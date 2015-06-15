@@ -43,10 +43,11 @@ pgsql_wipe() {
     export PGPASSWORD=$db_password
 
     # Make a set of drop commands, one for each table owned by keatest
-    pgsql_execute "SELECT 'drop table if exists '||t.tablename || ' cascade;' as dcmd FROM pg_catalog.pg_tables t WHERE t.tableowner = 'keatest';"
+    RESULT=`pgsql_execute "SELECT 'drop table if exists '||t.tablename || ' cascade;' as dcmd FROM pg_catalog.pg_tables t WHERE t.tableowner = 'keatest';"`
     assert_eq 0 $? "pgsql_wipe select failed, expected exit code: %d, actual: %d"
+
     # Now execute the set of drop commands from the result set returned
-    pgsql_execute "$_RESULT"
+    RESULT=`pgsql_execute "$RESULT"`
     assert_eq 0 $? "pgsql_wipe drop failed, expected exit code: %d, actual: %d"
 }
 
@@ -63,19 +64,19 @@ pgsql_lease_init_test() {
     # Verify that all the expected tables exist
 
     # Check schema_version table
-    pgsql_execute "SELECT version, minor FROM schema_version;"
-    assert_eq 0 $? "schema_vesion table check failed, expected exit code: %d, actual: %d"
+    RESULT=`pgsql_execute "SELECT version, minor FROM schema_version;"`
+    assert_eq 0 $? "schema_version table check failed, expected exit code: %d, actual: %d"
 
     # Check lease4 table
-    pgsql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname FROM lease4;"
+    RESULT=`pgsql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname FROM lease4;"`
     assert_eq 0 $? "lease4 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6 table
-    pgsql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname FROM lease6;"
+    RESULT=`pgsql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname FROM lease6;"`
     assert_eq 0 $? "lease6 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6_types table
-    pgsql_execute "SELECT lease_type, name FROM lease6_types;"
+    RESULT=`pgsql_execute "SELECT lease_type, name FROM lease6_types;"`
     assert_eq 0 $? "lease6_types table check failed, expected exit code: %d, actual: %d"
 
     # Trying to create it again should fail.  This verifies the db present
@@ -130,6 +131,206 @@ pgsql_upgrade_test() {
     test_finish 0
 }
 
+# Given a valid timestamp string, returns a timestamp with timezone string
+# for the give time localized by the PostgreSQL server.
+get_local_time() {
+    timestamp="$1"
+
+    # Expiration field is a "timestamp with timezone" so we need a reference
+    # time for the machine/DB this test is running upon.
+    ref_timestamp=`pgsql_execute "SELECT timestamptz '$1';"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "reference time query failed for [$timestamp], expected exit code %d, actual %d"
+    echo $ref_timestamp
+}
+
+
+# Test verifies the ability to dump lease4 data to CSV file
+# The dump output file is compared against a reference file.
+# If the dump is successful, the file contents will be the
+# same.  Note that the expire field in the lease4 table
+# is of data type "timestamp with timezone". This means that
+# the dumped file content is dependent upon the timezone
+# setting the PostgreSQL server is using.  To account for
+# this the reference data contains a tag, "<timestamp>"
+# where the expire column's data would normally be. This
+# tag is replaced during text execution with a value
+# determined by querying the PostgreSQL server.  This
+# updated reference data is captured in a temporary file
+# which is used for the actual comparison.
+pgsql_lease4_dump_test() {
+    test_start "pgsql.lease4_dump_test"
+
+    test_dir="@abs_top_srcdir@/src/bin/admin/tests"
+    script_dir="@abs_top_srcdir@/src/bin/admin/scripts"
+    output_file="$test_dir/data/pgsql.lease4_dump_test.output.csv"
+    ref_file="$test_dir/data/pgsql.lease4_dump_test.reference.csv"
+    ref_file_tmp=$ref_file.tmp
+
+    # wipe out any residuals from prior failed runs
+    if [ -e $output_file ]
+    then
+        rm $output_file
+    fi
+
+    if [ -e $ref_file_tmp ]
+    then
+        rm $ref_file_tmp
+    fi
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # Ok, now let's initalize the database
+    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $script_dir
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "could not create database, expected exit code %d, actual %d"
+
+    timestamp1="2015-01-01 01:15:30"
+    timestamp2="2015-02-02 02:30:45"
+    timestamp3="2015-03-03 11:01:07"
+
+    # Insert the reference records
+    insert_sql="\
+insert into lease4 values(10,E'\\x20',E'\\x30',40,'$timestamp1',50,'t','t','one.example.com');\
+insert into lease4 values(11,'',E'\\x0123',40,'$timestamp2',50,'t','t','');\
+insert into lease4 values(12,E'\\x22','',40,'$timestamp3',50,'t','t','three.example.com');"
+
+    pgsql_execute "$insert_sql"
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "insert into lease4 failed, expected exit code %d, actual %d"
+
+    # Dump lease4 to output_file
+    ${keaadmin} lease-dump pgsql -4 -u $db_user -p $db_password -n $db_name -d $script_dir -o $output_file
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "kea-admin lease-dump -4 failed,  status code %d"
+
+    # Expiration field is a "timestamp with timezone" so we need a localized reference
+    # times for the machine/DB this test is running upon.
+    local_timestamp1=`get_local_time "$timestamp1"`
+    local_timestamp2=`get_local_time "$timestamp2"`
+    local_timestamp3=`get_local_time "$timestamp3"`
+
+    # Create the comparison file by replacing the <timestamp> tags
+    # with the local reference timestamp
+    sedstr="\
+sed 's/<timestamp1>/$local_timestamp1/g' $ref_file | \
+sed 's/<timestamp2>/$local_timestamp2/g' | \
+sed 's/<timestamp3>/$local_timestamp3/g' "
+
+    eval $sedstr >$ref_file_tmp
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "timestamp replacement failed, expected exit code %d, actual %d"
+
+    # Compare the dump output to reference file, they should be identical
+    cmp -s $output_file  $ref_file_tmp
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dump file does not match reference file, expected exit code %d, actual %d"
+
+    # Remove the output file and temporary reference file
+    rm $output_file
+    rm $ref_file_tmp
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
+
+# Test verifies the ability to dump lease6 data to CSV file
+# The dump output file is compared against a reference file.
+# If the dump is successful, the file contents will be the
+# same.  Note that the expire field in the lease6 table
+# is of data type "timestamp with timezone". This means that
+# the dumped file content is dependent upon the timezone
+# setting the PostgreSQL server is using.  To account for
+# this the reference data contains a tag, "<timestamp>"
+# where the expire column's data would normally be. This
+# tag is replaced during text execution with a value
+# determined by querying the PostgreSQL server.  This
+# updated reference data is captured in a temporary file
+# which is used for the actual comparison.
+pgsql_lease6_dump_test() {
+    test_start "pgsql.lease6_dump_test"
+
+    test_dir="@abs_top_srcdir@/src/bin/admin/tests"
+    script_dir="@abs_top_srcdir@/src/bin/admin/scripts"
+    output_file="$test_dir/data/pgsql.lease6_dump_test.output.csv"
+    ref_file="$test_dir/data/pgsql.lease6_dump_test.reference.csv"
+    ref_file_tmp=$ref_file.tmp
+
+    # wipe out any residuals from prior failed runs
+    if [ -e $output_file ]
+    then
+        rm $output_file
+    fi
+
+    if [ -e $ref_file_tmp ]
+    then
+        rm $ref_file_tmp
+    fi
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # Ok, now let's initalize the database
+    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $script_dir
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "could not create database,  status code %d"
+
+    timestamp1="2015-04-04 01:15:30"
+    timestamp2="2015-02-02 02:30:45"
+    timestamp3="2015-06-06 11:01:07"
+
+    # Insert the reference records
+    insert_sql="\
+insert into lease6 values(10,E'\\x20',30,'$timestamp1',40,50,1,60,70,'t','t','one.example.com');\
+insert into lease6 values(11,'',30,'$timestamp2',40,50,1,60,70,'t','t','');\
+insert into lease6 values(12,E'\\x21',30,'$timestamp3',40,50,1,60,70,'t','t','three.example.com');"
+
+    pgsql_execute "$insert_sql"
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "insert into lease6 failed, status code %d"
+
+    # Dump lease6 to output_file
+    ${keaadmin} lease-dump pgsql -6 -u $db_user -p $db_password -n $db_name -d $script_dir -o $output_file
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "kea-admin lease-dump -6 failed, status code %d"
+
+    # Expiration field is a "timestamp with timezone" so we need a localized reference
+    # times for the machine/DB this test is running upon.
+    local_timestamp1=`get_local_time "$timestamp1"`
+    local_timestamp2=`get_local_time "$timestamp2"`
+    local_timestamp3=`get_local_time "$timestamp3"`
+
+    # Create the comparison file by replacing the <timestamp> tags
+    # with the local reference timestamp
+    sedstr="\
+sed 's/<timestamp1>/$local_timestamp1/g' $ref_file | \
+sed 's/<timestamp2>/$local_timestamp2/g' | \
+sed 's/<timestamp3>/$local_timestamp3/g' "
+
+    eval $sedstr >$ref_file_tmp
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "timestamp replacement failed, expected exit code %d, actual %d"
+
+    # Compare the dump output to reference file, they should be identical
+    cmp -s $output_file  $ref_file_tmp
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dump file does not match reference file"
+
+    # Remove the output file and temporary reference file
+    rm $output_file
+    rm $ref_file_tmp
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
+
 pgsql_lease_init_test
 pgsql_lease_version_test
 pgsql_upgrade_test
+pgsql_lease4_dump_test
+pgsql_lease6_dump_test
