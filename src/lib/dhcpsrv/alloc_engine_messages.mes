@@ -14,12 +14,18 @@
 
 $NAMESPACE isc::dhcp
 
-% ALLOC_ENGINE_ADDRESS4_ALLOC_ERROR error during attempt to allocate an IPv4 address: %1
+% ALLOC_ENGINE_DISCOVER_ADDRESS_CONFLICT conflicting reservation for address %1 with existing lease %2
+This warning message is issued when the DHCP server finds that the
+address reserved for the client can't be offered because this address
+is currently allocated to another client. The server will try to allocate
+a different address to the client to use until the conflict is resolved.
+
+% ALLOC_ENGINE_V4_ALLOC_ERROR %1: error during attempt to allocate an IPv4 address: %2
 An error occurred during an attempt to allocate an IPv4 address, the
 reason for the failure being contained in the message.  The server will
 return a message to the client refusing a lease.
 
-% ALLOC_ENGINE_ADDRESS4_ALLOC_FAIL failed to allocate an IPv4 address after %1 attempt(s)
+% ALLOC_ENGINE_V4_ALLOC_FAIL %1: failed to allocate an IPv4 address after %2 attempt(s)
 The DHCP allocation engine gave up trying to allocate an IPv4 address
 after the specified number of attempts.  This probably means that the
 address pool from which the allocation is being attempted is either
@@ -33,58 +39,6 @@ clients is less than the addresses you have available, you may want to
 consider reducing the lease lifetime.  In this way, addresses allocated
 to clients that are no longer active on the network will become available
 available sooner.
-
-% ALLOC_ENGINE_ADDRESS6_ALLOC_ERROR error during attempt to allocate an IPv6 address: %1
-An error occurred during an attempt to allocate an IPv6 address, the
-reason for the failure being contained in the message.  The server will
-return a message to the client refusing a lease.
-
-% ALLOC_ENGINE_ADDRESS6_ALLOC_FAIL failed to allocate an IPv6 address after %1 attempt(s)
-The DHCP allocation engine gave up trying to allocate an IPv6 address
-after the specified number of attempts.  This probably means that the
-address pool from which the allocation is being attempted is either
-empty, or very nearly empty.  As a result, the client will have been
-refused a lease.
-
-This message may indicate that your address pool is too small for the
-number of clients you are trying to service and should be expanded.
-Alternatively, if the you know that the number of concurrently active
-clients is less than the addresses you have available, you may want to
-consider reducing the lease lifetime.  In this way, addresses allocated
-to clients that are no longer active on the network will become available
-available sooner.
-
-% ALLOC_ENGINE_DISCOVER_ADDRESS_CONFLICT conflicting reservation for address %1 with existing lease %2
-This warning message is issued when the DHCP server finds that the
-address reserved for the client can't be offered because this address
-is currently allocated to another client. The server will try to allocate
-a different address to the client to use until the conflict is resolved.
-
-% ALLOC_ENGINE_HR_RESERVED_ADDR_GRANTED reserved address %1 was was assigned to client (duid=%2)
-This informational message signals that the specified client was assigned the address
-reserved for it.
-
-% ALLOC_ENGINE_HR_RESERVED_PREFIX_GRANTED reserved prefix %1/%2 was was assigned to client (duid=%3)
-This informational message signals that the specified client was assigned the prefix
-reserved for it.
-
-% ALLOC_ENGINE_HR_REVOKED_ADDR6_LEASE address %1 was revoked from client %2 as it is reserved for client %3
-This informational message is an indication that the specified IPv6
-address was used by client A but it is now reserved for client B. Client
-A has been told to stop using it so that it can be leased to client B.
-This is a normal occurrence during conflict resolution, which can occur
-in cases such as the system administrator adding a reservation for an
-address that is currently in use by another client.  The server will fully
-recover from this situation, but clients will change their addresses.
-
-% ALLOC_ENGINE_HR_REVOKED_PREFIX6_LEASE Prefix %1/%2 was revoked from client %3 as it is reserved for client %4
-This informational message is an indication that the specified IPv6
-prefix was used by client A but it is now reserved for client B. Client
-A has been told to stop using it so that it can be leased to client B.
-This is a normal occurrence during conflict resolution, which can occur
-in cases such as the system administrator adding a reservation for an
-address that is currently in use by another client.  The server will fully
-recover from this situation, but clients will change their prefixes.
 
 % ALLOC_ENGINE_V4_DISCOVER_HR %1: client sending DHCPDISCOVER has reservation for the address %2
 This message is issued when the allocation engine determines that the
@@ -113,7 +67,7 @@ offer lease specified in the hint, because the client doesn't
 have any reservations or the reserved or currently allocated
 address is leased to another client.
 
-% ALLOC_ENGINE_V4_REQUEST_ADDRESS_RESERVED %1: requested address is reserved
+% ALLOC_ENGINE_V4_REQUEST_ADDRESS_RESERVED %1: requested address %2 is reserved
 This message is issued when the allocation engine refused to
 allocate address requested by the client, because this
 address is reserved for another client.
@@ -164,6 +118,36 @@ address and the allocation engine determines that there is a
 reservation for this client. The allocation engine will try to
 allocate the reserved address.
 
+% ALLOC_ENGINE_V4_REUSE_EXPIRED_LEASE_DATA %1: reusing expired lease, updated lease information: %2
+This message is logged when the allocation engine is reusing
+an existing lease. The details of the updated lease are
+printed.
+
+% ALLOC_ENGINE_V6_ALLOC_ERROR %1: error during attempt to allocate an IPv6 address: %2
+An error occurred during an attempt to allocate an IPv6 address, the
+reason for the failure being contained in the message.  The server will
+return a message to the client refusing a lease.
+
+% ALLOC_ENGINE_V6_ALLOC_FAIL %1: failed to allocate an IPv6 address after %2 attempt(s)
+The DHCP allocation engine gave up trying to allocate an IPv6 address
+after the specified number of attempts.  This probably means that the
+address pool from which the allocation is being attempted is either
+empty, or very nearly empty.  As a result, the client will have been
+refused a lease.
+
+This message may indicate that your address pool is too small for the
+number of clients you are trying to service and should be expanded.
+Alternatively, if the you know that the number of concurrently active
+clients is less than the addresses you have available, you may want to
+consider reducing the lease lifetime.  In this way, addresses allocated
+to clients that are no longer active on the network will become available
+available sooner.
+
+% ALLOC_ENGINE_V6_ALLOC_HR_LEASE_EXISTS %1: lease type %2 for reserved address/prefix %3 already exists
+This debug message is issued when the allocation engine determines that
+the lease for the IPv6 address or prefix has already been allocated
+for the client and the client can continue using it.
+
 % ALLOC_ENGINE_V6_ALLOC_LEASES_HR %1: leases and static reservations found for client
 This message is logged when the allocation engine is in the process of
 allocating leases for the client, it found existing leases and static
@@ -179,6 +163,13 @@ allocating leases for the client, it hasn't found any existing leases
 for this client, but the client appears to have static reservations.
 The allocation engine will try to allocate the reserved resources for
 the client.
+
+% ALLOC_ENGINE_V6_ALLOC_NO_V6_HR %1: unable to allocate reserved leases - no IPv6 reservations
+This message is logged when the allocation engine determines that the
+client has no IPv6 reservations and thus allocation engine will have
+to try to allocate allocating leases from the dynamic pool or stop
+the allocation process if none leases can be allocated from the
+dynamic pool.
 
 % ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR %1: no reservations found but leases exist for client
 This message is logged when the allocation engine is in the process if
@@ -218,6 +209,24 @@ message. Depending on its nature, manual intervention may be required to
 continue processing messages from this particular client; other clients
 will be unaffected.
 
+% ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED %1: expired lease for the client's hint %2 is reserved for another client
+This message is logged when the allocation engine finds that the
+expired lease for the client's hint can't be reused because it
+is reserved for another client.
+
+% ALLOC_ENGINE_V6_HINT_RESERVED %1: lease for the client's hint %2 is reserved for another client
+This message is logged when the allocation engine cannot allocate
+the lease using the client's hint because the lease for this hint
+is reserved for another client.
+
+% ALLOC_ENGINE_V6_HR_ADDR_GRANTED reserved address %1 was was assigned to client (duid=%2)
+This informational message signals that the specified client was assigned the address
+reserved for it.
+
+% ALLOC_ENGINE_V6_HR_PREFIX_GRANTED reserved prefix %1/%2 was was assigned to client (duid=%3)
+This informational message signals that the specified client was assigned the prefix
+reserved for it.
+
 % ALLOC_ENGINE_V6_RENEW_HR %1: allocating leases reserved for the client as a result of Renew
 This debug message is issued when the allocation engine will try to
 allocate reserved leases for the client sending a Renew message.
@@ -236,3 +245,26 @@ to dynamically allocate new leases for the renewing client. This
 is the case when the server couldn't renew any of the existing
 client's leases, e.g. because leased resources are reserved for
 another client.
+
+% ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA %1: reusing expired lease, updated lease information: %2
+This message is logged when the allocation engine is reusing
+an existing lease. The details of the updated lease are
+printed.
+
+% ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE address %1 was revoked from client %2 as it is reserved for client %3
+This informational message is an indication that the specified IPv6
+address was used by client A but it is now reserved for client B. Client
+A has been told to stop using it so that it can be leased to client B.
+This is a normal occurrence during conflict resolution, which can occur
+in cases such as the system administrator adding a reservation for an
+address that is currently in use by another client.  The server will fully
+recover from this situation, but clients will change their addresses.
+
+% ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE Prefix %1/%2 was revoked from client %3 as it is reserved for client %4
+This informational message is an indication that the specified IPv6
+prefix was used by client A but it is now reserved for client B. Client
+A has been told to stop using it so that it can be leased to client B.
+This is a normal occurrence during conflict resolution, which can occur
+in cases such as the system administrator adding a reservation for an
+address that is currently in use by another client.  The server will fully
+recover from this situation, but clients will change their prefixes.

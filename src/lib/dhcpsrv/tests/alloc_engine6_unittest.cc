@@ -125,12 +125,14 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
     Lease6Ptr lease;
     AllocEngine::ClientContext6 ctx1(Subnet6Ptr(), duid_, iaid_, IOAddress("::"),
                                      Lease::TYPE_NA, false, false, "", false);
+    ctx1.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx1)));
     ASSERT_FALSE(lease);
 
     // Allocations without DUID are not allowed either
     AllocEngine::ClientContext6 ctx2(subnet_, DuidPtr(), iaid_, IOAddress("::"),
                                      Lease::TYPE_NA, false, false, "", false);
+    ctx2.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx2)));
     ASSERT_FALSE(lease);
 }
