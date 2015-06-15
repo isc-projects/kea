@@ -49,7 +49,7 @@ usage() {
     cerr << "Kea DHCPv4 server, version " << VERSION << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP4_NAME
-         << " -[v|V|W] [-d] [-c file] [-p number]" << endl;
+         << " -[v|V|W] [-d] [-c cfgfile] [-p number]" << endl;
     cerr << "  -v: print version number and exit" << endl;
     cerr << "  -V: print extended version and exit" << endl;
     cerr << "  -W: display the configuration report and exit" << endl;
