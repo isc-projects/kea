@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,24 +12,20 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config.h>
+#ifndef CONFIG_REPORT_H
+#define CONFIG_REPORT_H
 
-#include <gtest/gtest.h>
+namespace isc {
+namespace detail {
 
-#include <util/encode/hex.h>
+extern const char* const config_report[];
 
-#include <cryptolink/cryptolink.h>
+// The config_report array ends with an empty line ("")
+// Each line before this final one starts with four semicolons (;;;;)
+// in order to be easy to extract from binaries.
+std::string getConfigReport();
 
-using namespace isc::cryptolink;
-
-// Test get version
-TEST(CryptoLinkTest, Version) {
-    EXPECT_NO_THROW(CryptoLink::getVersion());
+}
 }
 
-// Tests whether getCryptoLink() returns a singleton instance
-TEST(CryptoLinkTest, Singleton) {
-    const CryptoLink& c1 = CryptoLink::getCryptoLink();
-    const CryptoLink& c2 = CryptoLink::getCryptoLink();
-    ASSERT_EQ(&c1, &c2);
-}
+#endif // CONFIG_REPORT_H

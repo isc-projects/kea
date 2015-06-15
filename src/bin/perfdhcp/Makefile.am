@@ -1,6 +1,7 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/log -I$(top_builddir)/src/lib/log
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
@@ -47,7 +48,7 @@ perfdhcp_LDADD = libperfdhcp.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-
+perfdhcp_LDADD += $(top_builddir)/src/bin/cfgrpt/libcfgrpt.la
 
 # ... and the documentation
 EXTRA_DIST = perfdhcp_internals.dox
