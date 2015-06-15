@@ -46,8 +46,8 @@ typedef boost::posix_time::time_duration StatsDuration;
 ///
 /// @{
 
-/// @brief Integer (implemented as unsigned 64-bit integer)
-typedef std::pair<uint64_t, boost::posix_time::ptime> IntegerSample;
+/// @brief Integer (implemented as signed 64-bit integer)
+typedef std::pair<int64_t, boost::posix_time::ptime> IntegerSample;
 
 /// @brief Float (implemented as double precision)
 typedef std::pair<double, boost::posix_time::ptime> FloatSample;
@@ -62,7 +62,7 @@ typedef std::pair<std::string, boost::posix_time::ptime> StringSample;
 
 /// @brief Represents a single observable characteristic (a 'statistic')
 ///
-/// Currently it supports one of four types: integer (implemented as unsigned 64
+/// Currently it supports one of four types: integer (implemented as signed 64
 /// bit integer), float (implemented as double), time duration (implemented with
 /// millisecond precision) and string. Absolute (setValue) and
 /// incremental (addValue) modes are supported. Statistic type is determined
@@ -85,7 +85,7 @@ class Observation {
     /// an easy to understand names were chosen (integer instead of uint64).
     /// To avoid confusion, we will support only one type of integer and only
     /// one type of floating points. Initially, these are represented by
-    /// uint64_t and double. If convincing use cases appear to change them
+    /// int64_t and double. If convincing use cases appear to change them
     /// to something else, we may change the underlying type.
     enum Type {
         STAT_INTEGER, ///< this statistic is unsinged 64-bit integer value
@@ -98,7 +98,7 @@ class Observation {
     ///
     /// @param name observation name
     /// @param value integer value observed.
-    Observation(const std::string& name, const uint64_t value);
+    Observation(const std::string& name, const int64_t value);
 
     /// @brief Constructor for floating point observations
     ///
@@ -122,7 +122,7 @@ class Observation {
     ///
     /// @param value integer value observed
     /// @throw InvalidStatType if statistic is not integer
-    void setValue(const uint64_t value);
+    void setValue(const int64_t value);
 
     /// @brief Records absolute floating point observation
     ///
@@ -146,7 +146,7 @@ class Observation {
     ///
     /// @param value integer value observed
     /// @throw InvalidStatType if statistic is not integer
-    void addValue(const uint64_t value);
+    void addValue(const int64_t value);
 
     /// @brief Records incremental floating point observation
     ///

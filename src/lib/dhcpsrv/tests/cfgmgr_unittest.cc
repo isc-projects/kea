@@ -588,8 +588,8 @@ TEST_F(CfgMgrTest, commitStats) {
     CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
     subnets->add(subnet1);
     cfg_mgr.commit();
-    stats_mgr.addValue("subnet[123].total-addresses", static_cast<uint64_t>(256));
-    stats_mgr.setValue("subnet[123].assigned-addresses", static_cast<uint64_t>(150));
+    stats_mgr.addValue("subnet[123].total-addresses", static_cast<int64_t>(256));
+    stats_mgr.setValue("subnet[123].assigned-addresses", static_cast<int64_t>(150));
 
     // Now, let's change the configuration to something new.
 
