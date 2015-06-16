@@ -149,67 +149,44 @@ size_t StatsMgr::count() const {
 isc::data::ConstElementPtr
 StatsMgr::statisticGetHandler(const std::string& /*name*/,
                               const isc::data::ConstElementPtr& params) {
-    if (!params) {
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Missing mandatory 'name' parameter."));
-    }
-    ConstElementPtr stat_name = params->get("name");
-    if (!stat_name) {
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Missing mandatory 'name' parameter."));
-    }
-    if (stat_name->getType() != Element::string) {
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             "'name' parameter expected to be a string."));
+    std::string name, error;
+    if (!getStatName(params, name, error)) {
+        return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
     return (createAnswer(CONTROL_RESULT_SUCCESS,
-                         instance().get(stat_name->stringValue())));
+                         instance().get(name)));
 }
 
 isc::data::ConstElementPtr
 StatsMgr::statisticResetHandler(const std::string& /*name*/,
                                 const isc::data::ConstElementPtr& params) {
-    if (!params) {
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Missing mandatory 'name' parameter."));
-    }
-    ConstElementPtr stat_name = params->get("name");
-    if (!stat_name) {
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Missing mandatory 'name' parameter."));
-    }
-    if (stat_name->getType() != Element::string) {
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             "'name' parameter expected to be a string."));
+    std::string name, error;
+    if (!getStatName(params, name, error)) {
+        return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
 
-    if (instance().reset(stat_name->stringValue())) {
+    if (instance().reset(name)) {
         return (createAnswer(CONTROL_RESULT_SUCCESS,
-                             "Statistic '" + stat_name->stringValue() + "' reset."));
+                             "Statistic '" + name + "' reset."));
     } else {
         return (createAnswer(CONTROL_RESULT_ERROR,
-                             "No '" + stat_name->stringValue() + "' statistic found"));
+                             "No '" + name + "' statistic found"));
     }
 }
 
 isc::data::ConstElementPtr
 StatsMgr::statisticRemoveHandler(const std::string& /*name*/,
                                  const isc::data::ConstElementPtr& params) {
-    if (!params) {
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Missing mandatory 'name' parameter."));
+    std::string name, error;
+    if (!getStatName(params, name, error)) {
+        return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    ConstElementPtr stat_name = params->get("name");
-    if (!stat_name) {
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Missing mandatory 'name' parameter."));
-    }
-    if (instance().del(stat_name->stringValue())) {
+    if (instance().del(name)) {
         return (createAnswer(CONTROL_RESULT_SUCCESS,
-                             "Statistic '" + stat_name->stringValue() + "' removed."));
+                             "Statistic '" + name + "' removed."));
     } else {
         return (createAnswer(CONTROL_RESULT_ERROR,
-                             "No '" + stat_name->stringValue() + "' statistic found"));
+                             "No '" + name + "' statistic found"));
     }
 
 }
@@ -237,6 +214,27 @@ StatsMgr::statisticResetAllHandler(const std::string& /*name*/,
                          "All statistics reset to neutral values."));
 }
 
+bool
+StatsMgr::getStatName(const isc::data::ConstElementPtr& params,
+                      std::string& name,
+                      std::string& reason) {
+    if (!params) {
+        reason = "Missing mandatory 'name' parameter.";
+        return (false);
+    }
+    ConstElementPtr stat_name = params->get("name");
+    if (!stat_name) {
+        reason = "Missing mandatory 'name' parameter.";
+        return (false);
+    }
+    if (stat_name->getType() != Element::string) {
+        reason = "'name' parameter expected to be a string.";
+        return (false);
+    }
+
+    name = stat_name->stringValue();
+    return (true);
+}
 
 };
 };
