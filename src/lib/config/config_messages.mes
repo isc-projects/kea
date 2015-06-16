@@ -52,7 +52,7 @@ This debug message indicates that specified number of bytes was received
 over command socket identified by specified file descriptor.
 
 % COMMAND_SOCKET_READ_FAIL Encountered error %1 while reading from command socket %2
-This warning message indicates that an error was encountered while
+This error message indicates that an error was encountered while
 reading from command socket.
 
 % COMMAND_SOCKET_WRITE Sent response of %1 bytes over command socket %2
@@ -60,14 +60,14 @@ This debug message indicates that the specified number of bytes was sent
 over command socket identifier by the specified file descriptor.
 
 % COMMAND_SOCKET_RESPONSE_TOOLARGE Server's response was larger (%1) than supported 64KB
-This warning message indicates that the server received a command and generated
+This error message indicates that the server received a command and generated
 an answer for it, but that response was larger than supported 64KB. Server
 will attempt to send the first 64KB of the response. Depending on the nature
 of this response, this may indicate a software or configuration error. Future
 Kea versions are expected to have better support for large responses.
 
 % COMMAND_SOCKET_WRITE_FAIL Error while writing %1 bytes to command socket %2
-This warning message indicates that an error was encountered while
+This error message indicates that an error was encountered while
 attempting to send a response to the command socket.
 
 % COMMAND_SOCKET_UNIX_OPEN Command socket opened: UNIX, fd=%1, path=%2

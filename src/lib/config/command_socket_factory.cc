@@ -67,6 +67,7 @@ private:
     /// @brief Auxiliary method for creating a UNIX socket
     ///
     /// @param file_name specifies socket file path
+    /// @return socket file descriptor
     int createUnixSocket(const std::string& file_name) {
 
         int fd = socket(AF_UNIX, SOCK_STREAM, 0);
