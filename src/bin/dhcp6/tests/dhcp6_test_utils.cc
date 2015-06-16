@@ -17,8 +17,10 @@
 #include <dhcp/option6_status_code.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
+#include <dhcp/tests/pkt_captures.h>
 #include <util/pointer_util.h>
 #include <cc/command_interpreter.h>
+#include <stats/stats_mgr.h>
 #include <string.h>
 
 using namespace isc::data;
@@ -27,6 +29,8 @@ using namespace isc::asiolink;
 
 namespace isc {
 namespace test {
+
+const char* NakedDhcpv6SrvTest::DUID_FILE = "server-id-test.txt";
 
 Dhcpv6SrvTest::Dhcpv6SrvTest()
 :srv_(0) {
@@ -742,6 +746,44 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
 }
 
 void
+Dhcpv6SrvTest::testReceiveStats(uint8_t pkt_type, const std::string& stat_name) {
+
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    NakedDhcpv6Srv srv(0);
+
+    // Let's get a simple SOLICIT...
+    Pkt6Ptr pkt = PktCaptures::captureSimpleSolicit();
+
+    // And pretend it's packet of a different type
+    pkt->data_[0] = pkt_type;
+
+    // Check that those statistics are not set before the test
+    ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
+    ObservationPtr tested_stat = mgr.getObservation(stat_name);
+    EXPECT_FALSE(pkt6_rcvd);
+    EXPECT_FALSE(tested_stat);
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(pkt);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    srv.run();
+
+    // All expected statstics must be present.
+    pkt6_rcvd = mgr.getObservation("pkt6-received");
+    tested_stat = mgr.getObservation(stat_name);
+    ASSERT_TRUE(pkt6_rcvd);
+    ASSERT_TRUE(tested_stat);
+
+    // They also must have expected values.
+    EXPECT_EQ(1, pkt6_rcvd->getInteger().first);
+    EXPECT_EQ(1, tested_stat->getInteger().first);
+}
+
+void
 Dhcpv6SrvTest::configure(const std::string& config) {
     configure(config, srv_);
 }
@@ -759,6 +801,48 @@ Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
     ASSERT_EQ(0, rcode);
 
     CfgMgr::instance().commit();
+}
+
+NakedDhcpv6SrvTest::NakedDhcpv6SrvTest()
+: rcode_(-1) {
+    // it's ok if that fails. There should not be such a file anyway
+    unlink(DUID_FILE);
+
+    const isc::dhcp::IfaceMgr::IfaceCollection& ifaces =
+        isc::dhcp::IfaceMgr::instance().getIfaces();
+
+    // There must be some interface detected
+    if (ifaces.empty()) {
+        // We can't use ASSERT in constructor
+        ADD_FAILURE() << "No interfaces detected.";
+    }
+
+    valid_iface_ = (*ifaces.begin())->getName();
+
+    // Let's wipe all existing statistics.
+    isc::stats::StatsMgr::instance().removeAll();
+}
+
+NakedDhcpv6SrvTest::~NakedDhcpv6SrvTest() {
+    // Let's wipe all existing statistics.
+    isc::stats::StatsMgr::instance().removeAll();
+
+    // Let's clean up if there is such a file.
+    unlink(DUID_FILE);
+    isc::hooks::HooksManager::preCalloutsLibraryHandle()
+        .deregisterAllCallouts("buffer6_receive");
+    isc::hooks::HooksManager::preCalloutsLibraryHandle()
+        .deregisterAllCallouts("buffer6_send");
+    isc::hooks::HooksManager::preCalloutsLibraryHandle()
+        .deregisterAllCallouts("lease6_renew");
+    isc::hooks::HooksManager::preCalloutsLibraryHandle()
+        .deregisterAllCallouts("lease6_release");
+    isc::hooks::HooksManager::preCalloutsLibraryHandle()
+        .deregisterAllCallouts("pkt6_receive");
+    isc::hooks::HooksManager::preCalloutsLibraryHandle()
+        .deregisterAllCallouts("pkt6_send");
+    isc::hooks::HooksManager::preCalloutsLibraryHandle()
+        .deregisterAllCallouts("subnet6_select");
 }
 
 // Generate IA_NA option with specified parameters
@@ -854,6 +938,7 @@ NakedDhcpv6SrvTest::checkIA_NAStatusCode(
                   status->getStatusCode());
     }
 }
+
 
 }; // end of isc::test namespace
 }; // end of isc namespace

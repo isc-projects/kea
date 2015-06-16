@@ -37,7 +37,7 @@
 #include <dhcpsrv/utils.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
-#include <hooks/server_hooks.h>
+#include <stats/stats_mgr.h>
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
@@ -58,7 +58,6 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
-using namespace isc::hooks;
 using namespace std;
 
 namespace {
@@ -2326,6 +2325,87 @@ TEST_F(Dhcpv6SrvTest, rsooOverride) {
     ASSERT_EQ(1, opt->getData().size());
 }
 
+// Test checks if pkt6-advertise-received is bumped up correctly.
+// Note that in properly configured network the server never receives Advertise
+// messages.
+TEST_F(Dhcpv6SrvTest, receiveAdvertiseStat) {
+    testReceiveStats(DHCPV6_ADVERTISE, "pkt6-advertise-received");
+}
+
+// Test checks if pkt6-reply-received is bumped up correctly.
+// Note that in properly configured network the server never receives Reply
+// messages.
+TEST_F(Dhcpv6SrvTest, receiveReplyStat) {
+    testReceiveStats(DHCPV6_ADVERTISE, "pkt6-advertise-received");
+}
+
+// Test checks if pkt6-unknown-received is bumped up correctly.
+TEST_F(Dhcpv6SrvTest, receiveUnknownStat) {
+    testReceiveStats(123, "pkt6-unknown-received");
+}
+
+// Test checks if pkt6-renew-received is bumped up correctly.
+TEST_F(Dhcpv6SrvTest, receiveRenewStat) {
+    testReceiveStats(DHCPV6_RENEW, "pkt6-renew-received");
+}
+
+// Test checks if pkt6-rebind-received is bumped up correctly.
+TEST_F(Dhcpv6SrvTest, receiveRebindStat) {
+    testReceiveStats(DHCPV6_REBIND, "pkt6-rebind-received");
+}
+
+// Test checks if pkt6-release-received is bumped up correctly.
+TEST_F(Dhcpv6SrvTest, receiveReleaseStat) {
+    testReceiveStats(DHCPV6_RELEASE, "pkt6-release-received");
+}
+
+// Test checks if pkt6-decline-received is bumped up correctly.
+TEST_F(Dhcpv6SrvTest, receiveDeclineStat) {
+    testReceiveStats(DHCPV6_DECLINE, "pkt6-decline-received");
+}
+
+// Test checks if reception of a malformed packet increases pkt-parse-failed
+// and pkt6-receive-drop
+TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    NakedDhcpv6Srv srv(0);
+
+    // Let's get a simple SOLICIT...
+    Pkt6Ptr pkt = PktCaptures::captureSimpleSolicit();
+
+    // And pretend it's packet is only 3 bytes long.
+    pkt->data_.resize(3);
+
+    // Check that those statistics are not set before the test
+    ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
+    ObservationPtr parse_fail = mgr.getObservation("pkt6-parse-failed");
+    ObservationPtr recv_drop = mgr.getObservation("pkt6-receive-drop");
+    EXPECT_FALSE(pkt6_rcvd);
+    EXPECT_FALSE(parse_fail);
+    EXPECT_FALSE(recv_drop);
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(pkt);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    srv.run();
+
+    // All expected statstics must be present.
+    pkt6_rcvd = mgr.getObservation("pkt6-received");
+    parse_fail = mgr.getObservation("pkt6-parse-failed");
+    recv_drop = mgr.getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(pkt6_rcvd);
+    ASSERT_TRUE(parse_fail);
+    ASSERT_TRUE(recv_drop);
+
+    // They also must have expected values.
+    EXPECT_EQ(1, pkt6_rcvd->getInteger().first);
+    EXPECT_EQ(1, parse_fail->getInteger().first);
+    EXPECT_EQ(1, recv_drop->getInteger().first);
+}
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
