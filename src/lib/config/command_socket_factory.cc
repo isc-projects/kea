@@ -14,72 +14,153 @@
 
 #include <config/command_socket_factory.h>
 #include <config/config_log.h>
-#include <cstdio>
+#include <config/command_mgr.h>
+#include <dhcp/iface_mgr.h>
+#include <boost/bind.hpp>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <string.h>
-#include <unistd.h>
+#include <cstdio>
 #include <fcntl.h>
-
-using namespace isc::config;
-
-namespace {
-
-int createUnixSocket(const std::string& file_name) {
-
-    int fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (fd == -1) {
-        isc_throw(isc::config::SocketError, "Failed to create AF_UNIX socket.");
-    }
-
-    // Let's remove the old file. We don't care about any possible
-    // errors here. The file should not be there if the file was
-    // shut down properly.
-    remove(file_name.c_str());
-
-    // Set this socket to be non-blocking one.
-    fcntl(fd, F_SETFL, O_NONBLOCK);
-
-    // Now bind the socket to the specified path.
-    struct sockaddr_un addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, file_name.c_str(), sizeof(addr.sun_path)-1);
-    if (bind(fd, (struct sockaddr*)&addr, sizeof(addr))) {
-        isc_throw(isc::config::SocketError, "Failed to bind socket " << fd
-                  << " to " << file_name);
-    }
-
-    // One means that we allow at most 1 awaiting connections.
-    // Any additional attempts will get ECONNREFUSED error.
-    // That means that at any given time, there may be at most one controlling
-    // connection.
-    /// @todo: Make this a configurable.
-    int status = listen(fd, 1);
-    if (status < 0) {
-        isc_throw(isc::config::SocketError, "Failed to listen on socket fd="
-                  << fd << ", filename=" << file_name);
-    }
-
-    LOG_INFO(command_logger, COMMAND_SOCKET_UNIX_OPEN).arg(fd).arg(file_name);
-
-    return (fd);
-}
-
-void closeUnixSocket(int socket_fd, const std::string& file_name) {
-    LOG_INFO(command_logger, COMMAND_SOCKET_UNIX_CLOSE).arg(socket_fd).arg(file_name);
-    close(socket_fd);
-    unlink(file_name.c_str());
-}
-
-}
 
 using namespace isc::data;
 
 namespace isc {
 namespace config {
 
-int
+/// @brief Wrapper for UNIX stream sockets
+///
+/// There are two UNIX socket types: datagram-based (equivalent of UDP) and
+/// stream-based (equivalent of TCP). This class represents stream-based
+/// sockets. It opens up a unix-socket and waits for incoming connections.
+/// Once incoming connection is detected, accept() system call is called
+/// and a new socket for that particular connection is returned. A new
+/// object of @ref ConnectionSocket is created.
+class UnixCommandSocket : public CommandSocket {
+public:
+    /// @brief Default constructor
+    ///
+    /// This socket_info map is expected to have at least one parameter:
+    /// 'socket-name' that specifies UNIX socket path. It's typically
+    /// a file somewhere in /tmp or /var/run/kea directory.
+    ///
+    /// @param socket_info socket description from the configuration
+    UnixCommandSocket(const isc::data::ConstElementPtr& socket_info)
+        : CommandSocket(socket_info) {
+
+        ConstElementPtr name = socket_info->get("socket-name");
+        if (!name) {
+            isc_throw(BadSocketInfo, "Mandatory 'socket-name' parameter missing");
+        }
+        filename_ = name->stringValue();
+
+        sockfd_ = createUnixSocket(filename_);
+
+        // Install this socket in Interface Manager.
+        isc::dhcp::IfaceMgr::instance().addExternalSocket(sockfd_,
+            boost::bind(&UnixCommandSocket::receiveHandler, this));
+    }
+
+private:
+
+    /// @brief Auxiliary method for creating a UNIX socket
+    ///
+    /// @param file_name specifies socket file path
+    int createUnixSocket(const std::string& file_name) {
+
+        int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+        if (fd == -1) {
+            isc_throw(isc::config::SocketError, "Failed to create AF_UNIX socket.");
+        }
+
+        // Let's remove the old file. We don't care about any possible
+        // errors here. The file should not be there if the file was
+        // shut down properly.
+        remove(file_name.c_str());
+
+        // Set this socket to be non-blocking one.
+        fcntl(fd, F_SETFL, O_NONBLOCK);
+
+        // Now bind the socket to the specified path.
+        struct sockaddr_un addr;
+        memset(&addr, 0, sizeof(addr));
+        addr.sun_family = AF_UNIX;
+        strncpy(addr.sun_path, file_name.c_str(), sizeof(addr.sun_path)-1);
+        if (bind(fd, (struct sockaddr*)&addr, sizeof(addr))) {
+            ::close(fd);
+            remove(file_name.c_str());
+            isc_throw(isc::config::SocketError, "Failed to bind socket " << fd
+                      << " to " << file_name);
+        }
+
+        // One means that we allow at most 1 awaiting connections.
+        // Any additional attempts will get ECONNREFUSED error.
+        // That means that at any given time, there may be at most one controlling
+        // connection.
+        /// @todo: Make the number of parallel connections configurable.
+        int status = listen(fd, 1);
+        if (status < 0) {
+            ::close(fd);
+            remove(file_name.c_str());
+            isc_throw(isc::config::SocketError, "Failed to listen on socket fd="
+                      << fd << ", filename=" << file_name);
+        }
+
+        // Woohoo! Socket opened, let's log it!
+        LOG_INFO(command_logger, COMMAND_SOCKET_UNIX_OPEN).arg(fd).arg(file_name);
+
+        return (fd);
+    }
+
+    /// CommandMgr::connectionAcceptor(int sockfd) {
+    /// @brief Callback used to accept incoming connections.
+    ///
+    /// This callback is used on a control socket. Once called, it will accept
+    /// incoming connection, create new socket for it and install
+    /// @ref commandReader for that new socket in @ref isc::dhcp::IfaceMgr.
+    void receiveHandler() {
+
+        // This method is specific to receiving data over UNIX socket, so using
+        // sockaddr_un instead of sockaddr_storage here is ok.
+        struct sockaddr_un client_addr;
+        socklen_t client_addr_len;
+        client_addr_len = sizeof(client_addr);
+
+        // Accept incoming connection. This will create a separate socket for
+        // handling this specific connection.
+        int fd2 = accept(sockfd_, static_cast<struct sockaddr*>(&client_addr),
+                         &client_addr_len);
+
+        // And now create an object that represents that new connection.
+        CommandSocketPtr conn(new ConnectionSocket(fd2));
+
+        // Not sure if this is really needed, but let's set it to non-blocking
+        // mode.
+        fcntl(fd2, F_SETFL, O_NONBLOCK);
+
+        // Remember this socket descriptor. It will be needed when we shut down
+        // the server.
+        CommandMgr::instance().addConnection(conn);
+
+        LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_OPENED).arg(fd2)
+            .arg(sockfd_);
+    }
+
+    // This method is called when we shutdown the connection.
+    void close() {
+        LOG_INFO(command_logger, COMMAND_SOCKET_UNIX_CLOSE).arg(sockfd_)
+            .arg(filename_);
+
+        isc::dhcp::IfaceMgr::instance().deleteExternalSocket(sockfd_);
+
+        ::close(sockfd_);
+        remove(filename_.c_str());
+    }
+
+    std::string filename_;
+};
+
+CommandSocketPtr
 CommandSocketFactory::create(const isc::data::ConstElementPtr& socket_info) {
     if(!socket_info) {
         isc_throw(BadSocketInfo, "Missing socket_info parameters, can't create socket.");
@@ -90,38 +171,8 @@ CommandSocketFactory::create(const isc::data::ConstElementPtr& socket_info) {
         isc_throw(BadSocketInfo, "Mandatory 'socket-type' parameter missing");
     }
 
-    ConstElementPtr name = socket_info->get("socket-name");
-    if (!name) {
-        isc_throw(BadSocketInfo, "Mandatory 'socket-name' parameter missing");
-    }
-
     if (type->stringValue() == "unix") {
-        return (createUnixSocket(name->stringValue()));
-    } else {
-        isc_throw(BadSocketInfo, "Specified socket type ('" + type->stringValue()
-                  + "') is not supported.");
-    }
-}
-
-void CommandSocketFactory::close(int socket_fd,
-                                 const isc::data::ConstElementPtr& socket_info) {
-
-    if(!socket_info) {
-        isc_throw(BadSocketInfo, "Missing socket_info parameters, can't create socket.");
-    }
-
-    ConstElementPtr type = socket_info->get("socket-type");
-    if (!type) {
-        isc_throw(BadSocketInfo, "Mandatory 'socket-type' parameter missing");
-    }
-
-    ConstElementPtr name = socket_info->get("socket-name");
-    if (!name) {
-        isc_throw(BadSocketInfo, "Mandatory 'socket-name' parameter missing");
-    }
-
-    if (type->stringValue() == "unix") {
-        return (closeUnixSocket(socket_fd, name->stringValue()));
+        return (CommandSocketPtr(new UnixCommandSocket(socket_info)));
     } else {
         isc_throw(BadSocketInfo, "Specified socket type ('" + type->stringValue()
                   + "') is not supported.");
