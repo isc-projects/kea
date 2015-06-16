@@ -114,7 +114,7 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
     // parameters are for IA and TA only. There is another dedicated
     // constructor for that (it uses prefix/length)
     if ((type != Lease::TYPE_NA) && (type != Lease::TYPE_TA)) {
-        isc_throw(BadValue, "Invalid Pool6 type specified:"
+        isc_throw(BadValue, "Invalid Pool6 type specified: "
                   << static_cast<int>(type));
     }
 
