@@ -113,6 +113,8 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     context_->subnet_ = subnet;
     // Hardware address.
     context_->hwaddr_ = query->getHWAddr();
+    // Pointer to client's query.
+    context_->query_ = query;
 
     // Set client identifier if the match-client-id flag is enabled (default).
     // If the subnet wasn't found it doesn't matter because we will not be
