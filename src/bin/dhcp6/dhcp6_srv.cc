@@ -45,6 +45,7 @@
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
@@ -330,6 +331,13 @@ bool Dhcpv6Srv::run() {
                     .arg(query->getLocalPort())
                     .arg(query->getIface());
 
+                // Log reception of the packet. We need to increase it early, as
+                // any failures in unpacking will cause the packet to be dropped.
+                // we will increase type specific packets further down the road.
+                // See processStatsReceived().
+                isc::stats::StatsMgr::instance().addValue("pkt6-received",
+                                                          static_cast<int64_t>(1));
+
             } else {
                 LOG_DEBUG(packet_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_INTERRUPTED)
                     .arg(timeout);
@@ -431,12 +439,26 @@ bool Dhcpv6Srv::run() {
                     .arg(query->getLocalAddr().toText())
                     .arg(query->getIface())
                     .arg(e.what());
+
+               // Increase the statistics of parse failues and dropped packets.
+                isc::stats::StatsMgr::instance().addValue("pkt6-parse-failed",
+                                                          static_cast<int64_t>(1));
+                isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
+                                                          static_cast<int64_t>(1));
                 continue;
             }
         }
+
+        // Update statistics accordingly for received packet.
+        processStatsReceived(query);
+
         // Check if received query carries server identifier matching
         // server identifier being used by the server.
         if (!testServerID(query)) {
+
+            // Increase the statistic of dropped packets.
+            isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
+                                                      static_cast<int64_t>(1));
             continue;
         }
 
@@ -444,6 +466,10 @@ bool Dhcpv6Srv::run() {
         // The Solicit, Confirm, Rebind and Information Request will be
         // discarded if sent to unicast address.
         if (!testUnicast(query)) {
+
+            // Increase the statistic of dropped packets.
+            isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
+                                                      static_cast<int64_t>(1));
             continue;
         }
 
@@ -541,6 +567,10 @@ bool Dhcpv6Srv::run() {
                 .arg(query->getRemoteAddr().toText())
                 .arg(e.what());
 
+            // Increase the statistic of dropped packets.
+            isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
+                                                      static_cast<int64_t>(1));
+
         } catch (const isc::Exception& e) {
 
             // Catch-all exception (at least for ones based on the isc Exception
@@ -553,6 +583,10 @@ bool Dhcpv6Srv::run() {
                 .arg(query->getName())
                 .arg(query->getRemoteAddr().toText())
                 .arg(e.what());
+
+            // Increase the statistic of dropped packets.
+            isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
+                                                      static_cast<int64_t>(1));
         }
 
         if (rsp) {
@@ -665,6 +699,10 @@ bool Dhcpv6Srv::run() {
                     .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
 
                 sendPacket(rsp);
+
+                // Update statistics accordingly for sent packet.
+                processStatsSent(rsp);
+
             } catch (const std::exception& e) {
                 LOG_ERROR(packet_logger, DHCP6_PACKET_SEND_FAIL)
                     .arg(e.what());
@@ -2896,6 +2934,78 @@ void Dhcpv6Srv::processRSOO(const Pkt6Ptr& query, const Pkt6Ptr& rsp) {
             }
         }
     }
+}
+
+void Dhcpv6Srv::processStatsReceived(const Pkt6Ptr& query) {
+    // Note that we're not bumping pkt4-received statistic as it was
+    // increased early in the packet reception code.
+
+    string stat_name = "pkt6-unknown-received";
+    switch (query->getType()) {
+    case DHCPV6_SOLICIT:
+        stat_name = "pkt6-solicit-received";
+        break;
+    case DHCPV6_ADVERTISE:
+        // Should not happen, but let's keep a counter for it
+        stat_name = "pkt6-advertise-received";
+        break;
+    case DHCPV6_REQUEST:
+        stat_name = "pkt6-request-received";
+        break;
+    case DHCPV6_CONFIRM:
+        stat_name = "pkt6-confirm-received";
+        break;
+    case DHCPV6_RENEW:
+        stat_name = "pkt6-renew-received";
+        break;
+    case DHCPV6_REBIND:
+        stat_name = "pkt6-rebind-received";
+        break;
+    case DHCPV6_REPLY:
+        // Should not happen, but let's keep a counter for it
+        stat_name = "pkt6-reply-received";
+        break;
+    case DHCPV6_RELEASE:
+        stat_name = "pkt6-release-received";
+        break;
+    case DHCPV6_DECLINE:
+        stat_name = "pkt6-decline-received";
+        break;
+    case DHCPV6_RECONFIGURE:
+        stat_name = "pkt6-reconfigure-received";
+        break;
+    case DHCPV6_INFORMATION_REQUEST:
+        stat_name = "pkt6-infrequest-received";
+        break;
+    default:
+            ; // do nothing
+    }
+
+    isc::stats::StatsMgr::instance().addValue(stat_name,
+                                              static_cast<int64_t>(1));
+}
+
+void Dhcpv6Srv::processStatsSent(const Pkt6Ptr& response) {
+    // Increase generic counter for sent packets.
+    isc::stats::StatsMgr::instance().addValue("pkt6-sent",
+                                              static_cast<int64_t>(1));
+
+    // Increase packet type specific counter for packets sent.
+    string stat_name;
+    switch (response->getType()) {
+    case DHCPV6_ADVERTISE:
+        stat_name = "pkt6-advertise-sent";
+        break;
+    case DHCPV6_REPLY:
+        stat_name = "pkt6-reply-sent";
+        break;
+    default:
+        // That should never happen
+        return;
+    }
+
+    isc::stats::StatsMgr::instance().addValue(stat_name,
+                                              static_cast<int64_t>(1));
 }
 
 };
