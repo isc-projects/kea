@@ -87,6 +87,7 @@ d2_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 d2_unittests_LDADD += $(top_builddir)/src/bin/cfgrpt/libcfgrpt.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 
 endif
 
