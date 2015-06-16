@@ -145,5 +145,20 @@ SrvConfig::equals(const SrvConfig& other) const {
             (*cfg_option_ == *other.cfg_option_));
 }
 
+void
+SrvConfig::removeStatistics() {
+
+    // For now, this method only removes statistics for v4 subnets, but in the
+    // near future, we'll also get statistics for v6 subnets.
+    getCfgSubnets4()->removeStatistics();
+}
+
+void
+SrvConfig::updateStatistics() {
+    // For now, this method only updates statistics for v4 subnets, but in the
+    // near future, we'll also get statistics for v6 subnets.
+    getCfgSubnets4()->updateStatistics();
+}
+
 }
 }

@@ -40,6 +40,7 @@
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 #include <util/strutil.h>
 #include <stats/stats_mgr.h>
 #include <log/logger.h>
@@ -60,6 +61,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::log;
+using namespace isc::stats;
 using namespace std;
 
 /// Structure that holds registered hook indexes
@@ -1788,6 +1790,11 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
                 LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
                     .arg(release->getLabel())
                     .arg(lease->addr_.toText());
+
+                // Need to decrease statistic for assigned addresses.
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-addresses"),
+                    static_cast<int64_t>(-1));
 
                 if (CfgMgr::instance().ddnsEnabled()) {
                     // Remove existing DNS entries for the lease, if any.

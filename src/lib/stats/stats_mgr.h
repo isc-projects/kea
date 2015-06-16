@@ -22,6 +22,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <sstream>
 
 namespace isc {
 namespace stats {
@@ -48,6 +49,23 @@ namespace stats {
 /// is today, except happening in a separate thread. One unsolved issue in
 /// this approach is how to extract data, but that will remain unsolvable
 /// until we get the control socket implementation.
+///
+/// Statistics Manager does not use logging by design. The reasons are:
+/// - performance impact (logging every observation would degrade performance
+///   significantly. While it's possible to log on sufficiently high debug
+///   level, such a log would be not that useful)
+/// - dependency (statistics are intended to be a lightweight library, adding
+///   dependency on libkea-log, which has its own dependecies, including
+///   external log4cplus, is against 'lightweight' design)
+/// - if logging of specific statistics is warranted, it is recommended to
+///   add log entries in the code that calls StatsMgr.
+/// - enabling logging in StatsMgr does not offer fine tuning. It would be
+///   either all or nothing. Adding logging entries only when necessary
+///   in the code that uses StatsMgr gives better granularity.
+///
+/// If this decision is revisited in the futere, the most universal places
+/// for adding logging have been marked in @ref addValueInternal and
+/// @ref setValueInternal.
 class StatsMgr : public boost::noncopyable {
  public:
 
@@ -65,7 +83,7 @@ class StatsMgr : public boost::noncopyable {
     /// @param name name of the observation
     /// @param value integer value observed
     /// @throw InvalidStatType if statistic is not integer
-    void setValue(const std::string& name, const uint64_t value);
+    void setValue(const std::string& name, const int64_t value);
 
     /// @brief Records absolute floating point observation.
     ///
@@ -93,7 +111,7 @@ class StatsMgr : public boost::noncopyable {
     /// @param name name of the observation
     /// @param value integer value observed
     /// @throw InvalidStatType if statistic is not integer
-    void addValue(const std::string& name, const uint64_t value);
+    void addValue(const std::string& name, const int64_t value);
 
     /// @brief Records incremental floating point observation.
     ///
@@ -197,6 +215,28 @@ class StatsMgr : public boost::noncopyable {
     /// @return Pointer to the Observation object
     ObservationPtr getObservation(const std::string& name) const;
 
+    /// @brief Generates statistic name in a given context
+    ///
+    /// Example:
+    /// @code
+    /// generateName("subnet", 123, "received-packets");
+    /// @endcode
+    /// will return subnet[123].received-packets. Any printable type
+    /// can be used as index.
+    ///
+    /// @tparam Type any type that can be used to index contexts
+    /// @param context name of the context (e.g. 'subnet')
+    /// @param index value used for indexing contexts (e.g. subnet_id)
+    /// @param stat_name name of the statistic
+    /// @return returns full statistic name in form context[index].stat_name
+    template<typename Type>
+    static std::string generateName(const std::string& context, Type index,
+                             const std::string& stat_name) {
+        std::stringstream name;
+        name << context << "[" << index << "]." << stat_name;
+        return (name.str());
+    }
+
  private:
 
     /// @brief Sets a given statistic to specified value (internal version).
@@ -205,12 +245,14 @@ class StatsMgr : public boost::noncopyable {
     /// specified by value. This internal method is used by public @ref setValue
     /// methods.
     ///
-    /// @tparam DataType one of uint64_t, double, StatsDuration or string
+    /// @tparam DataType one of int64_t, double, StatsDuration or string
     /// @param name name of the statistic
     /// @param value specified statistic will be set to this value
     /// @throw InvalidStatType is statistic exists and has a different type.
     template<typename DataType>
     void setValueInternal(const std::string& name, DataType value) {
+
+        // If we want to log each observation, here would be the best place for it.
         ObservationPtr stat = getObservation(name);
         if (stat) {
             stat->setValue(value);
@@ -226,12 +268,14 @@ class StatsMgr : public boost::noncopyable {
     /// by name to a value). This internal method is used by public @ref setValue
     /// methods.
     ///
-    /// @tparam DataType one of uint64_t, double, StatsDuration or string
+    /// @tparam DataType one of int64_t, double, StatsDuration or string
     /// @param name name of the statistic
     /// @param value specified statistic will be set to this value
     /// @throw InvalidStatType is statistic exists and has a different type.
     template<typename DataType>
     void addValueInternal(const std::string& name, DataType value) {
+
+        // If we want to log each observation, here would be the best place for it.
         ObservationPtr existing = getObservation(name);
         if (!existing) {
             // We tried to add to a non-existing statistic. We can recover from

@@ -1841,11 +1841,11 @@ temporarily override a list of interface names and listen on all interfaces.
       The rules for determining the FQDN option are as follows:
       <orderedlist>
       <listitem><para>
-      If configured to do, so ignore the REQUEST contents and generate a
+      If configured to do, so ignore the DHCPREQUEST contents and generate a
       FQDN using a configurable prefix and suffix.
       </para></listitem>
       <listitem><para>
-      If the REQUEST contains the client FQDN option, the candidate
+      If the DHCPREQUEST contains the client FQDN option, the candidate
       name is taken from there, otherwise it is taken from the Host Name option.
       The candidate name may then be modified:
       <orderedlist>
@@ -2825,6 +2825,41 @@ temporarily override a list of interface names and listen on all interfaces.
         </table>
     </section>
 
+<!-- proper section structure added in ticket 3794, will merge it
+appropiately -->
+
+
+<section id="dummy">
+  <title>MERGE ME</title>
+  <para>
+    <itemizedlist>
+      <listitem>
+        <simpara><emphasis>subnet[id].total-addresses</emphasis> (integer) -
+        this statistic shows the total number of addresses available for the
+        DHCPv4 management. In other words, this is the sum of all addresses in
+        all configured pools. This statistic changes only during configuration
+        changes. Note it does not take into account any addresses that may be
+        reserved due to host reservation. The <emphasis>id</emphasis> is the
+        subnet-id of a given subnet. This statistic is exposed for each subnet
+	separately. This statistic is reset during reconfiguration event.
+	</simpara>
+      </listitem>
+      <listitem>
+        <simpara><emphasis>subnet[id].assigned-addresses</emphasis> (integer) -
+        this statistic shows the number of assigned addresses in a given subnet.
+        This statistic increases every time a new lease is allocated (as a result
+        of receiving a DHCPREQUEST message) and is decreased every time a lease is
+        released (a DHCPRELEASE message is received). When lease expiration
+        is implemented (planned for Kea 1.0), it will also decrease when a lease
+        is expired. The <emphasis>id</emphasis> is the subnet-id of a given
+        subnet. This statistic is exposed for each subnet separately. This
+        statistic is reset during reconfiguration event.
+	</simpara>
+      </listitem>
+    </itemizedlist>
+    </para>
+</section>
+
     <section id="dhcp4-std">
       <title>Supported DHCP Standards</title>
       <para>The following standards are currently supported:</para>
@@ -2832,8 +2867,9 @@ temporarily override a list of interface names and listen on all interfaces.
           <listitem>
             <simpara><emphasis>Dynamic Host Configuration Protocol</emphasis>,
             <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>:
-            Supported messages are DISCOVER (1), OFFER (2),
-            REQUEST (3), RELEASE (7), INFORM (8), ACK (5), and NAK(6).</simpara>
+            Supported messages are DHCPDISCOVER (1), DHCPOFFER (2),
+            DHCPREQUEST (3), DHCPRELEASE (7), DHCPINFORM (8), DHCPACK (5), and
+            DHCPNAK(6).</simpara>
           </listitem>
           <listitem>
             <simpara><emphasis>DHCP Options and BOOTP Vendor Extensions</emphasis>,
