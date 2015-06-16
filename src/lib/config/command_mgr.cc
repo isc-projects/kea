@@ -140,7 +140,7 @@ CommandMgr::commandReader(int sockfd) {
     int rval = read(sockfd, buf, sizeof(buf));
     if (rval < 0) {
         // Read failed
-        LOG_WARN(command_logger, COMMAND_SOCKET_READ_FAIL).arg(rval).arg(sockfd);
+        LOG_ERROR(command_logger, COMMAND_SOCKET_READ_FAIL).arg(rval).arg(sockfd);
 
         /// @todo: Should we close the connection, similar to what is already
         /// being done for rval == 0?
@@ -180,7 +180,7 @@ CommandMgr::commandReader(int sockfd) {
     if (len > 65535) {
         // Hmm, our response is too large. Let's send the first
         // 64KB and hope for the best.
-        LOG_WARN(command_logger, COMMAND_SOCKET_RESPONSE_TOOLARGE).arg(len);
+        LOG_ERROR(command_logger, COMMAND_SOCKET_RESPONSE_TOOLARGE).arg(len);
 
         len = 65535;
     }
@@ -194,7 +194,7 @@ CommandMgr::commandReader(int sockfd) {
         // Response transmission failed. Since the response failed, it doesn't
         // make sense to send any status codes. Let's log it and be done with
         // it.
-        LOG_WARN(command_logger, COMMAND_SOCKET_WRITE_FAIL).arg(len).arg(sockfd);
+        LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL).arg(len).arg(sockfd);
     }
 }
 
