@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <string.h>
+#include <errno.h>
 #include <cstdio>
 #include <fcntl.h>
 
@@ -79,7 +80,10 @@ private:
         remove(file_name.c_str());
 
         // Set this socket to be non-blocking one.
-        fcntl(fd, F_SETFL, O_NONBLOCK);
+        if (fcntl(fd, F_SETFL, O_NONBLOCK) !=0 ) {
+            isc_throw(SocketError, "Failed to set non-block mode on unix socket "
+                      << fd << ": " << strerror(errno));
+        }
 
         // Now bind the socket to the specified path.
         struct sockaddr_un addr;
@@ -90,7 +94,7 @@ private:
             ::close(fd);
             remove(file_name.c_str());
             isc_throw(isc::config::SocketError, "Failed to bind socket " << fd
-                      << " to " << file_name);
+                      << " to " << file_name << ": " << strerror(errno));
         }
 
         // One means that we allow at most 1 awaiting connections.
@@ -103,7 +107,8 @@ private:
             ::close(fd);
             remove(file_name.c_str());
             isc_throw(isc::config::SocketError, "Failed to listen on socket fd="
-                      << fd << ", filename=" << file_name);
+                      << fd << ", filename=" << file_name << ": "
+                      << strerror(errno));
         }
 
         // Woohoo! Socket opened, let's log it!
@@ -128,15 +133,27 @@ private:
 
         // Accept incoming connection. This will create a separate socket for
         // handling this specific connection.
-        int fd2 = accept(sockfd_, static_cast<struct sockaddr*>(&client_addr),
+        int fd2 = accept(sockfd_, reinterpret_cast<struct sockaddr*>(&client_addr),
                          &client_addr_len);
+        if (fd2 == -1) {
+            LOG_ERROR(command_logger, COMMAND_SOCKET_ACCEPT_FAIL)
+                .arg(sockfd_).arg(strerror(errno));
+            return;
+        }
 
         // And now create an object that represents that new connection.
         CommandSocketPtr conn(new ConnectionSocket(fd2));
 
         // Not sure if this is really needed, but let's set it to non-blocking
         // mode.
-        fcntl(fd2, F_SETFL, O_NONBLOCK);
+        if (fcntl(fd2, F_SETFL, O_NONBLOCK) != 0) {
+            // Failed to set socket to non-blocking mode.
+            LOG_ERROR(command_logger, COMMAND_SOCKET_FAIL_NONBLOCK)
+                .arg(fd2).arg(sockfd_).arg(strerror(errno));
+
+            conn.reset();
+            return;
+        }
 
         // Remember this socket descriptor. It will be needed when we shut down
         // the server.
@@ -153,10 +170,13 @@ private:
 
         isc::dhcp::IfaceMgr::instance().deleteExternalSocket(sockfd_);
 
+        // Close should always succeed. We don't care if we're able to delete
+        // the socket or not.
         ::close(sockfd_);
         remove(filename_.c_str());
     }
 
+    /// @brief UNIX filename representing this socket
     std::string filename_;
 };
 
