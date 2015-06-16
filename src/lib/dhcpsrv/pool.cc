@@ -146,7 +146,7 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
 
     if ( ( (type == Lease::TYPE_NA) || (type == Lease::TYPE_TA)) &&
          (delegated_len != 128)) {
-        isc_throw(BadValue, "For IA or TA pools, delegated prefix length must "
+        isc_throw(BadValue, "For IA or TA pools, delegated prefix length must"
                   << " be 128.");
     }
 
