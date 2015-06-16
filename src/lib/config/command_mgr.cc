@@ -129,6 +129,8 @@ void CommandMgr::deregisterAll() {
 void
 CommandMgr::commandReader(int sockfd) {
 
+    /// @todo: We do not handle commands that are larger than 64K.
+
     // We should not expect commands bigger than 64K.
     char buf[65536];
     memset(buf, 0, sizeof(buf));
@@ -162,7 +164,7 @@ CommandMgr::commandReader(int sockfd) {
         // If successful, then process it as a command.
         rsp = CommandMgr::instance().processCommand(cmd);
     } catch (const Exception& ex) {
-        LOG_WARN(command_logger, COMMAND_PROCESS_ERROR).arg(ex.what());
+        LOG_WARN(command_logger, COMMAND_PROCESS_ERROR1).arg(ex.what());
         rsp = createAnswer(CONTROL_RESULT_ERROR, std::string(ex.what()));
     }
 
@@ -178,6 +180,8 @@ CommandMgr::commandReader(int sockfd) {
     if (len > 65535) {
         // Hmm, our response is too large. Let's send the first
         // 64KB and hope for the best.
+        LOG_WARN(command_logger, COMMAND_SOCKET_RESPONSE_TOOLARGE).arg(len);
+
         len = 65535;
     }
 
@@ -218,6 +222,7 @@ CommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
         return (it->second(name, arg));
 
     } catch (const Exception& e) {
+        LOG_WARN(command_logger, COMMAND_PROCESS_ERROR2).arg(e.what());
         return (createAnswer(CONTROL_RESULT_ERROR,
                              std::string("Error during command processing:")
                              + e.what()));
