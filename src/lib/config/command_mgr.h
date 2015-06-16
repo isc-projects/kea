@@ -16,6 +16,7 @@
 #define COMMAND_MGR_H
 
 #include <cc/data.h>
+#include <config/command_socket.h>
 #include <boost/noncopyable.hpp>
 #include <boost/function.hpp>
 #include <string>
@@ -98,8 +99,9 @@ public:
     /// @throw SocketError if command socket is already open.
     ///
     /// @param socket_info describes control socket parameters
-    /// @return socket descriptor of the socket created
-    int openCommandSocket(const isc::data::ConstElementPtr& socket_info);
+    /// @return object representing a socket
+    CommandSocketPtr
+    openCommandSocket(const isc::data::ConstElementPtr& socket_info);
 
     /// @brief Shuts down any open control sockets
     void closeCommandSocket();
@@ -124,16 +126,6 @@ public:
     /// it may be called by external code explicitly. Hence this method is public.
     isc::data::ConstElementPtr processCommand(const isc::data::ConstElementPtr& cmd);
 
-    /// @brief Callback used to accept incoming connections.
-    ///
-    /// This callback is used on a control socket. Once called, it will accept
-    /// incoming connection, create new socket for it and install @ref commandReader
-    /// for that new socket in @ref isc::dhcp::IfaceMgr.
-    ///
-    /// @param sockfd socket descriptor of a socket capable of accepting
-    ///               incoming connections
-    static void connectionAcceptor(int sockfd);
-
     /// @brief Reads data from a socket, parses as JSON command and processes it
     ///
     /// This method is used to handle traffic on connected socket. This callback
@@ -150,12 +142,22 @@ public:
     /// handled at all times.
     void deregisterAll();
 
+    /// @brief Adds an information about opened connection socket
+    ///
+    /// @param conn Connection socket to be stored
+    void addConnection(const CommandSocketPtr& conn);
+
+    /// @brief Closes connection with a specific socket descriptor
+    ///
+    /// @param fd socket descriptor
+    /// @return true if closed successfully, false if not found
+    bool closeConnection(int fd);
 
     /// @brief Returns control socket descriptor
     ///
     /// This method should be used only in tests.
     int getControlSocketFD() const {
-        return (socket_);
+        return (socket_->getFD());
     }
 
 private:
@@ -181,14 +183,17 @@ private:
     /// @brief Container for command handlers
     HandlerContainer handlers_;
 
-    /// @brief Socket file descriptor
-    int socket_;
+    /// @brief Control socket structure
+    ///
+    /// This is the socket that accepts incoming connections. There can be at
+    /// most one (if command channel is configured).
+    CommandSocketPtr socket_;
 
-    /// @brief Parameters for control socket
-    isc::data::ConstElementPtr socket_info_;
-
-    /// @brief Socket descriptors for open connections
-    std::list<int> connections_;
+    /// @brief Sockets for open connections
+    ///
+    /// These are the sockets that are dedicated to handle a specific connection.
+    /// Their number is equal to number of current control connections.
+    std::list<CommandSocketPtr> connections_;
 };
 
 }; // end of isc::config namespace

@@ -16,6 +16,7 @@
 
 #include <cc/data.h>
 #include <config/command_mgr.h>
+#include <config/command_socket.h>
 #include <config/command_socket_factory.h>
 #include <cstdio>
 
@@ -65,11 +66,12 @@ TEST_F(CommandSocketFactoryTest, unixCreate) {
                  isc::config::BadSocketInfo);
 
     socket_info->set("socket-name", Element::create(SOCKET_NAME));
-    int fd;
-    EXPECT_NO_THROW(fd = CommandSocketFactory::create(socket_info));
-    EXPECT_NE(-1, fd);
+    CommandSocketPtr sock;
+    EXPECT_NO_THROW(sock = CommandSocketFactory::create(socket_info));
+    ASSERT_TRUE(sock);
+    EXPECT_NE(-1, sock->getFD());
 
     // It should be possible to close the socket.
-    EXPECT_NO_THROW(CommandSocketFactory::close(fd, socket_info));
+    EXPECT_NO_THROW(sock->close());
 }
 
