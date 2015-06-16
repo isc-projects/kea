@@ -1,3 +1,8 @@
+957.	[func]		tomek
+	Per IPv4 subnet statistics (subnet[id].assigned-addresses and
+	subnet[id].total-addresses) has been implemented.
+	(Trac #3798, git bab2030f56bbf390959f9f9238a8acc62d583c70)
+
 956.	[func]		marcin
 	Improved log messages emitted by the allocation engine,
 	which now uses a dedicated logger.
