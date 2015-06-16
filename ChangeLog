@@ -1,3 +1,8 @@
+956.	[func]		marcin
+	Improved log messages emitted by the allocation engine,
+	which now uses a dedicated logger.
+	(Trac #3852, git 923928774f4f59c887d768cf155b5978e838a6f2)
+
 955.	[func]		tmark
 	Added unit tests to kea-admin for testing the lease-dump command
 	with a PostgreSQL backend. Updated PostgreSQL database installation
