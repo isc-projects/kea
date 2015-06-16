@@ -135,7 +135,7 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
 
     // check if the prefix length is sane
     if (prefix_len == 0 || prefix_len > 128) {
-        isc_throw(BadValue, "Invalid prefix length: " << prefix_len);
+        isc_throw(BadValue, "Invalid prefix length: " << static_cast<unsigned>(prefix_len));
     }
 
     if (prefix_len > delegated_len) {
