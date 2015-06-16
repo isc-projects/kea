@@ -96,7 +96,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->fqdn_fwd_ = false;
         lease->hostname_ = "myhost.example.com.";
 
-        } else if (address == straddress4_[1]) {
+    } else if (address == straddress4_[1]) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x19), HTYPE_ETHER));
         lease->client_id_ = ClientIdPtr(
             new ClientId(vector<uint8_t>(8, 0x53)));
