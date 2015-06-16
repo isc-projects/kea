@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -615,6 +615,32 @@ TEST_F(CfgMgrTest, commitStats) {
     EXPECT_EQ(128, total_addrs->getInteger().first);
 }
 
+// This test verifies that once the configuration is cleared, the statistics
+// are removed.
+TEST_F(CfgMgrTest, clearStats) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    StatsMgr& stats_mgr = StatsMgr::instance();
+
+    // Let's prepare the "old" configuration: a subnet with id 123
+    // and pretent there ware addresses assigned, so statistics are non-zero.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 123));
+    CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
+    subnets->add(subnet1);
+    cfg_mgr.commit();
+    stats_mgr.addValue("subnet[123].total-addresses", static_cast<int64_t>(256));
+    stats_mgr.setValue("subnet[123].assigned-addresses", static_cast<int64_t>(150));
+
+    // The stats should be there.
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-addresses"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].assigned-addresses"));
+
+    // Let's remove all configurations
+    cfg_mgr.clear();
+
+    // The stats should not be there anymore.
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-addresses"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-addresses"));
+}
 
 /// @todo Add unit-tests for testing:
 /// - addActiveIface() with invalid interface name
