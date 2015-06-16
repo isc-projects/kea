@@ -262,6 +262,9 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
 
 void
 Subnet::addPool(const PoolPtr& pool) {
+    // check if the type is valid (and throw if it isn't)
+    checkType(pool->getType());
+
     // Check that the pool is in range with a subnet only if this is
     // not a pool of IPv6 prefixes. The IPv6 prefixes delegated for
     // the particular subnet don't need to match the prefix of the
@@ -280,9 +283,6 @@ Subnet::addPool(const PoolPtr& pool) {
     }
 
     /// @todo: Check that pools do not overlap
-
-    // check if the type is valid (and throw if it isn't)
-    checkType(pool->getType());
 
     // Add the pool to the appropriate pools collection
     getPoolsWritable(pool->getType()).push_back(pool);
