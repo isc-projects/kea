@@ -101,7 +101,8 @@ public:
         // Connect to the specified UNIX socket
         int status = connect(socket_fd, (struct sockaddr*)&srv_addr, len);
         if (status == -1) {
-            ADD_FAILURE() << "Failed to connect socket";
+            ADD_FAILURE() << "Failed to connect unix socket: fd=" << socket_fd
+                          << ", path=" << socket_path;
             close(socket_fd);
             return (false);
         }
@@ -274,6 +275,7 @@ TEST_F(CtrlDhcpv4SrvTest, commandsRegistration) {
 TEST_F(CtrlDhcpv4SrvTest, DISABLED_commandSocketBasic) {
 
     string socket_path = string(TEST_DATA_DIR) + "/kea4.sock";
+    ::remove(socket_path.c_str());
 
     // Just a simple config. The important part here is the socket
     // location information.

@@ -14,10 +14,17 @@
 
 $NAMESPACE isc::config
 
-% COMMAND_PROCESS_ERROR Error while processing command: %1
+% COMMAND_PROCESS_ERROR1 Error while processing command: %1
 This warning message indicates that the server encountered an error while
 processing received command. Additional information will be provided, if
 available. Additional log messages may provide more details.
+
+% COMMAND_PROCESS_ERROR2 Error while processing command: %1
+This warning message indicates that the server encountered an error while
+processing received command. The difference, compared to COMMAND_PROCESS_ERROR1
+is that the initial command was well formed and the error occurred during
+logic processing, not the command parsing. Additional information will be
+provided, if available. Additional log messages may provide more details.
 
 % COMMAND_RECEIVED Received command '%1'
 This informational message indicates that a command was received over command
@@ -30,6 +37,16 @@ specified command. This likely indicates a server logic error, as the server
 is expected to generate valid responses for all commands, even malformed
 ones.
 
+% COMMAND_SOCKET_FAIL_NONBLOCK Failed to set non-blocking mode for socket %1 created for incoming connection on socket %2: %3
+This error message indicates that the server failed to set non-blocking mode
+on just created socket. That socket was created for accepting specific
+incoming connection. Additional information may be provided as third parameter.
+
+% COMMAND_SOCKET_ACCEPT_FAIL Failed to accept incoming connection on command socket %1: %2
+This error indicates that the server detected incoming connection and executed
+accept system call on said socket, but this call returned an error. Additional
+information may be provided by the system as second parameter.
+
 % COMMAND_SOCKET_READ Received %1 bytes over command socket %2
 This debug message indicates that specified number of bytes was received
 over command socket identified by specified file descriptor.
@@ -41,6 +58,13 @@ reading from command socket.
 % COMMAND_SOCKET_WRITE Sent response of %1 bytes over command socket %2
 This debug message indicates that the specified number of bytes was sent
 over command socket identifier by the specified file descriptor.
+
+% COMMAND_SOCKET_RESPONSE_TOOLARGE Server's response was larger (%1) than supported 64KB
+This warning message indicates that the server received a command and generated
+an answer for it, but that response was larger than supported 64KB. Server
+will attempt to send the first 64KB of the response. Depending on the nature
+of this response, this may indicate a software or configuration error. Future
+Kea versions are expected to have better support for large responses.
 
 % COMMAND_SOCKET_WRITE_FAIL Error while writing %1 bytes to command socket %2
 This warning message indicates that an error was encountered while
