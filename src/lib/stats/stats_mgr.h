@@ -49,6 +49,23 @@ namespace stats {
 /// is today, except happening in a separate thread. One unsolved issue in
 /// this approach is how to extract data, but that will remain unsolvable
 /// until we get the control socket implementation.
+///
+/// Statistics Manager does not use logging by design. The reasons are:
+/// - performance impact (logging every observation would degrade performance
+///   significantly. While it's possible to log on sufficiently high debug
+///   level, such a log would be not that useful)
+/// - dependency (statistics are intended to be a lightweight library, adding
+///   dependency on libkea-log, which has its own dependecies, including
+///   external log4cplus, is against 'lightweight' design)
+/// - if logging of specific statistics is warranted, it is recommended to
+///   add log entries in the code that calls StatsMgr.
+/// - enabling logging in StatsMgr does not offer fine tuning. It would be
+///   either all or nothing. Adding logging entries only when necessary
+///   in the code that uses StatsMgr gives better granularity.
+///
+/// If this decision is revisited in the futere, the most universal places
+/// for adding logging have been marked in @ref addValueInternal and
+/// @ref setValueInternal.
 class StatsMgr : public boost::noncopyable {
  public:
 
@@ -200,9 +217,12 @@ class StatsMgr : public boost::noncopyable {
 
     /// @brief Generates statistic name in a given context
     ///
-    /// example:
-    /// generateName("subnet", 123, "received-packets") will return
-    /// subnet[123].received-packets.
+    /// Example:
+    /// @code
+    /// generateName("subnet", 123, "received-packets");
+    /// @endcode
+    /// will return subnet[123].received-packets. Any printable type
+    /// can be used as index.
     ///
     /// @tparam Type any type that can be used to index contexts
     /// @param context name of the context (e.g. 'subnet')
@@ -231,6 +251,8 @@ class StatsMgr : public boost::noncopyable {
     /// @throw InvalidStatType is statistic exists and has a different type.
     template<typename DataType>
     void setValueInternal(const std::string& name, DataType value) {
+
+        // If we want to log each observation, here would be the best place for it.
         ObservationPtr stat = getObservation(name);
         if (stat) {
             stat->setValue(value);
@@ -252,6 +274,8 @@ class StatsMgr : public boost::noncopyable {
     /// @throw InvalidStatType is statistic exists and has a different type.
     template<typename DataType>
     void addValueInternal(const std::string& name, DataType value) {
+
+        // If we want to log each observation, here would be the best place for it.
         ObservationPtr existing = getObservation(name);
         if (!existing) {
             // We tried to add to a non-existing statistic. We can recover from
