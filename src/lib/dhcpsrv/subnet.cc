@@ -272,7 +272,7 @@ Subnet::addPool(const PoolPtr& pool) {
                       << Lease::typeToText(pool->getType())
                       << ", with the following address range: "
                       << pool->getFirstAddress() << "-"
-                      << pool->getLastAddress() << " does not match "
+                      << pool->getLastAddress() << " does not match"
                       << " the prefix of a subnet: "
                       << prefix_ << "/" << static_cast<int>(prefix_len_)
                       << " to which it is being added");
