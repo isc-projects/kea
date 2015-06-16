@@ -276,6 +276,7 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 
     // The lfc-interval must be an integer.
+    pmap["persist"] = "true";
     pmap["lfc-interval"] = "bogus";
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 }
