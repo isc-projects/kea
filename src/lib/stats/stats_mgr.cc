@@ -30,7 +30,7 @@ StatsMgr::StatsMgr()
 
 }
 
-void StatsMgr::setValue(const std::string& name, const uint64_t value) {
+void StatsMgr::setValue(const std::string& name, const int64_t value) {
     setValueInternal(name, value);
 }
 
@@ -45,7 +45,7 @@ void StatsMgr::setValue(const std::string& name, const std::string& value) {
     setValueInternal(name, value);
 }
 
-void StatsMgr::addValue(const std::string& name, const uint64_t value) {
+void StatsMgr::addValue(const std::string& name, const int64_t value) {
     addValueInternal(name, value);
 }
 

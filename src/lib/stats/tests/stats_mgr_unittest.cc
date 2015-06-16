@@ -65,7 +65,7 @@ TEST_F(StatsMgrTest, basic) {
 // an integer statistic.
 TEST_F(StatsMgrTest, integerStat) {
     EXPECT_NO_THROW(StatsMgr::instance().setValue("alpha",
-                                                  static_cast<uint64_t>(1234)));
+                                                  static_cast<int64_t>(1234)));
 
     ObservationPtr alpha;
     EXPECT_NO_THROW(alpha = StatsMgr::instance().getObservation("alpha"));
@@ -140,13 +140,13 @@ TEST_F(StatsMgrTest, setLimits) {
 TEST_F(StatsMgrTest, getGetAll) {
 
     // Set a couple of statistics
-    StatsMgr::instance().setValue("alpha", static_cast<uint64_t>(1234));
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
     StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
     StatsMgr::instance().setValue("delta", "Lorem");
 
     // Now add some values to them
-    StatsMgr::instance().addValue("alpha", static_cast<uint64_t>(5678));
+    StatsMgr::instance().addValue("alpha", static_cast<int64_t>(5678));
     StatsMgr::instance().addValue("beta", 56.78);
     StatsMgr::instance().addValue("gamma", time_duration(5,6,7,8));
     StatsMgr::instance().addValue("delta", " ipsum");
@@ -210,7 +210,7 @@ TEST_F(StatsMgrTest, getGetAll) {
 TEST_F(StatsMgrTest, reset) {
 
     // Set a couple of statistics
-    StatsMgr::instance().setValue("alpha", static_cast<uint64_t>(1234));
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
     StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
     StatsMgr::instance().setValue("delta", "Lorem ipsum");
@@ -246,7 +246,7 @@ TEST_F(StatsMgrTest, reset) {
 TEST_F(StatsMgrTest, resetAll) {
 
     // Set a couple of statistics
-    StatsMgr::instance().setValue("alpha", static_cast<uint64_t>(1234));
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
     StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
     StatsMgr::instance().setValue("delta", "Lorem ipsum");
@@ -269,7 +269,7 @@ TEST_F(StatsMgrTest, resetAll) {
 TEST_F(StatsMgrTest, removeAll) {
 
     // Set a couple of statistics
-    StatsMgr::instance().setValue("alpha", static_cast<uint64_t>(1234));
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
     StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
     StatsMgr::instance().setValue("delta", "Lorem ipsum");
@@ -352,12 +352,12 @@ TEST_F(StatsMgrTest, DISABLED_performanceMultipleAdd) {
     for (uint32_t i = 0; i < stats; ++i) {
         std::stringstream tmp;
         tmp << "statistic" << i;
-        StatsMgr::instance().setValue(tmp.str(), static_cast<uint64_t>(i));
+        StatsMgr::instance().setValue(tmp.str(), static_cast<int64_t>(i));
     }
 
     ptime before = microsec_clock::local_time();
     for (uint32_t i = 0; i < cycles; ++i) {
-        StatsMgr::instance().addValue("metric1", static_cast<uint64_t>(i));
+        StatsMgr::instance().addValue("metric1", static_cast<int64_t>(i));
     }
     ptime after = microsec_clock::local_time();
 
@@ -382,12 +382,12 @@ TEST_F(StatsMgrTest, DISABLED_performanceMultipleSet) {
     for (uint32_t i = 0; i < stats; ++i) {
         std::stringstream tmp;
         tmp << "statistic" << i;
-        StatsMgr::instance().setValue(tmp.str(), static_cast<uint64_t>(i));
+        StatsMgr::instance().setValue(tmp.str(), static_cast<int64_t>(i));
     }
 
     ptime before = microsec_clock::local_time();
     for (uint32_t i = 0; i < cycles; ++i) {
-        StatsMgr::instance().setValue("metric1", static_cast<uint64_t>(i));
+        StatsMgr::instance().setValue("metric1", static_cast<int64_t>(i));
     }
     ptime after = microsec_clock::local_time();
 
@@ -395,6 +395,22 @@ TEST_F(StatsMgrTest, DISABLED_performanceMultipleSet) {
 
     std::cout << "Setting one of " << stats << " statistics " << cycles
               << " times took: " << isc::util::durationToText(dur) << std::endl;
+}
+
+// Test checks whether statistics name can be generated using various
+// indexes.
+TEST_F(StatsMgrTest, generateName) {
+    // generateName is a templated method, so in principle anything printable
+    // to stream can be used as index. However, in practice only integers
+    // and possibly strings will be used.
+
+    // Let's text integer as index.
+    EXPECT_EQ("subnet[123].pkt4-received",
+              StatsMgr::generateName("subnet", 123, "pkt4-received"));
+
+    // Lets' test string as index.
+    EXPECT_EQ("subnet[foo].pkt4-received",
+              StatsMgr::generateName("subnet", "foo", "pkt4-received"));
 }
 
 };

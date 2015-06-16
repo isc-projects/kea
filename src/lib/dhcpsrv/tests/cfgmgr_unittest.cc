@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <stats/stats_mgr.h>
 
 #include <gtest/gtest.h>
 
@@ -34,6 +35,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
+using namespace isc::stats;
 using namespace isc;
 
 // don't import the entire boost namespace.  It will unexpectedly hide uint8_t
@@ -572,6 +574,72 @@ TEST_F(CfgMgrTest, verbosity) {
 
     CfgMgr::instance().setVerbose(false);
     EXPECT_FALSE(CfgMgr::instance().isVerbose());
+}
+
+// This test verifies that once the configuration is committed, statistics
+// are updated appropriately.
+TEST_F(CfgMgrTest, commitStats) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    StatsMgr& stats_mgr = StatsMgr::instance();
+
+    // Let's prepare the "old" configuration: a subnet with id 123
+    // and pretent there ware addresses assigned, so statistics are non-zero.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 123));
+    CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
+    subnets->add(subnet1);
+    cfg_mgr.commit();
+    stats_mgr.addValue("subnet[123].total-addresses", static_cast<int64_t>(256));
+    stats_mgr.setValue("subnet[123].assigned-addresses", static_cast<int64_t>(150));
+
+    // Now, let's change the configuration to something new.
+
+    // There's a subnet 192.1.2.0/24 with ID=42
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 42));
+
+    // Let's make a pool with 128 addresses available.
+    PoolPtr pool(new Pool4(IOAddress("192.1.2.0"), 25)); // 128 addrs
+    subnet2->addPool(pool);
+
+    subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
+    subnets->add(subnet2);
+
+    // Let's commit it
+    cfg_mgr.commit();
+
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-addresses"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-addresses"));
+
+    ObservationPtr total_addrs;
+    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-addresses"));
+    ASSERT_TRUE(total_addrs);
+    EXPECT_EQ(128, total_addrs->getInteger().first);
+}
+
+// This test verifies that once the configuration is cleared, the statistics
+// are removed.
+TEST_F(CfgMgrTest, clearStats) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    StatsMgr& stats_mgr = StatsMgr::instance();
+
+    // Let's prepare the "old" configuration: a subnet with id 123
+    // and pretent there ware addresses assigned, so statistics are non-zero.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 123));
+    CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
+    subnets->add(subnet1);
+    cfg_mgr.commit();
+    stats_mgr.addValue("subnet[123].total-addresses", static_cast<int64_t>(256));
+    stats_mgr.setValue("subnet[123].assigned-addresses", static_cast<int64_t>(150));
+
+    // The stats should be there.
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-addresses"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].assigned-addresses"));
+
+    // Let's remove all configurations
+    cfg_mgr.clear();
+
+    // The stats should not be there anymore.
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-addresses"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-addresses"));
 }
 
 /// @todo Add unit-tests for testing:

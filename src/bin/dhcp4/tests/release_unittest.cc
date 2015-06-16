@@ -21,13 +21,16 @@
 #include <dhcpsrv/subnet_id.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
+#include <stats/stats_mgr.h>
 #include <boost/shared_ptr.hpp>
+#include <sstream>
 
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::stats;
 
 namespace {
 
@@ -144,6 +147,18 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
     // Perform 4-way exchange to obtain a new lease.
     acquireLease(client);
 
+    std::stringstream name;
+
+    // Let's get the subnet-id and generate statistics name out of it
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    name << "subnet[" << subnets->at(0)->getID() << "].assigned-addresses";
+
+    ObservationPtr assigned_cnt = StatsMgr::instance().getObservation(name.str());
+    ASSERT_TRUE(assigned_cnt);
+    uint64_t before = assigned_cnt->getInteger().first;
+
     // Remember the acquired address.
     IOAddress leased_address = client.config_.lease_.addr_;
 
@@ -157,14 +172,25 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
     ASSERT_NO_THROW(client.doRelease());
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(leased_address);
 
+    assigned_cnt = StatsMgr::instance().getObservation(name.str());
+    ASSERT_TRUE(assigned_cnt);
+    uint64_t after = assigned_cnt->getInteger().first;
+
     // We check if the release process was successful by checking if the
     // lease is in the database. It is expected that it is not present,
     // i.e. has been deleted with the release.
     if (expected_result == SHOULD_PASS) {
         EXPECT_FALSE(lease);
 
+        // The removal succeded, so the assigned-addresses statistic should
+        // be decreased by one
+        EXPECT_EQ(before, after + 1);
     } else {
         EXPECT_TRUE(lease);
+
+        // The removal failed, so the assigned-address should be the same
+        // as before
+        EXPECT_EQ(before, after);
     }
 }
 

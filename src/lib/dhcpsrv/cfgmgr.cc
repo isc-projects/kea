@@ -19,10 +19,13 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/subnet_id.h>
+#include <stats/stats_mgr.h>
+#include <sstream>
 #include <string>
 
 using namespace isc::asiolink;
 using namespace isc::util;
+using namespace isc::stats;
 
 namespace isc {
 namespace dhcp {
@@ -110,13 +113,24 @@ CfgMgr::ensureCurrentAllocated() {
 
 void
 CfgMgr::clear() {
+    if (configuration_) {
+        configuration_->removeStatistics();
+    }
     configs_.clear();
     ensureCurrentAllocated();
 }
 
 void
 CfgMgr::commit() {
+
+
     ensureCurrentAllocated();
+
+    // First we need to remove statistics. The new configuration can have fewer
+    // subnets. Also, it may change subnet-ids. So we need to remove them all
+    // and add it back.
+    configuration_->removeStatistics();
+
     if (!configs_.back()->sequenceEquals(*configuration_)) {
         configuration_ = configs_.back();
         // Keep track of the maximum size of the configs history. Before adding
@@ -127,6 +141,9 @@ CfgMgr::commit() {
             configs_.erase(configs_.begin(), it);
         }
     }
+
+    // Now we need to set the statistics back.
+    configuration_->updateStatistics();
 }
 
 void
