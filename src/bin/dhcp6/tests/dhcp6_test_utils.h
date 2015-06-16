@@ -127,28 +127,16 @@ public:
     std::list<isc::dhcp::Pkt6Ptr> fake_sent_;
 };
 
-static const char* DUID_FILE = "server-id-test.txt";
-
-// test fixture for any tests requiring blank/empty configuration
-// serves as base class for additional tests
+/// @brief Test fixture for any tests requiring blank/empty configuration
+///        serves as base class for additional tests
 class NakedDhcpv6SrvTest : public ::testing::Test {
 public:
 
-    NakedDhcpv6SrvTest() : rcode_(-1) {
-        // it's ok if that fails. There should not be such a file anyway
-        unlink(DUID_FILE);
+    /// @brief Constructor
+    NakedDhcpv6SrvTest();
 
-        const isc::dhcp::IfaceMgr::IfaceCollection& ifaces =
-            isc::dhcp::IfaceMgr::instance().getIfaces();
-
-        // There must be some interface detected
-        if (ifaces.empty()) {
-            // We can't use ASSERT in constructor
-            ADD_FAILURE() << "No interfaces detected.";
-        }
-
-        valid_iface_ = (*ifaces.begin())->getName();
-    }
+    /// @brief Location of a test DUID file
+    static const char* DUID_FILE;
 
     // Generate IA_NA or IA_PD option with specified parameters
     boost::shared_ptr<isc::dhcp::Option6IA> generateIA
@@ -286,24 +274,7 @@ public:
         EXPECT_EQ(expected_transid, rsp->getTransid());
     }
 
-    virtual ~NakedDhcpv6SrvTest() {
-        // Let's clean up if there is such a file.
-        unlink(DUID_FILE);
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("buffer6_receive");
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("buffer6_send");
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("lease6_renew");
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("lease6_release");
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("pkt6_receive");
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("pkt6_send");
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("subnet6_select");
-    };
+    virtual ~NakedDhcpv6SrvTest();
 
     // A DUID used in most tests (typically as client-id)
     isc::dhcp::DuidPtr duid_;
@@ -538,6 +509,12 @@ public:
     void
     testReleaseReject(isc::dhcp::Lease::Type type,
                       const isc::asiolink::IOAddress& addr);
+
+    /// @brief simulates reception of a packet of specified type and checks statistic
+    ///
+    /// @param pkt_type reception of a packet of this type will be simulated
+    /// @param stat_name this statistic is expected to be set to 1
+    void testReceiveStats(uint8_t pkt_type, const std::string& stat_name);
 
     /// A subnet used in most tests
     isc::dhcp::Subnet6Ptr subnet_;
