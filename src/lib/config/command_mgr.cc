@@ -30,30 +30,52 @@ CommandMgr::CommandMgr() {
         boost::bind(&CommandMgr::listCommandsHandler, this, _1, _2));
 }
 
-int CommandMgr::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
-    if (socket_info_) {
+CommandSocketPtr
+CommandMgr::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
+    if (socket_) {
         isc_throw(SocketError, "There is already a control socket open");
     }
 
     socket_ = CommandSocketFactory::create(socket_info);
-    socket_info_ = socket_info;
-
-    // Install this socket in Interface Manager.
-    isc::dhcp::IfaceMgr::instance().addExternalSocket(socket_,
-        boost::bind(&isc::config::CommandMgr::connectionAcceptor, socket_));
 
     return (socket_);
 }
 
 void CommandMgr::closeCommandSocket() {
-    if (socket_info_) {
-
-        isc::dhcp::IfaceMgr::instance().deleteExternalSocket(socket_);
-
-        CommandSocketFactory::close(socket_, socket_info_);
-        socket_ = 0;
-        socket_info_.reset();
+    // First, let's close the socket for incoming new connections.
+    if (socket_) {
+        socket_->close();
+        socket_.reset();
     }
+
+    // Now let's close all existing connections that we may have.
+    for (std::list<CommandSocketPtr>::iterator conn = connections_.begin();
+         conn != connections_.end(); ++conn) {
+        (*conn)->close();
+    }
+    connections_.clear();
+}
+
+
+void CommandMgr::addConnection(const CommandSocketPtr& conn) {
+    connections_.push_back(conn);
+}
+
+bool CommandMgr::closeConnection(int fd) {
+
+    // Let's iterate over all currently registered connections.
+    for (std::list<CommandSocketPtr>::iterator conn = connections_.begin();
+         conn != connections_.end(); ++conn) {
+
+        // If found, close it.
+        if ((*conn)->getFD() == fd) {
+            (*conn)->close();
+            connections_.erase(conn);
+            return (true);
+        }
+    }
+
+    return (false);
 }
 
 CommandMgr&
@@ -105,35 +127,6 @@ void CommandMgr::deregisterAll() {
 }
 
 void
-CommandMgr::connectionAcceptor(int sockfd) {
-
-    /// @todo: Either make this generic or rename this method
-    /// to CommandSocketFactory::unixConnectionAcceptor
-    struct sockaddr_un client_addr;
-    socklen_t client_addr_len;
-    client_addr_len = sizeof(client_addr);
-
-    // Accept incoming connection. This will create a separate socket for
-    // handling this specific connection.
-    int fd2 = accept(sockfd, (struct sockaddr*) &client_addr, &client_addr_len);
-
-    // Not sure if this is really needed, but let's set it to non-blocking mode.
-    fcntl(fd2, F_SETFL, O_NONBLOCK);
-
-    // Install commandReader callback. When there's any data incoming on this
-    // socket, commandReader will be called and process it. It may also
-    // eventually close this socket.
-    isc::dhcp::IfaceMgr::instance().addExternalSocket(fd2,
-        boost::bind(&isc::config::CommandMgr::commandReader, fd2));
-
-    // Remember this socket descriptor. It will be needed when we shut down the
-    // server.
-    instance().connections_.push_back(fd2);
-
-    LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_OPENED).arg(fd2).arg(sockfd);
-}
-
-void
 CommandMgr::commandReader(int sockfd) {
 
     // We should not expect commands bigger than 64K.
@@ -152,19 +145,8 @@ CommandMgr::commandReader(int sockfd) {
         return;
     } else if (rval == 0) {
 
-        // read of 0 bytes means end-of-file. In other words the connection is
-        // being closed.
-
-        LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_CLOSED).arg(sockfd);
-
-        // Unregister this callback
-        isc::dhcp::IfaceMgr::instance().deleteExternalSocket(sockfd);
-
-        // Close the socket.
-        close(sockfd);
-
         // Remove it from the active connections list.
-        instance().connections_.remove(sockfd);
+        instance().closeConnection(sockfd);
 
         return;
     }
