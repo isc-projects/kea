@@ -426,7 +426,7 @@ Dhcpv4Srv::run() {
         // will increase type specific packets further down the road.
         // See processStatsReceived().
         isc::stats::StatsMgr::instance().addValue("pkt4-received",
-                                                  static_cast<uint64_t>(1));
+                                                  static_cast<int64_t>(1));
 
         // In order to parse the DHCP options, the server needs to use some
         // configuration information such as: existing option spaces, option
@@ -489,9 +489,9 @@ Dhcpv4Srv::run() {
 
                 // Increase the statistics of parse failues and dropped packets.
                 isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed",
-                                                          static_cast<uint64_t>(1));
+                                                          static_cast<int64_t>(1));
                 isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                          static_cast<uint64_t>(1));
+                                                          static_cast<int64_t>(1));
                 continue;
             }
         }
@@ -509,7 +509,7 @@ Dhcpv4Srv::run() {
         if (!accept(query)) {
             // Increase the statistic of dropped packets.
             isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                      static_cast<uint64_t>(1));
+                                                      static_cast<int64_t>(1));
             continue;
         }
 
@@ -599,7 +599,7 @@ Dhcpv4Srv::run() {
 
             // Increase the statistic of dropped packets.
             isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                      static_cast<uint64_t>(1));
+                                                      static_cast<int64_t>(1));
         }
 
         if (!rsp) {
@@ -2334,13 +2334,13 @@ void Dhcpv4Srv::processStatsReceived(const Pkt4Ptr& query) {
     }
 
     isc::stats::StatsMgr::instance().addValue(stat_name,
-                                              static_cast<uint64_t>(1));
+                                              static_cast<int64_t>(1));
 }
 
 void Dhcpv4Srv::processStatsSent(const Pkt4Ptr& response) {
     // Increase generic counter for sent packets.
     isc::stats::StatsMgr::instance().addValue("pkt4-sent",
-                                              static_cast<uint64_t>(1));
+                                              static_cast<int64_t>(1));
 
     // Increase packet type specific counter for packets sent.
     string stat_name;
@@ -2360,7 +2360,7 @@ void Dhcpv4Srv::processStatsSent(const Pkt4Ptr& response) {
     }
 
     isc::stats::StatsMgr::instance().addValue(stat_name,
-                                              static_cast<uint64_t>(1));
+                                              static_cast<int64_t>(1));
 }
 
 }   // namespace dhcp
