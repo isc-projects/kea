@@ -742,11 +742,13 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
 
             if (ctx.type_ == Lease::TYPE_NA) {
                 LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_HR_ADDR_GRANTED)
-                    .arg(addr.toText()).arg(ctx.duid_->toText());
+                    .arg(addr.toText())
+                    .arg(ctx.query_->getLabel());
             } else {
                 LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_HR_PREFIX_GRANTED)
-                    .arg(addr.toText()).arg(static_cast<int>(prefix_len))
-                    .arg(ctx.duid_->toText());
+                    .arg(addr.toText())
+                    .arg(static_cast<int>(prefix_len))
+                    .arg(ctx.query_->getLabel());
             }
 
             // We found a lease for this client and this IA. Let's return.
@@ -1128,11 +1130,6 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         return;
     }
 
-    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,
-              ALLOC_ENGINE_V6_EXTEND_LEASE_DATA)
-        .arg(ctx.query_->getLabel())
-        .arg(lease->toText());
-
     // Check if the lease still belongs to the subnet. If it doesn't,
     // we'll need to remove it.
     if ((lease->type_ != Lease::TYPE_PD) && !ctx.subnet_->inRange(lease->addr_)) {
@@ -1146,6 +1143,11 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
 
         return;
     }
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,
+              ALLOC_ENGINE_V6_EXTEND_LEASE_DATA)
+        .arg(ctx.query_->getLabel())
+        .arg(lease->toText());
 
     // Keep the old data in case the callout tells us to skip update.
     Lease6 old_data = *lease;
@@ -1453,7 +1455,8 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
             // allocate in the DHCPREQUEST time.
             new_lease = allocateOrReuseLease4(ctx.host_->getIPv4Reservation(), ctx);
             if (!new_lease) {
-                LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_DISCOVER_ADDRESS_CONFLICT)
+                LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_DISCOVER_ADDRESS_CONFLICT)
+                    .arg(ctx.query_->getLabel())
                     .arg(ctx.host_->getIPv4Reservation().toText())
                     .arg(ctx.conflicting_lease_ ? ctx.conflicting_lease_->toText() :
                          "(no lease info)");
@@ -1496,7 +1499,8 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
         !addressReserved(ctx.requested_address_, ctx)) {
 
         LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                  ALLOC_ENGINE_V4_OFFER_NEW_LEASE)
+                  ALLOC_ENGINE_V4_OFFER_REQUESTED_LEASE)
+            .arg(ctx.requested_address_.toText())
             .arg(ctx.query_->getLabel());
 
         new_lease = allocateOrReuseLease4(ctx.requested_address_, ctx);
