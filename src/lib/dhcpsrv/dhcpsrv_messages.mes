@@ -14,46 +14,6 @@
 
 $NAMESPACE isc::dhcp
 
-% DHCPSRV_ADDRESS4_ALLOC_ERROR error during attempt to allocate an IPv4 address: %1
-An error occurred during an attempt to allocate an IPv4 address, the
-reason for the failure being contained in the message.  The server will
-return a message to the client refusing a lease.
-
-% DHCPSRV_ADDRESS4_ALLOC_FAIL failed to allocate an IPv4 address after %1 attempt(s)
-The DHCP allocation engine gave up trying to allocate an IPv4 address
-after the specified number of attempts.  This probably means that the
-address pool from which the allocation is being attempted is either
-empty, or very nearly empty.  As a result, the client will have been
-refused a lease.
-
-This message may indicate that your address pool is too small for the
-number of clients you are trying to service and should be expanded.
-Alternatively, if the you know that the number of concurrently active
-clients is less than the addresses you have available, you may want to
-consider reducing the lease lifetime.  In this way, addresses allocated
-to clients that are no longer active on the network will become available
-available sooner.
-
-% DHCPSRV_ADDRESS6_ALLOC_ERROR error during attempt to allocate an IPv6 address: %1
-An error occurred during an attempt to allocate an IPv6 address, the
-reason for the failure being contained in the message.  The server will
-return a message to the client refusing a lease.
-
-% DHCPSRV_ADDRESS6_ALLOC_FAIL failed to allocate an IPv6 address after %1 attempt(s)
-The DHCP allocation engine gave up trying to allocate an IPv6 address
-after the specified number of attempts.  This probably means that the
-address pool from which the allocation is being attempted is either
-empty, or very nearly empty.  As a result, the client will have been
-refused a lease.
-
-This message may indicate that your address pool is too small for the
-number of clients you are trying to service and should be expanded.
-Alternatively, if the you know that the number of concurrently active
-clients is less than the addresses you have available, you may want to
-consider reducing the lease lifetime.  In this way, addresses allocated
-to clients that are no longer active on the network will become available
-available sooner.
-
 % DHCPSRV_CFGMGR_ADD_IFACE listening on interface %1
 An info message issued when a new interface is being added to the collection of
 interfaces on which the server listens to DHCP messages.
@@ -216,12 +176,6 @@ have been experienced.  Any such errors should have preceding entries in the
 log with details.  No further attempts to communicate with kea-dhcp-ddns will
 be made without intervention.
 
-% DHCPSRV_DISCOVER_ADDRESS_CONFLICT conflicting reservation for address %1 with existing lease %2
-This warning message is issued when the DHCP server finds that the
-address reserved for the client can't be offered because this address
-is currently allocated to another client. The server will try to allocate
-a different address to the client to use until the conflict is resolved.
-
 % DHCPSRV_HOOK_LEASE4_RENEW_SKIP DHCPv4 lease was not renewed because a callout set the skip flag.
 This debug message is printed when a callout installed on lease4_renew
 hook point set the skip flag. For this particular hook point, the setting
@@ -247,32 +201,6 @@ This debug message is printed when a callout installed on lease6_select
 hook point sets the skip flag. It means that the server was told that
 no lease6 should be assigned. The server will not put that lease in its
 database and the client will get a NoAddrsAvail for that IA_NA option.
-
-% DHCPSRV_HR_RESERVED_ADDR_GRANTED reserved address %1 was was assigned to client (duid=%2)
-This informational message signals that the specified client was assigned the address
-reserved for it.
-
-% DHCPSRV_HR_RESERVED_PREFIX_GRANTED reserved prefix %1/%2 was was assigned to client (duid=%3)
-This informational message signals that the specified client was assigned the prefix
-reserved for it.
-
-% DHCPSRV_HR_REVOKED_ADDR6_LEASE address %1 was revoked from client %2 as it is reserved for client %3
-This informational message is an indication that the specified IPv6
-address was used by client A but it is now reserved for client B. Client
-A has been told to stop using it so that it can be leased to client B.
-This is a normal occurrence during conflict resolution, which can occur
-in cases such as the system administrator adding a reservation for an
-address that is currently in use by another client.  The server will fully
-recover from this situation, but clients will change their addresses.
-
-% DHCPSRV_HR_REVOKED_PREFIX6_LEASE Prefix %1/%2 was revoked from client %3 as it is reserved for client %4
-This informational message is an indication that the specified IPv6
-prefix was used by client A but it is now reserved for client B. Client
-A has been told to stop using it so that it can be leased to client B.
-This is a normal occurrence during conflict resolution, which can occur
-in cases such as the system administrator adding a reservation for an
-address that is currently in use by another client.  The server will fully
-recover from this situation, but clients will change their prefixes.
 
 % DHCPSRV_INVALID_ACCESS invalid database access string: %1
 This is logged when an attempt has been made to parse a database access string
@@ -598,13 +526,6 @@ lease from the PostgreSQL database for the specified address.
 % DHCPSRV_PGSQL_UPDATE_ADDR6 updating IPv6 lease for address %1
 A debug message issued when the server is attempting to update IPv6
 lease from the PostgreSQL database for the specified address.
-
-% DHCPSRV_RENEW6_ERROR allocation engine experienced error with attempting to renew a lease: %1
-This error message indicates that an error was experienced during Renew
-or Rebind processing. Additional explanation is provided with this
-message. Depending on its nature, manual intervention may be required to
-continue processing messages from this particular client; other clients
-will be unaffected.
 
 % DHCPSRV_UNEXPECTED_NAME database access parameters passed through '%1', expected 'lease-database'
 The parameters for access the lease database were passed to the server through
