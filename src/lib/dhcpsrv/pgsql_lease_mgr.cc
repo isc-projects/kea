@@ -662,7 +662,7 @@ public:
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
-                      "Could not create bind array for Lease4: "
+                      "Could not create bind array from Lease4: "
                       << lease_->addr_.toText() << ", reason: " << ex.what());
         }
     }
