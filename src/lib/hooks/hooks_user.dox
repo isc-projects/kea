@@ -50,13 +50,12 @@ to as "user code".)  At specific points in its processing
 data that the user code can examine and, if required, modify.
 Kea uses the modified data in the remainder of its processing.
 
-In order to minimize the interaction between Kea and the user
-code, the latter is built independently of Kea in the form of
-a dynamic shared object (or objects). Even they are conceptually
-different dynamic shared objects are called here shared libraries.
-These are made known to Kea through its configuration mechanism, and
-Kea loads the library at run time. Libraries can be unloaded and
-reloaded as needed while Kea is running.
+In order to minimize the interaction between Kea and the user code,
+the latter is built independently of Kea in the form of one or more
+dynamic shared objects, called here (for historical reasons), shared
+libraries.  These are made known to Kea through its configuration
+mechanism, and Kea loads the library at run time. Libraries can be
+unloaded and reloaded as needed while Kea is running.
 
 Use of a defined API and the Kea configuration mechanism means that
 as new versions of Kea are released, there is no need to modify
