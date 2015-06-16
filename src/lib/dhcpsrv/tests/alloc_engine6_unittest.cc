@@ -13,6 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+#include <dhcp/pkt4.h>
+#include <dhcp/pkt6.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
 #include <dhcpsrv/tests/test_utils.h>
 
@@ -123,12 +125,14 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
     Lease6Ptr lease;
     AllocEngine::ClientContext6 ctx1(Subnet6Ptr(), duid_, iaid_, IOAddress("::"),
                                      Lease::TYPE_NA, false, false, "", false);
+    ctx1.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx1)));
     ASSERT_FALSE(lease);
 
     // Allocations without DUID are not allowed either
     AllocEngine::ClientContext6 ctx2(subnet_, DuidPtr(), iaid_, IOAddress("::"),
                                      Lease::TYPE_NA, false, false, "", false);
+    ctx2.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx2)));
     ASSERT_FALSE(lease);
 }
@@ -378,6 +382,7 @@ TEST_F(AllocEngine6Test, smallPool6) {
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
                                     Lease::TYPE_NA, fqdn_fwd_, fqdn_rev_,
                                     hostname_, false);
+    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
     // Check that we got that single lease
@@ -432,6 +437,8 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
     Lease6Ptr lease2;
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
                                     Lease::TYPE_NA, false, false, "", false);
+    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
+
     EXPECT_NO_THROW(lease2 = expectOneLease(engine->allocateLeases6(ctx)));
     EXPECT_FALSE(lease2);
 
@@ -467,6 +474,8 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     // CASE 1: Asking for any address
     AllocEngine::ClientContext6 ctx1(subnet_, duid_, iaid_, IOAddress("::"),
                                      Lease::TYPE_NA, fqdn_fwd_, fqdn_rev_, hostname_, true);
+    ctx1.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
+
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx1)));
     // Check that we got that single lease
     ASSERT_TRUE(lease);
@@ -478,6 +487,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     // CASE 2: Asking specifically for this address
     AllocEngine::ClientContext6 ctx2(subnet_, duid_, iaid_, addr, Lease::TYPE_NA,
                                      false, false, "", true);
+    ctx2.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx2)));
 
     // Check that we got that single lease
@@ -519,6 +529,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     // A client comes along, asking specifically for this address
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, addr, Lease::TYPE_NA,
                                     false, false, "", false);
+    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
     // Check that he got that single lease
@@ -968,6 +979,7 @@ TEST_F(AllocEngine6Test, reservedAddress) {
     for (int i = 0; i < 30; i++) {
         AllocEngine::ClientContext6 ctx(subnet_, clients[i], iaid_, IOAddress("::"),
                                         Lease::TYPE_NA,  false, false, "", false);
+        ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
         findReservation(engine, ctx);
         Lease6Collection leases = engine.allocateLeases6(ctx);
         if (leases.empty()) {
@@ -991,6 +1003,8 @@ TEST_F(AllocEngine6Test, reservedAddress) {
     // address reserved, will get it (despite the pool being depleted).
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
                                     Lease::TYPE_NA,  false, false, "", false);
+    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
+
     findReservation(engine, ctx);
     Lease6Collection leases = engine.allocateLeases6(ctx);
     ASSERT_EQ(1, leases.size());
@@ -1004,6 +1018,7 @@ TEST_F(AllocEngine6Test, allocateLeasesInvalidData) {
     // That looks like a valid context.
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
                                     Lease::TYPE_NA,  false, false, "", false);
+    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     Lease6Collection leases;
 
     // Let's break it!
@@ -1098,6 +1113,7 @@ TEST_F(AllocEngine6Test, DISABLED_reserved2AddressesSolicit) {
 
     AllocEngine::ClientContext6 ctx1(subnet_, duid_, iaid_, IOAddress("::"),
                                     pool_->getType(), false, false, "", true);
+    ctx1.query_.reset(new Pkt6(DHCPV6_SOLICIT, 1234));
     Lease6Collection leases1;
     findReservation(engine, ctx1);
     EXPECT_NO_THROW(leases1 = engine.allocateLeases6(ctx1));
@@ -1108,6 +1124,7 @@ TEST_F(AllocEngine6Test, DISABLED_reserved2AddressesSolicit) {
     // the same address.
     AllocEngine::ClientContext6 ctx2(subnet_, duid_, iaid_, IOAddress("::"),
                                     pool_->getType(), false, false, "", true);
+    ctx2.query_.reset(new Pkt6(DHCPV6_SOLICIT, 1234));
     Lease6Collection leases2;
     findReservation(engine, ctx2);
     EXPECT_NO_THROW(leases2 = engine.allocateLeases6(ctx2));
@@ -1118,6 +1135,7 @@ TEST_F(AllocEngine6Test, DISABLED_reserved2AddressesSolicit) {
     // different iaid. The second address should be assigned.
     AllocEngine::ClientContext6 ctx3(subnet_, duid_, iaid_ + 1, IOAddress("::"),
                                     pool_->getType(), false, false, "", true);
+    ctx3.query_.reset(new Pkt6(DHCPV6_SOLICIT, 1234));
     Lease6Collection leases3;
     findReservation(engine, ctx3);
     EXPECT_NO_THROW(leases3 = engine.allocateLeases6(ctx3));
@@ -1142,6 +1160,7 @@ TEST_F(AllocEngine6Test, reserved2Addresses) {
 
     AllocEngine::ClientContext6 ctx1(subnet_, duid_, iaid_, IOAddress("::"),
                                     pool_->getType(), false, false, "", false);
+    ctx1.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     Lease6Collection leases1;
     findReservation(engine, ctx1);
     EXPECT_NO_THROW(leases1 = engine.allocateLeases6(ctx1));
@@ -1152,6 +1171,8 @@ TEST_F(AllocEngine6Test, reserved2Addresses) {
     // the same address.
     AllocEngine::ClientContext6 ctx2(subnet_, duid_, iaid_, IOAddress("::"),
                                     pool_->getType(), false, false, "", false);
+    ctx2.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
+
     Lease6Collection leases2;
     findReservation(engine, ctx2);
     EXPECT_NO_THROW(leases2 = engine.allocateLeases6(ctx2));
@@ -1162,6 +1183,8 @@ TEST_F(AllocEngine6Test, reserved2Addresses) {
     // different iaid. The second address should be assigned.
     AllocEngine::ClientContext6 ctx3(subnet_, duid_, iaid_ + 1, IOAddress("::"),
                                     pool_->getType(), false, false, "", false);
+    ctx3.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
+    
     Lease6Collection leases3;
     findReservation(engine, ctx3);
     EXPECT_NO_THROW(leases3 = engine.allocateLeases6(ctx3));

@@ -1,3 +1,5 @@
+/alloc_engine_messages.cc
+/alloc_engine_messages.h
 /dhcpsrv_messages.cc
 /dhcpsrv_messages.h
 /hosts_messages.cc

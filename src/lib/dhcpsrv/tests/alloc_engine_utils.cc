@@ -17,6 +17,8 @@
 #include <dhcp/duid.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/pkt4.h>
+#include <dhcp/pkt6.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
@@ -122,6 +124,7 @@ AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
 
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, hint, type,
                                     false, false, "", fake);
+    ctx.query_.reset(new Pkt6(fake ? DHCPV6_SOLICIT : DHCPV6_REQUEST, 1234));
 
     Lease6Collection leases;
 
@@ -181,6 +184,8 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, hint, type,
                                     false, false, "", fake);
     ctx.hwaddr_ = hwaddr_;
+    ctx.query_.reset(new Pkt6(fake ? DHCPV6_SOLICIT : DHCPV6_REQUEST, 1234));
+
     findReservation(*engine, ctx);
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
@@ -229,6 +234,7 @@ AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
     ctx.hints_ = hints;
     ctx.query_.reset(new Pkt6(DHCPV6_RENEW, 123));
     ctx.allow_new_leases_in_renewals_ = allow_new_leases_in_renewal;
+    ctx.query_.reset(new Pkt6(DHCPV6_RENEW, 1234));
 
     findReservation(engine, ctx);
     Lease6Collection leases = engine.renewLeases6(ctx);
@@ -278,6 +284,7 @@ AllocEngine6Test::allocWithUsedHintTest(Lease::Type type, IOAddress used_addr,
     Lease6Ptr lease;
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, requested, type,
                                     false, false, "", false);
+    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
     // Check that we got a lease
@@ -314,6 +321,8 @@ AllocEngine6Test::allocBogusHint6(Lease::Type type, asiolink::IOAddress hint,
     Lease6Ptr lease;
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, hint, type, false,
                                     false, "", false);
+    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
+
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
     // Check that we got a lease
@@ -378,6 +387,7 @@ AllocEngine4Test::AllocEngine4Test() {
     ctx_.clientid_ = clientid_;
     ctx_.hwaddr_ = hwaddr_;
     ctx_.callout_handle_ = HooksManager::createCalloutHandle();
+    ctx_.query_.reset(new Pkt4(DHCPREQUEST, 1234));
 }
 
 }; // namespace test

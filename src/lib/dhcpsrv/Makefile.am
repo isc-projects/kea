@@ -35,21 +35,26 @@ EXTRA_DIST += parsers/host_reservation_parser.h
 EXTRA_DIST += parsers/host_reservations_list_parser.h
 
 # Define rule to build logging source files from message file
-dhcpsrv_messages.h dhcpsrv_messages.cc hosts_messages.h hosts_messages.cc: s-messages
+alloc_engine_messages.h alloc_engine_messages.cc dhcpsrv_messages.h \
+dhcpsrv_messages.cc hosts_messages.h hosts_messages.cc: s-messages
 
-s-messages: dhcpsrv_messages.mes hosts_messages.mes
+s-messages: alloc_engine_messages.mes dhcpsrv_messages.mes hosts_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/dhcpsrv/alloc_engine_messages.mes
+	touch $@
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
 	touch $@
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/dhcpsrv/hosts_messages.mes
 	touch $@
 
-# Tell Automake that the {dhcpsrv,hosts}_messages.{cc,h} source files are created
-# in the build process, so it must create these before doing anything else.
-# Although they are a dependency of the library (so will be created from the message
-# file anyway), there is no guarantee as to exactly _when_ in the build they will be
-# created.  As the .h file is included in other sources file (so must be
-# present when they are compiled), the safest option is to create it first.
-BUILT_SOURCES = dhcpsrv_messages.h dhcpsrv_messages.cc
+# Tell Automake that the {alloc_engine,dhcpsrv,hosts}_messages.{cc,h} source files
+# are created in the build process, so it must create these before doing anything
+# else. Although they are a dependency of the library (so will be created from the
+# message file anyway), there is no guarantee as to exactly _when_ in the build
+# they will be created.  As the .h file is included in other sources file (so
+# must be present when they are compiled), the safest option is to create it
+# first.
+BUILT_SOURCES = alloc_engine_messages.h alloc_engine_messages.cc
+BUILT_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
 BUILT_SOURCES += hosts_messages.h hosts_messages.cc
 
 # Some versions of GCC warn about some versions of Boost regarding
@@ -59,7 +64,9 @@ BUILT_SOURCES += hosts_messages.h hosts_messages.cc
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # Make sure the generated files are deleted in a "clean" operation
-CLEANFILES = *.gcno *.gcda dhcpsrv_messages.h dhcpsrv_messages.cc
+CLEANFILES = *.gcno *.gcda
+CLEANFILES += alloc_engine_messages.h alloc_engine_messages.cc
+CLEANFILES += dhcpsrv_messages.h dhcpsrv_messages.cc
 CLEANFILES += hosts_messages.h hosts_messages.cc s-messages
 # Remove CSV files created by the CSVLeaseFile6 and CSVLeaseFile4 unit tests.
 CLEANFILES += *.csv
@@ -68,6 +75,7 @@ lib_LTLIBRARIES = libkea-dhcpsrv.la
 libkea_dhcpsrv_la_SOURCES  =
 libkea_dhcpsrv_la_SOURCES += addr_utilities.cc addr_utilities.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
+libkea_dhcpsrv_la_SOURCES += alloc_engine_log.cc alloc_engine_log.h
 libkea_dhcpsrv_la_SOURCES += base_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
 libkea_dhcpsrv_la_SOURCES += cfg_hosts.cc cfg_hosts.h
@@ -128,8 +136,9 @@ libkea_dhcpsrv_la_SOURCES += parsers/host_reservations_list_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.h
 
-
-nodist_libkea_dhcpsrv_la_SOURCES = dhcpsrv_messages.h dhcpsrv_messages.cc
+nodist_libkea_dhcpsrv_la_SOURCES = alloc_engine__messages.h
+nodist_libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.cc
+nodist_libkea_dhcpsrv_la_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
 nodist_libkea_dhcpsrv_la_SOURCES += hosts_messages.h hosts_messages.cc
 
 libkea_dhcpsrv_la_CXXFLAGS = $(AM_CXXFLAGS)
@@ -159,6 +168,7 @@ libkea_dhcpsrv_la_CXXFLAGS += -Wno-unused-parameter
 endif
 
 # The message file should be in the distribution
+EXTRA_DIST += alloc_engine_messages.mes
 EXTRA_DIST += dhcpsrv_messages.mes
 EXTRA_DIST += hosts_messages.mes
 
