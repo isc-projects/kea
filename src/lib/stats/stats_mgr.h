@@ -362,6 +362,22 @@ class StatsMgr : public boost::noncopyable {
     /// @return true if deleted, false if not found
     bool deleteObservation(const std::string& name);
 
+    /// @brief Utility method that attempts to extract statistic name
+    ///
+    /// This method attempts to extract statistic name from the params
+    /// structure. It is expected to be a map that contains 'name' element,
+    /// that is of type string. If present as expected, statistic name
+    /// set and true is returned. If missing or is of incorrect type, the reason
+    /// is specified in reason parameter and false is returned.
+    ///
+    /// @param params parameters structure received in command
+    /// @param name [out] name of the statistic (if no error detected)
+    /// @param reason [out] failure reason (if error is detected)
+    /// @return true (if everything is ok), false otherwise
+    static bool getStatName(const isc::data::ConstElementPtr& params,
+                            std::string& name,
+                            std::string& reason);
+
     // This is a global context. All statistics will initially be stored here.
     StatContextPtr global_;
 };
