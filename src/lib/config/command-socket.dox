@@ -23,7 +23,7 @@ Control Channel allows an external entity (e.g. a tool run by a sysadmin
 or a script) to issue commands to the server which can influence the its
 behavior or retreive information from it. Several notable examples
 envisioned are: reconfiguration, statistics retrival and manipulation,
-and shutdown.  
+and shutdown.
 @note Currently, only the DHCPv4 component supports Control Channel.
 @todo: Update this text once Control Channel support in DHCPv6 is added.
 
@@ -46,7 +46,7 @@ commands structured as follows:
 }
 @endcode
 
-- command - is the name of command to execute and is mandatory. 
+- command - is the name of command to execute and is mandatory.
 - arguments - it may be absent, contain a single parameter or a map or parameters
 required to carry out the given command.  The exact content and format is command specific.
 
@@ -69,7 +69,7 @@ any non-zero value designates an error. Currently 1 is used as a generic error, 
 error codes may be added in the future.
 - text field - typically appears when result is non-zero and contains description of the error
 encountered.
-- arguments - is a map of additional data values returned by the server, specific to the 
+- arguments - is a map of additional data values returned by the server, specific to the
 command issue. The map is always present, even if it contains no data values.
 
 @section ctrlSocketClient Using Control Channel
@@ -173,24 +173,29 @@ or HTTPS connection):
   in the configuration file. Currently only two parameters are supported: socket-type
   (which must contain value 'unix') and socket-name (which contains unix path for
   the named socket to be created). This method calls @ref
-  isc::config::CommandSocketFactory::create method, which in turn calls type specific
-  creation method. Again, currently only UNIX type is supported, but the factory
+  isc::config::CommandSocketFactory::create method, which parses the parameters
+  and instantiates one object from a class derived from @ref isc::config::CommandSocket.
+  Again, currently only UNIX type is supported, but the factory
   class is expected to be extended to cover additional types.
 - @ref isc::config::CommandMgr::closeCommandSocket() - it is used to close the
-  socket. It calls @ref isc::config::CommandSocketFactory::close method that may
-  do type specific closure operations. In particular, for UNIX socket, it also
-  deletes the file after socket was closed.
+  socket. It calls close method on the @ref isc::config::CommandSocket object, if
+  one exists. In particular, for UNIX socket, it also deletes the file after socket
+  was closed.
 
 @section ctrlSocketConnections Accepting connections
 
 Control Channel is connection oriented communication. In that sense it is
 different than all other communications supported so far in Kea. To facilitate
-connections, several mechanisms were implemented. Once the control socket is opened,
-a special callback (@ref isc::config::CommandMgr::connectionAcceptor) is
-installed to process incoming connections. When the select call in
-@ref isc::dhcp::IfaceMgr::receive4 indicates that there is some data to be
+connections, several mechanisms were implemented. Intially a single UNIX socket
+it opened (see isc::config::UnixCommandSocket). Its @ref
+isc::config::UnixCommandSocket::receiveHandler callback method is
+installed in @ref isc::dhcp::IfaceMgr to process incoming connections. When the
+select call in @ref isc::dhcp::IfaceMgr::receive4 indicates that there is some data to be
 processed, this callback calls accept, which creates a new socket for handling
-this particular incoming connection. It installs another callback
+this particular incoming connection. Once the socket descriptor is known, a new
+instance of @ref isc::config::ConnectionSocket is created to represent that
+socket (and the whole ongoing connection). It installs another callback
+(@ref isc::config::ConnectionSocket::receiveHandler that calls
 (@ref isc::config::CommandMgr::commandReader) that will process incoming
 data or will close the socket when necessary. CommandReader reads data from
 incoming socket and attempts to parse it as JSON structures. If successful,
