@@ -37,8 +37,8 @@ public:
 
 /// @brief Abstract base class that represents an open command socket
 ///
-/// This class is not expected to be instantiated directly. Derived classes
-/// are expected to handle specific socket types (e.g. UNIX or https).
+/// Derived classes are expected to handle specific socket types (e.g. UNIX
+/// or https).
 ///
 /// For derived classes, see @ref UnixCommandSocket for a socket that
 /// accepts connections over UNIX socket and @ref ConnectionSocket that
@@ -46,13 +46,6 @@ public:
 /// should be generic).
 class CommandSocket {
 public:
-    /// @brief Default constructor
-    ///
-    /// @param socket_info socket information from the config
-    CommandSocket(const isc::data::ConstElementPtr& socket_info)
-        :socket_info_(socket_info) {
-    }
-
     /// @brief Method used to handle incoming data
     ///
     /// This may be registered in @ref isc::dhcp::IfaceMgr
@@ -80,15 +73,12 @@ public:
 protected:
     /// Stores socket descriptor.
     int sockfd_;
-
-    /// Stores socket information.
-    isc::data::ConstElementPtr socket_info_;
 };
 
 /// Pointer to a command socket object
 typedef boost::shared_ptr<CommandSocket> CommandSocketPtr;
 
-/// @brief This class represents a straming socket for handling connections
+/// @brief This class represents a streaming socket for handling connections
 ///
 /// Initially a socket (e.g. UNIX) is opened (represented by other classes, e.g.
 /// @ref UnixCommandSocket). Once incoming connection is detected, that class
