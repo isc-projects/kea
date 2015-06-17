@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,18 +23,10 @@ namespace config {
 
 /// @brief Command processing Logger
 ///
-/// Define the logger used to log messages.  We could define it in multiple
-/// modules, but defining in a single module and linking to it saves time and
-/// space.
-extern isc::log::Logger config_logger;
-
-/// @brief Command processing Logger
-///
 /// Define the logger used to log messages related to command processing.
+/// We could define it in multiple modules, but defining in a single
+/// module and linking to it saves time and space.
 extern isc::log::Logger command_logger;
-
-// Enumerate configuration elements as they are processed.
-const int DBG_CONFIG_PROCESS = DBGLVL_TRACE_BASIC;
 
 // Enumerate configuration elements as they are processed.
 const int DBG_COMMAND = DBGLVL_COMMAND;
