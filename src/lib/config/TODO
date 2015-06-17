@@ -1,0 +1,8 @@
+Open issues for lib/config:
+
+* Error output currently goes to stdout, and we need to use
+  decent logging for that.
+* Add "expect failure" tests to the unit tests.
+* This cpp version does not use recvmsg() with a sequence number to
+  prevent other messages sneaking in before the answer it expects.
+  (because lib/cc/session.cc|h does not support that yet).
