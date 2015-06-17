@@ -46,6 +46,7 @@
 951.	[build]		fdupont
 	Removed BUNDY configuration backend.
 	(Trac #3732, git 96364cbbb15318c8f55d5b287cda0990d3eaae32)
+	(Trac #3732a, git xxx)
 
 950.	[doc]		marcin
 	Updated section about logging in the User Guide. Also,
