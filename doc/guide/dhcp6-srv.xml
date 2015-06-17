@@ -2579,6 +2579,94 @@ should include options from the isc option space:
     </para>
     </section>
 
+    <section id="dhcp6-stats">
+      <title>Statistics in DHCPv6 server</title>
+      <note>
+        <para>This section describes DHCPv6-specific statistics. For a general
+        overview and usage of statistics, see <xref linkend="stats" />.</para>
+      </note>
+
+      <para>
+        The DHCPv6 server supports the following statistics:
+      </para>
+        <table frame="all" id="dhcp4-statistics">
+          <title>DHCPv6 Statistics</title>
+          <tgroup cols='3'>
+          <colspec colname='statistic' align='center'/>
+          <colspec colname='type' align='center'/>
+          <colspec colname='description' align='left'/>
+          <thead>
+            <row>
+              <entry>Statistic</entry>
+              <entry>Data Type</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+            <entry>subnet[id].total-NAs</entry>
+            <entry>integer</entry>
+            <entry>
+            This statistic shows the total number of NA addresses available for the
+            DHCPv6 management. In other words, this is the sum of all addresses in
+            all configured pools. This statistic changes only during configuration
+            changes. Note it does not take into account any addresses that may be
+            reserved due to host reservation. The <emphasis>id</emphasis> is the
+            subnet-id of a given subnet. This statistic is exposed for each subnet
+	    separately. This statistic is reset during reconfiguration event.
+            </entry>
+            </row>
+
+            <row>
+            <entry>subnet[id].assigned-NAs</entry>
+            <entry>integer</entry>
+            <entry>
+            This statistic shows the number of assigned NA addresses in a given subnet.
+            This statistic increases every time a new lease is allocated (as a result
+            of receiving a REQUEST message) and is decreased every time a lease is
+            released (a RELEASE message is received). When lease expiration
+            is implemented (planned for Kea 1.0), it will also decrease when a lease
+            is expired. The <emphasis>id</emphasis> is the subnet-id of a given
+            subnet. This statistic is exposed for each subnet separately. This
+            statistic is reset during reconfiguration event.
+            </entry>
+            </row>
+
+            <row>
+            <entry>subnet[id].total-PDs</entry>
+            <entry>integer</entry>
+            <entry>
+            This statistic shows the total number of PD prefixes available for the
+            DHCPv6 management. In other words, this is the sum of all prefixes in
+            all configured pools. This statistic changes only during configuration
+            changes. Note it does not take into account any prefixes that may be
+            reserved due to host reservation. The <emphasis>id</emphasis> is the
+            subnet-id of a given subnet. This statistic is exposed for each subnet
+	    separately. This statistic is reset during reconfiguration event.
+            </entry>
+            </row>
+
+            <row>
+            <entry>subnet[id].assigned-NAs</entry>
+            <entry>integer</entry>
+            <entry>
+            This statistic shows the number of assigned PD prefixes in a given subnet.
+            This statistic increases every time a new lease is allocated (as a result
+            of receiving a REQUEST message) and is decreased every time a lease is
+            released (a RELEASE message is received). When lease expiration
+            is implemented (planned for Kea 1.0), it will also decrease when a lease
+            is expired. The <emphasis>id</emphasis> is the subnet-id of a given
+            subnet. This statistic is exposed for each subnet separately. This
+            statistic is reset during reconfiguration event.
+            </entry>
+            </row>
+
+        </tbody>
+        </tgroup>
+        </table>
+    </section>
+
     <section id="dhcp6-std">
       <title>Supported DHCPv6 Standards</title>
       <para>The following standards are currently

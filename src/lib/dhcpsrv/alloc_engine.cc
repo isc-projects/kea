@@ -812,6 +812,13 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         // Remove this lease from LeaseMgr
         LeaseMgrFactory::instance().deleteLease((*candidate)->addr_);
 
+        // Need to decrease statistic for assigned addresses.
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                   ctx.type_ == Lease::TYPE_NA ? "assigned-NAs" :
+                                                                 "assigned-PDs"),
+            static_cast<int64_t>(-1));
+
         // In principle, we could trigger a hook here, but we will do this
         // only if we get serious complaints from actual users. We want the
         // conflict resolution procedure to really work and user libraries
@@ -867,6 +874,13 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
 
             // Remove this lease from LeaseMgr
             LeaseMgrFactory::instance().deleteLease((*lease)->addr_);
+
+            // Need to decrease statistic for assigned addresses.
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       ctx.type_ == Lease::TYPE_NA ? "assigned-NAs" :
+                                                                     "assigned-PDs"),
+                static_cast<int64_t>(-1));
 
             /// @todo: Probably trigger a hook here
 
@@ -1024,6 +1038,12 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         bool status = LeaseMgrFactory::instance().addLease(lease);
 
         if (status) {
+            // The lease insertion succeeded, let's bump up the statistic.
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       ctx.type_ == Lease::TYPE_NA ? "assigned-NAs" :
+                                                                     "assigned-PDs"),
+                static_cast<int64_t>(1));
 
             return (lease);
         } else {
@@ -1139,6 +1159,11 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
 
         // Remove this lease from LeaseMgr
         LeaseMgrFactory::instance().deleteLease(lease->addr_);
+
+        // Need to decrease statistic for assigned addresses.
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-NAs"),
+            static_cast<int64_t>(-1));
 
         // Add it to the removed leases list.
         ctx.old_leases_.push_back(lease);
@@ -1779,7 +1804,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
         if (status) {
 
             // The lease insertion succeeded, let's bump up the statistic.
-            isc::stats::StatsMgr::instance().addValue(
+            StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-addresses"),
                 static_cast<int64_t>(1));
 
