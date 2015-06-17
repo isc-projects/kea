@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")   
+// Copyright (C) 2011,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,5 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#define TEST_DATA_PATH "@abs_srcdir@/testdata"
-#define LOG_SPEC_FILE "@abs_top_srcdir@/src/bin/cfgmgr/plugins/logging.spec"
+/// Defines the logger used by the config lib
+
+#include "config/config_log.h"
+
+namespace isc {
+namespace config {
+
+isc::log::Logger config_logger("config");
+
+isc::log::Logger command_logger("commands");
+
+} // namespace nsas
+} // namespace isc
+

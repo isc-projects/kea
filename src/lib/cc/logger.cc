@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")   
+// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,5 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#define TEST_DATA_PATH "@abs_srcdir@/testdata"
-#define LOG_SPEC_FILE "@abs_top_srcdir@/src/bin/cfgmgr/plugins/logging.spec"
+#include <cc/logger.h>
+
+namespace isc {
+namespace cc {
+
+isc::log::Logger logger("cc");
+
+}
+}

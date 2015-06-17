@@ -1,0 +1,184 @@
+# Copyright (C) 2011, 2014-2015  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+$NAMESPACE isc::config
+
+% COMMAND_PROCESS_ERROR1 Error while processing command: %1
+This warning message indicates that the server encountered an error while
+processing received command. Additional information will be provided, if
+available. Additional log messages may provide more details.
+
+% COMMAND_PROCESS_ERROR2 Error while processing command: %1
+This warning message indicates that the server encountered an error while
+processing received command. The difference, compared to COMMAND_PROCESS_ERROR1
+is that the initial command was well formed and the error occurred during
+logic processing, not the command parsing. Additional information will be
+provided, if available. Additional log messages may provide more details.
+
+% COMMAND_RECEIVED Received command '%1'
+This informational message indicates that a command was received over command
+socket. The nature of this command and its possible results will be logged
+with separate messages.
+
+% COMMAND_RESPONSE_ERROR Server failed to generate response for command: %1
+This error message indicates that the server failed to generate response for
+specified command. This likely indicates a server logic error, as the server
+is expected to generate valid responses for all commands, even malformed
+ones.
+
+% COMMAND_SOCKET_FAIL_NONBLOCK Failed to set non-blocking mode for socket %1 created for incoming connection on socket %2: %3
+This error message indicates that the server failed to set non-blocking mode
+on just created socket. That socket was created for accepting specific
+incoming connection. Additional information may be provided as third parameter.
+
+% COMMAND_SOCKET_ACCEPT_FAIL Failed to accept incoming connection on command socket %1: %2
+This error indicates that the server detected incoming connection and executed
+accept system call on said socket, but this call returned an error. Additional
+information may be provided by the system as second parameter.
+
+% COMMAND_SOCKET_READ Received %1 bytes over command socket %2
+This debug message indicates that specified number of bytes was received
+over command socket identified by specified file descriptor.
+
+% COMMAND_SOCKET_READ_FAIL Encountered error %1 while reading from command socket %2
+This error message indicates that an error was encountered while
+reading from command socket.
+
+% COMMAND_SOCKET_WRITE Sent response of %1 bytes over command socket %2
+This debug message indicates that the specified number of bytes was sent
+over command socket identifier by the specified file descriptor.
+
+% COMMAND_SOCKET_RESPONSE_TOOLARGE Server's response was larger (%1) than supported 64KB
+This error message indicates that the server received a command and generated
+an answer for it, but that response was larger than supported 64KB. Server
+will attempt to send the first 64KB of the response. Depending on the nature
+of this response, this may indicate a software or configuration error. Future
+Kea versions are expected to have better support for large responses.
+
+% COMMAND_SOCKET_WRITE_FAIL Error while writing %1 bytes to command socket %2
+This error message indicates that an error was encountered while
+attempting to send a response to the command socket.
+
+% COMMAND_SOCKET_UNIX_OPEN Command socket opened: UNIX, fd=%1, path=%2
+This informational message indicates that the daemon opened a command
+processing socket. This is a UNIX socket. It was opened with the file
+descriptor and path specified.
+
+% COMMAND_SOCKET_UNIX_CLOSE Command socket closed: UNIX, fd=%1, path=%2
+This informational message indicates that the daemon closed a command
+processing socket. This was a UNIX socket. It was opened with the file
+descriptor and path specified.
+
+% COMMAND_SOCKET_CONNECTION_OPENED Opened socket %1 for incoming command connection on socket %2
+This is an informational message that a new incoming command connection was
+detected and a dedicated socket was opened for that connection.
+
+% COMMAND_SOCKET_CONNECTION_CLOSED Closed socket %1 for existing command connection
+This is an informational message that the socket created for handling
+client's connection is closed. This usually means that the client disconnected,
+but may also mean a timeout.
+
+% COMMAND_REGISTERED Command %1 registered
+This debug message indicates that the daemon started supporting specified
+command. If the command socket is open, this command can now be issued.
+
+% COMMAND_DEREGISTERED Command %1 deregistered
+This debug message indicates that the daemon stopped supporting specified
+command. This command can no longer be issued. If the command socket is
+open and this command is issued, the daemon will not be able to process it.
+
+% CONFIG_CCSESSION_MSG error in CC session message: %1
+There was a problem with an incoming message on the command and control
+channel. The message does not appear to be a valid command, and is
+missing a required element or contains an unknown data format. This
+most likely means that another Kea module is sending a bad message.
+The message itself is ignored by this module.
+
+% CONFIG_CCSESSION_MSG_INTERNAL error handling CC session message: %1
+There was an internal problem handling an incoming message on the command
+and control channel. An unexpected exception was thrown, details of
+which are appended to the message. The module will continue to run,
+but will not send back an answer.
+
+The most likely cause of this error is a programming error.  Please raise
+a bug report.
+
+% CONFIG_CCSESSION_STOPPING error sending stopping message: %1
+There was a problem when sending a message signaling that the module using
+this CCSession is stopping. This message is sent so that the rest of the
+system is aware that the module is no longer running. Apart from logging
+this message, the error itself is ignored, and the ModuleCCSession is
+still stopped. The specific exception message is printed.
+
+% CONFIG_CCSESSION_STOPPING_UNKNOWN unknown error sending stopping message
+Similar to CONFIG_CCSESSION_STOPPING, but in this case the exception that
+is seen is not a standard exception, and further information is unknown.
+This is a bug.
+
+% CONFIG_GET_FAIL error getting configuration from cfgmgr: %1
+The configuration manager returned an error when this module requested
+the configuration. The full error message answer from the configuration
+manager is appended to the log error. The most likely cause is that
+the module is of a different (command specification) version than the
+running configuration manager.
+
+% CONFIG_JSON_PARSE JSON parse error in %1: %2
+There was an error parsing the JSON file. The given file does not appear
+to be in valid JSON format. Please verify that the filename is correct
+and that the contents are valid JSON.
+
+% CONFIG_LOG_EXPLICIT will use logging configuration for explicitly-named logger %1
+This is a debug message.  When processing the "loggers" part of the
+configuration file, the configuration library found an entry for the named
+logger that matches the logger specification for the program.  The logging
+configuration for the program will be updated with the information.
+
+% CONFIG_LOG_IGNORE_EXPLICIT ignoring logging configuration for explicitly-named logger %1
+This is a debug message.  When processing the "loggers" part of the
+configuration file, the configuration library found an entry for the
+named logger.  As this does not match the logger specification for the
+program, it has been ignored.
+
+% CONFIG_LOG_IGNORE_WILD ignoring logging configuration for wildcard logger %1
+This is a debug message.  When processing the "loggers" part of the
+configuration file, the configuration library found the named wildcard
+entry (one containing the "*" character) that matched a logger already
+matched by an explicitly named entry.  The configuration is ignored.
+
+% CONFIG_LOG_WILD_MATCH will use logging configuration for wildcard logger %1
+This is a debug message.  When processing the "loggers" part of
+the configuration file, the configuration library found the named
+wildcard entry (one containing the "*" character) that matches a logger
+specification in the program. The logging configuration for the program
+will be updated with the information.
+
+% CONFIG_MOD_SPEC_FORMAT module specification error in %1: %2
+The given file does not appear to be a valid specification file: details
+are included in the message. Please verify that the filename is correct
+and that its contents are a valid Kea module specification.
+
+% CONFIG_MOD_SPEC_REJECT module specification rejected by cfgmgr: %1
+The specification file for this module was rejected by the configuration
+manager. The full error message answer from the configuration manager is
+appended to the log error. The most likely cause is that the module is of
+a different (specification file) version than the running configuration
+manager.
+
+% CONFIG_OPEN_FAIL error opening %1: %2
+There was an error opening the given file. The reason for the failure
+is included in the message.
+
+% CONFIG_RPC_SEQ RPC call %1 to %2 with seq %3
+Debug message, saying there's a RPC call of given command to given module. It
+has internal sequence number as listed in the message.
