@@ -22,15 +22,14 @@
 namespace isc {
 namespace config {
 
-ConnectionSocket::ConnectionSocket(int sockfd)
-    :CommandSocket(isc::data::ConstElementPtr()) {
-        sockfd_ = sockfd;
+ConnectionSocket::ConnectionSocket(int sockfd) {
+    sockfd_ = sockfd;
 
-        // Install commandReader callback. When there's any data incoming on this
-        // socket, commandReader will be called and process it. It may also
-        // eventually close this socket.
-        isc::dhcp::IfaceMgr::instance().addExternalSocket(sockfd,
-            boost::bind(&ConnectionSocket::receiveHandler, this));
+    // Install commandReader callback. When there's any data incoming on this
+    // socket, commandReader will be called and process it. It may also
+    // eventually close this socket.
+    isc::dhcp::IfaceMgr::instance().addExternalSocket(sockfd,
+        boost::bind(&ConnectionSocket::receiveHandler, this));
     }
 
 void ConnectionSocket::close() {

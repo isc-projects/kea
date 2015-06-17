@@ -41,20 +41,13 @@ class UnixCommandSocket : public CommandSocket {
 public:
     /// @brief Default constructor
     ///
-    /// This socket_info map is expected to have at least one parameter:
-    /// 'socket-name' that specifies UNIX socket path. It's typically
-    /// a file somewhere in /tmp or /var/run/kea directory.
+    /// Opens specified UNIX socket.
     ///
-    /// @param socket_info socket description from the configuration
-    UnixCommandSocket(const isc::data::ConstElementPtr& socket_info)
-        : CommandSocket(socket_info) {
+    /// @param filename socket filename
+    UnixCommandSocket(const std::string& filename)
+        : filename_(filename) {
 
-        ConstElementPtr name = socket_info->get("socket-name");
-        if (!name) {
-            isc_throw(BadSocketInfo, "Mandatory 'socket-name' parameter missing");
-        }
-        filename_ = name->stringValue();
-
+        // Create the socket and set it up.
         sockfd_ = createUnixSocket(filename_);
 
         // Install this socket in Interface Manager.
@@ -72,7 +65,8 @@ private:
 
         int fd = socket(AF_UNIX, SOCK_STREAM, 0);
         if (fd == -1) {
-            isc_throw(isc::config::SocketError, "Failed to create AF_UNIX socket.");
+            isc_throw(isc::config::SocketError, "Failed to create AF_UNIX socket:"
+                      << strerror(errno));
         }
 
         // Let's remove the old file. We don't care about any possible
@@ -82,8 +76,10 @@ private:
 
         // Set this socket to be non-blocking one.
         if (fcntl(fd, F_SETFL, O_NONBLOCK) !=0 ) {
+            const char* errmsg = strerror(errno);
+            ::close(fd);
             isc_throw(SocketError, "Failed to set non-block mode on unix socket "
-                      << fd << ": " << strerror(errno));
+                      << fd << ": " << errmsg);
         }
 
         // Now bind the socket to the specified path.
@@ -92,10 +88,11 @@ private:
         addr.sun_family = AF_UNIX;
         strncpy(addr.sun_path, file_name.c_str(), sizeof(addr.sun_path)-1);
         if (bind(fd, (struct sockaddr*)&addr, sizeof(addr))) {
+            const char* errmsg = strerror(errno);
             ::close(fd);
             remove(file_name.c_str());
             isc_throw(isc::config::SocketError, "Failed to bind socket " << fd
-                      << " to " << file_name << ": " << strerror(errno));
+                      << " to " << file_name << ": " << errmsg);
         }
 
         // One means that we allow at most 1 awaiting connections.
@@ -105,11 +102,11 @@ private:
         /// @todo: Make the number of parallel connections configurable.
         int status = listen(fd, 1);
         if (status < 0) {
+            const char* errmsg = strerror(errno);
             ::close(fd);
             remove(file_name.c_str());
             isc_throw(isc::config::SocketError, "Failed to listen on socket fd="
-                      << fd << ", filename=" << file_name << ": "
-                      << strerror(errno));
+                      << fd << ", filename=" << file_name << ": " << errmsg);
         }
 
         // Woohoo! Socket opened, let's log it!
@@ -118,12 +115,12 @@ private:
         return (fd);
     }
 
-    /// CommandMgr::connectionAcceptor(int sockfd) {
-    /// @brief Callback used to accept incoming connections.
+    /// @brief Connection acceptor, a callback used to accept incoming connections.
     ///
     /// This callback is used on a control socket. Once called, it will accept
-    /// incoming connection, create new socket for it and install
-    /// @ref commandReader for that new socket in @ref isc::dhcp::IfaceMgr.
+    /// incoming connection, create a new socket for it and create an instance
+    /// of ConnectionSocket, which will take care of the rest (i.e. install
+    /// appropriate callback for that new socket in @ref isc::dhcp::IfaceMgr).
     void receiveHandler() {
 
         // This method is specific to receiving data over UNIX socket, so using
@@ -193,7 +190,17 @@ CommandSocketFactory::create(const isc::data::ConstElementPtr& socket_info) {
     }
 
     if (type->stringValue() == "unix") {
-        return (CommandSocketPtr(new UnixCommandSocket(socket_info)));
+        // UNIX socket is requested. It takes one parameter: socket-name that
+        // specifies UNIX path of the socket.
+        ConstElementPtr name = socket_info->get("socket-name");
+        if (!name) {
+            isc_throw(BadSocketInfo, "Mandatory 'socket-name' parameter missing");
+        }
+        if (name->getType() != Element::string) {
+            isc_throw(BadSocketInfo, "'socket-name' parameter expected to be a string");
+        }
+
+        return (CommandSocketPtr(new UnixCommandSocket(name->stringValue())));
     } else {
         isc_throw(BadSocketInfo, "Specified socket type ('" + type->stringValue()
                   + "') is not supported.");

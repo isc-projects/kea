@@ -129,9 +129,10 @@ public:
     /// @brief Reads data from a socket, parses as JSON command and processes it
     ///
     /// This method is used to handle traffic on connected socket. This callback
-    /// is installed by the @ref connectionAcceptor once the incoming connection
-    /// is accepted. If end-of-file is detected, this method will close the socket
-    /// and will uninstall itself from @ref isc::dhcp::IfaceMgr.
+    /// is installed by the @ref isc::config::UnixCommandSocket::receiveHandler
+    /// once the incoming connection is accepted. If end-of-file is detected, this
+    /// method will close the socket and will uninstall itself from
+    /// @ref isc::dhcp::IfaceMgr.
     ///
     /// @param sockfd socket descriptor of a connected socket
     static void commandReader(int sockfd);
