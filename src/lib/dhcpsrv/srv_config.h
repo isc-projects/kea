@@ -24,6 +24,7 @@
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/logging_info.h>
+#include <cc/data.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <stdint.h>
@@ -276,6 +277,18 @@ public:
         return (cfg_mac_source_);
     }
 
+    /// @brief Returns information about control socket
+    /// @return pointer to the Element that holds control-socket map
+    const isc::data::ConstElementPtr getControlSocketInfo() const {
+        return (control_socket_);
+    }
+
+    /// @brief Sets information about the control socket
+    /// @param control_socket Element that holds control-socket map
+    void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
+        control_socket_ = control_socket;
+    }
+
     /// @brief Copies the currnet configuration to a new configuration.
     ///
     /// This method copies the parameters stored in the configuration to
@@ -407,6 +420,9 @@ private:
     /// This object holds a set of RSOO-enabled options. See
     /// RFC 6422 for the definition of the RSOO-enabled option.
     CfgRSOOPtr cfg_rsoo_;
+
+    /// @brief Pointer to the control-socket information
+    isc::data::ConstElementPtr control_socket_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

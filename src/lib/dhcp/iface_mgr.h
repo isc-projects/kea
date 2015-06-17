@@ -973,8 +973,10 @@ public:
     void addExternalSocket(int socketfd, SocketCallback callback);
 
     /// @brief Deletes external socket
-
     void deleteExternalSocket(int socketfd);
+
+    /// @brief Deletes all external sockets.
+    void deleteAllExternalSockets();
 
     /// @brief Set packet filter object to handle sending and receiving DHCPv4
     /// messages.
