@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <dhcp/dhcp4.h>
@@ -56,6 +57,7 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::asiolink;
 using namespace isc::hooks;
+using namespace isc::config;
 using namespace isc::dhcp::test;
 using namespace isc::test;
 

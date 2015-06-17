@@ -19,9 +19,13 @@
 #include <hooks/hooks_manager.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <config/command_mgr.h>
+#include <stats/stats_mgr.h>
 
 using namespace isc::data;
 using namespace isc::hooks;
+using namespace isc::config;
+using namespace isc::stats;
 using namespace std;
 
 namespace isc {
@@ -121,7 +125,6 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
     ConstElementPtr answer = configureDhcp4Server(*srv, config);
 
-
     // Check that configuration was successful. If not, do not reopen sockets
     // and don't bother with DDNS stuff.
     try {
@@ -164,6 +167,32 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
                   "There is another Dhcpv4Srv instance already.");
     }
     server_ = this; // remember this instance for later use in handlers
+
+    // Register supported commands in CommandMgr
+    CommandMgr::instance().registerCommand("shutdown",
+        boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
+
+    /// @todo: register config-reload (see CtrlDhcpv4Srv::commandConfigReloadHandler)
+    /// @todo: register libreload (see CtrlDhcpv4Srv::commandLibReloadHandler)
+
+    // Register statistic related commands
+    CommandMgr::instance().registerCommand("statistic-get",
+        boost::bind(&StatsMgr::statisticGetHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-reset",
+        boost::bind(&StatsMgr::statisticResetHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-remove",
+        boost::bind(&StatsMgr::statisticRemoveHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-get-all",
+        boost::bind(&StatsMgr::statisticGetAllHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-reset-all",
+        boost::bind(&StatsMgr::statisticResetAllHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-remove-all",
+        boost::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
 }
 
 void ControlledDhcpv4Srv::shutdown() {
@@ -173,6 +202,18 @@ void ControlledDhcpv4Srv::shutdown() {
 
 ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
     cleanup();
+
+    // Close the command socket (if it exists).
+    CommandMgr::instance().closeCommandSocket();
+
+    // Deregister any registered commands
+    CommandMgr::instance().deregisterCommand("shutdown");
+    CommandMgr::instance().deregisterCommand("statistic-get");
+    CommandMgr::instance().deregisterCommand("statistic-reset");
+    CommandMgr::instance().deregisterCommand("statistic-remove");
+    CommandMgr::instance().deregisterCommand("statistic-get-all");
+    CommandMgr::instance().deregisterCommand("statistic-reset-all");
+    CommandMgr::instance().deregisterCommand("statistic-remove-all");
 
     server_ = NULL; // forget this instance. Noone should call any handlers at
                     // this stage.

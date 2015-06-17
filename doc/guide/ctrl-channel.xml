@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+<!ENTITY % version SYSTEM "version.ent">
+%version;
+]>
+
+  <chapter id="ctrl-channel">
+    <title>Management API</title>
+    <para>
+      @todo: To be implemented in ticket 3880.
+    </para>
+
+  </chapter>

@@ -1,0 +1,209 @@
+// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+/**
+ @page ctrlSocket Control Channel
+
+@section ctrlSocketOverview Control Channel Overview
+
+In many cases it is useful to manage certain aspects of the DHCP servers
+while they are running. In Kea, this may be done via the Control Channel.
+Control Channel allows an external entity (e.g. a tool run by a sysadmin
+or a script) to issue commands to the server which can influence the its
+behavior or retreive information from it. Several notable examples
+envisioned are: reconfiguration, statistics retrival and manipulation,
+and shutdown.
+@note Currently, only the DHCPv4 component supports Control Channel.
+@todo: Update this text once Control Channel support in DHCPv6 is added.
+
+Communication over Control Channel is conducted using JSON structures.
+Currently (Kea 0.9.2) the only supported communication channel is UNIX stream
+sockets, but additional types may be added in the future.
+
+If configured, Kea will open a socket and will listen for any incoming
+connections. A process connecting to this socket is expected to send JSON
+commands structured as follows:
+
+@code
+{
+    "command": "foo",
+    "arguments": {
+        "param_foo": "value1",
+        "param_bar": "value2",
+        ...
+    }
+}
+@endcode
+
+- command - is the name of command to execute and is mandatory.
+- arguments - it may be absent, contain a single parameter or a map or parameters
+required to carry out the given command.  The exact content and format is command specific.
+
+The server will process the incoming command and then send a response of the form:
+
+@code
+{
+    "result": 0|1,
+    "text": "textual description",
+    "arguments": {
+        "argument1": "value1",
+        "argument2": "value2",
+        ...
+    }
+}
+@endcode
+
+- result - indicates the outcome of the command. A value of 0 means a success while
+any non-zero value designates an error. Currently 1 is used as a generic error, but additional
+error codes may be added in the future.
+- text field - typically appears when result is non-zero and contains description of the error
+encountered.
+- arguments - is a map of additional data values returned by the server, specific to the
+command issue. The map is always present, even if it contains no data values.
+
+@section ctrlSocketClient Using Control Channel
+
+Here are two examples of how to access the Control Channel:
+
+1. Use socat tool, which is available in many Linux and BSD distributions.
+See http://www.dest-unreach.org/socat/ for details. To use it:
+@code
+socat UNIX:/var/run/kea/kea4.sock -
+@endcode
+You then can type JSON commands and get responses (also in JSON format).
+
+2. Here's an example C code that connects and gets a list of supported commands:
+@code
+// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+int main(int argc, const char* argv[]) {
+
+    if (argc != 2) {
+        printf("Usage: %s socket_path\n", argv[0]);
+        return (1);
+    }
+
+    // Create UNIX stream socket.
+    int socket_fd;
+    if ((socket_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+    {
+        perror("Failed to create UNIX stream");
+        return (1);
+    }
+
+    // Specify the address to connect to (unix path)
+    struct sockaddr_un srv_addr;
+    memset(&srv_addr, 0, sizeof(struct sockaddr_un));
+    srv_addr.sun_family = AF_UNIX;
+    strcpy(srv_addr.sun_path, argv[1]);
+    socklen_t len = sizeof(srv_addr);
+
+    // Try to connect.
+    if (connect(socket_fd, (struct sockaddr*) &srv_addr, len) == -1) {
+        perror("Failed to connect");
+        return (1);
+    }
+
+    // Send a command to list all available commands.
+    char buf[1024];
+    sprintf(buf, "{ \"command\": \"list-commands\" }");
+    int bytes_sent = send(socket_fd, buf, strlen(buf), 0);
+    printf("%d bytes sent\n", bytes_sent);
+
+    // Receive a response (should be JSON formatted list of commands)
+    int bytes_rcvd = recv(socket_fd, buf, sizeof(buf), 0);
+    printf("%d bytes received: [%s]\n", bytes_rcvd, buf);
+
+    // Close the socket
+    close(socket_fd);
+
+    return 0;
+}
+@endcode
+
+@section ctrlSocketImpl Control Channel Implementation
+
+Control Channel is implemented in @ref isc::config::CommandMgr. It is a signleton
+class that allows registration of callbacks that handle specific commands.
+It internally supports a single command: @c list-commands that returns a list
+of supported commands. This component is expected to be shared among all daemons.
+
+There are 3 main methods that are expected to be used by developers:
+- @ref isc::config::CommandMgr::registerCommand, which allows registration of
+  additional commands.
+- @ref isc::config::CommandMgr::deregisterCommand, which allows removing previously
+  registered command.
+- @ref isc::config::CommandMgr::processCommand, which allows handling specified
+  command.
+
+There are also two methods for managing control sockets. They are not expected
+to be used directly, unless someone implements a new Control Channel (e.g. TCP
+or HTTPS connection):
+
+- @ref isc::config::CommandMgr::openCommandSocket that passes structure defined
+  in the configuration file. Currently only two parameters are supported: socket-type
+  (which must contain value 'unix') and socket-name (which contains unix path for
+  the named socket to be created). This method calls @ref
+  isc::config::CommandSocketFactory::create method, which parses the parameters
+  and instantiates one object from a class derived from @ref isc::config::CommandSocket.
+  Again, currently only UNIX type is supported, but the factory
+  class is expected to be extended to cover additional types.
+- @ref isc::config::CommandMgr::closeCommandSocket() - it is used to close the
+  socket. It calls close method on the @ref isc::config::CommandSocket object, if
+  one exists. In particular, for UNIX socket, it also deletes the file after socket
+  was closed.
+
+@section ctrlSocketConnections Accepting connections
+
+Control Channel is connection oriented communication. In that sense it is
+different than all other communications supported so far in Kea. To facilitate
+connections, several mechanisms were implemented. Intially a single UNIX socket
+it opened (see isc::config::UnixCommandSocket). Its @ref
+isc::config::UnixCommandSocket::receiveHandler callback method is
+installed in @ref isc::dhcp::IfaceMgr to process incoming connections. When the
+select call in @ref isc::dhcp::IfaceMgr::receive4 indicates that there is some data to be
+processed, this callback calls accept, which creates a new socket for handling
+this particular incoming connection. Once the socket descriptor is known, a new
+instance of @ref isc::config::ConnectionSocket is created to represent that
+socket (and the whole ongoing connection). It installs another callback
+(@ref isc::config::ConnectionSocket::receiveHandler that calls
+(@ref isc::config::CommandMgr::commandReader) that will process incoming
+data or will close the socket when necessary. CommandReader reads data from
+incoming socket and attempts to parse it as JSON structures. If successful,
+it calls isc::config::CommandMgr::processCommand(), serializes the structure
+returned and attempts to send it back.
+
+@todo Currently commands and responses up to 64KB are supported. It was deemed
+sufficient for the current needs, but in the future we may need to extend
+it to handle bigger structures.
+
+*/

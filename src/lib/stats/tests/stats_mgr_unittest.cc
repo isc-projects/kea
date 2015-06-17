@@ -17,6 +17,7 @@
 #include <stats/stats_mgr.h>
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
+#include <cc/command_interpreter.h>
 #include <util/boost_time_utils.h>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/shared_ptr.hpp>
@@ -28,6 +29,7 @@
 using namespace isc;
 using namespace isc::data;
 using namespace isc::stats;
+using namespace isc::config;
 using namespace boost::posix_time;
 
 namespace {
@@ -42,6 +44,7 @@ public:
     /// Makes sure that the Statistics Manager is instantiated.
     StatsMgrTest() {
         StatsMgr::instance();
+        StatsMgr::instance().removeAll();
     }
 
     /// @brief Destructor
@@ -411,6 +414,276 @@ TEST_F(StatsMgrTest, generateName) {
     // Lets' test string as index.
     EXPECT_EQ("subnet[foo].pkt4-received",
               StatsMgr::generateName("subnet", "foo", "pkt4-received"));
+}
+
+// Test checks if statistic-get handler is able to return specified statistic.
+TEST_F(StatsMgrTest, commandStatisticGet) {
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+
+    ElementPtr params = Element::createMap();
+    params->set("name", Element::create("alpha"));
+
+    ConstElementPtr rsp = StatsMgr::instance().statisticGetHandler("statistic-get",
+                                                                   params);
+
+    ObservationPtr alpha;
+    EXPECT_NO_THROW(alpha = StatsMgr::instance().getObservation("alpha"));
+    ASSERT_TRUE(alpha);
+
+    std::string exp = "{ \"alpha\": [ [ 1234, \""
+        + isc::util::ptimeToText(alpha->getInteger().second) + "\" ] ] }";
+
+    EXPECT_EQ("{ \"arguments\": " + exp + ", \"result\": 0 }", rsp->str());
+}
+
+// Test checks if statistic-get is able to handle:
+// - a request without parameters
+// - a request with missing statistic name
+// - a request for non-existing statistic.
+TEST_F(StatsMgrTest, commandStatisticGetNegative) {
+
+    // Case 1: a request without parameters
+    ConstElementPtr rsp = StatsMgr::instance().statisticGetHandler("statistic-get",
+                                                                   ElementPtr());
+    int status_code;
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
+
+    // Case 2: a request with missing statistic name
+    ElementPtr params = Element::createMap();
+    rsp = StatsMgr::instance().statisticGetHandler("statistic-get", params);
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
+
+    // Case 3: a request for non-existing statistic
+    params->set("name", Element::create("alpha"));
+    rsp = StatsMgr::instance().statisticGetHandler("statistic-get", params);
+    EXPECT_EQ("{ \"arguments\": {  }, \"result\": 0 }", rsp->str());
+}
+
+// This test checks whether statistc-get-all command returns all statistics
+// correctly.
+TEST_F(StatsMgrTest, commandGetAll) {
+
+    // Set a couple of statistics
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+    StatsMgr::instance().setValue("beta", 12.34);
+    StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
+    StatsMgr::instance().setValue("delta", "Lorem ipsum");
+
+    // Now get them. They're used to generate expected output
+    ConstElementPtr rep_alpha = StatsMgr::instance().get("alpha");
+    ConstElementPtr rep_beta = StatsMgr::instance().get("beta");
+    ConstElementPtr rep_gamma = StatsMgr::instance().get("gamma");
+    ConstElementPtr rep_delta = StatsMgr::instance().get("delta");
+
+    ASSERT_TRUE(rep_alpha);
+    ASSERT_TRUE(rep_beta);
+    ASSERT_TRUE(rep_gamma);
+    ASSERT_TRUE(rep_delta);
+
+    std::string exp_str_alpha = "[ [ 1234, \""
+        + isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
+                                   ->getInteger().second) + "\" ] ]";
+    std::string exp_str_beta = "[ [ 12.34, \""
+        + isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
+                                   ->getFloat().second) + "\" ] ]";
+    std::string exp_str_gamma = "[ [ \"01:02:03.000004\", \""
+        + isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
+                                   ->getDuration().second) + "\" ] ]";
+    std::string exp_str_delta = "[ [ \"Lorem ipsum\", \""
+        + isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
+                                   ->getString().second) + "\" ] ]";
+
+    // Check that all of them can be reported at once
+    ConstElementPtr rsp = StatsMgr::instance().statisticGetAllHandler(
+        "statistic-get-all", ElementPtr());
+    ASSERT_TRUE(rsp);
+    int status_code;
+    ConstElementPtr rep_all = parseAnswer(status_code, rsp);
+    ASSERT_EQ(0, status_code);
+    ASSERT_TRUE(rep_all);
+
+    // Verifying this is a bit more involved, as we don't know whether the
+    // order would be preserved or not.
+    EXPECT_EQ(4, rep_all->size());
+    ASSERT_TRUE(rep_all->get("alpha"));
+    ASSERT_TRUE(rep_all->get("beta"));
+    ASSERT_TRUE(rep_all->get("delta"));
+    ASSERT_TRUE(rep_all->get("gamma"));
+    EXPECT_FALSE(rep_all->get("epsilon"));
+
+    EXPECT_EQ(exp_str_alpha, rep_all->get("alpha")->str());
+    EXPECT_EQ(exp_str_beta, rep_all->get("beta")->str());
+    EXPECT_EQ(exp_str_gamma, rep_all->get("gamma")->str());
+    EXPECT_EQ(exp_str_delta, rep_all->get("delta")->str());
+}
+
+// Test checks if statistic-reset handler is able to reset specified statistic.
+TEST_F(StatsMgrTest, commandStatisticReset) {
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+
+    ElementPtr params = Element::createMap();
+    params->set("name", Element::create("alpha"));
+
+    ConstElementPtr rsp =
+        StatsMgr::instance().statisticResetHandler("statistic-reset", params);
+    int status_code;
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
+
+    ObservationPtr alpha;
+    EXPECT_NO_THROW(alpha = StatsMgr::instance().getObservation("alpha"));
+    ASSERT_TRUE(alpha);
+
+    // Check that it was indeed reset
+    EXPECT_EQ(0, alpha->getInteger().first);
+}
+
+// Test checks if statistic-reset is able to handle:
+// - a request without parameters
+// - a request with missing statistic name
+// - a request for non-existing statistic.
+TEST_F(StatsMgrTest, commandStatisticResetNegative) {
+
+    // Case 1: a request without parameters
+    ConstElementPtr rsp =
+        StatsMgr::instance().statisticResetHandler("statistic-reset", ElementPtr());
+    int status_code;
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
+
+    // Case 2: a request with missing statistic name
+    ElementPtr params = Element::createMap();
+    rsp = StatsMgr::instance().statisticResetHandler("statistic-reset", params);
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
+
+    // Case 3: a request for non-existing statistic
+    params->set("name", Element::create("alpha"));
+    rsp = StatsMgr::instance().statisticResetHandler("statistic-reset", params);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'alpha' statistic found\" }",
+              rsp->str());
+}
+
+// This test checks whether statistic-reset-all command really resets all
+// statistics correctly.
+TEST_F(StatsMgrTest, commandResetAll) {
+
+    // Set a couple of statistics
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+    StatsMgr::instance().setValue("beta", 12.34);
+    StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
+    StatsMgr::instance().setValue("delta", "Lorem ipsum");
+
+    // Now get them. They're used to generate expected output
+    ConstElementPtr rep_alpha = StatsMgr::instance().get("alpha");
+    ConstElementPtr rep_beta = StatsMgr::instance().get("beta");
+    ConstElementPtr rep_gamma = StatsMgr::instance().get("gamma");
+    ConstElementPtr rep_delta = StatsMgr::instance().get("delta");
+
+    ASSERT_TRUE(rep_alpha);
+    ASSERT_TRUE(rep_beta);
+    ASSERT_TRUE(rep_gamma);
+    ASSERT_TRUE(rep_delta);
+
+    std::string exp_str_alpha = "[ [ 1234, \""
+        + isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
+                                   ->getInteger().second) + "\" ] ]";
+    std::string exp_str_beta = "[ [ 12.34, \""
+        + isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
+                                   ->getFloat().second) + "\" ] ]";
+    std::string exp_str_gamma = "[ [ \"01:02:03.000004\", \""
+        + isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
+                                   ->getDuration().second) + "\" ] ]";
+    std::string exp_str_delta = "[ [ \"Lorem ipsum\", \""
+        + isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
+                                   ->getString().second) + "\" ] ]";
+
+    // Check that all of them can be reset at once
+    ConstElementPtr rsp = StatsMgr::instance().statisticResetAllHandler(
+        "statistic-reset-all", ElementPtr());
+    ASSERT_TRUE(rsp);
+    int status_code;
+    ConstElementPtr rep_all = parseAnswer(status_code, rsp);
+    ASSERT_EQ(0, status_code);
+    ASSERT_TRUE(rep_all);
+
+    // Check that they're indeed reset
+    EXPECT_EQ(0, StatsMgr::instance().getObservation("alpha")->getInteger().first);
+    EXPECT_EQ(0.0f,
+              StatsMgr::instance().getObservation("beta")->getFloat().first);
+    EXPECT_EQ(time_duration(0,0,0,0),
+              StatsMgr::instance().getObservation("gamma")->getDuration().first);
+    EXPECT_EQ("",
+              StatsMgr::instance().getObservation("delta")->getString().first);
+}
+
+// Test checks if statistic-remove handler is able to remove a statistic.
+TEST_F(StatsMgrTest, commandStatisticRemove) {
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+
+    ElementPtr params = Element::createMap();
+    params->set("name", Element::create("alpha"));
+
+    ConstElementPtr rsp =
+        StatsMgr::instance().statisticRemoveHandler("statistic-remove", params);
+    int status_code;
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
+
+    // It should be gone.
+    EXPECT_FALSE(StatsMgr::instance().getObservation("alpha"));
+}
+
+// Test checks if statistic-remove is able to handle:
+// - a request without parameters
+// - a request with missing statistic name
+// - a request for non-existing statistic.
+TEST_F(StatsMgrTest, commandStatisticRemoveNegative) {
+
+    // Case 1: a request without parameters
+    ConstElementPtr rsp =
+        StatsMgr::instance().statisticRemoveHandler("statistic-remove", ElementPtr());
+    int status_code;
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
+
+    // Case 2: a request with missing statistic name
+    ElementPtr params = Element::createMap();
+    rsp = StatsMgr::instance().statisticRemoveHandler("statistic-remove", params);
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
+
+    // Case 3: a request for non-existing statistic
+    params->set("name", Element::create("alpha"));
+    rsp = StatsMgr::instance().statisticRemoveHandler("statistic-remove", params);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'alpha' statistic found\" }",
+              rsp->str());
+}
+
+// This test checks whether statistic-remove-all command really resets all
+// statistics correctly.
+TEST_F(StatsMgrTest, commandRemoveAll) {
+
+    // Set a couple of statistics
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+    StatsMgr::instance().setValue("beta", 12.34);
+    StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
+    StatsMgr::instance().setValue("delta", "Lorem ipsum");
+
+    // Check that all of them can be reset at once
+    ConstElementPtr rsp = StatsMgr::instance().statisticRemoveAllHandler(
+        "statistic-remove-all", ElementPtr());
+    ASSERT_TRUE(rsp);
+    int status_code;
+    ConstElementPtr rep_all = parseAnswer(status_code, rsp);
+    ASSERT_EQ(0, status_code);
+
+    EXPECT_FALSE(StatsMgr::instance().getObservation("alpha"));
+    EXPECT_FALSE(StatsMgr::instance().getObservation("beta"));
+    EXPECT_FALSE(StatsMgr::instance().getObservation("gamma"));
+    EXPECT_FALSE(StatsMgr::instance().getObservation("delta"));
 }
 
 };

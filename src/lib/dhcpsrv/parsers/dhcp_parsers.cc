@@ -214,6 +214,27 @@ MACSourcesListConfigParser::commit() {
     // Nothing to do.
 }
 
+// ******************** ControlSocketParser *************************
+ControlSocketParser::ControlSocketParser(const std::string& param_name) {
+    if (param_name != "control-socket") {
+        isc_throw(BadValue, "Internal error. Control socket parser called "
+                  " for wrong parameter:" << param_name);
+    }
+}
+
+void ControlSocketParser::build(isc::data::ConstElementPtr value) {
+    if (value->getType() != Element::map) {
+        isc_throw(BadValue, "Specified control-socket is expected to be a map"
+                  ", i.e. a structure defined within { }");
+    }
+    CfgMgr::instance().getStagingCfg()->setControlSocketInfo(value);
+}
+
+/// @brief Does nothing.
+void ControlSocketParser::commit() {
+    // Nothing to do.
+}
+
 // ******************** HooksLibrariesParser *************************
 
 HooksLibrariesParser::HooksLibrariesParser(const std::string& param_name)
