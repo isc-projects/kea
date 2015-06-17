@@ -1,3 +1,7 @@
+959.	[build]		fdupont
+	Removed no longer used logging in cc and config libraries.
+	(Trac #3732, git 8d0324f4786900db953489ebaa9e018b1238543f)
+
 958.	[func]		tomek
 	DHCPv4 server now supports control channel, implemented over UNIX
 	socket. Currently supported commands are: statistic-get,
@@ -46,7 +50,6 @@
 951.	[build]		fdupont
 	Removed BUNDY configuration backend.
 	(Trac #3732, git 96364cbbb15318c8f55d5b287cda0990d3eaae32)
-	(Trac #3732a, git xxx)
 
 950.	[doc]		marcin
 	Updated section about logging in the User Guide. Also,
