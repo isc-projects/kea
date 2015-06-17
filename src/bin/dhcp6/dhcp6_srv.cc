@@ -45,6 +45,7 @@
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
@@ -74,6 +75,7 @@ using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::log;
 using namespace isc::util;
+using namespace isc::stats;
 using namespace std;
 
 namespace {
@@ -2210,6 +2212,11 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_Success,
                           "Lease released. Thank you, please come again."));
 
+        // Need to decrease statistic for assigned addresses.
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-NAs"),
+            static_cast<int64_t>(-1));
+
         // Check if a lease has flags indicating that the FQDN update has
         // been performed. If so, create NameChangeRequest which removes
         // the entries.
@@ -2360,6 +2367,11 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_Success,
                           "Lease released. Thank you, please come again."));
+
+        // Need to decrease statistic for assigned prefixes.
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-PDs"),
+            static_cast<int64_t>(-1));
     }
 
     return (ia_rsp);

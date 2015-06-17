@@ -16,6 +16,7 @@
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/subnet_id.h>
+#include <stats/stats_mgr.h>
 
 using namespace isc::asiolink;
 
@@ -177,6 +178,53 @@ CfgSubnets6::isDuplicate(const Subnet6& subnet) const {
         }
     }
     return (false);
+}
+
+void
+CfgSubnets6::removeStatistics() {
+    using namespace isc::stats;
+
+    // For each v6 subnet currently configured, remove the statistic.
+    /// @todo: May move this to CfgSubnets6 class if there will be more
+    /// statistics here.
+    for (Subnet6Collection::const_iterator subnet6 = subnets_.begin();
+         subnet6 != subnets_.end(); ++subnet6) {
+
+        StatsMgr::instance().del(StatsMgr::generateName("subnet",
+                                                        (*subnet6)->getID(),
+                                                        "total-NAs"));
+
+        StatsMgr::instance().del(StatsMgr::generateName("subnet",
+                                                        (*subnet6)->getID(),
+                                                        "assigned-NAs"));
+
+        StatsMgr::instance().del(StatsMgr::generateName("subnet",
+                                                        (*subnet6)->getID(),
+                                                        "total-PDs"));
+
+        StatsMgr::instance().del(StatsMgr::generateName("subnet",
+                                                        (*subnet6)->getID(),
+                                                        "assigned-PDs"));
+    }
+}
+
+void
+CfgSubnets6::updateStatistics() {
+    using namespace isc::stats;
+
+    /// @todo: May move this to CfgSubnets6 class if there will be more
+    /// statistics here.
+    for (Subnet6Collection::const_iterator subnet = subnets_.begin();
+         subnet != subnets_.end(); ++subnet) {
+
+        StatsMgr::instance().setValue(
+            StatsMgr::generateName("subnet", (*subnet)->getID(), "total-NAs"),
+            static_cast<int64_t>((*subnet)->getPoolCapacity(Lease::TYPE_NA)));
+
+        StatsMgr::instance().setValue(
+            StatsMgr::generateName("subnet", (*subnet)->getID(), "total-PDs"),
+            static_cast<int64_t>((*subnet)->getPoolCapacity(Lease::TYPE_PD)));
+    }
 }
 
 } // end of namespace isc::dhcp

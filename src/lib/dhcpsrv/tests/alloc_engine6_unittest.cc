@@ -17,10 +17,12 @@
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <stats/stats_mgr.h>
 
 using namespace std;
 using namespace isc::hooks;
 using namespace isc::asiolink;
+using namespace isc::stats;
 
 namespace isc {
 namespace dhcp {
@@ -52,23 +54,61 @@ TEST_F(AllocEngine6Test, constructor) {
 
 // This test checks if the simple allocation (REQUEST) can succeed
 TEST_F(AllocEngine6Test, simpleAlloc6) {
+
+    // Pretend our pool has allocated 100 addresses
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs");
+    StatsMgr::instance().addValue(name, static_cast<int64_t>(100));
+
     simpleAlloc6Test(pool_, IOAddress("::"), false);
+
+    // We should have bumped the address counter by 1
+    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(101, stat->getInteger().first);
 }
 
 // This test checks if the simple PD allocation (REQUEST) can succeed
 TEST_F(AllocEngine6Test, pdSimpleAlloc6) {
+
+    // Pretend our pool has allocated 100 prefixes
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-PDs");
+    StatsMgr::instance().addValue(name, static_cast<int64_t>(100));
+
     simpleAlloc6Test(pd_pool_, IOAddress("::"), false);
+
+    // We should have bumped the address counter by 1
+    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(101, stat->getInteger().first);
 }
 
 // This test checks if the fake allocation (for SOLICIT) can succeed
 TEST_F(AllocEngine6Test, fakeAlloc6) {
 
+    // Pretend our pool has allocated 100 prefixes
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs");
+    StatsMgr::instance().addValue(name, static_cast<int64_t>(100));
+
     simpleAlloc6Test(pool_, IOAddress("::"), true);
+
+    // We should not have bumped the address counter
+    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(100, stat->getInteger().first);
 }
 
 // This test checks if the fake PD allocation (for SOLICIT) can succeed
 TEST_F(AllocEngine6Test, pdFakeAlloc6) {
+    // Pretend our pool has allocated 100 prefixes
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-PDs");
+    StatsMgr::instance().addValue(name, static_cast<int64_t>(100));
+
     simpleAlloc6Test(pd_pool_, IOAddress("::"), true);
+
+    // We should not have bumped the address counter
+    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(100, stat->getInteger().first);
 };
 
 // This test checks if the allocation with a hint that is valid (in range,
@@ -568,7 +608,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
 // - Client sends SOLICIT without any hints.
 // - Client is allocated a reserved address.
 //
-// Note that DHCPv6 client can, but don't have to send any hints in its
+// Note that a DHCPv6 client can, but doesn't have to send any hints in its
 // Solicit message.
 TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitNoHint) {
     // Create reservation for the client. This is in-pool reservation,
@@ -599,9 +639,18 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestNoHint) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
+    // Pretend our pool has allocated 100 addresses
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs");
+    StatsMgr::instance().addValue(name, static_cast<int64_t>(100));
+
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
+
+    // We should have bumped the address counter
+    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(101, stat->getInteger().first);
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -857,15 +906,27 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestMatchingHint) {
 TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
+    // Pretend our pool has allocated 100 addresses
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs");
+    StatsMgr::instance().addValue(name, static_cast<int64_t>(100));
+
     // Client gets an address
     Lease6Ptr lease1 = simpleAlloc6Test(pool_, IOAddress("::"), false);
     ASSERT_TRUE(lease1);
+
+    // We should have bumped the address counter
+    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(101, stat->getInteger().first);
 
     // Just check that if the client requests again, it will get the same
     // address.
     Lease6Ptr lease2 = simpleAlloc6Test(pool_, lease1->addr_, false);
     ASSERT_TRUE(lease2);
     detailCompareLease(lease1, lease2);
+
+    // We should not have bumped the address counter again
+    EXPECT_EQ(101, stat->getInteger().first);
 
     // Now admin creates a reservation for this client. This is in-pool
     // reservation, as the pool is 2001:db8:1::10 - 2001:db8:1::20.
@@ -894,6 +955,11 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease3, from_mgr);
+
+    // Lastly check to see that the address counter is still 101 we should have
+    // have decremented it on the implied release and incremented it on the reserved
+    EXPECT_EQ(101, stat->getInteger().first);
+
 }
 
 // In the following situation:
@@ -1362,6 +1428,31 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolRequestValidHint) {
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
 }
+
+
+// This test checks that NULL values are handled properly
+TEST_F(AllocEngine6Test, allocateAddress6Stats) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    // Verify our pool hasn't allocated any addresses
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs");
+    StatsMgr::instance().addValue(name, static_cast<int64_t>(100));
+
+    Lease6Ptr lease;
+    AllocEngine::ClientContext6 ctx1(subnet_, duid_, iaid_, IOAddress("::"),
+                                     Lease::TYPE_NA, false, false, "", false);
+    ctx1.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx1)));
+    ASSERT_TRUE(lease);
+
+    // We should have bumped the address counter by 1
+    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(101, stat->getInteger().first);
+}
+
 
 }; // namespace test
 }; // namespace dhcp
