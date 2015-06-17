@@ -2648,7 +2648,7 @@ should include options from the isc option space:
             </row>
 
             <row>
-            <entry>subnet[id].assigned-NAs</entry>
+            <entry>subnet[id].assigned-PDs</entry>
             <entry>integer</entry>
             <entry>
             This statistic shows the number of assigned PD prefixes in a given subnet.
