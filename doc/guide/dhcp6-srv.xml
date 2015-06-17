@@ -88,9 +88,9 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
       </para>
 
       <para>
-	    When running in a console, the server can be shut down by
-	    pressing ctrl-c. It detects the key combination and shuts
-	    down gracefully.
+            When running in a console, the server can be shut down by
+            pressing ctrl-c. It detects the key combination and shuts
+            down gracefully.
       </para>
 
       <para>
@@ -506,10 +506,10 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>
-	The following configuration will assign the specified subnet
-	identifier to the newly configured subnet:
+        The following configuration will assign the specified subnet
+        identifier to the newly configured subnet:
 
-	<screen>
+        <screen>
 "Dhcp6": {
     "subnet6": [
         {
@@ -520,9 +520,9 @@ temporarily override a list of interface names and listen on all interfaces.
     ]
 }
 </screen>
-	This identifier will not change for this subnet unless the "id" parameter is
-	removed or set to 0. The value of 0 forces auto-generation of the subnet
-	identifier.
+        This identifier will not change for this subnet unless the "id" parameter is
+        removed or set to 0. The value of 0 forces auto-generation of the subnet
+        identifier.
       </para>
       <!-- @todo: describe whether database needs to be updated after changing
       id -->
@@ -673,15 +673,15 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Subnet and Prefix Delegation Pools</title>
       <para>
         Subnets may also be configured to delegate prefixes, as defined in
-	    <ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink>.
+            <ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink>.
         A subnet may have one or more prefix delegation pools.  Each pool has
         a prefixed address, which is specified as a prefix and a prefix length,
         as well as a delegated prefix length. <command>delegated-len</command>
-	    must not be shorter (that is it must be numerically greater or equal)
-	    than <command>prefix-len</command>.
-	    If both <command>delegated-len</command>
-	    and <command>prefix-len</command> are equal, the server will be able to
-	    delegate only one prefix. The delegated <command>prefix</command> does
+            must not be shorter (that is it must be numerically greater or equal)
+            than <command>prefix-len</command>.
+            If both <command>delegated-len</command>
+            and <command>prefix-len</command> are equal, the server will be able to
+            delegate only one prefix. The delegated <command>prefix</command> does
         not have to match the <command>subnet</command> prefix.
       </para>
       <para> Below is a sample subnet configuration which enables prefix
@@ -1317,7 +1317,7 @@ should include options from the isc option space:
         to designate that a given subnet is local, i.e. reachable directly over
         the specified interface. For example the server that is intended to serve
         a local subnet over eth0 may be configured as follows:
-	<screen>
+        <screen>
 "Dhcp6": {
     "subnet6": [
         {
@@ -2262,14 +2262,14 @@ should include options from the isc option space:
 
       <para>
         An example configuration that disables reservation looks like follows:
-	<screen>
+        <screen>
 "Dhcp6": {
     "subnet6": [
-	{
+        {
         "subnet": "2001:db8:1::/64",
         <userinput>"reservation-mode": "disabled"</userinput>,
         ...
-	}
+        }
     ]
 }
 </screen>
@@ -2392,9 +2392,9 @@ should include options from the isc option space:
                      "pool": "2001:db8:1::1-2001:db8:1::ffff"
                  }
              ],
-	     <userinput>"relay": {
-	         "ip-address": "3000::1"
-	     }</userinput>
+             <userinput>"relay": {
+                 "ip-address": "3000::1"
+             }</userinput>
         }
     ]
 }
@@ -2425,11 +2425,11 @@ should include options from the isc option space:
 "Dhcp6": {
     "subnet6": [
         {
-	    "subnet": "3000::/64",
-	    "pools": [
-	        { "pool": "3000::2 - 3000::ffff" }
-	    ],
-	    <userinput>"client-class": "VENDOR_CLASS_docsis3.0",
+            "subnet": "3000::/64",
+            "pools": [
+                { "pool": "3000::2 - 3000::ffff" }
+            ],
+            <userinput>"client-class": "VENDOR_CLASS_docsis3.0",
             "relay": {
                 "ip-address": "3000::1"
             }</userinput>
@@ -2442,9 +2442,9 @@ should include options from the isc option space:
                      "pool": "2001:db8:1::1-2001:db8:1::ffff"
                  }
              ],
-	     <userinput>"relay": {
-	         "ip-address": "3000::1"
-	     }</userinput>
+             <userinput>"relay": {
+                 "ip-address": "3000::1"
+             }</userinput>
         }
     ]
 }
@@ -2646,12 +2646,139 @@ should include options from the isc option space:
               </entry>
             </row>
 
+            <row>
+              <entry>pkt6-reply-received</entry>
+              <entry>integer</entry>
+              <entry>Number of REPLY packets received. This statistic is
+              expected to remain zero at all times, as REPLY packets are sent by
+              the server and the server is never expected to receive
+              them. Non-zero value indicates an error. One likely cause would be
+              a misbehaving relay agent that incorrectly forwards REPLY messages
+              towards the server, rather back to the clients.
+              </entry>
+            </row>
 
+            <row>
+              <entry>pkt6-renew-received</entry>
+              <entry>integer</entry>
+              <entry>Number of RENEW packets received. This statistic
+                is expected to grow. Its increase means that clients received their
+                addresses and prefixes and are trying to renew them.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-rebind-received</entry>
+              <entry>integer</entry>
+              <entry>Number of REBIND packets received. Non-zero value of statistic
+              indicates that clients didn't receive responses to their RENEW messages
+              (regular lease renewal mechanism) and attempting to find any server
+              that is able to take over their leases. It may mean that some server's
+              REPLY messages never reached the clients.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-release-received</entry>
+              <entry>integer</entry>
+              <entry>Number of RELEASE packets received. This statistic is expected
+              to grow every time a device is being shut down in the network. It
+              indicates that the address or prefix assigned is reported as no longer
+              needed. Note that in wireless networks, number of RELEASE messages
+              is significantly lower than number of REQUEST messages.
+              </entry>
+            </row>
+
+            <row>
+            <entry>pkt6-decline-received</entry>
+            <entry>integer</entry>
+            <entry>
+              Number of DECLINE packets received. This statistic is expected to
+              remain close to zero. Its increase means that a client leased an
+              address, but discovered that the address is currently used by an
+              unknown device in your network. If this statistic is growing, it
+              may indicate misconfigured server or devices that have statically
+              assigned conflicting addresses.
+            </entry>
+            </row>
+            
+            <row>
+              <entry>pkt6-infrequest-received</entry>
+              <entry>integer</entry>
+              <entry>
+                Number of INFORMATION-REQUEST packets received. This statistic
+                is expected to grow if there are devices that are using
+                stateless DHCPv6. INFORMATION-REQUEST messages are used by
+                clients that request stateless configuration, i.e. options
+                and parameters other than addresses or prefixes.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-unknown-received</entry>
+              <entry>integer</entry>
+              <entry>Number of packets received of an unknown type. Non-zero
+              value of this statistic indicates that the server received a
+              packet that it wasn't able to recognize: either with unsupported
+              type or possibly malformed.</entry>
+            </row>
+
+            <row>
+              <entry>pkt6-sent</entry>
+              <entry>integer</entry>
+              <entry>Number of DHCPv6 packets sent. This statistic is expected
+              to grow every time the server transmits a packet. In general, it
+              should roughly match pkt6-received, as most incoming packets cause
+              server to respond. There are exceptions (e.g. server receiving a
+              REQUEST with server-id matching other server), so do not worry, if
+              it is lesser than pkt6-received.</entry>
+            </row>
+
+            <row>
+              <entry>pkt6-advertiser-sent</entry>
+              <entry>integer</entry>
+              <entry>Number of ADVERTISE packets sent. This statistic is
+              expected to grow in most cases after a SOLICIT is processed. There
+              are certain uncommon, but valid cases where incoming SOLICIT is
+              dropped, but in general this statistic is expected to be close to
+              pkt6-solicit-received.</entry>
+            </row>
+
+            <row>
+              <entry>pkt6-reply-sent</entry>
+              <entry>integer</entry>
+              <entry>Number of REPLY packets sent. This statistic is expected to
+              grow in most cases after a SOLICIT (with rapid-commit), REQUEST,
+              RENEW, REBIND, RELEASE, DECLINE or INFORMATION-REQUEST is
+              processed. There are certain cases where there is no response.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-parse-failed</entry>
+              <entry>integer</entry>
+              <entry>Number of incoming packets that could not be parsed.
+              Non-zero value of this statistic indicates that the server
+              received malformed or truncated packet. This may indicate problems
+              in your network, faulty clients, faulty relay agents or server
+              code bug.</entry>
+            </row>
+            
+            <row>
+              <entry>pkt6-receive-drop</entry>
+              <entry>integer</entry>
+              <entry>Number of incoming packets that were dropped. Exact reason
+              for dropping packets is logged, but the most common reasons may
+              be: an unacceptable or not supported packet type, direct responses
+              are forbidden, the server-id sent by the client does not match the
+              server's server-id or the packet is malformed.</entry>
+            </row>
 
           </tbody>
           </tgroup>
         </table>
     </section>
+
     <section id="dhcp6-std">
       <title>Supported DHCPv6 Standards</title>
       <para>The following standards are currently
@@ -2696,13 +2823,13 @@ should include options from the isc option space:
             to echo back the options, checks whether an option is RSOO-enabled,
             ability to mark additional options as RSOO-enabled.</simpara>
           </listitem>
-	  <listitem>
-	    <simpara><emphasis>Client Link-Layer Address Option in
-	    DHCPv6</emphasis>,
-	    <ulink url="http://tools.ietf.org/html/rfc6939">RFC
-	    6939</ulink>: Supported option is client link-layer
-	    address option.</simpara>
-	  </listitem>
+          <listitem>
+            <simpara><emphasis>Client Link-Layer Address Option in
+            DHCPv6</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc6939">RFC
+            6939</ulink>: Supported option is client link-layer
+            address option.</simpara>
+          </listitem>
       </itemizedlist>
     </section>
 
