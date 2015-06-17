@@ -2579,6 +2579,79 @@ should include options from the isc option space:
     </para>
     </section>
 
+    <section id="dhcp6-stats">
+      <title>Statistics in DHCPv6 server</title>
+      <note>
+        <para>This section describes DHCPv6-specific statistics. For a general
+        overview and usage of statistics, see <xref linkend="stats" />.</para>
+      </note>
+
+      <para>
+        The DHCPv6 server supports the following statistics:
+      </para>
+        <table frame="all" id="dhcp4-statistics">
+          <title>DHCPv4 Statistics</title>
+          <tgroup cols='3'>
+          <colspec colname='statistic' align='center'/>
+          <colspec colname='type' align='center'/>
+          <colspec colname='description' align='left'/>
+          <thead>
+            <row>
+              <entry>Statistic</entry>
+              <entry>Data Type</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry>pkt6-received</entry>
+              <entry>integer</entry>
+              <entry>Number of DHCPv6 packets received. This includes all packets:
+              valid, bogus, corrupted, rejected etc. This statistic is expected
+              to grow rapidly.</entry>
+            </row>
+
+            <row>
+              <entry>pkt6-solicit-received</entry>
+              <entry>integer</entry>
+              <entry>
+                Number of SOLICIT packets received. This statistic is expected
+                to grow.  Its increase means that clients that just booted
+                started their configuration process and their initial packets
+                reached your server.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-advertise-received</entry>
+              <entry>integer</entry>
+              <entry>
+                Number of ADVERTISE packets received. Advertise packets are sent
+                by the server and the server is never expected to receive them. Non-zero
+                value of tris statistic indicates an error ocurring in the network.
+                One likely cause would be a misbehaving relay agent that incorrectly
+                forwards ADVERTISE messages towards the server, rather back to the
+                clients.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-request-received</entry>
+              <entry>integer</entry>
+              <entry>Number of REQUEST packets received. This statistic
+                is expected to grow. Its increase means that clients that just booted
+                received server's response (ADVERTISE), accepted it and now requesting
+                an address (REQUEST).
+              </entry>
+            </row>
+
+
+
+          </tbody>
+          </tgroup>
+        </table>
+    </section>
     <section id="dhcp6-std">
       <title>Supported DHCPv6 Standards</title>
       <para>The following standards are currently
