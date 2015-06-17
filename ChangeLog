@@ -1,3 +1,10 @@
+958.	[func]		tomek
+	DHCPv4 server now supports control channel, implemented over UNIX
+	socket. Currently supported commands are: statistic-get,
+	statistic-reset, statistic-remove, statistic-get-all,
+	statistic-reset-all, statistic-remove-all, shutdown.
+	(Trac #3880, git tbd)
+
 957.	[func]		tomek
 	Per IPv4 subnet statistics (subnet[id].assigned-addresses and
 	subnet[id].total-addresses) has been implemented.

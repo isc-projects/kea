@@ -237,6 +237,104 @@ class StatsMgr : public boost::noncopyable {
         return (name.str());
     }
 
+    /// @defgroup command_methods Methods are used to handle commands.
+    ///
+    /// @brief The following methods are used to handle commands:
+    ///
+    /// @{
+
+    /// @brief Handles statistic-get command
+    ///
+    /// This method handles statistic-get command, which returns value
+    /// of a given statistic). It expects one parameter stored in params map:
+    /// name: name-of-the-statistic
+    ///
+    /// Example params structure:
+    /// {
+    ///     "name": "packets-received"
+    /// }
+    ///
+    /// @param name name of the command (ignored, should be "statistic-get")
+    /// @param params structure containing a map that contains "name"
+    /// @param return answer containing details of specified statistic
+    static isc::data::ConstElementPtr
+    statisticGetHandler(const std::string& name,
+                        const isc::data::ConstElementPtr& params);
+
+    /// @param Handles statistic-reset command
+    ///
+    /// This method handles statistic-reset command, which resets value
+    /// of a given statistic. It expects one parameter stored in params map:
+    /// name: name-of-the-statistic
+    ///
+    /// Example params structure:
+    /// {
+    ///     "name": "packets-received"
+    /// }
+    ///
+    /// @param name name of the command (ignored, should be "statistic-reset")
+    /// @param params structure containing a map that contains "name"
+    /// @param return answer containing confirmation
+    static isc::data::ConstElementPtr
+    statisticResetHandler(const std::string& name,
+                          const isc::data::ConstElementPtr& params);
+
+    /// @param Handles statistic-remove command
+    ///
+    /// This method handles statistic-reset command, which removes a given
+    /// statistic completely. It expects one parameter stored in params map:
+    /// name: name-of-the-statistic
+    ///
+    /// Example params structure:
+    /// {
+    ///     "name": "packets-received"
+    /// }
+    ///
+    /// @param name name of the command (ignored, should be "statistic-remove")
+    /// @param params structure containing a map that contains "name" element
+    /// @param return answer containing confirmation
+    static isc::data::ConstElementPtr
+    statisticRemoveHandler(const std::string& name,
+                           const isc::data::ConstElementPtr& params);
+
+    /// @brief Handles statistic-get-all command
+    ///
+    /// This method handles statistic-get-all command, which returns values
+    /// of all statistics. Params parameter is ignored.
+    ///
+    /// @param name name of the command (ignored, should be "statistic-get-all")
+    /// @param params ignored
+    /// @param return answer containing values of all statistic
+    static isc::data::ConstElementPtr
+    statisticGetAllHandler(const std::string& name,
+                           const isc::data::ConstElementPtr& params);
+
+    /// @brief Handles statistic-reset-all command
+    ///
+    /// This method handles statistic-reset-all command, which sets values of
+    /// all statistics back to zero. Params parameter is ignored.
+    ///
+    /// @param name name of the command (ignored, should be "statistic-reset-all")
+    /// @param params ignored
+    /// @param return answer confirming success of this operation
+    static isc::data::ConstElementPtr
+    statisticResetAllHandler(const std::string& name,
+                             const isc::data::ConstElementPtr& params);
+
+    /// @brief Handles statistic-remove-all command
+    ///
+    /// This method handles statistic-remove-all command, which removes all
+    /// statistics. Params parameter is ignored.
+    ///
+    /// @param name name of the command (ignored, should be "statistic-remove-all")
+    /// @param params ignored
+    /// @param return answer confirming success of this operation
+    static isc::data::ConstElementPtr
+    statisticRemoveAllHandler(const std::string& name,
+                              const isc::data::ConstElementPtr& params);
+
+    /// @}
+
  private:
 
     /// @brief Sets a given statistic to specified value (internal version).
@@ -307,6 +405,22 @@ class StatsMgr : public boost::noncopyable {
     /// @param name of the statistic to be deleted
     /// @return true if deleted, false if not found
     bool deleteObservation(const std::string& name);
+
+    /// @brief Utility method that attempts to extract statistic name
+    ///
+    /// This method attempts to extract statistic name from the params
+    /// structure. It is expected to be a map that contains 'name' element,
+    /// that is of type string. If present as expected, statistic name
+    /// set and true is returned. If missing or is of incorrect type, the reason
+    /// is specified in reason parameter and false is returned.
+    ///
+    /// @param params parameters structure received in command
+    /// @param name [out] name of the statistic (if no error detected)
+    /// @param reason [out] failure reason (if error is detected)
+    /// @return true (if everything is ok), false otherwise
+    static bool getStatName(const isc::data::ConstElementPtr& params,
+                            std::string& name,
+                            std::string& reason);
 
     // This is a global context. All statistics will initially be stored here.
     StatContextPtr global_;

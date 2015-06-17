@@ -7,7 +7,7 @@ dist_html_DATA = $(HTMLDOCS) kea-guide.css
 
 DOCBOOK = kea-guide.xml intro.xml quickstart.xml install.xml admin.xml config.xml
 DOCBOOK += keactrl.xml dhcp4-srv.xml dhcp6-srv.xml logging.xml ddns.xml hooks.xml
-DOCBOOK += libdhcp.xml lfc.xml stats.xml
+DOCBOOK += libdhcp.xml lfc.xml stats.xml ctrl-channel.xml
 
 EXTRA_DIST = $(DOCBOOK)
 DISTCLEANFILES = $(HTMLDOCS) $(DOCS) kea-messages.xml

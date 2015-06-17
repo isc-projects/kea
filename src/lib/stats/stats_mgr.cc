@@ -14,8 +14,12 @@
 
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
+#include <cc/data.h>
+#include <cc/command_interpreter.h>
 
 using namespace std;
+using namespace isc::data;
+using namespace isc::config;
 
 namespace isc {
 namespace stats {
@@ -142,7 +146,95 @@ size_t StatsMgr::count() const {
     return (global_->stats_.size());
 }
 
+isc::data::ConstElementPtr
+StatsMgr::statisticGetHandler(const std::string& /*name*/,
+                              const isc::data::ConstElementPtr& params) {
+    std::string name, error;
+    if (!getStatName(params, name, error)) {
+        return (createAnswer(CONTROL_RESULT_ERROR, error));
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS,
+                         instance().get(name)));
+}
 
+isc::data::ConstElementPtr
+StatsMgr::statisticResetHandler(const std::string& /*name*/,
+                                const isc::data::ConstElementPtr& params) {
+    std::string name, error;
+    if (!getStatName(params, name, error)) {
+        return (createAnswer(CONTROL_RESULT_ERROR, error));
+    }
+
+    if (instance().reset(name)) {
+        return (createAnswer(CONTROL_RESULT_SUCCESS,
+                             "Statistic '" + name + "' reset."));
+    } else {
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "No '" + name + "' statistic found"));
+    }
+}
+
+isc::data::ConstElementPtr
+StatsMgr::statisticRemoveHandler(const std::string& /*name*/,
+                                 const isc::data::ConstElementPtr& params) {
+    std::string name, error;
+    if (!getStatName(params, name, error)) {
+        return (createAnswer(CONTROL_RESULT_ERROR, error));
+    }
+    if (instance().del(name)) {
+        return (createAnswer(CONTROL_RESULT_SUCCESS,
+                             "Statistic '" + name + "' removed."));
+    } else {
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "No '" + name + "' statistic found"));
+    }
+
+}
+
+isc::data::ConstElementPtr
+StatsMgr::statisticRemoveAllHandler(const std::string& /*name*/,
+                                    const isc::data::ConstElementPtr& /*params*/) {
+    instance().removeAll();
+    return (createAnswer(CONTROL_RESULT_SUCCESS,
+                         "All statistics removed."));
+}
+
+isc::data::ConstElementPtr
+StatsMgr::statisticGetAllHandler(const std::string& /*name*/,
+                                 const isc::data::ConstElementPtr& /*params*/) {
+    ConstElementPtr all_stats = instance().getAll();
+    return (createAnswer(CONTROL_RESULT_SUCCESS, all_stats));
+}
+
+isc::data::ConstElementPtr
+StatsMgr::statisticResetAllHandler(const std::string& /*name*/,
+                                   const isc::data::ConstElementPtr& /*params*/) {
+    instance().resetAll();
+    return (createAnswer(CONTROL_RESULT_SUCCESS,
+                         "All statistics reset to neutral values."));
+}
+
+bool
+StatsMgr::getStatName(const isc::data::ConstElementPtr& params,
+                      std::string& name,
+                      std::string& reason) {
+    if (!params) {
+        reason = "Missing mandatory 'name' parameter.";
+        return (false);
+    }
+    ConstElementPtr stat_name = params->get("name");
+    if (!stat_name) {
+        reason = "Missing mandatory 'name' parameter.";
+        return (false);
+    }
+    if (stat_name->getType() != Element::string) {
+        reason = "'name' parameter expected to be a string.";
+        return (false);
+    }
+
+    name = stat_name->stringValue();
+    return (true);
+}
 
 };
 };

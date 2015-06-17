@@ -420,6 +420,23 @@ private:
     ParserContextPtr global_context_;
 };
 
+/// @brief Parser for the control-socket structure
+///
+/// It does not parse anything, simply stores the element in
+/// the staging config.
+class ControlSocketParser : public DhcpConfigParser {
+public:
+
+    ControlSocketParser(const std::string& param_name);
+
+    /// @brief Stores contents of the control-socket map in the staging config.
+    ///
+    /// @param value pointer to the content of parsed values
+    virtual void build(isc::data::ConstElementPtr value);
+
+    /// @brief Does nothing.
+    virtual void commit();
+};
 
 /// @brief Parser for hooks library list
 ///

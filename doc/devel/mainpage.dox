@@ -79,6 +79,11 @@
  * - @subpage lfc
  *   - @subpage lfcProcessing
  *   - @subpage lfcFiles
+ * - @subpage ctrlSocket
+ *   - @subpage ctrlSocketOverview
+ *   - @subpage ctrlSocketClient
+ *   - @subpage ctrlSocketImpl
+ *   - @subpage ctrlSocketConnections
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay
