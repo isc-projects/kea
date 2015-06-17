@@ -3,7 +3,7 @@
 	socket. Currently supported commands are: statistic-get,
 	statistic-reset, statistic-remove, statistic-get-all,
 	statistic-reset-all, statistic-remove-all, shutdown.
-	(Trac #3880, git tbd)
+	(Trac #3880, git 688658395518f0b97d5384af81ceab5206691ad5)
 
 957.	[func]		tomek
 	Per IPv4 subnet statistics (subnet[id].assigned-addresses and
