@@ -190,6 +190,9 @@ TEST_F(PIDFileTest, pidWriteFail) {
 
     // Now try a write to the file, expecting an exception
     EXPECT_THROW(pid_file.write(10), PIDFileError);
+
+    // Don't forget to restore the write right for the next test
+    chmod(absolutePath(TESTNAME).c_str(), S_IRUSR | S_IWUSR);
 }
 
 /// @brief Test deleting a file that doesn't exist
