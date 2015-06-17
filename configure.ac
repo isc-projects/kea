@@ -1093,7 +1093,9 @@ fi
 # Add some default CPP flags needed for Boost, identified by the AX macro.
 CPPFLAGS="$CPPFLAGS $CPPFLAGS_BOOST_THREADCONF"
 
-# Can be required by gtest, boost and perhaps still asio
+# I can't get some of the #include <asio.hpp> right without this
+# TODO: find the real cause of asio/boost wanting pthreads
+# (this currently only occurs for src/lib/cc/session_unittests)
 PTHREAD_LDFLAGS=
 AC_CHECK_LIB(pthread, pthread_create,[ PTHREAD_LDFLAGS=-lpthread ], [])
 AC_SUBST(PTHREAD_LDFLAGS)
