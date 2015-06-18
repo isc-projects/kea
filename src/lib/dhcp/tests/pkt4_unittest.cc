@@ -735,7 +735,7 @@ TEST_F(Pkt4Test, unpackVendorMalformed) {
     Pkt4Ptr success(new Pkt4(&orig[0], orig.size()));
     EXPECT_NO_THROW(success->unpack());
 
-    // Data-len must match but it doesn't throw
+    // Data-len must match
     vector<uint8_t> baddatalen = orig;
     baddatalen.resize(orig.size() - 5);
     baddatalen[full_len_index] = 10;

@@ -949,11 +949,19 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
         3, 1, 2, 3  // first byte is opaque data length, the rest is opaque data
     };
     std::vector<uint8_t> vivco_buf(vivco_data, vivco_data + sizeof(vivco_data));
+    const char vivsio_data[] = {
+        1, 2, 3, 4, // enterprise id
+        4,          // first byte is vendor block length
+        1, 2, 3, 4  // option type=1 length=2
+    };
+    std::vector<uint8_t> vivsio_buf(vivsio_data, vivsio_data + sizeof(vivsio_data));
+
     LibDhcpTest::testStdOptionDefs4(DHO_VIVCO_SUBOPTIONS, vivco_buf.begin(),
                                     vivco_buf.end(), typeid(OptionVendorClass));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_VIVSO_SUBOPTIONS, begin, end,
-                                    typeid(OptionVendor));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_VIVSO_SUBOPTIONS, vivsio_buf.begin(),
+                                    vivsio_buf.end(), typeid(OptionVendor));
 }
 
 // Test that definitions of standard options have been initialized

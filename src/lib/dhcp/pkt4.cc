@@ -223,9 +223,10 @@ Pkt4::unpack() {
         offset = callback_(opts_buffer, "dhcp4", options_, NULL, NULL);
     }
 
-    // If offset is not equal to the size, then something is wrong here. We
-    // either parsed past input buffer (bug in our code) or we haven't parsed
-    // everything (received trailing garbage or truncated option).
+    // If offset is not equal to the size and there is no DHO_END,
+    // then something is wrong here. We either parsed past input
+    // buffer (bug in our code) or we haven't parsed everything
+    // (received trailing garbage or truncated option).
     //
     // Invoking Jon Postel's law here: be conservative in what you send, and be
     // liberal in what you accept. There's no easy way to log something from
@@ -233,7 +234,7 @@ Pkt4::unpack() {
     // bytes. We also need to quell compiler warning about unused offset
     // variable.
     //
-    // if (offset != size) {
+    // if ((offset != size) && (opts_buffer[offset] != DHO_END)) {
     //        isc_throw(BadValue, "Received DHCPv6 buffer of size " << size
     //                  << ", were able to parse " << offset << " bytes.");
     // }
