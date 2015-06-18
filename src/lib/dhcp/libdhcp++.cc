@@ -249,6 +249,7 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
                                size_t* relay_msg_len /* = 0 */) {
     size_t offset = 0;
     size_t length = buf.size();
+    size_t last_offset = 0;
 
     // Get the list of standard option definitions.
     OptionDefContainer option_defs;
@@ -265,7 +266,17 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
 
     // The buffer being read comprises a set of options, each starting with
     // a two-byte type code and a two-byte length field.
-    while (offset + 4 <= length) {
+    while (offset < length) {
+        // Save the current offset for backtracking
+        last_offset = offset;
+
+        // Check if there is room for another option
+        if (offset + 4 > length) {
+            // Still something but smaller than an option
+            return (last_offset);
+        }
+
+        // Parse the option header
         uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
         offset += 2;
 
@@ -276,12 +287,12 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
             // We peeked at the option header of the next option, but
             // discovered that it would end up beyond buffer end, so
             // the option is truncated. Hence we can't parse
-            // it. Therefore we revert back by those four bytes (as if
+            // it. Therefore we revert back by those bytes (as if
             // we never parsed them).
             //
             // @note it is the responsability of the caller to throw
             // an exception on partial parsing
-            return (offset - 4);
+            return (last_offset);
         }
 
         if (opt_type == D6O_RELAY_MSG && relay_msg_offset && relay_msg_len) {
@@ -299,7 +310,7 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
                 // Truncated vendor-option. We expect at least
                 // 4 bytes for the enterprise-id field. Let's roll back
                 // option code + option length (4 bytes) and return.
-                return (offset - 4);
+                return (last_offset);
             }
 
             // Parse this as vendor option
@@ -359,6 +370,7 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
                                const std::string& option_space,
                                isc::dhcp::OptionCollection& options) {
     size_t offset = 0;
+    size_t last_offset = 0;
 
     // Get the list of standard option definitions.
     OptionDefContainer option_defs;
@@ -375,12 +387,20 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
 
     // The buffer being read comprises a set of options, each starting with
     // a one-byte type code and a one-byte length field.
-    while (offset + 1 <= buf.size()) {
+    while (offset < buf.size()) {
+        // Save the current offset for backtracking
+        last_offset = offset;
+
+        // Get the option type
         uint8_t opt_type = buf[offset++];
 
         // DHO_END is a special, one octet long option
-        if (opt_type == DHO_END)
-            return (offset); // just return. Don't need to add DHO_END option
+        if (opt_type == DHO_END) {
+            // just return. Don't need to add DHO_END option
+            // Don't return offset because it makes this condition
+            // and partial parsing impossible to recognize.
+            return (last_offset);
+        }
 
         // DHO_PAD is just a padding after DHO_END. Let's continue parsing
         // in case we receive a message without DHO_END.
@@ -391,12 +411,11 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
             // We peeked at the option header of the next option, but
             // discovered that it would end up beyond buffer end, so
             // the option is truncated. Hence we can't parse
-            // it. Therefore we revert back by that byte (as if
-            // we never parsed it).
+            // it. Therefore we revert back (as if we never parsed it).
             //
             // @note it is the responsability of the caller to throw
             // an exception on partial parsing
-            return (offset - 1);
+            return (last_offset);
         }
 
         uint8_t opt_len =  buf[offset++];
@@ -404,9 +423,8 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
             // We peeked at the option header of the next option, but
             // discovered that it would end up beyond buffer end, so
             // the option is truncated. Hence we can't parse
-            // it. Therefore we revert back by two bytes (as if we
-            // never parsed them).
-            return (offset - 2);
+            // it. Therefore we revert back (as if we never parsed it).
+            return (last_offset);
         }
 
         // Get all definitions with the particular option code. Note
@@ -470,7 +488,8 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
     // a two-byte type code and a two-byte length field.
     while (offset < length) {
         if (offset + 4 > length) {
-            isc_throw(OutOfRange, "Option parse failed: truncated header");
+            isc_throw(OutOfRange,
+                      "Vendor option parse failed: truncated header");
         }
 
         uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
@@ -480,7 +499,7 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
         offset += 2;
 
         if (offset + opt_len > length) {
-            isc_throw(OutOfRange, "Option parse failed. Tried to parse "
+            isc_throw(OutOfRange, "Vendor option parse failed. Tried to parse "
                           << offset + opt_len << " bytes from " << length
                           << "-byte long buffer.");
         }
@@ -558,7 +577,7 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
 
     // The buffer being read comprises a set of options, each starting with
     // a one-byte type code and a one-byte length field.
-    while (offset + 1 <= buf.size()) {
+    while (offset < buf.size()) {
         // Note that Vendor-Specific info option (RFC3925) has a
         // different option format than Vendor-Spec info for
         // DHCPv6. (there's additional layer of data-length)
@@ -572,12 +591,12 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
         uint8_t offset_end = offset + data_len;
 
         // beginning of data-chunk parser
-        while (offset + 1 <= offset_end) {
+        while (offset < offset_end) {
             uint8_t opt_type = buf[offset++];
 
             // No DHO_END or DHO_PAD in vendor options
 
-            if (offset + 1 > buf.size()) {
+            if (offset + 1 > offset_end) {
                 // opt_type must be cast to integer so as it is not
                 // treated as unsigned char value (a number is
                 // presented in error message).
@@ -587,7 +606,7 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
             }
 
             uint8_t opt_len =  buf[offset++];
-            if (offset + opt_len > buf.size()) {
+            if (offset + opt_len > offset_end) {
                 isc_throw(OutOfRange, "Option parse failed. Tried to parse "
                           << offset + opt_len << " bytes from " << buf.size()
                           << "-byte long buffer.");
@@ -640,6 +659,7 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
 
         } // end of data-chunk
 
+        break; // end of the vendor block.
     }
     return (offset);
 }
