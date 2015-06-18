@@ -376,6 +376,21 @@ TEST_F(Pkt6Test, unpackMalformed) {
 
     // ... but there should be no option 123 as it was malformed.
     EXPECT_FALSE(trunc_option->getOption(123));
+
+    // Check with truncated length field
+    Pkt6Ptr trunc_length(new Pkt6(&malform2[0], malform2.size() - 1));
+    EXPECT_NO_THROW(trunc_length->unpack());
+    EXPECT_FALSE(trunc_length->getOption(123));
+
+    // Check with missing length field
+    Pkt6Ptr no_length(new Pkt6(&malform2[0], malform2.size() - 2));
+    EXPECT_NO_THROW(no_length->unpack());
+    EXPECT_FALSE(no_length->getOption(123));
+
+    // Check with truncated type field
+    Pkt6Ptr trunc_type(new Pkt6(&malform2[0], malform2.size() - 3));
+    EXPECT_NO_THROW(trunc_type->unpack());
+    EXPECT_FALSE(trunc_type->getOption(123));
 }
 
 // Checks if the code is able to handle a malformed vendor option

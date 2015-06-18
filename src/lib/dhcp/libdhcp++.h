@@ -137,30 +137,17 @@ public:
     static void packOptions(isc::util::OutputBuffer& buf,
                             const isc::dhcp::OptionCollection& options);
 
-    /// @brief Parses provided buffer as DHCPv4 options and creates Option objects.
+    /// @brief Parses provided buffer as DHCPv6 options and creates
+    /// Option objects.
     ///
-    /// Parses provided buffer and stores created Option objects
-    /// in options container.
-    ///
-    /// @param buf Buffer to be parsed.
-    /// @param option_space A name of the option space which holds definitions
-    ///        to be used to parse options in the packets.
-    /// @param options Reference to option container. Options will be
-    ///        put here.
-    /// @return offset to the first byte after the last successfully parsed option
-    static size_t unpackOptions4(const OptionBuffer& buf,
-                                 const std::string& option_space,
-                                 isc::dhcp::OptionCollection& options);
-
-    /// @brief Parses provided buffer as DHCPv6 options and creates Option objects.
-    ///
-    /// Parses provided buffer and stores created Option objects in options
-    /// container. The last two parameters are optional and are used in
-    /// relay parsing. If they are specified, relay-msg option is not created,
-    /// but rather those two parameters are specified to point out where
-    /// the relay-msg option resides and what is its length. This is a performance
-    /// optimization that avoids unnecessary copying of potentially large
-    /// relay-msg option. It is not used for anything, except in the next
+    /// Parses provided buffer and stores created Option objects in
+    /// options container. The last two parameters are optional and
+    /// are used in relay parsing. If they are specified, relay-msg
+    /// option is not created, but rather those two parameters are
+    /// specified to point out where the relay-msg option resides and
+    /// what is its length. This is a performance optimization that
+    /// avoids unnecessary copying of potentially large relay-msg
+    /// option. It is not used for anything, except in the next
     /// iteration its content will be treated as buffer to be parsed.
     ///
     /// @param buf Buffer to be parsed.
@@ -172,12 +159,37 @@ public:
     ///        offset to beginning of relay_msg option will be stored in it.
     /// @param relay_msg_len reference to a size_t structure. If specified,
     ///        length of the relay_msg option will be stored in it.
-    /// @return offset to the first byte after the last successfully parsed option
+    /// @return offset to the first byte after the last successfully
+    /// parsed option
+    ///
+    /// @note This function throws when an option type is defined more
+    /// than once, and it calls option building routines which can throw.
+    /// Partial parsing does not throw: it is the responsibility of the
+    /// caller to handle this condition.
     static size_t unpackOptions6(const OptionBuffer& buf,
                                  const std::string& option_space,
                                  isc::dhcp::OptionCollection& options,
                                  size_t* relay_msg_offset = 0,
                                  size_t* relay_msg_len = 0);
+
+    /// @brief Parses provided buffer as DHCPv4 options and creates
+    /// Option objects.
+    ///
+    /// Parses provided buffer and stores created Option objects
+    /// in options container.
+    ///
+    /// @param buf Buffer to be parsed.
+    /// @param option_space A name of the option space which holds definitions
+    ///        to be used to parse options in the packets.
+    /// @param options Reference to option container. Options will be
+    ///        put here.
+    /// @return offset to the first byte after the last successfully
+    /// parsed option or the offset of the DHO_END option type.
+    ///
+    /// The unpackOptions6 note applies too.
+    static size_t unpackOptions4(const OptionBuffer& buf,
+                                 const std::string& option_space,
+                                 isc::dhcp::OptionCollection& options);
 
     /// Registers factory method that produces options of specific option types.
     ///
@@ -215,9 +227,13 @@ public:
     ///
     /// @param vendor_id enterprise-id of the vendor
     /// @param buf Buffer to be parsed.
-    /// @param options Reference to option container. Options will be
+    /// @param options Reference to option container. Suboptions will be
     ///        put here.
-    /// @return offset to the first byte after the last successfully parsed option
+    /// @return offset to the first byte after the last successfully
+    /// parsed suboption
+    ///
+    /// @note unpackVendorOptions6 throws when it fails to parse a suboption
+    /// so the return value is currently always the buffer length.
     static size_t unpackVendorOptions6(const uint32_t vendor_id,
                                        const OptionBuffer& buf,
                                        isc::dhcp::OptionCollection& options);
@@ -230,10 +246,14 @@ public:
     ///
     /// @param vendor_id enterprise-id of the vendor
     /// @param buf Buffer to be parsed.
-    /// @param options Reference to option container. Options will be
+    /// @param options Reference to option container. Suboptions will be
     ///        put here.
-    /// @return offset to the first byte after the last successfully parsed option
-    static size_t unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffer& buf,
+    /// @return offset to the first byte after the last successfully
+    /// parsed suboption
+    ///
+    /// The unpackVendorOptions6 note applies
+    static size_t unpackVendorOptions4(const uint32_t vendor_id,
+                                       const OptionBuffer& buf,
                                        isc::dhcp::OptionCollection& options);
 
 private:
