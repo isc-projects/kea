@@ -22,6 +22,7 @@
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
+#include <stats/stats_mgr.h>
 
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
@@ -40,6 +41,7 @@
 using namespace std;
 using namespace isc::hooks;
 using namespace isc::asiolink;
+using namespace isc::stats;
 
 namespace isc {
 namespace dhcp {
@@ -82,6 +84,14 @@ AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
 
     cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
     cfg_mgr.commit();
+
+    // By default we pretend our subnet has 100 addresses and prefixes allocated.
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs"),
+        static_cast<int64_t>(100));
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_->getID(), "assigned-PDs"),
+        static_cast<int64_t>(100));
 }
 
 void

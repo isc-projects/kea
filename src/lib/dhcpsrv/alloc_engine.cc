@@ -1038,12 +1038,15 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         bool status = LeaseMgrFactory::instance().addLease(lease);
 
         if (status) {
-            // The lease insertion succeeded, let's bump up the statistic.
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
-                                       ctx.type_ == Lease::TYPE_NA ? "assigned-NAs" :
-                                                                     "assigned-PDs"),
-                static_cast<int64_t>(1));
+            // The lease insertion succeeded - if the lease is in the
+            // current subnet lets bump up the statistic.
+            if (ctx.subnet_->inPool(ctx.type_, addr)) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                           ctx.type_ == Lease::TYPE_NA ? "assigned-NAs" :
+                                                                         "assigned-PDs"),
+                    static_cast<int64_t>(1));
+            }
 
             return (lease);
         } else {

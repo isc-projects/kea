@@ -17,6 +17,7 @@
 #include <dhcp/option6_status_code.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
+#include <stats/stats_mgr.h>
 #include <util/pointer_util.h>
 #include <cc/command_interpreter.h>
 #include <string.h>
@@ -24,6 +25,7 @@
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::stats;
 
 namespace isc {
 namespace test {
@@ -590,6 +592,12 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(type, existing);
     ASSERT_TRUE(l);
 
+    // And prepopulate the stats counter
+    std::string name = StatsMgr::generateName("subnet", subnet_->getID(),
+                                              type == Lease::TYPE_NA ? "assigned-NAs" :
+                                              "assigned-PDs");
+    StatsMgr::instance().setValue(name, static_cast<int64_t>(1));
+
     // Let's create a RELEASE
     Pkt6Ptr rel = createMessage(DHCPV6_RELEASE, type, release_addr, prefix_len,
                                 iaid);
@@ -628,6 +636,11 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
     l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
                                               subnet_->getID());
     ASSERT_FALSE(l);
+
+    // We should have decremented the address counter
+    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(0, stat->getInteger().first);
 }
 
 void
@@ -655,6 +668,12 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
 
     // GenerateClientId() also sets duid_
     OptionPtr clientid = generateClientId();
+
+    // Pretend we have allocated 1 lease
+    std::string name = StatsMgr::generateName("subnet", subnet_->getID(),
+                                              type == Lease::TYPE_NA ? "assigned-NAs" :
+                                              "assigned-PDs");
+    StatsMgr::instance().setValue(name, static_cast<int64_t>(1));
 
     // Check that the lease is NOT in the database
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(type, addr);
@@ -685,6 +704,11 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     l = LeaseMgrFactory::instance().getLease6(type, addr);
     ASSERT_FALSE(l);
 
+    // Verify we didn't decrement the stats counter
+    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
+
     // CASE 2: Lease is known and belongs to this client, but to a different IAID
     SCOPED_TRACE("CASE 2: Lease is known and belongs to this client, but to a different IAID");
 
@@ -713,6 +737,9 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     l = LeaseMgrFactory::instance().getLease6(type, addr);
     ASSERT_TRUE(l);
 
+    // Verify we didn't decrement the stats counter
+    EXPECT_EQ(1, stat->getInteger().first);
+
     // CASE 3: Lease belongs to a client with different client-id
     SCOPED_TRACE("CASE 3: Lease belongs to a client with different client-id");
 
@@ -736,6 +763,9 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     // Check that the lease is still there
     l = LeaseMgrFactory::instance().getLease6(type, addr);
     ASSERT_TRUE(l);
+
+    // Verify we didn't decrement the stats counter
+    EXPECT_EQ(1, stat->getInteger().first);
 
     // Finally, let's cleanup the database
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));

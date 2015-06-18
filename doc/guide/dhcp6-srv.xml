@@ -2608,13 +2608,14 @@ should include options from the isc option space:
             <entry>subnet[id].total-NAs</entry>
             <entry>integer</entry>
             <entry>
-            This statistic shows the total number of NA addresses available for the
-            DHCPv6 management. In other words, this is the sum of all addresses in
-            all configured pools. This statistic changes only during configuration
-            changes. Note it does not take into account any addresses that may be
-            reserved due to host reservation. The <emphasis>id</emphasis> is the
-            subnet-id of a given subnet. This statistic is exposed for each subnet
-	    separately. This statistic is reset during reconfiguration event.
+            This statistic shows the total number of NA addresses available for
+            DHCPv6 management for a given subnet. In other words, this is the sum
+            of all addresses in all configured pools. This statistic changes only
+            during configuration changes. Note it does not take into account any
+            addresses that may be reserved due to host reservation. The
+            <emphasis>id</emphasis> is the subnet-id of a given subnet. This
+            statistic is exposed for each subnet separately. This statistic is
+            reset during a reconfiguration event.
             </entry>
             </row>
 
@@ -2622,14 +2623,14 @@ should include options from the isc option space:
             <entry>subnet[id].assigned-NAs</entry>
             <entry>integer</entry>
             <entry>
-            This statistic shows the number of assigned NA addresses in a given subnet.
-            This statistic increases every time a new lease is allocated (as a result
-            of receiving a REQUEST message) and is decreased every time a lease is
-            released (a RELEASE message is received). When lease expiration
+            This statistic shows the number of NA addresses in a given subnet that
+            are assigned. This statistic increases every time a new lease is allocated
+            (as a result of receiving a REQUEST message) and is decreased every time a
+            lease is released (a RELEASE message is received). When lease expiration
             is implemented (planned for Kea 1.0), it will also decrease when a lease
             is expired. The <emphasis>id</emphasis> is the subnet-id of a given
             subnet. This statistic is exposed for each subnet separately. This
-            statistic is reset during reconfiguration event.
+            statistic is reset during a reconfiguration event.
             </entry>
             </row>
 
@@ -2637,13 +2638,14 @@ should include options from the isc option space:
             <entry>subnet[id].total-PDs</entry>
             <entry>integer</entry>
             <entry>
-            This statistic shows the total number of PD prefixes available for the
-            DHCPv6 management. In other words, this is the sum of all prefixes in
-            all configured pools. This statistic changes only during configuration
-            changes. Note it does not take into account any prefixes that may be
-            reserved due to host reservation. The <emphasis>id</emphasis> is the
-            subnet-id of a given subnet. This statistic is exposed for each subnet
-	    separately. This statistic is reset during reconfiguration event.
+            This statistic shows the total number of PD prefixes available for
+            DHCPv6 management for a given subnet. In other words, this is the sum
+            of all prefixes in all configured pools. This statistic changes only
+            during configuration changes. Note it does not take into account any
+            prefixes that may be reserved due to host reservation. The
+            <emphasis>id</emphasis> is the subnet-id of a given subnet. This
+            statistic is exposed for each subnet separately. This statistic is
+            reset during a reconfiguration event.
             </entry>
             </row>
 
@@ -2651,14 +2653,14 @@ should include options from the isc option space:
             <entry>subnet[id].assigned-PDs</entry>
             <entry>integer</entry>
             <entry>
-            This statistic shows the number of assigned PD prefixes in a given subnet.
-            This statistic increases every time a new lease is allocated (as a result
-            of receiving a REQUEST message) and is decreased every time a lease is
-            released (a RELEASE message is received). When lease expiration
+            This statistic shows the number of PD prefixes in a given subnet that
+            are assigned. This statistic increases every time a new lease is allocated
+            (as a result of receiving a REQUEST message) and is decreased every time a
+            lease is released (a RELEASE message is received). When lease expiration
             is implemented (planned for Kea 1.0), it will also decrease when a lease
             is expired. The <emphasis>id</emphasis> is the subnet-id of a given
             subnet. This statistic is exposed for each subnet separately. This
-            statistic is reset during reconfiguration event.
+            statistic is reset during a reconfiguration event.
             </entry>
             </row>
 
