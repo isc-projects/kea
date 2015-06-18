@@ -1,3 +1,7 @@
+960.	[build]		fdupont
+	Get rid of the last bundy code.
+	(Trac #3732, git xxx)
+
 959.	[build]		fdupont
 	Removed no longer used logging in cc and config libraries.
 	(Trac #3732, git 8d0324f4786900db953489ebaa9e018b1238543f)
