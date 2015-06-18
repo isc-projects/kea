@@ -287,7 +287,7 @@ TEST_F(SARRTest, rapidCommitDisable) {
 TEST_F(SARRTest, sarrStats) {
 
     // Let's use one of the existing configurations and tell the client to
-    // as for an address.
+    // ask for an address.
     Dhcp6Client client;
     configure(CONFIGS[1], *client.getServer());
     client.setInterface("eth1");
