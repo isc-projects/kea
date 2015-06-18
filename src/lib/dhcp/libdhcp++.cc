@@ -290,7 +290,7 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
             // it. Therefore we revert back by those bytes (as if
             // we never parsed them).
             //
-            // @note it is the responsability of the caller to throw
+            // @note it is the responsibility of the caller to throw
             // an exception on partial parsing
             return (last_offset);
         }
@@ -413,7 +413,7 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
             // the option is truncated. Hence we can't parse
             // it. Therefore we revert back (as if we never parsed it).
             //
-            // @note it is the responsability of the caller to throw
+            // @note it is the responsibility of the caller to throw
             // an exception on partial parsing
             return (last_offset);
         }
