@@ -986,8 +986,8 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     const char vopt_data[] = {
         1, 2, 3, 4,                               // enterprise=0x1020304
         0, 100,                                   // type=100
-	0, 6,                                     // length=6
-	102, 111, 111, 98, 97, 114                // data="foobar"
+        0, 6,                                     // length=6
+        102, 111, 111, 98, 97, 114                // data="foobar"
     };
     // Initialize a vector with the suboption data.
     std::vector<uint8_t> vopt_buf(vopt_data, vopt_data + sizeof(vopt_data));
@@ -1049,7 +1049,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(OptionVendorClass));
 
     LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, vopt_buf.begin(),
-				    vopt_buf.end(),
+                                    vopt_buf.end(),
                                     typeid(OptionVendor),
                                     "vendor-opts-space");
 
