@@ -17,6 +17,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
@@ -693,6 +694,8 @@ namespace dhcp {
                                                 globalContext());
     } else if (config_id.compare("relay-supplied-options") == 0) {
         parser = new RSOOListConfigParser(config_id);
+    } else if (config_id.compare("control-socket") == 0) {
+        parser = new ControlSocketParser(config_id);
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "
@@ -813,6 +816,26 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         if (subnet_config != values_map.end()) {
             config_pair.first = "subnet6";
             subnet_parser->build(subnet_config->second);
+        }
+
+        // Get command socket configuration from the config file.
+        // This code expects the following structure:
+        // {
+        //     "socket-type": "unix",
+        //     "socket-name": "/tmp/kea6.sock"
+        // }
+        ConstElementPtr sock_cfg =
+            CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
+
+        // Close existing socket (if any).
+        isc::config::CommandMgr::instance().closeCommandSocket();
+        if (sock_cfg) {
+            // This will create a control socket and will install external socket
+            // in IfaceMgr. That socket will be monitored when Dhcp4Srv::receivePacket()
+            // calls IfaceMgr::receive4() and callback in CommandMgr will be called,
+            // if necessary. If there were previously open command socket, it will
+            // be closed.
+            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
         }
 
         // The lease database parser is the last to be run.
