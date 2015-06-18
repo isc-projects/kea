@@ -8,8 +8,152 @@
 
   <chapter id="ctrl-channel">
     <title>Management API</title>
-    <para>
-      @todo: To be implemented in ticket 3880.
+
+    <para>A classic approach to the daemon configuration assumes that
+    the server's configuration is stored in the configuration files
+    and when the configuration is changed, the daemon is restarted.
+    This approach has significant disadvantage of introducing periods
+    of downtime, where client traffic is not handled. Another risk
+    is that if the new configuration is invalid for whatever reason,
+    the server may refuse to start, which will further extend the
+    downtime period, until the issue is resolved.</para>
+
+    <para>To avoid such problems, both DHCPv4 and DHCPv6 servers
+    support introduced support for a mechanism that will allow
+    on-line reconfiguration, without requiring server shutdown.
+    Both servers can be instructed to open control sockets, which
+    is a communication channel. The server is able to receive
+    commands on that channel, act on them and report back status.
+    While the set of commands supported in Kea 0.9.2 is limited,
+    the number is expected to grow over time.</para>
+
+    <para>Currently the only supported type of control channel
+    is UNIX stream socket. For details how to configure it, see
+    <xref linkend="dhcp4-ctrl-channel" /> and <xref
+    linkend="dhcp6-ctrl-channel" />. It is likely that support
+    for other control channel types will be added in the future.
     </para>
+
+    <section id="ctrl-channel-syntax">
+    <title>Data syntax</title>
+    <para>Communication over Control Channel is conducted using JSON
+    structures. If configured, Kea will open a socket and will listen
+    for any incoming connections. A process connecting to this socket
+    is expected to send JSON commands structured as follows:
+
+<screen>
+{
+    "command": "foo",
+    "arguments": {
+	"param1": "value1",
+	"param2": "value2",
+	...
+    }
+}
+</screen>
+
+    <command>command</command> is the name of command to execute and
+    is mandatory. <command>arguments</command> is a map of parameters
+    required to carry out the given command.  The exact content and
+    format is command specific.</para>
+
+    <para>The server will process the incoming command and then send a
+    response of the form:
+<screen>
+{
+    "result": 0|1,
+    "text": "textual description",
+    "arguments": {
+	"argument1": "value1",
+	"argument2": "value2",
+	...
+    }
+}
+</screen>
+    <command>result</command> indicates the outcome of the command. A value of 0
+    means a success while any non-zero value designates an error. Currently 1 is
+    used as a generic error, but additional error codes may be added in the
+    future.<command>text</command> field typically appears when result is
+    non-zero and contains description of the error encountered, but it may also
+    appear for success results. That's command specific.
+    <command>arguments</command> is a map of additional data values returned by
+    the server, specific to the command issue. The map is always present, even
+    if it contains no data values.</para>
+    </section>
+
+    <section id="ctrl-channel-client">
+    <title>Using control channel</title>
+
+    <para>ISC does not provide a client for using control channel.  The primary
+    reason for that is the expectation is that the entity using control channel
+    is typically an IPAM or similar network management/monitoring software which
+    may have quite varied expectations regarding the client and even likely to
+    be written in languages different than C or C++. Therefore we only provide
+    examples how one can take advantage of the API.</para>
+
+    <para>The easiest way is to use a tool called <command>socat</command>,
+    a tool available from <ulink url="http://www.dest-unreach.org/socat/">socat
+    homepage</ulink>, but is also widely available in Linux and BSD
+    distributions. Once Kea is started, one could connect to the control
+    interface using the following command:
+<screen>
+$ socat UNIX:/path/to/the/kea/socket -
+</screen>
+where <command>/path/to/the/kea/socket</command> is the path specified in
+<command>Dhcp4/control-socket/socket-name</command> parameter in Kea
+configuration file.</para>
+
+    <para>It is also easy to open UNIX socket programmatically. An example of
+    such simplistic client written in C is available in the Kea Developer's
+    Guide, chapter Control Channel Overview, section Using Control Channel.</para>
+
+    </section>
+
+    <section id="commands-common">
+      <title>Commands supported by both DHCPv4 and DHCPv6 servers</title>
+
+      <section id="command-list-commands">
+      <title>list-commands command</title>
+
+      <para>
+	<emphasis>list-commands</emphasis> command retrieves a list of all
+	supported commands by the server. It does not take any arguments.
+	An example command may look like this:
+<screen>
+{
+    "command": "list-commands",
+    "arguments": { }
+}
+</screen>
+      </para>
+      <para>
+	The server will respond with a list of all supported commands. The
+	arguments element will be a list strings. Each string will convey
+	one supported command.
+      </para>
+    </section> <!-- end of command-list-commands -->
+
+    <section id="command-shutdown">
+      <title>shutdown command</title>
+
+      <para>
+	<emphasis>shutdown</emphasis> command instructs the server to initiate
+	its shutdown procedure. It is an equivalent of sending SIGTERM singal
+	to the process. This command does not take any arguments.  An example
+	command may look like this:
+<screen>
+{
+    "command": "shutdown",
+    "arguments": { }
+}
+</screen>
+      </para>
+      <para>
+	The server will respond with a confirmation that the shutdown procedure
+	has been initiated.
+      </para>
+    </section> <!-- end of command-shutdown -->
+
+    </section> <!-- end of commands supported by both servers -->
 
   </chapter>
