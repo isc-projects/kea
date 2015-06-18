@@ -440,7 +440,7 @@ bool Dhcpv6Srv::run() {
                     .arg(query->getIface())
                     .arg(e.what());
 
-               // Increase the statistics of parse failues and dropped packets.
+               // Increase the statistics of parse failures and dropped packets.
                 isc::stats::StatsMgr::instance().addValue("pkt6-parse-failed",
                                                           static_cast<int64_t>(1));
                 isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
@@ -2937,7 +2937,7 @@ void Dhcpv6Srv::processRSOO(const Pkt6Ptr& query, const Pkt6Ptr& rsp) {
 }
 
 void Dhcpv6Srv::processStatsReceived(const Pkt6Ptr& query) {
-    // Note that we're not bumping pkt4-received statistic as it was
+    // Note that we're not bumping pkt6-received statistic as it was
     // increased early in the packet reception code.
 
     string stat_name = "pkt6-unknown-received";

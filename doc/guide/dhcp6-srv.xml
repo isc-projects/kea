@@ -2589,7 +2589,7 @@ should include options from the isc option space:
       <para>
         The DHCPv6 server supports the following statistics:
       </para>
-        <table frame="all" id="dhcp4-statistics">
+        <table frame="all" id="dhcp6-statistics">
           <title>DHCPv4 Statistics</title>
           <tgroup cols='3'>
           <colspec colname='statistic' align='center'/>
@@ -2628,8 +2628,8 @@ should include options from the isc option space:
               <entry>integer</entry>
               <entry>
                 Number of ADVERTISE packets received. Advertise packets are sent
-                by the server and the server is never expected to receive them. Non-zero
-                value of tris statistic indicates an error ocurring in the network.
+                by the server and the server is never expected to receive them. A non-zero
+                value of this statistic indicates an error ocurring in the network.
                 One likely cause would be a misbehaving relay agent that incorrectly
                 forwards ADVERTISE messages towards the server, rather back to the
                 clients.
@@ -2641,8 +2641,8 @@ should include options from the isc option space:
               <entry>integer</entry>
               <entry>Number of REQUEST packets received. This statistic
                 is expected to grow. Its increase means that clients that just booted
-                received server's response (ADVERTISE), accepted it and now requesting
-                an address (REQUEST).
+                received the server's response (ADVERTISE), accepted it and are now
+                requesting an address (REQUEST).
               </entry>
             </row>
 
@@ -2652,7 +2652,7 @@ should include options from the isc option space:
               <entry>Number of REPLY packets received. This statistic is
               expected to remain zero at all times, as REPLY packets are sent by
               the server and the server is never expected to receive
-              them. Non-zero value indicates an error. One likely cause would be
+              them. A non-zero value indicates an error. One likely cause would be
               a misbehaving relay agent that incorrectly forwards REPLY messages
               towards the server, rather back to the clients.
               </entry>
@@ -2670,9 +2670,9 @@ should include options from the isc option space:
             <row>
               <entry>pkt6-rebind-received</entry>
               <entry>integer</entry>
-              <entry>Number of REBIND packets received. Non-zero value of statistic
+              <entry>Number of REBIND packets received. A non-zero value
               indicates that clients didn't receive responses to their RENEW messages
-              (regular lease renewal mechanism) and attempting to find any server
+              (regular lease renewal mechanism) and are attempting to find any server
               that is able to take over their leases. It may mean that some server's
               REPLY messages never reached the clients.
               </entry>
@@ -2684,8 +2684,8 @@ should include options from the isc option space:
               <entry>Number of RELEASE packets received. This statistic is expected
               to grow every time a device is being shut down in the network. It
               indicates that the address or prefix assigned is reported as no longer
-              needed. Note that in wireless networks, number of RELEASE messages
-              is significantly lower than number of REQUEST messages.
+              needed. Note that in wireless networks, the number of RELEASE messages
+              is significantly lower than the number of REQUEST messages.
               </entry>
             </row>
 
@@ -2729,13 +2729,13 @@ should include options from the isc option space:
               <entry>Number of DHCPv6 packets sent. This statistic is expected
               to grow every time the server transmits a packet. In general, it
               should roughly match pkt6-received, as most incoming packets cause
-              server to respond. There are exceptions (e.g. server receiving a
+              the server to respond. There are exceptions (e.g. server receiving a
               REQUEST with server-id matching other server), so do not worry, if
               it is lesser than pkt6-received.</entry>
             </row>
 
             <row>
-              <entry>pkt6-advertiser-sent</entry>
+              <entry>pkt6-advertise-sent</entry>
               <entry>integer</entry>
               <entry>Number of ADVERTISE packets sent. This statistic is
               expected to grow in most cases after a SOLICIT is processed. There
@@ -2758,8 +2758,8 @@ should include options from the isc option space:
               <entry>pkt6-parse-failed</entry>
               <entry>integer</entry>
               <entry>Number of incoming packets that could not be parsed.
-              Non-zero value of this statistic indicates that the server
-              received malformed or truncated packet. This may indicate problems
+              A non-zero value of this statistic indicates that the server
+              received a malformed or truncated packet. This may indicate problems
               in your network, faulty clients, faulty relay agents or server
               code bug.</entry>
             </row>
