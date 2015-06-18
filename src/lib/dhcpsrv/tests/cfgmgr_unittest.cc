@@ -583,7 +583,7 @@ TEST_F(CfgMgrTest, commitStats4) {
     StatsMgr& stats_mgr = StatsMgr::instance();
 
     // Let's prepare the "old" configuration: a subnet with id 123
-    // and pretend there ware addresses assigned, so statistics are non-zero.
+    // and pretend there were addresses assigned, so statistics are non-zero.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 123));
     CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
     subnets->add(subnet1);
@@ -622,7 +622,7 @@ TEST_F(CfgMgrTest, clearStats4) {
     StatsMgr& stats_mgr = StatsMgr::instance();
 
     // Let's prepare the "old" configuration: a subnet with id 123
-    // and pretend there ware addresses assigned, so statistics are non-zero.
+    // and pretend there were addresses assigned, so statistics are non-zero.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 123));
     CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
     subnets->add(subnet1);
@@ -649,7 +649,7 @@ TEST_F(CfgMgrTest, commitStats6) {
     StatsMgr& stats_mgr = StatsMgr::instance();
 
     // Let's prepare the "old" configuration: a subnet with id 123
-    // and pretend there ware addresses assigned, so statistics are non-zero.
+    // and pretend there were addresses assigned, so statistics are non-zero.
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4, 123));
     CfgSubnets6Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets6();
     subnets->add(subnet1);
@@ -700,7 +700,7 @@ TEST_F(CfgMgrTest, clearStats6) {
     StatsMgr& stats_mgr = StatsMgr::instance();
 
     // Let's prepare the "old" configuration: a subnet with id 123
-    // and pretend there ware addresses assigned, so statistics are non-zero.
+    // and pretend there were addresses assigned, so statistics are non-zero.
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4, 123));
     CfgSubnets6Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets6();
     subnets->add(subnet1);
