@@ -54,7 +54,7 @@ public:
     /// @brief Closes the Control Channel socket
     void disconnectFromServer() {
         if (socket_fd_ >= 0) {
-            (void)(close(socket_fd_));
+            static_cast<void>(close(socket_fd_));
             socket_fd_ = -1;
         }
     }
@@ -223,7 +223,7 @@ public:
     boost::shared_ptr<NakedControlledDhcpv6Srv> server_;
 
     CtrlChannelDhcpv6SrvTest() {
-        socket_path_ = string(TEST_DATA_DIR) + "/kea6.sock";
+        socket_path_ = string(TEST_DATA_BUILDDIR) + "/kea6.sock";
         reset();
     }
 
