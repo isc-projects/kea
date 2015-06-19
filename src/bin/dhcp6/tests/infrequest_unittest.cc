@@ -18,6 +18,7 @@
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_client_fqdn.h>
+#include <stats/stats_mgr.h>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -126,6 +127,17 @@ public:
     InfRequestTest()
         : Dhcpv6SrvTest(),
           iface_mgr_test_config_(true) {
+
+        // Let's wipe all existing statistics.
+        isc::stats::StatsMgr::instance().removeAll();
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Removes any statistics that may have been set.
+    ~InfRequestTest() {
+        // Let's wipe all existing statistics.
+        isc::stats::StatsMgr::instance().removeAll();
     }
 
     /// @brief Interface Manager's fake configuration control.
@@ -301,7 +313,53 @@ TEST_F(InfRequestTest, infRequestNoSubnets) {
     EXPECT_EQ("2001:db8::2", addrs[1].toText());
 }
 
+/// Check that server processes correctly an incoming inf-request in a
+/// typical subnet that has also address and prefix pools.
+TEST_F(InfRequestTest, infRequestStats) {
+    Dhcp6Client client;
 
+    // Configure client to request IA_PD.
+    configure(CONFIGS[0], *client.getServer());
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(1, subnets->size());
 
+    // Ok, let's check the statistics. None should be present.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
+    ObservationPtr pkt6_infreq_rcvd = mgr.getObservation("pkt6-infrequest-received");
+    ObservationPtr pkt6_reply_sent = mgr.getObservation("pkt6-reply-sent");
+    ObservationPtr pkt6_sent = mgr.getObservation("pkt6-sent");
+    EXPECT_FALSE(pkt6_rcvd);
+    EXPECT_FALSE(pkt6_infreq_rcvd);
+    EXPECT_FALSE(pkt6_reply_sent);
+    EXPECT_FALSE(pkt6_sent);
+
+    // Perform 2-way exchange (Inf-request/reply)
+    client.requestOption(D6O_NAME_SERVERS);
+    ASSERT_NO_THROW(client.doInfRequest());
+
+    // Confirm that there's a response
+    Pkt6Ptr response = client.getContext().response_;
+    ASSERT_TRUE(response);
+
+    pkt6_rcvd = mgr.getObservation("pkt6-received");
+    pkt6_infreq_rcvd = mgr.getObservation("pkt6-infrequest-received");
+    pkt6_reply_sent = mgr.getObservation("pkt6-reply-sent");
+    pkt6_sent = mgr.getObservation("pkt6-sent");
+
+    ASSERT_TRUE(pkt6_rcvd);
+    ASSERT_TRUE(pkt6_infreq_rcvd);
+    ASSERT_TRUE(pkt6_reply_sent);
+    ASSERT_TRUE(pkt6_sent);
+
+    // They also must have expected values.
+    EXPECT_EQ(1, pkt6_rcvd->getInteger().first);
+    EXPECT_EQ(1, pkt6_infreq_rcvd->getInteger().first);
+    EXPECT_EQ(1, pkt6_reply_sent->getInteger().first);
+    EXPECT_EQ(1, pkt6_sent->getInteger().first);
+}
 
 } // end of anonymous namespace
