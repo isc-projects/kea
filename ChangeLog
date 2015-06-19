@@ -2,7 +2,7 @@
 	Make the parsing of options and vendor options more consistent
 	between v4 and v6. In addition make the parsing more robust
 	against malformed packets.
-	(Trac #3618, git xxx)
+	(Trac #3618, git f4066793c5e034386c689fd72d2a91a70ffb6d5f)
 
 961.	[func]		fdupont
 	Improved error messages when handling invalid or malformed
