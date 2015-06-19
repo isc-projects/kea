@@ -1,3 +1,10 @@
+963.    [func]      tmark
+	DHCPv6 server now supports a control channel, implemented over 
+	a UNIX socket. Currently supported commands are: statistic-get,
+	statistic-reset, statistic-remove, statistic-get-all,
+	statistic-reset-all, statistic-remove-all, and shutdown.
+	(Trac #3797, git f49828612d9030c9f3441acaf4b3a9f60b492a3e)
+
 962.	[func]		fdupont
 	Make the parsing of options and vendor options more consistent
 	between v4 and v6. In addition make the parsing more robust
