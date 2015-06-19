@@ -1060,7 +1060,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
             break;
         }
         case D6O_IA_PD: {
-            OptionPtr answer_opt = assignIA_PD(question, ctx,
+            OptionPtr answer_opt = assignIA_PD(question, answer, ctx,
                                                boost::dynamic_pointer_cast<
                                                Option6IA>(opt->second));
             if (answer_opt) {
@@ -1304,7 +1304,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     const Subnet6Ptr& subnet = orig_ctx.subnet_;
     const DuidPtr& duid = orig_ctx.duid_;
 
-    // If there is no subnet selected for handling this IA_NA, the only thing to do left is
+    // If there is no subnet selected for handling this IA_NA, the only thing left to do is
     // to say that we are sorry, but the user won't get an address. As a convenience, we
     // use a different status text to indicate that (compare to the same status code,
     // but different wording below)
@@ -1335,17 +1335,18 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         .arg(duid ? duid->toText() : "(no-duid)").arg(ia->getIAID())
         .arg(hint_opt ? hint.toText() : "(no hint)");
 
-    // "Fake" allocation is processing of SOLICIT message. We pretend to do an
-    // allocation, but we do not put the lease in the database. That is ok,
-    // because we do not guarantee that the user will get that exact lease. If
-    // the user selects this server to do actual allocation (i.e. sends REQUEST)
-    // it should include this hint. That will help us during the actual lease
-    // allocation.
-    bool fake_allocation = false;
-    if (query->getType() == DHCPV6_SOLICIT) {
-        /// @todo: Check if we support rapid commit
-        fake_allocation = true;
-    }
+    // "Fake" allocation is the case when the server is processing the Solicit
+    // message without the Rapid Commit option and advertises a lease to
+    // the client, but doesn't commit this lease to the lease database. If
+    // the Solicit contains the Rapid Commit option and the server is
+    // configured to honor the Rapid Commit option, or the client has sent
+    // the Request message, the lease will be committed to the lease
+    // database. The type of the server's response may be used to determine
+    // if this is the fake allocation case or not. When the server sends
+    // Reply message it means that it is committing leases. Other message
+    // type (Advertise) means that server is not committing leases (fake
+    // allocation).
+    bool fake_allocation = (answer->getType() != DHCPV6_REPLY);
 
     // Get DDNS update direction flags
     bool do_fwd = false;
@@ -1456,7 +1457,7 @@ Dhcpv6Srv::conditionalNCRRemoval(Lease6Ptr& old_lease, Lease6Ptr& new_lease,
 }
 
 OptionPtr
-Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
+Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                        AllocEngine::ClientContext6& orig_ctx,
                        boost::shared_ptr<Option6IA> ia) {
 
@@ -1468,8 +1469,8 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
     // as we can initialize IAID using a constructor.
     boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
 
-    // If there is no subnet selected for handling this IA_PD, the only thing to
-    // do left is to say that we are sorry, but the user won't get an address.
+    // If there is no subnet selected for handling this IA_PD, the only thing
+    // left to do is to say that we are sorry, but the user won't get an address.
     // As a convenience, we use a different status text to indicate that
     // (compare to the same status code, but different wording below)
     if (!subnet) {
@@ -1494,13 +1495,18 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
         .arg(duid ? duid->toText() : "(no-duid)").arg(ia->getIAID())
         .arg(hint_opt ? hint.toText() : "(no hint)");
 
-    // "Fake" allocation is processing of SOLICIT message. We pretend to do an
-    // allocation, but we do not put the lease in the database. That is ok,
-    // because we do not guarantee that the user will get that exact lease. If
-    // the user selects this server to do actual allocation (i.e. sends REQUEST)
-    // it should include this hint. That will help us during the actual lease
-    // allocation.
-    bool fake_allocation = (query->getType() == DHCPV6_SOLICIT);
+    // "Fake" allocation is the case when the server is processing the Solicit
+    // message without the Rapid Commit option and advertises a lease to
+    // the client, but doesn't commit this lease to the lease database. If
+    // the Solicit contains the Rapid Commit option and the server is
+    // configured to honor the Rapid Commit option, or the client has sent
+    // the Request message, the lease will be committed to the lease
+    // database. The type of the server's response may be used to determine
+    // if this is the fake allocation case or not. When the server sends
+    // Reply message it means that it is committing leases. Other message
+    // type (Advertise) means that server is not committing leases (fake
+    // allocation).
+    bool fake_allocation = (answer->getType() != DHCPV6_REPLY);
 
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honour the hint, but it is just a hint - some other address
@@ -2341,26 +2347,43 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx = createContext(solicit);
 
-    Pkt6Ptr advertise(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
+    Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
-    copyClientOptions(solicit, advertise);
-    appendDefaultOptions(solicit, advertise);
-
-    if (!validateSeDhcpOptions(solicit, advertise, ctx)) {
-        return (advertise);
+    // Handle Rapid Commit option, if present.
+    if (ctx.subnet_ && ctx.subnet_->getRapidCommit()) {
+        OptionPtr opt_rapid_commit = solicit->getOption(D6O_RAPID_COMMIT);
+        if (opt_rapid_commit) {
+  
+            /// @todo uncomment when #3807 is merged!
+/*            LOG_DEBUG(options_logger, DBG_DHCP6_DETAIL, DHCP6_RAPID_COMMIT)
+                .arg(solicit->getLabel()); */
+  
+            // If Rapid Commit has been sent by the client, change the
+            // response type to Reply and include Rapid Commit option.
+            response->setType(DHCPV6_REPLY);
+            response->addOption(opt_rapid_commit);
+        }
     }
-    appendRequestedOptions(solicit, advertise, ctx);
-    appendRequestedVendorOptions(solicit, advertise, ctx);
+  
+    copyClientOptions(solicit, response);
+    appendDefaultOptions(solicit, response);
 
-    processClientFqdn(solicit, advertise, ctx);
-    assignLeases(solicit, advertise, ctx);
-    // Note, that we don't create NameChangeRequests here because we don't
-    // perform DNS Updates for Solicit. Client must send Request to update
-    // DNS.
+    if (!validateSeDhcpOptions(solicit, response, ctx)) {
+        return (response);
+    }
+    appendRequestedOptions(solicit, response, ctx);
+    appendRequestedVendorOptions(solicit, response, ctx);
 
-    generateFqdn(advertise);
+    processClientFqdn(solicit, response, ctx);
+    assignLeases(solicit, response, ctx);
 
-    return (advertise);
+    // Only generate name change requests if sending a Reply as a result
+    // of receiving Rapid Commit option.
+    if (response->getType() == DHCPV6_REPLY) {
+        createNameChangeRequests(response);
+    }
+  
+    return (response);
 }
 
 Pkt6Ptr

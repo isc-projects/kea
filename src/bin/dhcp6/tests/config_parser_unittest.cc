@@ -496,6 +496,41 @@ public:
         CfgMgr::instance().clear();
     }
 
+    /// @brief Tests the Rapid Commit configuration for a subnet.
+    ///
+    /// This test configures the server with a given configuration and
+    /// verifies if the Rapid Commit has been configured successfully
+    /// for a subnet.
+    ///
+    /// @param config Server configuration, possibly including the
+    /// 'rapid-commit' parameter.
+    /// @param exp_rapid_commit Expected value of the Rapid Commit flag
+    /// within a subnet.
+    void testRapidCommit(const std::string& config,
+                         const bool exp_rapid_commit) {
+        // Clear any existing configuration.
+        CfgMgr::instance().clear();
+
+        // Configure the server.
+        ElementPtr json = Element::fromJSON(config);
+
+        // Make sure that the configuration was successful.
+        ConstElementPtr status;
+        EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+        checkResult(status, 0);
+
+        // Get the subnet.
+        Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
+            selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+        ASSERT_TRUE(subnet);
+
+        // Check the Rapid Commit flag for the subnet.
+        EXPECT_EQ(exp_rapid_commit, subnet->getRapidCommit());
+
+        // Clear any existing configuration.
+        CfgMgr::instance().clear();
+    }
+
     int rcode_;          ///< Return code (see @ref isc::config::parseAnswer)
     Dhcpv6Srv srv_;      ///< Instance of the Dhcp6Srv used during tests
     ConstElementPtr comment_; ///< Comment (see @ref isc::config::parseAnswer)
@@ -1087,6 +1122,54 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceAndInterfaceId) {
     // Returned value should be 1 (configuration error)
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
+
+// This test checks the configuration of the Rapid Commit option
+// support for the subnet.
+TEST_F(Dhcp6ParserTest, subnetRapidCommit) {
+    {
+        // rapid-commit implicitly set to false.
+        SCOPED_TRACE("Default Rapid Commit setting");
+        testRapidCommit("{ \"preferred-lifetime\": 3000,"
+                        "\"rebind-timer\": 2000, "
+                        "\"renew-timer\": 1000, "
+                        "\"subnet6\": [ { "
+                        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - "
+                        "2001:db8:1::ffff\" } ],"
+                        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+                        "\"valid-lifetime\": 4000 }",
+                        false);
+    }
+
+    {
+        // rapid-commit explicitly set to true.
+        SCOPED_TRACE("Enable Rapid Commit");
+        testRapidCommit("{ \"preferred-lifetime\": 3000,"
+                        "\"rebind-timer\": 2000, "
+                        "\"renew-timer\": 1000, "
+                        "\"subnet6\": [ { "
+                        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - "
+                        "2001:db8:1::ffff\" } ],"
+                        "    \"rapid-commit\": True,"
+                        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+                        "\"valid-lifetime\": 4000 }",
+                        true);
+    }
+
+    {
+        // rapid-commit explicitly set to false.
+        SCOPED_TRACE("Disable Rapid Commit");
+        testRapidCommit("{ \"preferred-lifetime\": 3000,"
+                        "\"rebind-timer\": 2000, "
+                        "\"renew-timer\": 1000, "
+                        "\"subnet6\": [ { "
+                        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - "
+                        "2001:db8:1::ffff\" } ],"
+                        "    \"rapid-commit\": False,"
+                        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+                        "\"valid-lifetime\": 4000 }",
+                        false);
+    }
 }
 
 // This test checks that multiple pools can be defined and handled properly.

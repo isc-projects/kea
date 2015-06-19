@@ -429,6 +429,12 @@ as a hint for possible requested prefix.
 % DHCP6_QUERY_DATA received packet length %1, data length %2, data is %3
 A debug message listing the data received from the client or relay.
 
+% DHCP6_RAPID_COMMIT %1: Rapid Commit option received, following 2-way exchange
+This debug message is issued when the server found a Rapid Commit option
+in the client's message and 2-way exchanges are supported by the
+server for the subnet on which the client is connected. The argument
+specifies the client and transaction identification information.
+
 % DHCP6_RELEASE_MISSING_CLIENTID client (address=%1) sent RELEASE message without mandatory client-id
 This warning message indicates that client sent RELEASE message without
 mandatory client-id option. This is most likely caused by a buggy client

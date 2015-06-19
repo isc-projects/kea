@@ -405,6 +405,8 @@ protected:
             parser = new PdPoolListParser(config_id, pools_);
         } else if (config_id.compare("option-data") == 0) {
             parser = new OptionDataListParser(config_id, options_, AF_INET6);
+        } else if (config_id.compare("rapid-commit") == 0) {
+            parser = new BooleanParser(config_id, boolean_values_);
         } else {
             isc_throw(NotImplemented, "unsupported parameter: " << config_id);
         }
@@ -474,12 +476,16 @@ protected:
             }
         }
 
-        stringstream tmp;
-        tmp << addr << "/" << static_cast<int>(len)
-            << " with params t1=" << t1 << ", t2=" << t2 << ", pref="
-            << pref << ", valid=" << valid;
+        bool rapid_commit = boolean_values_->getOptionalParam("rapid-commit", false);
 
-        LOG_INFO(dhcp6_logger, DHCP6_CONFIG_NEW_SUBNET).arg(tmp.str());
+        std::ostringstream output;
+        output << addr << "/" << static_cast<int>(len)
+               << " with params t1=" << t1 << ", t2="
+               << t2 << ", preferred-lifetime=" << pref
+               << ", valid-lifetime=" << valid
+               << ", rapid-commit is " << (rapid_commit ? "enabled" : "disabled");
+
+        LOG_INFO(dhcp6_logger, DHCP6_CONFIG_NEW_SUBNET).arg(output.str());
 
         // Create a new subnet.
         Subnet6* subnet6 = new Subnet6(addr, len, t1, t2, pref, valid,
@@ -491,6 +497,9 @@ protected:
             OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
             subnet6->setInterfaceId(opt);
         }
+
+        // Enable or disable Rapid Commit option support for the subnet.
+        subnet6->setRapidCommit(rapid_commit);
 
         // Try setting up client class (if specified)
         try {

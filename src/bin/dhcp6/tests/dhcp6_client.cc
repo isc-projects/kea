@@ -38,13 +38,16 @@ Dhcp6Client::Dhcp6Client() :
     dest_addr_(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
     duid_(generateDUID(DUID::DUID_LLT)),
     link_local_("fe80::3a60:77ff:fed5:cdef"),
+    iface_name_("eth0"),
     srv_(boost::shared_ptr<NakedDhcpv6Srv>(new NakedDhcpv6Srv(0))),
     use_na_(false),
     use_pd_(false),
     use_relay_(false),
     use_oro_(false),
     use_client_id_(true),
-    prefix_hint_() {
+    use_rapid_commit_(false),
+    prefix_hint_(),
+    fqdn_() {
 }
 
 Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
@@ -53,13 +56,16 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     dest_addr_(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
     duid_(generateDUID(DUID::DUID_LLT)),
     link_local_("fe80::3a60:77ff:fed5:cdef"),
+    iface_name_("eth0"),
     srv_(srv),
     use_na_(false),
     use_pd_(false),
     use_relay_(false),
     use_oro_(false),
     use_client_id_(true),
-    prefix_hint_() {
+    use_rapid_commit_(false),
+    prefix_hint_(),
+    fqdn_() {
 }
 
 void
@@ -196,6 +202,13 @@ Dhcp6Client::applyLease(const LeaseInfo& lease_info) {
 }
 
 void
+Dhcp6Client::appendFQDN() {
+    if (fqdn_) {
+        context_.query_->addOption(fqdn_);
+    }
+}
+
+void
 Dhcp6Client::copyIAs(const Pkt6Ptr& source, const Pkt6Ptr& dest) {
     typedef OptionCollection Opts;
     // Copy IA_NAs.
@@ -292,10 +305,22 @@ Dhcp6Client::doSolicit() {
         }
         context_.query_->addOption(ia);
     }
+    if (use_rapid_commit_) {
+        context_.query_->addOption(OptionPtr(new Option(Option::V6,
+                                                        D6O_RAPID_COMMIT)));
+    }
+    // Add Client FQDN if configured.
+    appendFQDN();
+
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
 
-    /// @todo Sanity check here
+    // If using Rapid Commit and the server has responded with Reply,
+    // let's apply received configuration.
+    if (use_rapid_commit_ && context_.response_ &&
+        context_.response_->getType() == DHCPV6_REPLY) {
+        applyRcvdConfiguration(context_.response_);
+    }
 }
 
 void
@@ -303,6 +328,10 @@ Dhcp6Client::doRequest() {
     Pkt6Ptr query = createMsg(DHCPV6_REQUEST);
     query->addOption(context_.response_->getOption(D6O_SERVERID));
     copyIAs(context_.response_, query);
+
+    // Add Client FQDN if configured.
+    appendFQDN();
+
     context_.query_ = query;
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
@@ -346,6 +375,10 @@ Dhcp6Client::doRenew() {
     Pkt6Ptr query = createMsg(DHCPV6_RENEW);
     query->addOption(context_.response_->getOption(D6O_SERVERID));
     copyIAsFromLeases(query);
+
+    // Add Client FQDN if configured.
+    appendFQDN();
+
     context_.query_ = query;
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
@@ -359,6 +392,10 @@ void
 Dhcp6Client::doRebind() {
     Pkt6Ptr query = createMsg(DHCPV6_REBIND);
     copyIAsFromLeases(query);
+
+    // Add Client FQDN if configured.
+    appendFQDN();
+
     context_.query_ = query;
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
@@ -497,7 +534,7 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
                               msg->getBuffer().getLength()));
     msg_copy->setRemoteAddr(link_local_);
     msg_copy->setLocalAddr(dest_addr_);
-    msg_copy->setIface("eth0");
+    msg_copy->setIface(iface_name_);
     srv_->fakeReceive(msg_copy);
     srv_->run();
 }
@@ -509,6 +546,13 @@ Dhcp6Client::useHint(const uint32_t pref_lft, const uint32_t valid_lft,
                                            asiolink::IOAddress(prefix),
                                            len, pref_lft, valid_lft));
 }
+
+void
+Dhcp6Client::useFQDN(const uint8_t flags, const std::string& fqdn_name,
+                     Option6ClientFqdn::DomainNameType fqdn_type) {
+    fqdn_.reset(new Option6ClientFqdn(flags, fqdn_name, fqdn_type));
+}
+
 
 
 } // end of namespace isc::dhcp::test
