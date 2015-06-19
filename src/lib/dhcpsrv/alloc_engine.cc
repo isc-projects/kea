@@ -815,8 +815,8 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         // Need to decrease statistic for assigned addresses.
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", ctx.subnet_->getID(),
-                                   ctx.type_ == Lease::TYPE_NA ? "assigned-NAs" :
-                                                                 "assigned-PDs"),
+                                   ctx.type_ == Lease::TYPE_NA ? "assigned-nas" :
+                                                                 "assigned-pds"),
             static_cast<int64_t>(-1));
 
         // In principle, we could trigger a hook here, but we will do this
@@ -878,8 +878,8 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
             // Need to decrease statistic for assigned addresses.
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
-                                       ctx.type_ == Lease::TYPE_NA ? "assigned-NAs" :
-                                                                     "assigned-PDs"),
+                                       ctx.type_ == Lease::TYPE_NA ? "assigned-nas" :
+                                                                     "assigned-pds"),
                 static_cast<int64_t>(-1));
 
             /// @todo: Probably trigger a hook here
@@ -1043,8 +1043,8 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
             if (ctx.subnet_->inPool(ctx.type_, addr)) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", ctx.subnet_->getID(),
-                                           ctx.type_ == Lease::TYPE_NA ? "assigned-NAs" :
-                                                                         "assigned-PDs"),
+                                           ctx.type_ == Lease::TYPE_NA ? "assigned-nas" :
+                                                                         "assigned-pds"),
                     static_cast<int64_t>(1));
             }
 
@@ -1165,7 +1165,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
 
         // Need to decrease statistic for assigned addresses.
         StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-NAs"),
+            StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-nas"),
             static_cast<int64_t>(-1));
 
         // Add it to the removed leases list.

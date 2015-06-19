@@ -1,3 +1,9 @@
+XXX.	[func]		sar
+	Per IPv6 subnet statistics (subnet[id].assigned-nas, 
+	subnet[id].total-nas, subnet[id].assigned-pds, and subnet[id].total-pds)
+	has been implemented.
+	(Trac #3799, git TBD)
+
 957.	[func]		tomek
 	Per IPv4 subnet statistics (subnet[id].assigned-addresses and
 	subnet[id].total-addresses) has been implemented.

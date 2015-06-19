@@ -87,10 +87,10 @@ AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
 
     // By default we pretend our subnet has 100 addresses and prefixes allocated.
     StatsMgr::instance().setValue(
-        StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs"),
+        StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas"),
         static_cast<int64_t>(100));
     StatsMgr::instance().setValue(
-        StatsMgr::generateName("subnet", subnet_->getID(), "assigned-PDs"),
+        StatsMgr::generateName("subnet", subnet_->getID(), "assigned-pds"),
         static_cast<int64_t>(100));
 }
 
