@@ -27,24 +27,24 @@
     <para>There are four types of statistics:
     <itemizedlist>
       <listitem>
-	<simpara><emphasis>integer</emphasis> - this is the most common type.  It
-	is implemented as 64 bit integer (int64_t in C++), so it can hold any
-	value between -2^63 to 2^63 -1.</simpara>
+        <simpara><emphasis>integer</emphasis> - this is the most common type.  It
+        is implemented as 64 bit integer (int64_t in C++), so it can hold any
+        value between -2^63 to 2^63 -1.</simpara>
       </listitem>
       <listitem>
-	<simpara><emphasis>floating point</emphasis> - this type is intended to
-	store floating point precision. It is implemented as double C++ type.
-	</simpara>
+        <simpara><emphasis>floating point</emphasis> - this type is intended to
+        store floating point precision. It is implemented as double C++ type.
+        </simpara>
       </listitem>
       <listitem>
-	<simpara><emphasis>duration</emphasis> - this type is intended for
-	recording time periods. It uses boost::posix_time::time_duration type,
-	which stores hours, minutes, seconds and microseconds.</simpara>
+        <simpara><emphasis>duration</emphasis> - this type is intended for
+        recording time periods. It uses boost::posix_time::time_duration type,
+        which stores hours, minutes, seconds and microseconds.</simpara>
       </listitem>
       <listitem>
-	<simpara><emphasis>string</emphasis> - this type is intended for
-	recording statistics in textual forma. It uses std::string C++ type.
-	</simpara>
+        <simpara><emphasis>string</emphasis> - this type is intended for
+        recording statistics in textual forma. It uses std::string C++ type.
+        </simpara>
       </listitem>
     </itemizedlist>
     </para>
@@ -118,25 +118,25 @@
       <title>statistic-get command</title>
 
       <para>
-	<emphasis>statistic-get</emphasis> command retrieves a single
-	statistic. It takes a single string parameter called
-	<command>name</command> that specifies the statistic name.  An example
-	command may look like this:
+        <emphasis>statistic-get</emphasis> command retrieves a single
+        statistic. It takes a single string parameter called
+        <command>name</command> that specifies the statistic name.  An example
+        command may look like this:
 <screen>
 {
     "command": "statistic-get",
     "arguments": {
-	"name": "<userinput>pkt4-received</userinput>"
+        "name": "<userinput>pkt4-received</userinput>"
     }
 }
 </screen>
       </para>
       <para>
-	The server will respond with details of the requested statistic, with result
-	set to 0 indicating success and the specified statistic as the value of
-	"arguments" parameter. If the requested statistic is not found, the response
-	will contain an empty map, i.e. only { } as argument, but the status
-	code will still be set to success (0).
+        The server will respond with details of the requested statistic, with result
+        set to 0 indicating success and the specified statistic as the value of
+        "arguments" parameter. If the requested statistic is not found, the response
+        will contain an empty map, i.e. only { } as argument, but the status
+        code will still be set to success (0).
       </para>
     </section> <!-- end of command-statistic-get -->
 
@@ -144,26 +144,26 @@
       <title>statistic-reset command</title>
 
       <para>
-	<emphasis>statistic-reset</emphasis> command sets the specified statistic
-	to its neutral value: 0 for integer, 0.0 for float, 0h0m0s0us for time
-	duration and "" for string type. It takes a single string parameter
-	called <command>name</command> that specifies the statistic name.  An
-	example command may look like this:
+        <emphasis>statistic-reset</emphasis> command sets the specified statistic
+        to its neutral value: 0 for integer, 0.0 for float, 0h0m0s0us for time
+        duration and "" for string type. It takes a single string parameter
+        called <command>name</command> that specifies the statistic name.  An
+        example command may look like this:
 <screen>
 {
     "command": "statistic-reset",
     "arguments": {
-	"name": "<userinput>pkt4-received</userinput>"
+        "name": "<userinput>pkt4-received</userinput>"
     }
 }
 </screen>
       </para>
       <para>
-	If the specific statistic is found and reset was successful, the
-	server will respond with a status of 0, indicating success and an empty
-	parameters field. If an error is encountered (e.g. requested statistic
-	was not found), the server will return a status code of 1 (error)
-	and the text field will contain the error description.
+        If the specific statistic is found and reset was successful, the
+        server will respond with a status of 0, indicating success and an empty
+        parameters field. If an error is encountered (e.g. requested statistic
+        was not found), the server will return a status code of 1 (error)
+        and the text field will contain the error description.
       </para>
     </section> <!-- end of command-statistic-reset -->
 
@@ -171,25 +171,25 @@
       <title>statistic-remove command</title>
 
       <para>
-	<emphasis>statistic-remove</emphasis> command attempts to delete a single
-	statistic. It takes a single string parameter called
-	<command>name</command> that specifies the statistic name.  An example
-	command may look like this:
+        <emphasis>statistic-remove</emphasis> command attempts to delete a single
+        statistic. It takes a single string parameter called
+        <command>name</command> that specifies the statistic name.  An example
+        command may look like this:
 <screen>
 {
     "command": "statistic-remove",
     "arguments": {
-	"name": "<userinput>pkt4-received</userinput>"
+        "name": "<userinput>pkt4-received</userinput>"
     }
 }
 </screen>
       </para>
       <para>
-	If the specific statistic is found and its removal was successful, the
-	server will respond with a status of 0, indicating success and an empty
-	parameters field. If an error is encountered (e.g. requested statistic
-	was not found), the server will return a status code of 1 (error)
-	and the text field will contain the error description.
+        If the specific statistic is found and its removal was successful, the
+        server will respond with a status of 0, indicating success and an empty
+        parameters field. If an error is encountered (e.g. requested statistic
+        was not found), the server will return a status code of 1 (error)
+        and the text field will contain the error description.
       </para>
     </section> <!-- end of command-statistic-reset -->
 
@@ -197,7 +197,7 @@
       <title>statistic-get-all command</title>
 
       <para>
-	<emphasis>statistic-get-all</emphasis> command retrieves all statistics
+        <emphasis>statistic-get-all</emphasis> command retrieves all statistics
         recorded. An example command may look like this:
 <screen>
 {
@@ -207,9 +207,9 @@
 </screen>
       </para>
       <para>
-	The server will respond with details of all recorded statistics, with result
-	set to 0 indicating that it iterated over all statistics (even when
-	the total number of statistics is zero).
+        The server will respond with details of all recorded statistics, with result
+        set to 0 indicating that it iterated over all statistics (even when
+        the total number of statistics is zero).
       </para>
     </section> <!-- end of command-statistic-get-all -->
 
@@ -217,9 +217,9 @@
       <title>statistic-reset-all command</title>
 
       <para>
-	<emphasis>statistic-reset</emphasis> command sets all statistics to
-	their neutral values: 0 for integer, 0.0 for float, 0h0m0s0us for time
-	duration and "" for string type. An example command may look like this:
+        <emphasis>statistic-reset</emphasis> command sets all statistics to
+        their neutral values: 0 for integer, 0.0 for float, 0h0m0s0us for time
+        duration and "" for string type. An example command may look like this:
 <screen>
 {
     "command": "statistic-reset-all",
@@ -228,10 +228,10 @@
 </screen>
       </para>
       <para>
-	If the operation is successful, the server will respond with a status of
-	0, indicating success and an empty parameters field. If an error is
-	encountered, the server will return a status code of 1 (error) and the text
-	field will contain the error description.
+        If the operation is successful, the server will respond with a status of
+        0, indicating success and an empty parameters field. If an error is
+        encountered, the server will return a status code of 1 (error) and the text
+        field will contain the error description.
       </para>
     </section> <!-- end of command-statistic-reset-all -->
 
@@ -239,8 +239,8 @@
       <title>statistic-remove-all command</title>
 
       <para>
-	<emphasis>statistic-remove-all</emphasis> command attempts to delete all
-	statistics. An example command may look like this:
+        <emphasis>statistic-remove-all</emphasis> command attempts to delete all
+        statistics. An example command may look like this:
 <screen>
 {
     "command": "statistic-remove-all",
@@ -249,10 +249,10 @@
 </screen>
       </para>
       <para>
-	If the removal of all statistics was successful, the server will respond
-	with a status of 0, indicating success and an empty parameters field. If
-	an error is encountered, the server will return a status code of 1 (error)
-	and the text field will contain the error description.
+        If the removal of all statistics was successful, the server will respond
+        with a status of 0, indicating success and an empty parameters field. If
+        an error is encountered, the server will return a status code of 1 (error)
+        and the text field will contain the error description.
       </para>
     </section> <!-- end of command-statistic-remove-all -->
 
