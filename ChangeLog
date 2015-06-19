@@ -2,7 +2,7 @@
 	Improved error messages when handling invalid or malformed
 	configuration file. File and line number are printed, when
 	available.
-	(Trac #3697, git xxx)
+	(Trac #3697, git 70fc36e164e988c251bdaaee7e27c5f6407e0f4c)
 
 960.	[build]		fdupont
 	Get rid of the last bundy pieces of code.
