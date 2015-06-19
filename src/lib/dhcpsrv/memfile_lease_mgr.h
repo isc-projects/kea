@@ -134,6 +134,9 @@ public:
     /// @brief Destructor (closes file)
     virtual ~Memfile_LeaseMgr();
 
+    /// @brief Local version of getDBVersion() class method
+    static std::string getDBVersion();
+
     /// @brief Adds an IPv4 lease.
     ///
     /// @param lease lease to be added
