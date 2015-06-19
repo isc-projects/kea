@@ -265,6 +265,14 @@ Memfile_LeaseMgr::~Memfile_LeaseMgr() {
     }
 }
 
+std::string
+Memfile_LeaseMgr::getDBVersion() {
+    std::stringstream tmp;
+    tmp << "Memfile backend " << MAJOR_VERSION;
+    tmp << "." << MINOR_VERSION;
+    return (tmp.str());
+}
+
 bool
 Memfile_LeaseMgr::addLease(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
