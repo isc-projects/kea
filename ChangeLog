@@ -1,3 +1,9 @@
+962.	[func]		fdupont
+	Make the parsing of options and vendor options more consistent
+	between v4 and v6. In addition make the parsing more robust
+	against malformed packets.
+	(Trac #3618, git xxx)
+
 961.	[func]		fdupont
 	Improved error messages when handling invalid or malformed
 	configuration file. File and line number are printed, when

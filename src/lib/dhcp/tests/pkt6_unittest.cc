@@ -345,8 +345,8 @@ TEST_F(Pkt6Test, unpackMalformed) {
     Pkt6Ptr too_short_pkt(new Pkt6(&shorty[0], shorty.size()));
     EXPECT_THROW(too_short_pkt->unpack(), isc::BadValue);
 
-    // The code should complain about remaining bytes that can't
-    // be parsed.
+    // The code should complain about remaining bytes that can't be parsed
+    // but doesn't do so yet.
     Pkt6Ptr trailing_garbage(new Pkt6(&malform1[0], malform1.size()));
     EXPECT_NO_THROW(trailing_garbage->unpack());
 
@@ -369,6 +369,78 @@ TEST_F(Pkt6Test, unpackMalformed) {
 
     // ... but there should be no option 123 as it was malformed.
     EXPECT_FALSE(trunc_option->getOption(123));
+
+    // Check with truncated length field
+    Pkt6Ptr trunc_length(new Pkt6(&malform2[0], malform2.size() - 1));
+    EXPECT_NO_THROW(trunc_length->unpack());
+    EXPECT_FALSE(trunc_length->getOption(123));
+
+    // Check with missing length field
+    Pkt6Ptr no_length(new Pkt6(&malform2[0], malform2.size() - 2));
+    EXPECT_NO_THROW(no_length->unpack());
+    EXPECT_FALSE(no_length->getOption(123));
+
+    // Check with truncated type field
+    Pkt6Ptr trunc_type(new Pkt6(&malform2[0], malform2.size() - 3));
+    EXPECT_NO_THROW(trunc_type->unpack());
+    EXPECT_FALSE(trunc_type->getOption(123));
+}
+
+// Checks if the code is able to handle a malformed vendor option
+TEST_F(Pkt6Test, unpackVendorMalformed) {
+    // Get a packet. We're really interested in its on-wire
+    // representation only.
+    scoped_ptr<Pkt6> donor(capture1());
+
+    // Add a vendor option
+    OptionBuffer orig = donor->data_;
+
+    orig.push_back(0); // vendor options
+    orig.push_back(17);
+    orig.push_back(0);
+    size_t len_index = orig.size();
+    orig.push_back(18); // length=18
+    orig.push_back(1); // vendor_id=0x1020304
+    orig.push_back(2);
+    orig.push_back(3);
+    orig.push_back(4);
+    orig.push_back(1); // suboption type=0x101
+    orig.push_back(1); 
+    orig.push_back(0); // suboption length=3
+    orig.push_back(3);
+    orig.push_back(102); // data="foo"
+    orig.push_back(111);
+    orig.push_back(111);
+    orig.push_back(1); // suboption type=0x102
+    orig.push_back(2);
+    orig.push_back(0); // suboption length=3
+    orig.push_back(3);
+    orig.push_back(99); // data="bar'
+    orig.push_back(98);
+    orig.push_back(114);
+
+    Pkt6Ptr success(new Pkt6(&orig[0], orig.size()));
+    EXPECT_NO_THROW(success->unpack());
+
+    // Truncated vendor option is not accepted but doesn't throw
+    vector<uint8_t> shortv = orig;
+    shortv[len_index] = 20;
+    Pkt6Ptr too_short_vendor_pkt(new Pkt6(&shortv[0], shortv.size()));
+    EXPECT_NO_THROW(too_short_vendor_pkt->unpack());
+    
+    // Truncated option header is not accepted
+    vector<uint8_t> shorth = orig;
+    shorth.resize(orig.size() - 4);
+    shorth[len_index] = 12;
+    Pkt6Ptr too_short_header_pkt(new Pkt6(&shorth[0], shorth.size()));
+    EXPECT_THROW(too_short_header_pkt->unpack(), OutOfRange);
+
+    // Truncated option data is not accepted
+    vector<uint8_t> shorto = orig;
+    shorto.resize(orig.size() - 2);
+    shorto[len_index] = 16;
+    Pkt6Ptr too_short_option_pkt(new Pkt6(&shorto[0], shorto.size()));
+    EXPECT_THROW(too_short_option_pkt->unpack(), OutOfRange);
 }
 
 // This test verifies that it is possible to specify custom implementation of
