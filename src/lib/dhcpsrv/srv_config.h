@@ -365,13 +365,15 @@ public:
     /// @brief Updates statistics.
     ///
     /// This method calls appropriate methods in child objects that update
-    /// related statistics. See @ref CfgSubnets4::updateStatistics for details.
+    /// related statistics. See @ref CfgSubnets4::updateStatistics and
+    /// @ref CfgSubnets6::updateStatistics for details.
     void updateStatistics();
 
     /// @brief Removes statistics.
     ///
     /// This method calls appropriate methods in child objects that remove
-    /// related statistics. See @ref CfgSubnets4::removeStatistics for details.
+    /// related statistics. See @ref CfgSubnets4::removeStatistics and
+    /// @ref CfgSubnets6::removeStatistics for details.
     void removeStatistics();
 
 private:

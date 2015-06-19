@@ -1,3 +1,9 @@
+965.	[func]		sar
+	Per IPv6 subnet statistics (subnet[id].assigned-nas, 
+	subnet[id].total-nas, subnet[id].assigned-pds, and subnet[id].total-pds)
+	has been implemented.
+	(Trac #3799, git TBD)
+
 964.	[doc]		tomek
 	User's Guide and Developer's Guide updated with statistics and
 	control channel description.
