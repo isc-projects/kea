@@ -44,7 +44,7 @@ public:
 };
 
 const std::string CommandSocketFactoryTest::SOCKET_NAME =
-    std::string(TEST_DATA_DIR) + "/test-socket";
+    std::string(TEST_DATA_BUILDDIR) + "/test-socket";
 
 TEST_F(CommandSocketFactoryTest, unixCreate) {
     // Null pointer is obviously a bad idea.
