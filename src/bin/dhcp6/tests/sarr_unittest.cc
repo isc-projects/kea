@@ -373,7 +373,8 @@ TEST_F(SARRTest, pkt6ReceiveDropStat1) {
 }
 
 // This test verifies that pkt6-receive-drop is increased properly when the
-// client's packet is rejected due to sending to unicast.
+// client's packet is rejected due to having too many client-id options
+// (exactly one is expected).
 TEST_F(SARRTest, pkt6ReceiveDropStat2) {
 
     // Let's use one of the existing configurations and tell the client to
@@ -384,6 +385,35 @@ TEST_F(SARRTest, pkt6ReceiveDropStat2) {
     client.useNA();
 
     client.setDestAddress(asiolink::IOAddress("2001:db8::1")); // Pretend it's unicast
+    client.doSolicit();
+
+    // Ok, let's check the statistics. None should be present.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+
+    ObservationPtr pkt6_recv_drop = mgr.getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(pkt6_recv_drop);
+
+    EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
+}
+
+// This test verifies that pkt6-receive-drop is increased properly when the
+// client's packet is rejected due to having too many
+TEST_F(SARRTest, pkt6ReceiveDropStat3) {
+
+    // Let's use one of the existing configurations and tell the client to
+    // ask for an address.
+    Dhcp6Client client;
+    configure(CONFIGS[1], *client.getServer());
+    client.setInterface("eth1");
+    client.useNA();
+
+    client.setDestAddress(asiolink::IOAddress("2001:db8::1")); // Pretend it's unicast
+
+    // Let's send our client-id as server-id. That will result in the
+    // packet containing the client-id twice. That should cause RFCViolation
+    // exception.
+    client.useServerId(client.getClientId());
     client.doSolicit();
 
     // Ok, let's check the statistics. None should be present.
