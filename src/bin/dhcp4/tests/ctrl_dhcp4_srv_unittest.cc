@@ -274,7 +274,7 @@ TEST_F(CtrlDhcpv4SrvTest, commandsRegistration) {
 /// other unit-tests.
 TEST_F(CtrlDhcpv4SrvTest, DISABLED_commandSocketBasic) {
 
-    string socket_path = string(TEST_DATA_DIR) + "/kea4.sock";
+    string socket_path = string(TEST_DATA_BUILDDIR) + "/kea4.sock";
     ::remove(socket_path.c_str());
 
     // Just a simple config. The important part here is the socket
