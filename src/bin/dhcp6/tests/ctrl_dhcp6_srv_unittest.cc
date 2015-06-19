@@ -54,7 +54,7 @@ public:
     /// @brief Closes the Control Channel socket
     void disconnectFromServer() {
         if (socket_fd_ >= 0) {
-            close(socket_fd_);
+            (void)(close(socket_fd_));
             socket_fd_ = -1;
         }
     }
@@ -73,7 +73,7 @@ public:
 
         // Prepare socket address
         struct sockaddr_un srv_addr;
-        memset(&srv_addr, 0, sizeof(struct sockaddr_un));
+        memset(&srv_addr, 0, sizeof(srv_addr));
         srv_addr.sun_family = AF_UNIX;
         strncpy(srv_addr.sun_path, socket_path.c_str(),
                 sizeof(srv_addr.sun_path));
@@ -141,6 +141,11 @@ public:
             return (false);
         }
 
+        if (bytes_rcvd >= sizeof(buf)) {
+            ADD_FAILURE() << "Response size too large: " << bytes_rcvd;
+            return (false);
+        }
+
         // Convert the response to a string
         response = string(buf, bytes_rcvd);
         return (true);
@@ -150,9 +155,9 @@ public:
     /// @brief Uses select to poll the Control Channel for data waiting
     /// @return -1 on error, 0 if no data is available,  1 if data is ready
     int selectCheck() {
-        fd_set read_fds;
         int maxfd = 0;
 
+        fd_set read_fds;
         FD_ZERO(&read_fds);
 
         // Add this socket to listening set
@@ -232,7 +237,7 @@ public:
 
         // Just a simple config. The important part here is the socket
         // location information.
-        std::string config_txt =
+        std::string header =
             "{"
             "    \"interfaces-config\": {"
             "        \"interfaces\": [ \"*\" ]"
@@ -243,11 +248,17 @@ public:
             "    \"valid-lifetime\": 4000,"
             "    \"control-socket\": {"
             "        \"socket-type\": \"unix\","
-            "        \"socket-name\": \"" + socket_path_ + "\""
-            "    },"
+            "        \"socket-name\": \"";
+
+        std::string footer =
+            "\"    },"
             "    \"lease-database\": {"
             "       \"type\": \"memfile\", \"persist\": false }"
             "}";
+
+        // Fill in the socket-name value with socket_path_  to
+        // make the actual configuration text.
+        std::string config_txt = header + socket_path_  + footer;
 
         ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv6Srv()));
 
@@ -447,6 +458,8 @@ TEST_F(CtrlDhcpv6SrvTest, configReload) {
     CfgMgr::instance().clear();
 }
 
+typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
+
 // This test checks which commands are registered by the DHCPv4 server.
 TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
 
@@ -468,12 +481,17 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
 
     EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
     ASSERT_TRUE(answer);
+
     ASSERT_TRUE(answer->get("arguments"));
-    EXPECT_EQ("[ \"list-commands\", \"shutdown\", "
-              "\"statistic-get\", \"statistic-get-all\", "
-              "\"statistic-remove\", \"statistic-remove-all\", "
-              "\"statistic-reset\", \"statistic-reset-all\" ]",
-              answer->get("arguments")->str());
+    std::string command_list = answer->get("arguments")->str();
+
+    EXPECT_TRUE(command_list.find("\"list-commands\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-remove\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-remove-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-reset\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-reset-all\"") != string::npos);
 
     // Ok, and now delete the server. It should deregister its commands.
     srv.reset();
