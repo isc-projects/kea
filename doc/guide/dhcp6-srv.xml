@@ -2613,6 +2613,26 @@ should include options from the isc option space:
             </row>
 
             <row>
+              <entry>pkt6-receive-drop</entry>
+              <entry>integer</entry>
+              <entry>Number of incoming packets that were dropped. Exact reason
+              for dropping packets is logged, but the most common reasons may
+              be: an unacceptable or not supported packet type, direct responses
+              are forbidden, the server-id sent by the client does not match the
+              server's server-id or the packet is malformed.</entry>
+            </row>
+
+            <row>
+              <entry>pkt6-parse-failed</entry>
+              <entry>integer</entry>
+              <entry>Number of incoming packets that could not be parsed.
+              A non-zero value of this statistic indicates that the server
+              received a malformed or truncated packet. This may indicate problems
+              in your network, faulty clients, faulty relay agents or server
+              code bug.</entry>
+            </row>
+
+            <row>
               <entry>pkt6-solicit-received</entry>
               <entry>integer</entry>
               <entry>
@@ -2682,10 +2702,10 @@ should include options from the isc option space:
               <entry>pkt6-release-received</entry>
               <entry>integer</entry>
               <entry>Number of RELEASE packets received. This statistic is expected
-              to grow every time a device is being shut down in the network. It
+              to grow when a device is being shut down in the network. It
               indicates that the address or prefix assigned is reported as no longer
-              needed. Note that in wireless networks, the number of RELEASE messages
-              is significantly lower than the number of REQUEST messages.
+              needed. Note that many devices, especially wireless, do not send RELEASE,
+              because of design choice or due to moving out of range.
               </entry>
             </row>
 
@@ -2701,7 +2721,7 @@ should include options from the isc option space:
               assigned conflicting addresses.
             </entry>
             </row>
-            
+
             <row>
               <entry>pkt6-infrequest-received</entry>
               <entry>integer</entry>
@@ -2752,26 +2772,6 @@ should include options from the isc option space:
               RENEW, REBIND, RELEASE, DECLINE or INFORMATION-REQUEST is
               processed. There are certain cases where there is no response.
               </entry>
-            </row>
-
-            <row>
-              <entry>pkt6-parse-failed</entry>
-              <entry>integer</entry>
-              <entry>Number of incoming packets that could not be parsed.
-              A non-zero value of this statistic indicates that the server
-              received a malformed or truncated packet. This may indicate problems
-              in your network, faulty clients, faulty relay agents or server
-              code bug.</entry>
-            </row>
-            
-            <row>
-              <entry>pkt6-receive-drop</entry>
-              <entry>integer</entry>
-              <entry>Number of incoming packets that were dropped. Exact reason
-              for dropping packets is logged, but the most common reasons may
-              be: an unacceptable or not supported packet type, direct responses
-              are forbidden, the server-id sent by the client does not match the
-              server's server-id or the packet is malformed.</entry>
             </row>
 
           </tbody>

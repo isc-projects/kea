@@ -2336,7 +2336,7 @@ TEST_F(Dhcpv6SrvTest, receiveAdvertiseStat) {
 // Note that in properly configured network the server never receives Reply
 // messages.
 TEST_F(Dhcpv6SrvTest, receiveReplyStat) {
-    testReceiveStats(DHCPV6_ADVERTISE, "pkt6-advertise-received");
+    testReceiveStats(DHCPV6_REPLY, "pkt6-reply-received");
 }
 
 // Test checks if pkt6-unknown-received is bumped up correctly.
@@ -2406,6 +2406,7 @@ TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {
     EXPECT_EQ(1, parse_fail->getInteger().first);
     EXPECT_EQ(1, recv_drop->getInteger().first);
 }
+
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
