@@ -474,12 +474,12 @@ DControllerBase::getVersion(bool extended) {
         tmp << isc::cryptolink::CryptoLink::getVersion() << std::endl;
         tmp << "database:" << std::endl; 
 #ifdef HAVE_MYSQL
-        tmp << "MySQL backend" << std::endl;
+        tmp << isc::dhcp::MySqlLeaseMgr::getDBVersion() << std::endl;
 #endif
 #ifdef HAVE_PGSQL
-        tmp << "PostgreSQL backend" << std::endl;
+        tmp << isc::dhcp::PgSqlLeaseMgr::getDBVersion() << std::endl;
 #endif
-        tmp << "Memfile backend";
+        tmp << isc::dhcp::Memfile_LeaseMgr::getDBVersion();
 
         // @todo: more details about database runtime
     }
