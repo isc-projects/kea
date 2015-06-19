@@ -1,5 +1,10 @@
-963.    [func]      tmark
-	DHCPv6 server now supports a control channel, implemented over 
+964.	[doc]		tomek
+	User's Guide and Developer's Guide updated with statistics and
+	control channel description.
+	(Trac #3800, git 7ce8ca560370ec5f9bd4d5199a177b441f08a47e)
+
+963.    [func]		tmark
+	DHCPv6 server now supports a control channel, implemented over
 	a UNIX socket. Currently supported commands are: statistic-get,
 	statistic-reset, statistic-remove, statistic-get-all,
 	statistic-reset-all, statistic-remove-all, and shutdown.
