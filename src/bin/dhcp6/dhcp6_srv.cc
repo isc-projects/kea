@@ -2244,6 +2244,11 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_Success,
                           "Lease released. Thank you, please come again."));
 
+        // Need to decrease statistic for assigned addresses.
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-nas"),
+            static_cast<int64_t>(-1));
+
         // Check if a lease has flags indicating that the FQDN update has
         // been performed. If so, create NameChangeRequest which removes
         // the entries.
@@ -2394,6 +2399,11 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_Success,
                           "Lease released. Thank you, please come again."));
+
+        // Need to decrease statistic for assigned prefixes.
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-pds"),
+            static_cast<int64_t>(-1));
     }
 
     return (ia_rsp);
