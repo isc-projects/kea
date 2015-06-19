@@ -4,30 +4,258 @@
 <!ENTITY mdash  "&#x2014;" >
 ]>
 
-  <!-- Note: Please use the following terminology:
-       - daemon - one process (e.g. kea-dhcp4)
-       - component - one piece of code within a daemon (e.g. libdhcp or hooks)
-       - server - currently equal to daemon, but the difference will be more
-                  prominent once we add client or relay support
-       - logger - one instance of isc::log::Logger
-       - structure - an element in config file (e.g. "Dhcp4")
-
-       Do not use:
-       - module => daemon
-    -->
-
 <chapter id="stats">
   <title>Statistics</title>
 
   <section>
     <title>Statistics Overview</title>
-    
+
+    <para>Both Kea DHCP servers support statistics gathering since
+    0.9.2-beta version. A working DHCP server encounters various events
+    that can cause certain statistics to be collected. For
+    example, a DHCPv4 server may receive a packet (pkt4-received
+    statistic increases by one) that after parsing was identifier as
+    DHCPDISCOVER (pkt4-discover-received). The Server processed it and
+    decided to send DHCPOFFER representing its answer (pkt4-offer-sent
+    and pkt4-sent statistics increase by one). Such events happen
+    frequently, so it is not uncommon for the statistics to have
+    values in high thousands. They can serve as an easy and powerful
+    tool for observing a server's and network's health. For example,
+    if pkt4-received statistic stops growing, it means that the
+    clients' packets are not reaching the server.</para>
+
+    <para>There are four types of statistics:
+    <itemizedlist>
+      <listitem>
+	<simpara><emphasis>integer</emphasis> - this is the most common type.  It
+	is implemented as 64 bit integer (int64_t in C++), so it can hold any
+	value between -2^63 to 2^63 -1.</simpara>
+      </listitem>
+      <listitem>
+	<simpara><emphasis>floating point</emphasis> - this type is intended to
+	store floating point precision. It is implemented as double C++ type.
+	</simpara>
+      </listitem>
+      <listitem>
+	<simpara><emphasis>duration</emphasis> - this type is intended for
+	recording time periods. It uses boost::posix_time::time_duration type,
+	which stores hours, minutes, seconds and microseconds.</simpara>
+      </listitem>
+      <listitem>
+	<simpara><emphasis>string</emphasis> - this type is intended for
+	recording statistics in textual forma. It uses std::string C++ type.
+	</simpara>
+      </listitem>
+    </itemizedlist>
+    </para>
+
     <para>
-      TODO: Describe statistics collection here as part of ticket #3800.
-      For DHCPv4 specific statistics, see <xref linkend="dhcp4-stats"/>.
-      For DHCPv6 specific statistics, see TODO.
-      For DDNS specific statistics, see TODO.
+      During normal operation, DHCPv4 and DHCPv6 servers gather statistics.
+      For a list of DHCPv4 and DHCPv6 statistics, see <xref
+      linkend="dhcp4-stats"/> and <xref linkend="dhcp6-stats"/>, respectively.
+    </para>
+
+    <para>
+      To extract data from the statistics module, the control channel can be
+      used. See <xref linkend="ctrl-channel" /> for details. It is possible to
+      retrieve a single or all statistics, reset statistics (i.e. set to neutral
+      value, typically zero) or even remove completely a single or all
+      statistics. See section <xref linkend="command-stats"/> for a list of
+      statistic oriented commands.
     </para>
   </section>
-</chapter>
 
+  <section id="stats-lifecycle">
+    <title>Statistics Lifecycle</title>
+    <para>
+      It is useful to understand how the Statistics Manager module works. When
+      the server starts operation, the manager is empty and does not have any
+      statistics. When <command>statistic-get-all</command> is executed, an
+      empty list is returned. Once the server performs an operation that causes
+      a statistic to change, the related statistic will be created. In the general
+      case once a statistic is recorded even once, it is kept in the manager, until
+      explicitly removed, by <command>statistic-remove</command> or
+      <command>statistic-remove-all</command> being called or the server is shut
+      down. Per subnet statistics are explicitly removed when reconfiguration
+      takes place.
+    </para>
+    <para>
+      Statistics are considered run-time properties, so they are not retained
+      after server restart.
+    </para>
+    <para>
+      Removing a statistic that is updated frequently makes little sense as it
+      will be re-added when the server code next records that statistic.
+      The <command>statistic-remove</command> and
+      <command>statistic-remove-all</command> commands are intended to remove
+      statistics that are not expected to be observed in the near future. For
+      example, a misconfigured device in a network may cause clients to report
+      duplicate addresses, so the server will report increasing values of
+      pkt4-decline-received. Once the problem is found and the device is
+      removed, the system administrator may want to remove the
+      pkt4-decline-received statistic, so it won't be reported anymore. If a
+      duplicate address is detected ever again, the server will add this
+      statistic back.
+    </para>
+  </section>
+
+  <section id="command-stats">
+    <title>Commands for Manipulating Statistics</title>
+    <para>
+      There are several commands defined that can be used for accessing (-get),
+      resetting to zero or neutral value (-reset) or even removing a statistic
+      completely (-remove). The difference between reset and remove is somewhat
+      subtle.  The reset command sets the value of the statistic to zero or neutral
+      value. After this operation, the statistic will have a value of 0 (integer),
+      0.0 (float), 0h0m0s0us (duration) or "" (string). When asked for, a statistic
+      with the values metioned will be returned. <command>Remove</command> removes
+      a statistic completely, so the statistic will not be reported anymore. Please
+      note that the server code may add it back if there's a reason to record
+      it.
+    </para>
+
+    <section id="command-statistic-get">
+      <title>statistic-get command</title>
+
+      <para>
+	<emphasis>statistic-get</emphasis> command retrieves a single
+	statistic. It takes a single string parameter called
+	<command>name</command> that specifies the statistic name.  An example
+	command may look like this:
+<screen>
+{
+    "command": "statistic-get",
+    "arguments": {
+	"name": "<userinput>pkt4-received</userinput>"
+    }
+}
+</screen>
+      </para>
+      <para>
+	The server will respond with details of the requested statistic, with result
+	set to 0 indicating success and the specified statistic as the value of
+	"arguments" parameter. If the requested statistic is not found, the response
+	will contain an empty map, i.e. only { } as argument, but the status
+	code will still be set to success (0).
+      </para>
+    </section> <!-- end of command-statistic-get -->
+
+    <section id="command-statistic-reset">
+      <title>statistic-reset command</title>
+
+      <para>
+	<emphasis>statistic-reset</emphasis> command sets the specified statistic
+	to its neutral value: 0 for integer, 0.0 for float, 0h0m0s0us for time
+	duration and "" for string type. It takes a single string parameter
+	called <command>name</command> that specifies the statistic name.  An
+	example command may look like this:
+<screen>
+{
+    "command": "statistic-reset",
+    "arguments": {
+	"name": "<userinput>pkt4-received</userinput>"
+    }
+}
+</screen>
+      </para>
+      <para>
+	If the specific statistic is found and reset was successful, the
+	server will respond with a status of 0, indicating success and an empty
+	parameters field. If an error is encountered (e.g. requested statistic
+	was not found), the server will return a status code of 1 (error)
+	and the text field will contain the error description.
+      </para>
+    </section> <!-- end of command-statistic-reset -->
+
+    <section id="command-statistic-remove">
+      <title>statistic-remove command</title>
+
+      <para>
+	<emphasis>statistic-remove</emphasis> command attempts to delete a single
+	statistic. It takes a single string parameter called
+	<command>name</command> that specifies the statistic name.  An example
+	command may look like this:
+<screen>
+{
+    "command": "statistic-remove",
+    "arguments": {
+	"name": "<userinput>pkt4-received</userinput>"
+    }
+}
+</screen>
+      </para>
+      <para>
+	If the specific statistic is found and its removal was successful, the
+	server will respond with a status of 0, indicating success and an empty
+	parameters field. If an error is encountered (e.g. requested statistic
+	was not found), the server will return a status code of 1 (error)
+	and the text field will contain the error description.
+      </para>
+    </section> <!-- end of command-statistic-reset -->
+
+    <section id="command-statistic-get-all">
+      <title>statistic-get-all command</title>
+
+      <para>
+	<emphasis>statistic-get-all</emphasis> command retrieves all statistics
+        recorded. An example command may look like this:
+<screen>
+{
+    "command": "statistic-get-all",
+    "arguments": { }
+}
+</screen>
+      </para>
+      <para>
+	The server will respond with details of all recorded statistics, with result
+	set to 0 indicating that it iterated over all statistics (even when
+	the total number of statistics is zero).
+      </para>
+    </section> <!-- end of command-statistic-get-all -->
+
+    <section id="command-statistic-reset-all">
+      <title>statistic-reset-all command</title>
+
+      <para>
+	<emphasis>statistic-reset</emphasis> command sets all statistics to
+	their neutral values: 0 for integer, 0.0 for float, 0h0m0s0us for time
+	duration and "" for string type. An example command may look like this:
+<screen>
+{
+    "command": "statistic-reset-all",
+    "arguments": { }
+}
+</screen>
+      </para>
+      <para>
+	If the operation is successful, the server will respond with a status of
+	0, indicating success and an empty parameters field. If an error is
+	encountered, the server will return a status code of 1 (error) and the text
+	field will contain the error description.
+      </para>
+    </section> <!-- end of command-statistic-reset-all -->
+
+    <section id="command-statistic-remove-all">
+      <title>statistic-remove-all command</title>
+
+      <para>
+	<emphasis>statistic-remove-all</emphasis> command attempts to delete all
+	statistics. An example command may look like this:
+<screen>
+{
+    "command": "statistic-remove-all",
+    "arguments": { }
+}
+</screen>
+      </para>
+      <para>
+	If the removal of all statistics was successful, the server will respond
+	with a status of 0, indicating success and an empty parameters field. If
+	an error is encountered, the server will return a status code of 1 (error)
+	and the text field will contain the error description.
+      </para>
+    </section> <!-- end of command-statistic-remove-all -->
+
+  </section>
+
+</chapter>

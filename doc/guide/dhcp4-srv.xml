@@ -2888,6 +2888,15 @@ appropiately -->
         Communication over control channel is conducted using JSON structures.
         See the Control Channel section in the Kea Developer's Guide for more details.
       </para>
+
+      <para>DHCPv4 server supports <command>statistic-get</command>,
+      <command>statistic-reset</command>, <command>statistic-remove</command>,
+      <command>statistic-get-all</command>, <command>statistic-reset-all</command>
+      and <command>statistic-remove-all</command>, specified in
+      <xref linkend="command-stats"/>. It also supports
+      <command>list-commands</command> and <command>shutdown</command>,
+      specified in <xref linkend="command-list-commands" /> and
+      <xref linkend="command-shutdown" />, respectively.</para>
     </section>
 
     <section id="dhcp4-std">
