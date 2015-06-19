@@ -184,27 +184,25 @@ void
 CfgSubnets6::removeStatistics() {
     using namespace isc::stats;
 
-    // For each v6 subnet currently configured, remove the statistic.
-    /// @todo: May move this to CfgSubnets6 class if there will be more
-    /// statistics here.
+    // For each v6 subnet currently configured, remove the statistics.
     for (Subnet6Collection::const_iterator subnet6 = subnets_.begin();
          subnet6 != subnets_.end(); ++subnet6) {
 
         StatsMgr::instance().del(StatsMgr::generateName("subnet",
                                                         (*subnet6)->getID(),
-                                                        "total-NAs"));
+                                                        "total-nas"));
 
         StatsMgr::instance().del(StatsMgr::generateName("subnet",
                                                         (*subnet6)->getID(),
-                                                        "assigned-NAs"));
+                                                        "assigned-nas"));
 
         StatsMgr::instance().del(StatsMgr::generateName("subnet",
                                                         (*subnet6)->getID(),
-                                                        "total-PDs"));
+                                                        "total-pds"));
 
         StatsMgr::instance().del(StatsMgr::generateName("subnet",
                                                         (*subnet6)->getID(),
-                                                        "assigned-PDs"));
+                                                        "assigned-pds"));
     }
 }
 
@@ -212,17 +210,15 @@ void
 CfgSubnets6::updateStatistics() {
     using namespace isc::stats;
 
-    /// @todo: May move this to CfgSubnets6 class if there will be more
-    /// statistics here.
     for (Subnet6Collection::const_iterator subnet = subnets_.begin();
          subnet != subnets_.end(); ++subnet) {
 
         StatsMgr::instance().setValue(
-            StatsMgr::generateName("subnet", (*subnet)->getID(), "total-NAs"),
+            StatsMgr::generateName("subnet", (*subnet)->getID(), "total-nas"),
             static_cast<int64_t>((*subnet)->getPoolCapacity(Lease::TYPE_NA)));
 
         StatsMgr::instance().setValue(
-            StatsMgr::generateName("subnet", (*subnet)->getID(), "total-PDs"),
+            StatsMgr::generateName("subnet", (*subnet)->getID(), "total-pds"),
             static_cast<int64_t>((*subnet)->getPoolCapacity(Lease::TYPE_PD)));
     }
 }

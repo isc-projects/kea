@@ -2214,7 +2214,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
 
         // Need to decrease statistic for assigned addresses.
         StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-NAs"),
+            StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-nas"),
             static_cast<int64_t>(-1));
 
         // Check if a lease has flags indicating that the FQDN update has
@@ -2370,7 +2370,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
         // Need to decrease statistic for assigned prefixes.
         StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-PDs"),
+            StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-pds"),
             static_cast<int64_t>(-1));
     }
 
