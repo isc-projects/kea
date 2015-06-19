@@ -108,9 +108,10 @@
       subtle.  The reset command sets the value of the statistic to zero or neutral
       value. After this operation, the statistic will have a value of 0 (integer),
       0.0 (float), 0h0m0s0us (duration) or "" (string). When asked for, a statistic
-      with the values metioned will be returned. Remove removes a statistic
-      completely, so the statistic will not be reported anymore. Please note
-      that
+      with the values metioned will be returned. <command>Remove</command> removes
+      a statistic completely, so the statistic will not be reported anymore. Please
+      note that the server code may add it back if there's a reason to record
+      it.
     </para>
 
     <section id="command-statistic-get">
@@ -196,9 +197,8 @@
       <title>statistic-get-all command</title>
 
       <para>
-	<emphasis>statistic-get-all</emphasis> command retrieves a single
-	statistic. An example
-	command may look like this:
+	<emphasis>statistic-get-all</emphasis> command retrieves all statistics
+        recorded. An example command may look like this:
 <screen>
 {
     "command": "statistic-get-all",
