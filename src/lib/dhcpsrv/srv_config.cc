@@ -148,16 +148,19 @@ SrvConfig::equals(const SrvConfig& other) const {
 void
 SrvConfig::removeStatistics() {
 
-    // For now, this method only removes statistics for v4 subnets, but in the
-    // near future, we'll also get statistics for v6 subnets.
+    // Removes statistics for v4 and v6 subnets
     getCfgSubnets4()->removeStatistics();
+
+    getCfgSubnets6()->removeStatistics();
 }
 
 void
 SrvConfig::updateStatistics() {
-    // For now, this method only updates statistics for v4 subnets, but in the
-    // near future, we'll also get statistics for v6 subnets.
+
+    // Updates  statistics for v4 and v6 subnets
     getCfgSubnets4()->updateStatistics();
+
+    getCfgSubnets6()->updateStatistics();
 }
 
 }
