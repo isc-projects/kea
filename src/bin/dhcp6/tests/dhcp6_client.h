@@ -448,6 +448,17 @@ public:
         use_rapid_commit_ = rapid_commit;
     }
 
+    /// @brief Specifies server-id to be used in send messages
+    ///
+    /// Overrides the server-id to be sent when server-id is expected to be
+    /// sent. May be NULL, which means use proper server-id sent in Advertise
+    /// (which is a normal client behavior).
+    ///
+    /// @param server_id server-id to be sent
+    void useServerId(const OptionPtr& server_id) {
+        forced_server_id_ = server_id;
+    }
+
     /// @brief Creates an instance of the Client FQDN option to be included
     /// in the client's message.
     ///
@@ -613,6 +624,9 @@ private:
     /// Content of this vector will be sent as ORO if use_oro_ is set
     /// to true. See @ref sendORO for details.
     std::vector<uint16_t> oro_;
+
+    /// @brief forced (Overridden) value of the server-id option (may be NULL)
+    OptionPtr forced_server_id_;
 
     /// @brief FQDN requested by the client.
     Option6ClientFqdnPtr fqdn_;

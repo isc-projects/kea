@@ -19,6 +19,8 @@
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/d2_client_mgr.h>
+#include <asiolink/io_address.h>
+#include <stats/stats_mgr.h>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -101,6 +103,8 @@ public:
     SARRTest()
         : Dhcpv6SrvTest(),
           iface_mgr_test_config_(true) {
+        // Let's wipe all existing statistics.
+        isc::stats::StatsMgr::instance().removeAll();
     }
 
     /// @brief Destructor.
@@ -109,6 +113,9 @@ public:
     virtual ~SARRTest() {
         D2ClientConfigPtr cfg(new D2ClientConfig());
         CfgMgr::instance().setD2ClientConfig(cfg);
+
+        // Let's wipe all existing statistics.
+        isc::stats::StatsMgr::instance().removeAll();
     }
 
     /// @brief Interface Manager's fake configuration control.
@@ -274,6 +281,147 @@ TEST_F(SARRTest, rapidCommitDisable) {
     EXPECT_FALSE(client.getContext().response_->getOption(D6O_RAPID_COMMIT));
     // There should be no name change request generated.
     EXPECT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+}
+
+// This test verifies that regular Solicit/Adv/Request/Reply exchange will
+// result in appropriately set statistics.
+TEST_F(SARRTest, sarrStats) {
+
+    // Let's use one of the existing configurations and tell the client to
+    // ask for an address.
+    Dhcp6Client client;
+    configure(CONFIGS[1], *client.getServer());
+    client.setInterface("eth1");
+    client.useNA();
+
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(2, subnets->size());
+
+    // Ok, let's check the statistics. None should be present.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
+    ObservationPtr pkt6_solicit_rcvd = mgr.getObservation("pkt6-solicit-received");
+    ObservationPtr pkt6_adv_sent = mgr.getObservation("pkt6-advertise-sent");
+    ObservationPtr pkt6_request_rcvd = mgr.getObservation("pkt6-request-received");
+    ObservationPtr pkt6_reply_sent = mgr.getObservation("pkt6-reply-sent");
+    ObservationPtr pkt6_sent = mgr.getObservation("pkt6-sent");
+    EXPECT_FALSE(pkt6_rcvd);
+    EXPECT_FALSE(pkt6_solicit_rcvd);
+    EXPECT_FALSE(pkt6_adv_sent);
+    EXPECT_FALSE(pkt6_request_rcvd);
+    EXPECT_FALSE(pkt6_reply_sent);
+    EXPECT_FALSE(pkt6_sent);
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+
+    // All expected statstics must be present now.
+    pkt6_rcvd = mgr.getObservation("pkt6-received");
+    pkt6_solicit_rcvd = mgr.getObservation("pkt6-solicit-received");
+    pkt6_adv_sent = mgr.getObservation("pkt6-advertise-sent");
+    pkt6_request_rcvd = mgr.getObservation("pkt6-request-received");
+    pkt6_reply_sent = mgr.getObservation("pkt6-reply-sent");
+    pkt6_sent = mgr.getObservation("pkt6-sent");
+    ASSERT_TRUE(pkt6_rcvd);
+    ASSERT_TRUE(pkt6_solicit_rcvd);
+    ASSERT_TRUE(pkt6_adv_sent);
+    ASSERT_TRUE(pkt6_request_rcvd);
+    ASSERT_TRUE(pkt6_reply_sent);
+    ASSERT_TRUE(pkt6_sent);
+
+    // They also must have expected values.
+    EXPECT_EQ(2, pkt6_rcvd->getInteger().first);
+    EXPECT_EQ(1, pkt6_solicit_rcvd->getInteger().first);
+    EXPECT_EQ(1, pkt6_adv_sent->getInteger().first);
+    EXPECT_EQ(1, pkt6_request_rcvd->getInteger().first);
+    EXPECT_EQ(1, pkt6_reply_sent->getInteger().first);
+    EXPECT_EQ(2, pkt6_sent->getInteger().first);
+}
+
+// This test verifies that pkt6-receive-drop is increased properly when the
+// client's packet is rejected due to mismatched server-id value.
+TEST_F(SARRTest, pkt6ReceiveDropStat1) {
+
+    // Dummy server-id (0xff repeated 10 times)
+    std::vector<uint8_t> data(10, 0xff);
+    OptionPtr bogus_srv_id(new Option(Option::V6, D6O_SERVERID, data));
+
+    // Let's use one of the existing configurations and tell the client to
+    // ask for an address.
+    Dhcp6Client client;
+    configure(CONFIGS[1], *client.getServer());
+    client.setInterface("eth1");
+    client.useNA();
+
+    client.doSolicit();
+    client.useServerId(bogus_srv_id);
+    client.doRequest();
+
+    // Ok, let's check the statistic. pkt6-receive-drop should be set to 1.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+
+    ObservationPtr pkt6_recv_drop = mgr.getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(pkt6_recv_drop);
+
+    EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
+}
+
+// This test verifies that pkt6-receive-drop is increased properly when the
+// client's packet is rejected due to being unicast communication.
+TEST_F(SARRTest, pkt6ReceiveDropStat2) {
+
+    // Let's use one of the existing configurations and tell the client to
+    // ask for an address.
+    Dhcp6Client client;
+    configure(CONFIGS[1], *client.getServer());
+    client.setInterface("eth1");
+    client.useNA();
+
+    client.setDestAddress(asiolink::IOAddress("2001:db8::1")); // Pretend it's unicast
+    client.doSolicit();
+
+    // Ok, let's check the statistic. pkt6-receive-drop should be set to 1.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+
+    ObservationPtr pkt6_recv_drop = mgr.getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(pkt6_recv_drop);
+
+    EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
+}
+
+// This test verifies that pkt6-receive-drop is increased properly when the
+// client's packet is rejected due to having too many client-id options
+// (exactly one is expected).
+TEST_F(SARRTest, pkt6ReceiveDropStat3) {
+
+    // Let's use one of the existing configurations and tell the client to
+    // ask for an address.
+    Dhcp6Client client;
+    configure(CONFIGS[1], *client.getServer());
+    client.setInterface("eth1");
+    client.useNA();
+
+    // Let's send our client-id as server-id. That will result in the
+    // packet containing the client-id twice. That should cause RFCViolation
+    // exception.
+    client.useServerId(client.getClientId());
+    client.doSolicit();
+
+    // Ok, let's check the statistic. pkt6-receive-drop should be set to 1.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+
+    ObservationPtr pkt6_recv_drop = mgr.getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(pkt6_recv_drop);
+
+    EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
 }
 
 

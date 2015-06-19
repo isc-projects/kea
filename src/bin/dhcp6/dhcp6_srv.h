@@ -740,6 +740,14 @@ private:
                                Lease6Ptr& new_lease, const std::string& hostname,
                                bool do_fwd, bool do_rev);
 
+    /// @brief Updates statistics for received packets
+    /// @param query packet received
+    static void processStatsReceived(const Pkt6Ptr& query);
+
+    /// @brief Updates statistics for transmitted packets
+    /// @param query packet transmitted
+    static void processStatsSent(const Pkt6Ptr& response);
+
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
     /// It must be a pointer, because we will support changing engines
