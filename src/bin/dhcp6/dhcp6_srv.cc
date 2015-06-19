@@ -74,6 +74,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::log;
+using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
 
@@ -335,8 +336,7 @@ bool Dhcpv6Srv::run() {
                 // any failures in unpacking will cause the packet to be dropped.
                 // we will increase type specific packets further down the road.
                 // See processStatsReceived().
-                isc::stats::StatsMgr::instance().addValue("pkt6-received",
-                                                          static_cast<int64_t>(1));
+                StatsMgr::instance().addValue("pkt6-received", static_cast<int64_t>(1));
 
             } else {
                 LOG_DEBUG(packet_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_INTERRUPTED)
@@ -440,11 +440,11 @@ bool Dhcpv6Srv::run() {
                     .arg(query->getIface())
                     .arg(e.what());
 
-               // Increase the statistics of parse failures and dropped packets.
-                isc::stats::StatsMgr::instance().addValue("pkt6-parse-failed",
-                                                          static_cast<int64_t>(1));
-                isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
-                                                          static_cast<int64_t>(1));
+                // Increase the statistics of parse failures and dropped packets.
+                StatsMgr::instance().addValue("pkt6-parse-failed",
+                                              static_cast<int64_t>(1));
+                StatsMgr::instance().addValue("pkt6-receive-drop",
+                                              static_cast<int64_t>(1));
                 continue;
             }
         }
@@ -457,8 +457,7 @@ bool Dhcpv6Srv::run() {
         if (!testServerID(query)) {
 
             // Increase the statistic of dropped packets.
-            isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
-                                                      static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
             continue;
         }
 
@@ -468,8 +467,7 @@ bool Dhcpv6Srv::run() {
         if (!testUnicast(query)) {
 
             // Increase the statistic of dropped packets.
-            isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
-                                                      static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
             continue;
         }
 
@@ -568,8 +566,7 @@ bool Dhcpv6Srv::run() {
                 .arg(e.what());
 
             // Increase the statistic of dropped packets.
-            isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
-                                                      static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
 
         } catch (const isc::Exception& e) {
 
@@ -585,8 +582,7 @@ bool Dhcpv6Srv::run() {
                 .arg(e.what());
 
             // Increase the statistic of dropped packets.
-            isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
-                                                      static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
         }
 
         if (rsp) {
@@ -2981,14 +2977,12 @@ void Dhcpv6Srv::processStatsReceived(const Pkt6Ptr& query) {
             ; // do nothing
     }
 
-    isc::stats::StatsMgr::instance().addValue(stat_name,
-                                              static_cast<int64_t>(1));
+    StatsMgr::instance().addValue(stat_name, static_cast<int64_t>(1));
 }
 
 void Dhcpv6Srv::processStatsSent(const Pkt6Ptr& response) {
     // Increase generic counter for sent packets.
-    isc::stats::StatsMgr::instance().addValue("pkt6-sent",
-                                              static_cast<int64_t>(1));
+    StatsMgr::instance().addValue("pkt6-sent", static_cast<int64_t>(1));
 
     // Increase packet type specific counter for packets sent.
     string stat_name;
@@ -3004,8 +2998,7 @@ void Dhcpv6Srv::processStatsSent(const Pkt6Ptr& response) {
         return;
     }
 
-    isc::stats::StatsMgr::instance().addValue(stat_name,
-                                              static_cast<int64_t>(1));
+    StatsMgr::instance().addValue(stat_name, static_cast<int64_t>(1));
 }
 
 };

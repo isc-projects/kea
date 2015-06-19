@@ -327,7 +327,11 @@ Dhcp6Client::doSolicit() {
 void
 Dhcp6Client::doRequest() {
     Pkt6Ptr query = createMsg(DHCPV6_REQUEST);
-    query->addOption(context_.response_->getOption(D6O_SERVERID));
+    if (!forced_server_id_) {
+        query->addOption(context_.response_->getOption(D6O_SERVERID));
+    } else {
+        query->addOption(forced_server_id_);
+    }
     copyIAs(context_.response_, query);
 
     // Add Client FQDN if configured.

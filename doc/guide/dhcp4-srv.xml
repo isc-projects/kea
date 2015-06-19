@@ -2834,7 +2834,7 @@ temporarily override a list of interface names and listen on all interfaces.
               reset during reconfiguration event.</entry>
             </row>
             <row>
-              <entry><emphasis>subnet[id].assigned-addresses</emphasis></entry>
+              <entry>subnet[id].assigned-addresses</entry>
               <entry>integer</entry>
               <entry>This statistic shows the number of assigned addresses in a
               given subnet.  This statistic increases every time a new lease is
