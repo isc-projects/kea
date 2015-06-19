@@ -4,6 +4,12 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/cc -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+if HAVE_MYSQL
+AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
+endif
+if HAVE_PGSQL
+AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
+endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 if USE_CLANGPP

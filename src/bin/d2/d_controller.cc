@@ -23,6 +23,14 @@
 #include <log/logger.h>
 #include <cfgrpt/config_report.h>
 
+#ifdef HAVE_MYSQL
+#include <dhcpsrv/mysql_lease_mgr.h>
+#endif
+#ifdef HAVE_PGSQL
+#include <dhcpsrv/pgsql_lease_mgr.h>
+#endif
+#include <dhcpsrv/memfile_lease_mgr.h>
+
 #include <sstream>
 #include <unistd.h>
 
