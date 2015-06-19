@@ -65,6 +65,17 @@ void configure(const std::string& file_name) {
             isc_throw(isc::BadValue, "no configuration found");
         }
 
+        // Let's do sanity check before we call json->get() which
+        // works only for map.
+        if (json->getType() != isc::data::Element::map) {
+            isc_throw(isc::BadValue, "Configuration file is expected to be "
+		      "a map, i.e., start with { and end with } and contain "
+		      "at least an entry called 'Dhcp4' that itself is a map. "
+		      << file_name
+                      << " is a valid JSON, but its top element is not a map."
+		      " Did you forget to add { } around your configuration?");
+        }
+
         // If there's no logging element, we'll just pass NULL pointer,
         // which will be handled by configureLogger().
         Daemon::configureLogger(json->get("Logging"),
