@@ -20,9 +20,9 @@
 In many cases it is useful to manage certain aspects of the DHCP servers
 while they are running. In Kea, this may be done via the Control Channel.
 Control Channel allows an external entity (e.g. a tool run by a sysadmin
-or a script) to issue commands to the server which can influence the its
+or a script) to issue commands to the server which can influence its
 behavior or retreive information from it. Several notable examples
-envisioned are: reconfiguration, statistics retrival and manipulation,
+envisioned are: reconfiguration, statistics retrieval and manipulation,
 and shutdown.
 
 Communication over Control Channel is conducted using JSON structures.
