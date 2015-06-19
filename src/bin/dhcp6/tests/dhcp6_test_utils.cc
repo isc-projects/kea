@@ -594,8 +594,8 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
 
     // And prepopulate the stats counter
     std::string name = StatsMgr::generateName("subnet", subnet_->getID(),
-                                              type == Lease::TYPE_NA ? "assigned-NAs" :
-                                              "assigned-PDs");
+                                              type == Lease::TYPE_NA ? "assigned-nas" :
+                                              "assigned-pds");
     StatsMgr::instance().setValue(name, static_cast<int64_t>(1));
 
     // Let's create a RELEASE
@@ -671,8 +671,8 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
 
     // Pretend we have allocated 1 lease
     std::string name = StatsMgr::generateName("subnet", subnet_->getID(),
-                                              type == Lease::TYPE_NA ? "assigned-NAs" :
-                                              "assigned-PDs");
+                                              type == Lease::TYPE_NA ? "assigned-nas" :
+                                              "assigned-pds");
     StatsMgr::instance().setValue(name, static_cast<int64_t>(1));
 
     // Check that the lease is NOT in the database

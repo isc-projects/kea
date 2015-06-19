@@ -966,7 +966,7 @@ TEST_F(Dhcpv6SrvTest, pdRenewReject) {
 // - returned REPLY message has server-id
 // - returned REPLY message has IA_NA that does not include an IAADDR
 // - lease is actually removed from LeaseMgr
-// - assigned-NAs stats counter is properly decremented
+// - assigned-nas stats counter is properly decremented
 TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
     testReleaseBasic(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
                      IOAddress("2001:db8:1:1::cafe:babe"));
@@ -981,7 +981,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
 // - returned REPLY message has server-id
 // - returned REPLY message has IA_PD that does not include an IAPREFIX
 // - lease is actually removed from LeaseMgr
-// - assigned-PDs stats counter is properly decremented
+// - assigned-pds stats counter is properly decremented
 TEST_F(Dhcpv6SrvTest, pdReleaseBasic) {
     testReleaseBasic(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
                      IOAddress("2001:db8:1:2::"));
@@ -1000,7 +1000,7 @@ TEST_F(Dhcpv6SrvTest, pdReleaseBasic) {
 // - returned REPLY message has server-id
 // - returned REPLY message has IA_NA that includes STATUS-CODE
 // - No lease in LeaseMgr
-// - assigned-NAs stats counter is properly not decremented
+// - assigned-nas stats counter is properly not decremented
 TEST_F(Dhcpv6SrvTest, ReleaseReject) {
     testReleaseReject(Lease::TYPE_NA, IOAddress("2001:db8:1:1::dead"));
 }
@@ -1018,7 +1018,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseReject) {
 // - returned REPLY message has server-id
 // - returned REPLY message has IA_PD that includes STATUS-CODE
 // - No lease in LeaseMgr
-// - assigned-PDs stats counter is properly not decremented
+// - assigned-pds stats counter is properly not decremented
 TEST_F(Dhcpv6SrvTest, pdReleaseReject) {
     testReleaseReject(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"));
 }

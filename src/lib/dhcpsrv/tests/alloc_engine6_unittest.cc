@@ -59,7 +59,7 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
     simpleAlloc6Test(pool_, IOAddress("::"), false);
 
     // We should have bumped the address counter by 1
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs");
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
     ObservationPtr stat = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(stat);
     EXPECT_EQ(101, stat->getInteger().first);
@@ -72,7 +72,7 @@ TEST_F(AllocEngine6Test, pdSimpleAlloc6) {
     simpleAlloc6Test(pd_pool_, IOAddress("::"), false);
 
     // We should have bumped the address counter by 1
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-PDs");
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-pds");
     ObservationPtr stat = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(stat);
     EXPECT_EQ(101, stat->getInteger().first);
@@ -85,7 +85,7 @@ TEST_F(AllocEngine6Test, fakeAlloc6) {
     simpleAlloc6Test(pool_, IOAddress("::"), true);
 
     // We should not have bumped the address counter
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs");
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
     ObservationPtr stat = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(stat);
     EXPECT_EQ(100, stat->getInteger().first);
@@ -97,7 +97,7 @@ TEST_F(AllocEngine6Test, pdFakeAlloc6) {
     simpleAlloc6Test(pd_pool_, IOAddress("::"), true);
 
     // We should not have bumped the address counter
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-PDs");
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-pds");
     ObservationPtr stat = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(stat);
     EXPECT_EQ(100, stat->getInteger().first);
@@ -559,7 +559,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // By default we pretend our subnet has 100 addresses
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs");
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
     StatsMgr::instance().setValue(name, static_cast<int64_t>(100));
 
     // A client comes along, asking specifically for this address
@@ -643,7 +643,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestNoHint) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
     // By default we pretend our subnet has 100 addresses
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs");
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
     StatsMgr::instance().setValue(name, static_cast<int64_t>(100));
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
@@ -797,7 +797,7 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestNoHint) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
     // By default we pretend our subnet has 100 addresses
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs");
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
     StatsMgr::instance().setValue(name, static_cast<int64_t>(100));
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), false, false);
@@ -925,7 +925,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
     ASSERT_TRUE(lease1);
 
     // We should have bumped the address counter
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs");
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
     ObservationPtr stat = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(stat);
     EXPECT_EQ(101, stat->getInteger().first);
@@ -985,7 +985,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
     ASSERT_TRUE(lease1);
 
     // We should have bumped the address counter
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-NAs");
+    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
     ObservationPtr stat = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(stat);
     EXPECT_EQ(101, stat->getInteger().first);

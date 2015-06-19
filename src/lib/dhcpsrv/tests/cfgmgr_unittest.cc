@@ -654,11 +654,11 @@ TEST_F(CfgMgrTest, commitStats6) {
     CfgSubnets6Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets6();
     subnets->add(subnet1);
     cfg_mgr.commit();
-    stats_mgr.addValue("subnet[123].total-NAs", static_cast<int64_t>(256));
-    stats_mgr.setValue("subnet[123].assigned-NAs", static_cast<int64_t>(150));
+    stats_mgr.addValue("subnet[123].total-nas", static_cast<int64_t>(256));
+    stats_mgr.setValue("subnet[123].assigned-nas", static_cast<int64_t>(150));
 
-    stats_mgr.addValue("subnet[123].total-PDs", static_cast<int64_t>(256));
-    stats_mgr.setValue("subnet[123].assigned-PDs", static_cast<int64_t>(150));
+    stats_mgr.addValue("subnet[123].total-pds", static_cast<int64_t>(256));
+    stats_mgr.setValue("subnet[123].assigned-pds", static_cast<int64_t>(150));
 
     // Now, let's change the configuration to something new.
 
@@ -677,18 +677,18 @@ TEST_F(CfgMgrTest, commitStats6) {
     // Let's commit it
     cfg_mgr.commit();
 
-    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-NAs"));
-    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-NAs"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-nas"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-nas"));
 
-    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-PDs"));
-    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-PDs"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-pds"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-pds"));
 
     ObservationPtr total_addrs;
-    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-NAs"));
+    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-nas"));
     ASSERT_TRUE(total_addrs);
     EXPECT_EQ(128, total_addrs->getInteger().first);
 
-    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-PDs"));
+    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-pds"));
     ASSERT_TRUE(total_addrs);
     EXPECT_EQ(65536, total_addrs->getInteger().first);
 }
@@ -705,28 +705,28 @@ TEST_F(CfgMgrTest, clearStats6) {
     CfgSubnets6Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets6();
     subnets->add(subnet1);
     cfg_mgr.commit();
-    stats_mgr.addValue("subnet[123].total-NAs", static_cast<int64_t>(256));
-    stats_mgr.setValue("subnet[123].assigned-NAs", static_cast<int64_t>(150));
+    stats_mgr.addValue("subnet[123].total-nas", static_cast<int64_t>(256));
+    stats_mgr.setValue("subnet[123].assigned-nas", static_cast<int64_t>(150));
 
-    stats_mgr.addValue("subnet[123].total-PDs", static_cast<int64_t>(256));
-    stats_mgr.setValue("subnet[123].assigned-PDs", static_cast<int64_t>(150));
+    stats_mgr.addValue("subnet[123].total-pds", static_cast<int64_t>(256));
+    stats_mgr.setValue("subnet[123].assigned-pds", static_cast<int64_t>(150));
 
     // The stats should be there.
-    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-NAs"));
-    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].assigned-NAs"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-nas"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].assigned-nas"));
 
-    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-PDs"));
-    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].assigned-PDs"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-pds"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].assigned-pds"));
 
     // Let's remove all configurations
     cfg_mgr.clear();
 
     // The stats should not be there anymore.
-    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-NAs"));
-    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-NAs"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-nas"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-nas"));
 
-    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-PDs"));
-    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-PDs"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-pds"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-pds"));
 }
 
 /// @todo Add unit-tests for testing:

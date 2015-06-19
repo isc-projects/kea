@@ -2605,7 +2605,7 @@ should include options from the isc option space:
           <tbody>
 
             <row>
-            <entry>subnet[id].total-NAs</entry>
+            <entry>subnet[id].total-nas</entry>
             <entry>integer</entry>
             <entry>
             This statistic shows the total number of NA addresses available for
@@ -2620,7 +2620,7 @@ should include options from the isc option space:
             </row>
 
             <row>
-            <entry>subnet[id].assigned-NAs</entry>
+            <entry>subnet[id].assigned-nas</entry>
             <entry>integer</entry>
             <entry>
             This statistic shows the number of NA addresses in a given subnet that
@@ -2635,7 +2635,7 @@ should include options from the isc option space:
             </row>
 
             <row>
-            <entry>subnet[id].total-PDs</entry>
+            <entry>subnet[id].total-pds</entry>
             <entry>integer</entry>
             <entry>
             This statistic shows the total number of PD prefixes available for
@@ -2650,7 +2650,7 @@ should include options from the isc option space:
             </row>
 
             <row>
-            <entry>subnet[id].assigned-PDs</entry>
+            <entry>subnet[id].assigned-pds</entry>
             <entry>integer</entry>
             <entry>
             This statistic shows the number of PD prefixes in a given subnet that
