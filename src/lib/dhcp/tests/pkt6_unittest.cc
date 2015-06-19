@@ -353,7 +353,8 @@ TEST_F(Pkt6Test, unpackMalformed) {
     Pkt6Ptr too_short_pkt(new Pkt6(&shorty[0], shorty.size()));
     EXPECT_THROW(too_short_pkt->unpack(), isc::BadValue);
 
-    // The code should complain about remaining bytes that can't be parsed.
+    // The code should complain about remaining bytes that can't be parsed
+    // but doesn't do so yet.
     Pkt6Ptr trailing_garbage(new Pkt6(&malform1[0], malform1.size()));
     EXPECT_NO_THROW(trailing_garbage->unpack());
 
