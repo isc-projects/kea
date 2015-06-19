@@ -9,17 +9,17 @@
   <chapter id="ctrl-channel">
     <title>Management API</title>
 
-    <para>A classic approach to the daemon configuration assumes that
+    <para>A classic approach to daemon configuration assumes that
     the server's configuration is stored in the configuration files
     and when the configuration is changed, the daemon is restarted.
-    This approach has significant disadvantage of introducing periods
-    of downtime, where client traffic is not handled. Another risk
+    This approach has the significant disadvantage of introducing periods
+    of downtime, when client traffic is not handled. Another risk
     is that if the new configuration is invalid for whatever reason,
     the server may refuse to start, which will further extend the
     downtime period, until the issue is resolved.</para>
 
     <para>To avoid such problems, both DHCPv4 and DHCPv6 servers
-    support introduced support for a mechanism that will allow
+    introduced support for a mechanism that will allow
     on-line reconfiguration, without requiring server shutdown.
     Both servers can be instructed to open control sockets, which
     is a communication channel. The server is able to receive
@@ -36,7 +36,7 @@
 
     <section id="ctrl-channel-syntax">
     <title>Data syntax</title>
-    <para>Communication over Control Channel is conducted using JSON
+    <para>Communication over control channel is conducted using JSON
     structures. If configured, Kea will open a socket and will listen
     for any incoming connections. A process connecting to this socket
     is expected to send JSON commands structured as follows:
@@ -71,13 +71,13 @@
 }
 </screen>
     <command>result</command> indicates the outcome of the command. A value of 0
-    means a success while any non-zero value designates an error. Currently 1 is
+    means success while any non-zero value designates an error. Currently 1 is
     used as a generic error, but additional error codes may be added in the
     future.<command>text</command> field typically appears when result is
-    non-zero and contains description of the error encountered, but it may also
-    appear for success results. That's command specific.
+    non-zero and contains a description of the error encountered, but it may
+    also appear for successful results. That's command specific.
     <command>arguments</command> is a map of additional data values returned by
-    the server, specific to the command issue. The map is always present, even
+    the server, specific to the command issued. The map is always present, even
     if it contains no data values.</para>
     </section>
 
@@ -87,24 +87,24 @@
     <para>ISC does not provide a client for using control channel.  The primary
     reason for that is the expectation is that the entity using control channel
     is typically an IPAM or similar network management/monitoring software which
-    may have quite varied expectations regarding the client and even likely to
+    may have quite varied expectations regarding the client and is even likely to
     be written in languages different than C or C++. Therefore we only provide
     examples how one can take advantage of the API.</para>
 
     <para>The easiest way is to use a tool called <command>socat</command>,
     a tool available from <ulink url="http://www.dest-unreach.org/socat/">socat
-    homepage</ulink>, but is also widely available in Linux and BSD
+    homepage</ulink>, but it is also widely available in Linux and BSD
     distributions. Once Kea is started, one could connect to the control
     interface using the following command:
 <screen>
 $ socat UNIX:/path/to/the/kea/socket -
 </screen>
-where <command>/path/to/the/kea/socket</command> is the path specified in
-<command>Dhcp4/control-socket/socket-name</command> parameter in Kea
+where <command>/path/to/the/kea/socket</command> is the path specified in the
+<command>Dhcp4/control-socket/socket-name</command> parameter in the Kea
 configuration file.</para>
 
     <para>It is also easy to open UNIX socket programmatically. An example of
-    such simplistic client written in C is available in the Kea Developer's
+    such a simplistic client written in C is available in the Kea Developer's
     Guide, chapter Control Channel Overview, section Using Control Channel.</para>
 
     </section>
@@ -117,7 +117,7 @@ configuration file.</para>
 
       <para>
 	<emphasis>list-commands</emphasis> command retrieves a list of all
-	supported commands by the server. It does not take any arguments.
+	commands supported by the server. It does not take any arguments.
 	An example command may look like this:
 <screen>
 {
@@ -128,7 +128,7 @@ configuration file.</para>
       </para>
       <para>
 	The server will respond with a list of all supported commands. The
-	arguments element will be a list strings. Each string will convey
+	arguments element will be a list of strings. Each string will convey
 	one supported command.
       </para>
     </section> <!-- end of command-list-commands -->
@@ -138,7 +138,7 @@ configuration file.</para>
 
       <para>
 	<emphasis>shutdown</emphasis> command instructs the server to initiate
-	its shutdown procedure. It is an equivalent of sending SIGTERM singal
+	its shutdown procedure. It is the equivalent of sending a SIGTERM singal
 	to the process. This command does not take any arguments.  An example
 	command may look like this:
 <screen>
