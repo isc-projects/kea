@@ -362,7 +362,7 @@ TEST_F(SARRTest, pkt6ReceiveDropStat1) {
     client.useServerId(bogus_srv_id);
     client.doRequest();
 
-    // Ok, let's check the statistics. None should be present.
+    // Ok, let's check the statistic. pkt6-receive-drop should be set to 1.
     using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
 
@@ -373,8 +373,7 @@ TEST_F(SARRTest, pkt6ReceiveDropStat1) {
 }
 
 // This test verifies that pkt6-receive-drop is increased properly when the
-// client's packet is rejected due to having too many client-id options
-// (exactly one is expected).
+// client's packet is rejected due to being unicast communication.
 TEST_F(SARRTest, pkt6ReceiveDropStat2) {
 
     // Let's use one of the existing configurations and tell the client to
@@ -387,7 +386,7 @@ TEST_F(SARRTest, pkt6ReceiveDropStat2) {
     client.setDestAddress(asiolink::IOAddress("2001:db8::1")); // Pretend it's unicast
     client.doSolicit();
 
-    // Ok, let's check the statistics. None should be present.
+    // Ok, let's check the statistic. pkt6-receive-drop should be set to 1.
     using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
 
@@ -398,7 +397,8 @@ TEST_F(SARRTest, pkt6ReceiveDropStat2) {
 }
 
 // This test verifies that pkt6-receive-drop is increased properly when the
-// client's packet is rejected due to having too many
+// client's packet is rejected due to having too many client-id options
+// (exactly one is expected).
 TEST_F(SARRTest, pkt6ReceiveDropStat3) {
 
     // Let's use one of the existing configurations and tell the client to
@@ -416,7 +416,7 @@ TEST_F(SARRTest, pkt6ReceiveDropStat3) {
     client.useServerId(client.getClientId());
     client.doSolicit();
 
-    // Ok, let's check the statistics. None should be present.
+    // Ok, let's check the statistic. pkt6-receive-drop should be set to 1.
     using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
 
