@@ -20,6 +20,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/csv_lease_file6.h>
+#include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/memfile_lease_storage.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_file_loader.h>
@@ -157,7 +158,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
     opterr = 0;
     optind = 1;
-    while ((ch = getopt(argc, argv, ":46dvVp:x:i:o:c:f:")) != -1) {
+    while ((ch = getopt(argc, argv, ":46dvVWp:x:i:o:c:f:")) != -1) {
         switch (ch) {
         case '4':
             // Process DHCPv4 lease files.
@@ -177,6 +178,11 @@ LFCController::parseArgs(int argc, char* argv[]) {
         case 'V':
             // Print extended  Kea vesion and exit.
             std::cout << getVersion(true) << std::endl;
+            exit(EXIT_SUCCESS);
+
+        case 'W':
+            // Display the configuration report and exit.
+            std::cout << isc::detail::getConfigReport() << std::endl;
             exit(EXIT_SUCCESS);
 
         case 'd':
@@ -325,7 +331,8 @@ LFCController::getVersion(const bool extended) const{
 
     version_stream << VERSION;
     if (extended) {
-        version_stream << std::endl << EXTENDED_VERSION;
+        version_stream << std::endl << EXTENDED_VERSION << std::endl
+        << "database: " << isc::dhcp::Memfile_LeaseMgr::getDBVersion();
     }
 
     return (version_stream.str());
