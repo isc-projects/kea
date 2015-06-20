@@ -1270,7 +1270,7 @@ MySqlLeaseMgr::getDBVersion() {
     std::stringstream tmp;
     tmp << "MySQL backend " << CURRENT_VERSION_VERSION;
     tmp << "." << CURRENT_VERSION_MINOR;
-    tmp << " library " << mysql_get_client_info();
+    tmp << ", library " << mysql_get_client_info();
     return (tmp.str());
 }
 
