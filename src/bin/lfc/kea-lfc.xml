@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>Feb 1, 2015</date>
+    <date>June 20, 2015</date>
   </refentryinfo>
 
   <refmeta>
@@ -53,6 +53,7 @@
       <arg><option>-f <replaceable class="parameter">finish-file</replaceable></option></arg>
       <arg><option>-v</option></arg>
       <arg><option>-V</option></arg>
+      <arg><option>-W</option></arg>
       <arg><option>-d</option></arg>
       <arg><option>-h</option></arg>
     </cmdsynopsis>
@@ -96,6 +97,13 @@
         <term><option>-V</option></term>
         <listitem><para>
           Version causes a longer form of the version stamp to be printed.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-W</option></term>
+        <listitem><para>
+          Display the configuration report.
         </para></listitem>
       </varlistentry>
 
