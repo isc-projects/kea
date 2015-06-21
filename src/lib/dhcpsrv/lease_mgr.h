@@ -152,6 +152,10 @@ public:
     virtual ~LeaseMgr()
     {}
 
+    /// @brief Class method to return extended version info
+    /// This class method must be redeclared and redefined in derived classes
+    static std::string getDBVersion();
+
     /// @brief Adds an IPv4 lease.
     ///
     /// @param lease lease to be added

@@ -1265,6 +1265,15 @@ MySqlLeaseMgr::~MySqlLeaseMgr() {
     // closed in the destructor of the mysql_ member variable.
 }
 
+std::string
+MySqlLeaseMgr::getDBVersion() {
+    std::stringstream tmp;
+    tmp << "MySQL backend " << CURRENT_VERSION_VERSION;
+    tmp << "." << CURRENT_VERSION_MINOR;
+    tmp << ", library " << mysql_get_client_info();
+    return (tmp.str());
+}
+
 
 // Time conversion methods.
 //

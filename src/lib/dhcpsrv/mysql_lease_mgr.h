@@ -122,6 +122,9 @@ public:
     /// @brief Destructor (closes database)
     virtual ~MySqlLeaseMgr();
 
+    /// @brief Local version of getDBVersion() class method
+    static std::string getDBVersion();
+
     /// @brief Adds an IPv4 lease
     ///
     /// @param lease lease to be added
