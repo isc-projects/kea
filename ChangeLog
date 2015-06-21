@@ -1,6 +1,6 @@
 966.	[func]		fdupont
 	Include database software details in extended version information.
-	(Trac #3882, git xxx)
+	(Trac #3882, git b0e166c4d8b0383ebd6e2f51d55eed68a2bcafa8)
 
 965.	[func]		sar
 	Per IPv6 subnet statistics (subnet[id].assigned-nas, 
