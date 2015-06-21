@@ -54,6 +54,14 @@
 #include <cryptolink/cryptolink.h>
 #include <cfgrpt/config_report.h>
 
+#ifdef HAVE_MYSQL
+#include <dhcpsrv/mysql_lease_mgr.h>
+#endif
+#ifdef HAVE_PGSQL
+#include <dhcpsrv/pgsql_lease_mgr.h>
+#endif
+#include <dhcpsrv/memfile_lease_mgr.h>
+
 #include <asio.hpp>
 
 #include <boost/bind.hpp>
@@ -2893,15 +2901,15 @@ Dhcpv6Srv::getVersion(bool extended) {
         tmp << "linked with:" << endl;
         tmp << Logger::getVersion() << endl;
         tmp << CryptoLink::getVersion() << endl;
+        tmp << "database:" << endl;
 #ifdef HAVE_MYSQL
-        tmp << "database: MySQL";
-#else
+        tmp << MySqlLeaseMgr::getDBVersion() << endl;
+#endif
 #ifdef HAVE_PGSQL
-        tmp << "database: PostgreSQL";
-#else
-        tmp << "no database";
+        tmp << PgSqlLeaseMgr::getDBVersion() << endl;
 #endif
-#endif
+        tmp << Memfile_LeaseMgr::getDBVersion();
+
         // @todo: more details about database runtime
     }
 
