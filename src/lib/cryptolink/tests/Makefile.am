@@ -25,6 +25,7 @@ run_unittests_LDFLAGS =  $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS) $(AM_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD) $(CRYPTO_LIBS)
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+run_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 endif
