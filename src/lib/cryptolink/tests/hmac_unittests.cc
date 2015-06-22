@@ -144,6 +144,12 @@ namespace {
         hmac_sig.writeUint8At(~hmac_sig[0], 0);
         EXPECT_FALSE(hmac_verify->verify(hmac_sig.getData(),
                                          hmac_sig.getLength()));
+
+        // Restore the sig by flipping the first octet, and check
+        // whether verification succeeds then
+        hmac_sig.writeUint8At(~hmac_sig[0], 0);
+        EXPECT_TRUE(hmac_verify->verify(hmac_sig.getData(),
+                                        hmac_sig.getLength()));
     }
 
     /// @brief Sign and verify with vector representation of signature
@@ -207,6 +213,9 @@ namespace {
 
         sig[0] = ~sig[0];
         EXPECT_FALSE(hmac_verify->verify(sig, hmac_len));
+
+        sig[0] = ~sig[0];
+        EXPECT_TRUE(hmac_verify->verify(sig, hmac_len));
 
         delete[] sig;
     }
@@ -601,6 +610,28 @@ TEST(HMACTest, HMAC_SHA256_RFC2202_SIGN_TRUNCATED) {
                                        0x2b };
     doHMACTest("Test With Truncation", secret5, 20, SHA256,
                hmac_expected5, 16);
+}
+
+namespace {
+    /// @brief Get the hash algorithm
+    /// @param alg Hash algorithm enum
+    /// @return Hash algorithm enum
+    HashAlgorithm
+    signHashAlgorithm(HashAlgorithm alg) {
+        boost::shared_ptr<HMAC> hmac_sign(
+            CryptoLink::getCryptoLink().createHMAC("asdf", 4, alg),
+            deleteHMAC);
+        return (hmac_sign->getHashAlgorithm());
+    }
+}
+
+TEST(HMACTest, HashAlgorithm) {
+    EXPECT_EQ(MD5, signHashAlgorithm(MD5));
+    EXPECT_EQ(SHA1, signHashAlgorithm(SHA1));
+    EXPECT_EQ(SHA256, signHashAlgorithm(SHA256));
+    EXPECT_EQ(SHA224, signHashAlgorithm(SHA224));
+    EXPECT_EQ(SHA384, signHashAlgorithm(SHA384));
+    EXPECT_EQ(SHA512, signHashAlgorithm(SHA512));
 }
 
 namespace {
