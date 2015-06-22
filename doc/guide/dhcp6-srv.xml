@@ -2842,7 +2842,7 @@ should include options from the isc option space:
     <section id="dhcp6-ctrl-channel">
       <title>Management API for the DHCPv6 server</title>
       <para>
-        Management API has been introduced in Kea 0.9.2. It allows issuing specific
+        Management API has been introduced in Kea 0.9.2-beta. It allows issuing specific
         management commands, like statistics retrieval, reconfiguration or shutdown.
         For more details, see <xref linkend="ctrl-channel" />. Currently the only
         supported communication channel type is UNIX stream socket. By default there
