@@ -88,18 +88,18 @@ that the client already has a lease whose lifetime can be
 extended, and which can be returned to the client.
 The first argument includes the client identification information.
 
-% ALLOC_ENGINE_V4_REQUEST_IN_USE %1: requested address %2 is in use
-This message is issued when the client is requesting or has a
-reservation for an address which is in use. The first argument
-includes the client identification information.
-
 % ALLOC_ENGINE_V4_REQUEST_INVALID client %1 having a reservation for address %2 is requesting invalid address %3
 This message is logged when the client, having a reservation for
 one address, is requesting a different address. The client is
 only allowed to do this when the reserved address is in use by
-another client. However, the allocation engine has 
+another client. However, the allocation engine has
 determined that the reserved address is available and the
 client should request the reserved address.
+
+% ALLOC_ENGINE_V4_REQUEST_IN_USE %1: requested address %2 is in use
+This message is issued when the client is requesting or has a
+reservation for an address which is in use. The first argument
+includes the client identification information.
 
 % ALLOC_ENGINE_V4_REQUEST_OUT_OF_POOL client %1, which doesn't have reservation, requested address out of the dynamic pool
 This message is issued when the client has requested allocation
@@ -110,7 +110,7 @@ could only be allocated if the client had reservation for it.
 
 % ALLOC_ENGINE_V4_REQUEST_PICK_ADDRESS client %1 hasn't specified an address - picking available address from the pool
 This message is logged when the client hasn't specified any
-preferred address (the client should always do it, but Kea 
+preferred address (the client should always do it, but Kea
 tries to be forgiving). The allocation engine will try to pick an available
 address from the dynamic pool and allocate it to the client.
 
@@ -167,6 +167,13 @@ other clients and those that are not reserved for the client will
 be removed. All leases matching the reservations will be renewed
 and returned.
 
+% ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR no reservations found but leases exist for client %1
+This message is logged when the allocation engine is in the process if
+allocating leases for the client, there are no static reservations,
+but lease(s) exist for the client. The allocation engine will remove
+leases which are reserved for other clients, and return all
+remaning leases to the client.
+
 % ALLOC_ENGINE_V6_ALLOC_NO_LEASES_HR no leases found but reservations exist for client %1
 This message is logged when the allocation engine is in the process of
 allocating leases for the client. It hasn't found any existing leases
@@ -181,13 +188,6 @@ to try to allocate allocating leases from the dynamic pool or stop
 the allocation process if none can be allocated. The first argument
 includes the client identification information.
 
-% ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR no reservations found but leases exist for client %1
-This message is logged when the allocation engine is in the process if
-allocating leases for the client, there are no static reservations,
-but lease(s) exist for the client. The allocation engine will remove
-leases which are reserved for other clients, and return all
-remaning leases to the client.
-
 % ALLOC_ENGINE_V6_ALLOC_UNRESERVED no static reservations available - trying to dynamically allocate leases for client %1
 This debug message is issued when the allocation engine will attempt
 to allocate leases from the dynamic pools.  This may be due to one of
@@ -196,11 +196,25 @@ reservations for the client but they are not usable because the addresses
 are in use by another client or (c) we had a reserved lease but that
 has now been allocated to another client.
 
+% ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED %1: expired lease for the client's hint %2 is reserved for another client
+This message is logged when the allocation engine finds that the
+expired lease for the client's hint can't be reused because it
+is reserved for another client. The first argument includes the
+client identification information.
+
 % ALLOC_ENGINE_V6_EXTEND_ALLOC_UNRESERVED allocate new (unreserved) leases for the renewing client %1
 This debug message is issued when the allocation engine is trying to
 allocate new leases for the renewing client because it was unable to
 renew any of the existing client's leases, e.g. because leases are
 reserved for another client or for any other reason.
+
+% ALLOC_ENGINE_V6_EXTEND_ERROR %1: allocation engine experienced error with attempting to extend lease lifetime: %2
+This error message indicates that an error was experienced during Renew
+or Rebind processing. Additional explanation is provided with this
+message. Depending on its nature, manual intervention may be required to
+continue processing messages from this particular client; other clients
+will be unaffected. The first argument includes the client identification
+information.
 
 % ALLOC_ENGINE_V6_EXTEND_LEASE %1: extending lifetime of the lease type %2, address %3
 This debug message is issued when the allocation engine is trying
@@ -217,20 +231,6 @@ This debug message prints updated information about the lease to be
 extended. If the lease update is successful, the information printed
 by this message will be stored in the database. The first argument
 includes the client identification information.
-
-% ALLOC_ENGINE_V6_EXTEND_ERROR %1: allocation engine experienced error with attempting to extend lease lifetime: %2
-This error message indicates that an error was experienced during Renew
-or Rebind processing. Additional explanation is provided with this
-message. Depending on its nature, manual intervention may be required to
-continue processing messages from this particular client; other clients
-will be unaffected. The first argument includes the client identification
-information.
-
-% ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED %1: expired lease for the client's hint %2 is reserved for another client
-This message is logged when the allocation engine finds that the
-expired lease for the client's hint can't be reused because it
-is reserved for another client. The first argument includes the
-client identification information.
 
 % ALLOC_ENGINE_V6_HINT_RESERVED %1: lease for the client's hint %2 is reserved for another client
 This message is logged when the allocation engine cannot allocate
