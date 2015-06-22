@@ -24,30 +24,30 @@ This debug message is issued when starting to retrieve all hosts, holding the
 reservation for the specific IPv4 address, from the configuration. The
 argument specifies the IPv4 address used to search the hosts.
 
-% HOSTS_CFG_GET_ALL_ADDRESS4_HOST using address %1 found host: %2
-This debug message is issued when found host with the reservation
-for the specified IPv4 addres. The arguments specify the IPv4 address
-and the detailed description of the host found.
-
 % HOSTS_CFG_GET_ALL_ADDRESS4_COUNT using address %1, found %2 host(s)
 This debug message logs the number of hosts found using the specified
 IPv4 address. The arguments specify the IPv4 address used and the number
 of hosts found respectively.
+
+% HOSTS_CFG_GET_ALL_ADDRESS4_HOST using address %1 found host: %2
+This debug message is issued when found host with the reservation
+for the specified IPv4 addres. The arguments specify the IPv4 address
+and the detailed description of the host found.
 
 % HOSTS_CFG_GET_ALL_ADDRESS6 get all hosts with reservations for IPv6 address %1
 This debug message is issued when starting to retrieve all hosts, holding the
 reservation for the specific IPv6 address, from the configuration.
 The argument specifies the IPv6 address used to search the hosts.
 
-% HOSTS_CFG_GET_ALL_ADDRESS6_HOST using address %1 found host: %2
-This debug message is issued when found host with the reservation
-for the specified IPv6 address. The arguments specify the IPv6 address
-and the detailed description of the host found.
-
 % HOSTS_CFG_GET_ALL_ADDRESS6_COUNT using address %1, found %2 host(s)
 This debug message logs the number of hosts found using the specified
 IPv6 address. The arguments specify the IPv6 address used and the number
 of hosts found respectively.
+
+% HOSTS_CFG_GET_ALL_ADDRESS6_HOST using address %1 found host: %2
+This debug message is issued when found host with the reservation
+for the specified IPv6 address. The arguments specify the IPv6 address
+and the detailed description of the host found.
 
 % HOSTS_CFG_GET_ALL_HWADDR_DUID get all hosts with reservations for HWADDR %1 and DUID %2
 This debug message is issued when starting to retrieve reservations for all hosts
@@ -59,27 +59,27 @@ This debug message is issued when starting to retrieve reservations for all host
 identified by HW address or DUID. The argument holds both the identifier
 type and the value.
 
-% HOSTS_CFG_GET_ALL_IDENTIFIER_HOST using identifier: %1, found host: %2
-This debug message is issued when found host identified by the specific
-identifier. The arguments specify the identifier and the detailed
-description of the host found.
-
 % HOSTS_CFG_GET_ALL_IDENTIFIER_COUNT using identifier %1, found %2 host(s)
 This debug message logs the number of hosts found using the specified
 identifier. The arguments specify the identifier used and the number
 of hosts found respectively.
+
+% HOSTS_CFG_GET_ALL_IDENTIFIER_HOST using identifier: %1, found host: %2
+This debug message is issued when found host identified by the specific
+identifier. The arguments specify the identifier and the detailed
+description of the host found.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6 get all hosts with reservations for subnet id %1 and IPv6 address %2
 This debug message is issued when starting to retrieve all hosts connected to
 the specific subnet and having the specific IPv6 address reserved.
 The arguments specify subnet id and IPv6 address respectively.
 
-% HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_HOST using subnet id %1 and address %2, found host: %3
+% HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_COUNT using subnet id %1 and address %2, found %3 host(s)
 This debug message include the details of the host found using the
 subnet id and address. The arguments specify subnet id, address and
 found host details respectively.
 
-% HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_COUNT using subnet id %1 and address %2, found %3 host(s)
+% HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_HOST using subnet id %1 and address %2, found host: %3
 This debug message include the details of the host found using the
 subnet id and address. The arguments specify subnet id, address and
 found host details respectively.
@@ -124,17 +124,17 @@ subnet id, HW address and/or DUID.
 This debug message is issued when no host was found using the specified
 subnet id, HW address and DUID.
 
-% HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_HWADDR_DUID trying alternate source for host using subnet id %1, HWADDR %2, DUID%3
-This debug message is issued when the Host Manager doesn't find the
-host connected to the specific subnet and identified by the HW address
-or DUID, and it is starting to search for this host in the alternate
-host data source.
-
 % HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_ADDRESS4 trying alternate source for host using subnet id %1 and address %2
 This debug message is issued when the Host Manager doesn't find the
 host connected to the specific subnet and having the reservation for
 the specific IPv4 address, and it is starting to search for this host
 in the alternate host data source.
+
+% HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_HWADDR_DUID trying alternate source for host using subnet id %1, HWADDR %2, DUID%3
+This debug message is issued when the Host Manager doesn't find the
+host connected to the specific subnet and identified by the HW address
+or DUID, and it is starting to search for this host in the alternate
+host data source.
 
 % HOSTS_MGR_ALTERNATE_GET6_PREFIX trying alternate source for host using prefix %1/%2
 This debug message is issued when the Host Manager doesn't find the

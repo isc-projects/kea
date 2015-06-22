@@ -19,16 +19,16 @@ This message is printed when DHCPv4 server enabled an interface to be used
 to receive DHCPv4 traffic. IPv4 socket on this interface will be opened once
 Interface Manager starts up procedure of opening sockets.
 
-% DHCP4_BUFFER_RECEIVE_FAIL error on attempt to receive packet: %1
-The DHCPv4 server tried to receive a packet but an error
-occurred during this attempt. The reason for the error is included in
-the message.
-
 % DHCP4_BUFFER_RECEIVED received buffer from %1:%2 to %3:%4 over interface %5
 This debug message is logged when the server has received a packet
 over the socket. When the message is logged the contents of the received
 packet hasn't been parsed yet. The only available information is the
 interface and the source and destination IPv4 addresses/ports.
+
+% DHCP4_BUFFER_RECEIVE_FAIL error on attempt to receive packet: %1
+The DHCPv4 server tried to receive a packet but an error
+occurred during this attempt. The reason for the error is included in
+the message.
 
 % DHCP4_BUFFER_UNPACK parsing buffer received from %1 to %2 over interface %3
 This debug message is issued when the server starts parsing the received
@@ -87,11 +87,6 @@ client and transaction identification information. The second argument
 specifies the identifier of the subnet where the client is connected
 and for which this mode of operation is configured on the server.
 
-% DHCP4_CLIENT_FQDN_PROCESS %1: processing Client FQDN option
-This debug message is issued when the server starts processing the Client
-FQDN option sent in the client's query. The argument includes the
-client and transaction identification information.
-
 % DHCP4_CLIENT_FQDN_DATA %1: Client sent FQDN option: %2
 This debug message includes the detailed information extracted from the
 Client FQDN option sent in the query. The first argument includes the
@@ -99,10 +94,10 @@ client and transaction identification information. The second argument
 specifies the detailed information about the FQDN option received
 by the server.
 
-% DHCP4_CLIENT_HOSTNAME_PROCESS %1: processing client's Hostname option
-This debug message is issued when the server starts processing the Hostname
-option sent in the client's query. The argument includes the client and
-transaction identification information.
+% DHCP4_CLIENT_FQDN_PROCESS %1: processing Client FQDN option
+This debug message is issued when the server starts processing the Client
+FQDN option sent in the client's query. The argument includes the
+client and transaction identification information.
 
 % DHCP4_CLIENT_HOSTNAME_DATA %1: client sent Hostname option: %2
 This debug message includes the detailed information extracted from the
@@ -110,6 +105,11 @@ Hostname option sent in the query. The first argument includes the
 client and transaction identification information. The second argument
 specifies the hostname carried in the Hostname option sent by the
 client.
+
+% DHCP4_CLIENT_HOSTNAME_PROCESS %1: processing client's Hostname option
+This debug message is issued when the server starts processing the Hostname
+option sent in the client's query. The argument includes the client and
+transaction identification information.
 
 % DHCP4_CLIENT_NAME_PROC_FAIL %1: failed to process the fqdn or hostname sent by a client: %2
 This debug message is issued when the DHCP server was unable to process the
@@ -303,7 +303,7 @@ which should be sent to the kea-dhcp_ddns module to create
 new DNS records for the lease being acquired or to update existing records
 for the renewed lease. The first argument contains the client and transaction
 identification information. The second argument includes the reason for the
-failure. 
+failure.
 
 % DHCP4_NOT_RUNNING DHCPv4 server is not running
 A warning message is issued when an attempt is made to shut down the
@@ -510,18 +510,18 @@ first argument includes the client and the transaction identification
 information. The second argument holds the IPv4 address which release
 was attempted.
 
-% DHCP4_RELEASE_FAIL_NO_SUBNET %1: client is trying to release a lease %2 from a subnet which cannot be selected.
-This warning message indicates that client tried to release an address
-from an improper location.  The first argument contains the client and
-transaction identification information. The second argument contains
-the address which the client is trying to release.
-
 % DHCP4_RELEASE_FAIL_NO_LEASE %1: client is trying to release non-existing lease %2
 This debug message is printed when client attempts to release a lease,
 but no such lease is known to the server. The first argument contains
 the client and transaction identification information. The second
 argument contains the IPv4 address which the client is trying to
 release.
+
+% DHCP4_RELEASE_FAIL_NO_SUBNET %1: client is trying to release a lease %2 from a subnet which cannot be selected.
+This warning message indicates that client tried to release an address
+from an improper location.  The first argument contains the client and
+transaction identification information. The second argument contains
+the address which the client is trying to release.
 
 % DHCP4_RELEASE_FAIL_WRONG_CLIENT %1: client is trying to release the lease %2 which belongs to a different client
 This debug message is issued when a client is trying to release the
@@ -530,6 +530,19 @@ the 'client identifier' or 'chaddr' doesn't match between the client
 and the lease. The first argument includes the client and the
 transaction identification information. The second argument specifies
 the leased address.
+
+% DHCP4_REQUEST_CLASS_PROCESSING_FAILED %1: client class specific processing failed for DHCPREQUEST
+This debug message means that the server processing that is unique for each
+client class has reported a failure. The response packet will not be sent.
+The argument contains the client and transaction identification
+information.
+
+% DHCP4_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
+A debug message including the detailed data about the packet being sent
+to the client. The first argument contains the client and the transaction
+identification information. The second and third argument contains the
+packet name and type respectively. The fourth argument contains detailed
+packet information.
 
 % DHCP4_RESPONSE_FQDN_DATA %1: including FQDN option in the server's response: %2
 This debug message is issued when the server is adding the Client FQDN
@@ -554,19 +567,6 @@ when required by the server's configuration or when the client hasn't
 supplied its hostname. The first argument includes the client and the
 transaction identification information. The second argument holds the
 generated hostname.
-
-% DHCP4_REQUEST_CLASS_PROCESSING_FAILED %1: client class specific processing failed for DHCPREQUEST
-This debug message means that the server processing that is unique for each
-client class has reported a failure. The response packet will not be sent.
-The argument contains the client and transaction identification
-information.
-
-% DHCP4_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
-A debug message including the detailed data about the packet being sent
-to the client. The first argument contains the client and the transaction
-identification information. The second and third argument contains the
-packet name and type respectively. The fourth argument contains detailed
-packet information.
 
 % DHCP4_SERVER_FAILED server failed: %1
 The DHCPv4 server has encountered a fatal error and is terminating.
