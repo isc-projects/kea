@@ -2839,6 +2839,45 @@ should include options from the isc option space:
         </table>
     </section>
 
+    <section id="dhcp6-ctrl-channel">
+      <title>Management API for the DHCPv6 server</title>
+      <para>
+        Management API has been introduced in Kea 0.9.2. It allows issuing specific
+        management commands, like statistics retrieval, reconfiguration or shutdown.
+        For more details, see <xref linkend="ctrl-channel" />. Currently the only
+        supported communication channel type is UNIX stream socket. By default there
+        are no sockets open. To instruct Kea to open a socket, the following entry
+        in the configuration file can be used:
+<screen>
+"Dhcp6": {
+    "control-socket": {
+        "socket-type": "unix",
+        "socket-name": <userinput>"/path/to/the/unix/socket"</userinput>
+    },
+
+    "subnet6": [
+        ...
+    ],
+    ...
+}
+</screen>
+      </para>
+
+      <para>
+        Communication over control channel is conducted using JSON structures.
+        See the Control Channel section in the Kea Developer's Guide for more details.
+      </para>
+
+      <para>DHCPv4 server supports <command>statistic-get</command>,
+      <command>statistic-reset</command>, <command>statistic-remove</command>,
+      <command>statistic-get-all</command>, <command>statistic-reset-all</command>
+      and <command>statistic-remove-all</command>, specified in
+      <xref linkend="command-stats"/>. It also supports
+      <command>list-commands</command> and <command>shutdown</command>,
+      specified in <xref linkend="command-list-commands" /> and
+      <xref linkend="command-shutdown" />, respectively.</para>
+    </section>
+
     <section id="dhcp6-std">
       <title>Supported DHCPv6 Standards</title>
       <para>The following standards are currently
