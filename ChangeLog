@@ -1,3 +1,8 @@
+967.	[doc]		tomek
+	Management API section added in the DHCPv6 chapter of the Kea
+	User's Guide
+	(Trac #3917, git 21305d2da26090e3fad1ff9fb242a2bbb6b7e56b)
+
 966.	[func]		fdupont
 	Include database software details in extended version information.
 	(Trac #3882, git b0e166c4d8b0383ebd6e2f51d55eed68a2bcafa8)
