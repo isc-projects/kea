@@ -2868,7 +2868,7 @@ should include options from the isc option space:
         See the Control Channel section in the Kea Developer's Guide for more details.
       </para>
 
-      <para>DHCPv4 server supports <command>statistic-get</command>,
+      <para>DHCPv6 server supports <command>statistic-get</command>,
       <command>statistic-reset</command>, <command>statistic-remove</command>,
       <command>statistic-get-all</command>, <command>statistic-reset-all</command>
       and <command>statistic-remove-all</command>, specified in
