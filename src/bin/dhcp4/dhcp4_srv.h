@@ -33,6 +33,10 @@
 #include <iostream>
 #include <queue>
 
+// Undefine the macro OPTIONAL which is defined in some operating
+// systems but conflicts with a member of the RequirementLevel enum in
+// the server class.
+
 #ifdef OPTIONAL
 #undef OPTIONAL
 #endif
