@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -384,9 +384,9 @@ Option4ClientFqdn::setFlag(const uint8_t flag, const bool set_flag) {
     // multiple flags concurrently.
     if (((flag & ~FLAG_MASK) != 0) || (flag == 0)) {
         isc_throw(InvalidOption4FqdnFlags, "invalid DHCPv4 Client FQDN"
-                  << " Option flag " << std::hex
+                  << " Option flag 0x" << std::hex
                   << static_cast<int>(flag) << std::dec
-                  << "is being set. Expected combination of E, N, S and O");
+                  << " is being set. Expected combination of E, N, S and O");
     }
 
     // Copy the current flags into local variable. That way we will be able

@@ -890,7 +890,7 @@ RelayInfoParser::build(ConstElementPtr relay_info) {
     if ( (ip->isV4() && family_ != Option::V4) ||
          (ip->isV6() && family_ != Option::V6) ) {
         isc_throw(DhcpConfigError, "ip-address field " << ip->toText()
-                  << "does not have IP address of expected family type: "
+                  << " does not have IP address of expected family type: "
                   << (family_ == Option::V4 ? "IPv4" : "IPv6")
                   << " (" << string_values_->getPosition("ip-address") << ")");
     }
