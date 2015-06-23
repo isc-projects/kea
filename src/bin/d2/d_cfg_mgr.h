@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,13 @@
 
 #include <stdint.h>
 #include <string>
+
+// Undefine the macro OPTIONAL which is defined in some operating
+// systems but conflicts with class constant is the context base class.
+
+#ifdef OPTIONAL
+#undef OPTIONAL
+#endif
 
 namespace isc {
 namespace d2 {
