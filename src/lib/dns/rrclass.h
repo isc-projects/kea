@@ -31,7 +31,10 @@
 
 #include <boost/optional.hpp>
 
-#if defined(_WIN32) && defined(IN)
+// Undefine the macro IN which is defined in some operating systems
+// but conflicts the IN RR class.
+
+#ifdef IN
 #undef IN
 #endif
 
