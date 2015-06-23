@@ -252,7 +252,7 @@ TEST_F(Option6IAPrefixTest, negative) {
                  BadValue);
 
     // Prefix length can't be larger than 128
-    EXPECT_THROW(Option6IAPrefix(12345, IOAddress("192.0.2.1"),
+    EXPECT_THROW(Option6IAPrefix(12345, IOAddress("2001:db8:1::"),
                                  255, 1000, 2000),
                  BadValue);
 }

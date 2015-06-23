@@ -114,7 +114,7 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
     // parameters are for IA and TA only. There is another dedicated
     // constructor for that (it uses prefix/length)
     if ((type != Lease::TYPE_NA) && (type != Lease::TYPE_TA)) {
-        isc_throw(BadValue, "Invalid Pool6 type specified:"
+        isc_throw(BadValue, "Invalid Pool6 type specified: "
                   << static_cast<int>(type));
     }
 
@@ -135,7 +135,7 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
 
     // check if the prefix length is sane
     if (prefix_len == 0 || prefix_len > 128) {
-        isc_throw(BadValue, "Invalid prefix length: " << prefix_len);
+        isc_throw(BadValue, "Invalid prefix length: " << static_cast<unsigned>(prefix_len));
     }
 
     if (prefix_len > delegated_len) {
@@ -146,7 +146,7 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
 
     if ( ( (type == Lease::TYPE_NA) || (type == Lease::TYPE_TA)) &&
          (delegated_len != 128)) {
-        isc_throw(BadValue, "For IA or TA pools, delegated prefix length must "
+        isc_throw(BadValue, "For IA or TA pools, delegated prefix length must"
                   << " be 128.");
     }
 

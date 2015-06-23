@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,8 @@ NameChangeProtocol stringToNcrProtocol(const std::string& protocol_str) {
         return (NCR_TCP);
     }
 
-    isc_throw(BadValue, "Invalid NameChangeRequest protocol:" << protocol_str);
+    isc_throw(BadValue,
+              "Invalid NameChangeRequest protocol: " << protocol_str);
 }
 
 std::string ncrProtocolToString(NameChangeProtocol protocol) {
@@ -69,7 +70,7 @@ NameChangeListener::startListening(isc::asiolink::IOService& io_service) {
         open(io_service);
     } catch (const isc::Exception& ex) {
         stopListening();
-        isc_throw(NcrListenerOpenError, "Open failed:" << ex.what());
+        isc_throw(NcrListenerOpenError, "Open failed: " << ex.what());
     }
 
     // Set our status to listening.
@@ -80,7 +81,7 @@ NameChangeListener::startListening(isc::asiolink::IOService& io_service) {
         receiveNext();
     } catch (const isc::Exception& ex) {
         stopListening();
-        isc_throw(NcrListenerReceiveError, "doReceive failed:" << ex.what());
+        isc_throw(NcrListenerReceiveError, "doReceive failed: " << ex.what());
     }
 }
 
@@ -236,7 +237,8 @@ NameChangeSender::sendRequest(NameChangeRequestPtr& ncr) {
     }
 
     if (send_queue_.size() >= send_queue_max_) {
-        isc_throw(NcrSenderQueueFull, "send queue has reached maximum capacity:"
+        isc_throw(NcrSenderQueueFull,
+                  "send queue has reached maximum capacity: "
                   << send_queue_max_ );
     }
 

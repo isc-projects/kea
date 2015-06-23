@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -393,13 +393,14 @@ LabelSequence::extend(const LabelSequence& labels,
         isc_throw(BadValue,
                   "extend() called with unrelated buffer");
     }
-    if (data_pos + data_len > Name::MAX_WIRE) {
-        isc_throw(BadValue,
-                  "extend() would exceed maximum wire length");
-    }
+    // Check MAX_LABELS before MAX_WIRE or it will be never reached
     if (label_count + append_label_count > Name::MAX_LABELS) {
         isc_throw(BadValue,
                   "extend() would exceed maximum number of labels");
+    }
+    if (data_pos + data_len > Name::MAX_WIRE) {
+        isc_throw(BadValue,
+                  "extend() would exceed maximum wire length");
     }
 
     // All seems to be reasonably ok, let's proceed.
