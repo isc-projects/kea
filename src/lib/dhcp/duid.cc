@@ -76,7 +76,7 @@ DUID::decode(const std::string& text) {
             // allowed for client identifier.
             if (split_text[i].empty()) {
                 isc_throw(isc::BadValue, "invalid identifier '"
-                          << text << "':" << " tokens must be"
+                          << text << "': tokens must be"
                           " separated with a single colon");
             } else if (split_text[i].size() > 2) {
                 isc_throw(isc::BadValue, "invalid identifier '"
