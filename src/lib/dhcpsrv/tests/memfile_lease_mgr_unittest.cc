@@ -1030,20 +1030,20 @@ TEST_F(MemfileLeaseMgrTest, versionCheck) {
 // This test checks that the backend reads DHCPv4 lease data from multiple
 // files.
 TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {
-    LeaseFileIO io2("leasefile4_0.csv.2");
+    LeaseFileIO io2(getLeaseFilePath("leasefile4_0.csv.2"));
     io2.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
                   "fqdn_fwd,fqdn_rev,hostname\n"
                   "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,\n"
                   "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,\n");
 
-    LeaseFileIO io1("leasefile4_0.csv.1");
+    LeaseFileIO io1(getLeaseFilePath("leasefile4_0.csv.1"));
     io1.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
                   "fqdn_fwd,fqdn_rev,hostname\n"
                   "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,\n"
                   "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,\n"
                   "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,\n");
 
-    LeaseFileIO io("leasefile4_0.csv");
+    LeaseFileIO io(getLeaseFilePath("leasefile4_0.csv"));
     io.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
                  "fqdn_fwd,fqdn_rev,hostname\n"
                  "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,\n"
@@ -1076,7 +1076,7 @@ TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(200, lease->cltt_);
 
-    // Thsi lease exists in the second and third file and the cltt
+    // This lease exists in the second and third file and the cltt
     // should be calculated using the expiration time and the
     // valid lifetime from the third file.
     lease = lmptr_->getLease4(IOAddress("192.0.2.12"));
@@ -1088,26 +1088,26 @@ TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {
 // the .completed postfix instead of files with postfixes .1 and .2 if
 // the file with .completed postfix exists.
 TEST_F(MemfileLeaseMgrTest, load4CompletedFile) {
-    LeaseFileIO io2("leasefile4_0.csv.2");
+    LeaseFileIO io2(getLeaseFilePath("leasefile4_0.csv.2"));
     io2.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
                   "fqdn_fwd,fqdn_rev,hostname\n"
                   "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,\n"
                   "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,\n");
 
-    LeaseFileIO io1("leasefile4_0.csv.1");
+    LeaseFileIO io1(getLeaseFilePath("leasefile4_0.csv.1"));
     io1.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
                   "fqdn_fwd,fqdn_rev,hostname\n"
                   "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,\n"
                   "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,\n"
                   "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,\n");
 
-    LeaseFileIO io("leasefile4_0.csv");
+    LeaseFileIO io(getLeaseFilePath("leasefile4_0.csv"));
     io.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
                  "fqdn_fwd,fqdn_rev,hostname\n"
                  "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,\n"
                  "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,400,8,1,1,,\n");
 
-    LeaseFileIO ioc("leasefile4_0.csv.completed");
+    LeaseFileIO ioc(getLeaseFilePath("leasefile4_0.csv.completed"));
     ioc.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
                   "fqdn_fwd,fqdn_rev,hostname\n"
                   "192.0.2.13,ff:ff:ff:ff:ff:ff,,200,200,8,1,1,,\n");
@@ -1164,7 +1164,7 @@ TEST_F(MemfileLeaseMgrTest, load4LFCInProgress) {
 // This test checks that the backend reads DHCPv6 lease data from multiple
 // files.
 TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
-    LeaseFileIO io2("leasefile6_0.csv.2");
+    LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
                   "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
@@ -1172,7 +1172,7 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
                   "200,200,8,100,0,7,0,1,1,,\n");
 
-    LeaseFileIO io1("leasefile6_0.csv.1");
+    LeaseFileIO io1(getLeaseFilePath("leasefile6_0.csv.1"));
     io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
                   "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
@@ -1182,7 +1182,7 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
                   "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
                   "200,200,8,100,0,7,0,1,1,,\n");
 
-    LeaseFileIO io("leasefile6_0.csv");
+    LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
@@ -1227,7 +1227,7 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
 // leasefile without the postfix and the file with a .1 postfix when
 // the file with the .2 postfix is missing.
 TEST_F(MemfileLeaseMgrTest, load6MultipleNoSecondFile) {
-    LeaseFileIO io1("leasefile6_0.csv.1");
+    LeaseFileIO io1(getLeaseFilePath("leasefile6_0.csv.1"));
     io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
                   "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
@@ -1237,7 +1237,7 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoSecondFile) {
                   "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
                   "200,200,8,100,0,7,0,1,1,,\n");
 
-    LeaseFileIO io("leasefile6_0.csv");
+    LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
@@ -1273,7 +1273,7 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoSecondFile) {
 // leasefile without the postfix and the file with a .2 postfix when
 // the file with the .1 postfix is missing.
 TEST_F(MemfileLeaseMgrTest, load6MultipleNoFirstFile) {
-    LeaseFileIO io2("leasefile6_0.csv.2");
+    LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
                   "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
@@ -1281,7 +1281,7 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoFirstFile) {
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
                   "200,200,8,100,0,7,0,1,1,,\n");
 
-    LeaseFileIO io("leasefile6_0.csv");
+    LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
@@ -1319,7 +1319,7 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoFirstFile) {
 // the .completed postfix instead of files with postfixes .1 and .2 if
 // the file with .completed postfix exists.
 TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
-    LeaseFileIO io2("leasefile6_0.csv.2");
+    LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
                   "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
@@ -1327,7 +1327,7 @@ TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
                   "200,200,8,100,0,7,0,1,1,,\n");
 
-    LeaseFileIO io1("leasefile6_0.csv.1");
+    LeaseFileIO io1(getLeaseFilePath("leasefile6_0.csv.1"));
     io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
                   "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
@@ -1337,7 +1337,7 @@ TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
                   "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
                   "200,200,8,100,0,7,0,1,1,,\n");
 
-    LeaseFileIO io("leasefile6_0.csv");
+    LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
@@ -1345,7 +1345,7 @@ TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
                  "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
                  "200,200,8,100,0,7,0,1,1,,\n");
 
-    LeaseFileIO ioc("leasefile6_0.csv.completed");
+    LeaseFileIO ioc(getLeaseFilePath("leasefile6_0.csv.completed"));
     ioc.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
                   "2001:db8:1::125,ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff,"
