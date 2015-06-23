@@ -570,6 +570,57 @@ temporarily override a list of interface names and listen on all interfaces.
   </note>
 </section>
 
+<section id="dhcpinform-unicast-issues">
+  <title>Issues with unicast responses to DHCPINFORM</title>
+  <para>The use of the UDP sockets has certain benefits in the deployments
+  where the server receives a relayed traffic only. These benefits are
+  mentioned in the <xref linkend="dhcp4-interface-configuration"/>. From
+  the administrator's perspective it is often desired to be able to
+  configure the system's firewall to filter out the unwanted traffic, and
+  the use of UDP sockets faciliates it. However, the administrator must
+  also be aware of the implications related to filtering certain types
+  of traffic as it my impair the DHCP server's operation.
+  </para>
+
+  <para>In this section we are focusing on the case when the server
+  receives the DHCPINFORM message from the client via a relay. According
+  to the <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>,
+  the server should unicast DHCPACK response to the address carried in
+  the 'ciaddr' field. When the UDP socket is in use, the DHCP server
+  relies on the low level functions of an operating system to build the
+  data link, IP and UDP layer of the outgoing message. Typically, the
+  OS will first use ARP to obtain the client's link layer address to be
+  inserted into the frame's header. When the ARP exchange is successful,
+  the DHCP message can be unicast to the client, using the address
+  obtained.
+  </para>
+
+  <para>Some system administrators block ARP messages in their network,
+  which causes issues for the server when it responds to the
+  DHCPINFORM messages, because the server is unable to send the
+  DHCPACK if the preceding ARP communication fails. Since the OS is
+  entirely responsible for the ARP communication and then sending
+  the DHCP packet over the wire, the DHCP server has no means to
+  determine that the ARP exchange failed and the DHCP response message
+  was dropped. Thus, the server does not log any error messages when
+  the outgoing DHCP response is dropped. At the same time, all hooks
+  pertaining to the packet sending operation will be called, even
+  though the message never reaches its destination.
+  </para>
+
+  <para>Note that the issue described in this section is not observed
+  when the raw sockets are in use, because, in this case, the DHCP server
+  builds all the layers of the outgoing message on its own and does not
+  use ARP. Instead, it inserts the value carried in the 'chaddr' field
+  of the DHCPINFORM message into the link layer.
+  </para>
+
+  <para>The server administrators willing to support DHCPINFORM
+  messages via the relays should not block ARP traffic in their
+  networks or use the raw sockets instead of the UDP sockets.
+  </para>
+</section>
+
 <section id="ipv4-subnet-id">
   <title>IPv4 Subnet Identifier</title>
   <para>
