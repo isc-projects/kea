@@ -1,4 +1,4 @@
-// Copyright (C) 2012,2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -199,8 +199,8 @@ isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix
 
 isc::asiolink::IOAddress getNetmask4(uint8_t len) {
     if (len > 32) {
-        isc_throw(BadValue, "Invalid netmask size " << len << ", allowed range "
-                  "is 0..32");
+      isc_throw(BadValue, "Invalid netmask size "
+                << static_cast<unsigned>(len) << ", allowed range is 0..32");
     }
     uint32_t x = ~bitMask4[len];
 

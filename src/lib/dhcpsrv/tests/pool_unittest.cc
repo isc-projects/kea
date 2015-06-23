@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013,2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -39,15 +39,15 @@ TEST(Pool4Test, constructor_first_last) {
     EXPECT_EQ(IOAddress("192.0.2.255"), pool1.getLastAddress());
 
     // This is Pool4, IPv6 addresses do not belong here
-    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+    EXPECT_THROW(Pool4(IOAddress("2001:db8::1"),
                        IOAddress("192.168.0.5")), BadValue);
-    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("192.168.0.2"),
+    EXPECT_THROW(Pool4(IOAddress("192.168.0.2"),
                        IOAddress("2001:db8::1")), BadValue);
 
     // Should throw. Range should be 192.0.2.1-192.0.2.2, not
     // the other way around.
-    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("192.0.2.2"),
-                       IOAddress("192.0.2.1")), BadValue);
+    EXPECT_THROW(Pool4(IOAddress("192.0.2.2"), IOAddress("192.0.2.1")),
+                 BadValue);
 }
 
 TEST(Pool4Test, constructor_prefix_len) {

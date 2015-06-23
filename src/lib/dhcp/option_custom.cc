@@ -327,7 +327,7 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
         text << (readBoolean(index) ? "true" : "false");
         break;
     case OPT_INT8_TYPE:
-        text << readInteger<int8_t>(index);
+        text << static_cast<int>(readInteger<int8_t>(index));
         break;
     case OPT_INT16_TYPE:
         text << readInteger<int16_t>(index);
@@ -336,7 +336,7 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
         text << readInteger<int32_t>(index);
         break;
     case OPT_UINT8_TYPE:
-        text << readInteger<uint8_t>(index);
+        text << static_cast<unsigned>(readInteger<uint8_t>(index));
         break;
     case OPT_UINT16_TYPE:
         text << readInteger<uint16_t>(index);

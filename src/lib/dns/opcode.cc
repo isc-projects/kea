@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -50,7 +50,8 @@ const uint8_t MAX_OPCODE = 15;
 Opcode::Opcode(const uint8_t code) : code_(static_cast<CodeValue>(code)) {
     if (code > MAX_OPCODE) {
         isc_throw(OutOfRange,
-                  "DNS Opcode is too large to construct: " << code);
+                  "DNS Opcode is too large to construct: "
+		  << static_cast<unsigned>(code));
     }
 }
 
