@@ -2864,6 +2864,14 @@ should include options from the isc option space:
       </para>
 
       <para>
+        The total path is limited to the size of sun_path field of the
+        sockaddr_un structure of your system, decreased by one. That's 107 bytes
+        on Linux and 103 bytes on FreeBSD. Other systems are expected to have
+        similar limitations. Please check documentation of your operating system
+        for details. In case of failure, please specify shorter path.
+      </para>
+
+      <para>
         Communication over control channel is conducted using JSON structures.
         See the Control Channel section in the Kea Developer's Guide for more details.
       </para>
