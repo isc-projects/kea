@@ -590,9 +590,10 @@ temporarily override a list of interface names and listen on all interfaces.
   relies on the low level functions of an operating system to build the
   data link, IP and UDP layer of the outgoing message. Typically, the
   OS will first use ARP to obtain the client's link layer address to be
-  inserted into the frame's header. When the ARP exchange is successful,
-  the DHCP message can be unicast to the client, using the address
-  obtained.
+  inserted into the frame's header, if the address is not cached from
+  the previous transaction that the client had with the server.
+  When the ARP exchange is successful, the DHCP message can be unicast
+  to the client, using the address obtained.
   </para>
 
   <para>Some system administrators block ARP messages in their network,
