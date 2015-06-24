@@ -308,6 +308,7 @@ public:
     /// all variables are initialized/set in the methods before they are used.
     MySqlLease4Exchange() : addr4_(0), hwaddr_length_(0), client_id_length_(0),
                             client_id_null_(MLM_FALSE),
+                            subnet_id_(0), valid_lifetime_(0),
                             fqdn_fwd_(false), fqdn_rev_(false), hostname_length_(0) {
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
@@ -666,6 +667,8 @@ public:
     /// The initialization of the variables here is nonly to satisfy cppcheck -
     /// all variables are initialized/set in the methods before they are used.
     MySqlLease6Exchange() : addr6_length_(0), duid_length_(0),
+                            iaid_(0), lease_(0), lease_type_(0), prefixlen_(0),
+                            pref_lifetime_(0), subnet_id_(0), valid_lifetime_(0),
                             fqdn_fwd_(false), fqdn_rev_(false),
                             hostname_length_(0), hwaddr_length_(0),
                             hwaddr_null_(MLM_FALSE), hwtype_(0), hwaddr_source_(0) {
