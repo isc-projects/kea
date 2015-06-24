@@ -389,7 +389,7 @@ public:
                             const std::string& exp_hostname,
                             const uint8_t client_flags =
                                 Option6ClientFqdn::FLAG_S,
-                            const IOAddress expected_address = IOAddress("2001:db8:1:1::dead:beef"),
+                            const IOAddress& expected_address = IOAddress("2001:db8:1:1::dead:beef"),
                             const bool include_oro = true) {
         // Create a message of a specified type, add server id and
         // FQDN option.
