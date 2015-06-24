@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -82,11 +82,11 @@ public:
     // Destructor, remove the file.  This is only a test, so ignore failures
     ~SpecificationForFileLogger() {
         if (! name_.empty()) {
-            static_cast<void>(unlink(name_.c_str()));
+            static_cast<void>(remove(name_.c_str()));
 
             // Depending on the log4cplus version, a lock file may also be
             // created.
-            static_cast<void>(unlink((name_ + ".lock").c_str()));
+            static_cast<void>(remove((name_ + ".lock").c_str()));
         }
     }
 
@@ -195,7 +195,7 @@ TEST_F(LoggerManagerTest, FileLogger) {
     // For the first test, we want to check that the file is created
     // if it does not already exist.  So delete the temporary file before
     // logging the first message.
-    unlink(file_spec.getFileName().c_str());
+    remove(file_spec.getFileName().c_str());
 
     // Set up the file appenders.
     LoggerManager manager;
@@ -269,7 +269,7 @@ TEST_F(LoggerManagerTest, FileSizeRollover) {
     for (int i = 0; i < 3; ++i) {
         prev_name.push_back(file_spec.getFileName() + "." +
                             boost::lexical_cast<string>(i + 1));
-        (void) unlink(prev_name[i].c_str());
+        (void) remove(prev_name[i].c_str());
     }
 
     // Generate an argument for a message that ensures that the message when
@@ -325,7 +325,7 @@ TEST_F(LoggerManagerTest, FileSizeRollover) {
 
     // Tidy up
     for (vector<string>::size_type i = 0; i < prev_name.size(); ++i) {
-       (void) unlink(prev_name[i].c_str());
+       (void) remove(prev_name[i].c_str());
     }
 }
 
@@ -368,7 +368,7 @@ TEST_F(LoggerManagerTest, checkLayoutPattern) {
     // For the first test, we want to check that the file is created
     // if it does not already exist.  So delete the temporary file before
     // logging the first message.
-    unlink(file_spec.getFileName().c_str());
+    remove(file_spec.getFileName().c_str());
 
     // Set up the file appenders.
     LoggerManager manager;

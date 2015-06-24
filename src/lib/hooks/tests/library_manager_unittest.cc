@@ -1,4 +1,4 @@
-// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -54,14 +54,14 @@ public:
         callout_manager_.reset(new CalloutManager(4));
 
         // Ensure the marker file is not present at the start of a test.
-        static_cast<void>(unlink(MARKER_FILE));
+        static_cast<void>(remove(MARKER_FILE));
     }
 
     /// @brief Destructor
     ///
     /// Ensures a marker file is removed after each test.
     ~LibraryManagerTest() {
-        static_cast<void>(unlink(MARKER_FILE));
+        static_cast<void>(remove(MARKER_FILE));
     }
 
     /// @brief Marker file present

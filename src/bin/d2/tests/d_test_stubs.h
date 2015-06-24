@@ -356,7 +356,7 @@ public:
         }
 
         getController().reset();
-        static_cast<void>(unlink(CFG_TEST_FILE));
+        static_cast<void>(remove(CFG_TEST_FILE));
     }
 
     /// @brief Convenience method that destructs and then recreates the
