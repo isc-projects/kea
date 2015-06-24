@@ -363,7 +363,8 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
         offset += opt_len;
     }
 
-    return (offset);
+    last_offset = offset;
+    return (last_offset);
 }
 
 size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
@@ -463,7 +464,8 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
         options.insert(std::make_pair(opt_type, opt));
         offset += opt_len;
     }
-    return (offset);
+    last_offset = offset;
+    return (last_offset);
 }
 
 size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
