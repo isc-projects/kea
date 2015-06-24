@@ -1,3 +1,10 @@
+969.	[func]		tomek
+	KEA_SOCKET_TEST_DIR environment variable can be used to specify
+	the directory for opening Unix sockets during tests. That may
+	be used to avoid path length limitations when running unit-tests
+	in deeply nested directories.
+	(Trac #3918, git 9cfd502e8d4605eaf34f8744f90272dc3e8a3e34)
+
 968.	[func]		fdupont
 	Changed all occurrences of unlink() to the more portable remove()
 	to avoid problems on operating systems where the former is not
@@ -14,7 +21,7 @@
 	(Trac #3882, git b0e166c4d8b0383ebd6e2f51d55eed68a2bcafa8)
 
 965.	[func]		sar
-	Per IPv6 subnet statistics (subnet[id].assigned-nas, 
+	Per IPv6 subnet statistics (subnet[id].assigned-nas,
 	subnet[id].total-nas, subnet[id].assigned-pds, and
 	subnet[id].total-pds) has been implemented.
 	(Trac #3799, git 4aa4808268bbc54290578f60ba60ed33cf344712)
