@@ -246,7 +246,8 @@ struct Lease4 : public Lease {
     /// @brief Default constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease4() : Lease(0, 0, 0, 0, 0, 0, false, false, "", HWAddrPtr()) {
+    Lease4() : Lease(0, 0, 0, 0, 0, 0, false, false, "", HWAddrPtr()), ext_(0)
+    {
     }
 
     /// @brief Copy constructor
