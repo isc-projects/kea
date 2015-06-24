@@ -177,6 +177,7 @@ TEST(UDPSocket, processReceivedData) {
     uint8_t                 inbuff[32];     // Buffer to check
     OutputBufferPtr         outbuff(new OutputBuffer(16));
                                             // Where data is put
+                                            // cppcheck-suppress variableScope
     size_t                  expected;       // Expected amount of data
     size_t                  offset;         // Where to put next data
     size_t                  cumulative;     // Cumulative data received
