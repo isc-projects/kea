@@ -60,6 +60,8 @@ public:
     std::string SOCKET_NAME;
 };
 
+// This test verifies that a Unix socket can be opened properly and that input
+// parameters (socket-type and socket-name) are verified.
 TEST_F(CommandSocketFactoryTest, unixCreate) {
     // Null pointer is obviously a bad idea.
     EXPECT_THROW(CommandSocketFactory::create(ConstElementPtr()),
@@ -87,4 +89,14 @@ TEST_F(CommandSocketFactoryTest, unixCreate) {
 
     // It should be possible to close the socket.
     EXPECT_NO_THROW(sock->close());
+}
+
+// This test checks that when unix path is too long, the socket cannot be opened.
+TEST_F(CommandSocketFactoryTest, unixCreateTooLong) {
+    ElementPtr socket_info = Element::fromJSON("{ \"socket-type\": \"unix\","
+        "\"socket-name\": \"/tmp/toolongtoolongtoolongtoolongtoolongtoolong"
+        "toolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolong"
+        "\" }");
+
+    EXPECT_THROW(CommandSocketFactory::create(socket_info), SocketError);
 }
