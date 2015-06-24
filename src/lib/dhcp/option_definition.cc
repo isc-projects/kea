@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option4_addrlst.h>
@@ -21,6 +22,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
 #include <dhcp/option6_client_fqdn.h>
+#include <dhcp/option6_status_code.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int.h>
@@ -427,6 +429,14 @@ OptionDefinition::haveVendorClass6Format() const {
 }
 
 bool
+OptionDefinition::haveStatusCodeFormat() const {
+    return (haveType(OPT_RECORD_TYPE) &&
+            (record_fields_.size() == 2) &&
+            (record_fields_[0] == OPT_UINT16_TYPE) &&
+            (record_fields_[1] == OPT_STRING_TYPE));
+}
+
+bool
 OptionDefinition::convertToBool(const std::string& value_str) const {
     // Case insensitve check that the input is one of: "true" or "false".
     if (boost::iequals(value_str, "true")) {
@@ -683,6 +693,9 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
         } else if (getCode() == D6O_VENDOR_CLASS && haveVendorClass6Format()) {
             // Vendor Class (option code 16).
             return (OptionPtr(new OptionVendorClass(Option::V6, begin, end)));
+        } else if (getCode() == D6O_STATUS_CODE && haveStatusCodeFormat()) {
+            // Status Code (option code 13)
+            return (OptionPtr(new Option6StatusCode(begin, end)));
         }
     } else {
         if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {

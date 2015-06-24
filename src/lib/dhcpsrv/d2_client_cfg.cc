@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <dhcp_ddns/ncr_udp.h>
 #include <dhcpsrv/d2_client_cfg.h>
@@ -36,7 +38,6 @@ const bool D2ClientConfig::DFT_OVERRIDE_NO_UPDATE = false;
 const bool D2ClientConfig::DFT_OVERRIDE_CLIENT_UPDATE = false;
 const bool D2ClientConfig::DFT_REPLACE_CLIENT_NAME = false;
 const char *D2ClientConfig::DFT_GENERATED_PREFIX = "myhost";
-const char *D2ClientConfig::DFT_QUALIFYING_SUFFIX = "example.com";
 
 D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                const isc::asiolink::IOAddress& server_ip,
@@ -85,7 +86,7 @@ D2ClientConfig::D2ClientConfig()
       override_client_update_(DFT_OVERRIDE_CLIENT_UPDATE),
       replace_client_name_(DFT_REPLACE_CLIENT_NAME),
       generated_prefix_(DFT_GENERATED_PREFIX),
-      qualifying_suffix_(DFT_QUALIFYING_SUFFIX) {
+      qualifying_suffix_("") {
     validateContents();
 }
 

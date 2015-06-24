@@ -74,9 +74,9 @@ public:
     /// \param result The OutputBuffer to append the result to
     /// \param len The number of bytes from the result to copy. If this
     ///        value is smaller than the algorithms output size, the
-    ///        result will be truncated. If this value is larger, or 0
-    ///        (the default), it will be ignored
-    void final(isc::util::OutputBuffer& result, size_t len = 0);
+    ///        result will be truncated. If this value is larger,
+    ///        only output size bytes will be copied
+    void final(isc::util::OutputBuffer& result, size_t len);
 
     /// \brief Calculate the final digest
     ///
@@ -103,10 +103,10 @@ public:
     ///
     /// \param len The number of bytes from the result to copy. If this
     ///        value is smaller than the algorithms output size, the
-    ///        result will be truncated. If this value is larger, or 0
-    ///        (the default), it will be ignored
+    ///        result will be truncated. If this value is larger,
+    ///        only output size bytes will be copied
     /// \return a vector containing the signature
-    std::vector<uint8_t> final(size_t len = 0);
+    std::vector<uint8_t> final(size_t len);
 
 private:
     HashImpl* impl_;
@@ -128,8 +128,9 @@ private:
 /// \param data_len The length of the data
 /// \param hash_algorithm The hash algorithm
 /// \param result The digest will be appended to this buffer
-/// \param len If this is non-zero and less than the output size,
-///            the result will be truncated to len bytes
+/// \param len If this is non-zero and less than the output size, the result
+///            will be truncated to len bytes. If greater than output size
+///            (or equal to zero) only output size bytes are written
 void digest(const void* data,
             const size_t data_len,
             const HashAlgorithm hash_algorithm,

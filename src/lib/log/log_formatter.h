@@ -106,7 +106,7 @@ replacePlaceholder(std::string* message, const std::string& replacement,
 /// And if we did not deactivate the original Formatter, that one would get
 /// destroyed before any call to .arg, producing an output, and then the one
 /// the .arg calls are called on would get destroyed as well, producing output
-/// again. So, think of this behaviour as soul moving from one to another.
+/// again. So, think of this behavior as soul moving from one to another.
 template<class Logger> class Formatter {
 private:
     /// \brief The logger we will use to output the final message.

@@ -1,15 +1,18 @@
 # This is a basic configuration for the Kea DHCPv4 and DHCPv6 servers.
 # Subnet declarations are commented out and no interfaces are listed.
-# Therefore, the servers will not listen or to any queries. The basic
-# configuration must be extended to specify interfaces on which the
-# servers should listen. Also, subnets and options must be declared.
+# Therefore, the servers will not listen or respond to any queries.
+# The basic configuration must be extended to specify interfaces on
+# which the servers should listen. Also, subnets and options must be
+# declared.
 {
 
 # DHCPv4 configuration starts here.
 "Dhcp4":
 {
 # Add names of interfaces to listen on.
-  "interfaces": [ ],
+  "interfaces-config": {
+    "interfaces": [ ]
+  },
 
 # Use Memfile lease database backend to store leases in a CSV file.
   "lease-database": {
@@ -34,7 +37,9 @@
 "Dhcp6":
 {
 # Add names of interfaces to listen on.
-  "interfaces": [ ],
+  "interfaces-config": {
+    "interfaces": [ ]
+  },
 
 # Use Memfile lease database backend to store leases in a CSV file.
   "lease-database": {
@@ -43,7 +48,7 @@
 
 # Addresses will be assigned with preferred and valid lifetimes
 # being 3000 and 4000, respectively. Client is told to start
-# renewing after 1000 seconds. If the server does not repond
+# renewing after 1000 seconds. If the server does not respond
 # after 2000 seconds since the lease was granted, client is supposed
 # to start REBIND procedure (emergency renewal that allows switching
 # to a different server).

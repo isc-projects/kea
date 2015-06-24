@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,21 +23,80 @@
 #include <dhcpsrv/tests/lease_file_io.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
+#include <util/pid_file.h>
 #include <gtest/gtest.h>
 
+#include <boost/bind.hpp>
+
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include <queue>
 #include <sstream>
+#include <unistd.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::util;
 
 namespace {
 
-// empty class for now, but may be extended once Addr6 becomes bigger
+/// @brief Class derived from @c Memfile_LeaseMgr to test LFC timer.
+///
+/// This class provides a custom callback function which is invoked
+/// when the timer for Lease File Cleanup goes off. It is used to
+/// test that the timer is correctly installed.
+class LFCMemfileLeaseMgr : public Memfile_LeaseMgr {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Sets the counter for callbacks to 0.
+    LFCMemfileLeaseMgr(const ParameterMap& parameters)
+        : Memfile_LeaseMgr(parameters), lfc_cnt_(0) {
+    }
+
+    /// @brief Returns the number of callback executions.
+    int getLFCCount() {
+        return (lfc_cnt_);
+    }
+
+protected:
+
+    /// @brief Custom callback.
+    ///
+    /// This callback function increases the counter of callback executions.
+    /// By examining the counter value a test may verify that the callback
+    /// was triggered an expected number of times.
+    virtual void lfcCallback() {
+        ++lfc_cnt_;
+    }
+
+private:
+
+    /// @brief Counter of callback function executions.
+    int lfc_cnt_;
+
+};
+
+/// @brief A derivation of the lease manager exposing protected methods.
+class NakedMemfileLeaseMgr : public Memfile_LeaseMgr {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Creates instance of the lease manager.
+    NakedMemfileLeaseMgr(const ParameterMap& parameters)
+        : Memfile_LeaseMgr(parameters) {
+    }
+
+    using Memfile_LeaseMgr::lfcCallback;
+};
+
+/// @brief Test fixture class for @c Memfile_LeaseMgr
 class MemfileLeaseMgrTest : public GenericLeaseMgrTest {
 public:
 
@@ -46,11 +105,17 @@ public:
     /// Creates memfile and stores it in lmptr_ pointer
     MemfileLeaseMgrTest() :
         io4_(getLeaseFilePath("leasefile4_0.csv")),
-        io6_(getLeaseFilePath("leasefile6_0.csv")) {
+        io6_(getLeaseFilePath("leasefile6_0.csv")),
+        io_service_(),
+        fail_on_callback_(false) {
 
-        // Make sure there are no dangling files after previous tests.
-        io4_.removeFile();
-        io6_.removeFile();
+        std::ostringstream s;
+        s << KEA_LFC_BUILD_DIR << "/kea-lfc";
+        setenv("KEA_LFC_EXECUTABLE", s.str().c_str(), 1);
+
+        // Remove lease files and products of Lease File Cleanup.
+        removeFiles(getLeaseFilePath("leasefile4_0.csv"));
+        removeFiles(getLeaseFilePath("leasefile6_0.csv"));
     }
 
     /// @brief Reopens the connection to the backend.
@@ -70,6 +135,29 @@ public:
     /// destroys lease manager backend.
     virtual ~MemfileLeaseMgrTest() {
         LeaseMgrFactory::destroy();
+        // Remove lease files and products of Lease File Cleanup.
+        removeFiles(getLeaseFilePath("leasefile4_0.csv"));
+        removeFiles(getLeaseFilePath("leasefile6_0.csv"));
+    }
+
+
+    /// @brief Remove files being products of Lease File Cleanup.
+    ///
+    /// @param base_name Path to the lease file name. This file is removed
+    /// and all files which names are crated from this name (having specific
+    /// suffixes used by Lease File Cleanup mechanism).
+    void removeFiles(const std::string& base_name) const {
+        // Generate suffixes and append them to the base name. The
+        // resulting file names are the ones that may exist as a
+        // result of LFC.
+        for (int i = static_cast<int>(Memfile_LeaseMgr::FILE_CURRENT);
+             i <= static_cast<int>(Memfile_LeaseMgr::FILE_FINISH);
+             ++i) {
+            Memfile_LeaseMgr::LFCFileType type = static_cast<
+                Memfile_LeaseMgr::LFCFileType>(i);
+            LeaseFileIO io(Memfile_LeaseMgr::appendSuffix(base_name, type));
+            io.removeFile();
+        }
     }
 
     /// @brief Return path to the lease file used by unit tests.
@@ -116,11 +204,53 @@ public:
         lmptr_ = &(LeaseMgrFactory::instance());
     }
 
+    void setTestTime(const uint32_t ms) {
+        IntervalTimer::Callback cb =
+            boost::bind(&MemfileLeaseMgrTest::testTimerCallback, this);
+        test_timer_.reset(new IntervalTimer(*io_service_));
+        test_timer_->setup(cb, ms, IntervalTimer::ONE_SHOT);
+    }
+
+    /// @brief Test timer callback function.
+    void testTimerCallback() {
+        io_service_->stop();
+        if (fail_on_callback_) {
+            FAIL() << "Test timeout reached";
+        }
+    }
+
+    /// @brief Waits for the specified process to finish.
+    ///
+    /// @param process An object which started the process.
+    /// @param timeout Timeout in seconds.
+    ///
+    /// @return true if the process ended, false otherwise
+    bool waitForProcess(const Memfile_LeaseMgr& lease_mgr,
+                        const uint8_t timeout) {
+        uint32_t iterations = 0;
+        const uint32_t iterations_max = timeout * 1000;
+        while (lease_mgr.isLFCRunning() && (iterations < iterations_max)) {
+            usleep(1000);
+            ++iterations;
+        }
+        return (iterations < iterations_max);
+    }
+
+
     /// @brief Object providing access to v4 lease IO.
     LeaseFileIO io4_;
 
     /// @brief Object providing access to v6 lease IO.
     LeaseFileIO io6_;
+
+    /// @brief Test timer for the test.
+    boost::shared_ptr<IntervalTimer> test_timer_;
+
+    /// @brief IO service object used for the timer tests.
+    asiolink::IOServicePtr io_service_;
+
+    /// @brief Indicates if the @c testTimerCallback should cause test failure.
+    bool fail_on_callback_;
 
 };
 
@@ -134,6 +264,7 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
 
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 
+    pmap["lfc-interval"] = "10";
     pmap["persist"] = "true";
     pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
@@ -142,6 +273,11 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     // that is wrong.
     pmap["persist"] = "bogus";
     pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
+    EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
+
+    // The lfc-interval must be an integer.
+    pmap["persist"] = "true";
+    pmap["lfc-interval"] = "bogus";
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 }
 
@@ -204,6 +340,417 @@ TEST_F(MemfileLeaseMgrTest, persistLeases) {
     EXPECT_FALSE(lease_mgr->persistLeases(Memfile_LeaseMgr::V6));
 }
 
+// Check if it is possible to schedule the timer to perform the Lease
+// File Cleanup periodically.
+TEST_F(MemfileLeaseMgrTest, lfcTimer) {
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    // Specify the names of the lease files. Leases will be written.
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    pmap["lfc-interval"] = "1";
+
+    boost::scoped_ptr<LFCMemfileLeaseMgr>
+        lease_mgr(new LFCMemfileLeaseMgr(pmap));
+
+    // Check that the interval is correct.
+    EXPECT_EQ(1, lease_mgr->getIOServiceExecInterval());
+
+    io_service_ = lease_mgr->getIOService();
+
+    // Run the test for at most 2.9 seconds.
+    setTestTime(2900);
+
+    // Run the IO service to execute timers.
+    io_service_->run();
+
+    // Within 2.9 we should record two LFC executions.
+    EXPECT_EQ(2, lease_mgr->getLFCCount());
+}
+
+
+// This test checks if the LFC timer is disabled (doesn't trigger)
+// cleanups when the lfc-interval is set to 0.
+TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    // Set the LFC interval to 0, which should effectively disable it.
+    pmap["lfc-interval"] = "0";
+
+    boost::scoped_ptr<LFCMemfileLeaseMgr>
+        lease_mgr(new LFCMemfileLeaseMgr(pmap));
+
+    EXPECT_EQ(0, lease_mgr->getIOServiceExecInterval());
+
+    io_service_ = lease_mgr->getIOService();
+
+    // Run the test for at most 1.9 seconds.
+    setTestTime(1900);
+
+    // Run the IO service to execute timers.
+    io_service_->run();
+
+    // There should be no LFC execution recorded.
+    EXPECT_EQ(0, lease_mgr->getLFCCount());
+}
+
+// This test checks that the callback function executing the cleanup of the
+// DHCPv4 lease file works as expected.
+TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
+    // This string contains the lease file header, which matches
+    // the contents of the new file in which no leases have been
+    // stored.
+    std::string new_file_contents =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname\n";
+
+    // This string contains the contents of the lease file with exactly
+    // one lease, but two entries. One of the entries should be removed
+    // as a result of lease file cleanup.
+    std::string current_file_contents = new_file_contents +
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,\n"
+        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,,\n";
+    LeaseFileIO current_file(getLeaseFilePath("leasefile4_0.csv"));
+    current_file.writeFile(current_file_contents);
+
+    std::string previous_file_contents = new_file_contents +
+        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,\n"
+        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,\n";
+    LeaseFileIO previous_file(getLeaseFilePath("leasefile4_0.csv.2"));
+    previous_file.writeFile(previous_file_contents);
+
+    // Create the backend.
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    pmap["lfc-interval"] = "1";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
+
+    // Try to run the lease file cleanup.
+    ASSERT_NO_THROW(lease_mgr->lfcCallback());
+
+    // The new lease file should have been created and it should contain
+    // no leases.
+    ASSERT_TRUE(current_file.exists());
+    EXPECT_EQ(new_file_contents, current_file.readFile());
+
+    // Wait for the LFC process to complete.
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+
+    // And make sure it has returned an exit status of 0.
+    EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "Executing the LFC process failed: make sure that"
+        " the kea-lfc program has been compiled.";
+
+    // Check if we can still write to the lease file.
+    std::vector<uint8_t> hwaddr_vec(6);
+    HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
+    Lease4Ptr new_lease(new Lease4(IOAddress("192.0.2.45"), hwaddr, 0, 0,
+                                   100, 50, 60, 0, 1));
+    ASSERT_NO_THROW(lease_mgr->addLease(new_lease));
+
+    std::string updated_file_contents = new_file_contents +
+        "192.0.2.45,00:00:00:00:00:00,,100,100,1,0,0,\n";
+    EXPECT_EQ(updated_file_contents, current_file.readFile());
+
+    // This string contains the contents of the lease file we
+    // expect after the LFC run.  It has two leases with one
+    // entry each.
+    std::string result_file_contents = new_file_contents +
+        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,\n"
+        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,\n";
+
+    // The LFC should have created a file with the two leases and moved it
+    // to leasefile4_0.csv.2
+    LeaseFileIO input_file(getLeaseFilePath("leasefile4_0.csv.2"), false);
+    ASSERT_TRUE(input_file.exists());
+    // And this file should contain the contents of the result file.
+    EXPECT_EQ(result_file_contents, input_file.readFile());
+}
+
+// This test checks that the callback function executing the cleanup of the
+// DHCPv6 lease file works as expected.
+TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
+    // This string contains the lease file header, which matches
+    // the contents of the new file in which no leases have been
+    // stored.
+    std::string new_file_contents =
+        "address,duid,valid_lifetime,expire,subnet_id,"
+        "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+        "fqdn_rev,hostname,hwaddr\n";
+
+    // This string contains the contents of the lease file with exactly
+    // one lease, but two entries. One of the entries should be removed
+    // as a result of lease file cleanup.
+    std::string current_file_contents = new_file_contents +
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
+        "8,100,0,7,0,1,1,,\n"
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
+        "8,100,0,7,0,1,1,,\n";
+    LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
+    current_file.writeFile(current_file_contents);
+
+    std::string previous_file_contents = new_file_contents +
+        "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,200,"
+        "8,100,0,7,0,1,1,,\n"
+        "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
+        "8,100,0,7,0,1,1,,\n";
+    LeaseFileIO previous_file(getLeaseFilePath("leasefile6_0.csv.2"));
+    previous_file.writeFile(previous_file_contents);
+
+    // Create the backend.
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    pmap["lfc-interval"] = "1";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
+
+    // Try to run the lease file cleanup.
+    ASSERT_NO_THROW(lease_mgr->lfcCallback());
+
+    // The new lease file should have been created and it should contain
+    // no leases.
+    ASSERT_TRUE(current_file.exists());
+    EXPECT_EQ(new_file_contents, current_file.readFile());
+
+    // Wait for the LFC process to complete.
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+
+    // And make sure it has returned an exit status of 0.
+    EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "Executing the LFC process failed: make sure that"
+        " the kea-lfc program has been compiled.";
+
+
+    // Check if we can still write to the lease file.
+    std::vector<uint8_t> duid_vec(13);
+    DuidPtr duid(new DUID(duid_vec));
+    Lease6Ptr new_lease(new Lease6(Lease::TYPE_NA, IOAddress("3000::1"),duid,
+                                   123, 300, 400, 100, 300, 2));
+    new_lease->cltt_ = 0;
+    ASSERT_NO_THROW(lease_mgr->addLease(new_lease));
+
+    std::string update_file_contents = new_file_contents +
+        "3000::1,00:00:00:00:00:00:00:00:00:00:00:00:00,400,"
+        "400,2,300,0,123,128,0,0,,\n";
+    EXPECT_EQ(update_file_contents, current_file.readFile());
+
+    // This string contains the contents of the lease file we
+    // expect after the LFC run.  It has two leases with one
+    // entry each.
+    std::string result_file_contents = new_file_contents +
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
+        "8,100,0,7,0,1,1,,\n"
+        "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
+        "8,100,0,7,0,1,1,,\n";
+
+    // The LFC should have created a file with the two leases and moved it
+    // to leasefile6_0.csv.2
+    LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.2"), false);
+    ASSERT_TRUE(input_file.exists());
+    // And this file should contain the contents of the result file.
+    EXPECT_EQ(result_file_contents, input_file.readFile());
+}
+
+// This test verifies that EXIT_FAILURE status code is returned when
+// the LFC process fails to start.
+TEST_F(MemfileLeaseMgrTest, leaseFileCleanupStartFail) {
+    // This string contains the lease file header, which matches
+    // the contents of the new file in which no leases have been
+    // stored.
+    std::string new_file_contents =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname\n";
+
+    // Create the lease file to be used by the backend.
+    std::string current_file_contents = new_file_contents +
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,\n";
+    LeaseFileIO current_file(getLeaseFilePath("leasefile4_0.csv"));
+    current_file.writeFile(current_file_contents);
+
+    // Specify invalid path to the kea-lfc executable. This should result
+    // in failure status code returned by the child process.
+    setenv("KEA_LFC_EXECUTABLE", "foobar", 1);
+
+    // Create the backend.
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    pmap["lfc-interval"] = "1";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
+
+    // Try to run the lease file cleanup.
+    ASSERT_NO_THROW(lease_mgr->lfcCallback());
+
+    // Wait for the LFC process to complete.
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+
+    // And make sure it has returned an error.
+    EXPECT_EQ(EXIT_FAILURE, lease_mgr->getLFCExitStatus())
+        << "Executing the LFC process failed: make sure that"
+        " the kea-lfc program has been compiled.";
+}
+
+// This test checks that the callback function executing the cleanup of the
+// files doesn't move the current file if the finish file exists
+TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
+    // This string contains the lease file header, which matches
+    // the contents of the new file in which no leases have been
+    // stored.
+    std::string new_file_contents =
+        "address,duid,valid_lifetime,expire,subnet_id,"
+        "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+        "fqdn_rev,hostname,hwaddr\n";
+
+    // This string contains the contents of the current lease file.
+    // It should not be moved.
+    std::string current_file_contents = new_file_contents +
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
+        "8,100,0,7,0,1,1,,\n"
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
+        "8,100,0,7,0,1,1,,\n";
+    LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
+    current_file.writeFile(current_file_contents);
+
+    // This string contains the contents of the finish file.  It should
+    // be moved to the previous file.
+    std::string finish_file_contents = new_file_contents +
+        "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
+        "8,100,0,7,0,1,1,,\n";
+    LeaseFileIO finish_file(getLeaseFilePath("leasefile6_0.csv.completed"));
+    finish_file.writeFile(finish_file_contents);
+
+    // Create the backend.
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    pmap["lfc-interval"] = "1";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
+
+    // Try to run the lease file cleanup.
+    ASSERT_NO_THROW(lease_mgr->lfcCallback());
+
+    // The current lease file should not have been touched.
+    ASSERT_TRUE(current_file.exists());
+    EXPECT_EQ(current_file_contents, current_file.readFile());
+
+    // Wait for the LFC process to complete.
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+
+    // And make sure it has returned an exit status of 0.
+    EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "Executing the LFC process failed: make sure that"
+        " the kea-lfc program has been compiled.";
+
+    // The LFC should have moved the finish file to the previous file -
+    // leasefile6_0.csv.2
+    LeaseFileIO previous_file(getLeaseFilePath("leasefile6_0.csv.2"), false);
+    ASSERT_TRUE(previous_file.exists());
+    // And this file should contain the contents of the finish file.
+    EXPECT_EQ(finish_file_contents, previous_file.readFile());
+
+    // The finish file should have been removed
+    ASSERT_FALSE(finish_file.exists());
+}
+
+// This test checks that the callback function executing the cleanup of the
+// files doesn't move the current file if the copy file exists
+TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
+    // This string contains the lease file header, which matches
+    // the contents of the new file in which no leases have been
+    // stored.
+    std::string new_file_contents =
+        "address,duid,valid_lifetime,expire,subnet_id,"
+        "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+        "fqdn_rev,hostname,hwaddr\n";
+
+    // This string contains the contents of the current lease file.
+    // It should not be moved.
+    std::string current_file_contents = new_file_contents +
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
+        "8,100,0,7,0,1,1,,\n"
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
+        "8,100,0,7,0,1,1,,\n";
+    LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
+    current_file.writeFile(current_file_contents);
+
+    // This string contains the contents of the copy file.  It should
+    // be processed and moved to the previous file.  As there is only
+    // one lease the processing should result in the previous file being
+    // the same.
+    std::string input_file_contents = new_file_contents +
+        "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
+        "8,100,0,7,0,1,1,,\n";
+    LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.1"));
+    input_file.writeFile(input_file_contents);
+
+    // Create the backend.
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    pmap["lfc-interval"] = "1";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
+
+    // Try to run the lease file cleanup.
+    ASSERT_NO_THROW(lease_mgr->lfcCallback());
+
+    // The current lease file should not have been touched.
+    ASSERT_TRUE(current_file.exists());
+    EXPECT_EQ(current_file_contents, current_file.readFile());
+
+    // Wait for the LFC process to complete.
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+
+    // And make sure it has returned an exit status of 0.
+    EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "Executing the LFC process failed: make sure that"
+        " the kea-lfc program has been compiled.";
+
+    // The LFC should have processed the lease and moved it to the previous
+    // file - leasefile6_0.csv.2
+    LeaseFileIO previous_file(getLeaseFilePath("leasefile6_0.csv.2"), false);
+    ASSERT_TRUE(previous_file.exists());
+    // And this file should contain the contents of the copy file.
+    EXPECT_EQ(input_file_contents, previous_file.readFile());
+
+    // The input file should have been removed
+    ASSERT_FALSE(input_file.exists());
+}
+
+
+// Test that the backend returns a correct value of the interval
+// at which the IOService must be executed to run the handlers
+// for the installed timers.
+TEST_F(MemfileLeaseMgrTest, getIOServiceExecInterval) {
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+
+    // The lfc-interval is not set, so the returned value should be 0.
+    boost::scoped_ptr<LFCMemfileLeaseMgr> lease_mgr(new LFCMemfileLeaseMgr(pmap));
+    EXPECT_EQ(0, lease_mgr->getIOServiceExecInterval());
+
+    // lfc-interval = 10
+    pmap["lfc-interval"] = "10";
+    lease_mgr.reset();
+    lease_mgr.reset(new LFCMemfileLeaseMgr(pmap));
+    EXPECT_EQ(10, lease_mgr->getIOServiceExecInterval());
+
+    // lfc-interval = 20
+    pmap["lfc-interval"] = "20";
+    lease_mgr.reset();
+    lease_mgr.reset(new LFCMemfileLeaseMgr(pmap));
+    EXPECT_EQ(20, lease_mgr->getIOServiceExecInterval());
+
+}
 
 // Checks that adding/getting/deleting a Lease6 object works.
 TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
@@ -479,6 +1026,379 @@ TEST_F(MemfileLeaseMgrTest, versionCheck) {
     testVersion(Memfile_LeaseMgr::MAJOR_VERSION,
                 Memfile_LeaseMgr::MINOR_VERSION);
     LeaseMgrFactory::destroy();
+}
+
+// This test checks that the backend reads DHCPv4 lease data from multiple
+// files.
+TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {
+    LeaseFileIO io2("leasefile4_0.csv.2");
+    io2.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,\n");
+
+    LeaseFileIO io1("leasefile4_0.csv.1");
+    io1.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,\n"
+                  "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,\n");
+
+    LeaseFileIO io("leasefile4_0.csv");
+    io.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                 "fqdn_fwd,fqdn_rev,hostname\n"
+                 "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,\n"
+                 "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,400,8,1,1,,\n");
+
+    startBackend(V4);
+
+    // This lease only exists in the second file and the cltt should
+    // be 0.
+    Lease4Ptr lease = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // This lease only exists in the first file and the cltt should
+    // be 0.
+    lease = lmptr_->getLease4(IOAddress("192.0.2.2"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // This lease only exists in the third file and the cltt should
+    // be 0.
+    lease = lmptr_->getLease4(IOAddress("192.0.2.10"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // This lease exists in the first and second file and the cltt
+    // should be calculated using the expiration time and the
+    // valid lifetime from the second file.
+    lease = lmptr_->getLease4(IOAddress("192.0.2.11"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(200, lease->cltt_);
+
+    // Thsi lease exists in the second and third file and the cltt
+    // should be calculated using the expiration time and the
+    // valid lifetime from the third file.
+    lease = lmptr_->getLease4(IOAddress("192.0.2.12"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(200, lease->cltt_);
+}
+
+// This test checks that the lease database backend loads the file with
+// the .completed postfix instead of files with postfixes .1 and .2 if
+// the file with .completed postfix exists.
+TEST_F(MemfileLeaseMgrTest, load4CompletedFile) {
+    LeaseFileIO io2("leasefile4_0.csv.2");
+    io2.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,\n");
+
+    LeaseFileIO io1("leasefile4_0.csv.1");
+    io1.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,\n"
+                  "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,\n");
+
+    LeaseFileIO io("leasefile4_0.csv");
+    io.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                 "fqdn_fwd,fqdn_rev,hostname\n"
+                 "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,\n"
+                 "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,400,8,1,1,,\n");
+
+    LeaseFileIO ioc("leasefile4_0.csv.completed");
+    ioc.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  "192.0.2.13,ff:ff:ff:ff:ff:ff,,200,200,8,1,1,,\n");
+
+    startBackend(V4);
+
+    // We expect that this file only holds leases that belong to the
+    // lease file or to the file with .completed postfix.
+    Lease4Ptr lease = lmptr_->getLease4(IOAddress("192.0.2.10"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    lease = lmptr_->getLease4(IOAddress("192.0.2.12"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(200, lease->cltt_);
+
+    // This lease is in the .completed file.
+    lease = lmptr_->getLease4(IOAddress("192.0.2.13"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // Leases from the .1 and .2 files should not be loaded.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.11")));
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+}
+
+// This test checks that backend constructor refuses to load leases from the
+// lease files if the LFC is in progress.
+TEST_F(MemfileLeaseMgrTest, load4LFCInProgress) {
+    // Create the backend configuration.
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    pmap["lfc-interval"] = "1";
+
+    // Create a pid file holding the PID of the current process. Choosing the
+    // pid of the current process guarantees that when the backend starts up
+    // the process is alive.
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
+    pid_file.write();
+
+    // There is a pid file and the process which pid is in the file is
+    // running, so the backend should refuse to start.
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    ASSERT_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)),
+                 DbOpenError);
+
+    // Remove the pid file, and retry. The bakckend should be created.
+    pid_file.deleteFile();
+    ASSERT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+}
+
+// This test checks that the backend reads DHCPv6 lease data from multiple
+// files.
+TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
+    LeaseFileIO io2("leasefile6_0.csv.2");
+    io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+                  "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO io1("leasefile6_0.csv.1");
+    io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
+                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+                  "300,800,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                  "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO io("leasefile6_0.csv");
+    io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                 "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                 "400,1000,8,100,0,7,0,1,1,,\n"
+                 "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
+                 "200,200,8,100,0,7,0,1,1,,\n");
+
+    startBackend(V6);
+
+    // This lease only exists in the first file and the cltt should be 0.
+    Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA,
+                                        IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // This lease exists in the first and second file and the cltt should
+    // be calculated using the expiration time and the valid lifetime
+    // from the second file.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(500, lease->cltt_);
+
+    // This lease only exists in the second file and the cltt should be 0.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // This lease exists in the second and third file and the cltt should
+    // be calculated using the expiration time and the valid lifetime
+    // from the third file.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(600, lease->cltt_);
+
+    // This lease only exists in the third file and the cltt should be 0.
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+}
+
+// This test checks that the backend reads DHCPv6 lease data from the
+// leasefile without the postfix and the file with a .1 postfix when
+// the file with the .2 postfix is missing.
+TEST_F(MemfileLeaseMgrTest, load6MultipleNoSecondFile) {
+    LeaseFileIO io1("leasefile6_0.csv.1");
+    io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
+                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+                  "300,800,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                  "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO io("leasefile6_0.csv");
+    io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                 "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                 "400,1000,8,100,0,7,0,1,1,,\n"
+                 "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
+                 "200,200,8,100,0,7,0,1,1,,\n");
+
+    startBackend(V6);
+
+    // Check that leases from the leasefile6_0 and leasefile6_0.1 have
+    // been loaded.
+    Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(500, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(600, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // Make sure that a lease which is not in those files is not loaded.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+}
+
+// This test checks that the backend reads DHCPv6 lease data from the
+// leasefile without the postfix and the file with a .2 postfix when
+// the file with the .1 postfix is missing.
+TEST_F(MemfileLeaseMgrTest, load6MultipleNoFirstFile) {
+    LeaseFileIO io2("leasefile6_0.csv.2");
+    io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+                  "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO io("leasefile6_0.csv");
+    io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                 "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                 "400,1000,8,100,0,7,0,1,1,,\n"
+                 "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
+                 "200,200,8,100,0,7,0,1,1,,\n");
+
+    startBackend(V6);
+
+    // Verify that leases which belong to the leasefile6_0.csv and
+    // leasefile6_0.2 are loaded.
+    Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA,
+                                        IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(600, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    // A lease which doesn't belong to these files should not be loaded.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3")));
+}
+
+
+// This test checks that the lease database backend loads the file with
+// the .completed postfix instead of files with postfixes .1 and .2 if
+// the file with .completed postfix exists.
+TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
+    LeaseFileIO io2("leasefile6_0.csv.2");
+    io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+                  "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO io1("leasefile6_0.csv.1");
+    io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
+                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+                  "300,800,8,100,0,7,0,1,1,,\n"
+                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                  "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO io("leasefile6_0.csv");
+    io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                 "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
+                 "400,1000,8,100,0,7,0,1,1,,\n"
+                 "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
+                 "200,200,8,100,0,7,0,1,1,,\n");
+
+    LeaseFileIO ioc("leasefile6_0.csv.completed");
+    ioc.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "2001:db8:1::125,ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff,"
+                  "400,1000,8,100,0,7,0,1,1,,\n");
+
+    startBackend(V6);
+
+    // We expect that this file only holds leases that belong to the
+    // lease file or to the file with .completed postfix.
+    Lease6Ptr lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(600, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(0, lease->cltt_);
+
+    lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::125"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(600, lease->cltt_);
+
+    // Leases from the .1 and .2 files should not be loaded.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3")));
+}
+
+// This test checks that backend constructor refuses to load leases from the
+// lease files if the LFC is in progress.
+TEST_F(MemfileLeaseMgrTest, load6LFCInProgress) {
+    // Create the backend configuration.
+    LeaseMgr::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    pmap["lfc-interval"] = "1";
+
+    // Create a pid file holding the PID of the current process. Choosing the
+    // pid of the current process guarantees that when the backend starts up
+    // the process is alive.
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
+    pid_file.write();
+
+    // There is a pid file and the process which pid is in the file is
+    // running, so the backend should refuse to start.
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    ASSERT_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)),
+                 DbOpenError);
+
+    // Remove the pid file, and retry. The bakckend should be created.
+    pid_file.deleteFile();
+    ASSERT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
 }
 
 }; // end of anonymous namespace

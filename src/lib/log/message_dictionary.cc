@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -56,6 +56,17 @@ MessageDictionary::replace(const std::string& ident, const std::string& text) {
     return (found);
 }
 
+bool
+MessageDictionary::erase(const std::string& ident, const std::string& text) {
+    Dictionary::iterator mes = dictionary_.find(ident);
+    // Both the ID and the text must match.
+    bool found = (mes != dictionary_.end() && (mes->second == text));
+    if (found) {
+        dictionary_.erase(mes);
+    }
+    return (found);
+}
+
 // Load a set of messages
 
 vector<std::string>
@@ -100,9 +111,9 @@ MessageDictionary::getText(const std::string& ident) const {
 
 // Return global dictionary
 
-MessageDictionary&
+const MessageDictionaryPtr&
 MessageDictionary::globalDictionary() {
-    static MessageDictionary global;
+    static MessageDictionaryPtr global(new MessageDictionary());
     return (global);
 }
 

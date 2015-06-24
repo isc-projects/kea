@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+#include <asiolink/io_service.h>
 #include <d2/d2_log.h>
 #include <d2/spec_config.h>
 #include <d2/tests/d_test_stubs.h>
@@ -51,7 +53,7 @@ SimFailure::FailureType SimFailure::failure_type_ = SimFailure::ftNoFailure;
 // Define custom process command supported by DStubProcess.
 const char*  DStubProcess::stub_proc_command_("cool_proc_cmd");
 
-DStubProcess::DStubProcess(const char* name, IOServicePtr io_service)
+DStubProcess::DStubProcess(const char* name, asiolink::IOServicePtr io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new DStubCfgMgr())) {
 };
 
@@ -72,7 +74,7 @@ DStubProcess::run() {
     // To use run(), the "managing" layer must issue an io_service::stop
     // or the call to run will continue to block, and shutdown will not
     // occur.
-    IOServicePtr& io_service = getIoService();
+    asiolink::IOServicePtr& io_service = getIoService();
     while (!shouldShutdown()) {
         try {
             io_service->run_one();

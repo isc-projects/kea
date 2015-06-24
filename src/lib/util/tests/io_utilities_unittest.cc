@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// \brief Test of asiolink utilties
+/// \brief Test of asiolink utilities
 ///
 /// Tests the functionality of the asiolink utilities code by comparing them
 /// with the equivalent methods in isc::dns::[Input/Output]Buffer.

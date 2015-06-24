@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,7 +32,9 @@ public:
     /// @brief Constructor
     ///
     /// @param filename Abolsute path to the file.
-    LeaseFileIO(const std::string& filename);
+    /// @param recreate A boolean flag indicating if the new file should
+    /// be created, even if one exists.
+    LeaseFileIO(const std::string& filename, const bool recreate = true);
 
     /// @brief Destructor.
     ~LeaseFileIO();
@@ -55,6 +57,10 @@ public:
 
     /// @brief Absolute path to the file used in the tests.
     std::string testfile_;
+
+    /// @brief Indicates if the file should be recreated during object
+    /// construction and removed during destruction.
+    bool recreate_;
 
 };
 

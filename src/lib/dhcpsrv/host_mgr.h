@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -180,6 +180,15 @@ public:
     /// @return Const @c Host object using a specified HW address or DUID.
     virtual ConstHostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
+
+    /// @brief Returns a host from specific subnet and reserved address.
+    ///
+    /// @param subnet_id subnet identfier.
+    /// @param addr specified address.
+    ///
+    /// @return Const @c host object that has a reservation for specified address.
+    virtual ConstHostPtr
+    get6(const SubnetID& subnet_id, const asiolink::IOAddress& addr) const;
 
     /// @brief Adds a new host to the alternate data source.
     ///

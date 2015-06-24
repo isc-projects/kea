@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,7 +41,7 @@ public:
     ///
     /// Initializes the option buffer with some data.
     OptionIntTest(): buf_(255), out_buf_(255) {
-        for (int i = 0; i < 255; i++) {
+        for (unsigned i = 0; i < 255; i++) {
             buf_[i] = 255 - i;
         }
     }
@@ -558,6 +558,21 @@ TEST_F(OptionIntTest, unpackSuboptions6) {
     subopt = opt->getOption(1);
     // Expecting NULL which means that option does not exist.
     ASSERT_FALSE(subopt);
+}
+
+// This test checks that the toText function returns the option in the
+// textual format correctly.
+TEST_F(OptionIntTest, toText) {
+    OptionUint32 option(Option::V4, 128, 345678);
+    EXPECT_EQ("type=128, len=004: 345678 (uint32)", option.toText());
+
+    option.addOption(OptionPtr(new OptionUint16(Option::V4, 1, 234)));
+    option.addOption(OptionPtr(new OptionUint8(Option::V4, 3, 22)));
+    EXPECT_EQ("type=128, len=011: 345678 (uint32),\n"
+              "options:\n"
+              "  type=001, len=002: 234 (uint16)\n"
+              "  type=003, len=001: 22 (uint8)",
+              option.toText());
 }
 
 } // anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config/ccsession.h>
+#include <config.h>
+
+#include <cc/command_interpreter.h>
 #include <d2/d2_log.h>
 #include <dhcp/libdhcp++.h>
 #include <d2/d_cfg_mgr.h>
@@ -287,7 +289,7 @@ void DCfgMgrBase::buildAndCommit(std::string& element_id,
     // and store them in parser's local storage.
     parser->build(value);
 
-    // Invoke the parser's commit method. This "writes" the the data
+    // Invoke the parser's commit method. This "writes" the data
     // item(s) stored locally by the parser into the context.  (Note that
     // parsers are free to do more than update the context, but that is an
     // nothing something we are concerned with here.)

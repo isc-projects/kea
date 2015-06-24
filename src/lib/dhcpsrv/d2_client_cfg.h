@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -73,7 +73,6 @@ public:
     static const bool DFT_OVERRIDE_CLIENT_UPDATE;
     static const bool DFT_REPLACE_CLIENT_NAME;
     static const char *DFT_GENERATED_PREFIX;
-    static const char *DFT_QUALIFYING_SUFFIX;
 
     /// @brief Constructor
     ///
@@ -96,7 +95,10 @@ public:
     /// @param replace_client_name enables replacement of the domain-name
     /// supplied by the client with a generated name.
     /// @param generated_prefix Prefix to use when generating domain-names.
-    /// @param  qualifying_suffix Suffix to use to qualify partial domain-names.
+    /// @param qualifying_suffix Suffix to use to qualify partial domain-names.
+    ///
+    /// @c enable_updates is mandatory, @c qualifying_suffix is mandatory
+    /// when updates are enabled, other parameters are optional.
     ///
     /// @throw D2ClientError if given an invalid protocol or format.
     D2ClientConfig(const bool enable_updates,

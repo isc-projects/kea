@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <list>
+#include <vector>
 
 namespace isc {
 
@@ -78,6 +79,20 @@ public:
 class SocketWriteError : public Exception {
 public:
     SocketWriteError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief IfaceMgr exception thrown when there is no suitable interface.
+class IfaceNotFound : public Exception {
+public:
+    IfaceNotFound(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief IfaceMgr exception thrown when there is no suitable socket found.
+class SocketNotFound : public Exception {
+public:
+    SocketNotFound(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
@@ -144,15 +159,21 @@ struct SocketInfo {
 /// returned by the OS kernel when the socket is opened. Hence, it is
 /// convenient to allocate the buffer when the socket is being opened and
 /// utilze it throughout the lifetime of the socket.
-class Iface {
+///
+/// In order to avoid potentially expensive copies of the @c Iface objects
+/// holding pre-allocated buffers and multiple containers, this class is
+/// noncopyable.
+class Iface : public boost::noncopyable {
 public:
 
     /// Maximum MAC address length (Infiniband uses 20 bytes)
     static const unsigned int MAX_MAC_LEN = 20;
 
+    /// @brief Address type.
+    typedef util::OptionalValue<asiolink::IOAddress> Address;
+
     /// Type that defines list of addresses
-    typedef
-    std::list<util::OptionalValue<asiolink::IOAddress> > AddressCollection;
+    typedef std::list<Address> AddressCollection;
 
     /// @brief Type that holds a list of socket information.
     ///
@@ -174,9 +195,7 @@ public:
     Iface(const std::string& name, int ifindex);
 
     /// @brief Destructor.
-    ///
-    /// Deallocates the socket read buffer.
-    ~Iface();
+    ~Iface() { }
 
     /// @brief Closes all open sockets on interface.
     void closeSockets();
@@ -326,6 +345,9 @@ public:
     /// should be active (if true) or inactive (if false).
     void setActive(const bool active);
 
+    /// @brief Returns a number of activated IPv4 addresses on the interface.
+    unsigned int countActive4() const;
+
     /// @brief Deletes an address from an interface.
     ///
     /// This only deletes address from collection, it does not physically
@@ -398,19 +420,24 @@ public:
     ///
     /// @return Pointer to the first element of the read buffer or
     /// NULL if the buffer is empty.
-    uint8_t* getReadBuffer() const {
-        return (read_buffer_);
+    uint8_t* getReadBuffer() {
+        if (read_buffer_.empty()) {
+            return NULL;
+        }
+        return (&read_buffer_[0]);
     }
 
     /// @brief Returns the current size of the socket read buffer.
     size_t getReadBufferSize() const {
-        return (read_buffer_size_);
+        return (read_buffer_.size());
     }
 
     /// @brief Reallocates the socket read buffer.
     ///
     /// @param new_size New size of the buffer.
-    void resizeReadBuffer(const size_t new_size);
+    void resizeReadBuffer(const size_t new_size) {
+        read_buffer_.resize(new_size);
+    }
 
 protected:
     /// Socket used to send data.
@@ -473,14 +500,13 @@ public:
 
 private:
 
-    /// @brief Pointer to the buffer holding the data read from the socket.
+    /// @brief The buffer holding the data read from the socket.
     ///
     /// See @c Iface manager description for details.
-    uint8_t* read_buffer_;
-
-    /// @brief Allocated size of the read buffer.
-    size_t read_buffer_size_;
+    std::vector<uint8_t> read_buffer_;
 };
+
+typedef boost::shared_ptr<Iface> IfacePtr;
 
 /// @brief This type describes the callback function invoked when error occurs
 /// in the IfaceMgr.
@@ -525,14 +551,34 @@ public:
     //      2 maps (ifindex-indexed and name-indexed) and
     //      also hide it (make it public make tests easier for now)
 
-    /// Type that holds a list of interfaces.
-    typedef std::list<Iface> IfaceCollection;
+    /// Type that holds a list of pointers to interfaces.
+    typedef std::list<IfacePtr> IfaceCollection;
 
     /// IfaceMgr is a singleton class. This method returns reference
     /// to its sole instance.
     ///
     /// @return the only existing instance of interface manager
     static IfaceMgr& instance();
+
+    /// @brief Sets or clears the test mode for @c IfaceMgr.
+    ///
+    /// Various unit test may set this flag to true, to indicate that the 
+    /// @c IfaceMgr is in the test mode. There are places in the code that
+    /// modify the behavior depending if the @c IfaceMgr is in the test
+    /// mode or not.
+    ///
+    /// @param test_mode A flag which indicates that the @c IfaceMgr is in the
+    /// test mode (if true), or not (if false).
+    void setTestMode(const bool test_mode) {
+        test_mode_ = test_mode;
+    }
+
+    /// @brief Checks if the @c IfaceMgr is in the test mode.
+    ///
+    /// @return true if the @c IfaceMgr is in the test mode, false otherwise.
+    bool isTestMode() const {
+        return (test_mode_);
+    }
 
     /// @brief Check if packet be sent directly to the client having no address.
     ///
@@ -544,14 +590,14 @@ public:
     /// @return true if direct response is supported.
     bool isDirectResponseSupported() const;
 
-    /// @brief Returns interfac specified interface index
+    /// @brief Returns interface specified interface index
     ///
     /// @param ifindex index of searched interface
     ///
     /// @return interface with requested index (or NULL if no such
     ///         interface is present)
     ///
-    Iface* getIface(int ifindex);
+    IfacePtr getIface(int ifindex);
 
     /// @brief Returns interface with specified interface name
     ///
@@ -559,8 +605,7 @@ public:
     ///
     /// @return interface with requested name (or NULL if no such
     ///         interface is present)
-    ///
-    Iface* getIface(const std::string& ifname);
+    IfacePtr getIface(const std::string& ifname);
 
     /// @brief Returns container with all interfaces.
     ///
@@ -593,26 +638,30 @@ public:
     ///
     /// This method takes Pkt6 (see overloaded implementation that takes
     /// Pkt4) and chooses appropriate socket to send it. This method
-    /// may throw BadValue if specified packet does not have outbound
-    /// interface specified, no such interface exists, or specified
-    /// interface does not have any appropriate sockets open.
+    /// may throw if specified packet does not have outbound interface specified,
+    /// no such interface exists, or specified interface does not have any
+    /// appropriate sockets open.
     ///
     /// @param pkt a packet to be transmitted
     ///
     /// @return a socket descriptor
+    /// @throw SocketNotFound If no suitable socket found.
+    /// @throw IfaceNotFound If interface is not set for the packet.
     uint16_t getSocket(const isc::dhcp::Pkt6& pkt);
 
     /// @brief Return most suitable socket for transmitting specified IPv4 packet.
     ///
-    /// This method takes Pkt4 (see overloaded implementation that takes
-    /// Pkt6) and chooses appropriate socket to send it. This method
-    /// may throw BadValue if specified packet does not have outbound
-    /// interface specified, no such interface exists, or specified
-    /// interface does not have any appropriate sockets open.
+    /// This method uses the local address assigned to the packet and tries
+    /// to match it with addresses to which sockets are bound for the particular
+    /// interface. If the match is not found, the method returns the first IPv4
+    /// socket found for the particular interface. In case, there are no IPv4
+    /// sockets assigned to the interface the exception is thrown.
     ///
-    /// @param pkt a packet to be transmitted
+    /// @param pkt A packet to be transmitted. It must hold a local address and
+    /// a valid pointer to the interface.
     ///
     /// @return A structure describing a socket.
+    /// @throw SocketNotFound if no suitable socket found.
     SocketInfo getSocket(const isc::dhcp::Pkt4& pkt);
 
     /// Debugging method that prints out all available interfaces.
@@ -924,8 +973,10 @@ public:
     void addExternalSocket(int socketfd, SocketCallback callback);
 
     /// @brief Deletes external socket
-
     void deleteExternalSocket(int socketfd);
+
+    /// @brief Deletes all external sockets.
+    void deleteAllExternalSockets();
 
     /// @brief Set packet filter object to handle sending and receiving DHCPv4
     /// messages.
@@ -989,7 +1040,7 @@ public:
     /// @param iface reference to Iface object.
     /// @note This function must be public because it has to be callable
     /// from unit tests.
-    void addInterface(const Iface& iface) {
+    void addInterface(const IfacePtr& iface) {
         ifaces_.push_back(iface);
     }
 
@@ -1090,23 +1141,6 @@ protected:
     /// Control-buffer, used in transmission and reception.
     boost::scoped_array<char> control_buf_;
 
-    /// @brief A wrapper for OS-specific operations before sending IPv4 packet
-    ///
-    /// @param m message header (will be later used for sendmsg() call)
-    /// @param control_buf buffer to be used during transmission
-    /// @param control_buf_len buffer length
-    /// @param pkt packet to be sent
-    void os_send4(struct msghdr& m, boost::scoped_array<char>& control_buf,
-                  size_t control_buf_len, const Pkt4Ptr& pkt);
-
-    /// @brief OS-specific operations during IPv4 packet reception
-    ///
-    /// @param m message header (was used during recvmsg() call)
-    /// @param pkt packet received (some fields will be set here)
-    ///
-    /// @return true if successful, false otherwise
-    bool os_receive4(struct msghdr& m, Pkt4Ptr& pkt);
-
 private:
     /// @brief Identifies local network address to be used to
     /// connect to remote address.
@@ -1167,6 +1201,9 @@ private:
 
     /// @brief Contains list of callbacks for external sockets
     SocketCallbackInfoContainer callbacks_;
+
+    /// @brief Indicates if the IfaceMgr is in the test mode.
+    bool test_mode_;
 };
 
 }; // namespace isc::dhcp

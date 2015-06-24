@@ -41,7 +41,7 @@ TEST(WatchSocketTest, basics) {
 
     /// Verify that post-construction the state the select-fd is valid.
     int select_fd = watch->getSelectFd();
-    EXPECT_NE(select_fd, WatchSocket::INVALID_SOCKET);
+    EXPECT_NE(select_fd, WatchSocket::SOCKET_NOT_VALID);
 
     /// Verify that isReady() is false and that a call to select agrees.
     EXPECT_FALSE(watch->isReady());
@@ -85,7 +85,7 @@ TEST(WatchSocketTest, closedWhileClear) {
 
     /// Verify that post-construction the state the select-fd is valid.
     int select_fd = watch->getSelectFd();
-    ASSERT_NE(select_fd, WatchSocket::INVALID_SOCKET);
+    ASSERT_NE(select_fd, WatchSocket::SOCKET_NOT_VALID);
 
     // Verify that socket does not appear ready.
     ASSERT_EQ(0, watch->isReady());
@@ -106,7 +106,7 @@ TEST(WatchSocketTest, closedWhileClear) {
     ASSERT_NO_THROW(watch->clearReady());
 
     // Verify that getSelectFd() returns invalid socket.
-    ASSERT_EQ(WatchSocket::INVALID_SOCKET, watch->getSelectFd());
+    ASSERT_EQ(WatchSocket::SOCKET_NOT_VALID, watch->getSelectFd());
 }
 
 /// @brief Checks behavior when select_fd has closed while in the "ready"
@@ -120,7 +120,7 @@ TEST(WatchSocketTest, closedWhileReady) {
 
     /// Verify that post-construction the state the select-fd is valid.
     int select_fd = watch->getSelectFd();
-    ASSERT_NE(select_fd, WatchSocket::INVALID_SOCKET);
+    ASSERT_NE(select_fd, WatchSocket::SOCKET_NOT_VALID);
 
     /// Verify that the socket can be marked ready.
     ASSERT_NO_THROW(watch->markReady());
@@ -150,7 +150,7 @@ TEST(WatchSocketTest, emptyReadySelectFd) {
 
     /// Verify that post-construction the state the select-fd is valid.
     int select_fd = watch->getSelectFd();
-    ASSERT_NE(select_fd, WatchSocket::INVALID_SOCKET);
+    ASSERT_NE(select_fd, WatchSocket::SOCKET_NOT_VALID);
 
     /// Verify that the socket can be marked ready.
     ASSERT_NO_THROW(watch->markReady());
@@ -183,7 +183,7 @@ TEST(WatchSocketTest, badReadOnClear) {
 
     /// Verify that post-construction the state the select-fd is valid.
     int select_fd = watch->getSelectFd();
-    ASSERT_NE(select_fd, WatchSocket::INVALID_SOCKET);
+    ASSERT_NE(select_fd, WatchSocket::SOCKET_NOT_VALID);
 
     /// Verify that the socket can be marked ready.
     ASSERT_NO_THROW(watch->markReady());
@@ -203,7 +203,7 @@ TEST(WatchSocketTest, badReadOnClear) {
     EXPECT_NE(1, selectCheck(select_fd));
 
     // Verify that getSelectFd() returns INVALID.
-    ASSERT_EQ(WatchSocket::INVALID_SOCKET, watch->getSelectFd());
+    ASSERT_EQ(WatchSocket::SOCKET_NOT_VALID, watch->getSelectFd());
 
     // Verify that subsequent attempt to mark it fails.
     ASSERT_THROW(watch->markReady(), WatchSocketError);

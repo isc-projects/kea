@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -39,15 +39,15 @@ TEST(Pool4Test, constructor_first_last) {
     EXPECT_EQ(IOAddress("192.0.2.255"), pool1.getLastAddress());
 
     // This is Pool4, IPv6 addresses do not belong here
-    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+    EXPECT_THROW(Pool4(IOAddress("2001:db8::1"),
                        IOAddress("192.168.0.5")), BadValue);
-    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("192.168.0.2"),
+    EXPECT_THROW(Pool4(IOAddress("192.168.0.2"),
                        IOAddress("2001:db8::1")), BadValue);
 
     // Should throw. Range should be 192.0.2.1-192.0.2.2, not
     // the other way around.
-    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("192.0.2.2"),
-                       IOAddress("192.0.2.1")), BadValue);
+    EXPECT_THROW(Pool4(IOAddress("192.0.2.2"), IOAddress("192.0.2.1")),
+                 BadValue);
 }
 
 TEST(Pool4Test, constructor_prefix_len) {
@@ -79,6 +79,21 @@ TEST(Pool4Test, in_range) {
    EXPECT_FALSE(pool1.inRange(IOAddress("192.0.2.255")));
    EXPECT_FALSE(pool1.inRange(IOAddress("255.255.255.255")));
    EXPECT_FALSE(pool1.inRange(IOAddress("0.0.0.0")));
+}
+
+// Checks if the number of possible leases in range is reported correctly.
+TEST(Pool4Test, leasesCount) {
+    Pool4 pool1(IOAddress("192.0.2.10"), IOAddress("192.0.2.20"));
+    EXPECT_EQ(11, pool1.getCapacity());
+
+    Pool4 pool2(IOAddress("192.0.2.0"), IOAddress("192.0.2.255"));
+    EXPECT_EQ(256, pool2.getCapacity());
+
+    Pool4 pool3(IOAddress("192.168.0.0"), IOAddress("192.168.255.255"));
+    EXPECT_EQ(65536, pool3.getCapacity());
+
+    Pool4 pool4(IOAddress("10.0.0.0"), IOAddress("10.255.255.255"));
+    EXPECT_EQ(16777216, pool4.getCapacity());
 }
 
 // This test creates 100 pools and verifies that their IDs are unique.
@@ -262,5 +277,16 @@ TEST(Poo6Test,toText) {
     EXPECT_EQ("type=IA_PD, 2001:db8:1::-2001:db8:1::ffff:ffff, delegated_len=112",
               pool2.toText());
 }
+
+// Checks if the number of possible leases in range is reported correctly.
+TEST(Pool6Test, leasesCount) {
+    Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+                IOAddress("2001:db8::2"));
+    EXPECT_EQ(2, pool1.getCapacity());
+
+    Pool6 pool2(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 96, 112);
+    EXPECT_EQ(65536, pool2.getCapacity());
+}
+
 
 }; // end of anonymous namespace

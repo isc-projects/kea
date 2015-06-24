@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
@@ -95,18 +97,15 @@ void Option6AddrLst::unpack(OptionBufferConstIter begin,
     }
 }
 
-std::string Option6AddrLst::toText(int indent /* =0 */) {
-    stringstream tmp;
-    for (int i = 0; i < indent; i++)
-        tmp << " ";
-
-    tmp << "type=" << type_ << " " << addrs_.size() << "addr(s): ";
+std::string Option6AddrLst::toText(int indent) {
+    stringstream output;
+    output << headerToText(indent) << ":";
 
     for (AddressContainer::const_iterator addr = addrs_.begin();
          addr != addrs_.end(); ++addr) {
-        tmp << *addr << " ";
+        output << " " << *addr;
     }
-    return tmp.str();
+    return (output.str());
 }
 
 uint16_t Option6AddrLst::len() {

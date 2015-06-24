@@ -147,8 +147,8 @@ TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     } else if (error_txt == "BADTRUNC") {
         error = TSIGError::BAD_TRUNC_CODE;
     } else {
-	/// we cast to uint32_t and range-check, because casting directly to
-	/// uint16_t will convert negative numbers to large positive numbers
+        /// we cast to uint32_t and range-check, because casting directly to
+        /// uint16_t will convert negative numbers to large positive numbers
         try {
             error = boost::lexical_cast<uint32_t>(error_txt);
         } catch (const boost::bad_lexical_cast&) {
@@ -1855,6 +1855,9 @@ DNSKEY::compare(const Rdata& other) const {
     const size_t this_len = impl_->keydata_.size();
     const size_t other_len = other_dnskey.impl_->keydata_.size();
     const size_t cmplen = min(this_len, other_len);
+    if (cmplen == 0) {
+        return ((this_len == other_len) ? 0 : (this_len < other_len) ? -1 : 1);
+    }
     const int cmp = memcmp(&impl_->keydata_[0],
                            &other_dnskey.impl_->keydata_[0], cmplen);
     if (cmp != 0) {
@@ -2230,8 +2233,8 @@ MINFO::MINFO(const std::string& minfo_str) :
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-	rmailbox_ = createNameFromLexer(lexer, NULL);
-	emailbox_ = createNameFromLexer(lexer, NULL);
+        rmailbox_ = createNameFromLexer(lexer, NULL);
+        emailbox_ = createNameFromLexer(lexer, NULL);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for MINFO: "
@@ -3961,7 +3964,9 @@ OPT::appendPseudoRR(uint16_t code, const uint8_t* data, uint16_t length) {
 
     boost::shared_ptr<std::vector<uint8_t> >
         option_data(new std::vector<uint8_t>(length));
-    std::memcpy(&(*option_data)[0], data, length);
+    if (length != 0) {
+        std::memcpy(&(*option_data)[0], data, length);
+    }
     impl_->pseudo_rrs_.push_back(PseudoRR(code, option_data));
     impl_->rdlength_ += length;
 }

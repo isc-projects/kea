@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,10 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_status_code.h>
+#include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
 #include <dhcp6/tests/dhcp6_client.h>
@@ -36,11 +39,16 @@ Dhcp6Client::Dhcp6Client() :
     dest_addr_(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
     duid_(generateDUID(DUID::DUID_LLT)),
     link_local_("fe80::3a60:77ff:fed5:cdef"),
+    iface_name_("eth0"),
     srv_(boost::shared_ptr<NakedDhcpv6Srv>(new NakedDhcpv6Srv(0))),
     use_na_(false),
     use_pd_(false),
     use_relay_(false),
-    prefix_hint_() {
+    use_oro_(false),
+    use_client_id_(true),
+    use_rapid_commit_(false),
+    prefix_hint_(),
+    fqdn_() {
 }
 
 Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
@@ -49,10 +57,16 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     dest_addr_(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
     duid_(generateDUID(DUID::DUID_LLT)),
     link_local_("fe80::3a60:77ff:fed5:cdef"),
+    iface_name_("eth0"),
     srv_(srv),
     use_na_(false),
     use_pd_(false),
-    use_relay_(false) {
+    use_relay_(false),
+    use_oro_(false),
+    use_client_id_(true),
+    use_rapid_commit_(false),
+    prefix_hint_(),
+    fqdn_() {
 }
 
 void
@@ -70,6 +84,8 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
     for (Opts::const_iterator opt = opts.begin(); opt != opts.end(); ++opt) {
         Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(opt->second);
         if (!ia) {
+            // This is not IA, so let's just store it.
+            config_.options_.insert(*opt);
             continue;
         }
 
@@ -82,7 +98,8 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
             case D6O_IAADDR:
                 {
                     Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<
-                        Option6IAAddr>(ia->getOption(D6O_IAADDR));
+                        Option6IAAddr>(ia_opt);
+
                     if (!iaaddr) {
                         // There is no address. This IA option may simply
                         // contain a status code, so let's just reset the
@@ -107,7 +124,7 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
             case D6O_IAPREFIX:
                 {
                     Option6IAPrefixPtr iaprefix = boost::dynamic_pointer_cast<
-                        Option6IAPrefix>(ia->getOption(D6O_IAPREFIX));
+                        Option6IAPrefix>(ia_opt);
                     if (!iaprefix) {
                         // There is no prefix. This IA option may simply
                         // contain a status code, so let's just reset the
@@ -133,10 +150,10 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
                 {
                     // Check if the server has sent status code. If no status
                     // code, assume the status code to be 0.
-                    OptionCustomPtr status_code = boost::dynamic_pointer_cast<
-                        OptionCustom>(ia->getOption(D6O_STATUS_CODE));
+                    Option6StatusCodePtr status_code = boost::dynamic_pointer_cast<
+                        Option6StatusCode>(ia->getOption(D6O_STATUS_CODE));
                     lease_info.status_code_ =
-                        status_code ? status_code->readInteger<uint16_t>(0) : 0;
+                        status_code ? status_code->getStatusCode() : 0;
                 }
                 break;
 
@@ -149,20 +166,20 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
     }
 
     // Get the global status code.
-    OptionCustomPtr status_code = boost::dynamic_pointer_cast<
-        OptionCustom>(reply->getOption(D6O_STATUS_CODE));
+    Option6StatusCodePtr status_code = boost::dynamic_pointer_cast<
+        Option6StatusCode>(reply->getOption(D6O_STATUS_CODE));
     // If status code has been sent, we override the default status code:
     // Success and record that we have received the status code.
     if (status_code) {
         config_.received_status_code_ = true;
-        config_.status_code_ = status_code->readInteger<uint16_t>(0);
+        config_.status_code_ = status_code->getStatusCode();
     }
 }
 
 void
 Dhcp6Client::applyLease(const LeaseInfo& lease_info) {
     // Go over existing leases and try to match the one that we have.
-    for (int i = 0; i < config_.leases_.size(); ++i) {
+    for (size_t i = 0; i < config_.leases_.size(); ++i) {
         Lease6 existing_lease = config_.leases_[i].lease_;
         // If IAID is matching and there is an actual address assigned
         // replace the current lease. The default address is :: if the
@@ -183,6 +200,13 @@ Dhcp6Client::applyLease(const LeaseInfo& lease_info) {
     }
     // It is a new lease. Add it.
     config_.leases_.push_back(lease_info);
+}
+
+void
+Dhcp6Client::appendFQDN() {
+    if (fqdn_) {
+        context_.query_->addOption(fqdn_);
+    }
 }
 
 void
@@ -245,7 +269,17 @@ Dhcp6Client::createLease(const Lease6& lease) {
 Pkt6Ptr
 Dhcp6Client::createMsg(const uint8_t msg_type) {
     Pkt6Ptr msg(new Pkt6(msg_type, curr_transid_++));
-    msg->addOption(getClientId());
+
+    if (use_client_id_) {
+        msg->addOption(getClientId());
+    }
+    if (use_oro_) {
+        OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+        oro->setValues(oro_);
+
+        msg->addOption(oro);
+    };
+
     return (msg);
 }
 
@@ -261,6 +295,9 @@ Dhcp6Client::doSARR() {
 void
 Dhcp6Client::doSolicit() {
     context_.query_ = createMsg(DHCPV6_SOLICIT);
+    if (forced_server_id_) {
+        context_.query_->addOption(forced_server_id_);
+    }
     if (use_na_) {
         context_.query_->addOption(Option6IAPtr(new Option6IA(D6O_IA_NA,
                                                               1234)));
@@ -272,17 +309,37 @@ Dhcp6Client::doSolicit() {
         }
         context_.query_->addOption(ia);
     }
+    if (use_rapid_commit_) {
+        context_.query_->addOption(OptionPtr(new Option(Option::V6,
+                                                        D6O_RAPID_COMMIT)));
+    }
+    // Add Client FQDN if configured.
+    appendFQDN();
+
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
 
-    /// @todo Sanity check here
+    // If using Rapid Commit and the server has responded with Reply,
+    // let's apply received configuration.
+    if (use_rapid_commit_ && context_.response_ &&
+        context_.response_->getType() == DHCPV6_REPLY) {
+        applyRcvdConfiguration(context_.response_);
+    }
 }
 
 void
 Dhcp6Client::doRequest() {
     Pkt6Ptr query = createMsg(DHCPV6_REQUEST);
-    query->addOption(context_.response_->getOption(D6O_SERVERID));
+    if (!forced_server_id_) {
+        query->addOption(context_.response_->getOption(D6O_SERVERID));
+    } else {
+        query->addOption(forced_server_id_);
+    }
     copyIAs(context_.response_, query);
+
+    // Add Client FQDN if configured.
+    appendFQDN();
+
     context_.query_ = query;
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
@@ -296,9 +353,57 @@ Dhcp6Client::doRequest() {
 }
 
 void
+Dhcp6Client::doInfRequest() {
+    context_.query_ = createMsg(DHCPV6_INFORMATION_REQUEST);
+
+    // IA_NA, IA_TA and IA_PD options are not allowed in INF-REQUEST,
+    // but hey! Let's test it.
+    if (use_na_) {
+        // Insert IA_NA option with iaid=1234.
+        context_.query_->addOption(Option6IAPtr(new Option6IA(D6O_IA_NA,
+                                                              1234)));
+    }
+
+    // IA-PD is also not allowed. So it may be useful in testing, too.
+    if (use_pd_) {
+        // Insert IA_PD option with iaid=5678
+        Option6IAPtr ia(new Option6IA(D6O_IA_PD, 5678));
+        if (prefix_hint_) {
+            ia->addOption(prefix_hint_);
+        }
+        context_.query_->addOption(ia);
+    }
+
+    sendMsg(context_.query_);
+    context_.response_ = receiveOneMsg();
+}
+
+void
+Dhcp6Client::doRenew() {
+    Pkt6Ptr query = createMsg(DHCPV6_RENEW);
+    query->addOption(context_.response_->getOption(D6O_SERVERID));
+    copyIAsFromLeases(query);
+
+    // Add Client FQDN if configured.
+    appendFQDN();
+
+    context_.query_ = query;
+    sendMsg(context_.query_);
+    context_.response_ = receiveOneMsg();
+    // Apply configuration only if the server has responded.
+    if (context_.response_) {
+        applyRcvdConfiguration(context_.response_);
+    }
+}
+
+void
 Dhcp6Client::doRebind() {
     Pkt6Ptr query = createMsg(DHCPV6_REBIND);
     copyIAsFromLeases(query);
+
+    // Add Client FQDN if configured.
+    appendFQDN();
+
     context_.query_ = query;
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
@@ -324,7 +429,7 @@ Dhcp6Client::doConfirm() {
 void
 Dhcp6Client::fastFwdTime(const uint32_t secs) {
     // Iterate over all leases and move their cltt backwards.
-    for (int i = 0; i < config_.leases_.size(); ++i) {
+    for (size_t i = 0; i < config_.leases_.size(); ++i) {
         config_.leases_[i].lease_.cltt_ -= secs;
     }
 }
@@ -383,6 +488,12 @@ Dhcp6Client::getLeasesByIAID(const uint32_t iaid) const {
 }
 
 void
+Dhcp6Client::setDUID(const std::string& str) {
+    DUID d = DUID::fromText(str);
+    duid_.reset(new DUID(d));
+}
+
+void
 Dhcp6Client::modifyDUID() {
     if (!duid_) {
         duid_ = generateDUID(DUID::DUID_LLT);
@@ -410,13 +521,19 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     srv_->shutdown_ = false;
     // The client is configured to send through the relay. We achieve that
     // adding the relay structure.
-    if (use_relay_) {
-        Pkt6::RelayInfo relay;
-        relay.linkaddr_ = relay_link_addr_;
-        relay.peeraddr_ = asiolink::IOAddress("fe80::1");
-        relay.msg_type_ = DHCPV6_RELAY_FORW;
-        relay.hop_count_ = 1;
-        msg->relay_info_.push_back(relay);
+    if (use_relay_ || !relay_info_.empty()) {
+        if (relay_info_.empty()) {
+            // Let's craft the relay info by hand
+            Pkt6::RelayInfo relay;
+            relay.linkaddr_ = relay_link_addr_;
+            relay.peeraddr_ = asiolink::IOAddress("fe80::1");
+            relay.msg_type_ = DHCPV6_RELAY_FORW;
+            relay.hop_count_ = 1;
+            msg->relay_info_.push_back(relay);
+        } else {
+            // The test provided relay_info_, let's use that.
+            msg->relay_info_ = relay_info_;
+        }
     }
     // Repack the message to simulate wire-data parsing.
     msg->pack();
@@ -425,7 +542,7 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
                               msg->getBuffer().getLength()));
     msg_copy->setRemoteAddr(link_local_);
     msg_copy->setLocalAddr(dest_addr_);
-    msg_copy->setIface("eth0");
+    msg_copy->setIface(iface_name_);
     srv_->fakeReceive(msg_copy);
     srv_->run();
 }
@@ -437,6 +554,13 @@ Dhcp6Client::useHint(const uint32_t pref_lft, const uint32_t valid_lft,
                                            asiolink::IOAddress(prefix),
                                            len, pref_lft, valid_lft));
 }
+
+void
+Dhcp6Client::useFQDN(const uint8_t flags, const std::string& fqdn_name,
+                     Option6ClientFqdn::DomainNameType fqdn_type) {
+    fqdn_.reset(new Option6ClientFqdn(flags, fqdn_name, fqdn_type));
+}
+
 
 
 } // end of namespace isc::dhcp::test

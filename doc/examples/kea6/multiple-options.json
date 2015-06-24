@@ -5,7 +5,9 @@
 
 {
 # Kea is told to listen on ethX interface only.
-  "interfaces": [ "ethX" ],
+  "interfaces-config": {
+    "interfaces": [ "ethX" ]
+  },
 
 # We need to specify lease type. As of May 2014, three backends are supported:
 # memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
@@ -16,7 +18,7 @@
 
 # Addresses will be assigned with preferred and valid lifetimes
 # being 3000 and 4000, respectively. Client is told to start
-# renewing after 1000 seconds. If the server does not repond
+# renewing after 1000 seconds. If the server does not respond
 # after 2000 seconds since the lease was granted, client is supposed
 # to start REBIND procedure (emergency renewal that allows switching
 # to a different server).

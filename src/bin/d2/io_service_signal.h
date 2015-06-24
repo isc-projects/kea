@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,10 +15,12 @@
 #ifndef IO_SERVICE_SIGNAL_H
 #define IO_SERVICE_SIGNAL_H
 
-#include <d2/d2_asio.h>
+#include <asiolink/io_service.h>
+#include <asiolink/interval_timer.h>
 #include <exceptions/exceptions.h>
 
 #include <map>
+#include <stdint.h>
 
 namespace isc {
 namespace d2 {
@@ -202,7 +204,7 @@ public:
     ///
     /// @param io_service the IOService to which to send signals.
     /// @throw IOSignalError if io_service is NULL.
-    IOSignalQueue (IOServicePtr& io_service);
+    IOSignalQueue (asiolink::IOServicePtr& io_service);
 
     /// @brief Destructor.
     ~IOSignalQueue();
@@ -248,7 +250,7 @@ public:
 
 private:
     /// @brief Pointer to the IOService which will receive the signals.
-    IOServicePtr io_service_;
+    asiolink::IOServicePtr io_service_;
 
     /// @brief A map of the IOSignals pushed through this queue.
     IOSignalMap signals_;

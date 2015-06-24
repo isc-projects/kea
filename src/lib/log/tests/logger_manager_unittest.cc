@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +32,7 @@
 #include <log/logger_level.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
+#include <log/message_initializer.h>
 #include <log/output_option.h>
 
 #include "tempdir.h"
@@ -64,14 +65,15 @@ class SpecificationForFileLogger {
 public:
 
     // Constructor - allocate file and create the specification object
-    SpecificationForFileLogger() : spec_(), name_(""), logname_("filelogger") {
+    SpecificationForFileLogger() : spec_(), name_(createTempFilename()),
+                                   logname_("filelogger") {
 
         // Set the output to a temporary file.
         OutputOption option;
         option.destination = OutputOption::DEST_FILE;
-        option.filename = name_ = createTempFilename();
+        option.filename = name_;
 
-        // Set target output to the file logger.  The defauls indicate
+        // Set target output to the file logger.  The defaults indicate
         // INFO severity.
         spec_.setName(logname_);
         spec_.addOutputOption(option);
@@ -80,11 +82,11 @@ public:
     // Destructor, remove the file.  This is only a test, so ignore failures
     ~SpecificationForFileLogger() {
         if (! name_.empty()) {
-            static_cast<void>(unlink(name_.c_str()));
+            static_cast<void>(remove(name_.c_str()));
 
             // Depending on the log4cplus version, a lock file may also be
             // created.
-            static_cast<void>(unlink((name_ + ".lock").c_str()));
+            static_cast<void>(remove((name_ + ".lock").c_str()));
         }
     }
 
@@ -113,7 +115,7 @@ public:
     // does not exist, use /tmp.
     //
     // \return Temporary file name
-    std::string createTempFilename() {
+    static std::string createTempFilename() {
         string filename = TEMP_DIR + "/kea_logger_manager_test_XXXXXX";
 
         // Copy into writeable storage for the call to mkstemp
@@ -193,7 +195,7 @@ TEST_F(LoggerManagerTest, FileLogger) {
     // For the first test, we want to check that the file is created
     // if it does not already exist.  So delete the temporary file before
     // logging the first message.
-    unlink(file_spec.getFileName().c_str());
+    remove(file_spec.getFileName().c_str());
 
     // Set up the file appenders.
     LoggerManager manager;
@@ -267,7 +269,7 @@ TEST_F(LoggerManagerTest, FileSizeRollover) {
     for (int i = 0; i < 3; ++i) {
         prev_name.push_back(file_spec.getFileName() + "." +
                             boost::lexical_cast<string>(i + 1));
-        (void) unlink(prev_name[i].c_str());
+        (void) remove(prev_name[i].c_str());
     }
 
     // Generate an argument for a message that ensures that the message when
@@ -323,7 +325,7 @@ TEST_F(LoggerManagerTest, FileSizeRollover) {
 
     // Tidy up
     for (vector<string>::size_type i = 0; i < prev_name.size(); ++i) {
-       (void) unlink(prev_name[i].c_str());
+       (void) remove(prev_name[i].c_str());
     }
 }
 
@@ -366,7 +368,7 @@ TEST_F(LoggerManagerTest, checkLayoutPattern) {
     // For the first test, we want to check that the file is created
     // if it does not already exist.  So delete the temporary file before
     // logging the first message.
-    unlink(file_spec.getFileName().c_str());
+    remove(file_spec.getFileName().c_str());
 
     // Set up the file appenders.
     LoggerManager manager;
@@ -403,4 +405,28 @@ TEST_F(LoggerManagerTest, checkLayoutPattern) {
     const int re = regexec(*regex, line.c_str(), 0, NULL, 0);
     ASSERT_EQ(0, re)
         << "Logged message does not match expected layout pattern";
+}
+
+// Check that after calling the logDuplicatedMessages, the duplicated
+// messages are removed.
+TEST_F(LoggerManagerTest, logDuplicatedMessages) {
+    // Original set should not have duplicates.
+    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+
+    // This just defines 1, but we'll add it a number of times.
+    const char* dupe[] = {
+        "DUPE", "dupe",
+        NULL
+    };
+    const MessageInitializer init_message_initializer_1(dupe);
+    const MessageInitializer init_message_initializer_2(dupe);
+
+    MessageInitializer::loadDictionary();
+    // Should have a duplicate now.
+    ASSERT_EQ(1, MessageInitializer::getDuplicates().size());
+
+    // The logDuplicatedMessages, besides logging, should also remove the
+    // duplicates.
+    LoggerManager::logDuplicatedMessages();
+    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
 }

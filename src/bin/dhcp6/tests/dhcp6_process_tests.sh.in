@@ -1,4 +1,4 @@
-# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -21,8 +21,9 @@ EXPECTED_VERSION="@PACKAGE_VERSION@"
 # Kea configuration to be stored in the configuration file.
 CONFIG="{
     \"Dhcp6\":
-    {
-        \"interfaces\": [ ],
+    {   \"interfaces-config\": {
+          \"interfaces\": [ ]
+        },
         \"preferred-lifetime\": 3000,
         \"valid-lifetime\": 4000,
         \"renew-timer\": 1000,

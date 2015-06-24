@@ -37,7 +37,7 @@ public:
 
 /// @brief Implements the concept of a constant value with a text label.
 ///
-/// This class implements an association between an constant integer value
+/// This class implements an association between a constant integer value
 /// and a text label. It provides a single constructor, accessors for both
 /// the value and label, and boolean operators which treat the value as
 /// the "key" for comparisons.  This allows them to be assembled into

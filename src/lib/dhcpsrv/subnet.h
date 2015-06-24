@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -66,6 +66,27 @@ public:
         isc::asiolink::IOAddress addr_;
     };
 
+    /// @brief Specifies allowed host reservation mode.
+    ///
+    typedef enum  {
+
+        /// None - host reservation is disabled. No reservation types
+        /// are allowed.
+        HR_DISABLED,
+
+        /// Only out-of-pool reservations is allowed. This mode
+        /// allows AllocEngine to skip reservation checks when
+        /// dealing with with addresses that are in pool.
+        HR_OUT_OF_POOL,
+
+        /// Both out-of-pool and in-pool reservations are allowed. This is the
+        /// most flexible mode, where sysadmin have biggest liberty. However,
+        /// there is a non-trivial performance penalty for it, as the
+        /// AllocEngine code has to check whether there are reservations, even
+        /// when dealing with reservations from within the dynamic pools.
+        HR_ALL
+    } HRMode;
+
     /// Pointer to the RelayInfo structure
     typedef boost::shared_ptr<Subnet::RelayInfo> RelayInfoPtr;
 
@@ -74,12 +95,12 @@ public:
 
     /// @brief checks if the specified address is in pools
     ///
-    /// Note the difference between inSubnet() and inPool(). For a given
+    /// Note the difference between inRange() and inPool(). For a given
     /// subnet (e.g. 2001::/64) there may be one or more pools defined
     /// that may or may not cover entire subnet, e.g. pool 2001::1-2001::10).
-    /// inPool() returning true implies inSubnet(), but the reverse implication
+    /// inPool() returning true implies inRange(), but the reverse implication
     /// is not always true. For the given example, 2001::1234:abcd would return
-    /// true for inSubnet(), but false for inPool() check.
+    /// true for inRange(), but false for inPool() check.
     ///
     /// @param type type of pools to iterate over
     /// @param addr this address will be checked if it belongs to any pools in
@@ -150,8 +171,20 @@ public:
         return (std::make_pair(prefix_, prefix_len_));
     }
 
-    /// @brief Adds a new pool.
+    /// @brief Adds a new pool for the subnet.
+    ///
+    /// This method checks that the address range represented by the pool
+    /// matches the subnet prefix, if the pool type is different than
+    /// IA_PD. The prefixes from the IA_PD pools don't need to match the
+    /// prefix from the subnet from which they are handed out to the
+    /// requesting router because the requesting router may use the
+    /// delegated prefixes in different networks (using different subnets).
+    ///
     /// @param pool pool to be added
+    ///
+    /// @throw isc::BadValue if the pool type is invalid or the pool
+    /// is not an IA_PD pool and the address range of this pool does not
+    /// match the subnet prefix.
     void addPool(const PoolPtr& pool);
 
 
@@ -199,6 +232,11 @@ public:
     /// @param type lease type to be set
     /// @return a collection of all pools
     const PoolCollection& getPools(Lease::Type type) const;
+
+    /// @brief Returns the number of possible leases for specified lease type
+    ///
+    /// @param type type of the lease
+    uint64_t getPoolCapacity(Lease::Type type) const;
 
     /// @brief Sets name of the network interface for directly attached networks
     ///
@@ -284,6 +322,28 @@ public:
     void
     allowClientClass(const isc::dhcp::ClientClass& class_name);
 
+    /// @brief Specifies what type of Host Reservations are supported.
+    ///
+    /// Host reservations may be either in-pool (they reserve an address that
+    /// is in the dynamic pool) or out-of-pool (they reserve an address that is
+    /// not in the dynamic pool). HR may also be completely disabled for
+    /// performance reasons.
+    ///
+    /// @return whether in-pool host reservations are allowed.
+    HRMode
+    getHostReservationMode() const {
+        return (host_reservation_mode_);
+    }
+
+    /// @brief Sets host reservation mode.
+    ///
+    /// See @ref getHostReservationMode for details.
+    ///
+    /// @param mode mode to be set
+    void setHostReservationMode(HRMode mode) {
+        host_reservation_mode_ = mode;
+    }
+
 protected:
     /// @brief Returns all pools (non-const variant)
     ///
@@ -354,6 +414,11 @@ protected:
     /// @param type type to be checked
     /// @throw BadValue if invalid value is used
     virtual void checkType(Lease::Type type) const = 0;
+
+    /// @brief returns a sum of possible leases in all pools
+    /// @param pools list of pools
+    /// @return sum of possible leases
+    uint64_t sumPoolCapacity(const PoolCollection& pools) const;
 
     /// @brief subnet-id
     ///
@@ -429,6 +494,10 @@ protected:
     /// so it may be a while until we support this.
     ClientClasses white_list_;
 
+    /// @brief Specifies host reservation mode
+    ///
+    /// See @ref HRMode type for details.
+    HRMode host_reservation_mode_;
 private:
 
     /// @brief Pointer to the option data configuration for this subnet.
@@ -473,7 +542,24 @@ public:
     /// @return siaddr value
     isc::asiolink::IOAddress getSiaddr() const;
 
-protected:
+    /// @brief Sets the flag indicating if the client identifier should be
+    /// used to identify the client's lease.
+    ///
+    /// @param match If this value is true, the client identifiers are not
+    /// used for lease lookup.
+    void setMatchClientId(const bool match) {
+        match_client_id_ = match;
+    }
+
+    /// @brief Returns the flag indicating if the client identifiers should
+    /// be used to identify the client's lease.
+    ///
+    /// @return true if client identifiers should be used, false otherwise.
+    bool getMatchClientId() const {
+        return (match_client_id_);
+    }
+
+private:
 
     /// @brief Returns default address for pool selection
     /// @return ANY IPv4 address
@@ -491,6 +577,10 @@ protected:
 
     /// @brief siaddr value for this subnet
     isc::asiolink::IOAddress siaddr_;
+
+    /// @brief Should server use client identifiers for client lease
+    /// lookup.
+    bool match_client_id_;
 };
 
 /// @brief A pointer to a @c Subnet4 object
@@ -549,7 +639,23 @@ public:
         return interface_id_;
     }
 
-protected:
+    /// @brief Enables or disables Rapid Commit option support for the subnet.
+    ///
+    /// @param rapid_commit A boolean value indicating that the Rapid Commit
+    /// option support is enabled (if true), or disabled (if false).
+    void setRapidCommit(const bool rapid_commit) {
+        rapid_commit_ = rapid_commit;
+    };
+
+    /// @brief Returns boolean value indicating that the Rapid Commit option
+    /// is supported or unsupported for the subnet.
+    ///
+    /// @return true if the Rapid Commit option is supported, false otherwise.
+    bool getRapidCommit() const {
+        return (rapid_commit_);
+    }
+
+private:
 
     /// @brief Returns default address for pool selection
     /// @return ANY IPv6 address
@@ -570,6 +676,13 @@ protected:
 
     /// @brief a triplet with preferred lifetime (in seconds)
     Triplet<uint32_t> preferred_;
+
+    /// @brief A flag indicating if Rapid Commit option is supported
+    /// for this subnet.
+    ///
+    /// It's default value is false, which indicates that the Rapid
+    /// Commit is disabled for the subnet.
+    bool rapid_commit_;
 };
 
 /// @brief A pointer to a Subnet6 object

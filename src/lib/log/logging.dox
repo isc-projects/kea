@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -84,7 +84,7 @@ address and a level of 70 records every update of the round-trip time.
 
 Like severities, levels are cumulative; so if level 25 is set as the
 debug level, all debug messages associated levels 0 to 25 (inclusive)
-will be output.  In fact, it is probably easier to visualise the debug
+will be output.  In fact, it is probably easier to visualize the debug
 levels as part of the severity system:
 @code
 FATAL            Most severe
@@ -121,10 +121,10 @@ logger.  The top of the hierarchy is the root logger; this does not
 have a parent.  The reason for this hierarchy is that unless a logger
 explicitly assigns a value to an attribute (such as severity of messages
 it should log), it picks it up the value from the parent.  In Kea,
-each component (b10-dhcp4, b10-dhcp-ddns etc.)  has a root logger (named
+each component (kea-dhcp4, kea-dhcp-ddns etc.)  has a root logger (named
 after the program) and every other logger in the component is a child
 of that.  So in the example above, the error/syslog attributes could be
-associated with the b10-resolver logger while the logger associated with
+associated with the kea-resolver logger while the logger associated with
 the cache sets its own values for the debug/file attributes.
 
 More information about the logging hierarchy can be found in the section
@@ -177,11 +177,10 @@ compiling the message files of all Kea components and libraries.
 
 For C++ development, the message compiler produces two files in the
 default directory, having the same name as the input file but with file
-types of ".h" and ".cc". For Python, the message compiler will produce
-a Python module containing the symbols.</li>
+types of ".h" and ".cc".</li>
 
 <li>Include the resultant files in your source code to define message symbols,
-and (for C++) compile the code and link it into your program.</li>
+and compile the code and link it into your program.</li>
 
 <li>Declare loggers in your code and use them to log messages.</li>
 
@@ -203,9 +202,9 @@ An example file could be:
 
 $NAMESPACE isc::log
 
-% LOG_UNRECOGNISED_DIRECTIVE line %1: unrecognised directive '%2'
+% LOG_UNRECOGNIZED_DIRECTIVE line %1: unrecognized directive '%2'
 A line starting with a dollar symbol was found, but the first word on the line
-(shown in the message) was not a recognised message compiler directive.
+(shown in the message) was not a recognized message compiler directive.
 
 % LOG_WRITE_ERROR error writing to %1: %2
 The specified error was encountered by the message compiler when writing to
@@ -224,7 +223,7 @@ be on a line by themselves; inline comments will be interpreted as part
 of the text of that line.</li>
 
 <li>Lines starting with "$" are directives.  At present, just one
-directive is recognised:
+directive is recognized:
     <dl>
         <dt>$NAMESPACE &lt;namespace-name&gt;</dt>
         <dd>The sole argument is the name of the namespace in which the
@@ -268,7 +267,7 @@ blank lines are ignored.</li>
 </ul>
 
 Although there are few restriction on what can be in the message
-identifcation and text, there are a number of conventions used by Kea,
+identification and text, there are a number of conventions used by Kea,
 both in the contents of the message and in the usage.  All code
 should adhere to these:
 
@@ -331,7 +330,7 @@ message identification - appears in the Kea message manual.  It
 should:
 
 <ul>
-<li>Describe the serverity of the message (debug, informational etc.)</li>
+<li>Describe the severity of the message (debug, informational etc.)</li>
 
 <li>Expand on the text of the message.  In some cases, such as
 debug messages, the message text may provide more or less sufficient
@@ -351,17 +350,14 @@ programs.
 The message compiler is a program built in the src/log/compiler directory.
 It is invoked by the command:
 @code
-message [-h] [-v] [-p] [-d dir] <message-file>
+message [-h] [-v] [-d dir] <message-file>
 @endcode
 "-v" prints the version number and exits; "-h" prints brief help text.
-The compiler produces source files for C++ unless the "-p" switch is
-specified, in which case it produces Python code.  Finally, the "-d"
-switch directs the compiler to produce the output files in the specified
-directory (the default being the current working directory).
+Finally, the "-d" switch directs the compiler to produce the output
+files in the specified directory (the default being the current
+working directory).
 
 <b>C++ Files</b><br/>
-Without the "-p" option, the message compiler processes the message file
-to produce two files:
 
 <ol>
 <li>A C++ header file (called <message-file-name>.h) holding lines of
@@ -415,28 +411,13 @@ The appearance of such a message indicates a programming error.
 </li>
 </ol>
 
-<b>Python Files</b><br/>
-If the "-p" option is given, the compiler produces a Python module defining
-the messages.  The content of this is of the form:
-@code
-import isc.log
-    :
-LOG_WRITE_ERROR = isc.log.create_message("LOG_WRITE_ERROR",
-        "error writing to %1 : %2")
-@endcode
-(The definition is output on one line - it is split across two lines in this
-document for readability.)
-
-The module can be imported into other Python code, and messages logged
-in a similar way to C++ using the Python logging library.
-
 @subsubsection logMakefile Include Message Compilation in Makefile
-The source file for the messages is the ".mes" file, but the files used
-by the code (which, in the case of C++, must be compiled and linked)
-are the output of the message compiler.  (The compiler is produced very
-early on in the Kea build sequence, so is available for use in the
-building of subsequent components.)  To allow this, certain dependencies
-must be included in the Makefile.am for each component that uses logging.
+The source file for the messages is the ".mes" file, but the files
+used by the code which must be compiled and linked are the output of
+the message compiler.  (The compiler is produced very early on in the
+Kea build sequence, so is available for use in the building of
+subsequent components.)  To allow this, certain dependencies must be
+included in the Makefile.am for each component that uses logging.
 
 <b>Including Message files in C++ Component Builds</b><br/>
 The following segment from the "hooks" Makefile.am illustrates
@@ -471,7 +452,7 @@ which is in the repository - is accessed through the "top_srcdir" macro.
 
 The BUILT_SOURCES line notifies the Automake that the .h and .cc files
 need to be created before they can be used in the compilation, so
-instructs it to organse things so that the message compiler is run first.
+instructs it to organize things so that the message compiler is run first.
 
 As the .mes file is not directly included in any compilation, it will
 not be automatically copied into a distribution created through this
@@ -484,31 +465,6 @@ These files are therefore included in the definition of the CLEANFILES macro.
 
 Not shown are the Makefile.am lines where the .h and .cc file are used.  These
 are the same as other lines specifying .h and .cc source files.
-
-<b>Including Message files in Python Component Builds</b><br/>
-The following (modified) segments from the "xfrin" Makefile.am illustrates
-the entries needed.
-
-@code
-CLEANFILES  = $(PYTHON_LOGMSGPKG_DIR)/work/xfrin_messages.py
-CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/xfrin_messages.pyc
-  :
-EXTRA_DIST += xfrin_messages.mes
-  :
-# Define rule to build logging source files from message file
-$(PYTHON_LOGMSGPKG_DIR)/work/xfrin_messages.py : xfrin_messages.mes
-	$(top_builddir)/src/lib/log/compiler/message \
-	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/xfrin_messages.mes
-@endcode
-The CLEANFILES lines remove the created Python (and compiled Python)
-code when "make clean" is run.
-
-The EXTRA_DIST line ensures that the .mes file is copied to the
-distribution tarball.
-
-The final dependency shows the use of the message compiler to
-create the Python message module in a working directory.
-
 
 @subsection logUsage Using Logging Files in Program Development
 
@@ -529,8 +485,8 @@ in file scope.  The string passed to the constructor is the name of
 the logger (it can be any string) and is used when configuring it.
 (Remember though that the name of root logger for the program will be
 prepended to the name chosen.  So if, for example, the name "cache"
-is chosen and the model is included in the "b10-resolver" program, the
-full name of the logger will be "b10-resolver.cache".)  Loggers with
+is chosen and the model is included in the "kea-resolver" program, the
+full name of the logger will be "kea-resolver.cache".)  Loggers with
 the same name share the same configuration.  For this reason if, as is
 usual, messages logged in different files in the same component (e.g.
 hooks module, nameserver address store, etc.) originate from loggers
@@ -565,34 +521,6 @@ messages of INFO severity or above).</li>
 level, and external message file.
 </ol>
 
-@subsubsection logPythonUsage Use in a Python Module
-To use logging in a Python module:
-<ol>
-<li>Build message module as described above.</li>
-
-<li>Declare a logger through which the message will be logged.
-@code
-isc.log.Logger logger("name")
-@endcode
-The string passed to the constructor is the name of the logger (it can
-be any string) and is used when configuring it.  Loggers with the same
-name share the same configuration.</li>
-
-<li>Issue calls to the logging methods:
-@code
-logger.error(LOG_WRITE_ERROR, "output.txt")
-@endcode
-The message parameters are included as trailing arguments in the
-logger call.</li>
-
-<li>The main program unit must include a call to isc.log.init() (described
-in more detail below) to set the to set the logging severity, debug log
-level, and external message file.  The settings remain in effect until
-the logging configuration is read, so are the ones used during program
-initialization.</li>
-</ol>
-
-
 @subsection logInitialization Logging Initialization
 In all cases, if an attempt is made to use a logging method before
 the logging has been initialized, the program will terminate with a
@@ -615,7 +543,7 @@ Arguments are:
 <dl>
 <dt><code>root</code></dt>
 <dd>Name of the root logger.  This should be the name of the program
-(e.g. "b10-auth") and is used when configuring logging.</dd>
+(e.g. "kea-auth") and is used when configuring logging.</dd>
 
 <dt><code>severity</code></dt>
 <dd>Default severity that the program will start logging with.  Although
@@ -704,37 +632,33 @@ In the case of "stdout", "stderr" and "syslog", they must be written exactly
 as is - no leading or trailing spaces, and in lower-case.</dd>
 </dl>
 
-@subsection logInitializationPython Python Initialization
-To initialize the logger in a Python program, the "init" method must be
-called:
-@code
-isc.log.init(name, severity, debuglevel, file, buffer)
-@endcode
+@subsection logInitializationHooks Hooks Specific Notes
+All hooks libraries should use Kea logging mechanisms. The loggers and the
+library specific log messages are created in the same way as for the core
+Kea modules. The loggers created within the hook library belong to the
+logging hierarchy of the Kea process and their configuration can be
+controlled from the Kea configuration file. If the configuration file doesn't
+contain the specific configuration for the logger used in the library,
+this logger is given the configuration of the root Kea logger.
 
-<dl>
-<dt><code>name</code></dt>
-<dd>String giving the name of the root logger.  This is the only mandatory
-argument, the rest are optional.</dd>
+The hook libraries are loaded dynamically. This requires that the global log
+messages dictionary, holding the mapping of specific log message
+identifiers to the actual messages, is updated to include the messages
+specified in the hook library when the library is loaded. Conversely, the
+messages have to be removed from the dictionary when the library is unloaded.
 
-<dt><code>severity</code></dt>
-<dd>The severity, and is one of the strings "DEBUG", INFO" etc.
-The default is "INFO".</dd>
+The new messages are added to the global dictionary using the
+@c isc::log::MessageInitializer::loadDictionary static function. It is
+called by the @c isc::hooks::LibraryManager::loadLibrary for each loaded
+library.
 
-<dt><code>debuglevel</code></dt>
-<dd>Debug level, an integer between 0 and 99. A default value of 0 will
-be used if this is not specified.</dd>
+When the library is unloaded, the instance of the
+@c isc::log::MessageInitializer defined in the library is destroyed
+and its destructor removes the messages registered by the destroyed
+instance from the global dictionary.
 
-<dt><code>file</code></dt>
-<dd>Name of the external message file (if present).  By default, no
-external message file is used.</dd>
-
-<dt><code>buffer</code></dt>
-<dd>If set to true, initial log messages will be internally buffered,
-until the first time a logger specification is processed. This
-way the program can use logging before even processing its logging
-configuration. By default, no buffer is used.</dd>
-</dl>
-
+The hook library itself must not perform any action to register or
+unregister log messages in the global dictionary!
 
 @section logNotes Notes on the Use of Logging
 One thing that should always be kept in mind is whether the logging

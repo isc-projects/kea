@@ -42,8 +42,13 @@ const int DOCSIS3_V4_DEFS_SIZE  = sizeof(DOCSIS3_V4_DEFS) / sizeof(OptionDefPara
 #define DOCSIS3_V6_TFTP_SERVERS 32
 #define DOCSIS3_V6_CONFIG_FILE 33
 #define DOCSIS3_V6_SYSLOG_SERVERS 34
+#define DOCSIS3_V6_DEVICE_ID 36
 #define DOCSIS3_V6_TIME_SERVERS 37
 #define DOCSIS3_V6_TIME_OFFSET 38
+
+// The following DOCSIS3 options are inserted by the CMTS (which acts as
+// a relay agent)
+#define DOCSIS3_V6_CMTS_CM_MAC 1026
 
 /// @brief Definitions of standard DHCPv6 options.
 const OptionDefParams DOCSIS3_V6_DEFS[] = {
@@ -54,7 +59,9 @@ const OptionDefParams DOCSIS3_V6_DEFS[] = {
     { "time-servers",   DOCSIS3_V6_TIME_SERVERS, OPT_IPV6_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "config-file",    DOCSIS3_V6_CONFIG_FILE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "syslog-servers", DOCSIS3_V6_SYSLOG_SERVERS, OPT_IPV6_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
-    { "time-offset",    DOCSIS3_V6_TIME_OFFSET, OPT_INT32_TYPE, false, NO_RECORD_DEF, "" }
+    { "device-id",      DOCSIS3_V6_DEVICE_ID, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "time-offset",    DOCSIS3_V6_TIME_OFFSET, OPT_INT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "cmts-cm-mac",    DOCSIS3_V6_CMTS_CM_MAC, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" }
     // @todo add definitions for all remaning options.
 };
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,6 @@
 #ifndef DAEMON_H
 #define DAEMON_H
 
-#include <config.h>
 #include <cc/data.h>
 #include <dhcpsrv/srv_config.h>
 #include <util/signal_set.h>
@@ -153,6 +152,10 @@ public:
     /// containing version number. With extended == true, it returns
     /// also additional information about sources. It is expected to
     /// return extra information about dependencies and used DB backends.
+    ///
+    /// As there is no static virtual methods in C++ this class method
+    /// has to be redefined in derived classes and called with the
+    /// derived class name or a child name.
     ///
     /// @param extended print additional information?
     /// @return text string

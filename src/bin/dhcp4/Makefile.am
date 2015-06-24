@@ -3,6 +3,12 @@ SUBDIRS = . tests
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+if HAVE_MYSQL
+AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
+endif
+if HAVE_PGSQL
+AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
+endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 if USE_CLANGPP
@@ -19,6 +25,7 @@ CLEANFILES  = *.gcno *.gcda spec_config.h dhcp4_messages.h dhcp4_messages.cc s-m
 man_MANS = kea-dhcp4.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-dhcp4.xml dhcp4.spec
+EXTRA_DIST += dhcp4.dox dhcp4_hooks.dox
 
 if GENERATE_DOCS
 kea-dhcp4.8: kea-dhcp4.xml
@@ -55,13 +62,7 @@ libdhcp4_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp4_la_SOURCES += dhcp4_log.cc dhcp4_log.h
 libdhcp4_la_SOURCES += dhcp4_srv.cc dhcp4_srv.h
 
-if CONFIG_BACKEND_BUNDY
-libdhcp4_la_SOURCES += bundy_controller.cc
-endif
-
-if CONFIG_BACKEND_JSON
 libdhcp4_la_SOURCES += kea_controller.cc
-endif
 
 nodist_libdhcp4_la_SOURCES = dhcp4_messages.h dhcp4_messages.cc
 EXTRA_DIST += dhcp4_messages.mes
@@ -80,7 +81,11 @@ kea_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+kea_dhcp4_LDADD += $(top_builddir)/src/bin/cfgrpt/libcfgrpt.la
 
 kea_dhcp4dir = $(pkgdatadir)
 kea_dhcp4_DATA = dhcp4.spec

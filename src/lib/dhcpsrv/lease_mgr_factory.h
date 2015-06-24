@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,7 @@ namespace dhcp {
 
 /// @brief Invalid type exception
 ///
-/// Thrown when the factory doesn't recognise the type of the backend.
+/// Thrown when the factory doesn't recognize the type of the backend.
 class InvalidType : public Exception {
 public:
     InvalidType(const char* file, size_t line, const char* what) :

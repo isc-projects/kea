@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,13 +20,17 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-LeaseFileIO::LeaseFileIO(const std::string& filename)
-    : testfile_(filename) {
-    removeFile();
+LeaseFileIO::LeaseFileIO(const std::string& filename, const bool recreate)
+    : testfile_(filename), recreate_(recreate)  {
+    if (recreate_) {
+        removeFile();
+    }
 }
 
 LeaseFileIO::~LeaseFileIO() {
-    removeFile();
+    if (recreate_) {
+        removeFile();
+    }
 }
 
 bool

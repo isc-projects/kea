@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -490,6 +490,10 @@ TEST(NameChangeRequestTest, basicJsonTest) {
     // original input string.
     std::string json_str = ncr->toJSON();
     EXPECT_EQ(msg_str, json_str);
+
+    // Verify that the request ID matches the string from the DHCID.
+    std::string dhcid_str = "010203040A7F8E3D";
+    EXPECT_EQ(dhcid_str, ncr->getRequestId());
 }
 
 /// @brief Tests a variety of invalid JSON message strings.

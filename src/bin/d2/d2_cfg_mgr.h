@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,9 +15,9 @@
 #ifndef D2_CFG_MGR_H
 #define D2_CFG_MGR_H
 
+#include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
-#include <d2/d2_asio.h>
 #include <d2/d_cfg_mgr.h>
 #include <d2/d2_config.h>
 
@@ -134,7 +134,7 @@ public:
         return (boost::dynamic_pointer_cast<D2CfgContext>(getContext()));
     }
 
-    /// @brief Returns whether not forward updates are enabled.
+    /// @brief Returns whether or not forward updates are enabled.
     ///
     /// This method currently uses the presence or absence of Foward DDNS
     /// Domains to determine if forward updates are enabled or disabled.
@@ -144,7 +144,7 @@ public:
     /// @return true if forward updates are enabled, false otherwise.
     bool forwardUpdatesEnabled();
 
-    /// @brief Returns whether not reverse updates are enabled.
+    /// @brief Returns whether or not reverse updates are enabled.
     ///
     /// This method currently uses the presence or absence of Reverse DDNS
     /// Domains to determine if reverse updates are enabled or disabled.

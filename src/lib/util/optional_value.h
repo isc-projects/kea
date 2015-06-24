@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -47,7 +47,7 @@ struct OptionalValueState {
 /// in the configuration file, but is not mandatory. The value of the
 /// @c OptionalValue may be initialized to "unspecified" initially. When the
 /// configuration parser finds that the appropriate parameter exists in the
-/// configuration file, the default value can be overriden and the value may
+/// configuration file, the default value can be overridden and the value may
 /// be marked as "specified". If the parameter is not found, the value remains
 /// "unspecified" and the appropriate actions may be taken, e.g. the default
 /// value may be used.
@@ -76,8 +76,8 @@ public:
     /// Creates optional value. The value defaults to "unspecified".
     ///
     /// @param value Default explicit value.
-    /// @param specified Value which determines if the value is initially
-    // specified or not (default is false).
+    /// @param state Specifies bool which determines if the value is initially
+    /// specified or not (default is false).
     explicit OptionalValue(const T& value, const OptionalValueState& state =
                            OptionalValueState(false))
         : value_(value), specified_(state.specified_) {
@@ -100,11 +100,7 @@ public:
     /// @param value New actual value.
     void specify(const T& value) {
         set(value);
-        specify(true);
-    }
-
-    void specify(const OptionalValueState& state) {
-        specified_ = state.specified_;
+        specify(OptionalValueState(true));
     }
 
     /// @brief Sets the value to "specified" or "unspecified".
@@ -112,8 +108,8 @@ public:
     /// It does not alter the actual value. It only marks it "specified" or
     /// "unspecified".
     /// @param specified boolean that determined if a value is specified or not
-    void specify(const bool specified) {
-        specified_ = specified;
+    void specify(const OptionalValueState& state) {
+        specified_ = state.specified_;
     }
 
     /// @brief Checks if the value is specified or unspecified.

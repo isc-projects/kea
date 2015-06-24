@@ -120,6 +120,14 @@ public:
                     int dbglevel = 0, const char* file = NULL,
                     bool buffer = false);
 
+    /// \brief List duplicated log messages.
+    ///
+    /// Lists the duplicated log messages using warning severity. Then, it
+    /// clears the list of duplicated messages. This method is called by the
+    /// \c init method and by the \c isc::hooks::LibraryManager when the new
+    /// hooks library is loaded.
+    static void logDuplicatedMessages();
+
     /// \brief Reset logging
     ///
     /// Resets logging to whatever was set in the call to init(), expect for

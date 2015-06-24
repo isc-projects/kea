@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp6/json_config_parser.h>
@@ -43,6 +45,7 @@ const bool Dhcp6SrvD2Test::SHOULD_PASS;
 const bool Dhcp6SrvD2Test::SHOULD_FAIL;
 
 Dhcp6SrvD2Test::Dhcp6SrvD2Test() : rcode_(-1) {
+    reset();
 }
 
 Dhcp6SrvD2Test::~Dhcp6SrvD2Test() {
@@ -75,7 +78,9 @@ Dhcp6SrvD2Test::buildTestNcr(uint32_t dhcid_id_num) {
 
 void
 Dhcp6SrvD2Test::reset() {
-    std::string config = "{ \"interfaces\": [ \"*\" ],"
+    std::string config = "{ \"interfaces-config\": {"
+            "  \"interfaces\": [ \"*\" ]"
+            "},"
             "\"hooks-libraries\": [ ],"
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "
@@ -97,7 +102,9 @@ Dhcp6SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
                             const size_t max_queue_size) {
     std::ostringstream config;
     config <<
-        "{ \"interfaces\": [ \"*\" ],"
+        "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"hooks-libraries\": [ ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "

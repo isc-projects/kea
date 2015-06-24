@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <util/io/fd.h>
 #include <util/io/fd_share.h>
@@ -39,7 +41,7 @@ TEST(FDShare, transfer) {
         const pid_t sender(fork());
         ASSERT_NE(-1, sender);
         if (sender) { // We are in parent
-            // Close the other side of pipe, we want only writible one
+            // Close the other side of pipe, we want only writable one
             EXPECT_NE(-1, close(pipes[0]));
             // Get a process to check data
             int fd(0);

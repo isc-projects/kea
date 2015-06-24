@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/option.h>
 #include <dhcp/option_int_array.h>
@@ -49,6 +50,8 @@ Dhcp4Client::Dhcp4Client(const Dhcp4Client::State& state) :
     curr_transid_(0),
     dest_addr_("255.255.255.255"),
     hwaddr_(generateHWAddr()),
+    clientid_(),
+    iface_name_("eth0"),
     relay_addr_("192.0.2.2"),
     requested_options_(),
     server_facing_relay_addr_("10.0.0.2"),
@@ -63,7 +66,10 @@ Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv> srv,
     ciaddr_(IOAddress("0.0.0.0")),
     curr_transid_(0),
     dest_addr_("255.255.255.255"),
+    fqdn_(),
     hwaddr_(generateHWAddr()),
+    clientid_(),
+    iface_name_("eth0"),
     relay_addr_("192.0.2.2"),
     requested_options_(),
     server_facing_relay_addr_("10.0.0.2"),
@@ -82,12 +88,62 @@ Dhcp4Client::addRequestedAddress(const asiolink::IOAddress& addr) {
 }
 
 void
+Dhcp4Client::appendClientId() {
+    if (!context_.query_) {
+        isc_throw(Dhcp4ClientError, "pointer to the query must not be NULL"
+                  " when adding Client Identifier option");
+    }
+
+    if (clientid_) {
+        OptionPtr opt(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
+                                 clientid_->getClientId()));
+        context_.query_->addOption(opt);
+    }
+}
+
+void
+Dhcp4Client::appendName() {
+    if (!context_.query_) {
+        isc_throw(Dhcp4ClientError, "pointer to the query must not be NULL"
+                  " when adding FQDN or Hostname option");
+    }
+
+    if (fqdn_) {
+        context_.query_->addOption(fqdn_);
+
+    } else if (hostname_) {
+        context_.query_->addOption(hostname_);
+    }
+}
+
+void
+Dhcp4Client::appendPRL() {
+    if (!context_.query_) {
+        isc_throw(Dhcp4ClientError, "pointer to the query must not be NULL"
+                  " when adding option codes to the PRL option");
+
+    } else if (!requested_options_.empty()) {
+        // Include Parameter Request List if at least one option code
+        // has been specified to be requested.
+        OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                  DHO_DHCP_PARAMETER_REQUEST_LIST));
+        for (std::set<uint8_t>::const_iterator opt = requested_options_.begin();
+             opt != requested_options_.end(); ++opt) {
+            prl->addValue(*opt);
+        }
+        context_.query_->addOption(prl);
+    }
+}
+
+void
 Dhcp4Client::applyConfiguration() {
     Pkt4Ptr resp = context_.response_;
     if (!resp) {
         return;
     }
 
+    // Let's keep the old lease in case this is a response to Inform.
+    Lease4 old_lease = config_.lease_;
     config_.reset();
 
     // Routers
@@ -121,11 +177,17 @@ Dhcp4Client::applyConfiguration() {
         config_.serverid_ = opt_serverid->readAddress();
     }
 
-    /// @todo Set the valid lifetime, t1, t2 etc.
-    config_.lease_ = Lease4(IOAddress(context_.response_->getYiaddr()),
-                            context_.response_->getHWAddr(),
-                            0, 0, 0, 0, 0, time(NULL), 0, false, false,
-                            "");
+    // If the message sent was Inform, we don't want to throw
+    // away the old lease info, just the bits about options.
+    if (context_.query_->getType() == DHCPINFORM) {
+        config_.lease_ = old_lease;
+    } else {
+        /// @todo Set the valid lifetime, t1, t2 etc.
+        config_.lease_ = Lease4(IOAddress(context_.response_->getYiaddr()),
+                                context_.response_->getHWAddr(),
+                                0, 0, 0, 0, 0, time(NULL), 0, false, false,
+                                "");
+    }
 }
 
 void
@@ -147,7 +209,11 @@ void
 Dhcp4Client::doDiscover(const boost::shared_ptr<IOAddress>& requested_addr) {
     context_.query_ = createMsg(DHCPDISCOVER);
     // Request options if any.
-    includePRL();
+    appendPRL();
+    // Include FQDN or Hostname.
+    appendName();
+    // Include Client Identifier
+    appendClientId();
     if (requested_addr) {
         addRequestedAddress(*requested_addr);
     }
@@ -173,7 +239,7 @@ void
 Dhcp4Client::doInform(const bool set_ciaddr) {
     context_.query_ = createMsg(DHCPINFORM);
     // Request options if any.
-    includePRL();
+    appendPRL();
     // The client sending a DHCPINFORM message has an IP address obtained
     // by some other means, e.g. static configuration. The lease which we
     // are using here is most likely set by the createLease method.
@@ -193,6 +259,25 @@ Dhcp4Client::doInform(const bool set_ciaddr) {
     if (context_.response_->getType() == DHCPACK) {
         applyConfiguration();
     }
+}
+
+void
+Dhcp4Client::doRelease() {
+    if (config_.lease_.addr_ == IOAddress::IPV4_ZERO_ADDRESS()) {
+        isc_throw(Dhcp4ClientError, "failed to send the release"
+                  " message because client doesn't have a lease");
+    }
+    context_.query_ = createMsg(DHCPRELEASE);
+    // Set ciaddr to the address which we want to release.
+    context_.query_->setCiaddr(config_.lease_.addr_);
+    // Include client identifier.
+    appendClientId();
+
+    // Remove configuration.
+    config_.reset();
+
+    // Send the message to the server.
+    sendMsg(context_.query_);
 }
 
 void
@@ -236,7 +321,11 @@ Dhcp4Client::doRequest() {
     }
 
     // Request options if any.
-    includePRL();
+    appendPRL();
+    // Include FQDN or Hostname.
+    appendName();
+    // Include Client Identifier
+    appendClientId();
     // Send the message to the server.
     sendMsg(context_.query_);
     // Expect response.
@@ -248,29 +337,33 @@ Dhcp4Client::doRequest() {
 }
 
 void
-Dhcp4Client::includePRL() {
-    if (!context_.query_) {
-        isc_throw(Dhcp4ClientError, "pointer to the query must not be NULL"
-                  " when adding option codes to the PRL option");
+Dhcp4Client::includeClientId(const std::string& clientid) {
+    if (clientid.empty()) {
+        clientid_.reset();
 
-    } else if (!requested_options_.empty()) {
-        // Include Parameter Request List if at least one option code
-        // has been specified to be requested.
-        OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
-                                  DHO_DHCP_PARAMETER_REQUEST_LIST));
-        for (std::set<uint8_t>::const_iterator opt = requested_options_.begin();
-             opt != requested_options_.end(); ++opt) {
-            prl->addValue(*opt);
-        }
-        context_.query_->addOption(prl);
+    } else {
+        clientid_ = ClientId::fromText(clientid);
     }
 }
+
+void
+Dhcp4Client::includeFQDN(const uint8_t flags, const std::string& fqdn_name,
+                         Option4ClientFqdn::DomainNameType fqdn_type) {
+    fqdn_.reset(new Option4ClientFqdn(flags, Option4ClientFqdn::RCODE_CLIENT(),
+                                      fqdn_name, fqdn_type));
+}
+
+void
+Dhcp4Client::includeHostname(const std::string& name) {
+    hostname_.reset(new OptionString(Option::V4, DHO_HOST_NAME, name));
+}
+
 
 HWAddrPtr
 Dhcp4Client::generateHWAddr(const uint8_t htype) const {
     if (htype != HTYPE_ETHER) {
         isc_throw(isc::NotImplemented,
-                  "The harware address type " << static_cast<int>(htype)
+                  "The hardware address type " << static_cast<int>(htype)
                   << " is currently not supported");
     }
     std::vector<uint8_t> hwaddr(HWAddr::ETHERNET_HWADDR_LEN);
@@ -304,7 +397,6 @@ Dhcp4Client::requestOptions(const uint8_t option1, const uint8_t option2,
     requestOption(option2);
     requestOption(option3);
 }
-
 
 Pkt4Ptr
 Dhcp4Client::receiveOneMsg() {
@@ -344,14 +436,18 @@ Dhcp4Client::sendMsg(const Pkt4Ptr& msg) {
                               msg->getBuffer().getLength()));
     msg_copy->setRemoteAddr(msg->getLocalAddr());
     msg_copy->setLocalAddr(dest_addr_);
-    msg_copy->setIface("eth0");
+    msg_copy->setIface(iface_name_);
     srv_->fakeReceive(msg_copy);
     srv_->run();
 }
 
 void
 Dhcp4Client::setHWAddress(const std::string& hwaddr_str) {
-    hwaddr_.reset(new HWAddr(HWAddr::fromText(hwaddr_str)));
+    if (hwaddr_str.empty()) {
+        hwaddr_.reset();
+    } else {
+        hwaddr_.reset(new HWAddr(HWAddr::fromText(hwaddr_str)));
+    }
 }
 
 } // end of namespace isc::dhcp::test

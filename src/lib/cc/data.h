@@ -1,4 +1,4 @@
-// Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -186,6 +186,19 @@ public:
     std::string toWire() const;
     void toWire(std::ostream& out) const;
 
+    /// \brief Add the position to a TypeError message
+    /// should be used in place of isc_throw(TypeError, error)
+#define throwTypeError(error)                   \
+    {                                           \
+        std::string msg_ = error;               \
+        if ((position_.file_ != "") ||          \
+            (position_.line_ != 0) ||           \
+            (position_.pos_ != 0)) {            \
+            msg_ += " in " + position_.str();   \
+        }                                       \
+        isc_throw(TypeError, msg_);             \
+    }
+
     /// \name pure virtuals, every derived class must implement these
 
     /// \return true if the other ElementPtr has the same type and value
@@ -204,20 +217,20 @@ public:
     /// getValue() below
     //@{
     virtual int64_t intValue() const
-    { isc_throw(TypeError, "intValue() called on non-integer Element"); };
+    { throwTypeError("intValue() called on non-integer Element"); };
     virtual double doubleValue() const
-    { isc_throw(TypeError, "doubleValue() called on non-double Element"); };
+    { throwTypeError("doubleValue() called on non-double Element"); };
     virtual bool boolValue() const
-    { isc_throw(TypeError, "boolValue() called on non-Bool Element"); };
+    { throwTypeError("boolValue() called on non-Bool Element"); };
     virtual std::string stringValue() const
-    { isc_throw(TypeError, "stringValue() called on non-string Element"); };
+    { throwTypeError("stringValue() called on non-string Element"); };
     virtual const std::vector<ConstElementPtr>& listValue() const {
         // replace with real exception or empty vector?
-        isc_throw(TypeError, "listValue() called on non-list Element");
+        throwTypeError("listValue() called on non-list Element");
     };
     virtual const std::map<std::string, ConstElementPtr>& mapValue() const {
         // replace with real exception or empty map?
-        isc_throw(TypeError, "mapValue() called on non-map Element");
+        throwTypeError("mapValue() called on non-map Element");
     };
     //@}
 
@@ -674,6 +687,13 @@ public:
     // it doesn't exist or one of the elements in the path is not
     // a MapElement)
     bool find(const std::string& id, ConstElementPtr& t) const;
+
+    /// @brief Returns number of stored elements
+    ///
+    /// @return number of elements.
+    size_t size() const {
+        return (m.size());
+    }
 
     bool equals(const Element& other) const;
 };

@@ -52,9 +52,11 @@ libkea_log_la_LDFLAGS = -no-undefined -version-info 1:0:0
 # written libraries only need the definitions for logger.h and dependencies.
 libkea_log_includedir = $(pkgincludedir)/log
 libkea_log_include_HEADERS = \
+    log_dbglevels.h \
     log_formatter.h \
     logger.h \
     logger_level.h \
     macros.h \
+    message_initializer.h \
     message_types.h
 

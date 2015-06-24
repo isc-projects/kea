@@ -161,7 +161,7 @@ public:
     /// @brief Configures new interface for the @c IfaceMgr.
     ///
     /// @param iface Object encapsulating interface to be added.
-    void addIface(const Iface& iface);
+    void addIface(const IfacePtr& iface);
 
     /// @brief Configures new interface for the @c IfaceMgr.
     ///
@@ -188,7 +188,7 @@ public:
     /// @param ifindex An index of the interface to be created.
     ///
     /// @return An object representing interface.
-    static Iface createIface(const std::string& name, const int ifindex);
+    static IfacePtr createIface(const std::string& name, const int ifindex);
 
     /// @brief Creates a default (example) set of fake interfaces.
     void createIfaces();

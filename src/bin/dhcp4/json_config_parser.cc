@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config/ccsession.h>
+#include <config.h>
+
+#include <cc/command_interpreter.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
@@ -24,6 +26,8 @@
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
+#include <dhcpsrv/parsers/ifaces_config_parser.h>
+#include <config/command_mgr.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
@@ -111,7 +115,7 @@ public:
     /// @brief Constructor
     ///
     /// @param ignored first parameter
-    /// stores global scope parameters, options, option defintions.
+    /// stores global scope parameters, options, option definitions.
     Subnet4ConfigParser(const std::string&)
         :SubnetConfigParser("", globalContext(), IOAddress("0.0.0.0")) {
     }
@@ -182,7 +186,8 @@ protected:
         } else if ((config_id.compare("subnet") == 0) ||
                    (config_id.compare("interface") == 0) ||
                    (config_id.compare("client-class") == 0) ||
-                   (config_id.compare("next-server") == 0)) {
+                   (config_id.compare("next-server") == 0) ||
+                   (config_id.compare("reservation-mode") == 0)) {
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("pools") == 0) {
             parser = new Pools4ListParser(config_id, pools_);
@@ -190,31 +195,13 @@ protected:
             parser = new RelayInfoParser(config_id, relay_info_, Option::V4);
         } else if (config_id.compare("option-data") == 0) {
             parser = new OptionDataListParser(config_id, options_, AF_INET);
+        } else if (config_id.compare("match-client-id") == 0) {
+            parser = new BooleanParser(config_id, boolean_values_);
         } else {
             isc_throw(NotImplemented, "unsupported parameter: " << config_id);
         }
 
         return (parser);
-    }
-
-    /// @brief Determines if the given option space name and code describe
-    /// a standard option for the DHCP4 server.
-    ///
-    /// @param option_space is the name of the option space to consider
-    /// @param code is the numeric option code to consider
-    /// @return returns true if the space and code are part of the server's
-    /// standard options.
-    bool isServerStdOption(std::string option_space, uint32_t code) {
-        return ((option_space.compare("dhcp4") == 0)
-                && LibDHCP::isStandardOption(Option::V4, code));
-    }
-
-    /// @brief Returns the option definition for a given option code from
-    /// the DHCP4 server's standard set of options.
-    /// @param code is the numeric option code of the desired option definition.
-    /// @return returns a pointer the option definition
-    OptionDefinitionPtr getServerStdOptionDefinition (uint32_t code) {
-        return (LibDHCP::getOptionDef(Option::V4, code));
     }
 
     /// @brief Issues a DHCP4 server specific warning regarding duplicate subnet
@@ -266,7 +253,28 @@ protected:
         Subnet4Ptr subnet4(new Subnet4(addr, len, t1, t2, valid, subnet_id));
         subnet_ = subnet4;
 
-        // Try global value first
+        // match-client-id
+        isc::util::OptionalValue<bool> match_client_id;
+        try {
+            match_client_id = boolean_values_->getParam("match-client-id");
+
+        } catch (...) {
+            // Ignore because this parameter is optional and it may be specified
+            // in the global scope.
+        }
+
+        // If the match-client-id wasn't specified as a subnet specific parameter
+        // check if there is global value specified.
+        if (!match_client_id.isSpecified()) {
+            // If not specified, use false.
+            match_client_id.specify(globalContext()->boolean_values_->
+                                    getOptionalParam("match-client-id", true));
+        }
+
+        // Set the match-client-id value for the subnet.
+        subnet4->setMatchClientId(match_client_id.get());
+
+        // next-server
         try {
             string next_server = globalContext()->string_values_->getParam("next-server");
             if (!next_server.empty()) {
@@ -358,6 +366,7 @@ namespace dhcp {
 /// those that take format of Dhcp4/param1, Dhcp4/param2 and so forth.
 ///
 /// @param config_id pointer to received global configuration entry
+/// @param element pointer to the element to be parsed
 /// @return parser for specified global DHCPv4 parameter
 /// @throw NotImplemented if trying to create a parser for unknown
 /// config element
@@ -369,8 +378,8 @@ namespace dhcp {
         (config_id.compare("rebind-timer") == 0))  {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
-    } else if (config_id.compare("interfaces") == 0) {
-        parser = new InterfaceListConfigParser(config_id, globalContext());
+    } else if (config_id.compare("interfaces-config") == 0) {
+        parser = new IfacesConfigParser4();
     } else if (config_id.compare("subnet4") == 0) {
         parser = new Subnets4ListConfigParser(config_id);
     } else if (config_id.compare("option-data") == 0) {
@@ -389,6 +398,10 @@ namespace dhcp {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     } else if (config_id.compare("dhcp-ddns") == 0) {
         parser = new D2ClientConfigParser(config_id);
+    } else if (config_id.compare("match-client-id") == 0) {
+        parser = new BooleanParser(config_id, globalContext()->boolean_values_);
+    } else if (config_id.compare("control-socket") == 0) {
+        parser = new ControlSocketParser(config_id);
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "
@@ -423,6 +436,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND,
               DHCP4_CONFIG_START).arg(config_set->str());
 
+    // Reset global context.
+    globalContext().reset(new ParserContext(Option::V4));
+
     // Before starting any subnet operations, let's reset the subnet-id counter,
     // so newly recreated configuration starts with first subnet-id equal 1.
     Subnet::resetSubnetID();
@@ -432,12 +448,14 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // depend on the global values. Also, option values configuration
     // must be performed after the option definitions configurations.
     // Thus we group parsers and will fire them in the right order:
-    // all parsers other than subnet4 and option-data parser,
-    // option-data parser, subnet4 parser.
+    // all parsers other than: lease-database, subnet4 and option-data parser,
+    // then: option-data parser, subnet4 parser, lease-database parser.
+    // Please do not change this order!
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
     ParserPtr option_parser;
     ParserPtr iface_parser;
+    ParserPtr leases_parser;
 
     // Some of the parsers alter the state of the system in a way that can't
     // easily be undone. (Or alter it in a way such that undoing the change has
@@ -455,7 +473,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
     // Answer will hold the result.
     ConstElementPtr answer;
-    // Rollback informs whether error occured and original data
+    // Rollback informs whether error occurred and original data
     // have to be restored to global storages.
     bool rollback = false;
     // config_pair holds the details of the current parser when iterating over
@@ -473,9 +491,11 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                       .arg(config_pair.first);
             if (config_pair.first == "subnet4") {
                 subnet_parser = parser;
+            } else if (config_pair.first == "lease-database") {
+                leases_parser = parser;
             } else if (config_pair.first == "option-data") {
                 option_parser = parser;
-            } else if (config_pair.first == "interfaces") {
+            } else if (config_pair.first == "interfaces-config") {
                 // The interface parser is independent from any other
                 // parser and can be run here before any other parsers.
                 iface_parser = parser;
@@ -507,7 +527,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             option_parser->commit();
         }
 
-        // The subnet parser is the last one to be run.
+        // The subnet parser is the next one to be run.
         std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
             values_map.find("subnet4");
         if (subnet_config != values_map.end()) {
@@ -515,12 +535,41 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             subnet_parser->build(subnet_config->second);
         }
 
+        // Get command socket configuration from the config file.
+        // This code expects the following structure:
+        // {
+        //     "socket-type": "unix",
+        //     "socket-name": "/tmp/kea4.sock"
+        // }
+        ConstElementPtr sock_cfg =
+            CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
+
+        // Close existing socket (if any).
+        isc::config::CommandMgr::instance().closeCommandSocket();
+        if (sock_cfg) {
+            // This will create a control socket and will install external socket
+            // in IfaceMgr. That socket will be monitored when Dhcp4Srv::receivePacket()
+            // calls IfaceMgr::receive4() and callback in CommandMgr will be called,
+            // if necessary. If there were previously open command socket, it will
+            // be closed.
+            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
+        }
+
+        // the leases database parser is the last to be run.
+        std::map<std::string, ConstElementPtr>::const_iterator leases_config =
+            values_map.find("lease-database");
+        if (leases_config != values_map.end()) {
+            config_pair.first = "lease-database";
+            leases_parser->build(leases_config->second);
+            leases_parser->commit();
+        }
+
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
                   .arg(config_pair.first).arg(ex.what());
         answer = isc::config::createAnswer(1, ex.what());
 
-        // An error occured, so make sure that we restore original data.
+        // An error occurred, so make sure that we restore original data.
         rollback = true;
 
     } catch (...) {
@@ -529,7 +578,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         answer = isc::config::createAnswer(1, "undefined configuration"
                                            " processing error");
 
-        // An error occured, so make sure that we restore original data.
+        // An error occurred, so make sure that we restore original data.
         rollback = true;
     }
 

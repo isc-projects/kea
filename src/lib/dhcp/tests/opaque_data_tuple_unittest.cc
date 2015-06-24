@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -267,7 +267,7 @@ TEST(OpaqueDataTuple, pack1Byte) {
     EXPECT_THROW(tuple.pack(out_buf), OpaqueDataTupleError);
     // Set the data for tuple.
     std::vector<uint8_t> data;
-    for (int i = 0; i < 100; ++i) {
+    for (uint8_t i = 0; i < 100; ++i) {
         data.push_back(i);
     }
     tuple.assign(data.begin(), data.size());
@@ -289,7 +289,7 @@ TEST(OpaqueDataTuple, pack1Byte) {
     out_buf.clear();
     // Fill in the tuple buffer so as it reaches maximum allowed length. The
     // maximum length is 255 when the size of the length field is one byte.
-    for (int i = 100; i < 255; ++i) {
+    for (uint8_t i = 100; i < 255; ++i) {
         data.push_back(i);
     }
     ASSERT_EQ(255, data.size());
@@ -326,8 +326,8 @@ TEST(OpaqueDataTuple, pack2Bytes) {
     EXPECT_THROW(tuple.pack(out_buf), OpaqueDataTupleError);
     // Set the data for tuple.
     std::vector<uint8_t> data;
-    for (int i = 0; i < 512; ++i) {
-        data.push_back(i);
+    for (unsigned i = 0; i < 512; ++i) {
+        data.push_back(i & 0xff);
     }
     tuple.assign(data.begin(), data.size());
     // The pack should now succeed.

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <asiolink/interval_timer.h>
 #include <dhcp_ddns/ncr_io.h>
@@ -360,7 +362,7 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     int select_fd = sender.getSelectFd();
 
     // Verify select_fd is valid and currently shows no ready to read.
-    ASSERT_NE(dhcp_ddns::WatchSocket::INVALID_SOCKET, select_fd);
+    ASSERT_NE(dhcp_ddns::WatchSocket::SOCKET_NOT_VALID, select_fd);
 
     // Make sure select_fd does evaluates to not ready via select and
     // that ioReady() method agrees.

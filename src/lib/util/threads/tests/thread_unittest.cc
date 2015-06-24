@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <util/threads/thread.h>
 #include <util/unittests/check_valgrind.h>
 
@@ -23,7 +25,7 @@
 // started, but we at least check the function is run and exceptions are
 // propagated as they should.
 //
-// We run some tests mutiple times to see if there happen to be a race
+// We run some tests multiple times to see if there happen to be a race
 // condition (then it would have better chance showing up).
 //
 // The detached tests are not run as many times to prevent many threads being

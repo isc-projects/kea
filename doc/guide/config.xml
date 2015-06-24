@@ -6,20 +6,10 @@
 <chapter id="kea-config">
   <title>Kea configuration</title>
 
-  <para>Depending on the configuration backend chosen (see <xref
-  linkend="dhcp-config-backend"/>), the configuration mechanisms are different. The
-  following sections describe details of the different configuration backends. Note
-  that only one configuration backend can be used and its selection is
-  made when the configure script is run.</para>
-
-  <section id="bundy-backend">
-    <title>BUNDY configuration backend</title>
-    <para>This legacy configuration backend allows Kea to use the former BIND 10
-    framework. That framework and this Kea configuration backend is no longer
-    supported by ISC. It is currently developed as part of the Bundy project (see
-    <ulink url="http://bundy-dns.de">Bundy homepage</ulink>). See the Bundy project
-    documentation regarding configuration.</para>
-  </section>
+  <para>Kea is designed to allow different methods by which it can be
+    configured, each method being implemented by a component known as a
+    configuration backend.  At present, only one such backend is
+    available, that allowing configuration by means of a JSON file.</para>
 
   <section id="json-backend">
     <title>JSON configuration backend</title>
@@ -56,7 +46,10 @@
 
 # DHCPv4 specific configuration starts here.
 "Dhcp4": {
-    "interfaces": [ "eth0" ],
+    "interfaces-config": {
+        "interfaces": [ "eth0" ],
+        "dhcp-socket-type": "raw"
+    },
     "valid-lifetime": 4000,
     "renew-timer": 1000,
     "rebind-timer": 2000,
@@ -70,7 +63,9 @@
 
 # DHCPv6 specific configuration starts here.
 "Dhcp6": {
-    "interfaces": [ "eth1" ],
+    "interfaces-config": {
+        "interfaces": [ "eth1" ]
+    },
     "preferred-lifetime": 3000,
     "valid-lifetime": 4000,
     "renew-timer": 1000,
@@ -119,8 +114,7 @@
         If there is an array, a specific instance within that array is referenced by
         a number in square brackets (with numbering starting at zero). For example, in the above configuration the
         valid-lifetime in the Dhcp6 component can be referred to as
-        Dhcp6/valid-lifetime, the first interface for the DHCPv4 server as
-        Dhcp4/interfaces[0] and the pool in the first subnet defined in the DHCPv6
+        Dhcp6/valid-lifetime and the pool in the first subnet defined in the DHCPv6
         configuration as Dhcp6/subnet6[0]/pool.</para>
       
       <!-- @todo Add a reference here after #3422 is done -->

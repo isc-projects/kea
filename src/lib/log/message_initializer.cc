@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,40 +12,39 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <cassert>
-#include <cstdlib>
 #include <log/message_dictionary.h>
 #include <log/message_initializer.h>
+#include <algorithm>
+#include <cassert>
+#include <cstdlib>
 
-
-// As explained in the header file, initialization of the message dictionary
-// is a two-stage process:
-// 1) In the MessageInitializer constructor, a pointer to the array of
-//    messages is stored in a pre-defined array.  Since the MessageInitializers
-//    are declared statically outside a program unit, this takes place before
-//    main() is called.  As no heap storage is allocated in this process, we
-//    should avoid the static initialization fiasco in cases where
-//    initialization of system libraries is also carried out at the same time.
-// 2) After main() starts executing, loadDictionary() is called.
-//
-//
 
 namespace {
 
-// Declare the array of pointers to value arrays.
-const char** logger_values[isc::log::MessageInitializer::MAX_MESSAGE_ARRAYS];
+using namespace isc::log;
 
-// Declare the index used to access the array.  As this needs to be initialized
-// at first used, it is accessed it via a function.
-size_t& getIndex() {
-    static size_t index = 0;
-    return (index);
+/// @brief Returns the shared pointer to the list of pointers to the
+/// log messages defined.
+///
+/// The returned pointer must be held in the \c MessageInitializer object
+/// throughout its lifetime to make sure that the object doesn't outlive
+/// the list and may still access it in the destructor. The returned
+/// pointer is shared between all \c MessageInitializer instances.
+LoggerValuesListPtr
+getNonConstLoggerValues() {
+    static LoggerValuesListPtr logger_values(new LoggerValuesList());
+    return (logger_values);
 }
 
-// Return the duplicates singleton version (non-const for local use)
-std::vector<std::string>&
+/// @brief Returns the pointer to the list of message duplicates.
+///
+/// The returned pointer must be held in the \c MessageInitializer object
+/// throughout its lifetime to make sure that the object doesn't outlive
+/// the list and may still access it in the destructor. The returned
+/// pointer is shared between all \c MessageInitializer instances.
+LoggerDuplicatesListPtr
 getNonConstDuplicates() {
-    static std::vector<std::string> duplicates;
+    static LoggerDuplicatesListPtr duplicates(new LoggerDuplicatesList());
     return (duplicates);
 }
 } // end unnamed namespace
@@ -54,19 +53,52 @@ getNonConstDuplicates() {
 namespace isc {
 namespace log {
 
-// Constructor.  Add the pointer to the message array to the global array.
-// This method will trigger an assertion failure if the array overflows.
+MessageInitializer::MessageInitializer(const char* values[])
+    : values_(values),
+      global_dictionary_(MessageDictionary::globalDictionary()),
+      global_logger_values_(getNonConstLoggerValues()),
+      global_logger_duplicates_(getNonConstDuplicates()) {
+    global_logger_values_->push_back(values);
+}
 
-MessageInitializer::MessageInitializer(const char* values[]) {
-    assert(getIndex() < MAX_MESSAGE_ARRAYS);
-    logger_values[getIndex()++] = values;
+MessageInitializer::~MessageInitializer() {
+    // Search for the pointer to pending messages belonging to our instance.
+    LoggerValuesList::iterator my_messages = std::find(global_logger_values_->begin(),
+                                                       global_logger_values_->end(),
+                                                       values_);
+    bool pending = (my_messages != global_logger_values_->end());
+    // Our messages are still pending, so let's remove them from the list
+    // of pending messages.
+    if (pending) {
+        global_logger_values_->erase(my_messages);
+
+    } else {
+        // Our messages are not pending, so they might have been loaded to
+        // the dictionary and/or duplicates.
+        int i = 0;
+        while (values_[i]) {
+            // Check if the unloaded message is registered as duplicate. If it is,
+            // remove it from the duplicates list.
+            LoggerDuplicatesList::iterator dup =
+                std::find(global_logger_duplicates_->begin(),
+                          global_logger_duplicates_->end(),
+                          values_[i]);
+            if (dup != global_logger_duplicates_->end()) {
+                global_logger_duplicates_->erase(dup);
+
+            } else {
+                global_dictionary_->erase(values_[i], values_[i + 1]);
+            }
+            i += 2;
+        }
+    }
 }
 
 // Return the number of arrays registered but not yet loaded.
 
 size_t
 MessageInitializer::getPendingCount() {
-    return (getIndex());
+    return (getNonConstLoggerValues()->size());
 }
 
 // Load the messages in the arrays registered in the logger_values array
@@ -74,36 +106,37 @@ MessageInitializer::getPendingCount() {
 
 void
 MessageInitializer::loadDictionary(bool ignore_duplicates) {
-    MessageDictionary& global = MessageDictionary::globalDictionary();
+    const MessageDictionaryPtr& global = MessageDictionary::globalDictionary();
+    const LoggerValuesListPtr& logger_values = getNonConstLoggerValues();
 
-    for (size_t i = 0; i < getIndex(); ++i) {
-        std::vector<std::string> repeats = global.load(logger_values[i]);
+    for (LoggerValuesList::const_iterator values = logger_values->begin();
+         values != logger_values->end(); ++values) {
+        std::vector<std::string> repeats = global->load(*values);
 
         // Append the IDs in the list just loaded (the "repeats") to the
         // global list of duplicate IDs.
         if (!ignore_duplicates && !repeats.empty()) {
-            std::vector<std::string>& duplicates = getNonConstDuplicates();
-            duplicates.insert(duplicates.end(), repeats.begin(),
-                              repeats.end());
+            const LoggerDuplicatesListPtr& duplicates = getNonConstDuplicates();
+            duplicates->insert(duplicates->end(), repeats.begin(), repeats.end());
         }
     }
 
     // ... and mark that the messages have been loaded.  (This avoids a lot
     // of "duplicate message ID" messages in some of the unit tests where the
     // logging initialization code may be called multiple times.)
-    getIndex() = 0;
+    logger_values->clear();
 }
 
 // Return reference to duplicates vector
-const std::vector<std::string>&
+const std::list<std::string>&
 MessageInitializer::getDuplicates() {
-    return (getNonConstDuplicates());
+    return (*getNonConstDuplicates());
 }
 
 // Clear the duplicates vector
 void
 MessageInitializer::clearDuplicates() {
-    getNonConstDuplicates().clear();
+    getNonConstDuplicates()->clear();
 }
 
 } // namespace log

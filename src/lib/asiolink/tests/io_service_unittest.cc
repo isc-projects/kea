@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -34,6 +34,7 @@ TEST(IOService, post) {
     // Post two events
     service.post(boost::bind(&postedEvent, &called, 1));
     service.post(boost::bind(&postedEvent, &called, 2));
+    service.post(boost::bind(&postedEvent, &called, 3));
     // They have not yet been called
     EXPECT_TRUE(called.empty());
     // Process two events
@@ -43,6 +44,11 @@ TEST(IOService, post) {
     ASSERT_EQ(2, called.size());
     EXPECT_EQ(1, called[0]);
     EXPECT_EQ(2, called[1]);
+
+    // Test that poll() executes the last handler.
+    service.poll();
+    ASSERT_EQ(3, called.size());
+    EXPECT_EQ(3, called[2]);
 }
 
 }

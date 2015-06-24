@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -166,6 +166,12 @@ public:
     /// an error occurs.
     void doInform(const bool set_ciaddr = true);
 
+    /// @brief Sends DHCPRELEASE Message to the server.
+    ///
+    /// This method simulates sending the DHCPRELEASE message to the server.
+    /// The released lease is removed from the client's configuration.
+    void doRelease();
+
     /// @brief Sends DHCPREQUEST Message to the server and receives a response.
     ///
     /// This method simulates sending the DHCPREQUEST message to the server and
@@ -185,7 +191,7 @@ public:
     /// - Requested IP Address option
     /// - server identifier
     /// are used (as per RFC2131, section 4.3.2). Therefore, the unit tests
-    /// must setthe appropriate state of the client prior to calling this
+    /// must set the appropriate state of the client prior to calling this
     /// method using the @c setState function.
     ///
     /// When the server returns the DHCPACK the configuration carried in the
@@ -216,6 +222,30 @@ public:
     boost::shared_ptr<NakedDhcpv4Srv> getServer() const {
         return (srv_);
     }
+
+    /// @brief Creates the client id from the client id in the textual format.
+    ///
+    /// The generated client id will be added to the client's messages to the
+    /// server.
+    ///
+    /// @param clientid Client id in the textual format. Use the empty client id
+    /// value to not include the client id.
+    void includeClientId(const std::string& clientid);
+
+    /// @brief Creates an instance of the Client FQDN option to be included
+    /// in the client's message.
+    ///
+    /// @param flags Flags.
+    /// @param fqdn_name Name in the textual format.
+    /// @param fqdn_type Type of the name (fully qualified or partial).
+    void includeFQDN(const uint8_t flags, const std::string& fqdn_name,
+                     Option4ClientFqdn::DomainNameType fqdn_type);
+
+    /// @brief Creates an instance of the Hostname option to be included
+    /// in the client's message.
+    ///
+    /// @param name Name to be stored in the option.
+    void includeHostname(const std::string& name);
 
     /// @brief Modifies the client's HW address (adds one to it).
     ///
@@ -270,8 +300,17 @@ public:
 
     /// @brief Sets the explicit hardware address for the client.
     ///
-    /// @param hwaddr_str String representation of the HW address.
+    /// @param hwaddr_str String representation of the HW address. Use an
+    /// empty string to set the NULL hardware address.
     void setHWAddress(const std::string& hwaddr_str);
+
+    /// @brief Sets the interface over which the messages should be sent.
+    ///
+    /// @param iface_name Name of the interface over which the messages should
+    /// be sent.
+    void setIfaceName(const std::string& iface_name) {
+        iface_name_ = iface_name;
+    }
 
     /// @brief Sets client state.
     ///
@@ -337,13 +376,27 @@ private:
     /// @return An instance of the message created.
     Pkt4Ptr createMsg(const uint8_t msg_type);
 
+    /// @brief Includes the Client Identifier option in the client's message.
+    ///
+    /// This function creates an instance of the Client Identifier option
+    /// if the client identifier has been specified and includes this
+    /// option in the client's message to the server.
+    void appendClientId();
+
+    /// @brief Includes FQDN or Hostname option in the client's message.
+    ///
+    /// This method checks if @c fqdn_ or @c hostname_ is specified and
+    /// includes it in the client's message. If both are specified, the
+    /// @c fqdn_ will be used.
+    void appendName();
+
     /// @brief Include PRL Option in the query message.
     ///
     /// This function creates the instance of the PRL (Parameter Request List)
     /// option and adds option codes from the @c requested_options_ to it.
     /// It later adds the PRL option to the @c context_.query_ message
     /// if it is non-NULL.
-    void includePRL();
+    void appendPRL();
 
     /// @brief Simulates reception of the message from the server.
     ///
@@ -368,8 +421,20 @@ private:
     /// @brief Currently used destination address.
     asiolink::IOAddress dest_addr_;
 
+    /// @brief FQDN requested by the client.
+    Option4ClientFqdnPtr fqdn_;
+
+    /// @brief Hostname requested by the client.
+    OptionStringPtr hostname_;
+
     /// @brief Current hardware address of the client.
     HWAddrPtr hwaddr_;
+
+    /// @brief Current client identifier.
+    ClientIdPtr clientid_;
+
+    /// @brief Interface to be used to send the messages.
+    std::string iface_name_;
 
     /// @brief Relay address to use.
     asiolink::IOAddress relay_addr_;
@@ -395,4 +460,4 @@ private:
 } // end of namespace isc::dhcp
 } // end of namespace isc
 
-#endif // DHCP4_CLIENT
+#endif // DHCP4_CLIENT_H

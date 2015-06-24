@@ -52,7 +52,7 @@ void setLoggingInitialized(bool state = true);
 ///
 /// - Name of the root logger
 /// - The severity (and if applicable, debug level) for the root logger.
-/// - Name of a local message file, containing localisation of message text.
+/// - Name of a local message file, containing localization of message text.
 ///
 /// This function is likely to change over time as more debugging options are
 /// held in the configuration database.

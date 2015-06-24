@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -303,6 +303,30 @@ TEST_F(CSVFileTest, openReadAllWrite) {
     // Any attempt to read from the file or write to it should now fail.
     EXPECT_FALSE(csv->next(row));
     EXPECT_THROW(csv->append(row_write), CSVFileError);
+
+    CSVRow row_write2(3);
+    row_write2.writeAt(0, "bird");
+    row_write2.writeAt(1, 3);
+    row_write2.writeAt(2, "purple");
+
+    // Reopen the file, seek to the end of file so as we can append
+    // some more data.
+    ASSERT_NO_THROW(csv->open(true));
+    // The file pointer should be at the end of file, so an attempt
+    //  to read should result in an empty row.
+    ASSERT_TRUE(csv->next(row));
+    EXPECT_EQ(CSVFile::EMPTY_ROW(), row);
+    // We should be able to append new data.
+    ASSERT_NO_THROW(csv->append(row_write2));
+    ASSERT_NO_THROW(csv->flush());
+    csv->close();
+    // Check that new data has been appended.
+    EXPECT_EQ("animal,age,color\n"
+              "cat,10,white\n"
+              "lion,15,yellow\n"
+              "dog,2,blue\n"
+              "bird,3,purple\n",
+              readFile());
 }
 
 // This test checks that contents may be appended to a file which hasn't
@@ -391,7 +415,7 @@ TEST_F(CSVFileTest, recreate) {
 TEST_F(CSVFileTest, validate) {
     // Create CSV file with 2 invalid rows in it: one too long, one too short.
     // Apart from that, there are two valid columns that should be read
-    // successfuly.
+    // successfully.
     writeFile("animal,age,color\n"
               "cat,10,white\n"
               "lion,15,yellow,black\n"
@@ -452,6 +476,30 @@ TEST_F(CSVFileTest, validateHeader) {
     csv->addColumn("animal");
     csv->addColumn("age");
     EXPECT_THROW(csv->open(), CSVFileError);
+}
+
+// This test checks that the exists method of the CSVFile class properly
+// checks that the file exists.
+TEST_F(CSVFileTest, exists) {
+    // Create a new CSV file that contains a header and two data rows.
+    writeFile("animal,age,color\n"
+              "cat,10,white\n"
+              "lion,15,yellow\n");
+
+    boost::scoped_ptr<CSVFile> csv(new CSVFile(testfile_));
+    // The CSVFile class should return true even if the file hasn't been
+    // opened.
+    EXPECT_TRUE(csv->exists());
+    // Now open the file and make sure it still returns true.
+    ASSERT_NO_THROW(csv->open());
+    EXPECT_TRUE(csv->exists());
+
+    // Close the file and remove it.
+    csv->close();
+    removeFile();
+
+    // The file should not exist.
+    EXPECT_FALSE(csv->exists());
 }
 
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,10 +18,12 @@
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
+#include <dhcp/option6_client_fqdn.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <set>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -73,9 +75,16 @@ public:
     /// @brief Holds the current client configuration obtained from the
     /// server over DHCP.
     ///
-    /// Currently it simply contains the collection of leases acquired.
+    /// Currently it simply contains the collection of leases acquired
+    /// and a list of options. Note: this is a simple copy of all
+    /// non-IA options and often includes "protocol" options, like
+    /// server-id and client-id.
     struct Configuration {
+        /// @brief List of received leases
         std::vector<LeaseInfo> leases_;
+
+        /// @brief List of received options
+        OptionCollection options_;
 
         /// @brief Status code received in the global option scope.
         uint16_t status_code_;
@@ -101,6 +110,21 @@ public:
         void resetGlobalStatusCode() {
             status_code_ = 0;
             received_status_code_ = false;
+        }
+
+        /// @brief Finds an option with the specific code in the received
+        /// configuration.
+        ///
+        /// @param code Option code.
+        ///
+        /// @return Pointer to the option if the option exists, or NULL if
+        /// the option doesn't exist.
+        OptionPtr findOption(const uint16_t code) const {
+            std::multimap<unsigned int, OptionPtr>::const_iterator it = options_.find(code);
+            if (it != options_.end()) {
+                return (it->second);
+            }
+            return (OptionPtr());
         }
     };
 
@@ -153,7 +177,7 @@ public:
     /// @param lease A lease to be applied for the client.
     void createLease(const Lease6& lease);
 
-    /// @brief Performs a 4-way echange between the client and the server.
+    /// @brief Performs a 4-way exchange between the client and the server.
     ///
     /// If the 4-way exchange is successful, the client should acquire leases
     /// according to the server's current configuration and the type of leases
@@ -180,6 +204,21 @@ public:
     ///
     /// @todo Perform sanity checks on returned messages.
     void doSolicit();
+
+    /// @brief Sends a Renew to the server and receives the Reply.
+    ///
+    /// This function simulates sending the Renew message to the server and
+    /// receiving server's response (if any). The client uses existing leases
+    /// (either address or prefixes) and places them in the Renew message.
+    /// If the server responds to the Renew (and extends the lease lifetimes)
+    /// the current lease configuration is updated.
+    ///
+    /// @throw This function doesn't throw exceptions on its own, but it calls
+    /// functions that are not exception safe, so it may throw exceptions if
+    /// error occurs.
+    ///
+    /// @todo Perform sanity checks on returned messages.
+    void doRenew();
 
     /// @brief Sends a Rebind to the server and receives the Reply.
     ///
@@ -216,6 +255,16 @@ public:
     /// This function simulates sending the Confirm message to the server and
     /// receiving server's response (if any).
     void doConfirm();
+
+
+    /// @brief Performs stateless (inf-request / reply) exchange.
+    ///
+    /// This function generates Information-request message, sends it
+    /// to the server and then receives the reply. Contents of the Inf-Request
+    /// are controlled by use_na_, use_pd_, use_client_id_ and use_oro_
+    /// fields. This method does not process the response in any specific
+    /// way, just stores it.
+    void doInfRequest();
 
     /// @brief Removes the stateful configuration obtained from the server.
     ///
@@ -291,6 +340,18 @@ public:
         return (srv_);
     }
 
+    /// @brief Sets the client's DUID from a string value
+    ///
+    /// Replaces the client's DUID with one constructed from the given
+    /// string.  The string is expected to contain hexadecimal digits with or
+    /// without ":" separators.
+    ///
+    /// @param str The string of digits from which to create the DUID
+    ///
+    /// The DUID modification affects the value returned by the
+    /// @c Dhcp6Client::getClientId
+    void setDUID(const std::string& duid_str);
+
     /// @brief Modifies the client's DUID (adds one to it).
     ///
     /// The DUID should be modified to test negative scenarios when the client
@@ -314,13 +375,20 @@ public:
     ///
     /// By default, the client uses All_DHCP_Relay_Agents_and_Servers
     /// multicast address to communicate with the server. In certain cases
-    /// it ay be desired that different address is used (e.g. unicast in Renew).
+    /// it may be desired that different address is used (e.g. unicast in Renew).
     /// This function sets the new address for all future exchanges with the
     /// server.
     ///
     /// @param dest_addr New destination address.
     void setDestAddress(const asiolink::IOAddress& dest_addr) {
         dest_addr_ = dest_addr;
+    }
+
+    /// @brief Sets the interface to be used by the client.
+    ///
+    /// @param iface_name Interface name.
+    void setInterface(const std::string& iface_name) {
+        iface_name_ = iface_name;
     }
 
     /// @brief Sets a prefix hint to be sent to a server.
@@ -365,11 +433,76 @@ public:
         relay_link_addr_ = link_addr;
     }
 
+    /// @brief Controls whether the client should send a client-id or not
+    /// @param send should the client-id be sent?
+    void useClientId(const bool send) {
+        use_client_id_ = send;
+    }
+
+    /// @brief Specifies if the Rapid Commit option should be included in
+    /// the Solicit message.
+    ///
+    /// @param rapid_commit Boolean parameter controlling if the Rapid Commit
+    /// option must be included in the Solicit (if true), or not (if false).
+    void useRapidCommit(const bool rapid_commit) {
+        use_rapid_commit_ = rapid_commit;
+    }
+
+    /// @brief Specifies server-id to be used in send messages
+    ///
+    /// Overrides the server-id to be sent when server-id is expected to be
+    /// sent. May be NULL, which means use proper server-id sent in Advertise
+    /// (which is a normal client behavior).
+    ///
+    /// @param server_id server-id to be sent
+    void useServerId(const OptionPtr& server_id) {
+        forced_server_id_ = server_id;
+    }
+
+    /// @brief Creates an instance of the Client FQDN option to be included
+    /// in the client's message.
+    ///
+    /// @param flags Flags.
+    /// @param fqdn_name Name in the textual format.
+    /// @param fqdn_type Type of the name (fully qualified or partial).
+    void useFQDN(const uint8_t flags, const std::string& fqdn_name,
+                 Option6ClientFqdn::DomainNameType fqdn_type);
+
     /// @brief Lease configuration obtained by the client.
     Configuration config_;
 
     /// @brief Link address of the relay to be used for relayed messages.
     asiolink::IOAddress relay_link_addr_;
+
+    /// @brief RelayInfo (information about relays)
+    ///
+    /// Dhcp6Client will typically construct this info itself, but if
+    /// it is provided here by the test, this data will be used as is.
+    std::vector<Pkt6::RelayInfo> relay_info_;
+
+    /// @brief Controls whether the client will send ORO
+    ///
+    /// The actual content of the ORO is specified in oro_.
+    /// It is useful to split the actual content and the ORO sending
+    /// decision, so we could test cases of sending empty ORO.
+    /// @param send controls whether ORO will be sent or not.
+    void useORO(bool send) {
+        use_oro_ = send;
+    }
+
+    /// @brief Instructs client to request specified option in ORO
+    ///
+    /// @param option_code client will request this option code
+    void requestOption(uint16_t option_code) {
+        use_oro_ = true;
+        oro_.push_back(option_code);
+    }
+
+    /// @brief returns client-id
+    /// @return client-id
+    DuidPtr getDuid() const {
+        return (duid_);
+    }
 
 private:
 
@@ -395,6 +528,12 @@ private:
     ///
     /// @param lease_info Structure holding new lease information.
     void applyLease(const LeaseInfo& lease_info);
+
+    /// @brief Includes CLient FQDN in the client's message.
+    ///
+    /// This method checks if @c fqdn_ is specified and includes it in
+    /// the client's message.
+    void appendFQDN();
 
     /// @brief Copy IA options from one message to another.
     ///
@@ -451,10 +590,10 @@ private:
     /// @brief Current context (sent and received message).
     Context context_;
 
-    /// @biref Current transaction id (altered on each send).
+    /// @brief Current transaction id (altered on each send).
     uint32_t curr_transid_;
 
-    /// @brief Currently use destination address.
+    /// @brief Currently used destination address.
     asiolink::IOAddress dest_addr_;
 
     /// @brief Currently used DUID.
@@ -463,6 +602,9 @@ private:
     /// @brief Currently used link local address.
     asiolink::IOAddress link_local_;
 
+    /// @brief Currently used interface.
+    std::string iface_name_;
+
     /// @brief Pointer to the server that the client is communicating with.
     boost::shared_ptr<isc::test::NakedDhcpv6Srv> srv_;
 
@@ -470,8 +612,24 @@ private:
     bool use_pd_;    ///< Enable prefix delegation.
     bool use_relay_; ///< Enable relaying messages to the server.
 
+    bool use_oro_;  ///< Conth
+    bool use_client_id_;
+    bool use_rapid_commit_;
+
     /// @brief Pointer to the option holding a prefix hint.
     Option6IAPrefixPtr prefix_hint_;
+
+    /// @brief List of options to be requested
+    ///
+    /// Content of this vector will be sent as ORO if use_oro_ is set
+    /// to true. See @ref sendORO for details.
+    std::vector<uint16_t> oro_;
+
+    /// @brief forced (Overridden) value of the server-id option (may be NULL)
+    OptionPtr forced_server_id_;
+
+    /// @brief FQDN requested by the client.
+    Option6ClientFqdnPtr fqdn_;
 };
 
 } // end of namespace isc::dhcp::test

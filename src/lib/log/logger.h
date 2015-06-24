@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -142,7 +142,7 @@ public:
 ///
 /// 1. Constructing a logger by instantiating it with a specific name. (If the
 /// same logger is in multiple functions within a file, overhead can be
-/// minimised by declaring it as a file-wide static variable.)
+/// minimized by declaring it as a file-wide static variable.)
 /// 2. Using the error(), info() etc. methods to log an error.  (However, it is
 /// recommended to use the LOG_ERROR, LOG_INFO etc. macros defined in macros.h.
 /// These will avoid the potentially-expensive evaluation of arguments if the
@@ -168,7 +168,7 @@ public:
     /// initialization (which causes problems on some operating systems).
     ///
     /// \note Note also that there is no constructor taking a std::string. This
-    /// minimises the possibility of initializing a static logger with a
+    /// minimizes the possibility of initializing a static logger with a
     /// string, so leading to problems mentioned above.
     Logger(const char* name) : loggerptr_(NULL) {
 
@@ -199,6 +199,9 @@ public:
 
     /// \brief Destructor
     virtual ~Logger();
+
+    /// \brief Version
+    static std::string getVersion();
 
     /// \brief The formatter used to replace placeholders
     typedef isc::log::Formatter<Logger> Formatter;

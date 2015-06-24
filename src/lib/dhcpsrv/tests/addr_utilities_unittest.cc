@@ -1,5 +1,4 @@
-
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -198,6 +197,84 @@ TEST(AddrUtilitiesTest, getNetmask4) {
     EXPECT_EQ("255.255.255.255", getNetmask4(32).toText());
 
     EXPECT_THROW(getNetmask4(33), isc::BadValue);
+}
+
+// Checks if the calculation for IPv4 addresses in range are correct.
+TEST(AddrUtilitiesTest, addrsInRange4) {
+
+    // Let's start with something simple
+    EXPECT_EQ(1, addrsInRange(IOAddress("192.0.2.0"), IOAddress("192.0.2.0")));
+    EXPECT_EQ(10, addrsInRange(IOAddress("192.0.2.10"), IOAddress("192.0.2.19")));
+    EXPECT_EQ(256, addrsInRange(IOAddress("192.0.2.0"), IOAddress("192.0.2.255")));
+    EXPECT_EQ(65536, addrsInRange(IOAddress("192.0.0.0"), IOAddress("192.0.255.255")));
+    EXPECT_EQ(16777216, addrsInRange(IOAddress("10.0.0.0"), IOAddress("10.255.255.255")));
+
+    // Let's check if the network boundaries are crossed correctly.
+    EXPECT_EQ(3, addrsInRange(IOAddress("10.0.0.255"), IOAddress("10.0.1.1")));
+
+    // Let's go a bit overboard with this! How many addresses are there in
+    // IPv4 address space? That's a slightly tricky question, as the answer
+    // cannot be stored in uint32_t.
+    EXPECT_EQ(uint64_t(std::numeric_limits<uint32_t>::max()) + 1,
+              addrsInRange(IOAddress("0.0.0.0"), IOAddress("255.255.255.255")));
+
+    // The upper bound cannot be smaller than the lower bound.
+    EXPECT_THROW(addrsInRange(IOAddress("192.0.2.5"), IOAddress("192.0.2.4")),
+                 isc::BadValue);
+}
+
+// Checks if the calculation for IPv6 addresses in range are correct.
+TEST(AddrUtilitiesTest, addrsInRange6) {
+
+    // Let's start with something simple
+    EXPECT_EQ(1, addrsInRange(IOAddress("::"), IOAddress("::")));
+    EXPECT_EQ(16, addrsInRange(IOAddress("fe80::1"), IOAddress("fe80::10")));
+    EXPECT_EQ(65536, addrsInRange(IOAddress("fe80::"), IOAddress("fe80::ffff")));
+    EXPECT_EQ(uint64_t(std::numeric_limits<uint32_t>::max()) + 1,
+              addrsInRange(IOAddress("fe80::"), IOAddress("fe80::ffff:ffff")));
+
+    // There's 2^80 addresses between those. Due to uint64_t limits, this method is
+    // capped at 2^64 -1.
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
+              addrsInRange(IOAddress("2001:db8:1::"), IOAddress("2001:db8:2::")));
+
+    // Let's check if the network boundaries are crossed correctly.
+    EXPECT_EQ(3, addrsInRange(IOAddress("2001:db8::ffff"), IOAddress("2001:db8::1:1")));
+
+    // Let's go a bit overboard with this! How many addresses are there in
+    // IPv6 address space? That's a really tricky question, as the answer
+    // wouldn't fit even in uint128_t (if we had it). This method is capped
+    // at max value of uint64_t.
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), addrsInRange(IOAddress("::"),
+              IOAddress("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")));
+
+    EXPECT_THROW(addrsInRange(IOAddress("fe80::5"), IOAddress("fe80::4")),
+                 isc::BadValue);
+}
+
+// Checks if prefixInRange returns valid number of prefixes in specified range.
+TEST(AddrUtilitiesTest, prefixesInRange) {
+
+    // How many /64 prefixes are in /64 pool?
+    EXPECT_EQ(1, prefixesInRange(64, 64));
+
+    // How many /63 prefixes are in /64 pool?
+    EXPECT_EQ(2, prefixesInRange(63, 64));
+
+    // How many /64 prefixes are in /48 pool?
+    EXPECT_EQ(65536, prefixesInRange(48, 64));
+
+    // How many /127 prefixes are in /64 pool?
+    EXPECT_EQ(uint64_t(9223372036854775808ull), prefixesInRange(64, 127));
+
+    // How many /128 prefixes are in /64 pool?
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
+              prefixesInRange(64, 128));
+
+    // Let's go overboard again. How many IPv6 addresses are there?
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
+              prefixesInRange(0, 128));
+
 }
 
 }; // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -91,7 +91,7 @@ struct PsqlBindArray {
     /// Adds a BINARY_FMT value to the end of the bind array using the
     /// given vector as the data source.
     ///
-    /// @param value vector of binary bytes.
+    /// @param data vector of binary bytes.
     void add(const std::vector<uint8_t>& data);
 
     /// @brief Adds a boolean value to the bind array.
@@ -150,6 +150,9 @@ public:
 
     /// @brief Destructor (closes database)
     virtual ~PgSqlLeaseMgr();
+
+    /// @brief Local version of getDBVersion() class method
+    static std::string getDBVersion();
 
     /// @brief Adds an IPv4 lease
     ///

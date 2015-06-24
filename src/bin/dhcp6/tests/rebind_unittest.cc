@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -49,14 +49,14 @@ namespace {
 ///   - pools configured: 3000:3::/64 and 3000:4::/64
 ///   - this specific configuration is used by tests using relays
 ///
-/// - Configuration 5:
+/// - Configuration 4:
 ///   - only prefixes (no addresses)
 ///   - 2 subnets: 2001:db8:1::/40 and 2001:db8:2::/40
-///   - 2 prefix pools: 2001:db8:1::/72 and 2001:db8:2::/72
+///   - 2 prefix pools: 3000::/72 and 2001:db8:2::/72
 ///   - 1 subnet for eth0 and 1 subnet for eth1
 ///   - this specific configuration is used by tests which don't use relays
 ///
-/// - Configuration 6:
+/// - Configuration 5:
 ///   - similar to Configuration 5 but with different subnets
 ///   - 2 subnets: 2001:db8:3::/40 and 2001:db8:4::/40
 ///   - 2 prefix pools: 2001:db8:3::/72 and 2001:db8:4::/72
@@ -64,7 +64,9 @@ namespace {
 ///   - this specific configuration is used by tests which don't use relays
 const char* REBIND_CONFIGS[] = {
 // Configuration 0
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -83,7 +85,9 @@ const char* REBIND_CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
 // Configuration 1
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -102,7 +106,9 @@ const char* REBIND_CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
 // Configuration 2
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -121,7 +127,9 @@ const char* REBIND_CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
 // Configuration 3
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -140,13 +148,15 @@ const char* REBIND_CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
 // Configuration 4
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
         "    \"pd-pools\": ["
-        "        { \"prefix\": \"2001:db8:1:01::\", "
+        "        { \"prefix\": \"3000::\", "
         "          \"prefix-len\": 72, "
         "          \"delegated-len\": 80"
         "        } ],"
@@ -156,7 +166,7 @@ const char* REBIND_CONFIGS[] = {
         " },"
         " {"
         "    \"pd-pools\": ["
-        "        { \"prefix\": \"2001:db8:2:01::\", "
+        "        { \"prefix\": \"2001:db8:2::\", "
         "          \"prefix-len\": 72, "
         "          \"delegated-len\": 80"
         "        } ],"
@@ -167,7 +177,9 @@ const char* REBIND_CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
 // Configuration 5
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -250,15 +262,21 @@ TEST_F(RebindTest, directClientChangingSubnet) {
     configure(REBIND_CONFIGS[1], *client.getServer());
     // Try to rebind, using the address that the client had acquired using
     // previous server configuration.
+
     ASSERT_NO_THROW(client.doRebind());
+
     // We are expecting that the server didn't extend the lease because
     // the address that client is using doesn't match the new subnet.
     // But, the client still has an old lease.
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
+
     // The current lease should be exactly the same as old lease,
     // because server shouldn't have extended.
-    EXPECT_TRUE(lease_client == lease_client2);
+    EXPECT_TRUE(lease_client.addr_ == lease_client2.addr_);
+    EXPECT_EQ(0, lease_client2.preferred_lft_);
+    EXPECT_EQ(0, lease_client2.valid_lft_);
+
     // Make sure, that the lease that client has, is matching the lease
     // in the lease database.
     Lease6Ptr lease_server2 = checkLease(lease_client2);
@@ -445,7 +463,7 @@ TEST_F(RebindTest, relayedClientLostLease) {
 }
 
 // Check that relayed client receives the IA with lifetimes of 0, when
-// client is tgrying to Rebind using an address it doesn't have.
+// client is trying to Rebind using an address it doesn't have.
 TEST_F(RebindTest, relayedClientChangingAddress) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
@@ -468,17 +486,35 @@ TEST_F(RebindTest, relayedClientChangingAddress) {
         << "The server discarded the Rebind message, while it should have"
         " sent a response indicating that the client should stop using the"
         " lease, by setting lifetime values to 0.";
-    // Get the client's lease.
-    ASSERT_EQ(1, client.getLeaseNum());
-    Lease6 lease_client2 = client.getLease(0);
+    // Get the client's leases. He should get two addresses:
+    // the first one for the bogus 3000::100 address with 0 lifetimes.
+    // the second one with the actual lease with non-zero lifetimes.
+    ASSERT_EQ(2, client.getLeaseNum());
+
+    // Let's check the first one
+    Lease6 lease_client1 = client.getLease(0);
+    Lease6 lease_client2 = client.getLease(1);
+
+    if (lease_client1.addr_.toText() != "3000::100") {
+        lease_client1 = client.getLease(1);
+        lease_client2 = client.getLease(0);
+    }
+
     // The lifetimes should be set to 0, as an explicit notification to the
     // client to stop using invalid prefix.
-    EXPECT_EQ(0, lease_client2.valid_lft_);
-    EXPECT_EQ(0, lease_client2.preferred_lft_);
+    EXPECT_EQ(0, lease_client1.valid_lft_);
+    EXPECT_EQ(0, lease_client1.preferred_lft_);
+
+    // Let's check the second lease
+    // The lifetimes should be set to 0, as an explicit notification to the
+    // client to stop using invalid prefix.
+    EXPECT_NE(0, lease_client2.valid_lft_);
+    EXPECT_NE(0, lease_client2.preferred_lft_);
+
     // Check that server still has the same lease.
     Lease6Ptr lease_server = checkLease(lease_client);
     EXPECT_TRUE(lease_server);
-    // Make sure that the lease in the data base hasn't been addected.
+    // Make sure that the lease in the data base hasn't been added.
     EXPECT_NE(0, lease_server->valid_lft_);
     EXPECT_NE(0, lease_server->preferred_lft_);
 }
@@ -498,8 +534,6 @@ TEST_F(RebindTest, directClientPD) {
     // subnets.
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
-    ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
-                selectSubnet(lease_client2.addr_, ClientClasses()));
     // The client's lease should have been extended. The client will
     // update the cltt to current time when the lease gets extended.
     ASSERT_GE(lease_client2.cltt_ - lease_client.cltt_, 1000);
@@ -606,22 +640,34 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
         " sent a response indicating that the client should stop using the"
         " lease, by setting lifetime values to 0.";
     // Get the client's lease.
-    ASSERT_EQ(1, client.getLeaseNum());
-    Lease6 lease_client2 = client.getLease(0);
+    ASSERT_EQ(2, client.getLeaseNum());
+
+    // Client should get two entries. One with the invalid address he requested
+    // with zeroed lifetimes and a second one with the actual prefix he has
+    // with non-zero lifetimes.
+    Lease6 lease_client1 = client.getLease(0);
+    Lease6 lease_client2 = client.getLease(1);
+
     // The lifetimes should be set to 0, as an explicit notification to the
     // client to stop using invalid prefix.
-    EXPECT_EQ(0, lease_client2.valid_lft_);
-    EXPECT_EQ(0, lease_client2.preferred_lft_);
+    EXPECT_EQ(0, lease_client1.valid_lft_);
+    EXPECT_EQ(0, lease_client1.preferred_lft_);
+
+    // The lifetimes should be set to 0, as an explicit notification to the
+    // client to stop using invalid prefix.
+    EXPECT_NE(0, lease_client2.valid_lft_);
+    EXPECT_NE(0, lease_client2.preferred_lft_);
+
     // Check that server still has the same lease.
     Lease6Ptr lease_server = checkLease(lease_client);
     ASSERT_TRUE(lease_server);
-    // Make sure that the lease in the data base hasn't been addected.
+    // Make sure that the lease in the data base hasn't been added.
     EXPECT_NE(0, lease_server->valid_lft_);
     EXPECT_NE(0, lease_server->preferred_lft_);
 }
 
 /// @todo Extend PD tests for relayed messages.
-/// @todo Extend PD tests to cover same prefix buyt different length.
+/// @todo Extend PD tests to cover same prefix by different length.
 
 // This test checks that the Rebind message is discarded by the server if it
 // has been sent to unicast address (RFC3315, section 15).

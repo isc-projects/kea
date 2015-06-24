@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
+#include <dhcp/option6_status_code.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
@@ -309,7 +310,7 @@ TEST_F(LibDhcpTest, packOptions6) {
     isc::dhcp::OptionCollection opts; // list of options
 
     // generate content for options
-    for (int i = 0; i < 64; i++) {
+    for (unsigned i = 0; i < 64; i++) {
         buf[i]=i+100;
     }
 
@@ -476,7 +477,7 @@ static uint8_t v4_opts[] = {
 TEST_F(LibDhcpTest, packOptions4) {
 
     vector<uint8_t> payload[5];
-    for (int i = 0; i < 5; i++) {
+    for (unsigned i = 0; i < 5; i++) {
         payload[i].resize(3);
         payload[i][0] = i*10;
         payload[i][1] = i*10+1;
@@ -949,11 +950,19 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
         3, 1, 2, 3  // first byte is opaque data length, the rest is opaque data
     };
     std::vector<uint8_t> vivco_buf(vivco_data, vivco_data + sizeof(vivco_data));
+    const char vivsio_data[] = {
+        1, 2, 3, 4, // enterprise id
+        4,          // first byte is vendor block length
+        1, 2, 3, 4  // option type=1 length=2
+    };
+    std::vector<uint8_t> vivsio_buf(vivsio_data, vivsio_data + sizeof(vivsio_data));
+
     LibDhcpTest::testStdOptionDefs4(DHO_VIVCO_SUBOPTIONS, vivco_buf.begin(),
                                     vivco_buf.end(), typeid(OptionVendorClass));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_VIVSO_SUBOPTIONS, begin, end,
-                                    typeid(OptionVendor));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_VIVSO_SUBOPTIONS, vivsio_buf.begin(),
+                                    vivsio_buf.end(), typeid(OptionVendor));
 }
 
 // Test that definitions of standard options have been initialized
@@ -981,6 +990,16 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     };
     // Initialize a vector with the FQDN data.
     std::vector<uint8_t> fqdn_buf(data, data + sizeof(data));
+
+    // Prepare buffer holding a vendor option
+    const char vopt_data[] = {
+        1, 2, 3, 4,                               // enterprise=0x1020304
+        0, 100,                                   // type=100
+        0, 6,                                     // length=6
+        102, 111, 111, 98, 97, 114                // data="foobar"
+    };
+    // Initialize a vector with the suboption data.
+    std::vector<uint8_t> vopt_buf(vopt_data, vopt_data + sizeof(vopt_data));
 
     // The CLIENT_FQDN holds a uint8_t value and FQDN. We have
     // to add the uint8_t value to it and then append the buffer
@@ -1026,7 +1045,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(Option));
 
     LibDhcpTest::testStdOptionDefs6(D6O_STATUS_CODE, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(Option6StatusCode));
 
     LibDhcpTest::testStdOptionDefs6(D6O_RAPID_COMMIT, begin, end,
                                     typeid(Option));
@@ -1038,7 +1057,8 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     vclass_buf.end(),
                                     typeid(OptionVendorClass));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, begin, end,
+    LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, vopt_buf.begin(),
+                                    vopt_buf.end(),
                                     typeid(OptionVendor),
                                     "vendor-opts-space");
 
@@ -1140,6 +1160,14 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     LibDhcpTest::testStdOptionDefs6(D6O_LQ_CLIENT_LINK, begin, end,
                                     typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_RSOO, begin, end,
+                                    typeid(OptionCustom),
+                                    "rsoo-opts");
+
+    LibDhcpTest::testStdOptionDefs6(D6O_ERP_LOCAL_DOMAIN_NAME,
+                                    fqdn_buf.begin(), fqdn_buf.end(),
+                                    typeid(OptionCustom));
 }
 
 // This test checks if the DHCPv6 option definition can be searched by

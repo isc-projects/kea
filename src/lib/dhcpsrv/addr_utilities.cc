@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,8 @@
 #include <dhcpsrv/addr_utilities.h>
 #include <exceptions/exceptions.h>
 
+#include <vector>
+#include <limits>
 #include <string.h>
 
 using namespace isc;
@@ -197,12 +199,107 @@ isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix
 
 isc::asiolink::IOAddress getNetmask4(uint8_t len) {
     if (len > 32) {
-        isc_throw(BadValue, "Invalid netmask size " << len << ", allowed range "
-                  "is 0..32");
+      isc_throw(BadValue, "Invalid netmask size "
+                << static_cast<unsigned>(len) << ", allowed range is 0..32");
     }
     uint32_t x = ~bitMask4[len];
 
     return (IOAddress(x));
+}
+
+uint64_t
+addrsInRange(const isc::asiolink::IOAddress& min,
+             const isc::asiolink::IOAddress& max) {
+    if (min.getFamily() != max.getFamily()) {
+        isc_throw(BadValue, "Both addresses have to be the same family");
+    }
+
+    if (max < min) {
+        isc_throw(BadValue, min.toText() << " must not be greater than "
+                  << max.toText());
+    }
+
+    if (min.isV4()) {
+        // Let's explicitly cast last_ and first_ (IOAddress). This conversion is
+        // automatic, but let's explicitly cast it show that we moved to integer
+        // domain and addresses are now substractable.
+        uint64_t max_numeric = static_cast<uint32_t>(max);
+        uint64_t min_numeric = static_cast<uint32_t>(min);
+
+        // We can simply subtract the values. We need to increase the result
+        // by one, as both min and max are included in the range. So even if
+        // min == max, there's one address.
+        return (max_numeric - min_numeric + 1);
+    } else {
+
+        // Calculating the difference in v6 is more involved. Let's subtract
+        // one from the other. By subtracting min from max, we move the
+        // [a, b] range to the [0, (b-a)] range. We don't care about the beginning
+        // of the new range (it's always zero). The upper bound now specifies
+        // the number of addresses minus one.
+        IOAddress count = IOAddress::subtract(max, min);
+
+        // There's one very special case. Someone is trying to check how many
+        // IPv6 addresses are in IPv6 address space. He called this method
+        // with ::, ffff:ffff:ffff:fffff:ffff:ffff:ffff:ffff. The diff is also
+        // all 1s. Had we increased it by one, the address would flip to all 0s.
+        // This will not happen in a real world. Apparently, unit-tests are
+        // sometimes nastier then a real world.
+        static IOAddress max6("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff");
+        if (count == max6) {
+            return (std::numeric_limits<uint64_t>::max());
+        }
+
+        // Increase it by one (a..a range still contains one address, even though
+        // a subtracted from a is zero).
+        count = IOAddress::increase(count);
+
+        // We don't have uint128, so for anything greater than 2^64, we'll just
+        // assume numeric_limits<uint64_t>::max. Let's do it the manual way.
+        const std::vector<uint8_t>& bin(count.toBytes());
+
+        // If any of the most significant 64 bits is set, we have more than
+        // 2^64 addresses and can't represent it even on uint64_t.
+        for (int i = 0 ; i < 8; i++) {
+            if (bin[i]) {
+                return (std::numeric_limits<uint64_t>::max());
+            }
+        }
+
+        // Ok, we're good. The pool is sanely sized. It may be huge, but at least
+        // that's something we can represent on uint64_t.
+        uint64_t numeric = 0;
+        for (int i = 8; i < 16; i++) {
+            numeric <<= 8;
+            numeric += bin[i];
+        }
+
+        return (numeric);
+    }
+}
+
+uint64_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len) {
+    if (delegated_len < pool_len) {
+        return (0);
+    }
+
+    uint64_t count = delegated_len - pool_len;
+
+    if (count == 0) {
+        // If we want to delegate /64 out of /64 pool, we have only
+        // one prefix.
+        return (1);
+    } else if (count >= 64) {
+        // If the difference is greater than or equal 64, e.g. we want to
+        // delegate /96 out of /16 pool, the number is bigger than we can
+        // express, so we'll stick with maximum value of uint64_t.
+        return (std::numeric_limits<uint64_t>::max());
+    } else {
+        // Now count specifies the exponent (e.g. if the difference between the
+        // delegated and pool length is 4, we have 16 prefixes), so we need
+        // to calculate 2^(count - 1)
+        return ((static_cast<uint64_t>(2)) << (count - 1));
+    }
 }
 
 };

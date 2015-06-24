@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,9 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
@@ -29,6 +32,7 @@
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
+#include <dhcpsrv/parsers/ifaces_config_parser.h>
 #include <log/logger_support.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -40,6 +44,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
+#include <limits>
 #include <map>
 #include <vector>
 
@@ -126,7 +131,7 @@ protected:
 /// This class handles prefix delegation pool definitions for IPv6 subnets
 /// Pool6 objects are created and stored in the given PoolStorage container.
 ///
-/// PdPool defintions currently support three elements: prefix, prefix-len,
+/// PdPool definitions currently support three elements: prefix, prefix-len,
 /// and delegated-len, as shown in the example JSON text below:
 ///
 /// @code
@@ -317,12 +322,12 @@ public:
     /// @brief Constructor
     ///
     /// @param ignored first parameter
-    /// stores global scope parameters, options, option defintions.
+    /// stores global scope parameters, options, option definitions.
     Subnet6ConfigParser(const std::string&)
         :SubnetConfigParser("", globalContext(), IOAddress("::")) {
     }
 
-    /// @brief Parses a single IPv4 subnet configuration and adds to the
+    /// @brief Parses a single IPv6 subnet configuration and adds to the
     /// Configuration Manager.
     ///
     /// @param subnet A new subnet being configured.
@@ -337,7 +342,7 @@ public:
                           "Invalid cast in Subnet6ConfigParser::commit");
             }
 
-            // Set relay infomation if it was provided
+            // Set relay information if it was provided
             if (relay_info_) {
                 sub6ptr->setRelayInfo(*relay_info_);
             }
@@ -389,7 +394,8 @@ protected:
         } else if ((config_id.compare("subnet") == 0) ||
                    (config_id.compare("interface") == 0) ||
                    (config_id.compare("client-class") == 0) ||
-                   (config_id.compare("interface-id") == 0)) {
+                   (config_id.compare("interface-id") == 0) ||
+                   (config_id.compare("reservation-mode") == 0)) {
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("pools") == 0) {
             parser = new Pools6ListParser(config_id, pools_);
@@ -399,32 +405,13 @@ protected:
             parser = new PdPoolListParser(config_id, pools_);
         } else if (config_id.compare("option-data") == 0) {
             parser = new OptionDataListParser(config_id, options_, AF_INET6);
+        } else if (config_id.compare("rapid-commit") == 0) {
+            parser = new BooleanParser(config_id, boolean_values_);
         } else {
             isc_throw(NotImplemented, "unsupported parameter: " << config_id);
         }
 
         return (parser);
-    }
-
-
-    /// @brief Determines if the given option space name and code describe
-    /// a standard option for the DHCP6 server.
-    ///
-    /// @param option_space is the name of the option space to consider
-    /// @param code is the numeric option code to consider
-    /// @return returns true if the space and code are part of the server's
-    /// standard options.
-    bool isServerStdOption(std::string option_space, uint32_t code) {
-        return ((option_space.compare("dhcp6") == 0)
-                && LibDHCP::isStandardOption(Option::V6, code));
-    }
-
-    /// @brief Returns the option definition for a given option code from
-    /// the DHCP6 server's standard set of options.
-    /// @param code is the numeric option code of the desired option definition.
-    /// @return returns a pointer the option definition
-    OptionDefinitionPtr getServerStdOptionDefinition (uint32_t code) {
-        return (LibDHCP::getOptionDef(Option::V6, code));
     }
 
     /// @brief Issues a DHCP6 server specific warning regarding duplicate subnet
@@ -461,7 +448,7 @@ protected:
             static_cast<SubnetID>(uint32_values_->getOptionalParam("id", 0));
 
         // Get interface-id option content. For now we support string
-        // represenation only
+        // representation only
         std::string ifaceid;
         try {
             ifaceid = string_values_->getParam("interface-id");
@@ -489,12 +476,16 @@ protected:
             }
         }
 
-        stringstream tmp;
-        tmp << addr << "/" << static_cast<int>(len)
-            << " with params t1=" << t1 << ", t2=" << t2 << ", pref="
-            << pref << ", valid=" << valid;
+        bool rapid_commit = boolean_values_->getOptionalParam("rapid-commit", false);
 
-        LOG_INFO(dhcp6_logger, DHCP6_CONFIG_NEW_SUBNET).arg(tmp.str());
+        std::ostringstream output;
+        output << addr << "/" << static_cast<int>(len)
+               << " with params t1=" << t1 << ", t2="
+               << t2 << ", preferred-lifetime=" << pref
+               << ", valid-lifetime=" << valid
+               << ", rapid-commit is " << (rapid_commit ? "enabled" : "disabled");
+
+        LOG_INFO(dhcp6_logger, DHCP6_CONFIG_NEW_SUBNET).arg(output.str());
 
         // Create a new subnet.
         Subnet6* subnet6 = new Subnet6(addr, len, t1, t2, pref, valid,
@@ -506,6 +497,9 @@ protected:
             OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
             subnet6->setInterfaceId(opt);
         }
+
+        // Enable or disable Rapid Commit option support for the subnet.
+        subnet6->setRapidCommit(rapid_commit);
 
         // Try setting up client class (if specified)
         try {
@@ -573,6 +567,87 @@ public:
     ParserCollection subnets_;
 };
 
+/// @brief Parser for list of RSOO options
+///
+/// This parser handles a Dhcp6/relay-supplied-options entry. It contains a
+/// list of RSOO-enabled options which should be sent back to the client.
+///
+/// The options on this list can be specified using an option code or option
+/// name. Therefore, the values on the list should always be enclosed in
+/// "quotes".
+class RSOOListConfigParser : public DhcpConfigParser {
+public:
+
+    /// @brief constructor
+    ///
+    /// As this is a dedicated parser, it must be used to parse
+    /// "relay-supplied-options" parameter only. All other types will throw exception.
+    ///
+    /// @param param_name name of the configuration parameter being parsed
+    /// @throw BadValue if supplied parameter name is not "relay-supplied-options"
+    RSOOListConfigParser(const std::string& param_name) {
+        if (param_name != "relay-supplied-options") {
+            isc_throw(BadValue, "Internal error. RSOO configuration "
+                      "parser called for the wrong parameter: " << param_name);
+        }
+    }
+
+    /// @brief parses parameters value
+    ///
+    /// Parses configuration entry (list of sources) and adds each element
+    /// to the RSOO list.
+    ///
+    /// @param value pointer to the content of parsed values
+    virtual void build(isc::data::ConstElementPtr value) {
+        try {
+            BOOST_FOREACH(ConstElementPtr source_elem, value->listValue()) {
+                std::string option_str = source_elem->stringValue();
+                // This option can be either code (integer) or name. Let's try code first
+                int64_t code = 0;
+                try {
+                    code = boost::lexical_cast<int64_t>(option_str);
+                    // Protect against the negative value and too high value.
+                    if (code < 0) {
+                        isc_throw(BadValue, "invalid option code value specified '"
+                                  << option_str << "', the option code must be a"
+                                  " non-negative value");
+
+                    } else if (code > std::numeric_limits<uint16_t>::max()) {
+                        isc_throw(BadValue, "invalid option code value specified '"
+                                  << option_str << "', the option code must not be"
+                                  " greater than '" << std::numeric_limits<uint16_t>::max()
+                                  << "'");
+                    }
+
+                } catch (const boost::bad_lexical_cast &) {
+                    // Oh well, it's not a number
+                }
+
+                if (!code) {
+                    OptionDefinitionPtr def = LibDHCP::getOptionDef(Option::V6, option_str);
+                    if (def) {
+                        code = def->getCode();
+                    } else {
+                        isc_throw(BadValue, "unable to find option code for the "
+                                  " specified option name '" << option_str << "'"
+                                  " while parsing the list of enabled"
+                                  " relay-supplied-options");
+                    }
+                }
+                CfgMgr::instance().getStagingCfg()->getCfgRSOO()->enable(code);
+            }
+        } catch (const std::exception& ex) {
+            // Rethrow exception with the appended position of the parsed
+            // element.
+            isc_throw(DhcpConfigError, ex.what() << " (" << value->getPosition() << ")");
+        }
+    }
+
+    /// @brief Does nothing.
+    virtual void commit() {}
+};
+
+
 } // anonymous namespace
 
 namespace isc {
@@ -584,6 +659,7 @@ namespace dhcp {
 /// those that take format of Dhcp6/param1, Dhcp6/param2 and so forth.
 ///
 /// @param config_id pointer to received global configuration entry
+/// @param element pointer to the element to be parsed
 /// @return parser for specified global DHCPv6 parameter
 /// @throw NotImplemented if trying to create a parser for unknown config
 /// element
@@ -596,8 +672,8 @@ namespace dhcp {
         (config_id.compare("rebind-timer") == 0))  {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
-    } else if (config_id.compare("interfaces") == 0) {
-        parser = new InterfaceListConfigParser(config_id, globalContext());
+    } else if (config_id.compare("interfaces-config") == 0) {
+        parser = new IfacesConfigParser6();
     } else if (config_id.compare("subnet6") == 0) {
         parser = new Subnets6ListConfigParser(config_id);
     } else if (config_id.compare("option-data") == 0) {
@@ -616,6 +692,10 @@ namespace dhcp {
     } else if (config_id.compare("mac-sources") == 0) {
         parser = new MACSourcesListConfigParser(config_id,
                                                 globalContext());
+    } else if (config_id.compare("relay-supplied-options") == 0) {
+        parser = new RSOOListConfigParser(config_id);
+    } else if (config_id.compare("control-socket") == 0) {
+        parser = new ControlSocketParser(config_id);
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "
@@ -636,6 +716,9 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND,
               DHCP6_CONFIG_START).arg(config_set->str());
 
+    // Reset global context.
+    globalContext().reset(new ParserContext(Option::V6));
+
     // Before starting any subnet operations, let's reset the subnet-id counter,
     // so newly recreated configuration starts with first subnet-id equal 1.
     Subnet::resetSubnetID();
@@ -645,12 +728,15 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     // depend on the global values. Also, option values configuration
     // must be performed after the option definitions configurations.
     // Thus we group parsers and will fire them in the right order:
-    // all parsers other than subnet6 and option-data parser,
-    // option-data parser, subnet6 parser.
+    // all parsers other than lease-database, subnet6 and
+    // option-data parser, then option-data parser, subnet6 parser,
+    // lease-database parser.
+    // Please do not change this order!
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
     ParserPtr option_parser;
     ParserPtr iface_parser;
+    ParserPtr leases_parser;
 
     // Some of the parsers alter state of the system that can't easily
     // be undone. (Or alter it in a way such that undoing the change
@@ -668,7 +754,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
 
     // answer will hold the result.
     ConstElementPtr answer;
-    // rollback informs whether error occured and original data
+    // rollback informs whether error occurred and original data
     // have to be restored to global storages.
     bool rollback = false;
     // config_pair holds ther details of the current parser when iterating over
@@ -687,6 +773,8 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                       .arg(config_pair.first);
             if (config_pair.first == "subnet6") {
                 subnet_parser = parser;
+            } else if (config_pair.first == "lease-database") {
+                leases_parser = parser;
             } else if (config_pair.first == "option-data") {
                 option_parser = parser;
             } else if (config_pair.first == "hooks-libraries") {
@@ -696,7 +784,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 // committed.
                 hooks_parser = parser;
                 hooks_parser->build(config_pair.second);
-            } else if (config_pair.first == "interfaces") {
+            } else if (config_pair.first == "interfaces-config") {
                 // The interface parser is independent from any other parser and
                 // can be run here before other parsers.
                 parser->build(config_pair.second);
@@ -722,7 +810,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
             option_parser->commit();
         }
 
-        // The subnet parser is the last one to be run.
+        // The subnet parser is the next one to be run.
         std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
             values_map.find("subnet6");
         if (subnet_config != values_map.end()) {
@@ -730,11 +818,40 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
             subnet_parser->build(subnet_config->second);
         }
 
+        // Get command socket configuration from the config file.
+        // This code expects the following structure:
+        // {
+        //     "socket-type": "unix",
+        //     "socket-name": "/tmp/kea6.sock"
+        // }
+        ConstElementPtr sock_cfg =
+            CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
+
+        // Close existing socket (if any).
+        isc::config::CommandMgr::instance().closeCommandSocket();
+        if (sock_cfg) {
+            // This will create a control socket and will install external socket
+            // in IfaceMgr. That socket will be monitored when Dhcp4Srv::receivePacket()
+            // calls IfaceMgr::receive4() and callback in CommandMgr will be called,
+            // if necessary. If there were previously open command socket, it will
+            // be closed.
+            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
+        }
+
+        // The lease database parser is the last to be run.
+        std::map<std::string, ConstElementPtr>::const_iterator leases_config =
+            values_map.find("lease-database");
+        if (leases_config != values_map.end()) {
+            config_pair.first = "lease-database";
+            leases_parser->build(leases_config->second);
+            leases_parser->commit();
+        }
+
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)
                   .arg(config_pair.first).arg(ex.what());
         answer = isc::config::createAnswer(1, ex.what());
-        // An error occured, so make sure that we restore original data.
+        // An error occurred, so make sure that we restore original data.
         rollback = true;
 
     } catch (...) {
@@ -742,7 +859,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_EXCEPTION).arg(config_pair.first);
         answer = isc::config::createAnswer(1, "undefined configuration"
                                            " processing error");
-        // An error occured, so make sure that we restore original data.
+        // An error occurred, so make sure that we restore original data.
         rollback = true;
     }
 
@@ -769,14 +886,14 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
             answer = isc::config::createAnswer(2, ex.what());
-            // An error occured, so make sure to restore the original data.
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
             // for things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_EXCEPTION);
             answer = isc::config::createAnswer(2, "undefined configuration"
                                                " parsing error");
-            // An error occured, so make sure to restore the original data.
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         }
     }
@@ -788,7 +905,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     }
 
     LOG_INFO(dhcp6_logger, DHCP6_CONFIG_COMPLETE)
-        .arg(CfgMgr::instance().getCurrentCfg()->
+        .arg(CfgMgr::instance().getStagingCfg()->
              getConfigSummary(SrvConfig::CFGSEL_ALL6));
 
     // Everything was fine. Configuration is successful.

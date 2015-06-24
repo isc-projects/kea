@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -48,7 +48,7 @@ public:
 ///
 /// - The list of server hooks, which is used in two ways.  Firstly, when a
 ///   callout registers or deregisters a hook, it does so by name: the
-///   @ref isc::util::ServerHooks object supplies the names of registered
+///   @ref isc::hooks::ServerHooks object supplies the names of registered
 ///   hooks.  Secondly, when the callouts associated with a hook are called by
 ///   the server, the server supplies the index of the relevant hook: this is
 ///   validated by reference to the list of hook.
@@ -87,7 +87,7 @@ public:
 /// Indexes range between 1 and n (where n is the number of the libraries
 /// loaded) and are assigned to libraries based on the order the libraries
 /// presented to the hooks framework for loading (something that occurs in the
-/// isc::util::HooksManager) class.  However, two other indexes are recognised,
+/// isc::hooks::HooksManager) class.  However, two other indexes are recognized,
 /// 0 and INT_MAX.  These are used when the server itself registers callouts -
 /// the server is able to register callouts that get called before any
 /// user-library callouts, and ones that get called after user-library callouts.
@@ -95,7 +95,7 @@ public:
 /// C2 as before, and that the server registers S1 (to run before the
 /// user-registered callouts) and S2 (to run after them), the callouts are
 /// stored (and executed) in the order S1, A1, A2, B1, B2, B3, C2, C2, S2.  In
-/// summary, the recognised index values are:
+/// summary, the recognized index values are:
 ///
 /// - < 0: invalid.
 /// - 0: used for server-registered callouts that are called before
@@ -145,7 +145,7 @@ public:
     /// @param name Name of the hook to which the callout is added.
     /// @param callout Pointer to the callout function to be registered.
     ///
-    /// @throw NoSuchHook The hook name is unrecognised.
+    /// @throw NoSuchHook The hook name is unrecognized.
     /// @throw Unexpected The hook name is valid but an internal data structure
     ///        is of the wrong size.
     void registerCallout(const std::string& name, CalloutPtr callout);
@@ -162,7 +162,7 @@ public:
     ///
     /// @return true if a one or more callouts were deregistered.
     ///
-    /// @throw NoSuchHook The hook name is unrecognised.
+    /// @throw NoSuchHook The hook name is unrecognized.
     /// @throw Unexpected The hook name is valid but an internal data structure
     ///        is of the wrong size.
     bool deregisterCallout(const std::string& name, CalloutPtr callout);
@@ -177,7 +177,7 @@ public:
     ///
     /// @return true if one or more callouts were deregistered.
     ///
-    /// @throw NoSuchHook Thrown if the hook name is unrecognised.
+    /// @throw NoSuchHook Thrown if the hook name is unrecognized.
     bool deregisterAllCallouts(const std::string& name);
 
     /// @brief Checks if callouts are present on a hook

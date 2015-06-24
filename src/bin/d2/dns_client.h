@@ -75,7 +75,7 @@ public:
 
     /// @brief Callback for the @c DNSClient class.
     ///
-    /// This is is abstract class which represents the external callback for the
+    /// This is an abstract class which represents the external callback for the
     /// @c DNSClient. Caller must implement this class and supply its instance
     /// in the @c DNSClient constructor to get callbacks when the DNS Update
     /// exchange is complete (@see @c DNSClient).

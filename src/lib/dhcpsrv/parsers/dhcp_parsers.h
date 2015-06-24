@@ -380,47 +380,6 @@ private:
 
 };
 
-/// @brief parser for interface list definition
-///
-/// This parser handles Dhcp4/interfaces and Dhcp6/interfaces entries.
-/// It contains a list of network interfaces that the server listens on.
-/// In particular, it can contain an entry called "all" or "any" that
-/// designates all interfaces.
-class InterfaceListConfigParser : public DhcpConfigParser {
-public:
-
-    /// @brief constructor
-    ///
-    /// As this is a dedicated parser, it must be used to parse
-    /// "interface" parameter only. All other types will throw exception.
-    ///
-    /// @param param_name name of the configuration parameter being parsed
-    /// @param global_context Global parser context.
-    /// @throw BadValue if supplied parameter name is not "interface"
-    InterfaceListConfigParser(const std::string& param_name,
-                              ParserContextPtr global_context);
-
-    /// @brief parses parameters value
-    ///
-    /// Parses configuration entry (list of parameters) and adds each element
-    /// to the interfaces list.
-    ///
-    /// @param value pointer to the content of parsed values
-    virtual void build(isc::data::ConstElementPtr value);
-
-    /// @brief Does nothing.
-    virtual void commit();
-
-private:
-
-    // Parsed parameter name
-    std::string param_name_;
-
-    /// Global parser context.
-    ParserContextPtr global_context_;
-};
-
-
 /// @brief parser for MAC/hardware aquisition sources
 ///
 /// This parser handles Dhcp6/mac-sources entry.
@@ -461,6 +420,23 @@ private:
     ParserContextPtr global_context_;
 };
 
+/// @brief Parser for the control-socket structure
+///
+/// It does not parse anything, simply stores the element in
+/// the staging config.
+class ControlSocketParser : public DhcpConfigParser {
+public:
+
+    ControlSocketParser(const std::string& param_name);
+
+    /// @brief Stores contents of the control-socket map in the staging config.
+    ///
+    /// @param value pointer to the content of parsed values
+    virtual void build(isc::data::ConstElementPtr value);
+
+    /// @brief Does nothing.
+    virtual void commit();
+};
 
 /// @brief Parser for hooks library list
 ///
@@ -1037,22 +1013,6 @@ protected:
     virtual DhcpConfigParser* createSubnetConfigParser(
                                             const std::string& config_id) = 0;
 
-    /// @brief Determines if the given option space name and code describe
-    /// a standard option for the  server.
-    ///
-    /// @param option_space is the name of the option space to consider
-    /// @param code is the numeric option code to consider
-    /// @return returns true if the space and code are part of the server's
-    /// standard options.
-    virtual bool isServerStdOption(std::string option_space, uint32_t code) = 0;
-
-    /// @brief Returns the option definition for a given option code from
-    /// the server's standard set of options.
-    /// @param code is the numeric option code of the desired option definition.
-    /// @return returns a pointer the option definition
-    virtual OptionDefinitionPtr getServerStdOptionDefinition (
-                                                             uint32_t code) = 0;
-
     /// @brief Issues a server specific warning regarding duplicate subnet
     /// options.
     ///
@@ -1093,6 +1053,17 @@ protected:
     /// unspecified value.
     isc::dhcp::Triplet<uint32_t> getOptionalParam(const std::string& name);
 
+    /// @brief Attempts to convert text representation to HRMode enum.
+    ///
+    /// Allowed values are "disabled", "off" (alias for disabled),
+    /// "out-of-pool" and "all". See Subnet::HRMode for their exact meaning.
+    ///
+    /// @throw BadValue if the text cannot be converted.
+    ///
+    /// @param text representation for conversion
+    /// @return one of allowed HRMode values
+    static Subnet::HRMode hrModeFromText(const std::string& txt);
+
 private:
 
     /// @brief Create a new subnet using a data from child parsers.
@@ -1108,6 +1079,9 @@ protected:
 
     /// Storage for subnet-specific string values.
     StringStoragePtr string_values_;
+
+    /// Storage for subnet-specific boolean values.
+    BooleanStoragePtr boolean_values_;
 
     /// Storage for pools belonging to this subnet.
     PoolStoragePtr pools_;
@@ -1161,6 +1135,7 @@ public:
     /// The elements currently supported are (see isc::dhcp::D2ClientConfig
     /// for details on each):
     /// -# enable-updates
+    /// -# qualifying-suffix
     /// -# server-ip
     /// -# server-port
     /// -# ncr-protocol
@@ -1172,7 +1147,6 @@ public:
     /// -# override-client-update
     /// -# replace-client-name
     /// -# generated-prefix
-    /// -# qualifying-suffix
     ///
     /// @param config_id is the "item_name" for a specific member element of
     /// the "dns_server" specification.

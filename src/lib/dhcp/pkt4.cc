@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
@@ -123,7 +124,7 @@ Pkt4::pack() {
         buffer_out_.writeUint32(giaddr_);
 
 
-        if (hw_len <= MAX_CHADDR_LEN) {
+        if ((hw_len > 0) && (hw_len <= MAX_CHADDR_LEN)) {
             // write up to 16 bytes of the hardware address (CHADDR field is 16
             // bytes long in DHCPv4 message).
             buffer_out_.writeData(&hwaddr_->hwaddr_[0],
@@ -135,8 +136,10 @@ Pkt4::pack() {
         }
 
         // write (len) bytes of padding
-        vector<uint8_t> zeros(hw_len, 0);
-        buffer_out_.writeData(&zeros[0], hw_len);
+        if (hw_len > 0) {
+            vector<uint8_t> zeros(hw_len, 0);
+            buffer_out_.writeData(&zeros[0], hw_len);
+        }
 
         buffer_out_.writeData(sname_, MAX_SNAME_LEN);
         buffer_out_.writeData(file_, MAX_FILE_LEN);
@@ -222,9 +225,10 @@ Pkt4::unpack() {
         offset = callback_(opts_buffer, "dhcp4", options_, NULL, NULL);
     }
 
-    // If offset is not equal to the size, then something is wrong here. We
-    // either parsed past input buffer (bug in our code) or we haven't parsed
-    // everything (received trailing garbage or truncated option).
+    // If offset is not equal to the size and there is no DHO_END,
+    // then something is wrong here. We either parsed past input
+    // buffer (bug in our code) or we haven't parsed everything
+    // (received trailing garbage or truncated option).
     //
     // Invoking Jon Postel's law here: be conservative in what you send, and be
     // liberal in what you accept. There's no easy way to log something from
@@ -232,23 +236,15 @@ Pkt4::unpack() {
     // bytes. We also need to quell compiler warning about unused offset
     // variable.
     //
-    // if (offset != size) {
+    // if ((offset != size) && (opts_buffer[offset] != DHO_END)) {
     //        isc_throw(BadValue, "Received DHCPv6 buffer of size " << size
     //                  << ", were able to parse " << offset << " bytes.");
     // }
     (void)offset;
 
-    // @todo check will need to be called separately, so hooks can be called
-    // after the packet is parsed, but before its content is verified
-    check();
-}
-
-void Pkt4::check() {
-    uint8_t msg_type = getType();
-    if (msg_type > DHCPLEASEACTIVE) {
-        isc_throw(BadValue, "Invalid DHCP message type received: "
-                  << static_cast<int>(msg_type));
-    }
+    // No need to call check() here. There are thorough tests for this
+    // later (see Dhcp4Srv::accept()). We want to drop the packet later,
+    // so we'll be able to log more detailed drop reason.
 }
 
 uint8_t Pkt4::getType() const {
@@ -271,32 +267,142 @@ uint8_t Pkt4::getType() const {
 void Pkt4::setType(uint8_t dhcp_type) {
     OptionPtr opt = getOption(DHO_DHCP_MESSAGE_TYPE);
     if (opt) {
-        // There is message type option already, update it
-        opt->setUint8(dhcp_type);
+
+        // There is message type option already, update it. It seems that
+        // we do have two types of objects representing message-type option.
+        // It would be more preferable to use only one type, but there's no
+        // easy way to enforce it.
+        //
+        // One is an instance of the Option class. It stores type in
+        // Option::data_, so Option::setUint8() and Option::getUint8() can be
+        // used. The other one is an instance of OptionInt<uint8_t> and
+        // it stores message type as integer, hence
+        // OptionInt<uint8_t>::getValue() and OptionInt<uint8_t>::setValue()
+        // should be used.
+        boost::shared_ptr<OptionInt<uint8_t> > type_opt =
+            boost::dynamic_pointer_cast<OptionInt<uint8_t> >(opt);
+        if (type_opt) {
+            type_opt->setValue(dhcp_type);
+        } else {
+            opt->setUint8(dhcp_type);
+        }
     } else {
         // There is no message type option yet, add it
         std::vector<uint8_t> tmp(1, dhcp_type);
-        opt = OptionPtr(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE, tmp));
+        opt = OptionPtr(new OptionInt<uint8_t>(Option::V4, DHO_DHCP_MESSAGE_TYPE,
+                                               tmp.begin(), tmp.end()));
         addOption(opt);
     }
 }
 
-std::string
-Pkt4::toText() {
-    stringstream tmp;
-    tmp << "localAddr=" << local_addr_ << ":" << local_port_
-        << " remoteAddr=" << remote_addr_
-        << ":" << remote_port_ << ", msgtype=" << static_cast<int>(getType())
-        << ", transid=0x" << hex << transid_ << dec << endl;
+const char*
+Pkt4::getName(const uint8_t type) {
+    static const char* DHCPDISCOVER_NAME = "DHCPDISCOVER";
+    static const char* DHCPOFFER_NAME = "DHCPOFFER";
+    static const char* DHCPREQUEST_NAME = "DHCPREQUEST";
+    static const char* DHCPDECLINE_NAME = "DHCPDECLINE";
+    static const char* DHCPACK_NAME = "DHCPACK";
+    static const char* DHCPNAK_NAME = "DHCPNAK";
+    static const char* DHCPRELEASE_NAME = "DHCPRELEASE";
+    static const char* DHCPINFORM_NAME = "DHCPINFORM";
+    static const char* UNKNOWN_NAME = "UNKNOWN";
 
-    for (isc::dhcp::OptionCollection::iterator opt=options_.begin();
-         opt != options_.end();
-         ++opt) {
-        tmp << "  " << opt->second->toText() << std::endl;
+    switch (type) {
+        case DHCPDISCOVER:
+            return (DHCPDISCOVER_NAME);
+
+        case DHCPOFFER:
+            return (DHCPOFFER_NAME);
+
+        case DHCPREQUEST:
+            return (DHCPREQUEST_NAME);
+
+        case DHCPDECLINE:
+            return (DHCPDECLINE_NAME);
+
+        case DHCPACK:
+            return (DHCPACK_NAME);
+
+        case DHCPNAK:
+            return (DHCPNAK_NAME);
+
+        case DHCPRELEASE:
+            return (DHCPRELEASE_NAME);
+
+        case DHCPINFORM:
+            return (DHCPINFORM_NAME);
+
+        default:
+            ;
+    }
+    return (UNKNOWN_NAME);
+}
+
+const char*
+Pkt4::getName() const {
+    return (Pkt4::getName(getType()));
+}
+
+std::string
+Pkt4::getLabel() const {
+
+    /// @todo If and when client id is extracted into Pkt4, this method should
+    /// the instance member rather than fetch it every time.
+    ClientIdPtr client_id;
+    OptionPtr client_opt = getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    if (client_opt ) {
+        client_id = ClientIdPtr(new ClientId(client_opt->getData()));
     }
 
+    return makeLabel(hwaddr_, client_id, transid_);
 
-    return tmp.str();
+}
+
+std::string
+Pkt4::makeLabel(const HWAddrPtr& hwaddr, const ClientIdPtr& client_id,
+                const uint32_t transid) {
+    stringstream label;
+    label << "[" << (hwaddr ? hwaddr->toText() : "no hwaddr info")
+          << "], cid=[" << (client_id ? client_id->toText() : "no info")
+          << "], tid=0x" << hex << transid << dec;
+
+    return label.str();
+}
+
+
+std::string
+Pkt4::toText() const {
+    stringstream output;
+    output << "local_address=" << local_addr_ << ":" << local_port_
+        << ", remote_adress=" << remote_addr_
+        << ":" << remote_port_ << ", msg_type=";
+
+    // Try to obtain message type. This may throw if the Message Type option is
+    // not present. Therefore we guard it with try-catch, because we don't want
+    // toText method to throw.
+    try {
+        uint8_t msg_type = getType();
+        output << getName(msg_type) << " (" << static_cast<int>(msg_type) << ")";
+
+    } catch (...) {
+        // Message Type option is missing.
+        output << "(missing)";
+    }
+
+    output << ", transid=0x" << hex << transid_ << dec;
+
+    if (!options_.empty()) {
+        output << "," << std::endl << "options:";
+        for (isc::dhcp::OptionCollection::const_iterator opt = options_.begin();
+             opt != options_.end(); ++opt) {
+            output << std::endl << opt->second->toText(2);
+        }
+
+    } else {
+        output << ", message contains no options";
+    }
+
+    return (output.str());
 }
 
 void
@@ -379,6 +485,7 @@ Pkt4::setFile(const uint8_t* file, size_t fileLen /*= MAX_FILE_LEN*/) {
 }
 
 uint8_t
+// cppcheck-suppress unusedFunction
 Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
     switch (dhcpType) {
     case DHCPDISCOVER:
@@ -435,21 +542,7 @@ Pkt4::addOption(const OptionPtr& opt) {
 
 bool
 Pkt4::isRelayed() const {
-    static const IOAddress zero_addr("0.0.0.0");
-    // For non-relayed message both Giaddr and Hops are zero.
-    if (getGiaddr() == zero_addr && getHops() == 0) {
-        return (false);
-
-    // For relayed message, both Giaddr and Hops are non-zero.
-    } else if (getGiaddr() != zero_addr && getHops() > 0) {
-        return (true);
-    }
-    // In any other case, the packet is considered malformed.
-    isc_throw(isc::BadValue, "invalid combination of giaddr = "
-              << getGiaddr().toText() << " and hops = "
-              << static_cast<int>(getHops()) << ". Valid values"
-              " are: (giaddr = 0 and hops = 0) or (giaddr != 0 and"
-              "hops != 0)");
+    return (!giaddr_.isV4Zero() && !giaddr_.isV4Bcast());
 }
 
 } // end of namespace isc::dhcp

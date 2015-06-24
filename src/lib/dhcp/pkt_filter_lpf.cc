@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -44,35 +44,64 @@ using namespace isc::dhcp;
 ///   2 bytes  UDP destination port
 ///   4 bytes  Rest of UDP header
 ///
+/// Each instruction is preceded with the comments giving the instruction
+/// number within a BPF program, in the following format: #123.
+///
 /// @todo We may want to extend the filter to receive packets sent
 /// to the particular IP address assigned to the interface or
 /// broadcast address.
 struct sock_filter dhcp_sock_filter [] = {
     // Make sure this is an IP packet: check the half-word (two bytes)
     // at offset 12 in the packet (the Ethernet packet type).  If it
-    // is, advance to the next instruction.  If not, advance 8
+    // is, advance to the next instruction.  If not, advance 11
     // instructions (which takes execution to the last instruction in
     // the sequence: "drop it").
+    // #0
     BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_PACKET_TYPE_OFFSET),
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
+    // #1
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 11),
 
     // Make sure it's a UDP packet.  The IP protocol is at offset
     // 9 in the IP header so, adding the Ethernet packet header size
     // of 14 bytes gives an absolute byte offset in the packet of 23.
-    BPF_STMT(BPF_LD + BPF_B + BPF_ABS, ETHERNET_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
+    // #2
+    BPF_STMT(BPF_LD + BPF_B + BPF_ABS,
+             ETHERNET_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
+    // #3
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 9),
 
     // Make sure this isn't a fragment by checking that the fragment
     // offset field in the IP header is zero.  This field is the
     // least-significant 13 bits in the bytes at offsets 6 and 7 in
     // the IP header, so the half-word at offset 20 (6 + size of
     // Ethernet header) is loaded and an appropriate mask applied.
+    // #4
     BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_HEADER_LEN + IP_FLAGS_OFFSET),
-    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 4, 0),
+    // #5
+    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 7, 0),
+
+    // Check the packet's destination address. The program will only
+    // allow the packets sent to the broadcast address or unicast
+    // to the specific address on the interface. By default, this
+    // address is set to 0 and must be set to the specific value
+    // when the raw socket is created and the program is attached
+    // to it. The caller must assign the address to the
+    // prog.bf_insns[8].k in the network byte order.
+    // #6
+    BPF_STMT(BPF_LD + BPF_W + BPF_ABS,
+             ETHERNET_HEADER_LEN + IP_DEST_ADDR_OFFSET),
+    // If this is a broadcast address, skip the next check.
+    // #7
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0xffffffff, 1, 0),
+    // If this is not broadcast address, compare it with the unicast
+    // address specified for the interface.
+    // #8
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0x00000000, 0, 4),
 
     // Get the IP header length.  This is achieved by the following
     // (special) instruction that, given the offset of the start
     // of the IP header (offset 14) loads the IP header length.
+    // #9
     BPF_STMT(BPF_LDX + BPF_B + BPF_MSH, ETHERNET_HEADER_LEN),
 
     // Make sure it's to the right port.  The following instruction
@@ -80,18 +109,22 @@ struct sock_filter dhcp_sock_filter [] = {
     // offset to locate the correct byte.  The given offset of 16
     // comprises the length of the Ethernet header (14) plus the offset
     // of the UDP destination port (2) within the UDP header.
+    // #10
     BPF_STMT(BPF_LD + BPF_H + BPF_IND, ETHERNET_HEADER_LEN + UDP_DEST_PORT),
     // The following instruction tests against the default DHCP server port,
-    // but the action port is actually set in PktFilterLPF::openSocket().
+    // but the action port is actually set in PktFilterBPF::openSocket().
     // N.B. The code in that method assumes that this instruction is at
-    // offset 8 in the program.  If this is changed, openSocket() must be
+    // offset 11 in the program.  If this is changed, openSocket() must be
     // updated.
+    // #11
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 1),
 
     // If we passed all the tests, ask for the whole packet.
+    // #12
     BPF_STMT(BPF_RET + BPF_K, (u_int)-1),
 
     // Otherwise, drop it.
+    // #13
     BPF_STMT(BPF_RET + BPF_K, 0),
 };
 
@@ -129,8 +162,14 @@ PktFilterLPF::openSocket(Iface& iface,
 
     filter_program.filter = dhcp_sock_filter;
     filter_program.len = sizeof(dhcp_sock_filter) / sizeof(struct sock_filter);
+
+    // Configure the filter program to receive unicast packets sent to the
+    // specified address. The program will also allow packets sent to the
+    // 255.255.255.255 broadcast address.
+    dhcp_sock_filter[8].k = static_cast<uint32_t>(addr);
+
     // Override the default port value.
-    dhcp_sock_filter[8].k = port;
+    dhcp_sock_filter[11].k = port;
     // Apply the filter.
     if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &filter_program,
                    sizeof(filter_program)) < 0) {
@@ -162,7 +201,7 @@ PktFilterLPF::openSocket(Iface& iface,
 }
 
 Pkt4Ptr
-PktFilterLPF::receive(const Iface& iface, const SocketInfo& socket_info) {
+PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     uint8_t raw_buf[IfaceMgr::RCVBUFSIZE];
     // First let's get some data from the fallback socket. The data will be
     // discarded but we don't want the socket buffer to bloat. We get the

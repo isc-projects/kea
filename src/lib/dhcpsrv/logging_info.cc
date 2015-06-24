@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-
+#include <config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/logging_info.h>
 #include <log/logger_name.h>
@@ -129,7 +129,7 @@ LoggingInfo::toSpec() const {
             }
 
         } else {
-            // Not a recognised destination, assume a file.
+            // Not a recognized destination, assume a file.
             option.destination = OutputOption::DEST_FILE;
             option.filename = dest->output_;
         }

@@ -5,7 +5,7 @@
 ///////////////
 ///////////////
 
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,13 @@
 #include <dns/exceptions.h>
 
 #include <boost/optional.hpp>
+
+// Undefine the macro IN which is defined in some operating systems
+// but conflicts the IN RR class.
+
+#ifdef IN
+#undef IN
+#endif
 
 namespace isc {
 namespace util {

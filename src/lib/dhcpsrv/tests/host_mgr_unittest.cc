@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -52,6 +52,7 @@ protected:
 };
 
 void
+// cppcheck-suppress unusedFunction
 HostMgrTest::SetUp() {
     // Remove all configuration which may be dangling from the previous test.
     CfgMgr::instance().clear();
@@ -61,7 +62,7 @@ HostMgrTest::SetUp() {
     const uint8_t mac_template[] = {
         0x01, 0x02, 0x0A, 0xBB, 0x03, 0x00
     };
-    for (int i = 0; i < 10; ++i) {
+    for (uint8_t i = 0; i < 10; ++i) {
         std::vector<uint8_t> vec(mac_template,
                                  mac_template + sizeof(mac_template));
         vec[vec.size() - 1] = i;
@@ -72,7 +73,7 @@ HostMgrTest::SetUp() {
     const uint8_t duid_template[] = {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x00
     };
-    for (int i = 0; i < 10; ++i) {
+    for (uint8_t i = 0; i < 10; ++i) {
         std::vector<uint8_t> vec(duid_template,
                                  duid_template + sizeof(mac_template));
         vec[vec.size() - 1] = i;

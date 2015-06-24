@@ -10,26 +10,22 @@ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 # But older GCC compilers don't have the flag.
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
-# Until logging in dynamically loaded libraries is fixed,
 # Define rule to build logging source files from message file
-# user_chk_messages.h user_chk_messages.cc: s-messages
-
-# Until logging in dynamically loaded libraries is fixed, exclude these.
-# s-messages: user_chk_messages.mes
-#	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/hooks/dhcp/user_chk/user_chk_messages.mes
-#	touch $@
+user_chk_messages.h user_chk_messages.cc: s-messages
+s-messages: user_chk_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/hooks/dhcp/user_chk/user_chk_messages.mes
+	touch $@
 
 # Tell automake that the message files are built as part of the build process
 # (so that they are built before the main library is built).
-# BUILT_SOURCES = user_chk_messages.h user_chk_messages.cc
-BUILT_SOURCES =
+BUILT_SOURCES = user_chk_messages.h user_chk_messages.cc
 
-# Ensure that the message file is included in the distribution
 EXTRA_DIST = libdhcp_user_chk.dox
+# Ensure that the message file is included in the distribution
+EXTRA_DIST += user_chk_messages.mes
 
 # Get rid of generated message files on a clean
-#CLEANFILES = *.gcno *.gcda user_chk_messages.h user_chk_messages.cc s-messages
-CLEANFILES = *.gcno *.gcda
+CLEANFILES = *.gcno *.gcda user_chk_messages.h user_chk_messages.cc s-messages
 
 # convenience archive
 
@@ -42,15 +38,13 @@ libduc_la_SOURCES += pkt_send_co.cc
 libduc_la_SOURCES += subnet_select_co.cc
 libduc_la_SOURCES += user.cc user.h
 libduc_la_SOURCES += user_chk.h
-# Until logging in dynamically loaded libraries is fixed, exclude these.
-#libduc_la_SOURCES += user_chk_log.cc user_chk_log.h
+libduc_la_SOURCES += user_chk_log.cc user_chk_log.h
 libduc_la_SOURCES += user_data_source.h
 libduc_la_SOURCES += user_file.cc user_file.h
 libduc_la_SOURCES += user_registry.cc user_registry.h
 libduc_la_SOURCES += version.cc
 
-# Until logging in dynamically loaded libraries is fixed, exclude these.
-#nodist_libduc_la_SOURCES = user_chk_messages.cc user_chk_messages.h
+nodist_libduc_la_SOURCES = user_chk_messages.cc user_chk_messages.h
 
 libduc_la_CXXFLAGS = $(AM_CXXFLAGS)
 libduc_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
