@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -269,6 +269,7 @@ class TCPClient : public SimpleClient {
     static const unsigned int SERVER_TIME_OUT = 2;
     TCPClient(asio::io_service& service, const ip::tcp::endpoint& server)
         : SimpleClient(service, SERVER_TIME_OUT),
+          data_to_send_(""), data_to_send_len_(0),
           send_data_delay_(0), send_data_len_delay_(0)
     {
         server_ = server;
