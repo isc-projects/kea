@@ -19,6 +19,7 @@
 #include <config/command_socket.h>
 #include <config/command_socket_factory.h>
 #include <cstdio>
+#include <cstdlib>
 
 using namespace isc::config;
 using namespace isc::data;
@@ -28,7 +29,9 @@ class CommandSocketFactoryTest : public ::testing::Test {
 public:
 
     /// Default constructor
-    CommandSocketFactoryTest() {
+    CommandSocketFactoryTest()
+        :SOCKET_NAME(getSocketPath()) {
+
         // Remove any stale socket files
         remove(SOCKET_NAME.c_str());
     }
@@ -40,12 +43,25 @@ public:
         remove(SOCKET_NAME.c_str());
     }
 
-    static const std::string SOCKET_NAME;
+    /// @brief Returns socket path (using either hardcoded path or env variable)
+    /// @return path to the unix socket
+    std::string getSocketPath() {
+
+        std::string socket_path;
+        const char* env = getenv("KEA_SOCKET_TEST_DIR");
+        if (env) {
+            socket_path = std::string(env) + "/test-socket";
+        } else {
+            socket_path = std::string(TEST_DATA_BUILDDIR) + "/test-socket";
+        }
+        return (socket_path);
+    }
+
+    std::string SOCKET_NAME;
 };
 
-const std::string CommandSocketFactoryTest::SOCKET_NAME =
-    std::string(TEST_DATA_BUILDDIR) + "/test-socket";
-
+// This test verifies that a Unix socket can be opened properly and that input
+// parameters (socket-type and socket-name) are verified.
 TEST_F(CommandSocketFactoryTest, unixCreate) {
     // Null pointer is obviously a bad idea.
     EXPECT_THROW(CommandSocketFactory::create(ConstElementPtr()),
@@ -75,3 +91,12 @@ TEST_F(CommandSocketFactoryTest, unixCreate) {
     EXPECT_NO_THROW(sock->close());
 }
 
+// This test checks that when unix path is too long, the socket cannot be opened.
+TEST_F(CommandSocketFactoryTest, unixCreateTooLong) {
+    ElementPtr socket_info = Element::fromJSON("{ \"socket-type\": \"unix\","
+        "\"socket-name\": \"/tmp/toolongtoolongtoolongtoolongtoolongtoolong"
+        "toolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolong"
+        "\" }");
+
+    EXPECT_THROW(CommandSocketFactory::create(socket_info), SocketError);
+}
