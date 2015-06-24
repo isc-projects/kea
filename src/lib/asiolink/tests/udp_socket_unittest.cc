@@ -179,7 +179,9 @@ TEST(UDPSocket, processReceivedData) {
                                             // Where data is put
                                             // cppcheck-suppress variableScope
     size_t                  expected;       // Expected amount of data
+                                            // cppcheck-suppress variableScope    
     size_t                  offset;         // Where to put next data
+                                            // cppcheck-suppress variableScope
     size_t                  cumulative;     // Cumulative data received
 
     // Set some dummy values in the buffer to check
