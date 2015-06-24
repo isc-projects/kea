@@ -222,8 +222,8 @@ public:
     std::string socket_path_;
     boost::shared_ptr<NakedControlledDhcpv6Srv> server_;
 
-    CtrlChannelDhcpv6SrvTest() {
-        socket_path_ = string(TEST_DATA_BUILDDIR) + "/kea6.sock";
+    CtrlChannelDhcpv6SrvTest()
+        : socket_path_(string(TEST_DATA_BUILDDIR) + "/kea6.sock") {
         reset();
     }
 
