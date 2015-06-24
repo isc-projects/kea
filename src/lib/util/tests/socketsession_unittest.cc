@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 
 #include <cerrno>
 #include <cstring>
+#include <cstdlib>
 
 #include <algorithm>
 #include <string>
@@ -51,7 +52,6 @@ using namespace isc::util::io::internal;
 
 namespace {
 
-const char* const TEST_UNIX_FILE = TEST_DATA_TOPBUILDDIR "/test.unix";
 const char* const TEST_PORT = "53535";
 const char* const TEST_PORT2 = "53536"; // use this in case we need 2 ports
 const char TEST_DATA[] = "Kea test";
@@ -118,7 +118,7 @@ typedef pair<const struct sockaddr*, socklen_t> SockAddrInfo;
 // A helper class to convert textual representation of IP address and port
 // to a pair of sockaddr and its length (in the form of a SockAddrInfo
 // pair).  Its get method uses getaddrinfo(3) for the conversion and stores
-// the result in the addrinfo_list_ vector until the object is destructed.
+// the result in the addrinfo_list_ vector until the object is destroyed.
 // The allocated resources will be automatically freed in an RAII manner.
 class SockAddrCreator {
 public:
@@ -155,13 +155,30 @@ private:
 
 class ForwardTest : public ::testing::Test {
 protected:
-    ForwardTest() : listen_fd_(-1), forwarder_(TEST_UNIX_FILE),
+
+    /// @brief Returns socket path (using either hardcoded path or env variable)
+    /// @return path to the unix socket
+    std::string getSocketPath() {
+
+        std::string socket_path;
+        const char* env = getenv("KEA_SOCKET_TEST_DIR");
+        if (env) {
+            socket_path = string(env) + "/test.unix";
+        } else {
+            socket_path = string(TEST_DATA_BUILDDIR) + "/test.unix";
+        }
+        return (socket_path);
+    }
+
+    ForwardTest() : listen_fd_(-1), forwarder_(getSocketPath()),
                     large_text_(65535, 'a'),
-                    test_un_len_(2 + strlen(TEST_UNIX_FILE))
+                    test_un_len_(2 + strlen(getSocketPath().c_str()))
     {
-        unlink(TEST_UNIX_FILE);
+        std::string unix_file = getSocketPath();
+
+        remove(unix_file.c_str());
         test_un_.sun_family = AF_UNIX;
-        strncpy(test_un_.sun_path, TEST_UNIX_FILE, sizeof(test_un_.sun_path));
+        strncpy(test_un_.sun_path, unix_file.c_str(), sizeof(test_un_.sun_path));
 #ifdef HAVE_SA_LEN
         test_un_.sun_len = test_un_len_;
 #endif
@@ -171,7 +188,7 @@ protected:
         if (listen_fd_ != -1) {
             close(listen_fd_);
         }
-        unlink(TEST_UNIX_FILE);
+        remove(getSocketPath().c_str());
     }
 
     // Start an internal "socket session server".
@@ -238,7 +255,7 @@ protected:
     // and it's a TCP socket, it will also start listening to new connection
     // requests.
     int createSocket(int family, int type, int protocol,
-                     const SockAddrInfo& sainfo, bool do_listen) 
+                     const SockAddrInfo& sainfo, bool do_listen)
     {
         int s = socket(family, type, protocol);
         if (s < 0) {
@@ -338,7 +355,7 @@ protected:
     }
 
     // See below
-    void checkPushAndPop(int family, int type, int protocoal,
+    void checkPushAndPop(int family, int type, int protocol,
                          const SockAddrInfo& local,
                          const SockAddrInfo& remote, const void* const data,
                          size_t data_len, bool new_connection);
@@ -378,7 +395,7 @@ TEST_F(ForwardTest, connect) {
     EXPECT_THROW(forwarder.close(), BadValue);
 
     // Set up the receiver and connect.  It should succeed.
-    SocketSessionForwarder forwarder2(TEST_UNIX_FILE);
+    SocketSessionForwarder forwarder2(getSocketPath().c_str());
     startListen();
     forwarder2.connectToReceiver();
     // And it can be closed successfully.
@@ -396,14 +413,14 @@ TEST_F(ForwardTest, connect) {
     // Connect then destroy.  Should be internally closed, but unfortunately
     // it's not easy to test it directly.  We only check no disruption happens.
     SocketSessionForwarder* forwarderp =
-        new SocketSessionForwarder(TEST_UNIX_FILE);
+        new SocketSessionForwarder(getSocketPath().c_str());
     forwarderp->connectToReceiver();
     delete forwarderp;
 }
 
 TEST_F(ForwardTest, close) {
     // can't close before connect
-    EXPECT_THROW(SocketSessionForwarder(TEST_UNIX_FILE).close(), BadValue);
+    EXPECT_THROW(SocketSessionForwarder(getSocketPath().c_str()).close(), BadValue);
 }
 
 void
@@ -674,7 +691,7 @@ TEST_F(ForwardTest, badPush) {
 }
 
 // A subroutine for pushTooFast, continuously pushing socket sessions
-// with full-size DNS messages (65535 bytes) without receiving them.  
+// with full-size DNS messages (65535 bytes) without receiving them.
 // the push attempts will eventually fill the socket send buffer and trigger
 // an exception.  Unfortunately exactly how many we can forward depends on
 // the internal system implementation; it should be close to 3, because

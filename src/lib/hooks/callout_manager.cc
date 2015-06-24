@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,10 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <hooks/callout_handle.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks_log.h>
 #include <hooks/pointer_converter.h>
+#include <util/stopwatch.h>
 
 #include <boost/static_assert.hpp>
 
@@ -65,7 +68,7 @@ CalloutManager::checkLibraryIndex(int library_index) const {
 void
 CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
     // Note the registration.
-    LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUT_REGISTRATION)
+    LOG_DEBUG(callouts_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUT_REGISTRATION)
         .arg(current_library_).arg(name);
 
     // Sanity check that the current library index is set to a valid value.
@@ -134,6 +137,14 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
         // change and potentially affect the iteration through that vector.
         CalloutVector callouts(hook_vector_[hook_index]);
 
+        // This object will be used to measure execution time of each callout
+        // and the total time spent in callouts for this hook point.
+        util::Stopwatch stopwatch;
+
+        // Mark that the callouts begin for the hook.
+        LOG_DEBUG(callouts_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_BEGIN)
+            .arg(server_hooks_.getName(current_hook_));
+
         // Call all the callouts.
         for (CalloutVector::const_iterator i = callouts.begin();
              i != callouts.end(); ++i) {
@@ -144,28 +155,42 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
 
             // Call the callout
             try {
+                stopwatch.start();
                 int status = (*i->second)(callout_handle);
+                stopwatch.stop();
                 if (status == 0) {
-                    LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
+                    LOG_DEBUG(callouts_logger, HOOKS_DBG_EXTENDED_CALLS,
                               HOOKS_CALLOUT_CALLED).arg(current_library_)
                         .arg(server_hooks_.getName(current_hook_))
-                        .arg(PointerConverter(i->second).dlsymPtr());
+                        .arg(PointerConverter(i->second).dlsymPtr())
+                        .arg(stopwatch.logFormatLastDuration());
                 } else {
-                    LOG_ERROR(hooks_logger, HOOKS_CALLOUT_ERROR)
+                    LOG_ERROR(callouts_logger, HOOKS_CALLOUT_ERROR)
                         .arg(current_library_)
                         .arg(server_hooks_.getName(current_hook_))
-                        .arg(PointerConverter(i->second).dlsymPtr());
+                        .arg(PointerConverter(i->second).dlsymPtr())
+                        .arg(stopwatch.logFormatLastDuration());
                 }
             } catch (const std::exception& e) {
+                // If an exception occurred, the stopwatch.stop() hasn't been
+                // called, so we have to call it here.
+                stopwatch.stop();
                 // Any exception, not just ones based on isc::Exception
-                LOG_ERROR(hooks_logger, HOOKS_CALLOUT_EXCEPTION)
+                LOG_ERROR(callouts_logger, HOOKS_CALLOUT_EXCEPTION)
                     .arg(current_library_)
                     .arg(server_hooks_.getName(current_hook_))
                     .arg(PointerConverter(i->second).dlsymPtr())
-                    .arg(e.what());
+                    .arg(e.what())
+                    .arg(stopwatch.logFormatLastDuration());
             }
 
         }
+
+        // Mark end of callout execution. Include the total execution
+        // time for callouts.
+        LOG_DEBUG(callouts_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_COMPLETE)
+            .arg(server_hooks_.getName(current_hook_))
+            .arg(stopwatch.logFormatTotalDuration());
 
         // Reset the current hook and library indexs to an invalid value to
         // catch any programming errors.
@@ -212,7 +237,7 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
     // Return an indication of whether anything was removed.
     bool removed = initial_size != hook_vector_[hook_index].size();
     if (removed) {
-        LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
+        LOG_DEBUG(callouts_logger, HOOKS_DBG_EXTENDED_CALLS,
                   HOOKS_CALLOUT_DEREGISTERED).arg(current_library_).arg(name);
     }
 
@@ -247,7 +272,7 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
     // Return an indication of whether anything was removed.
     bool removed = initial_size != hook_vector_[hook_index].size();
     if (removed) {
-        LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
+        LOG_DEBUG(callouts_logger, HOOKS_DBG_EXTENDED_CALLS,
                   HOOKS_ALL_CALLOUTS_DEREGISTERED).arg(current_library_)
                                                 .arg(name);
     }

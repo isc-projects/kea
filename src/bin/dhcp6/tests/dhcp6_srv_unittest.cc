@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,9 +37,12 @@
 #include <dhcpsrv/utils.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
-#include <hooks/server_hooks.h>
+#include <stats/stats_mgr.h>
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp6/tests/dhcp6_client.h>
+#include <dhcp/tests/pkt_captures.h>
+#include <cc/command_interpreter.h>
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -50,13 +53,11 @@
 
 using namespace isc;
 using namespace isc::data;
-using namespace isc::config;
 using namespace isc::test;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
-using namespace isc::hooks;
 using namespace std;
 
 namespace {
@@ -80,7 +81,8 @@ TEST_F(NakedDhcpv6SrvTest, SolicitNoSubnet) {
     Pkt6Ptr reply = srv.processSolicit(sol);
 
     // check that we get the right NAK
-    checkNakResponse (reply, DHCPV6_ADVERTISE, 1234, STATUS_NoAddrsAvail);
+    checkNakResponse(reply, DHCPV6_ADVERTISE, 1234, STATUS_NoAddrsAvail,
+                     0, 0);
 }
 
 // This test verifies that incoming REQUEST can be handled properly when
@@ -112,7 +114,8 @@ TEST_F(NakedDhcpv6SrvTest, RequestNoSubnet) {
     Pkt6Ptr reply = srv.processRequest(req);
 
     // check that we get the right NAK
-    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoAddrsAvail);
+    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoAddrsAvail,
+                      0, 0);
 }
 
 // This test verifies that incoming RENEW can be handled properly, even when
@@ -147,7 +150,8 @@ TEST_F(NakedDhcpv6SrvTest, RenewNoSubnet) {
     Pkt6Ptr reply = srv.processRenew(req);
 
     // check that we get the right NAK
-    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoBinding);
+    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoBinding,
+                      0, 0);
 }
 
 // This test verifies that incoming RELEASE can be handled properly, even when
@@ -182,18 +186,13 @@ TEST_F(NakedDhcpv6SrvTest, ReleaseNoSubnet) {
     Pkt6Ptr reply = srv.processRelease(req);
 
     // check that we get the right NAK
-    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoBinding);
+    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoBinding, 0, 0);
 }
-
 
 // Test verifies that the Dhcpv6_srv class can be instantiated. It checks a mode
 // without open sockets and with sockets opened on a high port (to not require
 // root privileges).
 TEST_F(Dhcpv6SrvTest, basic) {
-    // srv has stubbed interface detection. It will read
-    // interfaces.txt instead. It will pretend to have detected
-    // fe80::1234 link-local address on eth0 interface. Obviously
-    // an attempt to bind this socket will fail.
     boost::scoped_ptr<Dhcpv6Srv> srv;
 
     ASSERT_NO_THROW( {
@@ -290,7 +289,9 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     IfaceMgrTestConfig test_config(true);
 
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -904,20 +905,38 @@ TEST_F(Dhcpv6SrvTest, pdRenewBasic) {
 }
 
 // This test verifies that incoming (invalid) RENEW with an address
-// can be handled properly.
+// can be handled properly. This has changed with #3565. The server
+// is now able to allocate a lease in Renew if it's available.
+// Previous testRenewReject is now split into 3 tests.
 //
-// This test checks 3 scenarios:
-// 1. there is no such lease at all
-// 2. there is such a lease, but it is assigned to a different IAID
-// 3. there is such a lease, but it belongs to a different client
-//
-// expected:
-// - returned REPLY message has copy of client-id
-// - returned REPLY message has server-id
-// - returned REPLY message has IA_NA that includes STATUS-CODE
-// - No lease in LeaseMgr
-TEST_F(Dhcpv6SrvTest, RenewReject) {
-    testRenewReject(Lease::TYPE_NA, IOAddress("2001:db8:1:1::dead"));
+// This test checks the first scenario: There is no lease at all.
+// The server will try to assign it. Since it is not used by anyone else,
+// the server will assign it. This is convenient for various types
+// of recoveries, e.g. when the server lost its database.
+TEST_F(Dhcpv6SrvTest, RenewUnknown) {
+    // False means that the lease should not be created before renewal attempt
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::abc", "2001:db8:1:1::abc",
+                   128, false);
+}
+
+// This test checks that a client that renews existing lease, but uses
+// a wrong IAID, will be processed correctly. As there is no lease for
+// this (duid, type, iaid) tuple, this is treated as a new IA, regardless
+// if the client inserted an address that is used in a different IA.
+// After #3565 was implemented, the server will attempt to assign a lease.
+// The one that client requested is already used with different IAID, so
+// it will just pick a different lease. This is the second out of three
+// scenarios tests by old RenewReject test.
+TEST_F(Dhcpv6SrvTest, RenewWrongIAID) {
+    testRenewWrongIAID(Lease::TYPE_NA, IOAddress("2001:db8:1:1::abc"));
+}
+
+// This test checks whether client A can renew an address that is currently
+// leased by client B. The server should detect that the lease belong to
+// someone else and assign a different lease. This is the third out of three
+// scenarios tests by old RenewReject test.
+TEST_F(Dhcpv6SrvTest, RenewSomeoneElesesLease) {
+    testRenewSomeoneElsesLease(Lease::TYPE_NA, IOAddress("2001:db8::1"));
 }
 
 // This test verifies that incoming (invalid) RENEW with a prefix
@@ -946,6 +965,7 @@ TEST_F(Dhcpv6SrvTest, pdRenewReject) {
 // - returned REPLY message has server-id
 // - returned REPLY message has IA_NA that does not include an IAADDR
 // - lease is actually removed from LeaseMgr
+// - assigned-nas stats counter is properly decremented
 TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
     testReleaseBasic(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
                      IOAddress("2001:db8:1:1::cafe:babe"));
@@ -960,6 +980,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
 // - returned REPLY message has server-id
 // - returned REPLY message has IA_PD that does not include an IAPREFIX
 // - lease is actually removed from LeaseMgr
+// - assigned-pds stats counter is properly decremented
 TEST_F(Dhcpv6SrvTest, pdReleaseBasic) {
     testReleaseBasic(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
                      IOAddress("2001:db8:1:2::"));
@@ -978,6 +999,7 @@ TEST_F(Dhcpv6SrvTest, pdReleaseBasic) {
 // - returned REPLY message has server-id
 // - returned REPLY message has IA_NA that includes STATUS-CODE
 // - No lease in LeaseMgr
+// - assigned-nas stats counter is properly not decremented
 TEST_F(Dhcpv6SrvTest, ReleaseReject) {
     testReleaseReject(Lease::TYPE_NA, IOAddress("2001:db8:1:1::dead"));
 }
@@ -995,32 +1017,9 @@ TEST_F(Dhcpv6SrvTest, ReleaseReject) {
 // - returned REPLY message has server-id
 // - returned REPLY message has IA_PD that includes STATUS-CODE
 // - No lease in LeaseMgr
+// - assigned-pds stats counter is properly not decremented
 TEST_F(Dhcpv6SrvTest, pdReleaseReject) {
     testReleaseReject(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"));
-}
-
-// This test verifies if the status code option is generated properly.
-TEST_F(Dhcpv6SrvTest, StatusCode) {
-    NakedDhcpv6Srv srv(0);
-
-    // a dummy content for client-id
-    uint8_t expected[] = {
-        0x0, 0xD, // option code = 13
-        0x0, 0x7, // option length = 7
-        0x0, 0x3, // status code = 3
-        0x41, 0x42, 0x43, 0x44, 0x45 // string value ABCDE
-    };
-    // Create the option.
-    OptionPtr status = srv.createStatusCode(3, "ABCDE");
-    // Allocate an output buffer. We will store the option
-    // in wire format here.
-    OutputBuffer buf(sizeof(expected));
-    // Prepare the wire format.
-    ASSERT_NO_THROW(status->pack(buf));
-    // Check that the option buffer has valid length (option header + data).
-    ASSERT_EQ(sizeof(expected), buf.getLength());
-    // Verify the contents of the option.
-    EXPECT_EQ(0, memcmp(expected, buf.getData(), sizeof(expected)));
 }
 
 // This test verifies if the sanityCheck() really checks options presence.
@@ -1096,7 +1095,7 @@ TEST_F(Dhcpv6SrvTest, testServerID) {
         Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     std::vector<uint8_t> bin;
 
-    // diud_llt constructed with: time = 0, macaddress = 00:00:00:00:00:00
+    // duid_llt constructed with: time = 0, macaddress = 00:00:00:00:00:00
     // it's necessary to generate server identifier option
     isc::util::encode::decodeHex("0001000100000000000000000000", bin);
     // Now create server identifier option
@@ -1107,7 +1106,7 @@ TEST_F(Dhcpv6SrvTest, testServerID) {
     // server is using.
     req->addOption(serverid);
 
-    // Message shoud be dropped
+    // Message should be dropped
     EXPECT_FALSE(srv.testServerID(req));
 
     // Delete server identifier option and add new one, with same value as
@@ -1425,7 +1424,7 @@ TEST_F(Dhcpv6SrvTest, ServerID) {
     ASSERT_TRUE(expected_duid1 == srv.getServerID()->getData());
 
     // Now test writing to a file
-    EXPECT_EQ(0, unlink(DUID_FILE));
+    EXPECT_EQ(0, remove(DUID_FILE));
     EXPECT_NO_THROW(srv.writeServerID(DUID_FILE));
 
     fstream file2(DUID_FILE, ios::in);
@@ -1443,7 +1442,7 @@ TEST_F(Dhcpv6SrvTest, portsDirectTraffic) {
     NakedDhcpv6Srv srv(0);
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = captureSimpleSolicit();
+    Pkt6Ptr sol = PktCaptures::captureSimpleSolicit();
 
     // Simulate that we have received that traffic
     srv.fakeReceive(sol);
@@ -1468,7 +1467,7 @@ TEST_F(Dhcpv6SrvTest, portsRelayedTraffic) {
     NakedDhcpv6Srv srv(0);
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = captureRelayedSolicit();
+    Pkt6Ptr sol = PktCaptures::captureRelayedSolicit();
 
     // Simulate that we have received that traffic
     srv.fakeReceive(sol);
@@ -1495,7 +1494,7 @@ TEST_F(Dhcpv6SrvTest, docsisTraffic) {
     NakedDhcpv6Srv srv(0);
 
     // Let's get a traffic capture from DOCSIS3.0 modem
-    Pkt6Ptr sol = captureDocsisRelayedSolicit();
+    Pkt6Ptr sol = PktCaptures::captureDocsisRelayedSolicit();
 
     // Simulate that we have received that traffic
     srv.fakeReceive(sol);
@@ -1515,7 +1514,7 @@ TEST_F(Dhcpv6SrvTest, docsisTraffic) {
 TEST_F(Dhcpv6SrvTest, docsisVendorOptionsParse) {
 
     // Let's get a traffic capture from DOCSIS3.0 modem
-    Pkt6Ptr sol = captureDocsisRelayedSolicit();
+    Pkt6Ptr sol = PktCaptures::captureDocsisRelayedSolicit();
     EXPECT_NO_THROW(sol->unpack());
 
     // Check if the packet contain
@@ -1550,7 +1549,7 @@ TEST_F(Dhcpv6SrvTest, docsisVendorORO) {
     NakedDhcpv6Srv srv(0);
 
     // Let's get a traffic capture from DOCSIS3.0 modem
-    Pkt6Ptr sol = captureDocsisRelayedSolicit();
+    Pkt6Ptr sol = PktCaptures::captureDocsisRelayedSolicit();
     ASSERT_NO_THROW(sol->unpack());
 
     // Check if the packet contains vendor options option
@@ -1573,7 +1572,9 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
 
     IfaceMgrTestConfig test_config(true);
 
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1637,7 +1638,7 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
     adv = srv_.processSolicit(sol);
     ASSERT_TRUE(adv);
 
-    // Check if thre is vendor option response
+    // Check if there is vendor option response
     OptionPtr tmp = adv->getOption(D6O_VENDOR_OPTS);
     ASSERT_TRUE(tmp);
 
@@ -1658,7 +1659,9 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
 // src/lib/dhcp/docsis3_option_defs.h.
 TEST_F(Dhcpv6SrvTest, vendorOptionsDocsisDefinitions) {
     ConstElementPtr x;
-    string config_prefix = "{ \"interfaces\": [ \"*\" ],"
+    string config_prefix = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1698,13 +1701,13 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsDocsisDefinitions) {
     // This should fail (missing option definition)
     EXPECT_NO_THROW(x = configureDhcp6Server(srv, json_bogus));
     ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
     ASSERT_EQ(1, rcode_);
 
     // This should work (option definition present)
     EXPECT_NO_THROW(x = configureDhcp6Server(srv, json_valid));
     ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 }
 
@@ -1789,7 +1792,7 @@ TEST_F(Dhcpv6SrvTest, clientClassification) {
     // Let's create a relayed SOLICIT. This particular relayed SOLICIT has
     // vendor-class set to docsis3.0
     Pkt6Ptr sol1;
-    ASSERT_NO_THROW(sol1 = captureDocsisRelayedSolicit());
+    ASSERT_NO_THROW(sol1 = PktCaptures::captureDocsisRelayedSolicit());
     ASSERT_NO_THROW(sol1->unpack());
 
     srv.classifyPacket(sol1);
@@ -1801,7 +1804,7 @@ TEST_F(Dhcpv6SrvTest, clientClassification) {
     // Let's get a relayed SOLICIT. This particular relayed SOLICIT has
     // vendor-class set to eRouter1.0
     Pkt6Ptr sol2;
-    ASSERT_NO_THROW(sol2 = captureeRouterRelayedSolicit());
+    ASSERT_NO_THROW(sol2 = PktCaptures::captureeRouterRelayedSolicit());
     ASSERT_NO_THROW(sol2->unpack());
 
     srv.classifyPacket(sol2);
@@ -1824,7 +1827,9 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
     // The second subnet does not play any role here. The client's
     // IP address belongs to the first subnet, so only that first
     // subnet it being tested.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1858,7 +1863,7 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
     // Still not supported, because it belongs to wrong class.
     EXPECT_FALSE(srv_.selectSubnet(sol));
 
-    // Let's add it to maching class.
+    // Let's add it to matching class.
     sol->addClass("foo");
 
     // This time it should work
@@ -1902,7 +1907,7 @@ TEST_F(Dhcpv6SrvTest, cableLabsShortVendorClass) {
     NakedDhcpv6Srv srv(0);
 
     // Create a simple Solicit with the 4-byte long vendor class option.
-    Pkt6Ptr sol = captureCableLabsShortVendorClass();
+    Pkt6Ptr sol = PktCaptures::captureCableLabsShortVendorClass();
 
     // Simulate that we have received that traffic
     srv.fakeReceive(sol);
@@ -1929,7 +1934,9 @@ TEST_F(Dhcpv6SrvTest, relayOverride) {
     // defined. Both are not belonging to the subnets. That is
     // important, because if the relay belongs to the subnet, there's
     // no need to specify relay override.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -2005,7 +2012,9 @@ TEST_F(Dhcpv6SrvTest, relayOverrideAndClientClass) {
     // This test configures 2 subnets. They both are on the same link, so they
     // have the same relay-ip address. Furthermore, the first subnet is
     // reserved for clients that belong to class "foo".
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -2065,7 +2074,346 @@ TEST_F(Dhcpv6SrvTest, relayOverrideAndClientClass) {
     EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol));
 }
 
+/// @brief Creates RSOO option with suboptions
+///
+/// Creates Relay-Supplied Options option that includes nested options. The
+/// codes of those nested options are specified in codes parameter. Content of
+/// the options is controlled with payload parameter. When it is zero, option
+/// code will be used (e.g. option 100 will contain repeating bytes of value 100).
+/// When non-zero is used, payload will be used. Each suboption length is always
+/// set to the arbitrarily chosen value of 10.
+///
+/// @param codes a vector of option codes to be created
+/// @param payload specified payload (0 = fill payload with repeating option code)
+/// @return RSOO with nested options
+OptionPtr createRSOO(const std::vector<uint16_t> codes, uint8_t payload = 0) {
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(Option::V6, D6O_RSOO);
+    if (!def) {
+        isc_throw(BadValue, "Can't find RSOO definition");
+    }
+    OptionPtr rsoo_container(new OptionCustom(*def, Option::V6));
+
+    for (size_t i = 0; i < codes.size(); ++i) {
+        OptionBuffer buf(10, payload ? payload : codes[i]); // let's make the option 10 bytes long
+        rsoo_container->addOption(OptionPtr(new Option(Option::V6, codes[i], buf)));
+    }
+
+    return (rsoo_container);
+}
+
+// Test that the server processes RSOO (Relay Supplied Options option) correctly,
+// i.e. it includes in its response the options that are inserted by the relay.
+// The server must do this only for options that are RSOO-enabled.
+TEST_F(Dhcpv6SrvTest, rsoo) {
+
+    Dhcp6Client client;
+
+    string config =
+        "{"
+        "    \"relay-supplied-options\": [ \"110\", \"120\", \"130\" ],"
+        "    \"preferred-lifetime\": 3000,"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"subnet6\": [ { "
+        "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "        \"subnet\": \"2001:db8::/48\" "
+        "     } ],"
+        "    \"valid-lifetime\": 4000"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Now pretend the packet came via one relay.
+    Pkt6::RelayInfo relay;
+    relay.msg_type_ = DHCPV6_RELAY_FORW;
+    relay.hop_count_ = 1;
+    relay.linkaddr_ = IOAddress("2001:db8::1");
+    relay.peeraddr_ = IOAddress("fe80::1");
+    vector<uint16_t> rsoo1;
+    rsoo1.push_back(109);
+    rsoo1.push_back(110);
+    rsoo1.push_back(111);
+
+    // The relay will request echoing back 3 options: 109, 110, 111.
+    // The configuration allows echoing back only 110.
+    OptionPtr opt = createRSOO(rsoo1);
+    relay.options_.insert(make_pair(opt->getType(), opt));
+    client.relay_info_.push_back(relay);
+
+    client.doSARR();
+
+    // Option 110 should be copied to the client
+    EXPECT_FALSE(client.config_.options_.find(110) == client.config_.options_.end());
+
+    // Options 109 and 111 should not be copied (they are not RSOO-enabled)
+    EXPECT_TRUE(client.config_.options_.find(109) == client.config_.options_.end());
+    EXPECT_TRUE(client.config_.options_.find(111) == client.config_.options_.end());
+}
+
+// Test that the server processes RSOO (Relay Supplied Options option) correctly
+// when there are more relays. In particular, the following case is tested:
+// if relay1 inserts option A and B, relay2 inserts option B and C, the response
+// should include options A, B and C. The server must use instance of option B
+// that comes from the first relay, not the second one.
+TEST_F(Dhcpv6SrvTest, rsoo2relays) {
+
+    Dhcp6Client client;
+
+    string config =
+        "{"
+        "    \"relay-supplied-options\": [ \"110\", \"120\", \"130\" ],"
+        "    \"preferred-lifetime\": 3000,"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"subnet6\": [ { "
+        "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "        \"subnet\": \"2001:db8::/48\" "
+        "     } ],"
+        "    \"valid-lifetime\": 4000"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Now pretend the packet came via two relays.
+
+    // This situation reflects the following case:
+    // client----relay1----relay2----server
+
+    // Fabricate the first relay.
+    Pkt6::RelayInfo relay1;
+    relay1.msg_type_ = DHCPV6_RELAY_FORW;
+    relay1.hop_count_ = 1;
+    relay1.linkaddr_ = IOAddress("2001:db8::1");
+    relay1.peeraddr_ = IOAddress("fe80::1");
+    vector<uint16_t> rsoo1;
+    rsoo1.push_back(110); // The relay1 will send 2 options: 110, 120
+    rsoo1.push_back(120);
+    OptionPtr opt = createRSOO(rsoo1, 1); // use 0x1 as payload
+    relay1.options_.insert(make_pair(opt->getType(), opt));
+
+    // Now the second relay.
+    Pkt6::RelayInfo relay2;
+    relay2.msg_type_ = DHCPV6_RELAY_FORW;
+    relay2.hop_count_ = 2;
+    relay2.linkaddr_ = IOAddress("2001:db8::2");
+    relay2.peeraddr_ = IOAddress("fe80::2");
+    vector<uint16_t> rsoo2;
+    rsoo2.push_back(120); // The relay2 will send 2 options: 120, 130
+    rsoo2.push_back(130);
+    opt = createRSOO(rsoo2, 2); // use 0x2 as payload
+    relay2.options_.insert(make_pair(opt->getType(), opt));
+
+    // The relays ecapsulate packet in this order: relay1, relay2, but the server
+    // decapsulates the packet in reverse order.
+    client.relay_info_.push_back(relay2);
+    client.relay_info_.push_back(relay1);
+
+    // There's a conflict here. Both relays want the server to echo back option
+    // 120. According to RFC6422, section 6:
+    //
+    // When such a conflict exists, the DHCP server MUST choose no more than
+    // one of these options to forward to the client.  The DHCP server MUST
+    // NOT forward more than one of these options to the client.
+    //
+    // By default, the DHCP server MUST choose the innermost value -- the
+    // value supplied by the relay agent closest to the DHCP client -- to
+    // forward to the DHCP client.
+
+    // Let the client do his thing.
+    client.doSARR();
+
+    int count110 = 0; // Let's count how many times option 110 was echoed back
+    int count120 = 0; // Let's count how many times option 120 was echoed back
+    int count130 = 0; // Let's count how many times option 130 was echoed back
+    OptionPtr opt120;
+    for (OptionCollection::const_iterator it = client.config_.options_.begin();
+         it != client.config_.options_.end(); ++it) {
+        switch (it->second->getType()) {
+        case 110:
+            count110++;
+            break;
+        case 120:
+            count120++;
+            opt120 = it->second;
+            break;
+        case 130:
+            count130++;
+            break;
+        default:
+            break;
+        }
+    }
+
+    // We expect to have exactly one instance of each option code.
+    EXPECT_EQ(1, count110);
+    EXPECT_EQ(1, count120);
+    EXPECT_EQ(1, count130);
+
+    // Now, let's check if the proper instance of option 120 was sent. It should
+    // match the content of what the first relay had sent.
+    ASSERT_TRUE(opt120);
+    vector<uint8_t> expected(10, 1);
+    EXPECT_TRUE(expected == opt120->getData());
+}
+
+// This test verifies that the server will send the option for which it
+// has a candidate, rather than the option sent by the relay in the RSOO.
+TEST_F(Dhcpv6SrvTest, rsooOverride) {
+    Dhcp6Client client;
+    // The client will be requesting specific options.
+    client.useORO(true);
+
+    // The following configuration enables RSOO options: 110 and 120.
+    // It also configures the server with option 120 which should
+    // "override" the option 120 sent in the RSOO by the relay.
+    string config =
+        "{"
+        "    \"relay-supplied-options\": [ \"110\", \"120\" ],"
+        "    \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 120,"
+        "      \"type\": \"binary\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"dhcp6\","
+        "      \"encapsulate\": \"\""
+        "    } ],"
+        "    \"option-data\": [ {"
+        "      \"code\": 120,"
+        "      \"data\": \"05\""
+        "    } ],"
+        "    \"preferred-lifetime\": 3000,"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"subnet6\": [ { "
+        "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "        \"subnet\": \"2001:db8::/48\" "
+        "     } ],"
+        "    \"valid-lifetime\": 4000"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Fabricate the relay.
+    Pkt6::RelayInfo relay;
+    relay.msg_type_ = DHCPV6_RELAY_FORW;
+    relay.hop_count_ = 1;
+    relay.linkaddr_ = IOAddress("2001:db8::1");
+    relay.peeraddr_ = IOAddress("fe80::1");
+    vector<uint16_t> rsoo;
+    // The relay will send 2 options: 110, 120
+    rsoo.push_back(110);
+    rsoo.push_back(120);
+    // Use 0x1 as payload
+    OptionPtr opt = createRSOO(rsoo, 1);
+    relay.options_.insert(make_pair(opt->getType(), opt));
+    client.relay_info_.push_back(relay);
+
+    // Client should request option 120 in the ORO so as the server
+    // sends the configured option 120 to the client.
+    client.requestOption(120);
+    client.doSARR();
+
+    // The option 110 should be the one injected by the relay.
+    opt = client.config_.findOption(110);
+    ASSERT_TRUE(opt);
+    // We check that this is the option injected by the relay by
+    // checking option length. It should have 10 bytes long payload.
+    ASSERT_EQ(10, opt->getData().size());
+
+    // The second option should be the one configured on the server,
+    // rather than the one injected by the relay.
+    opt = client.config_.findOption(120);
+    ASSERT_TRUE(opt);
+    // It should have the size of 1.
+    ASSERT_EQ(1, opt->getData().size());
+}
+
+// Test checks if pkt6-advertise-received is bumped up correctly.
+// Note that in properly configured network the server never receives Advertise
+// messages.
+TEST_F(Dhcpv6SrvTest, receiveAdvertiseStat) {
+    testReceiveStats(DHCPV6_ADVERTISE, "pkt6-advertise-received");
+}
+
+// Test checks if pkt6-reply-received is bumped up correctly.
+// Note that in properly configured network the server never receives Reply
+// messages.
+TEST_F(Dhcpv6SrvTest, receiveReplyStat) {
+    testReceiveStats(DHCPV6_REPLY, "pkt6-reply-received");
+}
+
+// Test checks if pkt6-unknown-received is bumped up correctly.
+TEST_F(Dhcpv6SrvTest, receiveUnknownStat) {
+    testReceiveStats(123, "pkt6-unknown-received");
+}
+
+// Test checks if pkt6-renew-received is bumped up correctly.
+TEST_F(Dhcpv6SrvTest, receiveRenewStat) {
+    testReceiveStats(DHCPV6_RENEW, "pkt6-renew-received");
+}
+
+// Test checks if pkt6-rebind-received is bumped up correctly.
+TEST_F(Dhcpv6SrvTest, receiveRebindStat) {
+    testReceiveStats(DHCPV6_REBIND, "pkt6-rebind-received");
+}
+
+// Test checks if pkt6-release-received is bumped up correctly.
+TEST_F(Dhcpv6SrvTest, receiveReleaseStat) {
+    testReceiveStats(DHCPV6_RELEASE, "pkt6-release-received");
+}
+
+// Test checks if pkt6-decline-received is bumped up correctly.
+TEST_F(Dhcpv6SrvTest, receiveDeclineStat) {
+    testReceiveStats(DHCPV6_DECLINE, "pkt6-decline-received");
+}
+
+// Test checks if reception of a malformed packet increases pkt-parse-failed
+// and pkt6-receive-drop
+TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    NakedDhcpv6Srv srv(0);
+
+    // Let's get a simple SOLICIT...
+    Pkt6Ptr pkt = PktCaptures::captureSimpleSolicit();
+
+    // And pretend it's packet is only 3 bytes long.
+    pkt->data_.resize(3);
+
+    // Check that those statistics are not set before the test
+    ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
+    ObservationPtr parse_fail = mgr.getObservation("pkt6-parse-failed");
+    ObservationPtr recv_drop = mgr.getObservation("pkt6-receive-drop");
+    EXPECT_FALSE(pkt6_rcvd);
+    EXPECT_FALSE(parse_fail);
+    EXPECT_FALSE(recv_drop);
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(pkt);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    srv.run();
+
+    // All expected statstics must be present.
+    pkt6_rcvd = mgr.getObservation("pkt6-received");
+    parse_fail = mgr.getObservation("pkt6-parse-failed");
+    recv_drop = mgr.getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(pkt6_rcvd);
+    ASSERT_TRUE(parse_fail);
+    ASSERT_TRUE(recv_drop);
+
+    // They also must have expected values.
+    EXPECT_EQ(1, pkt6_rcvd->getInteger().first);
+    EXPECT_EQ(1, parse_fail->getInteger().first);
+    EXPECT_EQ(1, recv_drop->getInteger().first);
+}
+
+
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
+
 
 }   // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,8 @@
 
 #include <config.h>
 
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
+#include <config/module_spec.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/iface_mgr.h>
@@ -71,6 +72,16 @@ TEST(Dhcp6SpecTest, basicSpec) {
 }
 
 class Dhcp6ParserTest : public ::testing::Test {
+protected:
+    // Check that no hooks libraries are loaded.  This is a pre-condition for
+    // a number of tests, so is checked in one place.  As this uses an
+    // ASSERT call - and it is not clear from the documentation that Gtest
+    // predicates can be used in a constructor - the check is placed in SetUp.
+    virtual void SetUp() {
+        std::vector<std::string> libraries = HooksManager::getLibraryNames();
+        ASSERT_TRUE(libraries.empty());
+    }
+
 public:
     Dhcp6ParserTest() :rcode_(-1), srv_(0) {
         // srv_(0) means to not open any sockets. We don't want to
@@ -86,7 +97,7 @@ public:
             ADD_FAILURE() << "No interfaces detected.";
         }
 
-        valid_iface_ = ifaces.begin()->getName();
+        valid_iface_ = (*ifaces.begin())->getName();
         bogus_iface_ = "nonexisting0";
 
         if (IfaceMgr::instance().getIface(bogus_iface_)) {
@@ -99,22 +110,13 @@ public:
         resetConfiguration();
     }
 
-    // Check that no hooks libraries are loaded.  This is a pre-condition for
-    // a number of tests, so is checked in one place.  As this uses an
-    // ASSERT call - and it is not clear from the documentation that Gtest
-    // predicates can be used in a constructor - the check is placed in SetUp.
-    void SetUp() {
-        std::vector<std::string> libraries = HooksManager::getLibraryNames();
-        ASSERT_TRUE(libraries.empty());
-    }
-
     ~Dhcp6ParserTest() {
         // Reset configuration database after each test.
         resetConfiguration();
 
         // ... and delete the hooks library marker files if present
-        unlink(LOAD_MARKER_FILE);
-        unlink(UNLOAD_MARKER_FILE);
+        remove(LOAD_MARKER_FILE);
+        remove(UNLOAD_MARKER_FILE);
     };
 
     // Checks if config_result (result of DHCP server configuration) has
@@ -124,6 +126,14 @@ public:
         ASSERT_TRUE(status);
         comment_ = parseAnswer(rcode_, status);
         EXPECT_EQ(expected_code, rcode_);
+    }
+
+    /// @brief Returns an interface configuration used by the most of the
+    /// unit tests.
+    std::string genIfaceConfig() const {
+        return ("\"interfaces-config\": {"
+                "  \"interfaces\": [ \"*\" ]"
+                "}");
     }
 
     /// @brief Create the simple configuration with single option.
@@ -185,7 +195,7 @@ public:
                                        std::string>& params)
     {
         std::ostringstream stream;
-        stream << "{ \"interfaces\": [ \"*\" ],"
+        stream << "{ " << genIfaceConfig() << ","
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
@@ -346,7 +356,9 @@ public:
     /// test to make sure that contents of the database do not affect the
     /// results of subsequent tests.
     void resetConfiguration() {
-        string config = "{ \"interfaces\": [ \"*\" ],"
+        string config = "{ \"interfaces-config\": {"
+            "    \"interfaces\": [ ]"
+            "},"
             "\"hooks-libraries\": [ ],"
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "
@@ -361,7 +373,7 @@ public:
         // The default setting is to listen on all interfaces. In order to
         // properly test interface configuration we disable listening on
         // all interfaces before each test and later check that this setting
-        // has been overriden by the configuration used in the test.
+        // has been overridden by the configuration used in the test.
         CfgMgr::instance().clear();
         // Create fresh context.
         globalContext()->copyContext(ParserContext(Option::V6));
@@ -484,6 +496,41 @@ public:
         CfgMgr::instance().clear();
     }
 
+    /// @brief Tests the Rapid Commit configuration for a subnet.
+    ///
+    /// This test configures the server with a given configuration and
+    /// verifies if the Rapid Commit has been configured successfully
+    /// for a subnet.
+    ///
+    /// @param config Server configuration, possibly including the
+    /// 'rapid-commit' parameter.
+    /// @param exp_rapid_commit Expected value of the Rapid Commit flag
+    /// within a subnet.
+    void testRapidCommit(const std::string& config,
+                         const bool exp_rapid_commit) {
+        // Clear any existing configuration.
+        CfgMgr::instance().clear();
+
+        // Configure the server.
+        ElementPtr json = Element::fromJSON(config);
+
+        // Make sure that the configuration was successful.
+        ConstElementPtr status;
+        EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+        checkResult(status, 0);
+
+        // Get the subnet.
+        Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
+            selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+        ASSERT_TRUE(subnet);
+
+        // Check the Rapid Commit flag for the subnet.
+        EXPECT_EQ(exp_rapid_commit, subnet->getRapidCommit());
+
+        // Clear any existing configuration.
+        CfgMgr::instance().clear();
+    }
+
     int rcode_;          ///< Return code (see @ref isc::config::parseAnswer)
     Dhcpv6Srv srv_;      ///< Instance of the Dhcp6Srv used during tests
     ConstElementPtr comment_; ///< Comment (see @ref isc::config::parseAnswer)
@@ -526,7 +573,7 @@ TEST_F(Dhcp6ParserTest, emptySubnet) {
     ConstElementPtr status;
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-                    Element::fromJSON("{ \"interfaces\": [ \"*\" ],"
+                    Element::fromJSON("{ " + genIfaceConfig() + ","
                                       "\"preferred-lifetime\": 3000,"
                                       "\"rebind-timer\": 2000, "
                                       "\"renew-timer\": 1000, "
@@ -543,7 +590,7 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -578,7 +625,7 @@ TEST_F(Dhcp6ParserTest, multipleSubnets) {
     ConstElementPtr x;
     // Collection of four subnets for which ids should be autogenerated
     // - ids are unspecified or set to 0.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -633,7 +680,7 @@ TEST_F(Dhcp6ParserTest, multipleSubnets) {
 TEST_F(Dhcp6ParserTest, multipleSubnetsExplicitIDs) {
     ConstElementPtr x;
     // Four subnets with arbitrary subnet ids.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -689,7 +736,7 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsExplicitIDs) {
 TEST_F(Dhcp6ParserTest, multipleSubnetsOverlapingIDs) {
     ConstElementPtr x;
     // Four subnets, two of them have the same id.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -729,7 +776,7 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
     ConstElementPtr x;
 
     // All four subnets
-    string config4 = "{ \"interfaces\": [ \"*\" ],"
+    string config4 = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -756,7 +803,7 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
         "\"valid-lifetime\": 4000 }";
 
     // Three subnets (the last one removed)
-    string config_first3 = "{ \"interfaces\": [ \"*\" ],"
+    string config_first3 = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -778,7 +825,7 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
         "\"valid-lifetime\": 4000 }";
 
     // Second subnet removed
-    string config_second_removed = "{ \"interfaces\": [ \"*\" ],"
+    string config_second_removed = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -862,7 +909,7 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -899,7 +946,7 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
 
     // There should be at least one interface
 
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -931,7 +978,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceBogus) {
 
     // There should be at least one interface
 
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -962,7 +1009,7 @@ TEST_F(Dhcp6ParserTest, interfaceGlobal) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1033,7 +1080,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceId) {
 // parameter.
 TEST_F(Dhcp6ParserTest, interfaceIdGlobal) {
 
-    const string config = "{ \"interfaces\": [ \"*\" ],"
+    const string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1077,11 +1124,59 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceAndInterfaceId) {
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
+// This test checks the configuration of the Rapid Commit option
+// support for the subnet.
+TEST_F(Dhcp6ParserTest, subnetRapidCommit) {
+    {
+        // rapid-commit implicitly set to false.
+        SCOPED_TRACE("Default Rapid Commit setting");
+        testRapidCommit("{ \"preferred-lifetime\": 3000,"
+                        "\"rebind-timer\": 2000, "
+                        "\"renew-timer\": 1000, "
+                        "\"subnet6\": [ { "
+                        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - "
+                        "2001:db8:1::ffff\" } ],"
+                        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+                        "\"valid-lifetime\": 4000 }",
+                        false);
+    }
+
+    {
+        // rapid-commit explicitly set to true.
+        SCOPED_TRACE("Enable Rapid Commit");
+        testRapidCommit("{ \"preferred-lifetime\": 3000,"
+                        "\"rebind-timer\": 2000, "
+                        "\"renew-timer\": 1000, "
+                        "\"subnet6\": [ { "
+                        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - "
+                        "2001:db8:1::ffff\" } ],"
+                        "    \"rapid-commit\": True,"
+                        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+                        "\"valid-lifetime\": 4000 }",
+                        true);
+    }
+
+    {
+        // rapid-commit explicitly set to false.
+        SCOPED_TRACE("Disable Rapid Commit");
+        testRapidCommit("{ \"preferred-lifetime\": 3000,"
+                        "\"rebind-timer\": 2000, "
+                        "\"renew-timer\": 1000, "
+                        "\"subnet6\": [ { "
+                        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - "
+                        "2001:db8:1::ffff\" } ],"
+                        "    \"rapid-commit\": False,"
+                        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+                        "\"valid-lifetime\": 4000 }",
+                        false);
+    }
+}
+
 // This test checks that multiple pools can be defined and handled properly.
 // The test defines 2 subnets, each with 2 pools.
 TEST_F(Dhcp6ParserTest, multiplePools) {
     // Collection with two subnets, each with 2 pools.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1142,7 +1237,7 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1171,7 +1266,7 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
 
     ConstElementPtr x;
 
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1204,7 +1299,7 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
 
     // Define a single valid pd pool.
     string config =
-        "{ \"interfaces\": [ \"*\" ],"
+        "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1259,14 +1354,17 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
 
     ConstElementPtr x;
 
+    // We will configure three pools of prefixes for the subnet. Note that
+    // the 3rd prefix is out of the subnet prefix (the prefix doesn't match
+    // the subnet prefix).
     const char* prefixes[] = {
         "2001:db8:1:1::",
         "2001:db8:1:2::",
-        "2001:db8:1:3::"
+        "3000:1:3::"
     };
 
     string config =
-        "{ \"interfaces\": [ \"*\" ],"
+        "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1282,7 +1380,7 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
         "          \"prefix-len\": 72, "
         "          \"delegated-len\": 88"
         "        },"
-        "        { \"prefix\": \"2001:db8:1:03::\", "
+        "        { \"prefix\": \"3000:1:03::\", "
         "          \"prefix-len\": 72, "
         "          \"delegated-len\": 96"
         "        }"
@@ -1332,7 +1430,7 @@ TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
 
     // Define a single valid pd pool.
     string config =
-        "{ \"interfaces\": [ \"*\" ],"
+        "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1391,7 +1489,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
 
     const char *config[] =  {
         // No prefix.
-        "{ \"interfaces\": [ \"*\" ],"
+        "{ \"interfaces-config\": { },"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1405,7 +1503,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         "\"valid-lifetime\": 4000 }"
         "] }",
         // No prefix-len.
-        "{ \"interfaces\": [ \"*\" ],"
+        "{ \"interfaces-config\": { },"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1418,7 +1516,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         "\"valid-lifetime\": 4000 }"
         "] }",
         // No delegated-len.
-        "{ \"interfaces\": [ \"*\" ],"
+        "{ \"interfaces-config\": { },"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1431,7 +1529,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         "\"valid-lifetime\": 4000 }"
         "] }",
         // Delegated length is too short.
-        "{ \"interfaces\": [ \"*\" ],"
+        "{ \"interfaces-config\": { },"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1441,20 +1539,6 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         "        { \"prefix\": \"2001:db8:1::\", "
         "          \"prefix-len\": 128, "
         "          \"delegated-len\": 64"
-        "        } ],"
-        "\"valid-lifetime\": 4000 }"
-        "] }",
-        // Pool is not within the subnet.
-        "{ \"interfaces\": [ \"*\" ],"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
-        "    \"subnet\": \"2001:db8:1::/64\","
-        "    \"pd-pools\": ["
-        "        { \"prefix\": \"2001:db8:77::\", "
-        "          \"prefix-len\": 64, "
-        "          \"delegated-len\": 128"
         "        } ],"
         "\"valid-lifetime\": 4000 }"
         "] }"
@@ -2022,7 +2106,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
 // configuration does not include options configuration.
 TEST_F(Dhcp6ParserTest, optionDataDefaults) {
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
@@ -2103,7 +2187,7 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
     // The definition is not required for the option that
     // belongs to the 'dhcp6' option space as it is the
     // standard option.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
@@ -2184,7 +2268,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     // at the very end (when all other parameters are configured).
 
     // Starting stage 1. Configure sub-options and their definitions.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
@@ -2237,7 +2321,9 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     // the configuration from the stage 2 is repeated because BIND
     // configuration manager sends whole configuration for the lists
     // where at least one element is being modified or added.
-    config = "{ \"interfaces\": [ \"*\" ],"
+    config = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -2332,7 +2418,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
 // for multiple subnets.
 TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -2647,7 +2733,7 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
     // This configuration string is to configure two options
     // sharing the code 1 and belonging to the different vendor spaces.
     // (different vendor-id values).
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
@@ -2707,7 +2793,7 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
     // This configuration string is to configure two options
     // sharing the code 1 and belonging to the different vendor spaces.
     // (different vendor-id values).
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
@@ -2770,10 +2856,10 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
 TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
 
     // The configuration is two stage process in this test.
-    // In the first stahe we create definitions of suboptions
+    // In the first stage we create definitions of suboptions
     // that we will add to the base option.
     // Let's create some dummy options: foo and foo2.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
@@ -2830,7 +2916,7 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
     // We add our dummy options to this option space and thus
     // they should be included as sub-options in the 'vendor-opts'
     // option.
-    config = "{ \"interfaces\": [ \"*\" ],"
+    config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -2942,8 +3028,8 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
 
     // Create the first part of the configuration string.
     string config =
-        "{ \"interfaces\": [ \"*\" ],"
-            "\"hooks-libraries\": [";
+        "{ \"interfaces-config\": { },"
+           "\"hooks-libraries\": [";
 
     // Append the libraries (separated by commas if needed)
     for (int i = 0; i < libraries.size(); ++i) {
@@ -3090,7 +3176,9 @@ TEST_F(Dhcp6ParserTest, selectedInterfaces) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"eth0\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"eth0\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -3105,8 +3193,7 @@ TEST_F(Dhcp6ParserTest, selectedInterfaces) {
     // as the pool does not belong to that subnet
     checkResult(status, 0);
 
-    CfgMgr::instance().getStagingCfg()->
-        getCfgIface().openSockets(AF_INET6, 10000);
+    CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET6, 10000);
 
     // eth0 and eth1 were explicitly selected. eth2 was not.
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET6));
@@ -3127,7 +3214,9 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
     // but also includes '*'. This keyword switches server into the
     // mode when it listens on all interfaces regardless of what interface names
     // were specified in the "interfaces" parameter.
-    string config = "{ \"interfaces\": [ \"eth0\", \"eth1\", \"*\" ],"
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"eth0\", \"eth1\", \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -3139,8 +3228,7 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     checkResult(status, 0);
 
-    CfgMgr::instance().getStagingCfg()->
-        getCfgIface().openSockets(AF_INET6, 10000);
+    CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET6, 10000);
 
     // All interfaces should be now active.
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET6));
@@ -3154,7 +3242,7 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
     ConstElementPtr status;
 
     // A config with relay information.
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
@@ -3183,7 +3271,7 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
 // with defined client classes.
 TEST_F(Dhcp6ParserTest, classifySubnets) {
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -3278,7 +3366,7 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
     // Verify that the convenience method agrees.
     ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
 
-    string config_str = "{ \"interfaces\": [ \"*\" ],"
+    string config_str = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000, "
@@ -3345,7 +3433,7 @@ TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
 
     // Configuration string with an invalid D2 client config,
     // "server-ip" is invalid.
-    string config_str = "{ \"interfaces\": [ \"*\" ],"
+    string config_str = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
@@ -3404,7 +3492,7 @@ bool reservationExists(const IPv6Resrv& resrv, const IPv6ResrvRange& range) {
 // respective IPv6 subnets.
 TEST_F(Dhcp6ParserTest, reservations) {
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ "
@@ -3471,7 +3559,7 @@ TEST_F(Dhcp6ParserTest, reservations) {
     ASSERT_TRUE(hosts_cfg);
 
     // Let's create an object holding hardware address of the host having
-    // a reservation in the subnet having id of 234. For simlicity the
+    // a reservation in the subnet having id of 234. For simplicity the
     // address is a collection of numbers from 1 to 6.
     std::vector<uint8_t> hwaddr_vec;
     for (int i = 1; i < 7; ++i) {
@@ -3538,12 +3626,12 @@ TEST_F(Dhcp6ParserTest, reservations) {
     EXPECT_FALSE(hosts_cfg->get6(234, duid));
 }
 
-// This test verfies that the bogus host reservation would trigger a
+// This test verifies that the bogus host reservation would trigger a
 // server configuration error.
 TEST_F(Dhcp6ParserTest, reservationBogus) {
     // Case 1: misspelled "duid" parameter.
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"*\" ],"
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ "
@@ -3569,7 +3657,7 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
     checkResult(x, 1);
 
     // Case 2: DUID and HW Address both specified.
-    config = "{ \"interfaces\": [ \"*\" ],"
+    config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ "
@@ -3599,7 +3687,7 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
     checkResult(x, 1);
 
     // Case 3: Neither ip address nor hostname specified.
-    config = "{ \"interfaces\": [ \"*\" ],"
+    config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ "
@@ -3636,7 +3724,7 @@ TEST_F(Dhcp6ParserTest, macSources) {
     ConstElementPtr status;
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-        Element::fromJSON("{ \"interfaces\": [ \"*\" ],"
+        Element::fromJSON("{ " + genIfaceConfig() + ","
                           "\"mac-sources\": [ \"rfc6939\", \"rfc4649\", \"rfc4580\","
                           "\"client-link-addr-option\", \"remote-id\", \"subscriber-id\"],"
                           "\"preferred-lifetime\": 3000,"
@@ -3668,7 +3756,7 @@ TEST_F(Dhcp6ParserTest, macSourcesEmpty) {
     ConstElementPtr status;
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-                    Element::fromJSON("{ \"interfaces\": [ \"*\" ],"
+                    Element::fromJSON("{ " + genIfaceConfig() + ","
                                       "\"mac-sources\": [ ],"
                                       "\"preferred-lifetime\": 3000,"
                                       "\"rebind-timer\": 2000, "
@@ -3690,7 +3778,7 @@ TEST_F(Dhcp6ParserTest, macSourcesBogus) {
     ConstElementPtr status;
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-                    Element::fromJSON("{ \"interfaces\": [ \"*\" ],"
+                    Element::fromJSON("{ " + genIfaceConfig() + ","
                                       "\"mac-sources\": [ \"from-wire\" ],"
                                       "\"preferred-lifetime\": 3000,"
                                       "\"rebind-timer\": 2000, "
@@ -3700,6 +3788,198 @@ TEST_F(Dhcp6ParserTest, macSourcesBogus) {
 
     // returned value should be 1 (failure)
     checkResult(status, 1);
+}
+
+/// The goal of this test is to verify that Host Reservation modes can be
+/// specified on a per-subnet basis.
+TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
+
+    /// - Configuration:
+    ///   - only addresses (no prefixes)
+    ///   - 4 subnets with:
+    ///       - 2001:db8:1::/64 (all reservations enabled)
+    ///       - 2001:db8:2::/64 (out-of-pool reservations)
+    ///       - 2001:db8:3::/64 (reservations disabled)
+    ///       - 2001:db8:3::/64 (reservations not specified)
+    const char* HR_CONFIG =
+        "{"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"reservation-mode\": \"all\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ],"
+        "    \"subnet\": \"2001:db8:2::/48\", "
+        "    \"reservation-mode\": \"out-of-pool\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:3::/64\" } ],"
+        "    \"subnet\": \"2001:db8:3::/48\", "
+        "    \"reservation-mode\": \"disabled\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:4::/64\" } ],"
+        "    \"subnet\": \"2001:db8:4::/48\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr status;
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
+                    Element::fromJSON(HR_CONFIG)));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+    CfgMgr::instance().commit();
+
+    // Let's get all subnets and check that there are 4 of them.
+    ConstCfgSubnets6Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
+    ASSERT_TRUE(subnets);
+    const Subnet6Collection* subnet_col = subnets->getAll();
+    ASSERT_EQ(4, subnet_col->size()); // We expect 4 subnets
+
+    // Let's check if the parsed subnets have correct HR modes.
+
+    // Subnet 1
+    Subnet6Ptr subnet;
+    subnet = subnets->selectSubnet(IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
+
+    // Subnet 2
+    subnet = subnets->selectSubnet(IOAddress("2001:db8:2::1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_OUT_OF_POOL, subnet->getHostReservationMode());
+
+    // Subnet 3
+    subnet = subnets->selectSubnet(IOAddress("2001:db8:3::1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_DISABLED, subnet->getHostReservationMode());
+
+    // Subnet 4
+    subnet = subnets->selectSubnet(IOAddress("2001:db8:4::1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
+}
+
+/// The goal of this test is to verify that configuration can include
+/// Relay Supplied options (specified as numbers).
+TEST_F(Dhcp6ParserTest, rsooNumbers) {
+
+    ConstElementPtr status;
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
+        Element::fromJSON("{ " + genIfaceConfig() + ","
+                          "\"relay-supplied-options\": [ \"10\", \"20\", \"30\" ],"
+                          "\"preferred-lifetime\": 3000,"
+                          "\"rebind-timer\": 2000, "
+                          "\"renew-timer\": 1000, "
+                          "\"subnet6\": [  ], "
+                          "\"valid-lifetime\": 4000 }")));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The following codes should be enabled now
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()->enabled(10));
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()->enabled(20));
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()->enabled(30));
+
+    // This option is on the IANA list, so it should be allowed all the time
+    // (http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml)
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()
+                ->enabled(D6O_ERP_LOCAL_DOMAIN_NAME));
+
+    // Those options are not enabled
+    EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()->enabled(25));
+    EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()->enabled(1));
+}
+
+/// The goal of this test is to verify that configuration can include
+/// Relay Supplied options (specified as names).
+TEST_F(Dhcp6ParserTest, rsooNames) {
+
+    ConstElementPtr status;
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
+        Element::fromJSON("{ " + genIfaceConfig() + ","
+                          "\"relay-supplied-options\": [ \"dns-servers\", \"remote-id\" ],"
+                          "\"preferred-lifetime\": 3000,"
+                          "\"rebind-timer\": 2000, "
+                          "\"renew-timer\": 1000, "
+                          "\"subnet6\": [  ], "
+                          "\"valid-lifetime\": 4000 }")));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    for (uint16_t code = 0; code < D6O_NAME_SERVERS; ++code) {
+        EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()
+                     ->enabled(code)) << " for option code " << code;
+    }
+
+    // The following code should be enabled now
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()
+                ->enabled(D6O_NAME_SERVERS));
+
+    for (uint16_t code = D6O_NAME_SERVERS + 1; code < D6O_REMOTE_ID; ++code) {
+        EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()
+                     ->enabled(code)) << " for option code " << code;
+    }
+
+    // Check remote-id. It should be enabled.
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()
+                ->enabled(D6O_REMOTE_ID));
+    for (uint16_t code = D6O_REMOTE_ID + 1; code < D6O_ERP_LOCAL_DOMAIN_NAME; ++code) {
+        EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()
+                     ->enabled(code)) << " for option code " << code;
+    }
+
+    // This option is on the IANA list, so it should be allowed all the time
+    // (http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml)
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()
+                ->enabled(D6O_ERP_LOCAL_DOMAIN_NAME));
+
+    for (uint16_t code = D6O_ERP_LOCAL_DOMAIN_NAME + 1; code < 300; ++code) {
+        EXPECT_FALSE(CfgMgr::instance().getStagingCfg()->getCfgRSOO()
+                     ->enabled(code)) << " for option code " << code;
+    }
+}
+
+TEST_F(Dhcp6ParserTest, rsooNegativeNumber) {
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
+        Element::fromJSON("{ " + genIfaceConfig() + ","
+                          "\"relay-supplied-options\": [ \"80\", \"-2\" ],"
+                          "\"preferred-lifetime\": 3000,"
+                          "\"rebind-timer\": 2000, "
+                          "\"renew-timer\": 1000, "
+                          "\"subnet6\": [  ], "
+                          "\"valid-lifetime\": 4000 }")));
+
+    // returned value should be 0 (success)
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
+
+TEST_F(Dhcp6ParserTest, rsooBogusName) {
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
+        Element::fromJSON("{ " + genIfaceConfig() + ","
+                          "\"relay-supplied-options\": [ \"bogus\", \"dns-servers\" ],"
+                          "\"preferred-lifetime\": 3000,"
+                          "\"rebind-timer\": 2000, "
+                          "\"renew-timer\": 1000, "
+                          "\"subnet6\": [  ], "
+                          "\"valid-lifetime\": 4000 }")));
+
+    // returned value should be 0 (success)
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 };

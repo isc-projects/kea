@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -59,7 +59,7 @@ public:
 
     ~JSONFileBackendTest() {
         isc::log::setDefaultLoggingOutput();
-        static_cast<void>(unlink(TEST_FILE));
+        static_cast<void>(remove(TEST_FILE));
     };
 
     /// @brief writes specified content to a well known file
@@ -69,7 +69,7 @@ public:
     ///
     /// @param content content to be written to file
     void writeFile(const std::string& content) {
-        static_cast<void>(unlink(TEST_FILE));
+        static_cast<void>(remove(TEST_FILE));
 
         ofstream out(TEST_FILE, ios::trunc);
         EXPECT_TRUE(out.is_open());
@@ -87,7 +87,10 @@ const char* JSONFileBackendTest::TEST_FILE  = "test-config.json";
 TEST_F(JSONFileBackendTest, jsonFile) {
 
     // Prepare configuration file.
-    string config = "{ \"Dhcp4\": { \"interfaces\": [ \"*\" ],"
+    string config = "{ \"Dhcp4\": {"
+        "\"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -162,7 +165,10 @@ TEST_F(JSONFileBackendTest, comments) {
 
     string config_hash_comments = "# This is a comment. It should be \n"
         "#ignored. Real config starts in line below\n"
-        "{ \"Dhcp4\": { \"interfaces\": [ \"*\" ],"
+        "{ \"Dhcp4\": {"
+        "\"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, \n"
         "# comments in the middle should be ignored, too\n"

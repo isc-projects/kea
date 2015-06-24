@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config/ccsession.h>
+#include <config.h>
+
+#include <cc/command_interpreter.h>
 #include <d2/d2_log.h>
 #include <d2/d2_cfg_mgr.h>
 #include <d2/d2_process.h>
@@ -26,7 +28,7 @@ namespace d2 {
 // be configurable.
 const unsigned int D2Process::QUEUE_RESTART_PERCENT =  80;
 
-D2Process::D2Process(const char* name, IOServicePtr io_service)
+D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new D2CfgMgr())),
      reconf_queue_flag_(false), shutdown_type_(SD_NORMAL) {
 
@@ -50,7 +52,7 @@ D2Process::init() {
 
 void
 D2Process::run() {
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DHCP_DDNS_RUN_ENTER);
+    LOG_INFO(dctl_logger, DHCP_DDNS_STARTED).arg(VERSION);
     // Loop forever until we are allowed to shutdown.
     while (!canShutdown()) {
         try {
@@ -101,7 +103,7 @@ D2Process::runIO() {
     // service.  Secondly, asiolink::IOService does not provide the poll
     // method.  This is a handy method which runs all ready handlers without
     // blocking.
-    IOServicePtr& io = getIoService();
+    asiolink::IOServicePtr& io = getIoService();
     asio::io_service& asio_io_service  = io->get_io_service();
 
     // Poll runs all that are ready. If none are ready it returns immediately
@@ -317,7 +319,7 @@ D2Process::reconfigureQueueMgr() {
     // a valid configuration to work with so if we fail below, it will be
     // an operational issue, such as a busy IP address. That will leave
     // queue manager in INITTED state, which is fine.
-    // What we dont' want is to continually attempt to reconfigure so set
+    // What we don't want is to continually attempt to reconfigure so set
     // the flag false now.
     // @todo This method assumes only 1 type of listener.  This will change
     // to support at least a TCP version, possibly some form of RDBMS listener

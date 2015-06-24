@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -50,12 +50,12 @@ to as "user code".)  At specific points in its processing
 data that the user code can examine and, if required, modify.
 Kea uses the modified data in the remainder of its processing.
 
-In order to minimise the interaction between Kea and the user
-code, the latter is built independently of Kea in the form of
-a shared library (or libraries).  These are made known to Kea
-through its configuration mechanism, and Kea loads the library at
-run time. Libraries can be unloaded and reloaded as needed while Kea
-is running.
+In order to minimize the interaction between Kea and the user code,
+the latter is built independently of Kea in the form of one or more
+dynamic shared objects, called here (for historical reasons), shared
+libraries.  These are made known to Kea through its configuration
+mechanism, and Kea loads the library at run time. Libraries can be
+unloaded and reloaded as needed while Kea is running.
 
 Use of a defined API and the Kea configuration mechanism means that
 as new versions of Kea are released, there is no need to modify
@@ -109,7 +109,7 @@ the hardware address and allocated IP address for the clients of interest.
 The following sections describe how to implement these requirements.
 The code presented here is not efficient and there are better ways of
 doing the task.  The aim however, is to illustrate the main features of
-user hook code not to provide an optimal solution.
+user hooks code, not to provide an optimal solution.
 
 
 @subsection hooksdgFrameworkFunctions Framework Functions
@@ -420,7 +420,7 @@ later in the list are able to examine (and modify) the settings of earlier ones.
 
 @subsubsection hooksdgCalloutContext Per-Request Context
 
-Although the Kea modules can be characterised as handling a single
+Although the Kea modules can be characterized as handling a single
 packet at a time - e.g. the DHCPv4 server receives a DHCPDISCOVER packet,
 processes it and responds with an DHCPOFFER, this may not always be true.
 Future developments may have the server processing multiple packets
@@ -576,10 +576,122 @@ int pkt4_send(CalloutHandle& handle) {
 }
 @endcode
 
+@subsection hooksdgLogging Logging in the Hooks Library
+
+Hooks libraries take part in the DHCP message processing. They also often
+modify the server's behavior by taking responsibility for processing
+the DHCP message at certain stages and instructing the server to skip
+the default processing for that stage. Thus, hooks libraries play an
+important role in the DHCP server operation and, depending on their
+purpose, they may have high complexity, which increases likehood of the
+defects in the libraries.
+
+All hooks libraries should use Kea logging system to faciliate diagnostics
+of the defects in the libraries and issues with the DHCP server's operation.
+Even if the issue doesn't originate in the hooks library itself, the use
+of the library may uncover issues in the Kea code that only
+manifest themselves in some special circumstances.
+
+Hooks libraries use the Kea logging system in the same way as any other
+standard Kea library. A hooks library should have at least one logger
+defined, but may have multiple loggers if it is desired
+to separate log messages from different functional parts of the library.
+
+Assuming that it has been decided to use logging in the hooks library, the
+implementor must select a unique name for the logger. Ideally the name
+should have some relationship with the name of the library so that it is
+easy to distinguish messages logged from this library. For example,
+if the hooks library is used to capture incoming and outgoing DHCP
+messages, and the name of the library is "libkea-packet-capture",
+a suitable logger name could be "packet-capture".
+
+In order to use a logger within the library, the logger should be declared
+in a header file, which must be included in all files using
+the logger:
+
+@code
+#ifndef PACKET_CAPTURE_LOG_H
+#define PACKET_CAPTURE_LOG_H
+
+#include <log/message_initializer.h>
+#include <log/macros.h>
+#include <user_chk_messages.h>
+
+namespace packet_capture {
+
+extern isc::log::Logger packet_capture_logger;
+
+}
+
+#endif
+@endcode
+
+The logger should be defined and initialized in the implementation file,
+as illustrated below:
+
+@code
+#include <packet_capture_log.h>
+
+namespace packet_capture {
+
+isc::log::Logger packet_capture_logger("packet-capture");
+
+}
+@endcode
+
+These files may contain multiple logger declarations and initializations
+when the use of more than one logger is desired.
+
+The next step is to add the appropriate message file as described in the
+@ref logMessageFiles.
+
+The implementor must make sure that log messages appear in the right
+places and that they are logged at the appropriate level. The choice
+of the place where the message should appear is not always obvious:
+it depends if the particular function being called already logs enough
+information and whether adding log message before and/or after the
+call to this function would simply duplicate some messages. Sometimes
+the choice whether the log message should appear within the function or
+outside of it depends on the level of details available for logging. For
+example, in many cases it is desirable to include the client identifier
+or transaction id of the DHCP packet being processed in logging message.
+If this information is available at the higher level but not in the
+function being called, it is often better to place the log message at
+higher level.  However, the function parameters list could be extended
+to include the additional information, and to be logged and the logging
+call made from within the function.
+
+Ideally, the hooks library should contain debug log messages (traces)
+in all significant decision points in the code, with the information as to
+how the code hit this decision point, how it will proceed and why.
+However, care should be taken when selecting the log level for those
+messages, because selecting too high logging level may impact the
+performance of the system. For this reason, traces (messages of
+the debug severity) should use different debug levels for the
+messages of different importance or having different performance
+requirements to generate the log message. For example, generation of
+a log message, which prints full details of a packet, usually requires
+more CPU bandwith than the generation of the message which only prints
+the packet type and length. Thus, the former should be logged at
+lower debug level (see @ref logSeverity for details of using
+various debug levels using "dbglevel" parameter).
+
+All loggers defined within the hooks libraries derive the default
+configuration from the root logger. For example, when the hooks
+library is attached to the DHCPv4 server, the root logger name is
+"kea-dhcp4", and the library by default uses configuration of this
+logger. The configuration of the library's logger can
+be modified by adding a configuration entry for it
+to the configuration file. In case of the "packet-capture"
+logger declared above, the full name of the logger in the
+configuration file will be "kea-dhcp4.packet-capture". The
+configuration specified for this logger will override the default
+configuration derived from the root logger.
+
 @subsection hooksdgBuild Building the Library
 
-Building the code requires building a shareable library.  This requires
-the the code be compiled as positition-independent code (using the
+Building the code requires building a sharable library.  This requires
+the the code be compiled as position-independent code (using the
 compiler's "-fpic" switch) and linked as a shared library (with the
 linker's "-shared" switch).  The build command also needs to point to
 the Kea include directory and link in the appropriate libraries.
@@ -765,7 +877,7 @@ int pkt4_receive(CalloutHandle& handle) {
     si->setSomething(...);
 
     // The pointed-to information has been updated but the pointer has not
-    // altered, so theree is no need to reset the context.
+    // altered, so there is no need to reset the context.
 }
 
 // No context_destroy callout is needed to delete the allocated
@@ -860,7 +972,7 @@ registered.  The same CalloutHandle is passed between them, so any
 change made to the CalloutHandle's arguments, "skip" flag, or per-request
 context by the first is visible to the second.
 
-@subsubsection hooksdgDynamicRegistration Dynamic Registration and Reregistration of Callouts
+@subsubsection hooksdgDynamicRegistration Dynamic Registration and Re-registration of Callouts
 
 The previous sections have dealt with callouts being registered during
 the call to "load".  The hooks framework is more flexible than that

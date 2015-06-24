@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -125,7 +125,6 @@ TEST_F(CfgIfaceTest, explicitNamesAndAddressesV4) {
     CfgIface cfg;
     ASSERT_NO_THROW(cfg.use(AF_INET, "eth0/10.0.0.1"));
     ASSERT_NO_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"));
-    ASSERT_THROW(cfg.use(AF_INET, "eth1/192.0.2.5"), DuplicateIfaceName);
 
     // Open sockets on specified interfaces and addresses.
     cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
@@ -146,7 +145,6 @@ TEST_F(CfgIfaceTest, explicitNamesAndAddressesV4) {
     // Now check that the socket can be bound to a different address on
     // eth1.
     ASSERT_NO_THROW(cfg.use(AF_INET, "eth1/192.0.2.5"));
-    ASSERT_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"), DuplicateIfaceName);
 
     // Open sockets according to the new configuration.
     cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
@@ -170,6 +168,25 @@ TEST_F(CfgIfaceTest, explicitNamesAndAddressesInvalidV4) {
     // Duplicated interface.
     ASSERT_NO_THROW(cfg.use(AF_INET, "eth1"));
     EXPECT_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"), DuplicateIfaceName);
+}
+
+// This test checks that it is possible to explicitly select multiple
+// IPv4 addresses on a single interface.
+TEST_F(CfgIfaceTest, multipleAddressesSameInterfaceV4) {
+    CfgIface cfg;
+    ASSERT_NO_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"));
+    // Cannot add the same address twice.
+    ASSERT_THROW(cfg.use(AF_INET, "eth1/192.0.2.3"), DuplicateAddress);
+    // Can add another address on this interface.
+    ASSERT_NO_THROW(cfg.use(AF_INET, "eth1/192.0.2.5"));
+    // Can't select the whole interface.
+    ASSERT_THROW(cfg.use(AF_INET, "eth1"), DuplicateIfaceName);
+
+    cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
+
+    EXPECT_FALSE(socketOpen("eth0", "10.0.0.1"));
+    EXPECT_TRUE(socketOpen("eth1", "192.0.2.3"));
+    EXPECT_TRUE(socketOpen("eth1", "192.0.2.5"));
 }
 
 // This test checks that the interface names can be explicitly selected
@@ -209,7 +226,6 @@ TEST_F(CfgIfaceTest, explicitNamesV6) {
     EXPECT_FALSE(socketOpen("eth0", AF_INET6));
     EXPECT_TRUE(socketOpen("eth1", AF_INET6));
     EXPECT_FALSE(socketOpen("lo", AF_INET6));
-
 }
 
 // This test checks that the wildcard interface name can be specified to
@@ -338,6 +354,56 @@ TEST_F(CfgIfaceTest, equality) {
     cfg2.use(AF_INET, "*");
     EXPECT_TRUE(cfg1 == cfg2);
     EXPECT_FALSE(cfg1 != cfg2);
+
+    // Differ by socket type.
+    cfg1.useSocketType(AF_INET, "udp");
+    EXPECT_FALSE(cfg1 == cfg2);
+    EXPECT_TRUE(cfg1 != cfg2);
+
+    // Now, both should use the same socket type.
+    cfg2.useSocketType(AF_INET, "udp");
+    EXPECT_TRUE(cfg1 == cfg2);
+    EXPECT_FALSE(cfg1 != cfg2);
 }
+
+// This test verifies that it is possible to specify the socket
+// type to be used by the DHCPv4 server.
+// This test is enabled on LINUX and BSD only, because the
+// direct traffic is only supported on those systems.
+#if defined OS_LINUX || defined OS_BSD
+TEST(CfgIfaceNoStubTest, useSocketType) {
+    CfgIface cfg;
+    // Select datagram sockets.
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, "udp"));
+    EXPECT_EQ("udp", cfg.socketTypeToText());
+    ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
+    // For datagram sockets, the direct traffic is not supported.
+    ASSERT_TRUE(!IfaceMgr::instance().isDirectResponseSupported());
+
+    // Select raw sockets.
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, "raw"));
+    EXPECT_EQ("raw", cfg.socketTypeToText());
+    ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
+    // For raw sockets, the direct traffic is supported.
+    ASSERT_TRUE(IfaceMgr::instance().isDirectResponseSupported());
+
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_UDP));
+    EXPECT_EQ("udp", cfg.socketTypeToText());
+    ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
+    ASSERT_TRUE(!IfaceMgr::instance().isDirectResponseSupported());
+
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_RAW));
+    EXPECT_EQ("raw", cfg.socketTypeToText());
+    ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
+    ASSERT_TRUE(IfaceMgr::instance().isDirectResponseSupported());
+
+    // Test invalid values.
+    EXPECT_THROW(cfg.useSocketType(AF_INET, "default"),
+        InvalidSocketType);
+    EXPECT_THROW(cfg.useSocketType(AF_INET6, "udp"),
+        InvalidSocketType);
+}
+#endif
+
 
 } // end of anonymous namespace

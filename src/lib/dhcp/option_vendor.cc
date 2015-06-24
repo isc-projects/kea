@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,9 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_vendor.h>
+#include <sstream>
 
 using namespace isc::dhcp;
 
@@ -40,8 +43,7 @@ void OptionVendor::pack(isc::util::OutputBuffer& buf) {
         // Calculate and store data-len as follows:
         // data-len = total option length - header length
         //            - enterprise id field length - data-len field size
-        buf.writeUint8(len() - getHeaderLen() -
-                       sizeof(uint32_t) - sizeof(uint8_t));
+        buf.writeUint8(dataLen());
     }
 
     packOptions(buf);
@@ -56,7 +58,7 @@ void OptionVendor::unpack(OptionBufferConstIter begin,
 
     vendor_id_ = isc::util::readUint32(&(*begin), distance(begin, end));
 
-    OptionBuffer vendor_buffer(begin +4, end);
+    OptionBuffer vendor_buffer(begin + 4, end);
 
     if (universe_ == Option::V6) {
         LibDHCP::unpackVendorOptions6(vendor_id_, vendor_buffer, options_);
@@ -82,4 +84,29 @@ uint16_t OptionVendor::len() {
         length += (*it).second->len();
     }
     return (length);
+}
+
+uint8_t
+OptionVendor::dataLen() {
+    // Calculate and store data-len as follows:
+    // data-len = total option length - header length
+    //            - enterprise id field length - data-len field size
+    return (len() - getHeaderLen() - sizeof(uint32_t) - sizeof(uint8_t));
+}
+
+std::string
+OptionVendor::toText(int indent) {
+    std::stringstream output;
+    output << headerToText(indent) << ": "
+           << getVendorId() << " (uint32)";
+
+    // For the DHCPv4 there is one more field.
+    if (getUniverse() == Option::V4) {
+        output << " " << static_cast<int>(dataLen()) << " (uint8)";
+    }
+
+    // Append suboptions.
+    output << suboptionsToText(indent + 2);
+
+    return (output.str());
 }

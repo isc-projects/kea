@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -103,6 +103,13 @@ public:
     /// @throw isc::OutOfRange if provided buffer is truncated.
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
 
+    /// @brief Returns option information in the textual format.
+    ///
+    /// @param indent Number of space characters to be inserted before
+    /// the text.
+    ///
+    /// @return Option information in the textual format.
+    virtual std::string toText(int indent = 0);
 };
 
 /// Pointer to the OptionString object.

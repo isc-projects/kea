@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -657,9 +657,8 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
               continue;
           }
 
-          // 'it' can be equal to str.end() here, but it is handled
-          // correctly.
-          if (*it != '{') {
+          // The str.end() check is required.
+          if ((it == str.end()) || (*it != '{')) {
               // There is no modifier (between {}), so just copy the
               // passed number into the generated string.
               rstr += boost::str(boost::format("%d") % num);
@@ -821,7 +820,7 @@ MasterLoader::MasterLoaderImpl::doGenerate() {
     }
 
     // Generate and add the records.
-    for (int i = start; i <= stop; i += step) {
+    for (unsigned int i = start; i <= stop; i += step) {
         // Get generated strings for LHS and RHS. LHS goes to form the
         // name, RHS goes to form the RDATA of the RR.
         const std::string generated_name = generateForIter(lhs, i);

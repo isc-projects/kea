@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -98,7 +98,7 @@ public:
     /// @param socket_info structure holding socket information
     ///
     /// @return Received packet
-    virtual Pkt4Ptr receive(const Iface& iface,
+    virtual Pkt4Ptr receive(Iface& iface,
                             const SocketInfo& socket_info) = 0;
 
     /// @brief Send packet over specified socket.

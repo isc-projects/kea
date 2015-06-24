@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -102,7 +102,7 @@ public:
 class OptionTest : public ::testing::Test {
 public:
     OptionTest(): buf_(255), outBuf_(255) {
-        for (int i = 0; i < 255; i++) {
+        for (unsigned i = 0; i < 255; i++) {
             buf_[i] = 255 - i;
         }
     }
@@ -233,7 +233,7 @@ TEST_F(OptionTest, v4_toText) {
 
     Option opt(Option::V4, 253, buf);
 
-    EXPECT_EQ("type=253, len=3: 00:0f:ff", opt.toText());
+    EXPECT_EQ("type=253, len=003: 00:0f:ff", opt.toText());
 }
 
 // Tests simple constructor
@@ -251,7 +251,7 @@ TEST_F(OptionTest, v6_basic) {
 
 // Tests constructor used in packet reception.  Option contains actual data
 TEST_F(OptionTest, v6_data1) {
-    for (int i = 0; i < 32; i++) {
+    for (unsigned i = 0; i < 32; i++) {
         buf_[i] = 100 + i;
     }
 
@@ -324,7 +324,7 @@ TEST_F(OptionTest, v6_data2) {
 //  +----opt3
 //
 TEST_F(OptionTest, v6_suboptions1) {
-    for (int i = 0; i < 128; i++) {
+    for (unsigned i = 0; i < 128; i++) {
         buf_[i] = 100 + i;
     }
 
@@ -367,7 +367,7 @@ TEST_F(OptionTest, v6_suboptions1) {
 //        +----opt3
 //
 TEST_F(OptionTest, v6_suboptions2) {
-    for (int i = 0; i < 128; i++) {
+    for (unsigned i = 0; i < 128; i++) {
         buf_[i] = 100 + i;
     }
 
@@ -399,7 +399,7 @@ TEST_F(OptionTest, v6_suboptions2) {
 }
 
 TEST_F(OptionTest, v6_addgetdel) {
-    for (int i = 0; i < 128; i++) {
+    for (unsigned i = 0; i < 128; i++) {
         buf_[i] = 100 + i;
     }
 
@@ -443,7 +443,7 @@ TEST_F(OptionTest, v6_toText) {
     buf_[2] = 0xff;
 
     OptionPtr opt(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 3 ));
-    EXPECT_EQ("type=258, len=3: 00:0f:ff", opt->toText());
+    EXPECT_EQ("type=00258, len=00003: 00:0f:ff", opt->toText());
 }
 
 

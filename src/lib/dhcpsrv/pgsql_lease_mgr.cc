@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -289,7 +289,11 @@ public:
 
     virtual ~PgSqlLeaseExchange(){}
 
-    /// @brief Converts time_t structure to a text representation in local time.
+    /// @brief Converts lease expiration time to a text representation in
+    /// local time.
+    ///
+    /// The expiration time is calculated as a sum of the cltt (client last
+    /// transmit time) and the valid lifetime.
     ///
     /// The format of the output string is "%Y-%m-%d %H:%M:%S".  Database
     /// table columns using this value should be typed as TIMESTAMP WITH
@@ -298,20 +302,31 @@ public:
     /// when stored.  Likewise, these columns are automatically adjusted
     /// upon retrieval unless fetched via "extract(epoch from <column>))".
     ///
-    /// @param time_val timestamp to be converted
+    /// @param cltt Client last transmit time
+    /// @param valid_lifetime Valid lifetime
+    ///
     /// @return std::string containing the stringified time
-    std::string
-    convertToDatabaseTime(const time_t& time_val) {
-        // PostgreSQL does funny things with time if you get past Y2038.  It
-        // will accept the values (unlike MySQL which throws) but it
-        // stops correctly adjusting to local time when reading them back
-        // out. So lets disallow it here.
-        if (time_val > LeaseMgr::MAX_DB_TIME) {
-            isc_throw(BadValue, "Time value is too large: " << time_val);
+    /// @throw isc::BadValue if the sum of the calculated expiration time is
+    /// greater than the value of @c LeaseMgr::MAX_DB_TIME.
+    static std::string
+    convertToDatabaseTime(const time_t cltt, const uint32_t valid_lifetime) {
+        // Calculate expiry time. Store it in the 64-bit value so as we can detect
+        // overflows.
+        int64_t expire_time_64 = static_cast<int64_t>(cltt) +
+            static_cast<int64_t>(valid_lifetime);
+
+        // It has been observed that the PostgreSQL doesn't deal well with the
+        // timestamp values beyond the LeaseMgr::MAX_DB_TIME seconds since the
+        // beginning of the epoch (around year 2038). The value is often
+        // stored in the database but it is invalid when read back (overflow?).
+        // Hence, the maximum timestamp value is restricted here.
+        if (expire_time_64 > LeaseMgr::MAX_DB_TIME) {
+            isc_throw(isc::BadValue, "Time value is too large: " << expire_time_64);
         }
 
         struct tm tinfo;
         char buffer[20];
+        const time_t time_val = static_cast<time_t>(expire_time_64);
         localtime_r(&time_val, &tinfo);
         strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tinfo);
         return (std::string(buffer));
@@ -323,7 +338,7 @@ public:
     /// is expected to be the number of seconds since the epoch
     /// expressed as base-10 integer string.
     /// @return Converted timestamp as time_t value.
-    time_t convertFromDatabaseTime(const std::string& db_time_val) {
+    static time_t convertFromDatabaseTime(const std::string& db_time_val) {
         // Convert string time value to time_t
         try  {
             return (boost::lexical_cast<time_t>(db_time_val));
@@ -348,7 +363,7 @@ public:
     /// @return a const char* pointer to the column's raw data
     /// @throw  DbOperationError if the value cannot be fetched.
     const char* getRawColumnValue(PGresult*& r, const int row,
-                                  const size_t col) {
+                                  const size_t col) const {
         const char* value = PQgetvalue(r, row, col);
         if (!value) {
             isc_throw(DbOperationError, "getRawColumnValue no data for :"
@@ -368,7 +383,7 @@ public:
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
     void getColumnValue(PGresult*& r, const int row, const size_t col,
-                        bool &value) {
+                        bool &value) const {
         const char* data = getRawColumnValue(r, row, col);
         if (!strlen(data) || *data == 'f') {
             value = false;
@@ -391,7 +406,7 @@ public:
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
     void getColumnValue(PGresult*& r, const int row, const size_t col,
-                        uint32_t &value) {
+                        uint32_t &value) const {
         const char* data = getRawColumnValue(r, row, col);
         try {
             value = boost::lexical_cast<uint32_t>(data);
@@ -412,7 +427,7 @@ public:
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
     void getColumnValue(PGresult*& r, const int row, const size_t col,
-                        uint8_t &value) {
+                        uint8_t &value) const {
         const char* data = getRawColumnValue(r, row, col);
         try {
             // lexically casting as uint8_t doesn't convert from char
@@ -435,7 +450,7 @@ public:
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
     void getColumnValue(PGresult*& r, const int row, const size_t col,
-                        Lease6::Type& value) {
+                        Lease6::Type& value) const {
         uint32_t raw_value = 0;
         getColumnValue(r, row , col, raw_value);
         switch (raw_value) {
@@ -475,7 +490,8 @@ public:
     /// invalid.
     void convertFromBytea(PGresult*& r, const int row, const size_t col,
                           uint8_t* buffer,
-                          const size_t buffer_size, size_t &bytes_converted) {
+                          const size_t buffer_size,
+                          size_t &bytes_converted) const {
 
         // Returns converted bytes in a dynamically allocated buffer, and
         // sets bytes_converted.
@@ -505,20 +521,20 @@ public:
     }
 
     /// @brief Returns column label given a column number
-    std::string getColumnLabel(const size_t column) {
-        if (column > columnLabels_.size()) {
+    std::string getColumnLabel(const size_t column) const {
+        if (column > column_labels_.size()) {
             ostringstream os;
             os << "Unknown column:" << column;
             return (os.str());
         }
 
-        return (columnLabels_[column]);
+        return (column_labels_[column]);
     }
 
 protected:
     /// @brief Stores text labels for columns, currently only used for
     /// logging and errors.
-    std::vector<std::string>columnLabels_;
+    std::vector<std::string>column_labels_;
 
     /// @brief Common Instance members used for binding and conversion
     //@{
@@ -571,15 +587,15 @@ public:
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
 
         // Set the column names (for error messages)
-        columnLabels_.push_back("address");
-        columnLabels_.push_back("hwaddr");
-        columnLabels_.push_back("client_id");
-        columnLabels_.push_back("valid_lifetime");
-        columnLabels_.push_back("expire");
-        columnLabels_.push_back("subnet_id");
-        columnLabels_.push_back("fqdn_fwd");
-        columnLabels_.push_back("fqdn_rev");
-        columnLabels_.push_back("hostname");
+        column_labels_.push_back("address");
+        column_labels_.push_back("hwaddr");
+        column_labels_.push_back("client_id");
+        column_labels_.push_back("valid_lifetime");
+        column_labels_.push_back("expire");
+        column_labels_.push_back("subnet_id");
+        column_labels_.push_back("fqdn_fwd");
+        column_labels_.push_back("fqdn_rev");
+        column_labels_.push_back("hostname");
     }
 
     /// @brief Creates the bind array for sending Lease4 data to the database.
@@ -632,8 +648,7 @@ public:
                              (lease->valid_lft_);
             bind_array.add(valid_lft_str_);
 
-            expire_str_ = convertToDatabaseTime(lease->valid_lft_ +
-                                                lease->cltt_);
+            expire_str_ = convertToDatabaseTime(lease->cltt_, lease_->valid_lft_);
             bind_array.add(expire_str_);
 
             subnet_id_str_ = boost::lexical_cast<std::string>
@@ -644,10 +659,11 @@ public:
             bind_array.add(lease->fqdn_rev_);
 
             bind_array.add(lease->hostname_);
+
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
-                      "Could not create bind array for Lease4 lease: "
-                      << lease_->addr_.toText() << " reason: " << ex.what());
+                      "Could not create bind array from Lease4: "
+                      << lease_->addr_.toText() << ", reason: " << ex.what());
         }
     }
 
@@ -749,18 +765,18 @@ public:
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
 
         // Set the column names (for error messages)
-        columnLabels_.push_back("address");
-        columnLabels_.push_back("duid");
-        columnLabels_.push_back("valid_lifetime");
-        columnLabels_.push_back("expire");
-        columnLabels_.push_back("subnet_id");
-        columnLabels_.push_back("pref_lifetime");
-        columnLabels_.push_back("lease_type");
-        columnLabels_.push_back("iaid");
-        columnLabels_.push_back("prefix_len");
-        columnLabels_.push_back("fqdn_fwd");
-        columnLabels_.push_back("fqdn_rev");
-        columnLabels_.push_back("hostname");
+        column_labels_.push_back("address");
+        column_labels_.push_back("duid");
+        column_labels_.push_back("valid_lifetime");
+        column_labels_.push_back("expire");
+        column_labels_.push_back("subnet_id");
+        column_labels_.push_back("pref_lifetime");
+        column_labels_.push_back("lease_type");
+        column_labels_.push_back("iaid");
+        column_labels_.push_back("prefix_len");
+        column_labels_.push_back("fqdn_fwd");
+        column_labels_.push_back("fqdn_rev");
+        column_labels_.push_back("hostname");
     }
 
     /// @brief Creates the bind array for sending Lease6 data to the database.
@@ -796,8 +812,7 @@ public:
                              (lease->valid_lft_);
             bind_array.add(valid_lft_str_);
 
-            expire_str_ = convertToDatabaseTime(lease->valid_lft_ +
-                                                lease->cltt_);
+            expire_str_ = convertToDatabaseTime(lease->cltt_, lease_->valid_lft_);
             bind_array.add(expire_str_);
 
             subnet_id_str_ = boost::lexical_cast<std::string>
@@ -826,7 +841,7 @@ public:
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Lease6: "
-                      << lease_->addr_.toText() << " reason: " << ex.what());
+                      << lease_->addr_.toText() << ", reason: " << ex.what());
         }
     }
 
@@ -894,7 +909,7 @@ public:
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
     isc::asiolink::IOAddress getIPv6Value(PGresult*& r, const int row,
-                                          const size_t col) {
+                                          const size_t col) const {
         const char* data = getRawColumnValue(r, row, col);
         try {
             return (isc::asiolink::IOAddress(data));
@@ -948,6 +963,15 @@ PgSqlLeaseMgr::~PgSqlLeaseMgr() {
         PQfinish(conn_);
         conn_ = NULL;
     }
+}
+
+std::string
+PgSqlLeaseMgr::getDBVersion() {
+    std::stringstream tmp;
+    tmp << "PostgreSQL backend " << PG_CURRENT_VERSION;
+    tmp << "." << PG_CURRENT_MINOR;
+    tmp << ", library " << PQlibVersion();
+    return (tmp.str());
 }
 
 void

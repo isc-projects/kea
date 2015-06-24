@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,12 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <dhcp/option.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <map>
 #include <string>
@@ -55,17 +58,21 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     // use of it).
     values_copy["universe"] = ctx_.universe_ == Option::V4 ? "4" : "6";
 
+    int64_t lfc_interval = 0;
     // 3. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, config_value->mapValue()) {
         try {
-            // The persist parameter is the only boolean parameter at the
-            // moment. It needs special handling.
-            if (param.first != "persist") {
-                values_copy[param.first] = param.second->stringValue();
-
-            } else {
+            if (param.first == "persist") {
                 values_copy[param.first] = (param.second->boolValue() ?
                                             "true" : "false");
+
+            } else if (param.first == "lfc-interval") {
+                lfc_interval = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(lfc_interval);
+
+            } else {
+                values_copy[param.first] = param.second->stringValue();
             }
         } catch (const isc::data::TypeError& ex) {
             // Append position of the element.
@@ -84,11 +91,19 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
                   "to be accessed (" << config_value->getPosition() << ")");
     }
 
-    // b. Check if the 'type; keyword known and throw an exception if not.
+    // b. Check if the 'type' keyword known and throw an exception if not.
     string dbtype = type_ptr->second;
     if ((dbtype != "memfile") && (dbtype != "mysql") && (dbtype != "postgresql")) {
         isc_throw(BadValue, "unknown backend database type: " << dbtype
                   << " (" << config_value->getPosition() << ")");
+    }
+
+    // c. Check that the lfc-interval is a number and it is within a resonable
+    // range.
+    if ((lfc_interval < 0) || (lfc_interval > std::numeric_limits<uint32_t>::max())) {
+        isc_throw(BadValue, "lfc-interval value: " << lfc_interval
+                  << " is out of range, expected value: 0.."
+                  << std::numeric_limits<uint32_t>::max());
     }
 
     // 5. If all is OK, update the stored keyword/value pairs.  We do this by

@@ -126,7 +126,7 @@ SignalSet::invokeOnReceiptHandler(int sig) {
                   << sig << ": " << ex.what());
     }
 
-    // Restore the sig action to reenable handling this signal.
+    // Restore the sig action to re-enable handling this signal.
     if (sigaction(sig, &prev_sa, 0) < 0) {
         // Highly unlikely we can get here.
         const char* errmsg = strerror(errno);
@@ -182,6 +182,11 @@ SignalSet::add(const int sig) {
         isc_throw(SignalSetError, "failed to register a signal handler for"
                   " signal " << sig << ": " << strerror(errno));
     }
+}
+
+void
+SignalSet::block() const {
+    maskSignals(SIG_BLOCK);
 }
 
 void
@@ -296,6 +301,12 @@ SignalSet::remove(const int sig) {
                   << ": this signal is not owned by the signal set");
     }
 }
+
+void
+SignalSet::unblock() const {
+    maskSignals(SIG_UNBLOCK);
+}
+
 
 void
 SignalSet::setOnReceiptHandler(BoolSignalHandler handler) {

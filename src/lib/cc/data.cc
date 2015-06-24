@@ -1,4 +1,4 @@
-// Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,7 +26,6 @@
 #include <sstream>
 #include <fstream>
 #include <cerrno>
-#include <climits>
 
 #include <boost/algorithm/string.hpp> // for iequals
 #include <boost/lexical_cast.hpp>
@@ -136,57 +135,57 @@ Element::setValue(const std::map<std::string, ConstElementPtr>&) {
 
 ConstElementPtr
 Element::get(const int) const {
-    isc_throw(TypeError, "get(int) called on a non-list Element");
+    throwTypeError("get(int) called on a non-list Element");
 }
 
 void
 Element::set(const size_t, ConstElementPtr) {
-    isc_throw(TypeError, "set(int, element) called on a non-list Element");
+    throwTypeError("set(int, element) called on a non-list Element");
 }
 
 void
 Element::add(ConstElementPtr) {
-    isc_throw(TypeError, "add() called on a non-list Element");
+    throwTypeError("add() called on a non-list Element");
 }
 
 void
 Element::remove(const int) {
-    isc_throw(TypeError, "remove(int) called on a non-list Element");
+    throwTypeError("remove(int) called on a non-list Element");
 }
 
 size_t
 Element::size() const {
-    isc_throw(TypeError, "size() called on a non-list Element");
+    throwTypeError("size() called on a non-list Element");
 }
 
 bool
 Element::empty() const {
-    isc_throw(TypeError, "empty() called on a non-list Element");
+    throwTypeError("empty() called on a non-list Element");
 }
 
 ConstElementPtr
 Element::get(const std::string&) const {
-    isc_throw(TypeError, "get(string) called on a non-map Element");
+    throwTypeError("get(string) called on a non-map Element");
 }
 
 void
 Element::set(const std::string&, ConstElementPtr) {
-    isc_throw(TypeError, "set(name, element) called on a non-map Element");
+    throwTypeError("set(name, element) called on a non-map Element");
 }
 
 void
 Element::remove(const std::string&) {
-    isc_throw(TypeError, "remove(string) called on a non-map Element");
+    throwTypeError("remove(string) called on a non-map Element");
 }
 
 bool
 Element::contains(const std::string&) const {
-    isc_throw(TypeError, "contains(string) called on a non-map Element");
+    throwTypeError("contains(string) called on a non-map Element");
 }
 
 ConstElementPtr
 Element::find(const std::string&) const {
-    isc_throw(TypeError, "find(string) called on a non-map Element");
+    throwTypeError("find(string) called on a non-map Element");
 }
 
 bool

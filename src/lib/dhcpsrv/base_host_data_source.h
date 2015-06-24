@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -31,6 +31,14 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exception thrown when an address is already reserved by a @c Host
+/// object (DuplicateHost is same identity, ReservedAddress same address).
+class ReservedAddress : public Exception {
+public:
+    ReservedAddress(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief Exception thrown when invalid IP address has been specified for
 /// @c Host.
 class BadHostAddress : public isc::BadValue {
@@ -57,8 +65,7 @@ class BaseHostDataSource {
 public:
 
     /// @brief Default destructor implementation.
-    virtual ~BaseHostDataSource() {
-    }
+    virtual ~BaseHostDataSource() { }
 
     /// @brief Return all hosts for the specified HW address or DUID.
     ///

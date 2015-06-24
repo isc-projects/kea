@@ -7,7 +7,7 @@ AC_PREREQ([2.59])
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
 # version that was used as a base + changes that were made later, but
 # are not released yet.
-AC_INIT(kea, 0.9-git, kea-dev@lists.isc.org)
+AC_INIT(kea, 0.9.2-beta, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -26,6 +26,8 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4macros])
 
+AC_CANONICAL_HOST
+
 # Checks for programs.
 AC_PROG_CXX
 
@@ -41,6 +43,20 @@ fi
 # Export EXTENDED_VERSION to config.h
 # This will be either "tarball" or "git abcd".
 AC_DEFINE_UNQUOTED([EXTENDED_VERSION], ["${KEA_SRCID}"], [Extended Kea version])
+
+# Find a separator for path_replacer
+for sep in "+" "," ";" "&" "__NONE__"; do
+	if `pwd | grep -q $sep`; then continue; fi
+	if `echo ${prefix} | grep -q $sep`; then continue; fi
+	if `echo ${sysconfdir} | grep -q $sep`; then continue; fi
+	if `echo ${localstatedir} | grep -q $sep`; then continue; fi
+	SEP=$sep
+	break
+done
+if test "$sep" = "__NONE__"; then
+	AC_MSG_ERROR([can't find a separator character in '+,;&' for the path_replacer shell script])
+fi
+AC_SUBST(SEP)
 
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
@@ -253,19 +269,18 @@ case "$host" in
 
 	# In OS X 10.9 (and possibly any future versions?) pthread_cond_destroy
 	# doesn't work as documented, which makes some of unit tests fail.
-        AC_TRY_RUN([
-	#include <Availability.h>
-	int main(void)
-	{
-	#ifdef __MAC_OS_X_VERSION_MIN_REQUIRED
-	#if __MAC_OS_X_VERSION_MIN_REQUIRED < 1090
-	return 1;
-	#else
-	return 0;
-	#endif
-	#endif
-	return 1;
-	}],[kea_undefined_pthread_behavior=yes],[],[])
+	AC_MSG_CHECKING([OS X versions where destroying locked locks do not fail])
+	AC_TRY_COMPILE(
+	[#include <Availability.h>],
+	[#ifdef __MAC_OS_X_VERSION_MIN_REQUIRED
+	 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1090
+	 #error " OS X >= 10.9"
+	 #endif
+	 #endif
+	 return 1;],
+	[AC_MSG_RESULT([OS X < 10.9])],
+	[AC_MSG_RESULT([OS X >= 10.9])
+	 kea_undefined_pthread_behavior=yes])
 
 	# libtool doesn't work perfectly with Darwin: libtool embeds the
 	# final install path in dynamic libraries and our loadable python
@@ -277,6 +292,17 @@ case "$host" in
 	ENV_LIBRARY_PATH=DYLD_LIBRARY_PATH
 	;;
 *-freebsd*)
+	# On FreeBSD10.1 pthread_cond_destroy doesn't work as documented, which
+	# causes the CondVarTest.destroyWhileWait test to fail. According to the
+	# pthread_cond_destroy documentation for FreeBSD, this function should
+	# return EBUSY error when there is a thread waiting for the conditional
+	# variable, whereas this function returned success code. We treat it here
+	# as an undefined behavior. Also note that this issue was only visible
+	# when gtest 1.7 was in use, because the previous versions of gtest
+	# didn't seem to have support for the death tests on FreeBSD. As a
+	# result, the test was not executed and the error didn't occur.
+	kea_undefined_pthread_behavior=yes
+
 	SET_ENV_LIBRARY_PATH=yes
 	;;
 *-netbsd*)
@@ -364,44 +390,62 @@ AC_TYPE_SIZE_T
 
 # Detect OS type (it may be used to do OS-specific things, e.g.
 # interface detection in DHCP)
-AC_MSG_CHECKING(OS family)
-system=`uname -s`
-case $system in
-    Linux)
+AC_MSG_CHECKING(OS type)
+BSD_TYPE="notaBSD"
+case $host in
+    *-linux*)
+      AC_DEFINE([OS_LINUX], [1], [Running on Linux?])
       OS_TYPE="Linux"
       CPPFLAGS="$CPPFLAGS -DOS_LINUX"
       ;;
-    Darwin | FreeBSD | NetBSD | OpenBSD)
+    *-apple-darwin*)
+      AC_DEFINE([OS_BSD], [1], [Running on BSD?])
+      AC_DEFINE([OS_OSX], [1], [Running on OSX?])
       OS_TYPE="BSD"
+      BSD_TYPE="OSX"
       CPPFLAGS="$CPPFLAGS -DOS_BSD"
       ;;
-    SunOS)
+    *-freebsd*)
+      AC_DEFINE([OS_BSD], [1], [Running on BSD?])
+      AC_DEFINE([OS_FREEBSD], [1], [Running on FreeBSD?])
+      OS_TYPE="BSD"
+      BSD_TYPE="FreeBSD"
+      CPPFLAGS="$CPPFLAGS -DOS_BSD"
+      ;;
+    *-netbsd*)
+      AC_DEFINE([OS_BSD], [1], [Running on BSD?])
+      AC_DEFINE([OS_NETBSD], [1], [Running on NetBSD?])
+      OS_TYPE="BSD"
+      BSD_TYPE="NetBSD"
+      CPPFLAGS="$CPPFLAGS -DOS_BSD"
+      ;;
+    *-openbsd*)
+      AC_DEFINE([OS_BSD], [1], [Running on BSD?])
+      AC_DEFINE([OS_OPENBSD], [1], [Running on OpenBSD?])
+      OS_TYPE="BSD"
+      BSD_TYPE="OpenBSD"
+      CPPFLAGS="$CPPFLAGS -DOS_BSD"
+      ;;
+    *-solaris*)
+      AC_DEFINE([OS_SOLARIS], [1], [Running on Solaris?])
       OS_TYPE="Solaris"
       CPPFLAGS="$CPPFLAGS -DOS_SUN"
       ;;
     *)
       OS_TYPE="Unknown"
-      AC_MSG_WARN("Unsupported OS: uname returned $system")
+      # $host_os is more user friendly than full $host
+      AC_MSG_WARN("Unsupported OS: $host_os")
       ;;
 esac
 AC_MSG_RESULT($OS_TYPE)
 
 AM_CONDITIONAL(OS_LINUX, test $OS_TYPE = Linux)
-AM_COND_IF([OS_LINUX], [AC_DEFINE([OS_LINUX], [1], [Running on Linux?])])
 AM_CONDITIONAL(OS_BSD, test $OS_TYPE = BSD)
-AM_COND_IF([OS_BSD], [AC_DEFINE([OS_BSD], [1], [Running on BSD?])])
 AM_CONDITIONAL(OS_SOLARIS, test $OS_TYPE = Solaris)
-AM_COND_IF([OS_SOLARIS], [AC_DEFINE([OS_SOLARIS], [1], [Running on Solaris?])])
-
-# Deal with variants
-AM_CONDITIONAL(OS_FREEBSD, test $system = FreeBSD)
-AM_COND_IF([OS_FREEBSD], [AC_DEFINE([OS_FREEBSD], [1], [Running on FreeBSD?])])
-AM_CONDITIONAL(OS_NETBSD, test $system = NetBSD)
-AM_COND_IF([OS_NETBSD], [AC_DEFINE([OS_NETBSD], [1], [Running on NetBSD?])])
-AM_CONDITIONAL(OS_OPENBSD, test $system = OpenBSD)
-AM_COND_IF([OS_OPENBSD], [AC_DEFINE([OS_OPENBSD], [1], [Running on OpenBSD?])])
-AM_CONDITIONAL(OS_OSX, test $system = Darwin)
-AM_COND_IF([OS_OSX], [AC_DEFINE([OS_OSX], [1], [Running on OSX?])])
+AM_CONDITIONAL(OS_OSX, test $BSD_TYPE = OSX)
+AM_CONDITIONAL(OS_FREEBSD, test $BSD_TYPE = FreeBSD)
+AM_CONDITIONAL(OS_NETBSD, test $BSD_TYPE = NetBSD)
+AM_CONDITIONAL(OS_OPENBSD, test $BSD_TYPE = OpenBSD)
 
 
 AC_MSG_CHECKING(for sa_len in struct sockaddr)
@@ -949,6 +993,9 @@ if test "$PG_CONFIG" != "" ; then
              AC_MSG_ERROR([Needs PostgreSQL library])]
     )
 
+    AC_CHECK_HEADERS([utils/errcodes.h],,
+    AC_MSG_ERROR([Missing required header file (errcodes.h) from PostgreSQL server-development package]))
+
     CPPFLAGS=$CPPFLAGS_SAVED
     LIBS=$LIBS_SAVED
 
@@ -1046,9 +1093,7 @@ fi
 # Add some default CPP flags needed for Boost, identified by the AX macro.
 CPPFLAGS="$CPPFLAGS $CPPFLAGS_BOOST_THREADCONF"
 
-# I can't get some of the #include <asio.hpp> right without this
-# TODO: find the real cause of asio/boost wanting pthreads
-# (this currently only occurs for src/lib/cc/session_unittests)
+# Can be required by gtest, boost and perhaps still asio
 PTHREAD_LDFLAGS=
 AC_CHECK_LIB(pthread, pthread_create,[ PTHREAD_LDFLAGS=-lpthread ], [])
 AC_SUBST(PTHREAD_LDFLAGS)
@@ -1068,7 +1113,7 @@ if test "x$enable_gtest" = "xyes" ; then
 
     if test -n "$with_gtest_source" ; then
 
-          if test "x$GTEST_SOURCE" = "xyes" ; then
+        if test "x$GTEST_SOURCE" = "xyes" ; then
 
             AC_MSG_CHECKING([for gtest source])
             # If not specified, try some common paths.
@@ -1083,107 +1128,107 @@ if test "x$enable_gtest" = "xyes" ; then
             if test -z $GTEST_SOURCE ; then
                 AC_MSG_ERROR([no gtest source but it was selected])
             fi
-         else
+        else
             AC_CHECK_FILES([$GTEST_SOURCE/src/gtest-all.cc]
-               [$GTEST_SOURCE/src/gtest_main.cc],
-               [have_gtest_source=yes],
-               [AC_MSG_ERROR([no gtest source at $GTEST_SOURCE])])
-          fi
-          have_gtest_source=yes
-          GTEST_LDFLAGS="\$(top_builddir)/ext/gtest/libgtest.a"
-          DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
-          GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
-          # See $GTEST_SOURCE/include/gtest/internal/gtest-port.h
-          # about GTEST_HAS_PTHREAD.
-          case "$host" in
+                [$GTEST_SOURCE/src/gtest_main.cc],
+                [have_gtest_source=yes],
+                [AC_MSG_ERROR([no gtest source at $GTEST_SOURCE])])
+        fi
+        have_gtest_source=yes
+        GTEST_LDFLAGS="\$(top_builddir)/ext/gtest/libgtest.a"
+        DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
+        GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
+        # See $GTEST_SOURCE/include/gtest/internal/gtest-port.h
+        # about GTEST_HAS_PTHREAD.
+        case "$host" in
             *-solaris*|*-linux*|*-hpux*)
                 GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
                 ;;
-          esac
-        fi
+        esac
+    fi
 
-if test "$gtest_path" != "no" ; then
-    if test "$gtest_path" != "yes"; then
-        GTEST_PATHS=$gtest_path
-        if test -x "${gtest_path}/bin/gtest-config" ; then
-            GTEST_CONFIG="${gtest_path}/bin/gtest-config"
-        fi
-    else
-        AC_PATH_PROG([GTEST_CONFIG], [gtest-config])
-    fi
-    if test -x "${GTEST_CONFIG}" ; then :
-        # using cppflags instead of cxxflags
-        GTEST_INCLUDES=`${GTEST_CONFIG} --cppflags`
-        GTEST_LDFLAGS=`${GTEST_CONFIG} --ldflags`
-        GTEST_LDADD=`${GTEST_CONFIG} --libs`
-        GTEST_VERSION=`${GTEST_CONFIG} --version`
-        GTEST_FOUND="true"
-    else
-        AC_MSG_WARN([Unable to locate Google Test gtest-config.])
-        if test -z "${GTEST_PATHS}" ; then
-            GTEST_PATHS="/usr /usr/local"
-        fi
-        GTEST_FOUND="false"
-    fi
-    if test "${GTEST_FOUND}" != "true"; then
-        GTEST_FOUND="false"
-        for dir in $GTEST_PATHS; do
-            if test -f "$dir/include/gtest/gtest.h"; then
-                GTEST_INCLUDES="-I$dir/include"
-                GTEST_LDFLAGS="-L$dir/lib"
-                GTEST_LDADD="-lgtest"
-                GTEST_FOUND="true"
-                # There is no gtest-config script on this
-                # system, which is supposed to inform us
-                # whether we need pthreads as well (a
-                # gtest compile-time option). So we still
-                # need to test that manually.
-                CPPFLAGS_SAVED="$CPPFLAGS"
-                CPPFLAGS="$CPPFLAGS $GTEST_INCLUDES"
-                LDFLAGS_SAVED="$LDFLAGS"
-                LDFLAGS="$LDFLAGS $GTEST_LDFLAGS"
-                LIBS_SAVED=$LIBS
-                LIBS="$LIBS $GTEST_LDADD"
-                AC_MSG_CHECKING([Checking whether gtest tests need pthreads])
-                # First try to compile without pthreads
-                AC_TRY_LINK([
-                    #include <gtest/gtest.h>
-                    ],[
-                        int i = 0;
-                        char* c = NULL;
-                        ::testing::InitGoogleTest(&i, &c);
-                        return (0);
-                    ],
-                    [ AC_MSG_RESULT(no) ],
-                    [
-                        LIBS="$SAVED_LIBS $GTEST_LDADD $PTHREAD_LDFLAGS"
-                        # Now try to compile with pthreads
-                        AC_TRY_LINK([
-                            #include <gtest/gtest.h>
-                            ],[
-                                int i = 0;
-                                char* c = NULL;
-                                ::testing::InitGoogleTest(&i, &c);
-                                return (0);
-                            ],
-                            [ AC_MSG_RESULT(yes)
-                              GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
-                            ],
-                            # Apparently we can't compile it at all
-                            [ AC_MSG_ERROR(unable to compile with gtest) ])
-                ])
-                CPPFLAGS=$CPPFLAGS_SAVED
-                LDFLAGS=$LDFLAGS_SAVED
-                LIBS=$LIBS_SAVED
-                break
+    if test "$gtest_path" != "no" ; then
+        if test "$gtest_path" != "yes"; then
+            GTEST_PATHS=$gtest_path
+            if test -x "${gtest_path}/bin/gtest-config" ; then
+                GTEST_CONFIG="${gtest_path}/bin/gtest-config"
             fi
-        done
-    fi
-    if test "${GTEST_FOUND}" != "true"; then
-        AC_MSG_ERROR([Cannot find gtest in: $GTEST_PATHS])
-    fi
+        else
+            AC_PATH_PROG([GTEST_CONFIG], [gtest-config])
+        fi
+        if test -x "${GTEST_CONFIG}" ; then :
+            # using cppflags instead of cxxflags
+            GTEST_INCLUDES=`${GTEST_CONFIG} --cppflags`
+            GTEST_LDFLAGS=`${GTEST_CONFIG} --ldflags`
+            GTEST_LDADD=`${GTEST_CONFIG} --libs`
+            GTEST_VERSION=`${GTEST_CONFIG} --version`
+            GTEST_FOUND="true"
+        else
+            AC_MSG_WARN([Unable to locate Google Test gtest-config.])
+            if test -z "${GTEST_PATHS}" ; then
+                GTEST_PATHS="/usr /usr/local"
+            fi
+            GTEST_FOUND="false"
+        fi
+        if test "${GTEST_FOUND}" != "true"; then
+            GTEST_FOUND="false"
+            for dir in $GTEST_PATHS; do
+                if test -f "$dir/include/gtest/gtest.h"; then
+                    GTEST_INCLUDES="-I$dir/include"
+                    GTEST_LDFLAGS="-L$dir/lib"
+                    GTEST_LDADD="-lgtest"
+                    GTEST_FOUND="true"
+                    # There is no gtest-config script on this
+                    # system, which is supposed to inform us
+                    # whether we need pthreads as well (a
+                    # gtest compile-time option). So we still
+                    # need to test that manually.
+                    CPPFLAGS_SAVED="$CPPFLAGS"
+                    CPPFLAGS="$CPPFLAGS $GTEST_INCLUDES"
+                    LDFLAGS_SAVED="$LDFLAGS"
+                    LDFLAGS="$LDFLAGS $GTEST_LDFLAGS"
+                    LIBS_SAVED=$LIBS
+                    LIBS="$LIBS $GTEST_LDADD"
+                    AC_MSG_CHECKING([Checking whether gtest tests need pthreads])
+                    # First try to compile without pthreads
+                    AC_TRY_LINK([
+                        #include <gtest/gtest.h>
+                        ],[
+                            int i = 0;
+                            char* c = NULL;
+                            ::testing::InitGoogleTest(&i, &c);
+                            return (0);
+                        ],
+                        [ AC_MSG_RESULT(no) ],
+                        [
+                            LIBS="$SAVED_LIBS $GTEST_LDADD $PTHREAD_LDFLAGS"
+                            # Now try to compile with pthreads
+                            AC_TRY_LINK([
+                                #include <gtest/gtest.h>
+                                ],[
+                                    int i = 0;
+                                    char* c = NULL;
+                                    ::testing::InitGoogleTest(&i, &c);
+                                    return (0);
+                                ],
+                                [ AC_MSG_RESULT(yes)
+                                  GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
+                                ],
+                                # Apparently we can't compile it at all
+                                [ AC_MSG_ERROR(unable to compile with gtest) ])
+                    ])
+                    CPPFLAGS=$CPPFLAGS_SAVED
+                    LDFLAGS=$LDFLAGS_SAVED
+                    LIBS=$LIBS_SAVED
+                    break
+                fi
+            done
+        fi
+        if test "${GTEST_FOUND}" != "true"; then
+            AC_MSG_ERROR([Cannot find gtest in: $GTEST_PATHS])
+        fi
 
-  fi
+    fi
 fi
 AM_CONDITIONAL(HAVE_GTEST, test $enable_gtest != "no")
 AM_CONDITIONAL(HAVE_GTEST_SOURCE, test "X$have_gtest_source" = "Xyes")
@@ -1232,34 +1277,6 @@ AC_SUBST(PERL)
 AC_PATH_PROGS(AWK, gawk awk)
 AC_SUBST(AWK)
 
-
-# Kea configuration backend section
-# Currently there are 2 backends available: BUNDY and JSON
-# It is possible that we may extend this to accept additional backends.
-AC_ARG_WITH(kea-config,
-    AC_HELP_STRING([--with-kea-config],
-    [Selects configuration backend; currently available options are: BUNDY
-    (Kea reads configuration and commands from Bundy framework) or JSON (default,
-    Kea reads configuration from a JSON file from disk)]),
-    [CONFIG_BACKEND="$withval"],
-    [CONFIG_BACKEND=JSON])
-
-AM_CONDITIONAL(CONFIG_BACKEND_BUNDY, test "x$CONFIG_BACKEND" = "xBUNDY")
-AM_CONDITIONAL(CONFIG_BACKEND_JSON,   test "x$CONFIG_BACKEND" = "xJSON")
-
-if test "x$CONFIG_BACKEND" = "xBUNDY"; then
-    AC_DEFINE(CONFIG_BACKEND_BUNDY, 1, [Define to 1 if Kea config was set to BUNDY])
-fi
-
-if test "x$CONFIG_BACKEND" = "xJSON"; then
-    AC_DEFINE(CONFIG_BACKEND_JSON, 1, [Define to 1 if Kea config was set to JSON])
-fi
-
-# Let's sanity check if the specified backend value is allowed
-if test "x$CONFIG_BACKEND" != "xBUNDY" && test "x$CONFIG_BACKEND" != "xJSON"; then
-   AC_MSG_ERROR("Invalid configuration backend specified: $CONFIG_BACKEND. The only supported are: BUNDY JSON")
-fi
-
 AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
   [regenerate documentation using Docbook [default=no]])],
   enable_generate_docs=$enableval, enable_generate_docs=no)
@@ -1293,6 +1310,9 @@ if test "x$enable_generate_docs" != xno ; then
   fi
 fi
 
+# Don't fail here if not found, used to generate PDF documentation.
+AC_PATH_PROG([DBLATEX], [dblatex])
+AM_CONDITIONAL(HAVE_DBLATEX, test "x$DBLATEX" != "x")
 
 AM_CONDITIONAL(GENERATE_DOCS, test x$enable_generate_docs != xno)
 
@@ -1351,6 +1371,8 @@ AC_TRY_LINK(
 AM_CONDITIONAL(HAVE_OPTRESET, test "x$var_optreset_exists" != "xno")
 AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPTRESET], [1], [Check for optreset?])])
 
+AC_DEFINE([CONFIG_H_WAS_INCLUDED], [1], [config.h inclusion marker])
+
 AC_CONFIG_FILES([compatcheck/Makefile
                  dns++.pc
                  doc/design/datasrc/Makefile
@@ -1360,7 +1382,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  doc/version.ent
                  ext/asio/asio/Makefile
                  ext/asio/Makefile
-		 ext/gtest/Makefile
+                 ext/gtest/Makefile
                  ext/Makefile
                  m4macros/Makefile
                  Makefile
@@ -1371,6 +1393,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/d2/tests/Makefile
                  src/bin/d2/tests/d2_process_tests.sh
                  src/bin/d2/tests/test_data_files_config.h
+                 src/bin/cfgrpt/Makefile
                  src/bin/dhcp4/Makefile
                  src/bin/dhcp4/spec_config.h.pre
                  src/bin/dhcp4/tests/Makefile
@@ -1390,6 +1413,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/keactrl/keactrl.conf
                  src/bin/keactrl/tests/Makefile
                  src/bin/keactrl/tests/keactrl_tests.sh
+                 src/bin/lfc/Makefile
+                 src/bin/lfc/tests/Makefile
                  src/bin/perfdhcp/Makefile
                  src/bin/perfdhcp/tests/Makefile
                  src/bin/perfdhcp/tests/testdata/Makefile
@@ -1399,8 +1424,10 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/admin/tests/Makefile
                  src/bin/admin/tests/memfile_tests.sh
                  src/bin/admin/tests/mysql_tests.sh
+                 src/bin/admin/tests/pgsql_tests.sh
                  src/bin/admin/scripts/mysql/Makefile
                  src/bin/admin/scripts/mysql/upgrade_1.0_to_2.0.sh
+                 src/bin/admin/scripts/mysql/upgrade_2.0_to_3.0.sh
                  src/bin/admin/scripts/pgsql/Makefile
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
@@ -1413,9 +1440,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/asiolink/Makefile
                  src/lib/asiolink/tests/Makefile
                  src/lib/cc/Makefile
-                 src/lib/cc/session_config.h.pre
                  src/lib/cc/tests/Makefile
-                 src/lib/cc/tests/session_unittests_config.h
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/data_def_unittests_config.h
@@ -1456,17 +1481,18 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/testutils/Makefile
                  src/lib/testutils/dhcp_test_lib.sh
                  src/lib/testutils/testdata/Makefile
+                 src/lib/stats/Makefile
+                 src/lib/stats/tests/Makefile
                  src/lib/util/Makefile
                  src/lib/util/io/Makefile
                  src/lib/util/python/Makefile
                  src/lib/util/python/gen_wiredata.py
                  src/lib/util/tests/Makefile
+                 src/lib/util/tests/process_spawn_app.sh
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
                  tools/path_replacer.sh
-                 tests/Makefile
-                 tests/tools/Makefile
 ])
 
  AC_CONFIG_COMMANDS([permissions], [
@@ -1483,6 +1509,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/lib/log/tests/logger_lock_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/gen_wiredata.py
+           chmod +x src/lib/util/tests/process_spawn_app.sh
            chmod +x tools/path_replacer.sh
 ])
 
@@ -1621,6 +1648,10 @@ Developer:
   Generate Documentation: $enable_generate_docs
 
 END
+
+# Create config_report.cc with embedded config.report
+chmod +x ${srcdir}/tools/mk_cfgrpt.sh
+${srcdir}/tools/mk_cfgrpt.sh ${srcdir}/src/bin/cfgrpt/config_report.cc
 
 cat config.report
 cat <<EOF

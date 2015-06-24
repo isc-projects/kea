@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <dhcpsrv/host.h>
 #include <util/strutil.h>
 #include <exceptions/exceptions.h>
@@ -83,15 +84,17 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
            const std::string& dhcp6_client_classes)
     : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
-      ipv4_reservation_(asiolink::IOAddress("0.0.0.0")),
-       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
-       dhcp6_client_classes_(dhcp6_client_classes) {
+      ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
+      hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
+      dhcp6_client_classes_(dhcp6_client_classes) {
 
     // Initialize HWAddr or DUID
     setIdentifier(identifier, identifier_len, identifier_type);
 
-    // Validate and set IPv4 address reservation.
-    setIPv4Reservation(ipv4_reservation);
+    if (!ipv4_reservation.isV4Zero()) {
+        // Validate and set IPv4 address reservation.
+        setIPv4Reservation(ipv4_reservation);
+    }
 }
 
 Host::Host(const std::string& identifier, const std::string& identifier_name,
@@ -102,15 +105,17 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
            const std::string& dhcp6_client_classes)
     : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
-      ipv4_reservation_(asiolink::IOAddress("0.0.0.0")),
+      ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
       dhcp6_client_classes_(dhcp6_client_classes) {
 
     // Initialize HWAddr or DUID
     setIdentifier(identifier, identifier_name);
 
-    // Validate and set IPv4 address reservation.
-    setIPv4Reservation(ipv4_reservation);
+    if (!ipv4_reservation.isV4Zero()) {
+        // Validate and set IPv4 address reservation.
+        setIPv4Reservation(ipv4_reservation);
+    }
 }
 
 const std::vector<uint8_t>&
@@ -132,6 +137,24 @@ Host::getIdentifierType() const {
         return (IDENT_HWADDR);
     }
     return (IDENT_DUID);
+}
+
+std::string
+Host::getIdentifierAsText() const {
+    std::string txt;
+    if (hw_address_) {
+        txt = "hwaddr=" + hw_address_->toText(false);
+    } else {
+        txt = "duid=";
+        if (duid_) {
+            txt += duid_->toText();
+        } else {
+            txt += "(none)";
+        }
+    }
+
+    return (txt);
+
 }
 
 void
@@ -172,10 +195,17 @@ Host::setIPv4Reservation(const asiolink::IOAddress& address) {
     if (!address.isV4()) {
         isc_throw(isc::BadValue, "address '" << address << "' is not a valid"
                   " IPv4 address");
+    } else if (address.isV4Zero() || address.isV4Bcast()) {
+        isc_throw(isc::BadValue, "must not make reservation for the '"
+                  << address << "' address");
     }
     ipv4_reservation_ = address;
 }
 
+void
+Host::removeIPv4Reservation() {
+    ipv4_reservation_ = asiolink::IOAddress::IPV4_ZERO_ADDRESS();
+}
 
 void
 Host::addReservation(const IPv6Resrv& reservation) {
@@ -192,6 +222,12 @@ Host::addReservation(const IPv6Resrv& reservation) {
 IPv6ResrvRange
 Host::getIPv6Reservations(const IPv6Resrv::Type& type) const {
     return (ipv6_reservations_.equal_range(type));
+}
+
+IPv6ResrvRange
+Host::getIPv6Reservations() const {
+    return (IPv6ResrvRange(ipv6_reservations_.begin(),
+                           ipv6_reservations_.end()));
 }
 
 bool
@@ -216,12 +252,78 @@ Host::hasReservation(const IPv6Resrv& reservation) const {
 }
 
 void
+Host::addClientClass4(const std::string& class_name) {
+    addClientClassInternal(dhcp4_client_classes_, class_name);
+}
+
+void
+Host::addClientClass6(const std::string& class_name) {
+    addClientClassInternal(dhcp6_client_classes_, class_name);
+}
+
+void
 Host::addClientClassInternal(ClientClasses& classes,
                              const std::string& class_name) {
     std::string trimmed = util::str::trim(class_name);
-    if (!class_name.empty()) {
-        classes.insert(ClientClass(class_name));
+    if (!trimmed.empty()) {
+        classes.insert(ClientClass(trimmed));
     }
+}
+
+std::string
+Host::toText() const {
+    std::ostringstream s;
+
+    // Add HW address or DUID.
+    s << getIdentifierAsText();
+
+    // Add IPv4 subnet id if exists (non-zero).
+    if (ipv4_subnet_id_) {
+        s << " ipv4_subnet_id=" << ipv4_subnet_id_;
+    }
+
+    // Add IPv6 subnet id if exists (non-zero).
+    if (ipv6_subnet_id_) {
+        s << " ipv6_subnet_id=" << ipv6_subnet_id_;
+    }
+
+    // Add hostname.
+    s << " hostname=" << (hostname_.empty() ? "(empty)" : hostname_);
+
+    // Add IPv4 reservation.
+    s << " ipv4_reservation=" << (ipv4_reservation_.isV4Zero() ? "(no)" :
+                                  ipv4_reservation_.toText());
+
+    if (ipv6_reservations_.empty()) {
+        s << " ipv6_reservations=(none)";
+
+    } else {
+        // Add all IPv6 reservations.
+        for (IPv6ResrvIterator resrv = ipv6_reservations_.begin();
+             resrv != ipv6_reservations_.end(); ++resrv) {
+            s << " ipv6_reservation"
+              << std::distance(ipv6_reservations_.begin(), resrv)
+              << "=" << resrv->second.toText();
+        }
+    }
+
+    // Add DHCPv4 client classes.
+    for (ClientClasses::const_iterator cclass = dhcp4_client_classes_.begin();
+         cclass != dhcp4_client_classes_.end(); ++cclass) {
+        s << " dhcp4_class"
+          << std::distance(dhcp4_client_classes_.begin(), cclass)
+          << "=" << *cclass;
+    }
+
+    // Add DHCPv6 client classes.
+    for (ClientClasses::const_iterator cclass = dhcp6_client_classes_.begin();
+         cclass != dhcp6_client_classes_.end(); ++cclass) {
+        s << " dhcp6_class"
+          << std::distance(dhcp6_client_classes_.begin(), cclass)
+          << "=" << *cclass;
+    }
+
+    return (s.str());
 }
 
 } // end of namespace isc::dhcp

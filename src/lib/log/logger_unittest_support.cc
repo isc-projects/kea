@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2014,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -80,7 +80,6 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
 
     // Root logger name is defined by the environment variable KEA_LOGGER_ROOT.
     // If not present, the name is "kea".
-    const char* DEFAULT_ROOT = "kea";
     const char* root = getenv("KEA_LOGGER_ROOT");
     if (! root) {
         // If not present, the name is "kea".

@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/csv_lease_file6.h>
 
@@ -27,7 +28,19 @@ CSVLeaseFile6::CSVLeaseFile6(const std::string& filename)
 }
 
 void
-CSVLeaseFile6::append(const Lease6& lease) const {
+CSVLeaseFile6::open(const bool seek_to_end) {
+    // Call the base class to open the file
+    CSVFile::open(seek_to_end);
+
+    // and clear any statistics we may have
+    clearStatistics();
+}
+
+void
+CSVLeaseFile6::append(const Lease6& lease) {
+    // Bump the number of write attempts
+    ++writes_;
+
     CSVRow row(getColumnCount());
     row.writeAt(getColumnIndex("address"), lease.addr_.toText());
     row.writeAt(getColumnIndex("duid"), lease.duid_->toText());
@@ -46,11 +59,23 @@ CSVLeaseFile6::append(const Lease6& lease) const {
         // We may not have hardware information
         row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_->toText(false));
     }
-    CSVFile::append(row);
+    try {
+        CSVFile::append(row);
+    } catch (const std::exception& ex) {
+        // Catch any errors so we can bump the error counter than rethrow it
+        ++write_errs_;
+        throw;
+    }
+
+    // Bump the number of leases written
+    ++write_leases_;
 }
 
 bool
 CSVLeaseFile6::next(Lease6Ptr& lease) {
+    // Bump the number of read attempts
+    ++reads_;
+
     // Read the CSV row and try to create a lease from the values read.
     // This may easily result in exception. We don't want this function
     // to throw exceptions, so we catch them all and rather return the
@@ -77,12 +102,19 @@ CSVLeaseFile6::next(Lease6Ptr& lease) {
         lease->hostname_ = readHostname(row);
 
     } catch (std::exception& ex) {
+        // bump the read error count
+        ++read_errs_;
+
         // The lease might have been created, so let's set it back to NULL to
         // signal that lease hasn't been parsed.
         lease.reset();
         setReadMsg(ex.what());
         return (false);
     }
+
+    // bump the number of leases read
+    ++read_leases_;
+
     return (true);
 }
 

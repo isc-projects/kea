@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012, 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012, 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
+#include <cfgrpt/config_report.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -40,8 +41,6 @@ namespace {
 
 const char* const DHCP4_NAME = "kea-dhcp4";
 
-const char* const DHCP4_LOGGER_NAME = "kea-dhcp4";
-
 /// @brief Prints Kea Usage and exits
 ///
 /// Note: This function never returns. It terminates the process.
@@ -50,13 +49,14 @@ usage() {
     cerr << "Kea DHCPv4 server, version " << VERSION << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP4_NAME
-         << " [-v] [-V] [-d] [-p number] [-c file]" << endl;
-    cerr << "  -c file: specify configuration file" << endl;
-    cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
-    cerr << "  -p number: specify non-standard port number 1-65535 "
-         << "(useful for testing only)" << endl;
+         << " -[v|V|W] [-d] [-c cfgfile] [-p number]" << endl;
     cerr << "  -v: print version number and exit" << endl;
     cerr << "  -V: print extended version and exit" << endl;
+    cerr << "  -W: display the configuration report and exit" << endl;
+    cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
+    cerr << "  -c file: specify configuration file" << endl;
+    cerr << "  -p number: specify non-standard port number 1-65535 "
+         << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
 }
 } // end of anonymous namespace
@@ -71,19 +71,27 @@ main(int argc, char* argv[]) {
     // The standard config file
     std::string config_file("");
 
-    while ((ch = getopt(argc, argv, "dvVp:c:")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVWc:p:")) != -1) {
         switch (ch) {
         case 'd':
             verbose_mode = true;
             break;
 
         case 'v':
-            cout << Daemon::getVersion(false) << endl;
+            cout << Dhcpv4Srv::getVersion(false) << endl;
             return (EXIT_SUCCESS);
 
         case 'V':
-            cout << Daemon::getVersion(true) << endl;
+            cout << Dhcpv4Srv::getVersion(true) << endl;
             return (EXIT_SUCCESS);
+
+        case 'W':
+            cout << isc::detail::getConfigReport() << endl;
+            return (EXIT_SUCCESS);
+
+        case 'c': // config file
+            config_file = optarg;
+            break;
 
         case 'p':
             try {
@@ -98,10 +106,6 @@ main(int argc, char* argv[]) {
                      << "], 1-65535 allowed." << endl;
                 usage();
             }
-            break;
-
-        case 'c': // config file
-            config_file = optarg;
             break;
 
         default:
@@ -126,10 +130,10 @@ main(int argc, char* argv[]) {
         // It is important that we set a default logger name because this name
         // will be used when the user doesn't provide the logging configuration
         // in the Kea configuration file.
-        CfgMgr::instance().setDefaultLoggerName(DHCP4_LOGGER_NAME);
+        CfgMgr::instance().setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
 
         // Initialize logging.  If verbose, we'll use maximum verbosity.
-        Daemon::loggerInit(DHCP4_LOGGER_NAME, verbose_mode);
+        Daemon::loggerInit(DHCP4_ROOT_LOGGER_NAME, verbose_mode);
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_START_INFO)
             .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no");
 
@@ -152,13 +156,17 @@ main(int argc, char* argv[]) {
                 log_manager.process();
                 LOG_ERROR(dhcp4_logger, DHCP4_INIT_FAIL).arg(ex.what());
             } catch (...) {
-                // The exeption thrown during the initialization could originate
-                // from logger subsystem. Therefore LOG_ERROR() may fail as well.
+                // The exception thrown during the initialization could
+                // originate from logger subsystem. Therefore LOG_ERROR()
+                // may fail as well.
                 cerr << "Failed to initialize server: " << ex.what() << endl;
             }
 
             return (EXIT_FAILURE);
         }
+
+        // Tell the admin we are ready to process packets
+        LOG_INFO(dhcp4_logger, DHCP4_STARTED).arg(VERSION);
 
         // And run the main loop of the server.
         server.run();

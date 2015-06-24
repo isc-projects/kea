@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -300,7 +300,7 @@ TEST_F(PerfPkt6Test, UnpackTransactionId) {
     uint8_t data[100] = { 0 };
 
     // Generate transaction id = 0x010203 and inject at offset = 50.
-    for (int i = 50; i <  53; ++i) {
+    for (uint8_t i = 50; i <  53; ++i) {
         data[i] = i - 49;
     }
     // Create packet and point out that transaction id is at offset 50.

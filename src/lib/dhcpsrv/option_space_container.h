@@ -23,7 +23,7 @@ namespace dhcp {
 
 /// @brief Simple container for option spaces holding various items.
 ///
-/// This helper class is used to store items of various types in
+/// This helper class is used to store items of various types
 /// that are grouped by option space names. Each option space is
 /// mapped to a container that holds items which specifically can
 /// be OptionDefinition objects or Subnet::OptionDescriptor structures.

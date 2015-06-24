@@ -120,15 +120,6 @@ initializer_unittests_1_CXXFLAGS = $(AM_CXXFLAGS)
 initializer_unittests_1_LDADD    = $(AM_LDADD)
 initializer_unittests_1_LDFLAGS  = $(AM_LDFLAGS)
 
-TESTS += initializer_unittests_2
-initializer_unittests_2_SOURCES  = run_initializer_unittests.cc
-initializer_unittests_2_SOURCES += message_initializer_2_unittest.cc
-
-initializer_unittests_2_CPPFLAGS = $(AM_CPPFLAGS)
-initializer_unittests_2_CXXFLAGS = $(AM_CXXFLAGS)
-initializer_unittests_2_LDADD    = $(AM_LDADD)
-initializer_unittests_2_LDFLAGS  = $(AM_LDFLAGS)
-
 noinst_PROGRAMS += $(TESTS)
 endif
 

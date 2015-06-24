@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp/option4_addrlst.h>
@@ -25,10 +25,12 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/tests/pkt_captures.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <stats/stats_mgr.h>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -40,6 +42,10 @@ namespace test {
 
 Dhcpv4SrvTest::Dhcpv4SrvTest()
 :rcode_(-1), srv_(0) {
+
+    // Wipe any existing statistics
+    isc::stats::StatsMgr::instance().removeAll();
+
     subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1000,
                                      2000, 3000));
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"), IOAddress("192.0.2.110")));
@@ -53,6 +59,9 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     CfgMgr::instance().clear();
     CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
     CfgMgr::instance().commit();
+
+    // Let's wipe all existing statistics.
+    isc::stats::StatsMgr::instance().removeAll();
 }
 
 Dhcpv4SrvTest::~Dhcpv4SrvTest() {
@@ -60,6 +69,9 @@ Dhcpv4SrvTest::~Dhcpv4SrvTest() {
     // Make sure that we revert to default value
     CfgMgr::instance().clear();
     CfgMgr::instance().echoClientId(true);
+
+    // Let's wipe all existing statistics.
+    isc::stats::StatsMgr::instance().removeAll();
 }
 
 void Dhcpv4SrvTest::addPrlOption(Pkt4Ptr& pkt) {
@@ -220,7 +232,7 @@ Dhcpv4SrvTest::noRequestedOptions(const Pkt4Ptr& pkt) {
 OptionPtr Dhcpv4SrvTest::generateClientId(size_t size /*= 4*/) {
 
     OptionBuffer clnt_id(size);
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         clnt_id[i] = 100 + i;
     }
 
@@ -234,7 +246,7 @@ OptionPtr Dhcpv4SrvTest::generateClientId(size_t size /*= 4*/) {
 HWAddrPtr Dhcpv4SrvTest::generateHWAddr(size_t size /*= 6*/) {
     const uint8_t hw_type = 123; // Just a fake number (typically 6=HTYPE_ETHER, see dhcp4.h)
     OptionBuffer mac(size);
-    for (int i = 0; i < size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         mac[i] = 50 + i;
     }
     return (HWAddrPtr(new HWAddr(mac, hw_type)));
@@ -388,7 +400,9 @@ Dhcpv4SrvTest::createPacketFromBuffer(const Pkt4Ptr& src_pkt,
     return (::testing::AssertionSuccess());
 }
 
-void Dhcpv4SrvTest::TearDown() {
+void
+// cppcheck-suppress unusedFunction
+Dhcpv4SrvTest::TearDown() {
 
     CfgMgr::instance().clear();
 
@@ -425,18 +439,18 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
 
     // Initialize the source HW address.
     vector<uint8_t> mac(6);
-    for (int i = 0; i < 6; ++i) {
+    for (uint8_t i = 0; i < 6; ++i) {
         mac[i] = i * 10;
     }
     // Initialized the destination HW address.
     vector<uint8_t> dst_mac(6);
-    for (int i = 0; i < 6; ++i) {
+    for (uint8_t i = 0; i < 6; ++i) {
         dst_mac[i] = i * 20;
     }
     // Create a DHCP message. It will be used to simulate the
     // incoming message.
     boost::shared_ptr<Pkt4> req(new Pkt4(msg_type, 1234));
-    // Create a response message. It will hold a reponse packet.
+    // Create a response message. It will hold a response packet.
     // Initially, set it to NULL.
     boost::shared_ptr<Pkt4> rsp;
     // Set the name of the interface on which packet is received.
@@ -587,7 +601,55 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
     }
  }
 
+Dhcpv4Exchange
+Dhcpv4SrvTest::createExchange(const Pkt4Ptr& query) {
+    return (Dhcpv4Exchange(srv_.alloc_engine_, query, srv_.selectSubnet(query)));
+}
 
+void
+Dhcpv4SrvTest::pretendReceivingPkt(NakedDhcpv4Srv& srv, const std::string& config,
+                                   uint8_t pkt_type, const std::string& stat_name) {
+
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Apply the configuration we just received.
+    configure(config);
+
+    // Let's just use one of the actual captured packets that we have.
+    Pkt4Ptr pkt = isc::test::PktCaptures::captureRelayedDiscover();
+
+    // We just need to tweak it a it, to pretend that it's type is as desired.
+    // Note that when receiving a packet, its on-wire form is stored in data_
+    // field. Most methods (including setType()) operates on option objects
+    // (objects stored in options_ after unpack() is called). Finally, outgoing
+    // packets are stored in out_buffer_. So we need to go through the full
+    // unpack/tweak/pack cycle and do repack, i.e. move the output buffer back
+    // to incoming buffer.
+    pkt->unpack();
+    pkt->setType(pkt_type); // Set message type.
+    pkt->pack();
+    pkt->data_.resize(pkt->getBuffer().getLength());
+    // Copy out_buffer_ to data_ to pretend that it's what was just received.
+    memcpy(&pkt->data_[0], pkt->getBuffer().getData(), pkt->getBuffer().getLength());
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(pkt);
+    srv.run();
+
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt4_rcvd = mgr.getObservation("pkt4-received");
+    ObservationPtr tested_stat = mgr.getObservation(stat_name);
+
+    // All expected statstics must be present.
+    ASSERT_TRUE(pkt4_rcvd);
+    ASSERT_TRUE(tested_stat);
+
+    // They also must have expected values.
+    EXPECT_EQ(1, pkt4_rcvd->getInteger().first);
+    EXPECT_EQ(1, tested_stat->getInteger().first);
+}
 
 }; // end of isc::dhcp::test namespace
 }; // end of isc::dhcp namespace

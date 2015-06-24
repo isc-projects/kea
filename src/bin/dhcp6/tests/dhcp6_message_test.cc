@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
 
 using namespace isc::asiolink;
@@ -64,8 +65,17 @@ Dhcpv6MessageTest::requestLease(const std::string& config,
     // subnets.
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
-    ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
-                selectSubnet(lease_client.addr_, ClientClasses()));
+
+    // Check if the lease belongs to one of the available pools.
+    bool pool_found = false;
+    for (int i = 0; i < subnets_num; ++i) {
+        if ((*subnets)[i]->getPool(lease_client.type_, lease_client.addr_)) {
+            pool_found = true;
+            break;
+        }
+    }
+    ASSERT_TRUE(pool_found);
+
     // Check that the client's lease matches the information on the server
     // side.
     Lease6Ptr lease_server = checkLease(lease_client);

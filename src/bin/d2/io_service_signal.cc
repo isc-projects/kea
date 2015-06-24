@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -65,7 +65,7 @@ IOSignal::TimerCallback::operator()() {
     return;
 }
 
-IOSignalQueue::IOSignalQueue(IOServicePtr& io_service)
+IOSignalQueue::IOSignalQueue(asiolink::IOServicePtr& io_service)
     : io_service_(io_service), signals_() {
     if (!io_service_) {
         isc_throw(IOSignalError, "IOSignalQueue - io_serivce cannot be NULL");

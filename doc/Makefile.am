@@ -1,6 +1,12 @@
 SUBDIRS = guide design
 
-EXTRA_DIST = version.ent.in differences.txt Doxyfile Doxyfile-xml
+EXTRA_DIST  = version.ent.in differences.txt Doxyfile Doxyfile-xml
+EXTRA_DIST += devel/config-backend.dox
+EXTRA_DIST += devel/contribute.dox
+EXTRA_DIST += devel/mainpage.dox
+EXTRA_DIST += devel/qa.dox
+
+EXTRA_DIST += images/isc-logo.png
 
 nobase_dist_doc_DATA  = examples/kea4/single-subnet.json
 nobase_dist_doc_DATA += examples/kea4/several-subnets.json
@@ -10,6 +16,8 @@ nobase_dist_doc_DATA += examples/kea6/simple.json
 nobase_dist_doc_DATA += examples/kea6/several-subnets.json
 nobase_dist_doc_DATA += examples/kea6/multiple-options.json
 nobase_dist_doc_DATA += examples/kea6/advanced.json
+nobase_dist_doc_DATA += examples/kea6/stateless.json
+nobase_dist_doc_DATA += examples/kea6/reservations.json
 nobase_dist_doc_DATA += examples/ddns/sample1.json
 nobase_dist_doc_DATA += examples/ddns/template.json
 

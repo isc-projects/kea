@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -141,6 +141,17 @@ public:
     /// @return true if option was deleted, false if no such option existed
     bool delOption(uint16_t type);
 
+    /// @brief Returns text representation primary packet identifiers
+    ///
+    /// This method is intended to be used to provide as a consistent way to
+    /// identify packets within log statements.  Derivations should supply
+    /// there own implementation.
+    ///
+    /// @return string with text representation
+    virtual std::string getLabel() const {
+        isc_throw(NotImplemented, "Pkt::getLabel()");
+    }
+
     /// @brief Returns text representation of the packet.
     ///
     /// This function is useful mainly for debugging.
@@ -150,7 +161,7 @@ public:
     /// implementations of this method.
     ///
     /// @return string with text representation
-    virtual std::string toText() = 0;
+    virtual std::string toText() const = 0;
 
     /// @brief Returns packet size in binary format.
     ///
@@ -181,6 +192,17 @@ public:
     ///
     /// @param type message type to be set
     virtual void setType(uint8_t type) = 0;
+
+    /// @brief Returns name of the DHCP message.
+    ///
+    /// For all unsupported messages the derived classes must return
+    /// "UNKNOWN".
+    ///
+    /// @return Ponter to "const" string containing DHCP message name.
+    /// The implementations in the derived classes should statically
+    /// allocate returned strings and the caller must not release the
+    /// returned pointer.
+    virtual const char* getName() const = 0;
 
     /// @brief Sets transaction-id value.
     ///
@@ -492,6 +514,34 @@ protected:
     /// @return hardware address (or NULL)
     virtual HWAddrPtr getMACFromIPv6RelayOpt() = 0;
 
+    /// @brief Attempts to obtain MAC address from DUID-LL or DUID-LLT.
+    ///
+    /// This method is called from getMAC(HWADDR_SOURCE_DUID) and should not be
+    /// called directly. It will attempt to extract MAC address information
+    /// from DUID if its type is LLT or LL. If this method fails, it will
+    /// return NULL.
+    ///
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt6 class have respective implementation.
+    /// This method is not applicable to DHCPv4.
+    ///
+    /// @return hardware address (or NULL)
+    virtual HWAddrPtr getMACFromDUID() = 0;
+
+    /// @brief Attempts to obtain MAC address from remote-id relay option.
+    ///
+    /// This method is called from getMAC(HWADDR_SOURCE_REMOTE_ID) and should not be
+    /// called directly. It will attempt to extract MAC address information
+    /// from remote-id option inserted by a relay agent closest to the client.
+    /// If this method fails, it will return NULL.
+    ///
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt6 class have respective implementation.
+    /// This method is not applicable to DHCPv4.
+    ///
+    /// @return hardware address (or NULL)
+    virtual HWAddrPtr getMACFromRemoteIdRelayOption() = 0;
+
     /// @brief Attempts to convert IPv6 address into MAC.
     ///
     /// Utility method that attempts to convert link-local IPv6 address to the
@@ -507,6 +557,32 @@ protected:
     /// @return hardware address (or NULL)
     HWAddrPtr
     getMACFromIPv6(const isc::asiolink::IOAddress& addr);
+
+    /// @brief Attempts to extract MAC/Hardware address from DOCSIS options
+    ///        inserted by the modem itself.
+    ///
+    /// This is a generic mechanism for extracting hardware address from the
+    /// DOCSIS options.
+    ///
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt6 class have respective implementation.
+    /// This method is currently not implemented in DHCPv4.
+    ///
+    /// @return hardware address (if necessary DOCSIS suboptions are present)
+    virtual HWAddrPtr getMACFromDocsisModem() = 0;
+
+    /// @brief Attempts to extract MAC/Hardware address from DOCSIS options
+    ///        inserted by the CMTS (the relay agent)
+    ///
+    /// This is a generic mechanism for extracting hardware address from the
+    /// DOCSIS options.
+    ///
+    /// @note This is a pure virtual method and must be implemented in
+    /// the derived classes. The @c Pkt6 class have respective implementation.
+    /// This method is currently not implemented in DHCPv4.
+    ///
+    /// @return hardware address (if necessary DOCSIS suboptions are present)
+    virtual HWAddrPtr getMACFromDocsisCMTS() = 0;
 
     /// Transaction-id (32 bits for v4, 24 bits for v6)
     uint32_t transid_;

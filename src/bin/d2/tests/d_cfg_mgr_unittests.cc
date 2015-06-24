@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <config/ccsession.h>
+#include <config.h>
+
+#include <cc/command_interpreter.h>
 #include <config/module_spec.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <d2/d_cfg_mgr.h>
@@ -22,7 +24,6 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
-#include <config.h>
 #include <sstream>
 
 using namespace std;

@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -107,6 +107,34 @@ TEST_F(MessageDictionaryTest, Replace) {
     EXPECT_EQ(string(""), dictionary.getText(gamma_id));
 }
 
+// Check that removing message works.
+
+TEST_F(MessageDictionaryTest, erase) {
+    MessageDictionary dictionary;
+    ASSERT_NO_THROW(dictionary.erase(alpha_id, alpha_text));
+    ASSERT_EQ(0, dictionary.size());
+
+    // Add a couple of messages.
+    EXPECT_TRUE(dictionary.add(alpha_id, alpha_text));
+    EXPECT_TRUE(dictionary.add(beta_id, beta_text));
+    // There is no sense to continue if messages haven't been added.
+    ASSERT_EQ(2, dictionary.size());
+
+    // Remove one with the existing ID, but non-matching text. It
+    // should not remove any message.
+    EXPECT_FALSE(dictionary.erase(beta_id, alpha_text));
+
+    // Now, remove the message with matching ID and text.
+    EXPECT_TRUE(dictionary.erase(beta_id, beta_text));
+    EXPECT_EQ(1, dictionary.size());
+    // The other entry should still exist.
+    EXPECT_EQ(alpha_text, dictionary.getText(alpha_id));
+
+    // And remove the other message.
+    EXPECT_TRUE(dictionary.erase(alpha_id, alpha_text));
+    EXPECT_EQ(0, dictionary.size());
+}
+
 // Load test
 
 TEST_F(MessageDictionaryTest, LoadTest) {
@@ -180,9 +208,9 @@ TEST_F(MessageDictionaryTest, Lookups) {
 // Check that the global dictionary is a singleton.
 
 TEST_F(MessageDictionaryTest, GlobalTest) {
-    MessageDictionary& global = MessageDictionary::globalDictionary();
-    MessageDictionary& global2 = MessageDictionary::globalDictionary();
-    EXPECT_TRUE(&global2 == &global);
+    const MessageDictionaryPtr& global = MessageDictionary::globalDictionary();
+    const MessageDictionaryPtr& global2 = MessageDictionary::globalDictionary();
+    EXPECT_TRUE(global2 == global);
 }
 
 // Check that the global dictionary has detected the duplicate and the
@@ -192,6 +220,6 @@ TEST_F(MessageDictionaryTest, GlobalLoadTest) {
     // There were duplicates but the vector should be cleared in init() now
     ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
 
-    string text = MessageDictionary::globalDictionary().getText("NEWSYM");
+    string text = MessageDictionary::globalDictionary()->getText("NEWSYM");
     EXPECT_EQ(string("new symbol added"), text);
 }

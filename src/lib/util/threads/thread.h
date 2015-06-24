@@ -35,7 +35,7 @@ namespace thread {
 /// You can wait for it then or just forget it ever existed and leave it
 /// live peacefully.
 ///
-/// The interface is minimalistic for now. We may need to extend it later.
+/// The interface is minimalist for now. We may need to extend it later.
 ///
 /// \note While the objects of this class represent another thread, they
 ///     are not thread-safe. You're not supposed to call wait() on the same

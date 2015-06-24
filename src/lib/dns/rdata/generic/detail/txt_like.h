@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -126,7 +126,7 @@ private:
         lexer.ungetToken();
 
         if (string_list_.empty()) {
-            isc_throw(InvalidRdataText, "Failed to construct" <<
+            isc_throw(InvalidRdataText, "Failed to construct " <<
                       RRType(typeCode) << " RDATA: empty input");
         }
     }

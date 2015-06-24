@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,8 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 
-#include <config/ccsession.h>
+#include <asiolink/io_service.h>
+#include <cc/command_interpreter.h>
 #include <d2/d2_process.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <d_test_stubs.h>
@@ -22,7 +24,6 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
-#include <config.h>
 #include <sstream>
 
 using namespace std;
@@ -64,8 +65,9 @@ class D2ProcessTest : public D2Process, public ConfigParseTest {
 public:
 
     /// @brief Constructor
-    D2ProcessTest() : D2Process("d2test",
-                                IOServicePtr(new isc::asiolink::IOService())) {
+    D2ProcessTest() :
+        D2Process("d2test",
+                  asiolink::IOServicePtr(new isc::asiolink::IOService())) {
     }
 
     /// @brief Destructor
@@ -143,7 +145,7 @@ public:
 TEST(D2Process, construction) {
     // Verify that the constructor will fail if given an empty
     // io service.
-    IOServicePtr lcl_io_service;
+    asiolink::IOServicePtr lcl_io_service;
     EXPECT_THROW (D2Process("TestProcess", lcl_io_service), DProcessBaseError);
 
     // Verify that the constructor succeeds with a valid io_service

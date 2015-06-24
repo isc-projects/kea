@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
+#include <asiolink/io_service.h>
 #include <asiolink/interval_timer.h>
 #include <d2/nc_trans.h>
 #include <dns/opcode.h>
@@ -59,7 +62,7 @@ public:
     /// @brief Constructor
     ///
     /// Parameters match those needed by NameChangeTransaction.
-    NameChangeStub(IOServicePtr& io_service,
+    NameChangeStub(asiolink::IOServicePtr& io_service,
                    dhcp_ddns::NameChangeRequestPtr& ncr,
                    DdnsDomainPtr& forward_domain,
                    DdnsDomainPtr& reverse_domain,
@@ -367,7 +370,7 @@ public:
 /// requires reverse change.
 /// 4. Valid construction functions properly
 TEST(NameChangeTransaction, construction) {
-    IOServicePtr io_service(new isc::asiolink::IOService());
+    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
     D2CfgMgrPtr cfg_mgr(new D2CfgMgr());
 
     const char* msg_str =
@@ -396,7 +399,7 @@ TEST(NameChangeTransaction, construction) {
 
     // Verify that construction with a null IOServicePtr fails.
     // @todo Subject to change if multi-threading is implemented.
-    IOServicePtr empty;
+    asiolink::IOServicePtr empty;
     EXPECT_THROW(NameChangeTransaction(empty, ncr,
                                        forward_domain, reverse_domain, cfg_mgr),
                                        NameChangeTransactionError);
@@ -449,7 +452,7 @@ TEST(NameChangeTransaction, construction) {
 }
 
 /// @brief General testing of member accessors.
-/// Most if not all of these are also tested as a byproduct off larger tests.
+/// Most if not all of these are also tested as a byproduct of larger tests.
 TEST_F(NameChangeTransactionTest, accessors) {
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
@@ -460,6 +463,9 @@ TEST_F(NameChangeTransactionTest, accessors) {
 
     // Verify that getTransactionKey works.
     EXPECT_EQ(ncr->getDhcid(), name_change->getTransactionKey());
+
+    // Verify that getRequestId works.
+    EXPECT_EQ(ncr->getRequestId(), name_change->getRequestId());
 
     // Verify that NcrStatus can be set and retrieved.
     EXPECT_NO_THROW(name_change->setNcrStatus(dhcp_ddns::ST_FAILED));

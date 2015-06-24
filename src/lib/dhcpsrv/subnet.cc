@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <asiolink/io_address.h>
 #include <dhcp/option_space.h>
@@ -38,8 +40,7 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
      last_allocated_ia_(lastAddrInPrefix(prefix, len)),
      last_allocated_ta_(lastAddrInPrefix(prefix, len)),
      last_allocated_pd_(lastAddrInPrefix(prefix, len)), relay_(relay),
-     cfg_option_(new CfgOption())
-
+     host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption())
       {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
@@ -133,6 +134,40 @@ Subnet::toText() const {
     return (tmp.str());
 }
 
+uint64_t
+Subnet::getPoolCapacity(Lease::Type type) const {
+    switch (type) {
+    case Lease::TYPE_V4:
+    case Lease::TYPE_NA:
+        return sumPoolCapacity(pools_);
+    case Lease::TYPE_TA:
+        return sumPoolCapacity(pools_ta_);
+    case Lease::TYPE_PD:
+        return sumPoolCapacity(pools_pd_);
+    default:
+        isc_throw(BadValue, "Unsupported pool type: "
+                  << static_cast<int>(type));
+    }
+}
+
+uint64_t
+Subnet::sumPoolCapacity(const PoolCollection& pools) const {
+    uint64_t sum = 0;
+    for (PoolCollection::const_iterator p = pools.begin(); p != pools.end(); ++p) {
+        uint64_t x = (*p)->getCapacity();
+
+        // Check if we can add it. If sum + x > uint64::max, then we would have
+        // overflown if we tried to add it.
+        if (x > std::numeric_limits<uint64_t>::max() - sum) {
+            return (std::numeric_limits<uint64_t>::max());
+        }
+
+        sum += x;
+    }
+
+    return (sum);
+}
+
 void Subnet4::checkType(Lease::Type type) const {
     if (type != Lease::TYPE_V4) {
         isc_throw(BadValue, "Only TYPE_V4 is allowed for Subnet4");
@@ -144,8 +179,8 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t2,
                  const Triplet<uint32_t>& valid_lifetime,
                  const SubnetID id)
-:Subnet(prefix, length, t1, t2, valid_lifetime,
-        RelayInfo(IOAddress("0.0.0.0")), id), siaddr_(IOAddress("0.0.0.0")) {
+    : Subnet(prefix, length, t1, t2, valid_lifetime, RelayInfo(IOAddress("0.0.0.0")), id),
+      siaddr_(IOAddress("0.0.0.0")), match_client_id_(true) {
     if (!prefix.isV4()) {
         isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
                   << " specified in subnet4");
@@ -227,19 +262,27 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
 
 void
 Subnet::addPool(const PoolPtr& pool) {
-    IOAddress first_addr = pool->getFirstAddress();
-    IOAddress last_addr = pool->getLastAddress();
+    // check if the type is valid (and throw if it isn't)
+    checkType(pool->getType());
 
-    if (!inRange(first_addr) || !inRange(last_addr)) {
-        isc_throw(BadValue, "Pool (" << first_addr << "-" << last_addr
-                  << " does not belong in this (" << prefix_ << "/"
-                  << static_cast<int>(prefix_len_) << ") subnet");
+    // Check that the pool is in range with a subnet only if this is
+    // not a pool of IPv6 prefixes. The IPv6 prefixes delegated for
+    // the particular subnet don't need to match the prefix of the
+    // subnet.
+    if (pool->getType() != Lease::TYPE_PD) {
+        if (!inRange(pool->getFirstAddress()) || !inRange(pool->getLastAddress())) {
+            isc_throw(BadValue, "a pool of type "
+                      << Lease::typeToText(pool->getType())
+                      << ", with the following address range: "
+                      << pool->getFirstAddress() << "-"
+                      << pool->getLastAddress() << " does not match"
+                      << " the prefix of a subnet: "
+                      << prefix_ << "/" << static_cast<int>(prefix_len_)
+                      << " to which it is being added");
+        }
     }
 
     /// @todo: Check that pools do not overlap
-
-    // check if the type is valid (and throw if it isn't)
-    checkType(pool->getType());
 
     // Add the pool to the appropriate pools collection
     getPoolsWritable(pool->getType()).push_back(pool);
@@ -286,8 +329,8 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& preferred_lifetime,
                  const Triplet<uint32_t>& valid_lifetime,
                  const SubnetID id)
-:Subnet(prefix, length, t1, t2, valid_lifetime, RelayInfo(IOAddress("::")), id),
-     preferred_(preferred_lifetime) {
+    :Subnet(prefix, length, t1, t2, valid_lifetime, RelayInfo(IOAddress("::")), id),
+     preferred_(preferred_lifetime), rapid_commit_(false) {
     if (!prefix.isV6()) {
         isc_throw(BadValue, "Non IPv6 prefix " << prefix
                   << " specified in subnet6");

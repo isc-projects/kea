@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -62,14 +62,6 @@ public:
     virtual ~D2ClientMgrTest(){
     }
 
-    /// @brief Updates the D2ClientMgr's configuration to DDNS disabled.
-    void disableDdns() {
-        D2ClientConfigPtr new_cfg;
-        ASSERT_NO_THROW(new_cfg.reset(new D2ClientConfig()));
-        ASSERT_NO_THROW(setD2ClientConfig(new_cfg));
-        ASSERT_FALSE(ddnsEnabled());
-    }
-
     /// @brief Updates the D2ClientMgr's configuration to DDNS enabled.
     ///
     /// @param server_address IP address of kea-dhcp-ddns.
@@ -113,9 +105,12 @@ public:
 
         FD_ZERO(&read_fds);
 
-        int select_fd = -1;
         // cppcheck-suppress redundantAssignment
-        ASSERT_NO_THROW(select_fd = getSelectFd());
+        int select_fd = -1;
+        ASSERT_NO_THROW(
+            // cppcheck-suppress redundantAssignment
+            select_fd = getSelectFd()
+        );
 
         FD_SET(select_fd,  &read_fds);
         maxfd = select_fd;
@@ -436,7 +431,7 @@ TEST_F(D2ClientMgrTest, ifaceRegister) {
     ASSERT_NO_THROW(startSender(getErrorHandler()));
 
     // Queue three messages.
-    for (int i = 0; i < 3; ++i) {
+    for (unsigned i = 0; i < 3; ++i) {
         dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
         ASSERT_NO_THROW(sendRequest(ncr));
     }
@@ -477,7 +472,7 @@ TEST_F(D2ClientMgrTest, udpSuspendUpdates) {
     ASSERT_NO_THROW(startSender(getErrorHandler()));
 
     // Send a test request.
-    for (int i = 0; i < 3; ++i) {
+    for (unsigned i = 0; i < 3; ++i) {
         dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
         ASSERT_NO_THROW(sendRequest(ncr));
     }

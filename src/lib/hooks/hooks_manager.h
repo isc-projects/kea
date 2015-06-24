@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -99,7 +99,7 @@ public:
 
     /// @brief Calls the callouts for a given hook
     ///
-    /// Iterates through the libray handles and calls the callouts associated
+    /// Iterates through the library handles and calls the callouts associated
     /// with the given hook index.
     ///
     /// @note This method invalidates the current library index set with
@@ -188,7 +188,7 @@ public:
     /// libraries is changed, each of the new libraries is checked before the
     /// change is committed.
     ///
-    /// @param List of libraries to be validated.
+    /// @param libraries List of libraries to be validated.
     ///
     /// @return An empty vector if all libraries validated.  Otherwise it
     ///         holds the names of the libraries that failed validation.
@@ -203,7 +203,7 @@ private:
 
     /// @brief Constructor
     ///
-    /// This is private as the object is a singleton and can only be addessed
+    /// This is private as the object is a singleton and can only be addressed
     /// through the getHooksManager() static method.
     HooksManager();
 
@@ -290,7 +290,8 @@ private:
     /// in some cases, server authors may not do that.  This method is called
     /// whenever any hooks execution function is invoked (checking callouts,
     /// calling callouts or returning a callout handle).  If the HooksManager
-    /// is unitialised, it will initialize it with an "empty set" of libraries.
+    /// is uninitialized, it will initialize it with an "empty set"
+    /// of libraries.
     ///
     /// For speed, the test of whether initialization is required is done
     /// in-line here.  The actual initialization is performed in

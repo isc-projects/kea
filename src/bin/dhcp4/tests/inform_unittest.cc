@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
+#include <stats/stats_mgr.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -48,7 +49,9 @@ namespace {
 ///   - Quotes Servers option present: 192.0.2.202, 192.0.2.203.
 const char* INFORM_CONFIGS[] = {
 // Configuration 0
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
@@ -85,7 +88,9 @@ const char* INFORM_CONFIGS[] = {
     "}",
 
 // Configuration 1
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"192.0.2.0/24\", "
@@ -132,6 +137,17 @@ public:
         : Dhcpv4SrvTest(),
           iface_mgr_test_config_(true) {
         IfaceMgr::instance().openSockets4();
+
+        // Let's wipe all existing statistics.
+        isc::stats::StatsMgr::instance().removeAll();
+    }
+
+    /// @brief Desctructor.
+    ///
+    /// Cleans up statistics after the test.
+    ~InformTest() {
+        // Let's wipe all existing statistics.
+        isc::stats::StatsMgr::instance().removeAll();
     }
 
     /// @brief Interface Manager's fake configuration control.
@@ -374,5 +390,58 @@ TEST_F(InformTest, relayedClientNoCiaddr) {
     EXPECT_EQ("192.0.2.203", client.config_.dns_servers_[1].toText());
 }
 
+/// This test verifies that after a client completes its INFORM exchange,
+/// appropriate statistics are updated.
+TEST_F(InformTest, statisticsInform) {
+    Dhcp4Client client;
+    // Configure DHCP server.
+    configure(INFORM_CONFIGS[0], *client.getServer());
+    // Request some configuration when DHCPINFORM is sent.
+    client.requestOptions(DHO_LOG_SERVERS, DHO_COOKIE_SERVERS);
+    // Preconfigure the client with the IP address.
+    client.createLease(IOAddress("10.0.0.56"), 600);
+
+    // Send DHCPINFORM message to the server.
+    ASSERT_NO_THROW(client.doInform());
+
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Ok, let's check the statistics.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt4_received = mgr.getObservation("pkt4-received");
+    ObservationPtr pkt4_inform_received = mgr.getObservation("pkt4-inform-received");
+    ObservationPtr pkt4_ack_sent = mgr.getObservation("pkt4-ack-sent");
+    ObservationPtr pkt4_sent = mgr.getObservation("pkt4-sent");
+
+    // All expected statistics must be present.
+    ASSERT_TRUE(pkt4_received);
+    ASSERT_TRUE(pkt4_inform_received);
+    ASSERT_TRUE(pkt4_ack_sent);
+    ASSERT_TRUE(pkt4_sent);
+
+    // And they must have expected values.
+    EXPECT_EQ(1, pkt4_received->getInteger().first);
+    EXPECT_EQ(1, pkt4_inform_received->getInteger().first);
+    EXPECT_EQ(1, pkt4_ack_sent->getInteger().first);
+    EXPECT_EQ(1, pkt4_sent->getInteger().first);
+
+    // Let the client send iform 4 times, which should make the server
+    // to send 4 acks.
+    ASSERT_NO_THROW(client.doInform());
+    ASSERT_NO_THROW(client.doInform());
+    ASSERT_NO_THROW(client.doInform());
+    ASSERT_NO_THROW(client.doInform());
+
+    // Let's see if the stats are properly updated.
+    EXPECT_EQ(5, pkt4_received->getInteger().first);
+    EXPECT_EQ(5, pkt4_inform_received->getInteger().first);
+    EXPECT_EQ(5, pkt4_ack_sent->getInteger().first);
+    EXPECT_EQ(5, pkt4_sent->getInteger().first);
+}
 
 } // end of anonymous namespace

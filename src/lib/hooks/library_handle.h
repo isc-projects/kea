@@ -81,7 +81,7 @@ public:
     /// @param name Name of the hook to which the callout is added.
     /// @param callout Pointer to the callout function to be registered.
     ///
-    /// @throw NoSuchHook The hook name is unrecognised.
+    /// @throw NoSuchHook The hook name is unrecognized.
     /// @throw Unexpected The hook name is valid but an internal data structure
     ///        is of the wrong size.
     void registerCallout(const std::string& name, CalloutPtr callout);
@@ -97,7 +97,7 @@ public:
     ///
     /// @return true if a one or more callouts were deregistered.
     ///
-    /// @throw NoSuchHook The hook name is unrecognised.
+    /// @throw NoSuchHook The hook name is unrecognized.
     /// @throw Unexpected The hook name is valid but an internal data structure
     ///        is of the wrong size.
     bool deregisterCallout(const std::string& name, CalloutPtr callout);
@@ -112,7 +112,7 @@ public:
     ///
     /// @return true if one or more callouts were deregistered.
     ///
-    /// @throw NoSuchHook Thrown if the hook name is unrecognised.
+    /// @throw NoSuchHook Thrown if the hook name is unrecognized.
     bool deregisterAllCallouts(const std::string& name);
 
 private:

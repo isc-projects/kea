@@ -1,0 +1,71 @@
+// Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+/**
+
+@page qa Kea Quality Assurance processes
+
+ @section qaUnitTests Unit-tests
+
+Kea uses the Google C++ Testing Framework (also called googletest or gtest) as a
+base for our C++ unit-tests. See http://code.google.com/p/googletest/ for
+details. We used to have Python unit-tests that were inherited from BIND10
+days. Those tests are removed now, so please do not develop any new Python
+tests in Kea. If you want to write DHCP tests in Python, we encourage you to
+take a look at ISC Forge: http://kea.isc.org/wiki/IscForge. You must have \c
+gtest installed or at least extracted in a directory before compiling Kea
+unit-tests. To enable unit-tests in Kea, use:
+
+@code
+./configure --with-gtest=/path/to/your/gtest/dir
+@endcode
+
+or
+
+@code
+./configure --with-gtest-source=/path/to/your/gtest/dir
+@endcode
+
+Depending on how you compiled or installed \c gtest (e.g. from sources
+or using some package management system) one of those two switches will
+find \c gtest. After that you make run unit-tests:
+
+@code
+make check
+
+@endcode
+
+The following environment variable can affect unit-tests:
+
+- KEA_SOCKET_TEST_DIR - if set, it specifies the directory where Unix
+  sockets are created. There's OS limitation on how long a Unix socket
+  path can be. It is typcially slightly over 100 characters. If you
+  happen to build and run unit-tests in deeply nested directories, this
+  may become a problem. KEA_SOCKET_TEST_DIR can be specified to instruct
+  unit-test to use a different directory. Must not end with slash (e.g.
+  /tmp).
+
+- KEA_LOCKFILE_DIR - Specifies a directory where the logging system should
+  create its lock file. If not specified, it is prefix/var/run/kea, where prefix
+  defaults to /usr/local. This variable must not end with a slash. There is one
+  special value: "none", which instructs Kea to not create lock file at
+  all. This may cause issues if several processes log to the same file.
+  Also see Kea User's Guide, section 15.3.
+
+- KEA_LOGGER_DESTINATION - Specifies logging destination. If not set, logged
+  messages will not be recorded anywhere. There are 3 special values:
+  stdout, stderr and syslog. Any other value is interpreted as a filename.
+  Also see Kea User's Guide, section 15.3.
+
+ */

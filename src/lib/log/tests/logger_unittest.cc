@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <gtest/gtest.h>
 
@@ -46,6 +48,11 @@ public:
     }
 };
 
+// Check version
+
+TEST_F(LoggerTest, Version) {
+    EXPECT_NO_THROW(Logger::getVersion());
+}
 
 // Checks that the logger is named correctly.
 
@@ -247,7 +254,7 @@ TEST_F(LoggerTest, EffectiveSeverityInheritance) {
     EXPECT_EQ(isc::log::INFO, parent.getEffectiveSeverity());
     EXPECT_EQ(isc::log::INFO, child.getEffectiveSeverity());
 
-    // Change the parwnt's severity and check it is reflects in the child.
+    // Change the parent's severity and check it is reflects in the child.
     parent.setSeverity(isc::log::WARN);
     EXPECT_EQ(isc::log::WARN, parent.getEffectiveSeverity());
     EXPECT_EQ(isc::log::WARN, child.getEffectiveSeverity());

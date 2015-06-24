@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,46 +13,6 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 $NAMESPACE isc::dhcp
-
-% DHCPSRV_ADDRESS4_ALLOC_ERROR error during attempt to allocate an IPv4 address: %1
-An error occurred during an attempt to allocate an IPv4 address, the
-reason for the failure being contained in the message.  The server will
-return a message to the client refusing a lease.
-
-% DHCPSRV_ADDRESS4_ALLOC_FAIL failed to allocate an IPv4 address after %1 attempt(s)
-The DHCP allocation engine gave up trying to allocate an IPv4 address
-after the specified number of attempts.  This probably means that the
-address pool from which the allocation is being attempted is either
-empty, or very nearly empty.  As a result, the client will have been
-refused a lease.
-
-This message may indicate that your address pool is too small for the
-number of clients you are trying to service and should be expanded.
-Alternatively, if the you know that the number of concurrently active
-clients is less than the addresses you have available, you may want to
-consider reducing the lease lifetime.  In this way, addresses allocated
-to clients that are no longer active on the network will become available
-available sooner.
-
-% DHCPSRV_ADDRESS6_ALLOC_ERROR error during attempt to allocate an IPv6 address: %1
-An error occurred during an attempt to allocate an IPv6 address, the
-reason for the failure being contained in the message.  The server will
-return a message to the client refusing a lease.
-
-% DHCPSRV_ADDRESS6_ALLOC_FAIL failed to allocate an IPv6 address after %1 attempt(s)
-The DHCP allocation engine gave up trying to allocate an IPv6 address
-after the specified number of attempts.  This probably means that the
-address pool from which the allocation is being attempted is either
-empty, or very nearly empty.  As a result, the client will have been
-refused a lease.
-
-This message may indicate that your address pool is too small for the
-number of clients you are trying to service and should be expanded.
-Alternatively, if the you know that the number of concurrently active
-clients is less than the addresses you have available, you may want to
-consider reducing the lease lifetime.  In this way, addresses allocated
-to clients that are no longer active on the network will become available
-available sooner.
 
 % DHCPSRV_CFGMGR_ADD_IFACE listening on interface %1
 An info message issued when a new interface is being added to the collection of
@@ -98,6 +58,32 @@ because it is the only subnet defined.
 This is a debug message reporting that the DHCP configuration manager has
 returned the specified IPv6 subnet when given the address hint specified
 because it is the only subnet defined.
+
+% DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED use of raw sockets is unsupported on this OS, UDP sockets will be used
+This warning message is logged when the user specified that the
+DHCPv4 server should use the raw sockets to receive the DHCP
+messages and respond to the clients, but the use of raw sockets
+is not supported on the particular environment. The raw sockets
+are useful when the server must respond to the directly connected
+clients which don't have an address yet. If the raw sockets are
+not supported by Kea on the particular platform, Kea will fall
+back to use of the IP/UDP sockets. The responses to
+the directly connected clients will be broadcast. The responses
+to relayed clients will be unicast as usual.
+
+% DHCPSRV_CFGMGR_SOCKET_TYPE_DEFAULT "dhcp-socket-type" not specified , using default socket type %1
+This informational message is logged when the administrator hasn't
+specified the "dhcp-socket-type" parameter in configuration for interfaces.
+In such case, the default socket type will be used.
+
+% DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT using socket type %1
+This informational message is logged when the DHCPv4 server selects the
+socket type to be used for all sockets that will be opened on the
+interfaces. Typically, the socket type is specified by the server
+administrator. If the socket type hasn't been specified, the raw
+socket will be selected. If the raw socket has been selected but
+Kea doesn't support the use of raw sockets on the particular
+OS, it will use an UDP socket instead.
 
 % DHCPSRV_CFGMGR_SUBNET4 retrieved subnet %1 for address hint %2
 This is a debug message reporting that the DHCP configuration manager has
@@ -202,6 +188,14 @@ hook point sets the skip flag. It means that the server was told that
 no lease4 should be assigned. The server will not put that lease in its
 database and the client will get a NAK packet.
 
+% DHCPSRV_HOOK_LEASE6_EXTEND_SKIP DHCPv6 lease lifetime was not extended because a callout set the skip flag for message %1
+This debug message is printed when a callout installed on lease6_renew
+or the lease6_rebind hook point set the skip flag. For this particular hook
+point, the setting of the flag by a callout instructs the server to not
+extend the lifetime for a lease. If the client requested renewal of multiple
+leases (by sending multiple IA options), the server will skip the renewal
+of the one in question and will proceed with other renewals as usual.
+
 % DHCPSRV_HOOK_LEASE6_SELECT_SKIP Lease6 (non-temporary) creation was skipped, because of callout skip flag.
 This debug message is printed when a callout installed on lease6_select
 hook point sets the skip flag. It means that the server was told that
@@ -284,23 +278,46 @@ subnet ID and hardware address.
 A debug message issued when the server is about to obtain schema version
 information from the memory file database.
 
-% DHCPSRV_MEMFILE_LEASES_RELOAD4 reloading leases from %1
-An info message issued when the server is about to start reading DHCPv4 leases
+% DHCPSRV_MEMFILE_LEASE_FILE_LOAD loading leases from file %1
+An info message issued when the server is about to start reading DHCP leases
 from the lease file. All leases currently held in the memory will be
 replaced by those read from the file.
 
-% DHCPSRV_MEMFILE_LEASES_RELOAD6 reloading leases from %1
-An info message issued when the server is about to start reading DHCPv6 leases
-from the lease file. All leases currently held in the memory will be
-replaced by those read from the file.
+% DHCPSRV_MEMFILE_LEASE_LOAD loading lease %1
+A debug message issued when DHCP lease is being loaded from the file to memory.
 
-% DHCPSRV_MEMFILE_LEASE_LOAD4 loading lease %1
-A debug message issued when DHCPv4 lease is being loaded from the file to
-memory.
+% DHCPSRV_MEMFILE_LFC_EXECUTE executing Lease File Cleanup using: %1
+An informational message issued when the Memfile lease database backend
+starts a new process to perform Lease File Cleanup.
 
-% DHCPSRV_MEMFILE_LEASE_LOAD6 loading lease %1
-A debug message issued when DHCPv6 lease is being loaded from the file to
-memory.
+% DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL failed to rename the current lease file %1 to %2, reason: %3
+An error message logged when the Memfile lease database backend fails to
+move the current lease file to a new file on which the cleanup should
+be performed. This effectively means that the lease file cleanup
+will not take place.
+
+% DHCPSRV_MEMFILE_LFC_LEASE_FILE_REOPEN_FAIL failed to reopen lease file %1 after preparing input file for lease file cleanup, reason: %2, new leases will not be persisted!
+An error message logged when the Memfile lease database backend
+failed to re-open or re-create the lease file after renaming the
+lease file for lease file cleanup. The server will continue to
+operate but leases will not be persisted to disk.
+
+% DHCPSRV_MEMFILE_LFC_SETUP setting up the Lease File Cleanup interval to %1 sec
+An informational message logged when the Memfile lease database backend
+configures the LFC to be executed periodically. The argument holds the
+interval in seconds in which the LFC will be executed.
+
+% DHCPSRV_MEMFILE_LFC_SPAWN_FAIL lease file cleanup failed to run because kea-lfc process couldn't be spawned
+This error message is logged when the the Kea server fails to run kea-lfc,
+the program that cleans up the lease file. The server will try again the
+next time a lease file cleanup is scheduled. Although this message should
+not appear and the reason why it did investigated, the occasional failure
+to start the lease file cleanup will not impact operations. Should the
+failure persist however, the size of the lease file will increase without bound.
+
+% DHCPSRV_MEMFILE_LFC_START starting Lease File Cleanup
+An informational message issued when the Memfile lease database backend
+starts the periodic Lease File Cleanup.
 
 % DHCPSRV_MEMFILE_NO_STORAGE running in non-persistent mode, leases will be lost after restart
 A warning message issued when writes of leases to disk have been disabled
@@ -326,6 +343,13 @@ lease from the memory file database for the specified address.
 % DHCPSRV_MEMFILE_UPDATE_ADDR6 updating IPv6 lease for address %1
 A debug message issued when the server is attempting to update IPv6
 lease from the memory file database for the specified address.
+
+% DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE current configuration will result in opening multiple brodcast capable sockets on some interfaces and some DHCP messages may be duplicated
+A warning message issued when the current configuration indicates that multiple
+sockets, capable of receiving brodcast traffic, will be opened on some of the
+interfaces. It must be noted that this may lead to receiving and processing
+the same DHCP message multiple times, as it will be received by each socket
+individually.
 
 % DHCPSRV_MYSQL_ADD_ADDR4 adding IPv4 lease with address %1
 A debug message issued when the server is about to add an IPv4 lease
@@ -404,16 +428,16 @@ lease from the MySQL database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the MySQL database for the specified address.
 
-% DHCPSRV_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
-This warning message is issued when the current server configuration specifies
-no interfaces that the server should listen on, or when the specified interfaces are not
-configured to receive the traffic.
-
 % DHCPSRV_NOTYPE_DB no 'type' keyword to determine database backend: %1
 This is an error message, logged when an attempt has been made to access
 a database backend, but where no 'type' keyword has been included in
 the access string.  The access string (less any passwords) is included
 in the message.
+
+% DHCPSRV_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
+This warning message is issued when the current server configuration specifies
+no interfaces that the server should listen on, or when the specified interfaces are not
+configured to receive the traffic.
 
 % DHCPSRV_OPEN_SOCKET_FAIL failed to open socket: %1
 A warning message issued when IfaceMgr fails to open and bind a socket.

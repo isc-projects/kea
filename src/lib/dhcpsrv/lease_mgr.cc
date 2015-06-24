@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <dhcpsrv/lease_mgr.h>
 #include <exceptions/exceptions.h>
@@ -57,6 +59,11 @@ LeaseMgr::getLease6(Lease::Type type, const DUID& duid,
         return (Lease6Ptr());
     }
     return (*col.begin());
+}
+
+std::string
+LeaseMgr::getDBVersion() {
+    isc_throw(NotImplemented, "LeaseMgr::getDBVersion() called");
 }
 
 } // namespace isc::dhcp

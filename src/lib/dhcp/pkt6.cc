@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,12 +12,19 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
+#include <dhcp/option_vendor_class.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/pkt6.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <util/io_utilities.h>
 #include <exceptions/exceptions.h>
+#include <dhcp/duid.h>
+#include <dhcp/iface_mgr.h>
 
 #include <iostream>
 #include <sstream>
@@ -249,7 +256,7 @@ void
 Pkt6::packTCP() {
     /// TODO Implement this function.
     isc_throw(NotImplemented, "DHCPv6 over TCP (bulk leasequery and failover)"
-              "not implemented yet.");
+              " not implemented yet.");
 }
 
 void
@@ -308,7 +315,10 @@ Pkt6::unpackMsg(OptionBuffer::const_iterator begin,
         ((*begin++) << 8) + (*begin++);
     transid_ = transid_ & 0xffffff;
 
-    size -= sizeof(uint32_t); // We just parsed 4 bytes header
+    // See below about invoking Postel's law, as we aren't using
+    // size we don't need to update it.  If we do so in the future
+    // perhaps for stats gathering we can uncomment this.
+    //    size -= sizeof(uint32_t); // We just parsed 4 bytes header
 
     OptionBuffer opt_buffer(begin, end);
 
@@ -368,7 +378,7 @@ Pkt6::unpackRelayMsg() {
         bufsize -= DHCPV6_RELAY_HDR_LEN; // 34 bytes (1+1+16+16)
 
         // parse the rest as options
-        OptionBuffer opt_buffer(&data_[offset], &data_[offset+bufsize]);
+        OptionBuffer opt_buffer(&data_[offset], &data_[offset] + bufsize);
 
         // If custom option parsing function has been set, use this function
         // to parse options. Otherwise, use standard function from libdhcp.
@@ -439,21 +449,102 @@ Pkt6::unpackTCP() {
               "not implemented yet.");
 }
 
+HWAddrPtr
+Pkt6::getMACFromDUID() {
+    OptionPtr opt_duid = getOption(D6O_CLIENTID);
+    if (!opt_duid) {
+        return (HWAddrPtr());
+    }
+
+    uint8_t hlen = opt_duid->getData().size();
+    vector<uint8_t> hw_addr(hlen, 0);
+    std::vector<unsigned char> duid_data = opt_duid->getData();
+
+    // Read the first two bytes. That duid type.
+    uint16_t duid_type = util::readUint16(&duid_data[0], duid_data.size());
+
+    switch (duid_type) {
+    case DUID::DUID_LL:
+    {
+        // 2 bytes of duid type, 2 bytes of hardware type and at least
+        // 1 byte of actual identification
+        if (duid_data.size() < 5) {
+            // This duid is truncated. We can't extract anything from it.
+            return (HWAddrPtr());
+        }
+
+        uint16_t hwtype = util::readUint16(&duid_data[2], duid_data.size() - 2);
+        return (HWAddrPtr(new HWAddr(&duid_data[4], duid_data.size() - 4,
+                                     hwtype)));
+    }
+    case DUID::DUID_LLT:
+    {
+        // 2 bytes of duid type, 2 bytes of hardware, 4 bytes for timestamp,
+        // and at least 1 byte of actual identification
+        if (duid_data.size() < 9) {
+            // This duid is truncated. We can't extract anything from it.
+            return (HWAddrPtr());
+        }
+
+        uint16_t hwtype = util::readUint16(&duid_data[2], duid_data.size() - 2);
+        return (HWAddrPtr(new HWAddr(&duid_data[8], duid_data.size() - 8,
+                                     hwtype)));
+    }
+    default:
+        return (HWAddrPtr());
+    }
+}
 
 std::string
-Pkt6::toText() {
+Pkt6::makeLabel(const DuidPtr duid, const uint32_t transid,
+                const HWAddrPtr& hwaddr) {
+    std::stringstream label;
+    // DUID should be present at all times, so explicitly inform when
+    // it is no present (no info).
+    label << "duid=[" << (duid ? duid->toText() : "no info")
+          << "],";
+
+    // HW address is typically not carried in the DHCPv6 mmessages
+    // and can be extracted using various, but not fully reliable,
+    // techniques. If it is not present, don't print anything.
+    if (hwaddr) {
+        label << " [" << hwaddr->toText() << "],";
+    }
+
+    // Transaction id is always there.
+    label << " tid=0x" << std::hex << transid << std::dec;
+
+    return (label.str());
+}
+
+std::string
+Pkt6::getLabel() const {
+    /// @todo Do not print HW address as it is unclear how it should
+    /// be retrieved if there is no access to user configuration which
+    /// specifies the order of various techniques to be used to retrieve
+    /// it.
+    return (makeLabel(getClientId(), getTransid(), HWAddrPtr()));}
+
+std::string
+Pkt6::toText() const {
     stringstream tmp;
     tmp << "localAddr=[" << local_addr_ << "]:" << local_port_
         << " remoteAddr=[" << remote_addr_
         << "]:" << remote_port_ << endl;
     tmp << "msgtype=" << static_cast<int>(msg_type_) << ", transid=0x" <<
         hex << transid_ << dec << endl;
-    for (isc::dhcp::OptionCollection::iterator opt=options_.begin();
+    for (isc::dhcp::OptionCollection::const_iterator opt=options_.begin();
          opt != options_.end();
          ++opt) {
         tmp << opt->second->toText() << std::endl;
     }
     return tmp.str();
+}
+
+DuidPtr
+Pkt6::getClientId() const {
+    OptionPtr opt_duid = getOption(D6O_CLIENTID);
+    return (opt_duid ? DuidPtr(new DUID(opt_duid->getData())) : DuidPtr());
 }
 
 isc::dhcp::OptionCollection
@@ -470,18 +561,28 @@ Pkt6::getOptions(uint16_t opt_type) {
 }
 
 const char*
-Pkt6::getName(uint8_t type) {
+Pkt6::getName(const uint8_t type) {
+    static const char* ADVERTISE = "ADVERTISE";
     static const char* CONFIRM = "CONFIRM";
     static const char* DECLINE = "DECLINE";
     static const char* INFORMATION_REQUEST = "INFORMATION_REQUEST";
+    static const char* LEASEQUERY = "LEASEQUERY";
+    static const char* LEASEQUERY_REPLY = "LEASEQUERY_REPLY";
     static const char* REBIND = "REBIND";
+    static const char* RECONFIGURE = "RECONFIGURE";
+    static const char* RELAY_FORW = "RELAY_FORWARD";
+    static const char* RELAY_REPL = "RELAY_REPLY";
     static const char* RELEASE = "RELEASE";
     static const char* RENEW = "RENEW";
+    static const char* REPLY = "REPLY";
     static const char* REQUEST = "REQUEST";
     static const char* SOLICIT = "SOLICIT";
     static const char* UNKNOWN = "UNKNOWN";
 
     switch (type) {
+    case DHCPV6_ADVERTISE:
+        return (ADVERTISE);
+
     case DHCPV6_CONFIRM:
         return (CONFIRM);
 
@@ -491,14 +592,32 @@ Pkt6::getName(uint8_t type) {
     case DHCPV6_INFORMATION_REQUEST:
         return (INFORMATION_REQUEST);
 
+    case DHCPV6_LEASEQUERY:
+        return (LEASEQUERY);
+
+    case DHCPV6_LEASEQUERY_REPLY:
+        return (LEASEQUERY_REPLY);
+
     case DHCPV6_REBIND:
         return (REBIND);
+
+    case DHCPV6_RECONFIGURE:
+        return (RECONFIGURE);
+
+    case DHCPV6_RELAY_FORW:
+        return (RELAY_FORW);
+
+    case DHCPV6_RELAY_REPL:
+        return (RELAY_REPL);
 
     case DHCPV6_RELEASE:
         return (RELEASE);
 
     case DHCPV6_RENEW:
         return (RENEW);
+
+    case DHCPV6_REPLY:
+        return (REPLY);
 
     case DHCPV6_REQUEST:
         return (REQUEST);
@@ -520,7 +639,7 @@ void Pkt6::copyRelayInfo(const Pkt6Ptr& question) {
 
     // We use index rather than iterator, because we need that as a parameter
     // passed to getRelayOption()
-    for (int i = 0; i < question->relay_info_.size(); ++i) {
+    for (size_t i = 0; i < question->relay_info_.size(); ++i) {
         RelayInfo info;
         info.msg_type_ = DHCPV6_RELAY_REPL;
         info.hop_count_ = question->relay_info_[i].hop_count_;
@@ -566,7 +685,7 @@ Pkt6::getMACFromIPv6RelayOpt() {
     if (opt) {
         const OptionBuffer data = opt->getData();
         if (data.size() < 3) {
-            // This client link address option is trucnated. It's supposed to be
+            // This client link address option is truncated. It's supposed to be
             // 2 bytes of link-layer type followed by link-layer address.
             return (HWAddrPtr());
         }
@@ -574,8 +693,96 @@ Pkt6::getMACFromIPv6RelayOpt() {
         // +2, -2 means to skip the initial 2 bytes which are hwaddress type
         return (HWAddrPtr(new HWAddr(&data[0] + 2, data.size() - 2,
                                      opt->getUint16())));
+    } else {
+        return (HWAddrPtr());
     }
-    else {
+}
+
+HWAddrPtr
+Pkt6::getMACFromDocsisModem() {
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<
+        OptionVendor>(getOption(D6O_VENDOR_OPTS));
+
+    // Check if this is indeed DOCSIS3 environment
+    if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
+        return (HWAddrPtr());
+    }
+
+    // If it is, try to get device-id option
+    OptionPtr device_id = vendor->getOption(DOCSIS3_V6_DEVICE_ID);
+    if (!device_id) {
+        return (HWAddrPtr());
+    }
+
+    // If the option contains any data, use it as MAC address
+    if (!device_id->getData().empty()) {
+        return (HWAddrPtr(new HWAddr(device_id->getData(), HTYPE_DOCSIS)));
+    } else {
+        return (HWAddrPtr());
+    }
+}
+
+HWAddrPtr
+Pkt6::getMACFromDocsisCMTS() {
+    if (relay_info_.empty()) {
+        // This message didn't pass through a CMTS, so there won't be any
+        // CMTS-specific options in it.
+        return (HWAddrPtr());
+    }
+
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<
+        OptionVendor>(getAnyRelayOption(D6O_VENDOR_OPTS,
+                                        RELAY_SEARCH_FROM_CLIENT));
+
+    // Check if this is indeed DOCSIS3 environment
+    if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
+        return (HWAddrPtr());
+    }
+
+    // If it is, try to get cable modem mac
+    OptionPtr cm_mac = vendor->getOption(DOCSIS3_V6_CMTS_CM_MAC);
+    if (!cm_mac) {
+        return (HWAddrPtr());
+    }
+
+    // If the option contains any data, use it as MAC address
+    if (!cm_mac->getData().empty()) {
+        return (HWAddrPtr(new HWAddr(cm_mac->getData(), HTYPE_DOCSIS)));
+    } else {
+        return (HWAddrPtr());
+    }
+}
+
+HWAddrPtr
+Pkt6::getMACFromRemoteIdRelayOption() {
+    if (relay_info_.empty()) {
+        // This is a direct message
+        return (HWAddrPtr());
+    }
+
+    // Get remote-id option from a relay agent closest to the client
+    OptionPtr opt = getAnyRelayOption(D6O_REMOTE_ID, RELAY_GET_FIRST);
+    if (opt) {
+        const OptionBuffer data = opt->getData();
+        if (data.size() < 5) {
+            // This remote-id option is truncated. It's supposed to be
+            // 4 bytes of enterprise-number followed by remote-id.
+            return (HWAddrPtr());
+        }
+
+        // Let's get the interface this packet was received on. We need it to get
+        // the hardware type.
+        IfacePtr iface = IfaceMgr::instance().getIface(iface_);
+        uint16_t hwtype = 0; // not specified
+
+        // If we get the interface HW type, great! If not, let's not panic.
+        if (iface) {
+            hwtype = iface->getHWType();
+        }
+
+        // Skip the initial 4 bytes which are enterprise-number.
+        return (HWAddrPtr(new HWAddr(&data[0] + 4, data.size() - 4, hwtype)));
+    } else {
         return (HWAddrPtr());
     }
 }

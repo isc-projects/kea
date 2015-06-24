@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -60,7 +60,7 @@ public:
     /// @brief Increases the first byte of the address.
     ///
     /// This function is helpful to find an address which belongs to the
-    /// different subnet than the input address. It is achived by increasing
+    /// different subnet than the input address. It is achieved by increasing
     /// the first byte of the input address.
     ///
     /// @param input_addr An input addres.

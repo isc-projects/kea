@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -423,7 +423,34 @@ protected:
     /// those into one exception which can be documented here.
     void unpackOptions(const OptionBuffer& buf);
 
-    /// @brief A private method used for option correctness.
+    /// @brief Returns option header in the textual format.
+    ///
+    /// This protected method should be called by the derived classes in
+    /// their respective @c toText implementations.
+    ///
+    /// @param indent Number of spaces to insert before the text.
+    /// @param type_name Option type name. If empty, the option name
+    /// is omitted.
+    ///
+    /// @return Option header in the textual format.
+    std::string headerToText(const int indent = 0,
+                             const std::string& type_name = "");
+
+    /// @brief Returns collection of suboptions in the textual format.
+    ///
+    /// This protected method should be called by the derived classes
+    /// in their respective @c toText implementations to append the
+    /// suboptions held by this option. Note that there are some
+    /// option types which don't have suboptions because they contain
+    /// variable length fields. For such options this method is not
+    /// called.
+    ///
+    /// @param indent Number of spaces to insert before the text.
+    ///
+    //// @return Suboptions in the textual format.
+    std::string suboptionsToText(const int indent = 0) const;
+
+    /// @brief A protected method used for option correctness.
     ///
     /// It is used in constructors. In there are any problems detected
     /// (like specifying type > 255 for DHCPv4 option), it will throw

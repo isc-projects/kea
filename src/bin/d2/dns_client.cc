@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <d2/dns_client.h>
 #include <d2/d2_log.h>
 #include <dns/messagerenderer.h>
@@ -146,7 +147,7 @@ DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
                                 tsig_context_.get());
         } catch (const isc::Exception& ex) {
             status = DNSClient::INVALID_RESPONSE;
-            LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
+            LOG_DEBUG(d2_to_dns_logger, DBGLVL_TRACE_DETAIL,
                       DHCP_DDNS_INVALID_RESPONSE).arg(ex.what());
 
         }

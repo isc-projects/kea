@@ -84,9 +84,9 @@ public:
     /// \param result The OutputBuffer to append the result to
     /// \param len The number of bytes from the result to copy. If this
     ///        value is smaller than the algorithms output size, the
-    ///        result will be truncated. If this value is larger, or 0
-    ///        (the default), it will be ignored
-    void sign(isc::util::OutputBuffer& result, size_t len = 0);
+    ///        result will be truncated. If this value is larger,
+    ///        only output size bytes will be copied
+    void sign(isc::util::OutputBuffer& result, size_t len);
 
     /// \brief Calculate the final signature
     ///
@@ -110,10 +110,10 @@ public:
     ///
     /// \param len The number of bytes from the result to copy. If this
     ///        value is smaller than the algorithms output size, the
-    ///        result will be truncated. If this value is larger, or 0
-    ///        (the default), it will be ignored
+    ///        result will be truncated. If this value is larger,
+    ///        only output size bytes will be copied
     /// \return a vector containing the signature
-    std::vector<uint8_t> sign(size_t len = 0);
+    std::vector<uint8_t> sign(size_t len);
 
     /// \brief Verify an existing signature
     ///
@@ -121,8 +121,8 @@ public:
     ///                         in the underlying library
     ///
     /// \param sig The signature to verify
-    /// \param len The length of the signature. If this is non-zero,
-    ///            and smaller than the output length of the algorithm,
+    /// \param len The length of the signature. If this is smaller
+    ///            than the output length of the algorithm,
     ///            only len bytes will be checked
     /// \return true if the signature is correct, false otherwise
     ///
@@ -136,7 +136,7 @@ private:
 
 /// \brief Create an HMAC signature for the given data
 ///
-/// This is a convenience function that calculates the hmac signature,
+/// This is a convenience function that calculates the HMAC signature,
 /// given a fixed amount of data. Internally it does the same as
 /// creating an HMAC object, feeding it the data, and calculating the
 /// resulting signature.
@@ -158,8 +158,9 @@ private:
 /// \param secret_len The length of the secret
 /// \param hash_algorithm The hash algorithm
 /// \param result The signature will be appended to this buffer
-/// \param len If this is non-zero and less than the output size,
-///            the result will be truncated to len bytes
+/// \param len If this is non-zero and less than the output size, the result
+///            will be truncated to len bytes. If greater than output size
+///            (or equal to zero) only output size bytes are written
 void signHMAC(const void* data,
               const size_t data_len,
               const void* secret,
@@ -173,7 +174,8 @@ void signHMAC(const void* data,
 /// This is a convenience function that verifies an hmac signature,
 /// given a fixed amount of data. Internally it does the same as
 /// creating an HMAC object, feeding it the data, and checking the
-/// resulting signature.
+/// resulting signature at the exception a zero sig_len is
+/// internally replaced by the output size.
 ///
 /// \exception UnsupportedAlgorithm if the given algorithm is unknown
 ///            or not supported by the underlying library

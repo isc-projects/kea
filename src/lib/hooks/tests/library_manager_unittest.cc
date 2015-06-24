@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,9 @@
 #include <hooks/tests/marker_file.h>
 #include <hooks/tests/test_libraries.h>
 
+#include <log/message_dictionary.h>
+#include <log/message_initializer.h>
+
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -32,6 +35,7 @@
 
 using namespace isc;
 using namespace isc::hooks;
+using namespace isc::log;
 using namespace std;
 
 namespace {
@@ -50,14 +54,14 @@ public:
         callout_manager_.reset(new CalloutManager(4));
 
         // Ensure the marker file is not present at the start of a test.
-        static_cast<void>(unlink(MARKER_FILE));
+        static_cast<void>(remove(MARKER_FILE));
     }
 
     /// @brief Destructor
     ///
     /// Ensures a marker file is removed after each test.
     ~LibraryManagerTest() {
-        static_cast<void>(unlink(MARKER_FILE));
+        static_cast<void>(remove(MARKER_FILE));
     }
 
     /// @brief Marker file present
@@ -376,7 +380,7 @@ TEST_F(LibraryManagerTest, CheckUnloadException) {
 }
 
 // Check that the case of the library's unload() function returning a
-// success is handled correcty.
+// success is handled correctly.
 
 TEST_F(LibraryManagerTest, CheckUnload) {
 
@@ -564,6 +568,32 @@ TEST_F(LibraryManagerTest, validateLibraries) {
     EXPECT_FALSE(LibraryManager::validateLibrary(NOT_PRESENT_LIBRARY));
     EXPECT_FALSE(LibraryManager::validateLibrary(NO_VERSION_LIBRARY));
     EXPECT_TRUE(LibraryManager::validateLibrary(UNLOAD_CALLOUT_LIBRARY));
+}
+
+// Check that log messages are properly registered and unregistered.
+
+TEST_F(LibraryManagerTest, libraryLoggerSetup) {
+    // Load a library with all framework functions.
+    LibraryManager lib_manager(std::string(BASIC_CALLOUT_LIBRARY), 0,
+                               callout_manager_);
+    EXPECT_TRUE(lib_manager.loadLibrary());
+
+    // After loading the library, the global logging dictionary should
+    // contain log messages registerd for this library.
+    const MessageDictionaryPtr& dict = MessageDictionary::globalDictionary();
+    EXPECT_EQ("basic callout load %1", dict->getText("BCL_LOAD_START"));
+    EXPECT_EQ("basic callout load end", dict->getText("BCL_LOAD_END"));
+    // Some of the messages defined by the hook library are duplicates. But,
+    // the loadLibrary function should have logged the duplicates and clear
+    // the duplicates list. By checking that the list of duplicates is empty
+    // we test that the LibraryManager handles the duplicates (logs and
+    // clears them).
+    EXPECT_TRUE(MessageInitializer::getDuplicates().empty());
+
+    // After unloading the library, the messages should be unregistered.
+    EXPECT_TRUE(lib_manager.unloadLibrary());
+    EXPECT_TRUE(dict->getText("BCL_LOAD_START").empty());
+    EXPECT_TRUE(dict->getText("BCL_LOAD_END").empty());
 }
 
 } // Anonymous namespace

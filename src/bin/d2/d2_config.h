@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,8 @@
 #ifndef D2_CONFIG_H
 #define D2_CONFIG_H
 
+#include <asiolink/io_service.h>
 #include <cc/data.h>
-#include <d2/d2_asio.h>
 #include <d2/d_cfg_mgr.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dns/tsig.h>
@@ -70,7 +70,7 @@ namespace d2 {
 /// any scalars which belong to the manager as well as creating and invoking a
 /// DdnsDomainListParser to parse its list of domain entries.
 ///
-/// A DdnsDomainListParser creates and invokes DdnsDomainListParser for each
+/// A DdnsDomainListParser creates and invokes a DdnsDomainParser for each
 /// domain entry in its list.
 ///
 /// A DdnsDomainParser handles the scalars which belong to the domain as well as
@@ -887,8 +887,6 @@ public:
     /// Parses a configuration for the elements needed to instantiate a
     /// DnsServerInfo, validates those entries, creates a DnsServerInfo instance
     /// then attempts to add to a list of  servers.
-    /// @param pos position within the configuration text (or file) of element
-    /// to be parsed.  This is passed for error messaging.
     ///
     /// @param server_config is the "dns_server" configuration to parse
     ///

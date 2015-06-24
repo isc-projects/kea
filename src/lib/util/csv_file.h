@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -238,13 +238,13 @@ private:
 
     /// @brief Check if the specified index of the value is in range.
     ///
-    /// This function is used interally by other functions.
+    /// This function is used internally by other functions.
     ///
     /// @param at Value index.
     /// @throw CSVFileError if specified index is not in range.
     void checkIndex(const size_t at) const;
 
-    /// @brief Separator character specifed in the constructor.
+    /// @brief Separator character specified in the constructor.
     ///
     /// @note Separator is held as a string object (one character long),
     /// because the boost::is_any_of algorithm requires a string, not a
@@ -277,7 +277,7 @@ std::ostream& operator<<(std::ostream& os, const CSVRow& row);
 /// - @c recreate - removes existing file and creates a new one.
 ///
 /// When the file is opened its header file is parsed and column names are
-/// idenetified. At this point it is already possible to get the list of the
+/// identified. At this point it is already possible to get the list of the
 /// column names using appropriate accessors. The data rows are not parsed
 /// at this time. The row parsing is triggered by calling @c next function.
 /// The result of parsing a row is stored in the @c CSVRow object passed as
@@ -311,14 +311,22 @@ public:
 
     /// @brief Writes the CSV row into the file.
     ///
-    /// @param Object representing a CSV file row.
+    /// @param row Object representing a CSV file row.
     ///
-    /// @throw CSVFileError When error occured during IO operation or if the
+    /// @throw CSVFileError When error occurred during IO operation or if the
     /// size of the row doesn't match the number of columns.
     void append(const CSVRow& row) const;
 
     /// @brief Closes the CSV file.
     void close();
+
+    /// @brief Checks if the CSV file exists and can be opened for reading.
+    ///
+    /// This method doesn't check if the existing file has a correct file
+    /// format.
+    ///
+    /// @return true if file exists, false otherwise.
+    bool exists() const;
 
     /// @brief Flushes a file.
     void flush() const;
@@ -377,12 +385,18 @@ public:
     /// greater than 0. If the file doesn't exist or has size of 0, the
     /// file is recreated. If the existing file has been opened, the header
     /// is parsed and column names are initialized in the @c CSVFile object.
-    /// The data pointer in the file is set to the beginning of the first
-    /// row. In order to retrieve the row contents the @c next function should
-    /// be called.
+    /// By default, the data pointer in the file is set to the beginning of
+    /// the first row. In order to retrieve the row contents the @c next
+    /// function should be called. If a @c seek_to_end parameter is set to
+    /// true, the file will be opened and the internal pointer will be set
+    /// to the end of file.
+    ///
+    /// @param seek_to_end A boolean value which indicates if the intput and
+    /// output file pointer should be set at the end of file.
     ///
     /// @throw CSVFileError when IO operation fails.
-    void open();
+
+    virtual void open(const bool seek_to_end = false);
 
     /// @brief Creates a new CSV file.
     ///
@@ -400,7 +414,7 @@ public:
     /// @c validate function can set a message after successful validation
     /// too. Such message could say "success", or something similar.
     ///
-    /// @param val_msg Error message to be set.
+    /// @param read_msg Error message to be set.
     void setReadMsg(const std::string& read_msg) {
         read_msg_ = read_msg;
     }
@@ -452,7 +466,7 @@ protected:
     /// compare that they exactly match (including order) the header read
     /// from the file.
     ///
-    /// This function is called internally by @CSVFile::open. Derived classes
+    /// This function is called internally by @ref CSVFile::open. Derived classes
     /// may add extra validation steps.
     ///
     /// @todo There should be a support for optional columns (see ticket #3626).

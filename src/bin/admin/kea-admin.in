@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -33,6 +33,11 @@ db_user="keatest"
 db_password="keatest"
 db_name="keatest"
 
+# lease dump parameters
+dump_type=0
+dump_file=""
+dump_qry=""
+
 # Include utilities. Use installed version if available and
 # use build version if it isn't.
 if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
@@ -56,6 +61,7 @@ usage() {
     printf " - lease-version: Checks version of the existing lease database scheme. Useful\n"
     printf " -                for checking lease DB version when preparing for an upgrade.\n"
     printf " - lease-upgrade: Upgrades your lease database scheme\n"
+    printf " - lease-dump: Dump current leases to a CSV file\n"
     printf "\n"
     printf "BACKEND - one of the supported backends: memfile|mysql|pgsql\n"
     printf "\n"
@@ -65,6 +71,11 @@ usage() {
     printf " -p or --password pass - specifies a password when connecting to a database\n"
     printf " -n or --name database - specifies a database name to connect to\n"
     printf " -d or --directory - path to upgrade scripts (default: ${SCRIPTS_DIR_DEFAULT})\n"
+    printf "\n"
+    printf " Parameters specific to lease-dump:\n"
+    printf "     -4 to dump IPv4 leases to file\n"
+    printf "     -6 to dump IPv6 leases to file\n"
+    printf "     -o or --output - name of file to which leases will be dumped\n"
 }
 
 
@@ -133,8 +144,15 @@ mysql_init() {
     # We should not hide them as they may give hints to user what is wrong with
     # his setup.
     #
-    mysql_execute "SHOW TABLES;"
-    COUNT=`echo $_RESULT | wc -w`
+    RESULT=`mysql_execute "SHOW TABLES;"`
+    ERRCODE=$?
+    if [ $ERRCODE -ne  0 ]
+    then
+        log_error "mysql_init table query failed, mysql status = $ERRCODE"
+        exit 1
+    fi
+
+    COUNT=`echo $RESULT | wc -w`
     if [ $COUNT -gt 0 ]; then
         # Let't start with a new line. mysql could have printed something out.
         printf "\n"
@@ -150,7 +168,7 @@ mysql_init() {
 
     if [ "$ERRCODE" -eq 0 ]; then
         printf "Lease DB version reported after initialization: "
-        mysql_version_print
+        mysql_version
         printf "\n"
     fi
 
@@ -158,18 +176,41 @@ mysql_init() {
 }
 
 pgsql_init() {
-    log_error "NOT IMPLEMENTED"
-    exit 1
+    printf "Checking if there is a database initialized already. Please ignore errors.\n"
+
+    # Let's try to count the number of tables. Anything above 0 means that there
+    # is some database in place. If there is anything, we abort.
+    RESULT=`pgsql_execute "\d"`
+    ERRCODE=$?
+    if [ "$ERRCODE" -ne 0 ]; then
+        log_error "pgsql_init: table query failed, status code: $ERRCODE?"
+        exit 1
+    fi
+
+    COUNT=`echo "$RESULT" | wc -w`
+    if [ $COUNT -gt 0 ]; then
+        printf "\n"
+        log_error "Expected empty database $db_name, but the following tables are present \n$RESULT. Aborting."
+        exit 2
+    fi
+
+    init_script="$scripts_dir/pgsql/dhcpdb_create.pgsql"
+    printf "Initializing database using script %s\n" $init_script
+    RESULT=`pgsql_execute_script $init_script`
+    ERRCODE=$?
+    if [ "$ERRCODE" -ne 0 ]; then
+        log_error "Database initialization failed, status code: $ERRCODE?"
+        exit 1
+    fi
+
+    version=`pgsql_version`
+    printf "Lease DB version reported after initialization: $version\n"
+    exit 0
 }
 
 ### Functions that implement database version checking commands
 memfile_version() {
     # @todo Implement this as part of #3601
-    log_error "NOT IMPLEMENTED"
-    exit 1
-}
-
-pgsql_version() {
     log_error "NOT IMPLEMENTED"
     exit 1
 }
@@ -190,7 +231,7 @@ memfile_upgrade() {
 mysql_upgrade() {
 
     printf "Lease DB version reported before upgrade: "
-    mysql_version_print
+    mysql_version
     printf "\n"
 
     # Check if the scripts directory exists at all.
@@ -213,14 +254,195 @@ mysql_upgrade() {
     done
 
     printf "Lease DB version reported after upgrade: "
-    mysql_version_print
+    mysql_version
     printf "\n"
 }
 
 pgsql_upgrade() {
-    log_error "NOT IMPLEMENTED"
+    version=`pgsql_version`
+    printf "Lease DB version reported before upgrade: $version\n"
+
+    # Check if the scripts directory exists at all.
+    if [ ! -d ${scripts_dir}/pgsql ]; then
+        log_error "Invalid scripts directory: ${scripts_dir}/pgsql"
+        exit 1
+    fi
+
+    # Check if there are any files in it
+    num_files=$(find ${scripts_dir}/pgsql/upgrade*.sh -type f | wc -l)
+    if [ $num_files -eq 0 ]; then
+        log_error "No scripts in ${scripts_dir}/pgsql or the directory is not readable or does not have any upgrade* scripts."
+        exit 1
+    fi
+
+    for script in ${scripts_dir}/pgsql/upgrade*.sh
+    do
+        echo "Processing $script file..."
+        sh ${script} --user=${db_user} --password=${db_password} ${db_name}
+    done
+
+    version=`pgsql_version`
+    printf "Lease DB version reported after upgrade: $version\n"
+    exit 0
 }
 
+# Utility function which tests if the given file exists and
+# if so notifies the user and provides them the opportunity
+# to abort the current command.
+check_file_overwrite () {
+    local file=$1
+    if [ -e ${file} ]
+    then
+        echo "Output file, $file, exists and will be overwritten."
+        echo "Do you wish to continue? (y/n)"
+        read ans
+        if [ ${ans} != "y" ]
+        then
+            echo "$command aborted by user."
+            exit 1
+        fi
+    fi
+}
+
+### Functions used for dump
+
+# Sets the global variable, dump_qry, to the schema-version specific
+# SQL text needed to dump the lease data for the current backend
+# and protocol
+get_dump_query() {
+    local version=$1
+
+    dump_qry=""
+    dump_sql_file="$scripts_dir/${backend}/lease_dump_$version.sh"
+    if [ ! -e $dump_sql_file ]
+    then
+        log_error "lease-dump: cannot access dump_sql_file: $dump_sql_file"
+        exit 1;
+    fi
+
+    # source in the dump file which defines the sql text we'll need
+    . $dump_sql_file
+    if [ $? -ne 0 ]
+    then
+        log_error "lease-dump: error sourcing dump_sql_file: $dump_sql_file"
+        exit 1
+    fi
+
+    # Construct the SQL text to dump the leases based on protocol type
+    case ${dump_type} in
+        4)
+            dump_qry="$lease4_dump_sql";
+            ;;
+        6)
+            dump_qry="$lease6_dump_sql";
+            ;;
+        *)
+            log_error "you must specify -4 or -6 for lease-dump"
+            usage
+            exit 1
+            ;;
+    esac
+
+    if [ "$dump_qry" = "" ]
+    then
+        log_error "lease-dump: dump query appears to be undefined"
+        exit 1
+    fi
+}
+
+memfile_dump() {
+    log_error "lease-dump is not supported for memfile"
+    exit 1
+}
+
+mysql_dump() {
+
+    # get the correct dump query
+    version=`mysql_version`
+    retcode=$?
+    if [ $retcode -ne 0 ]
+    then
+        log_error "lease-dump: mysql_version failed, exit code $retcode"
+        exit 1;
+    fi
+
+    # Fetch the correct SQL text. Note this function will exit
+    # if it fails.
+    get_dump_query $version
+
+    # Make sure they specified a file
+    if [ "$dump_file" = "" ]; then
+        log_error "you must specify an output file for lease-dump"
+        usage
+        exit 1
+
+    fi
+
+    # If output file exists, notify user, allow them a chance to bail
+    check_file_overwrite $dump_file
+
+    # Check the temp file too
+    tmp_file="$dump_file.tmp"
+    check_file_overwrite $tmp_file
+
+    # Run the sql to output tab-delimited lease data to a temp file.
+    # By using a temp file we can check for MySQL errors before using
+    # 'tr' to translate tabs to commas.  We do not use MySQL's output
+    # to file as that requires linux superuser privileges to execute
+    # the select.
+    mysql_execute "${dump_qry}" > $tmp_file
+    retcode=$?
+    if [ $retcode -ne 0 ]; then
+        log_error "lease-dump: mysql_execute failed, exit code $retcode";
+        exit 1
+    fi
+
+    # Now translate tabs to commas.
+    cat $tmp_file | tr '\t' ',' >$dump_file
+    if [ $? -ne 0 ]; then
+        log_error "lease-dump: reformatting failed";
+        exit 1
+    fi
+
+    # delete the tmp file on success
+    rm $tmp_file
+    echo lease$dump_type successfully dumped to $dump_file
+    exit 0
+}
+
+### Functions used for dump
+pgsql_dump() {
+    version=`pgsql_version`
+    get_dump_query $version
+
+    # Make sure they specified a file
+    if [ "$dump_file" = "" ]; then
+        log_error "you must specify an output file for lease-dump"
+        usage
+        exit 1
+
+    fi
+
+    # If output file exists, notify user, allow them a chance to bail
+    check_file_overwrite $dump_file
+
+    # psql does not accept password as a parameter but will look in the environment
+    export PGPASSWORD=$db_password
+
+    # Call psql and redirect output to the dump file. We don't use psql "to csv"
+    # as it can only be run as db superuser.
+    echo "$dump_qry" | psql --set ON_ERROR_STOP=1 -t -q --user=$db_user --dbname=$db_name -w --no-align --field-separator=',' >$dump_file
+    retcode=$?
+
+    # Check for errors.
+    if [ $retcode -ne 0 ]; then
+        log_error "lease-dump: psql call failed, exit code: $retcode";
+        exit 1
+    fi
+
+    echo lease$dump_type successfully dumped to $dump_file
+    exit 0
+}
 
 ### Script starts here ###
 
@@ -231,7 +453,7 @@ if [ -z ${command} ]; then
     usage
     exit 1
 fi
-is_in_list "${command}" "lease-init lease-version lease-upgrade"
+is_in_list "${command}" "lease-init lease-version lease-upgrade lease-dump"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid command: ${command}"
     exit 1
@@ -270,8 +492,8 @@ do
         # Specify database password
         -p|--password)
             shift
-            db_pass=${1}
-            if [ -z ${db_pass} ]; then
+            db_password=${1}
+            if [ -z ${db_password} ]; then
                 log_error "-p or --password requires a parameter"
                 usage
                 exit 1
@@ -292,6 +514,34 @@ do
             scripts_dir=${1}
             if [ -z ${scripts_dir} ]; then
                 log_error "-d or --directory requires a parameter"
+                usage
+                exit 1
+            fi
+            ;;
+        # specify DHCPv4 lease type
+        -4)
+            if [ $dump_type -eq 6 ]; then
+                log_error "you may not specify both -4 and -6"
+                usage
+                exit 1
+            fi
+            dump_type=4
+            ;;
+        # specify DHCPv6 lease type
+        -6)
+            if [ $dump_type -eq 4 ]; then
+                log_error "you may not specify both -4 and -6"
+                usage
+                exit 1
+            fi
+            dump_type=6
+            ;;
+        # specify output file, currently only used by lease dump
+        -o|--output)
+            shift
+            dump_file=${1}
+            if [ -z ${dump_file} ]; then
+                log_error "-o or --output requires a parameter"
                 usage
                 exit 1
             fi
@@ -325,7 +575,7 @@ case ${command} in
                 memfile_version
                 ;;
             mysql)
-                mysql_version_print
+                mysql_version
                 printf "\n"
                 ;;
             pgsql)
@@ -343,6 +593,19 @@ case ${command} in
                 ;;
             pgsql)
                 pgsql_upgrade
+                ;;
+            esac
+        ;;
+    lease-dump)
+        case ${backend} in
+            memfile)
+                memfile_dump
+                ;;
+            mysql)
+                mysql_dump
+                ;;
+            pgsql)
+                pgsql_dump
                 ;;
             esac
         ;;

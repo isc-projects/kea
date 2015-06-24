@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <config/module_spec.h>
 #include <d2/d2_config.h>
@@ -249,7 +251,7 @@ bool checkServer(DnsServerInfoPtr server, const char* hostname,
 /// @return returns true if there is a match across the board, otherwise it
 /// returns false.
 bool checkKey(TSIGKeyInfoPtr key, const std::string& name,
-	      const std::string& algorithm, const std::string& secret,
+              const std::string& algorithm, const std::string& secret,
               uint32_t digestbits = 0) {
     // Return value, assume its a match.
     return (((key) &&

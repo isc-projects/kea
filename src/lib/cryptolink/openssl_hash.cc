@@ -77,7 +77,7 @@ public:
         EVP_DigestInit_ex(md_.get(), algo, NULL);
     }
 
-    /// @brief Destrucotr
+    /// @brief Destructor
     ~HashImpl() {
         if (md_) {
             EVP_MD_CTX_cleanup(md_.get());
@@ -105,7 +105,7 @@ public:
         size_t size = getOutputLength();
         std::vector<unsigned char> digest(size);
         EVP_DigestFinal_ex(md_.get(), &digest[0], NULL);
-        if (len == 0 || len > size) {
+        if (len > size) {
              len = size;
         }
         result.writeData(&digest[0], len);
@@ -131,7 +131,7 @@ public:
         size_t size = getOutputLength();
         std::vector<unsigned char> digest(size);
         EVP_DigestFinal_ex(md_.get(), &digest[0], NULL);
-        if (len != 0 && len < size) {
+        if (len < size) {
             digest.resize(len);
         }
         return (std::vector<uint8_t>(digest.begin(), digest.end()));

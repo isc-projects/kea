@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,11 +14,22 @@
 
 #include <config.h>
 #include <d2/d2_log.h>
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
 #include <d2/d_controller.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <cryptolink/cryptolink.h>
+#include <log/logger.h>
+#include <cfgrpt/config_report.h>
+
+#ifdef HAVE_MYSQL
+#include <dhcpsrv/mysql_lease_mgr.h>
+#endif
+#ifdef HAVE_PGSQL
+#include <dhcpsrv/pgsql_lease_mgr.h>
+#endif
+#include <dhcpsrv/memfile_lease_mgr.h>
 
 #include <sstream>
 #include <unistd.h>
@@ -90,7 +101,6 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
                    "Application Process initialization failed: " << ex.what());
     }
 
-
     LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_STANDALONE).arg(app_name_);
 
     // Step 3 is to load configuration from file.
@@ -131,7 +141,7 @@ DControllerBase::parseArgs(int argc, char* argv[])
     int ch;
     opterr = 0;
     optind = 1;
-    std::string opts("dvVc:" + getCustomOpts());
+    std::string opts("dvVWc:" + getCustomOpts());
     while ((ch = getopt(argc, argv, opts.c_str())) != -1) {
         switch (ch) {
         case 'd':
@@ -140,15 +150,23 @@ DControllerBase::parseArgs(int argc, char* argv[])
             break;
 
         case 'v':
-            // Print just Kea version and exit
-            std::cout << getVersion(false) << std::endl;
-            exit(EXIT_SUCCESS);
+            // gather Kea version and throw so main() can catch and return
+            // rather than calling exit() here which disrupts gtest.
+            isc_throw(VersionMessage, getVersion(false));
+            break;
 
         case 'V':
-            // Print extended Kea version and exit
-            std::cout << getVersion(true) << std::endl;
-            exit(EXIT_SUCCESS);
+            // gather Kea version and throw so main() can catch and return
+            // rather than calling exit() here which disrupts gtest.
+            isc_throw(VersionMessage, getVersion(true));
+            break;
             
+        case 'W':
+            // gather Kea config report and throw so main() can catch and
+            // return rather than calling exit() here which disrupts gtest.
+            isc_throw(VersionMessage, isc::detail::getConfigReport());
+            break;
+
         case 'c':
             // config file name
             if (optarg == NULL) {
@@ -303,20 +321,20 @@ isc::data::ConstElementPtr
 DControllerBase::executeCommand(const std::string& command,
                             isc::data::ConstElementPtr args) {
     // Shutdown is universal.  If its not that, then try it as
-    // an custom command supported by the derivation.  If that
+    // a custom command supported by the derivation.  If that
     // doesn't pan out either, than send to it the application
     // as it may be supported there.
     isc::data::ConstElementPtr answer;
     if (command.compare(SHUT_DOWN_COMMAND) == 0) {
         answer = shutdownProcess(args);
     } else {
-        // It wasn't shutdown, so may be a custom controller command.
+        // It wasn't shutdown, so it may be a custom controller command.
         int rcode = 0;
         answer = customControllerCommand(command, args);
         isc::config::parseAnswer(rcode, answer);
         if (rcode == COMMAND_INVALID)
         {
-            // It wasn't controller command, so may be an application command.
+            // It wasn't a controller command, so it may be an application command.
             answer = process_->command(command, args);
         }
     }
@@ -425,12 +443,14 @@ DControllerBase::usage(const std::string & text)
     }
 
     std::cerr << "Usage: " << bin_name_ <<  std::endl
-              << "  -c <config file name> : mandatory,"
-              <<   " specifies name of configuration file " << std::endl
-              << "  -d: optional, verbose output " << std::endl
               << "  -v: print version number and exit" << std::endl
               << "  -V: print extended version information and exit"
-              << std::endl;
+              << std::endl
+              << "  -W: display the configuration report and exit"
+              << std::endl
+              << "  -d: optional, verbose output " << std::endl
+              << "  -c <config file name> : mandatory,"
+              <<   " specifies name of configuration file " << std::endl;
 
     // add any derivation specific usage
     std::cerr << getUsageText() << std::endl;
@@ -439,22 +459,34 @@ DControllerBase::usage(const std::string & text)
 DControllerBase::~DControllerBase() {
 }
 
-}; // namespace isc::d2
-
-}; // namespace isc
+// Refer to config_report so it will be embedded in the binary
+const char* const* d2_config_report = isc::detail::config_report;
 
 std::string
-isc::dhcp::Daemon::getVersion(bool extended) {
+DControllerBase::getVersion(bool extended) {
     std::stringstream tmp;
 
     tmp << VERSION;
     if (extended) {
-        tmp << std::endl << EXTENDED_VERSION;
+        tmp << std::endl << EXTENDED_VERSION << std::endl;
+        tmp << "linked with:" << std::endl;
+        tmp << isc::log::Logger::getVersion() << std::endl;
+        tmp << isc::cryptolink::CryptoLink::getVersion() << std::endl;
+        tmp << "database:" << std::endl; 
+#ifdef HAVE_MYSQL
+        tmp << isc::dhcp::MySqlLeaseMgr::getDBVersion() << std::endl;
+#endif
+#ifdef HAVE_PGSQL
+        tmp << isc::dhcp::PgSqlLeaseMgr::getDBVersion() << std::endl;
+#endif
+        tmp << isc::dhcp::Memfile_LeaseMgr::getDBVersion();
 
-        // @todo print more details (is it Botan or OpenSSL build,
-        // with or without MySQL/Postgres? What compilation options were
-        // used? etc)
+        // @todo: more details about database runtime
     }
 
     return (tmp.str());
 }
+
+}; // namespace isc::d2
+
+}; // namespace isc

@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,8 +14,6 @@
 
 #ifndef IO_FETCH_H
 #define IO_FETCH_H 1
-
-#include <config.h>
 
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>

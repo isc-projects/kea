@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <d2/d2_log.h>
 #include <d2/d2_cfg_mgr.h>
@@ -35,7 +37,7 @@ const int NameAddTransaction::FQDN_IN_USE_EVT;
 const int NameAddTransaction::FQDN_NOT_IN_USE_EVT;
 
 NameAddTransaction::
-NameAddTransaction(IOServicePtr& io_service,
+NameAddTransaction(asiolink::IOServicePtr& io_service,
                    dhcp_ddns::NameChangeRequestPtr& ncr,
                    DdnsDomainPtr& forward_domain,
                    DdnsDomainPtr& reverse_domain,
@@ -194,7 +196,8 @@ NameAddTransaction::addingFwdAddrsHandler() {
                 // While unlikely, the build might fail if we have invalid
                 // data.  Should that be the case, we need to fail the
                 // transaction.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE)
+                LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE)
+                          .arg(getRequestId())
                           .arg(getNcr()->toText())
                           .arg(ex.what());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -231,7 +234,8 @@ NameAddTransaction::addingFwdAddrsHandler() {
                 // Per RFC4703 any other value means cease.
                 // If we get not authorized should we try the next server in
                 // the list? @todo  This needs some discussion perhaps.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_REJECTED)
+                LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_ADD_REJECTED)
+                          .arg(getRequestId())
                           .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
@@ -247,7 +251,8 @@ NameAddTransaction::addingFwdAddrsHandler() {
             // to select the next server for a retry.
             // @note For now we treat OTHER as an IO error like TIMEOUT. It
             // is not entirely clear if this is accurate.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_IO_ERROR)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_ADD_IO_ERROR)
+                      .arg(getRequestId())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->toText());
 
@@ -257,7 +262,8 @@ NameAddTransaction::addingFwdAddrsHandler() {
         case DNSClient::INVALID_RESPONSE:
             // A response was received but was corrupt. Retry it like an IO
             // error.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_RESP_CORRUPT)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_ADD_RESP_CORRUPT)
+                      .arg(getRequestId())
                       .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
@@ -267,7 +273,8 @@ NameAddTransaction::addingFwdAddrsHandler() {
         default:
             // Any other value and we will fail this transaction, something
             // bigger is wrong.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS)
+                      .arg(getRequestId())
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->toText());
@@ -305,7 +312,8 @@ NameAddTransaction::replacingFwdAddrsHandler() {
                 // While unlikely, the build might fail if we have invalid
                 // data.  Should that be the case, we need to fail the
                 // transaction.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_BUILD_FAILURE)
+                LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REPLACE_BUILD_FAILURE)
+                          .arg(getRequestId())
                           .arg(getNcr()->toText())
                           .arg(ex.what());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -343,7 +351,8 @@ NameAddTransaction::replacingFwdAddrsHandler() {
                 // Per RFC4703 any other value means cease.
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_REJECTED)
+                LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REPLACE_REJECTED)
+                          .arg(getRequestId())
                           .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
@@ -359,7 +368,8 @@ NameAddTransaction::replacingFwdAddrsHandler() {
             // to select the next server for a retry.
             // @note For now we treat OTHER as an IO error like TIMEOUT. It
             // is not entirely clear if this is accurate.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_IO_ERROR)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REPLACE_IO_ERROR)
+                      .arg(getRequestId())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->toText());
 
@@ -371,7 +381,8 @@ NameAddTransaction::replacingFwdAddrsHandler() {
         case DNSClient::INVALID_RESPONSE:
             // A response was received but was corrupt. Retry it like an IO
             // error.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT)
+                      .arg(getRequestId())
                       .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
@@ -383,8 +394,9 @@ NameAddTransaction::replacingFwdAddrsHandler() {
         default:
             // Any other value and we will fail this transaction, something
             // bigger is wrong.
-            LOG_ERROR(dctl_logger,
+            LOG_ERROR(d2_to_dns_logger,
                       DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS)
+                      .arg(getRequestId())
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->toText());
@@ -451,7 +463,8 @@ NameAddTransaction::replacingRevPtrsHandler() {
                 // While unlikely, the build might fail if we have invalid
                 // data.  Should that be the case, we need to fail the
                 // transaction.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_BUILD_FAILURE)
+                LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REPLACE_BUILD_FAILURE)
+                          .arg(getRequestId())
                           .arg(getNcr()->toText())
                           .arg(ex.what());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -477,7 +490,8 @@ NameAddTransaction::replacingRevPtrsHandler() {
                 // Per RFC4703 any other value means cease.
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_REJECTED)
+                LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REPLACE_REJECTED)
+                          .arg(getRequestId())
                           .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
@@ -493,7 +507,8 @@ NameAddTransaction::replacingRevPtrsHandler() {
             // to select the next server for a retry.
             // @note For now we treat OTHER as an IO error like TIMEOUT. It
             // is not entirely clear if this is accurate.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_IO_ERROR)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REPLACE_IO_ERROR)
+                      .arg(getRequestId())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->toText());
 
@@ -505,7 +520,8 @@ NameAddTransaction::replacingRevPtrsHandler() {
         case DNSClient::INVALID_RESPONSE:
             // A response was received but was corrupt. Retry it like an IO
             // error.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT)
+                      .arg(getRequestId())
                       .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
@@ -517,8 +533,9 @@ NameAddTransaction::replacingRevPtrsHandler() {
         default:
             // Any other value and we will fail this transaction, something
             // bigger is wrong.
-            LOG_ERROR(dctl_logger,
+            LOG_ERROR(d2_to_dns_logger,
                       DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS)
+                      .arg(getRequestId())
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->toText());
@@ -541,8 +558,9 @@ void
 NameAddTransaction::processAddOkHandler() {
     switch(getNextEvent()) {
     case UPDATE_OK_EVT:
-        LOG_INFO(dctl_logger, DHCP_DDNS_ADD_SUCCEEDED)
-                  .arg(getNcr()->toText());
+        LOG_INFO(d2_to_dns_logger, DHCP_DDNS_ADD_SUCCEEDED)
+                 .arg(getRequestId())
+                 .arg(getNcr()->toText());
         setNcrStatus(dhcp_ddns::ST_COMPLETED);
         endModel();
         break;
@@ -559,7 +577,8 @@ NameAddTransaction::processAddFailedHandler() {
     case UPDATE_FAILED_EVT:
     case NO_MORE_SERVERS_EVT:
         setNcrStatus(dhcp_ddns::ST_FAILED);
-        LOG_ERROR(dctl_logger, DHCP_DDNS_ADD_FAILED)
+        LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_ADD_FAILED)
+                  .arg(getRequestId())
                   .arg(transactionOutcomeString());
         endModel();
         break;

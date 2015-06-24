@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <utility>
 #include <dhcp/pkt.h>
 #include <dhcp/iface_mgr.h>
@@ -129,6 +130,8 @@ HWAddrPtr
 Pkt::getMAC(uint32_t hw_addr_src) {
     HWAddrPtr mac;
 
+    /// @todo: Implement an array of method pointers instead of set of ifs
+
     // Method 1: from raw sockets.
     if (hw_addr_src & HWAddr::HWADDR_SOURCE_RAW) {
         mac = getRemoteHWAddr();
@@ -141,21 +144,7 @@ Pkt::getMAC(uint32_t hw_addr_src) {
         }
     }
 
-    // Method 2: Extracted from DUID-LLT or DUID-LL
-
-    // Method 3: Extracted from source IPv6 link-local address
-    if (hw_addr_src & HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL) {
-        mac = getMACFromSrcLinkLocalAddr();
-        if (mac) {
-            return (mac);
-        } else if (hw_addr_src ==  HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL) {
-            // If we're interested only in link-local addr as source of that
-            // info, there's no point in trying other options.
-            return (HWAddrPtr());
-        }
-    }
-
-    // Method 4: From client link-layer address option inserted by a relay
+    // Method 2: From client link-layer address option inserted by a relay
     if (hw_addr_src & HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION) {
         mac = getMACFromIPv6RelayOpt();
         if (mac) {
@@ -167,13 +156,67 @@ Pkt::getMAC(uint32_t hw_addr_src) {
         }
     }
 
+    // Method 3: Extracted from DUID-LLT or DUID-LL
+    if(hw_addr_src & HWAddr::HWADDR_SOURCE_DUID) {
+        mac = getMACFromDUID();
+        if (mac) {
+            return (mac);
+        } else if (hw_addr_src == HWAddr::HWADDR_SOURCE_DUID) {
+            // If the only source allowed is DUID then we can skip the other
+            // methods.
+            return (HWAddrPtr());
+        }
+    }
+
+    // Method 4: Extracted from source IPv6 link-local address
+    if (hw_addr_src & HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL) {
+        mac = getMACFromSrcLinkLocalAddr();
+        if (mac) {
+            return (mac);
+        } else if (hw_addr_src ==  HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL) {
+            // If we're interested only in link-local addr as source of that
+            // info, there's no point in trying other options.
+            return (HWAddrPtr());
+        }
+    }
+
     // Method 5: From remote-id option inserted by a relay
+    if(hw_addr_src & HWAddr::HWADDR_SOURCE_REMOTE_ID) {
+        mac = getMACFromRemoteIdRelayOption();
+        if (mac) {
+            return (mac);
+        } else if (hw_addr_src == HWAddr::HWADDR_SOURCE_REMOTE_ID) {
+            // If the only source allowed is remote-id option then we can skip
+            // the other methods.
+            return (HWAddrPtr());
+        }
+    }
 
     // Method 6: From subscriber-id option inserted by a relay
 
     // Method 7: From docsis options
+    if (hw_addr_src & HWAddr::HWADDR_SOURCE_DOCSIS_CMTS) {
+        mac = getMACFromDocsisCMTS();
+        if (mac) {
+            return (mac);
+        } else if (hw_addr_src == HWAddr::HWADDR_SOURCE_DOCSIS_CMTS) {
+            // If we're interested only in CMTS options as a source of that
+            // info, there's no point in trying other options.
+            return (HWAddrPtr());
+        }
+    }
 
-    /// @todo: add other MAC acquisition methods here
+    // Method 8: From docsis options
+    if (hw_addr_src & HWAddr::HWADDR_SOURCE_DOCSIS_MODEM) {
+        mac = getMACFromDocsisModem();
+        if (mac) {
+            return (mac);
+        } else if (hw_addr_src == HWAddr::HWADDR_SOURCE_DOCSIS_MODEM) {
+            // If we're interested only in CMTS options as a source of that
+            // info, there's no point in trying other options.
+            return (HWAddrPtr());
+        }
+    }
 
     // Ok, none of the methods were suitable. Return NULL.
     return (HWAddrPtr());
@@ -215,7 +258,7 @@ Pkt::getMACFromIPv6(const isc::asiolink::IOAddress& addr) {
 
     // Let's get the interface this packet was received on. We need it to get
     // hardware type
-    Iface* iface = IfaceMgr::instance().getIface(iface_);
+    IfacePtr iface = IfaceMgr::instance().getIface(iface_);
     uint16_t hwtype = 0; // not specified
     if (iface) {
         hwtype = iface->getHWType();

@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,8 +17,8 @@
 
 /// @file d2_queue_mgr.h This file defines the class D2QueueMgr.
 
+#include <asiolink/io_service.h>
 #include <exceptions/exceptions.h>
-#include <d2/d2_asio.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcp_ddns/ncr_io.h>
 
@@ -72,10 +72,10 @@ public:
 
 /// @brief D2QueueMgr creates and manages a queue of DNS update requests.
 ///
-/// D2QueueMgr is class specifically designed as an integral part of DHCP-DDNS.
+/// D2QueueMgr is a class specifically designed as an integral part of DHCP-DDNS.
 /// Its primary responsibility is to listen for NameChangeRequests from
 /// DHCP-DDNS clients (e.g. DHCP servers) and queue them for processing. In
-/// addition it may provide a number services to locate entries in the queue
+/// addition it may provide a number of services to locate entries in the queue
 /// such as by FQDN or DHCID.  These services may eventually be used
 /// for processing optimization.  The initial implementation will support
 /// simple FIFO access.
@@ -165,7 +165,7 @@ public:
     /// This value must be greater than zero. It defaults to MAX_QUEUE_DEFAULT.
     ///
     /// @throw D2QueueMgrError if max_queue_size is zero.
-    D2QueueMgr(IOServicePtr& io_service,
+    D2QueueMgr(asiolink::IOServicePtr& io_service,
                const size_t max_queue_size = MAX_QUEUE_DEFAULT);
 
     /// @brief Destructor
@@ -327,7 +327,7 @@ public:
     void updateStopState();
 
     /// @brief IOService that our listener should use for IO management.
-    IOServicePtr io_service_;
+    asiolink::IOServicePtr io_service_;
 
     /// @brief Dictates the maximum number of entries allowed in the queue.
     size_t max_queue_size_;

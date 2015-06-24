@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,14 +15,9 @@
 #ifndef ISC_TESTUTILS_MOCKUPS_H
 #define ISC_TESTUTILS_MOCKUPS_H 1
 
-#include <config.h>
-
 #include <exceptions/exceptions.h>
 
 #include <cc/data.h>
-#include <cc/session.h>
-
-//#include <xfr/xfrout_client.h>
 
 #include <asiodns/asiodns.h>
 
@@ -31,85 +26,6 @@
 
 namespace isc {
 namespace testutils {
-
-// A minimal mock configuration session.  Most the methods are
-// stubbed out, except for a very basic group_sendmsg() and
-// group_recvmsg().  hasQueuedMessages() always returns false.
-class MockSession : public isc::cc::AbstractSession {
-public:
-    MockSession() :
-        // by default we return a simple "success" message.
-        msg_(isc::data::Element::fromJSON("{\"result\": [0, \"SUCCESS\"]}")),
-        send_ok_(true), receive_ok_(true), answer_wanted_(false)
-    {}
-
-
-    virtual void establish(const char*) {}
-    virtual void disconnect() {}
-
-    virtual int group_sendmsg(isc::data::ConstElementPtr msg,
-                              std::string group,
-                              std::string, std::string, bool want_answer)
-    {
-        if (!send_ok_) {
-            isc_throw(isc::cc::SessionError,
-                      "mock session send is disabled for test");
-        }
-
-        sent_msg_ = msg;
-        msg_dest_ = group;
-        answer_wanted_ = want_answer;
-        return (0);
-    }
-
-    virtual bool group_recvmsg(isc::data::ConstElementPtr&,
-                               isc::data::ConstElementPtr& msg, bool, int)
-    {
-        if (!receive_ok_) {
-            isc_throw(isc::cc::SessionError,
-                      "mock session receive is disabled for test");
-        }
-
-        msg = msg_;
-        return (true);
-    }
-
-    virtual void subscribe(std::string, std::string) {}
-    virtual void unsubscribe(std::string, std::string) {}
-
-    virtual void startRead(boost::function<void()>) {}
-
-    virtual int reply(isc::data::ConstElementPtr, isc::data::ConstElementPtr) {
-        return (-1);
-    }
-
-    virtual bool hasQueuedMsgs() const {
-        return (false);
-    }
-
-    virtual void setTimeout(size_t) {};
-    virtual size_t getTimeout() const { return 0; };
-
-    // The following methods extent AbstractSession to allow testing:
-    void setMessage(isc::data::ConstElementPtr msg) { msg_ = msg; }
-    void disableSend() { send_ok_ = false; }
-    void disableReceive() { receive_ok_ = false; }
-
-    isc::data::ConstElementPtr getSentMessage() const { return (sent_msg_); }
-    std::string getMessageDest() const { return (msg_dest_); }
-
-    /// \brief Return the value of want_answer parameter of the previous call
-    /// to group_sendmsg().
-    bool wasAnswerWanted() const { return (answer_wanted_); }
-
-private:
-    isc::data::ConstElementPtr sent_msg_;
-    std::string msg_dest_;
-    isc::data::ConstElementPtr msg_;
-    bool send_ok_;
-    bool receive_ok_;
-    bool answer_wanted_;
-};
 
 // This mock object does nothing except for recording passed parameters
 // to addServerXXX methods so the test code subsequently checks the parameters.

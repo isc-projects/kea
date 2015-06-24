@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <d2/d2_asio.h>
+#include <config.h>
+
+#include <asiolink/io_service.h>
+#include <asiolink/interval_timer.h>
 #include <d2/d2_queue_mgr.h>
 #include <dhcp_ddns/ncr_udp.h>
 #include <util/time_utilities.h>
@@ -78,7 +81,7 @@ const long TEST_TIMEOUT = 5 * 1000;
 
 /// @brief Tests that construction with max queue size of zero is not allowed.
 TEST(D2QueueMgrBasicTest, construction1) {
-    IOServicePtr io_service;
+    asiolink::IOServicePtr io_service;
 
     // Verify that constructing with null IOServicePtr is not allowed.
     EXPECT_THROW((D2QueueMgr(io_service)), D2QueueMgrError);
@@ -90,7 +93,7 @@ TEST(D2QueueMgrBasicTest, construction1) {
 
 /// @brief Tests default construction works.
 TEST(D2QueueMgrBasicTest, construction2) {
-    IOServicePtr io_service(new isc::asiolink::IOService());
+    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
 
     // Verify that valid constructor works.
     D2QueueMgrPtr queue_mgr;
@@ -101,7 +104,7 @@ TEST(D2QueueMgrBasicTest, construction2) {
 
 /// @brief Tests construction with custom queue size works properly
 TEST(D2QueueMgrBasicTest, construction3) {
-    IOServicePtr io_service(new isc::asiolink::IOService());
+    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
 
     // Verify that custom queue size constructor works.
     D2QueueMgrPtr queue_mgr;
@@ -118,7 +121,7 @@ TEST(D2QueueMgrBasicTest, construction3) {
 /// 4. Peek returns the first entry on the queue without altering queue content
 /// 5. Dequeue removes the first entry on the queue
 TEST(D2QueueMgrBasicTest, basicQueue) {
-    IOServicePtr io_service(new isc::asiolink::IOService());
+    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
 
     // Construct the manager with max queue size set to number of messages
     // we'll use.
@@ -210,7 +213,7 @@ bool checkSendVsReceived(NameChangeRequestPtr sent_ncr,
 class QueueMgrUDPTest : public virtual ::testing::Test,
                         NameChangeSender::RequestSendHandler {
 public:
-    IOServicePtr io_service_;
+    asiolink::IOServicePtr io_service_;
     NameChangeSenderPtr   sender_;
     isc::asiolink::IntervalTimer test_timer_;
     D2QueueMgrPtr queue_mgr_;

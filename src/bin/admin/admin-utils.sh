@@ -1,4 +1,4 @@
-# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -16,29 +16,81 @@
 
 # There are two ways of calling this method.
 # mysql_execute SQL_QUERY - This call is simpler, but requires db_user,
-#     db_password and db_name variables to be bet.
+#     db_password and db_name variables to be set.
 # mysql_execute SQL_QUERY PARAM1 PARAM2 .. PARAMN - Additional parameters
 #     may be specified. They are passed directly to mysql. This one is
 #     more convenient to use if the script didn't parse db_user db_password
 #     and db_name.
 #
-# @todo: Catch mysql return code. I tried to use PIPESTATUS[X], but it doesn't
-# seem to work (or at least I don't know how to use it).
+# It returns the mysql command exit status to the caller as $?
 mysql_execute() {
+    QUERY=$1
+    shift
     if [ $# -gt 1 ]; then
-        QUERY=$1
-        shift
-        _RESULT=`echo $QUERY | mysql -N -B $@`
+        mysql -N -B  $* -e "${QUERY}"
+        retcode=$?
     else
-        _RESULT=$(mysql -N -B --user=$db_user --password=$db_password -e "${1}" $db_name)
+        mysql -N -B --user=$db_user --password=$db_password -e "${QUERY}" $db_name
+        retcode="$?"
     fi
+
+    return $retcode
 }
 
 mysql_version() {
     mysql_execute "SELECT CONCAT(version,\".\",minor) FROM schema_version" "$@"
+    return $?
 }
 
-mysql_version_print() {
-    mysql_version "$@"
-    printf "%s" $_RESULT
+# Submits given SQL text to PostgreSQL
+# There are two ways of calling this method.
+# pgsql_execute SQL_QUERY - This call is simpler, but requires db_user,
+#     db_password and db_name variables to be set.
+# pgsql_execute SQL_QUERY PARAM1 PARAM2 .. PARAMN - Additional parameters
+#     may be specified. They are passed directly to pgsql. This one is
+#     more convenient to use if the script didn't parse db_user db_password
+#     and db_name.
+#
+# It returns the pgsql command exit status to the caller as $?
+pgsql_execute() {
+    QUERY=$1
+    shift
+    if [ $# -gt 0 ]; then
+        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -q $*
+        retcode=$?
+    else
+        export PGPASSWORD=$db_password
+        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -q -U $db_user -d $db_name
+        retcode=$?
+    fi
+    return $retcode
+}
+
+# Submits SQL in a given file to PostgreSQL
+# There are two ways of calling this method.
+# pgsql_execute SQL_FILE - This call is simpler, but requires db_user,
+#     db_password and db_name variables to be set.
+# pgsql_execute SQL_FILE PARAM1 PARAM2 .. PARAMN - Additional parameters
+#     may be specified. They are passed directly to pgsql. This one is
+#     more convenient to use if the script didn't parse db_user db_password
+#     and db_name.
+#
+# It returns the pgsql command exit status to the caller as $?
+pgsql_execute_script() {
+    file=$1
+    shift
+    if [ $# -gt 0 ]; then
+        psql --set ON_ERROR_STOP=1 -A -t -q -f $file $*
+        retcode=$?
+    else
+        export PGPASSWORD=$db_password
+        psql --set ON_ERROR_STOP=1 -A -t -q -U $db_user -d $db_name -f $file
+        retcode=$?
+    fi
+    return $retcode
+}
+
+pgsql_version() {
+    pgsql_execute "SELECT version || '.' || minor FROM schema_version" "$@"
+    return $?
 }

@@ -65,6 +65,8 @@
 #define D6O_CLT_TIME                            46 /* RFC5007 */
 #define D6O_LQ_RELAY_DATA                       47 /* RFC5007 */
 #define D6O_LQ_CLIENT_LINK                      48 /* RFC5007 */
+#define D6O_ERP_LOCAL_DOMAIN_NAME               65 /* RFC6440 */
+#define D6O_RSOO                                66 /* RFC6422 */
 #define D6O_CLIENT_LINKLAYER_ADDR               79 /* RFC6939 */
 
 /*
@@ -104,13 +106,8 @@
 extern const char *dhcpv6_type_names[];
 extern const int dhcpv6_type_name_max;
 
-/* DUID type definitions (RFC3315 section 9).
- */
+// DUID type definitions (RFC3315 section 9).
 // see isc::dhcp::DUID::DUIDType enum in dhcp/duid.h
-// #define DUID_LLT        1
-// #define DUID_EN         2
-// #define DUID_LL         3
-// #define DUID_UUID       4
 
 // Define hardware types
 // Taken from http://www.iana.org/assignments/arp-parameters/

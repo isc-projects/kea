@@ -1,2 +1,3 @@
 /memfile_tests.sh
 /mysql_tests.sh
+/pgsql_tests.sh

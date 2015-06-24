@@ -78,7 +78,7 @@ struct TSIGContext::TSIGContextImpl {
                 hmac_.reset(CryptoLink::getCryptoLink().createHMAC(
                                 key_.getSecret(), key_.getSecretLength(),
                                 key_.getAlgorithm()),
-                            deleteHMAC);
+                                deleteHMAC);
             } catch (const isc::Exception&) {
                 return;
             }

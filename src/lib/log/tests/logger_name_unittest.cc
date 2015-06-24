@@ -52,13 +52,13 @@ TEST_F(LoggerNameTest, RootNameSetGet) {
     setRootLoggerName(name1);
     EXPECT_EQ(name1, getRootLoggerName());
 
-    // We could not test that the root logger name is initialised
+    // We could not test that the root logger name is initialized
     // correctly (as there is one instance of it and we don't know
     // when this test will be run) so to check that setName() actually
     // does change the name, run the test again with a different name.
     //
     // (There was always the outside chance that the root logger name
-    // was initialised with name1 and that setName() has no effect.)
+    // was initialized with name1 and that setName() has no effect.)
     setRootLoggerName(name2);
     EXPECT_EQ(name2, getRootLoggerName());
 }

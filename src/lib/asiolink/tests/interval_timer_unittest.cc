@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -191,7 +191,8 @@ TEST_F(IntervalTimerTest, startIntervalTimer) {
     // Expect TimerCallBack is called; timer_called_ is true
     EXPECT_TRUE(timer_called_);
     // Expect test_runtime is 100 milliseconds or longer.
-    EXPECT_TRUE(test_runtime > boost::posix_time::milliseconds(100)) <<
+    // Allow 1% of clock skew
+    EXPECT_TRUE(test_runtime >= boost::posix_time::milliseconds(99)) <<
                 "test runtime " << test_runtime.total_milliseconds() <<
                 "msec " << ">= 100";
 }

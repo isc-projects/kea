@@ -276,7 +276,7 @@
 
  Kea has the configuration option to allow static linking.  What this
  means is that it links against the static Kea libraries and not
- the shareable ones - although it links against the shareable system
+ the sharable ones - although it links against the sharable system
  libraries like "libc" and "libstdc++" and well as the sharable libraries
  for third-party packages such as log4cplus and MySql.
 
@@ -288,7 +288,7 @@
  a Kea shared library containing a global object, address space
  is assigned for it.  When the hooks framework loads a user-library
  linked against the same Kea shared library, the operating system
- recognises that the library is already loaded (and initialized) and
+ recognizes that the library is already loaded (and initialized) and
  uses its definition of the global object.  Thus both the code in the
  Kea image and the code in the user-written shared library
  reference the same object.
@@ -368,14 +368,14 @@
  initialized Kea.  (In fact, running it against a dynamically-linked
  Kea should have no effect, as the load operation discards any duplicate
  message entries.)  The hooks library tests do this, the code being
- copnditionally compiled within a test of the USE_STATIC_LINK macro, set
+ conditionally compiled within a test of the USE_STATIC_LINK macro, set
  by the configure script.
 
  @note Not everything is completely rosy with logging and static linking.
  In particular, there appears to be an issue with the scenario where a
  user-written hooks library is run by a statically-linked Kea and then
  unloaded.  As far as can be determined, on unload the system attempts to
- delete the same logger twice.  This is alleviated by explictly clearing
+ delete the same logger twice.  This is alleviated by explicitly clearing
  the loggerptr_ variable in the isc::log::Logger destructor, but there
  is a suspicion that some memory might be lost in these circumstances.
  This is still under investigation.

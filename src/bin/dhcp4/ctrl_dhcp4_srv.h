@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,8 +17,7 @@
 
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
-#include <cc/session.h>
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
 #include <dhcp4/dhcp4_srv.h>
 
 namespace isc {
@@ -26,13 +25,8 @@ namespace dhcp {
 
 /// @brief Controlled version of the DHCPv4 server
 ///
-/// This is a class that is responsible for DHCPv4 server being controllable.
-/// It does various things, depending on the configuration backend.
-/// For Bundy backend it establishes a connection with msqg and later receives
-/// commands over it. For Kea backend, it reads configuration file from disk.
-///
-/// For detailed explanation or relations between main(), ControlledDhcpv4Srv,
-/// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
+/// This is a class that is responsible for DHCPv4 server being controllable,
+/// by reading configuration file from disk.
 class ControlledDhcpv4Srv : public isc::dhcp::Dhcpv4Srv {
 public:
 
@@ -58,12 +52,7 @@ public:
     /// @brief Performs cleanup, immediately before termination
     ///
     /// This method performs final clean up, just before the Dhcpv4Srv object
-    /// is destroyed. The actual behavior is backend dependent. For Bundy
-    /// backend, it terminates existing session with msgq. After calling
-    /// it, no further messages over msgq (commands or configuration updates)
-    /// may be received. For JSON backend, it is no-op.
-    ///
-    /// For specific details, see actual implementation in *_backend.cc
+    /// is destroyed. Currently it is a no-op.
     void cleanup();
 
     /// @brief Initiates shutdown procedure for the whole DHCPv4 server.
@@ -83,7 +72,7 @@ public:
     ///
     /// @note It never throws.
     ///
-    /// @param command Text represenation of the command (e.g. "shutdown")
+    /// @param command Text representation of the command (e.g. "shutdown")
     /// @param args Optional parameters
     ///
     /// @return status of the command
@@ -125,8 +114,7 @@ protected:
     ///
     /// This static callback method is called from IfaceMgr::receive6() method,
     /// when there is a new command or configuration sent over control socket
-    /// (that was sent from msgq if backend is Bundy, or some yet unspecified
-    /// sender if the backend is JSON file).
+    /// (that was sent from some yet unspecified sender).
     static void sessionReader(void);
 
     /// @brief IOService object, used for all ASIO operations.

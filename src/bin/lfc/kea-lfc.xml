@@ -1,0 +1,205 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+               [<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<refentry>
+
+  <refentryinfo>
+    <date>June 20, 2015</date>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>kea-lfc</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>Kea</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>kea-lfc</refname>
+    <refpurpose>Lease File Cleanup  process in Kea</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2015</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>kea-lfc</command>
+      <arg><option>-4|-6</option></arg>
+      <arg><option>-c <replaceable class="parameter">config-file</replaceable></option></arg>
+      <arg><option>-p <replaceable class="parameter">pid-file</replaceable></option></arg>
+      <arg><option>-x <replaceable class="parameter">previous-file</replaceable></option></arg>
+      <arg><option>-i <replaceable class="parameter">copy-file</replaceable></option></arg>
+      <arg><option>-o <replaceable class="parameter">output-file</replaceable></option></arg>
+      <arg><option>-f <replaceable class="parameter">finish-file</replaceable></option></arg>
+      <arg><option>-v</option></arg>
+      <arg><option>-V</option></arg>
+      <arg><option>-W</option></arg>
+      <arg><option>-d</option></arg>
+      <arg><option>-h</option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+      The <command>kea-lfc</command> service process removes redundant
+      information from the files used to provide persistent storage for
+      the memfile data base backend.  The service is written to run as
+      a stand alone process.  While it can be started externally, there
+      is usually no need to do this.  It will be run on a periodic basis
+      by the Kea DHCP servers.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>ARGUMENTS</title>
+
+    <para>The arguments are as follows:</para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term><option>-d</option></term>
+        <listitem><para>
+          Verbose mode sets the logging level to debug. This is primarily
+          for development purposes in stand-alone mode.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-v</option></term>
+        <listitem><para>
+          version causes the version stamp to be printed.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-V</option></term>
+        <listitem><para>
+          Version causes a longer form of the version stamp to be printed.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-W</option></term>
+        <listitem><para>
+          Display the configuration report.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-h</option></term>
+        <listitem><para>
+          Help causes the usage string to be printed.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-4 | -6</option></term>
+        <listitem><para>
+          The protocol version of the lease files, must be one of 4 or 6.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-c</option></term>
+        <listitem><para>
+          Configuration file including the configuration for
+          <command>kea-lfc</command> process.  It may also
+          contain configuration entries for other Kea services.
+          Currently <command>kea-lfc</command> gets all of its arguments from
+          the comamnd line, in the future it will be extended to get some arguments
+          from the config file.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-p</option></term>
+        <listitem><para>
+          PID file - When the <command>kea-lfc</command> process starts
+          it attempts to determine if another instance of the process is
+          already running by examining the pid file.  If one is already
+          running the new process is terminated.  If one isn't running it
+          writes its pid into the pid file.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-x</option></term>
+        <listitem><para>
+          Previous or ex lease file - When <command>kea-lfc</command> starts this
+          is the result of any previous run of <command>kea-lfc</command>.
+          When <command>kea-lfc</command> finishes it is the result of this run.
+          If <command>kea-lfc</command> is interrupted before compelting
+          this file may not exist.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-i</option></term>
+        <listitem><para>
+          Input or copy of lease file - Before the DHCP server invokes
+          <command>kea-lfc</command> it will move the current lease file
+          here and then call <command>kea-lfc</command> with this file.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-o</option></term>
+        <listitem><para>
+          Output lease file - The temporary file <command>kea-lfc</command>
+          should use to write the leases.  Upon completion of writing this
+          this file it will be moved to the finish file (see below).
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-f</option></term>
+        <listitem><para>
+          Finish or completion file - Another temporary file
+          <command>kea-lfc</command> uses for bookkeeping.  When
+          <command>kea-lfc</command> completes writing the output
+          file it moves it to this file name.  After
+          <command>kea-lfc</command> finishes deleting the other
+          files (previous and input) it moves this file to previous
+          lease file.  By moving the files in this fashion the
+          <command>kea-lfc</command> and the DHCP server processes
+          can determine the correct file to use even if one of the
+          processes was interrupted before completing its task.
+        </para></listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>HISTORY</title>
+    <para>
+      The <command>kea-lfc</command> process was first coded in January
+      2015 by the ISC Kea/DHCP team.
+    </para>
+  </refsect1>
+</refentry><!--
+ - Local variables:
+ - mode: sgml
+ - End:
+-->

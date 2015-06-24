@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -103,11 +103,33 @@ public:
         return (asio_address_.is_v4());
     }
 
+    /// \brief Convenience function to check if it is an IPv4 zero address.
+    ///
+    /// \return true if the address is the zero IPv4 address.
+    bool isV4Zero() const {
+        return (equals(IPV4_ZERO_ADDRESS()));
+    }
+
+    /// \brief Convenience function to check if it is an IPv4 broadcast
+    ///        address.
+    ///
+    /// \return true if the address is the broadcast IPv4 address.
+    bool isV4Bcast() const {
+        return (equals(IPV4_BCAST_ADDRESS()));
+    }
+
     /// \brief Convenience function to check for an IPv6 address
     ///
     /// \return true if the address is a V6 address
     bool isV6() const {
         return (asio_address_.is_v6());
+    }
+
+    /// \brief Convenience function to check if it is an IPv4 zero address.
+    ///
+    /// \return true if the address is the zero IPv4 address.
+    bool isV6Zero() const {
+        return (equals(IPV6_ZERO_ADDRESS()));
     }
 
     /// \brief checks whether and address is IPv6 and is link-local
@@ -221,6 +243,47 @@ public:
         return (nequals(other));
     }
 
+    /// @brief Subtracts one address from another (a - b)
+    ///
+    /// Treats addresses as integers and subtracts them. For example:
+    /// 192.0.2.5 - 192.0.2.0 = 0.0.0.5
+    /// fe80::abcd - fe80:: = ::abcd
+    ///
+    /// It is possible to subtract greater from lesser address, e.g.
+    /// 192.168.56.10 - 192.168.67.20, but please do understand that
+    /// the address space is a finite field in mathematical sense, so
+    /// you may end up with a result that is greater then any of the
+    /// addresses you specified. Also, subtraction is not commutative,
+    /// so a - b != b - a.
+    ///
+    /// This operation is essential for calculating the number of
+    /// leases in a pool, where we need to calculate (max - min).
+    /// @throw BadValue if addresses are of different family
+    /// @param a address to be subtracted from
+    /// @param b address to be subtracted
+    /// @return IOAddress object that represents the difference
+    static IOAddress subtract(const IOAddress& a, const IOAddress& b);
+
+    /// @brief Returns an address increased by one
+    ///
+    /// This method works for both IPv4 and IPv6 addresses. For example,
+    /// increase 192.0.2.255 will become 192.0.3.0.
+    ///
+    /// Address space is a finite field in the mathematical sense, so keep
+    /// in mind that the address space "loops". 255.255.255.255 increased
+    /// by one gives 0.0.0.0. The same is true for maximum value of IPv6
+    /// (all 1's) looping to ::.
+    ///
+    /// @todo Determine if we have a use-case for increasing the address
+    /// by more than one. Increase by one is used in AllocEngine. This method
+    /// could take extra parameter that specifies the value by which the
+    /// address should be increased.
+    ///
+    /// @param addr address to be increased
+    /// @return address increased by one
+    static IOAddress
+    increase(const IOAddress& addr);
+
     /// \brief Converts IPv4 address to uint32_t
     ///
     /// Will throw BadValue exception if that is not IPv4
@@ -229,6 +292,29 @@ public:
     /// \return uint32_t that represents IPv4 address in
     ///         network byte order
     operator uint32_t () const;
+
+    /// @name Methods returning @c IOAddress objects encapsulating typical addresses.
+    ///
+    //@{
+    /// @brief Returns an address set to all zeros.
+    static const IOAddress& IPV4_ZERO_ADDRESS() {
+        static IOAddress address(0);
+        return (address);
+    }
+
+    /// @brief Returns a "255.255.255.255" broadcast address.
+    static const IOAddress& IPV4_BCAST_ADDRESS() {
+        static IOAddress address(0xFFFFFFFF);
+        return (address);
+    }
+
+    /// @brief Returns an IPv6 zero address.
+    static const IOAddress& IPV6_ZERO_ADDRESS() {
+        static IOAddress address("::");
+        return (address);
+    }
+
+    //@}
 
 private:
     asio::ip::address asio_address_;

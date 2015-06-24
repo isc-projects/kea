@@ -1,3 +1,589 @@
+969.	[func]		tomek
+	KEA_SOCKET_TEST_DIR environment variable can be used to specify
+	the directory for opening Unix sockets during tests. That may
+	be used to avoid path length limitations when running unit-tests
+	in deeply nested directories.
+	(Trac #3918, git 9cfd502e8d4605eaf34f8744f90272dc3e8a3e34)
+
+968.	[func]		fdupont
+	Changed all occurrences of unlink() to the more portable remove()
+	to avoid problems on operating systems where the former is not
+	available.
+	(Trac #3841, git 3752529ed3d72137f6899ef8225a0b231db5b1f0)
+
+967.	[doc]		tomek
+	Management API section added in the DHCPv6 chapter of the Kea
+	User's Guide
+	(Trac #3917, git 21305d2da26090e3fad1ff9fb242a2bbb6b7e56b)
+
+966.	[func]		fdupont
+	Include database software details in extended version information.
+	(Trac #3882, git b0e166c4d8b0383ebd6e2f51d55eed68a2bcafa8)
+
+965.	[func]		sar
+	Per IPv6 subnet statistics (subnet[id].assigned-nas,
+	subnet[id].total-nas, subnet[id].assigned-pds, and
+	subnet[id].total-pds) has been implemented.
+	(Trac #3799, git 4aa4808268bbc54290578f60ba60ed33cf344712)
+
+964.	[doc]		tomek
+	User's Guide and Developer's Guide updated with statistics and
+	control channel description.
+	(Trac #3800, git 7ce8ca560370ec5f9bd4d5199a177b441f08a47e)
+
+963.    [func]		tmark
+	DHCPv6 server now supports a control channel, implemented over
+	a UNIX socket. Currently supported commands are: statistic-get,
+	statistic-reset, statistic-remove, statistic-get-all,
+	statistic-reset-all, statistic-remove-all, and shutdown.
+	(Trac #3797, git f49828612d9030c9f3441acaf4b3a9f60b492a3e)
+
+962.	[func]		fdupont
+	Make the parsing of options and vendor options more consistent
+	between v4 and v6. In addition make the parsing more robust
+	against malformed packets.
+	(Trac #3618, git f4066793c5e034386c689fd72d2a91a70ffb6d5f)
+
+961.	[func]		fdupont
+	Improved error messages when handling invalid or malformed
+	configuration file. File and line number are printed, when
+	available.
+	(Trac #3697, git 70fc36e164e988c251bdaaee7e27c5f6407e0f4c)
+
+960.	[build]		fdupont
+	Get rid of the last bundy pieces of code.
+	(Trac #3732, git 6b7da42f902fabb6855e54a19ea472c18ba82a93)
+
+959.	[build]		fdupont
+	Removed no longer used logging in cc and config libraries.
+	(Trac #3732, git 8d0324f4786900db953489ebaa9e018b1238543f)
+
+958.	[func]		tomek
+	DHCPv4 server now supports control channel, implemented over UNIX
+	socket. Currently supported commands are: statistic-get,
+	statistic-reset, statistic-remove, statistic-get-all,
+	statistic-reset-all, statistic-remove-all, shutdown.
+	(Trac #3880, git 688658395518f0b97d5384af81ceab5206691ad5)
+
+957.	[func]		tomek
+	Per IPv4 subnet statistics (subnet[id].assigned-addresses and
+	subnet[id].total-addresses) has been implemented.
+	(Trac #3798, git bab2030f56bbf390959f9f9238a8acc62d583c70)
+
+956.	[func]		marcin
+	Improved log messages emitted by the allocation engine,
+	which now uses a dedicated logger.
+	(Trac #3852, git 923928774f4f59c887d768cf155b5978e838a6f2)
+
+955.	[func]		tmark
+	Added unit tests to kea-admin for testing the lease-dump command
+	with a PostgreSQL backend. Updated PostgreSQL database installation
+	instructions in Kea Administrator's guide to include use of kea-admin
+	tool.
+	(Trac #3884, git 0772b7df2a89e1019141be1d0ddec30d53c4b919)
+
+954.	[func]		fdupont
+	Enhance the versioning information printed by the executables and
+	make it more consistent across all of the executables. "-v" is for
+	basic Kea version information, "-V" provides more detailed
+	versioning and versions for external dynamic libraries, finally
+	"-W" provides the configure report from the configuration step
+	during the build of Kea.
+	(Trac #3513, git 584cf666e101c6cb5c9af76175ddd867ece85764)
+	(Trac #3859, git 384e6c6225de18fc97d606e4a1972baeef598ba4)
+
+953.	[bug]		fdupont
+	Corrected the setting of string characters to values above 127
+	in HMAC tests.
+	(Trac #3829, git 54f4ec64e513fea1547631122dc1af8579fae3db)
+
+952.	[bug]		fdupont
+	Made some loop indexes an unsigned type to avoid compiler warnings
+	where the termination condition is comparison with an unsigned
+	value.
+	(Trac #3833, git 3db9f1d78f59856b982a1ff84c3b5a1ba7ea39df)
+
+951.	[build]		fdupont
+	Removed BUNDY configuration backend.
+	(Trac #3732, git 96364cbbb15318c8f55d5b287cda0990d3eaae32)
+
+950.	[doc]		marcin
+	Updated section about logging in the User Guide. Also,
+	updated Hooks Developer's Guide with the recommendations for
+	the developers about use of logging in hooks libraries.
+	(Trac #3805, git b403de1f335a2fb5098c9abc0858b8137892f868)
+
+949.	[func]		tmark
+	kea-admin now supports dumping MySQL and PostgreSQL lease tables
+	to CSV file, via a new command "lease-dump".  This is primarily
+	intended for use as a diagnostic tool.
+	(Trac #3802, git 6ec774e8523e7f8415d6cd18c34062489e127847)
+
+948.	[bug]		fdupont
+	libdhcpsrv: check if new host reservation tries to use an already
+	reserved address.
+	(Trac #3652, git 4f10b78341b197bd321fbf2ec71db7420e40718d)
+
+947.	[func]		marcin
+	DHCPv6 server now supports Rapid Commit option.
+	(Trac #3070, git a6b6156aaa95ab74c69a537e90483f82e9fbe4a2)
+
+946.	[doc]		tmark
+	Added doucmentation for kea-admin "lease-dump" command to the
+	Kea Admininstrator's Guide and kea-admin man page.
+	(Trac #3803, git 54b59b7ef02f6428405794066ea779e9bd4c0b6e)
+
+945.	[func]		marcin
+	Improved log messages emitted by the DHCPv6 server. Also,
+	the server is now using multiple distinct loggers for logging
+	messages pertaining to different functional parts of the
+	code, e.g. packet transmission, lease allocation, DDNS etc.
+	(Trac #3807, git c95ebdaf39c3d8d78d83d53db15824c60078f566)
+
+944.    [func]      tmark
+	kea-admin commands lease-init, lease-version, and lease-upgrade
+	now support PostgreSQL. Note that at this time the PostgreSQL
+	backend only supports Kea schema version 1.0, so there are no
+	upgrades available.
+	(Trac #3883, git 990a0d72fa247e4a12e2608994204c48274e4cd6)
+
+943.	[func]		sar
+	Split the DHCP-DDNS logging messages amongst several loggers to
+	allow the administrator finer control over debugging messages.
+	Messages pertaining to the name change requests processing include
+	an ID, currently the DHCID, to identify the transactions.
+	(Trac #3808, git 4fbe08234049de6ef67bb5cdb244d180a7a4c3a9)
+
+942.	[func]		tomek
+	18 new statistics added in DHCPv4 server: generic packet counters,
+	per packet type counters, parsing failure and packet drops.
+	(Trac #3794, git a61f40c44910a09699a9a566a5ec35ab758564ba)
+
+941.	[bug]		marcin
+	Configuration parser for host reservations returns an error
+	when an unsupported parameter is specified.
+	(Trac 3810, git 54ee0f6328a303c366dd8239e768dfc4a23a5d9b)
+
+940.	[bug]		fdupont
+	DHCPv4 server drops DHCPRELEASE messages sent from a bad
+	location (i.e., no subnet can be selected)
+	(Trac 3504, git f0f13ac74779f76ed7af91bd5dab3d11ba00be79)
+
+939.	[bug]		fdupont
+	Small fix in HooksDhcpv4SrvTest.subnet4SelectSimple unit-test.
+	(Trac 3881, git a21afdffec41fceb61e6760d4108d670b2eabe75)
+
+938.	[build]		fdupont
+	Removed Python from the log library (code, message compiler and
+	documentation)
+	(Trac #3734, git d24b7c9716c6eb7a3e9dd2cb3fd2d1bfe4e1201f)
+
+937.	[bug]		fdupont
+	The log ID LOG_UNRECOGNISED_DIRECTIVE was changed to
+	LOG_UNRECOGNIZED_DIRECTIVE to follow US English spelling.
+	(Trac #3762, git 235e3304746352e9341008225f9f2392586a9f66)
+
+936.	[bug]		fdupont
+	Added an ASSERT to avoid a crash in HooksDhcpv4SrvTest
+	subnet4SelectSimple unit test. Fixed out of bounds vector accesses
+	in perfdhcp (which should not be able to handle links
+	with long (i.e., more than 6 bytes) link-layer addresses).
+	(Trac #3868, git c20f47e19d6060605c0611754db7b66b08553caa)
+
+935.	[bug]		fdupont
+	Fixed 3 out of bounds accesses on vectors in DHCP++ code.
+	(Trac #3854, git de263ad0008f3494a85592f78db1ec662b68e689)
+
+934.	[bug]		fdupont
+	Renamed the DHCP-DDNS constant INVALID_SOCKET to SOCKET_NOT_VALID
+	to avoid conflicting with a constant of that name defined on some
+	operating systems.
+	(Trac #3861, git 28205225ceed03ff3126e43cd06cedbaa7d8d657)
+
+933.	[func]*		marcin
+	DHCPv4 server by default identifies a client using the
+	client-identifier, if present. The new configuration
+	parameter 'match-client-id' allows for disabling this
+	behavior, i.e. 'chaddr' field is used to identify the
+	client instead.
+	(Trac #3747, git b9dc6ffd0f3396e9da8e0c83fd82164b8b8af011)
+
+932.	[func]		kalmus
+	MySQL schema has been extended with tables that can store
+	host reservation. This ticket updates database schema only,
+	the tables are not in use yet.
+	(Trac #3567, git d2cd5d53b3f31422a342c9bb8946dad9ed1ea032)
+
+931.	[func]		marcin
+	Improved log messages emitted by the DHCPv4 server. Also,
+	the server is now using multiple distinct loggers for logging
+	messages pertaining to different functional parts of the
+	code, e.g. packet transmission, lease allocation, DDNS etc.
+	For complete list of logger names see User Guide.
+	(Trac #3806, git 7b148c2dd5e2696a541883223ce1efd2de81f143)
+
+930.	[func]		tomek
+	Statistics Manager is now implemented. There is a new library
+	libkea-stats that governs statistics collection. Its usage will
+	be added in the upcoming tickets.
+	(Trac #3793, git 68e9554ecabfc2a79731eeec1c706522e4d39332)
+
+929.	[build]		fdupont
+	Corrected problem in build system whereby specifying an
+	installation directory on the "configure" command line that
+	included a "+" in the name caused the build to fail.
+	(Trac #3713, git 741ff09b743307bad28ae13db440e5e0f402d319)
+
+928.	[build]		fdupont
+	A CONFIG_H_WAS_INCLUDED define has been added to provide
+	a way in source files to check whether config.h has been included.
+	(Trac #3812, git cbb135d5f217b0692dcdbc9cfcc04f6a0dbc3922)
+
+927.	[bug]		tmark
+	DHCPv4 no longer attempts to update the lease database with the
+	generated FQDN when processing DHCPDISCOVERs.
+	(Trac #3779, git 0b413ee8aba1afa1643b216a1e8c35103c6c975b)
+
+926.	[bug]		marcin
+	Fixed the crash during the logging deinitialization.
+	(Trac #3823, git 435b958860ec7b921645bd5923fff96ea4341f19)
+
+925.	[func]		marcin
+	libkea-hooks logs when the callouts execution begins or ends
+	for the particular hook. It also logs the execution time of
+	individual callouts and the total time for all callouts.
+	(Trac #3804 git dd1432d7807e7d3b54c87dd4b3155d3110619fbd)
+
+924.	[bug]		marcin
+	Removed shell warning about the "missing format character"
+	in the keactrl usage.
+	(Trac #3784, git aa683395a4cd75af5340eb8603fe46b7b0dd8f4e)
+
+923.	[func]		tmark
+	The DHCPv4 server now logs packets it has either dropped as invalid
+	or to which it has replied with a NAK to a separate logger,
+	"kea_dhcp4.bad_packet".
+	(Trac #3743, git cb91ca851099423e1b6c39cca3f3e2ba29795a51)
+
+922.	[build]		fdupont
+	The config.h file should never be included by another include file.
+	Copy missing header files to the install directory.
+	(Trac #3782, git ea6e9d166faa54b1f9781bc56d7d8fee6c87b1f9)
+
+921.	[func]		marcin
+	libdhcpsrv: Added log traces to the host manager.
+	(Trac #3699, git 75b75c89db88eb1a81e76f5550f2a5b3155ce42d)
+
+920.	[bug]		marcin
+	Corrected issues with logging initialization in hooks
+	libraries. The dynamically loaded hooks libraries may now
+	define their own loggers which are configurable using Kea
+	configuration file.
+	(Trac #3198, git 8216a6b1a2ed6e2b38919280809ee21fc4107fd6)
+
+Kea 0.9.1 released on March 31, 2015
+
+919.	[doc]		stephen
+	Corrected some configuration examples in the documentation.
+	(Trac #3772, git e9f084525bc1eec1cca635c00f33228bf7fac6a4)
+
+918.	[func]		tomek,tmark
+	DHCPv6 server now supports static reservations of hostnames
+	for clients.  Note this resolves #3708 by reducing the number
+	of calls to selectSubnet to once per client request.
+	(Trac #3689, git c13c824d9948f7e3f71a65ed43798f3b5c14042c)
+
+917.	[bug]		marcin
+	DHCPv4 server may allocate lease for the client which is
+	using a non-unique identifier (HW address or client id),
+	if the other identifier is unique.
+	(Trac #3768, git 0f7a029e2a2a7652d49a0bcd9f49e879fac9136f)
+
+916.	[func]		sar
+	Add a log message that indicates when the v4, v6 or
+	DHCP-DDNS server has completed processing its
+	configuration and is about to enter the loop to process
+	messages.
+	(Trac #3755, git c71c7836804842bae51fe79fd599c57f5b3d007d)
+
+915.	[func]		tomek, marcin
+	The DHCPv6 server now supports the Relay-Supplied Options
+	option,	as defined in RFC 6422. The relay can insert options
+	in the relay forward message that the server will send back
+	to the client if certain criteria are met.
+	(Trac #3705, git 4772ee589712f5359ecbd79ebf71fbc7bb68741b)
+
+914.	[bug]		marcin
+	DHCPv4 server: corrected the logging message issued when
+	the server could not allocate or offer the lease for the
+	client. The corrected message contains the client-id,
+	hardware address, ciaddr and requested-ip-address.
+	(Trac #3737, git 4c56e1348c5d50eaa5b3083a0a8c346966e1b603)
+
+913.	[bug]		sar
+	Handle recovery properly should the LFC crash while
+	manipulating files after completing processing.
+	(Trac #3759, git bb3b4d14119392261a1766da2b406fa46d4c0f21)
+
+912.	[doc]		sar
+	Added sections on LFC to the administrators and developers
+	guides.
+	(Trac #3720, git 828b801e6a4616de331588076ab9c4c35677595)
+
+911.	[func]*		marcin
+	libdhcp++: the C++ objects representing network interfaces
+	(Iface objects) are now non-copyable. As a result, the API
+	of the Interface Manager functions returning the pointers
+	to the Iface objects has changed.
+	(Trac #3715, git 7415c74e38e13385a75e7200cb23b7d6ca86df7f)
+
+910.	[func]		marcin
+	DHCPv4 server supports static reservations of the hostnames
+	for the clients.
+	(Trac #3688, git b5c50e2aff64da05b439da8d5fa4913fc8a704ca)
+
+909.	[bug]		marcin
+	Removed many cppcheck errors in the code. Also removed the
+	dhcp-ubench test tool.
+	(Trac #3736, git 552aea126e968b78292ae80c1c6a03c9ef4dcdcd)
+
+908.	[bug]		marcin
+	Handle overflows during time conversions in the MySQL and
+	PostgreSQL lease database backends.
+	(Trac #3673, git 27b4e4590fdee507f0e877d7b771dc6c6457a4b5)
+
+907.	[doc]		tmark
+	Corrected depictions of kea-admin command line options for
+	database-name in Kea Administrator Reference. Prior to this
+	the document showed "-d" as the database name option, when
+	in fact it is "-n".
+	(Trac #3742, git ec427e4c9d008abc800f87eda3c0024b35e4c2e2)
+
+906.	[doc]		tmark
+	Added description of a restriction on extracting a MAC
+	address from an IPv6 link-local address to the Kea
+	Administrator Reference, section 8.8, item "ipv6-link-local".
+	(Trac #3691, git ca9f5541cb36f815ac614c5c21088d545eafcac6)
+
+905.	[func]		marcin
+	DHCPv4 server assigns an address from the dynamic address
+	pool if the reserved address is in use by another client.
+	(Trac #3694, git 95b09ff53b941691cba172c933de0682b05a0d85)
+
+904.	[bug]		marcin
+	FreeBSD-only change: Disabled unit test expecting the death
+	of the process when conditional variable was destroyed when
+	the thread was still waiting for the variable. This is due
+	invalid behavior of the pthread_cond_destroy on FreeBSD
+	which should return EBUSY in such case, whereas it returns
+	success error code.
+	(Trac #3710, git bdb442402ef023055715baf597c401c9974a7fb2)
+
+903.	[bug]		stephen
+	Corrected arithmetical error in the rate control module of
+	perfdhcp which led to the incorrect calculation of the rate
+	at which packets should be sent.
+	(Trac #3729, git bb5bca3d9b68abc4b83abdd204bfb075dda630ac)
+
+902.	[bug]		marcin
+	Fixed the bug in the DHCPv4 server whereby the server
+	reconfiguration (using the SIGHUP signal) failed because
+	of sockets remaining open since the previous configuration.
+	(Trac #3730, git 3ceb0cd97cf5e44e8fc151d0a38db553530dd3ed)
+
+Kea 0.9.1beta released on February 18, 2015
+
+901.	[bug]		tomek
+	Previously, the DHCPv4 and DHCPv6 servers gave up after
+	100 failed lease selection attempts. Now both DHCPv4 and
+	DHCPv6 servers calculate the number of attempts required
+	to find a lease using the pool capacity.
+	(Trac #3711, git cb5533a1bf1023faf61c1b8ade6ac8fa425f46c2)
+
+900.	[doc]		marcin
+	Documented configuration of the Lease File Cleanup (LFC) in
+	the Kea Administrator Reference.
+	(Trac #3672, git da3c676f009785204f9d84ca008890959bffcc18)
+
+899.	[func]		tomek
+	reservation-mode parameter has been added to DHCPv6 server.
+	It controls what host reservation types are allowed and may
+	improve performance in certain situations. It is also
+	accepted in the DHCPv4 configuration, but currently not
+	used.
+	(Trac #3565, git cfbe13ad05aac23e09357fc78507cf9a82c908e6)
+
+898.	[func]		marcin
+	The DHCPv4 server configuration allows for opening multiple
+	sockets on a single interface with multiple IPv4 addresses
+	assigned. This facilitates the use case when different relay
+	agents send messages to different addresses on the interface.
+	(Trac #3695, git 3116243706a2dbcae3f9b5b3af9d2241a07b9ab2)
+
+897.	[bug]		fdupont
+	Removed a double free of the read_buffer_ field of Iface
+	objects after (spurious) copy (partial as copies are not
+	yet fixed).
+	(Trac #3712, git 0b38ff6a6e77eb4182bfd7c0c681bef22ad5f634)
+
+896.	[bug]		fdupont
+	Removed exit() in D2 for version command line processing.
+	This interfered with how the unit-tests were run.
+	(Trac #3616, git 758a61e277675e89d857a22c3f8e844de307dca6)
+
+895.	[doc]		tomek
+	Host reservation for DHCPv4 and DHCPv6 is now documented.
+	(Trac #3575, git a981e42eb0f39d27795364a6862b3a5e574e540a)
+
+894.	[bug]		fdupont
+	Accept empty options or sub options in DHCPv4 messages unpacking
+	routines.
+	(Trac #3661, git 42a4854208ec16834c590a9316b9a5306c60a3bb)
+
+893.	[func,bug]	fdupont
+	Changed the qualifying-suffix parameter in the dhcp-ddns
+	configuration element to be mandatory with no default value when
+	updates are enabled (i.e., the enable-updates mandatory parameter
+	is true).
+	(Trac #3632, git 12808651448837c611e4f6a262f7a1eb3deaf8da)
+
+892.	[func]		sar
+	A class, LeaseFileStats, has been added to provide simple
+	statistics for use with lease files.  Also added logging
+	to the kea-lfc process per the design.
+	See http://kea.isc.org/wiki/LFCDesign for the design.
+	(Trac #3667, git 7f36e034fe79d85f317d7d07e2fe636d6cdf1f6e)
+
+891.	[func]		tomek
+	libdhcpsrv: Allocation Engine now uses statically assigned
+	addresses when processing DHCPv6 renewals.
+	(Trac #3677, git 9ce50790c91624937ff2b622e4afff36d5d3cc2d)
+
+890.	[func]		marcin
+	It is now possible to specify whether the DHCPv4 server
+	should use raw sockets or IP/UDP datagram sockets to
+	receive and send DHCP messages. The configuration format
+	has been changed for the selection of interfaces on which
+	the DHCPv4 and DHCPv6 servers should listen. The
+	configuration files using an old format are incompatible
+	with the latest version of Kea.
+	(Trac #3604, git c726bbc4eae0f576f6791c7490bfba8c30a401d9)
+
+889.	[bug]		marcin
+	Resolved a bug in the DHCPv4 allocation engine whereby the
+	client could request and obtain an address reserved for
+	another client.
+	(Trac #3690, git 1afa4e24b0fcdd6d3a2e596663ce1102ffe2340d)
+
+888.	[func]		marcin
+	DHCPv4 and DHCPv6 servers launch the kea-lfc program, according
+	to the value of lfc-interval configuration parameter for the
+	Memfile lease database backend.
+	(Trac #3669, git c92665ce05d71e9e5cad9a0679018e9e3f7e3be5)
+
+887.	[func]		sar
+	A new process, kea-lfc, has been added. It is meant to
+	be periodically executed by the DHCPv4 and DHCPv6 servers
+	to remove redundant information from the lease files.
+	See http://kea.isc.org/wiki/LFCDesign for the design.
+	(Trac #3664, git cc85938b35e2d4bd00ccb74f1b83d3017ab0e41b)
+	(Trac #3665, git b1707981f48b13895b50bf27176dede866576292)
+	(Trac #3687, git 1e92382aaa2fbff08bbf1d6bbf0add195a7b6fae)
+
+886.	[func]		tomek
+	libdhcpsrv: Allocation Engine now uses statically assigned
+	addresses when it allocates leases for the DHCPv6 clients.
+	(Trac #3563, git b86b24fd011c0617515d62b7091d56fdfd1a7360)
+
+885.	[func]		tomek
+	Information-Request (stateless mode) in DHCPv6 is now supported.
+	(Trac #2949, git 3185d229c39ed4660e9bc98a7f4a9d0dfbe64a04)
+
+884.	[func]		marcin
+	The DHCPv6 server configuration now allows for defining a pool
+	for prefix delegation in which prefixes do not match a
+	subnet prefix.
+	(Trac #3647, git 5455d96cbf773e678bd6b1c3e31bfdeb617e6c13)
+
+883.	[bug]		marcin
+	libdhcpsrv: Prevent infinite loops in the allocation engine,
+	when the address pool becomes exhausted.
+	(Trac #3692, git f1e464558c89a6dc88ab28a25dd14a65fee62578)
+
+882.	[func]		sar
+	A utility class has been added which handles writing and
+	deleting pid files as well as checking if the process with
+	the given pid is running.
+	(Trac #3687, git 1e92382aaa2fbff08bbf1d6bbf0add195a7b6fae)
+
+881.	[func]		kalmus
+	Extracting hardware/MAC address from the DHCPv6 remote-id
+	option is now implemented.
+	(Trac #3552, git 6db5fc158133b3f308c43f1fe2fa54a6f89baae1)
+
+880.	[doc]		tomek
+	kea-admin is now described in Kea User's Guide.
+	(Trac #3644, git fa83c48826e41663d93e56ec7fd6983e9b0b2cd1)
+
+879.	[bug]		fdupont
+	Drop DHCPREQUEST message from an unknown client in the
+	INIT-REBOOT state.
+	(Trac #3656, git 8e205adc35d8e72d1802d5ee9056e6c4ac78274a)
+
+878.	[func]		marcin
+	DHCPv4 and DHCPv6 server now support the lfc-interval
+	parameter which configures the interval in which the
+	Memfile lease database backend executes the Lease File
+	Cleanup (LFC). Note: the LFC is currently no-op and will
+	be implemented shortly.
+	(Trac #3668, git 2ce54eeb607d2caa0901125b5d86a373e9e3f165)
+
+877.	[func]           marcin
+	DHCPv4 server drops unicast packets sent to the IPv4 address
+	on which the server is not configured to listen.
+	(Trac #3547, git 803f1f0f145b0f252ffc3637f758a47e0061de85)
+
+876.	[func]          tomek
+	Two new MAC acquisition methods implemented for DHCPv6:
+	docsis-modem (which extracts MAC address from an option inserted
+	by a cable modem) and docsis-ctms (which extracts MAC address from
+	an option inserted by CMTS which acts as a DHCPv6 relay agent).
+	(Trac #3553, git ad0a3772774bc5f9831a5ba16725a5a22887b8cb)
+
+875.    [bug]           afidalgo, marcin
+	The DHCPv4 server no longer appends the trailing dot to the
+	hostnames sent to the clients in the Hostname option (12).
+	Appending trailing dot confused some DHCPv4 clients.
+	Credits to Alexis Fidalgo for submitting a patch.
+	(Trac #3636, git 450867e6987f4c786ad6c2cc95cabcff601c1b48)
+
+874.    [func]           marcin
+	Changes to the Memfile lease database backend to load
+	leases from multiple files during startup or server
+	reconfiguration. This change is required by the Lease File
+	Cleanup feature, which leads to the creation of additional
+	files holding cleaned up lease information.
+	(Trac #3671, git 667de2ef9044e97c76b15cacc7285132cdffdfcf)
+
+873.    [bug]           wlodek
+	Removed references to non-existing pgsql_test.sh script
+	from Makefile.
+	(Trac #3662, git ab69f38dd82cf3c3736588e03c1dc568de3ae6d6)
+
+872.    [func]          wlodek
+	Check for required header file errcode.h for PostgreSQL
+	backend added to configure process.
+	(Trac #3663, git d666dd9263ba1aaf88bec5b8e5ae3f0cb8e5c1db)
+
+871.	[func]		kalmus, tomek
+	DHCPv6 is now able to extract MAC from DUID-LLT and DUID-LL.
+	(Trac #3548, git f6d9630e2762a0f256a2b7825d74d2bce8fe4c60)
+
+870.	[func]		fdupont
+	Cleanup the cryptolink API (e.g., removing spurious 'magic'
+	zero length parameters).
+	(Trac #3606, git 55d2df9d78321b3844217055e376ae44ac962d8f)
+
 869.	[func]		tomek
 	'mac-sources' configuration parameter added. The DHCPv6 server
 	can now be configured to use various MAC/Hardware address
@@ -5,11 +591,11 @@
 	(Trac #3554, git 2e7c32e7c19372f0c97968ef7c8256509d80fdfc)
 
 868.    [func]          marcin
-        DHCPv4 server configuration allows for selection of the
-        address on the interface that server should listen on.
-        This is specifically useful in the environments with
-        multiple IPv4 addresses assigned to one interface.
-        (Trac #3539, git ff71887c605eedc3914bacfd2e551da7bddcc0d6)
+	DHCPv4 server configuration allows for selection of the
+	address on the interface that server should listen on.
+	This is specifically useful in the environments with
+	multiple IPv4 addresses assigned to one interface.
+	(Trac #3539, git ff71887c605eedc3914bacfd2e551da7bddcc0d6)
 
 867.	[func]		marcin
 	libdhcpsrv: Allocation Engine uses statically assigned
@@ -18,7 +604,7 @@
 	(Trac #3564, git 7b192fe314c12e38622742b3b338e997934f862f)
 
 866.	[doc]		stephen
-	Corrected documentation concering the way to configure hooks
+	Corrected documentation concerning the way to configure hooks
 	libraries.
 	(Trac #3635, git 42d1c98a2e66ab7fc3e372365edad1f5709df885)
 
@@ -36,7 +622,7 @@
 
 863.	[func]		tomek
 	A new tool called kea-admin added. It allows database maintenance.
-	Initalization of a new database, version check and upgrade between
+	Initialization of a new database, version check and upgrade between
 	version is now supported. Currently the only backend supported is
 	mysql, but support for memfile and pgsql is planned.
 	(Trac #3599, git cf22f8d212f2435957f89b51722f8e26e14635f2)
@@ -5243,12 +5829,11 @@ bind10-devel-20101201 released on December 01, 2010
 
 bind10-devel-20100917 released on September 17, 2010
 
-95.	[doc]		jreed
+95.	[doc, bug]	jreed
 	Add b10-zonemgr manual page. Update other docs to introduce
-	this secondary manager. (Trac #341, svn r2951)
-
-95.	[bug]		jreed
+	this secondary manager.
 	bin/xfrout and bin/zonemgr: Fixed some stderr output.
+	(Trac #341, svn r2951)
 	(Trac #342, svn r2949)
 
 94.	[bug]		jelte

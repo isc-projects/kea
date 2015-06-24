@@ -1,0 +1,96 @@
+# This is an example configuration file for DHCPv6 server in Kea
+# that showcases how to do host reservations. It is
+# assumed that one subnet (2001:db8:1::/64) is available directly
+# over ethX interface. A number of hosts have various combinations
+# of addresses and prefixes reserved for them.
+
+{ "Dhcp6":
+
+{
+# Kea is told to listen on ethX interface only.
+  "interfaces-config": {
+    "interfaces": [ "ethX" ]
+  },
+
+# We need to specify lease type. As of May 2014, three backends are supported:
+# memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
+# any prior set up.
+  "lease-database": {
+    "type": "memfile"
+  },
+
+# This is pretty basic stuff, it has nothing to do with reservations.
+  "preferred-lifetime": 3000,
+  "valid-lifetime": 4000,
+  "renew-timer": 1000,
+  "rebind-timer": 2000,
+
+# The following list defines subnets. Subnet, pools and interface definitions
+# are the same as in the regular scenario, without host reservations.
+# least subnet and pool entries.
+  "subnet6": [
+    {
+      "subnet": "2001:db8:1::/48",
+
+      "pools": [ { "pool": "2001:db8:1::/80" } ],
+
+      "pd-pools": [
+          {
+              "prefix": "2001:db8:1:8000::",
+              "prefix-len": 56,
+              "delegated-len": 64
+          }
+      ],
+      "interface": "ethX",
+
+# Host reservations. Define two reservations for the 192.0.2.202 and
+# 192.0.2.100 address. Note that the latter is a reservation for the
+# address which is within the range of the pool of the dynamically
+# allocated address. The server will exclude this address from this
+# pool and only assign it to the client which has a reservation for
+# it.
+      "reservations": [
+# This is a simple host reservation. The host with DUID matching
+# specified value will get 2001:db8:1::100 address.
+          {
+              "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
+              "ip-addresses": [ "2001:db8:1::100" ]
+          },
+# This is similar to the previous one, but this time the reservation is done
+# based on hardware/MAC address. The server will do its best to extract
+# the hardware/MAC address from received packets.
+          {
+              "hw-address": "00:01:02:03:04:05",
+              "ip-addresses": [ "2001:db8:1::101" ]
+          },
+# This is a bit more advanced configuration. The client with specified
+# DUID will get a reserved address, prefix and a hostname.
+          {
+              "duid": "01:02:03:04:05:06:07:08:09:0A",
+              "ip-addresses": [ "2001:db8:1::102" ],
+              "prefixes": [ "2001:db8:2:abcd::/64" ],
+              "hostname": "foo.example.com"
+          }
+      ]
+    }
+  ]
+},
+
+# The following configures logging. Kea will log all debug messages
+# to /var/log/kea-debug.log file.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp6",
+            "output_options": [
+                {
+                    "output": "/var/log/kea-debug.log"
+                }
+            ],
+            "debuglevel": 99,
+            "severity": "DEBUG"
+        }
+    ]
+}
+
+}

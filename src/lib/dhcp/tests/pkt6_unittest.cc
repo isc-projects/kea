@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,10 +21,12 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/docsis3_option_defs.h>
+#include <dhcp/tests/pkt_captures.h>
 #include <util/range_utilities.h>
 
 #include <boost/bind.hpp>
@@ -127,9 +129,9 @@ public:
     /// length as an input. This constructor is normally used to parse
     /// received packets. It stores the packet in a data_ field and
     /// therefore unpack() can be called to parse it.
-    Pkt6Ptr packAndClone() {
-        Pkt6Ptr parent(new Pkt6(DHCPV6_SOLICIT, 0x020304));
-
+    ///
+    /// @param parent Packet from which the new packet should be created.
+    Pkt6Ptr packAndClone(Pkt6Ptr& parent) {
         OptionPtr opt1(new Option(Option::V6, 1));
         OptionPtr opt2(new Option(Option::V6, 2));
         OptionPtr opt3(new Option(Option::V6, 100));
@@ -139,16 +141,7 @@ public:
         parent->addOption(opt2);
         parent->addOption(opt3);
 
-        EXPECT_EQ(DHCPV6_SOLICIT, parent->getType());
-
-        // Calculated length should be 16
-        EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
-                  parent->len());
-
         EXPECT_NO_THROW(parent->pack());
-
-        EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
-                  parent->len());
 
         // Create second packet,based on assembled data from the first one
         Pkt6Ptr clone(new Pkt6(static_cast<const uint8_t*>
@@ -304,7 +297,8 @@ TEST_F(Pkt6Test, unpack_solicit1) {
 
 TEST_F(Pkt6Test, packUnpack) {
     // Create an on-wire representation of the test packet and clone it.
-    Pkt6Ptr clone = packAndClone();
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 0x020304));
+    Pkt6Ptr clone = packAndClone(pkt);
 
     // Now recreate options list
     ASSERT_NO_THROW(clone->unpack());
@@ -338,7 +332,7 @@ TEST_F(Pkt6Test, unpackMalformed) {
     // Let's check a truncated packet. Moderately sane DHCPv6 packet should at
     // least have four bytes header. Zero bytes is definitely not a valid one.
     OptionBuffer empty(1); // Let's allocate one byte, so we won't be
-                           // dereferencing and empty buffer.
+                           // dereferencing an empty buffer.
 
     Pkt6Ptr empty_pkt(new Pkt6(&empty[0], 0));
     EXPECT_THROW(empty_pkt->unpack(), isc::BadValue);
@@ -351,8 +345,8 @@ TEST_F(Pkt6Test, unpackMalformed) {
     Pkt6Ptr too_short_pkt(new Pkt6(&shorty[0], shorty.size()));
     EXPECT_THROW(too_short_pkt->unpack(), isc::BadValue);
 
-    // The code should complain about remaining bytes that can't
-    // be parsed.
+    // The code should complain about remaining bytes that can't be parsed
+    // but doesn't do so yet.
     Pkt6Ptr trailing_garbage(new Pkt6(&malform1[0], malform1.size()));
     EXPECT_NO_THROW(trailing_garbage->unpack());
 
@@ -375,13 +369,86 @@ TEST_F(Pkt6Test, unpackMalformed) {
 
     // ... but there should be no option 123 as it was malformed.
     EXPECT_FALSE(trunc_option->getOption(123));
+
+    // Check with truncated length field
+    Pkt6Ptr trunc_length(new Pkt6(&malform2[0], malform2.size() - 1));
+    EXPECT_NO_THROW(trunc_length->unpack());
+    EXPECT_FALSE(trunc_length->getOption(123));
+
+    // Check with missing length field
+    Pkt6Ptr no_length(new Pkt6(&malform2[0], malform2.size() - 2));
+    EXPECT_NO_THROW(no_length->unpack());
+    EXPECT_FALSE(no_length->getOption(123));
+
+    // Check with truncated type field
+    Pkt6Ptr trunc_type(new Pkt6(&malform2[0], malform2.size() - 3));
+    EXPECT_NO_THROW(trunc_type->unpack());
+    EXPECT_FALSE(trunc_type->getOption(123));
+}
+
+// Checks if the code is able to handle a malformed vendor option
+TEST_F(Pkt6Test, unpackVendorMalformed) {
+    // Get a packet. We're really interested in its on-wire
+    // representation only.
+    scoped_ptr<Pkt6> donor(capture1());
+
+    // Add a vendor option
+    OptionBuffer orig = donor->data_;
+
+    orig.push_back(0); // vendor options
+    orig.push_back(17);
+    orig.push_back(0);
+    size_t len_index = orig.size();
+    orig.push_back(18); // length=18
+    orig.push_back(1); // vendor_id=0x1020304
+    orig.push_back(2);
+    orig.push_back(3);
+    orig.push_back(4);
+    orig.push_back(1); // suboption type=0x101
+    orig.push_back(1); 
+    orig.push_back(0); // suboption length=3
+    orig.push_back(3);
+    orig.push_back(102); // data="foo"
+    orig.push_back(111);
+    orig.push_back(111);
+    orig.push_back(1); // suboption type=0x102
+    orig.push_back(2);
+    orig.push_back(0); // suboption length=3
+    orig.push_back(3);
+    orig.push_back(99); // data="bar'
+    orig.push_back(98);
+    orig.push_back(114);
+
+    Pkt6Ptr success(new Pkt6(&orig[0], orig.size()));
+    EXPECT_NO_THROW(success->unpack());
+
+    // Truncated vendor option is not accepted but doesn't throw
+    vector<uint8_t> shortv = orig;
+    shortv[len_index] = 20;
+    Pkt6Ptr too_short_vendor_pkt(new Pkt6(&shortv[0], shortv.size()));
+    EXPECT_NO_THROW(too_short_vendor_pkt->unpack());
+    
+    // Truncated option header is not accepted
+    vector<uint8_t> shorth = orig;
+    shorth.resize(orig.size() - 4);
+    shorth[len_index] = 12;
+    Pkt6Ptr too_short_header_pkt(new Pkt6(&shorth[0], shorth.size()));
+    EXPECT_THROW(too_short_header_pkt->unpack(), OutOfRange);
+
+    // Truncated option data is not accepted
+    vector<uint8_t> shorto = orig;
+    shorto.resize(orig.size() - 2);
+    shorto[len_index] = 16;
+    Pkt6Ptr too_short_option_pkt(new Pkt6(&shorto[0], shorto.size()));
+    EXPECT_THROW(too_short_option_pkt->unpack(), OutOfRange);
 }
 
 // This test verifies that it is possible to specify custom implementation of
 // the option parsing algorithm by installing a callback function.
 TEST_F(Pkt6Test, packUnpackWithCallback) {
     // Create an on-wire representation of the test packet and clone it.
-    Pkt6Ptr clone = packAndClone();
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 0x020304));
+    Pkt6Ptr clone = packAndClone(pkt);
 
     // Install the custom callback function. We expect that this function
     // will be called to parse options in the packet instead of
@@ -510,10 +577,14 @@ TEST_F(Pkt6Test, Timestamp) {
 // packet type names.
 TEST_F(Pkt6Test, getName) {
     // Check all possible packet types
-    for (int itype = 0; itype < 256; ++itype) {
+    for (unsigned itype = 0; itype < 256; ++itype) {
         uint8_t type = itype;
 
         switch (type) {
+        case DHCPV6_ADVERTISE:
+            EXPECT_STREQ("ADVERTISE", Pkt6::getName(type));
+            break;
+
         case DHCPV6_CONFIRM:
             EXPECT_STREQ("CONFIRM", Pkt6::getName(type));
             break;
@@ -527,8 +598,28 @@ TEST_F(Pkt6Test, getName) {
                          Pkt6::getName(type));
             break;
 
+        case DHCPV6_LEASEQUERY:
+            EXPECT_STREQ("LEASEQUERY", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_LEASEQUERY_REPLY:
+            EXPECT_STREQ("LEASEQUERY_REPLY", Pkt6::getName(type));
+            break;
+
         case DHCPV6_REBIND:
             EXPECT_STREQ("REBIND", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_RECONFIGURE:
+            EXPECT_STREQ("RECONFIGURE", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_RELAY_FORW:
+            EXPECT_STREQ("RELAY_FORWARD", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_RELAY_REPL:
+            EXPECT_STREQ("RELAY_REPLY", Pkt6::getName(type));
             break;
 
         case DHCPV6_RELEASE:
@@ -537,6 +628,10 @@ TEST_F(Pkt6Test, getName) {
 
         case DHCPV6_RENEW:
             EXPECT_STREQ("RENEW", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_REPLY:
+            EXPECT_STREQ("REPLY", Pkt6::getName(type));
             break;
 
         case DHCPV6_REQUEST:
@@ -924,7 +1019,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_direct) {
     Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
 
     // Let's get the first interface
-    Iface* iface = IfaceMgr::instance().getIface(1);
+    IfacePtr iface = IfaceMgr::instance().getIface(1);
     ASSERT_TRUE(iface);
 
     // and set source interface data properly. getMACFromIPv6LinkLocal attempts
@@ -966,7 +1061,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_singleRelay) {
     ASSERT_EQ(1, pkt.relay_info_.size());
 
     // Let's get the first interface
-    Iface* iface = IfaceMgr::instance().getIface(1);
+    IfacePtr iface = IfaceMgr::instance().getIface(1);
     ASSERT_TRUE(iface);
 
     // and set source interface data properly. getMACFromIPv6LinkLocal attempts
@@ -1032,7 +1127,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_multiRelay) {
     ASSERT_EQ(3, pkt.relay_info_.size());
 
     // Let's get the first interface
-    Iface* iface = IfaceMgr::instance().getIface(1);
+    IfacePtr iface = IfaceMgr::instance().getIface(1);
     ASSERT_TRUE(iface);
 
     // and set source interface data properly. getMACFromIPv6LinkLocal attempts
@@ -1069,7 +1164,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_singleRelay) {
         0x0a, 0x1b, 0x0b, 0x01, 0xca, 0xfe // MAC
     };
     OptionPtr relay_opt(new Option(Option::V6, 79,
-    		            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
+                            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
     info.options_.insert(make_pair(relay_opt->getType(), relay_opt));
 
     pkt.addRelayInfo(info);
@@ -1098,7 +1193,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
         0x1a, 0x30, 0x0b, 0xfa, 0xc0, 0xfe // MAC
     };
     OptionPtr relay_opt1(new Option(Option::V6, D6O_CLIENT_LINKLAYER_ADDR,
-    		            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
+                            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
 
     info1.options_.insert(make_pair(relay_opt1->getType(), relay_opt1));
     pkt.addRelayInfo(info1);
@@ -1117,7 +1212,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
     // We reuse the option and modify the MAC to be sure we get the right address
     opt_data[2] = 0xfa;
     OptionPtr relay_opt3(new Option(Option::V6, D6O_CLIENT_LINKLAYER_ADDR,
-    		            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
+                            OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
     info3.options_.insert(make_pair(relay_opt3->getType(), relay_opt3));
     pkt.addRelayInfo(info3);
     ASSERT_EQ(3, pkt.relay_info_.size());
@@ -1129,6 +1224,278 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
     stringstream tmp;
     tmp << "hwtype=1 fa:30:0b:fa:c0:fe";
     EXPECT_EQ(tmp.str(), found->toText(true));
+}
+
+TEST_F(Pkt6Test, getMACFromDUID) {
+    Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
+
+    // Although MACs are typically 6 bytes long, let's make this test a bit
+    // more challenging and use odd MAC lengths.
+
+    uint8_t duid_llt[] = { 0, 1, // type (DUID-LLT)
+                           0, 7, // hwtype (7 - just a randomly picked value)
+                           1, 2, 3, 4, // timestamp
+                           0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10 // MAC address (7 bytes)
+    };
+
+    uint8_t duid_ll[] = { 0, 3, // type (DUID-LL)
+                        0, 11, // hwtype (11 - just a randomly picked value)
+                        0xa, 0xb, 0xc, 0xd, 0xe // MAC address (5 bytes)
+    };
+
+    uint8_t duid_en[] = { 0, 2, // type (DUID-EN)
+                        1, 2, 3, 4, // enterprise-id
+                        0xa, 0xb, 0xc // opaque data
+    };
+
+    OptionPtr clientid1(new Option(Option::V6, D6O_CLIENTID, OptionBuffer(
+                                       duid_llt, duid_llt + sizeof(duid_llt))));
+    OptionPtr clientid2(new Option(Option::V6, D6O_CLIENTID, OptionBuffer(
+                                       duid_ll, duid_ll + sizeof(duid_ll))));
+    OptionPtr clientid3(new Option(Option::V6, D6O_CLIENTID, OptionBuffer(
+                                       duid_en, duid_en + sizeof(duid_en))));
+
+    // Packet does not have any client-id, this call should fail
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_DUID));
+
+    // Let's test DUID-LLT. This should work.
+    pkt.addOption(clientid1);
+    HWAddrPtr mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_DUID);
+    ASSERT_TRUE(mac);
+    EXPECT_EQ("hwtype=7 0a:0b:0c:0d:0e:0f:10", mac->toText(true));
+
+    // Let's test DUID-LL. This should work.
+    ASSERT_TRUE(pkt.delOption(D6O_CLIENTID));
+    pkt.addOption(clientid2);
+    mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_DUID);
+    ASSERT_TRUE(mac);
+    EXPECT_EQ("hwtype=11 0a:0b:0c:0d:0e", mac->toText(true));
+
+    // Finally, let's try DUID-EN. This should fail, as EN type does not
+    // contain any MAC address information.
+    ASSERT_TRUE(pkt.delOption(D6O_CLIENTID));
+    pkt.addOption(clientid3);
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_DUID));
+}
+
+// Test checks whether getMAC(DOCSIS_MODEM) is working properly.
+// We only have a small number of actual traffic captures from
+// cable networks, so the scope of unit-tests is somewhat limited.
+TEST_F(Pkt6Test, getMAC_DOCSIS_Modem) {
+
+    // Let's use a captured traffic. The one we have comes from a
+    // modem with MAC address 10:0d:7f:00:07:88.
+    Pkt6Ptr pkt = isc::test::PktCaptures::captureDocsisRelayedSolicit();
+    ASSERT_NO_THROW(pkt->unpack());
+
+    // The method should return MAC based on the vendor-specific info,
+    // suboption 36, which is inserted by the modem itself.
+    HWAddrPtr found = pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_MODEM);
+    ASSERT_TRUE(found);
+
+    // Let's check the info.
+    EXPECT_EQ("hwtype=1 10:0d:7f:00:07:88", found->toText(true));
+
+    // Now let's remove the option
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<
+        OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
+    ASSERT_TRUE(vendor);
+    ASSERT_TRUE(vendor->delOption(DOCSIS3_V6_DEVICE_ID));
+
+    // Ok, there's no more suboption 36. Now getMAC() should fail.
+    EXPECT_FALSE(pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_MODEM));
+}
+
+// Test checks whether getMAC(DOCSIS_CMTS) is working properly.
+// We only have a small number of actual traffic captures from
+// cable networks, so the scope of unit-tests is somewhat limited.
+TEST_F(Pkt6Test, getMAC_DOCSIS_CMTS) {
+
+    // Let's use a captured traffic. The one we have comes from a
+    // modem with MAC address 20:e5:2a:b8:15:14.
+    Pkt6Ptr pkt = isc::test::PktCaptures::captureeRouterRelayedSolicit();
+    ASSERT_NO_THROW(pkt->unpack());
+
+    // The method should return MAC based on the vendor-specific info,
+    // suboption 36, which is inserted by the modem itself.
+    HWAddrPtr found = pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_CMTS);
+    ASSERT_TRUE(found);
+
+    // Let's check the info.
+    EXPECT_EQ("hwtype=1 20:e5:2a:b8:15:14", found->toText(true));
+
+    // Now let's remove the suboption 1026 that is inserted by the
+    // relay.
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<
+        OptionVendor>(pkt->getAnyRelayOption(D6O_VENDOR_OPTS,
+                          isc::dhcp::Pkt6::RELAY_SEARCH_FROM_CLIENT));
+    ASSERT_TRUE(vendor);
+    EXPECT_TRUE(vendor->delOption(DOCSIS3_V6_CMTS_CM_MAC));
+
+    EXPECT_FALSE(pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_CMTS));
+}
+
+// Test checks whether getMACFromRemoteIdRelayOption() returns the hardware (MAC)
+// address properly from a relayed message.
+TEST_F(Pkt6Test, getMACFromRemoteIdRelayOption) {
+
+    // Create a solicit message.
+    Pkt6 pkt(DHCPV6_SOLICIT, 1234);
+
+    // This should fail as the message is't relayed yet.
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_REMOTE_ID));
+
+    // Let's get the first interface
+    IfacePtr iface = IfaceMgr::instance().getIface(1);
+    ASSERT_TRUE(iface);
+
+    // and set source interface data properly. getMACFromIPv6LinkLocal attempts
+    // to use source interface to obtain hardware type
+    pkt.setIface(iface->getName());
+    pkt.setIndex(iface->getIndex());
+
+    // Generate option data with randomly picked enterprise number and MAC address
+    const uint8_t opt_data[] = {
+        1, 2, 3, 4,  // enterprise-number
+        0xa, 0xb, 0xc, 0xd, 0xe, 0xf // MAC
+    };
+
+    // Create option with number 37 (remote-id relay agent option)
+    OptionPtr relay_opt(new Option(Option::V6, D6O_REMOTE_ID,
+                        OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
+
+    // First simulate relaying message without adding remote-id option
+    Pkt6::RelayInfo info;
+    pkt.addRelayInfo(info);
+    ASSERT_EQ(1, pkt.relay_info_.size());
+
+    // This should fail as the remote-id option isn't there
+    EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_REMOTE_ID));
+
+    // Now add this option to the relayed message
+    info.options_.insert(make_pair(relay_opt->getType(), relay_opt));
+    pkt.addRelayInfo(info);
+    ASSERT_EQ(2, pkt.relay_info_.size());
+
+    // This should work now
+    HWAddrPtr mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_REMOTE_ID);
+    ASSERT_TRUE(mac);
+
+    stringstream tmp;
+    tmp << "hwtype=" << (int)iface->getHWType() << " 0a:0b:0c:0d:0e:0f";
+
+    EXPECT_EQ(tmp.str(), mac->toText(true));
+}
+
+// This test verifies that a solicit that passed through two relays is parsed
+// properly. In particular the second relay (outer encapsulation) included RSOO
+// (Relay Supplied Options option). This test checks whether it was parsed
+// properly. See captureRelayed2xRSOO() description for details.
+TEST_F(Pkt6Test, rsoo) {
+    Pkt6Ptr msg = test::PktCaptures::captureRelayed2xRSOO();
+
+    EXPECT_NO_THROW(msg->unpack());
+
+    EXPECT_EQ(DHCPV6_SOLICIT, msg->getType());
+    EXPECT_EQ(217, msg->len());
+
+    ASSERT_EQ(2, msg->relay_info_.size());
+
+    // There should be an RSOO option in the outermost relay
+    OptionPtr opt = msg->getRelayOption(D6O_RSOO, 1);
+    ASSERT_TRUE(opt);
+
+    EXPECT_EQ(D6O_RSOO, opt->getType());
+    const OptionCollection& rsoo = opt->getOptions();
+    ASSERT_EQ(2, rsoo.size());
+
+    OptionPtr rsoo1 = opt->getOption(255);
+    OptionPtr rsoo2 = opt->getOption(256);
+
+    ASSERT_TRUE(rsoo1);
+    ASSERT_TRUE(rsoo2);
+
+    EXPECT_EQ(8, rsoo1->len()); // 4 bytes of data + header
+    EXPECT_EQ(13, rsoo2->len()); // 9 bytes of data + header
+
+}
+
+// Verify that the DUID can be extracted from the DHCPv6 packet
+// holding Client Identifier option.
+TEST_F(Pkt6Test, getClientId) {
+    // Create a packet.
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 0x2312));
+    // Initially, the packet should hold no DUID.
+    EXPECT_FALSE(pkt->getClientId());
+
+    // Create DUID and add it to the packet.
+    const uint8_t duid_data[] = { 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 0 };
+    OptionBuffer duid_vec(duid_data, duid_data + sizeof(duid_data) - 1);
+    pkt->addOption(OptionPtr(new Option(Option::V6, D6O_CLIENTID,
+                                        duid_vec.begin(),
+                                        duid_vec.end())));
+
+    // Simulate the packet transmission over the wire, i.e. create on
+    // wire representation of the packet, and then parse it.
+    Pkt6Ptr pkt_clone = packAndClone(pkt);
+    ASSERT_NO_THROW(pkt_clone->unpack());
+
+    // This time the DUID should be returned.
+    DuidPtr duid = pkt_clone->getClientId();
+    ASSERT_TRUE(duid);
+
+    // And it should be equal to the one that we used to create
+    // the packet.
+    EXPECT_TRUE(duid->getDuid() == duid_vec);
+}
+
+// This test verfies that it is possible to obtain the packet
+// identifiers (DUID, HW Address, transaction id) in the textual
+// format.
+TEST_F(Pkt6Test, makeLabel) {
+    DuidPtr duid(new DUID(DUID::fromText("0102020202030303030303")));
+    HWAddrPtr hwaddr(new HWAddr(HWAddr::fromText("01:02:03:04:05:06",
+                                                 HTYPE_ETHER)));
+
+    // Specify DUID and no HW Address.
+    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], tid=0x123",
+              Pkt6::makeLabel(duid, 0x123, HWAddrPtr()));
+
+    // Specify HW Address and no DUID.
+    EXPECT_EQ("duid=[no info], [hwtype=1 01:02:03:04:05:06], tid=0x123",
+              Pkt6::makeLabel(DuidPtr(), 0x123, hwaddr));
+
+    // Specify both DUID and HW Address.
+    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], "
+              "[hwtype=1 01:02:03:04:05:06], tid=0x123",
+              Pkt6::makeLabel(duid, 0x123, hwaddr));
+
+    // Specify neither DUID nor HW Address.
+    EXPECT_EQ("duid=[no info], tid=0x0",
+              Pkt6::makeLabel(DuidPtr(), 0x0, HWAddrPtr()));
+}
+
+// This test verifies that it is possible to obtain the packet
+// identifiers in the textual format from the packet instance.
+TEST_F(Pkt6Test, getLabel) {
+    // Create a packet.
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 0x2312));
+    EXPECT_EQ("duid=[no info], tid=0x2312",
+              pkt->getLabel());
+
+    DuidPtr duid(new DUID(DUID::fromText("0102020202030303030303")));
+    pkt->addOption(OptionPtr(new Option(Option::V6, D6O_CLIENTID,
+                                        duid->getDuid().begin(),
+                                        duid->getDuid().end())));
+
+    // Simulate the packet transmission over the wire, i.e. create on
+    // wire representation of the packet, and then parse it.
+    Pkt6Ptr pkt_clone = packAndClone(pkt);
+    ASSERT_NO_THROW(pkt_clone->unpack());
+
+    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], tid=0x2312",
+              pkt_clone->getLabel());
+
 }
 
 }

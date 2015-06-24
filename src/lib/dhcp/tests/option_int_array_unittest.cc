@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,7 +38,7 @@ public:
     ///
     /// Initializes the option buffer with some data.
     OptionIntArrayTest(): buf_(255), out_buf_(255) {
-        for (int i = 0; i < 255; i++) {
+        for (unsigned i = 0; i < 255; i++) {
             buf_[i] = 255 - i;
         }
     }
@@ -462,6 +462,18 @@ TEST_F(OptionIntArrayTest, addValuesUint32) {
 
 TEST_F(OptionIntArrayTest, addValuesInt32) {
     addValuesTest<int16_t>();
+}
+
+// This test checks that the option is correctly converted into
+// the textual format.
+TEST_F(OptionIntArrayTest, toText) {
+    OptionUint32Array option(Option::V4, 128);
+    option.addValue(1);
+    option.addValue(32);
+    option.addValue(324);
+
+    EXPECT_EQ("type=128, len=012: 1(uint32) 32(uint32) 324(uint32)",
+              option.toText());
 }
 
 } // anonymous namespace

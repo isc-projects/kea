@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -34,7 +34,7 @@ NameChangeFormat stringToNcrFormat(const std::string& fmt_str) {
         return FMT_JSON;
     }
 
-    isc_throw(BadValue, "Invalid NameChangeRequest format:" << fmt_str);
+    isc_throw(BadValue, "Invalid NameChangeRequest format: " << fmt_str);
 }
 
 
@@ -93,7 +93,7 @@ D2Dhcid::fromStr(const std::string& data) {
     try {
         isc::util::encode::decodeHex(data, bytes_);
     } catch (const isc::Exception& ex) {
-        isc_throw(NcrMessageError, "Invalid data in Dhcid:" << ex.what());
+        isc_throw(NcrMessageError, "Invalid data in Dhcid: " << ex.what());
     }
 }
 
@@ -219,6 +219,9 @@ NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
     reverse_change_(reverse_change), fqdn_(fqdn), ip_io_address_("0.0.0.0"),
     dhcid_(dhcid), lease_expires_on_(lease_expires_on),
     lease_length_(lease_length), status_(ST_NEW) {
+
+    // User setter to validate fqdn.
+    setFqdn(fqdn);
 
     // User setter to validate address.
     setIpAddress(ip_address);
@@ -453,7 +456,7 @@ NameChangeRequest::setForwardChange(isc::data::ConstElementPtr element) {
     } catch (isc::data::TypeError& ex) {
         // We expect a boolean Element type, don't have one.
         isc_throw(NcrMessageError,
-                  "Wrong data type for forward_change :" << ex.what());
+                  "Wrong data type for forward_change: " << ex.what());
     }
 
     // Good to go, make the assignment.
@@ -474,7 +477,7 @@ NameChangeRequest::setReverseChange(isc::data::ConstElementPtr element) {
     } catch (isc::data::TypeError& ex) {
         // We expect a boolean Element type, don't have one.
         isc_throw(NcrMessageError,
-                  "Wrong data type for reverse_change :" << ex.what());
+                  "Wrong data type for reverse_change: " << ex.what());
     }
 
     // Good to go, make the assignment.
@@ -494,7 +497,8 @@ NameChangeRequest::setFqdn(const std::string& value) {
         fqdn_ = tmp.toText();
     } catch (const std::exception& ex) {
         isc_throw(NcrMessageError,
-                  "Invalid FQDN value: " << value << ", reason:" << ex.what());
+                  "Invalid FQDN value: " << value << ", reason: "
+                  << ex.what());
     }
 }
 

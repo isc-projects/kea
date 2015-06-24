@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -42,7 +42,9 @@ namespace {
 ///
 const char* CONFIRM_CONFIGS[] = {
 // Configuration 0
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -61,7 +63,9 @@ const char* CONFIRM_CONFIGS[] = {
         "\"valid-lifetime\": 4000 }",
 
 // Configuration 1
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -284,7 +288,7 @@ TEST_F(ConfirmTest, relayedClientNoSubnet) {
     EXPECT_FALSE(client.getContext().response_);
 }
 
-// This test checks that the relayed Confirm messsage is processed by the server
+// This test checks that the relayed Confirm message is processed by the server
 // when sent to unicast address RFC3315, section 18.2.8).
 TEST_F(ConfirmTest, relayedUnicast) {
     Dhcp6Client client;

@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,10 +19,12 @@
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
+#include <dhcpsrv/cfg_rsoo.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/logging_info.h>
+#include <cc/data.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <stdint.h>
@@ -129,21 +131,24 @@ public:
         logging_info_.push_back(logging_info);
     }
 
-    /// @brief Returns object which represents selection of interfaces.
+    /// @brief Returns non-const pointer to interface configuration.
     ///
-    /// This function returns a reference to the object which represents the
-    /// set of interfaces being used to receive DHCP traffic.
+    /// This function returns a non-const pointer to the interface
+    /// configuration.
     ///
-    /// @return Object representing selection of interfaces.
-    const CfgIface& getCfgIface() const {
+    /// @return Object representing configuration of interfaces.
+    CfgIfacePtr getCfgIface() {
         return (cfg_iface_);
     }
 
-    /// @brief Sets the object representing selection of interfaces.
+    /// @brief Returns const pointer to interface configuration.
     ///
-    /// @param cfg_iface Object representing selection of interfaces.
-    void setCfgIface(const CfgIface& cfg_iface) {
-        cfg_iface_ = cfg_iface;
+    /// This function returns a const pointer to the interface
+    /// configuration.
+    ///
+    /// @return Object representing configuration of interfaces.
+    ConstCfgIfacePtr getCfgIface() const {
+        return (cfg_iface_);
     }
 
     /// @brief Return pointer to non-const object representing user-defined
@@ -207,13 +212,13 @@ public:
     /// @brief Returns pointer to non-const object holding subnets configuration
     /// for DHCPv6.
     ///
-    /// @return Pointer to the object holding subnets configuration for DHCPv4.
+    /// @return Pointer to the object holding subnets configuration for DHCPv6.
     CfgSubnets6Ptr getCfgSubnets6() {
         return (cfg_subnets6_);
     }
 
     /// @brief Returns pointer to const object holding subnets configuration for
-    /// DHCPv4.
+    /// DHCPv6.
     ///
     /// @return Pointer to the object holding subnets configuration for DHCPv6.
     ConstCfgSubnets6Ptr getCfgSubnets6() const {
@@ -236,6 +241,24 @@ public:
         return (cfg_hosts_);
     }
 
+    /// @brief Returns pointer to the non-const object representing
+    /// set of RSOO-enabled options.
+    ///
+    /// @return Pointer to the non-const object holding RSOO-enabled
+    /// options.
+    CfgRSOOPtr getCfgRSOO() {
+        return (cfg_rsoo_);
+    }
+
+    /// @brief Returns pointer to the const object representing set
+    /// of RSOO-enabled options.
+    ///
+    /// @return Pointer to the const object holding RSOO-enabled
+    /// options.
+    ConstCfgRSOOPtr getCfgRSOO() const {
+        return (cfg_rsoo_);
+    }
+
     //@}
 
     /// @brief Returns non-const reference to an array that stores
@@ -252,6 +275,18 @@ public:
     /// @return const reference to MAC/hardware address sources
     const CfgMACSource& getMACSources() const {
         return (cfg_mac_source_);
+    }
+
+    /// @brief Returns information about control socket
+    /// @return pointer to the Element that holds control-socket map
+    const isc::data::ConstElementPtr getControlSocketInfo() const {
+        return (control_socket_);
+    }
+
+    /// @brief Sets information about the control socket
+    /// @param control_socket Element that holds control-socket map
+    void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
+        control_socket_ = control_socket;
     }
 
     /// @brief Copies the currnet configuration to a new configuration.
@@ -327,6 +362,19 @@ public:
 
     //@}
 
+    /// @brief Updates statistics.
+    ///
+    /// This method calls appropriate methods in child objects that update
+    /// related statistics. See @ref CfgSubnets4::updateStatistics and
+    /// @ref CfgSubnets6::updateStatistics for details.
+    void updateStatistics();
+
+    /// @brief Removes statistics.
+    ///
+    /// This method calls appropriate methods in child objects that remove
+    /// related statistics. See @ref CfgSubnets4::removeStatistics and
+    /// @ref CfgSubnets6::removeStatistics for details.
+    void removeStatistics();
 
 private:
 
@@ -340,7 +388,7 @@ private:
     ///
     /// Used to select interfaces on which the DHCP server will listen to
     /// queries.
-    CfgIface cfg_iface_;
+    CfgIfacePtr cfg_iface_;
 
     /// @brief Pointer to option definitions configuration.
     ///
@@ -357,7 +405,7 @@ private:
     /// @brief Pointer to subnets configuration for IPv4.
     CfgSubnets4Ptr cfg_subnets4_;
 
-    /// @brief Pointer to subnets configuration for IPv4.
+    /// @brief Pointer to subnets configuration for IPv6.
     CfgSubnets6Ptr cfg_subnets6_;
 
     /// @brief Pointer to the configuration for hosts reservation.
@@ -368,6 +416,15 @@ private:
 
     /// @brief A list of configured MAC sources.
     CfgMACSource cfg_mac_source_;
+
+    /// @brief Pointer to the configuration for RSOO-enabled options.
+    ///
+    /// This object holds a set of RSOO-enabled options. See
+    /// RFC 6422 for the definition of the RSOO-enabled option.
+    CfgRSOOPtr cfg_rsoo_;
+
+    /// @brief Pointer to the control-socket information
+    isc::data::ConstElementPtr control_socket_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

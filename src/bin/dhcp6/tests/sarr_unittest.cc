@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,8 +14,13 @@
 
 #include <config.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/option6_client_fqdn.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/d2_client_mgr.h>
+#include <asiolink/io_address.h>
+#include <stats/stats_mgr.h>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -27,11 +32,26 @@ namespace {
 /// @brief Set of JSON configurations used by the SARR unit tests.
 ///
 /// - Configuration 0:
-///   - one subnet used on eth0 interface
+///   - one subnet 3000::/32 used on eth0 interface
 ///   - prefixes of length 64, delegated from the pool: 2001:db8:3::/48
+///   - the delegated prefix was intentionally selected to not match the
+///     subnet prefix, to test that the delegated prefix doesn't need to
+///     match the subnet prefix
+///
+/// - Configuration 1:
+///   - two subnets 2001:db8:1::/48 and 2001:db8:2::/48
+///   - first subnet assigned to interface eth0, another one assigned to eth1
+///   - one pool for subnet in a range of 2001:db8:X::1 - 2001:db8:X::10,
+///     where X is 1 or 2
+///   - enables Rapid Commit for the first subnet and disables for the second
+///     one
+///   - DNS updates enabled
+///
 const char* CONFIGS[] = {
     // Configuration 0
-    "{ \"interfaces\": [ \"*\" ],"
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -41,15 +61,40 @@ const char* CONFIGS[] = {
         "          \"prefix-len\": 48, "
         "          \"delegated-len\": 64"
         "        } ],"
-        "    \"subnet\": \"2001:db8::/32\", "
+        "    \"subnet\": \"3000::/32\", "
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " } ],"
-        "\"valid-lifetime\": 4000 }"
+        "\"valid-lifetime\": 4000 }",
+
+// Configuration 1
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::10\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth0\","
+        "    \"rapid-commit\": True"
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::10\" } ],"
+        "    \"subnet\": \"2001:db8:2::/48\", "
+        "    \"interface\": \"eth1\","
+        "    \"rapid-commit\": False"
+        " } ],"
+        "\"valid-lifetime\": 4000,"
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : True, "
+        "     \"qualifying-suffix\" : \"example.com\" }"
+    "}"
 };
 
 /// @brief Test fixture class for testing 4-way exchange: Solicit-Advertise,
-/// Request-Reply.
+/// Request-Reply and 2-way exchange: Solicit-Reply.
 class SARRTest : public Dhcpv6SrvTest {
 public:
     /// @brief Constructor.
@@ -58,6 +103,19 @@ public:
     SARRTest()
         : Dhcpv6SrvTest(),
           iface_mgr_test_config_(true) {
+        // Let's wipe all existing statistics.
+        isc::stats::StatsMgr::instance().removeAll();
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Clear the DHCP-DDNS configuration.
+    virtual ~SARRTest() {
+        D2ClientConfigPtr cfg(new D2ClientConfig());
+        CfgMgr::instance().setD2ClientConfig(cfg);
+
+        // Let's wipe all existing statistics.
+        isc::stats::StatsMgr::instance().removeAll();
     }
 
     /// @brief Interface Manager's fake configuration control.
@@ -121,5 +179,250 @@ TEST_F(SARRTest, directClientPrefixHint) {
     lease_server = checkLease(lease_client);
     ASSERT_TRUE(lease_server);
 }
+
+// Check that when the client includes the Rapid Commit option in its
+// Solicit, the server responds with Reply and commits the lease.
+TEST_F(SARRTest, rapidCommitEnable) {
+    Dhcp6Client client;
+    // Configure client to request IA_NA
+    client.useNA();
+    configure(CONFIGS[1], *client.getServer());
+    ASSERT_NO_THROW(client.getServer()->startD2());
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(2, subnets->size());
+    // Perform 2-way exchange.
+    client.useRapidCommit(true);
+    // Include FQDN to trigger generation of name change requests.
+    ASSERT_NO_THROW(client.useFQDN(Option6ClientFqdn::FLAG_S,
+                                   "client-name.example.org",
+                                   Option6ClientFqdn::FULL));
+
+    ASSERT_NO_THROW(client.doSolicit());
+    // Server should have committed a lease.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    // Make sure that the address belongs to the subnet configured.
+    ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
+                selectSubnet(lease_client.addr_, ClientClasses()));
+    // Make sure that the server responded with Reply.
+    ASSERT_TRUE(client.getContext().response_);
+    EXPECT_EQ(DHCPV6_REPLY, client.getContext().response_->getType());
+    // Rapid Commit option should be included.
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_RAPID_COMMIT));
+    // Check that the lease has been committed.
+    Lease6Ptr lease_server = checkLease(lease_client);
+    EXPECT_TRUE(lease_server);
+    // There should be one name change request generated.
+    EXPECT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+}
+
+// Check that the server responds with Advertise if the client hasn't
+// included the Rapid Commit option in the Solicit.
+TEST_F(SARRTest, rapidCommitNoOption) {
+    Dhcp6Client client;
+    // Configure client to request IA_NA
+    client.useNA();
+    configure(CONFIGS[1], *client.getServer());
+    ASSERT_NO_THROW(client.getServer()->startD2());
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(2, subnets->size());
+    // Include FQDN to test that the server will not create name change
+    // requests when it sends Advertise (Rapid Commit disabled).
+    ASSERT_NO_THROW(client.useFQDN(Option6ClientFqdn::FLAG_S,
+                                   "client-name.example.org",
+                                   Option6ClientFqdn::FULL));
+    ASSERT_NO_THROW(client.doSolicit());
+    // There should be no lease because the server should have responded
+    // with Advertise.
+    ASSERT_EQ(0, client.getLeaseNum());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    EXPECT_EQ(DHCPV6_ADVERTISE, client.getContext().response_->getType());
+    // Make sure that the Rapid Commit option is not included.
+    EXPECT_FALSE(client.getContext().response_->getOption(D6O_RAPID_COMMIT));
+    // There should be no name change request generated.
+    EXPECT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+}
+
+// Check that when the Rapid Commit support is disabled for the subnet
+// the server replies with an Advertise and ignores the Rapid Commit
+// option sent by the client.
+TEST_F(SARRTest, rapidCommitDisable) {
+    Dhcp6Client client;
+    // The subnet assigned to eth1 has Rapid Commit disabled.
+    client.setInterface("eth1");
+    // Configure client to request IA_NA
+    client.useNA();
+    configure(CONFIGS[1], *client.getServer());
+    ASSERT_NO_THROW(client.getServer()->startD2());
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(2, subnets->size());
+    // Send Rapid Commit option to the server.
+    client.useRapidCommit(true);
+    // Include FQDN to test that the server will not create name change
+    // requests when it sends Advertise (Rapid Commit disabled).
+    ASSERT_NO_THROW(client.useFQDN(Option6ClientFqdn::FLAG_S,
+                                   "client-name.example.org",
+                                   Option6ClientFqdn::FULL));
+    ASSERT_NO_THROW(client.doSolicit());
+    // There should be no lease because the server should have responded
+    // with Advertise.
+    ASSERT_EQ(0, client.getLeaseNum());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    EXPECT_EQ(DHCPV6_ADVERTISE, client.getContext().response_->getType());
+    // Make sure that the Rapid Commit option is not included.
+    EXPECT_FALSE(client.getContext().response_->getOption(D6O_RAPID_COMMIT));
+    // There should be no name change request generated.
+    EXPECT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+}
+
+// This test verifies that regular Solicit/Adv/Request/Reply exchange will
+// result in appropriately set statistics.
+TEST_F(SARRTest, sarrStats) {
+
+    // Let's use one of the existing configurations and tell the client to
+    // ask for an address.
+    Dhcp6Client client;
+    configure(CONFIGS[1], *client.getServer());
+    client.setInterface("eth1");
+    client.useNA();
+
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(2, subnets->size());
+
+    // Ok, let's check the statistics. None should be present.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
+    ObservationPtr pkt6_solicit_rcvd = mgr.getObservation("pkt6-solicit-received");
+    ObservationPtr pkt6_adv_sent = mgr.getObservation("pkt6-advertise-sent");
+    ObservationPtr pkt6_request_rcvd = mgr.getObservation("pkt6-request-received");
+    ObservationPtr pkt6_reply_sent = mgr.getObservation("pkt6-reply-sent");
+    ObservationPtr pkt6_sent = mgr.getObservation("pkt6-sent");
+    EXPECT_FALSE(pkt6_rcvd);
+    EXPECT_FALSE(pkt6_solicit_rcvd);
+    EXPECT_FALSE(pkt6_adv_sent);
+    EXPECT_FALSE(pkt6_request_rcvd);
+    EXPECT_FALSE(pkt6_reply_sent);
+    EXPECT_FALSE(pkt6_sent);
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+
+    // All expected statstics must be present now.
+    pkt6_rcvd = mgr.getObservation("pkt6-received");
+    pkt6_solicit_rcvd = mgr.getObservation("pkt6-solicit-received");
+    pkt6_adv_sent = mgr.getObservation("pkt6-advertise-sent");
+    pkt6_request_rcvd = mgr.getObservation("pkt6-request-received");
+    pkt6_reply_sent = mgr.getObservation("pkt6-reply-sent");
+    pkt6_sent = mgr.getObservation("pkt6-sent");
+    ASSERT_TRUE(pkt6_rcvd);
+    ASSERT_TRUE(pkt6_solicit_rcvd);
+    ASSERT_TRUE(pkt6_adv_sent);
+    ASSERT_TRUE(pkt6_request_rcvd);
+    ASSERT_TRUE(pkt6_reply_sent);
+    ASSERT_TRUE(pkt6_sent);
+
+    // They also must have expected values.
+    EXPECT_EQ(2, pkt6_rcvd->getInteger().first);
+    EXPECT_EQ(1, pkt6_solicit_rcvd->getInteger().first);
+    EXPECT_EQ(1, pkt6_adv_sent->getInteger().first);
+    EXPECT_EQ(1, pkt6_request_rcvd->getInteger().first);
+    EXPECT_EQ(1, pkt6_reply_sent->getInteger().first);
+    EXPECT_EQ(2, pkt6_sent->getInteger().first);
+}
+
+// This test verifies that pkt6-receive-drop is increased properly when the
+// client's packet is rejected due to mismatched server-id value.
+TEST_F(SARRTest, pkt6ReceiveDropStat1) {
+
+    // Dummy server-id (0xff repeated 10 times)
+    std::vector<uint8_t> data(10, 0xff);
+    OptionPtr bogus_srv_id(new Option(Option::V6, D6O_SERVERID, data));
+
+    // Let's use one of the existing configurations and tell the client to
+    // ask for an address.
+    Dhcp6Client client;
+    configure(CONFIGS[1], *client.getServer());
+    client.setInterface("eth1");
+    client.useNA();
+
+    client.doSolicit();
+    client.useServerId(bogus_srv_id);
+    client.doRequest();
+
+    // Ok, let's check the statistic. pkt6-receive-drop should be set to 1.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+
+    ObservationPtr pkt6_recv_drop = mgr.getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(pkt6_recv_drop);
+
+    EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
+}
+
+// This test verifies that pkt6-receive-drop is increased properly when the
+// client's packet is rejected due to being unicast communication.
+TEST_F(SARRTest, pkt6ReceiveDropStat2) {
+
+    // Let's use one of the existing configurations and tell the client to
+    // ask for an address.
+    Dhcp6Client client;
+    configure(CONFIGS[1], *client.getServer());
+    client.setInterface("eth1");
+    client.useNA();
+
+    client.setDestAddress(asiolink::IOAddress("2001:db8::1")); // Pretend it's unicast
+    client.doSolicit();
+
+    // Ok, let's check the statistic. pkt6-receive-drop should be set to 1.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+
+    ObservationPtr pkt6_recv_drop = mgr.getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(pkt6_recv_drop);
+
+    EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
+}
+
+// This test verifies that pkt6-receive-drop is increased properly when the
+// client's packet is rejected due to having too many client-id options
+// (exactly one is expected).
+TEST_F(SARRTest, pkt6ReceiveDropStat3) {
+
+    // Let's use one of the existing configurations and tell the client to
+    // ask for an address.
+    Dhcp6Client client;
+    configure(CONFIGS[1], *client.getServer());
+    client.setInterface("eth1");
+    client.useNA();
+
+    // Let's send our client-id as server-id. That will result in the
+    // packet containing the client-id twice. That should cause RFCViolation
+    // exception.
+    client.useServerId(client.getClientId());
+    client.doSolicit();
+
+    // Ok, let's check the statistic. pkt6-receive-drop should be set to 1.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+
+    ObservationPtr pkt6_recv_drop = mgr.getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(pkt6_recv_drop);
+
+    EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
+}
+
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define PKT6_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/pkt.h>
 
@@ -157,12 +158,40 @@ public:
         proto_ = proto;
     }
 
+    /// @brief Returns text representation of the given packet identifiers.
+    ///
+    /// @note The parameters are ordered from the one that should be available
+    /// almost at all times, to the one that is optional. This allows for
+    /// providing default values for the parameters that may not be available
+    /// in some places in the code where @c Pkt6::makeLabel is called.
+    ///
+    /// @param duid Pointer to the client identifier or NULL.
+    /// @param transid Numeric transaction id to include in the string.
+    /// @param hwaddr Hardware address to include in the string or NULL.
+    ///
+    /// @return String with text representation of the packet identifiers.
+    static std::string makeLabel(const DuidPtr duid, const uint32_t transid,
+                                 const HWAddrPtr& hwaddr);
+
+    /// @brief Returns text representation of the primary packet identifiers
+    ///
+    /// This method is intended to be used to provide a consistent way to
+    /// identify packets within log statements.  It is an instance-level
+    /// wrapper around static makeLabel(). See this method for string
+    /// content.
+    ///
+    /// @note Currently this method doesn't include the HW address in the
+    /// returned text.
+    ///
+    /// @return string with text representation
+    virtual std::string getLabel() const;
+
     /// @brief Returns text representation of the packet.
     ///
     /// This function is useful mainly for debugging.
     ///
     /// @return string with text representation
-    virtual std::string toText();
+    virtual std::string toText() const;
 
     /// @brief Returns length of the packet.
     ///
@@ -185,6 +214,11 @@ public:
     ///
     /// @param type message type to be set
     virtual void setType(uint8_t type) { msg_type_=type; };
+
+    /// @brief Retrieves the DUID from the Client Identifier option.
+    ///
+    /// @return Pointer to the DUID or NULL if the option doesn't exist.
+    DuidPtr getClientId() const;
 
     /// @brief returns option inserted by relay
     ///
@@ -232,32 +266,27 @@ public:
     /// @param relay structure with necessary relay information
     void addRelayInfo(const RelayInfo& relay);
 
-    /// @brief Return textual type of packet.
-    ///
-    /// Returns the name of valid packet received by the server (e.g. SOLICIT).
-    /// If the packet is unknown - or if it is a valid DHCP packet but not one
-    /// expected to be received by the server (such as an ADVERTISE), the string
-    /// "UNKNOWN" is returned.  This method is used in debug messages.
+    /// @brief Returns name of the DHCPv6 message for a given type number.
     ///
     /// As the operation of the method does not depend on any server state, it
     /// is declared static. There is also non-static getName() method that
     /// works on Pkt6 objects.
     ///
-    /// @param type DHCPv6 packet type
+    /// @param type DHCPv6 message type which name should be returned.
     ///
-    /// @return Pointer to "const" string containing the packet name.
-    ///         Note that this string is statically allocated and MUST NOT
-    ///         be freed by the caller.
-    static const char* getName(uint8_t type);
+    /// @return Pointer to "const" string containing the message name. If
+    /// the message type is unknnown the "UNKNOWN" is returned. The caller
+    /// must not release the returned pointer.
+    static const char* getName(const uint8_t type);
 
-    /// @brief returns textual representation of packet type.
+    /// @brief Returns name of the DHCPv6 message.
     ///
     /// This method requires an object. There is also static version, which
     /// requires one parameter (type).
     ///
-    /// @return Pointer to "const" string containing packet name.
-    ///         Note that this string is statically allocated and MUST NOT
-    ///         be freed by the caller.
+    /// @return Pointer to "const" string containing the message name. If
+    /// the message type is unknnown the "UNKNOWN" is returned. The caller
+    /// must not release the returned pointer.
     const char* getName() const;
 
     /// @brief copies relay information from client's packet to server's response
@@ -304,6 +333,53 @@ protected:
     ///
     /// @return Hardware address (or NULL)
     virtual HWAddrPtr getMACFromIPv6RelayOpt();
+
+    /// @brief Extract MAC/Hardware address from client-id.
+    ///
+    /// This method attempts to extract MAC/Hardware address from DUID sent
+    /// as client-id. This method may fail, as only DUID-LLT and DUID-LL are
+    /// based on link-layer addresses. Client may use other valid DUID types
+    /// and this method will fail.
+    ///
+    /// @return Hardware address (or NULL)
+    virtual HWAddrPtr getMACFromDUID();
+
+    /// @brief Attempts to extract MAC/Hardware address from DOCSIS options
+    ///        inserted by the modem itself.
+    ///
+    /// The mechanism extracts that information from DOCSIS option
+    /// (vendor-specific info, vendor-id=4491, suboption 36). Note that
+    /// in a DOCSIS capable network, the MAC address information is provided
+    /// several times. The first is specified by the modem itself. The second
+    /// is added by the CMTS, which acts as a relay agent. This method
+    /// attempts to extract the former. See @ref getMACFromDocsisCMTS
+    /// for a similar method that extracts from the CMTS (relay) options.
+    ///
+    /// @return hardware address (if DOCSIS suboption 36 is present)
+    virtual HWAddrPtr getMACFromDocsisModem();
+
+    /// @brief Attempts to extract MAC/Hardware address from DOCSIS options.
+    ///
+    /// The DHCPv6 mechanism extracts that information from DOCSIS option
+    /// (vendor-specific info, vendor-id=4491, suboption 1026). Note that
+    /// in a DOCSIS capable network, the MAC address information is provided
+    /// several times. The first is specified by the modem itself. The second
+    /// is added by the CMTS, which acts as a relay agent. This method
+    /// attempts to extract the latter. See @ref getMACFromDocsisModem
+    /// for a similar method that extracts from the modem (client) options.
+    ///
+    /// @return hardware address (if DOCSIS suboption 1026 is present)
+    virtual HWAddrPtr getMACFromDocsisCMTS();
+
+    /// @brief Attempts to obtain MAC address from remote-id relay option.
+    ///
+    /// This method is called from getMAC(HWADDR_SOURCE_REMOTE_ID) and should not be
+    /// called directly. It will attempt to extract MAC address information
+    /// from remote-id option inserted by a relay agent closest to the client.
+    /// If this method fails, it will return NULL.
+    ///
+    /// @return hardware address (or NULL)
+    virtual HWAddrPtr getMACFromRemoteIdRelayOption();
 
     /// @brief Builds on wire packet for TCP transmission.
     ///

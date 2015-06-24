@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <cstddef>
 #include <stdint.h>
@@ -216,11 +218,11 @@ protected:
         EXPECT_EQ(0, opt.getBase().size());
         EXPECT_EQ(0, opt.getNumRequests().size());
         EXPECT_EQ(0, opt.getPeriod());
-        for (int i = 0; i < opt.getDropTime().size(); ++i) {
+        for (size_t i = 0; i < opt.getDropTime().size(); ++i) {
             EXPECT_DOUBLE_EQ(1, opt.getDropTime()[i]);
         }
         ASSERT_EQ(opt.getMaxDrop().size(), opt.getMaxDropPercentage().size());
-        for (int i = 0; i < opt.getMaxDrop().size(); ++i) {
+        for (size_t i = 0; i < opt.getMaxDrop().size(); ++i) {
             EXPECT_EQ(0, opt.getMaxDrop()[i]);
             EXPECT_EQ(0, opt.getMaxDropPercentage()[i]);
         }
@@ -786,7 +788,7 @@ TEST_F(CommandOptionsTest, Interface) {
     // not fail this test.
     if (ifaces.size() > 0) {
         // Get the name of the interface we detected.
-        iface_name = ifaces.begin()->getName();
+        iface_name = (*ifaces.begin())->getName();
         // Use the name in the command parser.
         ASSERT_NO_THROW(process("perfdhcp -4 -l " + iface_name + " abc"));
         // We expect that command parser will detect that argument

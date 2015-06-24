@@ -1,0 +1,25 @@
+# A very simply stateless configuration that provides information about DNS
+# servers to all clients, regardless of their point of attachment.
+#
+# It is also possible to specify options on a per subnet basis
+# in the same way as in stateful mode.
+#
+
+{
+"Dhcp6": {
+    "interfaces-config": {
+        "interfaces": [ "ethX" ]
+    },
+
+# This is the list of options that will be granted to all clients that ask.
+    "option-data": [ {
+        "name": "dns-servers",
+        "data": "2001:db8::1, 2001:db8::2"
+    } ],
+
+# Kea 0.9.1 requires lease-database to be specified, even it is not used.
+# In stateless mode, only options are granted, not addresses or prefixes, so
+# there will be no leases (unless stateless and stateful mode is used together).
+    "lease-database": { "type": "memfile" }
+}
+}

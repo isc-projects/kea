@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -250,7 +250,7 @@ Option6ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
             try {
                 domain_name_.reset(new isc::dns::Name(name_buf, true));
             } catch (const Exception& ex) {
-                isc_throw(InvalidOption6FqdnDomainName, "failed to parse"
+                isc_throw(InvalidOption6FqdnDomainName, "failed to parse "
                           "partial domain-name from wire format");
             }
             // Terminating zero was missing, so set the domain-name type
@@ -265,7 +265,7 @@ Option6ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
             try {
                 domain_name_.reset(new isc::dns::Name(name_buf, true));
             } catch (const Exception& ex) {
-                isc_throw(InvalidOption6FqdnDomainName, "failed to parse"
+                isc_throw(InvalidOption6FqdnDomainName, "failed to parse "
                           "fully qualified domain-name from wire format");
             }
             // Set the domain-type to fully qualified domain name.
@@ -332,9 +332,9 @@ Option6ClientFqdn::setFlag(const uint8_t flag, const bool set_flag) {
     // checked here so it will work.
     if (((flag & ~FLAG_MASK) != 0) || (flag == 0)) {
         isc_throw(InvalidOption6FqdnFlags, "invalid DHCPv6 Client FQDN"
-                  << " Option flag " << std::hex
+                  << " Option flag 0x" << std::hex
                   << static_cast<int>(flag) << std::dec
-                  << "is being set. Expected: N, S or O");
+                  << " is being set. Expected: N, S or O");
     }
 
     // Copy the current flags into local variable. That way we will be able

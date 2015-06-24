@@ -1,0 +1,59 @@
+# Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+$NAMESPACE isc::lfc
+% LFC_FAIL_PID_CREATE : %1
+This message is issued if LFC detected a failure when trying
+to create the PID file.  It includes a more specifc error string.
+
+% LFC_FAIL_PID_DEL : %1
+This message is issued if LFC detected a failure when trying
+to delete the PID file.  It includes a more specifc error string.
+
+% LFC_FAIL_PROCESS : %1
+This message is issued if LFC detected a failure when trying
+to process the files.  It includes a more specifc error string.
+
+% LFC_FAIL_ROTATE : %1
+This message is issued if LFC detected a failure when trying
+to rotate the files.  It includes a more specifc error string.
+
+% LFC_PROCESSING Previous file: %1, copy file: %2
+This message is issued just before LFC starts processing the
+lease files.
+
+% LFC_READ_STATS Leases: %1, attempts: %2, errors: %3.
+This message prints out the number of leases that were read, the
+number of attempts to read leases and the number of errors
+encountered while reading.
+
+% LFC_ROTATING LFC rotating files
+This message is issued just before LFC starts rotating the
+lease files - removing the old and replacing them with the new.
+
+% LFC_RUNNING LFC instance already running
+This message is issued if LFC detects that a previous copy of LFC
+may still be running via the PID check.
+
+% LFC_START Starting lease file cleanup
+This message is issued as the LFC process starts.
+
+% LFC_TERMINATE LFC finished processing
+This message is issued when the LFC process completes.  It does not
+indicate that the process was successful only that it has finished.
+
+% LFC_WRITE_STATS Leases: %1, attempts: %2, errors: %3.
+This message prints out the number of leases that were written, the
+number of attempts to write leases and the number of errors
+encountered while writing.

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -40,7 +40,7 @@ namespace {
 class Option6IATest : public ::testing::Test {
 public:
     Option6IATest(): buf_(255), outBuf_(255) {
-        for (int i = 0; i < 255; i++) {
+        for (unsigned i = 0; i < 255; i++) {
             buf_[i] = 255 - i;
         }
     }
@@ -258,7 +258,7 @@ TEST_F(Option6IATest, pdSuboptionsPack) {
 }
 
 // test if option can parse suboptions
-TEST_F(Option6IATest, suboptions_unpack) {
+TEST_F(Option6IATest, suboptionsUnpack) {
     // sizeof (expected) = 48 bytes
     const uint8_t expected[] = {
         D6O_IA_NA / 256, D6O_IA_NA % 256, // type
@@ -321,6 +321,47 @@ TEST_F(Option6IATest, suboptions_unpack) {
     ASSERT_FALSE(subopt); // should be NULL
 
     EXPECT_NO_THROW(ia.reset());
+}
+
+// This test checks that the IA_NA option is correctly converted to the
+// textual format.
+TEST_F(Option6IATest, toTextNA) {
+    Option6IA ia(D6O_IA_NA, 1234);
+    ia.setT1(200);
+    ia.setT2(300);
+
+    ia.addOption(OptionPtr(new Option6IAAddr(D6O_IAADDR, IOAddress("2001:db8:1::1"),
+                                             500, 600)));
+    ia.addOption(OptionPtr(new Option6IAAddr(D6O_IAADDR, IOAddress("2001:db8:1::2"),
+                                             450, 550)));
+
+    EXPECT_EQ("type=00003(IA_NA), len=00068: iaid=1234, t1=200, t2=300,\n"
+              "options:\n"
+              "  type=00005(IAADDR), len=00024: address=2001:db8:1::1, "
+              "preferred-lft=500, valid-lft=600\n"
+              "  type=00005(IAADDR), len=00024: address=2001:db8:1::2, "
+              "preferred-lft=450, valid-lft=550", ia.toText());
+}
+
+// This test checks that the IA_PD option is correctly converted to the
+// textual format.
+TEST_F(Option6IATest, toTextPD) {
+    Option6IA ia(D6O_IA_PD, 2345);
+    ia.setT1(200);
+    ia.setT2(300);
+
+    ia.addOption(OptionPtr(new Option6IAPrefix(D6O_IAPREFIX, IOAddress("2001:db8:1::"),
+                                               72, 500, 600)));
+    ia.addOption(OptionPtr(new Option6IAPrefix(D6O_IAPREFIX, IOAddress("2001:db8:1::"),
+                                               64, 450, 550)));
+
+    EXPECT_EQ("type=00025(IA_PD), len=00070: iaid=2345, t1=200, t2=300,\n"
+              "options:\n"
+              "  type=00026(IAPREFIX), len=00025: prefix=2001:db8:1::/72, "
+              "preferred-lft=500, valid-lft=600\n"
+              "  type=00026(IAPREFIX), len=00025: prefix=2001:db8:1::/64, "
+              "preferred-lft=450, valid-lft=550",
+              ia.toText());
 }
 
 }
