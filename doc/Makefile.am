@@ -4,6 +4,7 @@ EXTRA_DIST  = version.ent.in differences.txt Doxyfile Doxyfile-xml
 EXTRA_DIST += devel/config-backend.dox
 EXTRA_DIST += devel/contribute.dox
 EXTRA_DIST += devel/mainpage.dox
+EXTRA_DIST += devel/qa.dox
 
 EXTRA_DIST += images/isc-logo.png
 

@@ -105,6 +105,9 @@
  *   - @subpage configBackendAdding
  * - @subpage perfdhcpInternals
  *
+ * @section qa Quality Assurance
+ *   - @subpage qaUnitTests
+ *
  * @section miscellaneousTopics Miscellaneous Topics
  * - @subpage logKeaLogging
  *   - @subpage logBasicIdeas
