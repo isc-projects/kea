@@ -785,7 +785,7 @@ TEST_F(CommandOptionsTest, Interface) {
     // The local loopback interface should be available.
     // If no interface have been found for any reason we should
     // not fail this test.
-    if (ifaces.size() > 0) {
+    if (!ifaces.empty()) {
         // Get the name of the interface we detected.
         iface_name = (*ifaces.begin())->getName();
         // Use the name in the command parser.
