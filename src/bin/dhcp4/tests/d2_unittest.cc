@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp4/json_config_parser.h>
@@ -74,7 +76,9 @@ Dhcp4SrvD2Test::buildTestNcr(uint32_t dhcid_id_num) {
 
 void
 Dhcp4SrvD2Test::reset() {
-    std::string config = "{ \"interfaces\": [ \"*\" ],"
+    std::string config = "{ \"interfaces-config\": {"
+            "    \"interfaces\": [ \"*\" ]"
+            "},"
             "\"hooks-libraries\": [ ], "
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
@@ -95,7 +99,9 @@ Dhcp4SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
                             const size_t max_queue_size) {
     std::ostringstream config;
     config <<
-        "{ \"interfaces\": [ \"*\" ],"
+        "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -292,7 +298,7 @@ TEST_F(Dhcp4SrvD2Test, simpleUDPSend) {
 // Checks that an IO error in sending a request to D2, results in ddns updates
 // being suspended.  This indicates that Dhcp4Srv's error handler has been
 // invoked as expected.  Note that this unit test relies on an attempt to send
-// to a server address of 0.0.0.0 port 0 fails, which it does  under all OSs
+// to a server address of 0.0.0.0 port 0 fails, which it does  under all OSes
 // except Solaris 11.
 /// @todo Eventually we should find a way to test this under Solaris.
 #ifndef OS_SOLARIS

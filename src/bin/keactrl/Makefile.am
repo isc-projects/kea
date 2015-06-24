@@ -19,7 +19,7 @@ BUILT_SOURCES = kea.conf
 if GENERATE_DOCS
 
 keactrl.8: keactrl.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(builddir)/keactrl.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/keactrl.xml
 
 else
 
@@ -30,7 +30,7 @@ $(man_MANS):
 endif
 
 kea.conf: kea.conf.pre
-	$(top_srcdir)/tools/path_replacer.sh $(top_srcdir)/src/bin/keactrl/kea.conf.pre $@
+	$(top_builddir)/tools/path_replacer.sh $(top_srcdir)/src/bin/keactrl/kea.conf.pre $@
 
 if INSTALL_CONFIGURATIONS
 

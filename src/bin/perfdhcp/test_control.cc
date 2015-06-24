@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 
 #include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
@@ -25,6 +26,9 @@
 #include "perf_pkt4.h"
 #include "perf_pkt6.h"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/foreach.hpp>
+
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,8 +36,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace std;
 using namespace boost::posix_time;
@@ -57,7 +59,7 @@ TestControl::TestControlSocket::TestControlSocket(const int socket) :
 }
 
 TestControl::TestControlSocket::~TestControlSocket() {
-    Iface* iface = IfaceMgr::instance().getIface(ifindex_);
+    IfacePtr iface = IfaceMgr::instance().getIface(ifindex_);
     if (iface) {
         iface->delSocket(sockfd_);
     }
@@ -65,20 +67,11 @@ TestControl::TestControlSocket::~TestControlSocket() {
 
 void
 TestControl::TestControlSocket::initSocketData() {
-    const IfaceMgr::IfaceCollection& ifaces =
-        IfaceMgr::instance().getIfaces();
-    for (IfaceMgr::IfaceCollection::const_iterator it = ifaces.begin();
-         it != ifaces.end();
-         ++it) {
-        const Iface::SocketCollection& socket_collection =
-            it->getSockets();
-        for (Iface::SocketCollection::const_iterator s =
-                 socket_collection.begin();
-             s != socket_collection.end();
-             ++s) {
-            if (s->sockfd_ == sockfd_) {
-                ifindex_ = it->getIndex();
-                addr_ = s->addr_;
+    BOOST_FOREACH(IfacePtr iface, IfaceMgr::instance().getIfaces()) {
+        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+            if (s.sockfd_ == sockfd_) {
+                ifindex_ = iface->getIndex();
+                addr_ = s.addr_;
                 return;
             }
         }
@@ -400,7 +393,7 @@ TestControl::factoryIana6(Option::Universe, uint16_t,
         0, 0, 5400 >> 8, 5400 & 0xff,   // T2 = 5400
     };
     OptionBuffer buf_ia_na(buf_array, buf_array + sizeof(buf_array));
-    for (int i = 0;  i < buf.size(); ++i) {
+    for (size_t i = 0;  i < buf.size(); ++i) {
         buf_ia_na.push_back(buf[i]);
     }
     return (OptionPtr(new Option(Option::V6, D6O_IA_NA, buf_ia_na)));
@@ -589,7 +582,7 @@ TestControl::getRequestedIpOffset() const {
 }
 
 uint64_t
-TestControl::getRcvdPacketsNum(const ExchangeType xchg_type) const {
+TestControl::getRcvdPacketsNum(ExchangeType xchg_type) const {
     uint8_t ip_version = CommandOptions::instance().getIpVersion();
     if (ip_version == 4) {
         return (stats_mgr4_->getRcvdPacketsNum(xchg_type));
@@ -599,7 +592,7 @@ TestControl::getRcvdPacketsNum(const ExchangeType xchg_type) const {
 }
 
 uint64_t
-TestControl::getSentPacketsNum(const ExchangeType xchg_type) const {
+TestControl::getSentPacketsNum(ExchangeType xchg_type) const {
     uint8_t ip_version = CommandOptions::instance().getIpVersion();
     if (ip_version == 4) {
         return (stats_mgr4_->getSentPacketsNum(xchg_type));
@@ -784,7 +777,7 @@ TestControl::openSocket() const {
             // If user specified interface name with '-l' the
             // IPV6_MULTICAST_IF has to be set.
             if ((ret >= 0)  && options.isInterface()) {
-                Iface* iface =
+                IfacePtr iface =
                     IfaceMgr::instance().getIface(options.getLocalName());
                 if (iface == NULL) {
                     isc_throw(Unexpected, "unknown interface "
@@ -1043,7 +1036,7 @@ TestControl::readPacketTemplate(const std::string& file_name) {
     // apart from spaces the file contains hexadecimal digits
     // only.
     std::vector<char> hex_digits;
-    for (int i = 0; i < file_contents.size(); ++i) {
+    for (size_t i = 0; i < file_contents.size(); ++i) {
         if (isxdigit(file_contents[i])) {
             hex_digits.push_back(file_contents[i]);
         } else if (!isxdigit(file_contents[i]) &&
@@ -1059,7 +1052,7 @@ TestControl::readPacketTemplate(const std::string& file_name) {
         isc_throw(OutOfRange, "template file " << file_name << " is empty");
     }
     std::vector<uint8_t> binary_stream;
-    for (int i = 0; i < hex_digits.size(); i += 2) {
+    for (size_t i = 0; i < hex_digits.size(); i += 2) {
         stringstream s;
         s << "0x" << hex_digits[i] << hex_digits[i+1];
         int b;
@@ -1709,7 +1702,10 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     HWAddrPtr hwaddr = offer_pkt4->getHWAddr();
     std::vector<uint8_t> mac_address(HW_ETHER_LEN, 0);
     uint8_t hw_len = hwaddr->hwaddr_.size();
-    memcpy(&mac_address[0], &hwaddr->hwaddr_[0], hw_len > 16 ? 16 : hw_len);
+    if (hw_len != 0) {
+        memcpy(&mac_address[0], &hwaddr->hwaddr_[0],
+               hw_len > HW_ETHER_LEN ? HW_ETHER_LEN : hw_len);
+    }
     pkt4->writeAt(rand_offset, mac_address.begin(), mac_address.end());
 
     // Set elapsed time.
@@ -2050,7 +2046,7 @@ TestControl::setDefaults4(const TestControlSocket& socket,
                           const Pkt4Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
+    IfacePtr iface = IfaceMgr::instance().getIface(socket.ifindex_);
     if (iface == NULL) {
         isc_throw(BadValue, "unable to find interface with given index");
     }
@@ -2076,7 +2072,7 @@ TestControl::setDefaults6(const TestControlSocket& socket,
                           const Pkt6Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
+    IfacePtr iface = IfaceMgr::instance().getIface(socket.ifindex_);
     if (iface == NULL) {
         isc_throw(BadValue, "unable to find interface with given index");
     }

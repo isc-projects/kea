@@ -1,9 +1,7 @@
 SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
-if CONFIG_BACKEND_JSON
 SHTESTS += dhcp6_process_tests.sh
-endif
 
 noinst_SCRIPTS = dhcp6_process_tests.sh
 
@@ -23,9 +21,11 @@ AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += -DTOP_BUILDDIR="\"$(top_builddir)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/dhcp6/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
-CLEANFILES  = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
+CLEANFILES  = $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
 CLEANFILES += *.json *.log
 
@@ -75,27 +75,20 @@ dhcp6_unittests_SOURCES  = dhcp6_unittests.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += fqdn_unittest.cc
 dhcp6_unittests_SOURCES += hooks_unittest.cc
+dhcp6_unittests_SOURCES += host_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_test_utils.cc dhcp6_test_utils.h
 dhcp6_unittests_SOURCES += d2_unittest.cc d2_unittest.h
 dhcp6_unittests_SOURCES += marker_file.cc
 dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
-dhcp6_unittests_SOURCES += wireshark.cc
 dhcp6_unittests_SOURCES += dhcp6_client.cc dhcp6_client.h
 dhcp6_unittests_SOURCES += rebind_unittest.cc
 dhcp6_unittests_SOURCES += sarr_unittest.cc
 dhcp6_unittests_SOURCES += config_parser_unittest.cc
 dhcp6_unittests_SOURCES += confirm_unittest.cc
+dhcp6_unittests_SOURCES += infrequest_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
 
-if CONFIG_BACKEND_BUNDY
-# For Bundy backend, we only need to run the usual tests. There are no
-# Bundy-specific tests yet.
-dhcp6_unittests_SOURCES += bundy_controller_unittest.cc
-endif
-
-if CONFIG_BACKEND_JSON
 dhcp6_unittests_SOURCES += kea_controller_unittest.cc
-endif
 
 nodist_dhcp6_unittests_SOURCES  = marker_file.h test_libraries.h
 
@@ -117,6 +110,9 @@ dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/bin/cfgrpt/libcfgrpt.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+
 endif
 
 noinst_PROGRAMS = $(TESTS)

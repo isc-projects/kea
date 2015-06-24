@@ -29,10 +29,10 @@ namespace io {
 /*
  * \short write() that writes everything.
  * Wrapper around write(). The difference is, it never writes less data
- * and looks successfull (eg. it blocks until all data are written).
+ * and looks successful (eg. it blocks until all data are written).
  * Retries on signals.
  *
- * \return True if sucessfull, false otherwise. The errno variable is left
+ * \return True if successful, false otherwise. The errno variable is left
  *     intact.
  * \param fd Where to write.
  * \param data The buffer to write.

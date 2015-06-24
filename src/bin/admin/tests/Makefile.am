@@ -12,8 +12,10 @@ endif
 
 noinst_SCRIPTS = $(SHTESTS)
 
+EXTRA_DIST = dhcpdb_create_1.0.mysql
+
 CLEANFILES = *.log
-DISTCLEANFILES = memfile_tests.sh mysql_tests.sh
+DISTCLEANFILES = memfile_tests.sh mysql_tests.sh pgsql_tests.sh
 
 # Execute all test scripts.
 check-local:

@@ -146,7 +146,7 @@ TEST_F(LibraryManagerCollectionTest, NoLibrariesLoaded) {
     boost::shared_ptr<CalloutManager> manager =
                                       lm_collection.getCalloutManager();
 
-    // Eecute the calculation - callouts can be called but as nothing
+    // Execute the calculation - callouts can be called but as nothing
     // happens, the result should always be -1.
     executeCallCallouts(manager, -1, 3, -1, 22, -1, 83, -1);
 }

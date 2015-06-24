@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -155,6 +155,20 @@ TEST_F(OptionStringTest, pack) {
     // This string should be equal to the string used to create
     // option's instance. 
     EXPECT_TRUE(option_value == test_string);
+}
+
+// This test checks that the DHCP option holding a single string is
+// correctly returned in the textual format.
+TEST_F(OptionStringTest, toText) {
+    // V4 option
+    std::string option_value("lorem ipsum");
+    OptionString optv4(Option::V4, 122, option_value);
+    EXPECT_EQ("type=122, len=011: \"lorem ipsum\" (string)", optv4.toText());
+
+    // V6 option
+    option_value = "is a filler text";
+    OptionString optv6(Option::V6, 512, option_value);
+    EXPECT_EQ("type=00512, len=00016: \"is a filler text\" (string)", optv6.toText());
 }
 
 } // anonymous namespace

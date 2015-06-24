@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -150,7 +150,7 @@ checkRange(const int min, const int max, const int value,
     if ((value >= min) && (value <= max)) {
         return;
     }
-    isc_throw(InvalidTime, "Invalid " << valname << "value: " << value);
+    isc_throw(InvalidTime, "Invalid " << valname << " value: " << value);
 }
 }
 

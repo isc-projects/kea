@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
@@ -37,7 +39,8 @@ Option6IAPrefix::Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& 
     setEncapsulatedSpace("dhcp6");
     // Option6IAAddr will check if prefix is IPv6 and will throw if it is not
     if (prefix_len > 128) {
-        isc_throw(BadValue, prefix_len << " is not a valid prefix length. "
+        isc_throw(BadValue, static_cast<unsigned>(prefix_len)
+                  << " is not a valid prefix length. "
                   << "Allowed range is 0..128");
     }
 }
@@ -95,21 +98,15 @@ void Option6IAPrefix::unpack(OptionBuffer::const_iterator begin,
     unpackOptions(OptionBuffer(begin, end));
 }
 
-std::string Option6IAPrefix::toText(int indent /* =0 */) {
-    stringstream tmp;
-    for (int i=0; i<indent; i++)
-        tmp << " ";
+std::string Option6IAPrefix::toText(int indent) {
+    std::stringstream output;
+    output << headerToText(indent, "IAPREFIX") << ": "
+           << "prefix=" << addr_ << "/" << static_cast<int>(prefix_len_)
+           << ", preferred-lft=" << preferred_
+           << ", valid-lft=" << valid_;
 
-    tmp << "type=" << type_ << "(IAPREFIX) prefix=" << addr_ << "/"
-        << static_cast<int>(prefix_len_) << ", preferred-lft="
-        << preferred_ << ", valid-lft=" << valid_ << endl;
-
-    for (OptionCollection::const_iterator opt=options_.begin();
-         opt!=options_.end();
-         ++opt) {
-        tmp << (*opt).second->toText(indent + 2);
-    }
-    return tmp.str();
+    output << suboptionsToText(indent + 2);
+    return (output.str());
 }
 
 uint16_t Option6IAPrefix::len() {

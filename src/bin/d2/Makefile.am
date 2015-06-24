@@ -3,6 +3,12 @@ SUBDIRS = . tests
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+if HAVE_MYSQL
+AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
+endif
+if HAVE_PGSQL
+AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
+endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 if USE_CLANGPP
@@ -18,7 +24,7 @@ CLEANFILES  = *.gcno *.gcda spec_config.h d2_messages.h d2_messages.cc s-message
 
 man_MANS = kea-dhcp-ddns.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) kea-dhcp-ddns.xml dhcp-ddns.spec
+EXTRA_DIST = $(man_MANS) kea-dhcp-ddns.xml dhcp-ddns.spec d2.dox
 
 if GENERATE_DOCS
 kea-dhcp-ddns.8: kea-dhcp-ddns.xml
@@ -53,7 +59,6 @@ libd2_la_SOURCES  =
 libd2_la_SOURCES += d_process.h
 libd2_la_SOURCES += d_controller.cc d_controller.h
 libd2_la_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
-libd2_la_SOURCES += d2_asio.h
 libd2_la_SOURCES += d2_log.cc d2_log.h
 libd2_la_SOURCES += d2_process.cc d2_process.h
 libd2_la_SOURCES += d2_config.cc d2_config.h
@@ -70,13 +75,7 @@ libd2_la_SOURCES += nc_remove.cc nc_remove.h
 libd2_la_SOURCES += nc_trans.cc nc_trans.h
 libd2_la_SOURCES += state_model.cc state_model.h
 
-if CONFIG_BACKEND_BUNDY
-libd2_la_SOURCES += bundy_d2_controller.cc bundy_d2_controller.h
-else
-if CONFIG_BACKEND_JSON
 libd2_la_SOURCES += d2_controller.cc d2_controller.h
-endif
-endif
 
 nodist_libd2_la_SOURCES = d2_messages.h d2_messages.cc
 EXTRA_DIST += d2_messages.mes
@@ -98,6 +97,8 @@ kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/bin/cfgrpt/libcfgrpt.la
 
 kea_dhcp_ddnsdir = $(pkgdatadir)
 kea_dhcp_ddns_DATA = dhcp-ddns.spec

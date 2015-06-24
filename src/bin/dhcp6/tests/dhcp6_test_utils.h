@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,15 +25,16 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
+#include <dhcp/option6_status_code.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_custom.h>
+#include <dhcp/option.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <hooks/hooks_manager.h>
-#include <config/ccsession.h>
 
 #include <list>
 
@@ -101,7 +102,6 @@ public:
     using Dhcpv6Srv::processClientFqdn;
     using Dhcpv6Srv::createNameChangeRequests;
     using Dhcpv6Srv::createRemovalNameChangeRequest;
-    using Dhcpv6Srv::createStatusCode;
     using Dhcpv6Srv::selectSubnet;
     using Dhcpv6Srv::testServerID;
     using Dhcpv6Srv::testUnicast;
@@ -113,6 +113,7 @@ public:
     using Dhcpv6Srv::shutdown_;
     using Dhcpv6Srv::name_change_reqs_;
     using Dhcpv6Srv::VENDOR_CLASS_PREFIX;
+    using Dhcpv6Srv::createContext;
 
     /// @brief packets we pretend to receive
     ///
@@ -126,28 +127,16 @@ public:
     std::list<isc::dhcp::Pkt6Ptr> fake_sent_;
 };
 
-static const char* DUID_FILE = "server-id-test.txt";
-
-// test fixture for any tests requiring blank/empty configuration
-// serves as base class for additional tests
+/// @brief Test fixture for any tests requiring blank/empty configuration
+///        serves as base class for additional tests
 class NakedDhcpv6SrvTest : public ::testing::Test {
 public:
 
-    NakedDhcpv6SrvTest() : rcode_(-1) {
-        // it's ok if that fails. There should not be such a file anyway
-        unlink(DUID_FILE);
+    /// @brief Constructor
+    NakedDhcpv6SrvTest();
 
-        const isc::dhcp::IfaceMgr::IfaceCollection& ifaces =
-            isc::dhcp::IfaceMgr::instance().getIfaces();
-
-        // There must be some interface detected
-        if (ifaces.empty()) {
-            // We can't use ASSERT in constructor
-            ADD_FAILURE() << "No interfaces detected.";
-        }
-
-        valid_iface_ = ifaces.begin()->getName();
-    }
+    /// @brief Location of a test DUID file
+    static const char* DUID_FILE;
 
     // Generate IA_NA or IA_PD option with specified parameters
     boost::shared_ptr<isc::dhcp::Option6IA> generateIA
@@ -169,7 +158,7 @@ public:
     isc::dhcp::OptionPtr generateClientId(size_t duid_size = 32) {
 
         isc::dhcp::OptionBuffer clnt_duid(duid_size);
-        for (int i = 0; i < duid_size; i++) {
+        for (size_t i = 0; i < duid_size; i++) {
             clnt_duid[i] = 100 + i;
         }
 
@@ -212,7 +201,8 @@ public:
     void checkNakResponse(const isc::dhcp::Pkt6Ptr& rsp,
                           uint8_t expected_message_type,
                           uint32_t expected_transid,
-                          uint16_t expected_status_code)
+                          uint16_t expected_status_code,
+                          uint32_t expected_t1, uint32_t expected_t2)
     {
         // Check if we get response at all
         checkResponse(rsp, expected_message_type, expected_transid);
@@ -226,55 +216,36 @@ public:
             boost::dynamic_pointer_cast<isc::dhcp::Option6IA>(option_ia_na);
         ASSERT_TRUE(ia);
 
-        checkIA_NAStatusCode(ia, expected_status_code);
+        checkIA_NAStatusCode(ia, expected_status_code, expected_t1,
+                             expected_t2);
     }
 
-    // Checks that server rejected IA_NA, i.e. that it has no addresses and
-    // that expected status code really appears there. In some limited cases
-    // (reply to RELEASE) it may be used to verify positive case, where
-    // IA_NA response is expected to not include address.
-    //
-    // Status code indicates type of error encountered (in theory it can also
-    // indicate success, but servers typically don't send success status
-    // as this is the default result and it saves bandwidth)
+    /// @brief Checks that the server inserted expected status code in IA_NA
+    ///
+    /// Check that the server used status code as expected, i.e. that it has
+    /// no addresses (if status code is non-zero) and that expected status
+    /// code really appears there. In some limited cases (reply to RELEASE)
+    /// it may be used to verify positive case, where IA_NA response is
+    /// expected to not include address.
+    ///
+    /// Status code indicates type of error encountered (in theory it can also
+    /// indicate success, but servers typically don't send success status
+    /// as this is the default result and it saves bandwidth)
+    /// @param ia IA_NA container to be checked
+    /// @param expected_status_code expected value in status-code option
+    /// @param expected_t1 expected T1 in IA_NA option
+    /// @param expected_t2 expected T2 in IA_NA option
+    /// @param check_addr whether to check for address with 0 lifetimes
     void checkIA_NAStatusCode
         (const boost::shared_ptr<isc::dhcp::Option6IA>& ia,
-         uint16_t expected_status_code)
-    {
-        // Make sure there is no address assigned.
-        EXPECT_FALSE(ia->getOption(D6O_IAADDR));
-
-        // T1, T2 should be zeroed
-        EXPECT_EQ(0, ia->getT1());
-        EXPECT_EQ(0, ia->getT2());
-
-        isc::dhcp::OptionCustomPtr status =
-            boost::dynamic_pointer_cast<isc::dhcp::OptionCustom>
-                (ia->getOption(D6O_STATUS_CODE));
-
-        // It is ok to not include status success as this is the default
-        // behavior
-        if (expected_status_code == STATUS_Success && !status) {
-            return;
-        }
-
-        EXPECT_TRUE(status);
-
-        if (status) {
-            // We don't have dedicated class for status code, so let's
-            // just interpret first 2 bytes as status. Remainder of the
-            // status code option content is just a text explanation
-            // what went wrong.
-            EXPECT_EQ(static_cast<uint16_t>(expected_status_code),
-                      status->readInteger<uint16_t>(0));
-        }
-    }
+         uint16_t expected_status_code, uint32_t expected_t1,
+         uint32_t expected_t2, bool check_addr = true);
 
     void checkMsgStatusCode(const isc::dhcp::Pkt6Ptr& msg,
                             uint16_t expected_status)
     {
-        isc::dhcp::OptionCustomPtr status =
-            boost::dynamic_pointer_cast<isc::dhcp::OptionCustom>
+        isc::dhcp::Option6StatusCodePtr status =
+            boost::dynamic_pointer_cast<isc::dhcp::Option6StatusCode>
                 (msg->getOption(D6O_STATUS_CODE));
 
         // It is ok to not include status success as this is the default
@@ -290,7 +261,7 @@ public:
             // status code option content is just a text explanation
             // what went wrong.
             EXPECT_EQ(static_cast<uint16_t>(expected_status),
-                      status->readInteger<uint16_t>(0));
+                      status->getStatusCode());
         }
     }
 
@@ -303,24 +274,7 @@ public:
         EXPECT_EQ(expected_transid, rsp->getTransid());
     }
 
-    virtual ~NakedDhcpv6SrvTest() {
-        // Let's clean up if there is such a file.
-        unlink(DUID_FILE);
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("buffer6_receive");
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("buffer6_send");
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("lease6_renew");
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("lease6_release");
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("pkt6_receive");
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("pkt6_send");
-        isc::hooks::HooksManager::preCalloutsLibraryHandle()
-            .deregisterAllCallouts("subnet6_select");
-    };
+    virtual ~NakedDhcpv6SrvTest();
 
     // A DUID used in most tests (typically as client-id)
     isc::dhcp::DuidPtr duid_;
@@ -338,7 +292,7 @@ class Dhcpv6SrvTest : public NakedDhcpv6SrvTest {
 public:
     /// Name of the server-id file (used in server-id tests)
 
-    /// @brief Constructor that initalizes a simple default configuration
+    /// @brief Constructor that initializes a simple default configuration
     ///
     /// Sets up a single subnet6 with one pool for addresses and second
     /// pool for prefixes.
@@ -398,12 +352,12 @@ public:
         // an ostream, which means it can't be used in EXPECT_EQ.
         EXPECT_TRUE(subnet_->inPool(type, addr->getAddress()));
         EXPECT_EQ(expected_addr.toText(), addr->getAddress().toText());
-        EXPECT_EQ(addr->getPreferred(), subnet_->getPreferred());
-        EXPECT_EQ(addr->getValid(), subnet_->getValid());
+        EXPECT_EQ(subnet_->getPreferred(), addr->getPreferred());
+        EXPECT_EQ(subnet_->getValid(), addr->getValid());
     }
 
     // Checks if the lease sent to client is present in the database
-    // and is valid when checked agasint the configured subnet
+    // and is valid when checked against the configured subnet
     isc::dhcp::Lease6Ptr checkLease
         (const isc::dhcp::DuidPtr& duid, const isc::dhcp::OptionPtr& ia_na,
          boost::shared_ptr<isc::dhcp::Option6IAAddr> addr);
@@ -463,6 +417,22 @@ public:
              const isc::asiolink::IOAddress& addr,
              const uint8_t prefix_len, const uint32_t iaid);
 
+    /// @brief Compare options
+    ///
+    /// This method compares whether options content is identical. It writes
+    /// both options to a buffer and then compares the buffers. Comparing
+    /// two different instances of an option that has identical content
+    /// will return true.
+    ///
+    /// It is safe to pass NULL pointers. Two NULL pointers are equal.
+    /// NULL pointer and non-NULL pointers are obviously non-equal.
+    ///
+    /// @param option1 pointer to the first option
+    /// @param option2
+    /// @return true, if content is identical
+    bool compareOptions(const isc::dhcp::OptionPtr& option1,
+                        const isc::dhcp::OptionPtr& option2);
+
     /// @brief Performs basic (positive) RENEW test
     ///
     /// See renewBasic and pdRenewBasic tests for detailed explanation.
@@ -474,10 +444,29 @@ public:
     /// @param existing_addr address to be preinserted into the database
     /// @param renew_addr address being sent in RENEW
     /// @param prefix_len length of the prefix (128 for addresses)
+    /// @param insert_before_renew should the lease be inserted into the database
+    ///        before we try renewal?
     void
     testRenewBasic(isc::dhcp::Lease::Type type,
                    const std::string& existing_addr,
-                   const std::string& renew_addr, const uint8_t prefix_len);
+                   const std::string& renew_addr, const uint8_t prefix_len,
+                   bool insert_before_renew = true);
+
+    /// @brief Checks if RENEW with invalid IAID is processed correctly.
+    ///
+    /// @param type lease type (currently only IA_NA is supported)
+    /// @param addr address to be renewed
+    void
+    testRenewWrongIAID(isc::dhcp::Lease::Type type,
+                       const asiolink::IOAddress& addr);
+
+    /// @brief Checks if client A can renew address used by client B
+    ///
+    /// @param type lease type (currently only IA_NA is supported)
+    /// @param addr address to be renewed
+    void
+    testRenewSomeoneElsesLease(isc::dhcp::Lease::Type type,
+                               const asiolink::IOAddress& addr);
 
     /// @brief Performs negative RENEW test
     ///
@@ -521,21 +510,11 @@ public:
     testReleaseReject(isc::dhcp::Lease::Type type,
                       const isc::asiolink::IOAddress& addr);
 
-    // see wireshark.cc for descriptions
-    // The descriptions are too large and too closely related to the
-    // code, so it is kept in .cc rather than traditionally in .h
-    isc::dhcp::Pkt6Ptr captureSimpleSolicit();
-    isc::dhcp::Pkt6Ptr captureRelayedSolicit();
-    isc::dhcp::Pkt6Ptr captureDocsisRelayedSolicit();
-    isc::dhcp::Pkt6Ptr captureeRouterRelayedSolicit();
-    isc::dhcp::Pkt6Ptr captureCableLabsShortVendorClass();
-
-    /// @brief Auxiliary method that sets Pkt6 fields
+    /// @brief simulates reception of a packet of specified type and checks statistic
     ///
-    /// Used to reconstruct captured packets. Sets UDP ports, interface names,
-    /// and other fields to some believable values.
-    /// @param pkt packet that will have its fields set
-    void captureSetDefaultFields(const isc::dhcp::Pkt6Ptr& pkt);
+    /// @param pkt_type reception of a packet of this type will be simulated
+    /// @param stat_name this statistic is expected to be set to 1
+    void testReceiveStats(uint8_t pkt_type, const std::string& stat_name);
 
     /// A subnet used in most tests
     isc::dhcp::Subnet6Ptr subnet_;

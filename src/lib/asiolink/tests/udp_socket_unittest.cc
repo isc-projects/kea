@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@
 /// Tests the functionality of a UDPSocket by working through an open-send-
 /// receive-close sequence and checking that the asynchronous notifications
 /// work.
+
+#include <config.h>
 
 #include <string>
 

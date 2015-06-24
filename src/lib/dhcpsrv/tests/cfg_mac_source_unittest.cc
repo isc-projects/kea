@@ -46,9 +46,10 @@ TEST(CfgMACSourceTest, MACSourceFromText) {
               CfgMACSource::MACSourceFromText("subscriber-id"));
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_SUBSCRIBER_ID,
               CfgMACSource::MACSourceFromText("rfc4580"));
-    EXPECT_EQ(HWAddr::HWADDR_SOURCE_DOCSIS,
-              CfgMACSource::MACSourceFromText("docsis"));
-
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_DOCSIS_CMTS,
+              CfgMACSource::MACSourceFromText("docsis-cmts"));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_DOCSIS_MODEM,
+              CfgMACSource::MACSourceFromText("docsis-modem"));
 }
 
 };

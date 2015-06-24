@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,9 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <asiolink/io_address.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/tests/pkt_filter6_test_utils.h>
+
+#include <boost/foreach.hpp>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -185,10 +189,8 @@ PktFilter6Stub::openSocket(const Iface& iface, const isc::asiolink::IOAddress& a
                            const uint16_t port, const bool) {
     // Check if there is any other socket bound to the specified address
     // and port on this interface.
-    const Iface::SocketCollection& sockets = iface.getSockets();
-    for (Iface::SocketCollection::const_iterator socket = sockets.begin();
-         socket != sockets.end(); ++socket) {
-        if ((socket->addr_ == addr) && (socket->port_ == port)) {
+    BOOST_FOREACH(SocketInfo socket, iface.getSockets()) {
+        if ((socket.addr_ == addr) && (socket.port_ == port)) {
             isc_throw(SocketConfigError, "test socket bind error");
         }
     }

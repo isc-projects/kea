@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -67,7 +67,10 @@ public:
     /// is closed automatically in the destructor. If the function succeeds to
     /// send a DHCPv4 message, the socket is closed so as the function can be
     /// called again within the same test.
-    void sendMessage();
+    ///
+    /// @param dest Destination address for the packet.
+    void sendMessage(const asiolink::IOAddress& dest =
+                     asiolink::IOAddress("127.0.0.1"));
 
     /// @brief Test that the datagram socket is opened correctly.
     ///
@@ -141,7 +144,7 @@ public:
     /// @note All parameters are ignored.
     ///
     /// @return always a NULL object.
-    virtual Pkt4Ptr receive(const Iface& iface, const SocketInfo& sock_info);
+    virtual Pkt4Ptr receive(Iface& iface, const SocketInfo& sock_info);
 
     /// @brief Simulates sending a DHCPv4 message.
     ///

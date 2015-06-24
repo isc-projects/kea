@@ -1,9 +1,7 @@
 SHTESTS =
 # The test of dynamic reconfiguration based on signals will work only
 # if we are using file based configuration approach.
-if CONFIG_BACKEND_JSON
 SHTESTS += dhcp4_process_tests.sh
-endif
 
 noinst_SCRIPTS = dhcp4_process_tests.sh
 
@@ -24,7 +22,7 @@ AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/asiolink
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
-AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/dhcp6/tests\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/dhcp4/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
@@ -75,12 +73,10 @@ libco2_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 TESTS += dhcp4_unittests
 
 dhcp4_unittests_SOURCES  = d2_unittest.h d2_unittest.cc
-dhcp4_unittests_SOURCES += dhcp4_test_utils.h
 dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += dhcp4_test_utils.cc dhcp4_test_utils.h
 dhcp4_unittests_SOURCES += direct_client_unittest.cc
-dhcp4_unittests_SOURCES += wireshark.cc
 dhcp4_unittests_SOURCES += ctrl_dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += config_parser_unittest.cc
 dhcp4_unittests_SOURCES += fqdn_unittest.cc
@@ -88,16 +84,9 @@ dhcp4_unittests_SOURCES += marker_file.cc
 dhcp4_unittests_SOURCES += dhcp4_client.cc dhcp4_client.h
 dhcp4_unittests_SOURCES += inform_unittest.cc
 dhcp4_unittests_SOURCES += dora_unittest.cc
+dhcp4_unittests_SOURCES += release_unittest.cc
 
-if CONFIG_BACKEND_BUNDY
-# For Bundy backend, we only need to run the usual tests. There are no
-# Bundy-specific tests yet.
-dhcp4_unittests_SOURCES += bundy_controller_unittest.cc
-endif
-
-if CONFIG_BACKEND_JSON
 dhcp4_unittests_SOURCES += kea_controller_unittest.cc
-endif
 
 nodist_dhcp4_unittests_SOURCES = marker_file.h test_libraries.h
 
@@ -116,8 +105,11 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/bin/cfgrpt/libcfgrpt.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 endif
 
 noinst_EXTRA_DIST = configs-list.txt

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include "command_options_helper.h"
 #include "../test_control.h"
 
@@ -21,6 +23,7 @@
 #include <dhcp/iface_mgr.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/foreach.hpp>
 
 #include <cstddef>
 #include <stdint.h>
@@ -180,7 +183,7 @@ public:
         if (!temp_file.is_open()) {
             return (false);
         }
-        for (int i = 0; i < buf.size(); ++i) {
+        for (size_t i = 0; i < buf.size(); ++i) {
             int first_digit = buf[i] / 16;
             int second_digit = buf[i] % 16;
             // Insert two spaces between two hexadecimal digits.
@@ -217,11 +220,7 @@ public:
     ///
     /// \return local loopback interface name.
     std::string getLocalLoopback() const {
-        const IfaceMgr::IfaceCollection& ifaces =
-            IfaceMgr::instance().getIfaces();
-        for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
-             iface != ifaces.end();
-             ++iface) {
+        BOOST_FOREACH(IfacePtr iface, IfaceMgr::instance().getIfaces()) {
             if (iface->flag_loopback_) {
                 return (iface->getName());
             }
@@ -255,7 +254,7 @@ public:
                               const dhcp::OptionBuffer& buf) const {
         size_t matched_num = 0;
         for (size_t i = 0; i < buf.size(); ++i) {
-            for (int j = 0; j < requested_options.size(); ++j) {
+            for (size_t j = 0; j < requested_options.size(); ++j) {
                 if (requested_options[j] == buf[i]) {
                     // Requested option has been found.
                     ++matched_num;
@@ -284,7 +283,7 @@ public:
         }
         size_t matched_num = 0;
         for (size_t i = 0; i < buf.size(); i += 2) {
-            for (int j = 0; j < requested_options.size(); j += 2) {
+            for (size_t j = 0; j < requested_options.size(); j += 2) {
                 uint16_t opt_i = (buf[i + 1] << 8) + (buf[i] & 0xFF);
                 uint16_t opt_j = (requested_options[j + 1] << 8)
                     + (requested_options[j] & 0xFF);
@@ -771,7 +770,8 @@ public:
         // Simulate Advertise responses from the server. Each advertise is
         // assigned a transaction id from the range of 1 to 10, so as they
         // match the transaction ids from the Solicit messages.
-        for (int i = generator->getNext() - 10; i < generator->getNext(); ++i) {
+        for (unsigned i = generator->getNext() - 10;
+             i < generator->getNext(); ++i) {
             Pkt6Ptr advertise(createAdvertisePkt6(i));
             // If Advertise is matched with the Solicit the call below will
             // trigger a corresponding Request. They will be assigned
@@ -783,7 +783,8 @@ public:
         // Requests have been sent, so now let's simulate responses from the
         // server. Generate corresponding Reply messages with the transaction
         // ids from the range from 11 to 20.
-        for (int i = generator->getNext() - 10; i < generator->getNext(); ++i) {
+        for (unsigned i = generator->getNext() - 10;
+             i < generator->getNext(); ++i) {
             Pkt6Ptr reply(createReplyPkt6(i));
             // Each Reply packet corresponds to the new lease acquired. Since
             // -f<renew-rate> option has been specified, received Reply
@@ -1386,10 +1387,10 @@ TEST_F(TestControlTest, PacketTemplates) {
     std::string file1("test1.hex");
     std::vector<uint8_t> template2(233);
     std::string file2("test2.hex");
-    for (int i = 0; i < template1.size(); ++i) {
+    for (size_t i = 0; i < template1.size(); ++i) {
         template1[i] = static_cast<uint8_t>(random() % 256);
     }
-    for (int i = 0; i < template2.size(); ++i) {
+    for (size_t i = 0; i < template2.size(); ++i) {
         template2[i] = static_cast<uint8_t>(random() % 256);
     }
     // Size of the file is 2 times larger than binary data size.

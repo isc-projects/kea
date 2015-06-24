@@ -128,7 +128,7 @@ public:
         try {
             Botan::SecureVector<Botan::byte> b_result(hmac_->final());
 
-            if (len == 0 || len > b_result.size()) {
+            if (len > b_result.size()) {
                 len = b_result.size();
             }
             result.writeData(b_result.begin(), len);
@@ -159,7 +159,7 @@ public:
     std::vector<uint8_t> sign(size_t len) {
         try {
             Botan::SecureVector<Botan::byte> b_result(hmac_->final());
-            if (len == 0 || len > b_result.size()) {
+            if (len > b_result.size()) {
                 return (std::vector<uint8_t>(b_result.begin(), b_result.end()));
             } else {
                 return (std::vector<uint8_t>(b_result.begin(), &b_result[len]));
@@ -180,10 +180,10 @@ public:
         try {
             Botan::SecureVector<Botan::byte> our_mac = hmac_->final();
             size_t size = getOutputLength();
-            if (len != 0 && (len < 10 || len < size / 2)) {
+            if (len < 10 || len < size / 2) {
                 return (false);
             }
-            if (len == 0 || len > size) {
+            if (len > size) {
                 len = size;
             }
             return (Botan::same_mem(&our_mac[0],

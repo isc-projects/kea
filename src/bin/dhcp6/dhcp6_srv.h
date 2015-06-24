@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -31,6 +31,14 @@
 
 #include <iostream>
 #include <queue>
+
+// Undefine the macro OPTIONAL which is defined in some operating
+// systems but conflicts with a member of the RequirementLevel enum in
+// the server class.
+
+#ifdef OPTIONAL
+#undef OPTIONAL
+#endif
 
 namespace isc {
 namespace dhcp {
@@ -77,6 +85,10 @@ public:
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
 
+    /// @brief returns Kea version on stdout and exit.
+    /// redeclaration/redefinition. @ref Daemon::getVersion()
+    static std::string getVersion(bool extended);
+ 
     /// @brief Returns server-indentifier option.
     ///
     /// @return server-id option
@@ -166,25 +178,25 @@ protected:
     void sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
                      RequirementLevel serverid);
 
-    /// @brief Processes incoming SOLICIT and returns response.
+    /// @brief Processes incoming Solicit and returns response.
     ///
-    /// Processes received SOLICIT message and verifies that its sender
+    /// Processes received Solicit message and verifies that its sender
     /// should be served. In particular IA, TA and PD options are populated
     /// with to-be assigned addresses, temporary addresses and delegated
     /// prefixes, respectively. In the usual 4 message exchange, server is
-    /// expected to respond with ADVERTISE message. However, if client
-    /// requests rapid-commit and server supports it, REPLY will be sent
-    /// instead of ADVERTISE and requested leases will be assigned
+    /// expected to respond with Advertise message. However, if client
+    /// requests rapid-commit and server supports it, Reply will be sent
+    /// instead of Advertise and requested leases will be assigned
     /// immediately.
     ///
-    /// @param solicit SOLICIT message received from client
+    /// @param solicit Solicit message received from client
     ///
-    /// @return ADVERTISE, REPLY message or NULL
+    /// @return Advertise, Reply message or NULL.
     Pkt6Ptr processSolicit(const Pkt6Ptr& solicit);
 
-    /// @brief Processes incoming REQUEST and returns REPLY response.
+    /// @brief Processes incoming Request and returns Reply response.
     ///
-    /// Processes incoming REQUEST message and verifies that its sender
+    /// Processes incoming Request message and verifies that its sender
     /// should be served. In particular IA, TA and PD options are populated
     /// with assigned addresses, temporary addresses and delegated
     /// prefixes, respectively. Uses LeaseMgr to allocate or update existing
@@ -195,14 +207,22 @@ protected:
     /// @return REPLY message or NULL
     Pkt6Ptr processRequest(const Pkt6Ptr& request);
 
-    /// @brief Stub function that will handle incoming RENEW messages.
+    /// @brief Processes incoming Renew message.
     ///
-    /// @param renew message received from client
+    /// @param renew message received from the client
+    /// @return Reply message to be sent to the client.
     Pkt6Ptr processRenew(const Pkt6Ptr& renew);
 
-    /// @brief Stub function that will handle incoming REBIND messages.
+    /// @brief Processes incoming Rebind message.
     ///
-    /// @param rebind message received from client
+    /// @todo There are cases when the Rebind message should be  discarded
+    /// by the DHCP server. One of those is when the server doesn't have a
+    /// record of the client and it is unable to determine whether the
+    /// client is on the appropriate link or not. We don't seem to do it
+    /// now.
+    ///
+    /// @param rebind message received from the client.
+    /// @return Reply message to be sent to the client.
     Pkt6Ptr processRebind(const Pkt6Ptr& rebind);
 
     /// @brief Processes incoming Confirm message and returns Reply.
@@ -226,31 +246,26 @@ protected:
     ///
     /// @param confirm Confirm message sent by a client.
     ///
-    /// @return Reply message from the server al NULL pointer if Confirm
+    /// @return Reply message from the server or NULL pointer if Confirm
     /// message should be discarded by the server.
     Pkt6Ptr processConfirm(const Pkt6Ptr& confirm);
 
-    /// @brief Stub function that will handle incoming RELEASE messages.
+    /// @brief Process incoming Release message.
     ///
     /// @param release message received from client
+    /// @return Reply message to be sent to the client.
     Pkt6Ptr processRelease(const Pkt6Ptr& release);
 
-    /// @brief Stub function that will handle incoming DECLINE messages.
+    /// @brief Stub function that will handle incoming Decline.
     ///
     /// @param decline message received from client
     Pkt6Ptr processDecline(const Pkt6Ptr& decline);
 
-    /// @brief Stub function that will handle incoming INF-REQUEST messages.
+    /// @brief Processes incoming Information-request message.
     ///
-    /// @param infRequest message received from client
-    Pkt6Ptr processInfRequest(const Pkt6Ptr& infRequest);
-
-    /// @brief Creates status-code option.
-    ///
-    /// @param code status code value (see RFC3315)
-    /// @param text textual explanation (will be sent in status code option)
-    /// @return status-code option
-    OptionPtr createStatusCode(uint16_t code, const std::string& text);
+    /// @param inf_request message received from client
+    /// @return Reply message to be sent to the client.
+    Pkt6Ptr processInfRequest(const Pkt6Ptr& inf_request);
 
     /// @brief Selects a subnet for a given client's packet.
     ///
@@ -266,19 +281,17 @@ protected:
     /// status code option with non-zero status, denoting cause of the
     /// allocation failure.
     ///
-    /// @param subnet subnet the client is connected to
-    /// @param duid client's duid
     /// @param query client's message (typically SOLICIT or REQUEST)
     /// @param answer server's response to the client's message. This
     /// message should contain Client FQDN option being sent by the server
     /// to the client (if the client sent this option to the server).
+    /// @param orig_ctx client context (contains subnet, duid and other parameters)
     /// @param ia pointer to client's IA_NA option (client's request)
     ///
     /// @return IA_NA option (server's response)
-    OptionPtr assignIA_NA(const isc::dhcp::Subnet6Ptr& subnet,
-                          const isc::dhcp::DuidPtr& duid,
-                          const isc::dhcp::Pkt6Ptr& query,
+    OptionPtr assignIA_NA(const isc::dhcp::Pkt6Ptr& query,
                           const isc::dhcp::Pkt6Ptr& answer,
+                          AllocEngine::ClientContext6& orig_ctx,
                           Option6IAPtr ia);
 
     /// @brief Processes IA_PD option (and assigns prefixes if necessary).
@@ -289,13 +302,14 @@ protected:
     /// status code option with non-zero status denoting the cause of the
     /// allocation failure.
     ///
-    /// @param subnet subnet the client is connected to
-    /// @param duid client's duid
     /// @param query client's message (typically SOLICIT or REQUEST)
+    /// @param answer server's response to the client's message.
+    /// @param orig_ctx client context (contains subnet, duid and other parameters)
     /// @param ia pointer to client's IA_PD option (client's request)
     /// @return IA_PD option (server's response)
-    OptionPtr assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                          const Pkt6Ptr& query,
+    OptionPtr assignIA_PD(const Pkt6Ptr& query,
+                          const isc::dhcp::Pkt6Ptr& answer,
+                          AllocEngine::ClientContext6& orig_ctx,
                           boost::shared_ptr<Option6IA> ia);
 
     /// @brief Extends lifetime of the specific IA_NA option.
@@ -323,11 +337,12 @@ protected:
     /// @param answer server's response to the client's message. This
     /// message should contain Client FQDN option being sent by the server
     /// to the client (if the client sent this option to the server).
-    /// @param ia IA_NA option which carries adress for which lease lifetime
+    /// @param orig_ctx client context (contains subnet, duid and other parameters)
+    /// @param ia IA_NA option which carries address for which lease lifetime
     /// will be extended.
     /// @return IA_NA option (server's response)
-    OptionPtr extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                          const Pkt6Ptr& query, const Pkt6Ptr& answer,
+    OptionPtr extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
+                          AllocEngine::ClientContext6& orig_ctx,
                           Option6IAPtr ia);
 
     /// @brief Extends lifetime of the prefix.
@@ -341,16 +356,16 @@ protected:
     /// is thrown when there is no binding and the Rebind message is processed
     /// (see RFC3633, section 12.2. for details).
     ///
-    /// @param subnet subnet the sender belongs to
-    /// @param duid client's duid
     /// @param query client's message
+    /// @param orig_ctx client context (contains subnet, duid and other parameters)
     /// @param ia IA_PD option that is being renewed
     /// @return IA_PD option (server's response)
     /// @throw DHCPv6DiscardMessageError when the message being processed should
     /// be discarded by the server, i.e. there is no binding for the client doing
     /// Rebind.
-    OptionPtr extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                          const Pkt6Ptr& query, Option6IAPtr ia);
+    OptionPtr extendIA_PD(const Pkt6Ptr& query,
+                          AllocEngine::ClientContext6& orig_ctx,
+                          Option6IAPtr ia);
 
     /// @brief Releases specific IA_NA option
     ///
@@ -394,10 +409,11 @@ protected:
     /// Copies options that must appear in any server response (ADVERTISE, REPLY)
     /// to client's messages (SOLICIT, REQUEST, RENEW, REBIND, DECLINE, RELEASE).
     /// One notable example is client-id. Other options may be copied as required.
+    /// Relay information details are also copied here.
     ///
     /// @param question client's message (options will be copied from here)
     /// @param answer server's message (options will be copied here)
-    void copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
+    void copyClientOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
     /// @brief Appends default options to server's answer.
     ///
@@ -415,7 +431,9 @@ protected:
     ///
     /// @param question client's message
     /// @param answer server's message (options will be added here)
-    void appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
+    /// @param ctx client context (contains subnet, duid and other parameters)
+    void appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                                AllocEngine::ClientContext6& ctx);
 
     /// @brief Appends requested vendor options to server's answer.
     ///
@@ -424,19 +442,22 @@ protected:
     ///
     /// @param question client's message
     /// @param answer server's message (vendor options will be added here)
-    void appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
+    /// @param ctx client context (contains subnet, duid and other parameters)
+    void appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                                AllocEngine::ClientContext6& ctx);
 
     /// @brief Assigns leases.
     ///
-    /// It supports addresses (IA_NA) only. It does NOT support temporary
-    /// addresses (IA_TA) nor prefixes (IA_PD).
-    /// @todo: Extend this method once TA and PD becomes supported
+    /// It supports non-temporary addresses (IA_NA) and prefixes (IA_PD). It
+    /// does NOT support temporary addresses (IA_TA).
     ///
-    /// @param question client's message (with requested IA_NA)
-    /// @param answer server's message (IA_NA options will be added here).
-    /// This message should contain Client FQDN option being sent by the server
-    /// to the client (if the client sent this option to the server).
-    void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer);
+    /// @param question client's message (with requested IA options)
+    /// @param answer server's message (IA options will be added here).
+    ///   This message should contain Client FQDN option being sent by the server
+    ///   to the client (if the client sent this option to the server).
+    /// @param ctx client context (contains subnet, duid and other parameters)
+    void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                      AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes Client FQDN Option.
     ///
@@ -452,6 +473,28 @@ protected:
     /// domain-name, i.e. if the provided domain-name is partial it should
     /// generate the fully qualified domain-name.
     ///
+    /// This function takes into account the host reservation if one is matched
+    /// to this client when forming the FQDN to be used with DNS as well as the
+    /// lease name to be stored with the lease. In the following the term
+    /// "reserved hostname" means a host reservation which includes a
+    /// non-blank hostname.
+    ///
+    /// - If there is no Client FQDN and no reserved hostname then there
+    /// will no be DNS updates and the lease hostname will be empty.
+    ///
+    /// - If there is no Client FQDN but there is reserved hostname then
+    /// there will be no DNS updates and the lease hostname will be equal
+    /// to reserved hostname.
+    ///
+    /// - If there is a Client FQDN and a reserved hostname, then both the
+    /// FQDN and lease hostname will be equal to reserved hostname with
+    /// the qualifying suffix appended.
+    ///
+    /// - If there is a Client FQDN but no reserved hostname then both the
+    /// FQDN and lease hostname will be equal to the name provided in the
+    /// client FQDN adjusted according the the DhcpDdns configuration
+    /// parameters (e.g.replace-client-name, qualifying suffix...).
+    ///
     /// All the logic required to form appropriate answer to the client is
     /// held in this function.
     ///
@@ -459,7 +502,9 @@ protected:
     /// @param answer Server's response to a client. If server generated
     /// Client FQDN option for the client, this option is stored in this
     /// object.
-    void processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer);
+    /// @param ctx client context (includes subnet, client-id, hw-addr etc.)
+    void processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
+                           AllocEngine::ClientContext6& ctx);
 
     /// @brief Creates a number of @c isc::dhcp_ddns::NameChangeRequest objects
     /// based on the DHCPv6 Client FQDN %Option.
@@ -476,7 +521,7 @@ protected:
     ///
     /// @todo Add support for multiple IAADDR options in the IA_NA.
     ///
-    /// @param answer A message beging sent to the Client. If it holds the
+    /// @param answer A message begins sent to the Client. If it holds the
     /// Client FQDN option, this option is used to create NameChangeRequests.
     void createNameChangeRequests(const Pkt6Ptr& answer);
 
@@ -492,9 +537,12 @@ protected:
     /// own.
     /// If ddns updates are disabled, this method returns immediately.
     ///
+    /// @param query A pointer to the packet sent by the client for which the
+    /// name change request should be sent.
     /// @param lease A lease for which the the removal of corresponding DNS
     /// records will be performed.
-    void createRemovalNameChangeRequest(const Lease6Ptr& lease);
+    void createRemovalNameChangeRequest(const Pkt6Ptr& query,
+                                        const Lease6Ptr& lease);
 
     /// @brief Attempts to extend the lifetime of IAs.
     ///
@@ -506,7 +554,9 @@ protected:
     ///
     /// @param query client's Renew or Rebind message
     /// @param reply server's response
-    void extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply);
+    /// @param ctx client context (contains subnet, duid and other parameters)
+    void extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
+                      AllocEngine::ClientContext6& ctx);
 
     /// @brief Attempts to release received addresses
     ///
@@ -517,7 +567,9 @@ protected:
     /// to REPLY packet, just its IA_NA containers.
     /// @param release client's message asking to release
     /// @param reply server's response
-    void releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply);
+    /// @param ctx client context (includes subnet, client-id, hw-addr etc.)
+    void releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
+                       AllocEngine::ClientContext6& ctx);
 
     /// @brief Sets server-identifier.
     ///
@@ -605,6 +657,29 @@ protected:
     /// @return HWaddr pointer (or NULL if configured methods fail)
     static HWAddrPtr getMAC(const Pkt6Ptr& pkt);
 
+    /// @brief Processes Relay-supplied options, if present
+    ///
+    /// This method implements RFC6422. It checks if there are any RSOO options
+    /// inserted by the relay agents in the query message. If there are, they
+    /// are copied over to the response if they meet the following criteria:
+    /// - the option is marked as RSOO-enabled (see relay-supplied-options
+    ///   configuration parameter)
+    /// - there is no such option provided by the server)
+    void processRSOO(const Pkt6Ptr& query, const Pkt6Ptr& rsp);
+
+    /// @brief Creates client context for specified packet
+    ///
+    /// Instantiates the ClientContext6 and then:
+    /// - Performs the subnet selection and stores the result in context
+    /// - Extracts the duid from the packet and saves it to the context
+    /// - Extracts the hardware address from the packet and saves it to
+    /// the context
+    /// - Performs host reservation lookup and stores the result in the
+    /// context
+    ///
+    /// @return client context
+    AllocEngine::ClientContext6 createContext(const Pkt6Ptr& pkt);
+
     /// @brief this is a prefix added to the contend of vendor-class option
     ///
     /// If incoming packet has a vendor class option, its content is
@@ -614,15 +689,6 @@ protected:
     static const std::string VENDOR_CLASS_PREFIX;
 
 private:
-
-    /// @brief Implements the error handler for socket open failure.
-    ///
-    /// This callback function is installed on the @c isc::dhcp::IfaceMgr
-    /// when IPv6 sockets are being open. When socket fails to open for
-    /// any reason, this function is called. It simply logs the error message.
-    ///
-    /// @param errmsg An error message containing a cause of the failure.
-    static void ifaceMgrSocket6ErrorHandler(const std::string& errmsg);
 
     /// @brief Generate FQDN to be sent to a client if none exists.
     ///
@@ -665,6 +731,30 @@ private:
     /// @throw isc::Unexpected if specified message is NULL. This is treated
     /// as a programmatic error.
     void generateFqdn(const Pkt6Ptr& answer);
+
+
+    /// @brief Triggers removal Name Change Request if FQDN data changes in leases
+    ///
+    /// If there are any differences (different fwd or rev flags, or different
+    /// hostname) a DNS update for removing entry will be generated.
+    ///
+    /// @param query a pointer to the client's message
+    /// @param old_lease old version of the lease
+    /// @param new_lease new version of the lease (may be NULL)
+    /// @param hostname specifies hostname (for printing purposes)
+    /// @param do_fwd specifies if reverse updates are enabled (for printing purposes)
+    /// @param do_rev specifies if reverse updates are enabled (for printing purposes)
+    void conditionalNCRRemoval(const Pkt6Ptr& query, Lease6Ptr& old_lease,
+                               Lease6Ptr& new_lease, const std::string& hostname,
+                               bool do_fwd, bool do_rev);
+
+    /// @brief Updates statistics for received packets
+    /// @param query packet received
+    static void processStatsReceived(const Pkt6Ptr& query);
+
+    /// @brief Updates statistics for transmitted packets
+    /// @param query packet transmitted
+    static void processStatsSent(const Pkt6Ptr& response);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

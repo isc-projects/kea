@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -49,7 +49,7 @@ CSVRow::readAt(const size_t at) const {
 std::string
 CSVRow::render() const {
     std::ostringstream s;
-    for (int i = 0; i < values_.size(); ++i) {
+    for (size_t i = 0; i < values_.size(); ++i) {
         // Do not put separator before the first value.
         if (i > 0) {
             s << separator_;
@@ -97,6 +97,14 @@ CSVFile::close() {
     }
 }
 
+bool
+CSVFile::exists() const {
+    std::ifstream fs(filename_.c_str());
+    const bool file_exists = fs.good();
+    fs.close();
+    return (file_exists);
+}
+
 void
 CSVFile::flush() const {
     checkStreamStatusAndReset("flush");
@@ -133,7 +141,7 @@ CSVFile::append(const CSVRow& row) const {
                   " columns in the CSV file '" << getColumnCount() << "'");
     }
 
-    /// @todo Apparently, seekp and seekg are interchangable. A call to seekp
+    /// @todo Apparently, seekp and seekg are interchangeable. A call to seekp
     /// results in moving the input pointer too. This is ok for now. It means
     /// that when the append() is called, the read pointer is moved to the EOF.
     /// For the current use cases we only read a file and then append a new
@@ -195,9 +203,9 @@ CSVFile::size() const {
 
 int
 CSVFile::getColumnIndex(const std::string& col_name) const {
-    for (int i = 0; i < cols_.size(); ++i) {
+    for (size_t i = 0; i < cols_.size(); ++i) {
         if (cols_[i] == col_name) {
-            return (i);
+            return (static_cast<int>(i));
         }
     }
     return (-1);
@@ -215,7 +223,7 @@ CSVFile::getColumnName(const size_t col_index) const {
 
 bool
 CSVFile::next(CSVRow& row, const bool skip_validation) {
-    // Set somethings as row validation error. Although, we haven't started
+    // Set something as row validation error. Although, we haven't started
     // actual row validation we should get rid of any previously recorded
     // errors so as the caller doesn't interpret them as the current one.
     setReadMsg("validation not started");
@@ -253,7 +261,7 @@ CSVFile::next(CSVRow& row, const bool skip_validation) {
 }
 
 void
-CSVFile::open() {
+CSVFile::open(const bool seek_to_end) {
     // If file doesn't exist or is empty, we have to create our own file.
     if (size() == static_cast<std::streampos>(0)) {
         recreate();
@@ -265,13 +273,13 @@ CSVFile::open() {
         // Catch exceptions so as we can close the file if error occurs.
         try {
             // The file may fail to open. For example, because of insufficient
-            // persmissions. Although the file is not open we should call close
+            // permissions. Although the file is not open we should call close
             // to reset our internal pointer.
             if (!fs_->is_open()) {
                 isc_throw(CSVFileError, "unable to open '" << filename_ << "'");
             }
-            // Make sure we are on the beginning of the file, so as we can parse
-            // the header.
+            // Make sure we are on the beginning of the file, so as we
+            // can parse the header.
             fs_->seekg(0);
             if (!fs_->good()) {
                 isc_throw(CSVFileError, "unable to set read pointer in the file '"
@@ -300,6 +308,19 @@ CSVFile::open() {
                     addColumnInternal(header.readAt(i));
                 }
             }
+
+            // If caller requested that the pointer is set at the end of file,
+            // move both read and write pointer.
+            if (seek_to_end) {
+                fs_->seekp(0, std::ios_base::end);
+                fs_->seekg(0, std::ios_base::end);
+                if (!fs_->good()) {
+                    isc_throw(CSVFileError, "unable to move to the end of"
+                              " CSV file '" << filename_ << "'");
+                }
+                fs_->clear();
+            }
+
         } catch (const std::exception& ex) {
             close();
             throw;
@@ -323,10 +344,10 @@ CSVFile::recreate() {
         close();
         isc_throw(CSVFileError, "unable to open '" << filename_ << "'");
     }
-    // Opened successfuly. Write a header to it.
+    // Opened successfully. Write a header to it.
     try {
         CSVRow header(getColumnCount());
-        for (int i = 0; i < getColumnCount(); ++i) {
+        for (size_t i = 0; i < getColumnCount(); ++i) {
             header.writeAt(i, getColumnName(i));
         }
         *fs_ << header << std::endl;
@@ -362,7 +383,7 @@ CSVFile::validateHeader(const CSVRow& header) {
         return (false);
     }
 
-    for (int i = 0; i < getColumnCount(); ++i) {
+    for (size_t i = 0; i < getColumnCount(); ++i) {
         if (getColumnName(i) != header.readAt(i)) {
             return (false);
         }

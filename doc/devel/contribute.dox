@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -78,33 +78,7 @@ change. That is even more true for new code: if you write a new
 function, method or a class, you definitely should write unit-tests
 for it.
 
-Kea uses the Google C++ Testing Framework (also called googletest or
-gtest) as a base for our C++ unit-tests. See
-http://code.google.com/p/googletest/ for details. We still have some Python
-unit-tests that we inherited from BIND10 days, but those tests are being
-removed, so please do not develop any new Python tests in Kea. (If you
-want to write DHCP tests in Python, we encourage you to take a look
-at ISC Forge: http://kea.isc.org/wiki/IscForge). You must
-have \c gtest installed or at least extracted in a directory before
-compiling Kea unit-tests. To enable unit-tests in Kea, use:
-
-@code
-./configure --with-gtest=/path/to/your/gtest/dir
-@endcode
-
-or
-
-@code
-./configure --with-gtest-source=/path/to/your/gtest/dir
-@endcode
-
-Depending on how you compiled or installed \c gtest (e.g. from sources
-or using some package management system) one of those two switches will
-find \c gtest. After that you make run unit-tests:
-
-@code
-make check
-@endcode
+See @ref qaUnitTests for instructions on how to run unit-tests.
 
 If you happen to add new files or have modified any \c Makefile.am
 files, it is also a good idea to check if you haven't broken the
@@ -162,8 +136,9 @@ critical for whatever reason, it may also be mentioned in release notes.
 @section contributorGuideExtra Extra steps
 
 If you are interested in knowing the results of more in-depth testing,
-you are welcome to visit the Kea build farm:
-http://git.kea.isc.org/~tester/builder/KEA-builder-new.html.  This is a
+you are welcome to visit the ISC Jenkins page: https://jenkins.isc.org
+(Our old Kea build farm http://git.kea.isc.org/~tester/builder/KEA-builder-new.html
+is being migrated to Jenkins).  This is a
 live result page with all tests being run on various systems.  Besides
 basic unit-tests, we also have reports from valgrind (memory debugger),
 cppcheck and clang-analyzer (static code analyzers), Lettuce system

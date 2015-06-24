@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 #include <util/io_utilities.h>
 
 #include <stdint.h>
+#include <sstream>
 
 namespace isc {
 namespace dhcp {
@@ -28,7 +29,7 @@ namespace dhcp {
 template<typename T>
 class OptionInt;
 
-/// @defgroup option_int_array_defs Typedefs for OptionInt class.
+/// @defgroup option_int_defs Typedefs for OptionInt class.
 ///
 /// @brief Classes that represent options comprising an integer.
 ///
@@ -203,6 +204,36 @@ public:
             length += (*it).second->len();
         }
         return (length);
+    }
+
+    /// @brief Returns option carrying an integer value in the textual
+    /// format.
+    ///
+    /// The returned value also includes the suboptions if present.
+    ///
+    /// @param indent Number of spaces to be inserted before the text.
+    virtual std::string toText(int indent = 0) {
+        std::stringstream output;
+        output << headerToText(indent) << ": ";
+
+        // For 1 byte long data types we need to cast to the integer
+        // because they are usually implemented as "char" types, in
+        // which case the character rather than number would be printed.
+        if (OptionDataTypeTraits<T>::len == 1) {
+            output << static_cast<int>(getValue());
+        } else {
+            output << getValue();
+        }
+
+        // Append data type name.
+        output << " ("
+               << OptionDataTypeUtil::getDataTypeName(OptionDataTypeTraits<T>::type)
+               << ")";
+
+        // Append suboptions.
+        output << suboptionsToText(indent + 2);
+
+        return (output.str());
     }
 
 private:

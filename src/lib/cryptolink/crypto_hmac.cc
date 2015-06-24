@@ -32,6 +32,9 @@ signHMAC(const void* data, const size_t data_len, const void* secret,
                                                secret_len,
                                                hash_algorithm));
     hmac->update(data, data_len);
+    if (len == 0) {
+        len = hmac->getOutputLength();
+    }
     hmac->sign(result, len);
 }
 
@@ -46,7 +49,11 @@ verifyHMAC(const void* data, const size_t data_len, const void* secret,
                                                secret_len,
                                                hash_algorithm));
     hmac->update(data, data_len);
-    return (hmac->verify(sig, sig_len));
+    size_t len = sig_len;
+    if (len == 0) {
+        len = hmac->getOutputLength();
+    }
+    return (hmac->verify(sig, len));
 }
 
 void

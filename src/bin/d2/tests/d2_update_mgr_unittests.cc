@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <d2/d2_asio.h>
+#include <config.h>
+
+#include <asiolink/io_service.h>
 #include <d2/d2_update_mgr.h>
 #include <util/time_utilities.h>
 #include <d_test_stubs.h>
@@ -42,7 +44,7 @@ public:
     ///
     /// Parameters match those needed by D2UpdateMgr.
     D2UpdateMgrWrapper(D2QueueMgrPtr& queue_mgr, D2CfgMgrPtr& cfg_mgr,
-                       IOServicePtr& io_service,
+                       asiolink::IOServicePtr& io_service,
                        const size_t max_transactions = MAX_TRANSACTIONS_DEFAULT)
         : D2UpdateMgr(queue_mgr, cfg_mgr, io_service, max_transactions) {
     }
@@ -250,7 +252,7 @@ public:
 /// 4. Default construction works and max transactions is defaulted properly
 /// 5. Construction with custom max transactions works properly
 TEST(D2UpdateMgr, construction) {
-    IOServicePtr io_service(new isc::asiolink::IOService());
+    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
     D2QueueMgrPtr queue_mgr;
     D2CfgMgrPtr cfg_mgr;
     D2UpdateMgrPtr update_mgr;

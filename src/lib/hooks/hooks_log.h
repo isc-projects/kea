@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -43,6 +43,13 @@ const int HOOKS_DBG_EXTENDED_CALLS = DBGLVL_TRACE_DETAIL_DATA;
 /// modules, but defining in a single module and linking to it saves time and
 /// space.
 extern isc::log::Logger hooks_logger;
+
+/// @brief Callouts logger
+///
+/// This is the specialized logger used to log messages pertaining to the
+/// callouts execution. In particular, it logs when the callout is invoked
+/// and when it ends. It also logs the callout execution times.
+extern isc::log::Logger callouts_logger;
 
 } // namespace hooks
 } // namespace isc

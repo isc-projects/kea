@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -249,6 +249,46 @@ TEST_F(HostReservationParserTest, malformedAddress) {
     EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 }
 
+// This test verifies that the configuration parser for host reservations
+// throws an exception when zero IP address is specified.
+TEST_F(HostReservationParserTest, zeroAddress) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"ip-address\": \"0.0.0.0\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
+// This test verifies that the configuration parser for host reservations
+// throws an exception when broadcast IP address is specified.
+TEST_F(HostReservationParserTest, bcastAddress) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"ip-address\": \"255.255.255.255\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
+// This test verifies that the configuration parser for host reservations
+// throws an exception when unsupported parameter is specified.
+TEST_F(HostReservationParserTest, invalidParameterName) {
+    // The "ip-addresses" parameter name is incorrect for the DHCPv4
+    // case - it is only valid for DHCPv6 case. Trying to set this
+    // parameter should result in error.
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"hostname\": \"foo.bar.isc.org\","
+        "\"ip-addresses\": \"2001:db8:1::1\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
+
 // This test verfies that the parser can parse the IPv6 reservation entry for
 // which hw-address is a host identifier.
 TEST_F(HostReservationParserTest, dhcp6HWaddr) {
@@ -459,5 +499,21 @@ TEST_F(HostReservationParserTest, dhcp6DuplicatedPrefix) {
     EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 }
 
+
+// This test verifies that the configuration parser for host reservations
+// throws an exception when unsupported parameter is specified.
+TEST_F(HostReservationParserTest, dhcp6invalidParameterName) {
+    // The "ip-address" parameter name is incorrect for the DHCPv6
+    // case - it is only valid for DHCPv4 case. Trying to set this
+    // parameter should result in error.
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"hostname\": \"foo.bar.isc.org\","
+        "\"ip-address\": \"192.0.2.3\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(10));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+}
 
 } // end of anonymous namespace

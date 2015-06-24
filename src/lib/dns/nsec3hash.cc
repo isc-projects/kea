@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012,2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -120,7 +120,7 @@ iterateSHA1(const uint8_t* input, size_t inlength,
     boost::scoped_ptr<Hash> hash(CryptoLink::getCryptoLink().createHash(SHA1));
     hash->update(input, inlength);
     hash->update(salt, saltlen); // this works whether saltlen == or > 0
-    hash->final(output);
+    hash->final(output, hash->getOutputLength());
 }
 
 string

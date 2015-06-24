@@ -37,7 +37,7 @@ namespace log {
 /// and the idea of DEBUG has been extended, as will be seen below.  In
 /// Kea terms, this is known as "severity"; the "logging level" usage will
 /// usually be used when talking about log4cplus aspects of the idea (as
-/// log4cplus uses that teminology).
+/// log4cplus uses that terminology).
 ///
 /// Debug level: This is a number that ranges from 0 to 99 and is used by the
 /// application to control the detail of debug output.  A value of 0 gives the
@@ -103,7 +103,7 @@ public:
     /// DEBUG0 being equivalent to DEBUG, the standard log level.  If the name
     /// is DEBUGn but n lies outside the range of debug levels, debug level
     /// specifies is coerced to the nearest valid value.  If the string is just
-    /// not recognised, a NOT_SET_LOG_LEVEL is returned.
+    /// not recognized, a NOT_SET_LOG_LEVEL is returned.
     ///
     /// \param level String representing the logging level.
     ///

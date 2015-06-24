@@ -2,10 +2,10 @@ The files in this directory implement a helper sub-library of the
 inter process locking for the log library.  We use our own locks
 because such locks are only available in relatively recent versions of
 log4cplus.  Also (against our usual practice) we somehow re-invented
-an in-house version of such a general purose library rather than
+an in-house version of such a general purpose library rather than
 existing proven tools such as boost::interprocess.  While we decided
 to go with the in-house version for the log library at least until we
-completely swith to log4cplus's native lock support, no other BIND 10
+completely switch to log4cplus's native lock support, no other BIND 10
 module should use this; they should use existing external
 tools/libraries.
 

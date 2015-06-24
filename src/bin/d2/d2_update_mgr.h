@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,8 +17,8 @@
 
 /// @file d2_update_mgr.h This file defines the class D2UpdateMgr.
 
+#include <asiolink/io_service.h>
 #include <exceptions/exceptions.h>
-#include <d2/d2_asio.h>
 #include <d2/d2_log.h>
 #include <d2/d2_queue_mgr.h>
 #include <d2/d2_cfg_mgr.h>
@@ -49,7 +49,7 @@ typedef std::map<TransactionKey, NameChangeTransactionPtr> TransactionList;
 ///
 /// D2UpdateMgr uses the services of D2QueueMgr to monitor the queue of
 /// NameChangeRequests and select and dequeue requests for processing.
-/// When request is dequeued for processing it is removed from the queue and
+/// When a request is dequeued for processing it is removed from the queue and
 /// wrapped in NameChangeTransaction and added to the D2UpdateMgr's list of
 /// transactions.
 ///
@@ -65,7 +65,7 @@ typedef std::map<TransactionKey, NameChangeTransactionPtr> TransactionList;
 /// transactions complete,  D2UpdateMgr removes them from the transaction list,
 /// replacing them with new transactions.
 ///
-/// D2UpdateMgr carries out each of the above steps, from with a method called
+/// D2UpdateMgr carries out each of the above steps, with a method called
 /// sweep().  This method is intended to be called as IO events complete.
 /// The upper layer(s) are responsible for calling sweep in a timely and cyclic
 /// manner.
@@ -100,7 +100,7 @@ public:
     /// @throw D2UpdateMgrError if either the queue manager or configuration
     /// managers are NULL, or max transactions is less than one.
     D2UpdateMgr(D2QueueMgrPtr& queue_mgr, D2CfgMgrPtr& cfg_mgr,
-                IOServicePtr& io_service,
+                asiolink::IOServicePtr& io_service,
                 const size_t max_transactions = MAX_TRANSACTIONS_DEFAULT);
 
     /// @brief Destructor
@@ -154,7 +154,7 @@ protected:
     ///
     /// If updates in a given direction are disabled requests for updates in
     /// that direction will be ignored.  For example: If a request is received
-    /// which asks for updates both directions but only forward updates are
+    /// which asks for updates in both directions but only forward updates are
     /// enabled; only the forward update will be attempted.  Effectively, the
     /// request will be treated as if it only asked for forward updates.
     ///
@@ -173,7 +173,7 @@ public:
     /// @brief Gets the D2UpdateMgr's IOService.
     ///
     /// @return returns a reference to the IOService
-    const IOServicePtr& getIOService() {
+    const asiolink::IOServicePtr& getIOService() {
         return (io_service_);
     }
 
@@ -246,7 +246,7 @@ private:
     /// passed into transactions to manager their IO events.
     /// (For future reference, multi-threaded transactions would each use their
     /// own IOService instance.)
-    IOServicePtr io_service_;
+    asiolink::IOServicePtr io_service_;
 
     /// @brief Maximum number of concurrent transactions.
     size_t max_transactions_;

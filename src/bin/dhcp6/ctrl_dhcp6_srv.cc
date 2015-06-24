@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,14 +14,18 @@
 
 #include <config.h>
 #include <cc/data.h>
+#include <config/command_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
-#include <hooks/hooks_manager.h>
 #include <dhcp6/json_config_parser.h>
+#include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::hooks;
+using namespace isc::stats;
 using namespace std;
 
 namespace isc {
@@ -146,8 +150,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     // log warnings. Since we allow that this fails for some interfaces there
     // is no need to rollback configuration if socket fails to open on any
     // of the interfaces.
-    CfgMgr::instance().getStagingCfg()->
-        getCfgIface().openSockets(AF_INET6, srv->getPort());
+    CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET6, srv->getPort());
 
     return (answer);
 }
@@ -159,6 +162,32 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
                   "There is another Dhcpv6Srv instance already.");
     }
     server_ = this; // remember this instance for use in callback
+
+    // Register supported commands in CommandMgr
+    CommandMgr::instance().registerCommand("shutdown",
+        boost::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));
+
+    /// @todo: register config-reload (see CtrlDhcpv4Srv::commandConfigReloadHandler)
+    /// @todo: register libreload (see CtrlDhcpv4Srv::commandLibReloadHandler)
+
+    // Register statistic related commands
+    CommandMgr::instance().registerCommand("statistic-get",
+        boost::bind(&StatsMgr::statisticGetHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-reset",
+        boost::bind(&StatsMgr::statisticResetHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-remove",
+        boost::bind(&StatsMgr::statisticRemoveHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-get-all",
+        boost::bind(&StatsMgr::statisticGetAllHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-reset-all",
+        boost::bind(&StatsMgr::statisticResetAllHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-remove-all",
+        boost::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
 }
 
 void ControlledDhcpv6Srv::shutdown() {
@@ -168,6 +197,18 @@ void ControlledDhcpv6Srv::shutdown() {
 
 ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
     cleanup();
+
+   // Close the command socket (if it exists).
+    CommandMgr::instance().closeCommandSocket();
+
+    // Deregister any registered commands
+    CommandMgr::instance().deregisterCommand("shutdown");
+    CommandMgr::instance().deregisterCommand("statistic-get");
+    CommandMgr::instance().deregisterCommand("statistic-reset");
+    CommandMgr::instance().deregisterCommand("statistic-remove");
+    CommandMgr::instance().deregisterCommand("statistic-get-all");
+    CommandMgr::instance().deregisterCommand("statistic-reset-all");
+    CommandMgr::instance().deregisterCommand("statistic-remove-all");
 
     server_ = NULL; // forget this instance. There should be no callback anymore
                     // at this stage anyway.

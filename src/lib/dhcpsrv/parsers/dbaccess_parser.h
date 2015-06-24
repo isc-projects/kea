@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -67,9 +67,8 @@ public:
     /// Parses the set of strings forming the database access specification and
     /// checks that all are OK.  In particular it checks:
     ///
-    /// - "type" is "memfile" or "mysql"
-    /// - If "type" is "memfile", checks that no other values are present: if
-    ///   they are, logs a warning that they will be ignored.
+    /// - "type" is "memfile", "mysql" or "postgresql"
+    /// - "lfc-interval" is a number from the range of 0 to 4294967295.
     ///
     /// Once all has been validated, constructs the database access string
     /// expected by the lease manager.
@@ -97,7 +96,7 @@ public:
     /// Creates an instance of this parser.
     ///
     /// @param param_name Name of the parameter used to access the
-    /// 	configuration.
+    ///         configuration.
     /// @param ctx Parser context.
     ///
     /// @return Pointer to a DbAccessParser.  The caller is responsible for

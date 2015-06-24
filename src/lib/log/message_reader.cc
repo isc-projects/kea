@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -115,9 +115,9 @@ MessageReader::parseDirective(const std::string& text) {
 
     } else {
 
-        // Unrecognised directive
+        // Unrecognized directive
         isc_throw_3(MessageException, "Unrecognized directive",
-                    LOG_UNRECOGNISED_DIRECTIVE, tokens[0],
+                    LOG_UNRECOGNIZED_DIRECTIVE, tokens[0],
                     lineno_);
     }
 }

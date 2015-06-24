@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcp/option_string.h>
+#include <sstream>
 
 namespace isc {
 namespace dhcp {
@@ -80,6 +81,15 @@ OptionString::unpack(OptionBufferConstIter begin,
                   << " - empty value is not accepted");
     }
     setData(begin, end);
+}
+
+std::string
+OptionString::toText(int indent) {
+    std::ostringstream output;
+    output << headerToText(indent) << ": "
+           << "\"" << getValue() << "\" (string)";
+
+    return (output.str());
 }
 
 } // end of isc::dhcp namespace

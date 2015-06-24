@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp_ddns/ncr_udp.h>
@@ -28,7 +30,7 @@ namespace dhcp {
 
 D2ClientMgr::D2ClientMgr() : d2_client_config_(new D2ClientConfig()),
     name_change_sender_(), private_io_service_(),
-    registered_select_fd_(dhcp_ddns::WatchSocket::INVALID_SOCKET) {
+    registered_select_fd_(dhcp_ddns::WatchSocket::SOCKET_NOT_VALID) {
     // Default constructor initializes with a disabled configuration.
 }
 
@@ -171,26 +173,51 @@ D2ClientMgr::analyzeFqdn(const bool client_s, const bool client_n,
 }
 
 std::string
-D2ClientMgr::generateFqdn(const asiolink::IOAddress& address) const {
+D2ClientMgr::generateFqdn(const asiolink::IOAddress& address,
+                          const bool trailing_dot) const {
     std::string hostname = address.toText();
     std::replace(hostname.begin(), hostname.end(),
                  (address.isV4() ? '.' : ':'), '-');
 
     std::ostringstream gen_name;
     gen_name << d2_client_config_->getGeneratedPrefix() << "-" << hostname;
-    return (qualifyName(gen_name.str()));
+    return (qualifyName(gen_name.str(), trailing_dot));
 }
 
-std::string
-D2ClientMgr::qualifyName(const std::string& partial_name) const {
-    std::ostringstream gen_name;
-    gen_name << partial_name << "." << d2_client_config_->getQualifyingSuffix();
 
-    // Tack on a trailing dot in case suffix doesn't have one.
+std::string
+D2ClientMgr::qualifyName(const std::string& partial_name,
+                         const bool trailing_dot) const {
+    std::ostringstream gen_name;
+
+    gen_name << partial_name;
+    if (!d2_client_config_->getQualifyingSuffix().empty()) {
+        std::string str = gen_name.str();
+        size_t len = str.length();
+        if ((len > 0) && (str[len - 1] != '.')) {
+            gen_name << ".";
+        }
+
+        gen_name << d2_client_config_->getQualifyingSuffix();
+    }
+
     std::string str = gen_name.str();
     size_t len = str.length();
-    if ((len > 0) && (str[len - 1] != '.')) {
-        gen_name << ".";
+
+    if (trailing_dot) {
+        // If trailing dot should be added but there is no trailing dot,
+        // append it.
+        if ((len > 0) && (str[len - 1] != '.')) {
+            gen_name << ".";
+        }
+
+    } else {
+        // If the trailing dot should not be appended but it is present,
+        // remove it.
+        if ((len > 0) && (str[len - 1] == '.')) {
+            gen_name.str(str.substr(0,len-1));
+        }
+
     }
 
     return (gen_name.str());
@@ -248,9 +275,9 @@ D2ClientMgr::amSending() const {
 void
 D2ClientMgr::stopSender() {
     /// Unregister sender's select-fd.
-    if (registered_select_fd_ != dhcp_ddns::WatchSocket::INVALID_SOCKET) {
+    if (registered_select_fd_ != dhcp_ddns::WatchSocket::SOCKET_NOT_VALID) {
         IfaceMgr::instance().deleteExternalSocket(registered_select_fd_);
-        registered_select_fd_ = dhcp_ddns::WatchSocket::INVALID_SOCKET;
+        registered_select_fd_ = dhcp_ddns::WatchSocket::SOCKET_NOT_VALID;
     }
 
     // If its not null, call stop.

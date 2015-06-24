@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -51,15 +51,16 @@ RateControl::getOutboundMessageCount() {
         // Reset number of exchanges.
         uint64_t due_exchanges = 0;
         // If rate is specified from the command line we have to
-        // synchornize with it.
+        // synchronize with it.
         if (getRate() != 0) {
             time_period period(send_due_, now);
             time_duration duration = period.length();
             // due_factor indicates the number of seconds that
             // sending next chunk of packets will take.
-            double due_factor = duration.fractional_seconds() /
-                time_duration::ticks_per_second();
-            due_factor += duration.total_seconds();
+            double due_factor =
+                static_cast<double>(duration.fractional_seconds()) /
+                static_cast<double>(time_duration::ticks_per_second());
+            due_factor += static_cast<double>(duration.total_seconds());
             // Multiplying due_factor by expected rate gives the number
             // of exchanges to be initiated.
             due_exchanges = static_cast<uint64_t>(due_factor * getRate());

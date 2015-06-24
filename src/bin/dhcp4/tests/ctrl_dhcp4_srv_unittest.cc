@@ -14,7 +14,8 @@
 
 #include <config.h>
 
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <hooks/hooks_manager.h>
@@ -68,8 +69,73 @@ public:
         HooksManager::unloadLibraries();
 
         // Get rid of any marker files.
-        static_cast<void>(unlink(LOAD_MARKER_FILE));
-        static_cast<void>(unlink(UNLOAD_MARKER_FILE));
+        static_cast<void>(remove(LOAD_MARKER_FILE));
+        static_cast<void>(remove(UNLOAD_MARKER_FILE));
+    }
+
+    /// @brief sends commands over specified UNIX socket
+    ///
+    /// @param command command to be sent (should be valid JSON)
+    /// @param response response received (expected to be a valid JSON)
+    /// @param socket_path UNIX socket path
+    ///
+    /// @return true if send/response exchange was successful, false otherwise
+    bool sendCommandUnixSocket(const std::string& command,
+                               std::string& response,
+                               const std::string& socket_path) {
+
+        // Create UNIX socket
+        int socket_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+        if (socket_fd < 0) {
+            ADD_FAILURE() << "Failed to open unix stream socket.";
+            return (false);
+        }
+
+        // Prepare socket address
+        struct sockaddr_un srv_addr;
+        memset(&srv_addr, 0, sizeof(struct sockaddr_un));
+        srv_addr.sun_family = AF_UNIX;
+        strncpy(srv_addr.sun_path, socket_path.c_str(), sizeof(srv_addr.sun_path));
+        socklen_t len = sizeof(srv_addr);
+
+        // Connect to the specified UNIX socket
+        int status = connect(socket_fd, (struct sockaddr*)&srv_addr, len);
+        if (status == -1) {
+            ADD_FAILURE() << "Failed to connect unix socket: fd=" << socket_fd
+                          << ", path=" << socket_path;
+            close(socket_fd);
+            return (false);
+        }
+
+
+        // Send command
+        cout << "Sending command: " << command << endl;
+        int bytes_sent = send(socket_fd, command.c_str(), command.length(), 0);
+        if (bytes_sent < command.length()) {
+            ADD_FAILURE() << "Failed to send " << command.length()
+                      << " bytes, send() returned " << bytes_sent;
+            close(socket_fd);
+            return (false);
+        }
+
+        // Receive response
+        /// @todo: this may block if server fails to respond. Some sort of
+        /// of a timer is needed.
+        char buf[65536];
+        memset(buf, 0, sizeof(buf));
+        int bytes_rcvd = recv(socket_fd, buf, sizeof(buf), 0);
+        if (bytes_rcvd < 0) {
+            ADD_FAILURE() << "Failed to receive a response. recv() returned "
+                      << bytes_rcvd;
+            close(socket_fd);
+            return (false);
+        }
+
+        // Convert the response to a string, close the socket and return
+        response = string(buf, bytes_rcvd);
+        cout << "Received response: " << response << endl;
+        close(socket_fd);
+        return (true);
     }
 };
 
@@ -154,6 +220,44 @@ TEST_F(CtrlDhcpv4SrvTest, libreload) {
     // they should append information to the loading marker file.
     EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1212"));
+}
+
+// This test checks which commands are registered by the DHCPv4 server.
+TEST_F(CtrlDhcpv4SrvTest, commandsRegistration) {
+
+    ConstElementPtr list_cmds = createCommand("list-commands");
+    ConstElementPtr answer;
+
+    // By default the list should be empty (except the standard list-commands
+    // supported by the CommandMgr itself)
+    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
+    ASSERT_TRUE(answer);
+    ASSERT_TRUE(answer->get("arguments"));
+    EXPECT_EQ("[ \"list-commands\" ]", answer->get("arguments")->str());
+
+    // Created server should register several additional commands.
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv4Srv(0));
+    );
+
+    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
+    ASSERT_TRUE(answer);
+    ASSERT_TRUE(answer->get("arguments"));
+    EXPECT_EQ("[ \"list-commands\", \"shutdown\", "
+              "\"statistic-get\", \"statistic-get-all\", "
+              "\"statistic-remove\", \"statistic-remove-all\", "
+              "\"statistic-reset\", \"statistic-reset-all\" ]",
+              answer->get("arguments")->str());
+
+    // Ok, and now delete the server. It should deregister its commands.
+    srv.reset();
+
+    // The list should be (almost) empty again.
+    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
+    ASSERT_TRUE(answer);
+    ASSERT_TRUE(answer->get("arguments"));
+    EXPECT_EQ("[ \"list-commands\" ]", answer->get("arguments")->str());
 }
 
 } // End of anonymous namespace

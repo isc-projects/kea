@@ -1,4 +1,4 @@
-// Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -65,6 +65,21 @@ struct
 TSIGKey::TSIGKeyImpl {
     TSIGKeyImpl(const Name& key_name, const Name& algorithm_name,
                 isc::cryptolink::HashAlgorithm algorithm,
+                size_t digestbits) :
+
+        key_name_(key_name), algorithm_name_(algorithm_name),
+        algorithm_(algorithm), digestbits_(digestbits),
+        secret_()
+    {
+        // Convert the key and algorithm names to the canonical form.
+        key_name_.downcase();
+        if (algorithm == isc::cryptolink::MD5) {
+            algorithm_name_ = TSIGKey::HMACMD5_NAME();
+        }
+        algorithm_name_.downcase();
+    }
+    TSIGKeyImpl(const Name& key_name, const Name& algorithm_name,
+                isc::cryptolink::HashAlgorithm algorithm,
                 size_t digestbits,
                 const void* secret, size_t secret_len) :
 
@@ -103,8 +118,13 @@ TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
                   "TSIGKey with unknown algorithm has non empty secret: " <<
                   key_name << ":" << algorithm_name);
     }
-    impl_ = new TSIGKeyImpl(key_name, algorithm_name, algorithm,
-                            digestbits, secret, secret_len);
+    if (secret == NULL) {
+        impl_ = new TSIGKeyImpl(key_name, algorithm_name, algorithm,
+                                digestbits);
+    } else {
+        impl_ = new TSIGKeyImpl(key_name, algorithm_name, algorithm,
+                                digestbits, secret, secret_len);
+    }
 }
 
 TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
@@ -161,10 +181,13 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
                       << str);
         }
 
-        impl_ = new TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
-                                digestbits,
-                                secret.empty() ? NULL : &secret[0],
-                                secret.size());
+        if (secret.empty()) {
+            impl_ = new TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
+                                    digestbits);
+        } else {
+            impl_ = new TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
+                                    digestbits, &secret[0], secret.size());
+        }
     } catch (const isc::Exception& e) {
         // 'reduce' the several types of exceptions name parsing and
         // Base64 decoding can throw to just the InvalidParameter

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
@@ -87,21 +89,15 @@ void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
     unpackOptions(OptionBuffer(begin, end));
 }
 
-std::string Option6IAAddr::toText(int indent /* =0 */) {
-    stringstream tmp;
-    for (int i=0; i<indent; i++)
-        tmp << " ";
+std::string Option6IAAddr::toText(int indent) {
+    std::stringstream output;
+    output << headerToText(indent, "IAADDR") << ": "
+           << "address=" << addr_
+           << ", preferred-lft=" << preferred_
+           << ", valid-lft=" << valid_;
 
-    tmp << "type=" << type_ << "(IAADDR) addr=" << addr_
-        << ", preferred-lft=" << preferred_  << ", valid-lft="
-        << valid_ << endl;
-
-    for (OptionCollection::const_iterator opt=options_.begin();
-         opt!=options_.end();
-         ++opt) {
-        tmp << (*opt).second->toText(indent+2);
-    }
-    return tmp.str();
+    output << suboptionsToText(indent + 2);
+    return (output.str());
 }
 
 uint16_t Option6IAAddr::len() {

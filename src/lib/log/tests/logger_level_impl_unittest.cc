@@ -154,7 +154,7 @@ TEST_F(LoggerLevelImplTest, FromString) {
     EXPECT_EQ(log4cplus::NOT_SET_LOG_LEVEL,
               LoggerLevelImpl::logLevelFromString("DEBU"));
     EXPECT_EQ(log4cplus::NOT_SET_LOG_LEVEL,
-              LoggerLevelImpl::logLevelFromString("unrecognised"));
+              LoggerLevelImpl::logLevelFromString("unrecognized"));
 }
 
 // ... and check the conversion back again.  All levels should convert to "DEBUG".

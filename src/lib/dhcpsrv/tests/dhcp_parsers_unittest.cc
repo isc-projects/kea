@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
@@ -107,7 +107,7 @@ TEST_F(DhcpParserTest, booleanParserTest) {
     EXPECT_NO_THROW(parser.build(element));
 
     // Verify that commit updates storage.
-    actual_value = ~test_value;
+    actual_value = !test_value;
     parser.commit();
     EXPECT_NO_THROW((actual_value = storage->getParam(name)));
     EXPECT_EQ(test_value, actual_value);
@@ -212,65 +212,6 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
     EXPECT_NO_THROW((actual_value = storage->getParam(name)));
     EXPECT_EQ(test_value, actual_value);
 }
-
-/// @brief Check InterfaceListConfigParser  basic functionality
-///
-/// Verifies that the parser:
-/// 1. Does not allow empty for storage.
-/// 2. Does not allow name other than "interfaces"
-/// 3. Parses list of interfaces and adds them to CfgMgr
-/// 4. Parses wildcard interface name and sets a CfgMgr flag which indicates
-/// that server will listen on all interfaces.
-TEST_F(DhcpParserTest, interfaceListParserTest) {
-    IfaceMgrTestConfig test_config(true);
-
-    const std::string name = "interfaces";
-
-    ParserContextPtr parser_context(new ParserContext(Option::V4));
-
-    // Verify that parser constructor fails if parameter name isn't "interface"
-    EXPECT_THROW(InterfaceListConfigParser("bogus_name", parser_context),
-                 isc::BadValue);
-
-    boost::scoped_ptr<InterfaceListConfigParser>
-        parser(new InterfaceListConfigParser(name, parser_context));
-    ElementPtr list_element = Element::createList();
-    list_element->add(Element::create("eth0"));
-
-    // This should parse the configuration and add eth0 and eth1 to the list
-    // of interfaces that server should listen on.
-    parser->build(list_element);
-    parser->commit();
-
-    // Use CfgMgr instance to check if eth0 and eth1 was added, and that
-    // eth2 was not added.
-    SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
-    ASSERT_TRUE(cfg);
-    ASSERT_NO_THROW(cfg->getCfgIface().openSockets(AF_INET, 10000));
-
-    EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
-    EXPECT_FALSE(test_config.socketOpen("eth1", AF_INET));
-
-    // Add keyword all to the configuration. This should activate all
-    // interfaces, including eth2, even though it has not been explicitly
-    // added.
-    list_element->add(Element::create("*"));
-
-    // Reset parser and configuration.
-    parser.reset(new InterfaceListConfigParser(name, parser_context));
-    cfg->getCfgIface().closeSockets();
-    CfgMgr::instance().clear();
-
-    parser->build(list_element);
-    parser->commit();
-
-    cfg = CfgMgr::instance().getStagingCfg();
-    ASSERT_NO_THROW(cfg->getCfgIface().openSockets(AF_INET, 10000));
-
-    EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET));
-    EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET));
-}
-
 
 /// @brief Check MACSourcesListConfigParser  basic functionality
 ///
@@ -592,8 +533,7 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
     ASSERT_TRUE(opt_ptr);
 
     // Verify that the option definition is correct.
-    std::string val = "type=100, len=4, data fields:\n "
-                      " #0 192.0.2.0 ( ipv4-address ) \n";
+    std::string val = "type=00100, len=00004: 192.0.2.0 (ipv4-address)";
 
     EXPECT_EQ(val, opt_ptr->toText());
 }
@@ -1095,7 +1035,7 @@ TEST_F(ParseConfigTest, validD2Config) {
 /// false only.
 TEST_F(ParseConfigTest, validDisabledD2Config) {
 
-    // Configuration string.  This contains a set of valid libraries.
+    // Configuration string.  This defines a disabled D2 client config.
     std::string config_str =
         "{ \"dhcp-ddns\" :"
         "    {"
@@ -1121,11 +1061,14 @@ TEST_F(ParseConfigTest, validDisabledD2Config) {
 /// default values
 TEST_F(ParseConfigTest, parserDefaultsD2Config) {
 
-    // Configuration string.  This contains a set of valid libraries.
+    // Configuration string.  This defines an enabled D2 client config
+    // with the mandatory parameter in such a case, all other parameters
+    // are optional and their default values will be used.
     std::string config_str =
         "{ \"dhcp-ddns\" :"
         "    {"
-        "     \"enable-updates\" : true"
+        "     \"enable-updates\" : true, "
+        "     \"qualifying-suffix\" : \"test.suffix.\" "
         "    }"
         "}";
 
@@ -1159,7 +1102,7 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
               d2_client_config->getReplaceClientName());
     EXPECT_EQ(D2ClientConfig::DFT_GENERATED_PREFIX,
               d2_client_config->getGeneratedPrefix());
-    EXPECT_EQ(D2ClientConfig::DFT_QUALIFYING_SUFFIX,
+    EXPECT_EQ("test.suffix.",
               d2_client_config->getQualifyingSuffix());
 }
 
@@ -1167,9 +1110,15 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
 /// @brief Check various invalid D2 client configurations.
 TEST_F(ParseConfigTest, invalidD2Config) {
     std::string invalid_configs[] = {
-        // Must supply at lease enable-updates
+        // Must supply at least enable-updates
         "{ \"dhcp-ddns\" :"
         "    {"
+        "    }"
+        "}",
+        // Must supply qualifying-suffix when updates are enabled
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true"
         "    }"
         "}",
         // Invalid server ip value
@@ -1808,3 +1757,7 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
     // Unparseable text that looks like IPv6 address, but has too many colons
     EXPECT_THROW(parser->build(json_bogus2), DhcpConfigError);
 }
+
+// There's no test for ControlSocketParser, as it is tested in the DHCPv4 code
+// (see CtrlDhcpv4SrvTest.commandSocketBasic in
+// src/bin/dhcp4/tests/ctrl_dhcp4_srv_unittest.cc).

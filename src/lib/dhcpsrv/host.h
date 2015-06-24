@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -295,9 +295,17 @@ public:
         return (duid_);
     }
 
+    /// @brief Returns the identifier (MAC or DUID) in binary form.
+    /// @return const reference to MAC or DUID in vector<uint8_t> form
     const std::vector<uint8_t>& getIdentifier() const;
 
+    /// @brief Returns the identifier type.
+    /// @return the identifier type
     IdentifierType getIdentifierType() const;
+
+    /// @brief Returns host identifier (mac or DUID) in printer friendly form.
+    /// @return text form of the identifier, including (duid= or mac=).
+    std::string getIdentifierAsText() const;
 
     /// @brief Sets new IPv4 subnet identifier.
     ///
@@ -329,8 +337,14 @@ public:
     ///
     /// @param address Address to be reserved for the client.
     ///
-    /// @throw isc::BadValue if the provided address is not an IPv4 address.
+    /// @throw isc::BadValue if the provided address is not an IPv4 address,
+    /// is a 0 address or broadcast address.
     void setIPv4Reservation(const asiolink::IOAddress& address);
+
+    /// @brief Removes the IPv4 reservation.
+    ///
+    /// Sets the IPv4 reserved address to 0.
+    void removeIPv4Reservation();
 
     /// @brief Returns reserved IPv4 address.
     ///
@@ -351,6 +365,12 @@ public:
     /// @return A range of iterators pointing to the reservations of
     /// the specified type.
     IPv6ResrvRange getIPv6Reservations(const IPv6Resrv::Type& type) const;
+
+    /// @brief Returns all IPv6 reservations.
+    ///
+    /// @return A range of iterators pointing to the reservations of
+    /// the specified type.
+    IPv6ResrvRange getIPv6Reservations() const;
 
     /// @brief Checks if there is at least one IPv6 reservation for this host.
     ///
@@ -380,9 +400,7 @@ public:
     /// @brief Adds new client class for DHCPv4.
     ///
     /// @param class_name Class name.
-    void addClientClass4(const std::string& class_name) {
-        addClientClassInternal(dhcp4_client_classes_, class_name);
-    }
+    void addClientClass4(const std::string& class_name);
 
     /// @brief Returns classes which DHCPv4 client is associated with.
     const ClientClasses& getClientClasses4() const {
@@ -392,14 +410,15 @@ public:
     /// @brief Adds new client class for DHCPv6.
     ///
     /// @param class_name Class name.
-    void addClientClass6(const std::string& class_name) {
-        addClientClassInternal(dhcp6_client_classes_, class_name);
-    }
+    void addClientClass6(const std::string& class_name);
 
     /// @brief Returns classes which DHCPv6 client is associated with.
     const ClientClasses& getClientClasses6() const {
         return (dhcp6_client_classes_);
     }
+
+    /// @brief Returns information about the host in the textual format.
+    std::string toText() const;
 
 private:
 

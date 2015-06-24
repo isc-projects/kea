@@ -4,6 +4,7 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests\"
 AM_CPPFLAGS += -DDHCP_DATA_DIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests\"
+AM_CPPFLAGS += -DKEA_LFC_BUILD_DIR=\"$(abs_top_builddir)/src/bin/lfc\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -17,7 +18,7 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 CLEANFILES = *.gcno *.gcda
 
 TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+        $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
@@ -53,13 +54,17 @@ TESTS += libdhcpsrv_unittests
 
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
 libdhcpsrv_unittests_SOURCES += addr_utilities_unittest.cc
-libdhcpsrv_unittests_SOURCES += alloc_engine_unittest.cc
+libdhcpsrv_unittests_SOURCES += alloc_engine_utils.cc alloc_engine_utils.h
+libdhcpsrv_unittests_SOURCES += alloc_engine_hooks_unittest.cc
+libdhcpsrv_unittests_SOURCES += alloc_engine4_unittest.cc
+libdhcpsrv_unittests_SOURCES += alloc_engine6_unittest.cc
 libdhcpsrv_unittests_SOURCES += callout_handle_store_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_hosts_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_iface_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_mac_source_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_def_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfg_rsoo_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_subnets4_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_subnets6_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfgmgr_unittest.cc
@@ -73,7 +78,9 @@ libdhcpsrv_unittests_SOURCES += host_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_reservation_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_reservations_list_parser_unittest.cc
+libdhcpsrv_unittests_SOURCES += ifaces_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_file_io.cc lease_file_io.h
+libdhcpsrv_unittests_SOURCES += lease_file_loader_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_factory_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_unittest.cc
@@ -132,6 +139,7 @@ libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcpsrv_unittests_LDADD += $(GTEST_LDADD)
 endif

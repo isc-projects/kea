@@ -47,7 +47,7 @@ public:
     /// Sets up a collection of three LibraryHandle objects to use in the test.
     CalloutManagerTest() {
 
-        // Set up the server hooks.  There is sone singleton for all tests,
+        // Set up the server hooks.  There is one singleton for all tests,
         // so reset it and explicitly set up the hooks for the test.
         ServerHooks& hooks = ServerHooks::getServerHooks();
         hooks.reset();
@@ -292,7 +292,7 @@ TEST_F(CalloutManagerTest, RegisterCallout) {
     EXPECT_EQ(13465, callout_value_);
 
     // Add a callout from library index 1 - this should appear between the
-    // callouts from library index 0 and linrary index 2.
+    // callouts from library index 0 and library index 2.
     getCalloutManager()->setLibraryIndex(1);
     getCalloutManager()->registerCallout("alpha", callout_seven);
     callout_value_ = 0;

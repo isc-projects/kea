@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -97,13 +97,13 @@ processLineException(MessageReader& reader, const char* what,
     }
 }
 
-// Check that it recognises invalid directives
+// Check that it recognizes invalid directives
 
 TEST_F(MessageReaderTest, InvalidDirectives) {
 
     // Check that a "$" with nothing else generates an error
-    processLineException(reader_, "$", LOG_UNRECOGNISED_DIRECTIVE);
-    processLineException(reader_, "$xyz", LOG_UNRECOGNISED_DIRECTIVE);
+    processLineException(reader_, "$", LOG_UNRECOGNIZED_DIRECTIVE);
+    processLineException(reader_, "$xyz", LOG_UNRECOGNIZED_DIRECTIVE);
 }
 
 // Check that it can parse a prefix
@@ -170,7 +170,7 @@ TEST_F(MessageReaderTest, Namespace) {
     EXPECT_NO_THROW(reader_.processLine("$NAMESPACE isc::log"));
     EXPECT_EQ(string("isc::log"), reader_.getNamespace());
 
-    // Check that the indication of the anonymous namespace will be recognised.
+    // Check that the indication of the anonymous namespace will be recognized.
     reader_.clearNamespace();
     EXPECT_NO_THROW(reader_.processLine("$NAMESPACE ::"));
     EXPECT_EQ(string("::"), reader_.getNamespace());

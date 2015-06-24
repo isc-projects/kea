@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
+#include <asiolink/io_service.h>
 #include <d_test_stubs.h>
 #include <d2/io_service_signal.h>
 
@@ -29,7 +32,7 @@ namespace d2 {
 class IOSignalTest : public ::testing::Test {
 public:
     /// @brief IOService instance to process IO.
-    IOServicePtr io_service_;
+    asiolink::IOServicePtr io_service_;
     /// @brief Failsafe timer to ensure test(s) do not hang.
     isc::asiolink::IntervalTimer test_timer_;
     /// @brief Maximum time should be allowed to run.
@@ -137,7 +140,7 @@ void dummyHandler(IOSignalId) {
 
 // Tests IOSignal constructor.
 TEST(IOSignal, construction) {
-    IOServicePtr io_service(new asiolink::IOService());
+    asiolink::IOServicePtr io_service(new asiolink::IOService());
     IOSignalPtr signal;
     IOSignalPtr signal2;
 
@@ -169,7 +172,7 @@ TEST(IOSignal, construction) {
 // Tests IOSignalQueue constructors and exercises queuing methods.
 TEST(IOSignalQueue, constructionAndQueuing) {
     IOSignalQueuePtr queue;
-    IOServicePtr io_service;
+    asiolink::IOServicePtr io_service;
 
     // Verify constructing with an empty IOService will throw.
     ASSERT_THROW(queue.reset(new IOSignalQueue(io_service)), IOSignalError);

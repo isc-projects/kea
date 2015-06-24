@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_vendor.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
@@ -235,6 +236,30 @@ TEST_F(OptionVendorTest, packUnpack6) {
 
     ASSERT_EQ(binary.size(), output.getLength());
     EXPECT_FALSE(memcmp(&binary[0], output.getData(), output.getLength()));
+}
+
+// Tests that the vendor option is correctly returned in the textual
+// format for DHCPv4 case.
+TEST_F(OptionVendorTest, toText4) {
+    OptionVendor option(Option::V4, 1024);
+    option.addOption(OptionPtr(new OptionUint32(Option::V4, 1, 100)));
+
+    EXPECT_EQ("type=125, len=011: 1024 (uint32) 6 (uint8),\n"
+              "options:\n"
+              "  type=001, len=004: 100 (uint32)",
+              option.toText());
+}
+
+// Tests that the vendor option is correctly returned in the textual
+// format for DHCPv6 case.
+TEST_F(OptionVendorTest, toText6) {
+    OptionVendor option(Option::V6, 2048);
+    option.addOption(OptionPtr(new OptionUint16(Option::V6, 1, 100)));
+
+    EXPECT_EQ("type=00017, len=00010: 2048 (uint32),\n"
+              "options:\n"
+              "  type=00001, len=00002: 100 (uint16)",
+              option.toText());
 }
 
 }

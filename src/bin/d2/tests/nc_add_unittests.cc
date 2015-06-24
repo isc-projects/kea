@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
+#include <asiolink/io_service.h>
 #include <d2/d2_cfg_mgr.h>
 #include <d2/d2_cfg_mgr.h>
 #include <d2/nc_add.h>
@@ -32,7 +35,7 @@ namespace {
 // to protected methods.
 class NameAddStub : public NameAddTransaction {
 public:
-    NameAddStub(IOServicePtr& io_service,
+    NameAddStub(asiolink::IOServicePtr& io_service,
                 dhcp_ddns::NameChangeRequestPtr& ncr,
                 DdnsDomainPtr& forward_domain,
                 DdnsDomainPtr& reverse_domain,
@@ -266,7 +269,7 @@ public:
 /// 1. Construction with invalid type of request
 /// 2. Valid construction functions properly
 TEST(NameAddTransaction, construction) {
-    IOServicePtr io_service(new isc::asiolink::IOService());
+    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
     D2CfgMgrPtr cfg_mgr(new D2CfgMgr());
 
     const char* msg_str =

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <asiolink/io_address.h>
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
 #include <list>
 
 #include <boost/shared_ptr.hpp>
@@ -71,7 +71,7 @@ public:
     }
 
     /// Does nothing.
-    virtual Pkt4Ptr receive(const Iface&, const SocketInfo&) {
+    virtual Pkt4Ptr receive(Iface&, const SocketInfo&) {
         return Pkt4Ptr();
     }
 
@@ -101,7 +101,7 @@ public:
     /// - Direct DHCPv4 traffic - communication with clients which do not
     /// have IP address assigned yet.
     ///
-    /// Enabling these modes requires root privilges so they must be
+    /// Enabling these modes requires root privileges so they must be
     /// disabled for unit testing.
     ///
     /// Note, that disabling broadcast options on sockets does not impact
@@ -205,6 +205,7 @@ public:
     using Dhcpv4Srv::selectSubnet;
     using Dhcpv4Srv::VENDOR_CLASS_PREFIX;
     using Dhcpv4Srv::shutdown_;
+    using Dhcpv4Srv::alloc_engine_;
 };
 
 class Dhcpv4SrvTest : public ::testing::Test {
@@ -276,7 +277,7 @@ public:
     /// @brief generates client-id option
     ///
     /// Generate client-id option of specified length
-    /// Ids with different lengths are sufficent to generate
+    /// Ids with different lengths are sufficient to generate
     /// unique ids. If more fine grained control is required,
     /// tests generate client-ids on their own.
     /// Sets client_id_ field.
@@ -335,21 +336,6 @@ public:
     /// @param expected_clientid expected value of client-id
     void checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_clientid);
 
-    /// @brief sets default fields in a captured packet
-    ///
-    /// Sets UDP ports, addresses and interface.
-    ///
-    /// @param pkt packet to have default fields set
-    void captureSetDefaultFields(const Pkt4Ptr& pkt);
-
-    /// @brief returns captured DISCOVER that went through a relay
-    ///
-    /// See method code for a detailed explanation. This is a discover from
-    /// docsis3.0 device (Cable Modem)
-    ///
-    /// @return relayed DISCOVER
-    Pkt4Ptr captureRelayedDiscover();
-
     /// @brief Create packet from output buffer of another packet.
     ///
     /// This function creates a packet using an output buffer from another
@@ -373,21 +359,8 @@ public:
     /// @return assertion result indicating if a function completed with
     /// success or failure.
     static ::testing::AssertionResult
-    createPacketFromBuffer(const Pkt4Ptr& src_pkt,
-                           Pkt4Ptr& dst_pkt);
-
-    /// @brief returns captured DISCOVER that went through a relay
-    ///
-    /// See method code for a detailed explanation. This is a discover from
-    /// eRouter1.0 device (CPE device integrated with cable modem)
-    ///
-    /// @return relayed DISCOVER
-    Pkt4Ptr captureRelayedDiscover2();
-
-    /// @brief generates a DHCPv4 packet based on provided hex string
-    ///
-    /// @return created packet
-    Pkt4Ptr packetFromCapture(const std::string& hex_string);
+    createPacketFromBuffer(const isc::dhcp::Pkt4Ptr& src_pkt,
+                           isc::dhcp::Pkt4Ptr& dst_pkt);
 
     /// @brief Tests if Discover or Request message is processed correctly
     ///
@@ -417,6 +390,23 @@ public:
     /// should be committed (if true), or not (if false).
     void configure(const std::string& config, NakedDhcpv4Srv& srv,
                    const bool commit = true);
+
+    /// @brief Pretents a packet of specified type was received.
+    ///
+    /// Instantiates fake network interfaces, configures passed Dhcpv4Srv,
+    /// then creates a message of specified type and sends it to the
+    /// server and then checks whether expected statstics were set
+    /// appropriately.
+    ///
+    /// @param srv the DHCPv4 server to be used
+    /// @param config JSON configuration to be used
+    /// @param pkt_type type of the packet to be faked
+    /// @param stat_name name of the expected statistic
+    void pretendReceivingPkt(NakedDhcpv4Srv& srv, const std::string& config,
+                             uint8_t pkt_type, const std::string& stat_name);
+
+    /// @brief Create @c Dhcpv4Exchange from client's query.
+    Dhcpv4Exchange createExchange(const Pkt4Ptr& query);
 
     /// @brief This function cleans up after the test.
     virtual void TearDown();

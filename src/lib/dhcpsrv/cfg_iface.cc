@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,11 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <util/strutil.h>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+#include <algorithm>
 
 using namespace isc::asiolink;
 
@@ -26,7 +29,7 @@ namespace dhcp {
 const char* CfgIface::ALL_IFACES_KEYWORD = "*";
 
 CfgIface::CfgIface()
-    : wildcard_used_(false) {
+    : wildcard_used_(false), socket_type_(SOCKET_RAW) {
 }
 
 void
@@ -38,26 +41,55 @@ bool
 CfgIface::equals(const CfgIface& other) const {
     return (iface_set_ == other.iface_set_ &&
             address_map_ == other.address_map_ &&
-            wildcard_used_ == other.wildcard_used_);
+            wildcard_used_ == other.wildcard_used_ &&
+            socket_type_ == other.socket_type_);
+}
+
+bool
+CfgIface::multipleAddressesPerInterfaceActive() const {
+    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+    BOOST_FOREACH(IfacePtr iface, ifaces) {
+        if (iface->countActive4() > 1) {
+            return (true);
+        }
+    }
+    return (false);
 }
 
 void
 CfgIface::openSockets(const uint16_t family, const uint16_t port,
                       const bool use_bcast) const {
+    // Close any open sockets because we're going to modify some properties
+    // of the IfaceMgr. Those modifications require that sockets are closed.
+    closeSockets();
     // If wildcard interface '*' was not specified, set all interfaces to
     // inactive state. We will later enable them selectively using the
     // interface names specified by the user. If wildcard interface was
     // specified, mark all interfaces active. In all cases, mark loopback
     // inactive.
     setState(family, !wildcard_used_, true);
+    IfaceMgr& iface_mgr = IfaceMgr::instance();
     // Remove selection of unicast addresses from all interfaces.
-    IfaceMgr::instance().clearUnicasts();
+    iface_mgr.clearUnicasts();
+    // For the DHCPv4 server, if the user has selected that raw sockets
+    // should be used, we will try to configure the Interface Manager to
+    // support the direct responses to the clients that don't have the
+    // IP address. This should effectively turn on the use of raw
+    // sockets. However, this may be unsupported on some operating
+    // systems, so there is no guarantee.
+    if ((family == AF_INET) && (!IfaceMgr::instance().isTestMode())) {
+        iface_mgr.setMatchingPacketFilter(socket_type_ == SOCKET_RAW);
+        if ((socket_type_ == SOCKET_RAW) &&
+            !iface_mgr.isDirectResponseSupported()) {
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED);
+        }
+    }
     // If there is no wildcard interface specified, we will have to iterate
     // over the names specified by the caller and enable them.
     if (!wildcard_used_) {
         for (IfaceSet::const_iterator iface_name = iface_set_.begin();
              iface_name != iface_set_.end(); ++iface_name) {
-            Iface* iface = IfaceMgr::instance().getIface(*iface_name);
+            IfacePtr iface = IfaceMgr::instance().getIface(*iface_name);
             // This shouldn't really happen because we are checking the
             // names of interfaces when they are being added (use()
             // function). But, if someone has triggered detection of
@@ -70,20 +102,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
 
             } else if (family == AF_INET) {
                 iface->inactive4_ = false;
-                ExplicitAddressMap::const_iterator addr =
-                    address_map_.find(iface->getName());
-                // If user has specified an address to listen on, let's activate
-                // only this address.
-                if (addr != address_map_.end()) {
-                    iface->setActive(addr->second, true);
-
-                // Otherwise, activate first one.
-                } else {
-                    IOAddress address(0);
-                    if (iface->getAddress4(address)) {
-                        iface->setActive(address, true);
-                    }
-                }
+                setIfaceAddrsState(family, true, *iface);
 
             } else {
                 iface->inactive6_ = false;
@@ -91,24 +110,26 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
         }
     }
 
-    // Select unicast sockets. It works only for V6. Ignore for V4.
-    if (family == AF_INET6) {
-        for (ExplicitAddressMap::const_iterator unicast = address_map_.begin();
-             unicast != address_map_.end(); ++unicast) {
-            Iface* iface = IfaceMgr::instance().getIface(unicast->first);
-            if (iface == NULL) {
-                isc_throw(Unexpected,
-                          "fail to open unicast socket on interface '"
-                          << unicast->first << "' as this interface doesn't"
-                          " exist");
-            }
+    // Select unicast sockets for DHCPv6 or activate specific IPv4 addresses
+    // for DHCPv4.
+    for (ExplicitAddressMap::const_iterator unicast = address_map_.begin();
+         unicast != address_map_.end(); ++unicast) {
+        IfacePtr iface = IfaceMgr::instance().getIface(unicast->first);
+        if (iface == NULL) {
+            isc_throw(Unexpected,
+                      "fail to open unicast socket on interface '"
+                      << unicast->first << "' as this interface doesn't"
+                      " exist");
+        }
+        if (family == AF_INET6) {
             iface->addUnicast(unicast->second);
             iface->inactive6_ = false;
+
+        } else {
+            iface->setActive(unicast->second, true);
+            iface->inactive4_ = false;
         }
     }
-
-    // Before opening any sockets, close existing ones.
-    closeSockets();
 
     // Set the callback which is called when the socket fails to open
     // for some specific interface. This callback will simply log a
@@ -117,8 +138,18 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
         boost::bind(&CfgIface::socketOpenErrorHandler, _1);
     bool sopen;
     if (family == AF_INET) {
-        sopen = IfaceMgr::instance().openSockets4(port, use_bcast,
-                                                  error_callback);
+        // Use broadcast only if we're using raw sockets. For the UDP sockets,
+        // we only handle the relayed (unicast) traffic.
+        const bool can_use_bcast = use_bcast && (socket_type_ == SOCKET_RAW);
+        // Opening multiple raw sockets handling brodcast traffic on the single
+        // interface may lead to processing the same message multiple times.
+        // We don't prohibit such configuration because raw sockets can as well
+        // handle the relayed traffic. We have to issue a warning, however, to
+        // draw administrator's attention.
+        if (can_use_bcast && multipleAddressesPerInterfaceActive()) {
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE);
+        }
+        sopen = IfaceMgr::instance().openSockets4(port, can_use_bcast, error_callback);
     } else {
         // use_bcast is ignored for V6.
         sopen = IfaceMgr::instance().openSockets6(port, error_callback);
@@ -136,32 +167,34 @@ CfgIface::reset() {
     wildcard_used_ = false;
     iface_set_.clear();
     address_map_.clear();
+    useSocketType(AF_INET, SOCKET_RAW);
 }
 
 void
 CfgIface::setState(const uint16_t family, const bool inactive,
                    const bool loopback_inactive) const {
-    IfaceMgr::IfaceCollection ifaces = IfaceMgr::instance().getIfaces();
-    for (IfaceMgr::IfaceCollection::iterator iface = ifaces.begin();
-         iface != ifaces.end(); ++iface) {
-        Iface* iface_ptr = IfaceMgr::instance().getIface(iface->getName());
-        bool iface_inactive = iface_ptr->flag_loopback_ ?
-            loopback_inactive : inactive;
+    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+    BOOST_FOREACH(IfacePtr iface, ifaces) {
+        bool iface_inactive = iface->flag_loopback_ ? loopback_inactive : inactive;
         if (family == AF_INET) {
-            iface_ptr->inactive4_ = iface_inactive;
+            iface->inactive4_ = iface_inactive;
         } else {
-            iface_ptr->inactive6_ = iface_inactive;
+            iface->inactive6_ = iface_inactive;
         }
 
         // Activate/deactivate all addresses.
-        const Iface::AddressCollection addresses = iface_ptr->getAddresses();
-        for (Iface::AddressCollection::const_iterator addr_it =
-                 addresses.begin(); addr_it != addresses.end(); ++addr_it) {
-            if (addr_it->get().getFamily() == family) {
-                iface_ptr->setActive(addr_it->get(), !iface_inactive);
-            }
-        }
+        setIfaceAddrsState(family, !inactive, *iface);
+    }
+}
 
+void
+CfgIface::setIfaceAddrsState(const uint16_t family, const bool active,
+                             Iface& iface) const {
+    // Activate/deactivate all addresses.
+    BOOST_FOREACH(Iface::Address addr, iface.getAddresses()) {
+        if (addr.get().getFamily() == family) {
+            iface.setActive(addr.get(), active);
+        }
     }
 }
 
@@ -170,11 +203,41 @@ CfgIface::socketOpenErrorHandler(const std::string& errmsg) {
     LOG_WARN(dhcpsrv_logger, DHCPSRV_OPEN_SOCKET_FAIL).arg(errmsg);
 }
 
+std::string
+CfgIface::socketTypeToText() const {
+    switch (socket_type_) {
+    case SOCKET_RAW:
+        return ("raw");
+
+    case SOCKET_UDP:
+        return ("udp");
+
+    default:
+        ;
+    }
+
+    isc_throw(Unexpected, "unsupported socket type " << socket_type_);
+}
+
+CfgIface::SocketType
+CfgIface::textToSocketType(const std::string& socket_type_name) const {
+    if (socket_type_name == "udp") {
+        return (SOCKET_UDP);
+
+    } else if (socket_type_name == "raw") {
+        return (SOCKET_RAW);
+
+    } else {
+        isc_throw(InvalidSocketType, "unsupported socket type '"
+                  << socket_type_name << "'");
+    }
+}
+
 void
 CfgIface::use(const uint16_t family, const std::string& iface_name) {
-    // The interface name specified may have two formats, e.g.:
-    // - eth0
-    // - eth0/2001:db8:1::1.
+    // The interface name specified may have two formats:
+    // - "interface-name", e.g. eth0
+    // - "interface-name/address", e.g. eth0/10.0.0.1 or eth/2001:db8:1::1
     // The latter format is used to open unicast socket on the specified
     // interface. Here we are detecting which format was used and we strip
     // all extraneous spaces.
@@ -188,7 +251,7 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
             isc_throw(InvalidIfaceName,
                       "empty interface name used in configuration");
 
-        } if (name != ALL_IFACES_KEYWORD) {
+        } else if (name != ALL_IFACES_KEYWORD) {
             if (IfaceMgr::instance().getIface(name) == NULL) {
                 isc_throw(NoSuchIface, "interface '" << name
                           << "' doesn't exist in the system");
@@ -207,7 +270,7 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
 
     } else {
         // The interface name includes the address on which the socket should
-        // be opened, we we need to split interface name and the address to
+        // be opened, and we need to split interface name and the address to
         // two variables.
         name = util::str::trim(iface_name.substr(0, pos));
         addr_str = util::str::trim(iface_name.substr(pos + 1));
@@ -237,8 +300,8 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
         }
 
         // Interface must exist.
-        Iface* iface = IfaceMgr::instance().getIface(name);
-        if (iface == NULL) {
+        IfacePtr iface = IfaceMgr::instance().getIface(name);
+        if (!iface) {
             isc_throw(NoSuchIface, "interface '" << name
                       << "' doesn't exist in the system");
 
@@ -277,13 +340,21 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
                       << addr << "' assigned");
         }
 
-        // Insert address and the interface to the collection of unicast
-        // addresses.
-        if (address_map_.find(name) != address_map_.end()) {
-            isc_throw(DuplicateIfaceName, "must not select address '"
+        // For the IPv4, if the interface name was specified (instead of the interface-
+        // address tuple) all addresses are already activated. Adding an explicit address
+        // for the interface should result in error.
+        if ((family == AF_INET) && (iface_set_.find(iface->getName()) != iface_set_.end())) {
+            isc_throw(DuplicateIfaceName, "interface '" << iface->getName()
+                      << "' has already been selected");
+        }
+
+        // Check if the address hasn't been selected already.
+        std::pair<const std::string, IOAddress> iface_address_tuple(name, addr);
+        if (std::find(address_map_.begin(), address_map_.end(),
+                      iface_address_tuple) != address_map_.end()) {
+            isc_throw(DuplicateAddress, "must not select address '"
                       << addr << "' for interface '" << name << "' "
-                      "because another address has already been"
-                      " specified for this interface");
+                      "because this address is already selected");
         }
 
         if (family == AF_INET6) {
@@ -297,12 +368,13 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
         address_map_.insert(std::pair<std::string, IOAddress>(name, addr));
     }
 
-    // If interface name was explicitly specified and we're not parsing
-    // a unicast IPv6 address, add the interface to the interface set.
-    if ((name != ALL_IFACES_KEYWORD) &&
-        ((family == AF_INET) || ((family == AF_INET6) && addr_str.empty()))) {
-        // If interface has already been specified.
-        if (iface_set_.find(name) != iface_set_.end()) {
+    // If interface name was explicitly specified without an address, we will
+    // insert the interface name to the set of enabled interfaces.
+    if ((name != ALL_IFACES_KEYWORD) && addr_str.empty()) {
+        // An interface has been selected or an IPv4 address on this interface
+        // has been selected it is not allowed to select the whole interface.
+        if ((iface_set_.find(name) != iface_set_.end()) ||
+            ((family == AF_INET) && address_map_.count(name) > 0)) {
             isc_throw(DuplicateIfaceName, "interface '" << name
                       << "' has already been specified");
         }
@@ -314,6 +386,24 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
         }
         iface_set_.insert(name);
     }
+}
+
+void
+CfgIface::useSocketType(const uint16_t family,
+                        const SocketType& socket_type) {
+    if (family != AF_INET) {
+        isc_throw(InvalidSocketType, "socket type must not be specified for"
+                  " the DHCPv6 server");
+    }
+    socket_type_ = socket_type;
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT)
+        .arg(socketTypeToText());
+}
+
+void
+CfgIface::useSocketType(const uint16_t family,
+                        const std::string& socket_type_name) {
+    useSocketType(family, textToSocketType(socket_type_name));
 }
 
 } // end of isc::dhcp namespace

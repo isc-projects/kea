@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <d2/d2_log.h>
 #include <d2/nc_trans.h>
@@ -44,7 +46,7 @@ const int NameChangeTransaction::NCT_DERIVED_EVENT_MIN;
 const unsigned int NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
 
 NameChangeTransaction::
-NameChangeTransaction(IOServicePtr& io_service,
+NameChangeTransaction(asiolink::IOServicePtr& io_service,
                       dhcp_ddns::NameChangeRequestPtr& ncr,
                       DdnsDomainPtr& forward_domain,
                       DdnsDomainPtr& reverse_domain,
@@ -87,9 +89,9 @@ NameChangeTransaction::~NameChangeTransaction(){
 
 void
 NameChangeTransaction::startTransaction() {
-    LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
+    LOG_DEBUG(d2_to_dns_logger, DBGLVL_TRACE_DETAIL,
               DHCP_DDNS_STARTING_TRANSACTION)
-              .arg(getTransactionKey().toStr());
+              .arg(getRequestId());
 
     setNcrStatus(dhcp_ddns::ST_PENDING);
     startModel(READY_ST);
@@ -102,9 +104,9 @@ NameChangeTransaction::operator()(DNSClient::Status status) {
     // runModel is exception safe so we are good to call it here.
     // It won't exit until we hit the next IO wait or the state model ends.
     setDnsUpdateStatus(status);
-    LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
+    LOG_DEBUG(d2_to_dns_logger, DBGLVL_TRACE_DETAIL,
               DHCP_DDNS_UPDATE_RESPONSE_RECEIVED)
-              .arg(getTransactionKey().toStr())
+              .arg(getRequestId())
               .arg(current_server_->toText())
               .arg(responseString());
 
@@ -181,10 +183,10 @@ NameChangeTransaction::sendUpdate(const std::string& comment) {
                               d2_params->getDnsServerTimeout(), tsig_key_);
         // Message is on its way, so the next event should be NOP_EVT.
         postNextEvent(NOP_EVT);
-        LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
+        LOG_DEBUG(d2_to_dns_logger, DBGLVL_TRACE_DETAIL,
                   DHCP_DDNS_UPDATE_REQUEST_SENT)
+                  .arg(getRequestId())
                   .arg(comment)
-                  .arg(getTransactionKey().toStr())
                   .arg(current_server_->toText());
     } catch (const std::exception& ex) {
         // We were unable to initiate the send.
@@ -195,7 +197,9 @@ NameChangeTransaction::sendUpdate(const std::string& comment) {
         // DNSClient callback.  Any problem here most likely means the request
         // is corrupt in some way and cannot be completed, therefore we will
         // log it and transition it to failure.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_TRANS_SEND_ERROR).arg(ex.what());
+        LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_TRANS_SEND_ERROR)
+                  .arg(getRequestId())
+                  .arg(ex.what());
         transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
     }
 }
@@ -254,8 +258,9 @@ NameChangeTransaction::verifyStates() {
 void
 NameChangeTransaction::onModelFailure(const std::string& explanation) {
     setNcrStatus(dhcp_ddns::ST_FAILED);
-    LOG_ERROR(dctl_logger, DHCP_DDNS_STATE_MODEL_UNEXPECTED_ERROR)
-                  .arg(explanation);
+    LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_STATE_MODEL_UNEXPECTED_ERROR)
+              .arg(getRequestId())
+              .arg(explanation);
 }
 
 void
@@ -399,6 +404,11 @@ NameChangeTransaction::getNcr() const {
 const TransactionKey&
 NameChangeTransaction::getTransactionKey() const {
     return (ncr_->getDhcid());
+}
+
+std::string
+NameChangeTransaction::getRequestId() const {
+    return (ncr_->getRequestId());
 }
 
 dhcp_ddns::NameChangeStatus

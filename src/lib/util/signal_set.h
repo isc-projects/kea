@@ -37,12 +37,12 @@ public:
 
 /// @brief Defines a set of integer signal identifiers: SIGHUP, SIGTERM...
 typedef std::set<int> SigIntSet;
-/// @gbrief Pointer to a set of signal identifiers
+/// @brief Pointer to a set of signal identifiers
 typedef boost::shared_ptr<SigIntSet> SigIntSetPtr;
 
 /// @brief Defines a list of integer signal identifiers: SIGHUP, SIGTERM...
 typedef std::list<int> SigIntList;
-/// @gbrief Pointer to a list of signal identifiers
+/// @brief Pointer to a list of signal identifiers
 typedef boost::shared_ptr<SigIntList> SigIntListPtr;
 
 
@@ -171,7 +171,7 @@ public:
     /// @param handler the signal handler to register
     static void setOnReceiptHandler(BoolSignalHandler handler);
 
-    /// @brief Unregeisters the onreceipt signal handler
+    /// @brief Unregisters the onreceipt signal handler
     static void clearOnReceiptHandler();
 
     /// @brief Invokes the onreceipt handler if it exists
@@ -180,11 +180,11 @@ public:
     /// invoke the registered handler (if one) immediately upon receipt of
     /// a registered signal.
     ///
-    /// Prior to invoking the handler, it sets signal action for the given
-    /// signal to SIG_IGN which prevents any repeat signal occurences from
-    /// queuing while the handler is executing.  Upon completion of the handler,
-    /// the signal action is restored which reenables receipt and handling of
-    /// the signal.
+    /// Prior to invoking the handler, it sets signal action for the
+    /// given signal to SIG_IGN which prevents any repeat signal
+    /// occurrences from queuing while the handler is executing.  Upon
+    /// completion of the handler, the signal action is restored which
+    /// re-enables receipt and handling of the signal.
     ///
     /// @param sig Signal number.
     /// @return Boolean false if no on-receipt handler was registered,
@@ -197,9 +197,7 @@ private:
     ///
     /// This function blocks the signals in a set to prevent race condition
     /// between the signal handler and the new signal coming in.
-    void block() const {
-        maskSignals(SIG_BLOCK);
-    }
+    void block() const;
 
     /// @brief Removes the signal from the set.
     ///
@@ -235,9 +233,7 @@ private:
     /// @brief Unblocks signals in the set.
     ///
     /// This function unblocks the signals in a set.
-    void unblock() const {
-        maskSignals(SIG_UNBLOCK);
-    }
+    void unblock() const;
 
     /// @brief Stores the set of signals registered in this signal set.
     std::set<int> local_signals_;

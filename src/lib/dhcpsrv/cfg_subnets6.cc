@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,9 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/subnet_id.h>
+#include <stats/stats_mgr.h>
 
 using namespace isc::asiolink;
 
@@ -176,6 +178,49 @@ CfgSubnets6::isDuplicate(const Subnet6& subnet) const {
         }
     }
     return (false);
+}
+
+void
+CfgSubnets6::removeStatistics() {
+    using namespace isc::stats;
+
+    // For each v6 subnet currently configured, remove the statistics.
+    for (Subnet6Collection::const_iterator subnet6 = subnets_.begin();
+         subnet6 != subnets_.end(); ++subnet6) {
+
+        StatsMgr::instance().del(StatsMgr::generateName("subnet",
+                                                        (*subnet6)->getID(),
+                                                        "total-nas"));
+
+        StatsMgr::instance().del(StatsMgr::generateName("subnet",
+                                                        (*subnet6)->getID(),
+                                                        "assigned-nas"));
+
+        StatsMgr::instance().del(StatsMgr::generateName("subnet",
+                                                        (*subnet6)->getID(),
+                                                        "total-pds"));
+
+        StatsMgr::instance().del(StatsMgr::generateName("subnet",
+                                                        (*subnet6)->getID(),
+                                                        "assigned-pds"));
+    }
+}
+
+void
+CfgSubnets6::updateStatistics() {
+    using namespace isc::stats;
+
+    for (Subnet6Collection::const_iterator subnet = subnets_.begin();
+         subnet != subnets_.end(); ++subnet) {
+
+        StatsMgr::instance().setValue(
+            StatsMgr::generateName("subnet", (*subnet)->getID(), "total-nas"),
+            static_cast<int64_t>((*subnet)->getPoolCapacity(Lease::TYPE_NA)));
+
+        StatsMgr::instance().setValue(
+            StatsMgr::generateName("subnet", (*subnet)->getID(), "total-pds"),
+            static_cast<int64_t>((*subnet)->getPoolCapacity(Lease::TYPE_PD)));
+    }
 }
 
 } // end of namespace isc::dhcp

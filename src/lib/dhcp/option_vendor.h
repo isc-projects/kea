@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -92,7 +92,24 @@ public:
     /// @return length of this option
     virtual uint16_t len();
 
+    /// @brief Returns the option in the textual format.
+    ///
+    /// @param indent Number of spaces to be inserted before the text.
+    ///
+    /// @return Vendor option in the textual format.
+    virtual std::string toText(int indent = 0);
+
 private:
+
+    /// @brief Calculates the data-len value for DHCPv4.
+    ///
+    /// The data-len field is only present in DHCPv4 space. It follows
+    /// the vendor-id field. This method is called from the
+    /// @c OptionVendor::pack and @c OptionVendor::toText to calculate
+    /// this value.
+    ///
+    /// @return Returns calculated data-len value.
+    uint8_t dataLen();
 
     uint32_t vendor_id_;  ///< Enterprise-id
 };

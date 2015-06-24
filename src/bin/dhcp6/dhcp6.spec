@@ -17,18 +17,26 @@
         }
       },
 
-      { "item_name": "interfaces",
-        "item_type": "list",
+      { "item_name": "interfaces-config",
+        "item_type": "map",
         "item_optional": false,
-        "item_default": [ "*" ],
-        "list_item_spec":
+        "item_default": {},
+        "map_item_spec": [
         {
-          "item_name": "interface_name",
-          "item_type": "string",
-          "item_optional": false,
-          "item_default": "*"
+            "item_name": "interfaces",
+            "item_type": "list",
+            "item_optional": false,
+            "item_default": [ "*" ],
+            "list_item_spec":
+            {
+                "item_name": "interface_name",
+                "item_type": "string",
+                "item_optional": false,
+                "item_default": "*"
+            }
         }
-      } ,
+        ]
+      },
 
       { "item_name": "renew-timer",
         "item_type": "integer",
@@ -191,6 +199,12 @@
                 "item_type": "boolean",
                 "item_optional": true,
                 "item_default": true
+            },
+            {
+                "item_name": "lfc-interval",
+                "item_type": "integer",
+                "item_optional": true,
+                "item_default": 0
             }
         ]
       },
@@ -229,6 +243,12 @@
                   "item_type": "string",
                   "item_optional": false,
                   "item_default": ""
+                },
+
+                { "item_name": "rapid-commit",
+                  "item_type": "boolean",
+                  "item_optional": false,
+                  "item_default": false
                 },
 
                 { "item_name": "renew-timer",
@@ -419,6 +439,13 @@
                         }
                       } ]
                   }
+                },
+                {
+                  "item_name": "reservation-mode",
+                  "item_type": "string",
+                  "item_optional": true,
+                  "item_default": "all",
+                  "item_description": "Specifies allowed host reservation types. Disabling unused modes may improve performance. Allowed values: disabled, off, out-of-pool, all"
                 } ]
             }
       },
@@ -540,7 +567,7 @@
                 "item_name": "qualifying-suffix",
                 "item_type": "string",
                 "item_optional": true,
-                "item_default": "example.com",
+                "item_default": "",
                 "item_description": "Fully qualified domain-name suffix if partial name provided by client"
             },
         ]

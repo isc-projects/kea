@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -65,8 +65,8 @@ public:
     /// @param io_service is the io_service used by the caller for
     /// asynchronous event handling.
     ///
-    /// @throw DProcessBaseError is io_service is NULL.
-    D2Process(const char* name, IOServicePtr io_service);
+    /// @throw DProcessBaseError if io_service is NULL.
+    D2Process(const char* name, const asiolink::IOServicePtr& io_service);
 
     /// @brief Called after instantiation to perform initialization unique to
     /// D2.
@@ -86,7 +86,7 @@ public:
     /// Once entered, the main control thread remains inside this method
     /// until shutdown.  The event loop logic is as follows:
     /// @code
-    ///    while should not down {
+    ///    while should not shutdown {
     ///       process queue manager state change
     ///       process completed jobs
     ///       dequeue new jobs
@@ -146,7 +146,7 @@ public:
     ///
     /// This method may be called multiple times during the process lifetime.
     /// Certainly once during process startup, and possibly later if the user
-    /// alters configuration. This method must not throw, it should catch any
+    /// alters the configuration. This method must not throw, it should catch any
     /// processing errors and return a success or failure answer as described
     /// below.
     ///
@@ -217,7 +217,7 @@ protected:
 
     /// @brief Initializes then starts the queue manager.
     ///
-    /// This method is initializes the queue manager with the current
+    /// This method initializes the queue manager with the current
     /// configuration parameters and instructs it to start listening.
     /// Note the existing listener instance (if it exists) is destroyed,
     /// and that a new listener is created during initialization.

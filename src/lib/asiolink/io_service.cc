@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -59,14 +59,26 @@ public:
     ///
     /// This method does not return control to the caller until
     /// the \c stop() method is called via some handler.
-    void run() { io_service_.run(); };
+    void run() {
+        io_service_.run();
+    };
 
     /// \brief Run the underlying event loop for a single event.
     ///
     /// This method return control to the caller as soon as the
     /// first handler has completed.  (If no handlers are ready when
     /// it is run, it will block until one is.)
-    void run_one() { io_service_.run_one();} ;
+    void run_one() {
+        io_service_.run_one();
+    };
+
+    /// \brief Run the underlying event loop for a ready events.
+    ///
+    /// This method executes handlers for all ready events and returns.
+    /// It will return immediately if there are no ready events.
+    void poll() {
+        io_service_.poll();
+    };
 
     /// \brief Stop the underlying event loop.
     ///
@@ -105,6 +117,11 @@ IOService::run() {
 void
 IOService::run_one() {
     io_impl_->run_one();
+}
+
+void
+IOService::poll() {
+    io_impl_->poll();
 }
 
 void

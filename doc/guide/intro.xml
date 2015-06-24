@@ -15,10 +15,10 @@
     </para>
 
     <para>
-      Kea was initially developed as a part of the BIND 10 framework
-      (<ulink url="http://bind10.isc.org"/>). In early 2014, ISC
-      made the decision to discontinue active development of BIND 10 and
-      continue development of Kea as standalone DHCP software.
+      Kea was initially developed as a part of the BIND 10 framework.
+      In early 2014, ISC made the decision to discontinue active
+      development of BIND 10 and continue development of Kea as
+      standalone DHCP software.
     </para>
 
     <para>
@@ -135,6 +135,25 @@
               This process acts as an intermediary between the DHCP servers
               and DNS server. It receives name update requests from the DHCP
               servers and sends DNS Update messages to the DNS servers.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>kea-admin</command> &mdash;
+              A tool useful for database backend maintenance (creating new
+              database, checking versions, upgrading etc.)
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>kea-lfc</command> &mdash;
+              This process removes redundant information from the files used
+              to provide persistent storage for the memfile data base backend.
+              The service is written to run as a stand alone process.  While it
+              can be started externally it should be started by the Kea DHCP
+              servers.
             </simpara>
           </listitem>
 

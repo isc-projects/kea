@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,9 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/docsis3_option_defs.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
+#include <dhcp/option4_addrlst.h>
 #include <dhcp/pkt4.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
@@ -275,7 +277,7 @@ TEST_F(Pkt4Test, constructor) {
 
     // Just some dummy payload.
     uint8_t testData[250];
-    for (int i = 0; i < 250; i++) {
+    for (uint8_t i = 0; i < 250; i++) {
         testData[i] = i;
     }
 
@@ -413,12 +415,12 @@ TEST_F(Pkt4Test, hwAddr) {
 
     scoped_ptr<Pkt4> pkt;
     // let's test each hlen, from 0 till 16
-    for (int macLen = 0; macLen < Pkt4::MAX_CHADDR_LEN; macLen++) {
-        for (int i = 0; i < Pkt4::MAX_CHADDR_LEN; i++) {
+    for (size_t macLen = 0; macLen < Pkt4::MAX_CHADDR_LEN; macLen++) {
+        for (size_t i = 0; i < Pkt4::MAX_CHADDR_LEN; i++) {
             mac[i] = 0;
             expectedChaddr[i] = 0;
         }
-        for (int i = 0; i < macLen; i++) {
+        for (size_t i = 0; i < macLen; i++) {
             mac[i] = 128 + i;
             expectedChaddr[i] = 128 + i;
         }
@@ -471,7 +473,7 @@ TEST_F(Pkt4Test, msgTypes) {
     };
 
     scoped_ptr<Pkt4> pkt;
-    for (int i = 0; i < sizeof(types) / sizeof(msgType); i++) {
+    for (size_t i = 0; i < sizeof(types) / sizeof(msgType); i++) {
         pkt.reset(new Pkt4(types[i].dhcp, 0));
         EXPECT_EQ(types[i].dhcp, pkt->getType());
         EXPECT_EQ(types[i].bootp, pkt->getOp());
@@ -491,11 +493,11 @@ TEST_F(Pkt4Test, sname) {
 
     scoped_ptr<Pkt4> pkt;
     // Let's test each sname length, from 0 till 64
-    for (int snameLen = 0; snameLen < Pkt4::MAX_SNAME_LEN; ++snameLen) {
-        for (int i = 0; i < snameLen; ++i) {
+    for (size_t snameLen = 0; snameLen < Pkt4::MAX_SNAME_LEN; ++snameLen) {
+        for (size_t i = 0; i < snameLen; ++i) {
             sname[i] = i + 1;
         }
-        for (int i = snameLen; i < Pkt4::MAX_SNAME_LEN; ++i) {
+        for (size_t i = snameLen; i < Pkt4::MAX_SNAME_LEN; ++i) {
             sname[i] = 0;
         }
 
@@ -529,11 +531,11 @@ TEST_F(Pkt4Test, file) {
 
     scoped_ptr<Pkt4> pkt;
     // Let's test each file length, from 0 till 128.
-    for (int fileLen = 0; fileLen < Pkt4::MAX_FILE_LEN; ++fileLen) {
-        for (int i = 0; i < fileLen; ++i) {
+    for (size_t fileLen = 0; fileLen < Pkt4::MAX_FILE_LEN; ++fileLen) {
+        for (size_t i = 0; i < fileLen; ++i) {
             file[i] = i + 1;
         }
-        for (int i = fileLen; i < Pkt4::MAX_FILE_LEN; ++i) {
+        for (size_t i = fileLen; i < Pkt4::MAX_FILE_LEN; ++i) {
             file[i] = 0;
         }
 
@@ -565,7 +567,7 @@ TEST_F(Pkt4Test, options) {
     scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 0));
 
     vector<uint8_t> payload[5];
-    for (int i = 0; i < 5; i++) {
+    for (uint8_t i = 0; i < 5; i++) {
         payload[i].push_back(i * 10);
         payload[i].push_back(i * 10 + 1);
         payload[i].push_back(i * 10 + 2);
@@ -636,7 +638,7 @@ TEST_F(Pkt4Test, unpackOptions) {
     expectedFormat.push_back(0x53);
     expectedFormat.push_back(0x63);
 
-    for (int i = 0; i < sizeof(v4_opts); i++) {
+    for (size_t i = 0; i < sizeof(v4_opts); i++) {
         expectedFormat.push_back(v4_opts[i]);
     }
 
@@ -652,6 +654,111 @@ TEST_F(Pkt4Test, unpackOptions) {
     verifyParsedOptions(pkt);
 }
 
+// Checks if the code is able to handle a malformed option
+TEST_F(Pkt4Test, unpackMalformed) {
+
+    vector<uint8_t> orig = generateTestPacket2();
+
+    orig.push_back(0x63);
+    orig.push_back(0x82);
+    orig.push_back(0x53);
+    orig.push_back(0x63);
+
+    orig.push_back(53); // Message Type 
+    orig.push_back(1); // length=1
+    orig.push_back(2); // type=2
+
+    orig.push_back(12); // Hostname
+    orig.push_back(3); // length=3
+    orig.push_back(102); // data="foo"
+    orig.push_back(111);
+    orig.push_back(111);
+
+    // That's our original content. It should be sane.
+    Pkt4Ptr success(new Pkt4(&orig[0], orig.size()));
+    EXPECT_NO_THROW(success->unpack());
+
+    // With the exception of END and PAD an option must have a length byte
+    vector<uint8_t> nolength = orig;
+    nolength.resize(orig.size() - 4);
+    Pkt4Ptr no_length_pkt(new Pkt4(&nolength[0], nolength.size()));
+    EXPECT_NO_THROW(no_length_pkt->unpack());
+
+    // The unpack() operation doesn't throw but there is no option 12
+    EXPECT_FALSE(no_length_pkt->getOption(12));
+
+    // Truncated data is not accepted too but doesn't throw
+    vector<uint8_t> shorty = orig;
+    shorty.resize(orig.size() - 1);
+    Pkt4Ptr too_short_pkt(new Pkt4(&shorty[0], shorty.size()));
+    EXPECT_NO_THROW(too_short_pkt->unpack());
+
+    // The unpack() operation doesn't throw but there is no option 12
+    EXPECT_FALSE(no_length_pkt->getOption(12));
+}
+
+// Checks if the code is able to handle a malformed vendor option
+TEST_F(Pkt4Test, unpackVendorMalformed) {
+
+    vector<uint8_t> orig = generateTestPacket2();
+
+    orig.push_back(0x63);
+    orig.push_back(0x82);
+    orig.push_back(0x53);
+    orig.push_back(0x63);
+
+    orig.push_back(53); // Message Type 
+    orig.push_back(1); // length=1
+    orig.push_back(2); // type=2
+
+    orig.push_back(125); // vivso suboptions
+    size_t full_len_index = orig.size();
+    orig.push_back(15); // length=15
+    orig.push_back(1); // vendor_id=0x1020304
+    orig.push_back(2);
+    orig.push_back(3);
+    orig.push_back(4);
+    size_t data_len_index = orig.size();
+    orig.push_back(10); // data-len=10
+    orig.push_back(128); // suboption type=128
+    orig.push_back(3); // suboption length=3
+    orig.push_back(102); // data="foo"
+    orig.push_back(111);
+    orig.push_back(111);
+    orig.push_back(129); // suboption type=129
+    orig.push_back(3); // suboption length=3
+    orig.push_back(99); // data="bar"
+    orig.push_back(98);
+    orig.push_back(114);
+
+    // That's our original content. It should be sane.
+    Pkt4Ptr success(new Pkt4(&orig[0], orig.size()));
+    EXPECT_NO_THROW(success->unpack());
+
+    // Data-len must match
+    vector<uint8_t> baddatalen = orig;
+    baddatalen.resize(orig.size() - 5);
+    baddatalen[full_len_index] = 10;
+    Pkt4Ptr bad_data_len_pkt(new Pkt4(&baddatalen[0], baddatalen.size()));
+    EXPECT_THROW(bad_data_len_pkt->unpack(), InvalidOptionValue);
+
+    // A suboption must have a length byte
+    vector<uint8_t> nolength = orig;
+    nolength.resize(orig.size() - 4);
+    nolength[full_len_index] = 11;
+    nolength[data_len_index] = 6;
+    Pkt4Ptr no_length_pkt(new Pkt4(&nolength[0], nolength.size()));
+    EXPECT_THROW(no_length_pkt->unpack(), InvalidOptionValue);
+
+    // Truncated data is not accepted either
+    vector<uint8_t> shorty = orig;
+    shorty.resize(orig.size() - 1);
+    shorty[full_len_index] = 14;
+    shorty[data_len_index] = 9;
+    Pkt4Ptr too_short_pkt(new Pkt4(&shorty[0], shorty.size()));
+    EXPECT_THROW(too_short_pkt->unpack(), InvalidOptionValue);
+}
+
 // This test verifies that it is possible to specify custom implementation of
 // the option parsing algorithm by installing a callback function.
 TEST_F(Pkt4Test, unpackOptionsWithCallback) {
@@ -662,7 +769,7 @@ TEST_F(Pkt4Test, unpackOptionsWithCallback) {
     expectedFormat.push_back(0x53);
     expectedFormat.push_back(0x63);
 
-    for (int i = 0; i < sizeof(v4_opts); i++) {
+    for (size_t i = 0; i < sizeof(v4_opts); i++) {
         expectedFormat.push_back(v4_opts[i]);
     }
 
@@ -800,25 +907,26 @@ TEST_F(Pkt4Test, hwaddrSrcRemote) {
 }
 
 // This test verifies that the check for a message being relayed is correct.
-// It also checks that the exception is thrown if the combination of hops and
-// giaddr is invalid.
 TEST_F(Pkt4Test, isRelayed) {
     Pkt4 pkt(DHCPDISCOVER, 1234);
     // By default, the hops and giaddr should be 0.
-    ASSERT_EQ("0.0.0.0", pkt.getGiaddr().toText());
+    ASSERT_TRUE(pkt.getGiaddr().isV4Zero());
     ASSERT_EQ(0, pkt.getHops());
-    // For hops = 0 and giaddr = 0, the message is non-relayed.
+    // For zero giaddr the packet is non-relayed.
     EXPECT_FALSE(pkt.isRelayed());
-    // Set giaddr but leave hops = 0. This should result in exception.
+    // Set giaddr but leave hops = 0.
     pkt.setGiaddr(IOAddress("10.0.0.1"));
-    EXPECT_THROW(pkt.isRelayed(), isc::BadValue);
-    // Set hops. Now both hops and giaddr is set. The message is relayed.
+    EXPECT_TRUE(pkt.isRelayed());
+    // After setting hops the message should still be relayed.
     pkt.setHops(10);
     EXPECT_TRUE(pkt.isRelayed());
-    // Set giaddr to 0. For hops being set to non-zero value the function
-    // should throw an exception.
-    pkt.setGiaddr(IOAddress("0.0.0.0"));
-    EXPECT_THROW(pkt.isRelayed(), isc::BadValue);
+    // Set giaddr to 0. The message is now not-relayed.
+    pkt.setGiaddr(IOAddress(IOAddress::IPV4_ZERO_ADDRESS()));
+    EXPECT_FALSE(pkt.isRelayed());
+    // Setting the giaddr to 255.255.255.255 should not cause it to
+    // be relayed message.
+    pkt.setGiaddr(IOAddress(IOAddress::IPV4_BCAST_ADDRESS()));
+    EXPECT_FALSE(pkt.isRelayed());
 }
 
 // Tests whether a packet can be assigned to a class and later
@@ -875,6 +983,124 @@ TEST_F(Pkt4Test, getMAC) {
     // Check that the returned MAC is indeed the expected one
     ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
     ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(HWAddr::HWADDR_SOURCE_RAW));
+}
+
+// Tests that getLabel/makeLabel methods produces the expected strings based on
+// packet content.
+TEST_F(Pkt4Test, getLabel) {
+    Pkt4 pkt(DHCPOFFER, 1234);
+
+    // Verify makeLabel() handles empty values
+    EXPECT_EQ ("[no hwaddr info], cid=[no info], tid=0x0",
+               Pkt4::makeLabel(HWAddrPtr(), ClientIdPtr(), 0));
+
+    // Verify an "empty" packet label is as we expect
+    EXPECT_EQ ("[hwtype=1 ], cid=[no info], tid=0x4d2",
+               pkt.getLabel());
+
+    // Set that packet hardware address, then verify getLabel
+    const uint8_t hw[] = { 2, 4, 6, 8, 10, 12 }; // MAC
+    const uint8_t hw_type = 123; // hardware type
+    HWAddrPtr dummy_hwaddr(new HWAddr(hw, sizeof(hw), hw_type));
+    pkt.setHWAddr(dummy_hwaddr);
+
+    EXPECT_EQ ("[hwtype=123 02:04:06:08:0a:0c],"
+               " cid=[no info], tid=0x4d2", pkt.getLabel());
+
+    // Add a client id to the packet then verify getLabel
+    OptionBuffer clnt_id(4);
+    for (uint8_t i = 0; i < 4; i++) {
+        clnt_id[i] = 100 + i;
+    }
+
+    OptionPtr opt(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
+                             clnt_id.begin(), clnt_id.begin() + 4));
+    pkt.addOption(opt);
+
+    EXPECT_EQ ("[hwtype=123 02:04:06:08:0a:0c],"
+               " cid=[64:65:66:67], tid=0x4d2",
+               pkt.getLabel());
+
+}
+
+// Tests that the correct DHCPv4 message name is returned for various
+// message types.
+TEST_F(Pkt4Test, getName) {
+    // Check all possible packet types
+    for (int itype = 0; itype < 256; ++itype) {
+        uint8_t type = itype;
+
+        switch (type) {
+        case DHCPDISCOVER:
+            EXPECT_STREQ("DHCPDISCOVER", Pkt4::getName(type));
+            break;
+
+        case DHCPOFFER:
+            EXPECT_STREQ("DHCPOFFER", Pkt4::getName(type));
+            break;
+
+        case DHCPREQUEST:
+            EXPECT_STREQ("DHCPREQUEST", Pkt4::getName(type));
+            break;
+
+        case DHCPDECLINE:
+            EXPECT_STREQ("DHCPDECLINE", Pkt4::getName(type));
+            break;
+
+        case DHCPACK:
+            EXPECT_STREQ("DHCPACK", Pkt4::getName(type));
+            break;
+
+        case DHCPNAK:
+            EXPECT_STREQ("DHCPNAK", Pkt4::getName(type));
+            break;
+
+        case DHCPRELEASE:
+            EXPECT_STREQ("DHCPRELEASE", Pkt4::getName(type));
+            break;
+
+        case DHCPINFORM:
+            EXPECT_STREQ("DHCPINFORM", Pkt4::getName(type));
+            break;
+
+        default:
+            EXPECT_STREQ("UNKNOWN", Pkt4::getName(type));
+        }
+    }
+}
+
+// This test checks that the packet data are correctly converted to the
+// textual format.
+TEST_F(Pkt4Test, toText) {
+    Pkt4 pkt(DHCPDISCOVER, 2543);
+    pkt.setLocalAddr(IOAddress("192.0.2.34"));
+    pkt.setRemoteAddr(IOAddress("192.10.33.4"));
+
+    pkt.addOption(OptionPtr(new Option4AddrLst(123, IOAddress("192.0.2.3"))));
+    pkt.addOption(OptionPtr(new OptionUint32(Option::V4, 156, 123456)));
+    pkt.addOption(OptionPtr(new OptionString(Option::V4, 87, "lorem ipsum")));
+
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_adress=192.10.33.4:68, "
+              "msg_type=DHCPDISCOVER (1), transid=0x9ef,\n"
+              "options:\n"
+              "  type=053, len=001: 1 (uint8)\n"
+              "  type=087, len=011: \"lorem ipsum\" (string)\n"
+              "  type=123, len=004: 192.0.2.3\n"
+              "  type=156, len=004: 123456 (uint32)",
+              pkt.toText());
+
+    // Now remove all options, including Message Type and check if the
+    // information about lack of any options is displayed properly.
+    pkt.delOption(123);
+    pkt.delOption(156);
+    pkt.delOption(87);
+    pkt.delOption(53);
+
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_adress=192.10.33.4:68, "
+              "msg_type=(missing), transid=0x9ef, "
+              "message contains no options",
+              pkt.toText());
+
 }
 
 } // end of anonymous namespace

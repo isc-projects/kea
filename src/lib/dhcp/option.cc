@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <exceptions/exceptions.h>
@@ -150,7 +151,7 @@ uint16_t Option::len() {
     // option header)
 
     // length of the whole option is header and data stored in this option...
-    int length = getHeaderLen() + data_.size();
+    size_t length = getHeaderLen() + data_.size();
 
     // ... and sum of lengths of all suboptions
     for (OptionCollection::iterator it = options_.begin();
@@ -159,10 +160,10 @@ uint16_t Option::len() {
         length += (*it).second->len();
     }
 
-    // note that this is not equal to lenght field. This value denotes
+    // note that this is not equal to length field. This value denotes
     // number of bytes required to store this option. length option should
     // contain (len()-getHeaderLen()) value.
-    return (length);
+    return (static_cast<uint16_t>(length));
 }
 
 bool
@@ -194,29 +195,56 @@ bool Option::delOption(uint16_t opt_type) {
 }
 
 
-std::string Option::toText(int indent /* =0 */ ) {
-    std::stringstream tmp;
-
-    for (int i = 0; i < indent; i++)
-        tmp << " ";
-
-    tmp << "type=" << type_ << ", len=" << len()-getHeaderLen() << ": ";
+std::string Option::toText(int indent) {
+    std::stringstream output;
+    output << headerToText(indent) << ": ";
 
     for (unsigned int i = 0; i < data_.size(); i++) {
         if (i) {
-            tmp << ":";
+            output << ":";
         }
-        tmp << setfill('0') << setw(2) << hex
+        output << setfill('0') << setw(2) << hex
             << static_cast<unsigned short>(data_[i]);
     }
 
-    // print suboptions
-    for (OptionCollection::const_iterator opt = options_.begin();
-         opt != options_.end();
-         ++opt) {
-        tmp << (*opt).second->toText(indent+2);
+    // Append suboptions.
+    output << suboptionsToText(indent + 2);
+
+    return (output.str());
+}
+
+std::string
+Option::headerToText(const int indent, const std::string& type_name) {
+    std::stringstream output;
+    for (int i = 0; i < indent; i++)
+        output << " ";
+
+    int field_len = (getUniverse() == V4 ? 3 : 5);
+    output << "type=" << std::setw(field_len) << std::setfill('0')
+           << type_;
+
+    if (!type_name.empty()) {
+        output << "(" << type_name << ")";
     }
-    return tmp.str();
+
+    output << ", len=" << std::setw(field_len) << std::setfill('0')
+           << len()-getHeaderLen();
+    return (output.str());
+}
+
+std::string
+Option::suboptionsToText(const int indent) const {
+    std::stringstream output;
+
+    if (!options_.empty()) {
+        output << "," << std::endl << "options:";
+        for (OptionCollection::const_iterator opt = options_.begin();
+             opt != options_.end(); ++opt) {
+            output << std::endl << (*opt).second->toText(indent);
+        }
+    }
+
+    return (output.str());
 }
 
 uint16_t

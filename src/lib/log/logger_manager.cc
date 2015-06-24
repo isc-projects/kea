@@ -121,18 +121,7 @@ LoggerManager::init(const std::string& root, isc::log::Severity severity,
 
     // Check if there were any duplicate message IDs in the default dictionary
     // and if so, log them.  Log using the logging facility logger.
-    const vector<string>& duplicates = MessageInitializer::getDuplicates();
-    if (!duplicates.empty()) {
-
-        // There are duplicates present. This list itself may contain
-        // duplicates; if so, the message ID is listed as many times as
-        // there are duplicates.
-        for (vector<string>::const_iterator i = duplicates.begin();
-             i != duplicates.end(); ++i) {
-            LOG_WARN(logger, LOG_DUPLICATE_MESSAGE_ID).arg(*i);
-        }
-        MessageInitializer::clearDuplicates();
-    }
+    logDuplicatedMessages();
 
     // Replace any messages with local ones (if given)
     if (file) {
@@ -143,6 +132,22 @@ LoggerManager::init(const std::string& root, isc::log::Severity severity,
     (void) getMutex();
 }
 
+void
+LoggerManager::logDuplicatedMessages() {
+    const list<string>& duplicates = MessageInitializer::getDuplicates();
+    if (!duplicates.empty()) {
+
+        // There are duplicates present. This list itself may contain
+        // duplicates; if so, the message ID is listed as many times as
+        // there are duplicates.
+        for (list<string>::const_iterator i = duplicates.begin();
+             i != duplicates.end(); ++i) {
+            LOG_WARN(logger, LOG_DUPLICATE_MESSAGE_ID).arg(*i);
+        }
+        MessageInitializer::clearDuplicates();
+    }
+}
+
 
 // Read local message file
 // TODO This should be done after the configuration has been read so that
@@ -150,8 +155,8 @@ LoggerManager::init(const std::string& root, isc::log::Severity severity,
 void
 LoggerManager::readLocalMessageFile(const char* file) {
 
-    MessageDictionary& dictionary = MessageDictionary::globalDictionary();
-    MessageReader reader(&dictionary);
+    const MessageDictionaryPtr& dictionary = MessageDictionary::globalDictionary();
+    MessageReader reader(dictionary.get());
 
     // Turn off use of any lock files. This is because this logger can
     // be used by standalone programs which may not have write access to

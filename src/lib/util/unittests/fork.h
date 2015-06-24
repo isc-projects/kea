@@ -31,7 +31,7 @@ namespace unittests {
 /**
  * @short Checks that a process terminates correctly.
  * Waits for a process to terminate (with a short timeout, this should be
- * used whan the process is about tu terminate) and checks its exit code.
+ * used whan the process is about to terminate) and checks its exit code.
  *
  * @return True if the process terminates with 0, false otherwise.
  * @param process The ID of process to wait for.

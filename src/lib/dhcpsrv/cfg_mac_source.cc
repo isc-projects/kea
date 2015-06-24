@@ -42,7 +42,8 @@ uint32_t CfgMACSource::MACSourceFromText(const std::string& name) {
         { "rfc4649", HWAddr::HWADDR_SOURCE_REMOTE_ID },
         { "subscriber-id", HWAddr::HWADDR_SOURCE_SUBSCRIBER_ID },
         { "rfc4580", HWAddr::HWADDR_SOURCE_SUBSCRIBER_ID },
-        { "docsis", HWAddr::HWADDR_SOURCE_DOCSIS }
+        { "docsis-cmts", HWAddr::HWADDR_SOURCE_DOCSIS_CMTS },
+        { "docsis-modem", HWAddr::HWADDR_SOURCE_DOCSIS_MODEM }
     };
 
     for (int i=0; i < sizeof(sources)/sizeof(sources[0]); ++i) {

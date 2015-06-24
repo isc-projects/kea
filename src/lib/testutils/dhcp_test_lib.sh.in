@@ -1,4 +1,4 @@
-# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -197,10 +197,9 @@ get_log_messages() {
     _GET_LOG_MESSAGES=0
     # If log file is not present, the number of occurrences is 0.
     if [ -s ${LOG_FILE} ]; then
-        # Grep log file for the logger message occurrences.
-        _GET_LOG_MESSAGES=$( grep -o ${msg} ${LOG_FILE} | wc -w )
-        # Remove whitespaces.
-        ${_GET_LOG_MESSAGES##*[! ]}
+        # Grep log file for the logger message occurrences and remove
+        # whitespaces, if any.
+        _GET_LOG_MESSAGES=$( grep -o ${msg} ${LOG_FILE} | wc -w | tr -d " ")
     fi
 }
 

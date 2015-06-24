@@ -11,7 +11,7 @@
       <title>Starting and Stopping the DHCPv6 Server</title>
 
       <para>
-      It is recommended that the Kea DHCPv4 server be started and stopped
+      It is recommended that the Kea DHCPv6 server be started and stopped
       using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
       However, it is also possible to run the server directly: it accepts
       the following command-line switches:
@@ -53,12 +53,44 @@
               additional parameters and exits.
             </simpara>
           </listitem>
+          <listitem>
+            <simpara>
+              <command>-W</command> - prints out Kea configuration report
+              and exits.
+            </simpara>
+          </listitem>
       </itemizedlist>
 
       <para>
-	    When running in a console, the server can be shut down by
-	    pressing ctrl-c. It detects the key combination and shuts
-	    down gracefully.
+            The <command>-V</command> command returns the versions of the
+            external libraries dynamically linked.
+      </para>
+
+      <para>
+            The <command>-W</command> command describes the environment used
+            to build Kea.  This command displays a copy of the
+            <filename>config.report</filename> file produced by
+            <userinput>./configure</userinput> that is embedded in the
+            executable binary.
+      </para>
+
+      <para>
+            The <filename>config.report</filename> may also be accessed more
+            directly.  The following command may be used to extract this
+            information.  The binary <userinput>path</userinput> may be found
+            in the install directory or in the <filename>.libs</filename>
+            subdirectory in the source treee. For example
+            <filename>kea/src/bin/dhcp6/.libs/kea-dhcp6</filename>.
+
+<screen>
+strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
+</screen>
+      </para>
+
+      <para>
+            When running in a console, the server can be shut down by
+            pressing ctrl-c. It detects the key combination and shuts
+            down gracefully.
       </para>
 
       <para>
@@ -92,13 +124,17 @@
 "Dhcp6": {
 
 # First we set up global values
-    "interfaces": [ "eth0" ],
     "renew-timer": 1000,
     "rebind-timer": 2000,
     "preferred-lifetime": 3000,
     "valid-lifetime": 4000,
 
-# Next we specify the type of lease database
+# Next we setup the interfaces to be used by the server.
+    "interfaces-config": {
+        "interfaces": [ "eth0" ]
+    },
+
+# And we specify the type of a lease database
     "lease-database": {
         "type": "memfile",
         "persist": true,
@@ -156,19 +192,8 @@ ignored. This is unlikely to cause any confusion as there are no real life
 reasons to keep multiple copies of the same parameter in your configuration
 file.</para>
 
-<para>Moving onto the DHCPv6 configuration elements,
-the line defining <command>interfaces</command> parameter specifies a list
-of network interfaces on which the server should listen.
-Lists are opened and closed with square brackets, with elements
-separated by commas. Had we wanted to listen on two interfaces, the line could
-look like this:
-<screen>
-"interfaces": [ "eth0", "eth1" ],
-</screen>
-
-As "<command>interfaces</command>" is not the last parameter in the
-configuration, a trailing comma is required.</para>
-<para>A number of other parameters follow. <command>valid-lifetime</command>
+<para>Moving onto the DHCPv6 configuration elements, the very first few elements
+define some global parameters. <command>valid-lifetime</command>
 defines for how long the addresses (leases) given out by the server are valid. If
 nothing changes, a client that got an address is allowed to use it for 4000
 seconds. (Note that integer numbers are specified as is, without any quotes
@@ -177,6 +202,20 @@ allowed to keep old connections, but can't use this address for creating new
 connections). <command>renew-timer</command> and <command>
 rebind-timer</command> are values that define T1 and T2 timers that govern when
 the client will begin the renewal and rebind procedures.</para>
+
+<para>The <command>interfaces-config</command> map specifies the server
+configuration concerning the network interfaces, on which the server should
+listen to the DHCP messages. The <command>interfaces</command> parameter
+specifies a list of network interfaces on which the server should listen.
+Lists are opened and closed with square brackets, with elements separated
+by commas. Had we wanted to listen on two interfaces, the
+<command>interfaces-config</command> would look like this:
+<screen>
+"interfaces-config": {
+    "interfaces": [ "eth0", "eth1" ]
+},
+</screen>
+</para>
 
 <para>The next couple of lines define the lease database, the place where the server
 stores its lease information. This particular example tells the server to use
@@ -236,12 +275,6 @@ In a real life configuration file there most likely would be additional
 components defined such as Logging or DhcpDdns, so the closing brace would
 be followed by a comma and another object definition.</para>
 
-<para>Kea 0.9 does not have configuration syntax validation
-implemented yet. Such a feature is planned for the near future. For
-the time being, it is convenient to use on-line JSON validators and/or
-viewers to check whether the syntax is correct. One example of such a
-JSON validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
-</para>
 </section>
 
 <section>
@@ -250,7 +283,7 @@ JSON validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
   Currently there are three database backends available:
   memfile (which is the default backend), MySQL and PostgreSQL.</para>
 <section>
-  <title>Memfile - Basic Storage for Leases</title>
+  <title>Memfile, Basic Storage for Leases</title>
 
   <para>The server is able to store lease data in different repositories. Larger
   deployments may elect to store leases in a database. <xref
@@ -261,32 +294,107 @@ JSON validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
   eliminates a dependency on third-party database software.</para>
 
   <para>The configuration of the file backend (Memfile) is controlled through
-  the Dhcp6/lease-database parameters. <!-- @todo: we don't have default
-  parameters. Let's comment this out When default parameters are used, the
-  Memfile backend will write leases to a disk in the
-  [kea-install-dir]/var/kea/kea-leases4.csv. -->
-  The following configuration sets the name of the lease file to
-  <filename>/tmp/kea-leases6.csv</filename>:
+  the Dhcp6/lease-database parameters. The <command>type</command> parameter
+  is mandatory and it specifies which storage for leases the server should use.
+  The value of <userinput>"memfile"</userinput> indicates that the file should
+  be used as the storage. The following list presents the remaining, not mandatory
+  parameters, which can be used to configure the Memfile backend.
+
+  <itemizedlist>
+    <listitem>
+      <simpara><command>persist</command>: controls whether the new leases and
+      updates to existing leases are written to the file. It is strongly
+      recommended that the value of this parameter is set to
+      <userinput>true</userinput> at all times, during the server's normal
+      operation. Not writing leases to disk will mean that if a server is restarted
+      (e.g. after a power failure), it will not know what addresses have been
+      assigned.  As a result, it may hand out addresses to new clients that are
+      already in use. The value of <userinput>false</userinput> is mostly useful
+      for performance testing purposes. The default value of the
+      <command>persist</command> parameter is <userinput>true</userinput>,
+      which enables writing lease updates
+      to the lease file.
+      </simpara>
+    </listitem>
+
+    <listitem>
+      <simpara><command>name</command>: specifies an absolute location of the lease
+      file in which new leases and lease updates will be recorded. The default value
+      for this parameter is <userinput>"[kea-install-dir]/var/kea/kea-leases6.csv"
+      </userinput>.</simpara>
+    </listitem>
+
+    <listitem>
+      <simpara><command>lfc-interval</command>: specifies the interval in seconds, at
+      which the server (Memfile backend) will perform a lease file cleanup (LFC),
+      which removes the redundant (historical) information from the lease file
+      and effectively reduces the lease file size. The cleanup process is described
+      in more detailed fashion further in this section. The default value of the
+      <command>lfc-interval</command> is <userinput>0</userinput>, which disables
+      the LFC.</simpara>
+    </listitem>
+
+  </itemizedlist>
+  </para>
+
+  <para>The example configuration of the Memfile backend is presented below:
 
 <screen>
 "Dhcp6": {
     "lease-database": {
         <userinput>"type": "memfile"</userinput>,
         <userinput>"persist": true</userinput>,
-        <userinput>"name": "/tmp/kea-leases6.csv"</userinput>
+        <userinput>"name": "/tmp/kea-leases6.csv"</userinput>,
+        <userinput>"lfc-interval": 1800</userinput>
     }
-    ...
 }
 </screen>
   </para>
 
-  <para>The "persist" parameter controls whether the leases are written to disk.
-  It is strongly recommended that this parameter is set to true at all times
-  during the normal operation of the server. (Not writing leases to disk will
-  mean that if a server is restarted (e.g. after a power failure), it will not
-  know what addresses have been assigned.  As a result, it may hand out addresses
-  to new clients that are already in use.)
-          </para>
+  <para>It is important to know how the lease file contents are organized
+  to understand why the periodic lease file cleanup is needed. Every time when
+  the server updates a lease or creates a new lease for the client, the new
+  lease information must be recorded in the lease file. For performance reasons,
+  the server does not supersede the existing client's lease, as it would require
+  the lookup of the specific lease entry, but simply appends the new lease
+  information at the end of the lease file. The previous lease entries for the
+  client are not removed. When the server loads leases from the lease file, e.g.
+  at the server startup, it assumes that the latest lease entry for the client
+  is the valid one. The previous entries are discarded. This means that the
+  server can re-construct the accurate information about the leases even though
+  there may be many lease entries for each client. However, storing many entries
+  for each client results in bloated lease file and impairs the performance of
+  the server's startup and reconfiguration, as it needs to process larger number
+  of lease entries.
+  </para>
+
+  <para>The lease file cleanup removes all previous entries for each client and
+  leaves only the latest ones. The interval at which the cleanup is performed
+  is configurable, and it should be selected according to the frequency of lease
+  renewals initiated by the clients. The more frequent renewals are, the lesser
+  value of the <command>lfc-interval</command> should be. Note however, that the
+  LFC takes time and thus it is possible (although unlikely) that new cleanup
+  is started while the previous cleanup instance is still running, if the
+  <command>lfc-interval</command> is too short. The server would recover from
+  this by skipping the new cleanup when it detects that the previous cleanup
+  is still in progress. But, this implies that the actual cleanups will be
+  triggered more rarely than configured. Moreover, triggering a new cleanup
+  adds an overhead to the server, which will not be able to respond to new
+  requests for a short period of time when the new cleanup process is spawned.
+  Therefore, it is recommended that the <command>lfc-interval</command> value
+  is selected in a way that would allow for completing the cleanup before the
+  new cleanup is triggered.
+  </para>
+
+  <para>The LFC is performed by a separate process (in background) to avoid
+  performance impact on the server process. In order to avoid the conflicts
+  between the two processes both using the same lease files, the LFC process
+  operates on the copy of the original lease file, rather than on the lease
+  file used by the server to record lease updates. There are also other files
+  being created as a side effect of the lease file cleanup. The detailed
+  description of the LFC is located on the Kea wiki:
+  <ulink url="http://kea.isc.org/wiki/LFCDesign"/>.
+  </para>
 </section>
 
 <section id="database-configuration6">
@@ -306,8 +414,8 @@ JSON validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
 "Dhcp6": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
   Next, the name of the database is to hold the leases must be set: this is the
-  name used when the lease database was created (see <xref linkend="dhcp-mysql-database-create"/>
-  or <xref linkend="dhcp-pgsql-database-create"/>).
+  name used when the lease database was created (see <xref linkend="mysql-database-create"/>
+  or <xref linkend="pgsql-database-create"/>).
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
@@ -315,7 +423,7 @@ JSON validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
   database host name must also be specified (although it should be noted that this
   configuration may have a severe impact on server performance):
 <screen>
-"Dhcp6": { "lease-database": { <userinput>"host": <replaceable>remote-host-name</replaceable>"</userinput>, ... }, ... }
+"Dhcp6": { "lease-database": { <userinput>"host": <replaceable>remote-host-name</replaceable></userinput>, ... }, ... }
 </screen>
   The usual state of affairs will be to have the database on the same machine as
   the DHCPv6 server.  In this case, set the value to the empty string:
@@ -339,19 +447,37 @@ JSON validator is available at <ulink url="http://jsonviewer.stack.hu/"/>.
 <section id="dhcp6-interface-selection">
   <title>Interface selection</title>
   <para>The DHCPv6 server has to be configured to listen on specific network
-  interfaces.  The simplest network interface configuration tells the server to
+  interfaces.  The simplest network interface configuration instructs the server to
   listen on all available interfaces:
   <screen>
-"Dhcp6": { <userinput>"interfaces": ["*"]</userinput>, ... }</screen>
+"Dhcp6": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"*"</userinput> ]
+    }
+    ...
+}
+</screen>
   The asterisk plays the role of a wildcard and means "listen on all interfaces".
   However, it is usually a good idea to explicitly specify interface names:
   <screen>
-"Dhcp6": { <userinput>"interfaces": [ "eth1", "eth3" ]</userinput>, ... }</screen>
-  </para>
+"Dhcp6": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1", "eth3"</userinput> ]
+    },
+    ...
+}
+  </screen>
+</para>
   <para>It is possible to use wildcard interface name (asterisk) concurrently
-  with explicit interface names:
+  with the actual interface names:
   <screen>
-"Dhcp6": { <userinput>"interfaces": [ "eth1", "eth3", "*" ]</userinput>, ... }</screen>
+"Dhcp6": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1", "eth3", "*"</userinput> ]
+    },
+    ...
+}
+  </screen>
 It is anticipated that this will form of usage only be used where it is desired to
 temporarily override a list of interface names and listen on all interfaces.
   </para>
@@ -380,21 +506,23 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>
-	The following configuration will assign the specified subnet
-	identifier to the newly configured subnet:
+        The following configuration will assign the specified subnet
+        identifier to the newly configured subnet:
 
-	<screen>
+        <screen>
 "Dhcp6": {
     "subnet6": [
-        "subnet": "2001:db8:1::/64",
-        <userinput>"id": 1024</userinput>,
-        ...
+        {
+            "subnet": "2001:db8:1::/64",
+            <userinput>"id": 1024</userinput>,
+            ...
+        }
     ]
 }
 </screen>
-	This identifier will not change for this subnet unless the "id" parameter is
-	removed or set to 0. The value of 0 forces auto-generation of the subnet
-	identifier.
+        This identifier will not change for this subnet unless the "id" parameter is
+        removed or set to 0. The value of 0 forces auto-generation of the subnet
+        identifier.
       </para>
       <!-- @todo: describe whether database needs to be updated after changing
       id -->
@@ -413,23 +541,26 @@ temporarily override a list of interface names and listen on all interfaces.
         notation to specify interfaces has been extended.  An interface name can be
         optionally followed by a slash, followed by the global unicast address on which
         the server should listen. This will be done in addition to normal
-        link-local binding + listening on ff02::1:2 address. The sample commands
-        listed below show how to listen on 2001:db8::1 (a global address)
+        link-local binding + listening on ff02::1:2 address. The sample configuration
+        below shows how to listen on 2001:db8::1 (a global address)
         configured on the eth1 interface.
       </para>
       <para>
  <screen>
 "Dhcp6": {
-    <userinput>"interfaces": [ "eth1/2001:db8::1"],</userinput>
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1/2001:db8::1"</userinput> ]
+    },
     ...
-}</screen>
+}
+ </screen>
 
-        When this configuration gets committed, the server will start to listen on
+        This configuration will cause the server to listen on
         eth1 on link-local address, multicast group (ff02::1:2) and 2001:db8::1.
       </para>
       <para>
         It is possible to mix interface names, wildcards and interface name/addresses
-        on the Dhcp6/interface list. It is not possible to specify more than one
+        on the list of interfaces. It is not possible to specify more than one
         unicast address on a given interface.
       </para>
       <para>
@@ -542,15 +673,19 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Subnet and Prefix Delegation Pools</title>
       <para>
         Subnets may also be configured to delegate prefixes, as defined in
-	<ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink>.
+            <ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink>.
         A subnet may have one or more prefix delegation pools.  Each pool has
         a prefixed address, which is specified as a prefix and a prefix length,
         as well as a delegated prefix length. <command>delegated-len</command>
-	must not be shorter (that is it must be numerically greater or equal)
-	than <command>prefix-len</command>.
-	If both <command>delegated-len</command>
-	and <command>prefix-len</command> are equal, the server will be able to
-	delegate only one prefix. A sample configuration is shown below:
+            must not be shorter (that is it must be numerically greater or equal)
+            than <command>prefix-len</command>.
+            If both <command>delegated-len</command>
+            and <command>prefix-len</command> are equal, the server will be able to
+            delegate only one prefix. The delegated <command>prefix</command> does
+        not have to match the <command>subnet</command> prefix.
+      </para>
+      <para> Below is a sample subnet configuration which enables prefix
+      delegation for the subnet:
       <screen>
 "Dhcp6": {
     "subnet6": [
@@ -558,7 +693,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "subnet": "2001:d8b:1::/64",
             <userinput>"pd-pools": [
                 {
-                    "prefix": "2001:db8:1::",
+                    "prefix": "3000:1::",
                     "prefix-len": 64,
                     "delegated-len": 96
                 }
@@ -784,6 +919,9 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>clt-time</entry><entry>46</entry><entry>uint32</entry><entry>false</entry></row>
 <row><entry>lq-relay-data</entry><entry>47</entry><entry>record</entry><entry>false</entry></row>
 <row><entry>lq-client-link</entry><entry>48</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>erp-local-domain-name</entry><entry>65</entry><entry>fqdn</entry><entry>false</entry></row>
+<row><entry>rsoo</entry><entry>66</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>client-linklayer-addr</entry><entry>79</entry><entry>binary</entry><entry>false</entry></row>
         </tbody>
         </tgroup>
       </table>
@@ -940,7 +1078,7 @@ temporarily override a list of interface names and listen on all interfaces.
 "Dhcp6": {
     "option-data": [
         {
-            <userinput>"name": "foo"
+            <userinput>"name": "foo",
             "space": "vendor-encapsulated-options-space",
             "code": 1,
             "csv-format": true,
@@ -957,7 +1095,7 @@ temporarily override a list of interface names and listen on all interfaces.
     "option-data": [
         ...,
         {
-            <userinput>"name": "vendor-encapsulated-options"
+            <userinput>"name": "vendor-encapsulated-options",
             "space": "dhcp6",
             "code": 17,
             "csv-format": true,
@@ -994,13 +1132,13 @@ temporarily override a list of interface names and listen on all interfaces.
             <userinput>"name": "subopt1",
             "code": 1,
             "space": "isc",
-            "type": "ipv6-address".
+            "type": "ipv6-address",
             "record-types": "",
             "array": false,
-            "encapsulate ""
+            "encapsulate": ""</userinput>
         },
         {
-            "name": "subopt2",
+            <userinput>"name": "subopt2",
             "code": 2,
             "space": "isc",
             "type": "string",
@@ -1077,7 +1215,7 @@ should include options from the isc option space:
     "data" is not set the parser will assume that this parameter is not
     specified and an error will be reported.
     </para>
-    
+
     <para>Note that it is possible to create an option which carries some data
     in addition to the sub-options defined in the encapsulated option space.
     For example, if the "container" option from the previous example was
@@ -1179,7 +1317,7 @@ should include options from the isc option space:
         to designate that a given subnet is local, i.e. reachable directly over
         the specified interface. For example the server that is intended to serve
         a local subnet over eth0 may be configured as follows:
-	<screen>
+        <screen>
 "Dhcp6": {
     "subnet6": [
         {
@@ -1195,6 +1333,40 @@ should include options from the isc option space:
     ...
 }
 </screen>
+        </para>
+      </section>
+
+      <section id="dhcp6-rapid-commit">
+        <title>Rapid Commit</title>
+        <para>The Rapid Commit option, described in
+        <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>, is supported
+        by the Kea DHCPv6 server. However, support is disabled by default for
+        all subnets. It can be enabled for a particular subnet using the
+        <command>rapid-commit</command> parameter as shown below:
+<screen>
+"Dhcp6": {
+    "subnet6": [
+        {
+            "subnet": "2001:db8:beef::/48",
+            <userinput>"rapid-commit": true</userinput>,
+            "pools": [
+                 {
+                     "pool": "2001:db8:beef::1-2001:db8:beef::10"
+                 }
+             ],
+        }
+    ],
+    ...
+}
+</screen>
+        </para>
+        <para>
+          This setting only affects the subnet for which the
+          <command>rapid-commit</command> is set to <command>true</command>.
+          For clients connected to other subnets, the server will ignore the
+          Rapid Commit option sent by the client and will follow the 4-way
+          exchange procedure, i.e. respond with the Advertise for the Solicit
+          containing Rapid Commit option.
         </para>
       </section>
 
@@ -1266,6 +1438,43 @@ should include options from the isc option space:
 </screen>
         </para>
       </section>
+
+    <section id="dhcp6-rsoo">
+      <title>Relay-Supplied Options</title>
+      <para><ulink url="http://tools.ietf.org/html/rfc6422">RFC 6422</ulink>
+      defines a mechanism called Relay-Supplied DHCP Options. In certain cases relay
+      agents are the only entities that may have specific information. They can
+      insert options when relaying messages from the client to the server. The
+      server will then do certain checks and copy those options to the response
+      that will be sent to the client.</para>
+
+      <para>There are certain conditions that must be met for the option to be
+      included. First, the server must not provide the option by itself. In
+      other words, if both relay and server provide an option, the server always
+      takes precedence. Second, the option must be RSOO-enabled. IANA mantains a
+      list of RSOO-enabled options <ulink url="http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#options-relay-supplied">here</ulink>.
+      However, there may be cases when system administrators want to echo other
+      options. Kea can be instructed to treat other options as RSOO-enabled.
+      For example, to mark options 110, 120 and 130 as RSOO-enabled, the following
+      syntax should be used:
+<screen>
+"Dhcp6": {
+    <userinput>"relay-supplied-options": [ "110", "120", "130" ],</userinput>
+    ...
+}
+</screen>
+      </para>
+      <para>As of March 2015, only option 65 is RSOO-enabled by IANA. This
+      option will always be treated as such and there's no need to explicitly
+      mark it. Also, when enabling standard options, it is possible to use their
+      names, rather than option code, e.g. (e.g. use
+      <command>dns-servers</command> instead of <command>23</command>). See
+      <xref linkend="dhcp6-std-options-list" /> for the names. In certain cases
+      it could also work for custom options, but due to the nature of the parser
+      code this may be unreliable and should be avoided.
+      </para>
+
+    </section>
 
     <section id="dhcp6-client-classifier">
       <title>Client Classification in DHCPv6</title>
@@ -1370,27 +1579,68 @@ should include options from the isc option space:
       </orderedlist>
       The parameters controlling the generation of NCRs for submission to D2
       are contained in the "dhcp-ddns" section of kea-dhcp6
-      configuration. The default values for this section appears as follows:
+      configuration. The mandatory parameters for the DHCP DDNS configuration
+      are <command>enable-updates</command> which is unconditionally
+      required, and <command>qualifying-suffix</command> which has no
+      default value and is required when <command>enable-updates</command>
+      is set to <command>true</command>.
+
+      The two (disabled and enabled) minimal DHCP DDNS configurations are:
 <screen>
 "Dhcp6": {
     "dhcp-ddns": {
-        <userinput>"enable-updates": true,
-        "server-ip": "127.0.0.1",
-        "server-port": 53001,
-        "sender-ip": "",
-        "sender-port": 0,
-        "max-queue-size": 1024,
-        "ncr-protocol": "UDP",
-        "ncr-format": "JSON",
-        "override-no-update": false,
-        "override-client-update": false,
-        "replace-client-name": false,
-        "generated-prefix": "myhost",
-        "qualifying-suffix": "example.com"</userinput>
+        <userinput>"enable-updates": false</userinput>
     },
     ...
 }
 </screen>
+      and for example:
+<screen>
+"Dhcp6": {
+    "dhcp-ddns": {
+        <userinput>"enable-updates": true,
+        "qualifying-suffix": "example."</userinput>
+    },
+    ...
+}
+</screen>
+
+      The default values for the "dhcp-ddns" section are as follows:
+      <itemizedlist>
+      <listitem><simpara>
+      <command>"server-ip": "127.0.0.1"</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"server-port": 53001</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"sender-ip": ""</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"sender-port": 0</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"max-queue-size": 1024</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"ncr-protocol": "UDP"</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"ncr-format": "JSON"</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"override-no-update": false</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"override-client-update": false</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"replace-client-name": false</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"generated-prefix": "myhost"</command>
+      </simpara></listitem>
+      </itemizedlist>
       </para>
 
 
@@ -1586,8 +1836,8 @@ should include options from the isc option space:
       The third row in the table above describes the case in which the client
       requests that no DNS updates be done. The parameter, "override-no-update",
       can be used to instruct the server to disregard the client's wishes. When
-      this parameter is true, kea-dhcp6 will generate DDNS update requests to 
-      kea-dhcp-ddns even if the client requests no updates be done.  The N-S-O 
+      this parameter is true, kea-dhcp6 will generate DDNS update requests to
+      kea-dhcp-ddns even if the client requests no updates be done.  The N-S-O
       flags in the server's response to the client will be 0-1-1.
       </para>
       <para>
@@ -1662,9 +1912,12 @@ should include options from the isc option space:
 }
 </screen>
       <para>
-      The suffix used when generating a FQDN or when qualifying a partial name
-      is specified by the <command>qualifying-suffix</command> parameter. There
-      is no default value. To set its value simply set it to the desired string:
+      The suffix used when generating a FQDN or when qualifying a
+      partial name is specified by
+      the <command>qualifying-suffix</command> parameter. This
+      parameter has no default value, thus it is mandatory when
+      DDNS updates are enabled.
+      To set its value simply set it to the desired string:
       </para>
 <screen>
 "Dhcp6": {
@@ -1685,8 +1938,8 @@ should include options from the isc option space:
       </para>
       <para>
       where candidate-name is the partial name supplied in the REQUEST.
-      For example, if FQDN domain name value was "some-computer" and assuming
-      the default value for qualifying-suffix, the generated FQDN would be:
+      For example, if FQDN domain name value was "some-computer" and
+      qualifying-suffix "example.com", the generated FQDN would be:
       </para>
       <para>
         some-computer.example.com.
@@ -1700,10 +1953,9 @@ should include options from the isc option space:
       </para>
       <para>
       where address-text is simply the lease IP address converted to a
-      hyphenated string.  For example, if lease address is 3001:1::70E and
-      default values are used for 
-      <command>generated-prefix</command> and <command>qualifying-suffix</command>, the
-      generated FQDN would be:
+      hyphenated string.  For example, if lease address is 3001:1::70E,
+      the qualifying suffix "example.com", and the default value is used for
+      <command>generated-prefix</command>, the generated FQDN would be:
       </para>
       <para>
         myhost-3001-1--70E.example.com.
@@ -1711,6 +1963,323 @@ should include options from the isc option space:
     </section>
 
    </section>
+
+  <!-- Host reservation is a large topic. There will be many subsections,
+   so it should be a section on its own. -->
+  <section id="host-reservation-v6">
+    <title>Host reservation in DHCPv6</title>
+
+    <para>There are many cases where it is useful to provide a configuration on
+    a per host basis. The most obvious one is to reserve specific, static IPv6
+    address or/and prefix for exclusive use by a given client (host) &dash; returning
+    client will get the same address or/and prefix every time and other clients will
+    never get that address. Note that there may be cases when the
+    new reservation has been made for the client for the address or prefix being
+    currently in use by another client. We call this situation a "conflict". The
+    conflicts get resolved automatically over time as described in the subsequent
+    sections. Once conflict is resolved, the client will keep receiving the reserved
+    configuration when it renews.</para>
+
+    <para>Another example when the host reservations are applicable is when a host
+    that has specific requirements, e.g. a printer that needs additional DHCP options
+    or a cable modem needs specific parameters. Yet another possible use case for
+    host reservation is to define unique names for hosts.  Although not all of
+    the presented use cases are are implemented yet, Kea software will support them
+    in the near future.</para>
+
+    <para>Hosts reservations are defined as parameters for each subnet. Each host
+    can be identified by either DUID or its hardware/MAC address. See
+    <xref linkend="mac-in-dhcpv6"/> for details. There is an optional
+    <command>reservations</command> array in the
+    <command>Subnet6</command> structure. Each element in that array
+    is a structure, that holds information about a single host. In
+    particular, such a structure has to have an indentifer that
+    uniquely identifies a host.  In DHCPv6 context, such an identifier
+    is a hardware (MAC) address or a DUID.  Also, either one or more
+    addresses or prefixes should be specified. It is possible to
+    specify a hostname. Additional capabilities are planned.</para>
+
+    <para>The following example shows how to reserve addresses and prefixes
+    for specific hosts:
+
+<screen>
+"subnet6": [
+    {
+        "subnet": "2001:db8:1::/48",
+        "pools": [ { "pool": "2001:db8:1::/80" } ],
+        "pd-pools": [
+            {
+                "prefix": "2001:db8:1:8000::",
+                "prefix-len": 56,
+                "delegated-len": 64
+            }
+        ],
+        <userinput>"reservations": [
+            {
+                "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
+                "ip-addresses": [ "2001:db8:1::100" ]
+            },
+            {
+                "hw-address": "00:01:02:03:04:05",
+                "ip-addresses": [ "2001:db8:1::101" ]
+            },
+            {
+                "duid": "01:02:03:04:05:06:07:08:09:0A",
+                "ip-addresses": [ "2001:db8:1::102" ],
+                "prefixes": [ "2001:db8:2:abcd::/64" ],
+                "hostname": "foo.example.com"
+            }
+        ]</userinput>
+    }
+]
+</screen>
+    This example makes 3 reservations. The first one reserves 2001:db8:1::100 address
+    for the client using DUID 01:02:03:04:05:0A:0B:0C:0D:0E. The second one
+    also reserves an address, but does so using MAC or hardware address, rather than
+    DUID. The third example is most advanced. It reserves an address, a prefix and
+    a hostname at the same time.
+    </para>
+
+    <para>Note that DHCPv6 allows for a single client to lease multiple addresses
+    and multiple prefixes at the same time. In the upcoming Kea releases, it will
+    be possible to have multiple addresses and prefixes reserved for a single
+    host. Therefore <command>ip-addresses</command> and <command>prefixes</command>
+    are plural and are actually arrays. As of 0.9.1 having more than one IPv6
+    address or prefix is only partially supported.</para>
+
+    <para>Making a reservation for a mobile host that may visit multiple subnets
+    requires a separate host definition in each subnet it is expected to visit.
+    It is not allowed to define multiple host definitions with the same hardware
+    address in a single subnet. It is a valid configuration, if such definitions
+    are specified in different subnets, though. The reservation for a given host
+    should include only one identifier, either DUID or hwardware address. Defining
+    both for the same host is considered a configuration error, but as of 0.9.1
+    beta, it is not rejected.
+    </para>
+
+    <para>Adding host reservation incurs a performance penalty. In principle,
+    when the server that does not support host reservation responds to a query,
+    it needs to check whether there is a lease for a given address being
+    considered for allocation or renewal. The server that also supports host
+    reservation, has to perform additional checks: not only if the address is
+    currently used (if there is a lease for it), but also whether the address
+    could be used by someone else (if there is a reservation for it). That
+    additional check incurs performance penalty.</para>
+
+    <section id="reservation6-types">
+      <title>Address/prefix reservation types</title>
+
+      <para>In a typical scenario there's an IPv6 subnet defined with a certain
+      part of it dedicated for dynamic address allocation by the DHCPv6
+      server. There may be an additional address space defined for prefix
+      delegation. Those dynamic parts are referred to as dynamic pools, address
+      and prefix pools or simply pools. In principle, the host reservation can
+      reserve any address or prefix that belongs to the subnet. The reservations
+      that specify an address that belongs to configured pools are called
+      <command>in-pool reservations</command>. In contrast, those that do not
+      belong to dynamic pools are called <command>out-of-pool
+      reservations</command>. There is no formal difference in the reservation
+      syntax. As of 0.9.1, both reservation types are handled
+      uniformly. However, upcoming releases may offer improved performance if
+      there are only out-of-pool reservations as the server will be able to skip
+      reservation checks when dealing with existing leases. Therefore, system
+      administrators are encouraged to use out-of-pool reservations, if
+      possible.</para>
+    </section>
+
+    <section id="reservation6-conflict">
+      <title>Conflicts in DHCPv6 reservations</title>
+      <para>As reservations and lease information are stored in different places,
+      conflicts may arrise. Consider the following series of events. The server
+      has configured the dynamic pool of addresses from the range of 2001:db8::10
+      to 2001:db8::20. Host A requests an address and gets 2001:db8::10. Now the
+      system administrator decides to reserve an address for host B. He decides
+      to reserve 2001:db8::10 for that purpose. In general, reserving an address
+      that is currently assigned to someone else is not recommended, but there
+      are valid use cases where such an operation is warranted.</para>
+
+      <para>The server now has a conflict to resolve. Let's analyze the
+      situation here. If host B boots up and request an address, the server is
+      not able to assign the reserved address 2001:db8::10. A naive approach
+      would to be immediately remove the lease for host A and create a new one
+      for host B. That would not solve the problem, though, because as soon as
+      host B get the address, it will detect that the address is already in use
+      by someone else (host A) and would send Decline. Therefore in this
+      situation, the server has to temporarily assign a different address from the
+      dynamic pool (not matching what has been reserved) to host B.</para>
+
+      <para>When the host A renews its address, the server will discover that
+      the address being renewed is now reserved for someone else (host
+      B). Therefore the server will remove the lease for 2001:db8::10 and select
+      a new address and will create a new lease for it. It will send two
+      addresses in its response: the old address with lifetimes set to 0 to
+      explicitly indicate that it is no longer valid and a new address with
+      non-zero lifetimes. When the host B renews its temporarily assigned
+      address, the server will detect that the existing lease does not match
+      reservation, so it will release the current address host B has and will
+      create a new lease matching the reservation. Similar as before, the server
+      will send two addresses: the temporarily assigned one with zeroed
+      lifetimes, and the new one that matches reservation with proper lifetimes
+      set.</para>
+
+      <para>This recovery will succeed, even if other hosts will attempt to get
+      the reserved address. Had the host C requested address 2001:db8::10 after
+      the reservation was made, the server will propose a different address.</para>
+
+      <para>This recovery mechanism allows the server to fully recover from a
+      case where reservations conflict with existing leases. This procedure
+      takes time and will roughly take as long as renew-timer value specified.
+      The best way to avoid such recovery is to not define new reservations that
+      conflict with existing leases. Another recommendation is to use
+      out-of-pool reservations. If the reserved address does not belong to a
+      pool, there is no way that other clients could get this address (note that
+      having multiple reservations for the same address is not allowed).
+      </para>
+    </section>
+
+    <section id="reservation6-hostname">
+      <title>Reserving a hostname</title>
+      <para>When the reservation for the client includes the <command>hostname
+      </command>, the server will assign this hostname to the client and send
+      it back in the Client FQDN, if the client sent the FQDN option to the
+      the server. The reserved hostname always takes precedence over the hostname
+       supplied by the client (via the FQDN option) or the autogenerated
+      (from the IPv6 address) hostname.</para>
+
+      <para>The server qualifies the reserved hostname with the value
+      of the <command>qualifying-suffix</command> parameter. For example, the
+      following subnet configuration:
+<screen>
+"subnet6": [
+    {
+        "subnet": "2001:db8:1::/48",
+        "pools": [ { "pool": "2001:db8:1::/80" } ],
+        "reservations": [
+            {
+                "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
+                "ip-addresses": [ "2001:db8:1::100" ]
+                "hostname": "alice-laptop"
+            }
+        ]
+    }
+],
+"dhcp-ddns": {
+    "enable-updates": true,
+    "qualifying-suffix": "example.isc.org."
+}
+</screen>
+      will result in assigning the "alice-laptop.example.isc.org." hostname to the
+      client using the DUID "01:02:03:04:05:0A:0B:0C:0D:0E". If the <command>qualifying-suffix
+      </command> is not specified, the default (empty) value will be used, and
+      in this case the value specified as a <command>hostname</command> will
+      be treated as fully qualified name.  Thus, by leaving the
+      <command>qualifying-suffix</command> empty it is possible to qualify
+      hostnames for the different clients with different domain names:
+<screen>
+"subnet6": [
+    {
+        "subnet": "2001:db8:1::/48",
+        "pools": [ { "pool": "2001:db8:1::/80" } ],
+        "reservations": [
+            {
+                "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
+                "ip-addresses": [ "2001:db8:1::100" ]
+                "hostname": "mark-desktop.example.org."
+            }
+        ]
+    }
+],
+"dhcp-ddns": {
+    "enable-updates": true,
+}
+</screen>
+      will result in assigning the "mark-desktop.example.org." hostname to the
+      client using the DUID "01:02:03:04:05:0A:0B:0C:0D:0E".
+    </para>
+</section>
+
+    <section id="reservation6-options">
+      <title>Reserving specific options</title>
+      <!-- @todo: replace this with the actual text once #3573 is implemented -->
+      <para>Currently it is not possible to specify options in host
+      reservation. Such a feature will be added in the upcoming Kea
+      releases.</para>
+    </section>
+
+    <section id="reservation6-mode">
+      <title>Fine Tuning IPv6 Host Reservation</title>
+
+      <note>
+        <para><command>reservation-mode</command> in the DHCPv6 server is
+        implemented in Kea 0.9.1 beta, but has not been tested and is
+        considered experimental.</para>
+      </note>
+
+      <para>Host reservation capability introduces additional restrictions for the
+      allocation engine during lease selection and renewal. In particular, three
+      major checks are necessary. First, when selecting a new lease, it is not
+      sufficient for a candidate lease to be not used by another DHCP client. It
+      also must not be reserved for another client. Second, when renewing a lease,
+      additional check must be performed whether the address being renewed is not
+      reserved for another client. Finally, when a host renews an address or a
+      prefix, the server has to check whether there's a reservation for this host,
+      so the existing (dynamically allocated) address should be revoked and the
+      reserved one be used instead.</para>
+      <para>Some of those checks may be unnecessary in certain deployments. Not
+      performing them may improve performance. The Kea server provides the
+      <command>reservation-mode</command> configuration parameter to select the
+      types of reservations allowed for the particular subnet. Each reservation
+      type has different constraints for the checks to be performed by the
+      server when allocating or renewing a lease for the client.
+      Allowed values are:
+
+      <itemizedlist>
+      <listitem><simpara> <command>all</command> - enables all host reservation
+      types. This is the default value. This setting is the safest and the most
+      flexible. It allows in-pool and out-of-pool reservations. As all checks
+      are conducted, it is also the slowest.
+      </simpara></listitem>
+
+      <listitem><simpara> <command>out-of-pool</command> - allows only out of
+      pool host reservations.  With this setting in place, the server may assume
+      that all host reservations are for addresses that do not belong to the
+      dynamic pool. Therefore it can skip the reservation checks when dealing
+      with in-pool addresses, thus improving performance. Do not use this mode
+      if any of your reservations use in-pool address. Caution is advised when
+      using this setting. Kea 0.9.1 does not sanity check the reservations against
+      <command>reservation-mode</command>. Misconfiguration may cause problems.
+      </simpara></listitem>
+
+      <listitem><simpara>
+      <command>disabled</command> - host reservation support is disabled. As there
+      are no reservations, the server will skip all checks. Any reservations defined
+      will be completely ignored. As the checks are skipped, the server may
+      operate faster in this mode.
+      </simpara></listitem>
+
+      </itemizedlist>
+      </para>
+
+      <para>
+        An example configuration that disables reservation looks like follows:
+        <screen>
+"Dhcp6": {
+    "subnet6": [
+        {
+        "subnet": "2001:db8:1::/64",
+        <userinput>"reservation-mode": "disabled"</userinput>,
+        ...
+        }
+    ]
+}
+</screen>
+      </para>
+   </section>
+
+    <!-- @todo: add support for per IA reservation (that specifies IAID in
+                the ip-addresses and prefixes) -->
+  </section>
+  <!-- end of host reservations section -->
 
     <section id="dhcp6-serverid">
       <title>Server Identifier in DHCPv6</title>
@@ -1737,6 +2306,51 @@ should include options from the isc option space:
         file.
       </para>
 
+    </section>
+
+    <section id="stateless-dhcp6">
+      <title>Stateless DHCPv6 (Information-Request Message)</title>
+      <para>Typically DHCPv6 is used to assign both addresses and options. These
+      assignments (leases) have state that changes over time, hence
+      their name, stateful. DHCPv6 also supports a stateless mode,
+      where clients request configuration options only. This mode is
+      considered lightweight from the server perspective, as it does not require
+      any state tracking; hence its name.</para>
+      <para>The Kea server supports stateless mode. Clients can send
+      Information-Request messages and the server will send back
+      answers with the requested options (providing the options are
+      available in the server configuration).  The server will attempt to
+      use per-subnet options first. If that fails - for whatever reason - it
+      will then try to provide options defined in the global scope.</para>
+
+      <para>Stateless and stateful mode can be used together. No special
+      configuration directives are required to handle this. Simply use the
+      configuration for stateful clients and the stateless clients will get
+      just options they requested.</para>
+
+      <para>This usage of global options allows for an interesting case.
+      It is possible to run a server that provides just options and no
+      addresses or prefixes. If the options have the same value in each
+      subnet, the configuration can define required options in the global
+      scope and skip subnet definitions altogether. Here's a simple example of
+      such a configuration:
+<screen>
+"Dhcp6": {
+    "interfaces-config": {
+        "interfaces": [ "ethX" ]
+    },
+    <userinput>"option-data": [ {
+        "name": "dns-servers",
+        "data": "2001:db8::1, 2001:db8::2"
+    } ]</userinput>,
+    "lease-database": { "type": "memfile" }
+ }
+</screen>
+      This very simple configuration will provide DNS server information
+      to all clients in the network, regardless of their location. Note the
+      specification of the memfile lease database: this is required since,
+      as of version 0.9.1, Kea requires a lease database to be specified
+      even if it is not used.</para>
     </section>
 
     <section id="dhcp6-relay-override">
@@ -1778,9 +2392,9 @@ should include options from the isc option space:
                      "pool": "2001:db8:1::1-2001:db8:1::ffff"
                  }
              ],
-	     <userinput>"relay": {
-	         "ip-address": "3000::1"
-	     }</userinput>
+             <userinput>"relay": {
+                 "ip-address": "3000::1"
+             }</userinput>
         }
     ]
 }
@@ -1811,15 +2425,15 @@ should include options from the isc option space:
 "Dhcp6": {
     "subnet6": [
         {
-	    "subnet": "3000::/64",
-	    "pools": [
-	        { "pool": "3000::2 - 3000::ffff" }
-	    ],
-	    <userinput>"client-class": "VENDOR_CLASS_docsis3.0",
+            "subnet": "3000::/64",
+            "pools": [
+                { "pool": "3000::2 - 3000::ffff" }
+            ],
+            <userinput>"client-class": "VENDOR_CLASS_docsis3.0",
             "relay": {
                 "ip-address": "3000::1"
             }</userinput>
-        },	    
+        },
 
         {
             "subnet": "2001:db8:1::/64",
@@ -1828,9 +2442,9 @@ should include options from the isc option space:
                      "pool": "2001:db8:1::1-2001:db8:1::ffff"
                  }
              ],
-	     <userinput>"relay": {
-	         "ip-address": "3000::1"
-	     }</userinput>
+             <userinput>"relay": {
+                 "ip-address": "3000::1"
+             }</userinput>
         }
     ]
 }
@@ -1884,9 +2498,10 @@ should include options from the isc option space:
         </simpara>
       </listitem>
       <listitem>
-        <simpara><command>raw</command> In principle, a DHCPv6 server could use raw
+        <simpara><command>raw</command> - In principle, a DHCPv6 server could use raw
         sockets to receive incoming traffic and extract MAC/hardware address
-        information. This is currently not implemented and this value has no effect.
+        information. This is currently not implemented for DHCPv6 and this value has
+        no effect.
         </simpara>
       </listitem>
       <listitem>
@@ -1904,8 +2519,12 @@ should include options from the isc option space:
         sending their packets from IPv6 link-local addresses. There's a good chance
         that those addresses are based on EUI-64, which contains MAC address. This
         method is not completely reliable, as clients may use other link-local address
-        types. In particular, privacy extensions, defined in RFC4941, do not use
-        MAC addresses.
+        types.  In particular, privacy extensions, defined in RFC4941, do not use
+        MAC addresses.  Also note that successful extraction requires that the
+        address's u-bit must be set to 1 and its g-bit set to 0, indicating that it
+        is an interface identifier as per
+        <ulink url="http://tools.ietf.org/html/rfc2373#section-2.5.1">
+        RFC 2373, section 2.5.1</ulink>.
         </simpara>
       </listitem>
       <listitem>
@@ -1920,7 +2539,7 @@ should include options from the isc option space:
         </simpara>
       </listitem>
       <listitem>
-        <simpara><command>remote-id</command> <ulink
+        <simpara><command>remote-id</command> - <ulink
         url="http://tools.ietf.org/html/rfc4649">RFC 4649</ulink>
         defines remote-id option that is inserted by a relay agent. Depending
         on the relay agent configuration, the inserted option may convey client's
@@ -1940,14 +2559,332 @@ should include options from the isc option space:
         </simpara>
       </listitem>
       <listitem>
-        <simpara><command>docsis</command> - Yet another possible source of MAC
+        <simpara><command>docsis-cmts</command> - Yet another possible source of MAC
         address information are DOCSIS options inserted by a CMTS that acts
-        as a DHCPv6 relay agent in cable networks. This method is
-        currently not implemented.
+        as a DHCPv6 relay agent in cable networks. This method attempts to extract
+        MAC address information from suboption 1026 (cm mac) of the vendor specific option
+        with vendor-id=4491. This vendor option is extracted from the relay-forward message,
+        not the original client's message.
+        </simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>docsis-modem</command> - Yet another possible source of MAC
+        address information are DOCSIS options inserted by the cable modem itself.
+        This method attempts to extract MAC address information from suboption 36 (device id)
+        of the vendor specific option with vendor-id=4491. This vendor option is extracted from
+        the original client's message, not from any relay options.
         </simpara>
       </listitem>
     </itemizedlist>
     </para>
+    </section>
+
+    <section id="dhcp6-stats">
+      <title>Statistics in DHCPv6 server</title>
+      <note>
+        <para>This section describes DHCPv6-specific statistics. For a general
+        overview and usage of statistics, see <xref linkend="stats" />.</para>
+      </note>
+
+      <para>
+        The DHCPv6 server supports the following statistics:
+      </para>
+        <table frame="all" id="dhcp6-statistics">
+          <title>DHCPv6 Statistics</title>
+          <tgroup cols='3'>
+          <colspec colname='statistic' align='center'/>
+          <colspec colname='type' align='center'/>
+          <colspec colname='description' align='left'/>
+          <thead>
+            <row>
+              <entry>Statistic</entry>
+              <entry>Data Type</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry>pkt6-received</entry>
+              <entry>integer</entry>
+              <entry>Number of DHCPv6 packets received. This includes all packets:
+              valid, bogus, corrupted, rejected etc. This statistic is expected
+              to grow rapidly.</entry>
+            </row>
+
+            <row>
+              <entry>pkt6-receive-drop</entry>
+              <entry>integer</entry>
+              <entry>Number of incoming packets that were dropped. Exact reason
+              for dropping packets is logged, but the most common reasons may
+              be: an unacceptable or not supported packet type, direct responses
+              are forbidden, the server-id sent by the client does not match the
+              server's server-id or the packet is malformed.</entry>
+            </row>
+
+            <row>
+              <entry>pkt6-parse-failed</entry>
+              <entry>integer</entry>
+              <entry>Number of incoming packets that could not be parsed.
+              A non-zero value of this statistic indicates that the server
+              received a malformed or truncated packet. This may indicate problems
+              in your network, faulty clients, faulty relay agents or server
+              code bug.</entry>
+            </row>
+
+            <row>
+              <entry>pkt6-solicit-received</entry>
+              <entry>integer</entry>
+              <entry>
+                Number of SOLICIT packets received. This statistic is expected
+                to grow.  Its increase means that clients that just booted
+                started their configuration process and their initial packets
+                reached your server.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-advertise-received</entry>
+              <entry>integer</entry>
+              <entry>
+                Number of ADVERTISE packets received. Advertise packets are sent
+                by the server and the server is never expected to receive them. A non-zero
+                value of this statistic indicates an error ocurring in the network.
+                One likely cause would be a misbehaving relay agent that incorrectly
+                forwards ADVERTISE messages towards the server, rather back to the
+                clients.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-request-received</entry>
+              <entry>integer</entry>
+              <entry>Number of REQUEST packets received. This statistic
+                is expected to grow. Its increase means that clients that just booted
+                received the server's response (ADVERTISE), accepted it and are now
+                requesting an address (REQUEST).
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-reply-received</entry>
+              <entry>integer</entry>
+              <entry>Number of REPLY packets received. This statistic is
+              expected to remain zero at all times, as REPLY packets are sent by
+              the server and the server is never expected to receive
+              them. A non-zero value indicates an error. One likely cause would be
+              a misbehaving relay agent that incorrectly forwards REPLY messages
+              towards the server, rather back to the clients.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-renew-received</entry>
+              <entry>integer</entry>
+              <entry>Number of RENEW packets received. This statistic
+                is expected to grow. Its increase means that clients received their
+                addresses and prefixes and are trying to renew them.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-rebind-received</entry>
+              <entry>integer</entry>
+              <entry>Number of REBIND packets received. A non-zero value
+              indicates that clients didn't receive responses to their RENEW messages
+              (regular lease renewal mechanism) and are attempting to find any server
+              that is able to take over their leases. It may mean that some server's
+              REPLY messages never reached the clients.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-release-received</entry>
+              <entry>integer</entry>
+              <entry>Number of RELEASE packets received. This statistic is expected
+              to grow when a device is being shut down in the network. It
+              indicates that the address or prefix assigned is reported as no longer
+              needed. Note that many devices, especially wireless, do not send RELEASE,
+              because of design choice or due to moving out of range.
+              </entry>
+            </row>
+
+            <row>
+            <entry>pkt6-decline-received</entry>
+            <entry>integer</entry>
+            <entry>
+              Number of DECLINE packets received. This statistic is expected to
+              remain close to zero. Its increase means that a client leased an
+              address, but discovered that the address is currently used by an
+              unknown device in your network. If this statistic is growing, it
+              may indicate misconfigured server or devices that have statically
+              assigned conflicting addresses.
+            </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-infrequest-received</entry>
+              <entry>integer</entry>
+              <entry>
+                Number of INFORMATION-REQUEST packets received. This statistic
+                is expected to grow if there are devices that are using
+                stateless DHCPv6. INFORMATION-REQUEST messages are used by
+                clients that request stateless configuration, i.e. options
+                and parameters other than addresses or prefixes.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-unknown-received</entry>
+              <entry>integer</entry>
+              <entry>Number of packets received of an unknown type. Non-zero
+              value of this statistic indicates that the server received a
+              packet that it wasn't able to recognize: either with unsupported
+              type or possibly malformed.</entry>
+            </row>
+
+            <row>
+              <entry>pkt6-sent</entry>
+              <entry>integer</entry>
+              <entry>Number of DHCPv6 packets sent. This statistic is expected
+              to grow every time the server transmits a packet. In general, it
+              should roughly match pkt6-received, as most incoming packets cause
+              the server to respond. There are exceptions (e.g. server receiving a
+              REQUEST with server-id matching other server), so do not worry, if
+              it is lesser than pkt6-received.</entry>
+            </row>
+
+            <row>
+              <entry>pkt6-advertise-sent</entry>
+              <entry>integer</entry>
+              <entry>Number of ADVERTISE packets sent. This statistic is
+              expected to grow in most cases after a SOLICIT is processed. There
+              are certain uncommon, but valid cases where incoming SOLICIT is
+              dropped, but in general this statistic is expected to be close to
+              pkt6-solicit-received.</entry>
+            </row>
+
+            <row>
+              <entry>pkt6-reply-sent</entry>
+              <entry>integer</entry>
+              <entry>Number of REPLY packets sent. This statistic is expected to
+              grow in most cases after a SOLICIT (with rapid-commit), REQUEST,
+              RENEW, REBIND, RELEASE, DECLINE or INFORMATION-REQUEST is
+              processed. There are certain cases where there is no response.
+              </entry>
+            </row>
+
+            <row>
+            <entry>subnet[id].total-nas</entry>
+            <entry>integer</entry>
+            <entry>
+            This statistic shows the total number of NA addresses available for
+            DHCPv6 management for a given subnet. In other words, this is the sum
+            of all addresses in all configured pools. This statistic changes only
+            during configuration changes. Note it does not take into account any
+            addresses that may be reserved due to host reservation. The
+            <emphasis>id</emphasis> is the subnet-id of a given subnet. This
+            statistic is exposed for each subnet separately. This statistic is
+            reset during a reconfiguration event.
+            </entry>
+            </row>
+
+            <row>
+            <entry>subnet[id].assigned-nas</entry>
+            <entry>integer</entry>
+            <entry>
+            This statistic shows the number of NA addresses in a given subnet that
+            are assigned. This statistic increases every time a new lease is allocated
+            (as a result of receiving a REQUEST message) and is decreased every time a
+            lease is released (a RELEASE message is received). When lease expiration
+            is implemented (planned for Kea 1.0), it will also decrease when a lease
+            is expired. The <emphasis>id</emphasis> is the subnet-id of a given
+            subnet. This statistic is exposed for each subnet separately. This
+            statistic is reset during a reconfiguration event.
+            </entry>
+            </row>
+
+            <row>
+            <entry>subnet[id].total-pds</entry>
+            <entry>integer</entry>
+            <entry>
+            This statistic shows the total number of PD prefixes available for
+            DHCPv6 management for a given subnet. In other words, this is the sum
+            of all prefixes in all configured pools. This statistic changes only
+            during configuration changes. Note it does not take into account any
+            prefixes that may be reserved due to host reservation. The
+            <emphasis>id</emphasis> is the subnet-id of a given subnet. This
+            statistic is exposed for each subnet separately. This statistic is
+            reset during a reconfiguration event.
+            </entry>
+            </row>
+
+            <row>
+            <entry>subnet[id].assigned-pds</entry>
+            <entry>integer</entry>
+            <entry>
+            This statistic shows the number of PD prefixes in a given subnet that
+            are assigned. This statistic increases every time a new lease is allocated
+            (as a result of receiving a REQUEST message) and is decreased every time a
+            lease is released (a RELEASE message is received). When lease expiration
+            is implemented (planned for Kea 1.0), it will also decrease when a lease
+            is expired. The <emphasis>id</emphasis> is the subnet-id of a given
+            subnet. This statistic is exposed for each subnet separately. This
+            statistic is reset during a reconfiguration event.
+            </entry>
+            </row>
+
+        </tbody>
+        </tgroup>
+        </table>
+    </section>
+
+    <section id="dhcp6-ctrl-channel">
+      <title>Management API for the DHCPv6 server</title>
+      <para>
+        Management API has been introduced in Kea 0.9.2-beta. It allows issuing specific
+        management commands, like statistics retrieval, reconfiguration or shutdown.
+        For more details, see <xref linkend="ctrl-channel" />. Currently the only
+        supported communication channel type is UNIX stream socket. By default there
+        are no sockets open. To instruct Kea to open a socket, the following entry
+        in the configuration file can be used:
+<screen>
+"Dhcp6": {
+    "control-socket": {
+        "socket-type": "unix",
+        "socket-name": <userinput>"/path/to/the/unix/socket"</userinput>
+    },
+
+    "subnet6": [
+        ...
+    ],
+    ...
+}
+</screen>
+      </para>
+
+      <para>
+	The length of the path specified by the <command>socket-name</command>
+	parameter is restricted by the maximum length for the unix socket name
+	on your operating system, i.e. the size of the <command>sun_path</command>
+	field in the <command>sockaddr_un</command> structure, decreased by 1.
+	This value varies on different operating systems between 91 and 107
+	characters. The typical values are 107 on Linux and 103 on FreeBSD.
+      </para>
+
+      <para>
+        Communication over control channel is conducted using JSON structures.
+        See the Control Channel section in the Kea Developer's Guide for more details.
+      </para>
+
+      <para>DHCPv6 server supports <command>statistic-get</command>,
+      <command>statistic-reset</command>, <command>statistic-remove</command>,
+      <command>statistic-get-all</command>, <command>statistic-reset-all</command>
+      and <command>statistic-remove-all</command>, specified in
+      <xref linkend="command-stats"/>. It also supports
+      <command>list-commands</command> and <command>shutdown</command>,
+      specified in <xref linkend="command-list-commands" /> and
+      <xref linkend="command-shutdown" />, respectively.</para>
     </section>
 
     <section id="dhcp6-std">
@@ -1959,7 +2896,8 @@ should include options from the isc option space:
             <simpara><emphasis>Dynamic Host Configuration Protocol for IPv6</emphasis>,
             <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>:
             Supported messages are SOLICIT,
-            ADVERTISE, REQUEST, RELEASE, RENEW, REBIND, CONFIRM and REPLY.</simpara>
+            ADVERTISE, REQUEST, RELEASE, RENEW, REBIND, INFORMATION-REQUEST,
+            CONFIRM and REPLY.</simpara>
           </listitem>
           <listitem>
             <simpara><emphasis>IPv6 Prefix Options for
@@ -1975,18 +2913,31 @@ should include options from the isc option space:
             Supported option is DNS_SERVERS.</simpara>
           </listitem>
           <listitem>
+            <simpara><emphasis>The Dynamic Host Configuration Protocol for IPv6 (DHCPv6)
+            Relay Agent Remote-ID Option</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc4649">RFC 4649</ulink>:
+            REMOTE-ID option is supported.</simpara>
+          </listitem>
+          <listitem>
             <simpara><emphasis>The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Client
             Fully Qualified Domain Name (FQDN) Option</emphasis>,
             <ulink url="http://tools.ietf.org/html/rfc4704">RFC 4704</ulink>:
             Supported option is CLIENT_FQDN.</simpara>
           </listitem>
-	  <listitem>
-	    <simpara><emphasis>Client Link-Layer Address Option in
-	    DHCPv6</emphasis>,
-	    <ulink url="http://tools.ietf.org/html/rfc6939">RFC
-	    6939</ulink>: Supported option is client link-layer
-	    address option.</simpara>
-	  </listitem>
+          <listitem>
+            <simpara><emphasis>Relay-Supplied DHCP Options</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc6422">RFC 6422</ulink>:
+            Full functionality is supported: OPTION_RSOO, ability of the server
+            to echo back the options, checks whether an option is RSOO-enabled,
+            ability to mark additional options as RSOO-enabled.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>Client Link-Layer Address Option in
+            DHCPv6</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc6939">RFC
+            6939</ulink>: Supported option is client link-layer
+            address option.</simpara>
+          </listitem>
       </itemizedlist>
     </section>
 
@@ -2030,8 +2981,7 @@ should include options from the isc option space:
 
         <listitem>
           <simpara>
-            Duplication report (DECLINE), stateless configuration
-            (INFORMATION-REQUEST) and client reconfiguration (RECONFIGURE) are
+            Duplication report (DECLINE) and client reconfiguration (RECONFIGURE) are
             not yet supported.
           </simpara>
         </listitem>

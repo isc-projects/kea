@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <iostream>
 
@@ -145,7 +147,7 @@ PktTransform::packOptions(const OptionBuffer& in_buffer,
             // inject contents of temporary buffer to output buffer.
             const uint8_t *buf_data =
                 static_cast<const uint8_t*>(buf.getData());
-            for (int i = 0; i < buf.getLength(); ++i) {
+            for (size_t i = 0; i < buf.getLength(); ++i) {
                 out_buffer.writeUint8At(buf_data[i], offset + i);
             }
         }

@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <exceptions/exceptions.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_log.h>
@@ -20,6 +22,8 @@
 #include <hooks/library_manager.h>
 #include <hooks/pointer_converter.h>
 #include <hooks/server_hooks.h>
+#include <log/logger_manager.h>
+#include <log/message_initializer.h>
 
 #include <string>
 #include <vector>
@@ -146,7 +150,7 @@ LibraryManager::registerStandardCallouts() {
 
     // Iterate through the list of known hooks
     vector<string> hook_names = ServerHooks::getServerHooks().getHookNames();
-    for (int i = 0; i < hook_names.size(); ++i) {
+    for (size_t i = 0; i < hook_names.size(); ++i) {
 
         // Look up the symbol
         void* dlsym_ptr = dlsym(dl_handle_, hook_names[i].c_str());
@@ -263,6 +267,19 @@ LibraryManager::loadLibrary() {
     // Open the library (which is a check that it exists and is accessible).
     if (openLibrary()) {
 
+        // The hook libraries provide their own log messages and logger
+        // instances. This step is required to register log messages for
+        // the library being loaded in the global dictionary. Ideally, this
+        // should be called after all libraries have been loaded but we're
+        // going to call the version() and load() functions here and these
+        // functions may already contain logging statements.
+        isc::log::MessageInitializer::loadDictionary();
+
+        // The log messages registered by the new hook library may duplicate
+        // some of the existing messages. Log warning for each duplicated
+        // message now.
+        isc::log::LoggerManager::logDuplicatedMessages();
+
         // Library opened OK, see if a version function is present and if so,
         // check what value it returns.
         if (checkVersion()) {
@@ -317,7 +334,7 @@ LibraryManager::unloadLibrary() {
         // library on all hooks.
         vector<string> hooks = ServerHooks::getServerHooks().getHookNames();
         manager_->setLibraryIndex(index_);
-        for (int i = 0; i < hooks.size(); ++i) {
+        for (size_t i = 0; i < hooks.size(); ++i) {
             bool removed = manager_->deregisterAllCallouts(hooks[i]);
             if (removed) {
                 LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_REMOVED)

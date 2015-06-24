@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -54,11 +54,11 @@ public:
 
     ~JSONFileBackendTest() {
         isc::log::setDefaultLoggingOutput();
-        static_cast<void>(unlink(TEST_FILE));
+        static_cast<void>(remove(TEST_FILE));
     };
 
     void writeFile(const std::string& file_name, const std::string& content) {
-        static_cast<void>(unlink(file_name.c_str()));
+        static_cast<void>(remove(file_name.c_str()));
 
         ofstream out(file_name.c_str(), ios::trunc);
         EXPECT_TRUE(out.is_open());
@@ -75,7 +75,10 @@ const char* JSONFileBackendTest::TEST_FILE = "test-config.json";
 TEST_F(JSONFileBackendTest, jsonFile) {
 
     // Prepare configuration file.
-    string config = "{ \"Dhcp6\": { \"interfaces\": [ \"*\" ],"
+    string config = "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -150,7 +153,10 @@ TEST_F(JSONFileBackendTest, comments) {
 
     string config_hash_comments = "# This is a comment. It should be \n"
         "#ignored. Real config starts in line below\n"
-        "{ \"Dhcp6\": { \"interfaces\": [ \"*\" ],"
+        "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, \n"

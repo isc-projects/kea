@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#include <config/ccsession.h>
+#include <cc/command_interpreter.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <log/logger_support.h>
@@ -93,13 +93,14 @@ public:
             }
 
             // Add the keyword and value - make sure that they are quoted.
-            // The only parameter which is not quoted is persist as it
-            // is a boolean value.
+            // The parameters which are not quoted are persist and
+            // lfc-interval as they are boolean and integer respectively.
             result += quote + keyval[i] + quote + colon + space;
-            if (std::string(keyval[i]) != "persist") {
-                result += quote + keyval[i + 1] + quote;
-            } else {
+            if (!quoteValue(std::string(keyval[i]))) {
                 result += keyval[i + 1];
+
+            } else {
+                result += quote + keyval[i + 1] + quote;
             }
         }
 
@@ -172,6 +173,20 @@ public:
             EXPECT_EQ(corresponding->second, actual->second);
         }
     }
+
+private:
+
+    /// @brief Checks if the value of the specified parameter should be
+    /// quoted in the configuration.
+    ///
+    /// @param parameter A parameter for which it should be checked whether
+    /// the value should be quoted or not.
+    ///
+    /// @return true if the value of the parameter should be quoted.
+     bool quoteValue(const std::string& parameter) const {
+         return ((parameter != "persist") && (parameter != "lfc-interval"));
+    }
+
 };
 
 
@@ -285,6 +300,56 @@ TEST_F(DbAccessParserTest, persistV6Memfile) {
 
     checkAccessString("Valid memfile", parser.getDbAccessParameters(),
                       config, Option::V6);
+}
+
+// This test checks that the parser accepts the valid value of the
+// lfc-interval parameter.
+TEST_F(DbAccessParserTest, validLFCInterval) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "lfc-interval", "3600",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser("lease-database", ParserContext(Option::V6));
+    ASSERT_NO_THROW(parser.build(json_elements));
+    checkAccessString("Valid LFC Interval", parser.getDbAccessParameters(),
+                      config, Option::V6);
+}
+
+// This test checks that the parser rejects the negative value of the
+// lfc-interval parameter.
+TEST_F(DbAccessParserTest, negativeLFCInterval) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "lfc-interval", "-1",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser("lease-database", ParserContext(Option::V6));
+    EXPECT_THROW(parser.build(json_elements), BadValue);
+}
+
+// This test checks that the parser rejects the too large (greater than
+// the max uint32_t) value of the lfc-interval parameter.
+TEST_F(DbAccessParserTest, largeLFCInterval) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "lfc-interval", "4294967296",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser("lease-database", ParserContext(Option::V6));
+    EXPECT_THROW(parser.build(json_elements), BadValue);
 }
 
 // Check that the parser works with a valid MySQL configuration

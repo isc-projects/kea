@@ -170,7 +170,7 @@ RRs in that order, the "custom" section would be something like this:
   [custom]
   sections: a:ns
 
-and there must be an "ns" section in addtion to "a".
+and there must be an "ns" section in addition to "a".
 
 If a sequence of two or more RRs/RDATAs of the same RR type should be
 generated, these should be uniquely indexed with the "/" separator.
@@ -183,7 +183,7 @@ follows:
 and there must be "a/1" and "a/2" sections.
 
 Another practical example that would be used for many tests is to
-generate data for a complete DNS ressponse message.  The spec file of
+generate data for a complete DNS response message.  The spec file of
 such an example configuration would look like as follows:
 
   [custom]
@@ -224,15 +224,15 @@ hexadecimal representation is accepted, for example:
   tag: 0x1234
 
 Some others are expected to be string.  A string value does not have
-to be quated:
+to be quoted:
 
   address: 192.0.2.2
 
-but can also be quoated with single quotes:
+but can also be quoted with single quotes:
 
   address: '192.0.2.2'
 
-Note 1: a string that can be interpreted as an integer must be quated.
+Note 1: a string that can be interpreted as an integer must be quoted.
 For example, if you want to set a "string" entry to "3600", it should
 be:
 
@@ -257,7 +257,7 @@ especially for complicated RR field values, for which the
 corresponding class documentation should be referenced.
 
 One special string syntax that would be worth noting is domain names,
-which would natually be used in many kinds of entries.  The simplest
+which would naturally be used in many kinds of entries.  The simplest
 form of acceptable syntax is a textual representation of domain names
 such as "example.com" (note: names are always assumed to be
 "absolute", so the trailing dot can be omitted).  But a domain name in
@@ -534,11 +534,11 @@ class DNSQuestion:
       valid domain name.
     - rrtype (int or string): The question type.  If specified
       as an integer, it must be the 16-bit RR type value of the
-      covered type.  If specifed as a string, it must be the textual
+      covered type.  If specified as a string, it must be the textual
       mnemonic of the type.
     - rrclass (int or string): The question class.  If specified as an
       integer, it must be the 16-bit RR class value of the covered
-      type.  If specifed as a string, it must be the textual mnemonic
+      type.  If specified as a string, it must be the textual mnemonic
       of the class.
     '''
     name = 'example.com.'
@@ -974,7 +974,7 @@ class NSECBASE(RR):
     - bitmap[N] (string): The Bitmap.  This must be the hexadecimal
       representation of the bitmap field.  For example, for a bitmap
       where the 7th and 15th bits (and only these bits) are set, it
-      must be '0101'.  Note also that the value must be quated with
+      must be '0101'.  Note also that the value must be quoted with
       single quatations because it could also be interpreted as an
       integer.
     '''
@@ -1121,11 +1121,11 @@ class RRSIG(RR):
     same name of attribute for the default value):
     - covered (int or string): The Type Covered field.  If specified
       as an integer, it must be the 16-bit RR type value of the
-      covered type.  If specifed as a string, it must be the textual
+      covered type.  If specified as a string, it must be the textual
       mnemonic of the type.
     - algorithm (int or string): The Algorithm field.   If specified
       as an integer, it must be the 8-bit algorithm number as defined
-      in RFC4034.  If specifed as a string, it must be one of the keys
+      in RFC4034.  If specified as a string, it must be one of the keys
       of dict_algorithm (case insensitive).
     - labels (int): The Labels field.  If omitted (the corresponding
       variable being set to None), the number of labels of "signer"
@@ -1232,7 +1232,7 @@ class TSIG(RR):
       determined by the algorithm will be used.
     - mac (int or string): The MAC field.  If specified as an integer,
       the integer value is used as the MAC, possibly with prepended
-      0's so that the total length will be mac_size.  If specifed as a
+      0's so that the total length will be mac_size.  If specified as a
       string, it is converted to a sequence of ascii codes and its
       hexadecimal representation will be used.  So, for example, if
       "mac" is set to 'abc', it will be converted to '616263'.  Note

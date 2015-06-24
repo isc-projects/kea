@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -365,7 +365,7 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
     // 0      7 (bits)
     // The following check rejects this type of invalid encoding.
     if (padbits > BitsPerChunk * (padchars + 1)) {
-        isc_throw(BadValue, "Invalid " << algorithm << "padding: " << input);
+        isc_throw(BadValue, "Invalid " << algorithm << " padding: " << input);
     }
 
     // convert the number of bits in bytes for convenience.

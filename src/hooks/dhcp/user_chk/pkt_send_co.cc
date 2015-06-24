@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,7 @@
 
 /// @file pkt_send_co.cc Defines the pkt4_send and pkt6_send callout functions.
 
+#include <config.h>
 #include <asiolink/io_address.h>
 #include <hooks/hooks.h>
 #include <dhcp/dhcp4.h>
@@ -324,16 +325,16 @@ void add6Option(OptionPtr& vendor, uint8_t opt_code, std::string& opt_value) {
 ///
 /// id_type=&lt;id type&gt;<br/>
 /// client=&lt;id str&gt;<br/>
-/// subnet=&lt;subnet str&gt;<br/>
+/// subnet=&lt;addr str&gt;<br/>
 /// registered=&lt;is registered&gt;
 ///
 /// where:
-/// <id type> text label of the id type: "HW_ADDR" or "DUID"
-/// <id str> user's id formatted as either isc::dhcp::Hwaddr.toText() or
+/// &lt;id type&gt; text label of the id type: "HW_ADDR" or "DUID"
+/// &lt;id str&gt; user's id formatted as either isc::dhcp::Hwaddr.toText() or
 /// isc::dhcp::DUID.toText()
-/// <subnet str> selected subnet formatted as isc::dhcp::Subnet4::toText() or
+/// &lt;addr str&gt; selected subnet formatted as isc::dhcp::Subnet4::toText() or
 /// isc::dhcp::Subnet6::toText() as appropriate.
-/// <is registered> "yes" or "no"
+/// &lt;is registered&gt; "yes" or "no"
 ///
 /// Sample IPv4 entry would like this:
 ///
@@ -357,7 +358,7 @@ void add6Option(OptionPtr& vendor, uint8_t opt_code, std::string& opt_value) {
 ///
 /// @param id_type_str text label identify the id type
 /// @param id_val_str text representation of the user id
-/// @param subnet_str text representation  of the selected subnet
+/// @param addr_str text representation  of the selected subnet
 /// @param registered boolean indicating if the user is registered or not
 void generate_output_record(const std::string& id_type_str,
                             const std::string& id_val_str,

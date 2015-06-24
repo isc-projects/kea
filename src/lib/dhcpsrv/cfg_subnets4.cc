@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,10 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/subnet_id.h>
+#include <stats/stats_mgr.h>
 
 using namespace isc::asiolink;
 
@@ -91,7 +93,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     // If local interface name is known, use the local address on this
     // interface.
     } else if (!selector.iface_name_.empty()) {
-        Iface* iface = IfaceMgr::instance().getIface(selector.iface_name_);
+        IfacePtr iface = IfaceMgr::instance().getIface(selector.iface_name_);
         // This should never happen in the real life. Hence we throw an
         // exception.
         if (iface == NULL) {
@@ -108,7 +110,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     }
 
     // We have identified an address in the client's packet that can be
-    // used for subnet selection. Match this packet with the subnets. 
+    // used for subnet selection. Match this packet with the subnets.
     return (selectSubnet(address, selector.client_classes_));
 }
 
@@ -144,8 +146,40 @@ CfgSubnets4::isDuplicate(const Subnet4& subnet) const {
     return (false);
 }
 
+void
+CfgSubnets4::removeStatistics() {
+    using namespace isc::stats;
 
+    // For each v4 subnet currently configured, remove the statistic.
+    /// @todo: May move this to CfgSubnets4 class if there will be more
+    /// statistics here.
+    for (Subnet4Collection::const_iterator subnet4 = subnets_.begin();
+         subnet4 != subnets_.end(); ++subnet4) {
 
+        StatsMgr::instance().del(StatsMgr::generateName("subnet",
+                                                        (*subnet4)->getID(),
+                                                        "total-addresses"));
+
+        StatsMgr::instance().del(StatsMgr::generateName("subnet",
+                                                        (*subnet4)->getID(),
+                                                        "assigned-addresses"));
+    }
+}
+
+void
+CfgSubnets4::updateStatistics() {
+    using namespace isc::stats;
+
+    /// @todo: May move this to CfgSubnets4 class if there will be more
+    /// statistics here.
+    for (Subnet4Collection::const_iterator subnet = subnets_.begin();
+         subnet != subnets_.end(); ++subnet) {
+
+        StatsMgr::instance().setValue(
+            StatsMgr::generateName("subnet", (*subnet)->getID(), "total-addresses"),
+            static_cast<int64_t>((*subnet)->getPoolCapacity(Lease::TYPE_V4)));
+    }
+}
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

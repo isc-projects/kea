@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
+
+#include <config.h>
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
@@ -173,41 +175,6 @@ template <> void ValueParser<std::string>::build(ConstElementPtr value) {
     boost::erase_all(value_, "\"");
 }
 
-// ******************** InterfaceListConfigParser *************************
-
-InterfaceListConfigParser::
-InterfaceListConfigParser(const std::string& param_name,
-                          ParserContextPtr global_context)
-    : param_name_(param_name), global_context_(global_context) {
-    if (param_name_ != "interfaces") {
-        isc_throw(BadValue, "Internal error. Interface configuration "
-            "parser called for the wrong parameter: " << param_name);
-    }
-}
-
-void
-InterfaceListConfigParser::build(ConstElementPtr value) {
-    CfgIface cfg_iface;
-
-    BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
-        std::string iface_name = iface->stringValue();
-        try {
-            cfg_iface.use(global_context_->universe_ == Option::V4 ?
-                          AF_INET : AF_INET6, iface_name);
-
-        } catch (const std::exception& ex) {
-            isc_throw(DhcpConfigError, "Failed to select interface: "
-                      << ex.what() << " (" << value->getPosition() << ")");
-        }
-    }
-    CfgMgr::instance().getStagingCfg()->setCfgIface(cfg_iface);
-}
-
-void
-InterfaceListConfigParser::commit() {
-    // Nothing to do.
-}
-
 // ******************** MACSourcesListConfigParser *************************
 
 MACSourcesListConfigParser::
@@ -244,6 +211,27 @@ MACSourcesListConfigParser::build(ConstElementPtr value) {
 
 void
 MACSourcesListConfigParser::commit() {
+    // Nothing to do.
+}
+
+// ******************** ControlSocketParser *************************
+ControlSocketParser::ControlSocketParser(const std::string& param_name) {
+    if (param_name != "control-socket") {
+        isc_throw(BadValue, "Internal error. Control socket parser called "
+                  " for wrong parameter:" << param_name);
+    }
+}
+
+void ControlSocketParser::build(isc::data::ConstElementPtr value) {
+    if (value->getType() != Element::map) {
+        isc_throw(BadValue, "Specified control-socket is expected to be a map"
+                  ", i.e. a structure defined within { }");
+    }
+    CfgMgr::instance().getStagingCfg()->setControlSocketInfo(value);
+}
+
+/// @brief Does nothing.
+void ControlSocketParser::commit() {
     // Nothing to do.
 }
 
@@ -287,7 +275,7 @@ HooksLibrariesParser::build(ConstElementPtr value) {
 
         // Construct the list of libraries in error for the message.
         string error_list = error_libs[0];
-        for (int i = 1; i < error_libs.size(); ++i) {
+        for (size_t i = 1; i < error_libs.size(); ++i) {
             error_list += (string(", ") + error_libs[i]);
         }
         isc_throw(DhcpConfigError, "hooks libraries failed to validate - "
@@ -902,7 +890,7 @@ RelayInfoParser::build(ConstElementPtr relay_info) {
     if ( (ip->isV4() && family_ != Option::V4) ||
          (ip->isV6() && family_ != Option::V6) ) {
         isc_throw(DhcpConfigError, "ip-address field " << ip->toText()
-                  << "does not have IP address of expected family type: "
+                  << " does not have IP address of expected family type: "
                   << (family_ == Option::V4 ? "IPv4" : "IPv6")
                   << " (" << string_values_->getPosition("ip-address") << ")");
     }
@@ -1063,8 +1051,11 @@ PoolParser::commit() {
 SubnetConfigParser::SubnetConfigParser(const std::string&,
                                        ParserContextPtr global_context,
                                        const isc::asiolink::IOAddress& default_addr)
-    : uint32_values_(new Uint32Storage()), string_values_(new StringStorage()),
-      pools_(new PoolStorage()), global_context_(global_context),
+    : uint32_values_(new Uint32Storage()),
+      string_values_(new StringStorage()),
+      boolean_values_(new BooleanStorage()),
+      pools_(new PoolStorage()),
+      global_context_(global_context),
       relay_info_(new isc::dhcp::Subnet::RelayInfo(default_addr)),
       options_(new CfgOption()) {
     // The first parameter should always be "subnet", but we don't check
@@ -1124,6 +1115,21 @@ SubnetConfigParser::build(ConstElementPtr subnet) {
     }
 }
 
+Subnet::HRMode
+SubnetConfigParser::hrModeFromText(const std::string& txt) {
+    if ( (txt.compare("disabled") == 0) ||
+         (txt.compare("off") == 0) )  {
+        return (Subnet::HR_DISABLED);
+    } else if (txt.compare("out-of-pool") == 0) {
+        return (Subnet::HR_OUT_OF_POOL);
+    } else if (txt.compare("all") == 0) {
+        return (Subnet::HR_ALL);
+    } else {
+        isc_throw(BadValue, "Can't convert '" << txt
+                  << "' into any valid reservation-mode values");
+    }
+}
+
 void
 SubnetConfigParser::createSubnet() {
     std::string subnet_txt;
@@ -1175,6 +1181,19 @@ SubnetConfigParser::createSubnet() {
         iface = string_values_->getParam("interface");
     } catch (const DhcpConfigError &) {
         // iface not mandatory so swallow the exception
+    }
+
+
+    // Let's set host reservation mode. If not specified, the default value of
+    // all will be used.
+    std::string hr_mode;
+    try {
+        hr_mode = string_values_->getOptionalParam("reservation-mode", "all");
+        subnet_->setHostReservationMode(hrModeFromText(hr_mode));
+    } catch (const BadValue& ex) {
+        isc_throw(DhcpConfigError, "Failed to process specified value "
+                  " of reservation-mode parameter: " << ex.what()
+                  << string_values_->getPosition("reservation-mode"));
     }
 
     if (!iface.empty()) {
@@ -1273,6 +1292,11 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
         }
 
         // Get all parameters that are needed to create the D2ClientConfig.
+
+        // The qualifying suffix is mandatory when updates are enabled
+        std::string qualifying_suffix =
+            string_values_->getParam("qualifying-suffix");
+
         IOAddress server_ip =
             IOAddress(string_values_->getOptionalParam("server-ip",
                                                        D2ClientConfig::
@@ -1313,11 +1337,6 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
             string_values_->getOptionalParam("generated-prefix",
                                              D2ClientConfig::
                                              DFT_GENERATED_PREFIX);
-        std::string qualifying_suffix =
-            string_values_->getOptionalParam("qualifying-suffix",
-                                             D2ClientConfig::
-                                             DFT_QUALIFYING_SUFFIX);
-
         bool always_include_fqdn =
             boolean_values_->getOptionalParam("always-include-fqdn",
                                                 D2ClientConfig::

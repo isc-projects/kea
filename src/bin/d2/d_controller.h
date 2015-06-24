@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,8 @@
 #ifndef D_CONTROLLER_H
 #define D_CONTROLLER_H
 
+#include <asiolink/io_service.h>
 #include <cc/data.h>
-#include <d2/d2_asio.h>
 #include <d2/d2_log.h>
 #include <d2/d_process.h>
 #include <d2/io_service_signal.h>
@@ -38,6 +38,18 @@ public:
     InvalidUsage(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+/// @brief Exception used to convey version info upwards.
+/// Since command line argument parsing is done as part of
+/// DControllerBase::launch(), it uses this exception to propagate
+/// version information up to main(), when command line argument
+/// -v or -V is given.
+class VersionMessage : public isc::Exception {
+public:
+    VersionMessage(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 
 /// @brief Exception thrown when the application process fails.
 class ProcessInitError: public isc::Exception {
@@ -101,6 +113,10 @@ public:
     /// @brief Destructor
     virtual ~DControllerBase();
 
+    /// @brief returns Kea version on stdout and exit.
+    /// redeclaration/redefinition. @ref Daemon::getVersion()
+    static std::string getVersion(bool extended);
+ 
     /// @brief Acts as the primary entry point into the controller execution
     /// and provides the outermost application control logic:
     ///
@@ -232,7 +248,7 @@ protected:
     /// any prefixing hyphen(s)
     /// @param optarg is the argument value (if one) associated with the option
     ///
-    /// @return must return true if the option was valid, false is it is
+    /// @return must return true if the option was valid, false if it is
     /// invalid. (Note the default implementation always returns false.)
     virtual bool customOption(int option, char *optarg);
 
@@ -293,12 +309,12 @@ protected:
     /// -# SIGHUP - instigates reloading the configuration file
     /// -# SIGINT - instigates a graceful shutdown
     /// -# SIGTERM - instigates a graceful shutdown
-    /// If received any other signal, it will issue a debug statement and
+    /// If it receives any other signal, it will issue a debug statement and
     /// discard it.
     /// Derivations wishing to support additional signals could override this
     /// method with one that: processes the signal if it is one of additional
     /// signals, otherwise invoke this method (DControllerBase::processSignal())
-    /// with signal value.
+    /// with the signal value.
     /// @todo Provide a convenient way for derivations to register additional
     /// signals.
     virtual void processSignal(int signum);
@@ -320,7 +336,7 @@ protected:
     /// @brief Getter for fetching the controller's IOService
     ///
     /// @return returns a pointer reference to the IOService.
-    IOServicePtr& getIOService() {
+    asiolink::IOServicePtr& getIOService() {
         return (io_service_);
     }
 
@@ -358,7 +374,7 @@ protected:
     /// @brief Processes the command line arguments. It is the first step
     /// taken after the controller has been launched.  It combines the stock
     /// list of options with those returned by getCustomOpts(), and uses
-    /// cstdlib's getopt to loop through the command line.  The stock options
+    /// cstdlib's getopt to loop through the command line.
     /// It handles stock options directly, and passes any custom options into
     /// the customOption method.  Currently there are only two stock options
     /// -c for specifying the configuration file, and -v for verbose logging.
@@ -366,7 +382,8 @@ protected:
     /// @param argc  is the number of command line arguments supplied
     /// @param argv  is the array of string (char *) command line arguments
     ///
-    /// @throw throws InvalidUsage when there are usage errors.
+    /// @throw InvalidUsage when there are usage errors.
+    /// @throw VersionMessage if the -v or -V arguments is given.
     void parseArgs(int argc, char* argv[]);
 
     /// @brief Instantiates the application process and then initializes it.
@@ -481,7 +498,7 @@ private:
     DProcessBasePtr process_;
 
     /// @brief Shared pointer to an IOService object, used for ASIO operations.
-    IOServicePtr io_service_;
+    asiolink::IOServicePtr io_service_;
 
     /// @brief Set of registered signals to handle.
     util::SignalSetPtr signal_set_;

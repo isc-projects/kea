@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
 #include <util/io_utilities.h>
-
+#include <sstream>
 #include <stdint.h>
 
 namespace isc {
@@ -143,7 +143,7 @@ public:
         // Pack option header.
         packHeader(buf);
         // Pack option data.
-        for (int i = 0; i < values_.size(); ++i) {
+        for (size_t i = 0; i < values_.size(); ++i) {
             // Depending on the data type length we use different utility functions
             // writeUint16 or writeUint32 which write the data in the network byte
             // order to the provided buffer. The same functions can be safely used
@@ -247,6 +247,25 @@ public:
             length += (*it).second->len();
         }
         return (length);
+    }
+
+    /// @brief Returns textual representation of the option.
+    ///
+    /// @param indent Number of space characters to be inserted before
+    /// the text.
+    ///
+    /// @return textual representation of the option.
+    virtual std::string toText(int indent = 0) {
+        std::stringstream output;
+        output << headerToText(indent) << ":";
+
+        std::string data_type = OptionDataTypeUtil::getDataTypeName(OptionDataTypeTraits<T>::type);
+        for (typename std::vector<T>::const_iterator value = values_.begin();
+             value != values_.end(); ++value) {
+            output << " " << *value << "(" << data_type << ")";
+        }
+
+        return (output.str());
     }
 
 private:

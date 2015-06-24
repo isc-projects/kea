@@ -4,6 +4,12 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/cc -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+if HAVE_MYSQL
+AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
+endif
+if HAVE_PGSQL
+AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
+endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 if USE_CLANGPP
@@ -20,6 +26,7 @@ CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc s-messages
 man_MANS = kea-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-dhcp6.xml dhcp6.spec
+EXTRA_DIST += dhcp6.dox dhcp6_hooks.dox
 
 if GENERATE_DOCS
 
@@ -57,13 +64,7 @@ libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 libdhcp6_la_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
 
-if CONFIG_BACKEND_BUNDY
-libdhcp6_la_SOURCES += bundy_controller.cc
-endif
-
-if CONFIG_BACKEND_JSON
 libdhcp6_la_SOURCES += kea_controller.cc
-endif
 
 nodist_libdhcp6_la_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
@@ -83,6 +84,9 @@ kea_dhcp6_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+kea_dhcp6_LDADD += $(top_builddir)/src/bin/cfgrpt/libcfgrpt.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 
 kea_dhcp6dir = $(pkgdatadir)
 kea_dhcp6_DATA = dhcp6.spec

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@ namespace {
 /// @param name name of the array being declared.
 /// @param types data types of fields that belong to the record.
 #ifndef RECORD_DECL
-#define RECORD_DECL(name, types...) const OptionDataType name[] = { types }
+#define RECORD_DECL(name, ...) const OptionDataType name[] = { __VA_ARGS__ }
 #endif
 
 /// @brief A pair of values: one pointing to the array holding types of
@@ -327,6 +327,9 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
       RECORD_DEF(LQ_RELAY_DATA_RECORDS), "" },
     { "lq-client-link", D6O_LQ_CLIENT_LINK, OPT_IPV6_ADDRESS_TYPE, true,
       NO_RECORD_DEF, "" },
+    { "erp-local-domain-name", D6O_ERP_LOCAL_DOMAIN_NAME, OPT_FQDN_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "rsoo", D6O_RSOO, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "rsoo-opts" },
     { "client-linklayer-addr", D6O_CLIENT_LINKLAYER_ADDR, OPT_BINARY_TYPE, false,
         NO_RECORD_DEF, "" }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -120,21 +120,16 @@ uint16_t Option4AddrLst::len() {
     return (getHeaderLen() + addrs_.size() * V4ADDRESS_LEN);
 }
 
-std::string Option4AddrLst::toText(int indent /* =0 */ ) {
-    std::stringstream tmp;
-
-    for (int i = 0; i < indent; i++) {
-        tmp << " ";
-    }
-
-    tmp << "type=" << type_ << ", len=" << len()-getHeaderLen() << ":";
+std::string Option4AddrLst::toText(int indent) {
+    std::stringstream output;
+    output << headerToText(indent) << ":";
 
     for (AddressContainer::const_iterator addr = addrs_.begin();
          addr != addrs_.end(); ++addr) {
-        tmp << " " << (*addr);
+        output << " " << (*addr);
     }
 
-    return tmp.str();
+    return (output.str());
 }
 
 } // end of isc::dhcp namespace

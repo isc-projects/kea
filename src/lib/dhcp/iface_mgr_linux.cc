@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -474,22 +474,22 @@ void IfaceMgr::detectIfaces() {
         // into three separate steps for easier debugging.
         const char* tmp = static_cast<const char*>(RTA_DATA(attribs_table[IFLA_IFNAME]));
         string iface_name(tmp); // <--- bogus valgrind warning here
-        Iface iface = Iface(iface_name, interface_info->ifi_index);
+        IfacePtr iface(new Iface(iface_name, interface_info->ifi_index));
 
-        iface.setHWType(interface_info->ifi_type);
-        iface.setFlags(interface_info->ifi_flags);
+        iface->setHWType(interface_info->ifi_type);
+        iface->setFlags(interface_info->ifi_flags);
 
         // Does interface have LL_ADDR?
         if (attribs_table[IFLA_ADDRESS]) {
-            iface.setMac(static_cast<const uint8_t*>(RTA_DATA(attribs_table[IFLA_ADDRESS])),
-                         RTA_PAYLOAD(attribs_table[IFLA_ADDRESS]));
+            iface->setMac(static_cast<const uint8_t*>(RTA_DATA(attribs_table[IFLA_ADDRESS])),
+                          RTA_PAYLOAD(attribs_table[IFLA_ADDRESS]));
         }
         else {
             // Tunnels can have no LL_ADDR. RTA_PAYLOAD doesn't check it and
             // try to dereference it in this manner
         }
 
-        nl.ipaddrs_get(iface, addr_info);
+        nl.ipaddrs_get(*iface, addr_info);
         ifaces_.push_back(iface);
     }
 
@@ -522,16 +522,6 @@ IfaceMgr::setMatchingPacketFilter(const bool direct_response_desired) {
         setPacketFilter(PktFilterPtr(new PktFilterInet()));
 
     }
-}
-
-void IfaceMgr::os_send4(struct msghdr&, boost::scoped_array<char>&,
-                        size_t, const Pkt4Ptr&) {
-    return;
-
-}
-
-bool IfaceMgr::os_receive4(struct msghdr&, Pkt4Ptr&) {
-    return (true);
 }
 
 bool
