@@ -209,8 +209,8 @@ public:
         HooksManager::unloadLibraries();
 
         // Get rid of any marker files.
-        static_cast<void>(unlink(LOAD_MARKER_FILE));
-        static_cast<void>(unlink(UNLOAD_MARKER_FILE));
+        static_cast<void>(remove(LOAD_MARKER_FILE));
+        static_cast<void>(remove(UNLOAD_MARKER_FILE));
         IfaceMgr::instance().deleteAllExternalSockets();
         CfgMgr::instance().clear();
     }
