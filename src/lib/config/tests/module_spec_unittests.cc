@@ -290,6 +290,7 @@ TEST(ModuleSpec, CheckFormat) {
     std::vector<std::string> specs;
     ConstElementPtr el;
 
+    // cppcheck-suppress redundantAssignment
     specs.clear();
     item_default = "\"item_default\": \"2011-05-27T19:42:57Z\",";
     item_format  = "\"item_format\": \"date-time\"";
