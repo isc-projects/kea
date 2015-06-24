@@ -366,24 +366,6 @@ public:
     /// (true) or non-relayed (false).
     bool isRelayed() const;
 
-    /// @brief That's the data of input buffer used in RX packet.
-    ///
-    /// @note Note that InputBuffer does not store the data itself, but just
-    /// expects that data will be valid for the whole life of InputBuffer.
-    /// Therefore we need to keep the data around.
-    ///
-    /// @warning This public member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc. This field is also public, because
-    /// it may be modified by callouts (which are written in C++ now,
-    /// but we expect to also have them in Python, so any accesibility
-    /// methods would overly complicate things here and degrade
-    /// performance).
-    std::vector<uint8_t> data_;
-
 private:
 
     /// @brief Generic method that validates and sets HW address.
