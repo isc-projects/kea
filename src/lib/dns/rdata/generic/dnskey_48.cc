@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -268,6 +268,9 @@ DNSKEY::compare(const Rdata& other) const {
     const size_t this_len = impl_->keydata_.size();
     const size_t other_len = other_dnskey.impl_->keydata_.size();
     const size_t cmplen = min(this_len, other_len);
+    if (cmplen == 0) {
+        return ((this_len == other_len) ? 0 : (this_len < other_len) ? -1 : 1);
+    }
     const int cmp = memcmp(&impl_->keydata_[0],
                            &other_dnskey.impl_->keydata_[0], cmplen);
     if (cmp != 0) {

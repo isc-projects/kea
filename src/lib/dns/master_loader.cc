@@ -657,9 +657,8 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
               continue;
           }
 
-          // 'it' can be equal to str.end() here, but it is handled
-          // correctly.
-          if (*it != '{') {
+          // The str.end() check is required.
+          if ((it == str.end()) || (*it != '{')) {
               // There is no modifier (between {}), so just copy the
               // passed number into the generated string.
               rstr += boost::str(boost::format("%d") % num);
