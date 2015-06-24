@@ -15,6 +15,7 @@
 #ifndef STOPWATCH_H
 #define STOPWATCH_H
 
+#include <boost/noncopyable.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace isc {
@@ -39,7 +40,7 @@ class StopwatchImpl;
 /// @c start and @c stop consecutively. The total measured time will be
 /// a sum of durations between the invocations of respective starts and
 /// stops.
-class Stopwatch {
+class Stopwatch : boost::noncopyable {
 public:
 
     /// @brief Constructor.
