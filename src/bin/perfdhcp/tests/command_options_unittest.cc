@@ -472,7 +472,6 @@ TEST_F(CommandOptionsTest, Base) {
                             " -l 127.0.0.1 all"));
     std::vector<uint8_t> v1 = opt.getMacTemplate();
     std::vector<uint8_t> v2 = opt.getDuidTemplate();
-    v2 = opt.getDuidTemplate();
     EXPECT_TRUE(std::equal(v1.begin(), v1.end(), mac));
     EXPECT_TRUE(std::equal(v2.begin(), v2.end(), duid));
     // Test valid DUID.
