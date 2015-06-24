@@ -63,6 +63,17 @@ private:
     /// @return socket file descriptor
     int createUnixSocket(const std::string& file_name) {
 
+        struct sockaddr_un addr;
+
+        // string.size() returns number of bytes (without trailing zero)
+        // we need 1 extra byte for terminating 0.
+        if (file_name.size() > sizeof(addr.sun_path) - 1) {
+            isc_throw(SocketError, "Failed to open socket: path specified ("
+                      << file_name << ") is longer (" << file_name.size()
+                      << " bytes) than allowed "
+                      << (sizeof(addr.sun_path) - 1) << " bytes.");
+        }
+
         int fd = socket(AF_UNIX, SOCK_STREAM, 0);
         if (fd == -1) {
             isc_throw(isc::config::SocketError, "Failed to create AF_UNIX socket:"
@@ -83,10 +94,9 @@ private:
         }
 
         // Now bind the socket to the specified path.
-        struct sockaddr_un addr;
         memset(&addr, 0, sizeof(addr));
         addr.sun_family = AF_UNIX;
-        strncpy(addr.sun_path, file_name.c_str(), sizeof(addr.sun_path)-1);
+        strncpy(addr.sun_path, file_name.c_str(), sizeof(addr.sun_path) - 1);
         if (bind(fd, (struct sockaddr*)&addr, sizeof(addr))) {
             const char* errmsg = strerror(errno);
             ::close(fd);

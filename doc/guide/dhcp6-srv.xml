@@ -2864,6 +2864,15 @@ should include options from the isc option space:
       </para>
 
       <para>
+	The length of the path specified by the <command>socket-name</command>
+	parameter is restricted by the maximum length for the unix socket name
+	on your operating system, i.e. the size of the <command>sun_path</command>
+	field in the <command>sockaddr_un</command> structure, decreased by 1.
+	This value varies on different operating systems between 91 and 107
+	characters. The typical values are 107 on Linux and 103 on FreeBSD.
+      </para>
+
+      <para>
         Communication over control channel is conducted using JSON structures.
         See the Control Channel section in the Kea Developer's Guide for more details.
       </para>
