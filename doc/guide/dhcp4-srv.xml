@@ -2876,11 +2876,12 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>
-        The total path is limited to the size of sun_path field of the
-        sockaddr_un structure of your system, decreased by one. That's 107 bytes
-        on Linux and 103 bytes on FreeBSD. Other systems are expected to have
-        similar limitations. Please check documentation of your operating system
-        for details. In case of failure, please specify shorter path.
+	The length of the path specified by the <command>socket-name</command>
+	parameter is restricted by the maximum length for the unix socket name
+	on your operating system, i.e. the size of the <command>sun_path</command>
+	field in the <command>sockaddr_un</command> structure, decreased by 1.
+	This value varies on different operating systems between 91 and 107
+	characters. The typical values are 107 on Linux and 103 on FreeBSD.
       </para>
 
       <para>
