@@ -560,8 +560,6 @@ namespace {
 }
 
 TEST(HashTest, HashLength) {
-    std::vector<uint8_t> result;
-
     EXPECT_EQ(8, digestVectorLength(MD5, 8));
     EXPECT_EQ(16, digestVectorLength(MD5, 16));
     EXPECT_EQ(16, digestVectorLength(MD5, 40));
