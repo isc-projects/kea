@@ -23,7 +23,6 @@
 #include <dhcpsrv/daemon.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
-#include <util/signal_set.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
@@ -499,9 +498,6 @@ private:
 
     /// @brief Shared pointer to an IOService object, used for ASIO operations.
     asiolink::IOServicePtr io_service_;
-
-    /// @brief Set of registered signals to handle.
-    util::SignalSetPtr signal_set_;
 
     /// @brief Queue for propagating caught signals to the IOService.
     IOSignalQueuePtr io_signal_queue_;
