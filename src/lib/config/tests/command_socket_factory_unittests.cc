@@ -19,6 +19,7 @@
 #include <config/command_socket.h>
 #include <config/command_socket_factory.h>
 #include <cstdio>
+#include <cstdlib>
 
 using namespace isc::config;
 using namespace isc::data;
@@ -28,7 +29,9 @@ class CommandSocketFactoryTest : public ::testing::Test {
 public:
 
     /// Default constructor
-    CommandSocketFactoryTest() {
+    CommandSocketFactoryTest()
+        :SOCKET_NAME(getSocketPath()) {
+
         // Remove any stale socket files
         remove(SOCKET_NAME.c_str());
     }
@@ -40,11 +43,22 @@ public:
         remove(SOCKET_NAME.c_str());
     }
 
-    static const std::string SOCKET_NAME;
-};
+    /// @brief Returns socket path (using either hardcoded path or env variable)
+    /// @return path to the unix socket
+    std::string getSocketPath() {
 
-const std::string CommandSocketFactoryTest::SOCKET_NAME =
-    std::string(TEST_DATA_BUILDDIR) + "/test-socket";
+        std::string socket_path;
+        const char* env = getenv("KEA_SOCKET_TEST_DIR");
+        if (env) {
+            socket_path = std::string(env) + "/test-socket";
+        } else {
+            socket_path = std::string(TEST_DATA_BUILDDIR) + "/test-socket";
+        }
+        return (socket_path);
+    }
+
+    std::string SOCKET_NAME;
+};
 
 TEST_F(CommandSocketFactoryTest, unixCreate) {
     // Null pointer is obviously a bad idea.
@@ -74,4 +88,3 @@ TEST_F(CommandSocketFactoryTest, unixCreate) {
     // It should be possible to close the socket.
     EXPECT_NO_THROW(sock->close());
 }
-
