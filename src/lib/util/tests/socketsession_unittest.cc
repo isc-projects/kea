@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -159,7 +159,7 @@ protected:
                     large_text_(65535, 'a'),
                     test_un_len_(2 + strlen(TEST_UNIX_FILE))
     {
-        unlink(TEST_UNIX_FILE);
+        remove(TEST_UNIX_FILE);
         test_un_.sun_family = AF_UNIX;
         strncpy(test_un_.sun_path, TEST_UNIX_FILE, sizeof(test_un_.sun_path));
 #ifdef HAVE_SA_LEN
@@ -171,7 +171,7 @@ protected:
         if (listen_fd_ != -1) {
             close(listen_fd_);
         }
-        unlink(TEST_UNIX_FILE);
+        remove(TEST_UNIX_FILE);
     }
 
     // Start an internal "socket session server".

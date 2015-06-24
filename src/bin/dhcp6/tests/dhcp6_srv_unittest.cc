@@ -1424,7 +1424,7 @@ TEST_F(Dhcpv6SrvTest, ServerID) {
     ASSERT_TRUE(expected_duid1 == srv.getServerID()->getData());
 
     // Now test writing to a file
-    EXPECT_EQ(0, unlink(DUID_FILE));
+    EXPECT_EQ(0, remove(DUID_FILE));
     EXPECT_NO_THROW(srv.writeServerID(DUID_FILE));
 
     fstream file2(DUID_FILE, ios::in);

@@ -115,8 +115,8 @@ public:
         resetConfiguration();
 
         // ... and delete the hooks library marker files if present
-        unlink(LOAD_MARKER_FILE);
-        unlink(UNLOAD_MARKER_FILE);
+        remove(LOAD_MARKER_FILE);
+        remove(UNLOAD_MARKER_FILE);
     };
 
     // Checks if config_result (result of DHCP server configuration) has
