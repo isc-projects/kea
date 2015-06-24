@@ -638,8 +638,6 @@ namespace {
 }
 
 TEST(HMACTest, HMACSigLengthArgument) {
-    std::vector<uint8_t> sig;
-
     EXPECT_EQ(8, sigVectorLength(MD5, 8));
     EXPECT_EQ(16, sigVectorLength(MD5, 16));
     EXPECT_EQ(16, sigVectorLength(MD5, 40));
