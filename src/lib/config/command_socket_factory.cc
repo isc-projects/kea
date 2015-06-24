@@ -69,7 +69,8 @@ private:
         // we need 1 extra byte for terminating 0.
         if (file_name.size() > sizeof(addr.sun_path) - 1) {
             isc_throw(SocketError, "Failed to open socket: path specified ("
-                      << file_name << ") is longer than allowed "
+                      << file_name << ") is longer (" << file_name.size()
+                      << " bytes) than allowed "
                       << (sizeof(addr.sun_path) - 1) << " bytes.");
         }
 
