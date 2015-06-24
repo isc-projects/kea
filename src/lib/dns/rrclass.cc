@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -31,10 +31,12 @@ namespace isc {
 namespace dns {
 
 RRClass::RRClass(const std::string& class_str) {
-    if (!RRParamRegistry::getRegistry().textToClassCode(class_str, classcode_)) {
+    uint16_t classcode;
+    if (!RRParamRegistry::getRegistry().textToClassCode(class_str, classcode)) {
         isc_throw(InvalidRRClass,
                   "Unrecognized RR class string: " + class_str);
     }
+    classcode_ = classcode;
 }
 
 RRClass::RRClass(InputBuffer& buffer) {
