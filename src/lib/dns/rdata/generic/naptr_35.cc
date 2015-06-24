@@ -34,7 +34,7 @@ using namespace isc::dns;
 
 class NAPTRImpl {
 public:
-    NAPTRImpl() : order(0, preference(0), replacement(".") {}
+    NAPTRImpl() : order(0), preference(0), replacement(".") {}
 
     NAPTRImpl(InputBuffer& buffer, size_t rdata_len) : replacement(".") {
         if (rdata_len < 4 || buffer.getLength() - buffer.getPosition() < 4) {
