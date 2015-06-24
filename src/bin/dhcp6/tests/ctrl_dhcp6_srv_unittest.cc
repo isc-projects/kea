@@ -28,6 +28,7 @@
 
 #include <sys/select.h>
 #include <sys/ioctl.h>
+#include <cstdlib>
 
 using namespace std;
 using namespace isc::config;
@@ -231,7 +232,12 @@ public:
     boost::shared_ptr<NakedControlledDhcpv6Srv> server_;
 
     CtrlChannelDhcpv6SrvTest() {
-        socket_path_ = string(TEST_DATA_BUILDDIR) + "/kea6.sock";
+        const char* env = getenv("KEA_SOCKET_TEST_DIR");
+        if (env) {
+            socket_path_ = string(env) + "/kea6.sock";
+        } else {
+            socket_path_ = string(TEST_DATA_BUILDDIR) + "/kea6.sock";
+        }
         reset();
     }
 
