@@ -2,7 +2,7 @@
 	Changed all occurrences of unlink() to the more portable remove()
 	to avoid problems on operating systems where the former is not
 	available.
-	(Trac #3841, git xxx)
+	(Trac #3841, git 3752529ed3d72137f6899ef8225a0b231db5b1f0)
 
 967.	[doc]		tomek
 	Management API section added in the DHCPv6 chapter of the Kea
