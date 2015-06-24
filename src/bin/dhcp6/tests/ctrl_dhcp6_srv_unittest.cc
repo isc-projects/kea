@@ -28,6 +28,7 @@
 
 #include <sys/select.h>
 #include <sys/ioctl.h>
+#include <cstdlib>
 
 using namespace std;
 using namespace isc::config;
@@ -71,8 +72,16 @@ public:
             return (false);
         }
 
-        // Prepare socket address
         struct sockaddr_un srv_addr;
+        if (socket_path.size() > sizeof(srv_addr.sun_path) - 1) {
+            ADD_FAILURE() << "Socket path specified (" << socket_path
+                          << ") is larger than " << (sizeof(srv_addr.sun_path) - 1)
+                          << " allowed.";
+            disconnectFromServer();
+            return (false);
+        }
+
+        // Prepare socket address
         memset(&srv_addr, 0, sizeof(srv_addr));
         srv_addr.sun_family = AF_UNIX;
         strncpy(srv_addr.sun_path, socket_path.c_str(),
@@ -223,7 +232,12 @@ public:
     boost::shared_ptr<NakedControlledDhcpv6Srv> server_;
 
     CtrlChannelDhcpv6SrvTest() {
-        socket_path_ = string(TEST_DATA_BUILDDIR) + "/kea6.sock";
+        const char* env = getenv("KEA_SOCKET_TEST_DIR");
+        if (env) {
+            socket_path_ = string(env) + "/kea6.sock";
+        } else {
+            socket_path_ = string(TEST_DATA_BUILDDIR) + "/kea6.sock";
+        }
         reset();
     }
 
@@ -267,8 +281,9 @@ public:
         ASSERT_TRUE(answer);
 
         int status = 0;
-        isc::config::parseAnswer(status, answer);
-        ASSERT_EQ(0, status);
+        ConstElementPtr txt = isc::config::parseAnswer(status, answer);
+        // This should succeed. If not, print the error message.
+        ASSERT_EQ(0, status) << txt->str();
 
         // Now check that the socket was indeed open.
         ASSERT_GT(isc::config::CommandMgr::instance().getControlSocketFD(), -1);
