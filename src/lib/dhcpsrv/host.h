@@ -507,6 +507,8 @@ private:
     ClientClasses dhcp4_client_classes_;
     /// @brief Collection of classes associated with a DHCPv6 client.
     ClientClasses dhcp6_client_classes_;
+    /// @brief Credential (filename of public key or certificate)
+    std::string credential_;
     /// @brief Smart pointer to the temporary state
     boost::scoped_ptr<TmpState> tmp_state_;
 };
