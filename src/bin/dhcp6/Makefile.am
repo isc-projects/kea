@@ -21,7 +21,8 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc s-messages
+CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc \
+	sedhcp6_messages.h sedhcp6_messages.cc s-messages
 
 man_MANS = kea-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
@@ -46,13 +47,15 @@ endif
 spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
 
-dhcp6_messages.h dhcp6_messages.cc: s-messages
+dhcp6_messages.h dhcp6_messages.cc sedhcp6_messages.h sedhcp6_messages.cc: s-messages
 
-s-messages: dhcp6_messages.mes
+s-messages: dhcp6_messages.mes sedhcp6_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/bin/dhcp6/sedhcp6_messages.mes
 	touch $@
 
-BUILT_SOURCES = spec_config.h dhcp6_messages.h dhcp6_messages.cc
+BUILT_SOURCES = spec_config.h dhcp6_messages.h dhcp6_messages.cc \
+	sedhcp6_messages.h sedhcp6_messages.cc
 
 # convenience archive
 
@@ -66,8 +69,9 @@ libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
 
 libdhcp6_la_SOURCES += kea_controller.cc
 
-nodist_libdhcp6_la_SOURCES = dhcp6_messages.h dhcp6_messages.cc
-EXTRA_DIST += dhcp6_messages.mes
+nodist_libdhcp6_la_SOURCES  = dhcp6_messages.h dhcp6_messages.cc
+nodist_libdhcp6_la_SOURCES += sedhcp6_messages.h sedhcp6_messages.cc
+EXTRA_DIST += dhcp6_messages.mes sedhcp6_messages.mes
 
 sbin_PROGRAMS = kea-dhcp6
 

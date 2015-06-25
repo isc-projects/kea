@@ -33,6 +33,7 @@
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
+#include <dhcpsrv/parsers/sedhcp6_parser.h>
 #include <log/logger_support.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -694,6 +695,8 @@ namespace dhcp {
                                                 globalContext());
     } else if (config_id.compare("relay-supplied-options") == 0) {
         parser = new RSOOListConfigParser(config_id);
+    } else if (config_id.compare("secure-dhcp6") == 0) {
+        parser = new SeDhcp6Parser(config_id, Option::V6);
     } else if (config_id.compare("control-socket") == 0) {
         parser = new ControlSocketParser(config_id);
     } else {

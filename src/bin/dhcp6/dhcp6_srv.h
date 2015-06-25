@@ -688,6 +688,36 @@ protected:
     /// will cause the packet to be assigned to class VENDOR_CLASS_FOO.
     static const std::string VENDOR_CLASS_PREFIX;
 
+    /// @brief Validate incoming secure DHCPv6 packet
+    ///
+    /// Implements server part of draft-ietf-dhc-sedhcpv6-07.txt 6.2:
+    ///  - look for one signature option (or UnspecFail)
+    ///  - look for either public key or certificate option (or UnspecFail)
+    ///  - check if the hash and sign algorithms are supported (or
+    ///    AlgorithmNotSupported)
+    ///  - validate the certificate (in fact done offline, so here it is
+    ///    whether the certificate is configured for the host) (or
+    ///    AuthenticationFail)
+    ///  - check the timestamp option (or TimestampFail) (TODO)
+    ///  - check the signature (or SignatureFail)
+    ///
+    /// @return 
+    bool validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
+                               const AllocEngine::ClientContext6 ctx);
+
+    /// @brief Append secure DHCPv6 options
+    ///
+    /// Implements draft-ietf-dhc-sedhcpv6-07.txt 6.1
+    ///  - add either a public key or certificate option
+    ///  - add a signature option with zeroed signature
+    ///  - add a timestamp option (TODO)
+    void appendSeDhcpOptions(Pkt6Ptr& answer);
+
+    /// @brief Finalize signature
+    ///
+    /// Compute the signature itself (must be done of course late)
+    void finalizeSignature(Pkt6Ptr& tbs);
+
 private:
 
     /// @brief Generate FQDN to be sent to a client if none exists.

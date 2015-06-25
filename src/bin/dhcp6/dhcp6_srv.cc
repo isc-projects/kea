@@ -49,9 +49,11 @@
 
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
+#include <util/ntp_utils.h>
 #include <util/range_utilities.h>
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
+#include <cryptolink/crypto_asym.h>
 #include <cfgrpt/config_report.h>
 
 #ifdef HAVE_MYSQL
@@ -595,6 +597,8 @@ bool Dhcpv6Srv::run() {
 
         if (rsp) {
 
+            appendSeDhcpOptions(rsp);
+
             // Process relay-supplied options. It is important to call this very
             // late in the process, because we now have all the options the
             // server wanted to send already set. This is important, because
@@ -696,6 +700,10 @@ bool Dhcpv6Srv::run() {
                     }
 
                     callout_handle->getArgument("response6", rsp);
+                }
+
+                if (rsp->getSignatureOffset()) {
+                    finalizeSignature(rsp);
                 }
 
                 LOG_DEBUG(packet_logger, DBG_DHCP6_DETAIL_DATA,
@@ -2447,6 +2455,10 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
     copyClientOptions(solicit, response);
     appendDefaultOptions(solicit, response);
+
+    if (!validateSeDhcpOptions(solicit, response, ctx)) {
+        return (response);
+    }
     appendRequestedOptions(solicit, response, ctx);
     appendRequestedVendorOptions(solicit, response, ctx);
 
@@ -2474,6 +2486,10 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 
     copyClientOptions(request, reply);
     appendDefaultOptions(request, reply);
+
+    if (!validateSeDhcpOptions(request, reply, ctx)) {
+        return (reply);
+    }
     appendRequestedOptions(request, reply, ctx);
     appendRequestedVendorOptions(request, reply, ctx);
 
@@ -2497,6 +2513,10 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 
     copyClientOptions(renew, reply);
     appendDefaultOptions(renew, reply);
+
+    if (!validateSeDhcpOptions(renew, reply, ctx)) {
+        return (reply);
+    }
     appendRequestedOptions(renew, reply, ctx);
 
     processClientFqdn(renew, reply, ctx);
@@ -2517,6 +2537,10 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
 
     copyClientOptions(rebind, reply);
     appendDefaultOptions(rebind, reply);
+
+    if (!validateSeDhcpOptions(rebind, reply, ctx)) {
+        return (reply);
+    }
     appendRequestedOptions(rebind, reply, ctx);
 
     processClientFqdn(rebind, reply, ctx);
@@ -2545,6 +2569,10 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     // Make sure that the necessary options are included.
     copyClientOptions(confirm, reply);
     appendDefaultOptions(confirm, reply);
+
+    if (!validateSeDhcpOptions(confirm, reply, ctx)) {
+        return (reply);
+    }
     // Indicates if at least one address has been verified. If no addresses
     // are verified it means that the client has sent no IA_NA options
     // or no IAAddr options and that client's message has to be discarded.
@@ -2625,6 +2653,9 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
     copyClientOptions(release, reply);
     appendDefaultOptions(release, reply);
 
+    if (!validateSeDhcpOptions(release, reply, ctx)) {
+        return (reply);
+    }
     releaseLeases(release, reply, ctx);
 
     /// @todo If client sent a release and we should remove outstanding
@@ -2656,6 +2687,11 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     // to put in all messages it sends (server-id for now, but possibly other
     // options once we start supporting authentication)
     appendDefaultOptions(inf_request, reply);
+
+    // Validate secure DHCPv6 options
+    if (!validateSeDhcpOptions(inf_request, reply, ctx)) {
+        return (reply);
+    }
 
     // Try to assign options that were requested by the client.
     appendRequestedOptions(inf_request, reply, ctx);
@@ -3017,6 +3053,420 @@ void Dhcpv6Srv::processStatsSent(const Pkt6Ptr& response) {
     }
 
     StatsMgr::instance().addValue(stat_name, static_cast<int64_t>(1));
+}
+
+bool Dhcpv6Srv::validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
+                                      const AllocEngine::ClientContext6 ctx) {
+    // Get the secure DHCPv6 global configuration state
+    ConstCfgSeDhcp6Ptr state =
+        CfgMgr::instance().getCurrentCfg()->getCfgSeDhcp6();
+    // If doesn't exit or check-signatures disabled give up
+    if (!state || !state->getCheckSignatures()) {
+        return (true);
+    }
+
+    // Get the public key option
+    bool has_pubkey = false;
+    if (query->getOption(D6O_PUBLIC_KEY)) {
+        has_pubkey = true;
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_RECEIVED)
+            .arg("public key");
+        if (query->getOptions(D6O_PUBLIC_KEY).size() > 1) {
+            answer->addOption(createStatusCode(STATUS_UnspecFail,
+                        "More than one public key option"));
+            return (false);
+        }
+    }
+    // Get the certificate option
+    bool has_cert = false;
+    if (query->getOption(D6O_CERTIFICATE)) {
+        has_cert = true;
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_RECEIVED)
+            .arg("certificate");
+        if (query->getOptions(D6O_CERTIFICATE).size() > 1) {
+            answer->addOption(createStatusCode(STATUS_UnspecFail,
+                        "More than one certificate option"));
+            return (false);
+        }
+    }
+    // Both must not be presented at the same time
+    if (has_pubkey && has_cert) {
+        answer->addOption(createStatusCode(STATUS_UnspecFail,
+                    "Both public key and certificate options"));
+        return (false);
+    }
+
+    // Is signature required?
+    bool signopt_required = state->getCheckAuthorizations();
+    string host_credential = "";
+    if (ctx.host_) {
+        host_credential = ctx.host_->getCredential();
+    }
+    if (signopt_required && host_credential.empty()) {
+        answer->addOption(createStatusCode(STATUS_AuthenticationFail,
+                    "No configured credentials"));
+        return (false);
+    }
+    // Get the signature option
+    OptionPtr signopt = query->getOption(D6O_SIGNATURE);
+    if (signopt_required && !signopt) {
+        answer->addOption(createStatusCode(STATUS_UnspecFail,
+                    "No signature option"));
+        return (false);
+    }
+    // Unsecure
+    if (!signopt_required && !signopt) {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, SEDHCP6_UNSECURE);
+        return (true);
+    }
+    // signopt is true
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_RECEIVED)
+        .arg("signature");
+    // Either public key or certificate must available
+    if (!has_pubkey && !has_cert) {
+        answer->addOption(createStatusCode(STATUS_UnspecFail,
+                    "No public key or certificate options"));
+        return (false);
+    }
+    if (query->getOptions(D6O_SIGNATURE).size() > 1) {
+        answer->addOption(createStatusCode(STATUS_UnspecFail,
+                    "More than one signature options"));
+        return (false);
+    }
+    OptionCustomPtr signature =
+        boost::dynamic_pointer_cast<OptionCustom>(signopt);
+    if (!signature) {
+        answer->addOption(createStatusCode(STATUS_UnspecFail,
+                    "Invalid signature option"));
+        return (false);
+    }
+
+    // Check algorithms
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_INCOMING_TRACE)
+        .arg("checking algorithms");
+    uint8_t ha_id = signature->readInteger<uint8_t>(0);
+    if ((ha_id != SHA_256) && (ha_id != SHA_512)) {
+        answer->addOption(createStatusCode(STATUS_AlgorithmNotSupported,
+                    "Unsupported hash algorithm"));
+        return (false);
+    }
+    HashAlgorithm hash_algo = SHA256;
+    if (ha_id == SHA_512) {
+        hash_algo = SHA512;
+    }
+    uint8_t sa_id = signature->readInteger<uint8_t>(1);
+    if (sa_id != RSASSA_PKCS1v1_5) {
+        answer->addOption(createStatusCode(STATUS_AlgorithmNotSupported,
+                    "Unsupported signature algorithm"));
+        return (false);
+    }
+    AsymAlgorithm sign_algo = RSA_;
+    AsymKeyKind key_kind = PUBLIC;
+    if (has_cert) {
+        key_kind = CERT;
+    }
+
+    // Create the asym crypto key object
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_INCOMING_TRACE)
+        .arg("creating RSA objects");
+    vector<uint8_t> keybin;
+    if (has_pubkey) {
+        keybin = query->getOption(D6O_PUBLIC_KEY)->getData();
+    } else {
+        keybin = query->getOption(D6O_CERTIFICATE)->getData();
+    }
+    CryptoLink& crypto = CryptoLink::getCryptoLink();
+    CfgSeDhcp6::AsymPtr key(crypto.createAsym(keybin,
+                                              sign_algo,
+                                              hash_algo,
+                                              key_kind,
+                                              ASN1),
+                            deleteAsym);
+    if (!key) {
+        if (has_pubkey) {
+            answer->addOption(createStatusCode(STATUS_UnspecFail,
+                        "Malformed public key option"));
+        } else {
+            answer->addOption(createStatusCode(STATUS_UnspecFail,
+                        "Malformed certificate option"));
+        }
+        return (false);
+    }
+
+    // Compare with the credential for authorization
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_INCOMING_TRACE)
+        .arg(signopt_required ?
+             "comparing with config" : "not comparing with config");
+    if (signopt_required) {
+        CfgSeDhcp6::AsymPtr cred(crypto.createAsym(host_credential,
+                                                   "",
+                                                   sign_algo,
+                                                   hash_algo,
+                                                   key_kind,
+                                                   ASN1),
+                                 deleteAsym);
+        if (!cred) {
+            answer->addOption(createStatusCode(STATUS_AuthenticationFail,
+                        "Bad configured credentials"));
+            return (false);
+        }
+        if (!cred->compare(key.get(), key_kind)) {
+            answer->addOption(createStatusCode(STATUS_AuthenticationFail,
+                        "Credential mismatch"));
+            return (false);
+        }
+        // Add a hook in cryptolink for this!
+        if (state->getOnlineValidation() && !cred->validate()) {
+            answer->addOption(createStatusCode(STATUS_AuthenticationFail,
+                        "Credential does not validate"));
+            return (false);
+        }
+    }
+
+    // Handle the timestamp option
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_INCOMING_TRACE)
+        .arg("handling timestamp");
+    OptionPtr tmstmp_opt;
+    Ntp rd_new;
+    Ntp ts_new;
+    Ntp rd_last;
+    Ntp ts_last;
+    bool update_tmstmp = false;
+    if (state->getCheckTimestamps()) {
+        tmstmp_opt = query->getOption(D6O_TIMESTAMP);
+    }
+    if (tmstmp_opt) {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_RECEIVED)
+            .arg("timestamp");
+        // Get timestamps in NTP format
+        vector<uint8_t> tmstmp_bin = tmstmp_opt->getData();
+        if (!ts_new.from_binary(tmstmp_bin)) {
+            answer->addOption(createStatusCode(STATUS_UnspecFail,
+                        "Malformed timestamp option"));
+            return (false);
+        }
+        rd_new = Ntp(query->getTimestamp());
+        if (ctx.host_) {
+            rd_last = Ntp(ctx.host_->getRDlast());
+            ts_last = Ntp(ctx.host_->getTSlast());
+        }
+        // Verify the given timestamp
+        bool valid = false;
+        if (rd_last.is_zero() || ts_last.is_zero()) {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                      SEDHCP6_INCOMING_TRACE)
+                .arg("new client");
+            valid = Ntp::verify_new(rd_new, ts_new);
+            if (!valid) {
+                answer->addOption(createStatusCode(STATUS_TimestampFail,
+                            "New timestamp too far"));
+                return (false);
+            }
+            if (valid && ctx.host_) {
+                update_tmstmp = true;
+            }
+        } else {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                      SEDHCP6_INCOMING_TRACE)
+                .arg("known client");
+            valid = Ntp::verify(rd_new, ts_new, rd_last, ts_last,
+                                &update_tmstmp);
+            if (!valid) {
+                answer->addOption(createStatusCode(STATUS_TimestampFail,
+                            "Timestamp out of acceptable range"));
+                return (false);
+            }
+        }
+    }
+
+    // Check the signature
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_INCOMING_TRACE)
+        .arg("checking signature");
+    if (!query->getSignatureOffset()) {
+        LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_CHECK_FAIL)
+            .arg("null signature offset");
+        return (false);
+    }
+    if (query->getSignatureOffset() + signature->len() >
+        query->rawEnd() - query->rawBegin()) {
+        LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_CHECK_FAIL)
+            .arg("signature offset overflow");
+        return (false);
+    }
+    OptionBuffer tbs(query->rawBegin(), query->rawEnd());
+    size_t sig_off = query->getSignatureOffset();
+    sig_off += signature->getHeaderLen() + 2;
+    size_t sig_len = signature->len();
+    sig_len -= signature->getHeaderLen() + 2;
+    memset(&tbs[sig_off], 0, sig_len);
+    OptionBuffer sig(query->rawBegin() + sig_off,
+                     query->rawBegin() + sig_off + sig_len);
+    bool valid = false;
+    ostringstream vermsg("signature verify failed");
+    try {
+        key->update(&tbs[0], tbs.size());
+        valid = key->verify(&sig[0], sig_len, BASIC);
+    } catch (const Exception& ex) {
+        vermsg.str("");
+        vermsg << "signature verify failed: " << ex.what();
+    } catch (...) {
+        vermsg.str("signature verify failed?!");
+    }
+    if (!valid) {
+        answer->addOption(createStatusCode(STATUS_SignatureFail,
+                                           vermsg.str()));
+        return (false);
+    }
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_INCOMING_TRACE)
+        .arg("signature is valid");
+
+    // Update timestamps
+    if (update_tmstmp) {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_INCOMING_TRACE)
+            .arg("updating timestamps");
+        Host* hp = const_cast<Host*>(ctx.host_.get());
+        hp->setRDlast(rd_new);
+        hp->setTSlast(ts_new);
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                  SEDHCP6_TIMESTAMP_UPDATED);
+    }
+
+    // Done
+    return (true);
+}
+
+void Dhcpv6Srv::appendSeDhcpOptions(Pkt6Ptr& answer) {
+    // Get the secure DHCPv6 global configuration state
+    ConstCfgSeDhcp6Ptr state =
+        CfgMgr::instance().getCurrentCfg()->getCfgSeDhcp6();
+    // If doesn't exit give up
+    if (!state) {
+        return;
+    }
+
+    CfgSeDhcp6::AsymPtr key = state->getPrivateKey();
+    CfgSeDhcp6::AsymPtr cred = state->getCredential();
+    if (state->getSignAnswers() && key && cred) {
+        // Add the credential (public key or certificate) option
+        uint16_t cred_type = D6O_PUBLIC_KEY;
+        string opt_name = "public key";
+        if (cred->getAsymKeyKind() == CERT) {
+            cred_type = D6O_CERTIFICATE;
+            opt_name = "certificate";
+        }
+        OptionBuffer buf = cred->exportkey(cred->getAsymKeyKind(), ASN1);
+        OptionPtr cred_opt(new Option(Option::V6, cred_type, buf));
+        answer->addOption(cred_opt);
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_ADDED)
+            .arg(opt_name)
+            .arg(cred_opt->len());
+
+        // Add the signature option
+        uint8_t ha_id = SHA_256;
+        if (key->getHashAlgorithm() == SHA512) {
+            ha_id = SHA_512;
+        }
+        uint8_t sa_id = RSASSA_PKCS1v1_5;
+        size_t sig_len = key->getSignatureLength(BASIC);
+        OptionBuffer sig(sig_len + 2);
+        sig[0] = ha_id;
+        sig[1] = sa_id;
+        OptionDefinitionPtr sig_def =
+            LibDHCP::getOptionDef(Option::V6, D6O_SIGNATURE);
+        assert(sig_def);
+        OptionCustomPtr sig_opt(new OptionCustom(*sig_def, Option::V6, sig));
+        answer->addOption(sig_opt);
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_ADDED)
+            .arg("signature")
+            .arg(sig_opt->len());
+    }
+
+    // Add timestamps
+    if (state->getTimestampAnswers()) {
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        const Ntp val(&now);
+        const OptionBuffer buf = val.to_binary();
+        OptionPtr tmsmtp_opt(new Option(Option::V6, D6O_TIMESTAMP, buf));
+        answer->addOption(tmsmtp_opt);
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_ADDED)
+            .arg("timestamp")
+            .arg(tmsmtp_opt->len());
+    }
+}
+
+void Dhcpv6Srv::finalizeSignature(Pkt6Ptr& tbs) {
+    // Get the secure DHCPv6 global configuration state
+    ConstCfgSeDhcp6Ptr state =
+        CfgMgr::instance().getCurrentCfg()->getCfgSeDhcp6();
+    if (!state) {
+        LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+            .arg("no secure DHCPv6 configuration state");
+        return;
+    }
+
+    // Sanity checks (configuration)
+    if (!state->getSignAnswers()) {
+        LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+            .arg("Signing answers is disabled");
+        return;
+    }
+    CfgSeDhcp6::AsymPtr key = state->getPrivateKey();
+    if (!key) {
+        LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+            .arg("No private key configured");
+        return;
+    }
+
+    // Sanity checks (offset)
+    if (!tbs->getSignatureOffset()) {
+        LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+            .arg("null signature offset");
+        return;
+    }
+    size_t sig_off0 = tbs->getSignatureOffset();
+    size_t sig_off = sig_off0 + Option::OPTION6_HDR_LEN + 2;
+    size_t sig_len = key->getSignatureLength(BASIC);
+    if (sig_off + sig_len > tbs->rawEnd() - tbs->rawBegin()) {
+        LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+            .arg("signature offset overflow");
+        return;
+    }
+
+    // Sanity checks (option)
+    uint16_t opt_type = *(tbs->rawBegin() + sig_off0) << 8;
+    opt_type |= *(tbs->rawBegin() + sig_off0 + 1);
+    if (opt_type != D6O_SIGNATURE) {
+        LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+            .arg("signature option type mismatch");
+        return;
+    }
+    uint16_t opt_len = *(tbs->rawBegin() + sig_off0 + 2) << 8;
+    opt_len |= *(tbs->rawBegin() + sig_off0 + 3);
+    if (opt_len != sig_len + 2) {
+        LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+            .arg("signature option length mismatch");
+        return;
+    }
+
+    uint8_t* start = const_cast<uint8_t*>(tbs->rawBegin());
+    try {
+        key->update(tbs->rawBegin(), tbs->rawEnd() - tbs->rawBegin());
+        key->sign(start + sig_off, sig_len, BASIC);
+        key->clear();
+    } catch (const Exception& ex) {
+        ostringstream sigmsg("signature sign failed: ");
+        sigmsg << ex.what();
+        LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+            .arg(sigmsg.str());
+    } catch (...) {
+        LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+            .arg("signature sign failed?!");
+    }
+    vector<uint8_t> dump(sig_len);
+    memcpy(&dump[0], start + sig_off, sig_len);
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, SEDHCP6_SIGNATURE_DUMP)
+        .arg(encode::encodeHex(dump));
 }
 
 };
