@@ -160,7 +160,7 @@ protected:
 };
 
 LeaseFileLoaderTest::LeaseFileLoaderTest()
-    : filename_("leases4.csv"), io_(absolutePath(filename_)) {
+    : filename_(absolutePath("leases4.csv")), io_(filename_) {
 }
 
 std::string
