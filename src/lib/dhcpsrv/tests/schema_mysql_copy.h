@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,6 +37,11 @@ const char* destroy_statement[] = {
     "DROP TABLE lease6_types",
     "DROP TABLE lease_hwaddr_source",
     "DROP TABLE schema_version",
+    // Schema 3.0 destroy statements
+    "DROP TABLE hosts",
+    "DROP TABLE dhcp4_options",
+    "DROP TABLE dhcp6_options",
+    "DROP TABLE ipv6_reservations",
     NULL
 };
 
@@ -124,6 +129,86 @@ const char* create_statement[] = {
 
     "UPDATE schema_version SET version=\"2\", minor=\"0\";",
     // Schema upgrade to 2.0 ends here.
+
+    // Schema upgrade to 3.0 starts here.
+
+    "CREATE TABLE IF NOT EXISTS hosts ("
+        "host_id INT UNSIGNED NOT NULL AUTO_INCREMENT,"
+        "dhcp_identifier VARBINARY(128) NOT NULL,"
+        "dhcp_identifier_type TINYINT NOT NULL,"
+        "dhcp4_subnet_id INT UNSIGNED NULL,"
+        "dhcp6_subnet_id INT UNSIGNED NULL,"
+        "ipv4_address INT UNSIGNED NULL,"
+        "hostname VARCHAR(255) NULL,"
+        "dhcp4_client_classes VARCHAR(255) NULL,"
+        "dhcp6_client_classes VARCHAR(255) NULL,"
+        "PRIMARY KEY (host_id),"
+        "INDEX key_dhcp4_identifier_subnet_id (dhcp_identifier ASC , dhcp_identifier_type ASC),"
+        "INDEX key_dhcp6_identifier_subnet_id (dhcp_identifier ASC , dhcp_identifier_type ASC , dhcp6_subnet_id ASC)"
+    ")  ENGINE=INNODB",
+
+    "CREATE TABLE IF NOT EXISTS ipv6_reservations ("
+        "reservation_id INT NOT NULL AUTO_INCREMENT,"
+        "address VARCHAR(39) NOT NULL,"
+        "prefix_len TINYINT(3) UNSIGNED NOT NULL DEFAULT 128,"
+        "type TINYINT(4) UNSIGNED NOT NULL DEFAULT 0,"
+        "dhcp6_iaid INT UNSIGNED NULL,"
+        "host_id INT UNSIGNED NOT NULL,"
+        "PRIMARY KEY (reservation_id),"
+        "INDEX fk_ipv6_reservations_host_idx (host_id ASC),"
+        "CONSTRAINT fk_ipv6_reservations_Host FOREIGN KEY (host_id)"
+            "REFERENCES hosts (host_id)"
+            "ON DELETE NO ACTION ON UPDATE NO ACTION"
+    ")  ENGINE=INNODB",
+
+    "CREATE TABLE IF NOT EXISTS dhcp4_options ("
+        "option_id INT UNSIGNED NOT NULL AUTO_INCREMENT,"
+        "code TINYINT UNSIGNED NOT NULL,"
+        "value BLOB NULL,"
+        "formatted_value TEXT NULL,"
+        "space VARCHAR(128) NULL,"
+        "persistent TINYINT(1) NOT NULL DEFAULT 0,"
+        "dhcp_client_class VARCHAR(128) NULL,"
+        "dhcp4_subnet_id INT NULL,"
+        "host_id INT UNSIGNED NULL,"
+        "PRIMARY KEY (option_id),"
+        "UNIQUE INDEX option_id_UNIQUE (option_id ASC),"
+        "INDEX fk_options_host1_idx (host_id ASC),"
+        "CONSTRAINT fk_options_host1 FOREIGN KEY (host_id)"
+            "REFERENCES hosts (host_id)"
+            "ON DELETE NO ACTION ON UPDATE NO ACTION"
+    ")  ENGINE=INNODB",
+
+    "CREATE TABLE IF NOT EXISTS dhcp6_options ("
+        "option_id INT UNSIGNED NOT NULL AUTO_INCREMENT,"
+        "code INT UNSIGNED NOT NULL,"
+        "value BLOB NULL,"
+        "formatted_value TEXT NULL,"
+        "space VARCHAR(128) NULL,"
+        "persistent TINYINT(1) NOT NULL DEFAULT 0,"
+        "dhcp_client_class VARCHAR(128) NULL,"
+        "dhcp6_subnet_id INT NULL,"
+        "host_id INT UNSIGNED NULL,"
+        "PRIMARY KEY (option_id),"
+        "UNIQUE INDEX option_id_UNIQUE (option_id ASC),"
+        "INDEX fk_options_host1_idx (host_id ASC),"
+        "CONSTRAINT fk_options_host10 FOREIGN KEY (host_id)"
+            "REFERENCES hosts (host_id)"
+            "ON DELETE NO ACTION ON UPDATE NO ACTION"
+    ")  ENGINE=INNODB",
+
+
+    //"DELIMITER $$ ",
+    "CREATE TRIGGER host_BDEL BEFORE DELETE ON hosts FOR EACH ROW "
+    "BEGIN "
+    "DELETE FROM ipv6_reservations WHERE ipv6_reservations.host_id = OLD.host_id; "
+    "END ",
+    //"$$ ",
+    //"DELIMITER ;",
+
+    "UPDATE schema_version SET version = '3', minor = '0';",
+
+    // This line concludes database upgrade to version 3.0.
 
     NULL
 };

@@ -41,7 +41,7 @@ public:
 // This test checks that a database access string can be parsed correctly.
 TEST_F(LeaseMgrFactoryTest, parse) {
 
-    DataSource::ParameterMap parameters = LeaseMgrFactory::parse(
+    DataSource::ParameterMap parameters = DataSource::parse(
         "user=me password=forbidden name=kea somethingelse= type=mysql");
 
     EXPECT_EQ(5, parameters.size());
@@ -57,21 +57,21 @@ TEST_F(LeaseMgrFactoryTest, parseInvalid) {
 
     // No tokens in the string, so we expect no parameters
     std::string invalid = "";
-    DataSource::ParameterMap parameters = LeaseMgrFactory::parse(invalid);
+    DataSource::ParameterMap parameters = DataSource::parse(invalid);
     EXPECT_EQ(0, parameters.size());
 
     // With spaces, there are some tokens so we expect invalid parameter
     // as there are no equals signs.
     invalid = "   \t  ";
-    EXPECT_THROW(LeaseMgrFactory::parse(invalid), isc::InvalidParameter);
+    EXPECT_THROW(DataSource::parse(invalid), isc::InvalidParameter);
 
     invalid = "   noequalshere  ";
-    EXPECT_THROW(LeaseMgrFactory::parse(invalid), isc::InvalidParameter);
+    EXPECT_THROW(DataSource::parse(invalid), isc::InvalidParameter);
 
     // A single "=" is valid string, but is placed here as the result is
     // expected to be nothing.
     invalid = "=";
-    parameters = LeaseMgrFactory::parse(invalid);
+    parameters = DataSource::parse(invalid);
     EXPECT_EQ(1, parameters.size());
     EXPECT_EQ("", parameters[""]);
 }
@@ -83,7 +83,7 @@ TEST_F(LeaseMgrFactoryTest, parseInvalid) {
 TEST_F(LeaseMgrFactoryTest, redactAccessString) {
 
     DataSource::ParameterMap parameters =
-        LeaseMgrFactory::parse("user=me password=forbidden name=kea type=mysql");
+    		DataSource::parse("user=me password=forbidden name=kea type=mysql");
     EXPECT_EQ(4, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("forbidden", parameters["password"]);
@@ -92,8 +92,8 @@ TEST_F(LeaseMgrFactoryTest, redactAccessString) {
 
     // Redact the result.  To check, break the redacted string down into its
     // components.
-    std::string redacted = LeaseMgrFactory::redactedAccessString(parameters);
-    parameters = LeaseMgrFactory::parse(redacted);
+    std::string redacted = DataSource::redactedAccessString(parameters);
+    parameters = DataSource::parse(redacted);
 
     EXPECT_EQ(4, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
@@ -109,7 +109,7 @@ TEST_F(LeaseMgrFactoryTest, redactAccessString) {
 TEST_F(LeaseMgrFactoryTest, redactAccessStringEmptyPassword) {
 
     DataSource::ParameterMap parameters =
-        LeaseMgrFactory::parse("user=me name=kea type=mysql password=");
+    		DataSource::parse("user=me name=kea type=mysql password=");
     EXPECT_EQ(4, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("", parameters["password"]);
@@ -118,8 +118,8 @@ TEST_F(LeaseMgrFactoryTest, redactAccessStringEmptyPassword) {
 
     // Redact the result.  To check, break the redacted string down into its
     // components.
-    std::string redacted = LeaseMgrFactory::redactedAccessString(parameters);
-    parameters = LeaseMgrFactory::parse(redacted);
+    std::string redacted = DataSource::redactedAccessString(parameters);
+    parameters = DataSource::parse(redacted);
 
     EXPECT_EQ(4, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
@@ -129,15 +129,15 @@ TEST_F(LeaseMgrFactoryTest, redactAccessStringEmptyPassword) {
 
     // ... and again to check that the position of the empty password in the
     // string does not matter.
-    parameters = LeaseMgrFactory::parse("user=me password= name=kea type=mysql");
+    parameters = DataSource::parse("user=me password= name=kea type=mysql");
     EXPECT_EQ(4, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
     EXPECT_EQ("mysql", parameters["type"]);
 
-    redacted = LeaseMgrFactory::redactedAccessString(parameters);
-    parameters = LeaseMgrFactory::parse(redacted);
+    redacted = DataSource::redactedAccessString(parameters);
+    parameters = DataSource::parse(redacted);
 
     EXPECT_EQ(4, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
@@ -153,7 +153,7 @@ TEST_F(LeaseMgrFactoryTest, redactAccessStringEmptyPassword) {
 TEST_F(LeaseMgrFactoryTest, redactAccessStringNoPassword) {
 
     DataSource::ParameterMap parameters =
-        LeaseMgrFactory::parse("user=me name=kea type=mysql");
+    		DataSource::parse("user=me name=kea type=mysql");
     EXPECT_EQ(3, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("kea", parameters["name"]);
@@ -161,8 +161,8 @@ TEST_F(LeaseMgrFactoryTest, redactAccessStringNoPassword) {
 
     // Redact the result.  To check, break the redacted string down into its
     // components.
-    std::string redacted = LeaseMgrFactory::redactedAccessString(parameters);
-    parameters = LeaseMgrFactory::parse(redacted);
+    std::string redacted = DataSource::redactedAccessString(parameters);
+    parameters = DataSource::parse(redacted);
 
     EXPECT_EQ(3, parameters.size());
     EXPECT_EQ("me", parameters["user"]);

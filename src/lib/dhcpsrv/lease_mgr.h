@@ -118,8 +118,6 @@ public:
 
     /// @brief Constructor
     ///
-    /// @param parameters A data structure relating keywords and values
-    ///        concerned with the database.
     LeaseMgr() : io_service_(new asiolink::IOService())
     {}
 

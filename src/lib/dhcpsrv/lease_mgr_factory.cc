@@ -46,71 +46,13 @@ LeaseMgrFactory::getLeaseMgrPtr() {
     return (leaseMgrPtr);
 }
 
-DataSource::ParameterMap
-LeaseMgrFactory::parse(const std::string& dbaccess) {
-    DataSource::ParameterMap mapped_tokens;
-
-    if (!dbaccess.empty()) {
-        vector<string> tokens;
-
-        // We need to pass a string to is_any_of, not just char*. Otherwise
-        // there are cryptic warnings on Debian6 running g++ 4.4 in
-        // /usr/include/c++/4.4/bits/stl_algo.h:2178 "array subscript is above
-        // array bounds"
-        boost::split(tokens, dbaccess, boost::is_any_of(string("\t ")));
-        BOOST_FOREACH(std::string token, tokens) {
-            size_t pos = token.find("=");
-            if (pos != string::npos) {
-                string name = token.substr(0, pos);
-                string value = token.substr(pos + 1);
-                mapped_tokens.insert(make_pair(name, value));
-            } else {
-                LOG_ERROR(dhcpsrv_logger, DHCPSRV_INVALID_ACCESS).arg(dbaccess);
-                isc_throw(InvalidParameter, "Cannot parse " << token
-                          << ", expected format is name=value");
-            }
-        }
-    }
-
-    return (mapped_tokens);
-}
-
-std::string
-LeaseMgrFactory::redactedAccessString(const DataSource::ParameterMap& parameters) {
-    // Reconstruct the access string: start of with an empty string, then
-    // work through all the parameters in the original string and add them.
-    std::string access;
-    for (DataSource::ParameterMap::const_iterator i = parameters.begin();
-         i != parameters.end(); ++i) {
-
-        // Separate second and subsequent tokens are preceded by a space.
-        if (!access.empty()) {
-            access += " ";
-        }
-
-        // Append name of parameter...
-        access += i->first;
-        access += "=";
-
-        // ... and the value, except in the case of the password, where a
-        // redacted value is appended.
-        if (i->first == std::string("password")) {
-            access += "*****";
-        } else {
-            access += i->second;
-        }
-    }
-
-    return (access);
-}
-
 void
 LeaseMgrFactory::create(const std::string& dbaccess) {
     const std::string type = "type";
 
     // Parse the access string and create a redacted string for logging.
-    DataSource::ParameterMap parameters = parse(dbaccess);
-    std::string redacted = redactedAccessString(parameters);
+    DataSource::ParameterMap parameters = DataSource::parse(dbaccess);
+    std::string redacted = DataSource::redactedAccessString(parameters);
 
     // Is "type" present?
     if (parameters.find(type) == parameters.end()) {

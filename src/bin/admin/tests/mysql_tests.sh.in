@@ -257,7 +257,6 @@ EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "dhcp6_options table is missing or broken. (returned status code %d, expected %d)"
 
-
     # Verify that it reports version 3.0.
     version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name)
 
