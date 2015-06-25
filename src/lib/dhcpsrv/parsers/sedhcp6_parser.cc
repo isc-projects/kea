@@ -84,6 +84,7 @@ SeDhcp6Parser::build(isc::data::ConstElementPtr config_value) {
                        (param.first == "public-key") ||
                        (param.first == "certificate") ||
                        (param.first == "private-key") ||
+                       (param.first == "password") ||
                        (param.first == "validation-policy")) {
                 found = true;
                 values_copy[param.first] = param.second->stringValue();
@@ -266,6 +267,12 @@ CfgSeDhcp6 SeDhcp6Parser::create() const {
     if (private_key_ptr != values_.end()) {
         private_key = private_key_ptr->second;
     }
+    string password = "";
+    StringPairMap::const_iterator password_ptr =
+        values_.find("password");
+    if (password_ptr != values_.end()) {
+        password = password_ptr->second;
+    }
     
     // Get credential
     string public_key = "";
@@ -294,7 +301,7 @@ CfgSeDhcp6 SeDhcp6Parser::create() const {
         errmsg << "Failed to get the private key from '";
         errmsg << private_key.c_str() << "'";
         AsymPtr priv_key(crypto.createAsym(private_key,
-                                           "",
+                                           password,
                                            signature_algorithm,
                                            hash_algorithm,
                                            PRIVATE,
