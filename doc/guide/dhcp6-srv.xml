@@ -2007,8 +2007,13 @@ should include options from the isc option space:
      </simpara></listitem>
      <listitem><simpara>
      <command>"private-key": ""</command> Specifies the name of the
-     file which contains the private key (clear text PKCS#8) in PEM
+     file which contains the private key (PKCS#8) in PEM
      format. Mandatory when answer signing is enabled.
+     </simpara></listitem>
+     <listitem><simpara>
+     <command>"password": ""</command> Specifies the password for
+     the private key. When the password is empty (the default) the
+     private key is not encrypted (clear text PKCS#8).
      </simpara></listitem>
      <listitem><simpara>
      <command>"timestamp-answers": false</command>
@@ -2053,6 +2058,7 @@ should include options from the isc option space:
         "timestamp-answers": true,
         "certificate": "server-cert.pem",
         "private-key": "server-private-key.pem",
+        "password": "1234",
         "check-signatures": true,
         "check-authorizations": true,
         "check-timestamps": true
