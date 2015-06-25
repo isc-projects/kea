@@ -33,6 +33,8 @@ EXTRA_DIST += parsers/dhcp_parsers.h
 EXTRA_DIST += parsers/host_reservation_parser.cc
 EXTRA_DIST += parsers/host_reservation_parser.h
 EXTRA_DIST += parsers/host_reservations_list_parser.h
+EXTRA_DIST += parsers/sedhcp6_parser.cc
+EXTRA_DIST += parsers/sedhcp6_parser.h
 
 # Define rule to build logging source files from message file
 alloc_engine_messages.h alloc_engine_messages.cc dhcpsrv_messages.h \
@@ -83,6 +85,7 @@ libkea_dhcpsrv_la_SOURCES += cfg_iface.cc cfg_iface.h
 libkea_dhcpsrv_la_SOURCES += cfg_option.cc cfg_option.h
 libkea_dhcpsrv_la_SOURCES += cfg_option_def.cc cfg_option_def.h
 libkea_dhcpsrv_la_SOURCES += cfg_rsoo.cc cfg_rsoo.h
+libkea_dhcpsrv_la_SOURCES += cfg_sedhcp6.cc cfg_sedhcp6.h
 libkea_dhcpsrv_la_SOURCES += cfg_subnets4.cc cfg_subnets4.h
 libkea_dhcpsrv_la_SOURCES += cfg_subnets6.cc cfg_subnets6.h
 libkea_dhcpsrv_la_SOURCES += cfg_mac_source.cc cfg_mac_source.h
@@ -135,6 +138,8 @@ libkea_dhcpsrv_la_SOURCES += parsers/host_reservation_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/host_reservations_list_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.h
+libkea_dhcpsrv_la_SOURCES += parsers/sedhcp6_parser.cc
+libkea_dhcpsrv_la_SOURCES += parsers/sedhcp6_parser.h
 
 nodist_libkea_dhcpsrv_la_SOURCES = alloc_engine__messages.h
 nodist_libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.cc

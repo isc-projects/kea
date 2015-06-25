@@ -1,0 +1,44 @@
+Short help to create these files using openssl command line
+(known to be a bit hairy :-):
+
+$ openssl genrsa -out rsa -f4 1024
+
+rsa: PKCS#1 RSA private key, public exponent 0x10001, 1024 bit modulus
+
+$ openssl pkcs8 -in rsa -topk8 -nocrypt -out priv.pem
+
+priv.pem: clear text PKCS#8 RSA private key
+
+$ openssl pkcs8 -in priv.pem -out rsa2 -nocrypt
+
+rsa2: a copy of rsa
+
+$ openssl rsa -in rsa -out pub.pem -pubout
+
+pub.pem: SubjectPublicKeyInfo RSA public key
+
+$ openssl rsa -in priv.pem -out pub2.pem -pubout
+
+pub2.pem: a copy of pub.pem
+
+$ openssl req -new -x509 -sha256 -key rsa -days 365 -out cert.pem \
+ -subj '/O=Internet Systems Consortium/CN=secure DHCPv6 Kea server/'
+
+cert.pem: self-signed X.509 public key certificate, valid 365 days
+
+$ openssl req -new -x509 -sha256 -key priv.pem -days 365 -out cert2.pem \
+ -subj '/O=Internet Systems Consortium/CN=secure DHCPv6 Kea server/'
+
+cert2.pem: another X.509 certificate with a different serial
+
+$ openssl x509 -in cert.pem -text
+
+displays the certificate content
+
+$ openssl ecparam -genkey -name prime256v1 -out ec
+
+ec: P256 key pair
+
+$ openssl ecparam -list_curves
+
+lists available curves

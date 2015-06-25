@@ -4,6 +4,7 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests\"
 AM_CPPFLAGS += -DDHCP_DATA_DIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests\"
+AM_CPPFLAGS += -DSEDHCP6_DATA_DIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests/testdata\"
 AM_CPPFLAGS += -DKEA_LFC_BUILD_DIR=\"$(abs_top_builddir)/src/bin/lfc\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
@@ -65,6 +66,7 @@ libdhcpsrv_unittests_SOURCES += cfg_mac_source_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_def_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_rsoo_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfg_sedhcp6_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_subnets4_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_subnets6_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfgmgr_unittest.cc
@@ -98,6 +100,7 @@ endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
 libdhcpsrv_unittests_SOURCES += schema_mysql_copy.h
 libdhcpsrv_unittests_SOURCES += schema_pgsql_copy.h
+libdhcpsrv_unittests_SOURCES += sedhcp6_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += srv_config_unittest.cc
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_get_callout_handle.cc test_get_callout_handle.h

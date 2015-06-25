@@ -112,12 +112,14 @@ CfgMgr::ensureCurrentAllocated() {
 }
 
 void
-CfgMgr::clear() {
+CfgMgr::clear(bool reinit) {
     if (configuration_) {
         configuration_->removeStatistics();
     }
     configs_.clear();
-    ensureCurrentAllocated();
+    if (reinit) {
+        ensureCurrentAllocated();
+    }
 }
 
 void

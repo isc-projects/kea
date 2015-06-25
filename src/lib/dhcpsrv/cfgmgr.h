@@ -192,10 +192,10 @@ public:
     ///
     /// This function removes all configurations, including current and
     /// staging configurations. It creates a new current configuration with
-    /// default settings.
+    /// default settings when @param reinit is true.
     ///
     /// This function is exception safe.
-    void clear();
+    void clear(bool reinit = true);
 
     /// @brief Commits the staging configuration.
     ///
