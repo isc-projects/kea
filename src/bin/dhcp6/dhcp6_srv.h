@@ -701,7 +701,12 @@ protected:
     ///  - check the timestamp option (or TimestampFail) (TODO)
     ///  - check the signature (or SignatureFail)
     ///
-    /// @return 
+    /// @param query The incoming message
+    /// @param answer The outgoing message
+    /// @param ctx The client context
+    /// @return true is the incoming message is valid, false if it is not
+    /// @note for bad incoming messages the routine fills the status code
+    /// and the caller must abort processing and send the answer.
     bool validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
                                const AllocEngine::ClientContext6 ctx);
 
@@ -711,12 +716,18 @@ protected:
     ///  - add either a public key or certificate option
     ///  - add a signature option with zeroed signature
     ///  - add a timestamp option (TODO)
-    void appendSeDhcpOptions(Pkt6Ptr& answer);
+    ///
+    /// @param answer The outgoing message (i.e., where to add options)
+    /// @return true if the outgoing message will be signed
+    bool appendSeDhcpOptions(Pkt6Ptr& answer);
 
     /// @brief Finalize signature
     ///
-    /// Compute the signature itself (must be done of course late)
-    void finalizeSignature(Pkt6Ptr& tbs);
+    /// Compute the signature itself (must be done of course late).
+    /// Called when appendSeDhcpOptions() has returned true
+    ///
+    /// @param answer The to be signed / outgoing message
+    void finalizeSignature(Pkt6Ptr& answer);
 
 private:
 
