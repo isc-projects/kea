@@ -20,6 +20,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/subnet_id.h>
+#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <list>
 #include <map>
@@ -180,6 +181,15 @@ public:
     enum IdentifierType {
         IDENT_HWADDR,
         IDENT_DUID
+    };
+
+    /// @brief Temporary state structure
+    ///
+    /// The extend (aka lifetime) of the temporary state is the same
+    /// than for the host reservation object.
+    struct TmpState {
+        // Put properties here, e.g.:
+        // int prop_;
     };
 
     /// @brief Constructor.
@@ -417,6 +427,10 @@ public:
         return (dhcp6_client_classes_);
     }
 
+    /// Put temporary state set/get property handlers here, e.g.:
+    /// int getProp() const { return (tmp_state_->prop_); }
+    /// void setProp(const int prop) const { tmp_state_->prop_ = prop; }
+
     /// @brief Returns information about the host in the textual format.
     std::string toText() const;
 
@@ -455,6 +469,8 @@ private:
     ClientClasses dhcp4_client_classes_;
     /// @brief Collection of classes associated with a DHCPv6 client.
     ClientClasses dhcp6_client_classes_;
+    /// @brief Smart pointer to the temporary state
+    boost::scoped_ptr<TmpState> tmp_state_;
 };
 
 /// @brief Pointer to the @c Host object.
