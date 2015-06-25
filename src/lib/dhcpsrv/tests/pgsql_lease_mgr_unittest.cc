@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -252,6 +252,9 @@ TEST(PgSqlOpenTest, OpenDatabase) {
         VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
 
+    // This test might fail if 'auth-method' in PostgresSQL host-based authentication
+    // file (/var/lib/pgsql/9.4/data/pg_hba.conf) is set to 'trust',
+    // which allows logging without password. 'Auth-method' should be changed to 'password'.
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);

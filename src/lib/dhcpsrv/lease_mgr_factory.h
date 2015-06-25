@@ -99,26 +99,7 @@ public:
     ///        create() to create one before calling this method.
     static LeaseMgr& instance();
 
-    /// @brief Parse database access string
-    ///
-    /// Parses the string of "keyword=value" pairs and separates them
-    /// out into the map.
-    ///
-    /// @param dbaccess Database access string.
-    ///
-    /// @return std::map<std::string, std::string> Map of keyword/value pairs.
-    static DataSource::ParameterMap parse(const std::string& dbaccess);
 
-    /// @brief Redact database access string
-    ///
-    /// Takes the database parameters and returns a database access string
-    /// passwords replaced by asterisks. This string is used in log messages.
-    ///
-    /// @param parameters Database access parameters (output of "parse").
-    ///
-    /// @return Redacted database access string.
-    static std::string redactedAccessString(
-            const DataSource::ParameterMap& parameters);
 
 private:
     /// @brief Hold pointer to lease manager

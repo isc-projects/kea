@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/data_source.h>
 #include <boost/scoped_ptr.hpp>
-#include <mysql/mysql.h>		// TODO poprawić przed oddaniem
+#include <mysql.h>
 
 #include <time.h>
 
@@ -134,15 +134,23 @@ private:
     MYSQL* mysql_;      ///< Initialization context
 };
 
-// Define the current database schema values
+/// @brief Common MySQL Connector Pool
+///
+///	This class provides common operations for MySQL database connection
+///	used by both MySqlLeaseMgr and MySqlHostDataSource. It manages connecting
+///	to the database and preparing compiled statements.
 
 class MySqlConnection : public DataSource {
 public:
 
+    /// @brief Constructor
+    ///
+    /// Initialize MySqlConnection object with parameters needed for connection.
     MySqlConnection(const ParameterMap& parameters)
         : DataSource(parameters) {
     }
 
+    /// @brief Destructor
     virtual ~MySqlConnection() {
     }
 

@@ -44,12 +44,22 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+
+/// @brief Common Data Source Class
+///
+/// This class provides functions that are common for establishing
+/// connection with different types of databases; enables operations
+/// on access parameters strings.
 class DataSource : public boost::noncopyable {
 
 public:
     /// Database configuration parameter map
     typedef std::map<std::string, std::string> ParameterMap;
 
+    /// @brief Constructor
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
     DataSource(const ParameterMap& parameters)
         :parameters_(parameters) {
     }
@@ -58,6 +68,27 @@ public:
     /// @throw BadValue if parameter is not found
     /// @return parameter
     std::string getParameter(const std::string& name) const;
+
+    /// @brief Parse database access string
+    ///
+    /// Parses the string of "keyword=value" pairs and separates them
+    /// out into the map.
+    ///
+    /// @param dbaccess Database access string.
+    ///
+    /// @return std::map<std::string, std::string> Map of keyword/value pairs.
+    static DataSource::ParameterMap parse(const std::string& dbaccess);
+
+    /// @brief Redact database access string
+    ///
+    /// Takes the database parameters and returns a database access string
+    /// passwords replaced by asterisks. This string is used in log messages.
+    ///
+    /// @param parameters Database access parameters (output of "parse").
+    ///
+    /// @return Redacted database access string.
+    static std::string redactedAccessString(
+            const DataSource::ParameterMap& parameters);
 
 protected:
 
