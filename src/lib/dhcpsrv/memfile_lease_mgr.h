@@ -20,8 +20,8 @@
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/csv_lease_file6.h>
 #include <dhcpsrv/memfile_lease_storage.h>
+#include <dhcpsrv/data_source.h>
 #include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/mysql_connection.h>
 #include <util/process_spawn.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -86,7 +86,7 @@ class LFCSetup;
 /// is not specified, the default location in the installation
 /// directory is used: var/kea/kea-leases4.csv and
 /// var/kea/kea-leases6.csv.
-class Memfile_LeaseMgr : public LeaseMgr, public MySqlConnection {
+class Memfile_LeaseMgr : public LeaseMgr, public DataSource {
 public:
 
     /// @defgroup versions Specified memfile backend version.
