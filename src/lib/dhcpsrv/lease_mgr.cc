@@ -15,7 +15,6 @@
 #include <config.h>
 
 #include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/mysql_connection.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/foreach.hpp>
