@@ -80,6 +80,12 @@
             "item_default": ""
         },
         {
+            "item_name": "password",
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": ""
+        },
+        {
             "item_name": "timestamp-answers",
             "item_type": "boolean",
             "item_optional": true,
