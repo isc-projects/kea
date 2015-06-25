@@ -48,6 +48,7 @@ perfdhcp_LDADD = libperfdhcp.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 perfdhcp_LDADD += $(top_builddir)/src/bin/cfgrpt/libcfgrpt.la
 
 # ... and the documentation

@@ -11,17 +11,24 @@ lib_LTLIBRARIES = libkea-cryptolink.la
 libkea_cryptolink_la_SOURCES = cryptolink.h cryptolink.cc
 libkea_cryptolink_la_SOURCES += crypto_hash.h crypto_hash.cc
 libkea_cryptolink_la_SOURCES += crypto_hmac.h crypto_hmac.cc
+libkea_cryptolink_la_SOURCES += crypto_asym.h crypto_asym.cc
 if HAVE_BOTAN
 libkea_cryptolink_la_SOURCES += botan_link.cc
 libkea_cryptolink_la_SOURCES += botan_common.h
 libkea_cryptolink_la_SOURCES += botan_hash.cc
 libkea_cryptolink_la_SOURCES += botan_hmac.cc
+libkea_cryptolink_la_SOURCES += botan_asym.cc
+libkea_cryptolink_la_SOURCES += botan_rsa.h botan_rsa.cc
+libkea_cryptolink_la_SOURCES += botan_ecdsa.h botan_ecdsa.cc
 endif
 if HAVE_OPENSSL
 libkea_cryptolink_la_SOURCES += openssl_link.cc
 libkea_cryptolink_la_SOURCES += openssl_common.h
 libkea_cryptolink_la_SOURCES += openssl_hash.cc
 libkea_cryptolink_la_SOURCES += openssl_hmac.cc
+libkea_cryptolink_la_SOURCES += openssl_asym.cc
+libkea_cryptolink_la_SOURCES += openssl_rsa.h openssl_rsa.cc
+libkea_cryptolink_la_SOURCES += openssl_ecdsa.h openssl_ecdsa.cc
 endif
 
 libkea_cryptolink_la_LDFLAGS = ${CRYPTO_LDFLAGS}

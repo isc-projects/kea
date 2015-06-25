@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -36,11 +36,11 @@ class HMAC : private boost::noncopyable {
 private:
     /// \brief Constructor from a secret and a hash algorithm
     ///
-    /// \exception UnsupportedAlgorithmException if the given algorithm
-    ///            is unknown or not supported by the underlying library
-    /// \exception InvalidKeyLength if the given key secret_len is bad
+    /// \exception UnsupportedAlgorithm if the given algorithm is unknown
+    ///            or not supported by the underlying library
+    /// \exception Badkey if the given key secret_len is bad
     /// \exception LibraryError if there was any unexpected exception
-    ///                         in the underlying library
+    ///            in the underlying library
     ///
     /// Notes: if the secret is longer than the block size of its
     /// algorithm, the constructor will run it through the hash
