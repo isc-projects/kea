@@ -29,7 +29,7 @@ const ptime epoch(date(1970, Jan, 1));
 
 bool eq(Ntp ntpa, Ntp ntpb) {
     return ((ntpa.ntp_sec_ == ntpb.ntp_sec_) &&
-	    (ntpa.ntp_fraction_ == ntpb.ntp_fraction_));
+            (ntpa.ntp_fraction_ == ntpb.ntp_fraction_));
 }
 
 }
@@ -65,7 +65,7 @@ TEST(NtpUtilsTest, timeval) {
     time_duration td2(ptime2 - epoch);
     struct timeval tv2;
     tv2.tv_sec =
-	static_cast<time_t>(static_cast<unsigned>(td2.total_seconds()));
+        static_cast<time_t>(static_cast<unsigned>(td2.total_seconds()));
     tv2.tv_usec = 150;
     Ntp ntp2(&tv2);
     Ntp expected2(4586245993ULL, uint16_t(9U));
@@ -78,13 +78,13 @@ TEST(NtpUtilsTest, posixTime) {
     EXPECT_TRUE(eq(ntp0, expected0));
 
     ptime ptime1(date(2015, May, 1),
-		 hours(13) + minutes(13) + seconds(13) + milliseconds(150));
+                 hours(13) + minutes(13) + seconds(13) + milliseconds(150));
     Ntp ntp1(ptime1);
     Ntp expected1(3639474793ULL, uint16_t(9830U));
     EXPECT_TRUE(eq(ntp1, expected1));
 
     ptime ptime2(date(2045, May, 1),
-		 hours(13) + minutes(13) + seconds(13) + milliseconds(150));
+                 hours(13) + minutes(13) + seconds(13) + milliseconds(150));
     Ntp ntp2(ptime2);
     Ntp expected2(4586245993ULL, uint16_t(9830U));
     EXPECT_TRUE(eq(ntp2, expected2));
@@ -109,7 +109,7 @@ TEST(NtpUtilsTest, fromBinary) {
 
 TEST(NtpUtilsTest, toBinary) {
     const uint8_t expected[] = { 0x01, 0x02, 0x03, 0x04,
-				 0x05, 0x06, 0x07, 0x08 };
+                                 0x05, 0x06, 0x07, 0x08 };
     Ntp ntp(0x10203040506ULL, uint16_t(0x708U));
     vector<uint8_t> bin(ntp.to_binary());
     ASSERT_EQ(8, bin.size());
