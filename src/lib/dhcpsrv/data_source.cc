@@ -19,10 +19,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
-
-#include <dhcpsrv/mysql_lease_mgr.h>
-#include <dhcpsrv/pgsql_lease_mgr.h>
-
+#include <vector>
 
 using namespace std;
 
