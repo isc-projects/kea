@@ -223,7 +223,7 @@ LFCSetup::getExitStatus() const {
 
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
-    : MySqlConnection(parameters),
+    : DataSource(parameters),
       lfc_setup_(new LFCSetup(boost::bind(&Memfile_LeaseMgr::lfcCallback, this),
                               *getIOService()))
     {
