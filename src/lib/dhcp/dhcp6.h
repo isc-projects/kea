@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2006-2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -68,21 +68,31 @@
 #define D6O_ERP_LOCAL_DOMAIN_NAME               65 /* RFC6440 */
 #define D6O_RSOO                                66 /* RFC6422 */
 #define D6O_CLIENT_LINKLAYER_ADDR               79 /* RFC6939 */
+/* secure DHCPv6 (draft-ietf-dhc-sedhcpv6-07) */
+#define D6O_PUBLIC_KEY                         701
+#define D6O_CERTIFICATE                        702
+#define D6O_SIGNATURE                          703
+#define D6O_TIMESTAMP                          704
 
 /*
  * Status Codes, from RFC 3315 section 24.4, and RFC 3633, 5007.
  */
-#define STATUS_Success           0
-#define STATUS_UnspecFail        1
-#define STATUS_NoAddrsAvail      2
-#define STATUS_NoBinding         3
-#define STATUS_NotOnLink         4
-#define STATUS_UseMulticast      5
-#define STATUS_NoPrefixAvail     6
-#define STATUS_UnknownQueryType  7
-#define STATUS_MalformedQuery    8
-#define STATUS_NotConfigured     9
-#define STATUS_NotAllowed       10
+#define STATUS_Success                   0
+#define STATUS_UnspecFail                1
+#define STATUS_NoAddrsAvail              2
+#define STATUS_NoBinding                 3
+#define STATUS_NotOnLink                 4
+#define STATUS_UseMulticast              5
+#define STATUS_NoPrefixAvail             6
+#define STATUS_UnknownQueryType          7
+#define STATUS_MalformedQuery            8
+#define STATUS_NotConfigured             9
+#define STATUS_NotAllowed               10
+/* secure DHCPv6 */
+#define STATUS_AlgorithmNotSupported   705
+#define STATUS_AuthenticationFail      706
+#define STATUS_TimestampFail           707
+#define STATUS_SignatureFail           708
 
 /*
  * DHCPv6 message types, defined in section 5.3 of RFC 3315
@@ -113,6 +123,12 @@ extern const int dhcpv6_type_name_max;
 // Taken from http://www.iana.org/assignments/arp-parameters/
 #define HWTYPE_ETHERNET    0x0001
 #define HWTYPE_INFINIBAND  0x0020
+
+// Secure DHCPv6 (draft-ietf-dhc-sedhcpv6-07.txt)
+// (can't use an enum because HashAlgorithm name is already taken)
+#define SHA_256                 1
+#define SHA_512                 2
+#define RSASSA_PKCS1v1_5        1
 
 // Taken from http://www.iana.org/assignments/enterprise-numbers
 #define ENTERPRISE_ID_ISC 2495
