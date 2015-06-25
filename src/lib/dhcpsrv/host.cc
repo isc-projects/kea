@@ -332,6 +332,8 @@ Host::toText() const {
         s << " credential=" << credential_;
     }
 
+    // Add state (TODO)
+
     return (s.str());
 }
 

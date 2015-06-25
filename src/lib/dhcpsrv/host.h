@@ -192,8 +192,10 @@ public:
     /// The extend (aka lifetime) of the temporary state is the same
     /// than for the host reservation object.
     struct TmpState {
-        // Put properties here, e.g.:
-        // int prop_;
+        /// @brief Date of the last received and accepted packet
+        isc::util::Ntp rd_last_;
+        /// @brief Date of the last received and accepted timestamp
+        isc::util::Ntp ts_last_;
     };
 
     /// @brief Constructor.
@@ -431,10 +433,6 @@ public:
         return (dhcp6_client_classes_);
     }
 
-    /// Put temporary state set/get property handlers here, e.g.:
-    /// int getProp() const { return (tmp_state_->prop_); }
-    /// void setProp(const int prop) const { tmp_state_->prop_ = prop; }
-
     /// @brief Sets new credential (public key or certificate)
     ///
     /// @param filename New filename to the public key or certificate.
@@ -445,6 +443,30 @@ public:
     /// @brief Returns credential
     const std::string& getCredential() const {
         return (credential_);
+    }
+
+    /// @brief Sets the date of the last received and accepted packet
+    ///
+    /// @param timestamp Date in NTP format
+    void setRDlast(const isc::util::Ntp& timestamp) const {
+        tmp_state_->rd_last_ = timestamp;
+    }
+
+    /// @brief Returns the date of the last received and accepted packet
+    const isc::util::Ntp& getRDlast() const {
+        return (tmp_state_->rd_last_);
+    }
+
+    /// @brief Sets the date from the last received and accepted packet
+    ///
+    /// @param timestamp Date in NTP format
+    void setTSlast(const isc::util::Ntp& timestamp) const {
+        tmp_state_->ts_last_ = timestamp;
+    }
+
+    /// @brief Returns the date from the last received and accepted packet
+    const isc::util::Ntp& getTSlast() const {
+        return (tmp_state_->ts_last_);
     }
 
     /// @brief Returns information about the host in the textual format.
