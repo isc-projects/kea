@@ -289,44 +289,9 @@ AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
     return (alloc->second);
 }
 
-} // end of isc::dhcp namespace
-} // end of isc namespace
-
-namespace {
-
-/// @brief Extends the lease lifetime.
-///
-/// This function is called to conditionally extend the lifetime of
-/// the DHCPv4 or DHCPv6 lease. It is envisaged that this function will
-/// make a decision if the lease lifetime should be extended, using
-/// a preconfigured threshold, which would indicate how many percent
-/// of the valid lifetime should have passed for the lease lifetime
-/// to be extended. The lease lifetime would not be extended if
-/// the threshold hasn't been reached.
-///
-/// @todo Currently this function always extends the lease lifetime.
-/// In the future, it will take the threshold value into account,
-/// once the threshold is configurable.
-///
-/// @param [out] lease A lease for which the lifetime should be
-/// extended.
-///
-/// @return true if the lease lifetime has been extended, false
-/// otherwise.
-bool
-conditionalExtendLifetime(Lease& lease) {
-    lease.cltt_ = time(NULL);
-    return (true);
-}
-
-} // end of anonymous namespace
-
 // ##########################################################################
 // #    DHCPv6 lease allocation code starts here.
 // ##########################################################################
-
-namespace isc {
-namespace dhcp {
 
 AllocEngine::ClientContext6::ClientContext6()
     : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
@@ -2075,6 +2040,12 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hostname_ = ctx.hostname_;
+}
+
+bool
+AllocEngine::conditionalExtendLifetime(Lease& lease) const {
+    lease.cltt_ = time(NULL);
+    return (true);
 }
 
 }; // end of isc::dhcp namespace
