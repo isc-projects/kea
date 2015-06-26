@@ -1091,6 +1091,28 @@ private:
     /// client and its message.
     void updateLease4Information(const Lease4Ptr& lease,
                                  ClientContext4& ctx) const;
+
+    /// @brief Extends the lease lifetime.
+    ///
+    /// This function is called to conditionally extend the lifetime of
+    /// the DHCPv4 or DHCPv6 lease. It is envisaged that this function will
+    /// make a decision if the lease lifetime should be extended, using
+    /// a preconfigured threshold, which would indicate how many percent
+    /// of the valid lifetime should have passed for the lease lifetime
+    /// to be extended. The lease lifetime would not be extended if
+    /// the threshold hasn't been reached.
+    ///
+    /// @todo Currently this function always extends the lease lifetime.
+    /// In the future, it will take the threshold value into account,
+    /// once the threshold is configurable.
+    ///
+    /// @param [in,out] lease A lease for which the lifetime should be
+    /// extended.
+    ///
+    /// @return true if the lease lifetime has been extended, false
+    /// otherwise.
+    bool conditionalExtendLifetime(Lease& lease) const;
+
 };
 
 /// @brief A pointer to the @c AllocEngine object.
