@@ -51,7 +51,7 @@ using namespace isc::dns::rdata;
 using isc::UnitTestUtil;
 using isc::util::unittests::matchWireData;
 
-// @note: blocks and SCOPED_TRACE can make buggy cppchecks to raise
+// @note: blocks and SCOPED_TRACE can make buggy cppchecks raise
 // a spurious syntax error...
 
 // See dnssectime.cc
