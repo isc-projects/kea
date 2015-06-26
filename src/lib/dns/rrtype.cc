@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,10 +32,12 @@ namespace isc {
 namespace dns {
 
 RRType::RRType(const std::string& type_str) {
-    if (!RRParamRegistry::getRegistry().textToTypeCode(type_str, typecode_)) {
+    uint16_t typecode;
+    if (!RRParamRegistry::getRegistry().textToTypeCode(type_str, typecode)) {
         isc_throw(InvalidRRType,
                   "Unrecognized RR type string: " + type_str);
     }
+    typecode_ = typecode;
 }
 
 RRType::RRType(InputBuffer& buffer) {

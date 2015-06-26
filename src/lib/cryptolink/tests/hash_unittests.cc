@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -560,8 +560,6 @@ namespace {
 }
 
 TEST(HashTest, HashLength) {
-    std::vector<uint8_t> result;
-
     EXPECT_EQ(8, digestVectorLength(MD5, 8));
     EXPECT_EQ(16, digestVectorLength(MD5, 16));
     EXPECT_EQ(16, digestVectorLength(MD5, 40));

@@ -828,8 +828,7 @@ TEST_F(Pkt6Test, relayPack) {
     EXPECT_EQ(opt->len(), optRelay1->len());
     OptionBuffer data = opt->getData();
     ASSERT_EQ(data.size(), sizeof(relay_opt_data));
-    EXPECT_EQ(0,
-              memcmp(relay_opt_data, relay_opt_data, sizeof(relay_opt_data)));
+    EXPECT_EQ(0, memcmp(&data[0], relay_opt_data, sizeof(relay_opt_data)));
 }
 
 

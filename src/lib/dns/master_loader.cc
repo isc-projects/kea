@@ -670,7 +670,7 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
               int offset = 0;
               unsigned int width;
               char base[2] = {'d', 0}; // char plus null byte
-              // cppcheck-suppress invalidscanf
+              // cppcheck-suppress invalidscanf_libc
               const int n = sscanf(scan_str, "{%d,%u,%1[doxXnN]}",
                                    &offset, &width, base);
               switch (n) {
@@ -807,7 +807,7 @@ MasterLoader::MasterLoaderImpl::doGenerate() {
     unsigned int start;
     unsigned int stop;
     unsigned int step;
-    // cppcheck-suppress invalidscanf
+    // cppcheck-suppress invalidscanf_libc
     const int n = sscanf(range.c_str(), "%u-%u/%u", &start, &stop, &step);
     if ((n < 2) || (stop < start)) {
         reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
