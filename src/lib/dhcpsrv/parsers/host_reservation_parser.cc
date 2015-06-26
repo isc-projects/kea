@@ -33,7 +33,8 @@ const std::set<std::string>& getSupportedParams4() {
     static std::set<std::string> params_set;
     if (params_set.empty()) {
         const char* params[] = {
-            "duid", "hw-address", "hostname", "ip-address", NULL
+            "duid", "hw-address", "hostname", "ip-address",
+            "public-key", "certificate", NULL
         };
         for (int i = 0; params[i] != NULL; ++i) {
             params_set.insert(std::string(params[i]));
@@ -42,7 +43,7 @@ const std::set<std::string>& getSupportedParams4() {
     return (params_set);
 }
 
-/// @brief Returns set of the supported parameters for DHCPv4.
+/// @brief Returns set of the supported parameters for DHCPv6.
 ///
 /// This function returns the set of supported parameters for
 /// host reservation in DHCPv6.
@@ -50,7 +51,8 @@ const std::set<std::string>& getSupportedParams6() {
     static std::set<std::string> params_set;
     if (params_set.empty()) {
         const char* params[] = {
-            "duid", "hw-address", "hostname", "ip-addresses", "prefixes", NULL
+            "duid", "hw-address", "hostname", "ip-addresses", "prefixes",
+            "public-key", "certificate", NULL
         };
         for (int i = 0; params[i] != NULL; ++i) {
             params_set.insert(std::string(params[i]));
