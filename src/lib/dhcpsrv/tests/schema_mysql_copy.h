@@ -37,10 +37,14 @@ const char* destroy_statement[] = {
     "DROP TABLE lease6_types",
     "DROP TABLE lease_hwaddr_source",
     "DROP TABLE schema_version",
+
+    // We need to drop ipv6_reservations before hosts, as it has constrains
+    // that depend on hosts. Therefore hosts table cannot be deleted while
+    // ipv6_reservations exists.
+    "DROP TABLE ipv6_reservations",
     "DROP TABLE hosts",
     "DROP TABLE dhcp4_options",
     "DROP TABLE dhcp6_options",
-    "DROP TABLE ipv6_reservations",
     NULL
 };
 
