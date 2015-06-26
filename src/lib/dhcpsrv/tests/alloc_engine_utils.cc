@@ -74,7 +74,7 @@ AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
                     const asiolink::IOAddress& pool_end) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
 
-    subnet_ = Subnet6Ptr(new Subnet6(subnet, 56, 1, 2, 3, 4));
+    subnet_ = Subnet6Ptr(new Subnet6(subnet, 56, 100, 200, 300, 400));
     pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, pool_start, pool_end));
 
     subnet_->addPool(pool_);
