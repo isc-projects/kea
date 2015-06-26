@@ -1,6 +1,6 @@
 970.	[bug]		fdupont
 	Refactored some code to suppress cppcheck warnings.
-	(Trac #3919, git xxx)
+	(Trac #3919, git 26be6ac4cefde012ca8ef12607b6beaadca13eed)
 
 969.	[func]		tomek
 	KEA_SOCKET_TEST_DIR environment variable can be used to specify
