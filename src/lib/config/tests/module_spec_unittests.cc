@@ -1,4 +1,4 @@
-// Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -306,10 +306,12 @@ TEST(ModuleSpec, CheckFormat) {
     item_default = "";
     item_format  = "\"item_format\": \"date\"";
     specs.push_back("," + item_format);
+    // cppcheck-suppress redundantAssignment
     item_default = "";
     item_format  = "\"item_format\": \"time\"";
     specs.push_back("," + item_format);
 
+    // cppcheck-suppress redundantAssignment
     item_default = "\"item_default\": \"a\"";
     specs.push_back("," + item_default);
     item_default = "\"item_default\": \"b\"";

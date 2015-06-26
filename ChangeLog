@@ -1,3 +1,7 @@
+970.	[bug]		fdupont
+	Refactored some code to suppress cppcheck warnings.
+	(Trac #3919, git xxx)
+
 969.	[func]		tomek
 	KEA_SOCKET_TEST_DIR environment variable can be used to specify
 	the directory for opening Unix sockets during tests. That may
