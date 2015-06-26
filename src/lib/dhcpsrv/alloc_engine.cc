@@ -422,7 +422,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
 
             if (!leases.empty()) {
                 // Return old leases so the server can see what has changed.
-                return (updateFqdnData(ctx, leases));
+                return (updateLeaseData(ctx, leases));
             }
 
             // If leases are empty at this stage, it means that we used to have
@@ -719,7 +719,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
         uint8_t prefix_len = resv->second.getPrefixLen();
 
         // Check if already have this lease on the existing_leases list.
-        for (Lease6Collection::const_iterator l = existing_leases.begin();
+        for (Lease6Collection::iterator l = existing_leases.begin();
              l != existing_leases.end(); ++l) {
 
             // Ok, we already have a lease for this reservation and it's usable
@@ -729,6 +729,13 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& exis
                     .arg(ctx.query_->getLabel())
                     .arg((*l)->typeToText((*l)->type_))
                     .arg((*l)->addr_.toText());
+
+                // If this is a real allocation, we may need to extend the lease
+                // lifetime.
+                if (!ctx.fake_allocation_ && conditionalExtendLifetime(**l)) {
+                    LeaseMgrFactory::instance().updateLease6(*l);
+                }
+
                 return;
             }
         }
@@ -1186,11 +1193,13 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     lease->valid_lft_ = ctx.subnet_->getValid();
     lease->t1_ = ctx.subnet_->getT1();
     lease->t2_ = ctx.subnet_->getT2();
-    lease->cltt_ = time(NULL);
     lease->hostname_ = ctx.hostname_;
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hwaddr_ = ctx.hwaddr_;
+
+    // Extend lease lifetime if it is time to extend it.
+    conditionalExtendLifetime(*lease);
 
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,
               ALLOC_ENGINE_V6_EXTEND_NEW_LEASE_DATA)
@@ -1246,7 +1255,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
 }
 
 Lease6Collection
-AllocEngine::updateFqdnData(ClientContext6& ctx, const Lease6Collection& leases) {
+AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases) {
     Lease6Collection updated_leases;
     for (Lease6Collection::const_iterator lease_it = leases.begin();
          lease_it != leases.end(); ++lease_it) {
@@ -1255,7 +1264,8 @@ AllocEngine::updateFqdnData(ClientContext6& ctx, const Lease6Collection& leases)
         lease->fqdn_rev_ = ctx.rev_dns_update_;
         lease->hostname_ = ctx.hostname_;
         if (!ctx.fake_allocation_ &&
-            ((lease->fqdn_fwd_ != (*lease_it)->fqdn_fwd_) ||
+            (conditionalExtendLifetime(*lease) ||
+             (lease->fqdn_fwd_ != (*lease_it)->fqdn_fwd_) ||
              (lease->fqdn_rev_ != (*lease_it)->fqdn_rev_) ||
              (lease->hostname_ != (*lease_it)->hostname_))) {
             ctx.changed_leases_.push_back(*lease_it);
@@ -2030,6 +2040,12 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hostname_ = ctx.hostname_;
+}
+
+bool
+AllocEngine::conditionalExtendLifetime(Lease& lease) const {
+    lease.cltt_ = time(NULL);
+    return (true);
 }
 
 }; // end of isc::dhcp namespace
