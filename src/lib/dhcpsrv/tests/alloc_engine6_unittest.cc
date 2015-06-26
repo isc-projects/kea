@@ -601,6 +601,118 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     EXPECT_EQ(100, stat->getInteger().first);
 }
 
+// Checks if the lease lifetime is extended when the client sends the
+// Request.
+TEST_F(AllocEngine6Test, requestExtendLeaseLifetime) {
+    // Create a lease for the client.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::15"),
+                               duid_, iaid_, 300, 400, 100, 200,
+                               subnet_->getID(), HWAddrPtr(), 128));
+
+    // Allocated 200 seconds ago - half of the lifetime.
+    time_t lease_cltt = time(NULL) - 200;
+    lease->cltt_ = lease_cltt;
+
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Client should receive a lease.
+    Lease6Ptr new_lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
+    ASSERT_TRUE(new_lease);
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(new_lease->cltt_, lease_cltt)
+        << "Lease lifetime was not extended, but it should";
+}
+
+// Checks if the lease lifetime is extended when the client sends the
+// Request and the client has a reservation for the lease.
+TEST_F(AllocEngine6Test, requestExtendLeaseLifetimeForReservation) {
+    // Create reservation for the client. This is in-pool reservation,
+    // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
+
+    // Create a lease for the client.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1c"),
+                               duid_, iaid_, 300, 400, 100, 200,
+                               subnet_->getID(), HWAddrPtr(), 128));
+
+    // Allocated 200 seconds ago - half of the lifetime.
+    time_t lease_cltt = time(NULL) - 200;
+    lease->cltt_ = lease_cltt;
+
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Client should receive a lease.
+    Lease6Ptr new_lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
+    ASSERT_TRUE(new_lease);
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(new_lease->cltt_, lease_cltt)
+        << "Lease lifetime was not extended, but it should";
+}
+
+// Checks if the lease lifetime is extended when the client sends the
+// Renew.
+TEST_F(AllocEngine6Test, renewExtendLeaseLifetime) {
+    // Create a lease for the client.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::15"),
+                               duid_, iaid_, 300, 400, 100, 200,
+                               subnet_->getID(), HWAddrPtr(), 128));
+
+    // Allocated 200 seconds ago - half of the lifetime.
+    time_t lease_cltt = time(NULL) - 200;
+    lease->cltt_ = lease_cltt;
+
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(make_pair(IOAddress("2001:db8:1::15"), 128));
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease_cltt)
+        << "Lease lifetime was not extended, but it should";
+}
+
+// Checks if the lease lifetime is extended when the client sends the
+// Renew and the client has a reservation for the lease.
+TEST_F(AllocEngine6Test, renewExtendLeaseLifetimeForReservation) {
+    // Create reservation for the client. This is in-pool reservation,
+    // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::15"), 128);
+
+    // Create a lease for the client.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::15"),
+                               duid_, iaid_, 300, 400, 100, 200,
+                               subnet_->getID(), HWAddrPtr(), 128));
+
+    // Allocated 200 seconds ago - half of the lifetime.
+    time_t lease_cltt = time(NULL) - 200;
+    lease->cltt_ = lease_cltt;
+
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(make_pair(IOAddress("2001:db8:1::15"), 128));
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease_cltt)
+        << "Lease lifetime was not extended, but it should";
+}
+
 // --- v6 host reservation ---
 
 // Checks that a client gets the address reserved (in-pool case)
