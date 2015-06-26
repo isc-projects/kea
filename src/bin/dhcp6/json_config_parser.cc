@@ -194,13 +194,10 @@ public:
 
         // Try to obtain the pool parameters. It will throw an exception if any
         // of the required parameters are not present or invalid.
-        std::string addr_str;
-        uint32_t prefix_len;
-        uint32_t delegated_len;
         try {
-            addr_str = string_values_->getParam("prefix");
-            prefix_len = uint32_values_->getParam("prefix-len");
-            delegated_len = uint32_values_->getParam("delegated-len");
+            std::string addr_str = string_values_->getParam("prefix");
+            uint32_t prefix_len = uint32_values_->getParam("prefix-len");
+            uint32_t delegated_len = uint32_values_->getParam("delegated-len");
 
             // Attempt to construct the local pool.
             pool_.reset(new Pool6(Lease::TYPE_PD, IOAddress(addr_str),

@@ -5,7 +5,7 @@
 ///////////////
 ///////////////
 
-// Copyright (C) 2010-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -2565,7 +2565,7 @@ namespace generic {
 
 class NAPTRImpl {
 public:
-    NAPTRImpl() : replacement(".") {}
+    NAPTRImpl() : order(0), preference(0), replacement(".") {}
 
     NAPTRImpl(InputBuffer& buffer, size_t rdata_len) : replacement(".") {
         if (rdata_len < 4 || buffer.getLength() - buffer.getPosition() < 4) {

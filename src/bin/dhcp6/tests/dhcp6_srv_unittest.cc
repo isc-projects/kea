@@ -2086,7 +2086,7 @@ TEST_F(Dhcpv6SrvTest, relayOverrideAndClientClass) {
 /// @param codes a vector of option codes to be created
 /// @param payload specified payload (0 = fill payload with repeating option code)
 /// @return RSOO with nested options
-OptionPtr createRSOO(const std::vector<uint16_t> codes, uint8_t payload = 0) {
+OptionPtr createRSOO(const std::vector<uint16_t>& codes, uint8_t payload = 0) {
     OptionDefinitionPtr def = LibDHCP::getOptionDef(Option::V6, D6O_RSOO);
     if (!def) {
         isc_throw(BadValue, "Can't find RSOO definition");

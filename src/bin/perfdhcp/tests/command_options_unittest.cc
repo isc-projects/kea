@@ -472,7 +472,6 @@ TEST_F(CommandOptionsTest, Base) {
                             " -l 127.0.0.1 all"));
     std::vector<uint8_t> v1 = opt.getMacTemplate();
     std::vector<uint8_t> v2 = opt.getDuidTemplate();
-    v2 = opt.getDuidTemplate();
     EXPECT_TRUE(std::equal(v1.begin(), v1.end(), mac));
     EXPECT_TRUE(std::equal(v2.begin(), v2.end(), duid));
     // Test valid DUID.
@@ -786,7 +785,7 @@ TEST_F(CommandOptionsTest, Interface) {
     // The local loopback interface should be available.
     // If no interface have been found for any reason we should
     // not fail this test.
-    if (ifaces.size() > 0) {
+    if (!ifaces.empty()) {
         // Get the name of the interface we detected.
         iface_name = (*ifaces.begin())->getName();
         // Use the name in the command parser.

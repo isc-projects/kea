@@ -487,7 +487,6 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             }
         }
 
-        Iface::AddressCollection addrs = iface->getAddresses();
         BOOST_FOREACH(Iface::Address addr, iface->getAddresses()) {
             // Skip non-IPv4 addresses and those that weren't selected..
             if (!addr.get().isV4() || !addr.isSpecified()) {
