@@ -60,6 +60,9 @@ public:
     /// \brief Destructor
     ~HMAC();
 
+    /// \brief Returns the HashAlgorithm of the object
+    HashAlgorithm getHashAlgorithm() const;
+
     /// \brief Returns the output size of the digest
     ///
     /// \return output size of the digest
@@ -101,7 +104,7 @@ public:
     /// result
     void sign(void* result, size_t len);
 
-    /// \brief Calculate the final signatre
+    /// \brief Calculate the final signature
     ///
     /// The result will be returned as a std::vector<uint8_t>
     ///

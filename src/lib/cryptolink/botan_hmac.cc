@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -42,16 +42,17 @@ public:
     /// @param secret_len The length of the secret
     /// @param hash_algorithm The hash algorithm
     explicit HMACImpl(const void* secret, size_t secret_len,
-                      const HashAlgorithm hash_algorithm) {
+                      const HashAlgorithm hash_algorithm)
+    : hash_algorithm_(hash_algorithm), hmac_() {
         Botan::HashFunction* hash;
         try {
             hash = Botan::get_hash(btn::getHashAlgorithmName(hash_algorithm));
         } catch (const Botan::Algorithm_Not_Found&) {
-            isc_throw(isc::cryptolink::UnsupportedAlgorithm,
+            isc_throw(UnsupportedAlgorithm,
                       "Unknown hash algorithm: " <<
                       static_cast<int>(hash_algorithm));
         } catch (const Botan::Exception& exc) {
-            isc_throw(isc::cryptolink::LibraryError, exc.what());
+            isc_throw(LibraryError, exc.what());
         }
 
         hmac_.reset(new Botan::HMAC(hash));
@@ -87,12 +88,17 @@ public:
         } catch (const Botan::Invalid_Key_Length& ikl) {
             isc_throw(BadKey, ikl.what());
         } catch (const Botan::Exception& exc) {
-            isc_throw(isc::cryptolink::LibraryError, exc.what());
+            isc_throw(LibraryError, exc.what());
         }
     }
 
     /// @brief Destructor
     ~HMACImpl() {
+    }
+
+    /// @brief Returns the HashAlgorithm of the object
+    HashAlgorithm getHashAlgorithm() const {
+        return (hash_algorithm_);
     }
 
     /// @brief Returns the output size of the digest
@@ -117,7 +123,7 @@ public:
         try {
             hmac_->update(static_cast<const Botan::byte*>(data), len);
         } catch (const Botan::Exception& exc) {
-            isc_throw(isc::cryptolink::LibraryError, exc.what());
+            isc_throw(LibraryError, exc.what());
         }
     }
 
@@ -133,7 +139,7 @@ public:
             }
             result.writeData(b_result.begin(), len);
         } catch (const Botan::Exception& exc) {
-            isc_throw(isc::cryptolink::LibraryError, exc.what());
+            isc_throw(LibraryError, exc.what());
         }
     }
 
@@ -149,7 +155,7 @@ public:
             }
             std::memcpy(result, b_result.begin(), output_size);
         } catch (const Botan::Exception& exc) {
-            isc_throw(isc::cryptolink::LibraryError, exc.what());
+            isc_throw(LibraryError, exc.what());
         }
     }
 
@@ -165,7 +171,7 @@ public:
                 return (std::vector<uint8_t>(b_result.begin(), &b_result[len]));
             }
         } catch (const Botan::Exception& exc) {
-            isc_throw(isc::cryptolink::LibraryError, exc.what());
+            isc_throw(LibraryError, exc.what());
         }
     }
 
@@ -178,7 +184,6 @@ public:
         /// which causes it to fail for truncated signatures, so we do
         /// the check ourselves
         try {
-            Botan::SecureVector<Botan::byte> our_mac = hmac_->final();
             size_t size = getOutputLength();
             if (len < 10 || len < size / 2) {
                 return (false);
@@ -186,17 +191,26 @@ public:
             if (len > size) {
                 len = size;
             }
-            return (Botan::same_mem(&our_mac[0],
+            if (digest_.empty()) {
+                digest_ = hmac_->final();
+            }
+            return (Botan::same_mem(&digest_[0],
                                     static_cast<const unsigned char*>(sig),
                                     len));
         } catch (const Botan::Exception& exc) {
-            isc_throw(isc::cryptolink::LibraryError, exc.what());
+            isc_throw(LibraryError, exc.what());
         }
     }
 
 private:
-    /// \brief The protected pointer to the Botan HMAC object
+    /// @brief The hash algorithm
+    HashAlgorithm hash_algorithm_;
+
+    /// @brief The protected pointer to the Botan HMAC object
     boost::scoped_ptr<Botan::HMAC> hmac_;
+
+    /// @brief The digest cache for multiple verify
+    Botan::SecureVector<Botan::byte> digest_;
 };
 
 HMAC::HMAC(const void* secret, size_t secret_length,
@@ -207,6 +221,11 @@ HMAC::HMAC(const void* secret, size_t secret_length,
 
 HMAC::~HMAC() {
     delete impl_;
+}
+
+HashAlgorithm
+HMAC::getHashAlgorithm() const {
+    return (impl_->getHashAlgorithm());
 }
 
 size_t
