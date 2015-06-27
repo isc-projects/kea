@@ -195,7 +195,7 @@ CSVFile::size() const {
         fs.seekg(0, std::ifstream::end);
         pos = fs.tellg();
         fs.close();
-    } catch (const std::exception& ex) {
+    } catch (const std::exception&) {
         return (0);
     }
     return (pos);
@@ -321,7 +321,7 @@ CSVFile::open(const bool seek_to_end) {
                 fs_->clear();
             }
 
-        } catch (const std::exception& ex) {
+        } catch (const std::exception&) {
             close();
             throw;
         }

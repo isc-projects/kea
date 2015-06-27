@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -235,7 +235,7 @@ Generic::constructFromLexer(MasterLexer& lexer) {
 
     try {
         rdlen = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    } catch (const MasterLexer::LexerError& ex) {
+    } catch (const MasterLexer::LexerError&) {
         isc_throw(InvalidRdataLength,
                   "Unknown RDATA length is invalid");
     }
