@@ -218,7 +218,7 @@ setDomainName(const std::string& domain_name,
         try {
             domain_name_.reset(new isc::dns::Name(name));
 
-        } catch (const Exception& ex) {
+        } catch (const Exception&) {
             isc_throw(InvalidOption4FqdnDomainName,
                       "invalid domain-name value '"
                       << domain_name << "' when setting new domain-name for"

@@ -507,7 +507,7 @@ NameChangeRequest::setIpAddress(const std::string& value) {
     // Validate IP Address.
     try {
         ip_io_address_ = isc::asiolink::IOAddress(value);
-    } catch (const isc::asiolink::IOError& ex) {
+    } catch (const isc::asiolink::IOError&) {
         isc_throw(NcrMessageError,
                   "Invalid ip address string for ip_address: " << value);
     }

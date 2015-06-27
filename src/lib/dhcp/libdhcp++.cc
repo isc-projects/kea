@@ -778,7 +778,7 @@ void initOptionSpace(OptionDefContainer& defs,
 
         try {
             definition->validate();
-        } catch (const isc::Exception& ex) {
+        } catch (const isc::Exception&) {
             // This is unlikely event that validation fails and may
             // be only caused by programming error. To guarantee the
             // data consistency we clear all option definitions that

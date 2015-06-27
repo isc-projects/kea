@@ -378,7 +378,7 @@ OptionDataParser::extractCode(ConstElementPtr parent) const {
     try {
         code = uint32_values_->getParam("code");
 
-    } catch (const exception& ex) {
+    } catch (const exception&) {
         // The code parameter was not found. Return an unspecified
         // value.
         return (OptionalValue<uint32_t>());
