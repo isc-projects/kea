@@ -200,9 +200,9 @@ public:
             try {
                 lease_file.append(**lease);
             } catch (const isc::Exception&) {
-            // Close the file
-            lease_file.close();
-            throw;
+                // Close the file
+                lease_file.close();
+                throw;
             }
         }
 
