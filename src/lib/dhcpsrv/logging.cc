@@ -76,7 +76,7 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
     }
     try {
         info.severity_ = isc::log::getSeverity(severity_ptr->stringValue().c_str());
-    } catch (const std::exception& ex) {
+    } catch (const std::exception&) {
         isc_throw(BadValue, "Unsupported severity value '"
                   << severity_ptr->stringValue() << "' ("
                   << severity_ptr->getPosition() << ")");

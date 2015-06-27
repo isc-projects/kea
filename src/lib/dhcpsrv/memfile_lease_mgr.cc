@@ -201,7 +201,7 @@ LFCSetup::execute() {
             .arg(process_->getCommandLine());
         pid_ = process_->spawn();
 
-    } catch (const ProcessSpawnError& ex) {
+    } catch (const ProcessSpawnError&) {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SPAWN_FAIL);
     }
 }
@@ -690,7 +690,7 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
     std::string persist_val;
     try {
         persist_val = getParameter("persist");
-    } catch (const Exception& ex) {
+    } catch (const Exception&) {
         // If parameter persist hasn't been specified, we use a default value
         // 'yes'.
         persist_val = "true";
@@ -708,7 +708,7 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
     std::string lease_file;
     try {
         lease_file = getParameter("name");
-    } catch (const Exception& ex) {
+    } catch (const Exception&) {
         lease_file = getDefaultLeaseFilePath(u);
     }
     return (lease_file);
@@ -794,14 +794,14 @@ Memfile_LeaseMgr::lfcSetup() {
     std::string lfc_interval_str = "0";
     try {
         lfc_interval_str = getParameter("lfc-interval");
-    } catch (const std::exception& ex) {
+    } catch (const std::exception&) {
         // Ignore and default to 0.
     }
 
     uint32_t lfc_interval = 0;
     try {
         lfc_interval = boost::lexical_cast<uint32_t>(lfc_interval_str);
-    } catch (boost::bad_lexical_cast& ex) {
+    } catch (boost::bad_lexical_cast&) {
         isc_throw(isc::BadValue, "invalid value of the lfc-interval "
                   << lfc_interval_str << " specified");
     }
