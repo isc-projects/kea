@@ -78,9 +78,6 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
     } else if (data == NULL) {
         isc_throw(InvalidParameter, "data buffer passed to Pkt4 is NULL");
     }
-
-    data_.resize(len);
-    memcpy(&data_[0], data, len);
 }
 
 size_t
