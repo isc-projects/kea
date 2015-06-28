@@ -13,6 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <cmath>
+#include <limits>
+#include <exceptions/exceptions.h>
 #include <util/ntp_utils.h>
 
 #include <gtest/gtest.h>
@@ -128,6 +130,26 @@ TEST(NtpUtilsTest, double) {
     Ntp tmp(d1, tv.tv_sec);
     double d2(tmp.secs(tv.tv_sec));
     EXPECT_LE(fabs(d2 - d1), 0.0001);
+}
+
+TEST(NtpUtilsTest, toText) {
+    Ntp ntp;
+    EXPECT_EQ("1900-01-01 00:00:00.000", ntp.to_text());
+    ntp.ntp_sec_ = 1577880000; // 50 years
+    EXPECT_THROW(ntp.to_text(), BadValue);
+    ntp.ntp_sec_ = 2208988799; // epoch - 1
+    EXPECT_THROW(ntp.to_text(), BadValue);
+    ntp.ntp_sec_ += 1;
+    EXPECT_NO_THROW(ntp.to_text());
+    ntp.ntp_sec_ += std::numeric_limits<uint32_t>::max();
+    EXPECT_NO_THROW(ntp.to_text());
+    ntp.ntp_sec_ += 1;
+    EXPECT_THROW(ntp.to_text(), BadValue);
+
+    ptime ptime1(date(2015, May, 1), hours(13) + minutes(13) + seconds(13));
+    Ntp ntp1(ptime1);
+    ntp1.ntp_fraction_ = 8192;
+    EXPECT_EQ("2015-05-01 13:13:13.125", ntp1.to_text());
 }
 
 TEST(NtpUtilsTest, verifyNew) {

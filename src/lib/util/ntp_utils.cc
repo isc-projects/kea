@@ -13,7 +13,11 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <cmath>
+#include <limits.h>
+#include <sstream>
+#include <exceptions/exceptions.h>
 #include <util/ntp_utils.h>
+#include <boost/format.hpp>
 
 using namespace boost::posix_time;
 using namespace boost::gregorian;
@@ -135,6 +139,30 @@ double Ntp::secs(time_t base) const
     ret -= nuns(base) + EPOCH_ADJUST;
     ret += static_cast<double>(ntp_fraction_) / 65536.;
     return (ret);
+}
+
+std::string Ntp::to_text() const
+{
+    if (is_zero()) {
+        return ("1900-01-01 00:00:00.000");
+    } else if (ntp_sec_ < EPOCH_ADJUST) {
+        isc_throw(isc::BadValue, "NTP timestamp before 1970");
+    }
+    const uint64_t s = ntp_sec_ - EPOCH_ADJUST;
+    if (s > std::numeric_limits<uint32_t>::max()) {
+        isc_throw(isc::BadValue, "NTP timestamp after 2106");
+    }
+    const time_t t = static_cast<const time_t>(s);
+    struct tm* tm = std::gmtime(&t);
+    boost::format d("%04d-%02d-%02d %02d:%02d:%02d.%03d");
+    d % (tm->tm_year + 1900);
+    d % (tm->tm_mon + 1);
+    d % tm->tm_mday;
+    d % tm->tm_hour;
+    d % tm->tm_min;
+    d % tm->tm_sec;
+    d % static_cast<int>(static_cast<double>(ntp_fraction_) / 65.536);
+    return (d.str());
 }
 
 bool Ntp::verify_new(const Ntp& rd_new, const Ntp& ts_new)

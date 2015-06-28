@@ -72,6 +72,9 @@ struct Ntp {
     // \brief Conversion to based double
     double secs(time_t base) const;
 
+    // \brief Conversion to a string
+    std::string to_text() const;
+
     // \brief Verify a timestamp without cache
     static bool verify_new(const Ntp& rd_new, const Ntp& ts_new);
 
