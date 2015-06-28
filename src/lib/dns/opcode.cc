@@ -51,7 +51,7 @@ Opcode::Opcode(const uint8_t code) : code_(static_cast<CodeValue>(code)) {
     if (code > MAX_OPCODE) {
         isc_throw(OutOfRange,
                   "DNS Opcode is too large to construct: "
-		  << static_cast<unsigned>(code));
+                  << static_cast<unsigned>(code));
     }
 }
 
