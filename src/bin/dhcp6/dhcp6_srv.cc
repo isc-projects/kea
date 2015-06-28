@@ -40,6 +40,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
+#include <dhcpsrv/tmp_state_host.h>
 #include <dhcpsrv/utils.h>
 #include <exceptions/exceptions.h>
 #include <hooks/callout_handle.h>
@@ -3068,79 +3069,79 @@ namespace {
     // @return true if parse succeed as expected
     bool parseToBeSigned(const OptionBuffer& buf, size_t& beg_off,
                          size_t& sig_off, size_t& raw_len) {
-	beg_off = 0;
-	sig_off = 0;
-	raw_len = buf.size();
+        beg_off = 0;
+        sig_off = 0;
+        raw_len = buf.size();
     parse:
-	// There must be room for the message header
-	if (raw_len < sizeof(uint32_t)) {
-	    return (false);
-	}
-	// Get the message type
-	uint8_t msg_type = buf[beg_off];
+        // There must be room for the message header
+        if (raw_len < sizeof(uint32_t)) {
+            return (false);
+        }
+        // Get the message type
+        uint8_t msg_type = buf[beg_off];
 
-	// Handle relayed messages
-	if ((msg_type == DHCPV6_RELAY_FORW) ||
-	    (msg_type == DHCPV6_RELAY_REPL)) {
-	    if (raw_len < Pkt6::DHCPV6_RELAY_HDR_LEN) {
-		// There must be room for the relay header
-		return (false);
-	    }
-	    beg_off += Pkt6::DHCPV6_RELAY_HDR_LEN;
-	    raw_len -= Pkt6::DHCPV6_RELAY_HDR_LEN;
-	    size_t offset = beg_off;
-	    size_t end = beg_off + raw_len;
-	    while (offset < end) {
-		if (offset + 2 * sizeof(uint16_t) > end) {
-		    // No room for an option header
-		    return (false);
-		}
-		uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
-		offset += sizeof(uint16_t);
-		uint16_t opt_len = isc::util::readUint16(&buf[offset], 2);
-		offset += sizeof(uint16_t);
-		if (offset + opt_len > end) {
-		    // No room for the option content
-		    return (false);
-		}
-		if (opt_type == D6O_RELAY_MSG) {
-		    beg_off = offset;
-		    raw_len = opt_len;
-		    goto parse;
-		}
-		offset += opt_len;
-	    }
-	    // There must be a relay-message option
-	    return (false);
-	}
+        // Handle relayed messages
+        if ((msg_type == DHCPV6_RELAY_FORW) ||
+            (msg_type == DHCPV6_RELAY_REPL)) {
+            if (raw_len < Pkt6::DHCPV6_RELAY_HDR_LEN) {
+                // There must be room for the relay header
+                return (false);
+            }
+            beg_off += Pkt6::DHCPV6_RELAY_HDR_LEN;
+            raw_len -= Pkt6::DHCPV6_RELAY_HDR_LEN;
+            size_t offset = beg_off;
+            size_t end = beg_off + raw_len;
+            while (offset < end) {
+                if (offset + 2 * sizeof(uint16_t) > end) {
+                    // No room for an option header
+                    return (false);
+                }
+                uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
+                offset += sizeof(uint16_t);
+                uint16_t opt_len = isc::util::readUint16(&buf[offset], 2);
+                offset += sizeof(uint16_t);
+                if (offset + opt_len > end) {
+                    // No room for the option content
+                    return (false);
+                }
+                if (opt_type == D6O_RELAY_MSG) {
+                    beg_off = offset;
+                    raw_len = opt_len;
+                    goto parse;
+                }
+                offset += opt_len;
+            }
+            // There must be a relay-message option
+            return (false);
+        }
 
-	// We are now parsing the raw message
-	size_t offset = beg_off;
-	size_t end = beg_off + raw_len;
-	// Skip the header
-	offset += sizeof(uint32_t);
-	while (offset < end) {
-	    if (offset + 2 * sizeof(uint16_t) > end) {
-		// No room for an option header
-		return (false);
-	    }
-	    uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
-	    offset += sizeof(uint16_t);
-	    uint16_t opt_len = isc::util::readUint16(&buf[offset], 2);
-	    offset += sizeof(uint16_t);
-	    if (offset + opt_len > end) {
-		// No room for the option content
-		return (false);
-	    }
-	    if (opt_type == D6O_SIGNATURE) {
-		// Found the signature option: skip algos and return
-		sig_off = offset + 2 * sizeof(uint8_t);
-		return (true);
-	    }
-	    offset += opt_len;
-	}
-	// The signature option must have been found
-	return (false);
+        // We are now parsing the raw message
+        size_t offset = beg_off;
+        size_t end = beg_off + raw_len;
+        // Skip the header
+        offset += sizeof(uint32_t);
+        while (offset < end) {
+            if (offset + 2 * sizeof(uint16_t) > end) {
+                // No room for an option header
+                return (false);
+            }
+            uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
+            offset += sizeof(uint16_t);
+            uint16_t opt_len = isc::util::readUint16(&buf[offset], 2);
+            offset += sizeof(uint16_t);
+            if (offset + opt_len > end) {
+                // No room for the option content
+                return (false);
+            }
+            if (opt_type == D6O_SIGNATURE) {
+                // Found the signature option: skip algos and return
+                sig_off = offset + 2 * sizeof(uint8_t);
+                return (true);
+            }
+            offset += opt_len;
+        }
+        // The signature option must have been found
+        return (false);
     }
 
 } // anonymous namespace
@@ -3342,8 +3343,15 @@ bool Dhcpv6Srv::validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
         }
         rd_new = Ntp(query->getTimestamp());
         if (ctx.host_) {
-            rd_last = Ntp(ctx.host_->getRDlast());
-            ts_last = Ntp(ctx.host_->getTSlast());
+            const TSHost* hp = dynamic_cast<const TSHost*>(ctx.host_.get());
+            if (!hp) {
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                          SEDHCP6_INCOMING_TRACE)
+                    .arg("No cached timestamps");
+            } else {
+                rd_last = Ntp(hp->getRDlast());
+                ts_last = Ntp(hp->getTSlast());
+            }
         }
         // Verify the given timestamp
         bool valid = false;
@@ -3388,15 +3396,15 @@ bool Dhcpv6Srv::validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
     // Parse the to be verified buffer and get offsets/length
     size_t beg_off, sig_off, raw_len;
     if (!parseToBeSigned(tbv, beg_off, sig_off, raw_len)) {
-	isc_throw(isc::Unexpected, "Can't parse to be verified");
+        isc_throw(isc::Unexpected, "Can't parse to be verified");
     }
     size_t sig_len = signature->len();
     sig_len -= signature->getHeaderLen() + 2 * sizeof(uint8_t);
     if (sig_len < key->getSignatureLength(BASIC)) {
-	isc_throw(isc::Unexpected, "Signature underflow");
+        isc_throw(isc::Unexpected, "Signature underflow");
     }
     if (sig_off + sig_len > raw_len) {
-	isc_throw(isc::Unexpected, "Signature overflow");
+        isc_throw(isc::Unexpected, "Signature overflow");
     }
     OptionBuffer sig(&tbv[sig_off], &tbv[sig_off] + sig_len);
     memset(&tbv[sig_off], 0, sig_len);
@@ -3425,10 +3433,13 @@ bool Dhcpv6Srv::validateSeDhcpOptions(const Pkt6Ptr& query, Pkt6Ptr& answer,
     if (update_tmstmp) {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_INCOMING_TRACE)
             .arg("updating timestamps");
-        ctx.host_->setRDlast(rd_new);
-        ctx.host_->setTSlast(ts_new);
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
-                  SEDHCP6_TIMESTAMP_UPDATED);
+        const TSHost* hp = dynamic_cast<const TSHost*>(ctx.host_.get());
+        if (!hp) {
+            isc_throw(isc::Unexpected, "No cached timestamps");
+        }
+        hp->setRDlast(rd_new);
+        hp->setTSlast(ts_new);
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_TIMESTAMP_UPDATED);
     }
 
     // Done
@@ -3562,17 +3573,17 @@ void Dhcpv6Srv::finalizeSignature(Pkt6Ptr& answer) {
     // Parse the to be signed buffer and get offsets/length
     size_t beg_off, sig_off, raw_len;
     if (!parseToBeSigned(tbs, beg_off, sig_off, raw_len)) {
-	LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
-	    .arg("Can't parse to be signed");
+        LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+            .arg("Can't parse to be signed");
         return;
     }
 
     // Sign
     size_t sig_len = key->getSignatureLength(BASIC);
     if (sig_off + sig_len > raw_len) {
-	LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
-	    .arg("signature overflow");
-	return;
+        LOG_ERROR(dhcp6_logger, SEDHCP6_SIGNATURE_FINALIZE_FAIL)
+            .arg("signature overflow");
+        return;
     }
     try {
         key->update(&tbs[beg_off], raw_len);

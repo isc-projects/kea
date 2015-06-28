@@ -15,6 +15,7 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/tmp_state_host.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -113,8 +114,9 @@ HostReservationParser::build(isc::data::ConstElementPtr reservation_data) {
         }
 
         // Create a host object from the basic parameters we already parsed.
-        host_.reset(new Host(identifier, identifier_name, SubnetID(0),
-                             SubnetID(0), IOAddress("0.0.0.0"), hostname));
+        // This is the place to replace Host by TSHost if it is used.
+        host_.reset(new TSHost(identifier, identifier_name, SubnetID(0),
+                               SubnetID(0), IOAddress("0.0.0.0"), hostname));
 
     } catch (const std::exception& ex) {
         // Append line number where the error occurred.

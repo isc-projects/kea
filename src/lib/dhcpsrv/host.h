@@ -20,8 +20,6 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/subnet_id.h>
-#include <util/ntp_utils.h>
-#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <list>
 #include <map>
@@ -187,17 +185,6 @@ public:
         IDENT_DUID
     };
 
-    /// @brief Temporary state structure
-    ///
-    /// The extend (aka lifetime) of the temporary state is the same
-    /// than for the host reservation object.
-    struct TmpState {
-        /// @brief Date of the last received and accepted packet
-        isc::util::Ntp rd_last_;
-        /// @brief Date of the last received and accepted timestamp
-        isc::util::Ntp ts_last_;
-    };
-
     /// @brief Constructor.
     ///
     /// Creates a @c Host object using an identifier in a binary format. This
@@ -264,6 +251,9 @@ public:
          const std::string& hostname = "",
          const std::string& dhcp4_client_classes = "",
          const std::string& dhcp6_client_classes = "");
+
+    /// @brief Destructor
+    virtual ~Host() { }
 
     /// @brief Replaces currently used identifier with a new identifier.
     ///
@@ -445,32 +435,8 @@ public:
         return (credential_);
     }
 
-    /// @brief Sets the date of the last received and accepted packet
-    ///
-    /// @param timestamp Date in NTP format
-    void setRDlast(const isc::util::Ntp& timestamp) const {
-        tmp_state_->rd_last_ = timestamp;
-    }
-
-    /// @brief Returns the date of the last received and accepted packet
-    const isc::util::Ntp& getRDlast() const {
-        return (tmp_state_->rd_last_);
-    }
-
-    /// @brief Sets the date from the last received and accepted packet
-    ///
-    /// @param timestamp Date in NTP format
-    void setTSlast(const isc::util::Ntp& timestamp) const {
-        tmp_state_->ts_last_ = timestamp;
-    }
-
-    /// @brief Returns the date from the last received and accepted packet
-    const isc::util::Ntp& getTSlast() const {
-        return (tmp_state_->ts_last_);
-    }
-
     /// @brief Returns information about the host in the textual format.
-    std::string toText() const;
+    virtual std::string toText() const;
 
 private:
 
@@ -509,8 +475,6 @@ private:
     ClientClasses dhcp6_client_classes_;
     /// @brief Credential (filename of public key or certificate)
     std::string credential_;
-    /// @brief Smart pointer to the temporary state
-    boost::scoped_ptr<TmpState> tmp_state_;
 };
 
 /// @brief Pointer to the @c Host object.
