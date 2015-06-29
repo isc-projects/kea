@@ -24,7 +24,7 @@ prefix=@prefix@
 if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
     . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
 else
-    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+    . @abs_top_srcdir@/src/bin/admin/admin-utils.sh
 fi
 
 db_user="keatest"
@@ -273,9 +273,12 @@ mysql_lease4_dump_test() {
     test_start "mysql.lease4_dump_test"
 
     test_dir="@abs_top_srcdir@/src/bin/admin/tests"
+    output_dir="@abs_top_builddir@/src/bin/admin/tests"
     script_dir="@abs_top_srcdir@/src/bin/admin/scripts"
-    output_file="$test_dir/data/mysql.lease4_dump_test.output.csv"
+
+    output_file="$output_dir/data/mysql.lease4_dump_test.output.csv"
     tmp_file="$output_file.tmp"
+
     ref_file="$test_dir/data/mysql.lease4_dump_test.reference.csv"
 
     # wipe out any residuals from prior failed runs
@@ -330,9 +333,12 @@ mysql_lease6_dump_test() {
     test_start "mysql.lease6_dump_test"
 
     test_dir="@abs_top_srcdir@/src/bin/admin/tests"
+    output_dir="@abs_top_builddir@/src/bin/admin/tests"
     script_dir="@abs_top_srcdir@/src/bin/admin/scripts"
-    output_file="$test_dir/data/mysql.lease6_dump_test.output.csv"
+
+    output_file="$output_dir/data/mysql.lease6_dump_test.output.csv"
     tmp_file="$output_file.tmp"
+
     ref_file="$test_dir/data/mysql.lease6_dump_test.reference.csv"
 
     # wipe out any residuals from prior failed runs
