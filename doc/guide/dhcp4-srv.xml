@@ -1129,14 +1129,14 @@ temporarily override a list of interface names and listen on all interfaces.
     <section id="dhcp4-vendor-opts">
       <title>DHCPv4 Vendor Specific Options</title>
       <para>
-      Currently there are three option spaces defined: "dhcp4" (used by the DHCPv4 daemon)
-      and "dhcp6" (for the DHCPv6 daemon); there is also "vendor-encapsulated-options-space",
-      which is empty by default, but options
-      can be defined in it. Those options are called vendor-specific
-      information options. The following examples show how to define
-      an option "foo" with code 1 that consists of an IPv4 address, an
-      unsigned 16 bit integer and a string. The "foo" option is conveyed
-      in a vendor specific information option.
+      Currently there are two option spaces defined for the DHCPv4 daemon:
+      "dhcp4" (for the top level DHCPv4 options) and
+      "vendor-encapsulated-options-space", which is empty by default but
+      options can be defined in it. Those options will be carried in the
+      Vendor Specific Information option (code 43). The following examples
+      show how to define an option "foo", with code 1, that consists of an
+      IPv4 address, an unsigned 16 bit integer and a string. The "foo"
+      option is conveyed in a Vendor Specific Information option.
       </para>
       <para>
       The first step is to define the format of the option:
@@ -1150,7 +1150,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "type": "record",
             "array": false,
             "record-types": "ipv4-address, uint16, string",
-            "encapsulates": ""</userinput>
+            "encapsulate": ""</userinput>
         }
     ],
     ...
@@ -1171,17 +1171,25 @@ temporarily override a list of interface names and listen on all interfaces.
     ],
     ...
 }</screen>
-    We also set up a dummy value for "vendor-encapsulated-options", the option that conveys our sub-option "foo".
-    This is required else the option will not be included in messages sent to the client.
+    We also include the Vendor Specific Information option, the option
+    that conveys our sub-option "foo". This is required, else the option
+    will not be included in messages sent to the client.
 <screen>
 "Dhcp4": {
     "option-data": [
         {
-            <userinput>"name": "vendor-encapsulated-options",
-            "space": "dhcp4",
-            "code": 43,
-            "csv-format": false,
-            "data": ""</userinput>
+            <userinput>"name": "vendor-encapsulated-options"</userinput>
+        }
+    ],
+    ...
+}</screen>
+    Alternatively, the option can be specified using its code.
+
+<screen>
+"Dhcp4": {
+    "option-data": [
+        {
+            <userinput>"code": 43</userinput>
         }
     ],
     ...
@@ -1190,10 +1198,11 @@ temporarily override a list of interface names and listen on all interfaces.
 
       <note>
         <para>
-          With this version of Kea, the "vendor-encapsulated-options" option
-          must be specified in the configuration although it has no configurable
-          parameters. If it is not specified, the server will assume that it is
-          not configured and will not send it to a client. In the future there
+          With this version of Kea, the Vendor Specific Information option
+          (a.k.a. "vendor-encapsulated-options") must be specified in the
+          configuration although it has no configurable parameters. If it
+          is not specified, the server will assume that it is not
+          configured and will not send it to a client. In the future there
           will be no need to include this option in the configuration.
         </para>
       </note>
@@ -1277,35 +1286,25 @@ temporarily override a list of interface names and listen on all interfaces.
     "option-data": [
         {
             <userinput>"name": "subopt1",
-            "space": "isc",
             "code": 1,
-            "csv-format": true,
+            "space": "isc",
             "data": "192.0.2.3"</userinput>
         },
         }
             <userinput>"name": "subopt2",
-            "space": "isc",
             "code": 2,
-            "csv-format": true,
+            "space": "isc",
             "data": "Hello world"</userinput>
         },
         {
             <userinput>"name": "container",
-            "space": "dhcp4",
             "code": 222,
-            "csv-format": true,
-            "data": ""</userinput>
+            "space": "dhcp4"</userinput>
         }
     ],
     ...
 }
 </screen>
-    Even though the "container" option does not carry any data except
-    sub-options, the "data" field must be explicitly set to an empty value.
-    This is required because in the current version of Kea, the
-    default configuration values are not propagated to the configuration parsers:
-    if the "data" is not set the parser will assume that this
-    parameter is not specified and an error will be reported.
     </para>
     <para>Note that it is possible to create an option which carries some data
     in addition to the sub-options defined in the encapsulated option space.  For example,
