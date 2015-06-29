@@ -1195,18 +1195,6 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }</screen>
       </para>
-
-      <note>
-        <para>
-          With this version of Kea, the Vendor Specific Information option
-          (a.k.a. "vendor-encapsulated-options") must be specified in the
-          configuration although it has no configurable parameters. If it
-          is not specified, the server will assume that it is not
-          configured and will not send it to a client. In the future there
-          will be no need to include this option in the configuration.
-        </para>
-      </note>
-
     </section>
 
     <section id="dhcp4-option-spaces">
