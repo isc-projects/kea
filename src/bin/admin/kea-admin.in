@@ -43,7 +43,7 @@ dump_qry=""
 if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
     . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
 else
-    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+    . @abs_top_srcdir@/src/bin/admin/admin-utils.sh
 fi
 
 # Prints out usage version.

@@ -24,7 +24,7 @@ prefix=@prefix@
 if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
     . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
 else
-    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+    . @abs_top_srcdir@/src/bin/admin/admin-utils.sh
 fi
 
 db_user="keatest"
@@ -162,10 +162,13 @@ pgsql_lease4_dump_test() {
     test_start "pgsql.lease4_dump_test"
 
     test_dir="@abs_top_srcdir@/src/bin/admin/tests"
+    output_dir="@abs_top_builddir@/src/bin/admin/tests"
     script_dir="@abs_top_srcdir@/src/bin/admin/scripts"
-    output_file="$test_dir/data/pgsql.lease4_dump_test.output.csv"
+
+    output_file="$output_dir/data/pgsql.lease4_dump_test.output.csv"
+
     ref_file="$test_dir/data/pgsql.lease4_dump_test.reference.csv"
-    ref_file_tmp=$ref_file.tmp
+    ref_file_tmp="$output_dir/data/pgsql.lease4_dump_test.reference.csv.tmp"
 
     # wipe out any residuals from prior failed runs
     if [ -e $output_file ]
@@ -254,10 +257,13 @@ pgsql_lease6_dump_test() {
     test_start "pgsql.lease6_dump_test"
 
     test_dir="@abs_top_srcdir@/src/bin/admin/tests"
+    output_dir="@abs_top_builddir@/src/bin/admin/tests"
     script_dir="@abs_top_srcdir@/src/bin/admin/scripts"
-    output_file="$test_dir/data/pgsql.lease6_dump_test.output.csv"
+
+    output_file="$output_dir/data/pgsql.lease6_dump_test.output.csv"
+
     ref_file="$test_dir/data/pgsql.lease6_dump_test.reference.csv"
-    ref_file_tmp=$ref_file.tmp
+    ref_file_tmp="$output_dir/data/pgsql.lease6_dump_test.reference.csv.tmp"
 
     # wipe out any residuals from prior failed runs
     if [ -e $output_file ]
