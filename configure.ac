@@ -1422,6 +1422,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/admin/kea-admin
                  src/bin/admin/scripts/Makefile
                  src/bin/admin/tests/Makefile
+                 src/bin/admin/tests/data/Makefile
                  src/bin/admin/tests/memfile_tests.sh
                  src/bin/admin/tests/mysql_tests.sh
                  src/bin/admin/tests/pgsql_tests.sh

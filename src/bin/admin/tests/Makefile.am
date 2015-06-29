@@ -1,4 +1,4 @@
-SUBDIRS = .
+SUBDIRS = data .
 
 SHTESTS = memfile_tests.sh
 
