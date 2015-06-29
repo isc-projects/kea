@@ -888,10 +888,14 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>rapid-commit</entry><entry>14</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>user-class</entry><entry>15</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>vendor-class</entry><entry>16</entry><entry>record</entry><entry>false</entry></row>
+-->
+<!-- Vendor-specific Information is configurable by the administrator -->
 <row><entry>vendor-opts</entry><entry>17</entry><entry>uint32</entry><entry>false</entry></row>
+<!--
 <row><entry>interface-id</entry><entry>18</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>reconf-msg</entry><entry>19</entry><entry>uint8</entry><entry>false</entry></row>
 <row><entry>reconf-accept</entry><entry>20</entry><entry>empty</entry><entry>false</entry></row> -->
+-->
 <row><entry>sip-server-dns</entry><entry>21</entry><entry>fqdn</entry><entry>true</entry></row>
 <row><entry>sip-server-addr</entry><entry>22</entry><entry>ipv6-address</entry><entry>true</entry></row>
 <row><entry>dns-servers</entry><entry>23</entry><entry>ipv6-address</entry><entry>true</entry></row>
@@ -1046,27 +1050,27 @@ temporarily override a list of interface names and listen on all interfaces.
     <section id="dhcp6-vendor-opts">
       <title>DHCPv6 vendor specific options</title>
       <para>
-      Currently there are three option spaces defined: dhcp4 (to be used
-      in DHCPv4 daemon) and dhcp6 (for the DHCPv6 daemon); there is also
-      vendor-opts-space, which is empty by default, but options can be
-      defined in it. Those options are called vendor-specific information
-      options. The following examples show how to define an option "foo"
-      with code 1 that consists of an IPv6 address, an unsigned 16 bit integer
-      and a string. The "foo" option is conveyed in a vendor specific
-      information option. This option comprises a single uint32 value
-      that is set to "12345". The sub-option "foo" follows the data
-      field holding this value.
+      Currently there are two option spaces defined for the DHCPv6
+      daemon: "dhcp6" (for top level DHCPv6 options) and "vendor-opts-space",
+      which is empty by default, but options can be defined in it.
+      Those options will be carried in the Vendor-specific
+      Information option (code 17). The following examples show how to
+      define an option "foo" with code 1 that consists of an IPv6 address,
+      an unsigned 16 bit integer and a string. The "foo" option is
+      conveyed in a Vendor-specific Information option. This option
+      comprises a single uint32 value that is set to "12345".
+      The sub-option "foo" follows the data field holding this value.
       <screen>
 "Dhcp6": {
     "option-def": [
         {
             <userinput>"name": "foo",
             "code": 1,
-            "space": "vendor-encapsulated-options-space",
+            "space": "vendor-opts-space",
             "type": "record",
             "array": false,
             "record-types": "ipv6-address, uint16, string",
-            "encapsulates": ""</userinput>
+            "encapsulate": ""</userinput>
         }
     ],
     ...
@@ -1079,26 +1083,33 @@ temporarily override a list of interface names and listen on all interfaces.
     "option-data": [
         {
             <userinput>"name": "foo",
-            "space": "vendor-encapsulated-options-space",
-            "code": 1,
-            "csv-format": true,
+            "space": "vendor-opts-space",
             "data": "2001:db8:1::10, 123, Hello World"</userinput>
         },
         ...
     ],
     ...
 }</screen>
-    We should also define values for the vendor-opts, that will convey our
-    option foo.
+    We should also define a value (enterprise-number) for the
+    Vendor-specific Information option, that conveys our option "foo".
 <screen>
 "Dhcp6": {
     "option-data": [
         ...,
         {
-            <userinput>"name": "vendor-encapsulated-options",
-            "space": "dhcp6",
-            "code": 17,
-            "csv-format": true,
+            <userinput>"name": "vendor-opts",
+            "data": "12345"</userinput>
+        }
+    ],
+    ...
+}</screen>
+    Alternatively, the option can be specified using its code.
+<screen>
+"Dhcp6": {
+    "option-data": [
+        ...,
+        {
+            <userinput>"code": 17,
             "data": "12345"</userinput>
         }
     ],
@@ -1184,36 +1195,25 @@ should include options from the isc option space:
     "option-data": [
         {
             <userinput>"name": "subopt1",
-            "space": "isc",
             "code": 1,
-            "csv-format": true,
+            "space": "isc",
             "data": "2001:db8::abcd"</userinput>
         },
         }
             <userinput>"name": "subopt2",
-            "space": "isc",
             "code": 2,
-            "csv-format": true,
+            "space": "isc",
             "data": "Hello world"</userinput>
         },
         {
             <userinput>"name": "container",
-            "space": "dhcp6",
             "code": 102,
-            "csv-format": true,
-            "data": ""</userinput>
+            "space": "dhcp6"</userinput>
         }
     ],
     ...
 }
 </screen>
-
-    Even though the "container" option does not carry any data except
-    sub-options, the "data" field must be explicitly set to an empty value.
-    This is required because in the current version of Kea, the default
-    configuration values are not propagated to the configuration parsers: if the
-    "data" is not set the parser will assume that this parameter is not
-    specified and an error will be reported.
     </para>
 
     <para>Note that it is possible to create an option which carries some data
