@@ -1202,7 +1202,7 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Nested DHCPv4 Options (Custom Option Spaces)</title>
       <para>It is sometimes useful to define completely new option
       space. This is the case when user creates new option in the
-      standard option space ("dhcp4 or "dhcp6") and wants this option
+      standard option space ("dhcp4") and wants this option
       to convey sub-options. Since they are in a separate space,
       sub-option codes will have a separate numbering scheme and may
       overlap with the codes of standard options.
