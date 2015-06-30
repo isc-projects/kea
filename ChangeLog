@@ -1,3 +1,9 @@
+974.	[bug]*		marcin
+	Corrected invalid format of the DHCPv4 option 5 (name-servers).
+	The corrected format comprises a list of IPv4 addresses,
+	rather than a single IPv4 address.
+	(Trac #3887, git 54d1dbe6138e74c5efacfbaf85b77c87aea9ddf1)
+
 973.	[doc]		marcin
 	Added new section to the User's Guide to describe the issues
 	with unicast responses to the DHCPINFORM messages when ARP
