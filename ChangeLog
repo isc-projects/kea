@@ -1,3 +1,9 @@
+975.	[doc]		marcin
+	Updated the list of standard DHCPv4 options in the User's Guide
+	with the information of whether they are returned by the server
+	even when they are not requested.
+	(Trac #3578, git b361b28ce53729a5f2d59f79670a36cf1a4a0352)
+
 974.	[bug]*		marcin
 	Corrected invalid format of the DHCPv4 option 5 (name-servers).
 	The corrected format comprises a list of IPv4 addresses,
