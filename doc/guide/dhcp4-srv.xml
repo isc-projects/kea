@@ -765,12 +765,31 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Standard DHCPv4 options</title>
       <para>
         One of the major features of the DHCPv4 server is to provide configuration
-        options to clients.  Although there are several options that require
-        special behavior, most options are sent by the server only if the client
-        explicitly requests them.  The following example shows how to
-        configure the addresses of DNS servers, which is one of the most frequently used
-        options. Options specified in this way are considered global and apply
-        to all configured subnets.
+        options to clients. Most of the options are sent by the server, only if the
+        client explicitly requests them using the Parameter Request List option.
+        Those that do not require being requested using the Parameter Request List
+        option are commonly used options, e.g. "Domain Server", and options which
+        require special behavior, e.g. "Client FQDN" is returned to the client
+        if the client has included this option in its message to the server.
+      </para>
+
+      <para>
+        The <xref linkend="dhcp4-std-options-list"/> comprises the list of the
+        standard DHCPv4 options, whose values can be configured using the
+        configuration structures described in this section. This table excludes
+        the options which require special processing and thus cannot be configured
+        with some fixed values. The last column of this table specifies which
+        options can be sent by the server even when they are not requested in
+        the Parameter Request list option, and which are sent only when
+        explicitly requested. These options are marked with the values
+        'true' and 'false' respectively.
+      </para>
+
+      <para>
+        The following example shows how to configure the addresses of DNS
+        servers, which is one of the most frequently used options. Options
+        specified in this way are considered global and apply to all
+        configured subnets.
 
         <screen>
 "Dhcp4": {
@@ -789,8 +808,8 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
     <para>
       The <command>name</command> parameter specifies the
-      option name. For a complete list of currently supported names,
-      see <xref linkend="dhcp4-std-options-list"/> below.
+      option name. For a list of currently supported names, see
+      <xref linkend="dhcp4-std-options-list"/> below.
       The <command>code</command> parameter specifies the option code, which must match one of the
       values from that list. The next line specifies the option space, which must always
       be set to "dhcp4" as these are standard DHCPv4 options. For
@@ -903,59 +922,66 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         <table frame="all" id="dhcp4-std-options-list">
           <title>List of standard DHCPv4 options</title>
-          <tgroup cols='4'>
+          <tgroup cols='5'>
           <colspec colname='name'/>
           <colspec colname='code' align='center'/>
           <colspec colname='type' align='center'/>
           <colspec colname='array' align='center'/>
+          <colspec colname='always-returned' align='center'/>
           <thead>
             <row>
               <entry>Name</entry>
               <entry>Code</entry>
               <entry>Type</entry>
               <entry>Array?</entry>
+              <entry>Returned if not requested?</entry>
             </row>
           </thead>
           <tbody>
-<row><entry>subnet-mask</entry><entry>1</entry><entry>ipv4-address</entry><entry>false</entry></row>
-<row><entry>time-offset</entry><entry>2</entry><entry>int32</entry><entry>false</entry></row>
-<row><entry>routers</entry><entry>3</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>time-servers</entry><entry>4</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>name-servers</entry><entry>5</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>domain-name-servers</entry><entry>6</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>log-servers</entry><entry>7</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>cookie-servers</entry><entry>8</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>lpr-servers</entry><entry>9</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>impress-servers</entry><entry>10</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>resource-location-servers</entry><entry>11</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>host-name</entry><entry>12</entry><entry>string</entry><entry>false</entry></row>
-<row><entry>boot-size</entry><entry>13</entry><entry>uint16</entry><entry>false</entry></row>
-<row><entry>merit-dump</entry><entry>14</entry><entry>string</entry><entry>false</entry></row>
-<row><entry>domain-name</entry><entry>15</entry><entry>fqdn</entry><entry>false</entry></row>
-<row><entry>swap-server</entry><entry>16</entry><entry>ipv4-address</entry><entry>false</entry></row>
-<row><entry>root-path</entry><entry>17</entry><entry>string</entry><entry>false</entry></row>
-<row><entry>extensions-path</entry><entry>18</entry><entry>string</entry><entry>false</entry></row>
-<row><entry>ip-forwarding</entry><entry>19</entry><entry>boolean</entry><entry>false</entry></row>
-<row><entry>non-local-source-routing</entry><entry>20</entry><entry>boolean</entry><entry>false</entry></row>
-<row><entry>policy-filter</entry><entry>21</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>max-dgram-reassembly</entry><entry>22</entry><entry>uint16</entry><entry>false</entry></row>
-<row><entry>default-ip-ttl</entry><entry>23</entry><entry>uint8</entry><entry>false</entry></row>
-<row><entry>path-mtu-aging-timeout</entry><entry>24</entry><entry>uint32</entry><entry>false</entry></row>
-<row><entry>path-mtu-plateau-table</entry><entry>25</entry><entry>uint16</entry><entry>true</entry></row>
-<row><entry>interface-mtu</entry><entry>26</entry><entry>uint16</entry><entry>false</entry></row>
-<row><entry>all-subnets-local</entry><entry>27</entry><entry>boolean</entry><entry>false</entry></row>
-<row><entry>broadcast-address</entry><entry>28</entry><entry>ipv4-address</entry><entry>false</entry></row>
-<row><entry>perform-mask-discovery</entry><entry>29</entry><entry>boolean</entry><entry>false</entry></row>
-<row><entry>mask-supplier</entry><entry>30</entry><entry>boolean</entry><entry>false</entry></row>
-<row><entry>router-discovery</entry><entry>31</entry><entry>boolean</entry><entry>false</entry></row>
-<row><entry>router-solicitation-address</entry><entry>32</entry><entry>ipv4-address</entry><entry>false</entry></row>
-<row><entry>static-routes</entry><entry>33</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>trailer-encapsulation</entry><entry>34</entry><entry>boolean</entry><entry>false</entry></row>
-<row><entry>arp-cache-timeout</entry><entry>35</entry><entry>uint32</entry><entry>false</entry></row>
-<row><entry>ieee802-3-encapsulation</entry><entry>36</entry><entry>boolean</entry><entry>false</entry></row>
-<row><entry>default-tcp-ttl</entry><entry>37</entry><entry>uint8</entry><entry>false</entry></row>
-<row><entry>tcp-keepalive-interval</entry><entry>38</entry><entry>uint32</entry><entry>false</entry></row>
-<row><entry>tcp-keepalive-garbage</entry><entry>39</entry><entry>boolean</entry><entry>false</entry></row>
+<!-- Subnet Mask option is not configured by the user
+<row><entry>subnet-mask</entry><entry>1</entry><entry>ipv4-address</entry><entry>false</entry><entry>true</entry></row>
+-->
+<row><entry>time-offset</entry><entry>2</entry><entry>int32</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>routers</entry><entry>3</entry><entry>ipv4-address</entry><entry>true</entry><entry>true</entry></row>
+<row><entry>time-servers</entry><entry>4</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>name-servers</entry><entry>5</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>domain-name-servers</entry><entry>6</entry><entry>ipv4-address</entry><entry>true</entry><entry>true</entry></row>
+<row><entry>log-servers</entry><entry>7</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>cookie-servers</entry><entry>8</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>lpr-servers</entry><entry>9</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>impress-servers</entry><entry>10</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>resource-location-servers</entry><entry>11</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<!-- Hostname option value is not explicitly configured by the user.
+This rather belong to the DDNS configuration
+<row><entry>host-name</entry><entry>12</entry><entry>string</entry><entry>false</entry><entry>true</entry></row>
+-->
+<row><entry>boot-size</entry><entry>13</entry><entry>uint16</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>merit-dump</entry><entry>14</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>domain-name</entry><entry>15</entry><entry>fqdn</entry><entry>false</entry><entry>true</entry></row>
+<row><entry>swap-server</entry><entry>16</entry><entry>ipv4-address</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>root-path</entry><entry>17</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>extensions-path</entry><entry>18</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>ip-forwarding</entry><entry>19</entry><entry>boolean</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>non-local-source-routing</entry><entry>20</entry><entry>boolean</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>policy-filter</entry><entry>21</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>max-dgram-reassembly</entry><entry>22</entry><entry>uint16</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>default-ip-ttl</entry><entry>23</entry><entry>uint8</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>path-mtu-aging-timeout</entry><entry>24</entry><entry>uint32</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>path-mtu-plateau-table</entry><entry>25</entry><entry>uint16</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>interface-mtu</entry><entry>26</entry><entry>uint16</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>all-subnets-local</entry><entry>27</entry><entry>boolean</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>broadcast-address</entry><entry>28</entry><entry>ipv4-address</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>perform-mask-discovery</entry><entry>29</entry><entry>boolean</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>mask-supplier</entry><entry>30</entry><entry>boolean</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>router-discovery</entry><entry>31</entry><entry>boolean</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>router-solicitation-address</entry><entry>32</entry><entry>ipv4-address</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>static-routes</entry><entry>33</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>trailer-encapsulation</entry><entry>34</entry><entry>boolean</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>arp-cache-timeout</entry><entry>35</entry><entry>uint32</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>ieee802-3-encapsulation</entry><entry>36</entry><entry>boolean</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>default-tcp-ttl</entry><entry>37</entry><entry>uint8</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>tcp-keepalive-interval</entry><entry>38</entry><entry>uint32</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>tcp-keepalive-garbage</entry><entry>39</entry><entry>boolean</entry><entry>false</entry><entry>false</entry></row>
 
           </tbody>
           </tgroup>
@@ -965,65 +991,77 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         <table frame="all" id="dhcp4-std-options-list-part2">
           <title>List of standard DHCPv4 options (continued)</title>
-          <tgroup cols='4'>
+          <tgroup cols='5'>
           <colspec colname='name'/>
           <colspec colname='code'/>
           <colspec colname='type'/>
           <colspec colname='array'/>
+          <colspec colname='always-returned' align='center'/>
           <thead>
             <row>
               <entry>Name</entry>
               <entry>Code</entry>
               <entry>Type</entry>
               <entry>Array?</entry>
+              <entry>Returned if not requested?</entry>
             </row>
           </thead>
           <tbody>
 
-<row><entry>nis-domain</entry><entry>40</entry><entry>string</entry><entry>false</entry></row>
-<row><entry>nis-servers</entry><entry>41</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>ntp-servers</entry><entry>42</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>vendor-encapsulated-options</entry><entry>43</entry><entry>empty</entry><entry>false</entry></row>
-<row><entry>netbios-name-servers</entry><entry>44</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>netbios-dd-server</entry><entry>45</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>netbios-node-type</entry><entry>46</entry><entry>uint8</entry><entry>false</entry></row>
-<row><entry>netbios-scope</entry><entry>47</entry><entry>string</entry><entry>false</entry></row>
-<row><entry>font-servers</entry><entry>48</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>x-display-manager</entry><entry>49</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>dhcp-requested-address</entry><entry>50</entry><entry>ipv4-address</entry><entry>false</entry></row>
-<!-- Lease time should not be configured by a user.
-<row><entry>dhcp-lease-time</entry><entry>51</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>nis-domain</entry><entry>40</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>nis-servers</entry><entry>41</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>ntp-servers</entry><entry>42</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>vendor-encapsulated-options</entry><entry>43</entry><entry>empty</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>netbios-name-servers</entry><entry>44</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>netbios-dd-server</entry><entry>45</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>netbios-node-type</entry><entry>46</entry><entry>uint8</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>netbios-scope</entry><entry>47</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>font-servers</entry><entry>48</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>x-display-manager</entry><entry>49</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<!-- Lease time and requested address should not be configured by a user.
+<row><entry>dhcp-requested-address</entry><entry>50</entry><entry>ipv4-address</entry><entry>false</entry><entry>true</entry></row>
+<row><entry>dhcp-lease-time</entry><entry>51</entry><entry>uint32</entry><entry>false</entry><entry>true</entry></row>
 -->
-<row><entry>dhcp-option-overload</entry><entry>52</entry><entry>uint8</entry><entry>false</entry></row>
+<row><entry>dhcp-option-overload</entry><entry>52</entry><entry>uint8</entry><entry>false</entry><entry>false</entry></row>
 <!-- Message Type, Server Identifier and Parameter Request List should not be configured by a user.
-<row><entry>dhcp-message-type</entry><entry>53</entry><entry>uint8</entry><entry>false</entry></row>
-<row><entry>dhcp-server-identifier</entry><entry>54</entry><entry>ipv4-address</entry><entry>false</entry></row>
-<row><entry>dhcp-parameter-request-list</entry><entry>55</entry><entry>uint8</entry><entry>true</entry></row>
+<row><entry>dhcp-message-type</entry><entry>53</entry><entry>uint8</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>dhcp-server-identifier</entry><entry>54</entry><entry>ipv4-address</entry><entry>false</entry><entry>true</entry></row>
+<row><entry>dhcp-parameter-request-list</entry><entry>55</entry><entry>uint8</entry><entry>true</entry><entry>true</entry></row>
 -->
-<row><entry>dhcp-message</entry><entry>56</entry><entry>string</entry><entry>false</entry></row>
-<row><entry>dhcp-max-message-size</entry><entry>57</entry><entry>uint16</entry><entry>false</entry></row>
+<row><entry>dhcp-message</entry><entry>56</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>dhcp-max-message-size</entry><entry>57</entry><entry>uint16</entry><entry>false</entry><entry>false</entry></row>
 <!-- Renewal and rebinding time should not be configured by a user.
-<row><entry>dhcp-renewal-time</entry><entry>58</entry><entry>uint32</entry><entry>false</entry></row>
-<row><entry>dhcp-rebinding-time</entry><entry>59</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>dhcp-renewal-time</entry><entry>58</entry><entry>uint32</entry><entry>false</entry><entry>true</entry></row>
+<row><entry>dhcp-rebinding-time</entry><entry>59</entry><entry>uint32</entry><entry>false</entry><entry>true</entry></row>
 -->
-<row><entry>vendor-class-identifier</entry><entry>60</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>vendor-class-identifier</entry><entry>60</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <!-- Client identifier should not be configured by a user.
-<row><entry>dhcp-client-identifier</entry><entry>61</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>dhcp-client-identifier</entry><entry>61</entry><entry>binary</entry><entry>false</entry><entry>true</entry></row>
 -->
-<row><entry>nwip-domain-name</entry><entry>62</entry><entry>string</entry><entry>false</entry></row>
-<row><entry>nwip-suboptions</entry><entry>63</entry><entry>binary</entry><entry>false</entry></row>
-<row><entry>tftp-server-name</entry><entry>66</entry><entry>string</entry><entry>false</entry></row>
-<row><entry>boot-file-name</entry><entry>67</entry><entry>string</entry><entry>false</entry></row>
-<row><entry>user-class</entry><entry>77</entry><entry>binary</entry><entry>false</entry></row>
-<row><entry>fqdn</entry><entry>81</entry><entry>record</entry><entry>false</entry></row>
-<row><entry>dhcp-agent-options</entry><entry>82</entry><entry>empty</entry><entry>false</entry></row>
-<row><entry>authenticate</entry><entry>90</entry><entry>binary</entry><entry>false</entry></row>
-<row><entry>client-last-transaction-time</entry><entry>91</entry><entry>uint32</entry><entry>false</entry></row>
-<row><entry>associated-ip</entry><entry>92</entry><entry>ipv4-address</entry><entry>true</entry></row>
-<row><entry>subnet-selection</entry><entry>118</entry><entry>ipv4-address</entry><entry>false</entry></row>
-<row><entry>domain-search</entry><entry>119</entry><entry>binary</entry><entry>false</entry></row>
-<row><entry>vivco-suboptions</entry><entry>124</entry><entry>binary</entry><entry>false</entry></row>
-<row><entry>vivso-suboptions</entry><entry>125</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>nwip-domain-name</entry><entry>62</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>nwip-suboptions</entry><entry>63</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>tftp-server-name</entry><entry>66</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>boot-file-name</entry><entry>67</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>user-class</entry><entry>77</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
+<!-- The Client FQDN option value is not explicitly configured.
+It is a part of the DDNS/D2 configuration
+<row><entry>fqdn</entry><entry>81</entry><entry>record</entry><entry>false</entry><entry>true</entry></row>
+-->
+<!-- Relay Agent Information is not configured by the user.
+It is merely echoed by the server
+<row><entry>dhcp-agent-options</entry><entry>82</entry><entry>empty</entry><entry>false</entry><entry>false</entry></row>
+-->
+<!-- Authentication option requires special processing
+<row><entry>authenticate</entry><entry>90</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
+-->
+<!-- Last transaction time and associated IP is dynamically calculated
+<row><entry>client-last-transaction-time</entry><entry>91</entry><entry>uint32</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>associated-ip</entry><entry>92</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+-->
+<row><entry>subnet-selection</entry><entry>118</entry><entry>ipv4-address</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>domain-search</entry><entry>119</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>vivco-suboptions</entry><entry>124</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>vivso-suboptions</entry><entry>125</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
           </tbody>
           </tgroup>
         </table>
