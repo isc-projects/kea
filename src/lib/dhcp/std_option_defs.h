@@ -80,7 +80,7 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "routers", DHO_ROUTERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "time-servers", DHO_TIME_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "name-servers", DHO_NAME_SERVERS, OPT_IPV4_ADDRESS_TYPE,
-      false, NO_RECORD_DEF, "" },
+      true, NO_RECORD_DEF, "" },
     { "domain-name-servers", DHO_DOMAIN_NAME_SERVERS,
       OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "log-servers", DHO_LOG_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
