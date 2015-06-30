@@ -1,3 +1,9 @@
+973.	[doc]		marcin
+	Added new section to the User's Guide to describe the issues
+	with unicast responses to the DHCPINFORM messages when ARP
+	traffic is blocked.
+	(Trac #3740, git 22bcb060ceca544dfa1779815321155668bf19dc)
+
 972.	[doc]		marcin
 	Updated sections of User's Guide concerning creation of
 	the option definitions and Vendor Specific Information
