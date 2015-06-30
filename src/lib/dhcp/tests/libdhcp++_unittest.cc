@@ -725,7 +725,7 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(Option4AddrLst));
 
     LibDhcpTest::testStdOptionDefs4(DHO_NAME_SERVERS, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(Option4AddrLst));
 
     LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_NAME_SERVERS, begin, end,
                                     typeid(Option4AddrLst));
