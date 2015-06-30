@@ -719,11 +719,11 @@ temporarily override a list of interface names and listen on all interfaces.
         The last column of the <xref linkend="dhcp4-std-options-list"/> specifies
         which options can be sent by the server even when they are not
         requested in the Parameter Request List option, and which are sent only
-        when explicitly requested. These options are marked with the 'true'
-        and 'false' values respectively. One group of options which are
+        when explicitly requested. These options are marked with the the values
+        'true' and 'false' respectively. One group of options which are
         sent by the server even when they are not requested are those that
-        require special processing, e.g. Client FQDN option returned if the
-        client has sent Client FQDN option to the server. Another group comprises
+        require special processing, e.g. a Client FQDN option is returned if the
+        client has sent a Client FQDN option to the server. Another group comprises
         options with the fixed values specified in the server configuration,
         e.g. 'domain-name-servers'.
       </para>
