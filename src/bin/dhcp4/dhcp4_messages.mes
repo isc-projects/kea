@@ -428,6 +428,11 @@ destination IPv4 address and the name of the interface on which the
 message has been received.
 
 % DHCP4_PACKET_SEND %1: trying to send packet %2 (type %3) from %4:%5 to %6:%7 on interface %8
+The arguments specify the client identification information (HW address
+and client identifier), DHCP message name and type, source IPv4
+address and port, destination IPv4 address and port and the
+interface name.
+
 This debug message is issued when the server is trying to send the
 response to the client. When the server is using an UDP socket
 to send the packet there are cases when this operation may be
@@ -441,11 +446,6 @@ Consequently, the response to the DHCPINFORM will not be sent.
 Since the ARP communication is under the OS control, Kea is not
 notified about the drop of the packet which it is trying to send
 and it has no means to display an error message.
-
-The arguments specify the client identification information (HW address
-and client identifier), DHCP message name and type, source IPv4
-address and port, destination IPv4 address and port and the
-interface name.
 
 % DHCP4_PACKET_SEND_FAIL %1: failed to send DHCPv4 packet: %2
 This error is output if the DHCPv4 server fails to send an assembled
