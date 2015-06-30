@@ -715,7 +715,7 @@ temporarily override a list of interface names and listen on all interfaces.
         One of the major features of the DHCPv4 server is to provide configuration
         options to clients. Most of the options are sent by the server, only if the
         client explicitly requests them using the Parameter Request List option.
-        Those that do not require requesting using the Parameter Request List
+        Those that do not require being requested using the Parameter Request List
         option are commonly used options, e.g. "Name Server", and options which
         require special behavior, e.g. "Client FQDN" is returned to the client
         if the client has included this option in its message to the server.
@@ -723,7 +723,7 @@ temporarily override a list of interface names and listen on all interfaces.
 
       <para>
         The <xref linkend="dhcp4-std-options-list"/> comprises the list of the
-        standard DHCPv4 options, which values can be configured using the
+        standard DHCPv4 options, whose values can be configured using the
         configuration structures described in this section. This table excludes
         the options which require special processing and thus cannot be configured
         with some fixed values. The last column of this table specifies which
