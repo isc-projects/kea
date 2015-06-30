@@ -713,19 +713,24 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Standard DHCPv4 options</title>
       <para>
         One of the major features of the DHCPv4 server is to provide configuration
-        options to clients.  Although there are several options that require
-        special behavior, most options are sent by the server only if the client
-        explicitly requests them using the Parameter Request List option.
-        The last column of the <xref linkend="dhcp4-std-options-list"/> specifies
-        which options can be sent by the server even when they are not
-        requested in the Parameter Request List option, and which are sent only
-        when explicitly requested. These options are marked with the the values
-        'true' and 'false' respectively. One group of options which are
-        sent by the server even when they are not requested are those that
-        require special processing, e.g. a Client FQDN option is returned if the
-        client has sent a Client FQDN option to the server. Another group comprises
-        options with the fixed values specified in the server configuration,
-        e.g. 'domain-name-servers'.
+        options to clients. Most of the options are sent by the server, only if the
+        client explicitly requests them using the Parameter Request List option.
+        Those that do not require requesting using the Parameter Request List
+        option are commonly used options, e.g. "Name Server", and options which
+        require special behavior, e.g. "Client FQDN" is returned to the client
+        if the client has included this option in its message to the server.
+      </para>
+
+      <para>
+        The <xref linkend="dhcp4-std-options-list"/> comprises the list of the
+        standard DHCPv4 options, which values can be configured using the
+        configuration structures described in this section. This table excludes
+        the options which require special processing and thus cannot be configured
+        with some fixed values. The last column of this table specifies which
+        options can be sent by the server even when they are not requested in
+        the Parameter Request list option, and which are sent only when
+        explicitly requested. These options are marked with the values
+        'true' and 'false' respectively.
       </para>
 
       <para>
@@ -751,8 +756,8 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
     <para>
       The <command>name</command> parameter specifies the
-      option name. For a complete list of currently supported names,
-      see <xref linkend="dhcp4-std-options-list"/> below.
+      option name. For a list of currently supported names, see
+      <xref linkend="dhcp4-std-options-list"/> below.
       The <command>code</command> parameter specifies the option code, which must match one of the
       values from that list. The next line specifies the option space, which must always
       be set to "dhcp4" as these are standard DHCPv4 options. For
@@ -881,7 +886,9 @@ temporarily override a list of interface names and listen on all interfaces.
             </row>
           </thead>
           <tbody>
+<!-- Subnet Mask option is not configured by the user
 <row><entry>subnet-mask</entry><entry>1</entry><entry>ipv4-address</entry><entry>false</entry><entry>true</entry></row>
+-->
 <row><entry>time-offset</entry><entry>2</entry><entry>int32</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>routers</entry><entry>3</entry><entry>ipv4-address</entry><entry>true</entry><entry>true</entry></row>
 <row><entry>time-servers</entry><entry>4</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
@@ -892,7 +899,10 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>lpr-servers</entry><entry>9</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>impress-servers</entry><entry>10</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>resource-location-servers</entry><entry>11</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<!-- Hostname option value is not explicitly configured by the user.
+This rather belong to the DDNS configuration
 <row><entry>host-name</entry><entry>12</entry><entry>string</entry><entry>false</entry><entry>true</entry></row>
+-->
 <row><entry>boot-size</entry><entry>13</entry><entry>uint16</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>merit-dump</entry><entry>14</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>domain-name</entry><entry>15</entry><entry>fqdn</entry><entry>false</entry><entry>true</entry></row>
@@ -981,14 +991,21 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>tftp-server-name</entry><entry>66</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>boot-file-name</entry><entry>67</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>user-class</entry><entry>77</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
+<!-- The Client FQDN option value is not explicitly configured.
+It is a part of the DDNS/D2 configuration
 <row><entry>fqdn</entry><entry>81</entry><entry>record</entry><entry>false</entry><entry>true</entry></row>
+-->
 <!-- Relay Agent Information is not configured by the user.
 It is merely echoed by the server
 <row><entry>dhcp-agent-options</entry><entry>82</entry><entry>empty</entry><entry>false</entry><entry>false</entry></row>
 -->
+<!-- Authentication option requires special processing
 <row><entry>authenticate</entry><entry>90</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
+-->
+<!-- Last transaction time and associated IP is dynamically calculated
 <row><entry>client-last-transaction-time</entry><entry>91</entry><entry>uint32</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>associated-ip</entry><entry>92</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+-->
 <row><entry>subnet-selection</entry><entry>118</entry><entry>ipv4-address</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>domain-search</entry><entry>119</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>vivco-suboptions</entry><entry>124</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
