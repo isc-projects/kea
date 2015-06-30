@@ -1,3 +1,9 @@
+972.	[doc]		marcin
+	Updated sections of User's Guide concerning creation of
+	the option definitions and Vendor Specific Information
+	options for both DHCPv4 and DHCPv6.
+	(Trac #3846, git 6aebe0867ca9cf6fb09a289d80051125db7fa34b)
+
 971.	[bug]		marcin
 	DHCPv6 server extends the lifetime of the client's lease
 	in the database when the client sends the Request message.
