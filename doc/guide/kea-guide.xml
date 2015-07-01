@@ -81,6 +81,8 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="logging.xml" />
 
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="faq.xml" />
+
     <chapter id="acknowledgements">
       <title>Acknowledgements</title>
 
