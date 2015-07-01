@@ -17,12 +17,20 @@
 
 #include <cc/data.h>
 #include <dhcpsrv/srv_config.h>
+#include <util/pid_file.h>
 #include <util/signal_set.h>
 #include <boost/noncopyable.hpp>
 #include <string>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Exception thrown when a the PID file points to a live PID
+class DaemonPIDExists : public Exception {
+public:
+    DaemonPIDExists(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 /// @brief Base class for all services
 ///
@@ -161,6 +169,56 @@ public:
     /// @return text string
     static std::string getVersion(bool extended);
 
+    /// @brief Sets the configuration file name
+    ///
+    /// @param config_file pathname of the configuration file
+    static void setConfigFile(const std::string& config_file);
+
+    /// @brief returns the process name
+    /// This value is used as when forming the default PID file name
+    /// @return text string
+    std::string getProcName() const;
+
+    /// @brief Sets the process name
+    /// @param proc_name name the process by which the process is recognized
+    void setProcName(const std::string& proc_name);
+
+    /// @brief Returns the directory used when forming default PID file name
+    /// @return text string
+    std::string getPIDFileDir() const;
+
+    /// @brief Sets the PID file directory
+    /// @param pid_file_dir path into which the PID file should be written
+    /// Note the value should not include a trailing slash, '/'
+    void setPIDFileDir(const std::string& pid_file_dir);
+
+    /// @brief Returns the current PID file name
+    /// @return text string
+    std::string getPIDFileName() const;
+
+    /// @brief Sets PID file name
+    ///
+    /// If this method is called prior to calling createPIDFile,
+    /// the value passed in will be treated as the full file name
+    /// for the PID file.  This provides a means to override the
+    /// default file name with an explicit value.
+    ///
+    /// @param pid_file_name file name to be used as the PID file
+    void setPIDFileName(const std::string& pid_file_name);
+
+    /// @brief Creates the PID file
+    ///
+    /// If the PID file name has not been previously set, the method
+    /// uses manufacturePIDFileName() to set it.  If the PID file
+    /// name refers to an existing file whose contents are a PID whose
+    /// process is still alive, the method will throw a DaemonPIDExists
+    /// exception.  Otherwise, the file created (or truncated) and
+    /// the given pid (if not zero) is written to the file.
+    ///
+    /// @param pid PID to write to the file if not zero, otherwise the
+    /// PID of the current process is used.
+    void createPIDFile(int pid = 0);
+
 protected:
 
     /// @brief Invokes handler for the next received signal.
@@ -189,11 +247,22 @@ protected:
     /// it not initialized, the signals will not be handled.
     isc::util::SignalHandler signal_handler_;
 
-private:
+    /// @brief Manufacture the pid file name
+    std::string makePIDFileName() const;
 
+private:
     /// @brief Config file name or empty if config file not used.
     static std::string config_file_;
 
+    /// @brief Name of this process, used when creating its pid file
+    std::string proc_name_;
+
+    /// @brief Pointer to the directory where PID file(s) are written
+    /// It defaults to --localstatedir
+    std::string pid_file_dir_;
+
+    /// @brief Pointer to the PID file for this process
+    isc::util::PIDFilePtr pid_file_;
 };
 
 }; // end of isc::dhcp namespace
