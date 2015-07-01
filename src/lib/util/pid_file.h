@@ -16,6 +16,7 @@
 #define PID_FILE_H
 
 #include <exceptions/exceptions.h>
+#include <boost/shared_ptr.hpp>
 #include <fstream>
 #include <ostream>
 #include <string>
@@ -94,6 +95,9 @@ private:
     /// @brief PID filename
     std::string filename_;
 };
+
+/// @brief Defines a shared pointer to a PIDFile
+typedef boost::shared_ptr<PIDFile> PIDFilePtr;
 
 } // namespace isc::util
 } // namespace isc
