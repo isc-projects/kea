@@ -63,11 +63,11 @@ public:
     /// If the file exists but can't be read or it doesn't have
     /// the proper format treat it as the process existing.
     ///
-    /// @return true if the PID is in use, false otherwise
+    /// @return returns the PID if it is in, 0 otherwise.
     ///
     /// @throw throws PIDCantReadPID if it was able to open the file
     /// but was unable to read the PID from it.
-    bool check() const;
+    int check() const;
 
     /// @brief Write the PID to the file.
     ///
