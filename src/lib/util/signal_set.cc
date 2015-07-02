@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -50,7 +50,7 @@ SigIntListPtr getSignalStates() {
     return (signal_states);
 }
 
-/// @brief Internal signal handler for @c isc::util::io::SignalSet class.
+/// @brief Internal signal handler for @c isc::util::SignalSet class.
 ///
 /// This handler catches all registered signals. When a signal arrives it
 /// passes the signal to invokeOnReceiptHandler for "on-receipt" processing.
