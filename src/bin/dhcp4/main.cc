@@ -145,8 +145,9 @@ main(int argc, char* argv[]) {
         // Remember verbose-mode
         server.setVerbose(verbose_mode);
 
-        Daemon::setProcName(DHCP4_NAME);
-        Daemon::setConfigFile(config_file);
+        // Create our PID file.
+        server.setProcName(DHCP4_NAME);
+        server.setConfigFile(config_file);
         server.createPIDFile();
 
         try {

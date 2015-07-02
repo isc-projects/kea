@@ -148,6 +148,11 @@ main(int argc, char* argv[]) {
         // Remember verbose-mode
         server.setVerbose(verbose_mode);
 
+        // Create our PID file
+        server.setProcName(DHCP6_NAME);
+        server.setConfigFile(config_file);
+        server.createPIDFile();
+
         try {
             // Initialize the server, e.g. establish control session
             // Read a configuration file
@@ -177,6 +182,17 @@ main(int argc, char* argv[]) {
 
         LOG_INFO(dhcp6_logger, DHCP6_SHUTDOWN);
 
+    } catch (const isc::dhcp::DaemonPIDExists& ex) {
+        // First, we print the error on stderr (that should always work)
+        cerr << DHCP6_NAME << " already running? " << ex.what()
+             << endl;
+
+        // Let's also try to log it using logging system, but we're not
+        // sure if it's usable (the exception may have been thrown from
+        // the logger subsystem)
+        LOG_FATAL(dhcp6_logger, DHCP6_ALREADY_RUNNING)
+                  .arg(DHCP6_NAME).arg(ex.what());
+        ret = EXIT_FAILURE;
     } catch (const std::exception& ex) {
 
         // First, we print the error on stderr (that should always work)
