@@ -37,9 +37,11 @@ namespace dhcp {
 // This is an initial config file location.
 std::string Daemon::config_file_ = "";
 
+std::string Daemon::proc_name_ = "";
+
 Daemon::Daemon()
-    : signal_set_(), signal_handler_(), proc_name_(""),
-    pid_file_dir_(DHCP_DATA_DIR), pid_file_(), am_file_author_(false) {
+    : signal_set_(), signal_handler_(), pid_file_dir_(DHCP_DATA_DIR),
+    pid_file_(), am_file_author_(false) {
 
     // The pid_file_dir can be overridden via environment variable
     // This is primarily intended to simplify testing
@@ -117,7 +119,7 @@ Daemon::setConfigFile(const std::string& config_file) {
 }
 
 std::string
-Daemon::getProcName() const {
+Daemon::getProcName() {
     return (proc_name_);
 };
 
