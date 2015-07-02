@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,7 +26,7 @@
 namespace isc {
 namespace util {
 
-/// @brief Exception thrown when the @c isc::util::io::SignalSet class
+/// @brief Exception thrown when the @c isc::util::SignalSet class
 /// experiences an error.
 class SignalSetError : public Exception {
 public:
@@ -46,9 +46,9 @@ typedef std::list<int> SigIntList;
 typedef boost::shared_ptr<SigIntList> SigIntListPtr;
 
 
-/// @brief Forward declaration to the @c isc::util::io::SignalSet.
+/// @brief Forward declaration to the @c isc::util::SignalSet.
 class SignalSet;
-/// @brief Pointer to the @c isc::util::io::SignalSet.
+/// @brief Pointer to the @c isc::util::SignalSet.
 typedef boost::shared_ptr<SignalSet> SignalSetPtr;
 /// @brief Pointer to the signal handling function.
 typedef boost::function<void(int signum)> SignalHandler;
@@ -134,7 +134,7 @@ public:
 
     /// @brief Uninstalls all signals.
     ///
-    /// This function calls @c isc::util::io::SignalSet::remove for each
+    /// This function calls @c isc::util::SignalSet::remove for each
     /// installed signal.
     void clear();
 
@@ -176,7 +176,7 @@ public:
 
     /// @brief Invokes the onreceipt handler if it exists
     ///
-    /// This static method is used by @c isc::util::io::SignalSet class to
+    /// This static method is used by @c isc::util::SignalSet class to
     /// invoke the registered handler (if one) immediately upon receipt of
     /// a registered signal.
     ///
