@@ -28,7 +28,7 @@ PIDFile::PIDFile(const std::string& filename)
 PIDFile::~PIDFile() {
 }
 
-bool
+int
 PIDFile::check() const {
     std::ifstream fs(filename_.c_str());
     int pid;
@@ -53,11 +53,11 @@ PIDFile::check() const {
 
     // If the process is still running return true
     if (kill(pid, 0) == 0) {
-        return (true);
+        return (pid);
     }
 
     // No process
-    return (false);
+    return (0);
 }
 
 void
