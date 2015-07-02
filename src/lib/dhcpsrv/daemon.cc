@@ -39,11 +39,18 @@ std::string Daemon::config_file_ = "";
 
 Daemon::Daemon()
     : signal_set_(), signal_handler_(), proc_name_(""),
-    pid_file_dir_(DHCP_DATA_DIR), pid_file_() {
+    pid_file_dir_(DHCP_DATA_DIR), pid_file_(), am_file_author_(false) {
+
+    // The pid_file_dir can be overridden via environment variable
+    // This is primarily intended to simplify testing
+    const char* const env = getenv("KEA_PIDFILE_DIR");
+    if (env) {
+        pid_file_dir_ = env;
+    }
 }
 
 Daemon::~Daemon() {
-    if (pid_file_) {
+    if (pid_file_ && am_file_author_) {
         pid_file_->deleteFile();
     }
 }
@@ -191,9 +198,10 @@ Daemon::createPIDFile(int pid) {
     }
 
     // If we find a pre-existing file containing a live PID we bail.
-    if (pid_file_->check()) {
-        isc_throw(DaemonPIDExists, "Daemon::createPIDFile " << proc_name_
-                  << " already running?, PID file: " << getPIDFileName());
+    int chk_pid = pid_file_->check();
+    if (chk_pid > 0) {
+        isc_throw(DaemonPIDExists, "Daemon::createPIDFile: PID: " << chk_pid
+                 << " exists, PID file: " << getPIDFileName());
     }
 
     if (pid == 0) {
@@ -203,6 +211,8 @@ Daemon::createPIDFile(int pid) {
         // Write the PID we were given
         pid_file_->write(pid);
     }
+
+    am_file_author_ = true;
 }
 
 };

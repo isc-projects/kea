@@ -50,6 +50,12 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exception thrown when the controller launch fails.
+class LaunchError: public isc::Exception {
+public:
+    LaunchError (const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 /// @brief Exception thrown when the application process fails.
 class ProcessInitError: public isc::Exception {

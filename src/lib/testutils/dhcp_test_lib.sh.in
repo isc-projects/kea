@@ -426,6 +426,60 @@ must be a number"
     kill -${sig} ${_GET_PIDS}
 }
 
+# Verifies that a server is up running by its PID file
+# The PID file is constructed from the given config file name and
+# binary name.  If it exists and the PID it contains refers to a
+# live process it sets _SERVER_PID_FILE and _SERVER_PID to the
+# corresponding values.  Otherwise, it emits an error and exits.
+verify_server_pid() {
+    local bin_name="${1}" # binary name of the server
+    local cfg_file="${2}" # config file name
+
+    # We will construct the PID file name based on the server config
+    # and binary name
+    if [ -z ${bin_name} ]; then
+        test_lib_error "verify_server_pid requires binary name"
+        clean_exit 1
+    fi
+
+    if [ -z ${cfg_file} ]; then
+        test_lib_error "verify_server_pid requires config file name"
+        clean_exit 1
+    fi
+
+    # Only the file name portio of the config file is used, try and
+    # extract it. NOTE if this "algorithm" changes this code will need
+    # to be updated.
+    fname=`basename ${cfg_file}`
+    fname=`echo $fname | cut -f1 -d'.'`
+
+    if [ -z ${fname} ]; then
+        test_lib_error "verify_server_pid could not extract config name"
+        clean_exit 1
+    fi
+
+    # Now we can build the name:
+    pid_file="$KEA_PIDFILE_DIR/$fname.$bin_name.pid"
+
+    if [ ! -e ${pid_file} ]; then
+        printf "ERROR: PID file:[%s] does not exist\n" ${pid_file}
+        clean_exit 1
+    fi
+
+    # File exists, does its PID point to a live process?
+    pid=`cat ${pid_file}`
+    kill -0 ${pid}
+    if [ $? -ne 0 ]; then
+        printf "ERROR: PID file:[%s] exists but PID:[%d] does not\n" \
+               ${pid_file} ${pid}
+        clean_exit 1
+    fi
+
+    # Make the values accessible to the caller
+    _SERVER_PID="${pid}"
+    _SERVER_PID_FILE="${pid_file}"
+}
+
 # This test verifies that the binary is reporting its version properly.
 version_test() {
     test_name=${1}  # Test name

@@ -263,6 +263,9 @@ private:
 
     /// @brief Pointer to the PID file for this process
     isc::util::PIDFilePtr pid_file_;
+
+    /// @brief Flag indicating if this instance created the file
+    bool am_file_author_;
 };
 
 }; // end of isc::dhcp namespace
