@@ -70,7 +70,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
         throw; // rethrow it
     }
 
-    Daemon::setProcName(bin_name_);
+    setProcName(bin_name_);
 
     // It is important that we set a default logger name because this name
     // will be used when the user doesn't provide the logging configuration
@@ -187,7 +187,7 @@ DControllerBase::parseArgs(int argc, char* argv[])
                 isc_throw(InvalidUsage, "configuration file name missing");
             }
 
-            Daemon::setConfigFile(optarg);
+            setConfigFile(optarg);
             break;
 
         case '?': {
