@@ -19,6 +19,16 @@ This message is printed when DHCPv4 server enabled an interface to be used
 to receive DHCPv4 traffic. IPv4 socket on this interface will be opened once
 Interface Manager starts up procedure of opening sockets.
 
+% DHCP4_ALREADY_RUNNING %1 already running? %2
+This is an error message that occurs when the DHCPv4 server encounters
+a pre-existing PID file which contains the PID of a running process.
+This most likely indicates an attempt to start a second instance of
+the server using the same configuration file.  It is possible, though
+unlikely that the PID file is a remnant left behind by a server crash or
+power failure and the PID it contains refers to a process other than
+the server.  In such an event, it would be necessary to manually remove
+the PID file.
+
 % DHCP4_BUFFER_RECEIVED received buffer from %1:%2 to %3:%4 over interface %5
 This debug message is logged when the server has received a packet
 over the socket. When the message is logged the contents of the received

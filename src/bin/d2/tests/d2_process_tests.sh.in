@@ -235,50 +235,9 @@ shutdown_test() {
     test_finish 0
 }
 
-# This test verifies if only one D2 per config can be started.
-dupcliate_server_start_test() {
-    # Log the start of the test and print test name.
-    test_start "dhcp_ddns.duplicate_server_start_test"
-    # Remove dangling D2 instances and remove log files.
-    cleanup
-    # Create new configuration file.
-    create_config "${CONFIG}"
-    # Instruct D2 to log to the specific file.
-    set_logger
-    # Start D2.
-    start_kea ${bin_path}/${bin}
-    # Wait up to 20s for D2 to start.
-    wait_for_kea 20
-    if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
-        printf "ERROR: timeout waiting for D2 to start.\n"
-        clean_exit 1
-    fi
-
-    # Verify server is still running
-    verify_server_pid ${bin} ${CFG_FILE}
-
-    printf "PID file is [%s],  PID is [%d]" ${_SERVER_PID_FILE} ${_SERVER_PID}
-
-    # Now try to start a second one
-    start_kea ${bin_path}/${bin}
-
-    wait_for_message 10 "DHCP_DDNS_ALREADY_RUNNING" 1
-    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
-        printf "ERROR: Second D2 instance started? PID conflict not reported.\n"
-        clean_exit 1
-    fi
-
-    # Verify server is still running
-    verify_server_pid ${bin} ${CFG_FILE}
-
-    # All ok. Shut down D2 and exit.
-    test_finish 0
-}
-
-
+server_pid_file_test "${CONFIG}" DHCP_DDNS_ALREADY_RUNNING
 dynamic_reconfiguration_test
 shutdown_test "dhcp-ddns.sigterm_test" 15
 shutdown_test "dhcp-ddns.sigint_test" 2
 version_test "dhcp-ddns.version"
 logger_vars_test "dhcp-ddns.variables"
-dupcliate_server_start_test
