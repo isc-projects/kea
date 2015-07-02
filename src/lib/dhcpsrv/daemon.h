@@ -177,11 +177,11 @@ public:
     /// @brief returns the process name
     /// This value is used as when forming the default PID file name
     /// @return text string
-    std::string getProcName() const;
+    static std::string getProcName();
 
     /// @brief Sets the process name
     /// @param proc_name name the process by which the process is recognized
-    void setProcName(const std::string& proc_name);
+    static void setProcName(const std::string& proc_name);
 
     /// @brief Returns the directory used when forming default PID file name
     /// @return text string
@@ -255,7 +255,7 @@ private:
     static std::string config_file_;
 
     /// @brief Name of this process, used when creating its pid file
-    std::string proc_name_;
+    static std::string proc_name_;
 
     /// @brief Pointer to the directory where PID file(s) are written
     /// It defaults to --localstatedir

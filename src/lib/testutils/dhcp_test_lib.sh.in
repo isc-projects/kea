@@ -590,3 +590,49 @@ logger_vars_test() {
 
     test_finish 0
 }
+
+# This test verifies server PID file management
+# 1. It verifies that upon startup, the server creates a PID file
+# 2. It verifies the an attempt to start a second instance fails
+# due to pre-existing PID File/PID detection
+server_pid_file_test() {
+    local server_cfg="${1}"
+    local log_id="${2}"
+
+    # Log the start of the test and print test name.
+    test_start "${bin}.server_pid_file_test"
+    # Remove dangling DHCP4 instances and remove log files.
+    cleanup
+    # Create new configuration file.
+    create_config "${CONFIG}"
+    # Instruct server to log to the specific file.
+    set_logger
+    # Start server
+    start_kea ${bin_path}/${bin}
+    # Wait up to 20s for server to start.
+    wait_for_kea 20
+    if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
+        printf "ERROR: timeout waiting for %s to start.\n" ${bin}
+        clean_exit 1
+    fi
+
+    # Verify server is still running
+    verify_server_pid ${bin} ${CFG_FILE}
+
+    printf "PID file is [%s],  PID is [%d]" ${_SERVER_PID_FILE} ${_SERVER_PID}
+
+    # Now try to start a second one
+    start_kea ${bin_path}/${bin}
+
+    wait_for_message 10 "${log_id}" 1
+    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+        printf "ERROR: Second %s instance started? PID conflict not reported.\n" ${bin}
+        clean_exit 1
+    fi
+
+    # Verify server is still running
+    verify_server_pid ${bin} ${CFG_FILE}
+
+    # All ok. Shut down the server and exit.
+    test_finish 0
+}
