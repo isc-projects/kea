@@ -177,6 +177,9 @@ EXTRA_DIST += hosts_messages.mes
 # Database schema creation script moved to src/bin/admin
 EXTRA_DIST += database_backends.dox libdhcpsrv.dox
 
+# Specification file
+EXTRA_DIST += logging.spec
+
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(dhcp_data_dir)
 
