@@ -26,7 +26,8 @@ bool
 LoggingDestination::equals(const LoggingDestination& other) const {
     return (output_ == other.output_ &&
             maxver_ == other.maxver_ &&
-            maxsize_ == other.maxsize_);
+            maxsize_ == other.maxsize_ &&
+            flush_ == other.flush_);
 }
 
 LoggingInfo::LoggingInfo()
@@ -133,6 +134,9 @@ LoggingInfo::toSpec() const {
             option.destination = OutputOption::DEST_FILE;
             option.filename = dest->output_;
         }
+
+        // Copy the immediate flush flag
+        option.flush = flush_;
 
         // ... and set the destination
         spec.addOutputOption(option);
