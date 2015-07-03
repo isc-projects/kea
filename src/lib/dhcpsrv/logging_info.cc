@@ -136,7 +136,7 @@ LoggingInfo::toSpec() const {
         }
 
         // Copy the immediate flush flag
-        option.flush = flush_;
+        option.flush = dest->flush_;
 
         // ... and set the destination
         spec.addOutputOption(option);
