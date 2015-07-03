@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,17 @@ using namespace isc::dhcp;
 using namespace isc::data;
 
 namespace {
+
+// Helper to get the spec file
+std::string specfile(const std::string& name) {
+    return (std::string(TEST_DATA_BUILDDIR) + "/../" + name);
+}
+
+// Tests that the spec file is valid.
+TEST(LoggingTest, basicSpec) {
+    using namespace isc::config;
+    ASSERT_NO_THROW(moduleSpecFromFile(specfile("logging.spec")));
+}
 
 /// @brief Logging Test Fixture Class
 ///
