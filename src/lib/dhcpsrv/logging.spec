@@ -47,6 +47,13 @@
               "item_type": "integer",
               "item_optional": true,
               "item_default": 204800
+            },
+
+            {
+              "item_name": "flush",
+              "item_type": "boolean",
+              "item_optional": true,
+              "item_default": true
             }
             ]
           },
