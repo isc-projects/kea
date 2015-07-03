@@ -15,6 +15,7 @@
 #include <config.h>
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
+#include <config/module_spec.h>
 #include <dhcpsrv/logging.h>
 #include <gtest/gtest.h>
 #include <log/logger_support.h>
@@ -24,17 +25,6 @@ using namespace isc::dhcp;
 using namespace isc::data;
 
 namespace {
-
-// Helper to get the spec file
-std::string specfile(const std::string& name) {
-    return (std::string(TEST_DATA_BUILDDIR) + "/../" + name);
-}
-
-// Tests that the spec file is valid.
-TEST(LoggingTest, basicSpec) {
-    using namespace isc::config;
-    ASSERT_NO_THROW(moduleSpecFromFile(specfile("logging.spec")));
-}
 
 /// @brief Logging Test Fixture Class
 ///
@@ -56,6 +46,15 @@ class LoggingTest : public ::testing::Test {
         }
 };
 
+// Helper to get the spec file
+std::string specfile(const std::string& name) {
+    return (std::string(TEST_DATA_BUILDDIR) + "/../" + name);
+}
+
+// Tests that the spec file is valid.
+TEST_F(LoggingTest, basicSpec) {
+    ASSERT_NO_THROW(isc::config::moduleSpecFromFile(specfile("logging.spec")));
+}
 
 // Checks that contructor is able to process specified storage properly
 TEST_F(LoggingTest, constructor) {
