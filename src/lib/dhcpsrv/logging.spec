@@ -6,13 +6,13 @@
       {
         "item_name": "loggers",
         "item_type": "list",
-        "item_optional": true,
+        "item_optional": false,
         "item_default": [],
         "list_item_spec":
         {
-          "item_name": "logger-config",
+          "item_name": "logger",
           "item_type": "map",
-          "item_optional": true,
+          "item_optional": false,
           "item_default": {},
           "map_item_spec": [
           {
@@ -24,38 +24,45 @@
 
           {
             "item_name": "output_options",
-            "item_type": "map",
+            "item_type": "list",
             "item_optional": true,
-            "item_default": {},
-            "map_item_spec": [
+            "item_default": [],
+            "list_item_spec":
             {
-              "item_name": "output",
-              "item_type": "string",
-              "item_optional": false,
-              "item_default": "stdout"
-            },
+               "item_name": "output_option",
+               "item_type": "map",
+               "item_optional": false,
+               "item_default": {},
+               "map_item_spec": [
+               {
+                 "item_name": "output",
+                 "item_type": "string",
+                 "item_optional": false,
+                 "item_default": "stdout"
+               },
 
-            {
-              "item_name": "maxver",
-              "item_type": "integer",
-              "item_optional": true,
-              "item_default": 1
-            },
+               {
+                 "item_name": "maxver",
+                 "item_type": "integer",
+                 "item_optional": true,
+                 "item_default": 1
+               },
 
-            {
-              "item_name": "maxsize",
-              "item_type": "integer",
-              "item_optional": true,
-              "item_default": 204800
-            },
+               {
+                 "item_name": "maxsize",
+                 "item_type": "integer",
+                 "item_optional": true,
+                 "item_default": 204800
+               },
 
-            {
-              "item_name": "flush",
-              "item_type": "boolean",
-              "item_optional": true,
-              "item_default": true
-            }
-            ]
+               {
+                 "item_name": "flush",
+                 "item_type": "boolean",
+                 "item_optional": true,
+                 "item_default": true
+               }
+               ]
+             }
           },
 
           {
