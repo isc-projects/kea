@@ -106,6 +106,33 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
         access. Make sure you run this daemon as root.
       </para>
 
+      <para>
+        During startup the server will attempt to create a PID file of the
+        form: [localstatedir]/[conf name].kea-dhcp4.pid
+        where:
+        <itemizedlist>
+            <listitem>
+            <simpara><command>localstatedir</command>: The value as passed into the
+            build configure script. It defaults defaults to "/usr/local/var".  Note
+            that this value may be overridden at run time by setting the environment
+            variable KEA_PIDFILE_DIR.  This is intended primarily for testing purposes.
+            </simpara>
+            </listitem>
+            <listitem>
+            <simpara><command>conf name</command>: The confguration file name
+            used to start the server, minus all preceding path and file extension.
+            For example, given a pathname of "/usr/local/etc/kea/myconf.txt", the
+            portion used would be "myconf".
+            </simpara>
+            </listitem>
+        </itemizedlist>
+        If the file already exists and contains the PID of a live process,
+        the server will issue a DHCP4_ALREADY_RUNNING log message and exit. It
+        is possible, though unlikely, that the file is a remnant of a system crash
+        and the process to which the PID belongs is unrelated to Kea.  In such a 
+        case it would be necessary to manually delete the PID file.
+      </para>
+
     </section>
 
     <section id="dhcp4-configuration">
