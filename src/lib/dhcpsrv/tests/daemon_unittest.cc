@@ -65,9 +65,6 @@ public:
     /// the default after each test completes.
     ~DaemonTest() {
         isc::log::setDefaultLoggingOutput();
-        // Since they're static we need to clear them between tests
-        Daemon::setConfigFile("");
-        Daemon::setProcName("");
     }
 };
 
