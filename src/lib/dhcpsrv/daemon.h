@@ -46,16 +46,6 @@ public:
 /// Dhcpv6Srv) in tests, without going through the hassles of implemeting stub
 /// methods.
 ///
-/// This class comprises a static object holding a location of the configuration
-/// file. The object must be static because it is instantiated by the signal
-/// handler functions, which are static by their nature. The signal handlers
-/// are used to reconfigure a running server and they need access to the
-/// configuration file location. They get this access by calling
-/// @c Daemon::getConfigFile function.
-///
-/// By default, the configuration file location is empty and its actual value
-/// is assigned to the static object in @c Daemon::init function.
-///
 /// Classes derived from @c Daemon may install custom signal handlers using
 /// @c isc::util::SignalSet class. This base class provides a declaration
 /// of the @c SignalSet object that should be initialized in the derived
@@ -80,6 +70,10 @@ public:
     virtual ~Daemon();
 
     /// @brief Initializes the server.
+    ///
+    /// @todo #3753 - This method should be revisited as its original purpose
+    /// has been lost.  As of #3769, it has been superseded with setConfigFile().
+    /// None of the following is currently accurate.
     ///
     /// Depending on the configuration backend, it establishes msgq session,
     /// or reads the configuration file.
@@ -110,11 +104,6 @@ public:
 
     /// @brief Initiates shutdown procedure for the whole DHCPv6 server.
     virtual void shutdown();
-
-    /// @brief Returns config file name.
-    static std::string getConfigFile() {
-        return (config_file_);
-    }
 
     /// @brief Initializes logger
     ///
@@ -169,19 +158,23 @@ public:
     /// @return text string
     static std::string getVersion(bool extended);
 
+    /// @brief Returns config file name.
+    /// @return text string
+    std::string getConfigFile() const;
+
     /// @brief Sets the configuration file name
     ///
     /// @param config_file pathname of the configuration file
-    static void setConfigFile(const std::string& config_file);
+    void setConfigFile(const std::string& config_file);
 
     /// @brief returns the process name
     /// This value is used as when forming the default PID file name
     /// @return text string
-    static std::string getProcName();
+    std::string getProcName() const;
 
     /// @brief Sets the process name
     /// @param proc_name name the process by which the process is recognized
-    static void setProcName(const std::string& proc_name);
+    void setProcName(const std::string& proc_name);
 
     /// @brief Returns the directory used when forming default PID file name
     /// @return text string
@@ -252,10 +245,10 @@ protected:
 
 private:
     /// @brief Config file name or empty if config file not used.
-    static std::string config_file_;
+    std::string config_file_;
 
     /// @brief Name of this process, used when creating its pid file
-    static std::string proc_name_;
+    std::string proc_name_;
 
     /// @brief Pointer to the directory where PID file(s) are written
     /// It defaults to --localstatedir
