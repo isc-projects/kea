@@ -34,14 +34,9 @@
 namespace isc {
 namespace dhcp {
 
-// This is an initial config file location.
-std::string Daemon::config_file_ = "";
-
-std::string Daemon::proc_name_ = "";
-
 Daemon::Daemon()
-    : signal_set_(), signal_handler_(), pid_file_dir_(DHCP_DATA_DIR),
-    pid_file_(), am_file_author_(false) {
+    : signal_set_(), signal_handler_(), config_file_(""), proc_name_(""),
+    pid_file_dir_(DHCP_DATA_DIR), pid_file_(), am_file_author_(false) {
 
     // The pid_file_dir can be overridden via environment variable
     // This is primarily intended to simplify testing
@@ -113,13 +108,18 @@ std::string Daemon::getVersion(bool /*extended*/) {
     isc_throw(isc::NotImplemented, "Daemon::getVersion() called");
 }
 
+std::string
+Daemon::getConfigFile() const {
+    return (config_file_);
+}
+
 void
 Daemon::setConfigFile(const std::string& config_file) {
     config_file_ = config_file;
 }
 
 std::string
-Daemon::getProcName() {
+Daemon::getProcName() const {
     return (proc_name_);
 };
 

@@ -229,7 +229,7 @@ TEST_F(DStubControllerTest, missingConfigFileArgument) {
     int argc = 2;
 
     // Record start time, and invoke launch().
-    EXPECT_THROW(launch(argc, argv), ProcessInitError);
+    EXPECT_THROW(launch(argc, argv), LaunchError);
 }
 
 /// @brief Tests launch with an operational error during application execution.
