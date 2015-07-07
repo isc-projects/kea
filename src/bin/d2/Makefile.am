@@ -26,6 +26,14 @@ man_MANS = kea-dhcp-ddns.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-dhcp-ddns.xml dhcp-ddns.spec d2.dox
 
+EXTRA_DIST += images/abstract_app_classes.svg images/add_state_model.svg
+EXTRA_DIST += images/config_data_classes.svg images/config_from_file_sequence.svg
+EXTRA_DIST += images/config_parser_classes.svg images/cpl_signal_classes.svg
+EXTRA_DIST += images/cpl_signal_sequence.svg images/d2_app_classes.svg
+EXTRA_DIST += images/nc_trans_sequence.svg images/remove_state_model.svg
+EXTRA_DIST += images/request_mgt_classes.svg images/state_model_classes.svg
+EXTRA_DIST += images/trans_classes.svg images/update_exec_classes.svg
+
 if GENERATE_DOCS
 kea-dhcp-ddns.8: kea-dhcp-ddns.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
