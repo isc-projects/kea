@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+
+<chapter id="faq">
+  <title>Frequently Asked Questions</title>
+
+  <para>This chapter contains a number of frequently asked questions and
+  troubleshooting tips. It currently lacks content, but it is expected to grow
+  over time.</para>
+
+    <!-- Note: you may be tempted to put in questions here that concern current
+    missing features or known issues type of stuff. Please do not do that.
+    This section should only contain questions that will still be valid in
+    at least 2 years. If you have something short term, please consider putting
+    it in the known issues list. -->
+
+  <section id="faq-generic">
+    <title>Generic Frequently Asked Questions</title>
+
+    <section id="q1-generic">
+      <title>Where did the Kea name came from?</title>
+
+      <para>Kea is the name of a high mountain parrot living in New Zealand.
+      See this <ulink url="https://lists.isc.org/pipermail/kea-users/2014-October/000032.html" />
+      for an extended answer.</para>
+
+    </section>
+
+    <section id="q2-generic">
+      <title>Feature X is not supported yet. When/if will it be available?</title>
+
+      <para>Kea is developed by a small team of engineers. Our resources are
+      limited, so we need to prioritize requests. The complexity of a new
+      feature (how difficult it is to implement a feature and how likely it
+      would break something that already works), amount of work required and
+      expected popularity (i.e., how many users would actually benefit from it)
+      are three leading factors. We sometimes also have contractual obligations.
+      </para>
+
+      <para> Simply stating that you'd like feature X is useful. We try to
+      implement features that are actively requested first, but the reality
+      is that we have more requests than we can handle, so some of them must
+      be postponed, at least in the near future. So is your request likely to
+      be rejected? Not at all. You can do many things to greatly improve the
+      chances of your request being fulfilled. First, it helps to explain why you
+      need a feature. If your explanation is reasonable and there are likely
+      other users that would benefit from it, the chances for Kea developers
+      to put this task on a roadmap is better. Saying that you are willing
+      to participate in tests (e.g., test engineering drops when they become
+      available) is also helpful.</para>
+
+      <para>Another thing you can do to greatly improve the chances of a feature
+      to appear is to actually develop it on your own and submit a patch.
+      That's an avenue that people often forget about. Kea is open source
+      software and we do accept patches. There are certain requirements, like
+      code quality, comments, unit-tests, documentation, etc., but we have
+      accepted a significant number of patches in the past, so it's doable.
+      Accepted contributions range from minor documentation corrections to
+      significant new features, like support for a new database type. Before
+      considering writing and submitting a patch, make sure you read
+      the Contributor's Guide in <ulink url="http://git.kea.isc.org/~tester/kea/doxygen/">Kea Developer's Guide</ulink>.
+      </para>
+
+      <para>Kea is developed by ISC, which is a non-profit organization.
+      You may consider signing a development contract with us. In the past
+      we did implement certain features due to contractual obligations.
+      With additional funds we are able to put extra engineering efforts
+      into Kea development. We can reshuffle our schedule or add extra
+      hands to the team if needed. Please keep in mind that Kea is
+      open source software and its principle goal is to provide a good DHCP
+      solution that can be used by everyone. In other words, we may
+      refuse a contract that would tie the solution to specific proprietary
+      technology or make it unusable for other users. Also, we strive to
+      make Kea a reference implementation, so if your proposal significantly
+      violates a RFC, we may have a problem with that. Nevertheless, please
+      talk to us and we may be able to find a solution.</para>
+
+      <para>Finally, Kea has a <ulink url="http://kea.isc.org/roadmap">public
+      roadmap</ulink>, with releases happening several times each year. We tend
+      to not modify plans for the current milestone, unless there are very good
+      reasons to do so. Therefore "I'd like a feature X in 6 months" is much
+      better received than "I'd like a feature X now".</para>
+    </section>
+
+  </section>
+
+  <section id="faq-dhcp4">
+    <title>Frequently Asked Questions about DHCPv4</title>
+
+    <section iq="q1-dhcp4">
+      <title>I set up a firewall, but the Kea server still receives the traffic. Why?</title>
+
+      <para>Any DHCPv4 server must be able to receive from and send traffic to
+      hosts that don't have an IPv4 address assigned yet. That is typically not
+      possible with regular UDP sockets, therefore the Kea DHCPv4 server uses raw
+      sockets by default. Raw sockets mean that the incoming packets are received
+      as raw Ethernet frames, thus bypassing the whole kernel IP stack, including
+      any firewalling rules your kernel may provide.</para>
+
+      <para>If you do not want the server to use raw sockets, it is possible to
+      configure the Kea DHCPv4 server to use UDP sockets instead. See <command>dhcp-socket-type</command>
+      described in <xref linkend="dhcp4-interface-configuration" />. However,
+      using UDP sockets has certain limitations. In particular, they may not allow
+      for sending responses directly to clients without IPv4 addresses assigned.
+      That's ok, if all your traffic is coming through relay agents.</para>
+    </section>
+
+  </section> <!-- end of DHCPv4 FAQ section -->
+
+  <section id="faq-dhcp6">
+    <title>Frequently Asked Questions about DHCPv6</title>
+
+    <section iq="q1-dhcp6">
+      <title>Kea DHCPv6 doesn't seem to get incoming traffic. I checked with tcpdump (or other traffic
+      capture software) that the incoming traffic is reaching the box. What's wrong?</title>
+
+      <para>Please check whether your OS has any IPv6 filtering rules. Many
+      operating systems are shipped with firewalls that discard incoming IPv6
+      traffic by default. In particular, many Linux distributions do that. Please
+      check the output of the following command:
+  <screen>
+# <userinput>ip6tables -L -n</userinput></screen>
+      One common mistake in this area is to use <command>iptables</command> tool,
+      which lists IPv4 firewall rules only.
+      </para>
+    </section>
+
+  </section> <!-- end of DHCPv6 FAQ section -->
+
+
+  </chapter>
