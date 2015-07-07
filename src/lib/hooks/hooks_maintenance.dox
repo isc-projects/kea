@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -58,8 +58,8 @@
  The @ref isc::hooks::CalloutHandle has two functions: passing arguments
  between the Kea component and the user-written library, and storing
  per-request context between library calls.  In both cases the data is
- stored in a std::map structure, keyed by argument (or context item) name.
- The actual data is stored in a boost::any object, which allows any
+ stored in a @c std::map structure, keyed by argument (or context item) name.
+ The actual data is stored in a @c boost::any object, which allows any
  data type to be stored, although a penalty for this flexibility is
  the restriction (mentioned in the @ref hooksdgDevelopersGuide) that
  the type of data retrieved must be identical (and not just compatible)
@@ -149,11 +149,11 @@
  time and is used to tag the callout pointers.  It is discussed
  further below.
 
- As the LibraryManager provides all the methods needed to manage the
- shared library, it is the natural home for the static validateLibrary()
+ As the @c LibraryManager provides all the methods needed to manage the
+ shared library, it is the natural home for the static @c validateLibrary()
  method. The function called the parsing of the Kea configuration, when
  the "hooks-libraries" element is processed. It checks that shared library
- exists, that it can be opened, that it contains the "version()" function
+ exists, that it can be opened, that it contains the @c version() function
  and that that function returns a valid value. It then closes the shared
  library and returns an appropriate indication as to the library status.
 
@@ -164,32 +164,32 @@
  of them. The collection of LibraryManagers is managed by the
  @ref isc::hooks::LibraryManagerCollection object which, in most
  cases has a method corresponding to a @ref hooksmgLibraryManager
- method, e.g. it has a loadLibraries() that corresponds to the @ref
+ method, e.g. it has a @c loadLibraries() that corresponds to the @ref
  hooksmgLibraryManager's loadLibrary() call. As would be expected, methods
- on the LibraryManagerCollection iterate through all specified libraries,
+ on the @c LibraryManagerCollection iterate through all specified libraries,
  calling the corresponding LibraryManager method for each library.
 
- One point of note is that LibraryManagerCollection operates on an "all
- or none" principle. When loadLibraries() is called, on exit either all
+ One point of note is that @c LibraryManagerCollection operates on an "all
+ or none" principle. When @c loadLibraries() is called, on exit either all
  libraries have been successfully opened or none of them have. There
  is no use-case in Kea where, after a user has specified the shared
  libraries they want to load, the system will operate with only some of
  them loaded.
 
- The LibraryManagerCollection is the place where each library's index is set.
+ The @c LibraryManagerCollection is the place where each library's index is set.
  Each library is assigned a number ranging from 1 through to the number
  of libraries being loaded.  As mentioned in the previous section, this
  index is used to tag callout pointers, something that is discussed
  in the next section.
 
  (Whilst on the subject of library index numbers, two additional
- numbers - 0 and INT_MAX - are also valid as "current library index".
+ numbers - 0 and @c INT_MAX - are also valid as "current library index".
  For flexibility, the Kea component is able to register its own
  functions as hook callouts.  It does this by obtaining a suitable @ref
  hooksmgLibraryHandle from the @ref hooksmgHooksManager.  A choice
  of two is available: one @ref hooksmgLibraryHandle (with an index
  of 0) can be used to register a callout on a hook to execute before
- any user-supplied callouts.  The second (with an index of INT_MAX)
+ any user-supplied callouts.  The second (with an index of @c INT_MAX)
  is used to register a callout to run after user-specified callouts.
  Apart from the index number, the hooks framework does not treat these
  callouts any differently from user-supplied ones.)
@@ -209,7 +209,7 @@
  function (and prior to registering the standard callbacks).
 
  The situation is slightly more complex when a callout is executing. In
- order to execute a callout, the CalloutManager's callCallouts()
+ order to execute a callout, the CalloutManager's @c callCallouts()
  method must be called. This iterates through the callout vector for
  a hook and for each element in the vector, uses the "library index"
  part of the pair to set the "current library index" before calling the
@@ -282,8 +282,8 @@
 
  Static linking poses a problem for dynamically-loaded hooks libraries
  as some of the code in them - in particular the hooks framework and
- the logging code - depend on global objects created within the BIND
- 10 libraries.  In the normal course of events (Kea linked against
+ the logging code - depend on global objects created within the Kea
+ libraries.  In the normal course of events (Kea linked against
  shared libraries), when Kea is run and the operating system loads
  a Kea shared library containing a global object, address space
  is assigned for it.  When the hooks framework loads a user-library
@@ -315,16 +315,16 @@
  the relevant Kea server; this information is not available in the
  singleton created in the user's hooks library.
 
- Within the code users by the user's hooks library, the ServerHooks
+ Within the code users by the user's hooks library, the @c ServerHooks
  object is used by @ref isc::hooks::CalloutHandle and @ref
  isc::hooks::CalloutManager objects.  Both these objects are passed to the
  hooks library code when a callout is called: the former directly through
  the callout argument list, the latter indirectly as a pointer to it is
  stored in the CalloutHandle.  This allows a solution to the problem:
- instead of accessing the singleton via ServerHooks::getServerHooks(),
+ instead of accessing the singleton via @c ServerHooks::getServerHooks(),
  the constructors of these objects store a reference to the singleton
- ServerHooks when they are created and use that reference to access
- ServerHooks data.  Since both CalloutHandle and CalloutManager are
+ @c ServerHooks when they are created and use that reference to access
+ @c ServerHooks data.  Since both @c CalloutHandle and @c CalloutManager are
  created in the statically-linked Kea server, use of the reference
  means that it is the singleton within the server - and not the one
  within the user's hooks library - that is referenced.
@@ -349,8 +349,8 @@
  log4cplus shared library, item 1 - the static initialization of the log4cplus
  global variables is performed once.
 
- The next two tasks - static initialization of the messages in the BIND
- 10 libraries and the static initialization of the logging framework -
+ The next two tasks - static initialization of the messages in the Kea
+ libraries and the static initialization of the logging framework -
  are performed twice, once in the context of the Kea server and
  once in the context of the hooks library.  For this reason, run-time
  initialization of the logging framework needs to be performed twice,
@@ -359,7 +359,7 @@
  initialization code also performs the last task, initialization of
  log4cplus, something that causes problems if executed more than once.
 
- To get round this, the function isc::hooks::hooksStaticLinkInit()
+ To get round this, the function @ref isc::hooks::hooksStaticLinkInit()
  has been written.  It executes the only part of the logging framework
  run-time initialization that actually pertains to the logging framework
  and not log4cplus, namely loading the message dictionary with the
@@ -368,7 +368,7 @@
  initialized Kea.  (In fact, running it against a dynamically-linked
  Kea should have no effect, as the load operation discards any duplicate
  message entries.)  The hooks library tests do this, the code being
- conditionally compiled within a test of the USE_STATIC_LINK macro, set
+ conditionally compiled within a test of the @c USE_STATIC_LINK macro, set
  by the configure script.
 
  @note Not everything is completely rosy with logging and static linking.
@@ -376,7 +376,7 @@
  user-written hooks library is run by a statically-linked Kea and then
  unloaded.  As far as can be determined, on unload the system attempts to
  delete the same logger twice.  This is alleviated by explicitly clearing
- the loggerptr_ variable in the isc::log::Logger destructor, but there
+ the loggerptr_ variable in the @ref isc::log::Logger destructor, but there
  is a suspicion that some memory might be lost in these circumstances.
  This is still under investigation.
 */
