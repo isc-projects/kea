@@ -83,8 +83,8 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="faq.xml" />
 
-    <chapter id="acknowledgements">
-      <title>Acknowledgements</title>
+    <chapter id="acknowledgments">
+      <title>Acknowledgments</title>
 
       <para>Kea is primarily designed, developed, and maintained by
       Internet Systems Consortium, Inc. It is an open source project
