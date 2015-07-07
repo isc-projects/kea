@@ -36,7 +36,7 @@
       limited, so we need to prioritize requests. The complexity of a new
       feature (how difficult it is to implement a feature and how likely it
       would break something that already works), amount of work required and
-      expected popularity (i.e. how many users would actually benefit from it)
+      expected popularity (i.e., how many users would actually benefit from it)
       are three leading factors. We sometimes also have contractual obligations.
       </para>
 
@@ -49,7 +49,7 @@
       need a feature. If your explanation is reasonable and there are likely
       other users that would benefit from it, the chances for Kea developers
       to put this task on a roadmap is better. Saying that you are willing
-      to participate in tests (e.g. test engineering drops when they become
+      to participate in tests (e.g., test engineering drops when they become
       available) is also helpful.</para>
 
       <para>Another thing you can do to greatly improve the chances of a feature
@@ -80,8 +80,8 @@
 
       <para>Finally, Kea has a <ulink url="http://kea.isc.org/roadmap">public
       roadmap</ulink>, with releases happening several times each year. We tend
-      to not modify features for the current milestone, unless there are very good
-      reasons to do so. Therefore "I'd like a featury X in 6 months" is much
+      to not modify plans for the current milestone, unless there are very good
+      reasons to do so. Therefore "I'd like a feature X in 6 months" is much
       better received than "I'd like a feature X now".</para>
     </section>
 
