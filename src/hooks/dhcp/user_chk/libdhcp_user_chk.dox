@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,19 +35,19 @@ sampled by an external consumer.
 
 ## User Registry Classes
 At the heart of the library is a class hierarchy centered around the class,
-user_chk::UserRegistry.  This class represents a maintainable, searchable
+@c user_chk::UserRegistry.  This class represents a maintainable, searchable
 registry of "known" users and their attributes.  It provides services to load,
 clear, and refresh the registry as well as to add, find, and remove users.
 
-Each entry in the registry is an instance of the class, user_chk::User. Users
-are uniquely identified by their user_chk::UserId. UserIds are comprised of
+Each entry in the registry is an instance of the class, @c user_chk::User. Users
+are uniquely identified by their @c user_chk::UserId. UserIds are comprised of
 data taken from the DHCP request. IPv4 users have a type of "HW_ADDR" and
 their id is the hardware address from the request.  IPv6 users have a type of
 "DUID" and their id is the DUID from the request.
 
 The registry may be manually populated or loaded from a source of data which
-implements the UserDataSource interface. Currently, a single implementation has
-been implemented, user_chk::UserFile. UserFile supports reading the registry
+implements the @c UserDataSource interface. Currently, a single implementation has
+been implemented, @c user_chk::UserFile. UserFile supports reading the registry
 from a text file in which each line is a user entry in JSON format.  Each entry
 contains the id type and user id along with optional attributes.  Attributes are
 essentially name/value pairs whose significance is left up to the calling layer.
@@ -59,7 +59,7 @@ The library implements callouts for packet receive, subnet select, and packet
 send for both IPv4 and IPv6.  Regardless of the protocol type, the process
 flow upon receipt of an inbound request is the same and is as follows:
 
--# pkt_receive callout is invoked
+-# "pkt_receive" callout is invoked
     -# Refresh the user registry
     -# Extract user id from DHCP request and store it to context
     -#  Look up user id in registry and store resultant user pointer to context
@@ -70,15 +70,16 @@ flow upon receipt of an inbound request is the same and is as follows:
     user and push the result to the context making it available to subsequent
     callouts.
 
--# subnet_select callout is invoked
+-# "subnet_select" callout is invoked
     -# Retrieve the user pointer from context
     -# If pointer is null (i.e. user is not registered), replace subnet
     selection with restricted subnet
 
     By convention, the last subnet in the collection of subnets available is
-    assumed to be the "restricted access" subnet. A more sophisticated mechanism    is likely to be needed.
+    assumed to be the "restricted access" subnet. A more sophisticated mechanism
+    is likely to be needed.
 
--# pkt_send callout is invoked:
+-# "pkt_send" callout is invoked:
     -# Retrieve the user id and user pointer from context
     -# If user is not null add the options based on user's attributes,
     otherwise use default user's attributes
@@ -96,7 +97,9 @@ Two steps are required in order to use the library:
 Currently, the library uses a hard coded pathname for the user registry defined
 in load_unload.cc:
 
+@code
     const char* registry_fname = "/tmp/user_chk_registry.txt";
+@endcode
 
 Each line in the file is a self-contained JSON snippet which must have the
 following two entries:
@@ -120,7 +123,8 @@ Sample user registry file is shown below:
 { "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:06", "tftp_server" : "tftp.v6.example.com" }
 @endcode
 
-It is possible to specify additional attributes. They will be loaded and stored with the user's entry in the registry. This allows the library to be extended to perform additional actions based on these attributes.
+It is possible to specify additional attributes. They will be loaded and stored with the user's entry in the registry.
+This allows the library to be extended to perform additional actions based on these attributes.
 
 Upon start up the library will attempt to load this file.  If it does not exist
 the library will unload.
