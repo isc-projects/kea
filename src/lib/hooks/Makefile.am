@@ -28,6 +28,11 @@ EXTRA_DIST = hooks_messages.mes
 # Include developer's guide files
 EXTRA_DIST += hooks_user.dox hooks_maintenance.dox hooks_component_developer.dox
 
+# Include images used in Developer's guide
+EXTRA_DIST += images/DataScopeArgument.dia images/DataScopeArgument.png
+EXTRA_DIST += images/DataScopeContext.dia images/DataScopeContext.png
+EXTRA_DIST += images/HooksUml.dia images/HooksUml.png
+
 # Get rid of generated message files on a clean
 CLEANFILES = *.gcno *.gcda hooks_messages.h hooks_messages.cc s-messages
 
