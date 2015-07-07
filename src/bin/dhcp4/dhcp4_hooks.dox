@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,7 @@
  the @ref hooksdgDevelopersGuide.  Information for Kea maintainers can be
  found in the @ref hooksComponentDeveloperGuide.
 
- This manual is more specialised and is aimed at developers of hook
+ This manual is more specialized and is aimed at developers of hook
  code for the DHCPv4 server. It describes each hook point, what the callouts
  attached to the hook are able to do, and the arguments passed to the
  callouts.  Each entry in this manual has the following information:
@@ -54,23 +54,25 @@ packet processing. Hook points that are not specific to packet processing
  - @b Arguments:
    - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
 
- - @b Description: this callout is executed when an incoming DHCPv4
-   buffer is received, before its content is parsed. The sole argument
-   - query4 - contains a pointer to an isc::dhcp::Pkt4 object that
-   contains raw information regarding incoming packet, including its
-   source and destination addresses, interface over which it was
-   received, and a raw buffer stored in data_ field. None of the
-   packet fields (op_, hlen_, chaddr_, etc.) are set yet. Callouts
-   installed on this hook point can modify the incoming buffer. The
-   server will parse the buffer afterwards.
+ - @b Description: this callout is executed when the server has received a
+   buffer containing a DHCPv4 message, but the message hasn't been parsed
+   yet. The sole argument "query4" contains a pointer to the isc::dhcp::Pkt4
+   object, which contains the source and destination address of the
+   received packet, interface over which the packet has been received, and
+   a raw buffer, stored in the data_ field, containing the DHCPv4 message
+   in the wire format. None of the packet fields (op_, hlen_, chaddr_, etc.)
+   are set yet. Callouts installed on this hook point can modify the data
+    in the received buffer. The server will parse the buffer afterwards.
 
  - <b>Skip flag action</b>: If any callout sets the skip flag, the server will
    skip the buffer parsing. In such case there is an expectation that
-   the callout will parse the buffer and create option objects (see
-   isc::dhcp::Pkt4::addOption()). Otherwise the server will find out
-   that some mandatory options are missing (e.g. DHCP Message Type) and
-   will drop the packet. If you want to have the capability to drop
-   a message, it is better to use skip flag in pkt4_receive callout.
+   the callout will parse options carried in the buffer, create
+   @c isc::dhcp::Option objects (or derived) and add them to the "query4"
+   object using the @c isc::dhcp::Pkt4::addOption.
+   Otherwise the server will find out that some mandatory options are
+   missing (e.g. DHCP Message Type) and will drop the message. If you
+   want to have the capability to drop a message, it is better to use
+   skip flag in "pkt4_receive" callout.
 
  @subsection dhcpv4HooksPkt4Receive pkt4_receive
 
@@ -79,15 +81,14 @@ packet processing. Hook points that are not specific to packet processing
 
  - @b Description: this callout is executed when an incoming DHCPv4
    packet is received and its content has been parsed. The sole
-   argument - query4 - contains a pointer to an isc::dhcp::Pkt4 object
+   argument "query4" contains a pointer to an isc::dhcp::Pkt4 object
    that contains all information regarding incoming packet, including
    its source and destination addresses, interface over which it was
-   received, a list of all options present within and relay
+   received, a list of all options present within and the relay
    information.  All fields of the Pkt4 object can be modified at this
-   time, except data_. (By the time this hook is reached, the contents
-   of the data_ field has been already parsed and stored in other
-   fields. Therefore, the modification in the data_ field has no
-   effect.)
+   time. By the time this hook is reached, the contents of the data_
+   field has been already parsed and stored in other fields. Therefore,
+   the modification in the data_ field has no effect.
 
  - <b>Skip flag action</b>: If any callout sets the skip flag, the server will
    drop the packet and start processing the next one.  The reason for the drop
@@ -98,19 +99,19 @@ packet processing. Hook points that are not specific to packet processing
  - @b Arguments:
    - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
    - name: @b subnet4, type: isc::dhcp::Subnet4Ptr, direction: <b>in/out</b>
-   - name: @b subnet4collection, type: const isc::dhcp::Subnet4Collection *, direction: <b>in</b>
+   - name: @b subnet4collection, type: const isc::dhcp::Subnet4Collection *,
+     direction: <b>in</b>
 
  - @b Description: this callout is executed when a subnet is being
    selected for the incoming packet. All parameters and addresses
    will be assigned from that subnet. A callout can select a
-   different subnet if it wishes so, the list of all subnets currently
-   configured being provided as 'subnet4collection'. The list itself must
+   different subnet if it wishes so. The list of all subnets currently
+   configured are provided as "subnet4collection". The list itself must
    not be modified.
 
- - <b>Skip flag action</b>: If any callout installed on 'subnet4_select'
+ - <b>Skip flag action</b>: If any callout, installed on "subnet4_select",
    sets the skip flag, the server will not select any subnet. Packet processing
-   will continue, but will be severely limited (i.e. only global options
-   will be assigned).
+   will continue, but will be severely limited.
 
 @subsection dhcpv4HooksLeaseSelect lease4_select
 
@@ -120,22 +121,24 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b lease4, type: isc::dhcp::Lease4Ptr, direction: <b>in/out</b>
 
  - @b Description: this callout is executed after the server engine
-   has selected a lease for client's request but before the lease has
+   has selected a lease for the client's request, but before the lease has
    been inserted into the database. Any modifications made to the
-   isc::dhcp::Lease4 object will be stored in the lease's record in
-   the database. The callout should sanity check all modifications as
-   the server will use that data as is with no further checking.\n\n
-   The server processes lease requests for DISCOVER and REQUEST in a
-   very similar way. The only major difference is that for DISCOVER
-   the lease is just selected, but not inserted into the database.  It
-   is possible to distinguish between DISCOVER and REQUEST by checking
-   value of the fake_allocation flag: a value of true indicates that the
-   lease won't be inserted into the database (DISCOVER), a value of
-   false indicates that it will (REQUEST).
+   "lease4" object will affect the lease's record in the database.
+   The callout should sanity check all modifications as the server will
+   use that data as is, with no further checking.\n\n
+   The server processes lease requests for DHCPDISCOVER and DHCPREQUEST in a
+   very similar way. The only major difference is that for DHCPDISCOVER
+   the lease is only selected, but not inserted into the database. The callouts
+   may distinguish between DHCPDISCOVER and DHCPREQUEST by checking the
+   value of the "fake_allocation" flag: a value of true indicates that the
+   lease won't be inserted into the database (DHCPDISCOVER case), a value of
+   false indicates that it will (DHCPREQUEST case).
 
- - <b>Skip flag action</b>: If any callout installed on 'lease4_select'
-   sets the skip flag, the server will not assign any lease. Packet
-   processing will continue, but client will not get an address.
+ - <b>Skip flag action</b>: If any callout installed on "lease4_select"
+   sets the skip flag, the server will not assign any lease and the callouts
+   become responsible for the lease assignment. If the callouts fail to provide
+   a lease, the packet processing will continue, but client will not get
+   an address.
 
 @subsection dhcpv4HooksLeaseRenew lease4_renew
 
@@ -146,15 +149,15 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b lease4, type: isc::dhcp::Lease4Ptr, direction: <b>in/out</b>
 
  - @b Description: this callout is executed when the server engine
-   is about to renew a lease, as a result of receiving REQUEST/Renewing
-   packet. The lease4 argument points to Lease4 object that contains
-   the updated values. Callout can modify those values. Care should be taken
-   as the server will attempt to update the lease in the database without
-   any additional checks.
+   is about to renew a lease, as a result of receiving DHCPREQUEST/Renewing
+   packet. The "lease4" argument points to @c isc::dhcp::Lease4 object that
+   contains the updated values. Callout can modify those values. Care should
+   be taken as the server will attempt to update the lease in the database
+   without any additional checks.
 
- - <b>Skip flag action</b>: If any callout installed on 'lease4_renew'
-   sets the skip flag, the server will not update the lease and will
-   use old values instead.
+ - <b>Skip flag action</b>: If any callout installed on "lease4_renew"
+   sets the skip flag, the server will not update the lease in the
+   database and continue using old values instead.
 
 @subsection dhcpv4HooksLeaseRelease lease4_release
 
@@ -163,11 +166,11 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b lease4, type: isc::dhcp::Lease4Ptr, direction: <b>in</b>
 
  - @b Description: this callout is executed when the server engine
-   is about to release a lease, as a result of receiving RELEASE packet.
-   The lease4 argument points to Lease4 object that contains the lease to
+   is about to release a lease, as a result of receiving DHCPRELEASE packet.
+   The "lease4" argument points to @c Lease4 object that contains the lease to
    be released. It doesn't make sense to modify it at this time.
 
- - <b>Skip flag action</b>: If any callout installed on 'lease4_release'
+ - <b>Skip flag action</b>: If any callout installed on "lease4_release"
    sets the skip flag, the server will not delete the lease. It will be
    kept in the database and will go through the regular expiration/reuse
    process.
@@ -178,17 +181,17 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
 
  - @b Description: this callout is executed when server's response
-   is about to be sent back to the client. The sole argument - response4 -
-   contains a pointer to an isc::dhcp::Pkt4 object that contains the
+   is about to be sent back to the client. The sole argument "response4"
+   contains a pointer to an isc::dhcp::Pkt4 object carrying the
    packet, with source and destination addresses set, interface over which
    it will be sent, and a list of all options and relay information.  All fields
-   of the Pkt4 object can be modified at this time, except buffer_out_.
+   of the @c Pkt4 object can be modified at this time, except @c buffer_out_.
    (This is scratch space used for constructing the packet after all
    pkt4_send callouts are complete, so any changes to that field will
    be overwritten.)
 
  - <b>Skip flag action</b>: if any callout sets the skip flag, the server
-   will not construct raw buffer. The expectation is that if the callout
+   will not construct the raw buffer. The expectation is that if the callout
    set skip flag, it is responsible for constructing raw form on its own.
    Otherwise the output packet will be sent with zero length.
 
@@ -198,17 +201,19 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
 
  - @b Description: this callout is executed when server's response
-   is about to be sent back to the client. The sole argument - response4 -
-   contains a pointer to an isc::dhcp::Pkt4 object that contains the
+   is about to be sent back to the client. The sole argument "response4"
+   contains a pointer to an @c isc::dhcp::Pkt4 object that contains the
    packet, with source and destination addresses set, interface over which
    it will be sent, and a list of all options and relay information. The raw
-   on-wire form is already prepared in buffer_out_ (see isc::dhcp::Pkt4::getBuffer())
-   It doesn't make any sense to modify packet fields or options content
-   at this time, because they were already used to construct on-wire buffer.
+   on-wire form is already prepared in @c buffer_out_ (see
+   @c isc::dhcp::Pkt4::getBuffer())
+   Callouts should not modify the packet fields or options contents at this
+   time, because they were already used to construct on-wire buffer. Their
+   modification would have no effect.
 
  - <b>Skip flag action</b>: if any callout sets the skip flag, the server
    will drop this response packet. However, the original request packet
-   from a client was processed, so server's state was most likely changed
+   from a client was processed, so server's state most likely has changed
    (e.g. lease was allocated). Setting this flag merely stops the change
    being communicated to the client.
 
