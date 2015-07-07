@@ -1,3 +1,7 @@
+976.	[build]		tomek
+	Included missing Doxygen documentation images in the tarball.
+	(Trac #3928, git 2fb63a18897b93b12a5fc4635d4ac29e0bf82841)
+
 975.	[doc]		marcin
 	Updated the list of standard DHCPv4 options in the User's Guide
 	with the information of whether they are returned by the server
