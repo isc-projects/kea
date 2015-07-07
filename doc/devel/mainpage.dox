@@ -15,12 +15,12 @@
 /**
  * @mainpage Kea Developer's Guide
  *
- * Welcome to Kea Developer's Guide. This documentation is addressed
- * at existing and prospecting developers and programmers and provides
- * information needed to both extend and maintain Kea.
- *
+ * Welcome to Kea Developer's Guide. This documentation is addressed at
+ * either existing or prospective Kea developers and contributors, and
+ * provides information needed to extend and maintain Kea.
+
  * If you wish to write "hook" code - code that is loaded by Kea at
- * run-time and modifies its behavior you should read the section
+ * run-time and modifies its behavior,  you should read the section
  * @ref hooksdgDevelopersGuide.
  *
  * Kea maintenance information is divided into a number of sections
@@ -30,8 +30,11 @@
  *
  * If you are a user or system administrator, rather than software engineer,
  * you should read the
- * <a href="http://kea.isc.org/docs/bind10-guide.html">Kea
- * Administrator Reference Manual</a> instead.
+ * <a href="http://kea.isc.org/docs/kea-guide.html">Kea
+ * Administrator Reference Manual</a> instead. If you are using Beta or
+ * development version of Kea, the
+ * <a href="http://git.kea.isc.org/~tester/kea/guide/kea-guide.html">
+ * development version of the manual</a> is recommended.
  *
  * Regardless of your field of expertise, you are encouraged to visit the
  * <a href="http://kea.isc.org/">Kea webpage (http://kea.isc.org)</a>
@@ -117,10 +120,5 @@
  * - @subpage SocketSessionUtility
  * - <a href="./doxygen-error.log">Documentation warnings and errors</a>
  *
- * @image html isc-logo.png
- */
-/*
- * @todo: Move the logo to the right (and possibly up). Not sure what
- * is the best way to do it in Doxygen, without using CSS hacks.
  */
 
