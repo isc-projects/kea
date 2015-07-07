@@ -1,3 +1,7 @@
+977.	[doc]		tomek
+	Frequently Asked Questions section added to the Kea User's Guide.
+	(Trac #3873, #3847, git 95683c9d3c3dd7024269df1904b6cbe5817741a2)
+
 976.	[build]		tomek
 	Included missing Doxygen documentation images in the tarball.
 	(Trac #3928, git 2fb63a18897b93b12a5fc4635d4ac29e0bf82841)
