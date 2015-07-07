@@ -58,7 +58,7 @@ a regular x86 architecture machine to write your patch, but the software
 is expected to run on many other architectures. You may take a look at
 system specific build notes (http://kea.isc.org/wiki/SystemSpecificNotes).
 For a complete list of systems we build on, you may take a look at the
-following build farm report: http://git.kea.isc.org/~tester/builder/KEA-builder-new.html .
+following build farm report: https://jenkins.isc.org/view/Kea_BuildFarm/ .
 
 Does your patch conform to Kea coding guidelines
 (http://kea.isc.org/wiki/CodingGuidelines)? You can submit a
@@ -76,7 +76,12 @@ almost every line of code. Even if you are fixing something small,
 like a single line fix, you are encouraged to write unit-tests for that
 change. That is even more true for new code: if you write a new
 function, method or a class, you definitely should write unit-tests
-for it.
+for it. To ensure that the test for the specific change is valid, it
+should be written before the change is applied. The test should initially
+fail. When the change is applied the test should start passing. The
+test validating a new function should be written against empty
+(unimplemented) function. When the function is implemented, the test
+should pass.
 
 See @ref qaUnitTests for instructions on how to run unit-tests.
 
@@ -94,10 +99,10 @@ checks on logger parameters. Use \c --enable-debug to enable various
 additional consistency checks that reduce performance but help during
 development. If you happen to modify anything in the
 documentation, use \c --enable-generate-docs. If you are modifying DHCP
-code, you are likely to be interested in enabling a database backend for
-DHCP. Note that if the backend is not enabled, the database-specific unit-tests
-are skipped. To enable the MySQL backend, use the switch
-\c --with-dhcp-mysql; for PostgreSQL, use \c --with-dhcp-pgsql.
+code, you are likely to be interested in enabling a non-default database
+backends for DHCP. Note that if the backend is not enabled,
+the database-specific unit-tests are skipped. To enable the MySQL backend,
+use the switch \c --with-dhcp-mysql; for PostgreSQL, use \c --with-dhcp-pgsql.
 A complete list of all switches can be obtained with the command:
 
 @code
