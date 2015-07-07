@@ -90,8 +90,8 @@ The following sections will describe these tasks in more detail.
 @section hooksComponentDefinition Determining the Hook Points
 
 Before any other action takes place, the location of the hook points
-in the code need to be determined.  This of course depends on the
-component but as a general guideline, hook locations should be chosen
+in the code need to be determined.  This, of course, depends on the
+component but, as a general guideline, hook locations should be located
 where a callout is able to obtain useful information from Kea and/or
 affect processing.  Typically this means at the start or end of a major
 step in the processing of a request, at a point where either useful
@@ -121,7 +121,7 @@ subject to certain restrictions (see below).
 Before the callouts at any hook point are called and any user libraries
 loaded - so typically during component initialization - the component must
 register the names of all the hooks.  The registration is done using
-the static method isc::hooks::HooksManager::registerHook():
+the static method @c isc::hooks::HooksManager::registerHook():
 
 @code
 
@@ -130,7 +130,7 @@ the static method isc::hooks::HooksManager::registerHook():
     int example_index = HooksManager::registerHook("lease_allocate");
 @endcode
 
-The name of the hook is passed as the sole argument to the registerHook()
+The name of the hook is passed as the sole argument to the @c registerHook()
 method.  The value returned is the index of that hook point and should
 be retained - it is needed to call the callouts attached to that hook.
 
@@ -142,7 +142,7 @@ unregistering a hook and there is no need to do so.
 In some components, it may be convenient to set up a single initialization
 function that registers all hooks.  For others, it may be more convenient
 for each module within the component to perform its own initialization.
-Since the isc::hooks::HooksManager object is a singleton and is created when first
+Since the @c isc::hooks::HooksManager object is a singleton and is created when first
 accessed, a useful trick is to automatically register the hooks when
 the module is loaded.
 
@@ -197,7 +197,7 @@ However, the following guidelines should be observed:
 
 - The names <b>context_create</b> and <b>context_destroy</b> are reserved to
 the hooks system and are automatically registered: an attempt to register
-one of these will lead to a isc::hooks::DuplicateHook exception being thrown.
+one of these will lead to a @c isc::hooks::DuplicateHook exception being thrown.
 
 - The hook name should be a valid "C" function name.  If a user gives a
 callout the same name as one of the hooks, the hooks framework will
@@ -224,16 +224,16 @@ Each user callout has the signature:
 int callout_name(isc::hooks::CalloutHandle& handle);
 @endcode
 
-The isc::hooks::CalloutHandle object is the object used to pass data to
+The @c isc::hooks::CalloutHandle object is the object used to pass data to
 and from the callout.  This holds the data as a set of name/value pairs,
 each pair being considered an argument to the callout.  If there are
-multiple callouts attached to a hook, the CalloutHandle is passed to
+multiple callouts attached to a hook, the @c CalloutHandle is passed to
 each in turn. Should a callout modify an argument, the updated data is
 passed subsequent callouts (each of which could also modify it) before
 being returned to the component.
 
 Two methods are provided to get and set the arguments passed to
-the callout called (naturally enough) getArgument and SetArgument.
+the callout called (naturally enough) @c getArgument and @c setArgument.
 Their usage is illustrated by the following code snippets.
 
 @code
@@ -254,26 +254,26 @@ Their usage is illustrated by the following code snippets.
     handle_ptr->getArgument("inpacket", pktptr);
 @endcode
 
-As can be seen "getArgument" is used to retrieve data from the
-CalloutHandle, and "setArgument" used to put data into it.  If a callout
+As can be seen @c getArgument is used to retrieve data from the
+@c CalloutHandle, and @c setArgument used to put data into it.  If a callout
 wishes to alter data and pass it back to the component, it should retrieve
 the data with getArgument, modify it, and call setArgument to send
 it back.
 
 There are a couple points to be aware of:
 
-- The data type of the variable in the call to getArgument must
+- The data type of the variable in the call to @c getArgument must
 match the data type of the variable passed to the corresponding
-setArgument <B>exactly</B>: using what would normally be considered
+@c setArgument <B>exactly</B>: using what would normally be considered
 to be a "compatible" type is not enough.  For example, if the callout
-passed an argument back to the component as an "int" and the component
-attempted to retrieve it as a "long", an exception would be thrown even
-though any value that can be stored in an "int" will fit into a "long".
+passed an argument back to the component as an @c int and the component
+attempted to retrieve it as a @c long, an exception would be thrown even
+though any value that can be stored in an @c int will fit into a @c long.
 This restriction also applies the "const" attribute but only as applied to
-data pointed to by pointers, e.g. if an argument is defined as a "char*",
+data pointed to by pointers, e.g. if an argument is defined as a @c char*,
 an exception will be thrown if an attempt is made to retrieve it into
-a variable of type "const char*".  (However, if an argument is set as a
-"const int", it can be retrieved into an "int".)  The documentation of
+a variable of type @c const @c char*.  (However, if an argument is set as a
+@c const @c int, it can be retrieved into an @c int.)  The documentation of
 a hook point should detail the exact data type of each argument.
 
 - If a pointer to an object is passed to a callout (either a "raw"
@@ -285,7 +285,7 @@ This can be avoided by passing a pointer to a "const" object.
 @subsection hooksComponentSkipFlag The Skip Flag
 
 Although information is passed back to the component from callouts through
-CalloutHandle arguments, a common action for callouts is to inform the component
+@c CalloutHandle arguments, a common action for callouts is to inform the component
 that its flow of control should be altered.  For example:
 
 - In the DHCP servers, there is a hook at the point at which a lease is
@@ -298,9 +298,9 @@ that its flow of control should be altered.  For example:
   against a blacklist.  If the address is on the list, the callout could set
   the skip flag to indicate to the server that the packet should be dropped.
 
-For ease of processing, the CalloutHandle contains
-two methods, isc::hooks::CalloutHandle::getSkip() and
-isc::hooks::CalloutHandle::setSkip().  It is only meaningful for the
+For ease of processing, the @c CalloutHandle contains
+two methods, @c isc::hooks::CalloutHandle::getSkip() and
+@c isc::hooks::CalloutHandle::setSkip().  It is only meaningful for the
 component to use the "get" method.  The skip flag is cleared by the hooks
 framework when the component requests that callouts be executed, so any
 value set by the component is lost.  Callouts can both inspect the flag (it
@@ -325,14 +325,14 @@ if (! handle_ptr->getSkip()) {
 
 @subsection hooksComponentGettingHandle Getting the Callout Handle
 
-The CalloutHandle object is linked to the loaded libraries
+The @c CalloutHandle object is linked to the loaded libraries
 for lifetime reasons (described below).  Components
-should retrieve a isc::hooks::CalloutHandle using
-isc::hooks::HooksManager::createCalloutHandle():
+should retrieve a @c isc::hooks::CalloutHandle using
+@c isc::hooks::HooksManager::createCalloutHandle():
 @code
     CalloutHandlePtr handle_ptr = HooksManager::createCalloutHandle();
 @endcode
-(isc::hooks::CalloutHandlePtr is a typedef for a Boost shared pointer to a
+(@c isc::hooks::CalloutHandlePtr is a typedef for a Boost shared pointer to a
 CalloutHandle.)  The CalloutHandle so retrieved may be used for as
 long as the libraries are loaded.
 
@@ -350,14 +350,14 @@ in a future version.)
 @subsection hooksComponentCallingCallout Calling the Callout
 
 Calling the callout is a simple matter of executing the
-isc::hooks::HooksManager::callCallouts() method for the hook index in
-question.  For example, with the hook index pkt_sent defined as above,
+@c isc::hooks::HooksManager::callCallouts() method for the hook index in
+question.  For example, with the hook index "pkt_sent" defined as above,
 the hook can be executed by:
 @code
     HooksManager::callCallouts(pkt_sent, *handle_ptr);
 @endcode
 ... where "*handle_ptr" is a reference (note: not a pointer) to the
-isc::hooks::CalloutHandle object holding the arguments.  No status code
+@c isc::hooks::CalloutHandle object holding the arguments.  No status code
 is returned.  If a component needs to get data returned (other than that
 provided by the "skip" flag), it should define an argument through which
 the callout can do so.
@@ -365,9 +365,9 @@ the callout can do so.
 @subsubsection hooksComponentConditionalCallout Conditionally Calling Hook Callouts
 
 Most hooks in a component will not have callouts attached to them. To
-avoid the overhead of setting up arguments in the CalloutHandle, a
+avoid the overhead of setting up arguments in the @c CalloutHandle, a
 component can check for callouts before doing that processing using
-isc::hooks::HooksManager::calloutsPresent().  Taking the index of a
+@c isc::hooks::HooksManager::calloutsPresent().  Taking the index of a
 hook as its sole argument, the function returns true if there are any
 callouts attached to the hook and false otherwise.
 
@@ -390,33 +390,33 @@ if (HooksManager::calloutsPresent(lease_hook_index)) {
 
 Once hooks are defined, all the hooks code described above will
 work, even if no libraries are loaded (and even if the library
-loading method is not called).  The CalloutHandle returned by
-isc::hooks::HooksManager::createCalloutHandle() will be valid,
-isc::hooks::HooksManager::calloutsPresent() will return false for every
-index, and isc::hooks::HooksManager::callCallouts() will be a no-op.
+loading method is not called).  The @c CalloutHandle returned by
+@c isc::hooks::HooksManager::createCalloutHandle() will be valid,
+@c isc::hooks::HooksManager::calloutsPresent() will return false for every
+index, and @c isc::hooks::HooksManager::callCallouts() will be a no-op.
 
 However, if user libraries are specified in the Kea configuration,
 the component should load them.  (Note the term "libraries": the hooks
 framework allows multiple user libraries to be loaded.) This should take
 place after the component's configuration has been read, and is achieved
-by the isc::hooks::HooksManager::loadLibraries() method.  The method is
+by the @c isc::hooks::HooksManager::loadLibraries() method.  The method is
 passed a vector of strings, each giving the full file specification of
 a user library:
 @code
     std::vector<std::string> libraries = ... // Get array of libraries
     bool success = HooksManager::loadLibraries(libraries);
 @endcode
-loadLibraries() returns a boolean status which is true if all libraries
+@c loadLibraries() returns a boolean status which is true if all libraries
 loaded successfully or false if one or more failed to load.  Appropriate
 error messages will have been logged in the latter case, the status
 being more to allow the developer to decide whether the execution
 should proceed in such circumstances.
 
-If loadLibraries() is called a second or subsequent time (as a result
+If @c loadLibraries() is called a second or subsequent time (as a result
 of a reconfiguration), all existing libraries are unloaded and a new
 set loaded.  Libraries can be explicitly unloaded either by calling
-isc::hooks::HooksManager::unloadLibraries() or by calling
-loadLibraries() with an empty vector as an argument.
+@c isc::hooks::HooksManager::unloadLibraries() or by calling
+@c loadLibraries() with an empty vector as an argument.
 
 @subsection hooksComponentUnloadIssues Unload and Reload Issues
 
@@ -429,7 +429,7 @@ In many operating systems, heap storage allowed by a shared library will
 lie in the virtual address allocated to the library.  This has implications
 in the hooks framework because:
 
-- Argument information stored in a CalloutHandle by a callout in a library
+- Argument information stored in a @c CalloutHandle by a callout in a library
 may lie in the library's address space.
 - Data modified in objects passed as arguments may lie in the address
 space.  For example, it is common for a DHCP callout to add "options"
@@ -467,16 +467,16 @@ found in @ref hooksdgDevelopersGuide.)
 
 A component can associate with a hook callouts that run either before
 user-registered callouts or after them.  Registration is done via a
-isc::hooks::LibraryHandle object, a reference to one being obtained
-through the methods isc::hooks::HooksManager::preCalloutLibraryHandle()
+@c isc::hooks::LibraryHandle object, a reference to one being obtained
+through the methods @c isc::hooks::HooksManager::preCalloutLibraryHandle()
 (for a handle to register callouts to run before the user library
-callouts) or isc::hooks::HooksManager::postCalloutLibraryHandle() (for
+callouts) or @c isc::hooks::HooksManager::postCalloutLibraryHandle() (for
 a handle to register callouts to run after the user callouts).  Use of
-the LibraryHandle to register and deregister callouts is described in
+the @c LibraryHandle to register and deregister callouts is described in
 @ref hooksdgLibraryHandle.
 
 Finally, it should be noted that callouts registered in this way only
-remain registered until the next call to isc::hooks::loadLibraries().
+remain registered until the next call to @c isc::hooks::loadLibraries().
 It is up to the component to re-register the callouts after this
 method has been called.
 
