@@ -156,9 +156,6 @@ typedef boost::shared_ptr<Dhcpv4Exchange> Dhcpv4ExchangePtr;
 /// This class does not support any controlling mechanisms directly.
 /// See the derived \ref ControlledDhcpv4Srv class for support for
 /// command and configuration updates over msgq.
-///
-/// For detailed explanation or relations between main(), ControlledDhcpv4Srv,
-/// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
 class Dhcpv4Srv : public Daemon {
 
 public:

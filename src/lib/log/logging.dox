@@ -583,10 +583,8 @@ configuration. As soon as any specification is processed (even an
 empty one), the buffered log messages will be flushed according to
 the specification. Note that if this option is used, the program
 SHOULD call one of the @ref isc::log::LoggerManager::process() calls.
-(If you are using the built-in logging configuration handling in @ref
-isc::config::ModuleCCSession, this is automatically handled.) If the
-program exits before this is done, all log messages are dumped in a raw
-format to stdout (so that no messages get lost).</dd>
+If the program exits before this is done, all log messages are dumped
+in a raw format to stdout (so that no messages get lost).</dd>
 </dl>
 
 @subsubsection logInitializationCppVariant2 Variant #2, Used by Unit Tests

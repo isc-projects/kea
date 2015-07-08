@@ -349,13 +349,7 @@ public:
 
     /// \brief Checks if the data received is complete.
     ///
-    /// \param staging Unused
-    /// \param length Unused
-    /// \param cumulative Unused
-    /// \param offset Unused.
-    /// \param expected Unused.
-    /// \param outbuff Unused.
-    ///
+    /// The parameters are unused.
     /// \return Always true
     virtual bool receiveComplete(const void*, size_t, size_t&, size_t&,
                                  size_t&, isc::util::OutputBufferPtr&)
