@@ -148,7 +148,7 @@ public:
     std::string readFile() const;
 
     /// @brief Removes existing file (if any).
-    void removeFile() const;
+    int removeFile() const;
 
     /// @brief Creates file with contents.
     ///
@@ -162,11 +162,11 @@ public:
 
 CSVFileTest::CSVFileTest()
     : testfile_(absolutePath("test.csv")) {
-    removeFile();
+    static_cast<void>(removeFile());
 }
 
 CSVFileTest::~CSVFileTest() {
-    removeFile();
+    static_cast<void>(removeFile());
 }
 
 std::string
@@ -196,9 +196,9 @@ CSVFileTest::readFile() const {
     return (contents);
 }
 
-void
+int
 CSVFileTest::removeFile() const {
-    remove(testfile_.c_str());
+    return (remove(testfile_.c_str()));
 }
 
 void
@@ -496,7 +496,7 @@ TEST_F(CSVFileTest, exists) {
 
     // Close the file and remove it.
     csv->close();
-    removeFile();
+    EXPECT_EQ(0, removeFile());
 
     // The file should not exist.
     EXPECT_FALSE(csv->exists());
