@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -31,32 +31,45 @@ The following classes for packet manipulation are implemented:
 - isc::dhcp::Pkt4 - represents DHCPv4 packet.
 - isc::dhcp::Pkt6 - represents DHCPv6 packet.
 
-There are two pointer types defined: Pkt4Ptr and Pkt6Ptr. They are
-smart pointer and are using boost::shared_ptr. There are not const
-versions defined, as we assume that hooks can modify any aspect of
-the packet at almost any stage of processing.
+The following pointer types are defined: \c Pkt4Ptr and \c Pkt6Ptr. They are
+smart pointers using the \c boost::shared_ptr type. There are no const
+versions of packet types defined, as we assume that hooks can modify any
+aspect of the packet at almost any stage of processing.
 
-Both packets use collection of Option objects to represent DHCPv4
-and DHCPv6 options. The base class -- Option -- can be used to
+Both packet types use collection of \ref isc::dhcp::Option objects to
+represent DHCPv4 and DHCPv6 options. The base class @c Option can be used to
 represent generic option that contains collection of
-bytes. Depending on if the option is instantiated as v4 or v6
+bytes. Depending on whether the option is instantiated as DHCPv4 or DHCPv6
 option, it will adjust its header (DHCPv4 options use 1 octet for
 type and 1 octet for length, while DHCPv6 options use 2 bytes for
 each).
 
-There are many specialized classes that are intended to handle options with
-specific content:
+There are many specialized classes that are intended to handle options having
+specific formats:
 - isc::dhcp::Option4AddrLst -- DHCPv4 option, contains one or more IPv4 addresses;
 - isc::dhcp::Option6AddrLst -- DHCPv6 option, contains one or more IPv6 addresses;
-- isc::dhcp::Option6IAAddr -- DHCPv6 option, represents IAADDR_OPTION (an option that
-                    contains IPv6 address with extra parameters);
+- isc::dhcp::Option4ClientFqdn -- DHCPv4 Client FQDN option;
+- isc::dhcp::Option6ClientFqdn -- DHCPv6 Client FQDN option;
+- isc::dhcp::Option6IAAddr -- DHCPv6 option, represents IAADDR option (an option that
+                              contains IPv6 address with extra parameters);
+- isc::dhcp::Option6IAPrefix -- DHCPv6 option, represents IAPREFIX option (an option
+                                that contains IPv6 prefix in prefix delegation);
 - isc::dhcp::Option6IA -- DHCPv6 option used to store IA_NA and its suboptions.
+- isc::dhcp::Option6StatusCode -- DHCPv6 option, carries a status code to the client;
+- isc::dhcp::OptionCustom -- Represents option having many different formats, where
+                             data fields can be accessed in a convenient way;
+- isc::dhcp::OptionInt -- DHCPv4 or DHCPv6 option, carries a single numeric value;
+- isc::dhcp::OptionString -- DHCPv4 or DHCPv6 option, carries a text value;
+- isc::dhcp::OptionVendor -- DHCPv4 or DHCPv6 option, carries Vendor Specific
+                             Information;
+- isc::dhcp::OptionVendorClass -- DHCPv4 or DHCPv6 option, contains vendor class
+                                  information.
 
-All options can store sub-options (i.e. options that are stored within option
-rather than in a message directly). This functionality is commonly used in
-DHCPv6, but is rarely used in DHCPv4. isc::dhcp::Option::addOption(),
-isc::dhcp::Option::delOption(), isc::dhcp::Option::getOption() can be used
-for that purpose.
+Various options can store sub-options (i.e. options that are stored within an
+option rather than in a message directly). This functionality is commonly used in
+DHCPv6, but is rarely used in DHCPv4. \ref isc::dhcp::Option::addOption(),
+\ref isc::dhcp::Option::delOption(), \ref isc::dhcp::Option::getOption() can
+be used to add, remove and retrieve sub-options from within an option.
 
 @section libdhcpRelay Relay v6 support in Pkt6
 
@@ -80,7 +93,7 @@ that interface-id in its copy, when sending data back to the client.
 This will be used by the relay to choose proper interface when forwarding
 response towards the client.
 
-Pkt6 class has a public Pkt6::relay_info_ field, which is of type Pkt6::RelayInfo.
+Pkt6 class has a public \c Pkt6::relay_info_ field, which is of type \c Pkt6::RelayInfo.
 This is a simple structure that represents the information in each RELAY_FORW
 or RELAY_REPL message. It is important to understand the order in which
 the data appear here. Consider the following network:
@@ -93,7 +106,7 @@ Client will transmit SOLICIT message. Relay1 will forward it as
 RELAY_FORW with SOLICIT in it. Relay2 forward it as RELAY_FORW with
 RELAY_FORW with SOLICIT in it. Finally the third relay will add yet
 another RELAY_FORW around it. The server will parse the packet and
-create Pkt6 object for it. Its relay_info_ will have 3
+create \c Pkt6 object for it. Its relay_info_ will have 3
 elements. Packet parsing is done in reverse order, compare to the
 order the packet traversed in the network.  The first element
 (relay_info_[0]) will represent relay3 information (the "last" relay or
@@ -103,40 +116,25 @@ the first relay (relay1) or in other words the one closest to the client.
 
 Packets sent by the server must maintain the same encapsulation order.
 This is easy to do - just copy data from client's message object into
-server's response object. See Pkt6::coyRelayInfo for details.
+server's response object. See @ref isc::dhcp::Pkt6::RelayInfo for details.
 
 @section libdhcpIfaceMgr Interface Manager
 
-Interface Manager (or IfaceMgr) is an abstraction layer about low-level
+Interface Manager (or IfaceMgr) is an abstraction layer for low-level
 network operations. In particlar, it provides information about existing
-network interfaces See isc::dhcp::IfaceMgr::Iface class and
-isc::dhcp::IfaceMgr::detectIfaces() and isc::dhcp::IfaceMgr::getIface().
+network interfaces See @ref isc::dhcp::Iface class and
+@ref isc::dhcp::IfaceMgr::detectIfaces() and @ref isc::dhcp::IfaceMgr::getIface().
 
-Currently there is interface detection is implemented in Linux and BSD.
-There are plans to implement such support for other OSes, but they
-remain low priority for now.
-
-Generic parts of the code are isc::dhcp::IfaceMgr class in
+Generic parts of the code are @ref isc::dhcp::IfaceMgr class in
 src/lib/dhcp/iface_mgr.cc file. OS-specific code is located in separate
 files, e.g. iface_mgr_linux.cc, iface_mgr_bsd. Such separation should be
 maintained when additional code will be developed.
 
-For systems that interface detection is not supported on, there is a stub
-mechanism implemented. It assumes that interface name is read from a text
-file. This is a temporary solution and will be removed as soon as proper
-interface detection is implemented. It is not going to be developed further.
-To use this feature, store interfaces.txt file. It uses a simple syntax.
-Each line represents an interface name, followed by IPv4 or IPv6 address
-that follows it. This is usually link-local IPv6 address that the server
-should bind to. In theory this mechanism also supports IPv4, but it was
-never tested. The code currently supports only a single interface defined
-that way.
-
 Other useful methods are dedicated to transmission
-(isc::dhcp::IfaceMgr::send(), 2 overloads) and reception
-(isc::dhcp::IfaceMgr::receive4() and isc::dhcp::IfaceMgr::receive6()).
-Note that receive4() and receive6() methods may return NULL, e.g.
-when timeout is reached or if dhcp daemon receives a signal.
+(\ref isc::dhcp::IfaceMgr::send(), 2 overloads) and reception
+(\ref isc::dhcp::IfaceMgr::receive4() and \ref isc::dhcp::IfaceMgr::receive6()).
+Note that \c receive4() and \c receive6() methods may return NULL, e.g.
+when timeout is reached or if the DHCP daemon receives a signal.
 
 @section libdhcpPktFilter Switchable Packet Filter objects used by Interface Manager
 
