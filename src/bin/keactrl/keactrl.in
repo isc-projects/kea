@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -65,48 +65,75 @@ usage() {
 }
 
 ### Functions managing Kea processes ###
+# Contructs a server's PID file based on its binary name, the config file,
+# and the --localstatedir and returns the contents as $_pid.   If the file
+# does not exist, the value of $_pid is 0.  If the file exists but cannot
+# be read the function exists with a error message. Note the PID file name
+# is always returned in $_pid_file.
+get_pid_from_file() {
+    local proc_name=${1} # Process name.
 
-# Returns a list of existing PIDs and a number of PIDs for the process
-# having a name specified as an argument to the function.
-get_pids() {
-    local proc_name=${1}  # Process name.
-    # Return the list of PIDs.
-    _get_pids=$(ps axwwo pid,command | grep ${proc_name} | grep -v grep \
-        | awk '{print $1}')
-    # Return the number of PIDs.
-    _get_pids_num=$(printf "%s" "${_get_pids}" | wc -w | awk '{print $1}')
+    # Extract the name portion of the config file
+    local conf_name=$(basename ${kea_config_file} | cut -f1 -d'.')
+
+    # Default the directory to --localstatedir
+    local pid_file_dir=@localstatedir@/@PACKAGE@
+
+    # Use directory override if set (primarily for testing only)
+    if [ ! -z $KEA_PIDFILE_DIR ]; then
+        pid_file_dir=${KEA_PIDFILE_DIR}
+    fi
+
+    # construct the PID file name
+    _pid_file="${pid_file_dir}/${conf_name}.${proc_name}.pid"
+
+    # Grab the PID if the file exists
+    if [ -e ${_pid_file} ]; then
+        _pid=`cat ${_pid_file}`
+        if [ $? -ne 0 ]; then
+            log_error "Error reading PID file: ${_pid_file}"
+        fi
+    else
+        # No file, means no pid
+        _pid=0;
+    fi
 }
 
-# Checks if the specified process is running. Internally it calls get_pids
-# to get the number of processes.
+
+# Checks if the specified process is running by reading its
+# PID file and checking the PID it contains.  If the file does
+# not exist, the process is assumed to not be running.
 check_running() {
     local proc_name=${1} # Process name.
     # Initially mark the process as not running.
     _running=0
-    get_pids ${proc_name}
-    # If the number of pids is non-zero, the process is running.
-    if [ ${_get_pids_num} -gt 0 ]; then
-        _running=1
+
+    # Get the PID from the PID file (if it exists)
+    get_pid_from_file ${proc_name}
+    if [ ${_pid} -gt 0 ]; then
+        # Use kill -0 to check if PID is alive
+        kill -0 ${_pid}
+        if [ $? -eq 0 ]; then
+            # No error, so PID IS ALIVE
+            _running=1
+        fi
     fi
 }
 
-# Sends a signal to a group of processes having a specified name.
+# Sends a signal to a process based on its PID file
 send_signal() {
     local sig=${1}        # Signal number
     local proc_name=${2}  # Process name.
-    # Get all PIDs for the specified process name.
-    get_pids ${proc_name}
-    # If no processes running, there is no process we can send the signal
-    # to. This is not neccessarily an error.
-    if [ -z ${_get_pids} ]; then
+
+    get_pid_from_file ${proc_name}
+    if [ ${_pid} -eq 0 ]; then
         log_info "Skip sending signal ${sig} to process ${proc_name}: \
 process is not running\n"
-        return
-    fi
-    # Send a signal to all processes.
-    kill -${sig} ${_get_pids} >/dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        log_error "Failed to send signal ${sig} to process ${proc_name}.\n"
+    else
+        kill -${sig} ${_pid}
+        if [ $? -ne 0 ]; then
+            log_error "Failed to send signal ${sig} to process ${proc_name}, PID {$_pid}.\n"
+        fi
     fi
 }
 
@@ -121,12 +148,56 @@ start_server() {
     check_running ${binary_name}
     # If process is running, don't start another one. Just log a message.
     if [ ${_running} -ne 0 ]; then
-        log_info "Skip starting ${binary_name} \
-as another instance is already running."
+        log_info "${binary_name} is already running as: \
+PID ${_pid}, PID file: ${_pid_file}."
     else
         log_info "Starting ${binary_name} ${args}"
         # Start the process.
         ${binary_path} ${args} &
+    fi
+}
+
+# Instruct Kea process to shutdown by sending it signal 15
+stop_server() {
+    binary_path=${1}   # Full path to the binary.
+    local sig=15
+    # Extract the name of the binary from the path.
+    local binary_name=$(basename ${binary_path})
+
+    # Use the binary name to check if the process is already running.
+    check_running ${binary_name}
+    # If process isn't running, don't start another one. Just log a message.
+    if [ ${_running} -eq 0 ]; then
+        log_info "${binary_name} isn't running."
+    else
+        log_info "Stopping ${binary_name}..."
+        kill -${sig} ${_pid}
+        if [ $? -ne 0 ]; then
+            log_error "Stop failed, could not send signal ${sig} \
+to process ${proc_name}, PID ${_pid}.\n"
+        fi
+    fi
+}
+
+# Instruct Kea process to reload config by sending it signal 1
+reload_server() {
+    binary_path=${1}   # Full path to the binary.
+    local sig=1
+    # Extract the name of the binary from the path.
+    local binary_name=$(basename ${binary_path})
+
+    # Use the binary name to check if the process is already running.
+    check_running ${binary_name}
+    # If process isn't running, don't start another one. Just log a message.
+    if [ ${_running} -eq 0 ]; then
+        log_info "${binary_name} isn't running."
+    else
+        log_info "Reloading ${binary_name}..."
+        kill -${sig} ${_pid}
+        if [ $? -ne 0 ]; then
+            log_error "Reload failed, could not send signal ${sig} \
+to process ${proc_name}, PID ${_pid}.\n"
+        fi
     fi
 }
 
@@ -301,18 +372,18 @@ case ${command} in
     # Stop running servers.
     stop)
         # Stop all servers or servers specified from the command line.
-        run_conditional "dhcp4" "send_signal 15 $(basename ${dhcp4_srv})" 0
-        run_conditional "dhcp6" "send_signal 15 $(basename ${dhcp6_srv})" 0
-        run_conditional "dhcp_ddns" "send_signal 15 $(basename ${dhcp_ddns_srv})" 0
+        run_conditional "dhcp4" "stop_server ${dhcp4_srv}" 0
+        run_conditional "dhcp6" "stop_server ${dhcp6_srv}" 0
+        run_conditional "dhcp_ddns" "stop_server ${dhcp_ddns_srv}" 0
 
         exit 0 ;;
 
     # Reconfigure the servers.
     reload)
         # Reconfigure all servers or servers specified from the command line.
-        run_conditional "dhcp4" "send_signal 1 $(basename ${dhcp4_srv})" 0
-        run_conditional "dhcp6" "send_signal 1 $(basename ${dhcp6_srv})" 0
-        run_conditional "dhcp_ddns" "send_signal 1 $(basename ${dhcp_ddns_srv})" 0
+        run_conditional "dhcp4" "reload_server ${dhcp4_srv}" 0
+        run_conditional "dhcp6" "reload_server ${dhcp6_srv}" 0
+        run_conditional "dhcp_ddns" "reload_server ${dhcp_ddns_srv}" 0
 
         exit 0 ;;
 
