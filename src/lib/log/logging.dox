@@ -648,12 +648,12 @@ specified in the hook library when the library is loaded. Conversely, the
 messages have to be removed from the dictionary when the library is unloaded.
 
 The new messages are added to the global dictionary using the
-@c isc::log::MessageInitializer::loadDictionary static function. It is
-called by the @c isc::hooks::LibraryManager::loadLibrary for each loaded
+@ref isc::log::MessageInitializer::loadDictionary static function. It is
+called by the @ref isc::hooks::LibraryManager::loadLibrary for each loaded
 library.
 
 When the library is unloaded, the instance of the
-@c isc::log::MessageInitializer defined in the library is destroyed
+@ref isc::log::MessageInitializer defined in the library is destroyed
 and its destructor removes the messages registered by the destroyed
 instance from the global dictionary.
 
