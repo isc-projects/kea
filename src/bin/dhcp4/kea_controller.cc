@@ -168,9 +168,6 @@ namespace dhcp {
 
 void
 ControlledDhcpv4Srv::init(const std::string& file_name) {
-    // Call parent class's init to initialize file name.
-    Daemon::init(file_name);
-
     // Configure the server using JSON file.
     configure(file_name);
 

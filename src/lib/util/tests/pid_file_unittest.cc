@@ -127,7 +127,7 @@ TEST_F(PIDFileTest, pidInUse) {
     pid_file.write();
 
     // Check if we think the process is running
-    EXPECT_TRUE(pid_file.check());
+    EXPECT_EQ(getpid(), pid_file.check());
 }
 
 /// @brief Test checking a PID. Write a PID that isn't in use
@@ -148,7 +148,7 @@ TEST_F(PIDFileTest, pidNotInUse) {
     pid_file.write(pid);
 
     // Check to see if we think the process is running
-    if (!pid_file.check()) {
+    if (pid_file.check() == 0) {
         return;
     }
 
@@ -159,7 +159,7 @@ TEST_F(PIDFileTest, pidNotInUse) {
     pid_file.write(pid);
 
     // Check to see if we think the process is running
-    EXPECT_FALSE(pid_file.check());
+    EXPECT_EQ(0, pid_file.check());
 }
 
 /// @brief Test checking a PID.  Write garbage to the PID file

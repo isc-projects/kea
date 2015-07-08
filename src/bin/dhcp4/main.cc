@@ -118,6 +118,7 @@ main(int argc, char* argv[]) {
         usage();
     }
 
+
     // Configuration file is required.
     if (config_file.empty()) {
         cerr << "Configuration file not specified." << endl;
@@ -125,7 +126,6 @@ main(int argc, char* argv[]) {
     }
 
     int ret = EXIT_SUCCESS;
-
     try {
         // It is important that we set a default logger name because this name
         // will be used when the user doesn't provide the logging configuration
@@ -144,6 +144,11 @@ main(int argc, char* argv[]) {
 
         // Remember verbose-mode
         server.setVerbose(verbose_mode);
+
+        // Create our PID file.
+        server.setProcName(DHCP4_NAME);
+        server.setConfigFile(config_file);
+        server.createPIDFile();
 
         try {
             // Initialize the server.
@@ -173,8 +178,18 @@ main(int argc, char* argv[]) {
 
         LOG_INFO(dhcp4_logger, DHCP4_SHUTDOWN);
 
-    } catch (const std::exception& ex) {
+    } catch (const isc::dhcp::DaemonPIDExists& ex) {
+        // First, we print the error on stderr (that should always work)
+        cerr << DHCP4_NAME << " already running? " << ex.what()
+             << endl;
 
+        // Let's also try to log it using logging system, but we're not
+        // sure if it's usable (the exception may have been thrown from
+        // the logger subsystem)
+        LOG_FATAL(dhcp4_logger, DHCP4_ALREADY_RUNNING)
+                  .arg(DHCP4_NAME).arg(ex.what());
+        ret = EXIT_FAILURE;
+    } catch (const std::exception& ex) {
         // First, we print the error on stderr (that should always work)
         cerr << DHCP4_NAME << ": Fatal error during start up: " << ex.what()
              << endl;

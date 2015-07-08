@@ -17,12 +17,20 @@
 
 #include <cc/data.h>
 #include <dhcpsrv/srv_config.h>
+#include <util/pid_file.h>
 #include <util/signal_set.h>
 #include <boost/noncopyable.hpp>
 #include <string>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Exception thrown when a the PID file points to a live PID
+class DaemonPIDExists : public Exception {
+public:
+    DaemonPIDExists(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 /// @brief Base class for all services
 ///
@@ -37,16 +45,6 @@ namespace dhcp {
 /// Methods are not pure virtual, as we need to instantiate basic daemons (e.g.
 /// Dhcpv6Srv) in tests, without going through the hassles of implemeting stub
 /// methods.
-///
-/// This class comprises a static object holding a location of the configuration
-/// file. The object must be static because it is instantiated by the signal
-/// handler functions, which are static by their nature. The signal handlers
-/// are used to reconfigure a running server and they need access to the
-/// configuration file location. They get this access by calling
-/// @c Daemon::getConfigFile function.
-///
-/// By default, the configuration file location is empty and its actual value
-/// is assigned to the static object in @c Daemon::init function.
 ///
 /// Classes derived from @c Daemon may install custom signal handlers using
 /// @c isc::util::SignalSet class. This base class provides a declaration
@@ -71,25 +69,6 @@ public:
     /// virtual destructor as well.
     virtual ~Daemon();
 
-    /// @brief Initializes the server.
-    ///
-    /// Depending on the configuration backend, it establishes msgq session,
-    /// or reads the configuration file.
-    ///
-    /// Note: This function may throw to report enountered problems. It may
-    /// also return false if the initialization was skipped. That may seem
-    /// redundant, but the idea here is that in some cases the configuration
-    /// was read, understood and the decision was made to not start. One
-    /// case where such capability could be needed is when we have a single
-    /// config file for Kea4 and D2, but the DNS Update is disabled. It is
-    /// likely that the D2 will be started, it will analyze its config file,
-    /// decide that it is not needed and will shut down.
-    ///
-    /// @note this method may throw
-    ///
-    /// @param config_file Config file name (may be empty if unused).
-    virtual void init(const std::string& config_file);
-
     /// @brief Performs final deconfiguration.
     ///
     /// Performs configuration backend specific final clean-up. This is called
@@ -102,11 +81,6 @@ public:
 
     /// @brief Initiates shutdown procedure for the whole DHCPv6 server.
     virtual void shutdown();
-
-    /// @brief Returns config file name.
-    static std::string getConfigFile() {
-        return (config_file_);
-    }
 
     /// @brief Initializes logger
     ///
@@ -161,6 +135,60 @@ public:
     /// @return text string
     static std::string getVersion(bool extended);
 
+    /// @brief Returns config file name.
+    /// @return text string
+    std::string getConfigFile() const;
+
+    /// @brief Sets the configuration file name
+    ///
+    /// @param config_file pathname of the configuration file
+    void setConfigFile(const std::string& config_file);
+
+    /// @brief returns the process name
+    /// This value is used as when forming the default PID file name
+    /// @return text string
+    std::string getProcName() const;
+
+    /// @brief Sets the process name
+    /// @param proc_name name the process by which the process is recognized
+    void setProcName(const std::string& proc_name);
+
+    /// @brief Returns the directory used when forming default PID file name
+    /// @return text string
+    std::string getPIDFileDir() const;
+
+    /// @brief Sets the PID file directory
+    /// @param pid_file_dir path into which the PID file should be written
+    /// Note the value should not include a trailing slash, '/'
+    void setPIDFileDir(const std::string& pid_file_dir);
+
+    /// @brief Returns the current PID file name
+    /// @return text string
+    std::string getPIDFileName() const;
+
+    /// @brief Sets PID file name
+    ///
+    /// If this method is called prior to calling createPIDFile,
+    /// the value passed in will be treated as the full file name
+    /// for the PID file.  This provides a means to override the
+    /// default file name with an explicit value.
+    ///
+    /// @param pid_file_name file name to be used as the PID file
+    void setPIDFileName(const std::string& pid_file_name);
+
+    /// @brief Creates the PID file
+    ///
+    /// If the PID file name has not been previously set, the method
+    /// uses manufacturePIDFileName() to set it.  If the PID file
+    /// name refers to an existing file whose contents are a PID whose
+    /// process is still alive, the method will throw a DaemonPIDExists
+    /// exception.  Otherwise, the file created (or truncated) and
+    /// the given pid (if not zero) is written to the file.
+    ///
+    /// @param pid PID to write to the file if not zero, otherwise the
+    /// PID of the current process is used.
+    void createPIDFile(int pid = 0);
+
 protected:
 
     /// @brief Invokes handler for the next received signal.
@@ -189,11 +217,25 @@ protected:
     /// it not initialized, the signals will not be handled.
     isc::util::SignalHandler signal_handler_;
 
+    /// @brief Manufacture the pid file name
+    std::string makePIDFileName() const;
+
 private:
-
     /// @brief Config file name or empty if config file not used.
-    static std::string config_file_;
+    std::string config_file_;
 
+    /// @brief Name of this process, used when creating its pid file
+    std::string proc_name_;
+
+    /// @brief Pointer to the directory where PID file(s) are written
+    /// It defaults to --localstatedir
+    std::string pid_file_dir_;
+
+    /// @brief Pointer to the PID file for this process
+    isc::util::PIDFilePtr pid_file_;
+
+    /// @brief Flag indicating if this instance created the file
+    bool am_file_author_;
 };
 
 }; // end of isc::dhcp namespace

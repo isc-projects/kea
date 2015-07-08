@@ -70,6 +70,8 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
         throw; // rethrow it
     }
 
+    setProcName(bin_name_);
+
     // It is important that we set a default logger name because this name
     // will be used when the user doesn't provide the logging configuration
     // in the Kea configuration file.
@@ -85,6 +87,18 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     if (!test_mode) {
         // Now that we know what the mode flags are, we can init logging.
         Daemon::loggerInit(bin_name_.c_str(), verbose_);
+    }
+
+    try {
+        createPIDFile();
+    } catch (const dhcp::DaemonPIDExists& ex) {
+        LOG_FATAL(dctl_logger, DHCP_DDNS_ALREADY_RUNNING)
+                  .arg(bin_name_).arg(ex.what());
+        isc_throw (LaunchError, "Launch Failed: " << ex.what());
+    } catch (const std::exception& ex) {
+        LOG_FATAL(dctl_logger, DHCP_DDNS_PID_FILE_ERROR)
+                  .arg(app_name_).arg(ex.what());
+        isc_throw (LaunchError, "Launch failed: " << ex.what());
     }
 
     // Log the starting of the service.  Although this is the controller
@@ -173,7 +187,7 @@ DControllerBase::parseArgs(int argc, char* argv[])
                 isc_throw(InvalidUsage, "configuration file name missing");
             }
 
-            Daemon::init(optarg);
+            setConfigFile(optarg);
             break;
 
         case '?': {
