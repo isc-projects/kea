@@ -74,7 +74,8 @@ TEST_F(LoggingTest, parsingConsoleOutput) {
     "        \"name\": \"kea\","
     "        \"output_options\": ["
     "            {"
-    "                \"output\": \"stdout\""
+    "                \"output\": \"stdout\","
+    "                \"flush\": true"
     "            }"
     "        ],"
     "        \"debuglevel\": 99,"
@@ -102,6 +103,7 @@ TEST_F(LoggingTest, parsingConsoleOutput) {
 
     ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
+    EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
 }
 
 // Checks if the LogConfigParser class is able to transform JSON structures
@@ -142,6 +144,8 @@ TEST_F(LoggingTest, parsingFile) {
 
     ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ("logfile.txt" , storage->getLoggingInfo()[0].destinations_[0].output_);
+    // Default for immediate flush is true
+    EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
 }
 
 // Checks if the LogConfigParser class is able to transform data structures
@@ -155,7 +159,8 @@ TEST_F(LoggingTest, multipleLoggers) {
     "        \"name\": \"kea\","
     "        \"output_options\": ["
     "            {"
-    "                \"output\": \"logfile.txt\""
+    "                \"output\": \"logfile.txt\","
+    "                \"flush\": true"
     "            }"
     "        ],"
     "        \"severity\": \"INFO\""
@@ -164,7 +169,8 @@ TEST_F(LoggingTest, multipleLoggers) {
     "        \"name\": \"wombat\","
     "        \"output_options\": ["
     "            {"
-    "                \"output\": \"logfile2.txt\""
+    "                \"output\": \"logfile2.txt\","
+    "                \"flush\": false"
     "            }"
     "        ],"
     "        \"severity\": \"DEBUG\","
@@ -191,12 +197,14 @@ TEST_F(LoggingTest, multipleLoggers) {
     EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
     ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ("logfile.txt" , storage->getLoggingInfo()[0].destinations_[0].output_);
+    EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
 
     EXPECT_EQ("wombat", storage->getLoggingInfo()[1].name_);
     EXPECT_EQ(99, storage->getLoggingInfo()[1].debuglevel_);
     EXPECT_EQ(isc::log::DEBUG, storage->getLoggingInfo()[1].severity_);
     ASSERT_EQ(1, storage->getLoggingInfo()[1].destinations_.size());
     EXPECT_EQ("logfile2.txt" , storage->getLoggingInfo()[1].destinations_[0].output_);
+    EXPECT_FALSE(storage->getLoggingInfo()[1].destinations_[0].flush_);
 }
 
 // Checks if the LogConfigParser class is able to transform data structures
@@ -239,7 +247,9 @@ TEST_F(LoggingTest, multipleLoggingDestinations) {
     EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
     ASSERT_EQ(2, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ("logfile.txt" , storage->getLoggingInfo()[0].destinations_[0].output_);
+    EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
     EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[1].output_);
+    EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[1].flush_);
 }
 
 /// @todo There is no easy way to test applyConfiguration() and defaultLogging().
