@@ -19,6 +19,17 @@ This message is printed when DHCPv6 server enabled an interface to be used
 to receive DHCPv6 traffic. IPv6 socket on this interface will be opened once
 Interface Manager starts up procedure of opening sockets.
 
+% DHCP6_ALREADY_RUNNING %1 already running? %2
+This is an error message that occurs when the DHCPv6 server encounters
+a pre-existing PID file which contains the PID of a running process.
+This most likely indicates an attempt to start a second instance of
+the server using the same configuration file.  It is possible, though
+unlikely that the PID file is a remnant left behind by a server crash or
+power failure and the PID it contains refers to a process other than
+the server.  In such an event, it would be necessary to manually remove
+the PID file.  The first argument is the DHCPv6 process name, the second
+contains the PID and PID file.
+
 % DHCP6_ADD_GLOBAL_STATUS_CODE %1: adding Status Code to DHCPv6 packet: %2
 This message is logged when the server is adding the top-level
 Status Code option. The first argument includes the client and the
