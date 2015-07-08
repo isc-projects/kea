@@ -52,10 +52,6 @@ Daemon::~Daemon() {
     }
 }
 
-void Daemon::init(const std::string& config_file) {
-    config_file_ = config_file;
-}
-
 void Daemon::cleanup() {
 
 }

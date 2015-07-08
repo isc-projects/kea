@@ -69,29 +69,6 @@ public:
     /// virtual destructor as well.
     virtual ~Daemon();
 
-    /// @brief Initializes the server.
-    ///
-    /// @todo #3753 - This method should be revisited as its original purpose
-    /// has been lost.  As of #3769, it has been superseded with setConfigFile().
-    /// None of the following is currently accurate.
-    ///
-    /// Depending on the configuration backend, it establishes msgq session,
-    /// or reads the configuration file.
-    ///
-    /// Note: This function may throw to report enountered problems. It may
-    /// also return false if the initialization was skipped. That may seem
-    /// redundant, but the idea here is that in some cases the configuration
-    /// was read, understood and the decision was made to not start. One
-    /// case where such capability could be needed is when we have a single
-    /// config file for Kea4 and D2, but the DNS Update is disabled. It is
-    /// likely that the D2 will be started, it will analyze its config file,
-    /// decide that it is not needed and will shut down.
-    ///
-    /// @note this method may throw
-    ///
-    /// @param config_file Config file name (may be empty if unused).
-    virtual void init(const std::string& config_file);
-
     /// @brief Performs final deconfiguration.
     ///
     /// Performs configuration backend specific final clean-up. This is called

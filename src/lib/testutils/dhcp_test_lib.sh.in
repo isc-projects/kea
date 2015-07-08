@@ -447,7 +447,7 @@ verify_server_pid() {
         clean_exit 1
     fi
 
-    # Only the file name portio of the config file is used, try and
+    # Only the file name portion of the config file is used, try and
     # extract it. NOTE if this "algorithm" changes this code will need
     # to be updated.
     fname=`basename ${cfg_file}`
