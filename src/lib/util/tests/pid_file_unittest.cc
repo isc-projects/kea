@@ -64,7 +64,7 @@ protected:
 private:
     /// @brief Removes any remaining test files
     void removeTestFile() const {
-        remove(absolutePath(TESTNAME).c_str());
+        static_cast<void>(remove(absolutePath(TESTNAME).c_str()));
     }
 
 };
