@@ -55,7 +55,7 @@ LeaseFileIO::readFile() const {
 
 void
 LeaseFileIO::removeFile() const {
-    remove(testfile_.c_str());
+    static_cast<void>(remove(testfile_.c_str()));
 }
 
 void
