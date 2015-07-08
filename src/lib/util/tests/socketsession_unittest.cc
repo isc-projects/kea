@@ -176,7 +176,7 @@ protected:
     {
         std::string unix_file = getSocketPath();
 
-        remove(unix_file.c_str());
+        static_cast<void>(remove(unix_file.c_str()));
         test_un_.sun_family = AF_UNIX;
         strncpy(test_un_.sun_path, unix_file.c_str(), sizeof(test_un_.sun_path));
 #ifdef HAVE_SA_LEN
@@ -188,7 +188,7 @@ protected:
         if (listen_fd_ != -1) {
             close(listen_fd_);
         }
-        remove(getSocketPath().c_str());
+        static_cast<void>(remove(getSocketPath().c_str()));
     }
 
     // Start an internal "socket session server".
