@@ -78,10 +78,10 @@ TEST_F(DaemonTest, constructor) {
     Daemon instance2;
     EXPECT_FALSE(instance2.getVerbose());
 
-    EXPECT_EQ("",instance2.getConfigFile());
-    EXPECT_EQ("",instance2.getProcName());
+    EXPECT_TRUE(instance2.getConfigFile().empty());
+    EXPECT_TRUE(instance2.getProcName().empty());
     EXPECT_EQ(CfgMgr::instance().getDataDir(),instance2.getPIDFileDir());
-    EXPECT_EQ("",instance2.getPIDFileName());
+    EXPECT_TRUE(instance2.getPIDFileName().empty());
 }
 
 // Verify config file accessors

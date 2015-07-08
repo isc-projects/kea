@@ -107,7 +107,8 @@ indicates an attempt to start a second instance of DHCP_DDNS using the
 same configuration file.  It is possible, though unlikely, that the PID file
 is a remnant left behind by a server crash or power failure and the PID
 it contains refers to a process other than DHCP_DDNS.  In such an event,
-it would be necessary to manually remove the PID file.
+it would be necessary to manually remove the PID file.  The first argument is
+the DHCP_DDNS process name, the second contains the PID and and PID file.
 
 % DHCP_DDNS_AT_MAX_TRANSACTIONS application has %1 queued requests but has reached maximum number of %2 concurrent transactions
 This is a debug message that indicates that the application has DHCP_DDNS
@@ -292,7 +293,8 @@ its PID file.  The log message should contain details sufficient to
 determine the underlying cause.  The most likely culprits are that
 some portion of the pathname does not exist or a permissions issue. The
 default path is determined by --localstatedir configure paramter but
-may be overridden by setting environment variable, KEA_PIDFILE_DIR.
+may be overridden by setting environment variable, KEA_PIDFILE_DIR.  The
+first argument is the DHCP_DDNS process name.
 
 % DHCP_DDNS_PROCESS_INIT application init invoked
 This is a debug message issued when the DHCP-DDNS application enters

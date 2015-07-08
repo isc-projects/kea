@@ -51,7 +51,7 @@ PIDFile::check() const {
                   << filename_ << "'");
     }
 
-    // If the process is still running return true
+    // If the process is still running return its pid.
     if (kill(pid, 0) == 0) {
         return (pid);
     }
