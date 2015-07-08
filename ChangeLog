@@ -1,3 +1,11 @@
+978.	[func]		tmark
+	DHCPv4, DHCPv6, and DHCP_DDNS now all create PID files upon
+	startup.  The PID file pathname is formed from:
+		<localstatedir>/<conf name>.<binary-name>.pid
+	If a server's PID file exists and contains the PID of a
+	live process, it will emit a log message and exit.
+	(Trac #3769, git cdce632add025aaadbcdc89078f5bd3e19cfb5ca)
+
 977.	[doc]		tomek
 	Frequently Asked Questions section added to the Kea User's Guide.
 	(Trac #3873, #3847, git 95683c9d3c3dd7024269df1904b6cbe5817741a2)
