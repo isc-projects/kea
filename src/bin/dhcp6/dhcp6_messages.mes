@@ -27,7 +27,8 @@ the server using the same configuration file.  It is possible, though
 unlikely that the PID file is a remnant left behind by a server crash or
 power failure and the PID it contains refers to a process other than
 the server.  In such an event, it would be necessary to manually remove
-the PID file.
+the PID file.  The first argument is the DHCPv6 process name, the second
+contains the PID and and PID file.
 
 % DHCP6_ADD_GLOBAL_STATUS_CODE %1: adding Status Code to DHCPv6 packet: %2
 This message is logged when the server is adding the top-level
