@@ -252,6 +252,8 @@ TEST_F(LoggingTest, multipleLoggingDestinations) {
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[1].flush_);
 }
 
+/// @todo Add tests for malformed logging configuration
+
 /// @todo There is no easy way to test applyConfiguration() and defaultLogging().
 /// To test them, it would require instrumenting log4cplus to actually fake
 /// the logging set up. Alternatively, we could develop set of test suites
