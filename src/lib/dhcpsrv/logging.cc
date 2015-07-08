@@ -147,6 +147,11 @@ void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destin
             dest.maxsize_ = boost::lexical_cast<uint64_t>(maxsize_ptr->str());
         }
 
+        isc::data::ConstElementPtr flush_ptr = output_option->get("flush");
+        if (flush_ptr) {
+            dest.flush_ = flush_ptr->boolValue();
+        }
+
         destination.push_back(dest);
     }
 }
