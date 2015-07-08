@@ -834,7 +834,7 @@ Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
 NakedDhcpv6SrvTest::NakedDhcpv6SrvTest()
 : rcode_(-1) {
     // it's ok if that fails. There should not be such a file anyway
-    remove(DUID_FILE);
+    static_cast<void>(remove(DUID_FILE));
 
     const isc::dhcp::IfaceMgr::IfaceCollection& ifaces =
         isc::dhcp::IfaceMgr::instance().getIfaces();
@@ -856,7 +856,7 @@ NakedDhcpv6SrvTest::~NakedDhcpv6SrvTest() {
     isc::stats::StatsMgr::instance().removeAll();
 
     // Let's clean up if there is such a file.
-    remove(DUID_FILE);
+    static_cast<void>(remove(DUID_FILE));
     isc::hooks::HooksManager::preCalloutsLibraryHandle()
         .deregisterAllCallouts("buffer6_receive");
     isc::hooks::HooksManager::preCalloutsLibraryHandle()
