@@ -195,7 +195,7 @@ TEST_F(LoggerManagerTest, FileLogger) {
     // For the first test, we want to check that the file is created
     // if it does not already exist.  So delete the temporary file before
     // logging the first message.
-    remove(file_spec.getFileName().c_str());
+    static_cast<void>(remove(file_spec.getFileName().c_str()));
 
     // Set up the file appenders.
     LoggerManager manager;
@@ -368,7 +368,7 @@ TEST_F(LoggerManagerTest, checkLayoutPattern) {
     // For the first test, we want to check that the file is created
     // if it does not already exist.  So delete the temporary file before
     // logging the first message.
-    remove(file_spec.getFileName().c_str());
+    static_cast<void>(remove(file_spec.getFileName().c_str()));
 
     // Set up the file appenders.
     LoggerManager manager;
