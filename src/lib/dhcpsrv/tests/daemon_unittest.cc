@@ -23,6 +23,8 @@
 
 #include <gtest/gtest.h>
 
+#include <sys/wait.h>
+
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::data;
