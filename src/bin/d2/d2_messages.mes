@@ -108,7 +108,7 @@ same configuration file.  It is possible, though unlikely, that the PID file
 is a remnant left behind by a server crash or power failure and the PID
 it contains refers to a process other than DHCP_DDNS.  In such an event,
 it would be necessary to manually remove the PID file.  The first argument is
-the DHCP_DDNS process name, the second contains the PID and and PID file.
+the DHCP_DDNS process name, the second contains the PID and PID file.
 
 % DHCP_DDNS_AT_MAX_TRANSACTIONS application has %1 queued requests but has reached maximum number of %2 concurrent transactions
 This is a debug message that indicates that the application has DHCP_DDNS

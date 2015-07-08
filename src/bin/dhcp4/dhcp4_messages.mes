@@ -28,7 +28,7 @@ unlikely that the PID file is a remnant left behind by a server crash or
 power failure and the PID it contains refers to a process other than
 the server.  In such an event, it would be necessary to manually remove
 the PID file.  The first argument is the DHCPv4 process name, the
-second contains the PID and and PID file.
+second contains the PID and PID file.
 
 % DHCP4_BUFFER_RECEIVED received buffer from %1:%2 to %3:%4 over interface %5
 This debug message is logged when the server has received a packet
