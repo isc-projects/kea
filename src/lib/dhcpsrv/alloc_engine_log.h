@@ -21,7 +21,7 @@
 namespace isc {
 namespace dhcp {
 
-///@{
+//@{
 /// \brief Logging levels for the @c AllocEngine.
 ///
 /// Defines the levels used to output debug messages from the @c AllocEngine.
@@ -45,7 +45,7 @@ const int ALLOC_ENGINE_DBG_TRACE_DETAIL = DBGLVL_TRACE_DETAIL;
 /// Messages logged at this level will contain detailed results.
 const int ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA = DBGLVL_TRACE_DETAIL_DATA;
 
-///@}
+//@}
 
 /// @brief Logger for the @c AllocEngine..
 ///

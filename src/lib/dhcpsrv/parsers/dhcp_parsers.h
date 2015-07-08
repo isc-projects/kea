@@ -958,7 +958,7 @@ protected:
     /// The elements currently supported are:
     /// -# ip-address
     ///
-    /// @param config_id is the "item_name" for a specific member element of
+    /// @param parser is the "item_name" for a specific member element of
     /// the "relay" specification.
     ///
     /// @return returns a pointer to newly created parser.
@@ -1057,6 +1057,8 @@ protected:
     ///
     /// Allowed values are "disabled", "off" (alias for disabled),
     /// "out-of-pool" and "all". See Subnet::HRMode for their exact meaning.
+    ///
+    /// @param txt Host Reservation mode in the textual form.
     ///
     /// @throw BadValue if the text cannot be converted.
     ///
