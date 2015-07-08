@@ -426,6 +426,60 @@ must be a number"
     kill -${sig} ${_GET_PIDS}
 }
 
+# Verifies that a server is up running by its PID file
+# The PID file is constructed from the given config file name and
+# binary name.  If it exists and the PID it contains refers to a
+# live process it sets _SERVER_PID_FILE and _SERVER_PID to the
+# corresponding values.  Otherwise, it emits an error and exits.
+verify_server_pid() {
+    local bin_name="${1}" # binary name of the server
+    local cfg_file="${2}" # config file name
+
+    # We will construct the PID file name based on the server config
+    # and binary name
+    if [ -z ${bin_name} ]; then
+        test_lib_error "verify_server_pid requires binary name"
+        clean_exit 1
+    fi
+
+    if [ -z ${cfg_file} ]; then
+        test_lib_error "verify_server_pid requires config file name"
+        clean_exit 1
+    fi
+
+    # Only the file name portion of the config file is used, try and
+    # extract it. NOTE if this "algorithm" changes this code will need
+    # to be updated.
+    fname=`basename ${cfg_file}`
+    fname=`echo $fname | cut -f1 -d'.'`
+
+    if [ -z ${fname} ]; then
+        test_lib_error "verify_server_pid could not extract config name"
+        clean_exit 1
+    fi
+
+    # Now we can build the name:
+    pid_file="$KEA_PIDFILE_DIR/$fname.$bin_name.pid"
+
+    if [ ! -e ${pid_file} ]; then
+        printf "ERROR: PID file:[%s] does not exist\n" ${pid_file}
+        clean_exit 1
+    fi
+
+    # File exists, does its PID point to a live process?
+    pid=`cat ${pid_file}`
+    kill -0 ${pid}
+    if [ $? -ne 0 ]; then
+        printf "ERROR: PID file:[%s] exists but PID:[%d] does not\n" \
+               ${pid_file} ${pid}
+        clean_exit 1
+    fi
+
+    # Make the values accessible to the caller
+    _SERVER_PID="${pid}"
+    _SERVER_PID_FILE="${pid_file}"
+}
+
 # This test verifies that the binary is reporting its version properly.
 version_test() {
     test_name=${1}  # Test name
@@ -534,5 +588,51 @@ logger_vars_test() {
     printf "Reverting KEA_LOCKFILE_DIR to ${KEA_LOCKFILE_DIR_OLD}\n"
     KEA_LOCKFILE_DIR=${KEA_LOCKFILE_DIR_OLD}
 
+    test_finish 0
+}
+
+# This test verifies server PID file management
+# 1. It verifies that upon startup, the server creates a PID file
+# 2. It verifies the an attempt to start a second instance fails
+# due to pre-existing PID File/PID detection
+server_pid_file_test() {
+    local server_cfg="${1}"
+    local log_id="${2}"
+
+    # Log the start of the test and print test name.
+    test_start "${bin}.server_pid_file_test"
+    # Remove dangling DHCP4 instances and remove log files.
+    cleanup
+    # Create new configuration file.
+    create_config "${CONFIG}"
+    # Instruct server to log to the specific file.
+    set_logger
+    # Start server
+    start_kea ${bin_path}/${bin}
+    # Wait up to 20s for server to start.
+    wait_for_kea 20
+    if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
+        printf "ERROR: timeout waiting for %s to start.\n" ${bin}
+        clean_exit 1
+    fi
+
+    # Verify server is still running
+    verify_server_pid ${bin} ${CFG_FILE}
+
+    printf "PID file is [%s],  PID is [%d]" ${_SERVER_PID_FILE} ${_SERVER_PID}
+
+    # Now try to start a second one
+    start_kea ${bin_path}/${bin}
+
+    wait_for_message 10 "${log_id}" 1
+    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+        printf "ERROR: Second %s instance started? PID conflict not reported.\n" ${bin}
+        clean_exit 1
+    fi
+
+    # Verify server is still running
+    verify_server_pid ${bin} ${CFG_FILE}
+
+    # All ok. Shut down the server and exit.
     test_finish 0
 }

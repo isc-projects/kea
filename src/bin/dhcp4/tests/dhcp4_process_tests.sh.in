@@ -272,6 +272,7 @@ shutdown_test() {
     test_finish 0
 }
 
+server_pid_file_test "${CONFIG}" DHCP4_ALREADY_RUNNING
 dynamic_reconfiguration_test
 shutdown_test "dhcpv4.sigterm_test" 15
 shutdown_test "dhcpv4.sigint_test" 2

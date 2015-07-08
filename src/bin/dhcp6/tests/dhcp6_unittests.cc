@@ -22,6 +22,7 @@ main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     isc::log::initLogger();
 
+    setenv("KEA_PIDFILE_DIR", TEST_DATA_BUILDDIR, 1);
     int result = RUN_ALL_TESTS();
 
     return result;

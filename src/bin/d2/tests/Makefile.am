@@ -13,6 +13,7 @@ check-local:
 	for shtest in $(SHTESTS) ; do \
 	echo Running test: $$shtest ; \
 	export KEA_LOCKFILE_DIR=$(abs_top_builddir); \
+	export KEA_PIDFILE_DIR=$(abs_top_builddir); \
 	${SHELL} $(abs_builddir)/$$shtest || exit ; \
 	done
 
