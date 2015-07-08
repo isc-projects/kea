@@ -46,14 +46,10 @@ class LoggingTest : public ::testing::Test {
         }
 };
 
-// Helper to get the spec file
-std::string specfile(const std::string& name) {
-    return (std::string(TEST_DATA_BUILDDIR) + "/../" + name);
-}
-
 // Tests that the spec file is valid.
 TEST_F(LoggingTest, basicSpec) {
-    ASSERT_NO_THROW(isc::config::moduleSpecFromFile(specfile("logging.spec")));
+    std::string specfile = std::string(TEST_DATA_BUILDDIR) + "/../logging.spec";
+    ASSERT_NO_THROW(isc::config::moduleSpecFromFile(specfile));
 }
 
 // Checks that contructor is able to process specified storage properly
