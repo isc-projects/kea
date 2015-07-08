@@ -34,7 +34,8 @@ namespace dhcp {
 ///         {
 ///             "output": "/home/thomson/kea-inst/kea-warn.log",
 ///             "maxver": 8,
-///             "maxsize": 204800
+///             "maxsize": 204800,
+///             "flush": true
 ///         }
 ///     ],
 ///     "severity": "WARN"
@@ -74,16 +75,8 @@ private:
 
     /// @brief Parses output_options structure
     ///
-    /// An example data structure that holds output_options in JSON format
-    /// looks like this:
-    ///     "output_options": [
-    ///         {
-    ///             "output": "/var/log/kea-warn.log",
-    ///             "maxver": 8,
-    ///             "maxsize": 204800,
-    ///             "flush": ture
-    ///         }
-    ///     ],
+    /// @ref @c LogConfigParser for an example in JSON format.
+    ///
     /// @param destination parsed parameters will be stored here
     /// @param output_options element to be parsed
     void parseOutputOptions(std::vector<LoggingDestination>& destination,
