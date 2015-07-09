@@ -29,11 +29,11 @@ const char* DHCP4_DDNS_LOGGER_NAME = "ddns";
 const char* DHCP4_LEASE_LOGGER_NAME = "leases";
 
 isc::log::Logger dhcp4_logger(DHCP4_APP_LOGGER_NAME);
-isc::log::Logger bad_packet_logger(DHCP4_BAD_PACKET_LOGGER_NAME);
-isc::log::Logger packet_logger(DHCP4_PACKET_LOGGER_NAME);
-isc::log::Logger options_logger(DHCP4_OPTIONS_LOGGER_NAME);
-isc::log::Logger ddns_logger(DHCP4_DDNS_LOGGER_NAME);
-isc::log::Logger lease_logger(DHCP4_LEASE_LOGGER_NAME);
+isc::log::Logger bad_packet4_logger(DHCP4_BAD_PACKET_LOGGER_NAME);
+isc::log::Logger packet4_logger(DHCP4_PACKET_LOGGER_NAME);
+isc::log::Logger options4_logger(DHCP4_OPTIONS_LOGGER_NAME);
+isc::log::Logger ddns4_logger(DHCP4_DDNS_LOGGER_NAME);
+isc::log::Logger lease4_logger(DHCP4_LEASE_LOGGER_NAME);
 
 } // namespace dhcp
 } // namespace isc
