@@ -1,7 +1,7 @@
 979.	[bug]		fdupont
 	Fixed two cases of public variables in a base class being
 	hidden by variables in a derived class.
-	(Trac #3920, git xxx)
+	(Trac #3920, git bd42a66fb67aab3fe397523c6fdbf14a939587c8)
 
 978.	[func]		tmark
 	DHCPv4, DHCPv6, and DHCP_DDNS now all create PID files upon
