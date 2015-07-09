@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -391,6 +391,22 @@ Expected wait_for_message return %d, returned %d."
         "Expected keactrl status command return %s"
     assert_string_contains "DHCP DDNS: inactive" "${output}" \
         "Expected keactrl status command return %s"
+
+    # Make sure that the status command no longer checks first config file
+    printf "Getting status without a Kea config file\n"
+    mv ${CFG_FILE} ${CFG_FILE}.saved
+    output=$( ${keactrl} status -c ${KEACTRL_CFG_FILE} )
+    ret=${?}
+    mv ${CFG_FILE}.saved ${CFG_FILE}
+    assert_eq 1 ${ret} "Expected keactrl to return %d, returned %d"
+    assert_string_contains "DHCPv4 server: active" "${output}" \
+        "Expected keactrl status command return %s"
+    assert_string_contains "DHCPv6 server: inactive" "${output}" \
+        "Expected keactrl status command return %s"
+    assert_string_contains "DHCP DDNS: inactive" "${output}" \
+        "Expected keactrl status command return %s"
+    assert_string_contains "Configuration file for Kea does not exist" \
+	"${output}" "Expected keactrl status command return %s"
 
     # Use keactrl stop to shutdown the servers.
     printf "Stopping Kea: ${keactrl} stop -c ${KEACTRL_CFG_FILE}\n"
