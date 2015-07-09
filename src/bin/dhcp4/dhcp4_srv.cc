@@ -320,17 +320,17 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
 
     if (subnet) {
         // Log at higher debug level that subnet has been found.
-        LOG_DEBUG(packet_logger, DBG_DHCP4_BASIC_DATA, DHCP4_SUBNET_SELECTED)
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_SUBNET_SELECTED)
             .arg(query->getLabel())
             .arg(subnet->getID());
         // Log detailed information about the selected subnet at the
         // lower debug level.
-        LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_DATA)
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_DATA)
             .arg(query->getLabel())
             .arg(subnet->toText());
 
     } else {
-        LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL,
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL,
                   DHCP4_SUBNET_SELECTION_FAILED)
             .arg(query->getLabel());
     }
@@ -366,7 +366,7 @@ Dhcpv4Srv::run() {
             if (timeout == 0) {
                 timeout = 1000;
             }
-            LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT).arg(timeout);
+            LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT).arg(timeout);
             query = receivePacket(timeout);
 
             // Log if packet has arrived. We can't log the detailed information
@@ -376,7 +376,7 @@ Dhcpv4Srv::run() {
             // point are: the interface, source address and destination addresses
             // and ports.
             if (query) {
-                LOG_DEBUG(packet_logger, DBG_DHCP4_BASIC, DHCP4_BUFFER_RECEIVED)
+                LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_BUFFER_RECEIVED)
                     .arg(query->getRemoteAddr().toText())
                     .arg(query->getRemotePort())
                     .arg(query->getLocalAddr().toText())
@@ -384,7 +384,7 @@ Dhcpv4Srv::run() {
                     .arg(query->getIface());
 
             } else {
-                LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_INTERRUPTED)
+                LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_INTERRUPTED)
                     .arg(timeout);
             }
 
@@ -394,11 +394,11 @@ Dhcpv4Srv::run() {
             // SIGINT or SIGHUP which are handled by the server. For signals
             // that are not handled by the server we rely on the default
             // behavior of the system.
-            LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
+            LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
                 .arg(signal_set_->getNext());
         } catch (const std::exception& e) {
             // Log all other errors.
-            LOG_ERROR(packet_logger, DHCP4_BUFFER_RECEIVE_FAIL).arg(e.what());
+            LOG_ERROR(packet4_logger, DHCP4_BUFFER_RECEIVE_FAIL).arg(e.what());
         }
 
         // Handle next signal received by the process. It must be called after
@@ -481,14 +481,14 @@ Dhcpv4Srv::run() {
         // indicated they did it
         if (!skip_unpack) {
             try {
-                LOG_DEBUG(options_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_UNPACK)
+                LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_UNPACK)
                     .arg(query->getRemoteAddr().toText())
                     .arg(query->getLocalAddr().toText())
                     .arg(query->getIface());
                 query->unpack();
             } catch (const std::exception& e) {
                 // Failed to parse the packet.
-                LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
+                LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                           DHCP4_PACKET_DROP_0001)
                     .arg(query->getRemoteAddr().toText())
                     .arg(query->getLocalAddr().toText())
@@ -524,14 +524,14 @@ Dhcpv4Srv::run() {
         // We have sanity checked (in accept() that the Message Type option
         // exists, so we can safely get it here.
         int type = query->getType();
-        LOG_DEBUG(packet_logger, DBG_DHCP4_BASIC_DATA, DHCP4_PACKET_RECEIVED)
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_PACKET_RECEIVED)
             .arg(query->getLabel())
             .arg(query->getName())
             .arg(type)
             .arg(query->getRemoteAddr())
             .arg(query->getLocalAddr())
             .arg(query->getIface());
-        LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
             .arg(query->getLabel())
             .arg(query->toText());
 
@@ -600,7 +600,7 @@ Dhcpv4Srv::run() {
             // (The problem is logged as a debug message because debug is
             // disabled by default - it prevents a DDOS attack based on the
             // sending of problem packets.)
-            LOG_DEBUG(bad_packet_logger, DBG_DHCP4_BASIC,
+            LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC,
                       DHCP4_PACKET_DROP_0007)
                 .arg(query->getLabel())
                 .arg(e.what());
@@ -647,11 +647,11 @@ Dhcpv4Srv::run() {
 
         if (!skip_pack) {
             try {
-                LOG_DEBUG(options_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_PACK)
+                LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_PACK)
                     .arg(rsp->getLabel());
                 rsp->pack();
             } catch (const std::exception& e) {
-                LOG_ERROR(options_logger, DHCP4_PACKET_PACK_FAIL)
+                LOG_ERROR(options4_logger, DHCP4_PACKET_PACK_FAIL)
                     .arg(rsp->getLabel())
                     .arg(e.what());
             }
@@ -688,7 +688,7 @@ Dhcpv4Srv::run() {
                 callout_handle->getArgument("response4", rsp);
             }
 
-            LOG_DEBUG(packet_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_SEND)
+            LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_SEND)
                 .arg(rsp->getLabel())
                 .arg(rsp->getName())
                 .arg(static_cast<int>(rsp->getType()))
@@ -698,7 +698,7 @@ Dhcpv4Srv::run() {
                 .arg(rsp->getRemotePort())
                 .arg(rsp->getIface());
 
-            LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL_DATA,
+            LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA,
                       DHCP4_RESPONSE_DATA)
                 .arg(rsp->getLabel())
                 .arg(rsp->getName())
@@ -710,7 +710,7 @@ Dhcpv4Srv::run() {
             processStatsSent(rsp);
 
         } catch (const std::exception& e) {
-            LOG_ERROR(packet_logger, DHCP4_PACKET_SEND_FAIL)
+            LOG_ERROR(packet4_logger, DHCP4_PACKET_SEND_FAIL)
                 .arg(rsp->getLabel())
                 .arg(e.what());
         }
@@ -940,7 +940,7 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
         Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
             (ex.getQuery()->getOption(DHO_FQDN));
         if (fqdn) {
-            LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_FQDN_PROCESS)
+            LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_FQDN_PROCESS)
                 .arg(ex.getQuery()->getLabel());
             processClientFqdnOption(ex);
 
@@ -948,7 +948,7 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
             OptionStringPtr hostname = boost::dynamic_pointer_cast<OptionString>
                 (ex.getQuery()->getOption(DHO_HOST_NAME));
             if (hostname) {
-                LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_HOSTNAME_PROCESS)
+                LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_HOSTNAME_PROCESS)
                     .arg(ex.getQuery()->getLabel());
                 processHostnameOption(ex);
             }
@@ -962,7 +962,7 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
         // from the log. We don't want to throw an exception here because,
         // it will impact the processing of the whole packet. We rather want
         // the processing to continue, even if the client's name is wrong.
-        LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_NAME_PROC_FAIL)
+        LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_NAME_PROC_FAIL)
             .arg(ex.getQuery()->getLabel())
             .arg(e.what());
     }
@@ -974,7 +974,7 @@ Dhcpv4Srv::processClientFqdnOption(Dhcpv4Exchange& ex) {
     Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option4ClientFqdn>(ex.getQuery()->getOption(DHO_FQDN));
 
-    LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_FQDN_DATA)
+    LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_FQDN_DATA)
         .arg(ex.getQuery()->getLabel())
         .arg(fqdn->toText());
 
@@ -1014,7 +1014,7 @@ Dhcpv4Srv::processClientFqdnOption(Dhcpv4Exchange& ex) {
     // If we don't store the option in the response message, we will have to
     // propagate it in the different way to the functions which acquire the
     // lease. This would require modifications to the API of this class.
-    LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESPONSE_FQDN_DATA)
+    LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESPONSE_FQDN_DATA)
         .arg(ex.getQuery()->getLabel())
         .arg(fqdn_resp->toText());
     ex.getResponse()->addOption(fqdn_resp);
@@ -1026,7 +1026,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     OptionStringPtr opt_hostname = boost::dynamic_pointer_cast<OptionString>
         (ex.getQuery()->getOption(DHO_HOST_NAME));
 
-    LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_HOSTNAME_DATA)
+    LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_HOSTNAME_DATA)
         .arg(ex.getQuery()->getLabel())
         .arg(opt_hostname->getValue());
 
@@ -1045,7 +1045,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     /// @todo It would be more liberal to accept this and let it fall into
     /// the case  of replace or less than two below.
     if (label_count == 0) {
-        LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_EMPTY_HOSTNAME)
+        LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_EMPTY_HOSTNAME)
             .arg(ex.getQuery()->getLabel());
         return;
     }
@@ -1090,7 +1090,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname, false));
     }
 
-    LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESPONSE_HOSTNAME_DATA)
+    LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESPONSE_HOSTNAME_DATA)
         .arg(ex.getQuery()->getLabel())
         .arg(opt_hostname_resp->getValue());
     ex.getResponse()->addOption(opt_hostname_resp);
@@ -1150,7 +1150,7 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
     try {
         dhcid  = computeDhcid(lease);
     } catch (const DhcidComputeError& ex) {
-        LOG_ERROR(ddns_logger, DHCP4_DHCID_COMPUTE_ERROR)
+        LOG_ERROR(ddns4_logger, DHCP4_DHCID_COMPUTE_ERROR)
             .arg(lease->toText())
             .arg(ex.what());
         return;
@@ -1166,7 +1166,7 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
                                                     lease->valid_lft_),
                                                    lease->valid_lft_));
 
-    LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUEUE_NCR)
+    LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUEUE_NCR)
         .arg(chg_type == CHG_ADD ? "add" : "remove")
         .arg(ncr->toText());
 
@@ -1191,7 +1191,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // misconfiguration of the server (or some relays).
 
         // Perhaps this should be logged on some higher level?
-        LOG_ERROR(bad_packet_logger, DHCP4_PACKET_NAK_0001)
+        LOG_ERROR(bad_packet4_logger, DHCP4_PACKET_NAK_0001)
             .arg(query->getLabel())
             .arg(query->getRemoteAddr().toText())
             .arg(query->getName());
@@ -1244,7 +1244,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // and whether the client is known, i.e., has a lease.
     if (!fake_allocation && !opt_serverid && opt_requested_address) {
 
-        LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_INIT_REBOOT)
+        LOG_DEBUG(lease4_logger, DBG_DHCP4_DETAIL, DHCP4_INIT_REBOOT)
             .arg(query->getLabel())
             .arg(hint.toText());
 
@@ -1261,7 +1261,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // validating the address sent because we don't want to respond if
         // we don't know this client.
         if (!lease || !lease->belongsToClient(hwaddr, client_id)) {
-            LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
+            LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_NO_LEASE_INIT_REBOOT)
                 .arg(query->getLabel())
                 .arg(hint.toText());
@@ -1273,7 +1273,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // We know this client so we can now check if his notion of the
         // IP address is correct.
         if (lease && (lease->addr_ != hint)) {
-            LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
+            LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_PACKET_NAK_0002)
                 .arg(query->getLabel())
                 .arg(hint.toText());
@@ -1331,7 +1331,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     if (lease) {
         // We have a lease! Let's set it in the packet and send it back to
         // the client.
-        LOG_DEBUG(lease_logger, DBG_DHCP4_BASIC_DATA, fake_allocation?
+        LOG_DEBUG(lease4_logger, DBG_DHCP4_BASIC_DATA, fake_allocation?
                   DHCP4_LEASE_ADVERT : DHCP4_LEASE_ALLOC)
             .arg(query->getLabel())
             .arg(lease->addr_.toText());
@@ -1364,7 +1364,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             lease->hostname_ = CfgMgr::instance().getD2ClientMgr()
                 .generateFqdn(lease->addr_, static_cast<bool>(fqdn));
 
-            LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL, DHCP4_RESPONSE_HOSTNAME_GENERATE)
+            LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_RESPONSE_HOSTNAME_GENERATE)
                 .arg(query->getLabel())
                 .arg(lease->hostname_);
 
@@ -1389,7 +1389,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                 }
 
             } catch (const Exception& ex) {
-                LOG_ERROR(ddns_logger, DHCP4_NAME_GEN_UPDATE_FAIL)
+                LOG_ERROR(ddns4_logger, DHCP4_NAME_GEN_UPDATE_FAIL)
                     .arg(query->getLabel())
                     .arg(lease->hostname_)
                     .arg(ex.what());
@@ -1424,12 +1424,12 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // real allocation.
         if (!fake_allocation && CfgMgr::instance().ddnsEnabled()) {
             try {
-                LOG_DEBUG(ddns_logger, DBG_DHCP4_DETAIL, DHCP4_NCR_CREATE)
+                LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_NCR_CREATE)
                     .arg(query->getLabel());
                 createNameChangeRequests(lease, ctx->old_lease_);
 
             } catch (const Exception& ex) {
-                LOG_ERROR(ddns_logger, DHCP4_NCR_CREATION_FAILED)
+                LOG_ERROR(ddns4_logger, DHCP4_NCR_CREATION_FAILED)
                     .arg(query->getLabel())
                     .arg(ex.what());
             }
@@ -1438,7 +1438,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     } else {
         // Allocation engine did not allocate a lease. The engine logged
         // cause of that failure.
-        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, fake_allocation ?
+        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, fake_allocation ?
                   DHCP4_PACKET_NAK_0003 : DHCP4_PACKET_NAK_0004)
             .arg(query->getLabel())
             .arg(query->getCiaddr().toText())
@@ -1651,7 +1651,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     /// doing class specific processing.
     if (!classSpecificProcessing(ex)) {
         /// @todo add more verbosity here
-        LOG_DEBUG(options_logger, DBG_DHCP4_DETAIL, DHCP4_DISCOVER_CLASS_PROCESSING_FAILED)
+        LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_DISCOVER_CLASS_PROCESSING_FAILED)
             .arg(discover->getLabel());
     }
 
@@ -1701,7 +1701,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     /// doing class specific processing.
     if (!classSpecificProcessing(ex)) {
         /// @todo add more verbosity here
-        LOG_DEBUG(options_logger, DBG_DHCP4_DETAIL, DHCP4_REQUEST_CLASS_PROCESSING_FAILED)
+        LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_REQUEST_CLASS_PROCESSING_FAILED)
             .arg(ex.getQuery()->getLabel());
     }
 
@@ -1732,7 +1732,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
     Subnet4Ptr subnet = selectSubnet(release);
     if (!subnet) {
         // No subnet - release no sent from the proper location
-        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL,
+        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                   DHCP4_RELEASE_FAIL_NO_SUBNET)
             .arg(release->getLabel())
             .arg(release->getCiaddr().toText());
@@ -1745,14 +1745,14 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
         if (!lease) {
             // No such lease - bogus release
-            LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_NO_LEASE)
+            LOG_DEBUG(lease4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_NO_LEASE)
                 .arg(release->getLabel())
                 .arg(release->getCiaddr().toText());
             return;
         }
 
         if (!lease->belongsToClient(release->getHWAddr(), client_id)) {
-            LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_CLIENT)
+            LOG_DEBUG(lease4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_CLIENT)
                 .arg(release->getLabel())
                 .arg(release->getCiaddr().toText());
             return;
@@ -1795,7 +1795,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
             if (success) {
                 // Release successful
-                LOG_DEBUG(lease_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
+                LOG_DEBUG(lease4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
                     .arg(release->getLabel())
                     .arg(lease->addr_.toText());
 
@@ -1810,13 +1810,13 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
                 }
             } else {
                 // Release failed
-                LOG_ERROR(lease_logger, DHCP4_RELEASE_FAIL)
+                LOG_ERROR(lease4_logger, DHCP4_RELEASE_FAIL)
                     .arg(release->getLabel())
                     .arg(lease->addr_.toText());
             }
         }
     } catch (const isc::Exception& ex) {
-        LOG_ERROR(lease_logger, DHCP4_RELEASE_EXCEPTION)
+        LOG_ERROR(lease4_logger, DHCP4_RELEASE_EXCEPTION)
             .arg(release->getLabel())
             .arg(release->getCiaddr())
             .arg(ex.what());
@@ -1848,7 +1848,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     // be cleared (these fields were copied by the copyDefaultFields function).
     // Also Relay Agent Options should be removed if present.
     if (ack->getRemoteAddr() != inform->getGiaddr()) {
-        LOG_DEBUG(packet_logger, DBG_DHCP4_DETAIL, DHCP4_INFORM_DIRECT_REPLY)
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_INFORM_DIRECT_REPLY)
             .arg(inform->getLabel())
             .arg(ack->getRemoteAddr())
             .arg(ack->getIface());
@@ -1863,7 +1863,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     /// @todo: decide whether we want to add a new hook point for
     /// doing class specific processing.
     if (!classSpecificProcessing(ex)) {
-        LOG_DEBUG(options_logger, DBG_DHCP4_DETAIL,
+        LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL,
                   DHCP4_INFORM_CLASS_PROCESSING_FAILED)
             .arg(inform->getLabel());
     }
@@ -1881,7 +1881,7 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
     // Check if the message from directly connected client (if directly
     // connected) should be dropped or processed.
     if (!acceptDirectRequest(query)) {
-        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0002)
+        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0002)
             .arg(query->getLabel())
             .arg(query->getIface());
         return (false);
@@ -1890,7 +1890,7 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
     // Check if the DHCPv4 packet has been sent to us or to someone else.
     // If it hasn't been sent to us, drop it!
     if (!acceptServerId(query)) {
-        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0003)
+        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0003)
             .arg(query->getLabel())
             .arg(query->getIface());
         return (false);
@@ -1934,7 +1934,7 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
         type = query->getType();
 
     } catch (...) {
-        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0004)
+        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0004)
             .arg(query->getLabel())
             .arg(query->getIface());
         return (false);
@@ -1942,7 +1942,7 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
 
     // If we receive a message with a non-existing type, we are logging it.
     if (type > DHCPLEASEQUERYDONE) {
-        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0005)
+        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0005)
             .arg(query->getLabel())
             .arg(type);
         return (false);
@@ -1959,7 +1959,7 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
     if ((type != DHCPDISCOVER) && (type != DHCPREQUEST) &&
         (type != DHCPRELEASE) && (type != DHCPDECLINE) &&
         (type != DHCPINFORM)) {
-        LOG_DEBUG(bad_packet_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0006)
+        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0006)
             .arg(query->getLabel())
             .arg(type);
         return (false);
@@ -2196,7 +2196,7 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     }
 
     if (!classes.empty()) {
-        LOG_DEBUG(options_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+        LOG_DEBUG(options4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
             .arg(pkt->getLabel())
             .arg(classes);
     }
@@ -2260,7 +2260,7 @@ void
 Dhcpv4Srv::d2ClientErrorHandler(const
                                 dhcp_ddns::NameChangeSender::Result result,
                                 dhcp_ddns::NameChangeRequestPtr& ncr) {
-    LOG_ERROR(ddns_logger, DHCP4_DDNS_REQUEST_SEND_FAILED).
+    LOG_ERROR(ddns4_logger, DHCP4_DDNS_REQUEST_SEND_FAILED).
               arg(result).arg((ncr ? ncr->toText() : " NULL "));
     // We cannot communicate with kea-dhcp-ddns, suspend further updates.
     /// @todo We may wish to revisit this, but for now we will simply turn

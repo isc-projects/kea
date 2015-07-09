@@ -130,7 +130,7 @@ createStatusCode(const Pkt6& pkt, const uint16_t status_code,
                  const std::string& status_message) {
     Option6StatusCodePtr option_status(new Option6StatusCode(status_code,
                                                              status_message));
-    LOG_DEBUG(options_logger, DBG_DHCP6_DETAIL, DHCP6_ADD_GLOBAL_STATUS_CODE)
+    LOG_DEBUG(options6_logger, DBG_DHCP6_DETAIL, DHCP6_ADD_GLOBAL_STATUS_CODE)
         .arg(pkt.getLabel())
         .arg(option_status->dataToText());
     return (option_status);
@@ -155,7 +155,7 @@ createStatusCode(const Pkt6& pkt, const Option6IA& ia, const uint16_t status_cod
                  const std::string& status_message) {
     Option6StatusCodePtr option_status(new Option6StatusCode(status_code,
                                                              status_message));
-    LOG_DEBUG(options_logger, DBG_DHCP6_DETAIL, DHCP6_ADD_STATUS_CODE_FOR_IA)
+    LOG_DEBUG(options6_logger, DBG_DHCP6_DETAIL, DHCP6_ADD_STATUS_CODE_FOR_IA)
         .arg(pkt.getLabel())
         .arg(ia.getIAID())
         .arg(option_status->dataToText());
@@ -261,7 +261,7 @@ Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt) {
         // Let us test received ServerID if it is same as ServerID
         // which is being used by server
         if (getServerID()->getData() != server_id->getData()){
-            LOG_DEBUG(bad_packet_logger, DBG_DHCP6_DETAIL_DATA,
+            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_DETAIL_DATA,
                       DHCP6_PACKET_DROP_SERVERID_MISMATCH)
                 .arg(pkt->getLabel())
                 .arg(duidToString(server_id))
@@ -281,7 +281,7 @@ Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
     case DHCPV6_REBIND:
     case DHCPV6_INFORMATION_REQUEST:
         if (pkt->relay_info_.empty() && !pkt->getLocalAddr().isV6Multicast()) {
-            LOG_DEBUG(bad_packet_logger, DBG_DHCP6_DETAIL, DHCP6_PACKET_DROP_UNICAST)
+            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_DETAIL, DHCP6_PACKET_DROP_UNICAST)
                 .arg(pkt->getLabel())
                 .arg(pkt->getName());
             return (false);
@@ -323,7 +323,7 @@ bool Dhcpv6Srv::run() {
             if (timeout == 0) {
                 timeout = 1000;
             }
-            LOG_DEBUG(packet_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT).arg(timeout);
+            LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT).arg(timeout);
             query = receivePacket(timeout);
 
             // Log if packet has arrived. We can't log the detailed information
@@ -333,7 +333,7 @@ bool Dhcpv6Srv::run() {
             // point are: the interface, source address and destination addresses
             // and ports.
             if (query) {
-                LOG_DEBUG(packet_logger, DBG_DHCP6_BASIC, DHCP6_BUFFER_RECEIVED)
+                LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_BUFFER_RECEIVED)
                     .arg(query->getRemoteAddr().toText())
                     .arg(query->getRemotePort())
                     .arg(query->getLocalAddr().toText())
@@ -347,7 +347,7 @@ bool Dhcpv6Srv::run() {
                 StatsMgr::instance().addValue("pkt6-received", static_cast<int64_t>(1));
 
             } else {
-                LOG_DEBUG(packet_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_INTERRUPTED)
+                LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_INTERRUPTED)
                     .arg(timeout);
             }
 
@@ -357,10 +357,10 @@ bool Dhcpv6Srv::run() {
             // SIGINT or SIGHUP which are handled by the server. For signals
             // that are not handled by the server we rely on the default
             // behavior of the system.
-            LOG_DEBUG(packet_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_SIGNAL)
+            LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_SIGNAL)
                 .arg(signal_set_->getNext());
         } catch (const std::exception& e) {
-            LOG_ERROR(packet_logger, DHCP6_PACKET_RECEIVE_FAIL).arg(e.what());
+            LOG_ERROR(packet6_logger, DHCP6_PACKET_RECEIVE_FAIL).arg(e.what());
         }
 
         // Handle next signal received by the process. It must be called after
@@ -434,14 +434,14 @@ bool Dhcpv6Srv::run() {
         // indicated they did it
         if (!skip_unpack) {
             try {
-                LOG_DEBUG(options_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_UNPACK)
+                LOG_DEBUG(options6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_UNPACK)
                     .arg(query->getRemoteAddr().toText())
                     .arg(query->getLocalAddr().toText())
                     .arg(query->getIface());
                 query->unpack();
             } catch (const std::exception &e) {
                 // Failed to parse the packet.
-                LOG_DEBUG(bad_packet_logger, DBG_DHCP6_DETAIL,
+                LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_DETAIL,
                           DHCP6_PACKET_DROP_PARSE_FAIL)
                     .arg(query->getRemoteAddr().toText())
                     .arg(query->getLocalAddr().toText())
@@ -479,14 +479,14 @@ bool Dhcpv6Srv::run() {
             continue;
         }
 
-        LOG_DEBUG(packet_logger, DBG_DHCP6_BASIC_DATA, DHCP6_PACKET_RECEIVED)
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_PACKET_RECEIVED)
             .arg(query->getLabel())
             .arg(query->getName())
             .arg(query->getType())
             .arg(query->getRemoteAddr())
             .arg(query->getLocalAddr())
             .arg(query->getIface());
-        LOG_DEBUG(packet_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_QUERY_DATA)
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_QUERY_DATA)
             .arg(query->getLabel())
             .arg(query->toText());
 
@@ -558,7 +558,7 @@ bool Dhcpv6Srv::run() {
 
             default:
                 // We received a packet type that we do not recognize.
-                LOG_DEBUG(bad_packet_logger, DBG_DHCP6_BASIC, DHCP6_UNKNOWN_MSG_RECEIVED)
+                LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_UNKNOWN_MSG_RECEIVED)
                     .arg(static_cast<int>(query->getType()))
                     .arg(query->getIface());
                 // Only action is to output a message if debug is enabled,
@@ -568,7 +568,7 @@ bool Dhcpv6Srv::run() {
             }
 
         } catch (const RFCViolation& e) {
-            LOG_DEBUG(bad_packet_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
+            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
                 .arg(query->getName())
                 .arg(query->getRemoteAddr().toText())
                 .arg(e.what());
@@ -584,7 +584,7 @@ bool Dhcpv6Srv::run() {
             // (The problem is logged as a debug message because debug is
             // disabled by default - it prevents a DDOS attack based on the
             // sending of problem packets.)
-            LOG_DEBUG(bad_packet_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
+            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
                 .arg(query->getName())
                 .arg(query->getRemoteAddr().toText())
                 .arg(e.what());
@@ -653,7 +653,7 @@ bool Dhcpv6Srv::run() {
                 }
             }
 
-            LOG_DEBUG(packet_logger, DBG_DHCP6_DETAIL_DATA,
+            LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA,
                       DHCP6_RESPONSE_DATA)
                 .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
 
@@ -661,7 +661,7 @@ bool Dhcpv6Srv::run() {
                 try {
                     rsp->pack();
                 } catch (const std::exception& e) {
-                    LOG_ERROR(options_logger, DHCP6_PACK_FAIL)
+                    LOG_ERROR(options6_logger, DHCP6_PACK_FAIL)
                         .arg(e.what());
                     continue;
                 }
@@ -698,7 +698,7 @@ bool Dhcpv6Srv::run() {
                     callout_handle->getArgument("response6", rsp);
                 }
 
-                LOG_DEBUG(packet_logger, DBG_DHCP6_DETAIL_DATA,
+                LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA,
                           DHCP6_RESPONSE_DATA)
                     .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
 
@@ -708,7 +708,7 @@ bool Dhcpv6Srv::run() {
                 processStatsSent(rsp);
 
             } catch (const std::exception& e) {
-                LOG_ERROR(packet_logger, DHCP6_PACKET_SEND_FAIL)
+                LOG_ERROR(packet6_logger, DHCP6_PACKET_SEND_FAIL)
                     .arg(e.what());
             }
         }
@@ -1091,17 +1091,17 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
 
     if (subnet) {
         // Log at higher debug level that subnet has been found.
-        LOG_DEBUG(packet_logger, DBG_DHCP6_BASIC_DATA, DHCP6_SUBNET_SELECTED)
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_SUBNET_SELECTED)
             .arg(question->getLabel())
             .arg(subnet->getID());
         // Log detailed information about the selected subnet at the
         // lower debug level.
-        LOG_DEBUG(packet_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_DATA)
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_DATA)
             .arg(question->getLabel())
             .arg(subnet->toText());
 
     } else {
-        LOG_DEBUG(packet_logger, DBG_DHCP6_DETAIL, DHCP6_SUBNET_SELECTION_FAILED)
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_SUBNET_SELECTION_FAILED)
             .arg(question->getLabel());
     }
 
@@ -1168,7 +1168,7 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
         return;
     }
 
-    LOG_DEBUG(ddns_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_RECEIVE_FQDN)
+    LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_RECEIVE_FQDN)
         .arg(question->getLabel())
         .arg(fqdn->toText());
 
@@ -1203,7 +1203,7 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
     // response to be sent to a client. Note that the Client FQDN option is
     // always sent back to the client if Client FQDN was included in the
     // client's message.
-    LOG_DEBUG(ddns_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_RESPONSE_FQDN_DATA)
+    LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_RESPONSE_FQDN_DATA)
         .arg(question->getLabel())
         .arg(fqdn_resp->toText());
     answer->addOption(fqdn_resp);
@@ -1293,7 +1293,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
                                         iaaddr->getAddress().toText(),
                                         dhcid, 0, iaaddr->getValid()));
 
-        LOG_DEBUG(ddns_logger, DBG_DHCP6_DETAIL,
+        LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL,
                   DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST).arg(ncr->toText());
 
         // Post the NCR to the D2ClientMgr.
@@ -1312,7 +1312,7 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Pkt6Ptr& query, const Lease6Ptr&
     // Don't create NameChangeRequests if DNS updates are disabled
     // or DNS update hasn't been performed.
     if (!CfgMgr::instance().ddnsEnabled() || (!lease->fqdn_fwd_ && !lease->fqdn_rev_)) {
-        LOG_DEBUG(ddns_logger, DBG_DHCP6_DETAIL_DATA,
+        LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL_DATA,
                   DHCP6_DDNS_SKIP_REMOVE_NAME_CHANGE_REQUEST)
             .arg(query->getLabel())
             .arg(lease->toText());
@@ -1331,7 +1331,7 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Pkt6Ptr& query, const Lease6Ptr&
         OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
 
     } catch (const Exception& ex) {
-        LOG_ERROR(ddns_logger, DHCP6_DDNS_REMOVE_INVALID_HOSTNAME)
+        LOG_ERROR(ddns6_logger, DHCP6_DDNS_REMOVE_INVALID_HOSTNAME)
             .arg(query->getLabel())
             .arg(lease->hostname_.empty() ? "(empty)" : lease->hostname_)
             .arg(lease->addr_.toText());
@@ -1356,7 +1356,7 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Pkt6Ptr& query, const Lease6Ptr&
                                     lease->addr_.toText(),
                                     dhcid, 0, lease->valid_lft_));
 
-    LOG_DEBUG(ddns_logger, DBG_DHCP6_DETAIL,
+    LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL,
               DHCP6_DDNS_CREATE_REMOVE_NAME_CHANGE_REQUEST)
         .arg(query->getLabel())
         .arg(ncr->toText());
@@ -1395,7 +1395,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         hint = hint_opt->getAddress();
     }
 
-    LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_NA_REQUEST)
+    LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_NA_REQUEST)
         .arg(query->getLabel())
         .arg(ia->getIAID())
         .arg(hint_opt ? hint.toText() : "(no hint)");
@@ -1474,12 +1474,12 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     if (lease) {
         // We have a lease! Let's wrap its content into IA_NA option
         // with IAADDR suboption.
-        LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, fake_allocation ?
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
                   DHCP6_LEASE_ADVERT : DHCP6_LEASE_ALLOC)
             .arg(query->getLabel())
             .arg(lease->addr_.toText())
             .arg(ia->getIAID());
-        LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_LEASE_DATA)
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_LEASE_DATA)
             .arg(query->getLabel())
             .arg(ia->getIAID())
             .arg(lease->toText());
@@ -1522,7 +1522,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         // cause of that failure. The only thing left is to insert
         // status code to pass the sad news to the client.
 
-        LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, fake_allocation ?
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
                   DHCP6_LEASE_ADVERT_FAIL : DHCP6_LEASE_ALLOC_FAIL)
             .arg(query->getLabel())
             .arg(ia->getIAID());
@@ -1540,7 +1540,7 @@ Dhcpv6Srv::conditionalNCRRemoval(const Pkt6Ptr& query, Lease6Ptr& old_lease,
                                  Lease6Ptr& new_lease, const std::string& hostname,
                                  bool do_fwd, bool do_rev) {
     if (old_lease && !new_lease->hasIdenticalFqdn(*old_lease)) {
-        LOG_DEBUG(ddns_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_LEASE_ASSIGN_FQDN_CHANGE)
+        LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_LEASE_ASSIGN_FQDN_CHANGE)
             .arg(query->getLabel())
             .arg(old_lease->toText())
             .arg(hostname)
@@ -1568,7 +1568,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         hint = hint_opt->getAddress();
     }
 
-    LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_REQUEST)
+    LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_REQUEST)
         .arg(query->getLabel())
         .arg(ia->getIAID())
         .arg(hint_opt ? hint.toText() : "(no hint)");
@@ -1630,7 +1630,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
             // We have a lease! Let's wrap its content into IA_PD option
             // with IAADDR suboption.
-            LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, fake_allocation ?
+            LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
                       DHCP6_PD_LEASE_ADVERT : DHCP6_PD_LEASE_ALLOC)
                 .arg(query->getLabel())
                 .arg((*l)->addr_.toText())
@@ -1653,7 +1653,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         // cause of that failure. The only thing left is to insert
         // status code to pass the sad news to the client.
 
-        LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, fake_allocation ?
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
                   DHCP6_PD_LEASE_ADVERT_FAIL : DHCP6_PD_LEASE_ALLOC_FAIL)
             .arg(query->getLabel())
             .arg(ia->getIAID());
@@ -1671,7 +1671,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                        AllocEngine::ClientContext6& orig_ctx,
                        boost::shared_ptr<Option6IA> ia) {
 
-    LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_NA_EXTEND)
+    LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_NA_EXTEND)
         .arg(query->getLabel())
         .arg(ia->getIAID());
 
@@ -1790,7 +1790,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         // delete any existing FQDN records for this lease.
         if (((*l)->hostname_ != ctx.hostname_) || ((*l)->fqdn_fwd_ != do_fwd) ||
             ((*l)->fqdn_rev_ != do_rev)) {
-            LOG_DEBUG(ddns_logger, DBG_DHCP6_DETAIL,
+            LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL,
                       DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE)
                 .arg(query->getLabel())
                 .arg((*l)->toText())
@@ -1822,7 +1822,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
             ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoBinding,
                               "Sorry, no known leases for this duid/iaid/subnet."));
 
-            LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, DHCP6_EXTEND_NA_UNKNOWN)
+            LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_EXTEND_NA_UNKNOWN)
                 .arg(query->getLabel())
                 .arg(ia->getIAID())
                 .arg(subnet->toText());
@@ -1843,7 +1843,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                        AllocEngine::ClientContext6& orig_ctx,
                        boost::shared_ptr<Option6IA> ia) {
 
-    LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_EXTEND)
+    LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_EXTEND)
         .arg(query->getLabel())
         .arg(ia->getIAID());
 
@@ -2109,7 +2109,7 @@ OptionPtr
 Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
                         int& general_status, boost::shared_ptr<Option6IA> ia) {
 
-    LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_NA_RELEASE)
+    LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_NA_RELEASE)
         .arg(query->getLabel())
         .arg(ia->getIAID());
 
@@ -2154,7 +2154,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         // have mandatory DUID information attached. Someone was messing with our
         // database.
 
-        LOG_ERROR(lease_logger, DHCP6_LEASE_NA_WITHOUT_DUID)
+        LOG_ERROR(lease6_logger, DHCP6_LEASE_NA_WITHOUT_DUID)
             .arg(query->getLabel())
             .arg(release_addr->getAddress().toText());
 
@@ -2167,7 +2167,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
     if (*duid != *(lease->duid_)) {
 
         // Sorry, it's not your address. You can't release it.
-        LOG_INFO(lease_logger, DHCP6_RELEASE_NA_FAIL_WRONG_DUID)
+        LOG_INFO(lease6_logger, DHCP6_RELEASE_NA_FAIL_WRONG_DUID)
             .arg(query->getLabel())
             .arg(release_addr->getAddress().toText())
             .arg(lease->duid_->toText());
@@ -2180,7 +2180,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
 
     if (ia->getIAID() != lease->iaid_) {
         // This address belongs to this client, but to a different IA
-        LOG_WARN(lease_logger, DHCP6_RELEASE_NA_FAIL_WRONG_IAID)
+        LOG_WARN(lease6_logger, DHCP6_RELEASE_NA_FAIL_WRONG_IAID)
             .arg(query->getLabel())
             .arg(release_addr->getAddress().toText())
             .arg(lease->iaid_)
@@ -2235,7 +2235,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_UnspecFail,
                           "Server failed to release a lease"));
 
-        LOG_ERROR(lease_logger, DHCP6_RELEASE_NA_FAIL)
+        LOG_ERROR(lease6_logger, DHCP6_RELEASE_NA_FAIL)
             .arg(query->getLabel())
             .arg(lease->addr_.toText())
             .arg(lease->iaid_);
@@ -2243,7 +2243,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
 
         return (ia_rsp);
     } else {
-        LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, DHCP6_RELEASE_NA)
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_RELEASE_NA)
             .arg(query->getLabel())
             .arg(lease->addr_.toText())
             .arg(lease->iaid_);
@@ -2308,7 +2308,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
         // Something is gravely wrong here. We do have a lease, but it does not
         // have mandatory DUID information attached. Someone was messing with our
         // database.
-        LOG_ERROR(lease_logger, DHCP6_LEASE_PD_WITHOUT_DUID)
+        LOG_ERROR(lease6_logger, DHCP6_LEASE_PD_WITHOUT_DUID)
             .arg(query->getLabel())
             .arg(release_prefix->getAddress().toText())
             .arg(static_cast<int>(release_prefix->getLength()));
@@ -2321,7 +2321,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
     if (*duid != *(lease->duid_)) {
         // Sorry, it's not your address. You can't release it.
-        LOG_INFO(lease_logger, DHCP6_RELEASE_PD_FAIL_WRONG_DUID)
+        LOG_INFO(lease6_logger, DHCP6_RELEASE_PD_FAIL_WRONG_DUID)
             .arg(query->getLabel())
             .arg(release_prefix->getAddress().toText())
             .arg(static_cast<int>(release_prefix->getLength()))
@@ -2335,7 +2335,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
     if (ia->getIAID() != lease->iaid_) {
         // This address belongs to this client, but to a different IA
-        LOG_WARN(lease_logger, DHCP6_RELEASE_PD_FAIL_WRONG_IAID)
+        LOG_WARN(lease6_logger, DHCP6_RELEASE_PD_FAIL_WRONG_IAID)
             .arg(query->getLabel())
             .arg(release_prefix->getAddress().toText())
             .arg(static_cast<int>(release_prefix->getLength()))
@@ -2390,7 +2390,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_UnspecFail,
                           "Server failed to release a lease"));
 
-        LOG_ERROR(lease_logger, DHCP6_RELEASE_PD_FAIL)
+        LOG_ERROR(lease6_logger, DHCP6_RELEASE_PD_FAIL)
             .arg(query->getLabel())
             .arg(lease->addr_.toText())
             .arg(static_cast<int>(lease->prefixlen_))
@@ -2398,7 +2398,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
         general_status = STATUS_UnspecFail;
 
     } else {
-        LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, DHCP6_RELEASE_PD)
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_RELEASE_PD)
             .arg(query->getLabel())
             .arg(lease->addr_.toText())
             .arg(static_cast<int>(lease->prefixlen_))
@@ -2433,9 +2433,8 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
         OptionPtr opt_rapid_commit = solicit->getOption(D6O_RAPID_COMMIT);
         if (opt_rapid_commit) {
 
-            /// @todo uncomment when #3807 is merged!
-/*            LOG_DEBUG(options_logger, DBG_DHCP6_DETAIL, DHCP6_RAPID_COMMIT)
-                .arg(solicit->getLabel()); */
+            LOG_DEBUG(options6_logger, DBG_DHCP6_DETAIL, DHCP6_RAPID_COMMIT)
+                .arg(solicit->getLabel());
 
             // If Rapid Commit has been sent by the client, change the
             // response type to Reply and include Rapid Commit option.
@@ -2827,7 +2826,7 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
     std::string generated_name =
         CfgMgr::instance().getD2ClientMgr().generateFqdn(addr);
 
-    LOG_DEBUG(ddns_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_DDNS_FQDN_GENERATED)
+    LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_DDNS_FQDN_GENERATED)
         .arg(answer->getLabel())
         .arg(generated_name);
 
@@ -2856,7 +2855,7 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
         fqdn->setDomainName(generated_name, Option6ClientFqdn::FULL);
 
     } catch (const Exception& ex) {
-        LOG_ERROR(ddns_logger, DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL)
+        LOG_ERROR(ddns6_logger, DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL)
             .arg(answer->getLabel())
             .arg(addr.toText())
             .arg(ex.what());
@@ -2879,7 +2878,7 @@ void
 Dhcpv6Srv::d2ClientErrorHandler(const
                                 dhcp_ddns::NameChangeSender::Result result,
                                 dhcp_ddns::NameChangeRequestPtr& ncr) {
-    LOG_ERROR(ddns_logger, DHCP6_DDNS_REQUEST_SEND_FAILED).
+    LOG_ERROR(ddns6_logger, DHCP6_DDNS_REQUEST_SEND_FAILED).
               arg(result).arg((ncr ? ncr->toText() : " NULL "));
     // We cannot communicate with kea-dhcp-ddns, suspend further updates.
     /// @todo We may wish to revisit this, but for now we will simply turn
