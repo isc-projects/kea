@@ -1,3 +1,8 @@
+979.	[bug]		fdupont
+	Fixed two cases of public variables in a base class being
+	hidden by variables in a derived class.
+	(Trac #3920, git xxx)
+
 978.	[func]		tmark
 	DHCPv4, DHCPv6, and DHCP_DDNS now all create PID files upon
 	startup.  The PID file pathname is formed from:

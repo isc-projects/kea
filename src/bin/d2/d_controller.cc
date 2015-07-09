@@ -44,7 +44,7 @@ DControllerBase::DControllerBase(const char* app_name, const char* bin_name)
     : app_name_(app_name), bin_name_(bin_name),
       verbose_(false), spec_file_name_(""),
       io_service_(new isc::asiolink::IOService()),
-      signal_set_(), io_signal_queue_() {
+      io_signal_queue_() {
 }
 
 void
