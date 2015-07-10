@@ -70,6 +70,15 @@ public:
         /// @brief Default constructor for the structure.
         LeaseInfo() :
             lease_(), status_code_(0) { }
+
+        /// @brief Constructor which sets the lease type.
+        ///
+        /// @param lease_type One of the D6O_IA_NA or D6O_IA_PD.
+        LeaseInfo(const uint16_t lease_type) :
+            lease_(), status_code_(0) {
+            lease_.type_ = lease_type == D6O_IA_NA ? Lease::TYPE_NA :
+                Lease::TYPE_PD;
+        }
     };
 
     /// @brief Holds the current client configuration obtained from the
@@ -317,7 +326,7 @@ public:
     /// @param type Lease type: D6O_IA_NA or D6O_IA_PD.
     ///
     /// @return Vector containing leases of the specified type.
-    std::vector<Lease6> getLeasesByType(const Lease::Type& lease_type) const;
+    std::vector<LeaseInfo> getLeasesByType(const Lease::Type& lease_type) const;
 
     /// @brief Returns the value of the global status code for the last
     /// transaction.
