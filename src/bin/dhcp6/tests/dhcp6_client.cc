@@ -80,8 +80,6 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
     // Let's try to get a MAC
     HWAddrPtr hwaddr = reply->getMAC(HWAddr::HWADDR_SOURCE_ANY);
 
-    // Set the global status code to default: success and not received.
-    config_.resetGlobalStatusCode();
     for (Opts::const_iterator opt = opts.begin(); opt != opts.end(); ++opt) {
         Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(opt->second);
         if (!ia) {
@@ -94,7 +92,9 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
         for (Opts::const_iterator iter_ia_opt = ia_opts.begin();
              iter_ia_opt != ia_opts.end(); ++iter_ia_opt) {
             OptionPtr ia_opt = iter_ia_opt->second;
-            LeaseInfo lease_info;
+            LeaseInfo lease_info(ia->getType());
+            lease_info.lease_.iaid_ = ia->getIAID();
+
             switch (ia_opt->getType()) {
             case D6O_IAADDR:
                 {
@@ -107,7 +107,6 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
                         // lease and keep IAID around.
                         lease_info.lease_ = Lease6();
                         lease_info.lease_.type_ = Lease::TYPE_NA;
-                        lease_info.lease_.iaid_ = ia->getIAID();
                         break;
                     }
 
@@ -132,7 +131,6 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
                         // lease and keep IAID around.
                         lease_info.lease_ = Lease6();
                         lease_info.lease_.type_ = Lease::TYPE_PD;
-                        lease_info.lease_.iaid_ = ia->getIAID();
                         break;
                     }
                     lease_info.lease_ = Lease6(Lease::TYPE_PD,
@@ -193,12 +191,15 @@ Dhcp6Client::applyLease(const LeaseInfo& lease_info) {
             config_.leases_[i] = lease_info;
             return;
 
-        } else if (lease_info.lease_.addr_ == asiolink::IOAddress("::")) {
+        } else if ((existing_lease.iaid_ == lease_info.lease_.iaid_) &&
+                   (lease_info.lease_.addr_ == asiolink::IOAddress("::"))) {
+            config_.leases_[i] = lease_info;
             config_.leases_[i].status_code_ = lease_info.status_code_;
             return;
 
         }
     }
+
     // It is a new lease. Add it.
     config_.leases_.push_back(lease_info);
 }
@@ -286,6 +287,11 @@ Dhcp6Client::copyIAsFromLeases(const Pkt6Ptr& dest) const {
     for (std::set<uint32_t>::const_iterator iaid = iaids.begin();
          iaid != iaids.end(); ++iaid) {
         std::vector<Lease6> leases = getLeasesByIAID(*iaid);
+        // Only a valid lease should be included. If we have received an
+        // error status code, it should not be copied.
+        if (leases[0].valid_lft_ == 0) {
+            continue;
+        }
         Option6IAPtr opt(new Option6IA(leases[0].type_ == Lease::TYPE_NA ?
                                        D6O_IA_NA : D6O_IA_PD, *iaid));
         opt->setT1(leases[0].t1_);
@@ -370,6 +376,7 @@ Dhcp6Client::doSolicit() {
     // let's apply received configuration.
     if (use_rapid_commit_ && context_.response_ &&
         context_.response_->getType() == DHCPV6_REPLY) {
+        config_.clear();
         applyRcvdConfiguration(context_.response_);
     }
 }
@@ -396,6 +403,7 @@ Dhcp6Client::doRequest() {
 
     // Apply new configuration only if the server has responded.
     if (context_.response_) {
+        config_.clear();
         applyRcvdConfiguration(context_.response_);
     }
 }
@@ -444,6 +452,7 @@ Dhcp6Client::doRenew() {
     context_.response_ = receiveOneMsg();
     // Apply configuration only if the server has responded.
     if (context_.response_) {
+        config_.clear();
         applyRcvdConfiguration(context_.response_);
     }
 }
@@ -465,6 +474,7 @@ Dhcp6Client::doRebind() {
     context_.response_ = receiveOneMsg();
     // Apply configuration only if the server has responded.
     if (context_.response_) {
+        config_.clear();
         applyRcvdConfiguration(context_.response_);
     }
 }
@@ -478,6 +488,7 @@ Dhcp6Client::doConfirm() {
     // Set the global status code to default: success and not received.
     config_.resetGlobalStatusCode();
     if (context_.response_) {
+        config_.resetGlobalStatusCode();
         applyRcvdConfiguration(context_.response_);
     }
 }
@@ -543,13 +554,13 @@ Dhcp6Client::getLeasesByIAID(const uint32_t iaid) const {
     return (leases);
 }
 
-std::vector<Lease6>
+std::vector<Dhcp6Client::LeaseInfo>
 Dhcp6Client::getLeasesByType(const Lease::Type& lease_type) const {
-    std::vector<Lease6> leases;
+    std::vector<Dhcp6Client::LeaseInfo> leases;
     LeaseInfo lease_info;
     BOOST_FOREACH(lease_info, config_.leases_) {
         if (lease_info.lease_.type_ == lease_type) {
-            leases.push_back(lease_info.lease_);
+            leases.push_back(lease_info);
         }
     }
     return (leases);

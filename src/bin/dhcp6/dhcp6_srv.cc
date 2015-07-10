@@ -482,7 +482,7 @@ bool Dhcpv6Srv::run() {
         LOG_DEBUG(packet_logger, DBG_DHCP6_BASIC_DATA, DHCP6_PACKET_RECEIVED)
             .arg(query->getLabel())
             .arg(query->getName())
-            .arg(query->getType())
+            .arg(static_cast<int>(query->getType()))
             .arg(query->getRemoteAddr())
             .arg(query->getLocalAddr())
             .arg(query->getIface());
@@ -1721,6 +1721,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     ctx.ia_rsp_ = ia_rsp;
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
+    ctx.allow_new_leases_in_renewals_ = true;
 
     // Extract the addresses that the client is trying to obtain.
     OptionCollection addrs = ia->getOptions();
@@ -1745,15 +1746,6 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // We need to remember it as we'll be removing hints from this list as
     // we extend, cancel or otherwise deal with the leases.
     bool hints_present = !ctx.hints_.empty();
-
-    /// @todo: This was clarified in draft-ietf-dhc-dhcpv6-stateful-issues that
-    /// the server is allowed to assign new leases in both Renew and Rebind. For
-    /// now, we only support it in Renew, because it breaks a lot of Rebind
-    /// unit-tests. Ultimately, whether we allow it or not, should be exposed
-    /// as configurable policy. See ticket #3717.
-    if (query->getType() == DHCPV6_RENEW) {
-        ctx.allow_new_leases_in_renewals_ = true;
-    }
 
     Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
 
@@ -1897,6 +1889,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     ctx.ia_rsp_ = ia_rsp;
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
+    ctx.allow_new_leases_in_renewals_ = true;
 
     // Extract prefixes that the client is trying to renew.
     OptionCollection addrs = ia->getOptions();
