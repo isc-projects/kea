@@ -23,6 +23,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <util/buffer.h>
+#include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
 #include <cstdlib>
 #include <time.h>
@@ -210,17 +211,70 @@ Dhcp6Client::appendFQDN() {
 }
 
 void
+Dhcp6Client::appendRequestedIAs(const Pkt6Ptr& query) const {
+    if (use_na_) {
+        conditionallyAppendRequestedIA(query, D6O_IA_NA, 1234);
+    }
+
+    if (use_pd_) {
+        conditionallyAppendRequestedIA(query, D6O_IA_PD, 5678);
+    }
+}
+
+void
+Dhcp6Client::conditionallyAppendRequestedIA(const Pkt6Ptr& query,
+                                            const uint8_t ia_type,
+                                            const uint32_t iaid) const {
+    // Get existing options of the specified type.
+    OptionCollection options = query->getOptions(ia_type);
+    std::pair<unsigned int, OptionPtr> option_pair;
+
+    // Check if the option we want to add is already present.
+    BOOST_FOREACH(option_pair, options) {
+        Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(option_pair.second);
+        // This shouldn't happen.
+        if (!ia) {
+            isc_throw(Unexpected, "Dhcp6Client: IA option has an invalid C++ type;"
+                      " this is a programming issue");
+        }
+        // There is an option of the specific type already. If it has our
+        // IAID we return here, because we don't want to duplicate the IA.
+        // If IAID is different, we check other existing IAs.
+        if (ia->getIAID() == iaid) {
+            return;
+        }
+    }
+
+    // If we're here, it means that there is no instance of our IA yet.
+    Option6IAPtr requested_ia(new Option6IA(ia_type, iaid));
+    // Add prefix hint if specified.
+    if (prefix_hint_ && (ia_type == D6O_IA_PD)) {
+        requested_ia->addOption(prefix_hint_);
+    }
+
+    query->addOption(requested_ia);
+}
+
+
+void
 Dhcp6Client::copyIAs(const Pkt6Ptr& source, const Pkt6Ptr& dest) {
     typedef OptionCollection Opts;
     // Copy IA_NAs.
     Opts opts = source->getOptions(D6O_IA_NA);
     for (Opts::const_iterator opt = opts.begin(); opt != opts.end(); ++opt) {
-        dest->addOption(opt->second);
+        // Only copy the entire IA_NA if there is at lease one IA Address option.
+        if (opt->second->getOption(D6O_IAADDR)) {
+            dest->addOption(opt->second);
+        }
     }
     // Copy IA_PDs.
     opts = source->getOptions(D6O_IA_PD);
     for (Opts::const_iterator opt = opts.begin(); opt != opts.end(); ++opt) {
-        dest->addOption(opt->second);
+        // Only copy the entire IA_PD if there is at least one IA Prefix option
+        // in it.
+        if (opt->second->getOption(D6O_IAPREFIX)) {
+            dest->addOption(opt->second);
+        }
     }
 }
 
@@ -298,17 +352,10 @@ Dhcp6Client::doSolicit() {
     if (forced_server_id_) {
         context_.query_->addOption(forced_server_id_);
     }
-    if (use_na_) {
-        context_.query_->addOption(Option6IAPtr(new Option6IA(D6O_IA_NA,
-                                                              1234)));
-    }
-    if (use_pd_) {
-        Option6IAPtr ia(new Option6IA(D6O_IA_PD, 5678));
-        if (prefix_hint_) {
-            ia->addOption(prefix_hint_);
-        }
-        context_.query_->addOption(ia);
-    }
+
+    // Append requested (empty) IAs.
+    appendRequestedIAs(context_.query_);
+
     if (use_rapid_commit_) {
         context_.query_->addOption(OptionPtr(new Option(Option::V6,
                                                         D6O_RAPID_COMMIT)));
@@ -336,6 +383,7 @@ Dhcp6Client::doRequest() {
         query->addOption(forced_server_id_);
     }
     copyIAs(context_.response_, query);
+    appendRequestedIAs(query);
 
     // Add Client FQDN if configured.
     appendFQDN();
@@ -384,6 +432,10 @@ Dhcp6Client::doRenew() {
     query->addOption(context_.response_->getOption(D6O_SERVERID));
     copyIAsFromLeases(query);
 
+    // During the Renew the client may request additional bindings per
+    // RFC7550.
+    appendRequestedIAs(query);
+
     // Add Client FQDN if configured.
     appendFQDN();
 
@@ -400,6 +452,10 @@ void
 Dhcp6Client::doRebind() {
     Pkt6Ptr query = createMsg(DHCPV6_REBIND);
     copyIAsFromLeases(query);
+
+    // During the Rebind the client may request additional bindings per
+    // RFC7550.
+    appendRequestedIAs(query);
 
     // Add Client FQDN if configured.
     appendFQDN();
@@ -482,6 +538,18 @@ Dhcp6Client::getLeasesByIAID(const uint32_t iaid) const {
          ++lease_info) {
         if (lease_info->lease_.iaid_ == iaid) {
             leases.push_back(lease_info->lease_);
+        }
+    }
+    return (leases);
+}
+
+std::vector<Lease6>
+Dhcp6Client::getLeasesByType(const Lease::Type& lease_type) const {
+    std::vector<Lease6> leases;
+    LeaseInfo lease_info;
+    BOOST_FOREACH(lease_info, config_.leases_) {
+        if (lease_info.lease_.type_ == lease_type) {
+            leases.push_back(lease_info.lease_);
         }
     }
     return (leases);
