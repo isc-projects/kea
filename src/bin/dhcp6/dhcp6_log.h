@@ -98,30 +98,30 @@ extern isc::log::Logger dhcp6_logger;
 ///
 /// Here "bad packets" are packets that are either dropped (i.e malformed,
 /// unsupported types) or packets that are rejected for logical reasons.
-extern isc::log::Logger bad_packet_logger;
+extern isc::log::Logger bad_packet6_logger;
 
 /// @brief Logger for processed packets.
 ///
 /// This logger is used to issue log messages related to the reception and
 /// sending DHCP packets.
-extern isc::log::Logger packet_logger;
+extern isc::log::Logger packet6_logger;
 
 /// @brief Logger for options parser.
 ///
 /// This logger is used to issue log messages related to processing of the
 /// DHCP options 
-extern isc::log::Logger options_logger;
+extern isc::log::Logger options6_logger;
 
 /// @brief Logger for Hostname or FQDN processing.
 ///
 /// This logger is used to issue log messages related to processing the
 /// hostnames, FQDNs and sending name change requests to D2.
-extern isc::log::Logger ddns_logger;
+extern isc::log::Logger ddns6_logger;
 
 /// @brief Logger for lease allocation logic.
 ///
 /// This logger is used to issue log messages related to lease allocation.
-extern isc::log::Logger lease_logger;
+extern isc::log::Logger lease6_logger;
 
 //@}
 
