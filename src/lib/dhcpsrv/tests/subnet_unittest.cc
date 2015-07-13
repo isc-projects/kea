@@ -1059,6 +1059,24 @@ TEST(Subnet6Test, rapidCommit) {
     EXPECT_FALSE(subnet.getRapidCommit());
 }
 
+// This test checks that the flag which indicates if the new leases are
+// allocated as a result of processing the Renew and Rebind message can
+// be set to "enable" or "disable".
+TEST(Subnet6Test, allocNewLeasesOnRenew) {
+    Subnet6 subnet(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4);
+
+    // By default, the flag should be enabled.
+    EXPECT_TRUE(subnet.getAllocLeasesOnRenew());
+
+    // Disable it.
+    subnet.setAllocLeasesOnRenew(false);
+    EXPECT_FALSE(subnet.getAllocLeasesOnRenew());
+
+    // Enable again.
+    subnet.setAllocLeasesOnRenew(true);
+    EXPECT_TRUE(subnet.getAllocLeasesOnRenew());
+}
+
 // Checks if last allocated address/prefix is stored/retrieved properly
 TEST(Subnet6Test, lastAllocated) {
     IOAddress ia("2001:db8:1::1");
