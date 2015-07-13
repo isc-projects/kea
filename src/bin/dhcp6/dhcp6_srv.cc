@@ -1721,7 +1721,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     ctx.ia_rsp_ = ia_rsp;
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
-    ctx.allow_new_leases_in_renewals_ = true;
+    ctx.allow_new_leases_in_renewals_ = subnet->getAllocLeasesOnRenew();
 
     // Extract the addresses that the client is trying to obtain.
     OptionCollection addrs = ia->getOptions();
@@ -1889,7 +1889,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     ctx.ia_rsp_ = ia_rsp;
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
-    ctx.allow_new_leases_in_renewals_ = true;
+    ctx.allow_new_leases_in_renewals_ = subnet->getAllocLeasesOnRenew();
 
     // Extract prefixes that the client is trying to renew.
     OptionCollection addrs = ia->getOptions();
