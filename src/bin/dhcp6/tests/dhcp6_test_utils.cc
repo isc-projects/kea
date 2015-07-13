@@ -444,6 +444,9 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
     // Quick sanity check that the address we're about to use is ok
     ASSERT_TRUE(subnet_->inPool(type, addr));
 
+    // Do not allocate leases as a result of Renew/Rebind.
+    subnet_->setAllocLeasesOnRenew(false);
+
     // GenerateClientId() also sets duid_
     OptionPtr clientid = generateClientId();
 
