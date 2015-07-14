@@ -48,14 +48,6 @@ make check
 
 The following environment variable can affect unit-tests:
 
-- KEA_SOCKET_TEST_DIR - if set, it specifies the directory where Unix
-  sockets are created. There's OS limitation on how long a Unix socket
-  path can be. It is typcially slightly over 100 characters. If you
-  happen to build and run unit-tests in deeply nested directories, this
-  may become a problem. KEA_SOCKET_TEST_DIR can be specified to instruct
-  unit-test to use a different directory. Must not end with slash (e.g.
-  /tmp).
-
 - KEA_LOCKFILE_DIR - Specifies a directory where the logging system should
   create its lock file. If not specified, it is prefix/var/run/kea, where prefix
   defaults to /usr/local. This variable must not end with a slash. There is one
@@ -67,5 +59,18 @@ The following environment variable can affect unit-tests:
   messages will not be recorded anywhere. There are 3 special values:
   stdout, stderr and syslog. Any other value is interpreted as a filename.
   Also see Kea User's Guide, section 15.3.
+
+- KEA_PIDFILE_DIR - Specifies the directory which should be used for PID files
+  as used by dhcp::Daemon or its derivatives. If not specified, the default is
+  prefix/var/run/kea, where prefix defaults to /usr/local. This variable must
+  not end with a slash.
+
+- KEA_SOCKET_TEST_DIR - if set, it specifies the directory where Unix
+  sockets are created. There's OS limitation on how long a Unix socket
+  path can be. It is typcially slightly over 100 characters. If you
+  happen to build and run unit-tests in deeply nested directories, this
+  may become a problem. KEA_SOCKET_TEST_DIR can be specified to instruct
+  unit-test to use a different directory. Must not end with slash (e.g.
+  /tmp).
 
  */

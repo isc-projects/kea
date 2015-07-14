@@ -148,7 +148,7 @@ start_server() {
     check_running ${binary_name}
     # If process is running, don't start another one. Just log a message.
     if [ ${_running} -ne 0 ]; then
-        log_info "${binary_name} is already running as: \
+        log_info "${binary_name} appears to be running, see: \
 PID ${_pid}, PID file: ${_pid_file}."
     else
         log_info "Starting ${binary_name} ${args}"
