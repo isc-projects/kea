@@ -583,10 +583,8 @@ configuration. As soon as any specification is processed (even an
 empty one), the buffered log messages will be flushed according to
 the specification. Note that if this option is used, the program
 SHOULD call one of the @ref isc::log::LoggerManager::process() calls.
-(If you are using the built-in logging configuration handling in @ref
-isc::config::ModuleCCSession, this is automatically handled.) If the
-program exits before this is done, all log messages are dumped in a raw
-format to stdout (so that no messages get lost).</dd>
+If the program exits before this is done, all log messages are dumped
+in a raw format to stdout (so that no messages get lost).</dd>
 </dl>
 
 @subsubsection logInitializationCppVariant2 Variant #2, Used by Unit Tests
@@ -648,12 +646,12 @@ specified in the hook library when the library is loaded. Conversely, the
 messages have to be removed from the dictionary when the library is unloaded.
 
 The new messages are added to the global dictionary using the
-@c isc::log::MessageInitializer::loadDictionary static function. It is
-called by the @c isc::hooks::LibraryManager::loadLibrary for each loaded
+@ref isc::log::MessageInitializer::loadDictionary static function. It is
+called by the @ref isc::hooks::LibraryManager::loadLibrary for each loaded
 library.
 
 When the library is unloaded, the instance of the
-@c isc::log::MessageInitializer defined in the library is destroyed
+@ref isc::log::MessageInitializer defined in the library is destroyed
 and its destructor removes the messages registered by the destroyed
 instance from the global dictionary.
 

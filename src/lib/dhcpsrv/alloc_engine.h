@@ -408,9 +408,9 @@ public:
     /// response to SOLICIT).
     ///
     /// This method uses host reservation if ctx.host_ is set. The easy way to
-    /// set it is to call @ref AllocEngine::findReservation(ctx). The host reservation
-    /// is convenient, but incurs performance penalty, so it can be tweaked on
-    /// a per subnet basis. There are three possible modes:
+    /// set it is to call @ref isc::dhcp::AllocEngine::findReservation(ctx).
+    /// The host reservation is convenient, but incurs performance penalty,
+    /// so it can be tweaked on a per subnet basis. There are three possible modes:
     /// 1. disabled (no host reservation at all). This is the most performant one
     /// as the code can skip all checks;
     /// 2. out-of-pool (only reservations that are outside

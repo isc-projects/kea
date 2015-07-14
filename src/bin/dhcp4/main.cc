@@ -33,9 +33,6 @@ using namespace std;
 /// instantiates ControlledDhcpv4Srv class that is responsible for establishing
 /// connection with msgq (receiving commands and configuration) and also
 /// creating Dhcpv4 server object as well.
-///
-/// For detailed explanation or relations between main(), ControlledDhcpv4Srv,
-/// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
 
 namespace {
 

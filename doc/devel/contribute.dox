@@ -58,7 +58,7 @@ a regular x86 architecture machine to write your patch, but the software
 is expected to run on many other architectures. You may take a look at
 system specific build notes (http://kea.isc.org/wiki/SystemSpecificNotes).
 For a complete list of systems we build on, you may take a look at the
-following build farm report: http://git.kea.isc.org/~tester/builder/KEA-builder-new.html .
+following build farm report: https://jenkins.isc.org/view/Kea_BuildFarm/ .
 
 Does your patch conform to Kea coding guidelines
 (http://kea.isc.org/wiki/CodingGuidelines)? You can submit a
@@ -78,6 +78,30 @@ change. That is even more true for new code: if you write a new
 function, method or a class, you definitely should write unit-tests
 for it.
 
+To ensure that everything is tested, ISC uses a development method
+called Test Driven Development (TDD).  In TDD, a feature is developed
+alongside the tests, with the tests being written first.  In detail,
+a test is written for a small piece of functionality and run against
+the existing code. (In the case where the test is a unit test for
+a function, it would be run against an empty (unimplemented)
+function.)  The test should fail.  A minimal amount of code is then
+written, just enough to get the test to pass.  Then the process is
+repeated for the next small piece of functionality. This continues
+until all the functionality has been implemented.
+
+This approach has two advantages:
+
+- By writing a test first and then only enough code to pass the
+test, that code is fully tested.  By repeating this process until
+the feature is fully implemented, all the code gets test coverage.
+You avoid the situation where not enough tests have been written
+to check all the code.
+
+- By running the test before the code implementing the function is
+written and observing the test fail, you can detect the situation
+where a bug in the test code will cause it to pass regardless of
+the code being tested.
+
 See @ref qaUnitTests for instructions on how to run unit-tests.
 
 If you happen to add new files or have modified any \c Makefile.am
@@ -94,10 +118,10 @@ checks on logger parameters. Use \c --enable-debug to enable various
 additional consistency checks that reduce performance but help during
 development. If you happen to modify anything in the
 documentation, use \c --enable-generate-docs. If you are modifying DHCP
-code, you are likely to be interested in enabling a database backend for
-DHCP. Note that if the backend is not enabled, the database-specific unit-tests
-are skipped. To enable the MySQL backend, use the switch
-\c --with-dhcp-mysql; for PostgreSQL, use \c --with-dhcp-pgsql.
+code, you are likely to be interested in enabling a non-default database
+backends for DHCP. Note that if the backend is not enabled,
+the database-specific unit-tests are skipped. To enable the MySQL backend,
+use the switch \c --with-dhcp-mysql; for PostgreSQL, use \c --with-dhcp-pgsql.
 A complete list of all switches can be obtained with the command:
 
 @code
