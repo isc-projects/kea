@@ -131,15 +131,13 @@ TEST_F(RenewTest, requestPrefixInRenew) {
     client.fastFwdTime(1000);
 
     // Make sure that the client has acquired NA lease.
-    std::vector<Dhcp6Client::LeaseInfo> leases_client_na =
-        client.getLeasesByType(Lease::TYPE_NA);
+    std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(1, leases_client_na.size());
 
     // The client should not acquire a PD lease.
-    std::vector<Dhcp6Client::LeaseInfo> leases_client_pd =
-        client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd.size());
-    ASSERT_EQ(STATUS_NoPrefixAvail, leases_client_pd[0].status_code_);
+    std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_TRUE(leases_client_pd.empty());
+    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(5678));
 
     // Reconfigure the server to use both NA and PD pools.
     configure(RENEW_CONFIGS[2], *client.getServer());
@@ -148,19 +146,18 @@ TEST_F(RenewTest, requestPrefixInRenew) {
     ASSERT_NO_THROW(client.doRenew());
 
     // Make sure that the client has acquired NA lease.
-    std::vector<Dhcp6Client::LeaseInfo> leases_client_na_renewed =
+    std::vector<Lease6> leases_client_na_renewed =
         client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(1, leases_client_na_renewed.size());
-    EXPECT_EQ(STATUS_Success, leases_client_na_renewed[0].status_code_);
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
 
     // The lease should have been renewed.
-    EXPECT_EQ(1000, leases_client_na_renewed[0].lease_.cltt_ -
-              leases_client_na[0].lease_.cltt_);
+    EXPECT_EQ(1000, leases_client_na_renewed[0].cltt_ - leases_client_na[0].cltt_);
 
     // The client should now also acquire a PD lease.
     leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_EQ(1, leases_client_pd.size());
-    EXPECT_EQ(STATUS_Success, leases_client_pd[0].status_code_);
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
 }
 
 // This test verifies that the client can request the prefix delegation
@@ -182,16 +179,15 @@ TEST_F(RenewTest, requestAddressInRenew) {
     client.fastFwdTime(1000);
 
     // Make sure that the client has acquired PD lease.
-    std::vector<Dhcp6Client::LeaseInfo> leases_client_pd =
-        client.getLeasesByType(Lease::TYPE_PD);
+    std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_EQ(1, leases_client_pd.size());
-    EXPECT_EQ(STATUS_Success, leases_client_pd[0].status_code_);
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
 
     // The client should not acquire a NA lease.
-    std::vector<Dhcp6Client::LeaseInfo> leases_client_na =
+    std::vector<Lease6> leases_client_na =
         client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na.size());
-    ASSERT_EQ(STATUS_NoAddrsAvail, leases_client_na[0].status_code_);
+    ASSERT_EQ(0, leases_client_na.size());
+    ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(1234));
 
     // Reconfigure the server to use both NA and PD pools.
     configure(RENEW_CONFIGS[2], *client.getServer());
@@ -200,17 +196,16 @@ TEST_F(RenewTest, requestAddressInRenew) {
     ASSERT_NO_THROW(client.doRenew());
 
     // Make sure that the client has renewed PD lease.
-    std::vector<Dhcp6Client::LeaseInfo> leases_client_pd_renewed =
+    std::vector<Lease6> leases_client_pd_renewed =
         client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_EQ(1, leases_client_pd_renewed.size());
-    EXPECT_EQ(STATUS_Success, leases_client_pd_renewed[0].status_code_);
-    EXPECT_EQ(1000, leases_client_pd_renewed[0].lease_.cltt_ -
-              leases_client_pd[0].lease_.cltt_);
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
+    EXPECT_EQ(1000, leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_);
 
     // The client should now also acquire a NA lease.
     leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(1, leases_client_na.size());
-    EXPECT_EQ(STATUS_Success, leases_client_na[0].status_code_);
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
 }
 
 
