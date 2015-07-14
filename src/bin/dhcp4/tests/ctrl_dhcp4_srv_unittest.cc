@@ -49,7 +49,7 @@ namespace {
 class NakedControlledDhcpv4Srv: public ControlledDhcpv4Srv {
     // "Naked" DHCPv4 server, exposes internal fields
 public:
-    NakedControlledDhcpv4Srv():ControlledDhcpv4Srv(DHCP4_SERVER_PORT + 10000) { }
+    NakedControlledDhcpv4Srv():ControlledDhcpv4Srv(0) { }
 
     /// Expose internal methods for the sake of testing
     using Dhcpv4Srv::receivePacket;
@@ -187,9 +187,8 @@ public:
 
 TEST_F(CtrlChannelDhcpv4SrvTest, commands) {
 
-    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
     ASSERT_NO_THROW(
-        srv.reset(new ControlledDhcpv4Srv(DHCP4_SERVER_PORT + 10000))
+        server_.reset(new NakedControlledDhcpv4Srv());
     );
 
     // Use empty parameters list
@@ -222,9 +221,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreload) {
 
     // Sending commands for processing now requires a server that can process
     // them.
-    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
     ASSERT_NO_THROW(
-        srv.reset(new ControlledDhcpv4Srv(0))
+        server_.reset(new NakedControlledDhcpv4Srv());
     );
 
     // Ensure no marker files to start with.
@@ -282,9 +280,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_EQ("[ \"list-commands\" ]", answer->get("arguments")->str());
 
     // Created server should register several additional commands.
-    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
     ASSERT_NO_THROW(
-        srv.reset(new ControlledDhcpv4Srv(0));
+        server_.reset(new NakedControlledDhcpv4Srv());
     );
 
     EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
@@ -301,7 +298,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"statistic-reset-all\"") != string::npos);
 
     // Ok, and now delete the server. It should deregister its commands.
-    srv.reset();
+    server_.reset();
 
     // The list should be (almost) empty again.
     EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
@@ -339,7 +336,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelShutdown) {
 // Tests that the server properly responds to statistics commands.  Note this
 // is really only intended to verify that the appropriate Statistics handler
 // is called based on the command.  It is not intended to be an exhaustive
-// test of Dhcpv6 statistics.
+// test of Dhcpv4 statistics.
 TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
     createUnixChannelServer();
     std::string response;
