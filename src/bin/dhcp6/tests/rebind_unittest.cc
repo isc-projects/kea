@@ -288,7 +288,7 @@ TEST_F(RebindTest, directClientChangingSubnet) {
     Lease6Ptr lease_server2 = checkLease(lease_client2);
     EXPECT_TRUE(lease_server2);
     // Client should have received NoBinding status code.
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
+    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(1234));
 
 }
 
@@ -304,7 +304,7 @@ TEST_F(RebindTest, directClientChangingIAID) {
     Lease6 lease_client = client.getLease(0);
     // Modify the IAID of the lease record that client stores. By adding
     // one to IAID we guarantee that the IAID will change.
-    ++client.config_.leases_[0].lease_.iaid_;
+    ++client.config_.leases_[0].iaid_;
     // Try to Rebind. Note that client will use a different IAID (which
     // is not matching IAID that server retains for the client). Server
     // should not find the lease that client is trying to extend and
@@ -315,7 +315,7 @@ TEST_F(RebindTest, directClientChangingIAID) {
     Lease6Ptr lease_server2 = checkLease(lease_client);
     EXPECT_TRUE(lease_server2);
     // The Status code returned to the client, should be NoBinding.
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
+    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(1235));
 
 }
 
@@ -336,7 +336,7 @@ TEST_F(RebindTest, directClientLostLease) {
     // the server and the server should return NoBinding status code.
     ASSERT_NO_THROW(client.doRebind());
     ASSERT_EQ(1, client.getLeaseNum());
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
+    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(1234));
 }
 
 /// @todo Extend tests for direct client changing address.
@@ -398,18 +398,9 @@ TEST_F(RebindTest, relayedClientChangingSubnet) {
     ASSERT_NO_THROW(client.doRebind());
     // We are expecting that the server didn't extend the lease because
     // the address that client is using doesn't match the new subnet.
-    // But, the client still has an old lease.
-    ASSERT_EQ(1, client.getLeaseNum());
-    Lease6 lease_client2 = client.getLease(0);
-    // The current lease should be exactly the same as old lease,
-    // because server shouldn't have extended.
-    EXPECT_TRUE(lease_client == lease_client2);
-    // Make sure, that the lease that client has, is matching the lease
-    // in the lease database.
-    Lease6Ptr lease_server2 = checkLease(lease_client2);
-    EXPECT_TRUE(lease_server2);
+    ASSERT_EQ(0, client.getLeaseNum());
     // Client should have received NoBinding status code.
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
+    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(1234));
 
 }
 
@@ -429,7 +420,7 @@ TEST_F(RebindTest, relayedClientChangingIAID) {
     Lease6 lease_client = client.getLease(0);
     // Modify the IAID of the lease record that client stores. By adding
     // one to IAID we guarantee that the IAID will change.
-    ++client.config_.leases_[0].lease_.iaid_;
+    ++client.config_.leases_[0].iaid_;
     // Try to Rebind. Note that client will use a different IAID (which
     // is not matching IAID that server retains for the client). Server
     // should not find the lease that client is trying to extend and
@@ -440,7 +431,7 @@ TEST_F(RebindTest, relayedClientChangingIAID) {
     Lease6Ptr lease_server2 = checkLease(lease_client);
     EXPECT_TRUE(lease_server2);
     // The Status code returned to the client, should be NoBinding.
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
+    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(1235));
 
 }
 
@@ -465,7 +456,7 @@ TEST_F(RebindTest, relayedClientLostLease) {
     // the server and the server should return NoBinding status code.
     ASSERT_NO_THROW(client.doRebind());
     ASSERT_EQ(1, client.getLeaseNum());
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
+    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(1234));
 }
 
 // Check that relayed client receives the IA with lifetimes of 0, when
@@ -481,7 +472,7 @@ TEST_F(RebindTest, relayedClientChangingAddress) {
     // Modify the address of the lease record that client stores. The server
     // should check that the address is invalid (hasn't been allocated for
     // the particular IAID).
-    client.config_.leases_[0].lease_.addr_ = IOAddress("3000::100");
+    client.config_.leases_[0].addr_ = IOAddress("3000::100");
     // Try to Rebind. The client will use correct IAID but will specify a
     // wrong address. The server will discover that the client has a binding
     // but the address will not match.
@@ -599,7 +590,7 @@ TEST_F(RebindTest, directClientPDChangingIAID) {
     Lease6 lease_client = client.getLease(0);
     // Modify the IAID of the lease record that client stores. By adding
     // one to IAID we guarantee that the IAID will change.
-    ++client.config_.leases_[0].lease_.iaid_;
+    ++client.config_.leases_[0].iaid_;
     // Try to Rebind. Note that client will use a different IAID (which
     // is not matching IAID that server retains for the client). This is
     // a condition described in RFC3633, section 12.2 as the server finds
@@ -630,9 +621,9 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
     // Modify the Prefix of the lease record that client stores. The server
     // should check that the prefix is invalid (hasn't been allocated for
     // the particular IAID).
-    ASSERT_NE(client.config_.leases_[0].lease_.addr_,
+    ASSERT_NE(client.config_.leases_[0].addr_,
               IOAddress("2001:db8:1:10::"));
-    client.config_.leases_[0].lease_.addr_ = IOAddress("2001:db8:1:10::");
+    client.config_.leases_[0].addr_ = IOAddress("2001:db8:1:10::");
     // Try to Rebind. The client will use correct IAID but will specify a
     // wrong prefix. The server will discover that the client has a binding
     // but the prefix will not match. According to the RFC3633, section 12.2.
@@ -651,21 +642,19 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
     // Client should get two entries. One with the invalid address he requested
     // with zeroed lifetimes and a second one with the actual prefix he has
     // with non-zero lifetimes.
-    Lease6 lease_client1 = client.getLease(0);
-    Lease6 lease_client2 = client.getLease(1);
 
-    // The lifetimes should be set to 0, as an explicit notification to the
-    // client to stop using invalid prefix.
-    EXPECT_EQ(0, lease_client1.valid_lft_);
-    EXPECT_EQ(0, lease_client1.preferred_lft_);
+    // Get the lease with 0 lifetimes.
+    std::vector<Lease6> invalid_leases = client.getLeasesWithZeroLifetime();
+    ASSERT_EQ(1, invalid_leases.size());
+    EXPECT_EQ(0, invalid_leases[0].valid_lft_);
+    EXPECT_EQ(0, invalid_leases[0].preferred_lft_);
 
-    // The lifetimes should be set to 0, as an explicit notification to the
-    // client to stop using invalid prefix.
-    EXPECT_NE(0, lease_client2.valid_lft_);
-    EXPECT_NE(0, lease_client2.preferred_lft_);
+    // Get the valid lease with non-zero lifetime.
+    std::vector<Lease6> valid_leases = client.getLeasesWithNonZeroLifetime();
+    ASSERT_EQ(1, valid_leases.size());
 
     // Check that server still has the same lease.
-    Lease6Ptr lease_server = checkLease(lease_client);
+    Lease6Ptr lease_server = checkLease(valid_leases[0]);
     ASSERT_TRUE(lease_server);
     // Make sure that the lease in the data base hasn't been added.
     EXPECT_NE(0, lease_server->valid_lft_);

@@ -90,7 +90,10 @@ public:
     /// server-id and client-id.
     struct Configuration {
         /// @brief List of received leases
-        std::vector<LeaseInfo> leases_;
+        std::vector<Lease6> leases_;
+
+        /// @brief A map of IAID, status code tuples.
+        std::map<uint32_t, uint16_t> status_codes_;
 
         /// @brief List of received options
         OptionCollection options_;
@@ -110,6 +113,7 @@ public:
         /// @brief Clears configuration.
         void clear() {
             leases_.clear();
+            status_codes_.clear();
             resetGlobalStatusCode();
         }
 
@@ -311,7 +315,7 @@ public:
     /// @param at Index of the lease held by the client.
     /// @return A lease at the specified index.
     Lease6 getLease(const size_t at) const {
-        return (config_.leases_[at].lease_);
+        return (config_.leases_[at]);
     }
 
     /// @brief Returns collection of leases for specified IAID.
@@ -326,7 +330,13 @@ public:
     /// @param type Lease type: D6O_IA_NA or D6O_IA_PD.
     ///
     /// @return Vector containing leases of the specified type.
-    std::vector<LeaseInfo> getLeasesByType(const Lease::Type& lease_type) const;
+    std::vector<Lease6> getLeasesByType(const Lease::Type& lease_type) const;
+
+    /// @brief Returns leases with non-zero lifetimes.
+    std::vector<Lease6> getLeasesWithNonZeroLifetime() const;
+
+    /// @brief Returns leases with zero lifetimes.
+    std::vector<Lease6> getLeasesWithZeroLifetime() const;
 
     /// @brief Returns the value of the global status code for the last
     /// transaction.
@@ -334,7 +344,7 @@ public:
         return (config_.status_code_);
     }
 
-    /// @brief Returns status code set by the server for the lease.
+    /// @brief Returns status code set by the server for the IAID.
     ///
     /// @warning This method doesn't check if the specified index is out of
     /// range. The caller is responsible for using a correct offset by
@@ -342,9 +352,7 @@ public:
     ///
     /// @param at Index of the lease held by the client.
     /// @return A status code for the lease at the specified index.
-    uint16_t getStatusCode(const size_t at) const {
-        return (config_.leases_[at].status_code_);
-    }
+    uint16_t getStatusCode(const uint32_t iaid) const;
 
     /// @brief Returns number of acquired leases.
     size_t getLeaseNum() const {
@@ -543,7 +551,7 @@ private:
     /// each individual lease.
     ///
     /// @param lease_info Structure holding new lease information.
-    void applyLease(const LeaseInfo& lease_info);
+    void applyLease(const Lease6& lease);
 
     /// @brief Includes Client FQDN in the client's message.
     ///
@@ -611,6 +619,24 @@ private:
     /// @param duid_type Type of the DUID. Currently, only LLT is accepted.
     /// @return Object encapsulating a DUID.
     DuidPtr generateDUID(DUID::DUIDType duid_type) const;
+
+    /// @brief Returns client's leases which match the specified condition.
+    ///
+    /// @param property A value of the lease property used to search the lease.
+    /// @param equals A flag which indicates if the operator should search
+    /// for the leases which property is equal to the value of @c property
+    /// parameter (if true), or unequal (if false).
+    /// @param [out] leases A vector in which the operator will store leases
+    /// found.
+    ///
+    /// @tparam BaseType Base type to which the property belongs: @c Lease or
+    /// @c Lease6.
+    /// @tparam PropertyType A type of the property, e.g. @c uint32_t for IAID.
+    /// @tparam MemberPointer A pointer to the member, e.g. @c &Lease6::iaid_.
+    template<typename BaseType, typename PropertyType,
+             PropertyType BaseType::*MemberPointer>
+    void getLeasesByProperty(const PropertyType& property, const bool equals,
+                             std::vector<Lease6>& leases) const;
 
     /// @brief Simulates reception of the message from the server.
     ///
