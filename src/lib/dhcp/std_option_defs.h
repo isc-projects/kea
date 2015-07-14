@@ -28,7 +28,6 @@ namespace {
 /// of a definition for option comprising a record of data fields.
 ///
 /// @param name name of the array being declared.
-/// @param types data types of fields that belong to the record.
 #ifndef RECORD_DECL
 #define RECORD_DECL(name, ...) const OptionDataType name[] = { __VA_ARGS__ }
 #endif

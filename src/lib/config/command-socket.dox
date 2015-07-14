@@ -185,7 +185,8 @@ or HTTPS connection):
 Control Channel is connection oriented communication. In that sense it is
 different than all other communications supported so far in Kea. To facilitate
 connections, several mechanisms were implemented. Intially a single UNIX socket
-it opened (see isc::config::UnixCommandSocket). Its @ref
+it opened (see @c isc::config::UnixCommandSocket in
+src/lib/config/command_socket_factory.cc). Its @ref
 isc::config::UnixCommandSocket::receiveHandler callback method is
 installed in @ref isc::dhcp::IfaceMgr to process incoming connections. When the
 select call in @ref isc::dhcp::IfaceMgr::receive4 indicates that there is some data to be
