@@ -55,24 +55,24 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
 
  - @b Description: this callout is executed when the server has received a
-   buffer containing a DHCPv4 message, but the message hasn't been parsed
-   yet. The sole argument "query4" contains a pointer to the isc::dhcp::Pkt4
+   buffer containing a DHCPv4 message, but the message hasn't yet been parsed.
+   The sole argument "query4" contains a pointer to the isc::dhcp::Pkt4
    object, which contains the source and destination address of the
-   received packet, interface over which the packet has been received, and
+   received packet, the interface over which the packet has been received, and
    a raw buffer, stored in the data_ field, containing the DHCPv4 message
    in the wire format. None of the packet fields (op_, hlen_, chaddr_, etc.)
    are set yet. Callouts installed on this hook point can modify the data
     in the received buffer. The server will parse the buffer afterwards.
 
  - <b>Skip flag action</b>: If any callout sets the skip flag, the server will
-   skip the buffer parsing. In such case there is an expectation that
-   the callout will parse options carried in the buffer, create
+   skip the buffer parsing. In this case there is an expectation that
+   the callout will parse the options carried in the buffer, create
    @c isc::dhcp::Option objects (or derived) and add them to the "query4"
    object using the @c isc::dhcp::Pkt4::addOption.
    Otherwise the server will find out that some mandatory options are
    missing (e.g. DHCP Message Type) and will drop the message. If you
    want to have the capability to drop a message, it is better to use
-   skip flag in "pkt4_receive" callout.
+   the skip flag in the "pkt4_receive" callout.
 
  @subsection dhcpv4HooksPkt4Receive pkt4_receive
 

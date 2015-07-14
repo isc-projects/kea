@@ -28,8 +28,8 @@ add any server-specific code to libdhcp++ and use \ref libdhcpsrv instead.
 
 The following classes for packet manipulation are implemented:
 
-- isc::dhcp::Pkt4 - represents DHCPv4 packet.
-- isc::dhcp::Pkt6 - represents DHCPv6 packet.
+- isc::dhcp::Pkt4 - represents a DHCPv4 packet.
+- isc::dhcp::Pkt6 - represents a DHCPv6 packet.
 
 The following pointer types are defined: \c Pkt4Ptr and \c Pkt6Ptr. They are
 smart pointers using the \c boost::shared_ptr type. There are no const
@@ -50,9 +50,9 @@ specific formats:
 - isc::dhcp::Option6AddrLst -- DHCPv6 option, contains one or more IPv6 addresses;
 - isc::dhcp::Option4ClientFqdn -- DHCPv4 Client FQDN option;
 - isc::dhcp::Option6ClientFqdn -- DHCPv6 Client FQDN option;
-- isc::dhcp::Option6IAAddr -- DHCPv6 option, represents the IAADDR option (an option that
+- isc::dhcp::Option6IAAddr -- DHCPv6 option, represents an IAADDR option (an option that
                               contains IPv6 address with extra parameters);
-- isc::dhcp::Option6IAPrefix -- DHCPv6 option, represents the IAPREFIX option (an option
+- isc::dhcp::Option6IAPrefix -- DHCPv6 option, represents an IAPREFIX option (an option
                                 that contains IPv6 prefix in prefix delegation);
 - isc::dhcp::Option6IA -- DHCPv6 option used to store IA_NA and its suboptions.
 - isc::dhcp::Option6StatusCode -- DHCPv6 option, carries a status code to the client;
