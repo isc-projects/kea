@@ -15,36 +15,35 @@
 /**
  @page libdhcpsrv libdhcpsrv - Server DHCP library
 
-This library contains code used for DHCPv4 and DHCPv6 servers' operations,
-including "Lease Manager" that manages information about leases,
-"Configuration Manager" that stores servers' configuration etc.
-The code here is server specific. For generic (useful by server,
+This library contains code used for the DHCPv4 and DHCPv6 servers' operations,
+including the "Lease Manager" that manages information about leases and the
+"Configuration Manager" that stores the servers' configuration etc.
+The code here is server specific. For generic (useful to the server,
 client, relay and other tools like perfdhcp) code, please see
 \ref libdhcp.
 
-This library contains several crucial elements for the DHCP server operation:
+This library contains several crucial elements for the operation of the DHCP server:
 
-- isc::dhcp::LeaseMgr - lease manager is a name for database backend that stores
+- isc::dhcp::LeaseMgr - lease manager is the name for the database backend that stores
   leases.
 - isc::dhcp::CfgMgr - configuration manager that holds DHCP specific
   configuration information (subnets, pools, options, timer values etc.) in
   easy to use format.
-- isc::dhcp::AllocEngine - allocation engine that handles new requestes and allocates new
+- isc::dhcp::AllocEngine - allocation engine that handles new requests and allocates new
   leases.
-- isc::dhcp::HostMgr - manager for static reservations, a.k.a. as host
-  reservations.
-- isc::dhcp::D2ClientMgr - D2 client manager which is responsible for
+- isc::dhcp::HostMgr - manager for static reservations (a.k.a. host reservations).
+- isc::dhcp::D2ClientMgr - DHCP-DDNS (D2) client manager which is responsible for
   the communication between the DHCP server and the D2 component.
 
 @section leasemgr Lease Manager
 
 LeaseMgr provides a common, unified abstract API for all database backends. All
 backends are derived from the base class isc::dhcp::LeaseMgr. Currently Kea
-supports three backends implemented in the following classes:
+supports three backends, implemented in the following classes:
 
-- isc::dhcp::Memfile_LeaseMgr - stores leases in the CSV file,
-- isc::dhcp::MySqlLeaseMgr - stores leases in the MySQL database
-- isc::dhcp::PgSqlLeaseMgr - stores leases in the PostgreSQL database
+- isc::dhcp::Memfile_LeaseMgr - stores leases in a CSV file,
+- isc::dhcp::MySqlLeaseMgr - stores leases in a MySQL database
+- isc::dhcp::PgSqlLeaseMgr - stores leases in a PostgreSQL database
 
 @section cfgmgr Configuration Manager
 
