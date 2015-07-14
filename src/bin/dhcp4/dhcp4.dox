@@ -57,7 +57,7 @@ applies to all subnets. However, some subnets may have it overwritten with subne
 specific values that takes precedence over global values that are considered
 defaults. The parameters inheritance is implemented by means of the "global
 context". The global context is represented by the @ref isc::dhcp::ParserContext
-class and it holds pointers to storages of different kind, e.g. text parameters,
+class and it holds pointers to storage of different kinds, e.g. text parameters,
 numeric parameters etc. When the server is parsing the top level configuration
 parameters it passes pointers to the storages of the appropriate kind, to the
 parsers being invoked to parse the global values. Parsers will store the
@@ -120,32 +120,31 @@ for standard options in libdhcp++. However, the formats for vendor specific
 options are dynamically configured by the server's administrator and thus can't
 be stored in libdhcp++. Such option formats are stored in the
 @ref isc::dhcp::CfgMgr. The libdhcp++ provides functions for recursive parsing
-of options which may be encapsulated by other options up to the any level of
-encapsulation but these functions are unaware of the option formats defined
+of options which may be encapsulated by other options up to any level of
+encapsulation, but these functions are unaware of the option formats defined
 in the @ref isc::dhcp::CfgMgr because they belong to a different library.
 Therefore, the generic functions @ref isc::dhcp::LibDHCP::unpackOptions4 and
-@ref isc::dhcp::LibDHCP::unpackOptions4 are only useful to parse standard
-options which definitions are provided in the libdhcp++. In order to overcome
+@ref isc::dhcp::LibDHCP::unpackOptions6 are only useful to parse standard
+options whose definitions are provided in the libdhcp++. In order to overcome
 this problem a callback mechanism has been implemented in @c Option and @c Pkt4
-classes. By installing a callback function on the instance of the @c Pkt4 the
+classes. By installing a callback function on an instance of @c Pkt4, the
 server may provide a custom implementation of the options parsing algorithm.
 This callback function will take precedence over the @c LibDHCP::unpackOptions4
-and @c LibDHCP::unpackOptions4 functions. With this approach, the callback is
+and @c LibDHCP::unpackOptions6 functions. With this approach, the callback is
 implemented within the context of the server and it has access to all objects
 which define its configuration (including dynamically created option
 definitions).
 
 @section dhcpv4DDNSIntegration DHCPv4 Server Support for the Dynamic DNS Updates
-T
-he DHCPv4 server supports processing of the DHCPv4 Client FQDN option (RFC4702)
-and the DHCPv4 Host Name option (RFC2132). Client may send one of these options
+The DHCPv4 server supports processing of the DHCPv4 Client FQDN option (RFC4702)
+and the DHCPv4 Host Name option (RFC2132). A client may send one of these options
 to convey its fully qualified or partial name to the server. The server may use
 this name to perform DNS updates for the client. If server receives both options
 in the same message, the DHCPv4 Client FQDN %Option is processed and the Host
 Name option is ignored. If only Host Name Option is present in the client's
 message, it is used to update DNS.
 
-Server may be configured to use a different name to perform DNS update for the
+The server may be configured to use a different name to perform DNS update for the
 client. In this case the server will return one of the DHCPv4 Client FQDN or
 Host Name %Option in its response with the name which was selected for the
 client to indicate that this name will be used to perform DNS update.
@@ -170,7 +169,7 @@ or 2 NameChangeRequests during single message processing. Server generates no
 NameChangeRequests if it is not configured to update DNS or it rejects the DNS
 update for any other reason.
 
-Server may generate 1 NameChangeRequest in a case when client acquired a new
+The server may generate one NameChangeRequest in the case when client acquires a new
 lease or it releases an existing lease. In the former case, the NameChangeRequest
 type is CHG_ADD, which indicates that the kea-dhcp-ddns module should add a new
 DNS binding for the client, and it is assumed that there is no DNS binding for
@@ -183,15 +182,15 @@ forward only update or both reverse and forward update) have been performed when
 the lease was acquired or renewed. Server checks this information to make a
 decision which mapping it is supposed to remove when lease is released.
 
-Server may generate 2 NameChangeRequests in case a client is renewing a lease and
-it already has a DNS binding for that lease. The DHCPv4 server will check if
-there is an existing lease for the client which has sent a message and if DNS
-Updates had been performed for this lease. If the notion of client's FQDN changes,
-comparing to the information stored in the lease database, the DHCPv4 has to
-remove an existing binding from the DNS and then add a new binding according to
-the new FQDN information received from the client. If the client's FQDN
-information (including the client's name and type of update performed) doesn't
-change comparing to the NameChangeRequest is not generated.
+The server may generate two NameChangeRequests in the case where client is
+renewing a lease and it already has a DNS binding for that lease. The DHCPv4
+server will check if there is an existing lease for the client which has sent a
+message and if DNS Updates had been performed for this lease. If the notion of
+client's FQDN changes, comparing to the information stored in the lease
+database, the DHCPv4 has to remove an existing binding from the DNS and then add
+a new binding according to the new FQDN information received from the client. If
+the client's FQDN information (including the client's name and type of update
+performed) doesn't change comparing to the NameChangeRequest is not generated.
 
 The DHCPv4 Client FQDN %Option comprises flags which communicate to the server
 what updates (if any) client expects the server to perform. Server may be
@@ -200,7 +199,7 @@ If the server overrides client's preference it will communicate it by sending
 the DHCPv4 Client FQDN %Option in its responses to a client, with the appropriate
 flags set.
 
-@todo Note, that current implementation doesn't allow configuration of the
+@todo Note: the current implementation doesn't allow configuration of the
 server's behaviour with respect to DNS Updates. This is planned for the future.
 The default behaviour is constituted by the set of constants defined in the
 (upper part of) dhcp4_srv.cc file. Once the configuration is implemented,
@@ -208,7 +207,7 @@ these constants will be removed.
 
 @section dhcpv4Classifier DHCPv4 Client Classification
 
-Kea DHCPv4 server currently supports simplified client classification. It is called
+The Kea DHCPv4 server currently supports simplified client classification. It is called
 "simplified", because the incoming packets are classified based on the content
 of the vendor class (60) option. More flexible classification is planned, but there
 are no specific development dates agreed.
@@ -293,11 +292,11 @@ a handler function defined in the kea_controller.cc. The handler function
 calls a static function @c configure defined in the kea_controller.cc.
 
 The signal handler reconfigures the server using the configuration file
-specified at the server startup. The location of this file is held in the
+specified at server startup. The location of this file is held in the
 @c Daemon class.
 
 @section dhcpv4Other Other DHCPv4 topics
 
- For hooks API support in DHCPv4, see @ref dhcpv4Hooks.
+For hooks API support in DHCPv4, see @ref dhcpv4Hooks.
 
 */

@@ -36,10 +36,10 @@ smart pointers using the \c boost::shared_ptr type. There are no const
 versions of packet types defined, as we assume that hooks can modify any
 aspect of the packet at almost any stage of processing.
 
-Both packet types use collection of \ref isc::dhcp::Option objects to
+Both packet types use a collection of \ref isc::dhcp::Option objects to
 represent DHCPv4 and DHCPv6 options. The base class @c Option can be used to
 represent generic option that contains collection of
-bytes. Depending on whether the option is instantiated as DHCPv4 or DHCPv6
+bytes. Depending on whether the option is instantiated as a DHCPv4 or DHCPv6
 option, it will adjust its header (DHCPv4 options use 1 octet for
 type and 1 octet for length, while DHCPv6 options use 2 bytes for
 each).
@@ -50,13 +50,13 @@ specific formats:
 - isc::dhcp::Option6AddrLst -- DHCPv6 option, contains one or more IPv6 addresses;
 - isc::dhcp::Option4ClientFqdn -- DHCPv4 Client FQDN option;
 - isc::dhcp::Option6ClientFqdn -- DHCPv6 Client FQDN option;
-- isc::dhcp::Option6IAAddr -- DHCPv6 option, represents IAADDR option (an option that
+- isc::dhcp::Option6IAAddr -- DHCPv6 option, represents the IAADDR option (an option that
                               contains IPv6 address with extra parameters);
-- isc::dhcp::Option6IAPrefix -- DHCPv6 option, represents IAPREFIX option (an option
+- isc::dhcp::Option6IAPrefix -- DHCPv6 option, represents the IAPREFIX option (an option
                                 that contains IPv6 prefix in prefix delegation);
 - isc::dhcp::Option6IA -- DHCPv6 option used to store IA_NA and its suboptions.
 - isc::dhcp::Option6StatusCode -- DHCPv6 option, carries a status code to the client;
-- isc::dhcp::OptionCustom -- Represents option having many different formats, where
+- isc::dhcp::OptionCustom -- Represents an option having many different formats, where
                              data fields can be accessed in a convenient way;
 - isc::dhcp::OptionInt -- DHCPv4 or DHCPv6 option, carries a single numeric value;
 - isc::dhcp::OptionString -- DHCPv4 or DHCPv6 option, carries a text value;
@@ -93,7 +93,7 @@ that interface-id in its copy, when sending data back to the client.
 This will be used by the relay to choose proper interface when forwarding
 response towards the client.
 
-Pkt6 class has a public \c Pkt6::relay_info_ field, which is of type \c Pkt6::RelayInfo.
+The Pkt6 class has a public \c Pkt6::relay_info_ field, which is of type \c Pkt6::RelayInfo.
 This is a simple structure that represents the information in each RELAY_FORW
 or RELAY_REPL message. It is important to understand the order in which
 the data appear here. Consider the following network:
@@ -125,10 +125,10 @@ network operations. In particlar, it provides information about existing
 network interfaces See @ref isc::dhcp::Iface class and
 @ref isc::dhcp::IfaceMgr::detectIfaces() and @ref isc::dhcp::IfaceMgr::getIface().
 
-Generic parts of the code are @ref isc::dhcp::IfaceMgr class in
+Generic parts of the code are contained in the @ref isc::dhcp::IfaceMgr class in
 src/lib/dhcp/iface_mgr.cc file. OS-specific code is located in separate
-files, e.g. iface_mgr_linux.cc, iface_mgr_bsd. Such separation should be
-maintained when additional code will be developed.
+files, e.g. iface_mgr_linux.cc, iface_mgr_bsd. The separation should be
+maintained when developing additional code.
 
 Other useful methods are dedicated to transmission
 (\ref isc::dhcp::IfaceMgr::send(), 2 overloads) and reception

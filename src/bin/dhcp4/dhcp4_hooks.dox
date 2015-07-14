@@ -157,7 +157,7 @@ packet processing. Hook points that are not specific to packet processing
 
  - <b>Skip flag action</b>: If any callout installed on "lease4_renew"
    sets the skip flag, the server will not update the lease in the
-   database and continue using old values instead.
+   database and will continue using the old values instead.
 
 @subsection dhcpv4HooksLeaseRelease lease4_release
 

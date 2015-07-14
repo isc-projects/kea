@@ -142,10 +142,10 @@ send them to the kea-dhcp-ddns module when server is idle waiting for DHCP messa
 
 In the simplest case, when client gets one address from the server, a DHCPv6 server
 may generate 0, 1 or 2 NameChangeRequests during single message processing.
-Server generates no NameChangeRequests if it is not configured to update DNS
+The server generates no NameChangeRequests if it is not configured to update DNS
  or it rejects the DNS update for any other reason.
 
-Server may generate 1 NameChangeRequest in a situation when a client acquires a
+The server may generate one NameChangeRequest in a situation when a client acquires a
 new lease or it releases an existing lease. In the former case, the NameChangeRequest
 type is CHG_ADD, which indicates that the kea-dhcp-ddns module should add a new DNS
 binding for the client, and it is assumed that there is no DNS binding for this
@@ -158,7 +158,7 @@ both reverse and forward update) have been performed when the lease was acquired
 Server checks this information to make a decision which mapping it is supposed to
 remove when a lease is released.
 
-Server may generate 2 NameChangeRequests in case the client is renewing a lease and
+The server may generate two NameChangeRequests in case the client is renewing a lease and
 it already has a DNS binding for that lease. Note, that renewal may be triggered
 as a result of sending a RENEW message as well as the REQUEST message. In both cases
 DHCPv6 server will check if there is an existing lease for the client which has sent
@@ -202,7 +202,7 @@ encapsulation but these functions are unaware of the option formats defined
 in the @ref isc::dhcp::CfgMgr because they belong to a different library.
 Therefore, the generic functions @ref isc::dhcp::LibDHCP::unpackOptions4 and
 @ref isc::dhcp::LibDHCP::unpackOptions6 are only useful to parse standard
-options which definitions are provided in the libdhcp++. In order to overcome
+options whose definitions are provided in the libdhcp++. In order to overcome
 this problem a callback mechanism has been implemented in @c Option and @c Pkt6
 classes. By installing a callback function on the instance of the @c Pkt6 the
 server may provide a custom implementation of the options parsing algorithm.
@@ -214,7 +214,7 @@ definitions).
 
 @section dhcpv6Classifier DHCPv6 Client Classification
 
-Kea DHCPv6 server currently supports simplified client classification. It is called
+The Kea DHCPv6 server currently supports simplified client classification. It is called
 "simplified", because the incoming packets are classified based on the content
 of the vendor class (16) option. More flexible classification is planned, but there
 are no specific development dates agreed.
@@ -247,13 +247,14 @@ limited.
 
  @section dhcpv6ConfigBackend Configuration backend for DHCPv6
 
-There are many theoretical ways in which server configuration can be stored.
+There are many theoretical ways in which the server configuration can be stored.
 The legacy ISC-DHCP implementation uses flat files. Configuration stored in JSON files is
 becoming more and more popular among various projects. There are unofficial patches for
 ISC-DHCP that keep parts of the configuration in LDAP. It was also suggested that in some
 cases it would be convenient to keep configuration in XML files.
 
-Kea 0.9 has introduced configuration backends that are switchable during compilation phase. Currently the only choice is JSON.
+Kea 0.9 has introduced configuration backends that are switchable during the
+compilation phase. Currently the only choice is JSON.
 
 JSON is a new configuration backend that causes Kea to read JSON configuration file from
 disk. It does not require any framework and thus is considered more lightweight. It will
@@ -296,11 +297,11 @@ a handler function defined in the kea_controller.cc. The handler function
 calls a static function @c configure defined in the kea_controller.cc.
 
 The signal handler reconfigures the server using the configuration file
-specified at the server startup. The location of this file is held in the
+specified at server startup. The location of this file is held in the
 @c Daemon class.
 
- @section dhcpv6Other Other DHCPv6 topics
+@section dhcpv6Other Other DHCPv6 topics
 
- For hooks API support in DHCPv6, see @ref dhcpv6Hooks.
+For hooks API support in DHCPv6, see @ref dhcpv6Hooks.
 
  */
