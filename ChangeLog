@@ -1,3 +1,7 @@
+980.	[doc]		marcin
+	Updated Developer's Guide.
+	(Trac #3484, git 220c337c31a592311363eca981c7f1578abbe15d)
+
 979.	[bug]		fdupont
 	Fixed two cases of public variables in a base class being
 	hidden by variables in a derived class.
