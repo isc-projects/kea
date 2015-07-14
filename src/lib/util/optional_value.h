@@ -107,7 +107,7 @@ public:
     ///
     /// It does not alter the actual value. It only marks it "specified" or
     /// "unspecified".
-    /// @param specified boolean that determined if a value is specified or not
+    /// @param state determines if a value is specified or not
     void specify(const OptionalValueState& state) {
         specified_ = state.specified_;
     }

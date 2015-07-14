@@ -331,8 +331,6 @@ protected:
     /// not appropriate for the link the client is attached to, the server MAY
     /// send the IA with address lifetimes set to 0 or discard the message.
     ///
-    /// @param subnet subnet the sender belongs to
-    /// @param duid client's duid
     /// @param query client's message (Renew or Rebind)
     /// @param answer server's response to the client's message. This
     /// message should contain Client FQDN option being sent by the server

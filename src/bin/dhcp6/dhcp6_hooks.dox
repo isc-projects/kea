@@ -55,25 +55,25 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
 
  - @b Description: This callout is executed when an incoming DHCPv6
-   packet is received and the data stored in a buffer. The sole argument -
-   query6 - contains a pointer to an isc::dhcp::Pkt6 object that contains
+   packet is received and the data stored in a buffer. The sole argument
+   "query6" contains a pointer to an @c isc::dhcp::Pkt6 object that contains
    the received information stored in the data_ field. Basic information
    like protocol, source/destination addresses and ports are set, but
    the contents of the buffer have not yet been parsed.  That means that
-   the options_ field (that will eventually contain a list of objects
+   the @c options_ field (that will eventually contain a list of objects
    representing the received options) is empty, so none of the methods
    that operate on it (e.g., getOption()) will work. The primary purpose
    of this early call is to offer the ability to modify incoming packets
    in their raw form. Unless you need to access to the raw data, it is
-   usually better to install your callout on the pkt6_receive hook point.
+   usually better to install your callout on the "pkt6_receive" hook point.
 
  - <b>Skip flag action</b>: If any callout sets the skip flag, the
-   server will assume that the callout parsed the buffer and added then
-   necessary option objects to the options_ field; the server will not
+   server will assume that the callout parsed the buffer and added the
+   necessary option objects to the @c options_ field; the server will not
    do any parsing. If the callout sets the skip flag but does not parse
    the buffer, the server will most probably drop the packet due to
    the absence of mandatory options. If you want to drop the packet,
-   see the description of the skip flag in the pkt6_receive hook point.
+   see the description of the skip flag in the "pkt6_receive" hook point.
 
  @subsection dhcpv6HooksPkt6Receive pkt6_receive
 
@@ -81,16 +81,16 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
 
  - @b Description: This callout is executed when an incoming DHCPv6
-   packet is received and its content is parsed. The sole argument -
-   query6 - contains a pointer to an isc::dhcp::Pkt6 object that contains
+   packet is received and its content is parsed. The sole argument
+   "query6" contains a pointer to an @c isc::dhcp::Pkt6 object that contains
    all information regarding incoming packet, including its source and
    destination addresses, the interface over which it was received, a list
    of all options present within and relay information.  All fields of
-   the Pkt6 object can be modified at this time, except data_. (data_
+   the "query6" object can be modified at this time, except data_. (data_
    contains the incoming packet as raw buffer. By the time this hook is
    reached, that information has already been parsed and is available though
-   other fields in the Pkt6 object.  For this reason, it doesn't make
-   sense to modify it.)
+   other fields in the Pkt6 object.  For this reason, modification of the
+   @c data_ field would have no effect.)
 
  - <b>Skip flag action</b>: If any callout sets the skip flag, the server will
    drop the packet and start processing the next one.  The reason for the drop
@@ -107,13 +107,12 @@ packet processing. Hook points that are not specific to packet processing
    selected for the incoming packet. All parameters, addresses and
    prefixes will be assigned from that subnet. A callout can select a
    different subnet if it wishes so, the list of all subnets currently
-   configured being provided as 'subnet6collection'. The list itself must
+   configured being provided as "subnet6collection". The list itself must
    not be modified.
 
- - <b>Skip flag action</b>: If any callout installed on 'subnet6_select'
+ - <b>Skip flag action</b>: If any callout installed on "subnet6_select"
    sets the skip flag, the server will not select any subnet. Packet processing
-   will continue, but will be severely limited (i.e. only global options
-   will be assigned).
+   will continue, but will be severely limited.
 
 @subsection dhcpv6HooksLease6Select lease6_select
 
@@ -125,18 +124,18 @@ packet processing. Hook points that are not specific to packet processing
  - @b Description: This callout is executed after the server engine
    has selected a lease for client's request but before the lease
    has been inserted into the database. Any modifications made to the
-   isc::dhcp::Lease6 object will be stored in the lease's record in the
-   database. The callout should make sure that any modifications are
-   sanity checked as the server will use that data as is with no further
+   "lease6" object will affect the lease's record in the database.
+   The callout should make sure that any modifications are sanity
+   checked as the server will use that data as is, with no further
    checking.\n\n The server processes lease requests for SOLICIT and
-   REQUEST in a very similar way. The only major difference is that
-   for SOLICIT the lease is just selected; it is not inserted into
-   the database.  It is possible to distinguish between SOLICIT and
-   REQUEST by checking value of the fake_allocation flag: a value of true
-   means that the lease won't be inserted into the database (SOLICIT),
-   a value of false means that it will (REQUEST).
+   REQUEST in a very similar way. The major difference is that
+   for SOLICIT the lease is only selected; it is not inserted into
+   the database.  The callouts can distinguish between the SOLICIT and
+   REQUEST by checking the value of the "fake_allocation" flag: a value
+   of true means that the lease won't be inserted into the database
+   (SOLICIT case), a value of false means that it will (REQUEST).
 
- - <b>Skip flag action</b>: If any callout installed on 'lease6_select'
+ - <b>Skip flag action</b>: If any callout installed on "lease6_select"
    sets the skip flag, the server will not assign that particular lease.
    Packet processing will continue and the client may get other addresses
    or prefixes if it requested more than one address and/or prefix.
@@ -150,26 +149,26 @@ packet processing. Hook points that are not specific to packet processing
 
  - @b Description: This callout is executed when the server engine is
    about to renew an existing lease. The client's request is provided as
-   the query6 argument and the existing lease with the appropriate fields
-   already modified is given in the lease6 argument. The final argument,
+   the "query6" argument and the existing lease with the appropriate fields
+   already modified is given in the "lease6" argument. The final argument,
    ia_na, is the IA_NA option that will be sent back to the client.
-   Callouts installed on the lease6_renew may modify the content of
-   the lease6 object. Care should be taken however, as that modified
+   Callouts installed on the "lease6_renew" may modify the content of
+   the "lease6" object. Care should be taken however, as that modified
    information will be written to the database without any further
    checking. \n\n Although the envisaged usage assumes modification of T1,
    T2, preferred and valid lifetimes only, other parameters associated
-   with the lease may be modified as well. The only exception is the addr_
+   with the lease may be modified as well. The only exception is the @c addr_
    field, which must not be modified as it is used by the database to
    select the existing lease to be updated. Care should also be taken to
-   modify the ia_na argument to match any changes in the lease6 argument.
+   modify the "ia_na" argument to match any changes in the "lease6" argument.
    If a client sends more than one IA_NA option, callouts will be called
    separately for each IA_NA instance. The callout will be called only
    when the update is valid, i.e. conditions such as an invalid addresses
    or invalid iaid renewal attempts will not trigger this hook point.
 
- - <b>Skip flag action</b>: If any callout installed on 'lease6_renew'
+ - <b>Skip flag action</b>: If any callout installed on "lease6_renew"
    sets the skip flag, the server will not renew the lease. Under these
-   circumstances, the callout should modify the ia_na argument to reflect
+   circumstances, the callout should modify the "ia_na" argument to reflect
    this fact; otherwise the client will think the lease was renewed and continue
    to operate under this assumption.
 
@@ -181,12 +180,12 @@ packet processing. Hook points that are not specific to packet processing
 
  - @b Description: This callout is executed when the server engine is
    about to release an existing lease. The client's request is provided
-   as the query6 argument and the existing lease is given in the lease6
-   argument.  Although the lease6 structure may be modified, it doesn't
+   as the "query6" argument and the existing lease is given in the "lease6"
+   argument.  Although the "lease6" structure may be modified, it doesn't
    make sense to do so as it will be destroyed immediately the callouts
    finish execution.
 
- - <b>Skip flag action</b>: If any callout installed on 'lease6_release'
+ - <b>Skip flag action</b>: If any callout installed on "lease6_release"
    sets the skip flag, the server will not delete the lease, which will
    remain in the database until it expires. However, the server will send out
    the response back to the client as if it did.
@@ -197,22 +196,22 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
 
  - @b Description: This callout is executed when server's response
-   is about to be send back to the client. The sole argument - response6 -
-   contains a pointer to an isc::dhcp::Pkt6 object that contains the
+   is about to be send back to the client. The sole argument "response6"
+   contains a pointer to an @c isc::dhcp::Pkt6 object that contains the
    packet, with set source and destination addresses, interface over which
    it will be send, list of all options and relay information.  All fields
-   of the Pkt6 object can be modified at this time.  It should be noted that
-   unless the callout sets the skip flag (see below), anything placed in the
-   bufferOut_ field will be overwritten when the callout returns.
-   (bufferOut_ is scratch space used for constructing the packet.)
+   of the "response6" object can be modified at this time.  It should be
+   noted that unless the callout sets the skip flag (see below), anything
+   placed in the @c buffer_out_ field will be overwritten when the callout
+   returns. (buffer_out_ is scratch space used for constructing the packet.)
 
  - <b>Skip flag action</b>: If any callout sets the skip flag, the server
-   will assume that the callout did pack the transaction-id, message type and
-   option objects into the bufferOut_ field and will skip packing part.
+   will assume that the callout did pack the "transaction-id", "message type"
+   and option objects into the @c buffer_out_ field and will skip packing part.
    Note that if the callout sets skip flag, but did not prepare the
    output buffer, the server will send a zero sized message that will be
    ignored by the client. If you want to drop the packet, please see
-   skip flag in the buffer6_send hook point.
+   skip flag in the "buffer6_send" hook point.
 
 @subsection dhcpv6HooksBuffer6Send buffer6_send
 
@@ -221,14 +220,14 @@ packet processing. Hook points that are not specific to packet processing
 
  - @b Description: This callout is executed when server's response is
    assembled into binary form and is about to be send back to the
-   client. The sole argument - response6 - contains a pointer to an
-   isc::dhcp::Pkt6 object that contains the packet, with set source and
+   client. The sole argument "response6" contains a pointer to an
+   @c isc::dhcp::Pkt6 object that contains the packet, with set source and
    destination addresses, interface over which it will be sent, list of
    all options and relay information. All options are already encoded
-   in bufferOut_ field. It doesn't make sense to modify anything but the
-   contents of bufferOut_ at this time (although if it is a requirement
+   in @c buffer_out_ field. It doesn't make sense to modify anything but the
+   contents of buffer_out_ at this time (although if it is a requirement
    to modify that data, it will probably be found easier to modify the
-   option objects in a callout attached to the pkt6_send hook).
+   option objects in a callout attached to the "pkt6_send" hook).
 
  - <b>Skip flag action</b>: If any callout sets the skip flag, the server
    will drop this response packet. However, the original request packet

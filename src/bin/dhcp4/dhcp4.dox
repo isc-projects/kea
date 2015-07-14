@@ -15,46 +15,136 @@
 /**
  @page dhcp4 DHCPv4 Server Component
 
-Kea offers DHCPv4 server implementation. It is implemented as
-kea-dhcp4 component.  Its primary code is located in
-isc::dhcp::Dhcpv4Srv class. It uses \ref libdhcp extensively,
-especially isc::dhcp::Pkt4, isc::dhcp::Option and
-isc::dhcp::IfaceMgr classes. Currently this code offers skeleton
-functionality, i.e. it is able to receive and process incoming
-requests and transmit responses. However, it does not have database
-management, so it returns only one, hardcoded lease to whoever asks
-for it.
+Kea includes the "kea-dhcp4" component, which is the DHCPv4 server
+implementation. This component is built around the
+@ref isc::dhcp::Dhcpv4Srv class which controls all major operations
+performed by the server such as: DHCP messages processing, callouts
+execution for many hook points, FQDN processing and interactions with the
+"kea-dhcp-ddns" component, lease allocation, system signals handling etc.
 
-DHCPv4 server component does not support direct traffic (relayed
-only), as support for transmission to hosts without IPv4 address
-assigned is not implemented in IfaceMgr yet.
+The "kea-dhcp4" component requires linking with many different libraries
+to obtain access to common functions like: interfaces and sockets
+management, configuration parsing, leases management and allocation,
+hooks infrastructure, statistics management etc.
+
+The following sections walk through some of the details of the "kea-dhcp4"
+component implementation.
 
 @section dhcpv4ConfigParser Configuration Parser in DHCPv4
 
-This parser follows exactly the same logic as its DHCPv6 counterpart.
-See \ref dhcpv6ConfigParser.
+The common configuration parsers for the DHCP servers are located in the
+src/lib/dhcpsrv/parsers/ directory. Parsers specific to the DHCPv4 component
+are located in the src/bin/dhcp4/json_config_parser.cc. These parsers derive
+from the common configuration parsers and customize their behavior. For
+example: the @c Subnet4ConfigParser is used to parse parameters
+describing a single subnet. It derives from the @c
+isc::dhcp::SubnetConfigParser, which implements the common base for both
+DHCPv4 and DHCPv6 subnets. The @ref isc::dhcp::Subnet4ConfigParser
+implements the @c initSubnet abstract method, which creates an instance of
+the DHCPv4 subnet. This method is invoked by the parent class.
+
+Some parsers for the DHCPv4 server derive from the isc::dhcp::DhcpConfigParser
+class directly. This is an abstract class, defining a basic interface for
+all configuration parsers. All DHCPv4 parsers deriving from this class
+directly have their entire implementation in the
+src/bin/dhcp4/json_config_parser.cc.
 
 @section dhcpv4ConfigInherit DHCPv4 configuration inheritance
 
-Configuration inheritance in DHCPv4 follows exactly the same logic as its DHCPv6
-counterpart. See \ref dhcpv6ConfigInherit.
+One notable useful feature of DHCP configuration is its parameter inheritance.
+For example, "renew-timer" value may be specified at a global scope and it then
+applies to all subnets. However, some subnets may have it overwritten with subnet
+specific values that takes precedence over global values that are considered
+defaults. The parameters inheritance is implemented by means of the "global
+context". The global context is represented by the @ref isc::dhcp::ParserContext
+class and it holds pointers to storage of different kinds, e.g. text parameters,
+numeric parameters etc. When the server is parsing the top level configuration
+parameters it passes pointers to the storages of the appropriate kind, to the
+parsers being invoked to parse the global values. Parsers will store the
+parsed values into these storages. Once the global parameters are stored in the
+global context, the parsers for the nested configuration parameters are invoked.
+These parsers check the presence of the parameters overriding the values of
+the global parameters. If a value is not present, the values from the global
+context is used.
+
+A good example of inheritance is the implementation of the @ref
+isc::dhcp::SubnetConfigParser. The @c getParam method is used throughout the
+class to obtain values of the parameters defining a subnet. It first checks
+if the specific value is present in the local values storage. If it is not
+present, it uses the value from the global context.
+
+ @code
+ isc::dhcp::Triplet<uint32_t>
+ SubnetConfigParser::getParam(const std::string& name) {
+     uint32_t value = 0;
+     try {
+         // look for local value
+          value = uint32_values_->getParam(name);
+     } catch (const DhcpConfigError &) {
+         try {
+             // no local, use global value
+             value = global_context_->uint32_values_->getParam(name);
+         } catch (const DhcpConfigError &) {
+             isc_throw(DhcpConfigError, "Mandatory parameter " << name
+                       << " missing (no global default and no subnet-"
+                       << "specific value)");
+         }
+     }
+
+     return (Triplet<uint32_t>(value));
+}
+@endcode
+
+Note that if the value is neither present in the local storage nor in the global
+context an error is signalled.
+
+Parameter inheritance is done once, during the reconfiguration phase.
+Reconfigurations are rare, so extra logic here is not a problem. On the other
+hand, values of those parameters may be used thousands times per second, so
+access to these parameters must be as efficient as possible. In fact,
+currently the code has to only call @c Subnet4::getT1(), regardless if the
+"renew-timer" has been specified as a global or subnet specific value.
+
+Debugging a configuration parser may be confusing. Therefore there is a special
+class called DebugParser. It does not configure anything, but just
+accepts any parameter of any type. If requested to commit configuration, it will
+print out received parameter name and its value. This class is not currently used,
+but it is convenient to have it every time a new parameter is added to the DHCP
+configuration. For that purpose it should be left in the code.
 
 @section dhcpv4OptionsParse Custom functions to parse message options
 
-The DHCPv4 server uses the same logic to supply custom callback function to
-parse message option as DHCPv6 server implementation. See \ref dhcpv6OptionsParse.
+The DHCPv4 server implementation provides a generic support to define option
+formats and set option values. A number of options formats have been defined
+for standard options in libdhcp++. However, the formats for vendor specific
+options are dynamically configured by the server's administrator and thus can't
+be stored in libdhcp++. Such option formats are stored in the
+@ref isc::dhcp::CfgMgr. The libdhcp++ provides functions for recursive parsing
+of options which may be encapsulated by other options up to any level of
+encapsulation, but these functions are unaware of the option formats defined
+in the @ref isc::dhcp::CfgMgr because they belong to a different library.
+Therefore, the generic functions @ref isc::dhcp::LibDHCP::unpackOptions4 and
+@ref isc::dhcp::LibDHCP::unpackOptions6 are only useful to parse standard
+options whose definitions are provided in the libdhcp++. In order to overcome
+this problem a callback mechanism has been implemented in @c Option and @c Pkt4
+classes. By installing a callback function on an instance of @c Pkt4, the
+server may provide a custom implementation of the options parsing algorithm.
+This callback function will take precedence over the @c LibDHCP::unpackOptions4
+and @c LibDHCP::unpackOptions6 functions. With this approach, the callback is
+implemented within the context of the server and it has access to all objects
+which define its configuration (including dynamically created option
+definitions).
 
 @section dhcpv4DDNSIntegration DHCPv4 Server Support for the Dynamic DNS Updates
-T
-he DHCPv4 server supports processing of the DHCPv4 Client FQDN option (RFC4702)
-and the DHCPv4 Host Name option (RFC2132). Client may send one of these options
+The DHCPv4 server supports processing of the DHCPv4 Client FQDN option (RFC4702)
+and the DHCPv4 Host Name option (RFC2132). A client may send one of these options
 to convey its fully qualified or partial name to the server. The server may use
 this name to perform DNS updates for the client. If server receives both options
 in the same message, the DHCPv4 Client FQDN %Option is processed and the Host
 Name option is ignored. If only Host Name Option is present in the client's
 message, it is used to update DNS.
 
-Server may be configured to use a different name to perform DNS update for the
+The server may be configured to use a different name to perform DNS update for the
 client. In this case the server will return one of the DHCPv4 Client FQDN or
 Host Name %Option in its response with the name which was selected for the
 client to indicate that this name will be used to perform DNS update.
@@ -79,8 +169,8 @@ or 2 NameChangeRequests during single message processing. Server generates no
 NameChangeRequests if it is not configured to update DNS or it rejects the DNS
 update for any other reason.
 
-Server may generate 1 NameChangeRequest in a case when client acquired a new
-lease or it releases an existing lease. In the former case, the NameChangeRequest
+The server may generate one NameChangeRequest in the case where a client acquires a new
+lease or it releases an existing one. In the former case, the NameChangeRequest
 type is CHG_ADD, which indicates that the kea-dhcp-ddns module should add a new
 DNS binding for the client, and it is assumed that there is no DNS binding for
 this client already. In the latter case, the NameChangeRequest type is CHG_REMOVE
@@ -92,15 +182,15 @@ forward only update or both reverse and forward update) have been performed when
 the lease was acquired or renewed. Server checks this information to make a
 decision which mapping it is supposed to remove when lease is released.
 
-Server may generate 2 NameChangeRequests in case a client is renewing a lease and
-it already has a DNS binding for that lease. The DHCPv4 server will check if
-there is an existing lease for the client which has sent a message and if DNS
-Updates had been performed for this lease. If the notion of client's FQDN changes,
-comparing to the information stored in the lease database, the DHCPv4 has to
-remove an existing binding from the DNS and then add a new binding according to
-the new FQDN information received from the client. If the client's FQDN
-information (including the client's name and type of update performed) doesn't
-change comparing to the NameChangeRequest is not generated.
+The server may generate two NameChangeRequests in the case where client is
+renewing a lease and it already has a DNS binding for that lease. The DHCPv4
+server will check if there is an existing lease for the client which has sent a
+message and if DNS Updates had been performed for this lease. If the notion of
+client's FQDN changes, comparing to the information stored in the lease
+database, the DHCPv4 has to remove an existing binding from the DNS and then add
+a new binding according to the new FQDN information received from the client. If
+the client's FQDN information (including the client's name and type of update
+performed) doesn't change comparing to the NameChangeRequest is not generated.
 
 The DHCPv4 Client FQDN %Option comprises flags which communicate to the server
 what updates (if any) client expects the server to perform. Server may be
@@ -109,7 +199,7 @@ If the server overrides client's preference it will communicate it by sending
 the DHCPv4 Client FQDN %Option in its responses to a client, with the appropriate
 flags set.
 
-@todo Note, that current implementation doesn't allow configuration of the
+@todo Note: the current implementation doesn't allow configuration of the
 server's behaviour with respect to DNS Updates. This is planned for the future.
 The default behaviour is constituted by the set of constants defined in the
 (upper part of) dhcp4_srv.cc file. Once the configuration is implemented,
@@ -117,7 +207,7 @@ these constants will be removed.
 
 @section dhcpv4Classifier DHCPv4 Client Classification
 
-Kea DHCPv4 server currently supports simplified client classification. It is called
+The Kea DHCPv4 server currently supports simplified client classification. It is called
 "simplified", because the incoming packets are classified based on the content
 of the vendor class (60) option. More flexible classification is planned, but there
 are no specific development dates agreed.
@@ -201,16 +291,12 @@ through the main loop. This method fetches the last received signal and calls
 a handler function defined in the kea_controller.cc. The handler function
 calls a static function @c configure defined in the kea_controller.cc.
 
-In order for the signal handler to know the location of the configuration file
-(specified at process startup), the location of this file needs to be stored
-in a static variable so as it may be directly accessed by the signal handler.
-This static variable is stored in the @c dhcp::Daemon class and all Kea processes
-can use it (all processes derive from this class). The configuration file
-location is initialized when the @c Daemon::init method is called. Therefore,
-derived classes should call it in their implementations of the @c init method.
+The signal handler reconfigures the server using the configuration file
+specified at server startup. The location of this file is held in the
+@c Daemon class.
 
 @section dhcpv4Other Other DHCPv4 topics
 
- For hooks API support in DHCPv4, see @ref dhcpv4Hooks.
+For hooks API support in DHCPv4, see @ref dhcpv4Hooks.
 
 */

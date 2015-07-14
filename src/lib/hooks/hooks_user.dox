@@ -100,11 +100,11 @@ shared library and loaded by Kea into its address space.
 To illustrate how to write code that integrates with Kea, we will
 use the following (rather contrived) example:
 
-The Kea DHCPv4 server is used to allocate IPv4 addresses to clients
+<i>The Kea DHCPv4 server is used to allocate IPv4 addresses to clients
 (as well as to pass them other information such as the address of DNS
 servers).  We will suppose that we need to classify clients requesting
 IPv4 addresses according to their hardware address, and want to log both
-the hardware address and allocated IP address for the clients of interest.
+the hardware address and allocated IP address for the clients of interest.</i>
 
 The following sections describe how to implement these requirements.
 The code presented here is not efficient and there are better ways of
@@ -282,11 +282,11 @@ int callout(CalloutHandle& handle);
 @endcode
 
 (As before, the callout is declared with "C" linkage.)  Information is passed
-between Kea and the callout through name/value pairs in the CalloutHandle
+between Kea and the callout through name/value pairs in the @c CalloutHandle
 object. The object is also used to pass information between callouts on a
 per-request basis. (Both of these concepts are explained below.)
 
-A callout returns an "int" as a status return.  A value of 0 indicates
+A callout returns an @c int as a status return.  A value of 0 indicates
 success, anything else signifies an error.  The status return has no
 effect on server processing; the only difference between a success
 and error code is that if the latter is returned, the server will
@@ -296,7 +296,7 @@ error information to the Kea logging system.
 
 @subsubsection hooksdgArguments Callout Arguments
 
-The CalloutHandle object provides two methods to get and set the
+The @c CalloutHandle object provides two methods to get and set the
 arguments passed to the callout.  These methods are called (naturally
 enough) getArgument and SetArgument.  Their usage is illustrated by the
 following code snippets.
@@ -336,27 +336,27 @@ In the callout
     handle.setArgument("data_count", number);
 @endcode
 
-As can be seen "getArgument" is used to retrieve data from the
-CalloutHandle, and setArgument used to put data into it.  If a callout
+As can be seen @c getArgument is used to retrieve data from the
+@c CalloutHandle, and @c setArgument used to put data into it.  If a callout
 wishes to alter data and pass it back to the server, it should retrieve
-the data with getArgument, modify it, and call setArgument to send
+the data with @c getArgument, modify it, and call @c setArgument to send
 it back.
 
 There are several points to be aware of:
 
-- the data type of the variable in the call to getArgument must match
-the data type of the variable passed to the corresponding setArgument
+- the data type of the variable in the call to @c getArgument must match
+the data type of the variable passed to the corresponding @c setArgument
 <B>exactly</B>: using what would normally be considered to be a
 "compatible" type is not enough.  For example, if the server passed
-an argument as an "int" and the callout attempted to retrieve it as a
-"long", an exception would be thrown even though any value that can
-be stored in an "int" will fit into a "long".  This restriction also
+an argument as an @c int and the callout attempted to retrieve it as a
+@c long, an exception would be thrown even though any value that can
+be stored in an @c int will fit into a @c long.  This restriction also
 applies the "const" attribute but only as applied to data pointed to by
-pointers, e.g. if an argument is defined as a "char*", an exception will
+pointers, e.g. if an argument is defined as a @c char*, an exception will
 be thrown if an attempt is made to retrieve it into a variable of type
-"const char*".  (However, if an argument is set as a "const int", it can
-be retrieved into an "int".)  The documentation of each hook point will
-detail the data type of each argument.
+@c const @c char*.  (However, if an argument is set as a @c const @c int,
+it can be retrieved into an @c int.)  The documentation of each hook
+point will detail the data type of each argument.
 - Although all arguments can be modified, some altered values may not
 be read by the server. (These would be ones that the server considers
 "read-only".) Consult the documentation of each hook to see whether an
@@ -371,8 +371,8 @@ parameters can be modified.  As a general rule:
 
 - Do not alter arguments unless you mean the change to be reflected in
 the server.
-- If you alter an argument, call CalloutHandle::setArgument to update the
-value in the CalloutHandle object.
+- If you alter an argument, call @c CalloutHandle::setArgument to update the
+value in the @c CalloutHandle object.
 
 @subsubsection hooksdgSkipFlag The "Skip" Flag
 
@@ -391,7 +391,7 @@ is a server where a callout inspects the hardware address of the client
 sending the packet and compares it against a black list; if the address
 is on it, the callout notifies the server to drop the packet.
 
-To handle these common cases, the CalloutHandle has a "skip" flag.
+To handle these common cases, the @c CalloutHandle has a "skip" flag.
 This is set by a callout when it wishes the server to skip normal
 processing.  It is set false by the hooks framework before callouts on a
 hook are called.  If the flag is set on return, the server will take the
@@ -427,7 +427,7 @@ Future developments may have the server processing multiple packets
 simultaneously, or to suspend processing on a packet and resume it at
 a later time after other packets have been processed.
 
-As well as argument information, the CalloutHandle object can be used by
+As well as argument information, the @c CalloutHandle object can be used by
 callouts to attach information to a packet being handled by the server.
 This information (known as "context") is not used by the server: its purpose
 is to allow callouts to pass information between one another on a
@@ -441,9 +441,9 @@ simultaneously: callouts can effectively attach data to a packet that
 follows the packet around the system.
 
 Context information is held as name/value pairs in the same way
-as arguments, being accessed by the pair of methods setContext and
-getContext.  They have the same restrictions as the setArgument and
-getArgument methods - the type of data retrieved from context must
+as arguments, being accessed by the pair of methods @c setContext and
+@c getContext.  They have the same restrictions as the @c setArgument and
+@c getArgument methods - the type of data retrieved from context must
 <B>exactly</B> match the type of the data set.
 
 The example in the next section illustrates their use.
@@ -457,8 +457,9 @@ do this in one callout, for this example we'll use two:
 
 - pkt4_receive - a callout on this hook is invoked when a packet has been
 received and has been parsed.  It is passed a single argument, "query4"
-which is an isc::dhcp::Pkt4 object (representing a DHCP v4 packet).
-We will do the classification here.
+which is an isc::dhcp::Pkt4Ptr object, holding a pointer to the
+isc::dhcp::Pkt4 object (representing a DHCPv4 packet). We will do the
+classification here.
 
 - pkt4_send - called when a response is just about to be sent back to
 the client.  It is passed a single argument "response4".  This is the
@@ -521,7 +522,7 @@ int pkt4_receive(CalloutHandle& handle) {
 }
 @endcode
 
-The pkt4_receive callout placed the hardware address of an interesting client in
+The "pkt4_receive" callout placed the hardware address of an interesting client in
 the "hwaddr" context for the packet.  Turning now to the callout that will
 write this information to the log file:
 
@@ -757,12 +758,12 @@ to initialize per-request context. The second is called after all
 server-defined hooks have been processed, and is to allow a library to
 tidy up.
 
-As an example, the pkt4_send example above required that the code
+As an example, the "pkt4_send" example above required that the code
 check for an exception being thrown when accessing the "hwaddr" context
 item in case it was not set.  An alternative strategy would have been to
 provide a callout for the "context_create" hook and set the context item
 "hwaddr" to an empty string. Instead of needing to handle an exception,
-pkt4_send would be guaranteed to get something when looking for
+"pkt4_send" would be guaranteed to get something when looking for
 the hwaddr item and so could write or not write the output depending on
 the value.
 
@@ -771,7 +772,7 @@ automatically deletes context. An example where it could be required
 is where memory has been allocated by a callout during the processing
 of a request and a raw pointer to it stored in the context object. On
 destruction of the context, that memory will not be automatically
-released. Freeing in the memory in the "context_destroy callout will solve
+released. Freeing in the memory in the "context_destroy" callout will solve
 that problem.
 
 Actually, when the context is destroyed, the destructor
@@ -786,8 +787,8 @@ Here it is assumed that the hooks library is performing some form of
 security checking on the packet and needs to maintain information in
 a user-specified "SecurityInformation" object. (The details of this
 fictitious object are of no concern here.) The object is created in
-the context_create callout and used in both the pkt4_receive and the
-pkt4_send callouts.
+the "context_create" callout and used in both the "pkt4_receive" and the
+"pkt4_send" callouts.
 
 @code
 // Storing information in a "raw" pointer.  Assume that the
@@ -808,7 +809,7 @@ int context_create(CalloutHandle& handle) {
 // Callouts that use the context
 int pkt4_receive(CalloutHandle& handle) {
     // Retrieve the pointer to the SecurityInformation object
-    SecurityInformation si;
+    SecurityInformation* si;
     handle.getContext("security_information", si);
         :
         :
@@ -821,7 +822,7 @@ int pkt4_receive(CalloutHandle& handle) {
 
 int pkt4_send(CalloutHandle& handle) {
     // Retrieve the pointer to the SecurityInformation object
-    SecurityInformation si;
+    SecurityInformation* si;
     handle.getContext("security_information", si);
         :
         :
@@ -831,11 +832,11 @@ int pkt4_send(CalloutHandle& handle) {
 }
 
 // Context destruction.  We need to delete the pointed-to SecurityInformation
-// object because we will lose the pointer to it when the CalloutHandle is
+// object because we will lose the pointer to it when the @c CalloutHandle is
 // destroyed.
 int context_destroy(CalloutHandle& handle) {
     // Retrieve the pointer to the SecurityInformation object
-    SecurityInformation si;
+    SecurityInformation* si;
     handle.getContext("security_information", si);
 
     // Delete the pointed-to memory.
@@ -843,7 +844,7 @@ int context_destroy(CalloutHandle& handle) {
 }
 @endcode
 
-The requirement for the context_destroy callout can be eliminated if
+The requirement for the "context_destroy" callout can be eliminated if
 a Boost shared ptr is used to point to the allocated memory:
 
 @code
@@ -865,7 +866,7 @@ int context_create(CalloutHandle& handle) {
 }
 
 // Other than the data type, a shared pointer has similar semantics to a "raw"
-// pointer.  Only the code from pkt4_receive is shown here.
+// pointer.  Only the code from "pkt4_receive" is shown here.
 
 int pkt4_receive(CalloutHandle& handle) {
     // Retrieve the pointer to the SecurityInformation object
@@ -881,7 +882,7 @@ int pkt4_receive(CalloutHandle& handle) {
 }
 
 // No context_destroy callout is needed to delete the allocated
-// SecurityInformation object.  When the CalloutHandle is destroyed, the shared
+// SecurityInformation object.  When the @c CalloutHandle is destroyed, the shared
 // pointer object will be destroyed.  If that is the last shared pointer to the
 // allocated memory, then it too will be deleted.
 @endcode
@@ -915,13 +916,13 @@ registration is through the LibraryHandle object.  This was briefly
 introduced in the discussion of the framework functions, in that
 an object of this type is pass to the "load" function.  A LibraryHandle
 can also be obtained from within a callout by calling the CalloutHandle's
-getLibraryHandle() method.
+@c getLibraryHandle() method.
 
 The LibraryHandle provides three methods to manipulate callouts:
 
-- registerCallout - register a callout on a hook.
-- deregisterCallout - deregister a callout from a hook.
-- deregisterAllCallouts - deregister all callouts on a hook.
+- @c registerCallout - register a callout on a hook.
+- @c deregisterCallout - deregister a callout from a hook.
+- @c deregisterAllCallouts - deregister all callouts on a hook.
 
 The following sections cover some of the ways in which these can be used.
 
@@ -960,7 +961,7 @@ a hook point.  Although it is likely to be rare for user code to need to
 do this, there may be instances where it make sense.
 
 To register multiple callouts on a hook, just call
-LibraryHandle::registerCallout multiple times on the same hook, e.g.
+@c LibraryHandle::registerCallout multiple times on the same hook, e.g.
 
 @code
     libhandle.registerCallout("pkt4_receive", classify);
@@ -968,7 +969,7 @@ LibraryHandle::registerCallout multiple times on the same hook, e.g.
 @endcode
 
 The hooks framework will call the callouts in the order they are
-registered.  The same CalloutHandle is passed between them, so any
+registered.  The same @c CalloutHandle is passed between them, so any
 change made to the CalloutHandle's arguments, "skip" flag, or per-request
 context by the first is visible to the second.
 
@@ -1036,7 +1037,7 @@ int write_data(CalloutHandle& handle) {
     flush(interesting);
 
     // We've logged the data, so deregister ourself.  This callout will not
-    // be called again until it is registered by pkt4_receive.
+    // be called again until it is registered by "pkt4_receive".
 
     handle.getLibraryHandle().deregisterCallout("pkt4_send", write_data);
 
@@ -1093,7 +1094,7 @@ request.
 
 The vertical blue lines represent callout context. Context is
 per-packet but also per-library.  When the server calls "authorize",
-the CalloutHandle's getContext and setContext methods access a context
+the CalloutHandle's @c getContext and @c setContext methods access a context
 created purely for library 1. The next callout on the hook will access
 context created for library 2. These contexts are passed to the callouts
 associated with the next hook.  So when "check" is called, it gets the
@@ -1132,7 +1133,7 @@ as separate elements of the hooks-libraries configuration element, e.g.
 
 In rare cases, it is possible that one library may want to pass
 data to another.  This can be done in a limited way by means of the
-CalloutHandle's setArgument and getArgument calls.  For example, in the
+CalloutHandle's @c setArgument and @c getArgument calls.  For example, in the
 above diagram, the callout "add_option" can pass a value to "putopt"
 by setting a name.value pair in the hook's argument list.  "putopt"
 would be able to read this, but would not be able to return information
@@ -1185,7 +1186,7 @@ to add one.) For example:
 extern "C" {
 
 int version() {
-    return (BIND10_HOOKS_VERSION);
+    return (KEA_HOOKS_VERSION);
 }
 
 int load() {
