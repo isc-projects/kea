@@ -21,7 +21,7 @@ namespace d2 {
 
 /// @brief Defines the logger used within D2.
 isc::log::Logger dctl_logger("dhcpddns");
-isc::log::Logger dhcp_to_d2_logger("dchp-to-d2");
+isc::log::Logger dhcp_to_d2_logger("dhcp-to-d2");
 isc::log::Logger d2_to_dns_logger("d2-to-dns");
 
 } // namespace d2
