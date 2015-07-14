@@ -48,11 +48,8 @@ public:
     NakedControlledDhcpv6Srv():ControlledDhcpv6Srv(DHCP6_SERVER_PORT + 10000) {
     }
 
-    /// @brief Exposes server's receivePacket method
-    virtual Pkt6Ptr receivePacket(int timeout) {
-        return(Dhcpv6Srv::receivePacket(timeout));
-    }
-
+    /// Expose internal methods for the sake of testing
+    using Dhcpv6Srv::receivePacket;
 };
 
 class CtrlDhcpv6SrvTest : public ::testing::Test {
@@ -85,9 +82,16 @@ public:
 
 class CtrlChannelDhcpv6SrvTest : public CtrlDhcpv6SrvTest {
 public:
+
+    /// @brief Path to the UNIX socket being used to communicate with the server
     std::string socket_path_;
+
+    /// @brief Pointer to the tested server object
     boost::shared_ptr<NakedControlledDhcpv6Srv> server_;
 
+    /// @brief Default constructor
+    ///
+    /// Sets socket path to its default value.
     CtrlChannelDhcpv6SrvTest() {
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
@@ -98,6 +102,7 @@ public:
         reset();
     }
 
+    /// @brief Destructor
     ~CtrlChannelDhcpv6SrvTest() {
         server_.reset();
         reset();
