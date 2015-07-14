@@ -809,7 +809,7 @@ int context_create(CalloutHandle& handle) {
 // Callouts that use the context
 int pkt4_receive(CalloutHandle& handle) {
     // Retrieve the pointer to the SecurityInformation object
-    SecurityInformation si;
+    SecurityInformation* si;
     handle.getContext("security_information", si);
         :
         :
@@ -822,7 +822,7 @@ int pkt4_receive(CalloutHandle& handle) {
 
 int pkt4_send(CalloutHandle& handle) {
     // Retrieve the pointer to the SecurityInformation object
-    SecurityInformation si;
+    SecurityInformation* si;
     handle.getContext("security_information", si);
         :
         :
@@ -836,7 +836,7 @@ int pkt4_send(CalloutHandle& handle) {
 // destroyed.
 int context_destroy(CalloutHandle& handle) {
     // Retrieve the pointer to the SecurityInformation object
-    SecurityInformation si;
+    SecurityInformation* si;
     handle.getContext("security_information", si);
 
     // Delete the pointed-to memory.
