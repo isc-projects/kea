@@ -105,11 +105,11 @@ access to these parameters must be as efficient as possible. In fact,
 currently the code has to only call @c Subnet4::getT1(), regardless if the
 "renew-timer" has been specified as a global or subnet specific value.
 
-Debugging configuration parser may be confusing. Therefore there is a special
+Debugging a configuration parser may be confusing. Therefore there is a special
 class called DebugParser. It does not configure anything, but just
 accepts any parameter of any type. If requested to commit configuration, it will
 print out received parameter name and its value. This class is not currently used,
-but it is convenient to have it every time a new parameter is added to DHCP
+but it is convenient to have it every time a new parameter is added to the DHCP
 configuration. For that purpose it should be left in the code.
 
 @section dhcpv4OptionsParse Custom functions to parse message options
@@ -169,8 +169,8 @@ or 2 NameChangeRequests during single message processing. Server generates no
 NameChangeRequests if it is not configured to update DNS or it rejects the DNS
 update for any other reason.
 
-The server may generate one NameChangeRequest in the case when client acquires a new
-lease or it releases an existing lease. In the former case, the NameChangeRequest
+The server may generate one NameChangeRequest in the case where a client acquires a new
+lease or it releases an existing one. In the former case, the NameChangeRequest
 type is CHG_ADD, which indicates that the kea-dhcp-ddns module should add a new
 DNS binding for the client, and it is assumed that there is no DNS binding for
 this client already. In the latter case, the NameChangeRequest type is CHG_REMOVE
