@@ -76,12 +76,31 @@ almost every line of code. Even if you are fixing something small,
 like a single line fix, you are encouraged to write unit-tests for that
 change. That is even more true for new code: if you write a new
 function, method or a class, you definitely should write unit-tests
-for it. To ensure that the test for the specific change is valid, it
-should be written before the change is applied. The test should initially
-fail. When the change is applied the test should start passing. The
-test validating a new function should be written against empty
-(unimplemented) function. When the function is implemented, the test
-should pass.
+for it.
+
+To ensure that everything is tested, ISC uses a development method
+called Test Driven Development (TDD).  In TDD, a feature is developed
+alongside the tests, with the tests being written first.  In detail,
+a test is written for a small piece of functionality and run against
+the existing code. (In the case where the test is a unit test for
+a function, it would be run against an empty (unimplemented)
+function.)  The test should fail.  A minimal amount of code is then
+written, just enough to get the test to pass.  Then the process is
+repeated for the next small piece of functionality. This continues
+until all the functionality has been implemented.
+
+This approach has two advantages:
+
+- By writing a test first and then only enough code to pass the
+test, that code is fully tested.  By repeating this process until
+the feature is fully implemented, all the code gets test coverage.
+You avoid the situation where not enough tests have been written
+to check all the code.
+
+- By running the test before the code implementing the function is
+written and observing the test fail, you can detect the situation
+where a bug in the test code will cause it to pass regardless of
+the code being tested.
 
 See @ref qaUnitTests for instructions on how to run unit-tests.
 
