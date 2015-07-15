@@ -1,3 +1,9 @@
+981.	[bug]		tmark
+	keactrl now uses PID files to identify and control server instances.
+	Prior to this it relied on the system command, "ps", which could lead
+	to it misinterperting which processes are or are not running.
+	(Trac #3939, git 93a720ed7ffdffe66bd835cd64f78e4ad601637a)
+
 980.	[doc]		marcin
 	Updated Developer's Guide.
 	(Trac #3484, git 220c337c31a592311363eca981c7f1578abbe15d)
