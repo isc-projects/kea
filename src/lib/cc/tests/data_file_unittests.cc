@@ -35,7 +35,7 @@ public:
     /// @param content text to be written to disk
     void writeFile(const std::string& content) {
         // Write sample content to disk
-        remove(TEMP_FILE);
+        static_cast<void>(remove(TEMP_FILE));
         std::ofstream write_me(TEMP_FILE);
         EXPECT_TRUE(write_me.is_open());
         write_me << content;

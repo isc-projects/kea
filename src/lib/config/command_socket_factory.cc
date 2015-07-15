@@ -83,7 +83,7 @@ private:
         // Let's remove the old file. We don't care about any possible
         // errors here. The file should not be there if the file was
         // shut down properly.
-        remove(file_name.c_str());
+        static_cast<void>(remove(file_name.c_str()));
 
         // Set this socket to be non-blocking one.
         if (fcntl(fd, F_SETFL, O_NONBLOCK) !=0 ) {
@@ -100,7 +100,7 @@ private:
         if (bind(fd, (struct sockaddr*)&addr, sizeof(addr))) {
             const char* errmsg = strerror(errno);
             ::close(fd);
-            remove(file_name.c_str());
+            static_cast<void>(remove(file_name.c_str()));
             isc_throw(isc::config::SocketError, "Failed to bind socket " << fd
                       << " to " << file_name << ": " << errmsg);
         }
@@ -114,7 +114,7 @@ private:
         if (status < 0) {
             const char* errmsg = strerror(errno);
             ::close(fd);
-            remove(file_name.c_str());
+            static_cast<void>(remove(file_name.c_str()));
             isc_throw(isc::config::SocketError, "Failed to listen on socket fd="
                       << fd << ", filename=" << file_name << ": " << errmsg);
         }
@@ -181,7 +181,7 @@ private:
         // Close should always succeed. We don't care if we're able to delete
         // the socket or not.
         ::close(sockfd_);
-        remove(filename_.c_str());
+        static_cast<void>(remove(filename_.c_str()));
     }
 
     /// @brief UNIX filename representing this socket
