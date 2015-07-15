@@ -157,21 +157,48 @@ kea_verbose=no
       the servers looks similar to the following:
 <screen>
 <userinput>$ keactrl start</userinput>
-INFO/keactrl: Starting kea-dhcp4 -c /usr/local/etc/kea/kea.conf
-INFO/keactrl: Starting kea-dhcp6 -c /usr/local/etc/kea/kea.conf
-INFO/keactrl: Starting kea-dhcp-ddns -c /usr/local/etc/kea/kea.conf
+INFO/keactrl: Starting kea-dhcp4 -c /usr/local/etc/kea/kea.conf -d
+INFO/keactrl: Starting kea-dhcp6 -c /usr/local/etc/kea/kea.conf -d
+INFO/keactrl: Starting kea-dhcp-ddns -c /usr/local/etc/kea/kea.conf -d
 </screen>
+      </para>
+
+      <para>Kea's servers create PID files upon startup. These files are used
+      by keactrl to deteremine whether or not a given server is running.  If
+      one or more servers are running when the start command is issued, the
+      output will look similiar to the following:
+<screen>
+<userinput>$ keactrl start</userinput>
+INFO/keactrl: kea-dhcp4 appears to be running, see: PID 10918, PID file: /usr/local/var/kea/kea.kea-dhcp4.pid.
+INFO/keactrl: kea-dhcp6 appears to be running, see: PID 10924, PID file: /usr/local/var/kea/kea.kea-dhcp6.pid.
+INFO/keactrl: kea-dhcp-ddns appears to be running, see: PID 10930, PID file: /usr/local/var/kea/kea.kea-dhcp-ddns.pid.
+</screen>
+      During normal shutdowns these PID files are deleted. They may, however,
+      be left over as remnants following a system crash.  It is possible,
+      though highly unlikely, that upon system restart the PIDs they contain
+      actually refer to processes unrelated to Kea.  This condition will cause
+      keactrl to decide that the servers are running, when in fact they are
+      not.  In such a case the PID files as listed in the keactrl output
+      must be manually deleted.
       </para>
 
       <para>The following command stops all servers:
 <screen>
 <userinput>$ keactrl stop</userinput>
-INFO/keactrl: Skip sending signal 15 to process kea-dhcp6: process is not running
+INFO/keactrl: Stopping kea-dhcp4...
+INFO/keactrl: Stopping kea-dhcp6...
+INFO/keactrl: Stopping kea-dhcp-ddns...
 </screen>
       Note that the <command>stop</command> will attempt to stop all servers
       regardless of whether they are "enabled" in the <filename>keactrl.conf</filename>.
-      If any of the servers is not running, an informational message
-      is displayed as in the <command>stop</command> command output above.
+      If any of the servers are not running, an informational message
+      is displayed as in the <command>stop</command> command output below.
+<screen>
+<userinput>$ keactrl stop</userinput>
+INFO/keactrl: kea-dhcp4 isn't running.
+INFO/keactrl: kea-dhcp6 isn't running.
+INFO/keactrl: kea-dhcp-ddns isn't running.
+</screen>
       </para>
 
       <para>
@@ -184,6 +211,17 @@ INFO/keactrl: Skip sending signal 15 to process kea-dhcp6: process is not runnin
         valid, uses the new configuration. A reload is executed as follows:
 <screen>
 <userinput>$ keactrl reload</userinput>
+INFO/keactrl: Reloading kea-dhcp4...
+INFO/keactrl: Reloading kea-dhcp6...
+INFO/keactrl: Reloading kea-dhcp-ddns...
+</screen>
+      If any of the servers are not running, an informational message
+      is displayed as in the <command>reload</command> command output below.
+<screen>
+<userinput>$ keactrl stop</userinput>
+INFO/keactrl: kea-dhcp4 isn't running.
+INFO/keactrl: kea-dhcp6 isn't running.
+INFO/keactrl: kea-dhcp-ddns isn't running.
 </screen>
       </para>
 
