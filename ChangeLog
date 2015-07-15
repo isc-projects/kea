@@ -1,3 +1,7 @@
+982.	[bug]		marcin
+	Fixed the typo in the name of the D2 logger.
+	(Trac #3951, git 92305b2a1774df1cf1bdfeb93d787fea0ab27f74)
+
 981.	[bug]		tmark
 	keactrl now uses PID files to identify and control server instances.
 	Prior to this it relied on the system command, "ps", which could lead
