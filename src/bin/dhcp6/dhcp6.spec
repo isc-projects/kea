@@ -62,6 +62,12 @@
         "item_default": 4000
       },
 
+      { "item_name": "new-leases-on-renew",
+        "item_type": "boolean",
+        "item_optional": true,
+        "item_default": true
+      },
+
       { "item_name": "option-def",
         "item_type": "list",
         "item_optional": false,

@@ -23,11 +23,56 @@
 #include <dhcpsrv/lease.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <util/buffer.h>
+#include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
 #include <cstdlib>
 #include <time.h>
 
+using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::test;
+
+namespace {
+
+/// @brief Functor searching for the leases using a specified property.
+///
+/// @tparam BaseType Base type to which the property belongs: @c Lease or
+/// @c Lease6.
+/// @tparam PropertyType A type of the property, e.g. @c uint32_t for IAID.
+/// @tparam MemberPointer A pointer to the member, e.g. @c &Lease6::iaid_.
+template<typename BaseType, typename PropertyType,
+         PropertyType BaseType::*MemberPointer>
+struct getLeasesByPropertyFun {
+
+    /// @brief Returns leases matching the specified condition.
+    ///
+    /// @param config DHCP client configuration structure holding leases.
+    /// @param property A value of the lease property used to search the lease.
+    /// @param equals A flag which indicates if the operator should search for
+    /// the leases which property is equal to the value of @c property parameter
+    /// (if true), or unequal (if false).
+    /// @param [out] leases A vector in which the operator will store leases
+    /// found.
+    void operator()(const Dhcp6Client::Configuration& config,
+                    const PropertyType& property, const bool equals,
+                    std::vector<Lease6>& leases) {
+
+        // Iterate over the leases and match the property with a given lease
+        //field.
+        for (typename std::vector<Lease6>::const_iterator lease =
+                 config.leases_.begin(); lease != config.leases_.end();
+             ++lease) {
+            // Check if fulfils the condition.
+            if ((equals && ((*lease).*MemberPointer) == property) ||
+                (!equals && ((*lease).*MemberPointer) != property)) {
+                // Found the matching lease.
+                leases.push_back(*lease);
+            }
+        }
+    }
+};
+
+}; // end of anonymous namespace
 
 namespace isc {
 namespace dhcp {
@@ -79,8 +124,6 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
     // Let's try to get a MAC
     HWAddrPtr hwaddr = reply->getMAC(HWAddr::HWADDR_SOURCE_ANY);
 
-    // Set the global status code to default: success and not received.
-    config_.resetGlobalStatusCode();
     for (Opts::const_iterator opt = opts.begin(); opt != opts.end(); ++opt) {
         Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(opt->second);
         if (!ia) {
@@ -93,31 +136,27 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
         for (Opts::const_iterator iter_ia_opt = ia_opts.begin();
              iter_ia_opt != ia_opts.end(); ++iter_ia_opt) {
             OptionPtr ia_opt = iter_ia_opt->second;
-            LeaseInfo lease_info;
+            Lease6 lease;
+            lease.type_ = (ia->getType() == D6O_IA_NA ? Lease::TYPE_NA : Lease::TYPE_PD);
+            lease.iaid_ = ia->getIAID();
+
             switch (ia_opt->getType()) {
             case D6O_IAADDR:
                 {
                     Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<
                         Option6IAAddr>(ia_opt);
 
-                    if (!iaaddr) {
-                        // There is no address. This IA option may simply
-                        // contain a status code, so let's just reset the
-                        // lease and keep IAID around.
-                        lease_info.lease_ = Lease6();
-                        lease_info.lease_.type_ = Lease::TYPE_NA;
-                        lease_info.lease_.iaid_ = ia->getIAID();
-                        break;
+                    if (iaaddr) {
+                        lease = Lease6(Lease::TYPE_NA,
+                                       iaaddr->getAddress(),
+                                       duid_, ia->getIAID(),
+                                       iaaddr->getPreferred(),
+                                       iaaddr->getValid(),
+                                       ia->getT1(), ia->getT2(), 0,
+                                       hwaddr);
+                        lease.cltt_ = time(NULL);
+                        applyLease(lease);
                     }
-
-                    lease_info.lease_ = Lease6(Lease::TYPE_NA,
-                                               iaaddr->getAddress(),
-                                               duid_, ia->getIAID(),
-                                               iaaddr->getPreferred(),
-                                               iaaddr->getValid(),
-                                               ia->getT1(), ia->getT2(), 0,
-                                               hwaddr);
-                    lease_info.lease_.cltt_ = time(NULL);
                 }
                 break;
 
@@ -125,24 +164,19 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
                 {
                     Option6IAPrefixPtr iaprefix = boost::dynamic_pointer_cast<
                         Option6IAPrefix>(ia_opt);
-                    if (!iaprefix) {
-                        // There is no prefix. This IA option may simply
-                        // contain a status code, so let's just reset the
-                        // lease and keep IAID around.
-                        lease_info.lease_ = Lease6();
-                        lease_info.lease_.type_ = Lease::TYPE_PD;
-                        lease_info.lease_.iaid_ = ia->getIAID();
-                        break;
+
+                    if (iaprefix) {
+                        lease = Lease6(Lease::TYPE_PD,
+                                       iaprefix->getAddress(), duid_,
+                                       ia->getIAID(),
+                                       iaprefix->getPreferred(),
+                                       iaprefix->getValid(),
+                                       ia->getT1(), ia->getT2(), 0,
+                                       hwaddr,
+                                       iaprefix->getLength());
+                        lease.cltt_ = time(NULL);
+                        applyLease(lease);
                     }
-                    lease_info.lease_ = Lease6(Lease::TYPE_PD,
-                                               iaprefix->getAddress(), duid_,
-                                               ia->getIAID(),
-                                               iaprefix->getPreferred(),
-                                               iaprefix->getValid(),
-                                               ia->getT1(), ia->getT2(), 0,
-                                               hwaddr,
-                                               iaprefix->getLength());
-                    lease_info.lease_.cltt_ = time(NULL);
                 }
                 break;
 
@@ -152,8 +186,8 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
                     // code, assume the status code to be 0.
                     Option6StatusCodePtr status_code = boost::dynamic_pointer_cast<
                         Option6StatusCode>(ia->getOption(D6O_STATUS_CODE));
-                    lease_info.status_code_ =
-                        status_code ? status_code->getStatusCode() : 0;
+                    config_.status_codes_[ia->getIAID()] =
+                        (status_code ? status_code->getStatusCode() : 0);
                 }
                 break;
 
@@ -161,7 +195,6 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
                 ; // no-op
             }
 
-            applyLease(lease_info);
         }
     }
 
@@ -177,29 +210,25 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
 }
 
 void
-Dhcp6Client::applyLease(const LeaseInfo& lease_info) {
+Dhcp6Client::applyLease(const Lease6& lease) {
     // Go over existing leases and try to match the one that we have.
     for (size_t i = 0; i < config_.leases_.size(); ++i) {
-        Lease6 existing_lease = config_.leases_[i].lease_;
+        Lease6 existing_lease = config_.leases_[i];
         // If IAID is matching and there is an actual address assigned
         // replace the current lease. The default address is :: if the
         // server hasn't sent the IA option. In this case, there is no
         // lease assignment so we keep what we have.
-        if ((existing_lease.iaid_ == lease_info.lease_.iaid_)
-            && (existing_lease.type_ == lease_info.lease_.type_)
-            && (lease_info.lease_.addr_ != asiolink::IOAddress("::"))
-            && (existing_lease.addr_ == lease_info.lease_.addr_)) {
-            config_.leases_[i] = lease_info;
+        if ((existing_lease.iaid_ == lease.iaid_)
+            && (existing_lease.type_ == lease.type_)
+            && (lease.addr_ != asiolink::IOAddress("::"))
+            && (existing_lease.addr_ == lease.addr_)) {
+            config_.leases_[i] = lease;
             return;
-
-        } else if (lease_info.lease_.addr_ == asiolink::IOAddress("::")) {
-            config_.leases_[i].status_code_ = lease_info.status_code_;
-            return;
-
         }
     }
+
     // It is a new lease. Add it.
-    config_.leases_.push_back(lease_info);
+    config_.leases_.push_back(lease);
 }
 
 void
@@ -210,17 +239,70 @@ Dhcp6Client::appendFQDN() {
 }
 
 void
+Dhcp6Client::appendRequestedIAs(const Pkt6Ptr& query) const {
+    if (use_na_) {
+        conditionallyAppendRequestedIA(query, D6O_IA_NA, 1234);
+    }
+
+    if (use_pd_) {
+        conditionallyAppendRequestedIA(query, D6O_IA_PD, 5678);
+    }
+}
+
+void
+Dhcp6Client::conditionallyAppendRequestedIA(const Pkt6Ptr& query,
+                                            const uint8_t ia_type,
+                                            const uint32_t iaid) const {
+    // Get existing options of the specified type.
+    OptionCollection options = query->getOptions(ia_type);
+    std::pair<unsigned int, OptionPtr> option_pair;
+
+    // Check if the option we want to add is already present.
+    BOOST_FOREACH(option_pair, options) {
+        Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(option_pair.second);
+        // This shouldn't happen.
+        if (!ia) {
+            isc_throw(Unexpected, "Dhcp6Client: IA option has an invalid C++ type;"
+                      " this is a programming issue");
+        }
+        // There is an option of the specific type already. If it has our
+        // IAID we return here, because we don't want to duplicate the IA.
+        // If IAID is different, we check other existing IAs.
+        if (ia->getIAID() == iaid) {
+            return;
+        }
+    }
+
+    // If we're here, it means that there is no instance of our IA yet.
+    Option6IAPtr requested_ia(new Option6IA(ia_type, iaid));
+    // Add prefix hint if specified.
+    if (prefix_hint_ && (ia_type == D6O_IA_PD)) {
+        requested_ia->addOption(prefix_hint_);
+    }
+
+    query->addOption(requested_ia);
+}
+
+
+void
 Dhcp6Client::copyIAs(const Pkt6Ptr& source, const Pkt6Ptr& dest) {
     typedef OptionCollection Opts;
     // Copy IA_NAs.
     Opts opts = source->getOptions(D6O_IA_NA);
     for (Opts::const_iterator opt = opts.begin(); opt != opts.end(); ++opt) {
-        dest->addOption(opt->second);
+        // Only copy the entire IA_NA if there is at lease one IA Address option.
+        if (opt->second->getOption(D6O_IAADDR)) {
+            dest->addOption(opt->second);
+        }
     }
     // Copy IA_PDs.
     opts = source->getOptions(D6O_IA_PD);
     for (Opts::const_iterator opt = opts.begin(); opt != opts.end(); ++opt) {
-        dest->addOption(opt->second);
+        // Only copy the entire IA_PD if there is at least one IA Prefix option
+        // in it.
+        if (opt->second->getOption(D6O_IAPREFIX)) {
+            dest->addOption(opt->second);
+        }
     }
 }
 
@@ -232,6 +314,11 @@ Dhcp6Client::copyIAsFromLeases(const Pkt6Ptr& dest) const {
     for (std::set<uint32_t>::const_iterator iaid = iaids.begin();
          iaid != iaids.end(); ++iaid) {
         std::vector<Lease6> leases = getLeasesByIAID(*iaid);
+        // Only a valid lease should be included. If we have received an
+        // error status code, it should not be copied.
+        if (leases[0].valid_lft_ == 0) {
+            continue;
+        }
         Option6IAPtr opt(new Option6IA(leases[0].type_ == Lease::TYPE_NA ?
                                        D6O_IA_NA : D6O_IA_PD, *iaid));
         opt->setT1(leases[0].t1_);
@@ -261,9 +348,7 @@ Dhcp6Client::copyIAsFromLeases(const Pkt6Ptr& dest) const {
 
 void
 Dhcp6Client::createLease(const Lease6& lease) {
-    LeaseInfo info;
-    info.lease_ = lease;
-    applyLease(info);
+    applyLease(lease);
 }
 
 Pkt6Ptr
@@ -298,17 +383,10 @@ Dhcp6Client::doSolicit() {
     if (forced_server_id_) {
         context_.query_->addOption(forced_server_id_);
     }
-    if (use_na_) {
-        context_.query_->addOption(Option6IAPtr(new Option6IA(D6O_IA_NA,
-                                                              1234)));
-    }
-    if (use_pd_) {
-        Option6IAPtr ia(new Option6IA(D6O_IA_PD, 5678));
-        if (prefix_hint_) {
-            ia->addOption(prefix_hint_);
-        }
-        context_.query_->addOption(ia);
-    }
+
+    // Append requested (empty) IAs.
+    appendRequestedIAs(context_.query_);
+
     if (use_rapid_commit_) {
         context_.query_->addOption(OptionPtr(new Option(Option::V6,
                                                         D6O_RAPID_COMMIT)));
@@ -323,6 +401,7 @@ Dhcp6Client::doSolicit() {
     // let's apply received configuration.
     if (use_rapid_commit_ && context_.response_ &&
         context_.response_->getType() == DHCPV6_REPLY) {
+        config_.clear();
         applyRcvdConfiguration(context_.response_);
     }
 }
@@ -336,6 +415,7 @@ Dhcp6Client::doRequest() {
         query->addOption(forced_server_id_);
     }
     copyIAs(context_.response_, query);
+    appendRequestedIAs(query);
 
     // Add Client FQDN if configured.
     appendFQDN();
@@ -348,6 +428,7 @@ Dhcp6Client::doRequest() {
 
     // Apply new configuration only if the server has responded.
     if (context_.response_) {
+        config_.clear();
         applyRcvdConfiguration(context_.response_);
     }
 }
@@ -384,6 +465,10 @@ Dhcp6Client::doRenew() {
     query->addOption(context_.response_->getOption(D6O_SERVERID));
     copyIAsFromLeases(query);
 
+    // During the Renew the client may request additional bindings per
+    // RFC7550.
+    appendRequestedIAs(query);
+
     // Add Client FQDN if configured.
     appendFQDN();
 
@@ -392,6 +477,7 @@ Dhcp6Client::doRenew() {
     context_.response_ = receiveOneMsg();
     // Apply configuration only if the server has responded.
     if (context_.response_) {
+        config_.clear();
         applyRcvdConfiguration(context_.response_);
     }
 }
@@ -401,6 +487,10 @@ Dhcp6Client::doRebind() {
     Pkt6Ptr query = createMsg(DHCPV6_REBIND);
     copyIAsFromLeases(query);
 
+    // During the Rebind the client may request additional bindings per
+    // RFC7550.
+    appendRequestedIAs(query);
+
     // Add Client FQDN if configured.
     appendFQDN();
 
@@ -409,6 +499,7 @@ Dhcp6Client::doRebind() {
     context_.response_ = receiveOneMsg();
     // Apply configuration only if the server has responded.
     if (context_.response_) {
+        config_.clear();
         applyRcvdConfiguration(context_.response_);
     }
 }
@@ -422,6 +513,7 @@ Dhcp6Client::doConfirm() {
     // Set the global status code to default: success and not received.
     config_.resetGlobalStatusCode();
     if (context_.response_) {
+        config_.resetGlobalStatusCode();
         applyRcvdConfiguration(context_.response_);
     }
 }
@@ -430,7 +522,7 @@ void
 Dhcp6Client::fastFwdTime(const uint32_t secs) {
     // Iterate over all leases and move their cltt backwards.
     for (size_t i = 0; i < config_.leases_.size(); ++i) {
-        config_.leases_[i].lease_.cltt_ -= secs;
+        config_.leases_[i].cltt_ -= secs;
     }
 }
 
@@ -466,10 +558,9 @@ Dhcp6Client::getClientId() const {
 std::set<uint32_t>
 Dhcp6Client::getIAIDs() const {
     std::set<uint32_t> iaids;
-    for (std::vector<LeaseInfo>::const_iterator lease_info =
-             config_.leases_.begin(); lease_info != config_.leases_.end();
-         ++lease_info) {
-        iaids.insert(lease_info->lease_.iaid_);
+    for (std::vector<Lease6>::const_iterator lease = config_.leases_.begin();
+         lease != config_.leases_.end(); ++lease) {
+        iaids.insert(lease->iaid_);
     }
     return (iaids);
 }
@@ -477,15 +568,55 @@ Dhcp6Client::getIAIDs() const {
 std::vector<Lease6>
 Dhcp6Client::getLeasesByIAID(const uint32_t iaid) const {
     std::vector<Lease6> leases;
-    for (std::vector<LeaseInfo>::const_iterator lease_info =
-             config_.leases_.begin(); lease_info != config_.leases_.end();
-         ++lease_info) {
-        if (lease_info->lease_.iaid_ == iaid) {
-            leases.push_back(lease_info->lease_);
-        }
-    }
+    getLeasesByProperty<Lease6, uint32_t, &Lease6::iaid_>(iaid, true, leases);
     return (leases);
 }
+
+template<typename BaseType, typename PropertyType, PropertyType BaseType::*MemberPointer>
+void
+Dhcp6Client::getLeasesByProperty(const PropertyType& property, const bool equals,
+                                 std::vector<Lease6>& leases) const {
+    getLeasesByPropertyFun<BaseType, PropertyType, MemberPointer> fun;
+    fun(config_, property, equals, leases);
+}
+
+std::vector<Lease6>
+Dhcp6Client::getLeasesByType(const Lease6::Type& lease_type) const {
+    std::vector<Lease6> leases;
+    getLeasesByProperty<Lease6, Lease6::Type, &Lease6::type_>(lease_type, true, leases);
+    return (leases);
+}
+
+std::vector<Lease6>
+Dhcp6Client::getLeasesWithNonZeroLifetime() const {
+    std::vector<Lease6> leases;
+    getLeasesByProperty<Lease, uint32_t, &Lease::valid_lft_>(0, false, leases);
+    return (leases);
+}
+
+std::vector<Lease6>
+Dhcp6Client::getLeasesWithZeroLifetime() const {
+    std::vector<Lease6> leases;
+    getLeasesByProperty<Lease, uint32_t, &Lease::valid_lft_>(0, true, leases);
+    return (leases);
+}
+
+uint16_t
+Dhcp6Client::getStatusCode(const uint32_t iaid) const {
+    std::map<uint32_t, uint16_t>::const_iterator status_code =
+        config_.status_codes_.find(iaid);
+    if (status_code == config_.status_codes_.end()) {
+        if (!getLeasesByIAID(iaid).empty()) {
+            return (STATUS_Success);
+        }
+
+    } else {
+        return (status_code->second);
+    }
+
+    return (0xFFFF);
+}
+
 
 void
 Dhcp6Client::setDUID(const std::string& str) {

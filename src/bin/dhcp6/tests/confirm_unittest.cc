@@ -276,8 +276,8 @@ TEST_F(ConfirmTest, relayedClientNoSubnet) {
 
     // Set lifetimes to 0 so as the Confirm will ignore the specific address
     // and send an empty IA_NA.
-    client.config_.leases_[0].lease_.preferred_lft_ = 0;
-    client.config_.leases_[0].lease_.valid_lft_ = 0;
+    client.config_.leases_[0].preferred_lft_ = 0;
+    client.config_.leases_[0].valid_lft_ = 0;
     ASSERT_NO_THROW(client.doConfirm());
     EXPECT_FALSE(client.getContext().response_);
 
