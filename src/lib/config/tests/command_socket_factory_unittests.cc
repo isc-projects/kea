@@ -33,14 +33,14 @@ public:
         :SOCKET_NAME(getSocketPath()) {
 
         // Remove any stale socket files
-        remove(SOCKET_NAME.c_str());
+        static_cast<void>(remove(SOCKET_NAME.c_str()));
     }
 
     /// Default destructor
     ~CommandSocketFactoryTest() {
 
         // Remove any stale socket files
-        remove(SOCKET_NAME.c_str());
+        static_cast<void>(remove(SOCKET_NAME.c_str()));
     }
 
     /// @brief Returns socket path (using either hardcoded path or env variable)

@@ -478,7 +478,7 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
     // Testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    remove("interfaces.txt");
+    static_cast<void>(remove("interfaces.txt"));
 
     ofstream interfaces("interfaces.txt", ios::ate);
     interfaces << "eth0 fe80::21e:8cff:fe9b:7349";
