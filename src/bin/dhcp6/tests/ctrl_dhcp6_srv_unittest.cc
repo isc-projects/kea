@@ -247,7 +247,7 @@ public:
     };
 
     void createUnixChannelServer() {
-        ::remove(socket_path_.c_str());
+        static_cast<void>(::remove(socket_path_.c_str()));
 
         // Just a simple config. The important part here is the socket
         // location information.
@@ -292,7 +292,7 @@ public:
     /// @brief Reset
     void reset() {
         CtrlDhcpv6SrvTest::reset();
-        ::remove(socket_path_.c_str());
+        static_cast<void>(::remove(socket_path_.c_str()));
     }
 
     /// @brief Conducts a command/response exchange via UnixCommandSocket

@@ -123,8 +123,8 @@ public:
         resetConfiguration();
 
         // ... and delete the hooks library marker files if present
-        remove(LOAD_MARKER_FILE);
-        remove(UNLOAD_MARKER_FILE);
+        static_cast<void>(remove(LOAD_MARKER_FILE));
+        static_cast<void>(remove(UNLOAD_MARKER_FILE));
     };
 
     /// @brief Returns an interface configuration used by the most of the
