@@ -3569,7 +3569,7 @@ void Dhcpv6Srv::finalizeSignature(Pkt6Ptr& answer) {
     // Get a copy of the outgoing message
     OutputBuffer& abuf(answer->getBuffer());
     OptionBuffer tbs(abuf.getLength());
-    std::memcpy(&tbs, abuf.getData(), tbs.size());
+    std::memcpy(&tbs[0], abuf.getData(), tbs.size());
     // Parse the to be signed buffer and get offsets/length
     size_t beg_off, sig_off, raw_len;
     if (!parseToBeSigned(tbs, beg_off, sig_off, raw_len)) {
