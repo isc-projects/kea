@@ -111,8 +111,8 @@ check_running() {
     # Get the PID from the PID file (if it exists)
     get_pid_from_file ${proc_name}
     if [ ${_pid} -gt 0 ]; then
-        # Use kill -0 to check if PID is alive
-        kill -0 ${_pid}
+        # Use ps to check if PID is alive
+        ps -p ${_pid} 1>/dev/null
         if [ $? -eq 0 ]; then
             # No error, so PID IS ALIVE
             _running=1
