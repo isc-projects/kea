@@ -653,10 +653,6 @@ bool Dhcpv6Srv::run() {
                 }
             }
 
-            LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA,
-                      DHCP6_RESPONSE_DATA)
-                .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
-
             if (!skip_pack) {
                 try {
                     rsp->pack();
