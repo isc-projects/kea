@@ -28,6 +28,7 @@ TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += base32hex_unittest.cc
 run_unittests_SOURCES += base64_unittest.cc
+run_unittests_SOURCES += boost_time_utils_unittest.cc
 run_unittests_SOURCES += buffer_unittest.cc
 run_unittests_SOURCES += csv_file_unittest.cc
 run_unittests_SOURCES += fd_share_tests.cc
