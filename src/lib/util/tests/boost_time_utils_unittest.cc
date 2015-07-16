@@ -33,7 +33,7 @@ TEST(BoostTimeUtilsTest, epoch) {
     time_t tepoch = 0;
     ptime pepoch = from_time_t(tepoch);
     string sepoch = ptimeToText(pepoch);
-    EXPECT_TRUE(strncmp(sepoch.c_str(), "1970-01-01 00:00:00.000", 23) == 0);
+    EXPECT_EQ("1970-01-01 00:00:00.000", sepoch.substr(0, 23));
 }
 
 // The 2015 Bastille day
@@ -42,5 +42,5 @@ TEST(BoostTimeUtilsTest, bastilleDay) {
 	hours(12) + minutes(13) + seconds(14) + milliseconds(500);
     ptime pbast(date(2015, Jul, 14), tdbast);
     string sbast = ptimeToText(pbast);
-    EXPECT_TRUE(strncmp(sbast.c_str(), "2015-07-14 12:13:14.500", 23) == 0);
+    EXPECT_EQ("2015-07-14 12:13:14.500", sbast.substr(0, 23));
 }
