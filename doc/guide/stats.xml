@@ -43,7 +43,7 @@
       </listitem>
       <listitem>
         <simpara><emphasis>string</emphasis> - this type is intended for
-        recording statistics in textual forma. It uses std::string C++ type.
+        recording statistics in textual form. It uses std::string C++ type.
         </simpara>
       </listitem>
     </itemizedlist>
@@ -75,7 +75,7 @@
       a statistic to change, the related statistic will be created. In the general
       case once a statistic is recorded even once, it is kept in the manager, until
       explicitly removed, by <command>statistic-remove</command> or
-      <command>statistic-remove-all</command> being called or the server is shut
+       <command>statistic-remove-all</command> being called or the server is shut
       down. Per subnet statistics are explicitly removed when reconfiguration
       takes place.
     </para>
@@ -108,7 +108,7 @@
       subtle.  The reset command sets the value of the statistic to zero or neutral
       value. After this operation, the statistic will have a value of 0 (integer),
       0.0 (float), 0h0m0s0us (duration) or "" (string). When asked for, a statistic
-      with the values metioned will be returned. <command>Remove</command> removes
+      with the values mentioned will be returned. <command>Remove</command> removes
       a statistic completely, so the statistic will not be reported anymore. Please
       note that the server code may add it back if there's a reason to record
       it.
