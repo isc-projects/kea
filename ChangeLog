@@ -1,3 +1,9 @@
+984.	[bug]		tmark
+	Replaced used of "kill -0" with "ps -p" in keactrl when 
+	checking of servers are alive.  This makes it possible for
+	non-root users to use keactrl to monitor server status.
+	(Trac #3954, git f7f22b244343a3dc2d06645a47c2c65a5134326e)
+
 983.	[bug]		fdupont
 	Enforce numeric month values in Posix date printing.
 	(Trac #3944, git fdbe74b0235055057a37c6ce2b0aaf88f0cc7891)
