@@ -1,6 +1,6 @@
 983.	[bug]		fdupont
 	Enforce numeric month values in Posix date printing.
-	(Trac #3944, git xxx)
+	(Trac #3944, git fdbe74b0235055057a37c6ce2b0aaf88f0cc7891)
 
 982.	[bug]		marcin
 	Fixed the typo in the name of the D2 logger.
