@@ -20,8 +20,10 @@ std::string
 isc::util::ptimeToText(boost::posix_time::ptime t) {
     boost::gregorian::date d = t.date();
     std::stringstream s;
-    s << d.year() << "-" << d.month() << "-" << d.day();
-    s << " " << durationToText(t.time_of_day());
+    s << d.year()
+      << "-" << std::setw(2) << std::setfill('0') << d.month().as_number()
+      << "-" << std::setw(2) << std::setfill('0') << d.day()
+      << " " << durationToText(t.time_of_day());
     return (s.str());
 }
 
