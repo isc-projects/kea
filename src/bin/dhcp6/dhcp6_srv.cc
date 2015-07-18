@@ -3499,6 +3499,8 @@ bool Dhcpv6Srv::appendSeDhcpOptions(Pkt6Ptr& answer) {
         const Ntp val(&now);
         const OptionBuffer buf = val.to_binary();
         OptionPtr tmsmtp_opt(new Option(Option::V6, D6O_TIMESTAMP, buf));
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_TIMESTAMP_OPTION_ADDED)
+            .arg(val.ntp_sec_).arg(val.ntp_fraction_).arg(val.to_text());
         answer->addOption(tmsmtp_opt);
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, SEDHCP6_OPTION_ADDED)
             .arg("timestamp")

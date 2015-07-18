@@ -18,6 +18,9 @@ $NAMESPACE isc::dhcp
 This debug message is printed when a secure DHCPv6 option is added
 to an answer packet.
 
+% SEDHCP6_TIMESTAMP_OPTION_ADDED %1 seconds, %2 fractions, text: %3
+This debug message prints the value of a secure DHCPv6 timestamp option.
+
 % SEDHCP6_OPTION_RECEIVED secure DHCPv6 option has been received: type %1
 This debug message is printed when a secure DHCPv6 option is found
 during incoming packet validation.
