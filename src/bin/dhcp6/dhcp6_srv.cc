@@ -1912,15 +1912,6 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         // Put the client's prefix into the hints list.
         ctx.hints_.push_back(make_pair(prf->getAddress(), prf->getLength()));
     }
-    // We need to remember it as we'll be removing hints from this list as
-    // we extend, cancel or otherwise deal with the leases.
-    bool hints_present = !ctx.hints_.empty();
-
-    /// @todo: The draft-ietf-dhc-dhcpv6-stateful-issues added a new capability
-    /// of the server to to assign new PD leases in both Renew and Rebind.
-    /// There's allow_new_leases_in_renewals_ in the ClientContext6, but we
-    /// currently not use it in PD yet. This should be implemented as part
-    /// of the stateful-issues implementation effort. See ticket #3718.
 
     // Call Allocation Engine and attempt to renew leases. Number of things
     // may happen. Leases may be extended, revoked (if the lease is no longer
@@ -1954,9 +1945,14 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // already, inform the client that he can't have them.
     for (AllocEngine::HintContainer::const_iterator prefix = ctx.hints_.begin();
          prefix != ctx.hints_.end(); ++prefix) {
-        OptionPtr prefix_opt(new Option6IAPrefix(D6O_IAPREFIX, prefix->first,
-                                                 prefix->second, 0, 0));
-        ia_rsp->addOption(prefix_opt);
+        // Send the prefix hint with the zero lifetimes only if the prefix
+        // contains non-zero value. A zero value indicates that the hint was
+        // for the prefix length.
+        if (!prefix->first.isV6Zero()) {
+            OptionPtr prefix_opt(new Option6IAPrefix(D6O_IAPREFIX, prefix->first,
+                                                     prefix->second, 0, 0));
+            ia_rsp->addOption(prefix_opt);
+        }
     }
 
     // All is left is to insert the status code.
@@ -1964,7 +1960,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         // We did not assign anything. If client has sent something, then
         // the status code is NoBinding, if he sent an empty IA_PD, then it's
         // NoAddrsAvailable
-        if (hints_present && !subnet->getAllocLeasesOnRenew()) {
+        if (!subnet->getAllocLeasesOnRenew()) {
             if (query->getType() == DHCPV6_RENEW) {
                 // Insert status code NoBinding to indicate that the lease does not
                 // exist for this client.
