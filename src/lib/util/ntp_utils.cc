@@ -99,6 +99,8 @@ Ntp::Ntp(double secs, time_t base)
 
 bool Ntp::from_binary(const std::vector<uint8_t> binary)
 {
+    // This format is defined in RFC5905, Section 6, Fig. 3
+    // (see 64bit timestamp format)
     if (binary.size() != 8) {
         return (false);
     }
@@ -109,11 +111,11 @@ bool Ntp::from_binary(const std::vector<uint8_t> binary)
     ntp_sec_ |= binary[2];
     ntp_sec_ <<= 8;
     ntp_sec_ |= binary[3];
-    ntp_sec_ <<= 8;
-    ntp_sec_ |= binary[4];
-    ntp_sec_ <<= 8;
-    ntp_sec_ |= binary[5];
-    ntp_fraction_ = binary[6];
+    ntp_fraction_ = binary[4];
+    ntp_fraction_ <<= 8;
+    ntp_fraction_ |= binary[5];
+    ntp_fraction_ <<= 8;
+    ntp_fraction_ |= binary[6];
     ntp_fraction_ <<= 8;
     ntp_fraction_ |= binary[7];
     return (true);
@@ -121,6 +123,8 @@ bool Ntp::from_binary(const std::vector<uint8_t> binary)
 
 std::vector<uint8_t> Ntp::to_binary() const
 {
+    // This format is defined in RFC5905, Section 6, Fig. 3
+    // (see 64bit timestamp format)
     std::vector<uint8_t> ret(8);
     ret[0] = static_cast<uint8_t>((ntp_sec_ >> 24) & 0xff);
     ret[1] = static_cast<uint8_t>((ntp_sec_ >> 16) & 0xff);
