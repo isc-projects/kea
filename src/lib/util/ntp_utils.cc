@@ -122,12 +122,12 @@ bool Ntp::from_binary(const std::vector<uint8_t> binary)
 std::vector<uint8_t> Ntp::to_binary() const
 {
     std::vector<uint8_t> ret(8);
-    ret[0] = static_cast<uint8_t>((ntp_sec_ >> 40) & 0xff);
-    ret[1] = static_cast<uint8_t>((ntp_sec_ >> 32) & 0xff);
-    ret[2] = static_cast<uint8_t>((ntp_sec_ >> 24) & 0xff);
-    ret[3] = static_cast<uint8_t>((ntp_sec_ >> 16) & 0xff);
-    ret[4] = static_cast<uint8_t>((ntp_sec_ >> 8) & 0xff);
-    ret[5] = static_cast<uint8_t>(ntp_sec_ & 0xff);
+    ret[0] = static_cast<uint8_t>((ntp_sec_ >> 24) & 0xff);
+    ret[1] = static_cast<uint8_t>((ntp_sec_ >> 16) & 0xff);
+    ret[2] = static_cast<uint8_t>((ntp_sec_ >> 8) & 0xff);
+    ret[3] = static_cast<uint8_t>(ntp_sec_ & 0xff);
+    ret[4] = static_cast<uint8_t>((ntp_fraction_ >> 24) & 0xff);
+    ret[5] = static_cast<uint8_t>((ntp_fraction_ >> 16) & 0xff);
     ret[6] = static_cast<uint8_t>((ntp_fraction_ >> 8) & 0xff);
     ret[7] = static_cast<uint8_t>(ntp_fraction_ & 0xff);
     return (ret);
