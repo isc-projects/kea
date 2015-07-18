@@ -62,6 +62,18 @@ namespace {
 ///   - 2 prefix pools: 2001:db8:3::/72 and 2001:db8:4::/72
 ///   - delegated length /80
 ///   - this specific configuration is used by tests which don't use relays
+///
+/// - Configuration 6:
+///   - only addresses (no prefixes)
+///   - 1 subnet with the 2001:db8:1::/64 prefix
+///   - 'new-leases-on-renew' enabled
+///
+/// - Configuration 7:
+///   - addresses and prefixes
+///   - address pool: 2001:db8:1::/64
+///   - prefix pool: 3000::/72
+///   - 'new-leases-on-renew' enabled
+///
 const char* REBIND_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces-config\": {"
@@ -210,6 +222,42 @@ const char* REBIND_CONFIGS[] = {
         "    \"interface\": \"eth0\""
         " } ],"
         "\"valid-lifetime\": 4000 }",
+
+// Configuration 6
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"new-leases-on-renew\": True,"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }",
+
+// Configuration 7
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"3000::\", "
+        "          \"prefix-len\": 72, "
+        "          \"delegated-len\": 80"
+        "        } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
 
 };
 
@@ -726,5 +774,61 @@ TEST_F(RebindTest, relayedUnicast) {
     Lease6Ptr lease_server2 = checkLease(lease_client2);
     EXPECT_TRUE(lease_server2);
 }
+
+// This test verifies that the client can request the prefix delegation
+// while it is rebinding an address lease.
+TEST_F(RebindTest, requestPrefixInRebind) {
+    Dhcp6Client client;
+
+    // Configure client to request IA_NA and IA_PD.
+    client.useNA();
+    client.usePD();
+
+    // Configure the server with NA pools only.
+    ASSERT_NO_THROW(configure(REBIND_CONFIGS[6], *client.getServer()));
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Simulate aging of leases.
+    client.fastFwdTime(1000);
+
+    // Make sure that the client has acquired NA lease.
+    std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases_client_na.size());
+
+    // The client should not acquire a PD lease.
+    std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_TRUE(leases_client_pd.empty());
+    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(5678));
+
+    // Send Rebind message to the server, including IA_NA and requesting IA_PD.
+    ASSERT_NO_THROW(client.doRebind());
+    ASSERT_TRUE(client.getContext().response_);
+    leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_TRUE(leases_client_pd.empty());
+    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(5678));
+
+    // Reconfigure the server to use both NA and PD pools.
+    configure(REBIND_CONFIGS[7], *client.getServer());
+
+    // Send Rebind message to the server, including IA_NA and requesting IA_PD.
+    ASSERT_NO_THROW(client.doRebind());
+
+    // Make sure that the client has acquired NA lease.
+    std::vector<Lease6> leases_client_na_rebound =
+        client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases_client_na_rebound.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
+
+    // The lease should have been rebound.
+    EXPECT_EQ(1000, leases_client_na_rebound[0].cltt_ - leases_client_na[0].cltt_);
+
+    // The client should now also acquire a PD lease.
+    leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_EQ(1, leases_client_pd.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
+}
+
 
 } // end of anonymous namespace
