@@ -1961,12 +1961,11 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
 
     // All is left is to insert the status code.
     if (leases.empty()) {
-        if (query->getType() == DHCPV6_RENEW) {
-
-            // We did not assign anything. If client has sent something, then
-            // the status code is NoBinding, if he sent an empty IA_NA, then it's
-            // NoAddrsAvailable
-            if (hints_present) {
+        // We did not assign anything. If client has sent something, then
+        // the status code is NoBinding, if he sent an empty IA_PD, then it's
+        // NoAddrsAvailable
+        if (hints_present && !subnet->getAllocLeasesOnRenew()) {
+            if (query->getType() == DHCPV6_RENEW) {
                 // Insert status code NoBinding to indicate that the lease does not
                 // exist for this client.
                 ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
@@ -1974,23 +1973,24 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                                                    "Sorry, no known PD leases for"
                                                    " this duid/iaid/subnet."));
             } else {
-                ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
-                                                   STATUS_NoPrefixAvail,
-                                                   "Sorry, no prefixes could be"
-                                                   " assigned at this time."));
+                // Per RFC3633, section 12.2, if there is no binding and we are
+                // processing Rebind, the message has to be discarded (assuming that
+                // the server doesn't know if the prefix in the IA_PD option is
+                // appropriate for the client's link). The exception being thrown
+                // here should propagate to the main loop and cause the message to
+                // be discarded.
+                isc_throw(DHCPv6DiscardMessageError, "no binding found for the"
+                          " DUID=" << duid->toText() << ", IAID="
+                          << ia->getIAID() << ", subnet="
+                          << subnet->toText() << " when processing a Rebind"
+                          " message with IA_PD option");
             }
+
         } else {
-            // Per RFC3633, section 12.2, if there is no binding and we are
-            // processing Rebind, the message has to be discarded (assuming that
-            // the server doesn't know if the prefix in the IA_PD option is
-            // appropriate for the client's link). The exception being thrown
-            // here should propagate to the main loop and cause the message to
-            // be discarded.
-            isc_throw(DHCPv6DiscardMessageError, "no binding found for the"
-                      " DUID=" << duid->toText() << ", IAID="
-                      << ia->getIAID() << ", subnet="
-                      << subnet->toText() << " when processing a Rebind"
-                      " message with IA_PD option");
+            ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
+                                               STATUS_NoPrefixAvail,
+                                               "Sorry, no prefixes could be"
+                                               " assigned at this time."));
         }
     }
 

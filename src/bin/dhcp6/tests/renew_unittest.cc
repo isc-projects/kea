@@ -139,6 +139,12 @@ TEST_F(RenewTest, requestPrefixInRenew) {
     ASSERT_TRUE(leases_client_pd.empty());
     ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(5678));
 
+    // Send Renew message to the server, including IA_NA and requesting IA_PD.
+    ASSERT_NO_THROW(client.doRenew());
+    leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_TRUE(leases_client_pd.empty());
+    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(5678));
+
     // Reconfigure the server to use both NA and PD pools.
     configure(RENEW_CONFIGS[2], *client.getServer());
 
