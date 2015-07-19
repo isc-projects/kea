@@ -1587,6 +1587,29 @@ TEST_F(AllocEngine6Test, largePDPool) {
     ASSERT_EQ(1, leases.size());
 }
 
+// This test checks that the allocation engine can delegate addresses
+// from ridiculously large pool. The configuration provides 2^80 or
+// 1208925819614629174706176 addresses. We used to have a bug that would
+// confuse the allocation engine if the number of available addresses
+// was larger than 2^32.
+TEST_F(AllocEngine6Test, largePoolOver32bits) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
+
+    // Configure 2001:db8::/32 subnet
+    subnet_.reset(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
+
+    // Configure the NA pool of /48. So there are 2^80 addresses there. Make
+    // sure that we still can handle cases where number of available addresses
+    // is over max_uint64
+    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), 48));
+    subnet_->addPool(pool);
+
+    // We should have got exactly one lease.
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("::"),
+                                           false, true);
+    ASSERT_EQ(1, leases.size());
+}
+
 }; // namespace test
 }; // namespace dhcp
 }; // namespace isc
