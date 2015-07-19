@@ -231,9 +231,9 @@ AllocEngine::RandomAllocator::pickAddress(const SubnetPtr&,
 }
 
 
-AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts,
+AllocEngine::AllocEngine(AllocType engine_type, uint64_t attempts,
                          bool ipv6)
-    :attempts_(attempts) {
+    : attempts_(attempts) {
 
     // Choose the basic (normal address) lease type
     Lease::Type basic_type = ipv6 ? Lease::TYPE_NA : Lease::TYPE_V4;
@@ -502,10 +502,6 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             return (leases);
         }
 
-        // Unable to allocate an address, return an empty lease.
-        LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V6_ALLOC_FAIL)
-            .arg(ctx.query_->getLabel())
-            .arg(attempts_);
 
     } catch (const isc::Exception& e) {
 
@@ -625,13 +621,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     // - we find a free address
     // - we find an address for which the lease has expired
     // - we exhaust number of tries
-    //
-    /// @todo: We used to use hardcoded number of attempts (100). Now we dynamically
-    /// calculate the number of possible leases in all pools in this subnet and
-    /// try that number of times at most. It would be useful to that value if
-    /// attempts_, specified by the user could override that value (and keep
-    /// dynamic if they're set to 0).
-    uint64_t max_attempts = ctx.subnet_->getPoolCapacity(ctx.type_);
+    uint64_t max_attempts = (attempts_ > 0 ? attempts_  :
+                             ctx.subnet_->getPoolCapacity(ctx.type_));
     for (uint64_t i = 0; i < max_attempts; ++i)
     {
         IOAddress candidate = allocator->pickAddress(ctx.subnet_, ctx.duid_, hint);
@@ -692,6 +683,13 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             }
         }
     }
+
+    // Unable to allocate an address, return an empty lease.
+    LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V6_ALLOC_FAIL)
+        .arg(ctx.query_->getLabel())
+        .arg(max_attempts);
+
+
 
     // We failed to allocate anything. Let's return empty collection.
     return (Lease6Collection());
@@ -1424,12 +1422,6 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
         }
 
         new_lease = ctx.fake_allocation_ ? discoverLease4(ctx) : requestLease4(ctx);
-        if (!new_lease) {
-            // Unable to allocate an address, return an empty lease.
-            LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL)
-                .arg(ctx.query_->getLabel())
-                .arg(attempts_);
-        }
 
     } catch (const isc::Exception& e) {
         // Some other error, return an empty lease.
@@ -2008,7 +2000,8 @@ Lease4Ptr
 AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
     Lease4Ptr new_lease;
     AllocatorPtr allocator = getAllocator(Lease::TYPE_V4);
-    const uint64_t max_attempts = ctx.subnet_->getPoolCapacity(Lease::TYPE_V4);
+    const uint64_t max_attempts = (attempts_ > 0 ? attempts_ :
+                                   ctx.subnet_->getPoolCapacity(Lease::TYPE_V4));
     for (uint64_t i = 0; i < max_attempts; ++i) {
         IOAddress candidate = allocator->pickAddress(ctx.subnet_, ctx.clientid_,
                                                      ctx.requested_address_);
@@ -2023,6 +2016,11 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             }
         }
     }
+
+    // Unable to allocate an address, return an empty lease.
+    LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL)
+        .arg(ctx.query_->getLabel())
+        .arg(max_attempts);
 
     return (new_lease);
 }
