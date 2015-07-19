@@ -476,6 +476,7 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
 
 }
 
+
 // This test checks if an expired lease can be reused in SOLICIT (fake allocation)
 TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     boost::scoped_ptr<AllocEngine> engine;
@@ -1563,6 +1564,28 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolRequestValidHint) {
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
 }
 
+// This test checks that the allocation engine can delegate the long prefix.
+// The pool with prefix of 64 and with long delegated prefix has a very
+// high capacity. The number of attempts that the allocation engine makes
+// to allocate the prefix for high capacity pools is equal to the capacity
+// value. This test verifies that the prefix can be allocated in that
+// case.
+TEST_F(AllocEngine6Test, largePDPool) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /64 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 64, 96));
+    subnet_->addPool(pool);
+
+    // We should have got exactly one lease.
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("::"),
+                                           false, true);
+    ASSERT_EQ(1, leases.size());
+}
 
 }; // namespace test
 }; // namespace dhcp
