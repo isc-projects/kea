@@ -415,6 +415,14 @@ public:
         iface_name_ = iface_name;
     }
 
+    /// @brief Set an address hint to be sent to a server.
+    ///
+    /// @param pref_lft Preferred lifetime.
+    /// @param valid_lft Valid lifetime.
+    /// @param address Address for which the client has a preference.
+    void useHint(const uint32_t pref_lft, const uint32_t valid_lft,
+                 const std::string& address);
+
     /// @brief Sets a prefix hint to be sent to a server.
     ///
     /// @param pref_lft Preferred lifetime.
@@ -680,6 +688,9 @@ private:
     bool use_oro_;  ///< Conth
     bool use_client_id_;
     bool use_rapid_commit_;
+
+    /// @brief Pointer to the option holding an address hint.
+    Option6IAAddrPtr address_hint_;
 
     /// @brief Pointer to the option holding a prefix hint.
     Option6IAPrefixPtr prefix_hint_;

@@ -1743,10 +1743,6 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         ctx.hints_.push_back(make_pair(iaaddr->getAddress(), 128));
     }
 
-    // We need to remember it as we'll be removing hints from this list as
-    // we extend, cancel or otherwise deal with the leases.
-    bool hints_present = !ctx.hints_.empty();
-
     Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
 
     // Ok, now we have the leases extended. We have:
@@ -1805,26 +1801,35 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
     // All is left is to insert the status code.
     if (leases.empty()) {
-        // We did not assign anything. If client has sent something, then
-        // the status code is NoBinding, if he sent an empty IA_NA, then it's
-        // NoAddrsAvailable
-        if (hints_present) {
-            // Insert status code NoBinding to indicate that the lease does not
-            // exist for this client.
-            ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoBinding,
-                              "Sorry, no known leases for this duid/iaid/subnet."));
 
+        // We did not assign any address to the client. Depending on whether the
+        // server is configured to allocate new leases during the Renew or
+        // Rebind we will have to send a different status code. If the server
+        // is configured to allocate new leases for the Renew and Rebind, the
+        // status code will be NoAddressAvail. If the server is not configured
+        // to allocate prefixes for the renewing client, the status code will
+        // be NoBinding, or perhaps the message will be dropped if this is the
+        // Rebind case.
+        if (!subnet->getAllocLeasesOnRenew()) {
+            ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
+                                               STATUS_NoBinding,
+                                               "Sorry, no known NA leases for"
+                                               " this duid/iaid/subnet."));
             LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, DHCP6_EXTEND_NA_UNKNOWN)
                 .arg(query->getLabel())
                 .arg(ia->getIAID())
                 .arg(subnet->toText());
+
+
         } else {
-            ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoAddrsAvail,
-                              "Sorry, no addresses could be assigned at this time."));
+            // The server is configured to allocate new leases for the
+            // renewing client, but it could not allocate anything at this
+            // time. The status code should be NoAddrsAvail, per RFC7550.
+            ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
+                                               STATUS_NoAddrsAvail,
+                                               "Sorry, no addresses could be"
+                                               " assigned at this time."));
         }
-    } else {
-        // Yay, the client still has something. For now, let's not insert
-        // status-code=success to conserve bandwidth.
     }
 
     return (ia_rsp);
@@ -1945,7 +1950,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // already, inform the client that he can't have them.
     for (AllocEngine::HintContainer::const_iterator prefix = ctx.hints_.begin();
          prefix != ctx.hints_.end(); ++prefix) {
-        // Send the prefix hint with the zero lifetimes only if the prefix
+        // Send the prefix with the zero lifetimes only if the prefix
         // contains non-zero value. A zero value indicates that the hint was
         // for the prefix length.
         if (!prefix->first.isV6Zero()) {
@@ -1957,11 +1962,8 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
 
     // All is left is to insert the status code.
     if (leases.empty()) {
-        // We did not assign anything. If client has sent something, then
-        // the status code is NoBinding, if he sent an empty IA_PD, then it's
-        // NoAddrsAvailable
 
-        // We did not assign any prefix to the client. Dependin on whether the
+        // We did not assign any prefix to the client. Depending on whether the
         // server is configured to allocate new leases during the Renew or
         // Rebind we will have to send a different status code. If the server
         // is configured to allocate new leases for the Renew and Rebind, the
