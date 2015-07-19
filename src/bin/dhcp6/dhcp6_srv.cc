@@ -1960,10 +1960,21 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         // We did not assign anything. If client has sent something, then
         // the status code is NoBinding, if he sent an empty IA_PD, then it's
         // NoAddrsAvailable
+
+        // We did not assign any prefix to the client. Dependin on whether the
+        // server is configured to allocate new leases during the Renew or
+        // Rebind we will have to send a different status code. If the server
+        // is configured to allocate new leases for the Renew and Rebind, the
+        // status code will be NoPrefixAvail. If the server is not configured
+        // to allocate prefixes for the renewing client, the status code will
+        // be NoBinding, or perhaps the message will be dropped if this is the
+        // Rebind case.
         if (!subnet->getAllocLeasesOnRenew()) {
+            // The server is not configured to allocate new leases, so return
+            // the NoBinding for the Renew, and drop the message for the
+            // Rebind. There is also a detailed comment for the Rebind case
+            // further on.
             if (query->getType() == DHCPV6_RENEW) {
-                // Insert status code NoBinding to indicate that the lease does not
-                // exist for this client.
                 ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
                                                    STATUS_NoBinding,
                                                    "Sorry, no known PD leases for"
@@ -1983,6 +1994,9 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
             }
 
         } else {
+            // The server is configured to allocate new leases for the
+            // renewing client, but it could not allocate anything at this
+            // time. The status code should be NoPrefixAvail, per RFC7550.
             ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
                                                STATUS_NoPrefixAvail,
                                                "Sorry, no prefixes could be"
