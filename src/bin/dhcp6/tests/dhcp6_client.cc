@@ -92,6 +92,7 @@ Dhcp6Client::Dhcp6Client() :
     use_oro_(false),
     use_client_id_(true),
     use_rapid_commit_(false),
+    address_hint_(),
     prefix_hint_(),
     fqdn_() {
 }
@@ -110,6 +111,7 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     use_oro_(false),
     use_client_id_(true),
     use_rapid_commit_(false),
+    address_hint_(),
     prefix_hint_(),
     fqdn_() {
 }
@@ -278,7 +280,10 @@ Dhcp6Client::conditionallyAppendRequestedIA(const Pkt6Ptr& query,
     // Add prefix hint if specified.
     if (prefix_hint_ && (ia_type == D6O_IA_PD)) {
         requested_ia->addOption(prefix_hint_);
-    }
+
+    } else if (address_hint_ && (ia_type == D6O_IA_NA)) {
+        requested_ia->addOption(address_hint_);
+    } 
 
     query->addOption(requested_ia);
 }
@@ -676,6 +681,14 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     msg_copy->setIface(iface_name_);
     srv_->fakeReceive(msg_copy);
     srv_->run();
+}
+
+void
+Dhcp6Client::useHint(const uint32_t pref_lft, const uint32_t valid_lft,
+                     const std::string& address) {
+    address_hint_.reset(new Option6IAAddr(D6O_IAADDR,
+                                          asiolink::IOAddress(address),
+                                          pref_lft, valid_lft));
 }
 
 void
