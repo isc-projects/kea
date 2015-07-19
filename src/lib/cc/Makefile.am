@@ -8,4 +8,8 @@ lib_LTLIBRARIES = libkea-cc.la
 libkea_cc_la_SOURCES = data.cc data.h
 libkea_cc_la_SOURCES += command_interpreter.cc command_interpreter.h
 
+libkea_cc_la_LIBADD  = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+
+libkea_cc_la_LDFLAGS = -no-undefined -version-info 1:0:0
+
 CLEANFILES = *.gcno *.gcda

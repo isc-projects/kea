@@ -154,7 +154,7 @@ libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/stats/libkea-stats.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
-libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 3:0:0
+libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 4:0:0
 if HAVE_MYSQL
 libkea_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)
 endif

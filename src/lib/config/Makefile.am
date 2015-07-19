@@ -27,7 +27,7 @@ libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptio
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 
-libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 1:0:1
+libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 2:0:0
 
 nodist_libkea_cfgclient_la_SOURCES  = config_messages.h config_messages.cc
 
