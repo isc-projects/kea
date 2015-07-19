@@ -1571,7 +1571,7 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolRequestValidHint) {
 // value. This test verifies that the prefix can be allocated in that
 // case.
 TEST_F(AllocEngine6Test, largePDPool) {
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0);
 
     // Remove the default PD pool.
     subnet_->delPools(Lease::TYPE_PD);
@@ -1593,7 +1593,7 @@ TEST_F(AllocEngine6Test, largePDPool) {
 // confuse the allocation engine if the number of available addresses
 // was larger than 2^32.
 TEST_F(AllocEngine6Test, largePoolOver32bits) {
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0);
 
     // Configure 2001:db8::/32 subnet
     subnet_.reset(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
