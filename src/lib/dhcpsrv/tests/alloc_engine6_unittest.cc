@@ -1610,6 +1610,51 @@ TEST_F(AllocEngine6Test, largePoolOver32bits) {
     ASSERT_EQ(1, leases.size());
 }
 
+// This test verifies that it is possible to override the number of allocation
+// attempts made by the allocation engine for a single lease.
+TEST_F(AllocEngine6Test, largeAllocationAttemptsOverride) {
+    // Remove the default NA pools.
+    subnet_->delPools(Lease::TYPE_NA);
+
+    // Add exactly one pool with many addresses.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), 56));
+    subnet_->addPool(pool);
+
+    // Allocate 5 addresses from the pool configured.
+    for (int i = 0; i < 5; ++i) {
+        DuidPtr duid = DuidPtr(new DUID(vector<uint8_t>(12,
+                                                        static_cast<uint8_t>(i))));
+        // Get the unique IAID.
+        const uint32_t iaid = 3568 + i;
+
+        // Construct the unique address from the pool.
+        std::ostringstream address;
+        address << "2001:db8:1::";
+        address << i;
+
+        // Allocate the leease.
+        Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress(address.str()),
+                                   duid, iaid, 501, 502, 503, 504, subnet_->getID(),
+                                   HWAddrPtr(), 0));
+        ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+    }
+
+    // Try to use the allocation engine to allocate the lease. The iterative
+    // allocator will pick the addresses already allocated until it finds the
+    // available address. Since, we have restricted the number of attempts the
+    // allocation should fail.
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 3);
+    Lease6Collection leases = allocateTest(engine, pool_, IOAddress("::"),
+                                           false, true);
+    ASSERT_EQ(0, leases.size());
+
+    // This time, lets allow more attempts, and expect that the allocation will
+    // be successful.
+    AllocEngine engine2(AllocEngine::ALLOC_ITERATIVE, 6);
+    leases = allocateTest(engine2, pool_, IOAddress("::"), false, true);
+    ASSERT_EQ(1, leases.size());
+}
+
 }; // namespace test
 }; // namespace dhcp
 }; // namespace isc
