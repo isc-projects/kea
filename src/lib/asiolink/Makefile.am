@@ -15,7 +15,7 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-asiolink.la
 
-libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 1:0:1
+libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 2:0:0
 
 libkea_asiolink_la_SOURCES  = asiolink.h
 libkea_asiolink_la_SOURCES += dummy_io_cb.h

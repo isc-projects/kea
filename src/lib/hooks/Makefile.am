@@ -53,7 +53,7 @@ nodist_libkea_hooks_la_SOURCES = hooks_messages.cc hooks_messages.h
 
 libkea_hooks_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_hooks_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libkea_hooks_la_LDFLAGS  = $(AM_LDFLAGS)
+libkea_hooks_la_LDFLAGS  = $(AM_LDFLAGS) -no-undefined -version-info 1:0:0
 libkea_hooks_la_LIBADD  =
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
