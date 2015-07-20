@@ -2964,6 +2964,13 @@ should include options from the isc option space:
             6939</ulink>: Supported option is client link-layer
             address option.</simpara>
           </listitem>
+          <listitem>
+            <simpara><emphasis>Issues and Recommendations with Multiple
+            Stateful DHCPv6 Options</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc7550">RFC
+            7550</ulink>: All recommendations related to the DHCPv6 server
+            operation are supported.</simpara>
+          </listitem>
       </itemizedlist>
     </section>
 
