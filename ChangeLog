@@ -1,5 +1,11 @@
+985.	[bug]		marcin
+	Eliminated extraneous debug-level DHCP6_RESPONSE_DATA entry from the
+	DHCPv6 server log output.  Prior to this the server was logging
+	each response twice.
+	(Trac #3949, git 023973cbce44e5fb92a2bc45e69f2786d5152091)
+
 984.	[bug]		tmark
-	Replaced used of "kill -0" with "ps -p" in keactrl when 
+	Replaced used of "kill -0" with "ps -p" in keactrl when
 	checking of servers are alive.  This makes it possible for
 	non-root users to use keactrl to monitor server status.
 	(Trac #3954, git f7f22b244343a3dc2d06645a47c2c65a5134326e)
