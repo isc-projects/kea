@@ -262,7 +262,20 @@ public:
         std::string data_type = OptionDataTypeUtil::getDataTypeName(OptionDataTypeTraits<T>::type);
         for (typename std::vector<T>::const_iterator value = values_.begin();
              value != values_.end(); ++value) {
-            output << " " << *value << "(" << data_type << ")";
+            output << " ";
+
+            // For 1 byte long data types we need to cast to the integer
+            // because they are usually implemented as "char" types, in
+            // which case the character rather than number would be printed.
+            if (OptionDataTypeTraits<T>::len == 1) {
+                output << static_cast<int>(*value);
+
+            } else {
+                output << *value;
+            }
+
+            // Append data type.
+            output << "(" << data_type << ")";
         }
 
         return (output.str());
