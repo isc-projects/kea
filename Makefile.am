@@ -127,6 +127,7 @@ install-exec-hook:
 ### in the distributed tarball:
 EXTRA_DIST = tools/system_messages.py
 EXTRA_DIST += tools/path_replacer.sh
+EXTRA_DIST += tools/mk_cfgrpt.sh
 
 #### include external sources in the distributed tarball:
 EXTRA_DIST += ext/asio/README
