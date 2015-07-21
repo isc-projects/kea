@@ -1,3 +1,8 @@
+987.	[bug]		marcin
+	Fixed textual representation of the options containing an array
+	of 1 byte long unsigned numbers.
+	(Trac #3959, git 9045fd9d6d282184cce10a622c0108abab029d5b)
+
 986.	[bug]		marcin
 	Fixed the failing lease allocation from the large address and
 	prefix pools.
