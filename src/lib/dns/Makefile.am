@@ -103,7 +103,7 @@ BUILT_SOURCES += rdataclass.h rdataclass.cc
 
 lib_LTLIBRARIES = libkea-dns++.la
 
-libkea_dns___la_LDFLAGS = -no-undefined -version-info 2:0:0
+libkea_dns___la_LDFLAGS = -no-undefined -version-info 2:0:1
 
 libkea_dns___la_SOURCES =
 libkea_dns___la_SOURCES += dns_fwd.h

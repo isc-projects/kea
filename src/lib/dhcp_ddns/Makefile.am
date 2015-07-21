@@ -42,6 +42,8 @@ libkea_dhcp_ddns_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_dhcp_ddns_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libkea_dhcp_ddns_la_LDFLAGS  = $(AM_LDFLAGS)
 libkea_dhcp_ddns_la_LDFLAGS += ${CRYPTO_LDFLAGS}
+libkea_dhcp_ddns_la_LDFLAGS += -no-undefined -version-info 1:0:0
+
 libkea_dhcp_ddns_la_LIBADD  =
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
