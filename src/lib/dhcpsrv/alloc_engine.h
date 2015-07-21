@@ -219,7 +219,7 @@ public:
     /// @param attempts number of attempts for each lease allocation before
     ///        we give up (0 means unlimited)
     /// @param ipv6 specifies if the engine should work for IPv4 or IPv6
-    AllocEngine(AllocType engine_type, unsigned int attempts, bool ipv6 = true);
+    AllocEngine(AllocType engine_type, uint64_t attempts, bool ipv6 = true);
 
     /// @brief Destructor.
     virtual ~AllocEngine() { }
@@ -240,7 +240,7 @@ private:
     std::map<Lease::Type, AllocatorPtr> allocators_;
 
     /// @brief number of attempts before we give up lease allocation (0=unlimited)
-    unsigned int attempts_;
+    uint64_t attempts_;
 
     // hook name indexes (used in hooks callouts)
     int hook_index_lease4_select_; ///< index for lease4_select hook
