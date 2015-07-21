@@ -476,4 +476,18 @@ TEST_F(OptionIntArrayTest, toText) {
               option.toText());
 }
 
+// This test checks that the option holding multiple uint8 values
+// is correctly converted to the textual format.
+TEST_F(OptionIntArrayTest, toTextUint8) {
+    OptionUint8Array option(Option::V4, 128);
+    option.addValue(1);
+    option.addValue(7);
+    option.addValue(15);
+
+    EXPECT_EQ("type=128, len=003: 1(uint8) 7(uint8) 15(uint8)",
+              option.toText());
+}
+
+
+
 } // anonymous namespace
