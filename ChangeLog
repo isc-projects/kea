@@ -1,3 +1,8 @@
+986.	[bug]		marcin
+	Fixed the failing lease allocation from the large address and
+	prefix pools.
+	(Trac #3958, git c86b6a68725e2f57679598ff4890fc82f4482c20)
+
 985.	[bug]		marcin
 	Eliminated extraneous debug-level DHCP6_RESPONSE_DATA entry from the
 	DHCPv6 server log output.  Prior to this the server was logging
