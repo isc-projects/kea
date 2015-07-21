@@ -10,3 +10,4 @@ DISTCLEANFILES = config_report.cc
 noinst_LTLIBRARIES = libcfgrpt.la
 
 libcfgrpt_la_SOURCES = config_report.h config_report.cc cfgrpt.cc
+nodist_libcfgrpt_la_SOURCES = config_report.cc
