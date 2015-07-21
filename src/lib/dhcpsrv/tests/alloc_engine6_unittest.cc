@@ -476,6 +476,7 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
 
 }
 
+
 // This test checks if an expired lease can be reused in SOLICIT (fake allocation)
 TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     boost::scoped_ptr<AllocEngine> engine;
@@ -1563,6 +1564,96 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolRequestValidHint) {
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
 }
 
+// This test checks that the allocation engine can delegate the long prefix.
+// The pool with prefix of 64 and with long delegated prefix has a very
+// high capacity. The number of attempts that the allocation engine makes
+// to allocate the prefix for high capacity pools is equal to the capacity
+// value. This test verifies that the prefix can be allocated in that
+// case.
+TEST_F(AllocEngine6Test, largePDPool) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /64 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 64, 96));
+    subnet_->addPool(pool);
+
+    // We should have got exactly one lease.
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("::"),
+                                           false, true);
+    ASSERT_EQ(1, leases.size());
+}
+
+// This test checks that the allocation engine can delegate addresses
+// from ridiculously large pool. The configuration provides 2^80 or
+// 1208925819614629174706176 addresses. We used to have a bug that would
+// confuse the allocation engine if the number of available addresses
+// was larger than 2^32.
+TEST_F(AllocEngine6Test, largePoolOver32bits) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0);
+
+    // Configure 2001:db8::/32 subnet
+    subnet_.reset(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
+
+    // Configure the NA pool of /48. So there are 2^80 addresses there. Make
+    // sure that we still can handle cases where number of available addresses
+    // is over max_uint64
+    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), 48));
+    subnet_->addPool(pool);
+
+    // We should have got exactly one lease.
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("::"),
+                                           false, true);
+    ASSERT_EQ(1, leases.size());
+}
+
+// This test verifies that it is possible to override the number of allocation
+// attempts made by the allocation engine for a single lease.
+TEST_F(AllocEngine6Test, largeAllocationAttemptsOverride) {
+    // Remove the default NA pools.
+    subnet_->delPools(Lease::TYPE_NA);
+
+    // Add exactly one pool with many addresses.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), 56));
+    subnet_->addPool(pool);
+
+    // Allocate 5 addresses from the pool configured.
+    for (int i = 0; i < 5; ++i) {
+        DuidPtr duid = DuidPtr(new DUID(vector<uint8_t>(12,
+                                                        static_cast<uint8_t>(i))));
+        // Get the unique IAID.
+        const uint32_t iaid = 3568 + i;
+
+        // Construct the unique address from the pool.
+        std::ostringstream address;
+        address << "2001:db8:1::";
+        address << i;
+
+        // Allocate the leease.
+        Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress(address.str()),
+                                   duid, iaid, 501, 502, 503, 504, subnet_->getID(),
+                                   HWAddrPtr(), 0));
+        ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+    }
+
+    // Try to use the allocation engine to allocate the lease. The iterative
+    // allocator will pick the addresses already allocated until it finds the
+    // available address. Since, we have restricted the number of attempts the
+    // allocation should fail.
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 3);
+    Lease6Collection leases = allocateTest(engine, pool_, IOAddress("::"),
+                                           false, true);
+    ASSERT_EQ(0, leases.size());
+
+    // This time, lets allow more attempts, and expect that the allocation will
+    // be successful.
+    AllocEngine engine2(AllocEngine::ALLOC_ITERATIVE, 6);
+    leases = allocateTest(engine2, pool_, IOAddress("::"), false, true);
+    ASSERT_EQ(1, leases.size());
+}
 
 }; // namespace test
 }; // namespace dhcp

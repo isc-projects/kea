@@ -240,8 +240,10 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
             IfaceMgr::instance().setMatchingPacketFilter(direct_response_desired);
         }
 
-        // Instantiate allocation engine
-        alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100,
+        // Instantiate allocation engine. The number of allocation attempts equal
+        // to zero indicates that the allocation engine will use the number of
+        // attempts depending on the pool size.
+        alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 0,
                                             false /* false = IPv4 */));
 
         // Register hook points
