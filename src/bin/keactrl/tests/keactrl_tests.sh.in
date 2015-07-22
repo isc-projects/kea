@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -935,6 +935,35 @@ Expected wait_for_message return %d, returned %d."
     test_finish 0
 }
 
+# This test checks that the "status" command doesn't check the presence of the
+# config file.
+status_no_config_test() {
+    test_start "keactrl.status_no_config_test"
+
+    # Make sure that all config files are removed.
+    cleanup
+
+    # Create keactrl configuration file.
+    create_keactrl_config "${keactrl_config}"
+
+    # Make sure that the "status" command doesn't check the presence of
+    # the config file.
+    printf "Getting status without a Kea config file\n"
+
+    output=$( ${keactrl} status -c ${KEACTRL_CFG_FILE} )
+    ret=${?}
+    assert_eq 1 ${ret} "Expected keactrl to return %d, returned %d"
+    assert_string_contains "DHCPv4 server: inactive" "${output}" \
+        "Expected keactrl status command return %s"
+    assert_string_contains "DHCPv6 server: inactive" "${output}" \
+        "Expected keactrl status command return %s"
+    assert_string_contains "DHCP DDNS: inactive" "${output}" \
+        "Expected keactrl status command return %s"
+    assert_string_contains "Configuration file for Kea does not exist" \
+	"${output}" "Expected keactrl status command return %s"
+
+    test_finish 0
+}
 
 start_all_servers_no_verbose_test
 start_all_servers_verbose_test
@@ -943,4 +972,4 @@ start_v6_server_test
 late_start_v4_server_test
 late_start_v6_server_test
 stop_selected_server_test
-
+status_no_config_test

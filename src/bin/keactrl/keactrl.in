@@ -235,6 +235,21 @@ run_conditional() {
     fi
 }
 
+### Functions testing the existence of the Kea config file
+
+# Check if the Kea configuration file location has been specified in the
+# keactrl configuration file. If not, it is a warning or a fatal error.
+check_kea_conf() {
+    local conf_file=${1} # Kea config file name.
+    if [ -z ${conf_file} ]; then
+        log_error "Configuration file for Kea not specified."
+        exit 1
+    elif [ ! -f ${conf_file} ]; then
+        log_error "Configuration file for Kea does not exist: ${conf_file}."
+        exit 1
+    fi
+}
+
 ### Script starts here ###
 
 # Configure logger to log messages into the file.
@@ -336,16 +351,6 @@ if [ -z ${dhcp_ddns} ]; then
     exit 1
 fi
 
-# Check if the Kea configuration file location has been specified in the
-# keactrl configuration file. If not, it is a fatal error.
-if [ -z ${kea_config_file} ]; then
-    log_error "Configuration file for Kea not specified."
-    exit 1
-elif [ ! -f ${kea_config_file} ]; then
-    log_error "Configuration file for Kea does not exist: ${kea_config_file}."
-    exit 1
-fi
-
 # dhcp4 and dhcp6 (=yes) indicate if we should start DHCPv4 and DHCPv6 server
 # respectively.
 dhcp4=$( printf "%s" ${dhcp4} | tr [:upper:] [:lower:] )
@@ -355,6 +360,8 @@ dhcp_ddns=$( printf "%s" ${dhcp_ddns} | tr [:upper:] [:lower:] )
 case ${command} in
     # Start the servers.
     start)
+        check_kea_conf ${kea_config_file}
+
         args="-c ${kea_config_file}"
 
         if [ "${kea_verbose}" = "yes" ]; then
@@ -371,6 +378,8 @@ case ${command} in
 
     # Stop running servers.
     stop)
+        check_kea_conf ${kea_config_file}
+
         # Stop all servers or servers specified from the command line.
         run_conditional "dhcp4" "stop_server ${dhcp4_srv}" 0
         run_conditional "dhcp6" "stop_server ${dhcp6_srv}" 0
@@ -380,6 +389,8 @@ case ${command} in
 
     # Reconfigure the servers.
     reload)
+        check_kea_conf ${kea_config_file}
+
         # Reconfigure all servers or servers specified from the command line.
         run_conditional "dhcp4" "reload_server ${dhcp4_srv}" 0
         run_conditional "dhcp6" "reload_server ${dhcp6_srv}" 0
@@ -410,6 +421,8 @@ case ${command} in
         printf "DHCP DDNS: %s\n" ${d2_status}
         printf "Kea configuration file: %s\n" ${kea_config_file}
         printf "keactrl configuration file: %s\n" ${keactrl_conf}
+
+        check_kea_conf ${kea_config_file}
 
         exit 0 ;;
 

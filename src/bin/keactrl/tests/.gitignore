@@ -1,1 +1,4 @@
-keactrl_tests.sh
+/keactrl_tests.sh
+/test.log
+/test_config.json
+/test_config.json.saved
