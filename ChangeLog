@@ -1,3 +1,8 @@
+988.	[bug]		fdupont
+	keactrl no longer returns an error when the "status" command is
+	issued and the Kea configuration file doesn't exist.
+	(Trac #3785, git a27d72ef3cb7640a41dca26c8728a9cbd9ad1ca9)
+
 987.	[bug]		marcin
 	Fixed textual representation of the options containing an array
 	of 1 byte long unsigned numbers.
