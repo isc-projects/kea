@@ -1393,7 +1393,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/d2/tests/Makefile
                  src/bin/d2/tests/d2_process_tests.sh
                  src/bin/d2/tests/test_data_files_config.h
-                 src/bin/cfgrpt/Makefile
                  src/bin/dhcp4/Makefile
                  src/bin/dhcp4/spec_config.h.pre
                  src/bin/dhcp4/tests/Makefile
@@ -1442,6 +1441,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/asiolink/tests/Makefile
                  src/lib/cc/Makefile
                  src/lib/cc/tests/Makefile
+                 src/lib/cfgrpt/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/data_def_unittests_config.h
@@ -1494,6 +1494,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
                  tools/path_replacer.sh
+                 tools/mk_cfgrpt.sh
 ])
 
  AC_CONFIG_COMMANDS([permissions], [
@@ -1512,6 +1513,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/util/tests/process_spawn_app.sh
            chmod +x tools/path_replacer.sh
+           chmod +x tools/mk_cfgrpt.sh
 ])
 
 AC_OUTPUT
@@ -1650,10 +1652,6 @@ Developer:
   Generate Documentation: $enable_generate_docs
 
 END
-
-# Create config_report.cc with embedded config.report
-chmod +x ${srcdir}/tools/mk_cfgrpt.sh
-${srcdir}/tools/mk_cfgrpt.sh ${srcdir}/src/bin/cfgrpt/config_report.cc
 
 cat config.report
 cat <<EOF
