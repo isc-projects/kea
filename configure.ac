@@ -1442,6 +1442,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/cc/Makefile
                  src/lib/cc/tests/Makefile
                  src/lib/cfgrpt/Makefile
+                 src/lib/cfgrpt/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/data_def_unittests_config.h
