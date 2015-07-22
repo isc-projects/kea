@@ -1495,7 +1495,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
                  tools/path_replacer.sh
-                 tools/mk_cfgrpt.sh
 ])
 
  AC_CONFIG_COMMANDS([permissions], [
@@ -1514,7 +1513,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/util/tests/process_spawn_app.sh
            chmod +x tools/path_replacer.sh
-           chmod +x tools/mk_cfgrpt.sh
 ])
 
 AC_OUTPUT

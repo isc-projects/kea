@@ -17,8 +17,8 @@
 # Called by configure
 #
 
-dest="$1"
-report_file="@abs_top_builddir@/config.report"
+report_file="$1"
+dest="$2"
 
 if [ -z ${report_file} ]
 then
@@ -36,7 +36,7 @@ fi
 
 # Header
 cat >> $dest << END
-// config_report.cc. Generated from config.report by tools/mk_cfgrpt_header.sh
+// config_report.cc. Generated from config.report by tools/mk_cfgrpt.sh
 
 namespace isc {
 namespace detail {
