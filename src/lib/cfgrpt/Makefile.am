@@ -1,3 +1,4 @@
+SUBDIRS = . tests
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 
 # Get rid of generated message files on a clean

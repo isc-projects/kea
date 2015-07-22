@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,22 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef CONFIG_REPORT_H
-#define CONFIG_REPORT_H
+#include <gtest/gtest.h>
 
-#include <string>
+int
+main(int argc, char* argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
 
-namespace isc {
-namespace detail {
+    int result = RUN_ALL_TESTS();
 
-extern const char* const config_report[];
-
-// The config_report array ends with an empty line ("")
-// Each line before this final one starts with four semicolons (;;;;)
-// in order to be easy to extract from binaries.
-std::string getConfigReport();
-
+    return (result);
 }
-}
-
-#endif // CONFIG_REPORT_H
