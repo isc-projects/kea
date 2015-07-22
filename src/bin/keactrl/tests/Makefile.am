@@ -4,7 +4,7 @@ SHTESTS = keactrl_tests.sh
 
 noinst_SCRIPTS = keactrl_tests.sh
 
-CLEANFILES = *.log *.json
+CLEANFILES = *.log *.json *.saved
 DISTCLEANFILES = keactrl_tests.sh
 
 EXTRA_DIST = keactrl_tests.sh.in
