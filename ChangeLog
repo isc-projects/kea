@@ -1,3 +1,5 @@
+Kea 0.9.2 released on July 28, 2015
+
 988.	[bug]		fdupont
 	keactrl no longer returns an error when the "status" command is
 	issued and the Kea configuration file doesn't exist.
@@ -36,7 +38,7 @@
 981.	[bug]		tmark
 	keactrl now uses PID files to identify and control server instances.
 	Prior to this it relied on the system command, "ps", which could lead
-	to it misinterperting which processes are or are not running.
+	to it misinterpreting which processes are or are not running.
 	(Trac #3939, git 93a720ed7ffdffe66bd835cd64f78e4ad601637a)
 
 980.	[doc]		marcin
@@ -88,17 +90,17 @@
 	options for both DHCPv4 and DHCPv6.
 	(Trac #3846, git 6aebe0867ca9cf6fb09a289d80051125db7fa34b)
 
-971.	[bug]		marcin
-	DHCPv6 server extends the lifetime of the client's lease
-	in the database when the client sends the Request message.
-	This prevents premature lease expiration before the client
-	renews the lease, according to the timers and lifetimes
-	returned by the server.
-	(Trac #3913, git 1d64829a3f1a8288dc833ed388d9ffc9fe4cf491)
+971.	[func]          fdupont
+	Changed all occurrences of unlink() to the more portable remove()
+	to avoid problems on operating systems where the former is not
+	available.
+	(Trac #3841, git 3752529ed3d72137f6899ef8225a0b231db5b1f0)
 
 970.	[bug]		fdupont
 	Refactored some code to suppress cppcheck warnings.
 	(Trac #3919, git 26be6ac4cefde012ca8ef12607b6beaadca13eed)
+
+Kea 0.9.2-beta released on June 30, 2015
 
 969.	[func]		tomek
 	KEA_SOCKET_TEST_DIR environment variable can be used to specify
@@ -107,11 +109,13 @@
 	in deeply nested directories.
 	(Trac #3918, git 9cfd502e8d4605eaf34f8744f90272dc3e8a3e34)
 
-968.	[func]		fdupont
-	Changed all occurrences of unlink() to the more portable remove()
-	to avoid problems on operating systems where the former is not
-	available.
-	(Trac #3841, git 3752529ed3d72137f6899ef8225a0b231db5b1f0)
+968.	[bug]           marcin
+	DHCPv6 server extends the lifetime of the client's lease
+	in the database when the client sends the Request message.
+	This prevents premature lease expiration before the client
+	renews the lease, according to the timers and lifetimes
+	returned by the server.
+	(Trac #3913, git 1d64829a3f1a8288dc833ed388d9ffc9fe4cf491)
 
 967.	[doc]		tomek
 	Management API section added in the DHCPv6 chapter of the Kea
