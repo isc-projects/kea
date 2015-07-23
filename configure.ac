@@ -1393,7 +1393,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/d2/tests/Makefile
                  src/bin/d2/tests/d2_process_tests.sh
                  src/bin/d2/tests/test_data_files_config.h
-                 src/bin/cfgrpt/Makefile
                  src/bin/dhcp4/Makefile
                  src/bin/dhcp4/spec_config.h.pre
                  src/bin/dhcp4/tests/Makefile
@@ -1442,6 +1441,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/asiolink/tests/Makefile
                  src/lib/cc/Makefile
                  src/lib/cc/tests/Makefile
+                 src/lib/cfgrpt/Makefile
+                 src/lib/cfgrpt/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/data_def_unittests_config.h
@@ -1650,10 +1651,6 @@ Developer:
   Generate Documentation: $enable_generate_docs
 
 END
-
-# Create config_report.cc with embedded config.report
-chmod +x ${srcdir}/tools/mk_cfgrpt.sh
-${srcdir}/tools/mk_cfgrpt.sh ${srcdir}/src/bin/cfgrpt/config_report.cc
 
 cat config.report
 cat <<EOF
