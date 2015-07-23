@@ -12,20 +12,23 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef CONFIG_REPORT_H
-#define CONFIG_REPORT_H
+#include <config.h>
+#include <cfgrpt/config_report.h>
 
-namespace isc {
-namespace detail {
+#include <gtest/gtest.h>
 
-extern const char* const config_report[];
+using namespace isc;
+using namespace std;
 
-// The config_report array ends with an empty line ("")
-// Each line before this final one starts with four semicolons (;;;;)
-// in order to be easy to extract from binaries.
-std::string getConfigReport();
+// This test verifies that the getConfigReport() function
+// returns the actual config report.
+TEST(ConfigReportTest, getConfigReport) {
 
+    // Fetch the report string
+    std::string cfgReport = isc::detail::getConfigReport();
+
+    // Verify that it is not empty and does contain the
+    // extended version number
+    ASSERT_FALSE(cfgReport.empty());
+    EXPECT_NE(std::string::npos, cfgReport.find(EXTENDED_VERSION, 0));
 }
-}
-
-#endif // CONFIG_REPORT_H
