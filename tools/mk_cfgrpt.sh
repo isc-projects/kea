@@ -17,14 +17,26 @@
 # Called by configure
 #
 
-dest=$1
+report_file="$1"
+dest="$2"
+
+if [ -z ${report_file} ]
+then
+    echo "ERROR mk_cfgrpt.sh - input report: $report_file does not exist"
+    exit -1
+fi
 
 # Initializes
-cat > $dest
+cat /dev/null > $dest
+if [ $? -ne 0 ]
+then
+    echo "ERROR mk_cfgrpt.sh - cannot create config output file: $dest"
+    exit -1
+fi
 
 # Header
 cat >> $dest << END
-// config_report.cc. Generated from config.report by tools/mk_cfgrpt_header.sh
+// config_report.cc. Generated from config.report by tools/mk_cfgrpt.sh
 
 namespace isc {
 namespace detail {
@@ -34,7 +46,7 @@ END
 
 # Body: escape '\'s and '"'s, preprend '    ";;;; ' and append '",'
 sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/    ";;;; /' -e 's/$/",/' \
-    < config.report >> $dest
+    < $report_file >> $dest
 
 # Trailer
 cat >> $dest <<END
