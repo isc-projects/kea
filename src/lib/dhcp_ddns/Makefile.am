@@ -53,6 +53,8 @@ libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libkea_dhcp_ddns_la_LIBADD += ${CRYPTO_LIBS} ${CRYPTO_RPATH}
 
 if USE_CLANGPP

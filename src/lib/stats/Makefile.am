@@ -13,6 +13,7 @@ libkea_stats_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_stats_la_LDFLAGS = -no-undefined -version-info 1:0:0
 
 libkea_stats_la_LIBADD  = $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_stats_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_stats_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 
 libkea_stats_includedir = $(includedir)/$(PACKAGE_NAME)/stats
