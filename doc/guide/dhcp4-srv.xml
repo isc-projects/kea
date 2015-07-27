@@ -2503,7 +2503,7 @@ It is merely echoed by the server
 
       <note>
         <para><command>reservation-mode</command> configuration parameter in DHCPv4
-        server is accepted, but not used in the Kea 0.9.1 beta. Full implementation
+        server is accepted, but not used in the Kea 0.9.2. Full implementation
         will be available in the upcoming releases.</para>
       </note>
 
