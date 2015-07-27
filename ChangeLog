@@ -22,8 +22,8 @@ Kea 0.9.2 released on July 28, 2015
 	(Trac #3949, git 023973cbce44e5fb92a2bc45e69f2786d5152091)
 
 984.	[bug]		tmark
-	Replaced used of "kill -0" with "ps -p" in keactrl when
-	checking of servers are alive.  This makes it possible for
+	Replaced use of "kill -0" with "ps -p" in keactrl when
+	checking if servers are alive.  This makes it possible for
 	non-root users to use keactrl to monitor server status.
 	(Trac #3954, git f7f22b244343a3dc2d06645a47c2c65a5134326e)
 
