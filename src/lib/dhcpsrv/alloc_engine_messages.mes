@@ -246,6 +246,15 @@ reserved for it.
 This informational message signals that the specified client was assigned the prefix
 reserved for it.
 
+% ALLOC_ENGINE_V6_NO_BINDING %1: client requesting renew/rebind has no binding for lease type %2, IAID %3 and subnet id %4
+This debug message is issued when the allocation engine determines that the renewing
+client has no binding for the given lease type, IAID and subnet id. The server is
+configured to not allocate new bindings during the Renew/Rebind. Hence the
+server doesn't allocate new leases and returns NoBinding status code or
+ignores the message. The first argument contains the client and the
+transaction identification information. The remaining arguments hold
+the lease type, IAID and subnet id respectively.
+
 % ALLOC_ENGINE_V6_RENEW_HR allocating leases reserved for the client %1 as a result of Renew
 This debug message is issued when the allocation engine tries to
 allocate reserved leases for the client sending a Renew message.
