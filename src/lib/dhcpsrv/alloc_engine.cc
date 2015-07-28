@@ -1093,6 +1093,18 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
         Lease6Collection leases = LeaseMgrFactory::instance()
             .getLeases6(ctx.type_, *ctx.duid_, ctx.iaid_, ctx.subnet_->getID());
 
+        // If this client has no leases and we do not allow allocation of
+        // new leases in renewals, return now to indicate NoBinding.
+        if (leases.empty() && !ctx.allow_new_leases_in_renewals_) {
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_NO_BINDING)
+                .arg(ctx.query_->getLabel())
+                .arg(Lease::typeToText(ctx.type_))
+                .arg(ctx.iaid_)
+                .arg(ctx.subnet_->getID());
+            return (Lease6Collection());
+        }
+
         if (!leases.empty()) {
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V6_RENEW_REMOVE_RESERVED)
