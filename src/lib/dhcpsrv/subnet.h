@@ -655,21 +655,6 @@ public:
         return (rapid_commit_);
     }
 
-    /// @brief Enables or disables the allocation of the new leases for the
-    /// Renew and Rebind case.
-    ///
-    /// @param alloc_leases_on_renew A boolean value indicating if the server
-    /// can allocate new leases for the Renew and Rebind case.
-    void setAllocLeasesOnRenew(const bool alloc_leases_on_renew) {
-        alloc_leases_on_renew_ = alloc_leases_on_renew;
-    }
-
-    /// @brief Returns boolean value indicating if the new leases are allocated
-    /// by the server as a result of processing Renew and/or Rebind.
-    bool getAllocLeasesOnRenew() const {
-        return (alloc_leases_on_renew_);
-    }
-
 private:
 
     /// @brief Returns default address for pool selection
@@ -699,17 +684,6 @@ private:
     /// Commit is disabled for the subnet.
     bool rapid_commit_;
 
-    /// @brief A flag indicating if the server may allocate new leases
-    /// for the client sending a Renew or Rebind message.
-    ///
-    /// This flag indicates that the client may request allocation of the
-    /// new leases (of any type) when it renews existing leases. This
-    /// facilitates the use cases described in RFC7550. If the server is
-    /// configured to allocate new leases for the Renew and Rebind case
-    /// but it can't allocate them (e.g. because of the pool exhaustion)
-    /// it will send the NoAddrsAvail or the NoPrefixAvail status code
-    /// in the IA, depending on the IA type.
-    bool alloc_leases_on_renew_;
 };
 
 /// @brief A pointer to a Subnet6 object
