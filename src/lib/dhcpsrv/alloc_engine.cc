@@ -297,7 +297,7 @@ AllocEngine::ClientContext6::ClientContext6()
     : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
       hints_(), fwd_dns_update_(false), rev_dns_update_(false), hostname_(""),
       callout_handle_(), fake_allocation_(false), old_leases_(), host_(),
-      query_(), ia_rsp_(), allow_new_leases_in_renewals_(false) {
+      query_(), ia_rsp_() {
 }
 
 AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const DuidPtr& duid,
@@ -310,8 +310,7 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const Duid
     subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
     hints_(), fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
     hostname_(hostname), fake_allocation_(fake_allocation),
-    old_leases_(), host_(), query_(), ia_rsp_(),
-    allow_new_leases_in_renewals_(false) {
+    old_leases_(), host_(), query_(), ia_rsp_() {
 
     static asiolink::IOAddress any("::");
 
@@ -1093,18 +1092,6 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
         Lease6Collection leases = LeaseMgrFactory::instance()
             .getLeases6(ctx.type_, *ctx.duid_, ctx.iaid_, ctx.subnet_->getID());
 
-        // If this client has no leases and we do not allow allocation of
-        // new leases in renewals, return now to indicate NoBinding.
-        if (leases.empty() && !ctx.allow_new_leases_in_renewals_) {
-            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                      ALLOC_ENGINE_V6_NO_BINDING)
-                .arg(ctx.query_->getLabel())
-                .arg(Lease::typeToText(ctx.type_))
-                .arg(ctx.iaid_)
-                .arg(ctx.subnet_->getID());
-            return (Lease6Collection());
-        }
-
         if (!leases.empty()) {
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V6_RENEW_REMOVE_RESERVED)
@@ -1135,7 +1122,7 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
         // Depending on the configuration, we may enable or disable granting
         // new leases during renewals. This is controlled with the
         // allow_new_leases_in_renewals_ field.
-        if (leases.empty() && ctx.allow_new_leases_in_renewals_) {
+        if (leases.empty()) {
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V6_EXTEND_ALLOC_UNRESERVED)
