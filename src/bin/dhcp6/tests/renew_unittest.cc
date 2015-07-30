@@ -44,23 +44,6 @@ namespace {
 ///   - address pool: 2001:db8:1::/64
 ///   - prefix pool: 3000::/72
 ///
-/// - Configuration 3:
-///   - only addresses (no prefixes)
-///   - 1 subnet with 2001:db8:1::/64 pool
-///   - 'new-leases-on-renew' disabled
-///
-/// - Configuration 4:
-///   - only prefixes (no addresses)
-///   - prefix pool: 3000::/72
-///   - 'new-leases-on-renew' disabled
-///
-/// - Configuration 5:
-///   - addresses and prefixes
-///   - 1 subnet with one address pool and one prefix pool
-///   - address pool: 2001:db8:1::/64
-///   - prefix pool: 3000::/72
-///   - 'new-leases-on-renew' disabled
-///
 const char* RENEW_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces-config\": {"
@@ -103,63 +86,6 @@ const char* RENEW_CONFIGS[] = {
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
-        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-        "    \"pd-pools\": ["
-        "        { \"prefix\": \"3000::\", "
-        "          \"prefix-len\": 72, "
-        "          \"delegated-len\": 80"
-        "        } ],"
-        "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"interface-id\": \"\","
-        "    \"interface\": \"eth0\""
-        " } ],"
-        "\"valid-lifetime\": 4000 }",
-
-// Configuration 3
-    "{ \"interfaces-config\": {"
-        "  \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"new-leases-on-renew\": False,"
-        "\"subnet6\": [ { "
-        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-        "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"interface-id\": \"\","
-        "    \"interface\": \"eth0\""
-        " } ],"
-        "\"valid-lifetime\": 4000 }",
-
-// Configuration 4
-    "{ \"interfaces-config\": {"
-        "  \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"new-leases-on-renew\": False,"
-        "\"subnet6\": [ { "
-        "    \"pd-pools\": ["
-        "        { \"prefix\": \"3000::\", "
-        "          \"prefix-len\": 72, "
-        "          \"delegated-len\": 80"
-        "        } ],"
-        "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"interface-id\": \"\","
-        "    \"interface\": \"eth0\""
-        " } ],"
-        "\"valid-lifetime\": 4000 }",
-
-// Configuration 5
-    "{ \"interfaces-config\": {"
-        "  \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"new-leases-on-renew\": False,"
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"pd-pools\": ["
@@ -425,121 +351,6 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
     leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(1, leases_client_na.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
-}
-
-// This test verifies that when the client requests the prefix delegation
-// while it is renewing an address lease it is returned NoBinding, when
-// the server is not configured to allocate new leases during Renew.
-TEST_F(RenewTest, requestPrefixInRenewNotAllowed) {
-    Dhcp6Client client;
-
-    // Configure client to request IA_NA and IA_PD.
-    client.useNA();
-    client.usePD();
-
-    // Configure the server with NA pools only.
-    ASSERT_NO_THROW(configure(RENEW_CONFIGS[3], *client.getServer()));
-
-    // Perform 4-way exchange.
-    ASSERT_NO_THROW(client.doSARR());
-
-    // Simulate aging of leases.
-    client.fastFwdTime(1000);
-
-    // Make sure that the client has acquired NA lease.
-    std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na.size());
-
-    // The client should not acquire a PD lease.
-    std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_TRUE(leases_client_pd.empty());
-    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(5678));
-
-    // Send Renew message to the server, including IA_NA and requesting IA_PD.
-    ASSERT_NO_THROW(client.doRenew());
-    leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_TRUE(leases_client_pd.empty());
-    ASSERT_EQ(STATUS_NoBinding, client.getStatusCode(5678));
-
-    // Reconfigure the server to use both NA and PD pools.
-    configure(RENEW_CONFIGS[5], *client.getServer());
-
-    // Send Renew message to the server, including IA_NA and requesting IA_PD.
-    ASSERT_NO_THROW(client.doRenew());
-
-    // Make sure that the client has acquired NA lease.
-    std::vector<Lease6> leases_client_na_renewed =
-        client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na_renewed.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
-
-    // The lease should have been renewed.
-    EXPECT_EQ(1000, leases_client_na_renewed[0].cltt_ - leases_client_na[0].cltt_);
-
-    // The server should not delegate a prefix to the client, as this has been
-    // explicitly disabled in the configuration. Instead, it should send
-    // NoBinding status code.
-    leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(0, leases_client_pd.size());
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(5678));
-}
-
-// This test verifies that when the client requests an address assignment
-// while it is renewing a prefix lease it is returned NoBinding, when
-// the server is not configured to allocate new leases during Renew.
-TEST_F(RenewTest, requestAddressInRenewNotAllowed) {
-    Dhcp6Client client;
-
-    // Configure client to request IA_NA and IA_PD.
-    client.useNA();
-    client.usePD();
-
-    // Configure the server with PD pools only.
-    ASSERT_NO_THROW(configure(RENEW_CONFIGS[4], *client.getServer()));
-
-    // Perform 4-way exchange.
-    ASSERT_NO_THROW(client.doSARR());
-
-    // Simulate aging of leases.
-    client.fastFwdTime(1000);
-
-    // Make sure that the client has acquired PD lease.
-    std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
-
-    // The client should not acquire a NA lease.
-    std::vector<Lease6> leases_client_na =
-        client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(0, leases_client_na.size());
-    ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(1234));
-
-    // Send Renew message to the server, including IA_PD and requesting IA_NA.
-    // The server should return NoBinding status code in this case.
-    ASSERT_NO_THROW(client.doRenew());
-    leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(0, leases_client_na.size());
-    ASSERT_EQ(STATUS_NoBinding, client.getStatusCode(1234));
-
-    // Reconfigure the server to use both NA and PD pools.
-    configure(RENEW_CONFIGS[5], *client.getServer());
-
-    // Send Renew message to the server, including IA_PD and requesting IA_NA.
-    ASSERT_NO_THROW(client.doRenew());
-
-    // Make sure that the client has renewed PD lease.
-    std::vector<Lease6> leases_client_pd_renewed =
-        client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd_renewed.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
-    EXPECT_GE(leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_, 1000);
-
-    // The server should not allocate an address to the client, as this has been
-    // explicitly disabled in the configuration. Instead, it should send
-    // NoBinding status code.
-    leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(0, leases_client_na.size());
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(1234));
 }
 
 

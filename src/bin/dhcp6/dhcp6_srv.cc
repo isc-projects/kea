@@ -1721,7 +1721,6 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     ctx.ia_rsp_ = ia_rsp;
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
-    ctx.allow_new_leases_in_renewals_ = subnet->getAllocLeasesOnRenew();
 
     // Extract the addresses that the client is trying to obtain.
     OptionCollection addrs = ia->getOptions();
@@ -1802,34 +1801,12 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // All is left is to insert the status code.
     if (leases.empty()) {
 
-        // We did not assign any address to the client. Depending on whether the
-        // server is configured to allocate new leases during the Renew or
-        // Rebind we will have to send a different status code. If the server
-        // is configured to allocate new leases for the Renew and Rebind, the
-        // status code will be NoAddressAvail. If the server is not configured
-        // to allocate prefixes for the renewing client, the status code will
-        // be NoBinding, or perhaps the message will be dropped if this is the
-        // Rebind case.
-        if (!subnet->getAllocLeasesOnRenew()) {
-            ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
-                                               STATUS_NoBinding,
-                                               "Sorry, no known NA leases for"
-                                               " this duid/iaid/subnet."));
-            LOG_DEBUG(lease_logger, DBG_DHCP6_DETAIL, DHCP6_EXTEND_NA_UNKNOWN)
-                .arg(query->getLabel())
-                .arg(ia->getIAID())
-                .arg(subnet->toText());
-
-
-        } else {
-            // The server is configured to allocate new leases for the
-            // renewing client, but it could not allocate anything at this
-            // time. The status code should be NoAddrsAvail, per RFC7550.
-            ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
-                                               STATUS_NoAddrsAvail,
-                                               "Sorry, no addresses could be"
-                                               " assigned at this time."));
-        }
+        // The server wasn't able allocate new lease and renew an exising
+        // lease. In that case, the server sends NoAddrsAvail per RFC7550.
+        ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
+                                           STATUS_NoAddrsAvail,
+                                           "Sorry, no addresses could be"
+                                           " assigned at this time."));
     }
 
     return (ia_rsp);
@@ -1894,7 +1871,6 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     ctx.ia_rsp_ = ia_rsp;
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
-    ctx.allow_new_leases_in_renewals_ = subnet->getAllocLeasesOnRenew();
 
     // Extract prefixes that the client is trying to renew.
     OptionCollection addrs = ia->getOptions();
@@ -1963,47 +1939,12 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // All is left is to insert the status code.
     if (leases.empty()) {
 
-        // We did not assign any prefix to the client. Depending on whether the
-        // server is configured to allocate new leases during the Renew or
-        // Rebind we will have to send a different status code. If the server
-        // is configured to allocate new leases for the Renew and Rebind, the
-        // status code will be NoPrefixAvail. If the server is not configured
-        // to allocate prefixes for the renewing client, the status code will
-        // be NoBinding, or perhaps the message will be dropped if this is the
-        // Rebind case.
-        if (!subnet->getAllocLeasesOnRenew()) {
-            // The server is not configured to allocate new leases, so return
-            // the NoBinding for the Renew, and drop the message for the
-            // Rebind. There is also a detailed comment for the Rebind case
-            // further on.
-            if (query->getType() == DHCPV6_RENEW) {
-                ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
-                                                   STATUS_NoBinding,
-                                                   "Sorry, no known PD leases for"
-                                                   " this duid/iaid/subnet."));
-            } else {
-                // Per RFC3633, section 12.2, if there is no binding and we are
-                // processing Rebind, the message has to be discarded (assuming that
-                // the server doesn't know if the prefix in the IA_PD option is
-                // appropriate for the client's link). The exception being thrown
-                // here should propagate to the main loop and cause the message to
-                // be discarded.
-                isc_throw(DHCPv6DiscardMessageError, "no binding found for the"
-                          " DUID=" << duid->toText() << ", IAID="
-                          << ia->getIAID() << ", subnet="
-                          << subnet->toText() << " when processing a Rebind"
-                          " message with IA_PD option");
-            }
-
-        } else {
-            // The server is configured to allocate new leases for the
-            // renewing client, but it could not allocate anything at this
-            // time. The status code should be NoPrefixAvail, per RFC7550.
-            ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
-                                               STATUS_NoPrefixAvail,
-                                               "Sorry, no prefixes could be"
-                                               " assigned at this time."));
-        }
+        // The server wasn't able allocate new lease and renew an exising
+        // lease. In that case, the server sends NoPrefixAvail per RFC7550.
+        ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
+                                           STATUS_NoPrefixAvail,
+                                           "Sorry, no prefixes could be"
+                                           " assigned at this time."));
     }
 
     return (ia_rsp);

@@ -531,37 +531,6 @@ public:
         CfgMgr::instance().clear();
     }
 
-    /// @brief Test the 'new-leases-on-renew' configuration flag.
-    ///
-    /// @param config Server configuration, possibly including the
-    /// 'new-leases-on-renew' parameter.
-    /// @param exp_alloc_leases_on_renew Expected value of the flag
-    void testAllocLeasesOnRenew(const std::string& config,
-                                const bool exp_alloc_leases_on_renew) {
-        // Clear any existing configuration.
-        CfgMgr::instance().clear();
-
-        // Configure the server.
-        ElementPtr json = Element::fromJSON(config);
-
-        // Make sure that the configuration was successful.
-        ConstElementPtr status;
-        EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-        checkResult(status, 0);
-
-        // Get the subnet.
-        Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-            selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-        ASSERT_TRUE(subnet);
-
-        // Check the flag against the expected value.
-        EXPECT_EQ(exp_alloc_leases_on_renew, subnet->getAllocLeasesOnRenew());
-
-        // Clear any existing configuration.
-        CfgMgr::instance().clear();
-    }
-
-
     int rcode_;          ///< Return code (see @ref isc::config::parseAnswer)
     Dhcpv6Srv srv_;      ///< Instance of the Dhcp6Srv used during tests
     ConstElementPtr comment_; ///< Comment (see @ref isc::config::parseAnswer)
@@ -1200,55 +1169,6 @@ TEST_F(Dhcp6ParserTest, subnetRapidCommit) {
                         "    \"subnet\": \"2001:db8:1::/64\" } ],"
                         "\"valid-lifetime\": 4000 }",
                         false);
-    }
-}
-
-// This test checks the configuration of the Rapid Commit option
-// support for the subnet.
-TEST_F(Dhcp6ParserTest, subnetAllocLeasesOnRenew) {
-    {
-        // new-leases-on-renew implicitly set to false.
-        SCOPED_TRACE("Default setting for new-leases-on-renew");
-        testAllocLeasesOnRenew("{ \"preferred-lifetime\": 3000,"
-                               "\"rebind-timer\": 2000, "
-                               "\"renew-timer\": 1000, "
-                               "\"subnet6\": [ { "
-                               "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - "
-                               "2001:db8:1::ffff\" } ],"
-                               "    \"subnet\": \"2001:db8:1::/64\" } ],"
-                               "\"valid-lifetime\": 4000 }",
-                               true);
-    }
-
-    {
-        // new-leases-on-renew explicitly set to true.
-        SCOPED_TRACE("Enable new-leases-on-renew");
-        testAllocLeasesOnRenew("{ \"preferred-lifetime\": 3000,"
-                               "\"rebind-timer\": 2000, "
-                               "\"renew-timer\": 1000, "
-                               "\"new-leases-on-renew\": True,"
-
-                               "\"subnet6\": [ { "
-                               "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - "
-                               "2001:db8:1::ffff\" } ],"
-                               "    \"subnet\": \"2001:db8:1::/64\" } ],"
-                               "\"valid-lifetime\": 4000 }",
-                               true);
-    }
-
-    {
-        // new-leases-on-renew explicitly set to false.
-        SCOPED_TRACE("Disable new-leases-on-renew");
-        testAllocLeasesOnRenew("{ \"preferred-lifetime\": 3000,"
-                               "\"rebind-timer\": 2000, "
-                               "\"renew-timer\": 1000, "
-                               "\"new-leases-on-renew\": False,"
-                               "\"subnet6\": [ { "
-                               "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - "
-                               "2001:db8:1::ffff\" } ],"
-                               "    \"subnet\": \"2001:db8:1::/64\" } ],"
-                               "\"valid-lifetime\": 4000 }",
-                               false);
     }
 }
 
