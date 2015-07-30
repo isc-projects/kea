@@ -475,16 +475,13 @@ protected:
 
         // Gather boolean parameters values.
         bool rapid_commit = boolean_values_->getOptionalParam("rapid-commit", false);
-        bool alloc_leases_on_renew = globalContext()->
-            boolean_values_->getOptionalParam("new-leases-on-renew", true);
 
         std::ostringstream output;
         output << addr << "/" << static_cast<int>(len)
                << " with params t1=" << t1 << ", t2="
                << t2 << ", preferred-lifetime=" << pref
                << ", valid-lifetime=" << valid
-               << ", rapid-commit is " << (rapid_commit ? "enabled" : "disabled")
-               << ", new-leases-on-renew is " << (alloc_leases_on_renew ? "enabled" : "disabled");
+               << ", rapid-commit is " << (rapid_commit ? "enabled" : "disabled");
 
 
         LOG_INFO(dhcp6_logger, DHCP6_CONFIG_NEW_SUBNET).arg(output.str());
@@ -502,8 +499,6 @@ protected:
 
         // Enable or disable Rapid Commit option support for the subnet.
         subnet6->setRapidCommit(rapid_commit);
-        // Enable or disable allocation of the new leases for the Renew or/and Rebind message.
-        subnet6->setAllocLeasesOnRenew(alloc_leases_on_renew);
 
         // Try setting up client class (if specified)
         try {
@@ -700,8 +695,6 @@ namespace dhcp {
         parser = new RSOOListConfigParser(config_id);
     } else if (config_id.compare("control-socket") == 0) {
         parser = new ControlSocketParser(config_id);
-    } else if (config_id.compare("new-leases-on-renew") == 0) {
-        parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "

@@ -94,7 +94,9 @@ Dhcp6Client::Dhcp6Client() :
     use_rapid_commit_(false),
     address_hint_(),
     prefix_hint_(),
-    fqdn_() {
+    fqdn_(),
+    na_iaid_(1234),
+    pd_iaid_(5678) {
 }
 
 Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
@@ -113,7 +115,9 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     use_rapid_commit_(false),
     address_hint_(),
     prefix_hint_(),
-    fqdn_() {
+    fqdn_(),
+    na_iaid_(1234),
+    pd_iaid_(5678) {
 }
 
 void
@@ -243,11 +247,11 @@ Dhcp6Client::appendFQDN() {
 void
 Dhcp6Client::appendRequestedIAs(const Pkt6Ptr& query) const {
     if (use_na_) {
-        conditionallyAppendRequestedIA(query, D6O_IA_NA, 1234);
+        conditionallyAppendRequestedIA(query, D6O_IA_NA, na_iaid_);
     }
 
     if (use_pd_) {
-        conditionallyAppendRequestedIA(query, D6O_IA_PD, 5678);
+        conditionallyAppendRequestedIA(query, D6O_IA_PD, pd_iaid_);
     }
 }
 
@@ -445,9 +449,9 @@ Dhcp6Client::doInfRequest() {
     // IA_NA, IA_TA and IA_PD options are not allowed in INF-REQUEST,
     // but hey! Let's test it.
     if (use_na_) {
-        // Insert IA_NA option with iaid=1234.
+        // Insert IA_NA option.
         context_.query_->addOption(Option6IAPtr(new Option6IA(D6O_IA_NA,
-                                                              1234)));
+                                                              na_iaid_)));
     }
 
     // IA-PD is also not allowed. So it may be useful in testing, too.

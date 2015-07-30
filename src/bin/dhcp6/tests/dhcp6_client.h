@@ -439,8 +439,10 @@ public:
     ///
     /// @param use Parameter which 'true' value indicates that client should
     /// request address assignment.
-    void useNA(const bool use = true) {
+    /// @param iaid IAID to be used in the IA_NA.
+    void useNA(const bool use = true, const uint32_t iaid = 1234) {
         use_na_ = use;
+        na_iaid_ = iaid;
     }
 
     /// @brief Place IA_PD options to request prefix assignment.
@@ -450,8 +452,10 @@ public:
     ///
     /// @param use Parameter which 'true' value indicates that client should
     /// request prefix assignment.
-    void usePD(const bool use = true) {
+    /// @param iaid IAID to be used in the IA_NA.
+    void usePD(const bool use = true, const uint32_t iaid = 5678) {
         use_pd_ = use;
+        pd_iaid_ = iaid;
     }
 
     /// @brief Simulate sending messages through a relay.
@@ -706,6 +710,11 @@ private:
 
     /// @brief FQDN requested by the client.
     Option6ClientFqdnPtr fqdn_;
+
+    /// @bref IAID used by the client when requesting address assignment.
+    uint32_t na_iaid_;
+    /// @brief IAID used by the client when requesting prefix delegation.
+    uint32_t pd_iaid_;
 };
 
 } // end of namespace isc::dhcp::test
