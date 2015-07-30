@@ -2379,6 +2379,53 @@ should include options from the isc option space:
       even if it is not used.</para>
     </section>
 
+    <section id="dhcp6-rfc7550">
+      <title>Support for RFC 7550</title>
+      <para>The <ulink url="http://tools.ietf.org/html/rfc7550">RFC 7550</ulink>
+      has introduced some changes to the DHCPv6 protocol to resolve a few issues
+      with the coexistence of multiple stateful options in the messages sent
+      between the clients and servers.</para>
+
+      <para>The typical example is when the client (being also a requesting
+      router) requests an allocation of both addresses and prefixes when
+      it performs the 4-way (SARR) exchange with the server. If the
+      server is not configured to allocate any prefixes but it can allocate
+      some addresses, it will respond with the IA_NA(s) containing allocated
+      addresses and the IA_PD(s) containing the NoPrefixAvail status code. If
+      the client can operate without prefixes it may transition to the
+      'bound' state when it sends Renew/Rebind messages to the server,
+      according to the T1 and T2 times, to extend the lifetimes of the
+      allocated addresses. If the client is still interested in obtaining
+      prefixes from the server it may also include IA_PD in the Renew/Rebind
+      to request allocation of the prefixes. If the server still cannot
+      allocate the prefixes, it will respond with the IA_PD(s) containing
+      NoPrefixAvail status code. However, if the server can now allocate
+      the prefixes it will do so, and send them in the IA_PD(s) to the client.
+      Allocation of leases during the Renew/Rebind was not supported in the
+      <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>
+      and <ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink>,
+      and has been introduced in
+      <ulink url="http://tools.ietf.org/html/rfc7550">RFC 7550</ulink>.
+      Kea supports this new behavior and it doesn't provide any configuration
+      mechanisms to disable it.
+      </para>
+
+      <para>
+        The following are the other behaviors specified in the
+        <ulink url="http://tools.ietf.org/html/rfc7550">RFC 7550</ulink>
+        supported by the Kea DHCPv6 server:
+        <itemizedlist>
+          <listitem><simpara>set T1/T2 timers to the same value for all
+          stateful (IA_NA and IA_PD) options to facilitate renewal of all
+          client's leases at the same time (in a single message exchange),
+          </simpara></listitem>
+          <listitem><simpara>NoAddrsAvail and NoPrefixAvail status codes
+          are placed in the IA_NA and IA_PD options in the Advertise message,
+          rather than as the top level options.</simpara></listitem>
+        </itemizedlist>
+      </para>
+    </section>
+
     <section id="dhcp6-relay-override">
       <title>Using specific relay agent for a subnet</title>
       <para>
