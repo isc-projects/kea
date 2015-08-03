@@ -1190,11 +1190,24 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // information about the subnet he is connected to. This likely means
         // misconfiguration of the server (or some relays).
 
-        // Perhaps this should be logged on some higher level?
-        LOG_ERROR(bad_packet4_logger, DHCP4_PACKET_NAK_0001)
-            .arg(query->getLabel())
-            .arg(query->getRemoteAddr().toText())
-            .arg(query->getName());
+        // Perhaps this should be logged on some higher level? This is most
+        // likely configuration bug.
+        if (HooksManager::calloutsPresent(hook_index_pkt4_send_)) {
+          // if a callout for pkt4_send is registered we assume the author of
+          // the hook library knows what he's doing and will populate the
+          // egressing packet properly, so we demote this log line to DEBUG
+          LOG_DEBUG(bad_packet_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_NAK_0001)
+              .arg(query->getLabel())
+              .arg(query->getRemoteAddr().toText())
+              .arg(serverReceivedPacketName(query->getType()));
+        } else {
+          // if there is no hook library registered then this is likely to be
+          // a real configuration issue
+          LOG_ERROR(bad_packet_logger, DHCP4_PACKET_NAK_0001)
+              .arg(query->getLabel())
+              .arg(query->getRemoteAddr().toText())
+              .arg(serverReceivedPacketName(query->getType()));
+        }
         resp->setType(DHCPNAK);
         resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
         return;
@@ -1635,10 +1648,12 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
         // them we append them for him.
         appendBasicOptions(ex);
 
-    } else {
+    } else if (!HooksManager::calloutsPresent(hook_index_pkt4_send_)) {
         // If the server can't offer an address, it drops the packet.
+        // However this is not true if a pkt4_send callout is registered:
+        // we are assuming that the author of the library knows what s/he's doing
+        // and will populate the response him/herself.
         return (Pkt4Ptr());
-
     }
 
     // Set the src/dest IP address, port and interface for the outgoing
