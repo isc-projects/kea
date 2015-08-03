@@ -559,7 +559,8 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
 
     if (msg_type == DHCPDISCOVER) {
         ASSERT_NO_THROW(rsp = srv->processDiscover(received));
-        // Should return NULL packet.
+        // Should return NULL packet if no hook callout is registered
+        // (which is the case in this test).
         ASSERT_FALSE(rsp);
 
     } else {
