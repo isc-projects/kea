@@ -1190,8 +1190,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // information about the subnet he is connected to. This likely means
         // misconfiguration of the server (or some relays).
 
-        // Perhaps this should be logged on some higher level? This is most
-        // likely configuration bug.
+        // Perhaps this should be logged on some higher level?
         if (HooksManager::calloutsPresent(hook_index_pkt4_send_)) {
           // if a callout for pkt4_send is registered we assume the author of
           // the hook library knows what he's doing and will populate the
