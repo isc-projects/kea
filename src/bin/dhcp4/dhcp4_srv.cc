@@ -1195,17 +1195,17 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
           // if a callout for pkt4_send is registered we assume the author of
           // the hook library knows what he's doing and will populate the
           // egressing packet properly, so we demote this log line to DEBUG
-          LOG_DEBUG(bad_packet_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_NAK_0001)
+          LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_NAK_0001)
               .arg(query->getLabel())
               .arg(query->getRemoteAddr().toText())
-              .arg(serverReceivedPacketName(query->getType()));
+              .arg(query->getName());
         } else {
           // if there is no hook library registered then this is likely to be
           // a real configuration issue
-          LOG_ERROR(bad_packet_logger, DHCP4_PACKET_NAK_0001)
+          LOG_ERROR(bad_packet4_logger, DHCP4_PACKET_NAK_0001)
               .arg(query->getLabel())
               .arg(query->getRemoteAddr().toText())
-              .arg(serverReceivedPacketName(query->getType()));
+              .arg(query->getName());
         }
         resp->setType(DHCPNAK);
         resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
