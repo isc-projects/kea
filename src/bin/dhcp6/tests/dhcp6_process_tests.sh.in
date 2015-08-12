@@ -37,7 +37,11 @@ CONFIG="{
         {
             \"subnet\": \"2001:db8:1::/64\",
             \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
-        } ]
+        } ],
+        \"dhcp-ddns\": {
+            \"enable-updates\": true,
+            \"qualifying-suffix\": \"\"
+        }
     },
 
     \"Logging\":
