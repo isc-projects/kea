@@ -66,7 +66,8 @@ CREATE TABLE lease6 (
     prefix_len SMALLINT,                        -- For IA_PD only
     fqdn_fwd BOOLEAN,                           -- Has forward DNS update been performed by a server
     fqdn_rev BOOLEAN,                           -- Has reverse DNS update been performed by a server
-    hostname VARCHAR(255)                       -- The FQDN of the client
+    hostname VARCHAR(255),                      -- The FQDN of the client
+    hwaddr BYTEA                                -- Hardware address
     );
 
 -- Create search indexes for lease4 table
