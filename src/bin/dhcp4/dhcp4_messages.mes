@@ -610,6 +610,12 @@ core component within the DHCPv4 server (the Dhcpv4 server object)
 has failed.  As a result, the server will exit.  The reason for the
 failure is given within the message.
 
+% DHCP4_SRV_D2STOP_ERROR error stopping IO with DHCP_DDNS during shutdown: %1
+This error message indicates that during shutdown, an erro occurred while
+stopping IO between the DHCPv4 server and the DHCP_DDNS server.  This is
+probably due to a programmatic error is not likely to impact either server
+upon restart.  The reason for the failure is given within the message.
+
 % DHCP4_STARTED Kea DHCPv4 server version %1 started
 This informational message indicates that the DHCPv4 server has
 processed all configuration information and is ready to process
