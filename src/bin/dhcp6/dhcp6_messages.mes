@@ -676,6 +676,12 @@ core component within the IPv6 DHCP server (the Dhcpv6 server object)
 has failed.  As a result, the server will exit.  The reason for the
 failure is given within the message.
 
+% DHCP6_SRV_D2STOP_ERROR error stopping IO with DHCP_DDNS during shutdown: %1
+This error message indicates that during shutdown, an erro occurred while
+stopping IO between the DHCPv6 server and the DHCP_DDNS server.  This is
+probably due to a programmatic error is not likely to impact either server
+upon restart.  The reason for the failure is given within the message.
+
 % DHCP6_STANDALONE skipping message queue, running standalone
 This is a debug message indicating that the IPv6 server is running in
 standalone mode, not connected to the message queue.  Standalone mode
