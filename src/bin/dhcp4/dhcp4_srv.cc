@@ -269,6 +269,7 @@ Dhcpv4Srv::~Dhcpv4Srv() {
         // Highly unlikely, but lets Report it but go on
         LOG_ERROR(dhcp4_logger, DHCP4_SRV_D2STOP_ERROR).arg(ex.what());
     }
+
     IfaceMgr::instance().closeSockets();
 }
 
