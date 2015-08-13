@@ -1,5 +1,10 @@
 Kea 0.9.2 released on July 28, 2015
 
+989.	[bug]		tmark
+	Fixed a bug in both DHCPv4 and DHCPv6 servers that could cause
+	them to crash during sever shutdown when DNS updates are enabled.
+	(Trac #3997, git ce91bdd78f420f64324c573a952ec804bc25e0d8)
+
 988.	[bug]		fdupont
 	keactrl no longer returns an error when the "status" command is
 	issued and the Kea configuration file doesn't exist.
