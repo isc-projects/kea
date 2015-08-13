@@ -869,10 +869,10 @@ TEST_F(ParseConfigTest, noHooksLibraries) {
     EXPECT_TRUE(libraries.empty());
 }
 
-// hooks-libraries element that contains a single libaray.
+// hooks-libraries element that contains a single library.
 TEST_F(ParseConfigTest, oneHooksLibrary) {
 
-    // Configuration with hooks-libraries with a single library.
+    // Configuration with hooks-libraries set to a single library.
     const string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1);
 
     // Verify that the configuration string parses.
@@ -891,7 +891,7 @@ TEST_F(ParseConfigTest, oneHooksLibrary) {
 // hooks-libraries element that contains two libraries
 TEST_F(ParseConfigTest, twoHooksLibraries) {
 
-    // Configuration with hooks-libraries not present.
+    // Configuration with hooks-libraries set to two libraries.
     const string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1,
                                                   CALLOUT_LIBRARY_2);
 
@@ -912,6 +912,7 @@ TEST_F(ParseConfigTest, twoHooksLibraries) {
 // Configure with two libraries, then reconfigure with the same libraries.
 TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
 
+    // Configuration with hooks-libraries set to two libraries.
     const std::string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1,
                                                        CALLOUT_LIBRARY_2);
 
@@ -924,7 +925,8 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
     rcode = parseConfiguration(config);
     ASSERT_TRUE(rcode == 0) << error_text_;
 
-    // The list has not changed, and this is what we should see.
+    // The list has not changed between the two parse operations and this is
+    // what we should see.
     std::vector<std::string> libraries;
     bool changed;
     hooks_libraries_parser_->getLibraries(libraries, changed);
@@ -938,6 +940,7 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
 // the same libraries, but in reverse order.
 TEST_F(ParseConfigTest, reconfigureReverseHooksLibraries) {
 
+    // Configuration with hooks-libraries set to two libraries.
     std::string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1,
                                                  CALLOUT_LIBRARY_2);
 
@@ -965,6 +968,7 @@ TEST_F(ParseConfigTest, reconfigureReverseHooksLibraries) {
 // no libraries.
 TEST_F(ParseConfigTest, reconfigureZeroHooksLibraries) {
 
+    // Configuration with hooks-libraries set to two libraries.
     std::string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1,
                                                  CALLOUT_LIBRARY_2);
 
