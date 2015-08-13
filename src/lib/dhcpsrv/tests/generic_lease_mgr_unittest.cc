@@ -1657,6 +1657,246 @@ GenericLeaseMgrTest::testVersion(int major, int minor) {
     EXPECT_EQ(minor, lmptr_->getVersion().second);
 }
 
+void
+GenericLeaseMgrTest::testGetExpiredLeases4() {
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+    // Make sure we have at least 6 leases there.
+    ASSERT_GE(leases.size(), 6);
+
+    // Use the same current time for all leases.
+    time_t current_time = time_t(NULL);
+
+    // Add them to the database
+    for (size_t i = 0; i < leases.size(); ++i) {
+        // Mark every other lease as expired.
+        if (i % 2 == 0) {
+            // Set client last transmission time to the value older than the
+            // valid lifetime to make it expired. The expiration time also
+            // depends on the lease index, so as we can later check that the
+            // leases are ordered by the expiration time.
+            leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 10 - i;
+
+        } else {
+            // Set current time as cltt for remaining leases. These leases are
+            // not expired.
+            leases[i]->cltt_ = current_time;
+        }
+        ASSERT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Retrieve expired leases.
+    Lease4Collection expired_leases;
+    lmptr_->getExpiredLeases4(expired_leases, 1000);
+    // Leases with even indexes should be returned as expired.
+    ASSERT_EQ(static_cast<size_t>(leases.size() / 2), expired_leases.size());
+
+    // The expired leases should be returned from the most to least expired.
+    // This matches the reverse order to which they have been added.
+    for (Lease4Collection::reverse_iterator lease = expired_leases.rbegin();
+         lease != expired_leases.rend(); ++lease) {
+        int index = static_cast<int>(std::distance(expired_leases.rbegin(), lease));
+        // Multiple current index by two, because only leases with even indexes
+        // should have been returned.
+        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+    }
+
+    // Update current time for the next test.
+    current_time = time_t(NULL);
+    // Also, remove expired leases collected during the previous test.
+    expired_leases.clear();
+
+    // This time let's reverse the expiration time and see if they will be returned
+    // in the correct order.
+    for (int i = 0; i < leases.size(); ++i) {
+        // Update the time of expired leases with even indexes.
+        if (i % 2 == 0) {
+            leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
+
+        } else {
+            // Make sure remaining leases remain unexpired.
+            leases[i]->cltt_ = current_time + 100;
+        }
+        ASSERT_NO_THROW(lmptr_->updateLease4(leases[i]));
+    }
+
+    // Retrieve expired leases again. The limit of 0 means return all expired
+    // leases.
+    lmptr_->getExpiredLeases4(expired_leases, 0);
+    // The same leases should be returned.
+    ASSERT_EQ(static_cast<size_t>(leases.size() / 2), expired_leases.size());
+
+    // This time leases should be returned in the non-reverse order.
+    for (Lease4Collection::iterator lease = expired_leases.begin();
+         lease != expired_leases.end(); ++lease) {
+        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+    }
+
+    // Remember expired leases returned.
+    std::vector<Lease4Ptr> saved_expired_leases = expired_leases;
+
+    // Remove expired leases again. 
+    expired_leases.clear();
+
+    // Limit the number of leases to be returned to 2.
+    lmptr_->getExpiredLeases4(expired_leases, 2);
+
+    // Make sure we have exactly 2 leases returned.
+    ASSERT_EQ(2, expired_leases.size());
+
+    // Test that most expired leases have been returned.
+    for (Lease4Collection::iterator lease = expired_leases.begin();
+         lease != expired_leases.end(); ++lease) {
+        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+    }
+
+    // Mark every other expired lease as reclaimed.
+    for (int i = 0; i < saved_expired_leases.size(); ++i) {
+        if (i % 2 != 0) {
+            saved_expired_leases[i]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+        }
+        ASSERT_NO_THROW(lmptr_->updateLease4(saved_expired_leases[i]));
+    }
+
+    expired_leases.clear();
+
+    // This the returned leases should exclude reclaimed ones. So the number
+    // of returned leases should be roughly half of the expired leases.
+    lmptr_->getExpiredLeases4(expired_leases, 0);
+    ASSERT_EQ(static_cast<size_t>(saved_expired_leases.size() / 2),
+              expired_leases.size());
+
+    // Make sure that returned leases are those that are not reclaimed, i.e.
+    // those that have even index.
+    for (Lease4Collection::iterator lease = expired_leases.begin();
+         lease != expired_leases.end(); ++lease) {
+        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        EXPECT_EQ(saved_expired_leases[2 * index]->addr_, (*lease)->addr_);
+    }
+}
+
+void
+GenericLeaseMgrTest::testGetExpiredLeases6() {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+    // Make sure we have at least 6 leases there.
+    ASSERT_GE(leases.size(), 6);
+
+    // Use the same current time for all leases.
+    time_t current_time = time_t(NULL);
+
+    // Add them to the database
+    for (size_t i = 0; i < leases.size(); ++i) {
+        // Mark every other lease as expired.
+        if (i % 2 == 0) {
+            // Set client last transmission time to the value older than the
+            // valid lifetime to make it expired. The expiration time also
+            // depends on the lease index, so as we can later check that the
+            // leases are ordered by the expiration time.
+            leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 10 - i;
+
+        } else {
+            // Set current time as cltt for remaining leases. These leases are
+            // not expired.
+            leases[i]->cltt_ = current_time;
+        }
+        ASSERT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Retrieve expired leases.
+    Lease6Collection expired_leases;
+    lmptr_->getExpiredLeases6(expired_leases, 1000);
+    // Leases with even indexes should be returned as expired.
+    ASSERT_EQ(static_cast<size_t>(leases.size() / 2), expired_leases.size());
+
+    // The expired leases should be returned from the most to least expired.
+    // This matches the reverse order to which they have been added.
+    for (Lease6Collection::reverse_iterator lease = expired_leases.rbegin();
+         lease != expired_leases.rend(); ++lease) {
+        int index = static_cast<int>(std::distance(expired_leases.rbegin(), lease));
+        // Multiple current index by two, because only leases with even indexes
+        // should have been returned.
+        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+    }
+
+    // Update current time for the next test.
+    current_time = time_t(NULL);
+    // Also, remove expired leases collected during the previous test.
+    expired_leases.clear();
+
+    // This time let's reverse the expiration time and see if they will be returned
+    // in the correct order.
+    for (int i = 0; i < leases.size(); ++i) {
+        // Update the time of expired leases with even indexes.
+        if (i % 2 == 0) {
+            leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
+
+        } else {
+            // Make sure remaining leases remain unexpired.
+            leases[i]->cltt_ = current_time + 100;
+        }
+        ASSERT_NO_THROW(lmptr_->updateLease6(leases[i]));
+    }
+
+    // Retrieve expired leases again. The limit of 0 means return all expired
+    // leases.
+    lmptr_->getExpiredLeases6(expired_leases, 0);
+    // The same leases should be returned.
+    ASSERT_EQ(static_cast<size_t>(leases.size() / 2), expired_leases.size());
+
+    // This time leases should be returned in the non-reverse order.
+    for (Lease6Collection::iterator lease = expired_leases.begin();
+         lease != expired_leases.end(); ++lease) {
+        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+    }
+
+    // Remember expired leases returned.
+    std::vector<Lease6Ptr> saved_expired_leases = expired_leases;
+
+    // Remove expired leases again. 
+    expired_leases.clear();
+
+    // Limit the number of leases to be returned to 2.
+    lmptr_->getExpiredLeases6(expired_leases, 2);
+
+    // Make sure we have exactly 2 leases returned.
+    ASSERT_EQ(2, expired_leases.size());
+
+    // Test that most expired leases have been returned.
+    for (Lease6Collection::iterator lease = expired_leases.begin();
+         lease != expired_leases.end(); ++lease) {
+        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+    }
+
+    // Mark every other expired lease as reclaimed.
+    for (int i = 0; i < saved_expired_leases.size(); ++i) {
+        if (i % 2 != 0) {
+            saved_expired_leases[i]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+        }
+        ASSERT_NO_THROW(lmptr_->updateLease6(saved_expired_leases[i]));
+    }
+
+    expired_leases.clear();
+
+    // This the returned leases should exclude reclaimed ones. So the number
+    // of returned leases should be roughly half of the expired leases.
+    lmptr_->getExpiredLeases6(expired_leases, 0);
+    ASSERT_EQ(static_cast<size_t>(saved_expired_leases.size() / 2),
+              expired_leases.size());
+
+    // Make sure that returned leases are those that are not reclaimed, i.e.
+    // those that have even index.
+    for (Lease6Collection::iterator lease = expired_leases.begin();
+         lease != expired_leases.end(); ++lease) {
+        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        EXPECT_EQ(saved_expired_leases[2 * index]->addr_, (*lease)->addr_);
+    }
+}
+
 
 }; // namespace test
 }; // namespace dhcp
