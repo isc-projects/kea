@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -171,6 +171,23 @@ public:
     virtual Lease6Collection getLeases6(Lease::Type /* not used yet */,
                                         const DUID&, uint32_t, SubnetID) const {
         return (leases6_);
+    }
+
+
+    /// @brief Returns expired DHCPv6 leases.
+    ///
+    /// This method is not implemented.
+    virtual void getExpiredLeases6(Lease6Collection&, const size_t) const {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::getExpiredLeases6 is not"
+                  " implemented");
+    }
+
+    /// @brief Returns expired DHCPv4 leases.
+    ///
+    /// This method is not implemented.
+    virtual void getExpiredLeases4(Lease4Collection&, const size_t) const {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::getExpiredLeases4 is not"
+                  " implemented");
     }
 
     /// @brief Updates IPv4 lease.

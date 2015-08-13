@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef INMEMORY_LEASE_STORAGE_H
-#define INMEMORY_LEASE_STORAGE_H
+#ifndef MEMFILE_LEASE_STORAGE_H
+#define MEMFILE_LEASE_STORAGE_H
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease.h>
@@ -31,6 +31,17 @@
 namespace isc {
 namespace dhcp {
 
+
+/// @brief Tag for indexes by address.
+struct AddressIndexTag { };
+
+/// @brief Tag for indexes by expiration time.
+struct ExpirationIndexTag { };
+
+/// @name Multi index containers holding DHCPv4 and DHCPv6 leases.
+///
+//@{
+
 /// @brief A multi index container holding DHCPv6 leases.
 ///
 /// The leases in the container may be accessed using different indexes:
@@ -44,6 +55,7 @@ typedef boost::multi_index_container<
         // This index sorts leases by IPv6 addresses represented as
         // IOAddress objects.
         boost::multi_index::ordered_unique<
+            boost::multi_index::tag<AddressIndexTag>,
             boost::multi_index::member<Lease, isc::asiolink::IOAddress, &Lease::addr_>
         >,
 
@@ -61,6 +73,24 @@ typedef boost::multi_index_container<
                 // lease type.
                 boost::multi_index::member<Lease6, uint32_t, &Lease6::iaid_>,
                 boost::multi_index::member<Lease6, Lease::Type, &Lease6::type_>
+            >
+        >,
+
+        // Specification of the third index starts here.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<ExpirationIndexTag>,
+            // This is a composite index that will be used to search for
+            // the expired leases. Depending on the value of the first component
+            // of the search key, the reclaimed or not reclaimed leases will can
+            // be searched.
+            boost::multi_index::composite_key<
+                Lease6,
+                // The boolean value specifying if lease is reclaimed or not.
+                boost::multi_index::const_mem_fun<Lease, bool,
+                                                  &Lease::stateExpiredReclaimed>,
+                // Lease expiration time.
+                boost::multi_index::const_mem_fun<Lease, int64_t,
+                                                  &Lease::getExpirationTime>
             >
         >
      >
@@ -82,6 +112,7 @@ typedef boost::multi_index_container<
         // This index sorts leases by IPv4 addresses represented as
         // IOAddress objects.
         boost::multi_index::ordered_unique<
+            boost::multi_index::tag<AddressIndexTag>,
             // The IPv4 address are held in addr_ members that belong to
             // Lease class.
             boost::multi_index::member<Lease, isc::asiolink::IOAddress, &Lease::addr_>
@@ -141,11 +172,48 @@ typedef boost::multi_index_container<
                 // The subnet id is accessed through the subnet_id_ member.
                 boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
             >
+        >,
+
+        // Specification of the fifth index starts here.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<ExpirationIndexTag>,
+            // This is a composite index that will be used to search for
+            // the expired leases. Depending on the value of the first component
+            // of the search key, the reclaimed or not reclaimed leases will can
+            // be searched.
+            boost::multi_index::composite_key<
+                Lease4,
+                // The boolean value specifying if lease is reclaimed or not.
+                boost::multi_index::const_mem_fun<Lease, bool,
+                                                  &Lease::stateExpiredReclaimed>,
+                // Lease expiration time.
+                boost::multi_index::const_mem_fun<Lease, int64_t,
+                                                  &Lease::getExpirationTime>
+            >
         >
     >
 > Lease4Storage; // Specify the type name for this container.
 
+//@}
+
+/// @name Indexes used by the multi index containers
+///
+//@{
+
+/// @brief DHCPv6 lease storage index by address.
+typedef Lease6Storage::index<AddressIndexTag>::type Lease6StorageAddressIndex;
+
+/// @brief DHCPv6 lease storage index by expiration time.
+typedef Lease6Storage::index<ExpirationIndexTag>::type Lease6StorageExpirationIndex;
+
+/// @brief DHCPv4 lease storage index by address.
+typedef Lease4Storage::index<AddressIndexTag>::type Lease4StorageAddressIndex;
+
+/// @brief DHCPv4 lease storage index by exiration time.
+typedef Lease4Storage::index<ExpirationIndexTag>::type Lease4StorageExpirationIndex;
+
+//@}
 } // end of isc::dhcp namespace
 } // end of isc namespace
 
-#endif // INMEMORY_LEASE_STORAGE_H
+#endif // MEMFILE_LEASE_STORAGE_H

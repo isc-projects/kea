@@ -515,11 +515,59 @@ Memfile_LeaseMgr::getLeases6(Lease::Type type,
 }
 
 void
+Memfile_LeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
+                                    const size_t max_leases) const {
+    // Obtain the index which segragates leases by state and time.
+    const Lease6StorageExpirationIndex& index = storage6_.get<ExpirationIndexTag>();
+
+    // Retrieve leases which are not reclaimed and which haven't expired. The
+    // 'less-than' operator will be used for both components of the index. So,
+    // for the 'state' 'false' is less than 'true'. Also the leases with
+    // expiration time lower than current time will be returned.
+    Lease6StorageExpirationIndex::const_iterator ub =
+        index.upper_bound(boost::make_tuple(false, time_t(NULL)));
+
+    // Copy only the number of leases indicated by the max_leases parameter.
+    for (Lease6StorageExpirationIndex::const_iterator lease = index.begin();
+         (lease != ub) && ((max_leases == 0) || (std::distance(index.begin(), lease) <
+                                                 max_leases));
+         ++lease) {
+        expired_leases.push_back(Lease6Ptr(new Lease6(**lease)));
+    }
+}
+
+void
+Memfile_LeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
+                                    const size_t max_leases) const {
+    // Obtain the index which segragates leases by state and time.
+    const Lease4StorageExpirationIndex& index = storage4_.get<ExpirationIndexTag>();
+
+    // Retrieve leases which are not reclaimed and which haven't expired. The
+    // 'less-than' operator will be used for both components of the index. So,
+    // for the 'state' 'false' is less than 'true'. Also the leases with
+    // expiration time lower than current time will be returned.
+    Lease4StorageExpirationIndex::const_iterator ub =
+        index.upper_bound(boost::make_tuple(false, time_t(NULL)));
+
+    // Copy only the number of leases indicated by the max_leases parameter.
+    for (Lease4StorageExpirationIndex::const_iterator lease = index.begin();
+         (lease != ub) && ((max_leases == 0) || (std::distance(index.begin(), lease) <
+                                                 max_leases));
+         ++lease) {
+        expired_leases.push_back(Lease4Ptr(new Lease4(**lease)));
+    }
+}
+
+void
 Memfile_LeaseMgr::updateLease4(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_UPDATE_ADDR4).arg(lease->addr_.toText());
 
-    Lease4Storage::iterator lease_it = storage4_.find(lease->addr_);
+    // Obtain 'by address' index.
+    Lease4StorageAddressIndex& index = storage4_.get<AddressIndexTag>();
+
+    // Lease must exist if it is to be updated.
+    Lease4StorageAddressIndex::const_iterator lease_it = index.find(lease->addr_);
     if (lease_it == storage4_.end()) {
         isc_throw(NoSuchLease, "failed to update the lease with address "
                   << lease->addr_ << " - no such lease");
@@ -532,7 +580,8 @@ Memfile_LeaseMgr::updateLease4(const Lease4Ptr& lease) {
         lease_file4_->append(*lease);
     }
 
-    **lease_it = *lease;
+    // Use replace() to re-index leases.
+    index.replace(lease_it, Lease4Ptr(new Lease4(*lease)));
 }
 
 void
@@ -540,8 +589,12 @@ Memfile_LeaseMgr::updateLease6(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_UPDATE_ADDR6).arg(lease->addr_.toText());
 
-    Lease6Storage::iterator lease_it = storage6_.find(lease->addr_);
-    if (lease_it == storage6_.end()) {
+    // Obtain 'by address' index.
+    Lease6StorageAddressIndex& index = storage6_.get<AddressIndexTag>();
+
+    // Lease must exist if it is to be updated.
+    Lease6StorageAddressIndex::const_iterator lease_it = index.find(lease->addr_);
+    if (lease_it == index.end()) {
         isc_throw(NoSuchLease, "failed to update the lease with address "
                   << lease->addr_ << " - no such lease");
     }
@@ -553,7 +606,8 @@ Memfile_LeaseMgr::updateLease6(const Lease6Ptr& lease) {
         lease_file6_->append(*lease);
     }
 
-    **lease_it = *lease;
+    // Use replace() to re-index leases.
+    index.replace(lease_it, Lease6Ptr(new Lease6(*lease)));
 }
 
 bool
@@ -870,7 +924,6 @@ void Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) 
         lfc_setup_->execute();
     }
 }
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
