@@ -265,6 +265,26 @@ public:
     /// @param minor Expected minor version to be reported.
     void testVersion(int major, int minor);
 
+    /// @brief Checks that the expired DHCPv4 leases can be retrieved.
+    ///
+    /// This test checks the following:
+    /// - all expired and not reclaimed leases are retured
+    /// - number of leases returned can be limited
+    /// - leases are returned in the order from the most expired to the
+    ///   least expired
+    /// - reclaimed leases are not returned.
+    void testGetExpiredLeases4();
+
+    /// @brief Checks that the expired DHCPv6 leases can be retrieved.
+    ///
+    /// This test checks the following:
+    /// - all expired and not reclaimed leases are retured
+    /// - number of leases returned can be limited
+    /// - leases are returned in the order from the most expired to the
+    ///   least expired
+    /// - reclaimed leases are not returned.
+    void testGetExpiredLeases6();
+
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;
 

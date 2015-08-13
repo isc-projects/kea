@@ -881,6 +881,30 @@ TEST_F(MemfileLeaseMgrTest, getLeases6DuidSize) {
     testGetLeases6DuidSize();
 }
 
+/// @brief Check that the expired DHCPv4 leases can be retrieved.
+///
+/// This test adds a number of leases to the lease database and marks
+/// some of them as expired. Then it queries for expired leases and checks
+/// whether only expired leases are returned, and that they are returned in
+/// the order from most to least expired. It also checks that the lease
+/// which is marked as 'reclaimed' is not returned.
+TEST_F(MemfileLeaseMgrTest, getExpiredLeases4) {
+    startBackend(V4);
+    testGetExpiredLeases4();
+}
+
+/// @brief Check that the expired DHCPv6 leases can be retrieved.
+///
+/// This test adds a number of leases to the lease database and marks
+/// some of them as expired. Then it queries for expired leases and checks
+/// whether only expired leases are returned, and that they are returned in
+/// the order from most to least expired. It also checks that the lease
+/// which is marked as 'reclaimed' is not returned.
+TEST_F(MemfileLeaseMgrTest, getExpiredLeases6) {
+    startBackend(V6);
+    testGetExpiredLeases6();
+}
+
 /// @brief Check that getLease6 methods discriminate by lease type.
 ///
 /// Adds six leases, two per lease type all with the same duid and iad but
