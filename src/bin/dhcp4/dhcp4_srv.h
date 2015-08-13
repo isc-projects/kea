@@ -234,10 +234,17 @@ public:
 
     /// @brief Starts DHCP_DDNS client IO if DDNS updates are enabled.
     ///
-    /// If updates are enabled, it Instructs the D2ClientMgr singleton to
+    /// If updates are enabled, it instructs the D2ClientMgr singleton to
     /// enter send mode.  If D2ClientMgr encounters errors it may throw
-    /// D2ClientErrors. This method does not catch exceptions.
+    /// D2ClientError. This method does not catch exceptions.
     void startD2();
+
+    /// @brief Stops DHCP_DDNS client IO if DDNS updates are enabled.
+    ///
+    /// If updates are enabled, it instructs the D2ClientMgr singleton to
+    /// leave send mode.  If D2ClientMgr encounters errors it may throw
+    /// D2ClientError. This method does not catch exceptions.
+    void stopD2();
 
     /// @brief Implements the error handler for DHCP_DDNS IO errors
     ///
