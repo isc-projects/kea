@@ -48,6 +48,34 @@ struct Lease {
     /// @return text decription
     static std::string typeToText(Type type);
 
+    /// @name Common lease states constants.
+    //@{
+    ///
+    /// @brief A lease in the default state.
+    static const uint32_t STATE_DEFAULT;
+
+    /// @brief Declined lease.
+    static const uint32_t STATE_DECLINED;
+
+    /// @brief Expired and reclaimed lease.
+    static const uint32_t STATE_EXPIRED_RECLAIMED;
+
+    /// @brief Number of common states for DHCPv4 and DHCPv6.
+    ///
+    /// This constants holds the number of states used for both DHCPv4 and
+    /// DHCPv6 leases. If new states are defined, this value must be adjusted
+    /// accordingly.
+    static const unsigned int BASIC_STATES_NUM;
+    //@}
+
+    /// @brief Returns name(s) of the basic lease state(s).
+    ///
+    /// @param state A numeric value holding a state information. Multiple bits
+    /// may be set to indicate that the lease is in multiple states.
+    ///
+    /// @return Comma separated list of state names.
+    static std::string basicStatesToText(const uint32_t state);
+
     /// @brief Constructor
     ///
     /// @param addr IP address
@@ -139,6 +167,14 @@ struct Lease {
     /// system administrator.
     std::string comments_;
 
+    /// @brief Bitfield holding lease state(s).
+    ///
+    /// This is a bitfield which holds the lease state. Typically, a lease
+    /// remains in a single state, but it is possible set multiple states
+    /// for a single lease. In this case, multiple bits of this bitfield
+    /// will be set.
+    uint32_t state_;
+
     /// @brief Convert Lease to Printable Form
     ///
     /// @return String form of the lease
@@ -147,6 +183,12 @@ struct Lease {
     /// @brief returns true if the lease is expired
     /// @return true if the lease is expired
     bool expired() const;
+
+    /// @brief Indicates if the lease is in the "expired-reclaimed" state.
+    ///
+    /// @return true if the lease is in the "expired-reclaimed" state, false
+    /// otherwise.
+    bool stateExpiredReclaimed() const;
 
     /// @brief Returns true if the other lease has equal FQDN data.
     ///
@@ -165,6 +207,12 @@ struct Lease {
     ///
     /// @return const reference to the hardware address
     const std::vector<uint8_t>& getHWAddrVector() const;
+
+    /// @brief Returns lease expiration time.
+    ///
+    /// The lease expiration time is a sum of a client last transmission time
+    /// and valid lifetime.
+    int64_t getExpirationTime() const;
 };
 
 /// @brief Structure that holds a lease for IPv4 address
@@ -254,6 +302,19 @@ struct Lease4 : public Lease {
     ///
     /// @param other the @c Lease4 object to be copied.
     Lease4(const Lease4& other);
+
+    /// @brief Returns name of the lease states specific to DHCPv4.
+    ///
+    /// @todo Currently it simply returns common states for DHCPv4 and DHCPv6.
+    /// This method will have to be extended to handle DHCPv4 specific states
+    /// when they are defined.
+    ///
+    /// @param state Numeric value holding lease states.
+    /// @return Comma separated list of lease state names.
+    static std::string statesToText(const uint32_t state) {
+        return (Lease::basicStatesToText(state));
+    }
+
 
     /// @brief Returns a client identifier.
     ///
@@ -439,6 +500,18 @@ struct Lease6 : public Lease {
     ///
     /// Initialize fields that don't have a default constructor.
     Lease6();
+
+    /// @brief Returns name of the lease states specific to DHCPv6.
+    ///
+    /// @todo Currently it simply returns common states for DHCPv4 and DHCPv6.
+    /// This method will have to be extended to handle DHCPv6 specific states
+    /// when they are defined.
+    ///
+    /// @param state Numeric value holding lease states.
+    /// @return Comma separated list of lease state names.
+    static std::string statesToText(const uint32_t state) {
+        return (Lease::basicStatesToText(state));
+    }
 
     /// @brief Returns a reference to a vector representing a DUID.
     ///

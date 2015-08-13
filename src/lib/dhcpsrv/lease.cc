@@ -15,6 +15,7 @@
 #include <dhcpsrv/lease.h>
 #include <util/pointer_util.h>
 #include <sstream>
+#include <iostream>
 
 using namespace isc::util;
 using namespace std;
@@ -22,13 +23,21 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
+const uint32_t Lease::STATE_DEFAULT = 0x1;
+const uint32_t Lease::STATE_DECLINED = 0x2;
+const uint32_t Lease::STATE_EXPIRED_RECLAIMED = 0x4;
+
+const unsigned int Lease::BASIC_STATES_NUM = 3;
+
+
 Lease::Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
              uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
              const bool fqdn_fwd, const bool fqdn_rev,
              const std::string& hostname, const HWAddrPtr& hwaddr)
     :addr_(addr), t1_(t1), t2_(t2), valid_lft_(valid_lft), cltt_(cltt),
      subnet_id_(subnet_id), fixed_(false), hostname_(hostname),
-     fqdn_fwd_(fqdn_fwd), fqdn_rev_(fqdn_rev), hwaddr_(hwaddr) {
+     fqdn_fwd_(fqdn_fwd), fqdn_rev_(fqdn_rev), hwaddr_(hwaddr),
+     state_(STATE_DEFAULT) {
 }
 
 
@@ -52,11 +61,57 @@ Lease::typeToText(Lease::Type type) {
    }
 }
 
-bool Lease::expired() const {
+std::string
+Lease::basicStatesToText(const uint32_t state) {
+    // Stream will hold comma separated list of states.
+    std::ostringstream s;
+    // Iterate over all defined states.
+    for (int i = 0; i < BASIC_STATES_NUM; ++i) {
+        // Test each bit of the lease state to see if it is set.
+        uint32_t single_state = (state & (static_cast<uint32_t>(1) << i));
+        // Only proceed if the bit is set.
+        if (single_state > 0) {
+            // Comma sign is applied only if any state has been found.
+            if (static_cast<int>(s.tellp() > 0)) {
+                s << ",";
+            }
+            // Check which bit is set and append state name.
+            switch (single_state) {
+            case STATE_DEFAULT:
+                s << "default";
+                break;
 
-    // Let's use int64 to avoid problems with negative/large uint32 values
-    int64_t expire_time = cltt_ + valid_lft_;
-    return (expire_time < time(NULL));
+            case STATE_DECLINED:
+                s << "declined";
+                break;
+
+            case STATE_EXPIRED_RECLAIMED:
+                s << "expired-reclaimed";
+                break;
+
+            default:
+                // This shouldn't really happen.
+                s << "unknown";
+            }
+        }
+    }
+
+    return (s.tellp() > 0 ? s.str() : "(not set)");
+}
+
+bool
+Lease::expired() const {
+    return (getExpirationTime() < time(NULL));
+}
+
+bool
+Lease::stateExpiredReclaimed() const {
+    return ((state_ & STATE_EXPIRED_RECLAIMED) != 0);
+}
+
+int64_t
+Lease::getExpirationTime() const {
+    return (static_cast<int64_t>(cltt_) + valid_lft_);
 }
 
 bool
@@ -69,11 +124,13 @@ Lease::hasIdenticalFqdn(const Lease& other) const {
 Lease4::Lease4(const Lease4& other)
     : Lease(other.addr_, other.t1_, other.t2_, other.valid_lft_,
             other.subnet_id_, other.cltt_, other.fqdn_fwd_,
-            other.fqdn_rev_, other.hostname_, other.hwaddr_),
-            ext_(other.ext_) {
+            other.fqdn_rev_, other.hostname_, other.hwaddr_) {
 
-    fixed_ = other.fixed_;
+    // Copy over fields derived from Lease.
+    ext_ = other.ext_;
     comments_ = other.comments_;
+    fixed_ = other.fixed_;
+    state_ = other.state_;
 
     // Copy the hardware address if it is defined.
     if (other.hwaddr_) {
@@ -161,6 +218,7 @@ Lease4::operator=(const Lease4& other) {
         fqdn_rev_ = other.fqdn_rev_;
         comments_ = other.comments_;
         ext_ = other.ext_;
+        state_ = other.state_;
 
         // Copy the hardware address if it is defined.
         if (other.hwaddr_) {
@@ -239,7 +297,8 @@ Lease6::toText() const {
            << "Valid life:    " << valid_lft_ << "\n"
            << "Cltt:          " << cltt_ << "\n"
            << "Hardware addr: " << (hwaddr_?hwaddr_->toText(false):"(none)") << "\n"
-           << "Subnet ID:     " << subnet_id_ << "\n";
+           << "Subnet ID:     " << subnet_id_ << "\n"
+           << "State:         " << statesToText(state_) << "\n";
 
     return (stream.str());
 }
@@ -255,7 +314,8 @@ Lease4::toText() const {
            << "Cltt:          " << cltt_ << "\n"
            << "Hardware addr: " << (hwaddr_ ? hwaddr_->toText(false) : "(none)") << "\n"
            << "Client id:     " << (client_id_ ? client_id_->toText() : "(none)") << "\n"
-           << "Subnet ID:     " << subnet_id_ << "\n";
+           << "Subnet ID:     " << subnet_id_ << "\n"
+           << "State:         " << statesToText(state_) << "\n";
 
     return (stream.str());
 }
@@ -276,7 +336,8 @@ Lease4::operator==(const Lease4& other) const {
             hostname_ == other.hostname_ &&
             fqdn_fwd_ == other.fqdn_fwd_ &&
             fqdn_rev_ == other.fqdn_rev_ &&
-            comments_ == other.comments_);
+            comments_ == other.comments_ &&
+            state_ == other.state_);
 }
 
 bool
@@ -297,7 +358,8 @@ Lease6::operator==(const Lease6& other) const {
             hostname_ == other.hostname_ &&
             fqdn_fwd_ == other.fqdn_fwd_ &&
             fqdn_rev_ == other.fqdn_rev_ &&
-            comments_ == other.comments_);
+            comments_ == other.comments_ &&
+            state_ == other.state_);
 }
 
 std::ostream&
