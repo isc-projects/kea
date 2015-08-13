@@ -263,6 +263,13 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
 }
 
 Dhcpv4Srv::~Dhcpv4Srv() {
+    try {
+        stopD2();
+    } catch(const std::exception& ex) {
+        // Highly unlikely, but lets Report it but go on
+        LOG_ERROR(dhcp4_logger, DHCP4_SRV_D2STOP_ERROR).arg(ex.what());
+    }
+
     IfaceMgr::instance().closeSockets();
 }
 
@@ -2255,6 +2262,15 @@ Dhcpv4Srv::startD2() {
         // This may throw so wherever this is called needs to ready.
         d2_mgr.startSender(boost::bind(&Dhcpv4Srv::d2ClientErrorHandler,
                                        this, _1, _2));
+    }
+}
+
+void
+Dhcpv4Srv::stopD2() {
+    D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    if (d2_mgr.ddnsEnabled()) {
+        // Updates are enabled, so lets stop the sender
+        d2_mgr.stopSender();
     }
 }
 

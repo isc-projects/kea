@@ -37,7 +37,11 @@ CONFIG="{
         {
             \"subnet\": \"10.0.0.0/8\",
             \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
-        } ]
+        } ],
+       \"dhcp-ddns\": {
+            \"enable-updates\": true,
+            \"qualifying-suffix\": \"\"
+        }
     },
 
     \"Logging\":
