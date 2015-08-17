@@ -617,11 +617,12 @@ Dhcpv4Srv::run() {
                 // "switch" statement.
                 ;
             }
-        } catch (const isc::Exception& e) {
+        } catch (const std::exception& e) {
 
-            // Catch-all exception (at least for ones based on the isc Exception
-            // class, which covers more or less all that are explicitly raised
-            // in the Kea code).  Just log the problem and ignore the packet.
+            // Catch-all exception (we used to call only isc::Exception, but
+            // std::exception could potentially be raised and if we don't catch
+            // it here, it would be caught in main() and the process would
+            // terminate).  Just log the problem and ignore the packet.
             // (The problem is logged as a debug message because debug is
             // disabled by default - it prevents a DDOS attack based on the
             // sending of problem packets.)
