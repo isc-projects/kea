@@ -22,18 +22,30 @@ namespace isc {
 
 const char*
 Exception::what() const throw() {
+    return (what(false));
+}
+
+const char*
+Exception::what(bool verbose) const throw() {
+
     const char* whatstr = "isc::Exception";
 
-    // XXX: even though it's very unlikely that c_str() throws an exception,
+    // XXX: Even though it's very unlikely that c_str() throws an exception,
     // it's still not 100% guaranteed.  To meet the exception specification
     // of this function, we catch any unexpected exception and fall back to
     // the pre-defined constant.
     try {
-        whatstr = what_.c_str();
+        if (verbose) {
+            static std::stringstream location;
+            location.str("");
+            location << what_ << "[" << file_ << ":" << line_ << "]";
+            whatstr = location.str().c_str();
+        } else {
+            whatstr = what_.c_str();
+        }
     } catch (...) {
         // no exception handling is necessary.  just have to catch exceptions.
     }
-
     return (whatstr);
 }
 
