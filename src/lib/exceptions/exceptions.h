@@ -73,6 +73,16 @@ public:
     ///
     /// @return A C-style character string of the exception cause.
     virtual const char* what() const throw();
+
+    /// \brief Returns a C-style charater string of the cause of exception.
+    ///
+    /// With verbose set to true, also returns file name and line numbers.
+    /// Note that we can't simply define a single what() method with parameters,
+    /// as the compiler would complain that it shadows the base class method.
+    ///
+    /// \param verbose if set to true, filename and line number will be added.
+    /// \return A C-style character string of the exception cause.
+    virtual const char* what(bool verbose) const throw();
     //@}
 
     ///
