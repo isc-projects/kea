@@ -1,11 +1,6 @@
 #ifndef BOOST_ARCHIVE_ITERATORS_BINARY_FROM_BASE16_HPP
 #define BOOST_ARCHIVE_ITERATORS_BINARY_FROM_BASE16_HPP
 
-// MS compatible compilers support #pragma once
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
-# pragma once
-#endif
-
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
 // binary_from_base16.h (derived from boost binary_from_base64.hpp)
 
@@ -45,10 +40,7 @@ struct to_4_bit {
             -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 50-5f
             -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1  // 60-6f
         };
-        // metrowerks trips this assertion - how come?
-        #if ! defined(__MWERKS__)
         BOOST_STATIC_ASSERT(0x70 == sizeof(lookup_table));
-        #endif
         signed char value = -1;
         if((unsigned)t < sizeof(lookup_table))
             value = lookup_table[(unsigned)t];
@@ -93,9 +85,9 @@ class binary_from_base16 : public
 public:
     // make composable by using templated constructor
     template<class T>
-    binary_from_base16(BOOST_PFTO_WRAPPER(T)  start) :
+    binary_from_base16(T start) :
         super_t(
-            Base(BOOST_MAKE_PFTO_WRAPPER(static_cast<T>(start))), 
+            Base(static_cast<T>(start)),
             detail::to_4_bit<CharType>()
         )
     {}
