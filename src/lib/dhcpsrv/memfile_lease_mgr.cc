@@ -320,10 +320,9 @@ Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_ADDR4).arg(addr.toText());
 
-    typedef Lease4Storage::nth_index<0>::type SearchIndex;
-    const SearchIndex& idx = storage4_.get<0>();
-    Lease4Storage::iterator l = idx.find(addr);
-    if (l == storage4_.end()) {
+    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
+    Lease4StorageAddressIndex::iterator l = idx.find(addr);
+    if (l == idx.end()) {
         return (Lease4Ptr());
     } else {
         return (Lease4Ptr(new Lease4(**l)));
@@ -334,10 +333,9 @@ Lease4Collection
 Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_HWADDR).arg(hwaddr.toText());
-    typedef Lease4Storage::nth_index<0>::type SearchIndex;
     Lease4Collection collection;
-    const SearchIndex& idx = storage4_.get<0>();
-    for(SearchIndex::const_iterator lease = idx.begin();
+    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
+    for(Lease4StorageAddressIndex::const_iterator lease = idx.begin();
         lease != idx.end(); ++lease) {
 
         // Every Lease4 has a hardware address, so we can compare it
@@ -355,14 +353,11 @@ Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
               DHCPSRV_MEMFILE_GET_SUBID_HWADDR).arg(subnet_id)
         .arg(hwaddr.toText());
 
-    // We are going to use index #1 of the multi index container.
-    // We define SearchIndex locally in this function because
-    // currently only this function uses this index.
-    typedef Lease4Storage::nth_index<1>::type SearchIndex;
-    // Get the index.
-    const SearchIndex& idx = storage4_.get<1>();
+    // Get the index by HW Address and Subnet Identifier.
+    const Lease4StorageHWAddressSubnetIdIndex& idx =
+        storage4_.get<HWAddressSubnetIdIndexTag>();
     // Try to find the lease using HWAddr and subnet id.
-    SearchIndex::const_iterator lease =
+    Lease4StorageHWAddressSubnetIdIndex::const_iterator lease =
         idx.find(boost::make_tuple(hwaddr.hwaddr_, subnet_id));
     // Lease was not found. Return empty pointer to the caller.
     if (lease == idx.end()) {
@@ -377,10 +372,9 @@ Lease4Collection
 Memfile_LeaseMgr::getLease4(const ClientId& client_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_CLIENTID).arg(client_id.toText());
-    typedef Lease4Storage::nth_index<0>::type SearchIndex;
     Lease4Collection collection;
-    const SearchIndex& idx = storage4_.get<0>();
-    for(SearchIndex::const_iterator lease = idx.begin();
+    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
+    for(Lease4StorageAddressIndex::const_iterator lease = idx.begin();
         lease != idx.end(); ++ lease) {
 
         // client-id is not mandatory in DHCPv4. There can be a lease that does
@@ -402,14 +396,11 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id,
                                                         .arg(hwaddr.toText())
                                                         .arg(subnet_id);
 
-    // We are going to use index #3 of the multi index container.
-    // We define SearchIndex locally in this function because
-    // currently only this function uses this index.
-    typedef Lease4Storage::nth_index<3>::type SearchIndex;
-    // Get the index.
-    const SearchIndex& idx = storage4_.get<3>();
+    // Get the index by client id, HW address and subnet id.
+    const Lease4StorageClientIdHWAddressSubnetIdIndex& idx =
+        storage4_.get<ClientIdHWAddressSubnetIdIndexTag>();
     // Try to get the lease using client id, hardware address and subnet id.
-    SearchIndex::const_iterator lease =
+    Lease4StorageClientIdHWAddressSubnetIdIndex::const_iterator lease =
         idx.find(boost::make_tuple(client_id.getClientId(), hwaddr.hwaddr_,
                                    subnet_id));
 
@@ -429,14 +420,11 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id,
               DHCPSRV_MEMFILE_GET_SUBID_CLIENTID).arg(subnet_id)
               .arg(client_id.toText());
 
-    // We are going to use index #2 of the multi index container.
-    // We define SearchIndex locally in this function because
-    // currently only this function uses this index.
-    typedef Lease4Storage::nth_index<2>::type SearchIndex;
-    // Get the index.
-    const SearchIndex& idx = storage4_.get<2>();
+    // Get the index by client and subnet id.
+    const Lease4StorageClientIdSubnetIdIndex& idx =
+        storage4_.get<ClientIdSubnetIdIndexTag>();
     // Try to get the lease using client id and subnet id.
-    SearchIndex::const_iterator lease =
+    Lease4StorageClientIdSubnetIdIndex::const_iterator lease =
         idx.find(boost::make_tuple(client_id.getClientId(), subnet_id));
     // Lease was not found. Return empty pointer to the caller.
     if (lease == idx.end()) {
@@ -470,15 +458,15 @@ Memfile_LeaseMgr::getLeases6(Lease::Type type,
         .arg(duid.toText())
         .arg(Lease::typeToText(type));
 
-    // We are going to use index #1 of the multi index container.
-    typedef Lease6Storage::nth_index<1>::type SearchIndex;
-    // Get the index.
-    const SearchIndex& idx = storage6_.get<1>();
+    // Get the index by DUID, IAID, lease type.
+    const Lease6StorageDuidIaidTypeIndex& idx = storage6_.get<DuidIaidTypeIndexTag>();
     // Try to get the lease using the DUID, IAID and lease type.
-    std::pair<SearchIndex::iterator, SearchIndex::iterator> l =
+    std::pair<Lease6StorageDuidIaidTypeIndex::const_iterator,
+              Lease6StorageDuidIaidTypeIndex::const_iterator> l =
         idx.equal_range(boost::make_tuple(duid.getDuid(), iaid, type));
     Lease6Collection collection;
-    for(SearchIndex::iterator lease = l.first; lease != l.second; ++lease) {
+    for(Lease6StorageDuidIaidTypeIndex::const_iterator lease =
+            l.first; lease != l.second; ++lease) {
         collection.push_back(Lease6Ptr(new Lease6(**lease)));
     }
 
@@ -496,15 +484,15 @@ Memfile_LeaseMgr::getLeases6(Lease::Type type,
         .arg(duid.toText())
         .arg(Lease::typeToText(type));
 
-    // We are going to use index #1 of the multi index container.
-    typedef Lease6Storage::nth_index<1>::type SearchIndex;
-    // Get the index.
-    const SearchIndex& idx = storage6_.get<1>();
+    // Get the index by DUID, IAID, lease type.
+    const Lease6StorageDuidIaidTypeIndex& idx = storage6_.get<DuidIaidTypeIndexTag>();
     // Try to get the lease using the DUID, IAID and lease type.
-    std::pair<SearchIndex::iterator, SearchIndex::iterator> l =
+    std::pair<Lease6StorageDuidIaidTypeIndex::const_iterator,
+              Lease6StorageDuidIaidTypeIndex::const_iterator> l =
         idx.equal_range(boost::make_tuple(duid.getDuid(), iaid, type));
     Lease6Collection collection;
-    for(SearchIndex::iterator lease = l.first; lease != l.second; ++lease) {
+    for(Lease6StorageDuidIaidTypeIndex::const_iterator lease =
+            l.first; lease != l.second; ++lease) {
         // Filter out the leases which subnet id doesn't match.
         if((*lease)->subnet_id_ == subnet_id) {
             collection.push_back(Lease6Ptr(new Lease6(**lease)));
