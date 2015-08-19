@@ -35,8 +35,20 @@ namespace dhcp {
 /// @brief Tag for indexes by address.
 struct AddressIndexTag { };
 
+/// @brief Tag for indexes by DUID, IAID, lease type tuple.
+struct DuidIaidTypeIndexTag { };
+
 /// @brief Tag for indexes by expiration time.
 struct ExpirationIndexTag { };
+
+/// @brief Tag for indexes by HW address, subnet identifier tuple.
+struct HWAddressSubnetIdIndexTag { };
+
+/// @brief Tag for indexes by client and subnet identifiers.
+struct ClientIdSubnetIdIndexTag { };
+
+/// @brief Tag for indexes by client id, HW address and subnet id.
+struct ClientIdHWAddressSubnetIdIndexTag { };
 
 /// @name Multi index containers holding DHCPv4 and DHCPv6 leases.
 ///
@@ -61,6 +73,7 @@ typedef boost::multi_index_container<
 
         // Specification of the second index starts here.
         boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<DuidIaidTypeIndexTag>,
             // This is a composite index that will be used to search for
             // the lease using three attributes: DUID, IAID and lease type.
             boost::multi_index::composite_key<
@@ -120,6 +133,7 @@ typedef boost::multi_index_container<
 
         // Specification of the second index starts here.
         boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<HWAddressSubnetIdIndexTag>,
             // This is a composite index that combines two attributes of the
             // Lease4 object: hardware address and subnet id.
             boost::multi_index::composite_key<
@@ -140,6 +154,7 @@ typedef boost::multi_index_container<
 
         // Specification of the third index starts here.
         boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<ClientIdSubnetIdIndexTag>,
             // This is a composite index that uses two values to search for a
             // lease: client id and subnet id.
             boost::multi_index::composite_key<
@@ -155,6 +170,7 @@ typedef boost::multi_index_container<
 
         // Specification of the fourth index starts here.
         boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<ClientIdHWAddressSubnetIdIndexTag>,
             // This is a composite index that uses three values to search for a
             // lease: client id, HW address and subnet id.
             boost::multi_index::composite_key<
@@ -203,6 +219,9 @@ typedef boost::multi_index_container<
 /// @brief DHCPv6 lease storage index by address.
 typedef Lease6Storage::index<AddressIndexTag>::type Lease6StorageAddressIndex;
 
+/// @brief DHCPv6 lease storage index by DUID, IAID, lease type.
+typedef Lease6Storage::index<DuidIaidTypeIndexTag>::type Lease6StorageDuidIaidTypeIndex;
+
 /// @brief DHCPv6 lease storage index by expiration time.
 typedef Lease6Storage::index<ExpirationIndexTag>::type Lease6StorageExpirationIndex;
 
@@ -211,6 +230,18 @@ typedef Lease4Storage::index<AddressIndexTag>::type Lease4StorageAddressIndex;
 
 /// @brief DHCPv4 lease storage index by exiration time.
 typedef Lease4Storage::index<ExpirationIndexTag>::type Lease4StorageExpirationIndex;
+
+/// @brief DHCPv4 lease storage index by HW address and subnet identifier.
+typedef Lease4Storage::index<HWAddressSubnetIdIndexTag>::type
+Lease4StorageHWAddressSubnetIdIndex;
+
+/// @brief DHCPv4 lease storage index by client and subnet identifier.
+typedef Lease4Storage::index<ClientIdSubnetIdIndexTag>::type
+Lease4StorageClientIdSubnetIdIndex;
+
+/// @brief DHCPv4 lease storage index by client id, HW address and subnet id.
+typedef Lease4Storage::index<ClientIdHWAddressSubnetIdIndexTag>::type
+Lease4StorageClientIdHWAddressSubnetIdIndex;
 
 //@}
 } // end of isc::dhcp namespace
