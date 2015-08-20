@@ -90,11 +90,11 @@ protected:
         cstr_ = base_dir + "/" + "config_file";     // config
 
         v4_hdr_ = "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname\n";
+                  "fqdn_fwd,fqdn_rev,hostname,state\n";
 
         v6_hdr_ = "address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-                  "fqdn_rev,hostname,hwaddr\n";
+                  "fqdn_rev,hostname,hwaddr,state\n";
 
         // and remove any outstanding test files
         removeTestFile();
@@ -402,26 +402,26 @@ TEST_F(LFCControllerTest, launch4) {
     // We have several entries for different leases, the naming is:
     // <lease letter>_<version#>
     string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                 "200,200,8,1,1,host.example.com\n";
+                 "200,200,8,1,1,host.example.com,1\n";
     string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                 "200,500,8,1,1,host.example.com\n";
+                 "200,500,8,1,1,host.example.com,1\n";
     string a_3 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                 "200,800,8,1,1,host.example.com\n";
+                 "200,800,8,1,1,host.example.com,1\n";
 
     string b_1 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                 "100,100,7,0,0,\n";
+                 "100,100,7,0,0,,1\n";
     string b_2 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                 "100,135,7,0,0,\n";
+                 "100,135,7,0,0,,1\n";
     string b_3 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                 "100,150,7,0,0,\n";
+                 "100,150,7,0,0,,1\n";
 
     string c_1 = "192.0.2.3,,a:11:01:04,"
-                 "200,200,8,1,1,host.example.com\n";
+                 "200,200,8,1,1,host.example.com,1\n";
 
     string d_1 = "192.0.2.5,16:17:18:19:1a:bc,,"
-                 "200,200,8,1,1,host.example.com\n";
+                 "200,200,8,1,1,host.example.com,1\n";
     string d_2 = "192.0.2.5,16:17:18:19:1a:bc,,"
-                 "0,200,8,1,1,host.example.com\n";
+                 "0,200,8,1,1,host.example.com,1\n";
 
     // Subtest 1: both previous and copy available.
     // Create the test previous file
@@ -556,27 +556,27 @@ TEST_F(LFCControllerTest, launch6) {
     // We have several entries for different leases, the naming is:
     // <lease letter>_<version#>.
     string a_1 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                 "200,200,8,100,0,7,0,1,1,host.example.com,\n";
-    string a_2 = "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com,\n";
+                 "200,200,8,100,0,7,0,1,1,host.example.com,,1\n";
+    string a_2 = "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com,,1\n";
     string a_3 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                 "200,400,8,100,0,7,0,1,1,host.example.com,\n";
+                 "200,400,8,100,0,7,0,1,1,host.example.com,,1\n";
     string a_4 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                 "0,200,8,100,0,7,0,1,1,host.example.com,\n";
+                 "0,200,8,100,0,7,0,1,1,host.example.com,,1\n";
 
     string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                 "300,300,6,150,0,8,0,0,0,,\n";
+                 "300,300,6,150,0,8,0,0,0,,,1\n";
     string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                 "300,800,6,150,0,8,0,0,0,,\n";
+                 "300,800,6,150,0,8,0,0,0,,,1\n";
     string b_3 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                 "300,1000,6,150,0,8,0,0,0,,\n";
+                 "300,1000,6,150,0,8,0,0,0,,,1\n";
 
     string c_1 = "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                 "100,200,8,0,2,16,64,0,0,,\n";
+                 "100,200,8,0,2,16,64,0,0,,,1\n";
     string c_2 = "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                 "100,400,8,0,2,16,64,0,0,,\n";
+                 "100,400,8,0,2,16,64,0,0,,,1\n";
 
     string d_1 = "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                 "200,600,8,100,0,7,0,1,1,host.example.com,\n";
+                 "200,600,8,100,0,7,0,1,1,host.example.com,,1\n";
 
     // Subtest 1: bot previous and copy available
     // Create the test previous file
