@@ -376,6 +376,17 @@ public:
     /// @ref CfgSubnets6::removeStatistics for details.
     void removeStatistics();
 
+    /// @brief Sets decline probation-period
+    /// @param decline_timer number of seconds after declined lease is restored
+    void setDeclinePeriod(uint32_t decline_timer) {
+        decline_timer_ = decline_timer;
+    }
+
+    /// @brief
+    uint32_t getDeclinePeriod() const {
+        return (decline_timer_);
+    }
+
 private:
 
     /// @brief Sequence number identifying the configuration.
@@ -425,6 +436,9 @@ private:
 
     /// @brief Pointer to the control-socket information
     isc::data::ConstElementPtr control_socket_;
+
+    /// @brief Decline Period time
+    uint32_t decline_timer_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

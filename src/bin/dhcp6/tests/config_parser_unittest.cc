@@ -27,6 +27,7 @@
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_hosts.h>
+#include <dhcpsrv/defaults.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
@@ -3981,5 +3982,50 @@ TEST_F(Dhcp6ParserTest, rsooBogusName) {
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
+
+/// Check that the decline-probation-period value can be set properly.
+TEST_F(Dhcp6ParserTest, declineTimerDefault) {
+
+    ConstElementPtr status;
+
+    string config_txt = "{ " + genIfaceConfig() + ","
+        "\"subnet6\": [  ] "
+        "}";
+    ElementPtr config = Element::fromJSON(config_txt);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-perion must be equal to the
+    // default value.
+    EXPECT_EQ(DEFAULT_DECLINE_PROBATION_PERIOD,
+              CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+}
+
+/// Check that the decline-probation-period value can be set properly.
+TEST_F(Dhcp6ParserTest, declineTimer) {
+    ConstElementPtr status;
+
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"decline-probation-period\": 12345,"
+        "\"subnet6\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-perion must be equal to the
+    // value specified.
+    EXPECT_EQ(12345,
+              CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+}
+
+
 
 };

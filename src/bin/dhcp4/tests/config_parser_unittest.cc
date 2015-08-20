@@ -32,6 +32,7 @@
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/testutils/config_result_check.h>
+#include <dhcpsrv/defaults.h>
 #include <hooks/hooks_manager.h>
 
 #include "marker_file.h"
@@ -3646,5 +3647,50 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
     ASSERT_TRUE(subnet);
     EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
 }
+
+/// Check that the decline-probation-period has a default value when not
+/// specified.
+TEST_F(Dhcp4ParserTest, declineTimerDefault) {
+    ConstElementPtr status;
+
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"subnet4\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-perion must be equal to the
+    // default value.
+    EXPECT_EQ(DEFAULT_DECLINE_PROBATION_PERIOD,
+              CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+}
+
+/// Check that the decline-probation-period value can be set properly.
+TEST_F(Dhcp4ParserTest, declineTimer) {
+    ConstElementPtr status;
+
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"decline-probation-period\": 12345,"
+        "\"subnet4\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-perion must be equal to the
+    // value specified.
+    EXPECT_EQ(12345,
+              CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+}
+
 
 }
