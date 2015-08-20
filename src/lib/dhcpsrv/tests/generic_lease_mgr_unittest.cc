@@ -1665,7 +1665,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     ASSERT_GE(leases.size(), 6);
 
     // Use the same current time for all leases.
-    time_t current_time = time_t(NULL);
+    time_t current_time = time(NULL);
 
     // Add them to the database
     for (size_t i = 0; i < leases.size(); ++i) {
@@ -1702,7 +1702,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     }
 
     // Update current time for the next test.
-    current_time = time_t(NULL);
+    current_time = time(NULL);
     // Also, remove expired leases collected during the previous test.
     expired_leases.clear();
 
@@ -1785,7 +1785,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     ASSERT_GE(leases.size(), 6);
 
     // Use the same current time for all leases.
-    time_t current_time = time_t(NULL);
+    time_t current_time = time(NULL);
 
     // Add them to the database
     for (size_t i = 0; i < leases.size(); ++i) {
@@ -1822,7 +1822,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     }
 
     // Update current time for the next test.
-    current_time = time_t(NULL);
+    current_time = time(NULL);
     // Also, remove expired leases collected during the previous test.
     expired_leases.clear();
 
@@ -1897,6 +1897,163 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     }
 }
 
+void
+GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+    // Make sure we have at least 6 leases there.
+    ASSERT_GE(leases.size(), 6);
+
+    time_t current_time = time(NULL);
+
+    // Add them to the database
+    for (size_t i = 0; i < leases.size(); ++i) {
+        // Mark every other lease as expired.
+        if (i % 2 == 0) {
+            // Set client last transmission time to the value older than the
+            // valid lifetime to make it expired. We also substract the value
+            // of 10, 20, 30, 40 etc, depending on the lease index. This
+            // simulates different expiration times for various leases.
+            leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - i * 10;
+            // Set reclaimed state.
+            leases[i]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+
+        } else {
+            // Other leases are left as not expired - client last transmission
+            // time set to current time.
+            leases[i]->cltt_ = current_time;
+        }
+        ASSERT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Keep reclaimed lease for 15 seconds after expiration.
+    const uint32_t lease_affinity_time = 15;
+
+    // Delete expired and reclaimed leases which have expired earlier than
+    // 15 seconds ago. This should affect leases with index 2, 3, 4 etc.
+    ASSERT_NO_THROW(lmptr_->deleteExpiredReclaimedLeases4(lease_affinity_time));
+
+    for (size_t i = 0; i < leases.size(); ++i) {
+        // Obtain lease from the server.
+        Lease4Ptr lease = lmptr_->getLease4(leases[i]->addr_);
+
+        // If the lease is reclaimed and the expiration time passed more than
+        // 15 seconds ago, the lease should have been deleted.
+        if (leases[i]->stateExpiredReclaimed() &&
+            ((leases[i]->getExpirationTime() + lease_affinity_time) < current_time)) {
+            EXPECT_FALSE(lease) << "Lease with index " << i
+                << " should have been deleted, but it was not";
+
+        } else {
+            // If the lease is not reclaimed or it has expired less than
+            // 15 seconds ago, the lease should still be there.
+            EXPECT_TRUE(lease) << "Lease with index " << i
+                << " shouldn't have been deleted, but it was";
+        }
+    }
+
+    // Make sure we can make another attempt, when there are no more leases
+    // to be deleted.
+    ASSERT_NO_THROW(lmptr_->deleteExpiredReclaimedLeases4(lease_affinity_time));
+
+    for (size_t i = 0; i < leases.size(); ++i) {
+        // Obtain lease from the server.
+        Lease4Ptr lease = lmptr_->getLease4(leases[i]->addr_);
+
+        // If the lease is reclaimed and the expiration time passed more than
+        // 15 seconds ago, the lease should have been deleted.
+        if (leases[i]->stateExpiredReclaimed() &&
+            ((leases[i]->getExpirationTime() + lease_affinity_time) < current_time)) {
+            EXPECT_FALSE(lease) << "Lease with index " << i
+                << " should have been deleted, but it was not";
+
+        } else {
+            // If the lease is not reclaimed or it has expired less than
+            // 15 seconds ago, the lease should still be there.
+            EXPECT_TRUE(lease) << "Lease with index " << i
+                << " shouldn't have been deleted, but it was";
+        }
+    }
+}
+
+void
+GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases6() {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+    // Make sure we have at least 6 leases there.
+    ASSERT_GE(leases.size(), 6);
+
+    time_t current_time = time(NULL);
+
+    // Add them to the database
+    for (size_t i = 0; i < leases.size(); ++i) {
+        // Mark every other lease as expired.
+        if (i % 2 == 0) {
+            // Set client last transmission time to the value older than the
+            // valid lifetime to make it expired. We also substract the value
+            // of 10, 20, 30, 40 etc, depending on the lease index. This
+            // simulates different expiration times for various leases.
+            leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - i * 10;
+            // Set reclaimed state.
+            leases[i]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+
+        } else {
+            // Other leases are left as not expired - client last transmission
+            // time set to current time.
+            leases[i]->cltt_ = current_time;
+        }
+        ASSERT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Keep reclaimed lease for 15 seconds after expiration.
+    const uint32_t lease_affinity_time = 15;
+
+    // Delete expired and reclaimed leases which have expired earlier than
+    // 15 seconds ago. This should affect leases with index 2, 3, 4 etc.
+    ASSERT_NO_THROW(lmptr_->deleteExpiredReclaimedLeases6(lease_affinity_time));
+
+    for (size_t i = 0; i < leases.size(); ++i) {
+        // Obtain lease from the server.
+        Lease6Ptr lease = lmptr_->getLease6(leases[i]->type_, leases[i]->addr_);
+
+        // If the lease is reclaimed and the expiration time passed more than
+        // 15 seconds ago, the lease should have been deleted.
+        if (leases[i]->stateExpiredReclaimed() &&
+            ((leases[i]->getExpirationTime() + lease_affinity_time) < current_time)) {
+            EXPECT_FALSE(lease) << "Lease with index " << i
+                << " should have been deleted, but it was not";
+
+        } else {
+            // If the lease is not reclaimed or it has expired less than
+            // 15 seconds ago, the lease should still be there.
+            EXPECT_TRUE(lease) << "Lease with index " << i
+                << " shouldn't have been deleted, but it was";
+        }
+    }
+
+    // Make sure we can make another attempt, when there are no more leases
+    // to be deleted.
+    ASSERT_NO_THROW(lmptr_->deleteExpiredReclaimedLeases6(lease_affinity_time));
+
+    for (size_t i = 0; i < leases.size(); ++i) {
+        // Obtain lease from the server.
+        Lease6Ptr lease = lmptr_->getLease6(leases[i]->type_, leases[i]->addr_);
+
+        // If the lease is reclaimed and the expiration time passed more than
+        // 15 seconds ago, the lease should have been deleted.
+        if (leases[i]->stateExpiredReclaimed() &&
+            ((leases[i]->getExpirationTime() + lease_affinity_time) < current_time)) {
+            EXPECT_FALSE(lease) << "Lease with index " << i
+                << " should have been deleted, but it was not";
+
+        } else {
+            // If the lease is not reclaimed or it has expired less than
+            // 15 seconds ago, the lease should still be there.
+            EXPECT_TRUE(lease) << "Lease with index " << i
+                << " shouldn't have been deleted, but it was";
+        }
+    }
+}
 
 }; // namespace test
 }; // namespace dhcp

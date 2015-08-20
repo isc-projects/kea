@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-215 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -284,6 +284,22 @@ public:
     ///   least expired
     /// - reclaimed leases are not returned.
     void testGetExpiredLeases6();
+
+    /// @brief Checks that selected expired-reclaimed DHCPv6 leases
+    /// are removed.
+    ///
+    /// This creates a number of DHCPv6 leases and marks some of them
+    /// as expired-reclaimed. It later verifies that the expired-reclaimed
+    /// leases can be removed.
+    void testDeleteExpiredReclaimedLeases6();
+
+    /// @brief Checks that selected expired-reclaimed DHCPv4 leases
+    /// are removed.
+    ///
+    /// This creates a number of DHCPv4 leases and marks some of them
+    /// as expired-reclaimed. It later verifies that the expired-reclaimed
+    /// leases can be removed.
+    void testDeleteExpiredReclaimedLeases4();
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;

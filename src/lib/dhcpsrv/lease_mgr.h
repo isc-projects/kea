@@ -364,6 +364,20 @@ public:
     /// @return true if deletion was successful, false if no such lease exists
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr) = 0;
 
+    /// @brief Deletes all expired and reclaimed DHCPv4 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    virtual void deleteExpiredReclaimedLeases4(const uint32_t secs) = 0;
+
+    /// @brief Deletes all expired and reclaimed DHCPv6 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    virtual void deleteExpiredReclaimedLeases6(const uint32_t secs) = 0;
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
