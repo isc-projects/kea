@@ -382,7 +382,24 @@ bool Dhcpv6Srv::run() {
         // is called. If the function was called before receivePacket the
         // process could wait up to the duration of timeout of select() to
         // terminate.
-        handleSignal();
+        try {
+            handleSignal();
+                    } catch (const isc::Exception& e) {
+            // ISC-derived exception occurred. The nature of this exception
+            // indicates that it originated from ISC code. If this happens,
+            // it will be easy to fix as it is in the code that is under
+            // ISC control.
+            LOG_ERROR(dhcp6_logger, DHCP6_HANDLE_SIGNAL_EXCEPTION_ISC)
+                .arg(e.what());
+        } catch (const std::exception& e) {
+            // Standard exception occurred. The nature of this exception
+            // indicates that it was caused in non-ISC code. Fixing this
+            // issue will be somewhat more difficult than the one caused
+            // by ISC code.
+            LOG_ERROR(dhcp6_logger, DHCP6_HANDLE_SIGNAL_EXCEPTION_STD)
+                .arg(e.what());
+        }
+
 
         // Execute ready timers for the lease database, e.g. Lease File Cleanup.
         try {
@@ -585,11 +602,12 @@ bool Dhcpv6Srv::run() {
             // Increase the statistic of dropped packets.
             StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
 
-        } catch (const isc::Exception& e) {
+        } catch (const std::exception& e) {
 
             // Catch-all exception (at least for ones based on the isc Exception
             // class, which covers more or less all that are explicitly raised
-            // in the Kea code).  Just log the problem and ignore the packet.
+            // in the Kea code), but also the standard one, which may possibly be
+            // thrown from boost code.  Just log the problem and ignore the packet.
             // (The problem is logged as a debug message because debug is
             // disabled by default - it prevents a DDOS attack based on the
             // sending of problem packets.)
