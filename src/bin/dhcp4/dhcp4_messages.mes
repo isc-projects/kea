@@ -394,10 +394,6 @@ will not send a response but will instead ignore the packet. The first
 argument contains the client and transaction identification information.
 The second argument includes the details of the error.
 
-% DHCP4_PACKET_DROP_NO_TYPE packet received on interface %1 dropped, because of missing msg-type option
-This is a debug message informing that incoming DHCPv4 packet did not
-have mandatory DHCP message type option and thus was dropped.
-
 % DHCP4_PACKET_NAK_0001 %1: failed to select a subnet for incoming packet, src %2, type %3
 This error message is output when a packet was received from a subnet
 for which the DHCPv4 server has not been configured. The most probable
@@ -440,12 +436,6 @@ the client and the transaction identification information.
 This error message is issued when preparing an on-wire format of the packet
 has failed. The first argument identifies the client and the DHCP transaction.
 The second argument includes the error string.
-
-% DHCP4_PACKET_RECEIVE_INTERRUPT packet reception interrupted by signal: %1
-This informative message indicates that wait for incoming packet was interrupted
-by a signal. This is normal behavior when a signal is received and may
-happen during reconfiguration, shutdown or when LFC is being terminated.
-The server run will attempt to receive packets again.
 
 % DHCP4_PACKET_RECEIVED %1: %2 (type %3) received from %4 to %5 on interface %6
 A debug message noting that the server has received the specified type of
