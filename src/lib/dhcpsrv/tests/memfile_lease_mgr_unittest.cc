@@ -905,6 +905,18 @@ TEST_F(MemfileLeaseMgrTest, getExpiredLeases6) {
     testGetExpiredLeases6();
 }
 
+/// @brief Check that expired reclaimed DHCPv6 leases are removed.
+TEST_F(MemfileLeaseMgrTest, deleteExpiredReclaimedLeases6) {
+    startBackend(V6);
+    testDeleteExpiredReclaimedLeases6();
+}
+
+/// @brief Check that expired reclaimed DHCPv4 leases are removed.
+TEST_F(MemfileLeaseMgrTest, deleteExpiredReclaimedLeases4) {
+    startBackend(V4);
+    testDeleteExpiredReclaimedLeases4();
+}
+
 /// @brief Check that getLease6 methods discriminate by lease type.
 ///
 /// Adds six leases, two per lease type all with the same duid and iad but
