@@ -25,6 +25,7 @@
 #include <cstring>
 #include <errno.h>
 #include <iostream>
+#include <limits>
 #include <sstream>
 
 namespace {
@@ -513,7 +514,7 @@ Memfile_LeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
     // for the 'state' 'false' is less than 'true'. Also the leases with
     // expiration time lower than current time will be returned.
     Lease6StorageExpirationIndex::const_iterator ub =
-        index.upper_bound(boost::make_tuple(false, time_t(NULL)));
+        index.upper_bound(boost::make_tuple(false, time(NULL)));
 
     // Copy only the number of leases indicated by the max_leases parameter.
     for (Lease6StorageExpirationIndex::const_iterator lease = index.begin();
@@ -535,7 +536,7 @@ Memfile_LeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
     // for the 'state' 'false' is less than 'true'. Also the leases with
     // expiration time lower than current time will be returned.
     Lease4StorageExpirationIndex::const_iterator ub =
-        index.upper_bound(boost::make_tuple(false, time_t(NULL)));
+        index.upper_bound(boost::make_tuple(false, time(NULL)));
 
     // Copy only the number of leases indicated by the max_leases parameter.
     for (Lease4StorageExpirationIndex::const_iterator lease = index.begin();
@@ -644,6 +645,52 @@ Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
         }
     }
 }
+
+void
+Memfile_LeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
+    deleteExpiredReclaimedLeases<Lease4StorageExpirationIndex>(secs, storage4_);
+}
+
+void
+Memfile_LeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
+    deleteExpiredReclaimedLeases<Lease6StorageExpirationIndex>(secs, storage6_);
+}
+
+template<typename IndexType, typename StorageType>
+void
+Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
+                                               StorageType& storage) const {
+    // Obtain the index which segragates leases by state and time.
+    IndexType& index = storage.template get<ExpirationIndexTag>();
+
+    // This returns the first element which is greater than the specified
+    // tuple (true, time(NULL) - secs). However, the range between the
+    // beginnng of the index and returned element also includes all the
+    // elements for which the first value is false (lease state is NOT
+    // reclaimed), because false < true. All elements between the
+    // beginning of the index and the element returned, for which the
+    // first value is true, represent the reclaimed leases which should
+    // be deleted, because their expiration time + secs has occured earlier
+    // than current time.
+    typename IndexType::const_iterator upper_limit =
+        index.upper_bound(boost::make_tuple(true, time(NULL) - secs));
+
+    // Now, we have to exclude all elements of the index which represent
+    // leases in the state other than reclaimed - with the first value
+    // in the index equal to false. Note that elements in the index are
+    // ordered from the lower to the higher ones. So, all elements with
+    // the first value of false are placed before the elements with the
+    // value of true. Hence, we have to find the first element which
+    // contains value of true. The time value is the lowest possible.
+    typename IndexType::const_iterator lower_limit =
+        index.upper_bound(boost::make_tuple(true, std::numeric_limits<int64_t>::min()));
+
+    // If there are some elements in this range, delete them.
+    if (std::distance(lower_limit, upper_limit) > 0) {
+        index.erase(lower_limit, upper_limit);
+    }
+}
+
 
 std::string
 Memfile_LeaseMgr::getDescription() const {

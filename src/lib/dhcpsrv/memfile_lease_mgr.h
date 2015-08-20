@@ -314,6 +314,46 @@ public:
     /// @return true if deletion was successful, false if no such lease exists
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
 
+    /// @brief Deletes all expired-reclaimed DHCPv4 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    virtual void deleteExpiredReclaimedLeases4(const uint32_t secs);
+
+    /// @brief Deletes all expired-reclaimed DHCPv6 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    virtual void deleteExpiredReclaimedLeases6(const uint32_t secs);
+
+private:
+
+    /// @brief Deletes all expired-reclaimed leases.
+    ///
+    /// This private method is called by both of the public methods:
+    /// @c deleteExpiredReclaimedLeases4 and
+    /// @c deleteExpiredReclaimedLeases6 to remove all expired
+    /// reclaimed DHCPv4 or DHCPv6 leases respectively.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    /// @param storage Reference to the container where leases are held.
+    /// Some expired-reclaimed leases will be removed from this container.
+    ///
+    /// @tparam IndexType Index type to be used to search for the
+    /// expired-reclaimed leases, i.e.
+    /// @c Lease4StorageExpirationIndex or @c Lease6StorageExpirationIndex.
+    /// @tparam StorageType Type of storage where leases are held, i.e.
+    /// @c Lease4Storage or @c Lease6Storage.
+    template<typename IndexType, typename StorageType>
+    void deleteExpiredReclaimedLeases(const uint32_t secs,
+                                      StorageType& storage) const;
+
+public:
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend.

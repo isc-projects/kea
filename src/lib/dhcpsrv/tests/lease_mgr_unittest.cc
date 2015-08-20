@@ -214,6 +214,26 @@ public:
         return (false);
     }
 
+    /// @brief Deletes all expired and reclaimed DHCPv4 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    virtual void deleteExpiredReclaimedLeases4(const uint32_t) {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::deleteExpiredReclaimedLeases4"
+                  " is not implemented");
+    }
+
+    /// @brief Deletes all expired and reclaimed DHCPv6 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    virtual void deleteExpiredReclaimedLeases6(const uint32_t) {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::deleteExpiredReclaimedLeases6"
+                  " is not implemented");
+    }
+
     /// @brief Returns backend type.
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
