@@ -111,12 +111,12 @@ CSVLeaseFile4Test::absolutePath(const std::string& filename) {
 void
 CSVLeaseFile4Test::writeSampleFile() const {
     io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  "fqdn_fwd,fqdn_rev,hostname,state\n"
                   "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,"
-                  "host.example.com\n"
-                  "192.0.2.1,,a:11:01:04,200,200,8,1,1,host.example.com\n"
+                  "host.example.com,1\n"
+                  "192.0.2.1,,a:11:01:04,200,200,8,1,1,host.example.com,1\n"
                   "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,100,7,"
-                  "0,0,\n");
+                  "0,0,,2\n");
 }
 
 // This test checks the capability to read and parse leases from the file.
@@ -153,6 +153,7 @@ TEST_F(CSVLeaseFile4Test, parse) {
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("host.example.com", lease->hostname_);
+    EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
     }
 
     // Second lease is malformed - HW address is empty.
@@ -182,6 +183,7 @@ TEST_F(CSVLeaseFile4Test, parse) {
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
+    EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
     }
 
     // There are no more leases. Reading should cause no error, but the returned
@@ -217,6 +219,7 @@ TEST_F(CSVLeaseFile4Test, recreate) {
                                NULL, 0,
                                200, 50, 80, 0, 8, true, true,
                                "host.example.com"));
+    lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
     {
     SCOPED_TRACE("First write");
     ASSERT_NO_THROW(lf->append(*lease));
@@ -238,10 +241,10 @@ TEST_F(CSVLeaseFile4Test, recreate) {
     lf->close();
     // Check that the contents of the csv file are correct.
     EXPECT_EQ("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-              "fqdn_fwd,fqdn_rev,hostname\n"
-              "192.0.3.2,00:01:02:03:04:05,,200,200,8,1,1,host.example.com\n"
+              "fqdn_fwd,fqdn_rev,hostname,state\n"
+              "192.0.3.2,00:01:02:03:04:05,,200,200,8,1,1,host.example.com,4\n"
               "192.0.3.10,0d:0e:0a:0d:0b:0e:0e:0f,01:02:03:04,100,100,7,0,"
-              "0,\n",
+              "0,,1\n",
               io_.readFile());
 }
 

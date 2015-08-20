@@ -102,6 +102,7 @@ private:
     /// - fqdn_fwd
     /// - fqdn_rev
     /// - hostname
+    /// - state
     void initColumns();
 
     ///
@@ -111,48 +112,53 @@ private:
     ///
     /// @brief Reads lease address from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     asiolink::IOAddress readAddress(const util::CSVRow& row);
 
     /// @brief Reads HW address from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     HWAddr readHWAddr(const util::CSVRow& row);
 
     /// @brief Reads client identifier from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     ClientIdPtr readClientId(const util::CSVRow& row);
 
     /// @brief Reads valid lifetime from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     uint32_t readValid(const util::CSVRow& row);
 
     /// @brief Reads cltt value from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     time_t readCltt(const util::CSVRow& row);
 
     /// @brief Reads subnet id from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     SubnetID readSubnetID(const util::CSVRow& row);
 
     /// @brief Reads the FQDN forward flag from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     bool readFqdnFwd(const util::CSVRow& row);
 
     /// @brief Reads the FQDN reverse flag from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     bool readFqdnRev(const util::CSVRow& row);
 
     /// @brief Reads hostname from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     std::string readHostname(const util::CSVRow& row);
+
+    /// @brief Reads lease state from the CSV file row.
+    ///
+    /// @param row CSV file row holding lease information.
+    uint32_t readState(const util::CSVRow& row);
     //@}
 
 };
