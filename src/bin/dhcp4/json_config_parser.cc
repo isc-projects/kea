@@ -21,6 +21,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp4/json_config_parser.h>
+#include <dhcpsrv/defaults.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
@@ -375,7 +376,8 @@ namespace dhcp {
     DhcpConfigParser* parser = NULL;
     if ((config_id.compare("valid-lifetime") == 0)  ||
         (config_id.compare("renew-timer") == 0)  ||
-        (config_id.compare("rebind-timer") == 0))  {
+        (config_id.compare("rebind-timer") == 0) ||
+        (config_id.compare("decline-probation-period") == 0) )  {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
     } else if (config_id.compare("interfaces-config") == 0) {
@@ -411,7 +413,13 @@ namespace dhcp {
     return (parser);
 }
 
-void commitGlobalOptions() {
+/// @brief Commits global parameters
+///
+/// Currently this method sets the following global parameters:
+///
+/// - echo-client-id
+/// - decline-probation-period
+void commitGlobalParameters4() {
     // Although the function is modest for now, it is certain that the number
     // of global switches will increase over time, hence the name.
 
@@ -422,6 +430,16 @@ void commitGlobalOptions() {
         CfgMgr::instance().echoClientId(echo_client_id);
     } catch (...) {
         // Ignore errors. This flag is optional
+    }
+
+    // Set the probation period for decline handling.
+    try {
+        uint32_t probation_period = globalContext()->uint32_values_
+            ->getOptionalParam("decline-probation-period",
+                               DEFAULT_DECLINE_PROBATION_PERIOD);
+        CfgMgr::instance().getStagingCfg()->setDeclinePeriod(probation_period);
+    } catch (...) {
+        // That's not really needed.
     }
 }
 
@@ -592,7 +610,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             // CfgMgr::commit() function.
 
             // Apply global options
-            commitGlobalOptions();
+            commitGlobalParameters4();
 
             // This occurs last as if it succeeds, there is no easy way
             // revert it.  As a result, the failure to commit a subsequent

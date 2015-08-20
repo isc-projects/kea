@@ -27,6 +27,7 @@
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/triplet.h>
+#include <dhcpsrv/defaults.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
@@ -666,7 +667,8 @@ namespace dhcp {
     if ((config_id.compare("preferred-lifetime") == 0)  ||
         (config_id.compare("valid-lifetime") == 0)  ||
         (config_id.compare("renew-timer") == 0)  ||
-        (config_id.compare("rebind-timer") == 0))  {
+        (config_id.compare("rebind-timer") == 0) ||
+        (config_id.compare("decline-probation-period") == 0) )  {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
     } else if (config_id.compare("interfaces-config") == 0) {
@@ -700,6 +702,24 @@ namespace dhcp {
     }
 
     return (parser);
+}
+
+/// @brief Commits global parameters
+///
+/// Currently this method sets the following global parameters:
+///
+/// - decline-probation-period
+void commitGlobalParameters6() {
+
+    // Set the probation period for decline handling.
+    try {
+        uint32_t probation_period = globalContext()->uint32_values_
+            ->getOptionalParam("decline-probation-period",
+                               DEFAULT_DECLINE_PROBATION_PERIOD);
+        CfgMgr::instance().getStagingCfg()->setDeclinePeriod(probation_period);
+    } catch (...) {
+        // That's not really needed.
+    }
 }
 
 isc::data::ConstElementPtr
@@ -869,6 +889,9 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
             if (subnet_parser) {
                 subnet_parser->commit();
             }
+
+            // Commit global options
+            commitGlobalParameters6();
 
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
