@@ -59,6 +59,7 @@ CSVLeaseFile6::append(const Lease6& lease) {
         // We may not have hardware information
         row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_->toText(false));
     }
+    row.writeAt(getColumnIndex("state"), lease.state_);
     try {
         CSVFile::append(row);
     } catch (const std::exception&) {
@@ -100,6 +101,7 @@ CSVLeaseFile6::next(Lease6Ptr& lease) {
         lease->fqdn_fwd_ = readFqdnFwd(row);
         lease->fqdn_rev_ = readFqdnRev(row);
         lease->hostname_ = readHostname(row);
+        lease->state_ = readState(row);
 
     } catch (std::exception& ex) {
         // bump the read error count
@@ -133,6 +135,7 @@ CSVLeaseFile6::initColumns() {
     addColumn("fqdn_rev");
     addColumn("hostname");
     addColumn("hwaddr");
+    addColumn("state");
 }
 
 Lease::Type
@@ -239,21 +242,10 @@ CSVLeaseFile6::readHWAddr(const CSVRow& row) {
     }
 }
 
-bool
-CSVLeaseFile6::validateHeader(const isc::util::CSVRow& header) {
-
-    if (!CSVFile::validateHeader(header)) {
-
-        // One possible validation failure is that we're reading Kea 0.9
-        // lease file that didn't have hwaddr column. Let's add it and
-        // try to revalidate.
-        isc::util::CSVRow copy = header;
-        copy.append("hwaddr");
-        return CSVFile::validateHeader(copy);
-    } else {
-        return (true);
-    }
-
+uint32_t
+CSVLeaseFile6::readState(const util::CSVRow& row) {
+    uint32_t state = row.readAndConvertAt<uint32_t>(getColumnIndex("state"));
+    return (state);
 }
 
 } // end of namespace isc::dhcp
