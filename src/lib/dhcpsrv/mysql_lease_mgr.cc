@@ -1932,6 +1932,20 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
     return (result);
 }
 
+void
+MySqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
+                                 const size_t max_leases) const {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::getExpiredLeases6 is currently"
+              " not implemented");
+}
+
+void
+MySqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
+                                 const size_t max_leases) const {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::getExpiredLeases4 is currently"
+              " not implemented");
+}
+
 // Update lease methods.  These comprise common code that handles the actual
 // update, and type-specific methods that set up the parameters for the prepared
 // statement depending on the type of lease.
@@ -2073,6 +2087,19 @@ MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
         return (deleteLeaseCommon(DELETE_LEASE6, inbind));
     }
 }
+
+void
+MySqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::deleteExpiredReclaimedLeases4"
+              " is not implemented");
+}
+
+void
+MySqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
+    isc_throw(NotImplemented, "MySqlLeaseMgr::deleteExpiredReclaimedLeases6"
+              " is not implemented");
+}
+
 
 // Miscellaneous database methods.
 
