@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <signal.h>
 #include <stdint.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -36,22 +37,65 @@ std::string getApp() {
     return (s.str());
 }
 
-/// @brief Waits for the specified process to finish.
+/// @brief Waits for the specified process to finish (using sleep)
 ///
 /// @param process An object which started the process.
 /// @param pid ID of the spawned process.
 /// @param timeout Timeout in seconds.
+/// @param sleep specifies whether usleep(1ms) should be used or not.
+///
+/// This method uses usleep() to wait between checks. For an alternative,
+/// see waitForProcessFast(). Note: If the signal comes in when the
+/// loop calls usleep(), usleep() will be aborted and errno will be set
+/// to EINTR to indicate that interruption. Therefore this method is not
+/// suitable for tests that want to observe errno value. See
+/// @ref waitForProcessFast as an alternative.
 ///
 /// @return true if the process ended, false otherwise
 bool waitForProcess(const ProcessSpawn& process, const pid_t pid,
                     const uint8_t timeout) {
     uint32_t iterations = 0;
     const uint32_t iterations_max = timeout * 1000;
+
+    int errno_save = errno;
     while (process.isRunning(pid) && (iterations < iterations_max)) {
         usleep(1000);
         ++iterations;
     }
+    errno = errno_save;
     return (iterations < iterations_max);
+}
+
+/// @brief Waits for the specified process to finish (using fast loop)
+///
+/// @param process An object which started the process.
+/// @param pid ID of the spawned process.
+/// @param timeout Timeout in seconds.
+/// @param sleep specifies whether usleep(1ms) should be used or not.
+///
+/// This method does not use any sleep() calls, but rather iterates through
+/// the loop very fast. This is not recommended in general, but is necessary
+/// to avoid updating errno by sleep() after receving a signal.
+///
+/// Note: the timeout is only loosely accurate. Depending on the fraction
+/// of second it was started on, it may terminate later by up to almost
+/// whole second.
+///
+/// @return true if the process ended, false otherwise
+bool waitForProcessFast(const ProcessSpawn& process, const pid_t pid,
+                        const uint8_t timeout) {
+    time_t before = time(NULL);
+    while (process.isRunning(pid)) {
+        time_t now = time(NULL);
+
+        // The difference before we started and now is greater than
+        // the timeout, we should give up.
+        if (now - before > timeout) {
+            return (false);
+        }
+    }
+
+    return (true);
 }
 
 // This test verifies that the external application can be ran with
@@ -168,5 +212,31 @@ TEST(ProcessSpawn, isRunning) {
     // And make sure if died.
     ASSERT_TRUE(waitForProcess(process, pid, 2));
 }
+
+// This test verifies that the signal handler does not modify value of
+// errno.
+TEST(ProcessSpawn, errnoInvariance) {
+
+    // Set errno to an arbitrary value. We'll later check that it was not
+    // stumped on.
+    errno = 123;
+
+    std::vector<std::string> args;
+    args.push_back("-e");
+    args.push_back("64");
+    ProcessSpawn process(getApp(), args);
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
+
+    ASSERT_TRUE(waitForProcessFast(process, pid, 2));
+
+    EXPECT_EQ(64, process.getExitStatus(pid));
+
+    // errno value should NOT be set to be preserved, despite the SIGCHILD
+    // handler (ProcessSpawnImpl::waitForProcess) calling waitpid(), which
+    // will likely set errno to ECHILD. See trac4000 and support 8785.
+    EXPECT_EQ(123, errno);
+}
+
 
 } // end of anonymous namespace
