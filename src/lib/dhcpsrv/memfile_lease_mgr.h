@@ -340,17 +340,26 @@ private:
     /// @param secs Number of seconds since expiration of leases before
     /// they can be removed. Leases which have expired later than this
     /// time will not be deleted.
+    /// @param universe V4 or V6.
     /// @param storage Reference to the container where leases are held.
     /// Some expired-reclaimed leases will be removed from this container.
+    /// @param lease_file Reference to a DHCPv4 or DHCPv6 lease file
+    /// instance where leases should be marked as deleted.
     ///
     /// @tparam IndexType Index type to be used to search for the
     /// expired-reclaimed leases, i.e.
     /// @c Lease4StorageExpirationIndex or @c Lease6StorageExpirationIndex.
+    /// @tparam LeaseType Lease type, i.e. @c Lease4 or @c Lease6.
     /// @tparam StorageType Type of storage where leases are held, i.e.
     /// @c Lease4Storage or @c Lease6Storage.
-    template<typename IndexType, typename StorageType>
+    /// @tparam LeaseFileType Type of the lease file, i.e. DHCPv4 or
+    /// DHCPv6 lease file type.
+    template<typename IndexType, typename LeaseType, typename StorageType,
+             typename LeaseFileType>
     void deleteExpiredReclaimedLeases(const uint32_t secs,
-                                      StorageType& storage) const;
+                                      const Universe& universe,
+                                      StorageType& storage,
+                                      LeaseFileType& lease_file) const;
 
 public:
 

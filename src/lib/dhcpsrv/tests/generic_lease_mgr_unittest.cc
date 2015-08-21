@@ -1941,14 +1941,14 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
         // 15 seconds ago, the lease should have been deleted.
         if (leases[i]->stateExpiredReclaimed() &&
             ((leases[i]->getExpirationTime() + lease_affinity_time) < current_time)) {
-            EXPECT_FALSE(lease) << "Lease with index " << i
-                << " should have been deleted, but it was not";
+            EXPECT_FALSE(lease) << "The following lease should have been"
+                " deleted: " << leases[i]->toText();
 
         } else {
             // If the lease is not reclaimed or it has expired less than
             // 15 seconds ago, the lease should still be there.
-            EXPECT_TRUE(lease) << "Lease with index " << i
-                << " shouldn't have been deleted, but it was";
+            EXPECT_TRUE(lease) << "The following lease shouldn't have been"
+                " deleted: " << leases[i]->toText();
         }
     }
 
@@ -1956,7 +1956,17 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
     // to be deleted.
     ASSERT_NO_THROW(lmptr_->deleteExpiredReclaimedLeases4(lease_affinity_time));
 
+    // Reopen the database. This to ensure that the leases have been deleted
+    // from the persistent storage.
+    reopen(V4);
+
     for (size_t i = 0; i < leases.size(); ++i) {
+        /// @todo Leases with empty HW address are dropped by the memfile
+        /// backend. We will have to reevaluate if this is right behavior
+        /// of the backend when client identifier is present.
+        if (leases[i]->hwaddr_ && leases[i]->hwaddr_->hwaddr_.empty()) {
+            continue;
+        }
         // Obtain lease from the server.
         Lease4Ptr lease = lmptr_->getLease4(leases[i]->addr_);
 
@@ -1964,14 +1974,14 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
         // 15 seconds ago, the lease should have been deleted.
         if (leases[i]->stateExpiredReclaimed() &&
             ((leases[i]->getExpirationTime() + lease_affinity_time) < current_time)) {
-            EXPECT_FALSE(lease) << "Lease with index " << i
-                << " should have been deleted, but it was not";
+            EXPECT_FALSE(lease) << "The following lease should have been"
+                " deleted: " << leases[i]->toText();
 
         } else {
             // If the lease is not reclaimed or it has expired less than
             // 15 seconds ago, the lease should still be there.
-            EXPECT_TRUE(lease) << "Lease with index " << i
-                << " shouldn't have been deleted, but it was";
+            EXPECT_TRUE(lease) << "The following lease shouldn't have been"
+                " deleted: " << leases[i]->toText();
         }
     }
 }
@@ -2020,20 +2030,24 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases6() {
         // 15 seconds ago, the lease should have been deleted.
         if (leases[i]->stateExpiredReclaimed() &&
             ((leases[i]->getExpirationTime() + lease_affinity_time) < current_time)) {
-            EXPECT_FALSE(lease) << "Lease with index " << i
-                << " should have been deleted, but it was not";
+            EXPECT_FALSE(lease) << "The following lease should have been"
+                " deleted: " << leases[i]->toText();
 
         } else {
             // If the lease is not reclaimed or it has expired less than
             // 15 seconds ago, the lease should still be there.
-            EXPECT_TRUE(lease) << "Lease with index " << i
-                << " shouldn't have been deleted, but it was";
+            EXPECT_TRUE(lease) << "The following lease shouldn't have been"
+                " deleted: " << leases[i]->toText();
         }
     }
 
     // Make sure we can make another attempt, when there are no more leases
     // to be deleted.
     ASSERT_NO_THROW(lmptr_->deleteExpiredReclaimedLeases6(lease_affinity_time));
+
+    // Reopen the database. This to ensure that the leases have been deleted
+    // from the persistent storage.
+    reopen(V6);
 
     for (size_t i = 0; i < leases.size(); ++i) {
         // Obtain lease from the server.
@@ -2043,14 +2057,14 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases6() {
         // 15 seconds ago, the lease should have been deleted.
         if (leases[i]->stateExpiredReclaimed() &&
             ((leases[i]->getExpirationTime() + lease_affinity_time) < current_time)) {
-            EXPECT_FALSE(lease) << "Lease with index " << i
-                << " should have been deleted, but it was not";
+            EXPECT_FALSE(lease) << "The following lease should have been"
+                " deleted: " << leases[i]->toText();
 
         } else {
             // If the lease is not reclaimed or it has expired less than
             // 15 seconds ago, the lease should still be there.
-            EXPECT_TRUE(lease) << "Lease with index " << i
-                << " shouldn't have been deleted, but it was";
+            EXPECT_TRUE(lease) << "The following lease shouldn't have been"
+                " deleted: " << leases[i]->toText();
         }
     }
 }
