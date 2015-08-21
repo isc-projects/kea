@@ -136,10 +136,11 @@ private:
 
 /// @brief Common MySQL Connector Pool
 ///
-///	This class provides common operations for MySQL database connection
-///	used by both MySqlLeaseMgr and MySqlHostDataSource. It manages connecting
-///	to the database and preparing compiled statements.
-
+/// This class provides common operations for MySQL database connection
+/// used by both MySqlLeaseMgr and MySqlHostDataSource. It manages connecting
+/// to the database and preparing compiled statements. Its fields are
+/// public, because they are used (both set and retrieved) in classes
+/// that use instances of MySqlConnection.
 class MySqlConnection : public DatabaseConnection {
 public:
 
@@ -151,8 +152,7 @@ public:
     }
 
     /// @brief Destructor
-    virtual ~MySqlConnection() {
-    }
+    virtual ~MySqlConnection();
 
     /// @brief Prepare Single Statement
     ///
@@ -190,12 +190,22 @@ public:
     /// @throw DbOpenError Error opening the database
     void openDatabase();
 
-protected:
+    /// @brief Prepared statements
+    ///
+    /// This field is public, because it is used heavily from MySqlConnection
+    /// and will be from MySqlHostDataSource.
+    std::vector<MYSQL_STMT*> statements_;
 
-    std::vector<MYSQL_STMT*> statements_;       ///< Prepared statements
-    std::vector<std::string> text_statements_;  ///< Raw text of statements
+    /// @brief Raw text of statements
+    ///
+    /// This field is public, because it is used heavily from MySqlConnection
+    /// and will be from MySqlHostDataSource.
+    std::vector<std::string> text_statements_;
 
     /// @brief MySQL connection handle
+    ///
+    /// This field is public, because it is used heavily from MySqlConnection
+    /// and will be from MySqlHostDataSource.
     MySqlHolder mysql_;
 };
 
