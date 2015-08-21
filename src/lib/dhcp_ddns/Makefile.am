@@ -34,7 +34,6 @@ libkea_dhcp_ddns_la_SOURCES += dhcp_ddns_log.cc dhcp_ddns_log.h
 libkea_dhcp_ddns_la_SOURCES += ncr_io.cc ncr_io.h
 libkea_dhcp_ddns_la_SOURCES += ncr_msg.cc ncr_msg.h
 libkea_dhcp_ddns_la_SOURCES += ncr_udp.cc ncr_udp.h
-libkea_dhcp_ddns_la_SOURCES += watch_socket.cc watch_socket.h
 
 nodist_libkea_dhcp_ddns_la_SOURCES = dhcp_ddns_messages.cc dhcp_ddns_messages.h
 
