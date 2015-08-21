@@ -46,7 +46,7 @@ class MySqlLease6Exchange;
 /// database.  Use of this backend presupposes that a MySQL database is
 /// available and that the Kea schema has been created within it.
 
-class MySqlLeaseMgr : public LeaseMgr, public MySqlConnection {
+class MySqlLeaseMgr : public LeaseMgr {
 public:
 
     /// @brief Constructor
@@ -71,7 +71,7 @@ public:
     /// @throw isc::dhcp::DbOpenError Error opening the database
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    MySqlLeaseMgr(const ParameterMap& parameters);
+    MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
     virtual ~MySqlLeaseMgr();
@@ -432,6 +432,8 @@ public:
     };
 
 private:
+    /// @brief MySQL connection
+    MySqlConnection conn_;
 
     /// @brief Add Lease Common Code
     ///
@@ -594,9 +596,9 @@ private:
                            const char* what) const {
         if (status != 0) {
             isc_throw(DbOperationError, what << " for <" <<
-                      text_statements_[index] << ">, reason: " <<
-                      mysql_error(mysql_) << " (error code " <<
-                      mysql_errno(mysql_) << ")");
+                      conn_.text_statements_[index] << ">, reason: " <<
+                      mysql_error(conn_.mysql_) << " (error code " <<
+                      mysql_errno(conn_.mysql_) << ")");
         }
     }
 

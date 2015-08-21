@@ -1151,23 +1151,23 @@ private:
 // MySqlLeaseMgr Constructor and Destructor
 
 MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
-    : MySqlConnection(parameters) {
+    : conn_(parameters) {
 
     // Open the database.
-    openDatabase();
+    conn_.openDatabase();
 
     // Enable autocommit.  To avoid a flush to disk on every commit, the global
     // parameter innodb_flush_log_at_trx_commit should be set to 2.  This will
     // cause the changes to be written to the log, but flushed to disk in the
     // background every second.  Setting the parameter to that value will speed
     // up the system, but at the risk of losing data if the system crashes.
-    my_bool result = mysql_autocommit(mysql_, 1);
+    my_bool result = mysql_autocommit(conn_.mysql_, 1);
     if (result != 0) {
-        isc_throw(DbOperationError, mysql_error(mysql_));
+        isc_throw(DbOperationError, mysql_error(conn_.mysql_));
     }
 
     // Prepare all statements likely to be used.
-    prepareStatements(tagged_statements, MySqlLeaseMgr::NUM_STATEMENTS);
+    conn_.prepareStatements(tagged_statements, MySqlLeaseMgr::NUM_STATEMENTS);
 
     // Create the exchange objects for use in exchanging data between the
     // program and the database.
@@ -1177,16 +1177,6 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
 
 
 MySqlLeaseMgr::~MySqlLeaseMgr() {
-    // Free up the prepared statements, ignoring errors. (What would we do
-    // about them? We're destroying this object and are not really concerned
-    // with errors on a database connection that is about to go away.)
-    for (int i = 0; i < statements_.size(); ++i) {
-        if (statements_[i] != NULL) {
-            (void) mysql_stmt_close(statements_[i]);
-            statements_[i] = NULL;
-        }
-    }
-
     // There is no need to close the database in this destructor: it is
     // closed in the destructor of the mysql_ member variable.
 }
@@ -1275,17 +1265,17 @@ MySqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
                               std::vector<MYSQL_BIND>& bind) {
 
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[stindex], &bind[0]);
+    int status = mysql_stmt_bind_param(conn_.statements_[stindex], &bind[0]);
     checkError(status, stindex, "unable to bind parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(statements_[stindex]);
+    status = mysql_stmt_execute(conn_.statements_[stindex]);
     if (status != 0) {
 
         // Failure: check for the special case of duplicate entry.  If this is
         // the case, we return false to indicate that the row was not added.
         // Otherwise we throw an exception.
-        if (mysql_errno(mysql_) == ER_DUP_ENTRY) {
+        if (mysql_errno(conn_.mysql_) == ER_DUP_ENTRY) {
             return (false);
         }
         checkError(status, stindex, "unable to execute");
@@ -1353,43 +1343,43 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
                                        bool single) const {
 
     // Bind the selection parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[stindex], bind);
+    int status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
     checkError(status, stindex, "unable to bind WHERE clause parameter");
 
     // Set up the MYSQL_BIND array for the data being returned and bind it to
     // the statement.
     std::vector<MYSQL_BIND> outbind = exchange->createBindForReceive();
-    status = mysql_stmt_bind_result(statements_[stindex], &outbind[0]);
+    status = mysql_stmt_bind_result(conn_.statements_[stindex], &outbind[0]);
     checkError(status, stindex, "unable to bind SELECT clause parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(statements_[stindex]);
+    status = mysql_stmt_execute(conn_.statements_[stindex]);
     checkError(status, stindex, "unable to execute");
 
     // Ensure that all the lease information is retrieved in one go to avoid
     // overhead of going back and forth between client and server.
-    status = mysql_stmt_store_result(statements_[stindex]);
+    status = mysql_stmt_store_result(conn_.statements_[stindex]);
     checkError(status, stindex, "unable to set up for storing all results");
 
     // Set up the fetch "release" object to release resources associated
     // with the call to mysql_stmt_fetch when this method exits, then
     // retrieve the data.
-    MySqlFreeResult fetch_release(statements_[stindex]);
+    MySqlFreeResult fetch_release(conn_.statements_[stindex]);
     int count = 0;
-    while ((status = mysql_stmt_fetch(statements_[stindex])) == 0) {
+    while ((status = mysql_stmt_fetch(conn_.statements_[stindex])) == 0) {
         try {
             result.push_back(exchange->getLeaseData());
 
         } catch (const isc::BadValue& ex) {
             // Rethrow the exception with a bit more data.
             isc_throw(BadValue, ex.what() << ". Statement is <" <<
-                      text_statements_[stindex] << ">");
+                      conn_.text_statements_[stindex] << ">");
         }
 
         if (single && (++count > 1)) {
             isc_throw(MultipleRecords, "multiple records were found in the "
                       "database where only one was expected for query "
-                      << text_statements_[stindex]);
+                      << conn_.text_statements_[stindex]);
         }
     }
 
@@ -1399,7 +1389,7 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
         checkError(status, stindex, "unable to fetch results");
     } else if (status == MYSQL_DATA_TRUNCATED) {
         // Data truncated - throw an exception indicating what was at fault
-        isc_throw(DataTruncated, text_statements_[stindex]
+        isc_throw(DataTruncated, conn_.text_statements_[stindex]
                   << " returned truncated data: columns affected are "
                   << exchange->getErrorColumns());
     }
@@ -1732,16 +1722,16 @@ MySqlLeaseMgr::updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
                                  const LeasePtr& lease) {
 
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[stindex], bind);
+    int status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
     checkError(status, stindex, "unable to bind parameters");
 
     // Execute
-    status = mysql_stmt_execute(statements_[stindex]);
+    status = mysql_stmt_execute(conn_.statements_[stindex]);
     checkError(status, stindex, "unable to execute");
 
     // See how many rows were affected.  The statement should only update a
     // single row.
-    int affected_rows = mysql_stmt_affected_rows(statements_[stindex]);
+    int affected_rows = mysql_stmt_affected_rows(conn_.statements_[stindex]);
     if (affected_rows == 0) {
         isc_throw(NoSuchLease, "unable to update lease for address " <<
                   lease->addr_ << " as it does not exist");
@@ -1818,16 +1808,16 @@ bool
 MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind) {
 
     // Bind the input parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[stindex], bind);
+    int status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
     checkError(status, stindex, "unable to bind WHERE clause parameter");
 
     // Execute
-    status = mysql_stmt_execute(statements_[stindex]);
+    status = mysql_stmt_execute(conn_.statements_[stindex]);
     checkError(status, stindex, "unable to execute");
 
     // See how many rows were affected.  Note that the statement may delete
     // multiple rows.
-    return (mysql_stmt_affected_rows(statements_[stindex]) > 0);
+    return (mysql_stmt_affected_rows(conn_.statements_[stindex]) > 0);
 }
 
 
@@ -1870,7 +1860,7 @@ std::string
 MySqlLeaseMgr::getName() const {
     std::string name = "";
     try {
-        name = getParameter("name");
+        name = conn_.getParameter("name");
     } catch (...) {
         // Return an empty name
     }
@@ -1895,11 +1885,11 @@ MySqlLeaseMgr::getVersion() const {
     uint32_t    minor;      // Minor version number
 
     // Execute the prepared statement
-    int status = mysql_stmt_execute(statements_[stindex]);
+    int status = mysql_stmt_execute(conn_.statements_[stindex]);
     if (status != 0) {
         isc_throw(DbOperationError, "unable to execute <"
-                  << text_statements_[stindex] << "> - reason: " <<
-                  mysql_error(mysql_));
+                  << conn_.text_statements_[stindex] << "> - reason: " <<
+                  mysql_error(conn_.mysql_));
     }
 
     // Bind the output of the statement to the appropriate variables.
@@ -1916,19 +1906,19 @@ MySqlLeaseMgr::getVersion() const {
     bind[1].buffer = &minor;
     bind[1].buffer_length = sizeof(minor);
 
-    status = mysql_stmt_bind_result(statements_[stindex], bind);
+    status = mysql_stmt_bind_result(conn_.statements_[stindex], bind);
     if (status != 0) {
         isc_throw(DbOperationError, "unable to bind result set: " <<
-                  mysql_error(mysql_));
+                  mysql_error(conn_.mysql_));
     }
 
     // Fetch the data and set up the "release" object to release associated
     // resources when this method exits then retrieve the data.
-    MySqlFreeResult fetch_release(statements_[stindex]);
-    status = mysql_stmt_fetch(statements_[stindex]);
+    MySqlFreeResult fetch_release(conn_.statements_[stindex]);
+    status = mysql_stmt_fetch(conn_.statements_[stindex]);
     if (status != 0) {
         isc_throw(DbOperationError, "unable to obtain result set: " <<
-                  mysql_error(mysql_));
+                  mysql_error(conn_.mysql_));
     }
 
     return (std::make_pair(major, minor));
@@ -1938,8 +1928,8 @@ MySqlLeaseMgr::getVersion() const {
 void
 MySqlLeaseMgr::commit() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_COMMIT);
-    if (mysql_commit(mysql_) != 0) {
-        isc_throw(DbOperationError, "commit failed: " << mysql_error(mysql_));
+    if (mysql_commit(conn_.mysql_) != 0) {
+        isc_throw(DbOperationError, "commit failed: " << mysql_error(conn_.mysql_));
     }
 }
 
@@ -1947,8 +1937,8 @@ MySqlLeaseMgr::commit() {
 void
 MySqlLeaseMgr::rollback() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_ROLLBACK);
-    if (mysql_rollback(mysql_) != 0) {
-        isc_throw(DbOperationError, "rollback failed: " << mysql_error(mysql_));
+    if (mysql_rollback(conn_.mysql_) != 0) {
+        isc_throw(DbOperationError, "rollback failed: " << mysql_error(conn_.mysql_));
     }
 }
 
