@@ -17,7 +17,7 @@
 
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/data_source.h>
+#include <dhcpsrv/database_connection.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
 #include <libpq-fe.h>
@@ -121,7 +121,7 @@ const uint32_t PG_CURRENT_MINOR = 0;
 /// This class provides the \ref isc::dhcp::LeaseMgr interface to the PostgreSQL
 /// database.  Use of this backend presupposes that a PostgreSQL database is
 /// available and that the Kea schema has been created within it.
-class PgSqlLeaseMgr : public LeaseMgr, DataSource {
+class PgSqlLeaseMgr : public LeaseMgr, DatabaseConnection {
 public:
 
     /// @brief Constructor
@@ -146,7 +146,7 @@ public:
     /// @throw isc::dhcp::DbOpenError Error opening the database
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    PgSqlLeaseMgr(const DataSource::ParameterMap& parameters);
+    PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
     virtual ~PgSqlLeaseMgr();

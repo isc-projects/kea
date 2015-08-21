@@ -17,7 +17,7 @@
 
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/data_source.h>
+#include <dhcpsrv/database_connection.h>
 #include <boost/scoped_ptr.hpp>
 #include <mysql.h>
 
@@ -140,14 +140,14 @@ private:
 ///	used by both MySqlLeaseMgr and MySqlHostDataSource. It manages connecting
 ///	to the database and preparing compiled statements.
 
-class MySqlConnection : public DataSource {
+class MySqlConnection : public DatabaseConnection {
 public:
 
     /// @brief Constructor
     ///
     /// Initialize MySqlConnection object with parameters needed for connection.
     MySqlConnection(const ParameterMap& parameters)
-        : DataSource(parameters) {
+        : DatabaseConnection(parameters) {
     }
 
     /// @brief Destructor
@@ -190,13 +190,13 @@ public:
     /// @throw DbOpenError Error opening the database
     void openDatabase();
 
+protected:
+
     std::vector<MYSQL_STMT*> statements_;       ///< Prepared statements
     std::vector<std::string> text_statements_;  ///< Raw text of statements
 
-protected:
-
+    /// @brief MySQL connection handle
     MySqlHolder mysql_;
-
 };
 
 
