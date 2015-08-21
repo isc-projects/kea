@@ -648,18 +648,29 @@ Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
 
 void
 Memfile_LeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
-    deleteExpiredReclaimedLeases<Lease4StorageExpirationIndex>(secs, storage4_);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4)
+        .arg(secs);
+    deleteExpiredReclaimedLeases<Lease4StorageExpirationIndex, Lease4>(secs, V4, storage4_,
+                                                                       lease_file4_);
 }
 
 void
 Memfile_LeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
-    deleteExpiredReclaimedLeases<Lease6StorageExpirationIndex>(secs, storage6_);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6)
+        .arg(secs);
+    deleteExpiredReclaimedLeases<Lease6StorageExpirationIndex, Lease6>(secs, V6, storage6_,
+                                                                       lease_file6_);
 }
 
-template<typename IndexType, typename StorageType>
+template<typename IndexType, typename LeaseType, typename StorageType,
+         typename LeaseFileType>
 void
 Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
-                                               StorageType& storage) const {
+                                               const Universe& universe,
+                                               StorageType& storage,
+                                               LeaseFileType& lease_file) const {
     // Obtain the index which segragates leases by state and time.
     IndexType& index = storage.template get<ExpirationIndexTag>();
 
@@ -686,7 +697,29 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
         index.upper_bound(boost::make_tuple(true, std::numeric_limits<int64_t>::min()));
 
     // If there are some elements in this range, delete them.
-    if (std::distance(lower_limit, upper_limit) > 0) {
+    uint64_t num_leases = static_cast<uint64_t>(std::distance(lower_limit, upper_limit));
+    if (num_leases > 0) {
+
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START)
+            .arg(num_leases);
+
+        // If lease persistence is enabled, we also have to mark leases
+        // as deleted in the lease file. We do this by setting the
+        // lifetime to 0.
+        if (persistLeases(universe)) {
+            for (typename IndexType::const_iterator lease = lower_limit;
+                 lease != upper_limit; ++lease) {
+                // Copy lease to not affect the lease in the container.
+                LeaseType lease_copy(**lease);
+                // Set the valid lifetime to 0 to indicate the removal
+                // of the lease.
+                lease_copy.valid_lft_ = 0;
+                lease_file->append(lease_copy);
+            }
+        }
+
+        // Erase leases from memory.
         index.erase(lower_limit, upper_limit);
     }
 }

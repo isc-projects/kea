@@ -231,6 +231,23 @@ A debug message issued when the server is attempting to delete a lease
 for the specified address from the memory file database for the specified
 address.
 
+% DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4 deleting reclaimed leases expired more than %1 s ago
+A debug message issued when the server is removing reclaimed DHCPv4
+leases which have expired longer than a specified period of time.
+The argument specified the number of seconds since leases' expiration
+before they can be removed.
+
+% DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6 deleting reclaimed leases expired more than %1 s ago
+A debug message issued when the server is removing reclaimed DHCPv6
+leases which have expired longer than a specified period of time.
+The argument specified the number of seconds since leases' expiration
+before they can be removed.
+
+% DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START starting deletion of %1 expired-reclaimed leases
+A debug message issued wheb the server has found expired-reclaimed
+leases to be removed. The number of leases to be removed is logged
+in the message.
+
 % DHCPSRV_MEMFILE_GET_ADDR4 obtaining IPv4 lease for address %1
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the memory file database for the specified address.
