@@ -1933,15 +1933,13 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
 }
 
 void
-MySqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
-                                 const size_t max_leases) const {
+MySqlLeaseMgr::getExpiredLeases6(Lease6Collection&, const size_t) const {
     isc_throw(NotImplemented, "MySqlLeaseMgr::getExpiredLeases6 is currently"
               " not implemented");
 }
 
 void
-MySqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
-                                 const size_t max_leases) const {
+MySqlLeaseMgr::getExpiredLeases4(Lease4Collection&, const size_t) const {
     isc_throw(NotImplemented, "MySqlLeaseMgr::getExpiredLeases4 is currently"
               " not implemented");
 }
@@ -2089,13 +2087,13 @@ MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
 }
 
 void
-MySqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
+MySqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::deleteExpiredReclaimedLeases4"
               " is not implemented");
 }
 
 void
-MySqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
+MySqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::deleteExpiredReclaimedLeases6"
               " is not implemented");
 }
