@@ -942,8 +942,8 @@ private:
     //@}
 };
 
-PgSqlLeaseMgr::PgSqlLeaseMgr(const DataSource::ParameterMap& parameters)
-    : LeaseMgr(), DataSource(parameters), exchange4_(new PgSqlLease4Exchange()),
+PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
+    : LeaseMgr(), DatabaseConnection(parameters), exchange4_(new PgSqlLease4Exchange()),
     exchange6_(new PgSqlLease6Exchange()), conn_(NULL) {
     openDatabase();
     prepareStatements();

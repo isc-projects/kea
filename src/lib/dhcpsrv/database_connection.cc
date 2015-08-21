@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dhcpsrv/data_source.h>
+#include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <exceptions/exceptions.h>
 
@@ -26,17 +26,17 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-std::string DataSource::getParameter(const std::string& name) const {
+std::string DatabaseConnection::getParameter(const std::string& name) const {
     ParameterMap::const_iterator param = parameters_.find(name);
     if (param == parameters_.end()) {
-        isc_throw(BadValue, "Parameter not found");
+        isc_throw(BadValue, "Parameter " << name << " not found");
     }
     return (param->second);
 }
 
-DataSource::ParameterMap
-DataSource::parse(const std::string& dbaccess) {
-    DataSource::ParameterMap mapped_tokens;
+DatabaseConnection::ParameterMap
+DatabaseConnection::parse(const std::string& dbaccess) {
+    DatabaseConnection::ParameterMap mapped_tokens;
 
     if (!dbaccess.empty()) {
         vector<string> tokens;
@@ -64,11 +64,11 @@ DataSource::parse(const std::string& dbaccess) {
 }
 
 std::string
-DataSource::redactedAccessString(const DataSource::ParameterMap& parameters) {
+DatabaseConnection::redactedAccessString(const ParameterMap& parameters) {
     // Reconstruct the access string: start of with an empty string, then
     // work through all the parameters in the original string and add them.
     std::string access;
-    for (DataSource::ParameterMap::const_iterator i = parameters.begin();
+    for (DatabaseConnection::ParameterMap::const_iterator i = parameters.begin();
          i != parameters.end(); ++i) {
 
         // Separate second and subsequent tokens are preceded by a space.

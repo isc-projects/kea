@@ -220,9 +220,8 @@ LFCSetup::getExitStatus() const {
     return (process_->getExitStatus(pid_));
 }
 
-
 Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
-    : DataSource(parameters),
+    : DatabaseConnection(parameters),
       lfc_setup_(new LFCSetup(boost::bind(&Memfile_LeaseMgr::lfcCallback, this),
                               *getIOService()))
     {

@@ -16,7 +16,7 @@
 #define LEASE_MGR_FACTORY_H
 
 #include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/data_source.h>
+#include <dhcpsrv/database_connection.h>
 #include <exceptions/exceptions.h>
 
 #include <string>

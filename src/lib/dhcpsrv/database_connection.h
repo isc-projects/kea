@@ -49,8 +49,11 @@ public:
 ///
 /// This class provides functions that are common for establishing
 /// connection with different types of databases; enables operations
-/// on access parameters strings.
-class DataSource : public boost::noncopyable {
+/// on access parameters strings. In particular, it provides a way
+/// to parse parameters in key=value format. This class is expected
+/// to be a base class for all LeaseMgr and possibly HostDataSource
+/// derived classes.
+class DatabaseConnection : public boost::noncopyable {
 
 public:
     /// Database configuration parameter map
@@ -60,7 +63,7 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
-    DataSource(const ParameterMap& parameters)
+    DatabaseConnection(const ParameterMap& parameters)
         :parameters_(parameters) {
     }
 
@@ -77,7 +80,7 @@ public:
     /// @param dbaccess Database access string.
     ///
     /// @return std::map<std::string, std::string> Map of keyword/value pairs.
-    static DataSource::ParameterMap parse(const std::string& dbaccess);
+    static DatabaseConnection::ParameterMap parse(const std::string& dbaccess);
 
     /// @brief Redact database access string
     ///
@@ -88,7 +91,7 @@ public:
     ///
     /// @return Redacted database access string.
     static std::string redactedAccessString(
-            const DataSource::ParameterMap& parameters);
+            const DatabaseConnection::ParameterMap& parameters);
 
 protected:
 

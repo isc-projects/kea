@@ -161,7 +161,7 @@ public:
 
         // Check that the keywords and keyword values are the same: loop
         // through the keywords in the database access string.
-        for (DataSource::ParameterMap::const_iterator actual = parameters.begin();
+        for (DatabaseConnection::ParameterMap::const_iterator actual = parameters.begin();
              actual != parameters.end(); ++actual) {
 
             // Does the keyword exist in the set of expected keywords?
