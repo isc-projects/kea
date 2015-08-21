@@ -185,5 +185,21 @@ MySqlConnection::prepareStatements(const TaggedStatement tagged_statements[],
     }
 }
 
+/// @brief Destructor
+MySqlConnection::~MySqlConnection() {
+    // Free up the prepared statements, ignoring errors. (What would we do
+    // about them? We're destroying this object and are not really concerned
+    // with errors on a database connection that is about to go away.)
+    for (int i = 0; i < statements_.size(); ++i) {
+        if (statements_[i] != NULL) {
+            (void) mysql_stmt_close(statements_[i]);
+            statements_[i] = NULL;
+        }
+    }
+    statements_.clear();
+    text_statements_.clear();
+
+}
+
 } // namespace isc::dhcp
 } // namespace isc
