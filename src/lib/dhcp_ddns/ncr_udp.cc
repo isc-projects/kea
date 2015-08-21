@@ -260,7 +260,7 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
 
     send_callback_->setDataSource(server_endpoint_);
 
-    watch_socket_.reset(new WatchSocket());
+    watch_socket_.reset(new util::WatchSocket());
 }
 
 void

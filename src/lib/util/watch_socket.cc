@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,15 +14,15 @@
 
 /// @file watch_socket.cc
 
-#include <dhcp_ddns/dhcp_ddns_log.h>
-#include <dhcp_ddns/watch_socket.h>
+//#include <dhcp_ddns/dhcp_ddns_log.h>
+#include <util/watch_socket.h>
 
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/select.h>
 
 namespace isc {
-namespace dhcp_ddns {
+namespace util {
 
 
 const int WatchSocket::SOCKET_NOT_VALID;
@@ -124,9 +124,9 @@ WatchSocket::closeSocket() {
     // destructors that throw.
     if (source_ != SOCKET_NOT_VALID) {
         if (close(source_)) {
-            const char* errstr = strerror(errno);
+/*            const char* errstr = strerror(errno);
             LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_WATCH_SOURCE_CLOSE_ERROR)
-                      .arg(errstr);
+                      .arg(errstr); */
         }
 
         source_ = SOCKET_NOT_VALID;
@@ -134,9 +134,9 @@ WatchSocket::closeSocket() {
 
     if (sink_ != SOCKET_NOT_VALID) {
         if (close(sink_)) {
-            const char* errstr = strerror(errno);
+/*            const char* errstr = strerror(errno);
             LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_WATCH_SINK_CLOSE_ERROR)
-                      .arg(errstr);
+                      .arg(errstr); */
         }
 
         sink_ = SOCKET_NOT_VALID;
@@ -148,5 +148,5 @@ WatchSocket::getSelectFd() {
     return (sink_);
 }
 
-} // namespace isc::dhcp_ddns
+} // namespace isc::util
 } // namespace isc
