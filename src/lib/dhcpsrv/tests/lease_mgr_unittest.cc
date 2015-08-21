@@ -43,7 +43,7 @@ public:
     /// dbconfig is a generic way of passing parameters. Parameters
     /// are passed in the "name=value" format, separated by spaces.
     /// Values may be enclosed in double quotes, if needed.
-    ConcreteLeaseMgr(const DataSource::ParameterMap&)
+    ConcreteLeaseMgr(const DatabaseConnection::ParameterMap&)
         : LeaseMgr()
     {}
 
@@ -261,7 +261,7 @@ namespace {
 // 1 (return the lease) and more than 1 leases (throw).
 TEST_F(LeaseMgrTest, getLease6) {
 
-    DataSource::ParameterMap pmap;
+    DatabaseConnection::ParameterMap pmap;
     boost::scoped_ptr<ConcreteLeaseMgr> mgr(new ConcreteLeaseMgr(pmap));
 
     vector<Lease6Ptr> leases = createLeases6();

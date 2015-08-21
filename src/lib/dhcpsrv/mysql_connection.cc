@@ -147,21 +147,21 @@ void
 MySqlConnection::prepareStatement(uint32_t index, const char* text) {
     // Validate that there is space for the statement in the statements array
     // and that nothing has been placed there before.
-    if ((index >= this->statements_.size()) || (this->statements_[index] != NULL)) {
+    if ((index >= statements_.size()) || (statements_[index] != NULL)) {
         isc_throw(InvalidParameter, "invalid prepared statement index (" <<
                   static_cast<int>(index) << ") or indexed prepared " <<
                   "statement is not null");
     }
 
     // All OK, so prepare the statement
-    this->text_statements_[index] = std::string(text);
-    this->statements_[index] = mysql_stmt_init(mysql_);
-    if (this->statements_[index] == NULL) {
+    text_statements_[index] = std::string(text);
+    statements_[index] = mysql_stmt_init(mysql_);
+    if (statements_[index] == NULL) {
         isc_throw(DbOperationError, "unable to allocate MySQL prepared "
                   "statement structure, reason: " << mysql_error(mysql_));
     }
 
-    int status = mysql_stmt_prepare(this->statements_[index], text, strlen(text));
+    int status = mysql_stmt_prepare(statements_[index], text, strlen(text));
     if (status != 0) {
         isc_throw(DbOperationError, "unable to prepare MySQL statement <" <<
                   text << ">, reason: " << mysql_error(mysql_));

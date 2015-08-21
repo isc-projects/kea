@@ -51,8 +51,8 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     const std::string type = "type";
 
     // Parse the access string and create a redacted string for logging.
-    DataSource::ParameterMap parameters = DataSource::parse(dbaccess);
-    std::string redacted = DataSource::redactedAccessString(parameters);
+    DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(dbaccess);
+    std::string redacted = DatabaseConnection::redactedAccessString(parameters);
 
     // Is "type" present?
     if (parameters.find(type) == parameters.end()) {
