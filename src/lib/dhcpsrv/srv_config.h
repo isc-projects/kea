@@ -438,6 +438,9 @@ private:
     isc::data::ConstElementPtr control_socket_;
 
     /// @brief Decline Period time
+    ///
+    /// This timer specifies decline probation period, the time after a declined
+    /// lease is recovered back to available state. Expressed in seconds.
     uint32_t decline_timer_;
 };
 
