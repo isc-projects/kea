@@ -114,11 +114,23 @@ public:
     /// pipe.
     int getSelectFd();
 
-private:
     /// @brief Closes the descriptors associated with the socket.
     ///
-    /// Used internally in the destructor and if an error occurs marking or
-    /// clearing the socket.
+    /// This method is used to close the socket and capture errors that
+    /// may occur during this operation.
+    ///
+    /// @param [out] error_string Holds the error string if closing
+    /// the socket failed. It will hold empty string otherwise.
+    ///
+    /// @return true if the operation was successful, false otherwise.
+    bool closeSocket(std::string& error_string);
+
+private:
+
+    /// @brief Closes the descriptors associated with the socket.
+    ///
+    /// This method is called by the class destructor and it ignores
+    /// any errors that may occur while closing the sockets.
     void closeSocket();
 
     /// @brief The end of the pipe to which the marker is written
