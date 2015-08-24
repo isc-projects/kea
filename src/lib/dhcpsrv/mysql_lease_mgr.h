@@ -432,9 +432,6 @@ public:
     };
 
 private:
-    /// @brief MySQL connection
-    MySqlConnection conn_;
-
     /// @brief Add Lease Common Code
     ///
     /// This method performs the common actions for both flavours (V4 and V6)
@@ -611,7 +608,8 @@ private:
     boost::scoped_ptr<MySqlLease4Exchange> exchange4_; ///< Exchange object
     boost::scoped_ptr<MySqlLease6Exchange> exchange6_; ///< Exchange object
 
-
+    /// @brief MySQL connection
+    MySqlConnection conn_;
 };
 
 }; // end of isc::dhcp namespace
