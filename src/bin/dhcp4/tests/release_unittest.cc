@@ -285,8 +285,8 @@ TEST_F(ReleaseTest, releaseNonMatchingIPAddress) {
     ASSERT_TRUE(lease);
 }
 
-// This test verifies that incoming RELEASE from a bad location
-// is correctly dropped.
+// This test verifies that an incoming RELEASE for an address within
+// a subnet that has been removed
 TEST_F(ReleaseTest, releaseNoSubnet) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
@@ -303,9 +303,9 @@ TEST_F(ReleaseTest, releaseNoSubnet) {
     // Send the release
     ASSERT_NO_THROW(client.doRelease());
 
-    // Check that the lease was not removed (due to no subnet)
+    // Check that the lease was removed
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(leased_address);
-    EXPECT_TRUE(lease);
+    EXPECT_FALSE(lease);
 }
 
 } // end of anonymous namespace
