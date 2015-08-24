@@ -173,6 +173,8 @@ public:
     ///
     /// Creates the prepared statements for all of the SQL statements used
     /// by the MySQL backend.
+    /// @param tagged_statements an array of statements to be compiled
+    /// @param num_statements number of statements in tagged_statements
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.

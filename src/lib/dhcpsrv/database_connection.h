@@ -90,12 +90,11 @@ public:
     /// @param parameters Database access parameters (output of "parse").
     ///
     /// @return Redacted database access string.
-    static std::string redactedAccessString(
-            const DatabaseConnection::ParameterMap& parameters);
+    static std::string redactedAccessString(const ParameterMap& parameters);
 
 protected:
 
-    /// @brief list of parameters passed in dbconfig
+    /// @brief List of parameters passed in dbconfig
     ///
     /// That will be mostly used for storing database name, username,
     /// password and other parameters required for DB access. It is not
