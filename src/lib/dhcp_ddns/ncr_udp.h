@@ -548,6 +548,13 @@ public:
     virtual bool ioReady();
 
 private:
+
+    /// @brief Closes watch socket if the socket is open.
+    ///
+    /// This method closes watch socket if its instance exists and if the
+    /// socket is open. An error message is logged when this operation fails.
+    void closeWatchSocket();
+
     /// @brief IP address from which to send.
     isc::asiolink::IOAddress ip_address_;
 

@@ -231,4 +231,27 @@ TEST(WatchSocketTest, badReadOnClear) {
     ASSERT_THROW(watch->markReady(), WatchSocketError);
 }
 
+/// @brief Checks if the socket can be explicitly closed.
+TEST(WatchSocketTest, explicitClose) {
+    WatchSocketPtr watch;
+
+    // Create new instance of the socket.
+    ASSERT_NO_THROW(watch.reset(new WatchSocket()));
+    ASSERT_TRUE(watch);
+
+    // Make sure it has been opened by checking that its descriptor
+    // is valid.
+    EXPECT_NE(watch->getSelectFd(), WatchSocket::SOCKET_NOT_VALID);
+
+    // Close the socket.
+    std::string error_string;
+    ASSERT_TRUE(watch->closeSocket(error_string));
+
+    // Make sure that the descriptor is now invalid which indicates
+    // that the socket has been closed.
+    EXPECT_EQ(WatchSocket::SOCKET_NOT_VALID, watch->getSelectFd());
+    // No errors should be reported.
+    EXPECT_TRUE(error_string.empty());
+}
+
 } // end of anonymous namespace
