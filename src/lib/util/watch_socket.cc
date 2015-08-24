@@ -116,17 +116,19 @@ WatchSocket::clearReady() {
     }
 }
 
-void
-WatchSocket::closeSocket() {
+bool
+WatchSocket::closeSocket(std::string& error_string) {
+    // Clear error string.
+    error_string.clear();
+
     // Close the pipe fds.  Technically a close can fail (hugely unlikely)
     // but there's no recovery for it either.  If one does fail we log it
     // and go on. Plus this is called by the destructor and no one likes
     // destructors that throw.
     if (source_ != SOCKET_NOT_VALID) {
         if (close(source_)) {
-/*            const char* errstr = strerror(errno);
-            LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_WATCH_SOURCE_CLOSE_ERROR)
-                      .arg(errstr); */
+            // An error occured.
+            error_string = strerror(errno);
         }
 
         source_ = SOCKET_NOT_VALID;
@@ -134,13 +136,23 @@ WatchSocket::closeSocket() {
 
     if (sink_ != SOCKET_NOT_VALID) {
         if (close(sink_)) {
-/*            const char* errstr = strerror(errno);
-            LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_WATCH_SINK_CLOSE_ERROR)
-                      .arg(errstr); */
+            // An error occured.
+            if (error_string.empty()) {
+                error_string = strerror(errno);
+            }
         }
 
         sink_ = SOCKET_NOT_VALID;
     }
+
+    // If any errors have been reported, return false.
+    return (error_string.empty() ? true : false);
+}
+
+void
+WatchSocket::closeSocket() {
+    std::string error_string;
+    closeSocket(error_string);
 }
 
 int
