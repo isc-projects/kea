@@ -61,7 +61,7 @@
         crypto library for C++ (<ulink url="http://botan.randombit.net/"/>),
         version 1.8 or later. As an alternative to Botan, Kea can use the
         OpenSSL crypto library (<ulink url="http://www.openssl.org/"/>),
-        version 1.0.0 or later.
+        version 1.0.1 or later.
             </simpara>
         </listitem>
 

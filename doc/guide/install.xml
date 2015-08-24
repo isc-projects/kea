@@ -114,7 +114,7 @@
 
           <listitem>
         <para>
-          Botan (at least version 1.8) or OpenSSL (at least version 1.0.0).
+          Botan (at least version 1.8) or OpenSSL (at least version 1.0.1).
         </para>
           </listitem>
 
