@@ -541,12 +541,6 @@ the client and transaction identification information. The second
 argument contains the IPv4 address which the client is trying to
 release.
 
-% DHCP4_RELEASE_FAIL_NO_SUBNET %1: client is trying to release a lease %2 from a subnet which cannot be selected.
-This warning message indicates that client tried to release an address
-from an improper location.  The first argument contains the client and
-transaction identification information. The second argument contains
-the address which the client is trying to release.
-
 % DHCP4_RELEASE_FAIL_WRONG_CLIENT %1: client is trying to release the lease %2 which belongs to a different client
 This debug message is issued when a client is trying to release the
 lease for the address which is currently used by another client, i.e.
