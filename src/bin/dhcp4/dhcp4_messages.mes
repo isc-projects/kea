@@ -201,12 +201,8 @@ from a client. Server does not process empty Hostname options and therefore
 option is skipped. The argument holds the client and transaction identification
 information.
 
-% DHCP4_HANDLE_SIGNAL_EXCEPTION_ISC An ISC exception was thrown while handing signal: %1
-This error message is printed when an ISC exception was raised during signal
-processing. This likely indicates a coding error and should be reported to ISC.
-
-% DHCP4_HANDLE_SIGNAL_EXCEPTION_STD An standard exception was thrown while handing signal: %1
-This error message is printed when a standard type exception was raised during signal
+% DHCP4_HANDLE_SIGNAL_EXCEPTION An exception was thrown while handing signal: %1
+This error message is printed when an ISC or standard exception was raised during signal
 processing. This likely indicates a coding error and should be reported to ISC.
 
 % DHCP4_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed

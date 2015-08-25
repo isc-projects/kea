@@ -422,19 +422,10 @@ Dhcpv4Srv::run() {
         // of select() to terminate.
         try {
             handleSignal();
-        } catch (const isc::Exception& e) {
-            // ISC-derived exception occurred. The nature of this exception
-            // indicates that it originated from ISC code. If this happens,
-            // it will be easy to fix as it is in the code that is under
-            // ISC control.
-            LOG_ERROR(dhcp4_logger, DHCP4_HANDLE_SIGNAL_EXCEPTION_ISC)
-                .arg(e.what());
         } catch (const std::exception& e) {
-            // Standard exception occurred. The nature of this exception
-            // indicates that it was caused in non-ISC code. Fixing this
-            // issue will be somewhat more difficult than the one caused
-            // by ISC code.
-            LOG_ERROR(dhcp4_logger, DHCP4_HANDLE_SIGNAL_EXCEPTION_STD)
+            // Standard exception occurred. Let's be on the safe side to
+            // catch std::exception.
+            LOG_ERROR(dhcp4_logger, DHCP4_HANDLE_SIGNAL_EXCEPTION)
                 .arg(e.what());
         }
 
