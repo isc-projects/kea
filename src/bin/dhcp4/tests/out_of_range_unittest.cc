@@ -70,7 +70,7 @@ const char* OOR_CONFIGS[] = {
         "       },"
         "       {"
         "         \"hw-address\": \"dd:dd:dd:dd:dd:01\","
-        "         \"hostname\": \"reserved.example.com\""
+        "         \"hostname\": \"test.example.com\""
         "       }"
         "    ]"
         "} ],"
@@ -168,7 +168,7 @@ const char* OOR_CONFIGS[] = {
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
-        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]"
         "} ],"
         "\"dhcp-ddns\": {"
         "     \"enable-updates\": true,"
@@ -186,7 +186,7 @@ enum CfgIndex {
     DIFF_POOL_NO_HR,
     DIFF_SUBNET,
     DIFF_SUBNET_NO_HR,
-    NO_HR = 4
+    NO_HR
 };
 
 /// @brief Enum for specifying expected response to client renewal attempt
@@ -242,7 +242,7 @@ public:
     /// @param addr - string containing the ip address expected in the NCR
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const std::string& addr) {
-        ASSERT_EQ(1, d2_mgr_.getQueueSize());
+        ASSERT_TRUE(d2_mgr_.getQueueSize() > 0);
 
         isc::dhcp_ddns::NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
@@ -253,7 +253,6 @@ public:
 
         // Process the message off the queue
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
-        ASSERT_EQ(0, d2_mgr_.getQueueSize());
     }
 
     /// @brief Conducts a single out-of-range test scenario
@@ -348,6 +347,7 @@ OutOfRangeTest::oorRenewReleaseTest(enum CfgIndex cfg_idx,
     // Verify that we received an ACK to our renewal
     resp = client.getContext().response_;
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    EXPECT_EQ(0, d2_mgr_.getQueueSize());
 
     // STAGE TWO:
 
@@ -448,10 +448,10 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfSubnet) {
 }
 
 // Test verifies that once-valid dynamic address host reserveration,
-// whose address is within the configured subnet, but whose
+// whose address is within the configured subnet and pool, but whose
 // reservation has been removed:
 //
-// a: Is NAKed upon a renewal attempt
+// a: Is allowed to renew 
 // b: Is released properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, dynamicHostReservationRemoved) {
@@ -460,7 +460,7 @@ TEST_F(OutOfRangeTest, dynamicHostReservationRemoved) {
     std::string hwaddress = "dd:dd:dd:dd:dd:01";
     std::string expected_address = "";
 
-    oorRenewReleaseTest(NO_HR, hwaddress, expected_address, DOES_NOT_RENEW);
+    oorRenewReleaseTest(NO_HR, hwaddress, expected_address, DOES_RENEW);
 }
 
 // Test verifies that once-valid dynamic address host reserveration,

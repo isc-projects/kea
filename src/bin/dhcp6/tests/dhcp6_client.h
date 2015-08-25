@@ -235,6 +235,8 @@ public:
     /// @todo Perform sanity checks on returned messages.
     void doRebind();
 
+    void doRelease();
+
     /// @brief Sends Request to the server and receives Reply.
     ///
     /// This function simulates sending the Request message to the server and
