@@ -12,12 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <asio.hpp>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
+#include <boost/bind.hpp>
+#include <iostream>
 
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::util;
+using namespace isc::util::thread;
 
 namespace isc {
 namespace dhcp {
@@ -29,7 +33,7 @@ TimerMgr::instance() {
 }
 
 TimerMgr::TimerMgr()
-    : io_service_(new IOService()) {
+    : io_service_(new IOService()), thread_() {
 }
 
 void
@@ -47,8 +51,14 @@ TimerMgr::registerTimer(const std::string& timer_name,
                   << timer_name << "'");
     }
 
+    if (thread_) {
+        isc_throw(InvalidOperation, "unable to register new timer when the"
+                  " timer manager's worker thread is running");
+    }
+
+    IntervalTimerPtr interval_timer(new IntervalTimer(*io_service_));
+
     WatchSocket watch_socket;
-    IntervalTimerPtr interval_timer(new IntervalTimer(getIOService()));
     TimerInfo timer_info(watch_socket, interval_timer, callback, interval,
                          scheduling_mode);
     registered_timers_.insert(std::pair<std::string, TimerInfo>(timer_name, timer_info));
@@ -72,10 +82,23 @@ TimerMgr::setup(const std::string& timer_name) {
 }
 
 void
-TimerMgr::localCallback(const std::string& timer_name) const {
+TimerMgr::startThread() {
+    thread_.reset(new Thread(boost::bind(&IOService::run, &getIOService())));
 }
 
+void
+TimerMgr::stopThread() {
+    if (thread_) {
+        io_service_->post(boost::bind(&IOService::stop, &getIOService()));
+        thread_->wait();
+        thread_.reset();
+        io_service_->get_io_service().reset();
+    }
+}
 
+void
+TimerMgr::localCallback(const std::string& timer_name) const {
+}
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
