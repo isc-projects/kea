@@ -113,6 +113,7 @@ dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 
 endif
 
