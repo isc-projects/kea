@@ -17,8 +17,10 @@
 
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
+#include <util/threads/thread.h>
 #include <util/watch_socket.h>
 #include <boost/noncopyable.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <map>
 #include <string>
 
@@ -38,6 +40,10 @@ public:
     void deregisterTimer(const std::string& timer_name);
 
     void setup(const std::string& timer_name);
+
+    void startThread();
+
+    void stopThread();
 
     asiolink::IOService& getIOService() const {
         return (*io_service_);
@@ -60,6 +66,8 @@ private:
 
     /// @brief Holds the pointer to the io service object.
     asiolink::IOServicePtr io_service_;
+
+    boost::scoped_ptr<util::thread::Thread> thread_;
 
     /// @brief Structure holding information for a single timer.
     ///
