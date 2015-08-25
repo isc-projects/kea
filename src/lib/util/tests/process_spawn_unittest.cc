@@ -232,9 +232,9 @@ TEST(ProcessSpawn, errnoInvariance) {
 
     EXPECT_EQ(64, process.getExitStatus(pid));
 
-    // errno value should NOT be set to be preserved, despite the SIGCHILD
+    // errno value should be set to be preserved, despite the SIGCHILD
     // handler (ProcessSpawnImpl::waitForProcess) calling waitpid(), which
-    // will likely set errno to ECHILD. See trac4000 and support 8785.
+    // will likely set errno to ECHILD. See trac4000.
     EXPECT_EQ(123, errno);
 }
 
