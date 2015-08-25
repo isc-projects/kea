@@ -111,6 +111,7 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtes
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 endif
 
 noinst_EXTRA_DIST = configs-list.txt
