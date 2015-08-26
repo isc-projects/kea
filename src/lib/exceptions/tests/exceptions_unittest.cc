@@ -16,6 +16,7 @@
 #include <string>
 
 #include <exceptions/exceptions.h>
+#include <sstream>
 
 #include <gtest/gtest.h>
 
@@ -46,5 +47,25 @@ TEST_F(ExceptionTest, stdInheritance) {
     } catch (std::exception& ex) {
         EXPECT_EQ(std::string(ex.what()), std::string(teststring));
     }
+}
+
+// Tests whether verbose is disabled by default and can be enabled, if
+// needed.
+TEST_F(ExceptionTest, verbose) {
+
+    // This code is line numbers sensitive. Make sure no edits are done between
+    // this line and isc_throw below. Update that +3 offset, if needed.
+    std::stringstream expected;
+    expected << teststring << "[" << std::string(__FILE__)
+             << ":" << int(__LINE__ + 3) << "]";
+
+    try {
+        isc_throw(Exception, teststring);
+    } catch (const isc::Exception& ex) {
+        EXPECT_EQ(std::string(ex.what()), std::string(teststring));
+        EXPECT_EQ(std::string(ex.what(false)), std::string(teststring));
+        EXPECT_EQ(expected.str(), std::string(ex.what(true)));
+    }
+
 }
 }
