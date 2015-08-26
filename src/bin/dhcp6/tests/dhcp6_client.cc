@@ -336,11 +336,11 @@ Dhcp6Client::doRequest() {
         query->addOption(forced_server_id_);
     }
     copyIAs(context_.response_, query);
-    context_.query_ = query;
 
     // Add Client FQDN if configured.
     appendFQDN();
 
+    context_.query_ = query;
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
 
@@ -383,11 +383,11 @@ Dhcp6Client::doRenew() {
     Pkt6Ptr query = createMsg(DHCPV6_RENEW);
     query->addOption(context_.response_->getOption(D6O_SERVERID));
     copyIAsFromLeases(query);
-    context_.query_ = query;
 
     // Add Client FQDN if configured.
     appendFQDN();
 
+    context_.query_ = query;
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
     // Apply configuration only if the server has responded.
@@ -400,29 +400,6 @@ void
 Dhcp6Client::doRebind() {
     Pkt6Ptr query = createMsg(DHCPV6_REBIND);
     copyIAsFromLeases(query);
-    context_.query_ = query;
-
-    // Add Client FQDN if configured.
-    appendFQDN();
-
-    sendMsg(context_.query_);
-    context_.response_ = receiveOneMsg();
-    // Apply configuration only if the server has responded.
-    if (context_.response_) {
-        applyRcvdConfiguration(context_.response_);
-    }
-}
-
-
-void
-Dhcp6Client::doRelease() {
-    Pkt6Ptr query = createMsg(DHCPV6_RELEASE);
-    if (!forced_server_id_) {
-        query->addOption(context_.response_->getOption(D6O_SERVERID));
-    } else {
-        query->addOption(forced_server_id_);
-    }
-    copyIAsFromLeases(query);
 
     // Add Client FQDN if configured.
     appendFQDN();
@@ -435,7 +412,6 @@ Dhcp6Client::doRelease() {
         applyRcvdConfiguration(context_.response_);
     }
 }
-
 
 void
 Dhcp6Client::doConfirm() {
