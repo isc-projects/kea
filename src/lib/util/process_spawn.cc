@@ -19,6 +19,7 @@
 #include <map>
 #include <signal.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
@@ -279,6 +280,11 @@ ProcessSpawnImpl::waitForProcess(int signum) {
     if (signum != SIGCHLD) {
         return (false);
     }
+
+    // Need to store current value of errno, so we could restore it
+    // after this signal handler does his work.
+    int errno_value = errno;
+
     for (;;) {
         int status = 0;
         pid_t pid = waitpid(-1, &status, WNOHANG);
@@ -294,6 +300,16 @@ ProcessSpawnImpl::waitForProcess(int signum) {
             proc->second.running_ = false;
         }
     }
+
+    // Need to restore previous value of errno. We called waitpid(),
+    // which likely indicated its result by setting errno to ECHILD.
+    // This is a signal handler, which can be called while virtually
+    // any other code being run. If we're unlucky, we could receive a
+    // signal when running a code that is about to check errno. As a
+    // result the code would detect errno=ECHILD in places which are
+    // completely unrelated to child or processes in general.
+    errno = errno_value;
+
     return (true);
 }
 

@@ -400,8 +400,8 @@ Dhcpv4Srv::run() {
         } catch (const SignalInterruptOnSelect) {
             // Packet reception interrupted because a signal has been received.
             // This is not an error because we might have received a SIGTERM,
-            // SIGINT or SIGHUP which are handled by the server. For signals
-            // that are not handled by the server we rely on the default
+            // SIGINT, SIGHUP or SIGCHILD which are handled by the server. For
+            // signals that are not handled by the server we rely on the default
             // behavior of the system.
             LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
                 .arg(signal_set_->getNext());
@@ -420,7 +420,14 @@ Dhcpv4Srv::run() {
         // select() function is called. If the function was called before
         // receivePacket the process could wait up to the duration of timeout
         // of select() to terminate.
-        handleSignal();
+        try {
+            handleSignal();
+        } catch (const std::exception& e) {
+            // Standard exception occurred. Let's be on the safe side to
+            // catch std::exception.
+            LOG_ERROR(dhcp4_logger, DHCP4_HANDLE_SIGNAL_EXCEPTION)
+                .arg(e.what());
+        }
 
         // Execute ready timers for the lease database, e.g. Lease File Cleanup.
         try {
@@ -601,11 +608,12 @@ Dhcpv4Srv::run() {
                 // "switch" statement.
                 ;
             }
-        } catch (const isc::Exception& e) {
+        } catch (const std::exception& e) {
 
-            // Catch-all exception (at least for ones based on the isc Exception
-            // class, which covers more or less all that are explicitly raised
-            // in the Kea code).  Just log the problem and ignore the packet.
+            // Catch-all exception (we used to call only isc::Exception, but
+            // std::exception could potentially be raised and if we don't catch
+            // it here, it would be caught in main() and the process would
+            // terminate).  Just log the problem and ignore the packet.
             // (The problem is logged as a debug message because debug is
             // disabled by default - it prevents a DDOS attack based on the
             // sending of problem packets.)
