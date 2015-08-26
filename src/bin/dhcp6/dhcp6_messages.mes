@@ -242,6 +242,10 @@ probable if you see many such messages. Clients will recover from this,
 but they will most likely get a different IP addresses and experience
 a brief service interruption.
 
+% DHCP6_HANDLE_SIGNAL_EXCEPTION An exception was thrown while handing signal: %1
+This error message is printed when an exception was raised during signal
+processing. This likely indicates a coding error and should be reported to ISC.
+
 % DHCP6_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
 A "libreload" command was issued to reload the hooks libraries but for
 some reason the reload failed.  Other error messages issued from the
