@@ -1,3 +1,8 @@
+990.	[bug]		tomek
+	Improved child process signal handling. Improved number of
+	exception handling routines in DHCPv4 and DHCPv6.
+	(Trac #4000, git bf5e48f2cf80b5263cc89f445795bc8c5b8f011d)
+
 Kea 0.9.2 released on July 28, 2015
 
 989.	[bug]		tmark
