@@ -2,7 +2,7 @@
 	A 'flush' parameter has been added to logging configuration. It is
 	now possible to disable automatic immediate flushing to achieve
 	better logging performance.
-	(Trac #3752, git xxx)
+	(Trac #3752, git 16c4c2b6d95c45864ec3e2b27e0d320e386b2c0b)
 
 991.	[build]		fdupont
 	Removed partial function template ordering macros to allow Kea to
