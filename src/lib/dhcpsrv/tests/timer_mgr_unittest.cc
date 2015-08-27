@@ -14,7 +14,9 @@
 
 #include <asio.hpp>
 #include <config.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <exceptions/exceptions.h>
 #include <boost/bind.hpp>
 #include <gtest/gtest.h>
 
@@ -35,6 +37,8 @@ private:
 
     /// @brief IO service used by the test fixture class.
     IOService io_service_;
+
+    bool timeout_;
 
 public:
 
@@ -64,6 +68,8 @@ public:
     /// be increased.
     void timerCallback(const std::string& timer_name);
 
+    boost::function<void ()> makeCallback(const std::string& timer_name);
+
     /// @brief Callback for timeout.
     void timeoutCallback();
 
@@ -78,12 +84,16 @@ public:
 void
 TimerMgrTest::SetUp() {
     calls_count_.clear();
-//    TimerMgr::instance().startThread();
+    timeout_ = false;
+    // Make sure there are no dangling threads.
+    TimerMgr::instance().stopThread();
 }
 
 void
 TimerMgrTest::TearDown() {
-//    TimerMgr::instance().stopThread();
+    // Make sure there are no dangling threads.
+    TimerMgr::instance().stopThread();
+    TimerMgr::instance().deregisterTimers();
 }
 
 void
@@ -92,9 +102,8 @@ TimerMgrTest::registerTimer(const std::string& timer_name, const long timer_inte
     TimerMgr& timer_mgr = TimerMgr::instance();
 
     ASSERT_NO_THROW(
-        timer_mgr.registerTimer(timer_name, boost::bind(&TimerMgrTest::timerCallback,
-                                                        this, timer_name),
-                                timer_interval, timer_mode)
+        timer_mgr.registerTimer(timer_name, makeCallback(timer_name), timer_interval,
+                                timer_mode)
     );
 
     calls_count_[timer_name] = 0;
@@ -107,7 +116,12 @@ TimerMgrTest::doWait(const long timeout) {
     timeout_timer.setup(boost::bind(&TimerMgrTest::timeoutCallback, this), timeout,
                         IntervalTimer::ONE_SHOT);
 
-    io_service_.run_one();
+    while (!timeout_) {
+        IfaceMgr::instance().receive6(0, timeout * 1000);
+        io_service_.get_io_service().poll_one();
+    }
+
+    timeout_ = false;
 }
 
 void
@@ -118,24 +132,70 @@ TimerMgrTest::timerCallback(const std::string& timer_name) {
     TimerMgr::instance().setup(timer_name);
 }
 
+boost::function<void ()>
+TimerMgrTest::makeCallback(const std::string& timer_name) {
+    return (boost::bind(&TimerMgrTest::timerCallback, this, timer_name));
+}
+
+
 void
 TimerMgrTest::timeoutCallback() {
     io_service_.stop();
+    io_service_.get_io_service().reset();
+    timeout_ = true;
 }
 
 TEST_F(TimerMgrTest, registerTimer) {
     TimerMgr& timer_mgr = TimerMgr::instance();
 
-    ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
+    // Empty timer name is not allowed.
+    ASSERT_THROW(timer_mgr.registerTimer("", makeCallback("timer1"), 1,
+                                         IntervalTimer::ONE_SHOT),
+                 BadValue);
 
-    TimerMgr::instance().startThread();
-    TimerMgr::instance().setup("timer1");
+    // Add a timer with a correct name.
+    ASSERT_NO_THROW(timer_mgr.registerTimer("timer2", makeCallback("timer2"), 1,
+                                         IntervalTimer::ONE_SHOT));
+    // Adding the timer with the same name as the existing timer is not
+    // allowed.
+    ASSERT_THROW(timer_mgr.registerTimer("timer2", makeCallback("timer2"), 1,
+                                         IntervalTimer::ONE_SHOT),
+                 BadValue);
+
+    // Start worker thread.
+    ASSERT_NO_THROW(timer_mgr.startThread());
+}
+
+TEST_F(TimerMgrTest, scheduleTimers) {
+    TimerMgr& timer_mgr = TimerMgr::instance();
+
+    ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
+    ASSERT_NO_FATAL_FAILURE(registerTimer("timer2", 5));
+
+    timer_mgr.startThread();
+    timer_mgr.setup("timer1");
+    timer_mgr.setup("timer2");
 
     doWait(500);
 
-    TimerMgr::instance().stopThread();
+    timer_mgr.stopThread();
 
     EXPECT_GT(calls_count_["timer1"], 1);
+    EXPECT_GT(calls_count_["timer2"], 5);
+
+    EXPECT_GT(calls_count_["timer1"], calls_count_["timer2"]);
+
+    ASSERT_NO_THROW(timer_mgr.deregisterTimer("timer1"));
+
+    unsigned int calls_count_timer1 = calls_count_["timer1"];
+    unsigned int calls_count_timer2 = calls_count_["timer2"];
+
+    timer_mgr.startThread();
+
+    doWait(500);
+
+    EXPECT_EQ(calls_count_timer1, calls_count_["timer1"]);
+    EXPECT_GT(calls_count_["timer2"], calls_count_timer2);
 }
 
 } // end of anonymous namespace
