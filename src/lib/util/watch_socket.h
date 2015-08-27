@@ -18,7 +18,7 @@
 /// @file watch_socket.h Defines the class, WatchSocket.
 
 #include <exceptions/exceptions.h>
-
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <stdint.h>
@@ -51,7 +51,7 @@ public:
 /// such as close, read, or altering behavior flags with fcntl or ioctl can have
 /// unpredictable results.  It is intended strictly use with functions such as select()
 /// poll() or their variants.
-class WatchSocket {
+class WatchSocket : public boost::noncopyable {
 public:
     /// @brief Value used to signify an invalid descriptor.
     static const int SOCKET_NOT_VALID = -1;
