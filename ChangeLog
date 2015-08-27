@@ -2,7 +2,7 @@
 	Removed partial function template ordering macros to allow Kea to
 	build with Boost 1.59 and later.  Also removed some
 	compiler-dependent code.
-	(Trac #4006, git xxx)
+	(Trac #4006, git e06934f211436eea37439128ff6f388709f01101)
 
 990.	[bug]		tomek
 	Improved child process signal handling. Improved number of
