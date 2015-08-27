@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -40,6 +40,9 @@ struct LoggingDestination {
     /// @brief Maximum log file size
     uint64_t maxsize_;
 
+    /// @brief Immediate flush
+    bool flush_;
+
     /// @brief Compares two objects for equality.
     ///
     /// @param other Object to be compared with this object.
@@ -49,7 +52,7 @@ struct LoggingDestination {
 
     /// @brief Default constructor.
     LoggingDestination()
-        : output_("stdout"), maxver_(1), maxsize_(204800) {
+        : output_("stdout"), maxver_(1), maxsize_(204800), flush_(true) {
     }
 };
 
@@ -63,7 +66,8 @@ struct LoggingDestination {
 ///                {
 ///                    "output": "/path/to/the/logfile.log",
 ///                    "maxver": 8,
-///                    "maxsize": 204800
+///                    "maxsize": 204800,
+///                    "flush": true
 ///                }
 ///            ],
 ///            "severity": "WARN",

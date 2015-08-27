@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -34,7 +34,8 @@ namespace dhcp {
 ///         {
 ///             "output": "/home/thomson/kea-inst/kea-warn.log",
 ///             "maxver": 8,
-///             "maxsize": 204800
+///             "maxsize": 204800,
+///             "flush": true
 ///         }
 ///     ],
 ///     "severity": "WARN"
@@ -74,15 +75,8 @@ private:
 
     /// @brief Parses output_options structure
     ///
-    /// An example data structure that holds output_options in JSON format
-    /// looks like this:
-    ///     "output_options": [
-    ///         {
-    ///             "output": "/var/log/kea-warn.log",
-    ///             "maxver": 8,
-    ///             "maxsize": 204800
-    ///         }
-    ///     ],
+    /// @ref @c LogConfigParser for an example in JSON format.
+    ///
     /// @param destination parsed parameters will be stored here
     /// @param output_options element to be parsed
     void parseOutputOptions(std::vector<LoggingDestination>& destination,
