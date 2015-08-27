@@ -1,3 +1,9 @@
+991.	[build]		fdupont
+	Removed partial function template ordering macros to allow Kea to
+	build with Boost 1.59 and later.  Also removed some
+	compiler-dependent code.
+	(Trac #4006, git xxx)
+
 990.	[bug]		tomek
 	Improved child process signal handling. Improved number of
 	exception handling routines in DHCPv4 and DHCPv6.
