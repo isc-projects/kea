@@ -408,14 +408,14 @@ public:
     ///
     /// @return returns true if the process instance exists.
     bool checkProcess() {
-        return (getController()->process_);
+        return (getController()->process_.get() != 0);
     }
 
     /// @brief Tests the existence of the Controller's IOService.
     ///
     /// @return returns true if the IOService exists.
     bool checkIOService() {
-        return (getController()->io_service_);
+        return (getController()->io_service_.get() != 0);
     }
 
     /// @brief Gets the Controller's IOService.
