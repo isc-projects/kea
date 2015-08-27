@@ -1,3 +1,9 @@
+992.	[func]		fdupont
+	A 'flush' parameter has been added to logging configuration. It is
+	now possible to disable automatic immediate flushing to achieve
+	better logging performance.
+	(Trac #3752, git xxx)
+
 991.	[build]		fdupont
 	Removed partial function template ordering macros to allow Kea to
 	build with Boost 1.59 and later.  Also removed some
