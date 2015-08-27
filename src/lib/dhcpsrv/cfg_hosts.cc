@@ -469,7 +469,7 @@ CfgHosts::add4(const HostPtr& host) {
         } else if (duid) {
             s << "for HW address: " << duid->toText();
         }
-        isc_throw(BadValue, "specified reservation " << s
+        isc_throw(BadValue, "specified reservation " << s.str()
                   << " must include at least one resource, i.e. "
                   "hostname, IPv4 address or IPv6 address/prefix");
     }
