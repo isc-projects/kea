@@ -59,6 +59,12 @@ struct ClientIdHWAddressSubnetIdIndexTag { };
 /// The leases in the container may be accessed using different indexes:
 /// - using an IPv6 address,
 /// - using a composite index: DUID, IAID and lease type.
+/// - using a composite index: boolean flag indicating if the state is
+///   "expired-reclaimed" and expiration time.
+///
+/// Indexes can be accessed using the index number (from 0 to 2) or a
+/// name tag. It is recommended to use the tags to access indexes as
+/// they do not depend on the order of indexes in the container.
 typedef boost::multi_index_container<
     // It holds pointers to Lease6 objects.
     Lease6Ptr,
@@ -116,6 +122,12 @@ typedef boost::multi_index_container<
 /// - composite index: HW address and subnet id,
 /// - composite index: client id and subnet id,
 /// - composite index: HW address, client id and subnet id
+/// - using a composite index: boolean flag indicating if the state is
+///   "expired-reclaimed" and expiration time.
+///
+/// Indexes can be accessed using the index number (from 0 to 4) or a
+/// name tag. It is recommended to use the tags to access indexes as
+/// they do not depend on the order of indexes in the container.
 typedef boost::multi_index_container<
     // It holds pointers to Lease4 objects.
     Lease4Ptr,
