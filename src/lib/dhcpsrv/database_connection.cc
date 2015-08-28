@@ -18,7 +18,6 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <vector>
 
 using namespace std;
@@ -26,7 +25,8 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-std::string DatabaseConnection::getParameter(const std::string& name) const {
+std::string
+DatabaseConnection::getParameter(const std::string& name) const {
     ParameterMap::const_iterator param = parameters_.find(name);
     if (param == parameters_.end()) {
         isc_throw(BadValue, "Parameter " << name << " not found");

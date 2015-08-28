@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef DATA_SOURCE_H
-#define DATA_SOURCE_H
+#ifndef DATABASE_CONNECTION_H
+#define DATABASE_CONNECTION_H
 
 #include <boost/noncopyable.hpp>
 #include <exceptions/exceptions.h>
@@ -45,18 +45,17 @@ public:
 };
 
 
-/// @brief Common Data Source Class
+/// @brief Common database connection class.
 ///
 /// This class provides functions that are common for establishing
 /// connection with different types of databases; enables operations
 /// on access parameters strings. In particular, it provides a way
 /// to parse parameters in key=value format. This class is expected
-/// to be a base class for all LeaseMgr and possibly HostDataSource
-/// derived classes.
+/// to be a base class for all @ref LeaseMgr and possibly
+/// @ref BaseHostDataSource derived classes.
 class DatabaseConnection : public boost::noncopyable {
-
 public:
-    /// Database configuration parameter map
+    /// @brief Database configuration parameter map
     typedef std::map<std::string, std::string> ParameterMap;
 
     /// @brief Constructor
@@ -67,9 +66,11 @@ public:
         :parameters_(parameters) {
     }
 
-    /// @brief returns value of the parameter
+    /// @brief Returns value of a connection parameter.
+    ///
+    /// @param name Name of the parameter which value should be returned.
+    /// @return Value of one of the connection parameters.
     /// @throw BadValue if parameter is not found
-    /// @return parameter
     std::string getParameter(const std::string& name) const;
 
     /// @brief Parse database access string
@@ -79,8 +80,8 @@ public:
     ///
     /// @param dbaccess Database access string.
     ///
-    /// @return std::map<std::string, std::string> Map of keyword/value pairs.
-    static DatabaseConnection::ParameterMap parse(const std::string& dbaccess);
+    /// @return @ref ParameterMap of keyword/value pairs.
+    static ParameterMap parse(const std::string& dbaccess);
 
     /// @brief Redact database access string
     ///
@@ -92,7 +93,7 @@ public:
     /// @return Redacted database access string.
     static std::string redactedAccessString(const ParameterMap& parameters);
 
-protected:
+private:
 
     /// @brief List of parameters passed in dbconfig
     ///
@@ -106,4 +107,4 @@ protected:
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 
-#endif // DATA_SOURCE_H
+#endif // DATABASE_CONNECTION_H
