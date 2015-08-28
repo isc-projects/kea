@@ -229,10 +229,7 @@ CSVLeaseFile6::readHWAddr(const CSVRow& row) {
         // Let's return a pointer to new freshly created copy.
         return (HWAddrPtr(new HWAddr(hwaddr)));
 
-    } catch (const CSVFileError&) {
-        // That's ok, we may be reading old CSV file that didn't store hwaddr
-        return (HWAddrPtr());
-    } catch (const BadValue& ex) {
+    } catch (const std::exception& ex) {
         // That's worse. There was something in the file, but its conversion
         // to HWAddr failed. Let's log it on warning and carry on.
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_READ_HWADDR_FAIL)
