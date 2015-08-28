@@ -162,6 +162,9 @@ struct Lease {
     /// remains in a single state, but it is possible set multiple states
     /// for a single lease. In this case, multiple bits of this bitfield
     /// will be set.
+    ///
+    /// The defined states are represented by the "STATE_*" constants
+    /// belonging to this class.
     uint32_t state_;
 
     /// @brief Convert Lease to Printable Form
