@@ -136,11 +136,6 @@ struct Lease {
     /// Specifies the identification of the subnet to which the lease belongs.
     SubnetID subnet_id_;
 
-    /// @brief Fixed lease?
-    ///
-    /// Fixed leases are kept after they are released/expired.
-    bool fixed_;
-
     /// @brief Client hostname
     ///
     /// This field may be empty
@@ -160,12 +155,6 @@ struct Lease {
     ///
     /// This information may not be available in certain cases.
     HWAddrPtr hwaddr_;
-
-    /// @brief Lease comments
-    ///
-    /// Currently not used. It may be used for keeping comments made by the
-    /// system administrator.
-    std::string comments_;
 
     /// @brief Bitfield holding lease state(s).
     ///
@@ -223,16 +212,6 @@ struct Lease {
 /// extensively, direct access is warranted.
 struct Lease4 : public Lease {
 
-    /// @brief Address extension
-    ///
-    /// It is envisaged that in some cases IPv4 address will be accompanied
-    /// with some additional data. One example of such use are Address + Port
-    /// solutions (or Port-restricted Addresses), where several clients may get
-    /// the same address, but different port ranges. This feature is not
-    /// expected to be widely used.  Under normal circumstances, the value
-    /// should be 0.
-    uint32_t ext_;
-
     /// @brief Client identifier
     ///
     /// @todo Should this be a pointer to a client ID or the ID itself?
@@ -259,7 +238,7 @@ struct Lease4 : public Lease {
            const bool fqdn_fwd = false, const bool fqdn_rev = false,
            const std::string& hostname = "")
         : Lease(addr, t1, t2, valid_lft, subnet_id, cltt, fqdn_fwd, fqdn_rev,
-                hostname, hwaddr), ext_(0) {
+                hostname, hwaddr) {
         if (clientid_len) {
             client_id_.reset(new ClientId(clientid, clientid_len));
         }
@@ -294,7 +273,7 @@ struct Lease4 : public Lease {
     /// @brief Default constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease4() : Lease(0, 0, 0, 0, 0, 0, false, false, "", HWAddrPtr()), ext_(0)
+    Lease4() : Lease(0, 0, 0, 0, 0, 0, false, false, "", HWAddrPtr())
     {
     }
 

@@ -35,9 +35,8 @@ Lease::Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
              const bool fqdn_fwd, const bool fqdn_rev,
              const std::string& hostname, const HWAddrPtr& hwaddr)
     :addr_(addr), t1_(t1), t2_(t2), valid_lft_(valid_lft), cltt_(cltt),
-     subnet_id_(subnet_id), fixed_(false), hostname_(hostname),
-     fqdn_fwd_(fqdn_fwd), fqdn_rev_(fqdn_rev), hwaddr_(hwaddr),
-     state_(STATE_DEFAULT) {
+     subnet_id_(subnet_id), hostname_(hostname), fqdn_fwd_(fqdn_fwd),
+    fqdn_rev_(fqdn_rev), hwaddr_(hwaddr), state_(STATE_DEFAULT) {
 }
 
 
@@ -123,9 +122,6 @@ Lease4::Lease4(const Lease4& other)
             other.fqdn_rev_, other.hostname_, other.hwaddr_) {
 
     // Copy over fields derived from Lease.
-    ext_ = other.ext_;
-    comments_ = other.comments_;
-    fixed_ = other.fixed_;
     state_ = other.state_;
 
     // Copy the hardware address if it is defined.
@@ -158,7 +154,7 @@ Lease4::Lease4(const isc::asiolink::IOAddress& address,
 
     : Lease(address, t1, t2, valid_lifetime, subnet_id, cltt, fqdn_fwd,
             fqdn_rev, hostname, hw_address),
-      ext_(0), client_id_(client_id) {
+      client_id_(client_id) {
 }
 
 std::string
@@ -211,12 +207,9 @@ Lease4::operator=(const Lease4& other) {
         valid_lft_ = other.valid_lft_;
         cltt_ = other.cltt_;
         subnet_id_ = other.subnet_id_;
-        fixed_ = other.fixed_;
         hostname_ = other.hostname_;
         fqdn_fwd_ = other.fqdn_fwd_;
         fqdn_rev_ = other.fqdn_rev_;
-        comments_ = other.comments_;
-        ext_ = other.ext_;
         state_ = other.state_;
 
         // Copy the hardware address if it is defined.
@@ -330,17 +323,14 @@ Lease4::operator==(const Lease4& other) const {
     return (nullOrEqualValues(hwaddr_, other.hwaddr_) &&
             nullOrEqualValues(client_id_, other.client_id_) &&
             addr_ == other.addr_ &&
-            ext_ == other.ext_ &&
             subnet_id_ == other.subnet_id_ &&
             t1_ == other.t1_ &&
             t2_ == other.t2_ &&
             valid_lft_ == other.valid_lft_ &&
             cltt_ == other.cltt_ &&
-            fixed_ == other.fixed_ &&
             hostname_ == other.hostname_ &&
             fqdn_fwd_ == other.fqdn_fwd_ &&
             fqdn_rev_ == other.fqdn_rev_ &&
-            comments_ == other.comments_ &&
             state_ == other.state_);
 }
 
@@ -358,11 +348,9 @@ Lease6::operator==(const Lease6& other) const {
             t2_ == other.t2_ &&
             cltt_ == other.cltt_ &&
             subnet_id_ == other.subnet_id_ &&
-            fixed_ == other.fixed_ &&
             hostname_ == other.hostname_ &&
             fqdn_fwd_ == other.fqdn_fwd_ &&
             fqdn_rev_ == other.fqdn_rev_ &&
-            comments_ == other.comments_ &&
             state_ == other.state_);
 }
 
