@@ -120,6 +120,7 @@ libkea_dhcpsrv_la_SOURCES += srv_config.cc srv_config.h
 libkea_dhcpsrv_la_SOURCES += subnet.cc subnet.h
 libkea_dhcpsrv_la_SOURCES += subnet_id.h
 libkea_dhcpsrv_la_SOURCES += subnet_selector.h
+libkea_dhcpsrv_la_SOURCES += tmp_state_host.h
 libkea_dhcpsrv_la_SOURCES += triplet.h
 libkea_dhcpsrv_la_SOURCES += utils.h
 libkea_dhcpsrv_la_SOURCES += writable_host_data_source.h

@@ -249,6 +249,9 @@ public:
          const std::string& dhcp4_client_classes = "",
          const std::string& dhcp6_client_classes = "");
 
+    /// @brief Destructor
+    virtual ~Host() { }
+
     /// @brief Replaces currently used identifier with a new identifier.
     ///
     /// This method initializes hardware address or DUID (@c hw_address_ or
@@ -418,7 +421,7 @@ public:
     }
 
     /// @brief Returns information about the host in the textual format.
-    std::string toText() const;
+    virtual std::string toText() const;
 
 private:
 

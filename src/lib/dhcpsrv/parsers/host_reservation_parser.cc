@@ -111,6 +111,7 @@ HostReservationParser::build(isc::data::ConstElementPtr reservation_data) {
         }
 
         // Create a host object from the basic parameters we already parsed.
+        // This is the place to replace Host by TSHost if it is used.
         host_.reset(new Host(identifier, identifier_name, SubnetID(0),
                              SubnetID(0), IOAddress("0.0.0.0"), hostname));
 
