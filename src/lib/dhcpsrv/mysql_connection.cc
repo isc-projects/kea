@@ -17,17 +17,11 @@
 #include <dhcpsrv/mysql_connection.h>
 #include <exceptions/exceptions.h>
 
-#include <boost/foreach.hpp>
-#include <boost/algorithm/string.hpp>
-
 #include <algorithm>
 #include <iostream>
 #include <iterator>
-#include <map>
-#include <sstream>
+#include <stdint.h>
 #include <string>
-
-#include <time.h>
 
 using namespace isc;
 using namespace isc::dhcp;
