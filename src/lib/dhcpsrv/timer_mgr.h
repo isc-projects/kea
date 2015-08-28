@@ -42,7 +42,8 @@ namespace dhcp {
 ///
 /// The @c TimerMgr is a singleton, thus its instance is available from
 /// different places in the server code. This is convenient because timers
-/// can be installed by different configuration parsers.
+/// can be installed by different configuration parsers or they can be
+/// re-scheduled from the callback functions.
 ///
 /// The timer is registered using the @c TimerMgr::registerTimer method.
 /// Each registered timer has a unique name. It is not possible to register
@@ -56,7 +57,7 @@ namespace dhcp {
 ///
 /// The @c TimerMgr uses worker thread to run the timers. The thread is
 /// started and stopped using the @c TimerMgr::startThread and
-/// @TimerMgr::stopThread respectively. The thread calls the blocking
+/// @c TimerMgr::stopThread respectively. The thread calls the blocking
 /// @c IOService::run. All the registered timers are associated with
 /// this instance of the @c IOService that the thread is running.
 /// When the timer elapses a generic callback function is executed
@@ -69,7 +70,7 @@ namespace dhcp {
 /// function is invoked for the timer, it obtains the instance of the
 /// @c util::WatchSocket and marks it "ready". This call effectively
 /// writes the data to a socket (pipe) which interrupts the call
-/// to the @c select function in the main thread. Note that this
+/// to the @c select() function in the main thread. Note that this
 /// operation will likely block the worker thread until the
 /// socket is cleared. When the @c IfaceMgr (in the main thread)
 /// detects data transmitted over the external socket it will
@@ -166,7 +167,7 @@ public:
 
     /// @brief Starts worker thread
     ///
-    /// This method has no effect if the thread has already been started..
+    /// This method has no effect if the thread has already been started.
     void startThread();
 
     /// @brief Stops worker thread.
