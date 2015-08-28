@@ -453,7 +453,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     ASSERT_NO_THROW(lease_mgr->addLease(new_lease));
 
     std::string updated_file_contents = new_file_contents +
-        "192.0.2.45,00:00:00:00:00:00,,100,100,1,0,0,,1\n";
+        "192.0.2.45,00:00:00:00:00:00,,100,100,1,0,0,,0\n";
     EXPECT_EQ(updated_file_contents, current_file.readFile());
 
     // This string contains the contents of the lease file we
@@ -536,7 +536,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
 
     std::string update_file_contents = new_file_contents +
         "3000::1,00:00:00:00:00:00:00:00:00:00:00:00:00,400,"
-        "400,2,300,0,123,128,0,0,,,1\n";
+        "400,2,300,0,123,128,0,0,,,0\n";
     EXPECT_EQ(update_file_contents, current_file.readFile());
 
     // This string contains the contents of the lease file we

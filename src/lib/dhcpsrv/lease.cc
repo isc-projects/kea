@@ -23,11 +23,11 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-const uint32_t Lease::STATE_DEFAULT = 0x1;
-const uint32_t Lease::STATE_DECLINED = 0x2;
-const uint32_t Lease::STATE_EXPIRED_RECLAIMED = 0x4;
+const uint32_t Lease::STATE_DEFAULT = 0x0;
+const uint32_t Lease::STATE_DECLINED = 0x1;
+const uint32_t Lease::STATE_EXPIRED_RECLAIMED = 0x2;
 
-const unsigned int Lease::BASIC_STATES_NUM = 3;
+const unsigned int Lease::BASIC_STATES_NUM = 2;
 
 
 Lease::Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
@@ -77,10 +77,6 @@ Lease::basicStatesToText(const uint32_t state) {
             }
             // Check which bit is set and append state name.
             switch (single_state) {
-            case STATE_DEFAULT:
-                s << "default";
-                break;
-
             case STATE_DECLINED:
                 s << "declined";
                 break;
@@ -91,12 +87,12 @@ Lease::basicStatesToText(const uint32_t state) {
 
             default:
                 // This shouldn't really happen.
-                s << "unknown";
+                s << "unknown (" << i << ")";
             }
         }
     }
 
-    return (s.tellp() > 0 ? s.str() : "(not set)");
+    return (s.tellp() > 0 ? s.str() : "default");
 }
 
 bool
@@ -165,7 +161,10 @@ Lease4::Lease4(const isc::asiolink::IOAddress& address,
       ext_(0), client_id_(client_id) {
 }
 
-
+std::string
+Lease4::statesToText(const uint32_t state) {
+    return (Lease::basicStatesToText(state));
+}
 
 const std::vector<uint8_t>&
 Lease4::getClientIdVector() const {
@@ -271,6 +270,11 @@ Lease6::Lease6()
     : Lease(isc::asiolink::IOAddress("::"), 0, 0, 0, 0, 0, false, false, "",
             HWAddrPtr()), type_(TYPE_NA), prefixlen_(0), iaid_(0),
             duid_(DuidPtr()), preferred_lft_(0) {
+}
+
+std::string
+Lease6::statesToText(const uint32_t state) {
+    return (Lease::basicStatesToText(state));
 }
 
 const std::vector<uint8_t>&
