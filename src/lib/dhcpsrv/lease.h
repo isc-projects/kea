@@ -63,8 +63,8 @@ struct Lease {
     /// @brief Number of common states for DHCPv4 and DHCPv6.
     ///
     /// This constants holds the number of states used for both DHCPv4 and
-    /// DHCPv6 leases. If new states are defined, this value must be adjusted
-    /// accordingly.
+    /// DHCPv6 leases excluding the default state. If new states are defined,
+    /// this value must be adjusted accordingly.
     static const unsigned int BASIC_STATES_NUM;
     //@}
 
@@ -311,10 +311,7 @@ struct Lease4 : public Lease {
     ///
     /// @param state Numeric value holding lease states.
     /// @return Comma separated list of lease state names.
-    static std::string statesToText(const uint32_t state) {
-        return (Lease::basicStatesToText(state));
-    }
-
+    static std::string statesToText(const uint32_t state);
 
     /// @brief Returns a client identifier.
     ///
@@ -509,9 +506,7 @@ struct Lease6 : public Lease {
     ///
     /// @param state Numeric value holding lease states.
     /// @return Comma separated list of lease state names.
-    static std::string statesToText(const uint32_t state) {
-        return (Lease::basicStatesToText(state));
-    }
+    static std::string statesToText(const uint32_t state);
 
     /// @brief Returns a reference to a vector representing a DUID.
     ///

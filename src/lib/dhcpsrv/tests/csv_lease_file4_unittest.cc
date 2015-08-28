@@ -113,10 +113,10 @@ CSVLeaseFile4Test::writeSampleFile() const {
     io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
                   "fqdn_fwd,fqdn_rev,hostname,state\n"
                   "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,"
-                  "host.example.com,1\n"
+                  "host.example.com,0\n"
                   "192.0.2.1,,a:11:01:04,200,200,8,1,1,host.example.com,1\n"
                   "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,100,7,"
-                  "0,0,,2\n");
+                  "0,0,,1\n");
 }
 
 // This test checks the capability to read and parse leases from the file.
@@ -242,9 +242,9 @@ TEST_F(CSVLeaseFile4Test, recreate) {
     // Check that the contents of the csv file are correct.
     EXPECT_EQ("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
               "fqdn_fwd,fqdn_rev,hostname,state\n"
-              "192.0.3.2,00:01:02:03:04:05,,200,200,8,1,1,host.example.com,4\n"
+              "192.0.3.2,00:01:02:03:04:05,,200,200,8,1,1,host.example.com,2\n"
               "192.0.3.10,0d:0e:0a:0d:0b:0e:0e:0f,01:02:03:04,100,100,7,0,"
-              "0,,1\n",
+              "0,,0\n",
               io_.readFile());
 }
 
