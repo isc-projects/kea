@@ -15,13 +15,10 @@
 #ifndef MYSQL_CONNECTION_H
 #define MYSQL_CONNECTION_H
 
-#include <dhcp/hwaddr.h>
-#include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/database_connection.h>
 #include <boost/scoped_ptr.hpp>
 #include <mysql.h>
-
-#include <time.h>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
