@@ -1678,9 +1678,9 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
         ASSERT_TRUE(lmptr_->addLease(leases[i]));
     }
 
-    // Retrieve expired leases.
+    // Retrieve at most 1000 expired leases.
     Lease4Collection expired_leases;
-    lmptr_->getExpiredLeases4(expired_leases, 1000);
+    ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 1000));
     // Leases with even indexes should be returned as expired.
     ASSERT_EQ(static_cast<size_t>(leases.size() / 2), expired_leases.size());
 
@@ -1715,7 +1715,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
 
     // Retrieve expired leases again. The limit of 0 means return all expired
     // leases.
-    lmptr_->getExpiredLeases4(expired_leases, 0);
+    ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 0));
     // The same leases should be returned.
     ASSERT_EQ(static_cast<size_t>(leases.size() / 2), expired_leases.size());
 
@@ -1733,7 +1733,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     expired_leases.clear();
 
     // Limit the number of leases to be returned to 2.
-    lmptr_->getExpiredLeases4(expired_leases, 2);
+    ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 2));
 
     // Make sure we have exactly 2 leases returned.
     ASSERT_EQ(2, expired_leases.size());
@@ -1757,7 +1757,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
 
     // This the returned leases should exclude reclaimed ones. So the number
     // of returned leases should be roughly half of the expired leases.
-    lmptr_->getExpiredLeases4(expired_leases, 0);
+    ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 0));
     ASSERT_EQ(static_cast<size_t>(saved_expired_leases.size() / 2),
               expired_leases.size());
 
@@ -1798,9 +1798,9 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
         ASSERT_TRUE(lmptr_->addLease(leases[i]));
     }
 
-    // Retrieve expired leases.
+    // Retrieve at most 1000 expired leases.
     Lease6Collection expired_leases;
-    lmptr_->getExpiredLeases6(expired_leases, 1000);
+    ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 1000));
     // Leases with even indexes should be returned as expired.
     ASSERT_EQ(static_cast<size_t>(leases.size() / 2), expired_leases.size());
 
@@ -1835,7 +1835,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
 
     // Retrieve expired leases again. The limit of 0 means return all expired
     // leases.
-    lmptr_->getExpiredLeases6(expired_leases, 0);
+    ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0));
     // The same leases should be returned.
     ASSERT_EQ(static_cast<size_t>(leases.size() / 2), expired_leases.size());
 
@@ -1853,7 +1853,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     expired_leases.clear();
 
     // Limit the number of leases to be returned to 2.
-    lmptr_->getExpiredLeases6(expired_leases, 2);
+    ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 2));
 
     // Make sure we have exactly 2 leases returned.
     ASSERT_EQ(2, expired_leases.size());
@@ -1877,7 +1877,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
 
     // This the returned leases should exclude reclaimed ones. So the number
     // of returned leases should be roughly half of the expired leases.
-    lmptr_->getExpiredLeases6(expired_leases, 0);
+    ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0));
     ASSERT_EQ(static_cast<size_t>(saved_expired_leases.size() / 2),
               expired_leases.size());
 

@@ -872,10 +872,7 @@ TEST_F(MemfileLeaseMgrTest, getLeases6DuidIaid) {
     testGetLeases6DuidIaid();
 }
 
-// Check that the system can cope with a DUID of allowed size.
-
-/// @todo: test disabled, because Memfile_LeaseMgr::getLeases6(Lease::Type,
-/// const DUID& duid, uint32_t iaid) const is not implemented yet.
+/// @brief Check that the system can cope with a DUID of allowed size.
 TEST_F(MemfileLeaseMgrTest, getLeases6DuidSize) {
     startBackend(V6);
     testGetLeases6DuidSize();
