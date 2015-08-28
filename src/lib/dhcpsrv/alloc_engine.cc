@@ -932,7 +932,6 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     expired->t2_ = ctx.subnet_->getT2();
     expired->cltt_ = time(NULL);
     expired->subnet_id_ = ctx.subnet_->getID();
-    expired->fixed_ = false;
     expired->hostname_ = ctx.hostname_;
     expired->fqdn_fwd_ = ctx.fwd_dns_update_;
     expired->fqdn_rev_ = ctx.rev_dns_update_;
@@ -1913,7 +1912,6 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
     }
 
     updateLease4Information(expired, ctx);
-    expired->fixed_ = false;
 
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,
               ALLOC_ENGINE_V4_REUSE_EXPIRED_LEASE_DATA)
