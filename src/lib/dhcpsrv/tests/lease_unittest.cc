@@ -96,7 +96,6 @@ TEST_F(Lease4Test, constructor) {
                      "hostname.example.com.");
 
         EXPECT_EQ(ADDRESS[i], static_cast<uint32_t>(lease.addr_));
-        EXPECT_EQ(0, lease.ext_);
         EXPECT_TRUE(util::equalValues(hwaddr_, lease.hwaddr_));
         EXPECT_TRUE(util::equalValues(clientid_, lease.client_id_));
         EXPECT_EQ(0, lease.t1_);
@@ -104,11 +103,9 @@ TEST_F(Lease4Test, constructor) {
         EXPECT_EQ(VALID_LIFETIME, lease.valid_lft_);
         EXPECT_EQ(current_time, lease.cltt_);
         EXPECT_EQ(SUBNET_ID, lease.subnet_id_);
-        EXPECT_FALSE(lease.fixed_);
         EXPECT_EQ("hostname.example.com.", lease.hostname_);
         EXPECT_TRUE(lease.fqdn_fwd_);
         EXPECT_TRUE(lease.fqdn_rev_);
-        EXPECT_TRUE(lease.comments_.empty());
         EXPECT_EQ(Lease::STATE_DEFAULT, lease.state_);
     }
 }
@@ -295,13 +292,6 @@ TEST_F(Lease4Test, operatorEquals) {
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
-    ++lease1.ext_;
-    EXPECT_FALSE(lease1 == lease2);
-    EXPECT_TRUE(lease1 != lease2);
-    lease1.ext_ = lease2.ext_;
-    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... leases equal
-
     ++lease1.hwaddr_->hwaddr_[0];
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
@@ -354,13 +344,6 @@ TEST_F(Lease4Test, operatorEquals) {
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
-    lease1.fixed_ = !lease1.fixed_;
-    EXPECT_FALSE(lease1 == lease2);
-    EXPECT_TRUE(lease1 != lease2);
-    lease1.fixed_ = lease2.fixed_;
-    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... leases equal
-
     lease1.hostname_ += std::string("Something random");
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
@@ -379,13 +362,6 @@ TEST_F(Lease4Test, operatorEquals) {
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.fqdn_rev_ = lease2.fqdn_rev_;
-    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... leases equal
-
-    lease1.comments_ += std::string("Something random");
-    EXPECT_FALSE(lease1 == lease2);
-    EXPECT_TRUE(lease1 != lease2);
-    lease1.comments_ = lease2.comments_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
@@ -595,7 +571,7 @@ TEST(Lease6Test, Lease6ConstructorWithFQDN) {
 /// Checks that the operator==() correctly compares two leases for equality.
 /// As operator!=() is also defined for this class, every check on operator==()
 /// is followed by the reverse check on operator!=().
-TEST(Lease6Test, OperatorEquals) {
+TEST(Lease6Test, operatorEquals) {
 
     // check a variety of addresses with different bits set.
     const IOAddress addr("2001:db8:1::456");
@@ -697,13 +673,6 @@ TEST(Lease6Test, OperatorEquals) {
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
-    lease1.fixed_ = !lease1.fixed_;
-    EXPECT_FALSE(lease1 == lease2);
-    EXPECT_TRUE(lease1 != lease2);
-    lease1.fixed_ = lease2.fixed_;
-    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... leases equal
-
     lease1.hostname_ += std::string("Something random");
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
@@ -722,13 +691,6 @@ TEST(Lease6Test, OperatorEquals) {
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.fqdn_rev_ = lease2.fqdn_rev_;
-    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... leases equal
-
-    lease1.comments_ += std::string("Something random");
-    EXPECT_FALSE(lease1 == lease2);
-    EXPECT_TRUE(lease1 != lease2);
-    lease1.comments_ = lease2.comments_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 

@@ -79,11 +79,8 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
     lease->addr_ = IOAddress(address);
 
     // Initialize unused fields.
-    lease->ext_ = 0;                            // Not saved
     lease->t1_ = 0;                             // Not saved
     lease->t2_ = 0;                             // Not saved
-    lease->fixed_ = false;                      // Unused
-    lease->comments_ = std::string("");         // Unused
 
     // Set other parameters.  For historical reasons, address 0 is not used.
     if (address == straddress4_[0]) {
@@ -199,8 +196,6 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
     // Initialize unused fields.
     lease->t1_ = 0;                             // Not saved
     lease->t2_ = 0;                             // Not saved
-    lease->fixed_ = false;                      // Unused
-    lease->comments_ = std::string("");         // Unused
 
     // Set other parameters.  For historical reasons, address 0 is not used.
     if (address == straddress6_[0]) {
@@ -1304,8 +1299,6 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
     // Initialize unused fields.
     empty_lease->t1_ = 0;                             // Not saved
     empty_lease->t2_ = 0;                             // Not saved
-    empty_lease->fixed_ = false;                      // Unused
-    empty_lease->comments_ = std::string("");         // Unused
     empty_lease->iaid_ = 142;
     empty_lease->duid_ = DuidPtr(new DUID(*duid));
     empty_lease->subnet_id_ = 23;
