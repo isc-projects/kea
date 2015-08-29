@@ -9,14 +9,14 @@ AM_CPPFLAGS += $(BOOST_INCLUDES) $(MULTITHREADING_FLAG)
 # But older GCC compilers don't have the flag.     
 AM_CXXFLAGS  = $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
-# BIND 10 libraries against which the test user libraries are linked.
+# Kea libraries against which the test user libraries are linked.
 HOOKS_LIB      = $(top_builddir)/src/lib/hooks/libkea-hooks.la
 LOG_LIB        = $(top_builddir)/src/lib/log/libkea-log.la
-EXCEPTIONS_LIB = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-UTIL_LIB       = $(top_builddir)/src/lib/util/libkea-util.la
 THREADS_LIB    = $(top_builddir)/src/lib/util/threads/libkea-threads.la
+UTIL_LIB       = $(top_builddir)/src/lib/util/libkea-util.la
+EXCEPTIONS_LIB = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
-ALL_LIBS       = $(HOOKS_LIB) $(LOG_LIB) $(EXCEPTIONS_LIB) $(UTIL_LIB) $(THREADS_LIB)
+ALL_LIBS       = $(HOOKS_LIB) $(LOG_LIB) $(THREADS_LIB) $(UTIL_LIB) $(EXCEPTIONS_LIB) $(LOG4CPLUS_LIBS)
 
 if USE_CLANGPP
 # see ../Makefile.am
@@ -74,14 +74,14 @@ libbcl_la_SOURCES  = basic_callout_library.cc
 libbcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libbcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libbcl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
-libbcl_la_LIBADD    = $(ALL_LIBS)
+libbcl_la_LIBADD   = $(ALL_LIBS)
 
 # The load callout library - contains a load function
 liblcl_la_SOURCES  = load_callout_library.cc
 liblcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 liblcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 liblcl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
-liblcl_la_LIBADD    = $(ALL_LIBS)
+liblcl_la_LIBADD   = $(ALL_LIBS)
 
 # The load error callout library - contains a load function that returns
 # an error.
@@ -124,10 +124,11 @@ if USE_STATIC_LINK
 run_unittests_LDFLAGS += -static
 endif
 
-run_unittests_LDADD    = $(AM_LDADD) $(GTEST_LDADD)
+run_unittests_LDADD    = $(AM_LDADD)
 run_unittests_LDADD   += $(ALL_LIBS)
 run_unittests_LDADD   += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-
+run_unittests_LDADD   += $(top_builddir)/src/lib/util/io/libkea-util-io.la
+run_unittests_LDADD   += $(GTEST_LDADD)
 # As noted in configure.ac, libtool doesn't work perfectly with Darwin: it
 # embeds the final install path in dynamic libraries and loadable modules refer
 # to that path even if its loaded within the source tree, so preventing tests
@@ -141,7 +142,7 @@ run_unittests_LDADD   += $(top_builddir)/src/lib/util/unittests/libutil_unittest
 if USE_STATIC_LINK
 if SET_ENV_LIBRARY_PATH
 check-TESTS:
-	$(LIBTOOL) --mode=execute -dlopen $(HOOKS_LIB)  -dlopen $(LOG_LIB) -dlopen $(EXCEPTIONS_LIB) -dlopen $(UTIL_LIB)  -dlopen $(THREADS_LIB) ./run_unittests
+	$(LIBTOOL) --mode=execute -dlopen $(HOOKS_LIB)  -dlopen $(LOG_LIB) -dlopen $(THREADS_LIB) -dlopen $(UTIL_LIB) -dlopen $(EXCEPTIONS_LIB) ./run_unittests
 endif
 endif
 
