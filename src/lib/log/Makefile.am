@@ -43,8 +43,10 @@ if USE_GXX
 libkea_log_la_CXXFLAGS += -Wno-unused-parameter
 endif
 libkea_log_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libkea_log_la_LIBADD   = $(top_builddir)/src/lib/util/libkea-util.la
-libkea_log_la_LIBADD  += interprocess/libkea-log_interprocess.la
+libkea_log_la_LIBADD   = $(top_builddir)/src/lib/log/interprocess/libkea-log_interprocess.la
+libkea_log_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+libkea_log_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
+libkea_log_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_log_la_LIBADD  += $(LOG4CPLUS_LIBS)
 libkea_log_la_LDFLAGS = -no-undefined -version-info 1:0:1
 

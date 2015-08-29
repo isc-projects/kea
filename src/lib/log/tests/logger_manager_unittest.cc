@@ -35,7 +35,7 @@
 #include <log/message_initializer.h>
 #include <log/output_option.h>
 
-#include "tempdir.h"
+#include <log/tests/tempdir.h>
 
 #include <sys/types.h>
 #include <regex.h>
