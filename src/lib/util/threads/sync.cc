@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#include "sync.h"
+#include <util/threads/sync.h>
 
 #include <exceptions/exceptions.h>
 

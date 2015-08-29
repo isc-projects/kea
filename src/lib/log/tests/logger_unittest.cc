@@ -24,7 +24,7 @@
 #include <log/logger_name.h>
 #include <log/log_messages.h>
 #include <log/interprocess/interprocess_sync_file.h>
-#include "log/tests/log_test_messages.h"
+#include <log/tests/log_test_messages.h>
 
 #include <iostream>
 #include <string>
