@@ -22,8 +22,11 @@ if HAVE_GTEST
 libutil_unittests_la_CPPFLAGS += $(GTEST_INCLUDES)
 endif
 
-libutil_unittests_la_LIBADD  = $(top_builddir)/src/lib/util/libkea-util.la
-libutil_unittests_la_LIBADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
+libutil_unittests_la_LIBADD  = $(top_builddir)/src/lib/util/io/libkea-util-io.la
+libutil_unittests_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libutil_unittests_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+if HAVE_GTEST
+libutil_unittests_la_LIBADD += $(GTEST_LDADD)
+endif
 
 CLEANFILES = *.gcno *.gcda

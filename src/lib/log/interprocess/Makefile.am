@@ -16,6 +16,6 @@ libkea_log_interprocess_la_SOURCES += interprocess_sync_file.cc
 libkea_log_interprocess_la_SOURCES += interprocess_sync_null.h
 libkea_log_interprocess_la_SOURCES += interprocess_sync_null.cc
 
-libkea_log_interprocess_la_LIBADD  = $(top_builddir)/src/lib/util/threads/libkea-threads.la
+libkea_log_interprocess_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
 EXTRA_DIST  = README
