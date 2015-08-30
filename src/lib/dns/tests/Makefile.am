@@ -2,8 +2,6 @@ SUBDIRS = testdata .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
-AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 AM_CPPFLAGS += -DTEST_DATA_SRCDIR=\"$(abs_top_srcdir)/src/lib/dns/tests/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dns/tests/testdata\"
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -83,14 +81,11 @@ run_unittests_SOURCES += rrset_collection_unittest.cc
 run_unittests_SOURCES += zone_checker_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-# We shouldn't need to include CRYPTO_LIBS here, but there
-# is one test system where the path for GTEST_LDFLAGS contains
-# an older version of botan, and somehow that version gets
-# linked if we don't
-run_unittests_LDFLAGS = $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS) $(AM_LDFLAGS)
+run_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD = $(top_builddir)/src/lib/dns/libkea-dns++.la
-run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+run_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 run_unittests_LDADD += $(CRYPTO_LIBS) $(GTEST_LDADD)
 endif

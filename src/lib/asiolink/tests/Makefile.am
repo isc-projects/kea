@@ -1,7 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CPPFLAGS += -I$(top_builddir)/src/lib/util -I$(top_srcdir)/src/util
-AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -41,9 +39,11 @@ run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
 run_unittests_LDADD = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-run_unittests_LDADD += $(GTEST_LDADD)
+run_unittests_LDADD += $(LOG4CPLUS_LIBS) $(GTEST_LDADD)
 
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
