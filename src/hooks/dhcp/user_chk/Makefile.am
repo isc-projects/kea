@@ -47,7 +47,7 @@ libduc_la_SOURCES += version.cc
 nodist_libduc_la_SOURCES = user_chk_messages.cc user_chk_messages.h
 
 libduc_la_CXXFLAGS = $(AM_CXXFLAGS)
-libduc_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libduc_la_CPPFLAGS = $(AM_CPPFLAGS)
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
 # Boost headers when compiling with clang.
@@ -65,6 +65,7 @@ libdhcp_user_chk_la_LDFLAGS  += -rpath /nowhere
 libdhcp_user_chk_la_LIBADD  = libduc.la
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
+libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libdhcp_user_chk_la_LIBADD  += $(LOG4CPLUS_LIBS)

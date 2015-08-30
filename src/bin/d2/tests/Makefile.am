@@ -20,8 +20,6 @@ check-local:
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin
-AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
-AM_CPPFLAGS += -I$(top_srcdir)/src/lib/asiolink
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/d2/tests\"
@@ -71,24 +69,34 @@ d2_unittests_SOURCES += d2_controller_unittests.cc
 d2_unittests_SOURCES += d_controller_unittests.cc
 
 d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-d2_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-d2_unittests_LDADD = $(GTEST_LDADD)
-d2_unittests_LDADD += $(top_builddir)/src/bin/d2/libd2.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+d2_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
+if HAVE_MYSQL
+d2_unittests_LDFLAGS += $(MYSQL_LIBS)
+endif
+if HAVE_PGSQL
+d2_unittests_LDFLAGS += $(PGSQL_LIBS)
+endif
+d2_unittests_LDFLAGS += $(GTEST_LDFLAGS)
+
+d2_unittests_LDADD = $(top_builddir)/src/bin/d2/libd2.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+d2_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(GTEST_LDADD)
 
 endif
 
