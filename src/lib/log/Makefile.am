@@ -2,7 +2,7 @@ SUBDIRS = interprocess . compiler tests
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CPPFLAGS += -DTOP_BUILDDIR=\"${abs_top_builddir}\"
+AM_CPPFLAGS += -DTOP_BUILDDIR=\"$(abs_top_builddir)\"
 
 CLEANFILES = *.gcno *.gcda
 
