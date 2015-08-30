@@ -82,7 +82,6 @@ TESTSLDADD  = $(AM_LDADD)
 TESTSLDADD += $(top_builddir)/src/lib/log/libkea-log.la
 TESTSLDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 TESTSLDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-TESTSLDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
 TESTSLDADD += $(top_builddir)/src/lib/util/libkea-util.la
 TESTSLDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 TESTSLDADD += $(LOG4CPLUS_LIBS) $(GTEST_LDADD)

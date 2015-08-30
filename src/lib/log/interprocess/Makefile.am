@@ -1,7 +1,7 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-AM_CPPFLAGS += -DLOCKFILE_DIR=\"${localstatedir}/run/${PACKAGE_NAME}\"
+AM_CPPFLAGS += -DLOCKFILE_DIR=\"$(localstatedir)/run/$(PACKAGE_NAME)\"
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)

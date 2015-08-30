@@ -1,5 +1,7 @@
 SUBDIRS = . tests
+
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Get rid of generated message files on a clean
 CLEANFILES = *.gcno *.gcda config_report.cc
