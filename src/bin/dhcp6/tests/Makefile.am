@@ -16,7 +16,6 @@ check-local:
 	${SHELL} $(abs_builddir)/$$shtest || exit ; \
 	done
 
-
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin
@@ -94,27 +93,35 @@ dhcp6_unittests_SOURCES += kea_controller_unittest.cc
 nodist_dhcp6_unittests_SOURCES  = marker_file.h test_libraries.h
 
 dhcp6_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-dhcp6_unittests_LDADD = $(GTEST_LDADD)
-dhcp6_unittests_LDADD += $(top_builddir)/src/bin/dhcp6/libdhcp6.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
+if HAVE_MYSQL
+dhcp6_unittests_LDFLAGS += $(MYSQL_LIBS)
+endif
+if HAVE_PGSQL
+dhcp6_unittests_LDFLAGS += $(PGSQL_LIBS)
+endif
+dhcp6_unittests_LDFLAGS += $(GTEST_LDFLAGS)
+
+dhcp6_unittests_LDADD = $(top_builddir)/src/bin/dhcp6/libdhcp6.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
-
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+dhcp6_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)
