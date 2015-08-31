@@ -9,6 +9,10 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
+if USE_STATIC_LINK
+AM_LDFLAGS = -static
+endif
+
 # Some versions of GCC warn about some versions of Boost regarding
 # missing initializer for members in its posix_time.
 # https://svn.boost.org/trac/boost/ticket/3477
