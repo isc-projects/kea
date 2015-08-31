@@ -36,6 +36,10 @@ if USE_CLANGPP
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
+if USE_STATIC_LINK
+AM_LDFLAGS = -static
+endif
+
 TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
