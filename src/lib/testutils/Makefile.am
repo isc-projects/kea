@@ -21,6 +21,6 @@ endif
 # Include common libraries being used by shell-based tests.
 SHLIBS = dhcp_test_lib.sh.in
 
-EXTRA_DIST = portconfig.h socket_request.h $(SHLIBS)
+EXTRA_DIST = $(SHLIBS)
 
 CLEANFILES = dhcp_test_lib.sh

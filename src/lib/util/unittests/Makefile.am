@@ -2,7 +2,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 noinst_LTLIBRARIES = libutil_unittests.la
-libutil_unittests_la_SOURCES = fork.h fork.cc resolver.h
+libutil_unittests_la_SOURCES = fork.h fork.cc
 libutil_unittests_la_SOURCES += newhook.h newhook.cc
 libutil_unittests_la_SOURCES += testdata.h testdata.cc
 if HAVE_GTEST
