@@ -1,3 +1,0 @@
-example.org.    3600    IN  SOA ns.example.org. admin.example.org. 1234 3600 1800 2419200 7200
-example.org.    3600    IN  NS ns.example.org.
-ns.example.org.	3600    IN  A 192.0.2.1

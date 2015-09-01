@@ -1,9 +1,0 @@
-###
-### This data file was auto-generated from iquery_response_fromWire.spec
-###
-
-# Header Section
-# ID=4149 QR=Response Opcode=IQUERY(1) Rcode=NOTIMP(4)
-1035 c004
-# QDCNT=0, ANCNT=0, NSCNT=0, ARCNT=0
-0000 0000 0000 0000

@@ -1,5 +1,0 @@
-test1.example.    3600    IN  SOA ns.test1.example. admin.test1.example. 1241 3600 1800 2419200 7200
-test1.example.    3600    IN  NS ns.test1.example.
-ns.test1.example.	3600    IN  A 192.0.2.1
-;; out-of-zone RR
-www.example.com.	3600    IN  AAAA 2001:db8::80
