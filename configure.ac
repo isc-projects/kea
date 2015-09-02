@@ -1245,7 +1245,13 @@ AC_SUBST(GTEST_SOURCE)
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
 #
 # Disable threads: Currently we don't use them.
-CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_THREADS=1"
+CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
+#
+# Don't want boost system library
+CPPFLAGS="$CPPFLAGS -DBOOST_ERROR_CODE_HEADER_ONLY"
+#
+# Avoid boost::system::throws multiple defines
+CPPFLAGS="$CPPFLAGS -DBOOST_SYSTEM_NO_DEPRECATED"
 
 # Check for functions that are not available on all platforms
 AC_CHECK_FUNCS([pselect])
