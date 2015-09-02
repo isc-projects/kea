@@ -60,18 +60,13 @@ struct Lease {
     /// @brief Expired and reclaimed lease.
     static const uint32_t STATE_EXPIRED_RECLAIMED;
 
-    /// @brief Number of common states for DHCPv4 and DHCPv6.
-    ///
-    /// This constants holds the number of states used for both DHCPv4 and
-    /// DHCPv6 leases excluding the default state. If new states are defined,
-    /// this value must be adjusted accordingly.
-    static const unsigned int BASIC_STATES_NUM;
     //@}
 
     /// @brief Returns name(s) of the basic lease state(s).
     ///
-    /// @param state A numeric value holding a state information. Multiple bits
-    /// may be set to indicate that the lease is in multiple states.
+    /// @param state A numeric value holding a state information.
+    /// Some states may be composite, i.e. the single state value
+    /// maps to multiple logical states of the lease.
     ///
     /// @return Comma separated list of state names.
     static std::string basicStatesToText(const uint32_t state);
@@ -156,12 +151,12 @@ struct Lease {
     /// This information may not be available in certain cases.
     HWAddrPtr hwaddr_;
 
-    /// @brief Bitfield holding lease state(s).
+    /// @brief Holds the lease state(s).
     ///
-    /// This is a bitfield which holds the lease state. Typically, a lease
-    /// remains in a single state, but it is possible set multiple states
-    /// for a single lease. In this case, multiple bits of this bitfield
-    /// will be set.
+    /// This is the field that holds the lease state(s). Typically, a
+    /// lease remains in a single states. However, it is posible to
+    /// define a value for state which indicates that the lease remains
+    /// in multiple logical states.
     ///
     /// The defined states are represented by the "STATE_*" constants
     /// belonging to this class.
