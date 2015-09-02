@@ -2386,8 +2386,8 @@ should include options from the isc option space:
       with the coexistence of multiple stateful options in the messages sent
       between the clients and servers.</para>
 
-      <para>The typical example is when the client (being also a requesting
-      router) requests an allocation of both addresses and prefixes when
+      <para>The typical example is when the client, such as a requesting
+      router, requests an allocation of both addresses and prefixes when
       it performs the 4-way (SARR) exchange with the server. If the
       server is not configured to allocate any prefixes but it can allocate
       some addresses, it will respond with the IA_NA(s) containing allocated

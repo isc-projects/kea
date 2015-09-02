@@ -108,8 +108,15 @@ public:
     ///
     /// Sets up fake interfaces.
     RenewTest()
-        : Dhcpv6MessageTest() {
+        : Dhcpv6MessageTest(), na_iaid_(1234), pd_iaid_(5678) {
     }
+
+    /// @brief IAID used for IA_NA.
+    uint32_t na_iaid_;
+
+    /// @brief IAID used for IA_PD.
+    uint32_t pd_iaid_;
+
 };
 
 // This test verifies that the client can request the prefix delegation
@@ -118,8 +125,8 @@ TEST_F(RenewTest, requestPrefixInRenew) {
     Dhcp6Client client;
 
     // Configure client to request IA_NA and IA_PD.
-    client.useNA();
-    client.usePD();
+    client.useNA(na_iaid_);
+    client.usePD(pd_iaid_);
 
     // Configure the server with NA pools only.
     ASSERT_NO_THROW(configure(RENEW_CONFIGS[0], *client.getServer()));
@@ -133,17 +140,23 @@ TEST_F(RenewTest, requestPrefixInRenew) {
     // Make sure that the client has acquired NA lease.
     std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(1, leases_client_na.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // The client should not acquire a PD lease.
     std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_TRUE(leases_client_pd.empty());
-    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(5678));
+    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(pd_iaid_));
 
     // Send Renew message to the server, including IA_NA and requesting IA_PD.
     ASSERT_NO_THROW(client.doRenew());
     leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_TRUE(leases_client_pd.empty());
-    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(5678));
+    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(pd_iaid_));
+
+    std::vector<Lease6> leases_client_na_renewed =
+        client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases_client_na_renewed.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // Reconfigure the server to use both NA and PD pools.
     configure(RENEW_CONFIGS[2], *client.getServer());
@@ -152,10 +165,9 @@ TEST_F(RenewTest, requestPrefixInRenew) {
     ASSERT_NO_THROW(client.doRenew());
 
     // Make sure that the client has acquired NA lease.
-    std::vector<Lease6> leases_client_na_renewed =
-        client.getLeasesByType(Lease::TYPE_NA);
+    leases_client_na_renewed = client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(1, leases_client_na_renewed.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // The lease should have been renewed.
     EXPECT_EQ(1000, leases_client_na_renewed[0].cltt_ - leases_client_na[0].cltt_);
@@ -163,7 +175,7 @@ TEST_F(RenewTest, requestPrefixInRenew) {
     // The client should now also acquire a PD lease.
     leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_EQ(1, leases_client_pd.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 }
 
 // This test verifies that the client can request a prefix delegation
@@ -172,8 +184,8 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
     Dhcp6Client client;
 
     // Configure client to request IA_NA and IA_PD.
-    client.useNA();
-    client.usePD();
+    client.useNA(na_iaid_);
+    client.usePD(pd_iaid_);
 
     // Configure the server with NA pools only.
     ASSERT_NO_THROW(configure(RENEW_CONFIGS[0], *client.getServer()));
@@ -191,13 +203,18 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
     // The client should not acquire a PD lease.
     std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_TRUE(leases_client_pd.empty());
-    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(5678));
+    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(pd_iaid_));
 
     // Send Renew message to the server, including IA_NA and requesting IA_PD.
     ASSERT_NO_THROW(client.doRenew());
     leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_TRUE(leases_client_pd.empty());
-    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(5678));
+    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(pd_iaid_));
+
+    std::vector<Lease6> leases_client_na_renewed =
+        client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases_client_na_renewed.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // Specify the hint used for IA_PD.
     client.useHint(0, 0, 64, "::");
@@ -206,14 +223,13 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
     ASSERT_NO_THROW(client.doRenew());
 
     // Make sure that the client has acquired NA lease.
-    std::vector<Lease6> leases_client_na_renewed =
-        client.getLeasesByType(Lease::TYPE_NA);
+    leases_client_na_renewed = client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(1, leases_client_na_renewed.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_TRUE(leases_client_pd.empty());
-    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(5678));
+    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(pd_iaid_));
 
     // Reconfigure the server to use both NA and PD pools.
     configure(RENEW_CONFIGS[2], *client.getServer());
@@ -227,7 +243,7 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
     // Make sure that the client has acquired NA lease.
     leases_client_na_renewed = client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(1, leases_client_na_renewed.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // The lease should have been renewed.
     EXPECT_GE(leases_client_na_renewed[0].cltt_ - leases_client_na[0].cltt_, 1000);
@@ -235,7 +251,7 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
     // The client should now also acquire a PD lease.
     leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_EQ(1, leases_client_pd.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 }
 
 // This test verifies that the client can request the prefix delegation
@@ -244,8 +260,8 @@ TEST_F(RenewTest, requestAddressInRenew) {
     Dhcp6Client client;
 
     // Configure client to request IA_NA and IA_PD.
-    client.useNA();
-    client.usePD();
+    client.useNA(na_iaid_);
+    client.usePD(pd_iaid_);
 
     // Configure the server with PD pools only.
     ASSERT_NO_THROW(configure(RENEW_CONFIGS[1], *client.getServer()));
@@ -259,20 +275,26 @@ TEST_F(RenewTest, requestAddressInRenew) {
     // Make sure that the client has acquired PD lease.
     std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_EQ(1, leases_client_pd.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 
     // The client should not acquire a NA lease.
     std::vector<Lease6> leases_client_na =
         client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(0, leases_client_na.size());
-    ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(1234));
+    ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(na_iaid_));
 
     // Send Renew message to the server, including IA_PD and requesting IA_NA.
     // The server should return NoAddrsAvail status code in this case.
     ASSERT_NO_THROW(client.doRenew());
     leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(0, leases_client_na.size());
-    ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(1234));
+    ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(na_iaid_));
+
+    std::vector<Lease6> leases_client_pd_renewed =
+        client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
+    EXPECT_GE(leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_, 1000);
 
     // Reconfigure the server to use both NA and PD pools.
     configure(RENEW_CONFIGS[2], *client.getServer());
@@ -281,16 +303,15 @@ TEST_F(RenewTest, requestAddressInRenew) {
     ASSERT_NO_THROW(client.doRenew());
 
     // Make sure that the client has renewed PD lease.
-    std::vector<Lease6> leases_client_pd_renewed =
-        client.getLeasesByType(Lease::TYPE_PD);
+    leases_client_pd_renewed =  client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_EQ(1, leases_client_pd_renewed.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
     EXPECT_GE(leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_, 1000);
 
     // The client should now also acquire a NA lease.
     leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(1, leases_client_na.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 }
 
 // This test verifies that the client can request address assignment
@@ -299,8 +320,8 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
     Dhcp6Client client;
 
     // Configure client to request IA_NA and IA_PD.
-    client.useNA();
-    client.usePD();
+    client.useNA(na_iaid_);
+    client.usePD(pd_iaid_);
 
     // Configure the server with PD pools only.
     ASSERT_NO_THROW(configure(RENEW_CONFIGS[1], *client.getServer()));
@@ -314,13 +335,13 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
     // Make sure that the client has acquired PD lease.
     std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_EQ(1, leases_client_pd.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 
     // The client should not acquire a NA lease.
     std::vector<Lease6> leases_client_na =
         client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(0, leases_client_na.size());
-    ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(1234));
+    ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(na_iaid_));
 
     client.useHint(0, 0, "2001:db8:1::100");
 
@@ -332,7 +353,13 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
     ASSERT_EQ(1, leases_client_na.size());
     EXPECT_EQ(0, leases_client_na[0].preferred_lft_);
     EXPECT_EQ(0, leases_client_na[0].valid_lft_);
-    ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(1234));
+    ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(na_iaid_));
+
+    std::vector<Lease6> leases_client_pd_renewed =
+        client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
+    EXPECT_GE(leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_, 1000);
 
     // Reconfigure the server to use both NA and PD pools.
     configure(RENEW_CONFIGS[2], *client.getServer());
@@ -341,16 +368,15 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
     ASSERT_NO_THROW(client.doRenew());
 
     // Make sure that the client has renewed PD lease.
-    std::vector<Lease6> leases_client_pd_renewed =
-        client.getLeasesByType(Lease::TYPE_PD);
+    leases_client_pd_renewed = client.getLeasesByType(Lease::TYPE_PD);
     ASSERT_EQ(1, leases_client_pd_renewed.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
     EXPECT_GE(leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_, 1000);
 
     // The client should now also acquire a NA lease.
     leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(1, leases_client_na.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 }
 
 

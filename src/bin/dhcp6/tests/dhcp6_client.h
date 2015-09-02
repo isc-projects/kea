@@ -437,12 +437,32 @@ public:
     /// This function configures the client to place IA_NA options in its
     /// Solicit messages to request the IPv6 address assignment.
     ///
+    /// @param iaid IAID to be used in the IA_NA.
+    void useNA(const uint32_t iaid) {
+        useNA(true, iaid);
+    }
+
+    /// @brief Place IA_NA options to request address assignment.
+    ///
+    /// This function configures the client to place IA_NA options in its
+    /// Solicit messages to request the IPv6 address assignment.
+    ///
     /// @param use Parameter which 'true' value indicates that client should
     /// request address assignment.
     /// @param iaid IAID to be used in the IA_NA.
     void useNA(const bool use = true, const uint32_t iaid = 1234) {
         use_na_ = use;
         na_iaid_ = iaid;
+    }
+
+    /// @brief Place IA_PD options to request address assignment.
+    ///
+    /// This function configures the client to place IA_NA options in its
+    /// Solicit messages to request the IPv6 address assignment.
+    ///
+    /// @param iaid IAID to be used in the IA_PD.
+    void usePD(const uint32_t iaid) {
+        usePD(true, iaid);
     }
 
     /// @brief Place IA_PD options to request prefix assignment.
