@@ -15,7 +15,7 @@
 #ifndef UDP_SOCKET_H
 #define UDP_SOCKET_H 1
 
-#ifndef ASIO_HPP
+#ifndef BOOST_ASIO_HPP
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
 
