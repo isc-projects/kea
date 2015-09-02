@@ -3692,5 +3692,24 @@ TEST_F(Dhcp4ParserTest, declineTimer) {
               CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
 }
 
+/// Check that an incorrect decline-probation-period value will be caught.
+TEST_F(Dhcp4ParserTest, declineTimerError) {
+    ConstElementPtr status;
+
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"decline-probation-period\": \"soon\","
+        "\"subnet4\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 1 (error)
+    checkResult(status, 1);
+
+    // Check that the error contains error position.
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
 
 }
