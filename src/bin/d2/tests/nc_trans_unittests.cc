@@ -27,7 +27,6 @@
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/socket_base.hpp>
 #include <boost/asio.hpp>
-#include <boost/asio/error_code.hpp>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
