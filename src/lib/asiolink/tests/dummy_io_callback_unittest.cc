@@ -26,7 +26,7 @@ namespace { // begin unnamed namespace
 
 TEST(DummyIOCallbackTest, throws) {
     DummyIOCallback cb;
-    boost::asio::error_code error_code;
+    boost::system::error_code error_code;
 
     // All methods should throw isc::Unexpected.
     EXPECT_THROW(cb(error_code), isc::Unexpected);

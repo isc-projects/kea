@@ -47,7 +47,7 @@ public:
     void setup(const IntervalTimer::Callback& cbfunc, const long interval,
                const IntervalTimer::Mode& interval_mode
                = IntervalTimer::REPEATING);
-    void callback(const boost::asio::error_code& error);
+    void callback(const boost::system::error_code& error);
     void cancel() {
         timer_.cancel();
         interval_ = 0;
@@ -114,7 +114,7 @@ IntervalTimerImpl::update() {
         timer_.async_wait(boost::bind(&IntervalTimerImpl::callback,
                                       shared_from_this(),
                                       boost::asio::placeholders::error));
-    } catch (const boost::asio::system_error& e) {
+    } catch (const boost::system::system_error& e) {
         isc_throw(isc::Unexpected, "Failed to update timer: " << e.what());
     } catch (const boost::bad_weak_ptr&) {
         // Can't happen. It means a severe internal bug.
@@ -123,7 +123,7 @@ IntervalTimerImpl::update() {
 }
 
 void
-IntervalTimerImpl::callback(const boost::asio::error_code& ec) {
+IntervalTimerImpl::callback(const boost::system::error_code& ec) {
     assert(interval_ != INVALIDATED_INTERVAL);
     if (interval_ == 0 || ec) {
         // timer has been canceled. Do nothing.
