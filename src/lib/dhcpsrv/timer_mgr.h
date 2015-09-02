@@ -86,20 +86,20 @@ namespace dhcp {
 /// race conditions between the worker thread and the main thread
 /// if the latter is modifying the collection of the registered
 /// timers. Therefore, the @c TimerMgr does not allow for
-/// registering or deregistering the timers when the worker thread
+/// registering or unregistering the timers when the worker thread
 /// is running. The worker thread must be stopped first.
 ///
 /// @warning The application (DHCP server) is responsible for
-///  deregistering the timers before it terminates:
+///  unregistering the timers before it terminates:
 /// @code
-///     TimerMgr::instance().deregisterTimers();
+///     TimerMgr::instance().unregisterTimers();
 /// @endcode
 ///
 /// to avoid the static deinitialization fiasco between the @c TimerMgr
 /// and @c IfaceMgr. Note that the @c TimerMgr destructor doesn't
-/// deregister the timers to avoid referencing the @c IfaceMgr
+/// unregister the timers to avoid referencing the @c IfaceMgr
 /// instance which may not exist at this point. If the timers are
-/// not deregistered before the application terminates this will
+/// not unregistered before the application terminates this will
 /// likely result in segmentation fault on some systems.
 ///
 /// All timers are associated with the callback function
@@ -109,7 +109,7 @@ public:
     /// @brief Returns sole instance of the @c TimerMgr singleton.
     static TimerMgr& instance();
 
-    /// @name Registering, deregistering and scheduling the timers.
+    /// @name Registering, unregistering and scheduling the timers.
     //@{
 
     /// @brief Registers new timers in the @c TimerMgr.
@@ -129,22 +129,22 @@ public:
                        const long interval,
                        const asiolink::IntervalTimer::Mode& scheduling_mode);
 
-    /// @brief Deregisters specified timer.
+    /// @brief Unregisters specified timer.
     ///
     /// This method cancels the timer if it is setup. It removes the external
     /// socket from the @c IfaceMgr and closes it. It finally removes the
     /// timer from the internal collection of timers.
     ///
-    /// @param timer_name Name of the timer to be deregistered.
+    /// @param timer_name Name of the timer to be unregistered.
     ///
     /// @throw BadValue if the specified timer hasn't been registered.
-    void deregisterTimer(const std::string& timer_name);
+    void unregisterTimer(const std::string& timer_name);
 
-    /// @brief Deregisters all timers.
+    /// @brief Unregisters all timers.
     ///
     /// This method must be explicitly called prior to termination of the
     /// process.
-    void deregisterTimers();
+    void unregisterTimers();
 
     /// @brief Schedules the execution of the interval timer.
     ///
@@ -204,7 +204,7 @@ private:
 
     /// @brief Private destructor.
     ///
-    /// Stops the worker thread if it is running. It doesn't deregister any
+    /// Stops the worker thread if it is running. It doesn't unregister any
     /// timers to avoid static deinitialization fiasco with the @c IfaceMgr.
     ~TimerMgr();
 

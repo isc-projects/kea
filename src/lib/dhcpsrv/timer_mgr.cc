@@ -40,9 +40,9 @@ TimerMgr::TimerMgr()
 }
 
 TimerMgr::~TimerMgr() {
-    // Stop the thread, but do not deregister any timers. Deregistering
+    // Stop the thread, but do not unregister any timers. Unregistering
     // the timers could cause static deinitialization fiasco between the
-    // TimerMgr and IfaceMgr. By now, the caller should have deregistered
+    // TimerMgr and IfaceMgr. By now, the caller should have unregistered
     // the timers.
     stopThread();
 }
@@ -96,7 +96,7 @@ TimerMgr::registerTimer(const std::string& timer_name,
 }
 
 void
-TimerMgr::deregisterTimer(const std::string& timer_name) {
+TimerMgr::unregisterTimer(const std::string& timer_name) {
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
               DHCPSRV_TIMERMGR_UNREGISTER_TIMER)
@@ -129,7 +129,7 @@ TimerMgr::deregisterTimer(const std::string& timer_name) {
 }
 
 void
-TimerMgr::deregisterTimers() {
+TimerMgr::unregisterTimers() {
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
               DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS);
@@ -137,7 +137,7 @@ TimerMgr::deregisterTimers() {
     // Copy the map holding timers configuration. This is required so as
     // we don't cut the branch which we're sitting on when we will be
     // erasing the timers. We're going to iterate over the register timers
-    // and remove them with the call to deregisterTimer function. But this
+    // and remove them with the call to unregisterTimer function. But this
     // function will remove them from the register_timers_ map. If we
     // didn't work on the copy here, our iterator would invalidate. The
     // TimerInfo structure is copyable and since it is using the shared
@@ -145,10 +145,10 @@ TimerMgr::deregisterTimers() {
     // the process terminates so it is not critical for performance.
     TimerInfoMap registered_timers_copy(registered_timers_);
 
-    // Iterate over the existing timers and deregister them.
+    // Iterate over the existing timers and unregister them.
     for (TimerInfoMap::iterator timer_info_it = registered_timers_copy.begin();
          timer_info_it != registered_timers_copy.end(); ++timer_info_it) {
-        deregisterTimer(timer_info_it->first);
+        unregisterTimer(timer_info_it->first);
     }
 }
 
