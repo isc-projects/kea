@@ -227,8 +227,8 @@ TEST_F(TimerMgrTest, deregisterTimer) {
     const unsigned int calls_count = calls_count_["timer1"];
     ASSERT_GT(calls_count, 0);
 
-    // Check that an attempt to deregister a non-existing timerm would
-    // result in execption.
+    // Check that an attempt to deregister a non-existing timer would
+    // result in exeception.
     EXPECT_THROW(timer_mgr.deregisterTimer("timer2"), BadValue);
 
     // Now deregister the correct one.
@@ -237,6 +237,7 @@ TEST_F(TimerMgrTest, deregisterTimer) {
     // Start the thread again and wait another 100ms.
     ASSERT_NO_THROW(timer_mgr.startThread());
     doWait(100);
+    ASSERT_NO_THROW(timer_mgr.stopThread());
 
     // The number of calls for the timer1 shouldn't change as the
     // timer had been deregistered.
@@ -288,6 +289,24 @@ TEST_F(TimerMgrTest, deregisterTimers) {
     // The calls counter shouldn't change because there are
     // no timers registered.
     EXPECT_TRUE(calls_count == calls_count_);
+}
+
+// This test checks that it is not possible to deregister timers
+// while the thread is running.
+TEST_F(TimerMgrTest, deregisterTimerWhileRunning) {
+    TimerMgr& timer_mgr = TimerMgr::instance();
+
+    // Register two timers.
+    ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
+    ASSERT_NO_FATAL_FAILURE(registerTimer("timer2", 1));
+
+    // Start the thread and make sure we can't deregister them.
+    ASSERT_NO_THROW(timer_mgr.startThread());
+    EXPECT_THROW(timer_mgr.deregisterTimer("timer1"), InvalidOperation);
+    EXPECT_THROW(timer_mgr.deregisterTimers(), InvalidOperation);
+
+    // No need to stop the thread as it will be stopped by the
+    // test fixture destructor.
 }
 
 // This test verifies that the timer execution can be cancelled.

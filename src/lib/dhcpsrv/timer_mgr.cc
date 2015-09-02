@@ -91,6 +91,11 @@ TimerMgr::registerTimer(const std::string& timer_name,
 
 void
 TimerMgr::deregisterTimer(const std::string& timer_name) {
+    if (thread_) {
+        isc_throw(InvalidOperation, "unable to deregister timer "
+                  << timer_name << " while worker thread is running");
+    }
+
     // Find the timer with specified name.
     TimerInfoMap::iterator timer_info_it = registered_timers_.find(timer_name);
 
@@ -178,7 +183,6 @@ void
 TimerMgr::stopThread() {
     // If thread is not running, this is no-op.
     if (thread_) {
-        std::cout << "stopThread" << std::endl;
         // Stop the IO Service. This will break the IOService::run executed in the
         // worker thread. The thread will now terminate.
         getIOService().post(boost::bind(&IOService::stop, &getIOService()));
@@ -234,12 +238,9 @@ TimerMgr::watchSocketCallback(const std::string& timer_name, const bool mark_rea
         // from the worker thrad and will likely block the thread until the socket
         // is cleared.
         if (mark_ready) {
-            std::cout << "markReady" << std::endl;
             timer_info.watch_socket_->markReady();
-            std::cout << "markReady ended" << std::endl;
         } else {
 
-            std::cout << "clearReady" << std::endl;
             // We're executing a callback function from the Interface Manager.
             // This callback function is executed when the call to select() is
             // interrupted as a result of receiving some data over the watch
@@ -257,9 +258,7 @@ void
 TimerMgr::clearReadySockets() {
     for (TimerInfoMap::iterator timer_info_it = registered_timers_.begin();
          timer_info_it != registered_timers_.end(); ++timer_info_it) {
-        {
-            timer_info_it->second.watch_socket_->clearReady();
-        }
+        timer_info_it->second.watch_socket_->clearReady();
    }
 }
 
