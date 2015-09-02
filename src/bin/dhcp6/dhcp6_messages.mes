@@ -224,24 +224,6 @@ as a result of receiving SIGHUP signal.
 This is an error message logged when the dynamic reconfiguration of the
 DHCP server failed.
 
-% DHCP6_EXTEND_NA_UNKNOWN %1: received unknown IA_NA with iaid=%2 in subnet %3
-This warning message is printed when client attempts to extend the lease
-for the address (in the IA_NA option) but no such lease is known by the server.
-It typically means that client has attempted to use its lease past its
-lifetime: causes of this include a adjustment of the client's date/time
-setting or poor support on the client for sleep/recovery. A properly
-implemented client will recover from such a situation by restarting the
-lease allocation process after receiving a negative reply from the server.
-The first argument includes the client and the transaction identification
-information. The second argument holds IAID. The third argument holds the
-subnet information.
-
-An alternative cause could be that the server has lost its database
-recently and does not recognize its well-behaving clients. This is more
-probable if you see many such messages. Clients will recover from this,
-but they will most likely get a different IP addresses and experience
-a brief service interruption.
-
 % DHCP6_HANDLE_SIGNAL_EXCEPTION An exception was thrown while handing signal: %1
 This error message is printed when an exception was raised during signal
 processing. This likely indicates a coding error and should be reported to ISC.

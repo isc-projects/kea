@@ -497,7 +497,7 @@ bool Dhcpv6Srv::run() {
         LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_PACKET_RECEIVED)
             .arg(query->getLabel())
             .arg(query->getName())
-            .arg(query->getType())
+            .arg(static_cast<int>(query->getType()))
             .arg(query->getRemoteAddr())
             .arg(query->getLocalAddr())
             .arg(query->getIface());
@@ -1754,19 +1754,6 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         ctx.hints_.push_back(make_pair(iaaddr->getAddress(), 128));
     }
 
-    // We need to remember it as we'll be removing hints from this list as
-    // we extend, cancel or otherwise deal with the leases.
-    bool hints_present = !ctx.hints_.empty();
-
-    /// @todo: This was clarified in draft-ietf-dhc-dhcpv6-stateful-issues that
-    /// the server is allowed to assign new leases in both Renew and Rebind. For
-    /// now, we only support it in Renew, because it breaks a lot of Rebind
-    /// unit-tests. Ultimately, whether we allow it or not, should be exposed
-    /// as configurable policy. See ticket #3717.
-    if (query->getType() == DHCPV6_RENEW) {
-        ctx.allow_new_leases_in_renewals_ = true;
-    }
-
     Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
 
     // Ok, now we have the leases extended. We have:
@@ -1825,26 +1812,13 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
     // All is left is to insert the status code.
     if (leases.empty()) {
-        // We did not assign anything. If client has sent something, then
-        // the status code is NoBinding, if he sent an empty IA_NA, then it's
-        // NoAddrsAvailable
-        if (hints_present) {
-            // Insert status code NoBinding to indicate that the lease does not
-            // exist for this client.
-            ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoBinding,
-                              "Sorry, no known leases for this duid/iaid/subnet."));
 
-            LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_EXTEND_NA_UNKNOWN)
-                .arg(query->getLabel())
-                .arg(ia->getIAID())
-                .arg(subnet->toText());
-        } else {
-            ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoAddrsAvail,
-                              "Sorry, no addresses could be assigned at this time."));
-        }
-    } else {
-        // Yay, the client still has something. For now, let's not insert
-        // status-code=success to conserve bandwidth.
+        // The server wasn't able allocate new lease and renew an exising
+        // lease. In that case, the server sends NoAddrsAvail per RFC7550.
+        ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
+                                           STATUS_NoAddrsAvail,
+                                           "Sorry, no addresses could be"
+                                           " assigned at this time."));
     }
 
     return (ia_rsp);
@@ -1931,15 +1905,6 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         // Put the client's prefix into the hints list.
         ctx.hints_.push_back(make_pair(prf->getAddress(), prf->getLength()));
     }
-    // We need to remember it as we'll be removing hints from this list as
-    // we extend, cancel or otherwise deal with the leases.
-    bool hints_present = !ctx.hints_.empty();
-
-    /// @todo: The draft-ietf-dhc-dhcpv6-stateful-issues added a new capability
-    /// of the server to to assign new PD leases in both Renew and Rebind.
-    /// There's allow_new_leases_in_renewals_ in the ClientContext6, but we
-    /// currently not use it in PD yet. This should be implemented as part
-    /// of the stateful-issues implementation effort. See ticket #3718.
 
     // Call Allocation Engine and attempt to renew leases. Number of things
     // may happen. Leases may be extended, revoked (if the lease is no longer
@@ -1973,44 +1938,25 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // already, inform the client that he can't have them.
     for (AllocEngine::HintContainer::const_iterator prefix = ctx.hints_.begin();
          prefix != ctx.hints_.end(); ++prefix) {
-        OptionPtr prefix_opt(new Option6IAPrefix(D6O_IAPREFIX, prefix->first,
-                                                 prefix->second, 0, 0));
-        ia_rsp->addOption(prefix_opt);
+        // Send the prefix with the zero lifetimes only if the prefix
+        // contains non-zero value. A zero value indicates that the hint was
+        // for the prefix length.
+        if (!prefix->first.isV6Zero()) {
+            OptionPtr prefix_opt(new Option6IAPrefix(D6O_IAPREFIX, prefix->first,
+                                                     prefix->second, 0, 0));
+            ia_rsp->addOption(prefix_opt);
+        }
     }
 
     // All is left is to insert the status code.
     if (leases.empty()) {
-        if (query->getType() == DHCPV6_RENEW) {
 
-            // We did not assign anything. If client has sent something, then
-            // the status code is NoBinding, if he sent an empty IA_NA, then it's
-            // NoAddrsAvailable
-            if (hints_present) {
-                // Insert status code NoBinding to indicate that the lease does not
-                // exist for this client.
-                ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
-                                                   STATUS_NoBinding,
-                                                   "Sorry, no known PD leases for"
-                                                   " this duid/iaid/subnet."));
-            } else {
-                ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
-                                                   STATUS_NoPrefixAvail,
-                                                   "Sorry, no prefixes could be"
-                                                   " assigned at this time."));
-            }
-        } else {
-            // Per RFC3633, section 12.2, if there is no binding and we are
-            // processing Rebind, the message has to be discarded (assuming that
-            // the server doesn't know if the prefix in the IA_PD option is
-            // appropriate for the client's link). The exception being thrown
-            // here should propagate to the main loop and cause the message to
-            // be discarded.
-            isc_throw(DHCPv6DiscardMessageError, "no binding found for the"
-                      " DUID=" << duid->toText() << ", IAID="
-                      << ia->getIAID() << ", subnet="
-                      << subnet->toText() << " when processing a Rebind"
-                      " message with IA_PD option");
-        }
+        // The server wasn't able allocate new lease and renew an exising
+        // lease. In that case, the server sends NoPrefixAvail per RFC7550.
+        ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
+                                           STATUS_NoPrefixAvail,
+                                           "Sorry, no prefixes could be"
+                                           " assigned at this time."));
     }
 
     return (ia_rsp);
