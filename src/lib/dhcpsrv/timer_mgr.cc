@@ -74,10 +74,13 @@ TimerMgr::registerTimer(const std::string& timer_name,
     // Create a structure holding the configuration for the timer. It will
     // create the instance if the IntervalTimer and WatchSocket. It will
     // also hold the callback, interval and scheduling mode parameters.
+    // This may throw a WatchSocketError if the socket creation fails.
     TimerInfo timer_info(getIOService(), callback, interval, scheduling_mode);
 
     // Register the WatchSocket in the IfaceMgr and register our own callback
-    // to be executed when the data is received over this socket.
+    // to be executed when the data is received over this socket. The only time
+    // this may fail is when the socket failed to open which would have caused
+    // an exception in the previous call. So we should be safe here.
     IfaceMgr::instance().addExternalSocket(timer_info.watch_socket_->getSelectFd(),
                                            boost::bind(&TimerMgr::ifaceMgrCallback,
                                                        this, timer_name));
@@ -97,10 +100,10 @@ TimerMgr::deregisterTimer(const std::string& timer_name) {
                   << timer_name << "'");
     }
 
-    TimerInfo& timer_info = timer_info_it->second;
-
     // Cancel any pending asynchronous operation and stop the timer.
-    timer_info.interval_timer_->cancel();
+    cancel(timer_name);
+
+    TimerInfo& timer_info = timer_info_it->second;
 
     // Unregister the watch socket from the IfaceMgr.
     IfaceMgr::instance().deleteExternalSocket(timer_info.watch_socket_->getSelectFd());
@@ -156,6 +159,8 @@ TimerMgr::cancel(const std::string& timer_name) {
     }
     // Cancel the timer.
     timer_info_it->second.interval_timer_->cancel();
+    // Clear watch socket, if ready.
+    timer_info_it->second.watch_socket_->clearReady();
 }
 
 void
@@ -173,9 +178,15 @@ void
 TimerMgr::stopThread() {
     // If thread is not running, this is no-op.
     if (thread_) {
+        std::cout << "stopThread" << std::endl;
         // Stop the IO Service. This will break the IOService::run executed in the
         // worker thread. The thread will now terminate.
         getIOService().post(boost::bind(&IOService::stop, &getIOService()));
+        // When the worker thread may be waiting on the call to
+        // WatchSocket::markReady until main thread clears the socket.
+        // To unblock the thread we have to clear all sockets to make
+        // sure that the thread doesn't remain blocked.
+        clearReadySockets();
         // Wait for the thread to terminate.
         thread_->wait();
         // Set the thread pointer to NULL to indicate that the thread is not running.
@@ -223,9 +234,12 @@ TimerMgr::watchSocketCallback(const std::string& timer_name, const bool mark_rea
         // from the worker thrad and will likely block the thread until the socket
         // is cleared.
         if (mark_ready) {
+            std::cout << "markReady" << std::endl;
             timer_info.watch_socket_->markReady();
-
+            std::cout << "markReady ended" << std::endl;
         } else {
+
+            std::cout << "clearReady" << std::endl;
             // We're executing a callback function from the Interface Manager.
             // This callback function is executed when the call to select() is
             // interrupted as a result of receiving some data over the watch
@@ -237,6 +251,16 @@ TimerMgr::watchSocketCallback(const std::string& timer_name, const bool mark_rea
             timer_info.user_callback_();
         }
     }
+}
+
+void
+TimerMgr::clearReadySockets() {
+    for (TimerInfoMap::iterator timer_info_it = registered_timers_.begin();
+         timer_info_it != registered_timers_.end(); ++timer_info_it) {
+        {
+            timer_info_it->second.watch_socket_->clearReady();
+        }
+   }
 }
 
 } // end of namespace isc::dhcp
