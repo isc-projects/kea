@@ -1,3 +1,7 @@
+994.	[func]*		marcin
+	DHCPv6 server fully supports RFC 7550.
+	(Trac #3947, git c06ab97a4e068c4b4b11f4685c56dd402b2385dc)
+
 993.	[bug]		fdupont
 	The logging spec file was searched in the build tree when it
 	was in the source tree so distcheck (where they differ) failed.
