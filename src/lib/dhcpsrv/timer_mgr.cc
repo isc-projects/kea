@@ -15,6 +15,7 @@
 #include <asio.hpp>
 #include <asiolink/io_service.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
 #include <boost/bind.hpp>
@@ -51,6 +52,11 @@ TimerMgr::registerTimer(const std::string& timer_name,
                         const IntervalTimer::Callback& callback,
                         const long interval,
                         const IntervalTimer::Mode& scheduling_mode) {
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+              DHCPSRV_TIMERMGR_REGISTER_TIMER)
+        .arg(timer_name)
+        .arg(interval);
 
     // Timer name must not be empty.
     if (timer_name.empty()) {
@@ -91,8 +97,13 @@ TimerMgr::registerTimer(const std::string& timer_name,
 
 void
 TimerMgr::deregisterTimer(const std::string& timer_name) {
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+              DHCPSRV_TIMERMGR_UNREGISTER_TIMER)
+        .arg(timer_name);
+
     if (thread_) {
-        isc_throw(InvalidOperation, "unable to deregister timer "
+        isc_throw(InvalidOperation, "unable to unregister timer "
                   << timer_name << " while worker thread is running");
     }
 
@@ -101,7 +112,7 @@ TimerMgr::deregisterTimer(const std::string& timer_name) {
 
     // Check if the timer has been registered.
     if (timer_info_it == registered_timers_.end()) {
-        isc_throw(BadValue, "unable to deregister non existing timer '"
+        isc_throw(BadValue, "unable to unregister non existing timer '"
                   << timer_name << "'");
     }
 
@@ -119,6 +130,10 @@ TimerMgr::deregisterTimer(const std::string& timer_name) {
 
 void
 TimerMgr::deregisterTimers() {
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+              DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS);
+
     // Copy the map holding timers configuration. This is required so as
     // we don't cut the branch which we're sitting on when we will be
     // erasing the timers. We're going to iterate over the register timers
@@ -139,6 +154,11 @@ TimerMgr::deregisterTimers() {
 
 void
 TimerMgr::setup(const std::string& timer_name) {
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+              DHCPSRV_TIMERMGR_START_TIMER)
+        .arg(timer_name);
+
    // Check if the specified timer exists.
    TimerInfoMap::const_iterator timer_info_it = registered_timers_.find(timer_name);
    if (timer_info_it == registered_timers_.end()) {
@@ -156,6 +176,11 @@ TimerMgr::setup(const std::string& timer_name) {
 
 void
 TimerMgr::cancel(const std::string& timer_name) {
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+              DHCPSRV_TIMERMGR_STOP_TIMER)
+        .arg(timer_name);
+
     // Find the timer of our interest.
     TimerInfoMap::const_iterator timer_info_it = registered_timers_.find(timer_name);
     if (timer_info_it == registered_timers_.end()) {
@@ -172,6 +197,10 @@ void
 TimerMgr::startThread() {
     // Do not start the thread if the thread is already there.
     if (!thread_) {
+        // Only log it if we really start the thread.
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                  DHCPSRV_TIMERMGR_START_THREAD);
+
         // The thread will simply run IOService::run(), which is a blocking call
         // to keep running handlers for all timers according to how they have
         // been scheduled.
@@ -183,6 +212,10 @@ void
 TimerMgr::stopThread() {
     // If thread is not running, this is no-op.
     if (thread_) {
+        // Only log it if we really have something to stop.
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                  DHCPSRV_TIMERMGR_STOP_THREAD);
+
         // Stop the IO Service. This will break the IOService::run executed in the
         // worker thread. The thread will now terminate.
         getIOService().post(boost::bind(&IOService::stop, &getIOService()));
@@ -249,6 +282,13 @@ TimerMgr::watchSocketCallback(const std::string& timer_name, const bool mark_rea
             // TimerMgr user to perform custom actions on the expiration of
             // the given timer.
             timer_info.watch_socket_->clearReady();
+
+            // Running user-defined operation for the timer. Logging it
+            // on the slightly lower debug level as there may be many
+            // such traces.
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                      DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION)
+                .arg(timer_name);
             timer_info.user_callback_();
         }
     }
