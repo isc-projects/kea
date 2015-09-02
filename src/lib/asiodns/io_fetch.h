@@ -21,7 +21,7 @@
 
 #include <coroutine.h>
 
-#include <boost/asio/error_code.hpp>
+#include <boost/system/error_code.hpp>
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 

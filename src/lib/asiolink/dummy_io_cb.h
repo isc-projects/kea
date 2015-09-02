@@ -20,7 +20,6 @@
 #include <exceptions/exceptions.h>
 
 #include <boost/asio/error.hpp>
-#include <boost/asio/error_code.hpp>
 
 namespace isc {
 namespace asiolink {
