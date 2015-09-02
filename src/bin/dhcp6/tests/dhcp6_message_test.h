@@ -78,6 +78,7 @@ public:
     void requestLease(const std::string& config, const int subnets_num,
                       Dhcp6Client& client);
 
+
 protected:
 
     /// @brief Interface Manager's fake configuration control.

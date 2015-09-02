@@ -70,6 +70,15 @@ public:
         /// @brief Default constructor for the structure.
         LeaseInfo() :
             lease_(), status_code_(0) { }
+
+        /// @brief Constructor which sets the lease type.
+        ///
+        /// @param lease_type One of the D6O_IA_NA or D6O_IA_PD.
+        LeaseInfo(const uint16_t lease_type) :
+            lease_(), status_code_(0) {
+            lease_.type_ = lease_type == D6O_IA_NA ? Lease::TYPE_NA :
+                Lease::TYPE_PD;
+        }
     };
 
     /// @brief Holds the current client configuration obtained from the
@@ -81,7 +90,10 @@ public:
     /// server-id and client-id.
     struct Configuration {
         /// @brief List of received leases
-        std::vector<LeaseInfo> leases_;
+        std::vector<Lease6> leases_;
+
+        /// @brief A map of IAID, status code tuples.
+        std::map<uint32_t, uint16_t> status_codes_;
 
         /// @brief List of received options
         OptionCollection options_;
@@ -101,6 +113,7 @@ public:
         /// @brief Clears configuration.
         void clear() {
             leases_.clear();
+            status_codes_.clear();
             resetGlobalStatusCode();
         }
 
@@ -302,7 +315,7 @@ public:
     /// @param at Index of the lease held by the client.
     /// @return A lease at the specified index.
     Lease6 getLease(const size_t at) const {
-        return (config_.leases_[at].lease_);
+        return (config_.leases_[at]);
     }
 
     /// @brief Returns collection of leases for specified IAID.
@@ -312,13 +325,26 @@ public:
     /// @return Vector containing leases for the IAID.
     std::vector<Lease6> getLeasesByIAID(const uint32_t iaid) const;
 
+    /// @brief Returns collection of leases by type.
+    ///
+    /// @param type Lease type: D6O_IA_NA or D6O_IA_PD.
+    ///
+    /// @return Vector containing leases of the specified type.
+    std::vector<Lease6> getLeasesByType(const Lease::Type& lease_type) const;
+
+    /// @brief Returns leases with non-zero lifetimes.
+    std::vector<Lease6> getLeasesWithNonZeroLifetime() const;
+
+    /// @brief Returns leases with zero lifetimes.
+    std::vector<Lease6> getLeasesWithZeroLifetime() const;
+
     /// @brief Returns the value of the global status code for the last
     /// transaction.
     uint16_t getStatusCode() const {
         return (config_.status_code_);
     }
 
-    /// @brief Returns status code set by the server for the lease.
+    /// @brief Returns status code set by the server for the IAID.
     ///
     /// @warning This method doesn't check if the specified index is out of
     /// range. The caller is responsible for using a correct offset by
@@ -326,9 +352,7 @@ public:
     ///
     /// @param at Index of the lease held by the client.
     /// @return A status code for the lease at the specified index.
-    uint16_t getStatusCode(const size_t at) const {
-        return (config_.leases_[at].status_code_);
-    }
+    uint16_t getStatusCode(const uint32_t iaid) const;
 
     /// @brief Returns number of acquired leases.
     size_t getLeaseNum() const {
@@ -391,6 +415,14 @@ public:
         iface_name_ = iface_name;
     }
 
+    /// @brief Set an address hint to be sent to a server.
+    ///
+    /// @param pref_lft Preferred lifetime.
+    /// @param valid_lft Valid lifetime.
+    /// @param address Address for which the client has a preference.
+    void useHint(const uint32_t pref_lft, const uint32_t valid_lft,
+                 const std::string& address);
+
     /// @brief Sets a prefix hint to be sent to a server.
     ///
     /// @param pref_lft Preferred lifetime.
@@ -405,10 +437,32 @@ public:
     /// This function configures the client to place IA_NA options in its
     /// Solicit messages to request the IPv6 address assignment.
     ///
+    /// @param iaid IAID to be used in the IA_NA.
+    void useNA(const uint32_t iaid) {
+        useNA(true, iaid);
+    }
+
+    /// @brief Place IA_NA options to request address assignment.
+    ///
+    /// This function configures the client to place IA_NA options in its
+    /// Solicit messages to request the IPv6 address assignment.
+    ///
     /// @param use Parameter which 'true' value indicates that client should
     /// request address assignment.
-    void useNA(const bool use = true) {
+    /// @param iaid IAID to be used in the IA_NA.
+    void useNA(const bool use = true, const uint32_t iaid = 1234) {
         use_na_ = use;
+        na_iaid_ = iaid;
+    }
+
+    /// @brief Place IA_PD options to request address assignment.
+    ///
+    /// This function configures the client to place IA_NA options in its
+    /// Solicit messages to request the IPv6 address assignment.
+    ///
+    /// @param iaid IAID to be used in the IA_PD.
+    void usePD(const uint32_t iaid) {
+        usePD(true, iaid);
     }
 
     /// @brief Place IA_PD options to request prefix assignment.
@@ -418,8 +472,10 @@ public:
     ///
     /// @param use Parameter which 'true' value indicates that client should
     /// request prefix assignment.
-    void usePD(const bool use = true) {
+    /// @param iaid IAID to be used in the IA_NA.
+    void usePD(const bool use = true, const uint32_t iaid = 5678) {
         use_pd_ = use;
+        pd_iaid_ = iaid;
     }
 
     /// @brief Simulate sending messages through a relay.
@@ -527,13 +583,36 @@ private:
     /// each individual lease.
     ///
     /// @param lease_info Structure holding new lease information.
-    void applyLease(const LeaseInfo& lease_info);
+    void applyLease(const Lease6& lease);
 
-    /// @brief Includes CLient FQDN in the client's message.
+    /// @brief Includes Client FQDN in the client's message.
     ///
     /// This method checks if @c fqdn_ is specified and includes it in
     /// the client's message.
     void appendFQDN();
+
+    /// @brief Includes IAs to be requested.
+    ///
+    /// This method checks if @c use_na_ and/or @c use_pd_ are specified and
+    /// includes appropriate IA types, if they are not already included.
+    ///
+    /// @param query Pointer to the client's message to which IAs should be
+    /// added.
+    void appendRequestedIAs(const Pkt6Ptr& query) const;
+
+    /// @brief Include IA of the specified type if it doesn't exist yet.
+    ///
+    /// This methods includes an IA option of the specific type, and
+    /// having a given IAID to the query message, if this IA hasn't
+    /// been added yet.
+    ///
+    /// @param query Pointer to the client's message to which IA should be
+    /// added.
+    /// @param ia_type One of the D6O_IA_NA or D6O_IA_PD
+    /// @param iaid IAID of the IA.
+    void conditionallyAppendRequestedIA(const Pkt6Ptr& query,
+                                        const uint8_t ia_type,
+                                        const uint32_t iaid) const;
 
     /// @brief Copy IA options from one message to another.
     ///
@@ -572,6 +651,24 @@ private:
     /// @param duid_type Type of the DUID. Currently, only LLT is accepted.
     /// @return Object encapsulating a DUID.
     DuidPtr generateDUID(DUID::DUIDType duid_type) const;
+
+    /// @brief Returns client's leases which match the specified condition.
+    ///
+    /// @param property A value of the lease property used to search the lease.
+    /// @param equals A flag which indicates if the operator should search
+    /// for the leases which property is equal to the value of @c property
+    /// parameter (if true), or unequal (if false).
+    /// @param [out] leases A vector in which the operator will store leases
+    /// found.
+    ///
+    /// @tparam BaseType Base type to which the property belongs: @c Lease or
+    /// @c Lease6.
+    /// @tparam PropertyType A type of the property, e.g. @c uint32_t for IAID.
+    /// @tparam MemberPointer A pointer to the member, e.g. @c &Lease6::iaid_.
+    template<typename BaseType, typename PropertyType,
+             PropertyType BaseType::*MemberPointer>
+    void getLeasesByProperty(const PropertyType& property, const bool equals,
+                             std::vector<Lease6>& leases) const;
 
     /// @brief Simulates reception of the message from the server.
     ///
@@ -616,6 +713,9 @@ private:
     bool use_client_id_;
     bool use_rapid_commit_;
 
+    /// @brief Pointer to the option holding an address hint.
+    Option6IAAddrPtr address_hint_;
+
     /// @brief Pointer to the option holding a prefix hint.
     Option6IAPrefixPtr prefix_hint_;
 
@@ -630,6 +730,11 @@ private:
 
     /// @brief FQDN requested by the client.
     Option6ClientFqdnPtr fqdn_;
+
+    /// @bref IAID used by the client when requesting address assignment.
+    uint32_t na_iaid_;
+    /// @brief IAID used by the client when requesting prefix delegation.
+    uint32_t pd_iaid_;
 };
 
 } // end of namespace isc::dhcp::test

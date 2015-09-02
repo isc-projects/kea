@@ -683,6 +683,7 @@ private:
     /// It's default value is false, which indicates that the Rapid
     /// Commit is disabled for the subnet.
     bool rapid_commit_;
+
 };
 
 /// @brief A pointer to a Subnet6 object

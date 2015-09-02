@@ -473,6 +473,7 @@ protected:
             }
         }
 
+        // Gather boolean parameters values.
         bool rapid_commit = boolean_values_->getOptionalParam("rapid-commit", false);
 
         std::ostringstream output;
@@ -481,6 +482,7 @@ protected:
                << t2 << ", preferred-lifetime=" << pref
                << ", valid-lifetime=" << valid
                << ", rapid-commit is " << (rapid_commit ? "enabled" : "disabled");
+
 
         LOG_INFO(dhcp6_logger, DHCP6_CONFIG_NEW_SUBNET).arg(output.str());
 

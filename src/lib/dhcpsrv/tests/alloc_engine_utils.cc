@@ -233,7 +233,6 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
 Lease6Collection
 AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
                             AllocEngine::HintContainer& hints,
-                            bool allow_new_leases_in_renewal,
                             bool in_pool) {
 
     Lease::Type type = pool->getType();
@@ -243,7 +242,6 @@ AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
                                     type, false, false, "", false);
     ctx.hints_ = hints;
     ctx.query_.reset(new Pkt6(DHCPV6_RENEW, 123));
-    ctx.allow_new_leases_in_renewals_ = allow_new_leases_in_renewal;
     ctx.query_.reset(new Pkt6(DHCPV6_RENEW, 1234));
 
     findReservation(engine, ctx);
