@@ -32,6 +32,7 @@
 #include <gtest/gtest.h>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <map>
 #include <string>
