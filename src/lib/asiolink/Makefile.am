@@ -24,15 +24,12 @@ libkea_asiolink_la_SOURCES += io_address.cc io_address.h
 libkea_asiolink_la_SOURCES += io_asio_socket.h
 libkea_asiolink_la_SOURCES += io_endpoint.cc io_endpoint.h
 libkea_asiolink_la_SOURCES += io_error.h
-libkea_asiolink_la_SOURCES += io_message.h
 libkea_asiolink_la_SOURCES += io_service.h io_service.cc
 libkea_asiolink_la_SOURCES += io_socket.h io_socket.cc
-libkea_asiolink_la_SOURCES += simple_callback.h
 libkea_asiolink_la_SOURCES += tcp_endpoint.h
 libkea_asiolink_la_SOURCES += tcp_socket.h
 libkea_asiolink_la_SOURCES += udp_endpoint.h
 libkea_asiolink_la_SOURCES += udp_socket.h
-libkea_asiolink_la_SOURCES += local_socket.h local_socket.cc
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # KEA_CXXFLAGS)
