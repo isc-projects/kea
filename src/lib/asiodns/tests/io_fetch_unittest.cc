@@ -26,7 +26,7 @@
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 
 #include <util/buffer.h>
 #include <util/io_utilities.h>
@@ -43,17 +43,17 @@
 #include <asiolink/io_service.h>
 #include <asiodns/io_fetch.h>
 
-using namespace asio;
+using namespace boost::asio;
 using namespace isc::dns;
 using namespace isc::util;
-using namespace asio::ip;
+using namespace boost::asio::ip;
 using namespace std;
 using namespace isc::asiolink;
 
 namespace isc {
 namespace asiodns {
 
-const asio::ip::address TEST_HOST(asio::ip::address::from_string("127.0.0.1"));
+const boost::asio::ip::address TEST_HOST(boost::asio::ip::address::from_string("127.0.0.1"));
 const uint16_t TEST_PORT(5301);
 const int SEND_INTERVAL = 250;      // Interval in ms between TCP sends
 const size_t MAX_SIZE = 64 * 1024;  // Should be able to take 64kB
@@ -176,7 +176,7 @@ public:
     ///        sent with the correct QID.
     /// \param length Amount of data received.
     void udpReceiveHandler(udp::endpoint* remote, udp::socket* socket,
-                           asio::error_code ec = asio::error_code(),
+                           boost::asio::error_code ec = boost::asio::error_code(),
                            size_t length = 0, bool bad_qid = false,
                            bool second_send = false)
     {
@@ -206,12 +206,12 @@ public:
             expected_buffer_->writeUint8At(qid_0 + 1, 0);
             expected_buffer_->writeUint8At(qid_1 + 1, 1);
         }
-        socket->send_to(asio::buffer(expected_buffer_->getData(), length), *remote);
+        socket->send_to(boost::asio::buffer(expected_buffer_->getData(), length), *remote);
 
         if (bad_qid && second_send) {
             expected_buffer_->writeUint8At(qid_0, 0);
             expected_buffer_->writeUint8At(qid_1, 1);
-            socket->send_to(asio::buffer(expected_buffer_->getData(),
+            socket->send_to(boost::asio::buffer(expected_buffer_->getData(),
                             expected_buffer_->getLength()), *remote);
         }
         if (debug_) {
@@ -228,7 +228,7 @@ public:
     /// \param socket Socket on which data will be received
     /// \param ec Boost error code, value should be zero.
     void tcpAcceptHandler(tcp::socket* socket,
-                          asio::error_code ec = asio::error_code())
+                          boost::asio::error_code ec = boost::asio::error_code())
     {
         if (debug_) {
             cout << "tcpAcceptHandler(): error = " << ec.value() << endl;
@@ -252,7 +252,7 @@ public:
 
         // Initiate a read on the socket.
         cumulative_ = 0;
-        socket->async_receive(asio::buffer(receive_buffer_, sizeof(receive_buffer_)),
+        socket->async_receive(boost::asio::buffer(receive_buffer_, sizeof(receive_buffer_)),
             boost::bind(&IOFetchTest::tcpReceiveHandler, this, socket, _1, _2));
     }
 
@@ -268,7 +268,7 @@ public:
     ///        by the "server" to receive data.
     /// \param length Amount of data received.
     void tcpReceiveHandler(tcp::socket* socket,
-                           asio::error_code ec = asio::error_code(),
+                           boost::asio::error_code ec = boost::asio::error_code(),
                            size_t length = 0)
     {
         if (debug_) {
@@ -288,7 +288,7 @@ public:
         }
 
         if (!complete) {
-            socket->async_receive(asio::buffer((receive_buffer_ + cumulative_),
+            socket->async_receive(boost::asio::buffer((receive_buffer_ + cumulative_),
                 (sizeof(receive_buffer_) - cumulative_)),
                 boost::bind(&IOFetchTest::tcpReceiveHandler, this, socket, _1, _2));
             return;
@@ -377,7 +377,7 @@ public:
 
         // ... and send it.  The amount sent is also passed as the first
         // argument of the send callback, as a check.
-        socket->async_send(asio::buffer(send_ptr, amount),
+        socket->async_send(boost::asio::buffer(send_ptr, amount),
                            boost::bind(&IOFetchTest::tcpSendHandler, this,
                                        amount, socket, _1, _2));
     }
@@ -401,7 +401,7 @@ public:
     /// \param ec Boost error code, value should be zero.
     /// \param length Number of bytes sent.
     void tcpSendHandler(size_t expected, tcp::socket* socket,
-                        asio::error_code ec = asio::error_code(),
+                        boost::asio::error_code ec = boost::asio::error_code(),
                         size_t length = 0)
     {
         if (debug_) {
@@ -592,7 +592,7 @@ public:
         return_data_ = "Message returned to the client";
 
         udp::endpoint remote;
-        socket.async_receive_from(asio::buffer(receive_buffer_,
+        socket.async_receive_from(boost::asio::buffer(receive_buffer_,
                                                sizeof(receive_buffer_)),
                                   remote,
                                   boost::bind(&IOFetchTest::udpReceiveHandler,

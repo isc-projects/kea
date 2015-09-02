@@ -18,7 +18,7 @@
 #include <d2/spec_config.h>
 #include <d2/tests/d_test_stubs.h>
 
-using namespace asio;
+using namespace boost::asio;
 
 namespace isc {
 namespace d2 {

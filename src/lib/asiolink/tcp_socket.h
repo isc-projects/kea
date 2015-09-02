@@ -68,7 +68,7 @@ public:
     /// \param socket The ASIO representation of the TCP socket.  It is assumed
     ///        that the caller will open and close the socket, so these
     ///        operations are a no-op for that socket.
-    TCPSocket(asio::ip::tcp::socket& socket);
+    TCPSocket(boost::asio::ip::tcp::socket& socket);
 
     /// \brief Constructor
     ///
@@ -166,9 +166,9 @@ private:
     // Two variables to hold the socket - a socket and a pointer to it.  This
     // handles the case where a socket is passed to the TCPSocket on
     // construction, or where it is asked to manage its own socket.
-    asio::ip::tcp::socket*      socket_ptr_;    ///< Pointer to own socket
-    asio::ip::tcp::socket&      socket_;        ///< Socket
-    bool                        isopen_;        ///< true when socket is open
+    boost::asio::ip::tcp::socket*      socket_ptr_;    ///< Pointer to own socket
+    boost::asio::ip::tcp::socket&      socket_;        ///< Socket
+    bool                               isopen_;        ///< true when socket is open
 
     // TODO: Remove temporary buffer
     // The current implementation copies the buffer passed to asyncSend() into
@@ -189,7 +189,7 @@ private:
 // Constructor - caller manages socket
 
 template <typename C>
-TCPSocket<C>::TCPSocket(asio::ip::tcp::socket& socket) :
+TCPSocket<C>::TCPSocket(boost::asio::ip::tcp::socket& socket) :
     socket_ptr_(NULL), socket_(socket), isopen_(true), send_buffer_()
 {
 }
@@ -198,7 +198,7 @@ TCPSocket<C>::TCPSocket(asio::ip::tcp::socket& socket) :
 
 template <typename C>
 TCPSocket<C>::TCPSocket(IOService& service) :
-    socket_ptr_(new asio::ip::tcp::socket(service.get_io_service())),
+    socket_ptr_(new boost::asio::ip::tcp::socket(service.get_io_service())),
     socket_(*socket_ptr_), isopen_(false)
 {
 }
@@ -221,10 +221,10 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
     // At also allows us a treat a passed-in socket as a self-managed socket.
     if (!isopen_) {
         if (endpoint->getFamily() == AF_INET) {
-            socket_.open(asio::ip::tcp::v4());
+            socket_.open(boost::asio::ip::tcp::v4());
         }
         else {
-            socket_.open(asio::ip::tcp::v6());
+            socket_.open(boost::asio::ip::tcp::v6());
         }
         isopen_ = true;
 
@@ -232,7 +232,7 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
 
         // Reuse address - allow the socket to bind to a port even if the port
         // is in the TIMED_WAIT state.
-        socket_.set_option(asio::socket_base::reuse_address(true));
+        socket_.set_option(boost::asio::socket_base::reuse_address(true));
     }
 
     // Upconvert to a TCPEndpoint.  We need to do this because although
@@ -271,7 +271,7 @@ TCPSocket<C>::asyncSend(const void* data, size_t length,
             send_buffer_->writeData(data, length);
 
             // ... and send it
-            socket_.async_send(asio::buffer(send_buffer_->getData(),
+            socket_.async_send(boost::asio::buffer(send_buffer_->getData(),
                                send_buffer_->getLength()), callback);
         } catch (boost::numeric::bad_numeric_cast&) {
             isc_throw(BufferTooLarge,
@@ -317,7 +317,7 @@ TCPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
         void* buffer_start = static_cast<void*>(static_cast<uint8_t*>(data) + offset);
 
         // ... and kick off the read.
-        socket_.async_receive(asio::buffer(buffer_start, length - offset), callback);
+        socket_.async_receive(boost::asio::buffer(buffer_start, length - offset), callback);
 
     } else {
         isc_throw(SocketNotOpen,

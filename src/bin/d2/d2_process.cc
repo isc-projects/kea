@@ -19,7 +19,7 @@
 #include <d2/d2_cfg_mgr.h>
 #include <d2/d2_process.h>
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 
 namespace isc {
 namespace d2 {
@@ -95,8 +95,8 @@ D2Process::run() {
 size_t
 D2Process::runIO() {
     // We want to block until at least one handler is called.  We'll use
-    // asio::io_service directly for two reasons. First off
-    // asiolink::IOService::run_one is a void and asio::io_service::stopped
+    // boost::asio::io_service directly for two reasons. First off
+    // asiolink::IOService::run_one is a void and boost::asio::io_service::stopped
     // is not present in older versions of boost.  We need to know if any
     // handlers ran or if the io_service was stopped.  That latter represents
     // some form of error and the application cannot proceed with a stopped
@@ -104,7 +104,7 @@ D2Process::runIO() {
     // method.  This is a handy method which runs all ready handlers without
     // blocking.
     asiolink::IOServicePtr& io = getIoService();
-    asio::io_service& asio_io_service  = io->get_io_service();
+    boost::asio::io_service& asio_io_service  = io->get_io_service();
 
     // Poll runs all that are ready. If none are ready it returns immediately
     // with a count of zero.
