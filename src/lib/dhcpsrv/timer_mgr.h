@@ -237,6 +237,8 @@ private:
 
     //@}
 
+    void clearReadySockets();
+
     /// @brief Pointer to the worker thread.
     ///
     /// This is initially set to NULL until the thread is started using the
@@ -295,6 +297,7 @@ private:
     /// the map. The timer is associated with an instance of the @c WatchSocket
     /// which is marked ready when the interval for the particular elapses.
     TimerInfoMap registered_timers_;
+
 };
 
 } // end of namespace isc::dhcp
