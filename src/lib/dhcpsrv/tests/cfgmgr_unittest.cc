@@ -22,6 +22,8 @@
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <stats/stats_mgr.h>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <gtest/gtest.h>
 
 #include <iostream>

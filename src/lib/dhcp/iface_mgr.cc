@@ -29,6 +29,7 @@
 #include <util/io/pktinfo_utilities.h>
 
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <cstring>
 #include <errno.h>

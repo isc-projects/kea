@@ -22,6 +22,8 @@
 #include <dhcp/option.h>
 #include <dhcp/dhcp6.h>
 
+#include <boost/scoped_ptr.hpp>
+
 #include "../localized_option.h"
 #include "../perf_pkt6.h"
 
