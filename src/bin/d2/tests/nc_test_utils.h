@@ -21,8 +21,8 @@
 #include <asiolink/interval_timer.h>
 #include <d2/nc_trans.h>
 
-#include <asio/ip/udp.hpp>
-#include <asio/socket_base.hpp>
+#include <boost/asio/ip/udp.hpp>
+#include <boost/asio/socket_base.hpp>
 #include <gtest/gtest.h>
 
 namespace isc {
@@ -34,7 +34,7 @@ extern size_t TEST_DNS_SERVER_PORT;
 // Not extern'ed to allow use as array size
 const int TEST_MSG_MAX = 1024;
 
-typedef boost::shared_ptr<asio::ip::udp::socket> SocketPtr;
+typedef boost::shared_ptr<boost::asio::ip::udp::socket> SocketPtr;
 
 /// @brief This class simulates a DNS server.  It is capable of performing
 /// an asynchronous read, governed by an IOService, and responding to received
@@ -56,7 +56,7 @@ public:
     // Socket on which listening is done.
     SocketPtr server_socket_;
     // Stores the end point of requesting client.
-    asio::ip::udp::endpoint remote_;
+    boost::asio::ip::udp::endpoint remote_;
     // Buffer in which received packets are stuffed.
     uint8_t receive_buffer_[TEST_MSG_MAX];
     // Flag which indicates if a receive has been initiated but
@@ -110,7 +110,7 @@ public:
     /// @param response_mode type of response the handler should produce
     /// @param response_rcode value of Rcode in the response constructed by
     /// handler
-    void requestHandler(const asio::error_code& error,
+    void requestHandler(const boost::asio::error_code& error,
                         std::size_t bytes_recvd,
                         const ResponseMode& response_mode,
                         const dns::Rcode& response_rcode);

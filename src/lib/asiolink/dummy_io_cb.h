@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,8 +19,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include <asio/error.hpp>
-#include <asio/error_code.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/asio/error_code.hpp>
 
 namespace isc {
 namespace asiolink {
@@ -44,7 +44,7 @@ public:
     /// Should never be called, as this class is a convenience class provided
     /// for instances where a socket is required but it is known that no
     /// asynchronous operations will be carried out.
-    void operator()(asio::error_code) {
+    void operator()(boost::asio::error_code) {
         // If the function is called, there is a serious logic error in
         // the program (this class should not be used as the callback
         // class).  As the asiolink module is too low-level for logging
@@ -58,7 +58,7 @@ public:
     /// Should never be called, as this class is a convenience class provided
     /// for instances where a socket is required but it is known that no
     /// asynchronous operations will be carried out.
-    void operator()(asio::error_code, size_t) {
+    void operator()(boost::asio::error_code, size_t) {
         // If the function is called, there is a serious logic error in
         // the program (this class should not be used as the callback
         // class).  As the asiolink module is too low-level for logging

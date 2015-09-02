@@ -40,13 +40,13 @@
 #include <util/buffer.h>
 #include <util/io_utilities.h>
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 
 #include <asiolink/io_service.h>
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
 
-using namespace asio;
+using namespace boost::asio;
 using namespace isc::util;
 using namespace isc::asiolink;
 using namespace std;
@@ -74,10 +74,10 @@ public:
             error_code_(), length_(0), called_(false), name_("")
         {}
 
-        asio::error_code    error_code_;    ///< Completion error code
-        size_t              length_;        ///< Number of bytes transferred
-        bool                called_;        ///< Set true when callback called
-        std::string         name_;          ///< Which of the objects this is
+        boost::asio::error_code    error_code_;    ///< Completion error code
+        size_t                     length_;        ///< Number of bytes transferred
+        bool                       called_;        ///< Set true when callback called
+        std::string                name_;          ///< Which of the objects this is
     };
 
     /// \brief Constructor
@@ -110,7 +110,7 @@ public:
     ///
     /// \param ec I/O completion error code passed to callback function.
     /// \param length Number of bytes transferred
-    virtual void operator()(asio::error_code ec, size_t length = 0) {
+    virtual void operator()(boost::asio::error_code ec, size_t length = 0) {
         ptr_->error_code_ = ec;
         setLength(length);
         setCalled(true);
@@ -125,7 +125,7 @@ public:
     ///
     /// \param code New value of completion code
     void setCode(int code) {
-        ptr_->error_code_ = asio::error_code(code, asio::error_code().category());
+        ptr_->error_code_ = boost::asio::error_code(code, boost::asio::error_code().category());
     }
 
     /// \brief Get number of bytes transferred in I/O
@@ -244,7 +244,7 @@ TEST(UDPSocket, SequenceTest) {
     // The server - with which the client communicates.  For convenience, we
     // use the same io_service, and use the endpoint object created for
     // the client to send to as the endpoint object in the constructor.
-    asio::ip::udp::socket server(service.get_io_service(),
+    boost::asio::ip::udp::socket server(service.get_io_service(),
         server_endpoint.getASIOEndpoint());
     server.set_option(socket_base::reuse_address(true));
 

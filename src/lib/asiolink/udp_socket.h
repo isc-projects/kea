@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -54,7 +54,7 @@ public:
     /// \param socket The ASIO representation of the UDP socket.  It is assumed
     ///        that the caller will open and close the socket, so these
     ///        operations are a no-op for that socket.
-    UDPSocket(asio::ip::udp::socket& socket);
+    UDPSocket(boost::asio::ip::udp::socket& socket);
 
     /// \brief Constructor
     ///
@@ -152,15 +152,15 @@ private:
     // Two variables to hold the socket - a socket and a pointer to it.  This
     // handles the case where a socket is passed to the UDPSocket on
     // construction, or where it is asked to manage its own socket.
-    asio::ip::udp::socket*      socket_ptr_;    ///< Pointer to own socket
-    asio::ip::udp::socket&      socket_;        ///< Socket
-    bool                        isopen_;        ///< true when socket is open
+    boost::asio::ip::udp::socket*      socket_ptr_;    ///< Pointer to own socket
+    boost::asio::ip::udp::socket&      socket_;        ///< Socket
+    bool                               isopen_;        ///< true when socket is open
 };
 
 // Constructor - caller manages socket
 
 template <typename C>
-UDPSocket<C>::UDPSocket(asio::ip::udp::socket& socket) :
+UDPSocket<C>::UDPSocket(boost::asio::ip::udp::socket& socket) :
     socket_ptr_(NULL), socket_(socket), isopen_(true)
 {
 }
@@ -169,7 +169,7 @@ UDPSocket<C>::UDPSocket(asio::ip::udp::socket& socket) :
 
 template <typename C>
 UDPSocket<C>::UDPSocket(IOService& service) :
-    socket_ptr_(new asio::ip::udp::socket(service.get_io_service())),
+    socket_ptr_(new boost::asio::ip::udp::socket(service.get_io_service())),
     socket_(*socket_ptr_), isopen_(false)
 {
 }
@@ -194,22 +194,22 @@ UDPSocket<C>::open(const IOEndpoint* endpoint, C&) {
     // of this class).
     if (!isopen_) {
         if (endpoint->getFamily() == AF_INET) {
-            socket_.open(asio::ip::udp::v4());
+            socket_.open(boost::asio::ip::udp::v4());
         }
         else {
-            socket_.open(asio::ip::udp::v6());
+            socket_.open(boost::asio::ip::udp::v6());
         }
         isopen_ = true;
 
         // Ensure it can send and receive at least 4K buffers.
-        asio::ip::udp::socket::send_buffer_size snd_size;
+        boost::asio::ip::udp::socket::send_buffer_size snd_size;
         socket_.get_option(snd_size);
         if (snd_size.value() < MIN_SIZE) {
             snd_size = MIN_SIZE;
             socket_.set_option(snd_size);
         }
 
-        asio::ip::udp::socket::receive_buffer_size rcv_size;
+        boost::asio::ip::udp::socket::receive_buffer_size rcv_size;
         socket_.get_option(rcv_size);
         if (rcv_size.value() < MIN_SIZE) {
             rcv_size = MIN_SIZE;
@@ -237,7 +237,7 @@ UDPSocket<C>::asyncSend(const void* data, size_t length,
             static_cast<const UDPEndpoint*>(endpoint);
 
         // ... and send the message.
-        socket_.async_send_to(asio::buffer(data, length),
+        socket_.async_send_to(boost::asio::buffer(data, length),
             udp_endpoint->getASIOEndpoint(), callback);
     } else {
         isc_throw(SocketNotOpen,
@@ -266,7 +266,7 @@ UDPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
         void* buffer_start = static_cast<void*>(static_cast<uint8_t*>(data) + offset);
 
         // Issue the read
-        socket_.async_receive_from(asio::buffer(buffer_start, length - offset),
+        socket_.async_receive_from(boost::asio::buffer(buffer_start, length - offset),
             udp_endpoint->getASIOEndpoint(), callback);
     } else {
         isc_throw(SocketNotOpen,
