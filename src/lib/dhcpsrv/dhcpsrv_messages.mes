@@ -527,6 +527,56 @@ lease from the PostgreSQL database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the PostgreSQL database for the specified address.
 
+% DHCPSRV_TIMERMGR_REGISTER_TIMER registering timer: %1, using interval: %2 ms
+A debug message issued when the new interval timer is registered in
+the Timer Manager. This timer will have a callback function
+associated with it, and this function will be executed according
+to the interval specified. The unique name of the timer and the
+interval at which the callback function will be executed is
+included in the message.
+
+% DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION running operation for timer: %1
+A debug message issued when the Timer Manager is about to
+run a periodic operation associated with the given timer.
+An example of such operation is a periodic cleanup of
+expired leases. The name of the timer is included in the
+message.
+
+% DHCPSRV_TIMERMGR_START_THREAD starting thread for timers
+A debug message issued when the Timer Manager is starting a
+worker thread to run started timers. The worker thread is
+typically started right after all timers have been registered
+and runs until timers need to be reconfigured, e.g. their
+interval is changed, new timers are registered or existing
+timers are unregistered.
+
+% DHCPSRV_TIMERMGR_START_TIMER starting timer: %1
+A debug message issued when the registered interval timer is
+being started. If this operation is successful the timer will
+periodically execute the operation associated with it. The
+name of the started timer is included in the message.
+
+% DHCPSRV_TIMERMGR_STOP_THREAD stopping thread for timers
+A debug message issued when the Timer Manager is stopping
+the worker thread which executes interval timers. When the
+thread is stopped no timers will be executed. The thread is
+typically stopped at the server reconfiguration or when the
+server shuts down.
+
+% DHCPSRV_TIMERMGR_STOP_TIMER stopping timer: %1
+A debug message issued when the registered interval timer is
+being stopped. The timer remains registered and can be restarted
+if necessary. The name of the timer is included in the message.
+
+% DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS unregistering all timers
+A debug message issued when all registered interval timers are
+being unregistered from the Timer Manager.
+
+% DHCPSRV_TIMERMGR_UNREGISTER_TIMER unregistering timer: %1
+A debug message issued when one of the registered interval timers
+is unregistered from the Timer Manager. The name of the timer is
+included in the message.
+
 % DHCPSRV_UNEXPECTED_NAME database access parameters passed through '%1', expected 'lease-database'
 The parameters for access the lease database were passed to the server through
 the named configuration parameter, but the code was expecting them to be
