@@ -17,6 +17,8 @@
 #include <asiolink/io_address.h>
 #include <dhcpsrv/pool.h>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <gtest/gtest.h>
 
 #include <iostream>

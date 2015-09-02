@@ -26,7 +26,6 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include <algorithm>
 #include <iostream>
