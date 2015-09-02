@@ -377,12 +377,19 @@ public:
     void removeStatistics();
 
     /// @brief Sets decline probation-period
+    ///
+    /// Probation-period is the timer, expressed, in seconds, that specifies how
+    /// long a lease is unavailable after reported as declined.
+    ///
     /// @param decline_timer number of seconds after declined lease is restored
-    void setDeclinePeriod(uint32_t decline_timer) {
+    void setDeclinePeriod(const uint32_t decline_timer) {
         decline_timer_ = decline_timer;
     }
 
-    /// @brief
+    /// @brief Returns probation-period
+    ///
+    /// See @ref setDeclinePeriod for brief discussion.
+    /// @return value of probation-period, expressed in seconds
     uint32_t getDeclinePeriod() const {
         return (decline_timer_);
     }
