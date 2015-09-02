@@ -798,7 +798,7 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     boost::asio::io_service io_service;
     boost::asio::ip::udp::socket sock(io_service);
 
-    boost::asio::error_code err_code;
+    boost::system::error_code err_code;
     // If remote address is broadcast address we have to
     // allow this on the socket.
     if (remote_addr.isV4() &&

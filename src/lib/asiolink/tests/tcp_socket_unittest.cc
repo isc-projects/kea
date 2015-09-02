@@ -87,7 +87,7 @@ public:
             name_(""), queued_(NONE), called_(NONE), data_(MIN_SIZE, 0)
         {}
 
-        boost::asio::error_code    error_code_;    ///< Completion error code
+        boost::system::error_code  error_code_;    ///< Completion error code
         size_t                     length_;        ///< Bytes transferred in this I/O
         size_t                     cumulative_;    ///< Cumulative bytes transferred
         size_t                     expected_;      ///< Expected amount of data
@@ -95,7 +95,7 @@ public:
         std::string                name_;          ///< Which of the objects this is
         Operation                  queued_;        ///< Queued operation
         Operation                  called_;        ///< Which callback called
-        std::vector<uint8_t>        data_;         ///< Receive buffer
+        std::vector<uint8_t>       data_;          ///< Receive buffer
     };
 
     /// \brief Constructor
@@ -128,7 +128,7 @@ public:
     ///
     /// \param ec I/O completion error code passed to callback function.
     /// \param length Number of bytes transferred
-    void operator()(boost::asio::error_code ec = boost::asio::error_code(),
+    void operator()(boost::system::error_code ec = boost::system::error_code(),
                             size_t length = 0)
     {
         setCode(ec.value());
@@ -145,7 +145,7 @@ public:
     ///
     /// \param code New value of completion code
     void setCode(int code) {
-        ptr_->error_code_ = boost::asio::error_code(code, boost::asio::error_code().category());
+        ptr_->error_code_ = boost::system::error_code(code, boost::system::error_code().category());
     }
 
     /// \brief Get number of bytes transferred in I/O

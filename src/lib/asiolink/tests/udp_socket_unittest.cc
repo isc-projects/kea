@@ -74,7 +74,7 @@ public:
             error_code_(), length_(0), called_(false), name_("")
         {}
 
-        boost::asio::error_code    error_code_;    ///< Completion error code
+        boost::system::error_code  error_code_;    ///< Completion error code
         size_t                     length_;        ///< Number of bytes transferred
         bool                       called_;        ///< Set true when callback called
         std::string                name_;          ///< Which of the objects this is
@@ -110,7 +110,7 @@ public:
     ///
     /// \param ec I/O completion error code passed to callback function.
     /// \param length Number of bytes transferred
-    virtual void operator()(boost::asio::error_code ec, size_t length = 0) {
+    virtual void operator()(boost::system::error_code ec, size_t length = 0) {
         ptr_->error_code_ = ec;
         setLength(length);
         setCalled(true);
@@ -125,7 +125,7 @@ public:
     ///
     /// \param code New value of completion code
     void setCode(int code) {
-        ptr_->error_code_ = boost::asio::error_code(code, boost::asio::error_code().category());
+        ptr_->error_code_ = boost::system::error_code(code, boost::system::error_code().category());
     }
 
     /// \brief Get number of bytes transferred in I/O

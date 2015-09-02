@@ -176,7 +176,7 @@ public:
     ///        sent with the correct QID.
     /// \param length Amount of data received.
     void udpReceiveHandler(udp::endpoint* remote, udp::socket* socket,
-                           boost::asio::error_code ec = boost::asio::error_code(),
+                           boost::system::error_code ec = boost::system::error_code(),
                            size_t length = 0, bool bad_qid = false,
                            bool second_send = false)
     {
@@ -228,7 +228,7 @@ public:
     /// \param socket Socket on which data will be received
     /// \param ec Boost error code, value should be zero.
     void tcpAcceptHandler(tcp::socket* socket,
-                          boost::asio::error_code ec = boost::asio::error_code())
+                          boost::system::error_code ec = boost::system::error_code())
     {
         if (debug_) {
             cout << "tcpAcceptHandler(): error = " << ec.value() << endl;
@@ -268,7 +268,7 @@ public:
     ///        by the "server" to receive data.
     /// \param length Amount of data received.
     void tcpReceiveHandler(tcp::socket* socket,
-                           boost::asio::error_code ec = boost::asio::error_code(),
+                           boost::system::error_code ec = boost::system::error_code(),
                            size_t length = 0)
     {
         if (debug_) {
@@ -401,7 +401,7 @@ public:
     /// \param ec Boost error code, value should be zero.
     /// \param length Number of bytes sent.
     void tcpSendHandler(size_t expected, tcp::socket* socket,
-                        boost::asio::error_code ec = boost::asio::error_code(),
+                        boost::system::error_code ec = boost::system::error_code(),
                         size_t length = 0)
     {
         if (debug_) {

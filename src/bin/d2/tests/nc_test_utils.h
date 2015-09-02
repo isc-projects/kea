@@ -110,7 +110,7 @@ public:
     /// @param response_mode type of response the handler should produce
     /// @param response_rcode value of Rcode in the response constructed by
     /// handler
-    void requestHandler(const boost::asio::error_code& error,
+    void requestHandler(const boost::system::error_code& error,
                         std::size_t bytes_recvd,
                         const ResponseMode& response_mode,
                         const dns::Rcode& response_rcode);
