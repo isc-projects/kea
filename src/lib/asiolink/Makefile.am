@@ -35,8 +35,7 @@ libkea_asiolink_la_SOURCES += udp_socket.h
 # KEA_CXXFLAGS)
 libkea_asiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_asiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
-libkea_asiolink_la_LIBADD  = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libkea_asiolink_la_LIBADD += -lboost_system
+libkea_asiolink_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
 # IOAddress is sometimes used in user-library code
 libkea_asiolink_includedir = $(pkgincludedir)/asiolink
