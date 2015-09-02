@@ -15,7 +15,7 @@
 #ifndef TCP_ENDPOINT_H
 #define TCP_ENDPOINT_H 1
 
-#ifndef ASIO_HPP
+#ifndef BOOST_ASIO_HPP
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
 
