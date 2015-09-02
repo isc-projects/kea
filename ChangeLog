@@ -1,3 +1,8 @@
+993.	[bug]		fdupont
+	The logging spec file was searched in the build tree when it
+	was in the source tree so distcheck (where they differ) failed.
+	(Trac #4026, git xxx)
+
 992.	[func]		fdupont
 	A 'flush' parameter has been added to logging configuration. It is
 	now possible to disable automatic immediate flushing to achieve
