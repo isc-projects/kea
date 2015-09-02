@@ -48,7 +48,7 @@ class LoggingTest : public ::testing::Test {
 
 // Tests that the spec file is valid.
 TEST_F(LoggingTest, basicSpec) {
-    std::string specfile = std::string(TEST_DATA_BUILDDIR) + "/../logging.spec";
+    std::string specfile = std::string(LOGGING_SPEC_FILE);
     ASSERT_NO_THROW(isc::config::moduleSpecFromFile(specfile));
 }
 
