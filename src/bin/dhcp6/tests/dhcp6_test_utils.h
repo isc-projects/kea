@@ -468,19 +468,6 @@ public:
     testRenewSomeoneElsesLease(isc::dhcp::Lease::Type type,
                                const asiolink::IOAddress& addr);
 
-    /// @brief Performs negative RENEW test
-    ///
-    /// See renewReject and pdRenewReject tests for detailed explanation.
-    /// In essence the test attempts to perform couple failed RENEW scenarios.
-    ///
-    /// This method does not throw, but uses gtest macros to signify failures.
-    ///
-    /// @param type type (TYPE_NA or TYPE_PD)
-    /// @param addr address being sent in RENEW
-    void
-    testRenewReject(isc::dhcp::Lease::Type type,
-                    const isc::asiolink::IOAddress& addr);
-
     /// @brief Performs basic (positive) RELEASE test
     ///
     /// See releaseBasic and pdReleaseBasic tests for detailed explanation.
