@@ -109,7 +109,7 @@ TimerMgrTest::TearDown() {
     // Make sure there are no dangling threads.
     TimerMgr::instance().stopThread();
     // Remove all timers.
-    TimerMgr::instance().deregisterTimers();
+    TimerMgr::instance().unregisterTimers();
 }
 
 void
@@ -207,9 +207,9 @@ TEST_F(TimerMgrTest, registerTimer) {
 
 }
 
-// This test verifies that it is possible to deregister a timer from
+// This test verifies that it is possible to unregister a timer from
 // the TimerMgr.
-TEST_F(TimerMgrTest, deregisterTimer) {
+TEST_F(TimerMgrTest, unregisterTimer) {
     TimerMgr& timer_mgr = TimerMgr::instance();
 
     // Register a timer and start it.
@@ -227,12 +227,12 @@ TEST_F(TimerMgrTest, deregisterTimer) {
     const unsigned int calls_count = calls_count_["timer1"];
     ASSERT_GT(calls_count, 0);
 
-    // Check that an attempt to deregister a non-existing timer would
+    // Check that an attempt to unregister a non-existing timer would
     // result in exeception.
-    EXPECT_THROW(timer_mgr.deregisterTimer("timer2"), BadValue);
+    EXPECT_THROW(timer_mgr.unregisterTimer("timer2"), BadValue);
 
-    // Now deregister the correct one.
-    ASSERT_NO_THROW(timer_mgr.deregisterTimer("timer1"));
+    // Now unregister the correct one.
+    ASSERT_NO_THROW(timer_mgr.unregisterTimer("timer1"));
 
     // Start the thread again and wait another 100ms.
     ASSERT_NO_THROW(timer_mgr.startThread());
@@ -240,17 +240,17 @@ TEST_F(TimerMgrTest, deregisterTimer) {
     ASSERT_NO_THROW(timer_mgr.stopThread());
 
     // The number of calls for the timer1 shouldn't change as the
-    // timer had been deregistered.
+    // timer had been unregistered.
     EXPECT_EQ(calls_count_["timer1"], calls_count);
 }
 
-// This test verifies taht it is possible to deregister all timers.
+// This test verifies taht it is possible to unregister all timers.
 /// @todo This test is disabled because it may occassionally hang
 /// due to bug in the ASIO implementation shipped with Kea.
 /// Replacing it with the ASIO implementation from BOOST does
 /// solve the problem. See ticket #4009. Until this ticket is
 /// implemented, the test should remain disabled.
-TEST_F(TimerMgrTest, DISABLED_deregisterTimers) {
+TEST_F(TimerMgrTest, DISABLED_unregisterTimers) {
     TimerMgr& timer_mgr = TimerMgr::instance();
 
     // Register 10 timers.
@@ -283,8 +283,8 @@ TEST_F(TimerMgrTest, DISABLED_deregisterTimers) {
     // Copy counters for all timers.
     CallsCount calls_count(calls_count_);
 
-    // Let's deregister all timers.
-    ASSERT_NO_THROW(timer_mgr.deregisterTimers());
+    // Let's unregister all timers.
+    ASSERT_NO_THROW(timer_mgr.unregisterTimers());
 
     // Start worker thread again and wait for 500ms.
     ASSERT_NO_THROW(timer_mgr.startThread());
@@ -296,19 +296,19 @@ TEST_F(TimerMgrTest, DISABLED_deregisterTimers) {
     EXPECT_TRUE(calls_count == calls_count_);
 }
 
-// This test checks that it is not possible to deregister timers
+// This test checks that it is not possible to unregister timers
 // while the thread is running.
-TEST_F(TimerMgrTest, deregisterTimerWhileRunning) {
+TEST_F(TimerMgrTest, unregisterTimerWhileRunning) {
     TimerMgr& timer_mgr = TimerMgr::instance();
 
     // Register two timers.
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer2", 1));
 
-    // Start the thread and make sure we can't deregister them.
+    // Start the thread and make sure we can't unregister them.
     ASSERT_NO_THROW(timer_mgr.startThread());
-    EXPECT_THROW(timer_mgr.deregisterTimer("timer1"), InvalidOperation);
-    EXPECT_THROW(timer_mgr.deregisterTimers(), InvalidOperation);
+    EXPECT_THROW(timer_mgr.unregisterTimer("timer1"), InvalidOperation);
+    EXPECT_THROW(timer_mgr.unregisterTimers(), InvalidOperation);
 
     // No need to stop the thread as it will be stopped by the
     // test fixture destructor.
@@ -402,13 +402,13 @@ TEST_F(TimerMgrTest, scheduleTimers) {
     unsigned int calls_count_timer1 = calls_count_["timer1"];
     unsigned int calls_count_timer2 = calls_count_["timer2"];
 
-    // Deregister the 'timer1'.
-    ASSERT_NO_THROW(timer_mgr.deregisterTimer("timer1"));
+    // Unregister the 'timer1'.
+    ASSERT_NO_THROW(timer_mgr.unregisterTimer("timer1"));
 
     // Restart the thread.
     ASSERT_NO_THROW(timer_mgr.startThread());
 
-    // Wait another 500ms. The 'timer1' was deregistered so it
+    // Wait another 500ms. The 'timer1' was unregistered so it
     // should not make any more calls. The 'timer2' should still
     // work as previously.
     doWait(500);
