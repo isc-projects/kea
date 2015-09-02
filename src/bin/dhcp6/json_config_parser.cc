@@ -704,12 +704,12 @@ namespace dhcp {
     return (parser);
 }
 
-/// @brief Commits global parameters
+/// @brief Sets global parameters in the staging configuration
 ///
 /// Currently this method sets the following global parameters:
 ///
 /// - decline-probation-period
-void commitGlobalParameters6() {
+void setGlobalParameters6() {
 
     // Set the probation period for decline handling.
     try {
@@ -890,8 +890,8 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser->commit();
             }
 
-            // Commit global options
-            commitGlobalParameters6();
+            // Apply global options in the staging config.
+            setGlobalParameters6();
 
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
