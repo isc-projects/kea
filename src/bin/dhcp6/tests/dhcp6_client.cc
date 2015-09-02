@@ -287,7 +287,7 @@ Dhcp6Client::conditionallyAppendRequestedIA(const Pkt6Ptr& query,
 
     } else if (address_hint_ && (ia_type == D6O_IA_NA)) {
         requested_ia->addOption(address_hint_);
-    } 
+    }
 
     query->addOption(requested_ia);
 }
@@ -323,8 +323,8 @@ Dhcp6Client::copyIAsFromLeases(const Pkt6Ptr& dest) const {
     for (std::set<uint32_t>::const_iterator iaid = iaids.begin();
          iaid != iaids.end(); ++iaid) {
         std::vector<Lease6> leases = getLeasesByIAID(*iaid);
-        // Only a valid lease should be included. If we have received an
-        // error status code, it should not be copied.
+        // Only a valid lease should be included. Do not copy a
+        // lease which have been marked by the server as invalid.
         if (leases[0].valid_lft_ == 0) {
             continue;
         }
@@ -456,8 +456,8 @@ Dhcp6Client::doInfRequest() {
 
     // IA-PD is also not allowed. So it may be useful in testing, too.
     if (use_pd_) {
-        // Insert IA_PD option with iaid=5678
-        Option6IAPtr ia(new Option6IA(D6O_IA_PD, 5678));
+        // Insert IA_PD option.
+        Option6IAPtr ia(new Option6IA(D6O_IA_PD, pd_iaid_));
         if (prefix_hint_) {
             ia->addOption(prefix_hint_);
         }
