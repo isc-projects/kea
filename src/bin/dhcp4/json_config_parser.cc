@@ -413,13 +413,13 @@ namespace dhcp {
     return (parser);
 }
 
-/// @brief Commits global parameters
+/// @brief Sets global parameters in staging configuration
 ///
 /// Currently this method sets the following global parameters:
 ///
 /// - echo-client-id
 /// - decline-probation-period
-void commitGlobalParameters4() {
+void setGlobalParameters4() {
     // Although the function is modest for now, it is certain that the number
     // of global switches will increase over time, hence the name.
 
@@ -609,8 +609,8 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
 
-            // Apply global options
-            commitGlobalParameters4();
+            // Apply global options in the staging config.
+            setGlobalParameters4();
 
             // This occurs last as if it succeeds, there is no easy way
             // revert it.  As a result, the failure to commit a subsequent
