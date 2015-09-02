@@ -19,16 +19,16 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 
 #include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
 #include <boost/static_assert.hpp>
 
-using namespace asio;
-using asio::ip::udp;
-using asio::ip::tcp;
+using namespace boost::asio;
+using boost::asio::ip::udp;
+using boost::asio::ip::tcp;
 
 using namespace std;
 
@@ -38,7 +38,7 @@ namespace asiolink {
 // XXX: we cannot simply construct the address in the initialization list,
 // because we'd like to throw our own exception on failure.
 IOAddress::IOAddress(const std::string& address_str) {
-    asio::error_code err;
+    boost::asio::error_code err;
     asio_address_ = ip::address::from_string(address_str, err);
     if (err) {
         isc_throw(IOError, "Failed to convert string to address '"
@@ -46,12 +46,12 @@ IOAddress::IOAddress(const std::string& address_str) {
     }
 }
 
-IOAddress::IOAddress(const asio::ip::address& asio_address) :
+IOAddress::IOAddress(const boost::asio::ip::address& asio_address) :
     asio_address_(asio_address)
 {}
 
 IOAddress::IOAddress(uint32_t v4address):
-    asio_address_(asio::ip::address_v4(v4address)) {
+    asio_address_(boost::asio::ip::address_v4(v4address)) {
 
 }
 
@@ -79,14 +79,14 @@ IOAddress::fromBytes(short family, const uint8_t* data) {
 std::vector<uint8_t>
 IOAddress::toBytes() const {
     if (asio_address_.is_v4()) {
-        const asio::ip::address_v4::bytes_type bytes4 =
+        const boost::asio::ip::address_v4::bytes_type bytes4 =
             asio_address_.to_v4().to_bytes();
         return (std::vector<uint8_t>(bytes4.begin(), bytes4.end()));
     }
 
     // Not V4 address, so must be a V6 address (else we could never construct
     // this object).
-    const asio::ip::address_v6::bytes_type bytes6 =
+    const boost::asio::ip::address_v6::bytes_type bytes6 =
         asio_address_.to_v6().to_bytes();
     return (std::vector<uint8_t>(bytes6.begin(), bytes6.end()));
 }

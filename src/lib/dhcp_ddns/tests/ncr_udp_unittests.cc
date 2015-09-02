@@ -20,7 +20,7 @@
 #include <util/time_utilities.h>
 #include <test_utils.h>
 
-#include <asio/ip/udp.hpp>
+#include <boost/asio/ip/udp.hpp>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include <gtest/gtest.h>
@@ -198,18 +198,18 @@ public:
         ASSERT_NO_THROW(sent_ncr_->toFormat(FMT_JSON, ncr_buffer));
 
         // Create a UDP socket through which our "sender" will send the NCR.
-        asio::ip::udp::socket
-            udp_socket(io_service_.get_io_service(), asio::ip::udp::v4());
+        boost::asio::ip::udp::socket
+            udp_socket(io_service_.get_io_service(), boost::asio::ip::udp::v4());
 
         // Create an endpoint pointed at the listener.
-        asio::ip::udp::endpoint
-            listener_endpoint(asio::ip::address::from_string(TEST_ADDRESS),
+        boost::asio::ip::udp::endpoint
+            listener_endpoint(boost::asio::ip::address::from_string(TEST_ADDRESS),
                               LISTENER_PORT);
 
         // A response message is now ready to send. Send it!
         // Note this uses a synchronous send so it ships immediately.
         // If listener isn't in listening mode, it will get missed.
-        udp_socket.send_to(asio::buffer(ncr_buffer.getData(),
+        udp_socket.send_to(boost::asio::buffer(ncr_buffer.getData(),
                                      ncr_buffer.getLength()),
                             listener_endpoint);
     }

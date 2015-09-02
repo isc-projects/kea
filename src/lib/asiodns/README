@@ -102,7 +102,7 @@ argument the class of the object that will be used as the callback when the
 asynchronous operation completes. This object can be of any type, but must
 include an operator() method with the signature:
 
-   operator()(asio::error_code ec, size_t length)
+   operator()(boost::asio::error_code ec, size_t length)
 
 ... the two arguments being the status of the completed I/O operation and
 the number of bytes transferred. (In the case of the open method, the second

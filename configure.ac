@@ -1241,10 +1241,6 @@ AC_SUBST(GTEST_SOURCE)
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
-# Use local ASIO headers from ext
-#
-CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/asio"
-#
 # Use our 'coroutine' header from ext
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
 #
@@ -1380,8 +1376,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  doc/guide/Makefile
                  doc/Makefile
                  doc/version.ent
-                 ext/asio/asio/Makefile
-                 ext/asio/Makefile
                  ext/gtest/Makefile
                  ext/Makefile
                  m4macros/Makefile

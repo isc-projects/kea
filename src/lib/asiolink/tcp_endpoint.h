@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -40,7 +40,7 @@ public:
     /// Creates an internal endpoint.  This is expected to be set by some
     /// external call.
     TCPEndpoint() :
-        asio_endpoint_placeholder_(new asio::ip::tcp::endpoint()),
+        asio_endpoint_placeholder_(new boost::asio::ip::tcp::endpoint()),
         asio_endpoint_(*asio_endpoint_placeholder_)
     {}
 
@@ -50,7 +50,7 @@ public:
     /// \param port The TCP port number of the endpoint.
     TCPEndpoint(const IOAddress& address, const unsigned short port) :
         asio_endpoint_placeholder_(
-            new asio::ip::tcp::endpoint(asio::ip::address::from_string(address.toText()),
+            new boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string(address.toText()),
                               port)),
         asio_endpoint_(*asio_endpoint_placeholder_)
     {}
@@ -61,7 +61,7 @@ public:
     /// corresponding ASIO class, \c tcp::endpoint.
     ///
     /// \param asio_endpoint The ASIO representation of the TCP endpoint.
-    TCPEndpoint(asio::ip::tcp::endpoint& asio_endpoint) :
+    TCPEndpoint(boost::asio::ip::tcp::endpoint& asio_endpoint) :
         asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
     {}
 
@@ -71,8 +71,8 @@ public:
     /// corresponding ASIO class, \c tcp::endpoint.
     ///
     /// \param asio_endpoint The ASIO representation of the TCP endpoint.
-    TCPEndpoint(const asio::ip::tcp::endpoint& asio_endpoint) :
-        asio_endpoint_placeholder_(new asio::ip::tcp::endpoint(asio_endpoint)),
+    TCPEndpoint(const boost::asio::ip::tcp::endpoint& asio_endpoint) :
+        asio_endpoint_placeholder_(new boost::asio::ip::tcp::endpoint(asio_endpoint)),
         asio_endpoint_(*asio_endpoint_placeholder_)
     {}
 
@@ -102,16 +102,16 @@ public:
 
     // This is not part of the exposed IOEndpoint API but allows
     // direct access to the ASIO implementation of the endpoint
-    inline const asio::ip::tcp::endpoint& getASIOEndpoint() const {
+    inline const boost::asio::ip::tcp::endpoint& getASIOEndpoint() const {
         return (asio_endpoint_);
     }
-    inline asio::ip::tcp::endpoint& getASIOEndpoint() {
+    inline boost::asio::ip::tcp::endpoint& getASIOEndpoint() {
         return (asio_endpoint_);
     }
 
 private:
-    asio::ip::tcp::endpoint* asio_endpoint_placeholder_;
-    asio::ip::tcp::endpoint& asio_endpoint_;
+    boost::asio::ip::tcp::endpoint* asio_endpoint_placeholder_;
+    boost::asio::ip::tcp::endpoint& asio_endpoint_;
 };
 
 } // namespace asiolink
