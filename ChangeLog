@@ -1,7 +1,7 @@
 993.	[bug]		fdupont
 	The logging spec file was searched in the build tree when it
 	was in the source tree so distcheck (where they differ) failed.
-	(Trac #4026, git xxx)
+	(Trac #4026, git 5eb213647d7ac0a707530d57af2c6dbd725ac1b3)
 
 992.	[func]		fdupont
 	A 'flush' parameter has been added to logging configuration. It is
