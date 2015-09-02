@@ -450,11 +450,6 @@ TEST_F(Lease4Test, stateToText) {
     EXPECT_EQ("default", Lease4::statesToText(Lease::STATE_DEFAULT));
     EXPECT_EQ("declined", Lease4::statesToText(Lease::STATE_DECLINED));
     EXPECT_EQ("expired-reclaimed", Lease4::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
-
-    // Try multiple states.
-    EXPECT_EQ("declined,expired-reclaimed",
-              Lease4::statesToText(Lease::STATE_DECLINED | Lease::STATE_EXPIRED_RECLAIMED));
-
 }
 
 /// @brief Creates an instance of the lease with certain FQDN data.
@@ -811,10 +806,6 @@ TEST(Lease6Test, stateToText) {
     EXPECT_EQ("default", Lease6::statesToText(Lease::STATE_DEFAULT));
     EXPECT_EQ("declined", Lease6::statesToText(Lease::STATE_DECLINED));
     EXPECT_EQ("expired-reclaimed", Lease6::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
-
-    // Try multiple states.
-    EXPECT_EQ("declined,expired-reclaimed",
-              Lease6::statesToText(Lease::STATE_DECLINED | Lease::STATE_EXPIRED_RECLAIMED));
 }
 
 
