@@ -57,7 +57,7 @@ public:
     /// @param mode Interval timer mode, which defaults to
     /// @c IntervalTimer::ONE_SHOT.
     void registerTimer(const std::string& timer_name, const long timer_interval,
-                       const IntervalTimer::Mode& timer_mode = IntervalTimer::REPEATING);
+                       const IntervalTimer::Mode& timer_mode = IntervalTimer::ONE_SHOT);
 
     /// @brief Wait for one or many ready handlers.
     ///
@@ -152,9 +152,9 @@ TimerMgrTest::timerCallback(const std::string& timer_name) {
     // Accumulate the number of calls to the timer handler.
     ++calls_count_[timer_name];
 
-/*    // The timer installed is the ONE_SHOT timer, so we have
+    // The timer installed is the ONE_SHOT timer, so we have
     // to reschedule the timer.
-    TimerMgr::instance().setup(timer_name); */
+    TimerMgr::instance().setup(timer_name);
 }
 
 boost::function<void ()>
@@ -245,7 +245,12 @@ TEST_F(TimerMgrTest, deregisterTimer) {
 }
 
 // This test verifies taht it is possible to deregister all timers.
-TEST_F(TimerMgrTest, deregisterTimers) {
+/// @todo This test is disabled because it may occassionally hang
+/// due to bug in the ASIO implementation shipped with Kea.
+/// Replacing it with the ASIO implementation from BOOST does
+/// solve the problem. See ticket #4009. Until this ticket is
+/// implemented, the test should remain disabled.
+TEST_F(TimerMgrTest, DISABLED_deregisterTimers) {
     TimerMgr& timer_mgr = TimerMgr::instance();
 
     // Register 10 timers.
