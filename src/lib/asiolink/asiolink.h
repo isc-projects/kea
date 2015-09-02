@@ -20,12 +20,10 @@
 // See the description of the namespace below.
 
 #include <asiolink/io_service.h>
-#include <asiolink/simple_callback.h>
 #include <asiolink/interval_timer.h>
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_endpoint.h>
-#include <asiolink/io_message.h>
 #include <asiolink/io_socket.h>
 #include <asiolink/io_error.h>
 
