@@ -71,15 +71,23 @@ namespace dhcp {
 /// @c util::WatchSocket and marks it "ready". This call effectively
 /// writes the data to a socket (pipe) which interrupts the call
 /// to the @c select() function in the main thread. Note that this
-/// operation will likely block the worker thread until the
-/// socket is cleared. When the @c IfaceMgr (in the main thread)
-/// detects data transmitted over the external socket it will
-/// invoke a callback function associated with this socket. This
-/// is the @c TimerMgr::ifaceMgrCallback associated with the socket
-/// when the timer is registered. This callback function is executed
-/// in the main thread. It clears the socket, which unblocks the
-/// worker thread. It also invokes the user callback function specified
+/// operation may block the worker thread until the socket is cleared.
+/// When the @c IfaceMgr (in the main thread) detects data transmitted
+/// over the external socket it will invoke a callback function
+/// associated with this socket. This is the
+/// @c TimerMgr::ifaceMgrCallback associated with the socket when the
+/// timer is registered. This callback function is executed/ in the
+/// main thread. It clears the socket, which unblocks the worker
+/// thread. It also invokes the user callback function specified
 /// for a given timer.
+///
+/// The @c TimerMgr::timerCallback function searches for the
+/// registered timer for which it has been called. This may cause
+/// race conditions between the worker thread and the main thread
+/// if the latter is modifying the collection of the registered
+/// timers. Therefore, the @c TimerMgr does not allow for
+/// registering or deregistering the timers when the worker thread
+/// is running. The worker thread must be stopped first.
 ///
 /// @warning The application (DHCP server) is responsible for
 ///  deregistering the timers before it terminates:
@@ -93,6 +101,8 @@ namespace dhcp {
 /// instance which may not exist at this point. If the timers are
 /// not deregistered before the application terminates this will
 /// likely result in segmentation fault on some systems.
+///
+/// All timers are associated with the callback function
 class TimerMgr : public boost::noncopyable {
 public:
 
@@ -297,7 +307,6 @@ private:
     /// the map. The timer is associated with an instance of the @c WatchSocket
     /// which is marked ready when the interval for the particular elapses.
     TimerInfoMap registered_timers_;
-
 };
 
 } // end of namespace isc::dhcp
