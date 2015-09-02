@@ -27,9 +27,6 @@ const uint32_t Lease::STATE_DEFAULT = 0x0;
 const uint32_t Lease::STATE_DECLINED = 0x1;
 const uint32_t Lease::STATE_EXPIRED_RECLAIMED = 0x2;
 
-const unsigned int Lease::BASIC_STATES_NUM = 2;
-
-
 Lease::Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
              uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
              const bool fqdn_fwd, const bool fqdn_rev,
@@ -62,36 +59,20 @@ Lease::typeToText(Lease::Type type) {
 
 std::string
 Lease::basicStatesToText(const uint32_t state) {
-    // Stream will hold comma separated list of states.
-    std::ostringstream s;
-    // Iterate over all defined states.
-    for (int i = 0; i < BASIC_STATES_NUM; ++i) {
-        // Test each bit of the lease state to see if it is set.
-        uint32_t single_state = (state & (static_cast<uint32_t>(1) << i));
-        // Only proceed if the bit is set.
-        if (single_state > 0) {
-            // Comma sign is applied only if any state has been found.
-            if (static_cast<int>(s.tellp() > 0)) {
-                s << ",";
-            }
-            // Check which bit is set and append state name.
-            switch (single_state) {
-            case STATE_DECLINED:
-                s << "declined";
-                break;
-
-            case STATE_EXPIRED_RECLAIMED:
-                s << "expired-reclaimed";
-                break;
-
-            default:
-                // This shouldn't really happen.
-                s << "unknown (" << i << ")";
-            }
-        }
+    switch (state) {
+    case STATE_DEFAULT:
+        return ("default");
+    case STATE_DECLINED:
+        return ("declined");
+    case STATE_EXPIRED_RECLAIMED:
+        return ("expired-reclaimed");
+    default:
+        // The default case will be handled further on
+        ;
     }
-
-    return (s.tellp() > 0 ? s.str() : "default");
+    std::ostringstream s;
+    s << "unknown (" << state << ")";
+    return s.str();
 }
 
 bool
@@ -101,7 +82,7 @@ Lease::expired() const {
 
 bool
 Lease::stateExpiredReclaimed() const {
-    return ((state_ & STATE_EXPIRED_RECLAIMED) != 0);
+    return (state_ == STATE_EXPIRED_RECLAIMED);
 }
 
 int64_t
