@@ -9,6 +9,7 @@ libkea_cc_la_SOURCES = data.cc data.h
 libkea_cc_la_SOURCES += command_interpreter.cc command_interpreter.h
 
 libkea_cc_la_LIBADD  = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_cc_la_LIBADD += -lboost_system
 
 libkea_cc_la_LDFLAGS = -no-undefined -version-info 1:0:0
 
