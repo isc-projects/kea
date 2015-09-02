@@ -85,7 +85,7 @@ public:
     ///
     /// This constructor may throw a standard exception if
     /// memory allocation fails inside the method.
-    /// This constructor may also throw \c boost::asio::system_error.
+    /// This constructor may also throw \c boost::system::system_error.
     ///
     /// \param io_service A reference to an instance of IOService
     IntervalTimer(IOService& io_service);
@@ -111,7 +111,7 @@ public:
     /// each expiration (the default) or behave as a one-shot which will run
     /// for a single interval and not reschedule.
     ///
-    /// Note: IntervalTimer will not pass \c boost::asio::error_code to
+    /// Note: IntervalTimer will not pass \c boost::system::error_code to
     /// call back function. In case the timer is canceled, the function
     /// will not be called.
     ///

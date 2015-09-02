@@ -243,7 +243,7 @@ IOFetch::getProtocol() const {
 /// pattern; see internal/coroutine.h for details.
 
 void
-IOFetch::operator()(boost::asio::error_code ec, size_t length) {
+IOFetch::operator()(boost::system::error_code ec, size_t length) {
 
     if (data_->stopped) {
         return;
@@ -402,7 +402,7 @@ IOFetch::stop(Result result) {
 
 // Log an error - called on I/O failure
 
-void IOFetch::logIOFailure(boost::asio::error_code ec) {
+void IOFetch::logIOFailure(boost::system::error_code ec) {
 
     // Should only get here with a known error code.
     assert((data_->origin == ASIODNS_OPEN_SOCKET) ||

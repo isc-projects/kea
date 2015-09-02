@@ -189,7 +189,7 @@ public:
     ///
     /// \param ec Error code, the result of the last asynchronous I/O operation.
     /// \param length Amount of data received on the last asynchronous read
-    void operator()(boost::asio::error_code ec = boost::asio::error_code(), size_t length = 0);
+    void operator()(boost::system::error_code ec = boost::system::error_code(), size_t length = 0);
 
     /// \brief Terminate query
     ///
@@ -215,7 +215,7 @@ private:
     /// Records an I/O failure to the log file
     ///
     /// \param ec ASIO error code
-    void logIOFailure(boost::asio::error_code ec);
+    void logIOFailure(boost::system::error_code ec);
 
     // Member variables.  All data is in a structure pointed to by a shared
     // pointer.  The IOFetch object is copied a number of times during its

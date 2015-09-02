@@ -87,7 +87,7 @@ FauxServer::receive (const ResponseMode& response_mode,
 }
 
 void
-FauxServer::requestHandler(const boost::asio::error_code& error,
+FauxServer::requestHandler(const boost::system::error_code& error,
                            std::size_t bytes_recvd,
                            const ResponseMode& response_mode,
                            const dns::Rcode& response_rcode) {
