@@ -18,7 +18,7 @@
 #include <dhcp_ddns/ncr_udp.h>
 
 #include <boost/asio/ip/udp.hpp>
-#include <boost/asio/error_code.hpp>
+#include <boost/system/error_code.hpp>
 #include <boost/bind.hpp>
 
 namespace isc {
