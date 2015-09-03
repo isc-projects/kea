@@ -646,27 +646,29 @@ Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     }
 }
 
-void
+uint64_t
 Memfile_LeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4)
         .arg(secs);
-    deleteExpiredReclaimedLeases<Lease4StorageExpirationIndex, Lease4>(secs, V4, storage4_,
-                                                                       lease_file4_);
+    return (deleteExpiredReclaimedLeases<
+            Lease4StorageExpirationIndex, Lease4
+            >(secs, V4, storage4_, lease_file4_));
 }
 
-void
+uint64_t
 Memfile_LeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6)
         .arg(secs);
-    deleteExpiredReclaimedLeases<Lease6StorageExpirationIndex, Lease6>(secs, V6, storage6_,
-                                                                       lease_file6_);
+    return (deleteExpiredReclaimedLeases<
+            Lease6StorageExpirationIndex, Lease6
+            >(secs, V6, storage6_, lease_file6_));
 }
 
 template<typename IndexType, typename LeaseType, typename StorageType,
          typename LeaseFileType>
-void
+uint64_t
 Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
                                                const Universe& universe,
                                                StorageType& storage,
@@ -722,6 +724,8 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
         // Erase leases from memory.
         index.erase(lower_limit, upper_limit);
     }
+    // Return number of leases deleted.
+    return (num_leases);
 }
 
 

@@ -369,14 +369,18 @@ public:
     /// @param secs Number of seconds since expiration of leases before
     /// they can be removed. Leases which have expired later than this
     /// time will not be deleted.
-    virtual void deleteExpiredReclaimedLeases4(const uint32_t secs) = 0;
+    ///
+    /// @return Number of leases deleted.
+    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t secs) = 0;
 
     /// @brief Deletes all expired and reclaimed DHCPv6 leases.
     ///
     /// @param secs Number of seconds since expiration of leases before
     /// they can be removed. Leases which have expired later than this
     /// time will not be deleted.
-    virtual void deleteExpiredReclaimedLeases6(const uint32_t secs) = 0;
+    ///
+    /// @return Number of leases deleted.
+    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs) = 0;
 
     /// @brief Return backend type
     ///
