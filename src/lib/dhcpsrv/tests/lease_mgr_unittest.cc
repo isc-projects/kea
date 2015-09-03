@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -173,6 +173,23 @@ public:
         return (leases6_);
     }
 
+
+    /// @brief Returns expired DHCPv6 leases.
+    ///
+    /// This method is not implemented.
+    virtual void getExpiredLeases6(Lease6Collection&, const size_t) const {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::getExpiredLeases6 is not"
+                  " implemented");
+    }
+
+    /// @brief Returns expired DHCPv4 leases.
+    ///
+    /// This method is not implemented.
+    virtual void getExpiredLeases4(Lease4Collection&, const size_t) const {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::getExpiredLeases4 is not"
+                  " implemented");
+    }
+
     /// @brief Updates IPv4 lease.
     ///
     /// @param lease4 The lease to be updated.
@@ -195,6 +212,26 @@ public:
     /// @return true if deletion was successful, false if no such lease exists
     virtual bool deleteLease(const isc::asiolink::IOAddress&) {
         return (false);
+    }
+
+    /// @brief Deletes all expired and reclaimed DHCPv4 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t) {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::deleteExpiredReclaimedLeases4"
+                  " is not implemented");
+    }
+
+    /// @brief Deletes all expired and reclaimed DHCPv6 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t) {
+        isc_throw(NotImplemented, "ConcreteLeaseMgr::deleteExpiredReclaimedLeases6"
+                  " is not implemented");
     }
 
     /// @brief Returns backend type.

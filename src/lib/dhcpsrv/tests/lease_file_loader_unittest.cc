@@ -151,11 +151,11 @@ protected:
     /// @brief Sets up the header strings
     virtual void SetUp() {
         v4_hdr_ = "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname\n";
+                  "fqdn_fwd,fqdn_rev,hostname,state\n";
 
         v6_hdr_ = "address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-                  "fqdn_rev,hostname,hwaddr\n";
+                  "fqdn_rev,hostname,hwaddr,state\n";
     }
 };
 
@@ -179,17 +179,17 @@ LeaseFileLoaderTest::absolutePath(const std::string& filename) {
 TEST_F(LeaseFileLoaderTest, loadWrite4) {
     std::string test_str;
     std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,200,8,1,1,host.example.com\n";
+                      "200,200,8,1,1,host.example.com,1\n";
     std::string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,500,8,1,1,host.example.com\n";
+                      "200,500,8,1,1,host.example.com,1\n";
 
     std::string b_1 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                      "100,100,7,0,0,\n";
+                      "100,100,7,0,0,,1\n";
     std::string b_2 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                      "100,135,7,0,0,\n";
+                      "100,135,7,0,0,,1\n";
 
     std::string c_1 = "192.0.2.3,,a:11:01:04,"
-                      "200,200,8,1,1,host.example.com\n";
+                      "200,200,8,1,1,host.example.com,1\n";
 
     // Create lease file with leases for 192.0.2.1, 192.0.3.15. The lease
     // entry for the 192.0.2.3 is invalid (lacks HW address) and should
@@ -250,14 +250,14 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
 TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
     std::string test_str;
     std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,200,8,1,1,host.example.com\n";
+                      "200,200,8,1,1,host.example.com,1\n";
     std::string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "0,500,8,1,1,host.example.com\n";
+                      "0,500,8,1,1,host.example.com,1\n";
 
     std::string b_1 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                      "100,100,7,0,0,\n";
+                      "100,100,7,0,0,,1\n";
     std::string b_2 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                      "100,135,7,0,0,\n";
+                      "100,135,7,0,0,,1\n";
 
 
     // Create lease file in which one of the entries for 192.0.2.1
@@ -305,19 +305,19 @@ TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
 TEST_F(LeaseFileLoaderTest, loadWrite6) {
     std::string test_str;
     std::string a_1 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "200,200,8,100,0,7,0,1,1,host.example.com,\n";
+                      "200,200,8,100,0,7,0,1,1,host.example.com,,1\n";
     std::string a_2 = "2001:db8:1::1,,"
-                      "200,200,8,100,0,7,0,1,1,host.example.com,\n";
+                      "200,200,8,100,0,7,0,1,1,host.example.com,,1\n";
     std::string a_3 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "200,400,8,100,0,7,0,1,1,host.example.com,\n";
+                      "200,400,8,100,0,7,0,1,1,host.example.com,,1\n";
 
     std::string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,300,6,150,0,8,0,0,0,,\n";
+                      "300,300,6,150,0,8,0,0,0,,,1\n";
     std::string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,800,6,150,0,8,0,0,0,,\n";
+                      "300,800,6,150,0,8,0,0,0,,,1\n";
 
     std::string c_1 = "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "100,200,8,0,2,16,64,0,0,,\n";
+                      "100,200,8,0,2,16,64,0,0,,,1\n";
 
 
 
@@ -379,14 +379,14 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
 TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
     std::string test_str;
     std::string a_1 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "200,200,8,100,0,7,0,1,1,host.example.com,\n";
+                      "200,200,8,100,0,7,0,1,1,host.example.com,,1\n";
     std::string a_2 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "0,400,8,100,0,7,0,1,1,host.example.com,\n";
+                      "0,400,8,100,0,7,0,1,1,host.example.com,,1\n";
 
     std::string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,300,6,150,0,8,0,0,0,,\n";
+                      "300,300,6,150,0,8,0,0,0,,,1\n";
     std::string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,800,6,150,0,8,0,0,0,,\n";
+                      "300,800,6,150,0,8,0,0,0,,,1\n";
 
     // Create lease file in which one of the entries for the 2001:db8:1::1
     // has valid lifetime set to 0, in which case the lease should be
@@ -431,13 +431,13 @@ TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
 TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
     std::string test_str;
     std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,200,8,1,1,host.example.com\n";
+                      "200,200,8,1,1,host.example.com,1\n";
     std::string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,500,8,1,1,host.example.com\n";
+                      "200,500,8,1,1,host.example.com,1\n";
 
-    std::string b_1 = "192.0.2.3,,a:11:01:04,200,200,8,1,1,host.example.com\n";
+    std::string b_1 = "192.0.2.3,,a:11:01:04,200,200,8,1,1,host.example.com,1\n";
 
-    std::string c_1 = "192.0.2.10,01:02:03:04:05:06,,200,300,8,1,1,\n";
+    std::string c_1 = "192.0.2.10,01:02:03:04:05:06,,200,300,8,1,1,,1\n";
 
     // Create a lease file for which there is a number of invalid
     // entries.  b_1 is invalid and gets used multiple times.
@@ -501,8 +501,8 @@ TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
 // and comparing that with the expected value.
 TEST_F(LeaseFileLoaderTest, loadWriteLeaseWithZeroLifetime) {
     std::string test_str;
-    std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,\n";
-    std::string b_2 = "192.0.2.3,06:07:08:09:0a:bd,,0,200,8,1,1,\n";
+    std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,,1\n";
+    std::string b_2 = "192.0.2.3,06:07:08:09:0a:bd,,0,200,8,1,1,,1\n";
 
     // Create lease file. The second lease has a valid lifetime of 0.
     test_str = v4_hdr_ + a_1 + b_2;

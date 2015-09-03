@@ -322,6 +322,33 @@ public:
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
                                         uint32_t iaid, SubnetID subnet_id) const;
 
+    /// @brief Returns a collection of expired DHCPv6 leases.
+    ///
+    /// This method returns at most @c max_leases expired leases. The leases
+    /// returned haven't been reclaimed, i.e. the database query must exclude
+    /// reclaimed leases from the results returned.
+    ///
+    /// @param [out] expired_leases A container to which expired leases returned
+    /// by the database backend are added.
+    /// @param max_leases A maximum number of leases to be returned. If this
+    /// value is set to 0, all expired (but not reclaimed) leases are returned.
+    virtual void getExpiredLeases6(Lease6Collection& expired_leases,
+                                   const size_t max_leases) const;
+
+
+    /// @brief Returns a collection of expired DHCPv4 leases.
+    ///
+    /// This method returns at most @c max_leases expired leases. The leases
+    /// returned haven't been reclaimed, i.e. the database query must exclude
+    /// reclaimed leases from the results returned.
+    ///
+    /// @param [out] expired_leases A container to which expired leases returned
+    /// by the database backend are added.
+    /// @param max_leases A maximum number of leases to be returned. If this
+    /// value is set to 0, all expired (but not reclaimed) leases are returned.
+    virtual void getExpiredLeases4(Lease4Collection& expired_leases,
+                                   const size_t max_leases) const;
+
     /// @brief Updates IPv4 lease.
     ///
     /// Updates the record of the lease in the database (as identified by the
@@ -358,6 +385,24 @@ public:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
+
+    /// @brief Deletes all expired-reclaimed DHCPv4 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    ///
+    /// @return Number of leases deleted.
+    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t secs);
+
+    /// @brief Deletes all expired-reclaimed DHCPv6 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    ///
+    /// @return Number of leases deleted.
+    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs);
 
     /// @brief Return backend type
     ///
