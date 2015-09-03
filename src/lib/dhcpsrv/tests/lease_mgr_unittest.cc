@@ -219,7 +219,7 @@ public:
     /// @param secs Number of seconds since expiration of leases before
     /// they can be removed. Leases which have expired later than this
     /// time will not be deleted.
-    virtual void deleteExpiredReclaimedLeases4(const uint32_t) {
+    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t) {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::deleteExpiredReclaimedLeases4"
                   " is not implemented");
     }
@@ -229,7 +229,7 @@ public:
     /// @param secs Number of seconds since expiration of leases before
     /// they can be removed. Leases which have expired later than this
     /// time will not be deleted.
-    virtual void deleteExpiredReclaimedLeases6(const uint32_t) {
+    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t) {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::deleteExpiredReclaimedLeases6"
                   " is not implemented");
     }
