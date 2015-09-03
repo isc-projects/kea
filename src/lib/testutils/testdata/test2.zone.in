@@ -1,3 +1,0 @@
-test2.example.    3600    IN  SOA ns.test2.example. admin.test2.example. 1238 3600 1800 2419200 7200
-test2.example.    3600    IN  NS ns.test2.example.
-ns.test2.example.	3600    IN  A 192.0.2.2
