@@ -1,23 +1,22 @@
 The asiolink library is intended to provide an abstraction layer between
-BIND10 modules and the socket I/O subsystem we are using (currently, the
-headers-only version of ASIO, release 1.43).  This has several benefits,
+Kea modules and the socket I/O subsystem we are using (currently, the
+headers-only version of ASIO included in Boost).  This has several benefits,
 including:
 
   - Simple interface
 
-  - Back-end flexibility:  It would be easy to switch from using
-    ASIO to boost::asio, and even relatively straightforward to switch
-    to any other asynchronous I/O system.
+  - Back-end flexibility: It would be relatively easy to switch to any
+    other asynchronous I/O system.
 
   - Cleaner compilation:  The ASIO headers include code which can
     generate warnings in some compilers due to unused parameters and
-    such.  Including ASIO header files throughout the BIND 10 tree would
+    such.  Including ASIO header files throughout the Kea tree would
     require us to relax the strictness of our error checking.  Including
     them in only one place allows us to relax strictness here, while
     leaving it in place elsewhere.
 
 Some of the classes defined here--for example, IOSocket, IOEndpoint,
-and IOAddress--are to be used by BIND 10 modules as wrappers around
+and IOAddress--are to be used by Kea modules as wrappers around
 ASIO-specific classes.
 
 
