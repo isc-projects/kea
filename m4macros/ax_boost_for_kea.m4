@@ -1,6 +1,6 @@
 dnl @synopsis AX_BOOST_FOR_KEA
 dnl
-dnl Test for the Boost C++ header files intended to be used within BIND 10
+dnl Test for the Boost C++ header files intended to be used within Kea
 dnl
 dnl If no path to the installed boost header files is given via the
 dnl --with-boost-include option,  the macro searchs under
@@ -56,7 +56,7 @@ if test "${boost_include_path}" ; then
 	BOOST_INCLUDES="-I${boost_include_path}"
 	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
-AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp],,
+AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp boost/asio.hpp boost/asio/ip/address.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
 
 # clang can cause false positives with -Werror without -Qunused-arguments.
