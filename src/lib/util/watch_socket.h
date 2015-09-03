@@ -22,6 +22,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <stdint.h>
+#include <string>
 
 namespace isc {
 namespace util {
