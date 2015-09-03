@@ -1,3 +1,9 @@
+996.	[func]		marcin
+	Memfile lease database backend has been extended with new
+	functions to obtain expired leases and to delete expired
+	reclaimed leases.
+	(Trac #3965, git dd5b95453528416f22e961e6ebb3051bc2ae788c)
+
 995.	[build]		fdupont
 	Removed additional files left over from BIND 10 (headers,
 	src/lib/{asiodns,testutils,asiolink}).
