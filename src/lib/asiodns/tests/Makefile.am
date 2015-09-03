@@ -1,7 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
-AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc  -I$(top_builddir)/src/lib/util
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -18,8 +16,6 @@ TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
-run_unittests_SOURCES += dns_service_unittest.cc
-run_unittests_SOURCES += dns_server_unittest.cc
 run_unittests_SOURCES += io_fetch_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
