@@ -2086,13 +2086,13 @@ MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     }
 }
 
-void
+uint64_t
 MySqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::deleteExpiredReclaimedLeases4"
               " is not implemented");
 }
 
-void
+uint64_t
 MySqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t) {
     isc_throw(NotImplemented, "MySqlLeaseMgr::deleteExpiredReclaimedLeases6"
               " is not implemented");

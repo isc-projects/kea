@@ -1924,7 +1924,11 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
 
     // Delete expired and reclaimed leases which have expired earlier than
     // 15 seconds ago. This should affect leases with index 2, 3, 4 etc.
-    ASSERT_NO_THROW(lmptr_->deleteExpiredReclaimedLeases4(lease_affinity_time));
+    uint64_t deleted_num;
+    uint64_t should_delete_num = 0;
+    ASSERT_NO_THROW(
+        deleted_num = lmptr_->deleteExpiredReclaimedLeases4(lease_affinity_time)
+    );
 
     for (size_t i = 0; i < leases.size(); ++i) {
         // Obtain lease from the server.
@@ -1936,6 +1940,7 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
             ((leases[i]->getExpirationTime() + lease_affinity_time) < current_time)) {
             EXPECT_FALSE(lease) << "The following lease should have been"
                 " deleted: " << leases[i]->toText();
+            ++should_delete_num;
 
         } else {
             // If the lease is not reclaimed or it has expired less than
@@ -1944,10 +1949,16 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
                 " deleted: " << leases[i]->toText();
         }
     }
+    // Check that the number of leases deleted is correct.
+    EXPECT_EQ(deleted_num, should_delete_num);
 
     // Make sure we can make another attempt, when there are no more leases
     // to be deleted.
-    ASSERT_NO_THROW(lmptr_->deleteExpiredReclaimedLeases4(lease_affinity_time));
+    ASSERT_NO_THROW(
+        deleted_num = lmptr_->deleteExpiredReclaimedLeases4(lease_affinity_time)
+    );
+    // No lease should have been deleted.
+    EXPECT_EQ(0, deleted_num);
 
     // Reopen the database. This to ensure that the leases have been deleted
     // from the persistent storage.
@@ -2013,7 +2024,11 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases6() {
 
     // Delete expired and reclaimed leases which have expired earlier than
     // 15 seconds ago. This should affect leases with index 2, 3, 4 etc.
-    ASSERT_NO_THROW(lmptr_->deleteExpiredReclaimedLeases6(lease_affinity_time));
+    uint64_t deleted_num;
+    uint64_t should_delete_num = 0;
+    ASSERT_NO_THROW(
+        deleted_num = lmptr_->deleteExpiredReclaimedLeases6(lease_affinity_time)
+    );
 
     for (size_t i = 0; i < leases.size(); ++i) {
         // Obtain lease from the server.
@@ -2025,6 +2040,7 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases6() {
             ((leases[i]->getExpirationTime() + lease_affinity_time) < current_time)) {
             EXPECT_FALSE(lease) << "The following lease should have been"
                 " deleted: " << leases[i]->toText();
+            ++should_delete_num;
 
         } else {
             // If the lease is not reclaimed or it has expired less than
@@ -2033,10 +2049,16 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases6() {
                 " deleted: " << leases[i]->toText();
         }
     }
+    // Check that the number of deleted leases is correct.
+    EXPECT_EQ(should_delete_num, deleted_num);
 
     // Make sure we can make another attempt, when there are no more leases
     // to be deleted.
-    ASSERT_NO_THROW(lmptr_->deleteExpiredReclaimedLeases6(lease_affinity_time));
+    ASSERT_NO_THROW(
+        deleted_num = lmptr_->deleteExpiredReclaimedLeases6(lease_affinity_time)
+    );
+    // No lease should have been deleted.
+    EXPECT_EQ(0, deleted_num);
 
     // Reopen the database. This to ensure that the leases have been deleted
     // from the persistent storage.

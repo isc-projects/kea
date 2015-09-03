@@ -1507,13 +1507,13 @@ PgSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     return (deleteLeaseCommon(DELETE_LEASE6, bind_array));
 }
 
-void
+uint64_t
 PgSqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t) {
     isc_throw(NotImplemented, "PgSqlLeaseMgr::deleteExpiredReclaimedLeases4"
               " is not implemented");
 }
 
-void
+uint64_t
 PgSqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t) {
     isc_throw(NotImplemented, "PgSqlLeaseMgr::deleteExpiredReclaimedLeases6"
               " is not implemented");

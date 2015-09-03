@@ -319,14 +319,18 @@ public:
     /// @param secs Number of seconds since expiration of leases before
     /// they can be removed. Leases which have expired later than this
     /// time will not be deleted.
-    virtual void deleteExpiredReclaimedLeases4(const uint32_t secs);
+    ///
+    /// @return Number of leases deleted.
+    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t secs);
 
     /// @brief Deletes all expired-reclaimed DHCPv6 leases.
     ///
     /// @param secs Number of seconds since expiration of leases before
     /// they can be removed. Leases which have expired later than this
     /// time will not be deleted.
-    virtual void deleteExpiredReclaimedLeases6(const uint32_t secs);
+    ///
+    /// @return Number of leases deleted.
+    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs);
 
 private:
 
@@ -346,6 +350,8 @@ private:
     /// @param lease_file Reference to a DHCPv4 or DHCPv6 lease file
     /// instance where leases should be marked as deleted.
     ///
+    /// @return Number of leases deleted.
+    ///
     /// @tparam IndexType Index type to be used to search for the
     /// expired-reclaimed leases, i.e.
     /// @c Lease4StorageExpirationIndex or @c Lease6StorageExpirationIndex.
@@ -356,10 +362,10 @@ private:
     /// DHCPv6 lease file type.
     template<typename IndexType, typename LeaseType, typename StorageType,
              typename LeaseFileType>
-    void deleteExpiredReclaimedLeases(const uint32_t secs,
-                                      const Universe& universe,
-                                      StorageType& storage,
-                                      LeaseFileType& lease_file) const;
+    uint64_t deleteExpiredReclaimedLeases(const uint32_t secs,
+                                          const Universe& universe,
+                                          StorageType& storage,
+                                          LeaseFileType& lease_file) const;
 
 public:
 
