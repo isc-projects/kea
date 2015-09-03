@@ -1,7 +1,7 @@
 995.	[build]		fdupont
 	Removed additional files left over from BIND 10 (headers,
 	src/lib/{asiodns,testutils,asiolink}).
-	(Trac #4028, #4029, #4031, git xxx)
+	(Trac #40{28,29,31}, git 78ff0fb0a97731a8b3c055b1cbb4faebcd115f7c)
 
 994.	[func]*		marcin
 	DHCPv6 server fully supports RFC 7550.
