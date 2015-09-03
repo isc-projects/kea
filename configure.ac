@@ -1252,6 +1252,9 @@ CPPFLAGS="$CPPFLAGS -DBOOST_ERROR_CODE_HEADER_ONLY"
 #
 # Avoid boost::system::throws multiple defines
 CPPFLAGS="$CPPFLAGS -DBOOST_SYSTEM_NO_DEPRECATED"
+#
+# Doesn't seem to be required?
+CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
 
 # Check for functions that are not available on all platforms
 AC_CHECK_FUNCS([pselect])
