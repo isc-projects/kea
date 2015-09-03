@@ -59,6 +59,7 @@ CSVLeaseFile4::append(const Lease4& lease) {
     row.writeAt(getColumnIndex("fqdn_fwd"), lease.fqdn_fwd_);
     row.writeAt(getColumnIndex("fqdn_rev"), lease.fqdn_rev_);
     row.writeAt(getColumnIndex("hostname"), lease.hostname_);
+    row.writeAt(getColumnIndex("state"), lease.state_);
 
     try {
         CSVFile::append(row);
@@ -115,6 +116,7 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
                                readFqdnFwd(row),
                                readFqdnRev(row),
                                readHostname(row)));
+        lease->state_ = readState(row);
 
     } catch (std::exception& ex) {
         // bump the read error count
@@ -144,6 +146,7 @@ CSVLeaseFile4::initColumns() {
     addColumn("fqdn_fwd");
     addColumn("fqdn_rev");
     addColumn("hostname");
+    addColumn("state");
 }
 
 IOAddress
@@ -210,6 +213,12 @@ std::string
 CSVLeaseFile4::readHostname(const CSVRow& row) {
     std::string hostname = row.readAt(getColumnIndex("hostname"));
     return (hostname);
+}
+
+uint32_t
+CSVLeaseFile4::readState(const util::CSVRow& row) {
+    uint32_t state = row.readAndConvertAt<uint32_t>(getColumnIndex("state"));
+    return (state);
 }
 
 } // end of namespace isc::dhcp

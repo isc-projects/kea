@@ -87,18 +87,6 @@ public:
     /// ticket http://kea.isc.org/ticket/2405 is implemented.
     bool next(Lease6Ptr& lease);
 
-protected:
-    /// @brief This function validates the header of the Lease6 CSV file.
-    ///
-    /// It works similar to @c CSVFile::validateHeader, but if the validation
-    /// fails, it attempts to add hwaddr column and retry validation.
-    /// That's useful when attmepting to read CSV file generated in 0.9
-    /// (did not have hwaddr field) in 0.9.1 or later code.
-    ///
-    /// @param header A row holding a header.
-    /// @return true if header matches the columns; false otherwise.
-    virtual bool validateHeader(const isc::util::CSVRow& header);
-
 private:
 
     /// @brief Initializes columns of the CSV file holding leases.
@@ -117,6 +105,7 @@ private:
     /// - fqdn_rev
     /// - hostname
     /// - hwaddr
+    /// - state
     void initColumns();
 
     ///
@@ -126,69 +115,74 @@ private:
     ///
     /// @brief Reads lease type from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     Lease::Type readType(const util::CSVRow& row);
 
     /// @brief Reads lease address from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     asiolink::IOAddress readAddress(const util::CSVRow& row);
 
     /// @brief Reads DUID from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     DuidPtr readDUID(const util::CSVRow& row);
 
     /// @brief Reads IAID from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     uint32_t readIAID(const util::CSVRow& row);
 
     /// @brief Reads preferred lifetime from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     uint32_t readPreferred(const util::CSVRow& row);
 
     /// @brief Reads valid lifetime from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     uint32_t readValid(const util::CSVRow& row);
 
     /// @brief Reads cltt value from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     uint32_t readCltt(const util::CSVRow& row);
 
     /// @brief Reads subnet id from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     SubnetID readSubnetID(const util::CSVRow& row);
 
     /// @brief Reads prefix length from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     uint8_t readPrefixLen(const util::CSVRow& row);
 
     /// @brief Reads the FQDN forward flag from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     bool readFqdnFwd(const util::CSVRow& row);
 
     /// @brief Reads the FQDN reverse flag from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     bool readFqdnRev(const util::CSVRow& row);
 
     /// @brief Reads hostname from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     std::string readHostname(const util::CSVRow& row);
 
     /// @brief Reads HW address from the CSV file row.
     ///
-    /// @param row CSV file holding lease values.
+    /// @param row CSV file row holding lease information.
     /// @return pointer to the HWAddr structure that was read
     HWAddrPtr readHWAddr(const util::CSVRow& row);
+
+    /// @brief Reads lease state from the CSV file row.
+    ///
+    /// @param row CSV file row holding lease information.
+    uint32_t readState(const util::CSVRow& row);
     //@}
 
 };
