@@ -220,8 +220,8 @@ TEST_F(TimerMgrTest, unregisterTimer) {
     // Wait for the timer to execute several times.
     doWait(100);
 
-    // Stop the thread.
-    ASSERT_NO_THROW(timer_mgr.stopThread());
+    // Stop the thread but execute pending callbacks.
+    ASSERT_NO_THROW(timer_mgr.stopThread(true));
 
     // Remember how many times the timer's callback was executed.
     const unsigned int calls_count = calls_count_["timer1"];
@@ -237,7 +237,7 @@ TEST_F(TimerMgrTest, unregisterTimer) {
     // Start the thread again and wait another 100ms.
     ASSERT_NO_THROW(timer_mgr.startThread());
     doWait(100);
-    ASSERT_NO_THROW(timer_mgr.stopThread());
+    ASSERT_NO_THROW(timer_mgr.stopThread(true));
 
     // The number of calls for the timer1 shouldn't change as the
     // timer had been unregistered.
@@ -268,7 +268,7 @@ TEST_F(TimerMgrTest, DISABLED_unregisterTimers) {
     // Start worker thread and wait for 500ms.
     ASSERT_NO_THROW(timer_mgr.startThread());
     doWait(500);
-    ASSERT_NO_THROW(timer_mgr.stopThread());
+    ASSERT_NO_THROW(timer_mgr.stopThread(true));
 
     // Make sure that all timers have been executed at least once.
     for (CallsCount::iterator it = calls_count_.begin();
@@ -289,7 +289,7 @@ TEST_F(TimerMgrTest, DISABLED_unregisterTimers) {
     // Start worker thread again and wait for 500ms.
     ASSERT_NO_THROW(timer_mgr.startThread());
     doWait(500);
-    ASSERT_NO_THROW(timer_mgr.stopThread());
+    ASSERT_NO_THROW(timer_mgr.stopThread(true));
 
     // The calls counter shouldn't change because there are
     // no timers registered.
@@ -381,7 +381,7 @@ TEST_F(TimerMgrTest, scheduleTimers) {
 
     // Stop the worker thread, which would halt the execution of
     // the timers.
-    timer_mgr.stopThread();
+    timer_mgr.stopThread(true);
 
     // We have been running the timer for 500ms at the interval of
     // 1 ms. The maximum number of callbacks is 500. However, the
