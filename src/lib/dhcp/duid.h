@@ -16,9 +16,8 @@
 #define DUID_H
 
 #include <asiolink/io_address.h>
-
+#include <boost/shared_ptr.hpp>
 #include <vector>
-
 #include <stdint.h>
 #include <unistd.h>
 
