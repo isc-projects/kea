@@ -18,6 +18,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
+#include <dhcpsrv/utils.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -243,6 +244,24 @@ public:
         : Dhcpv6MessageTest() {
     }
 };
+
+// Test that clientID is mandatory and serverID forbidden for Rebind messages
+TEST_F(RebindTest, sanityCheck) {
+    NakedDhcpv6Srv srv(0);
+
+    // No clientID should fail
+    Pkt6Ptr rebind = Pkt6Ptr(new Pkt6(DHCPV6_REBIND, 1234));
+    EXPECT_THROW(srv.processRebind(rebind), RFCViolation);
+
+    // A clientID should succeed
+    OptionPtr clientid = generateClientId();
+    rebind->addOption(clientid);
+    EXPECT_NO_THROW(srv.processRebind(rebind));
+
+    // A serverID should fail
+    rebind->addOption(srv.getServerID());
+    EXPECT_THROW(srv.processRebind(rebind), RFCViolation);
+}
 
 // Test that directly connected client's Rebind message is processed and Reply
 // message is sent back.
