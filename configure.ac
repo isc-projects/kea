@@ -1244,17 +1244,19 @@ AC_SUBST(GTEST_SOURCE)
 # Use our 'coroutine' header from ext
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
 #
-# Disable threads: Currently we don't use them.
-CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
-#
-# Don't want boost system library
-CPPFLAGS="$CPPFLAGS -DBOOST_ERROR_CODE_HEADER_ONLY"
-#
-# Avoid boost::system::throws multiple defines
-CPPFLAGS="$CPPFLAGS -DBOOST_SYSTEM_NO_DEPRECATED"
-#
 # Doesn't seem to be required?
 CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
+#
+# Disable threads: Currently we don't use them.
+CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
+
+# We tried to stay header only
+if test "x${BOOST_LIBS}" = "x"; then
+   # Don't want boost system library
+   CPPFLAGS="$CPPFLAGS -DBOOST_ERROR_CODE_HEADER_ONLY"
+   # Avoid boost::system::throws multiple defines
+   CPPFLAGS="$CPPFLAGS -DBOOST_SYSTEM_NO_DEPRECATED"
+fi
 
 # Check for functions that are not available on all platforms
 AC_CHECK_FUNCS([pselect])
@@ -1573,6 +1575,7 @@ cat >> config.report << END
 Boost:
   BOOST_VERSION:   ${BOOST_VERSION}
   BOOST_INCLUDES:  ${BOOST_INCLUDES}
+  BOOST_LIBS:      ${BOOST_LIBS}
 
 ${CRYPTO_NAME}:
   CRYPTO_VERSION:  ${CRYPTO_VERSION}
