@@ -92,7 +92,7 @@ nodist_dhcp4_unittests_SOURCES = marker_file.h test_libraries.h
 
 dhcp4_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-dhcp4_unittests_LDADD = $(GTEST_LDADD)
+dhcp4_unittests_LDADD = $(BOOST_LIBS) $(GTEST_LDADD)
 dhcp4_unittests_LDADD += $(top_builddir)/src/bin/dhcp4/libdhcp4.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la

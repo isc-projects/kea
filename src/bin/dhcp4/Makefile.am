@@ -86,6 +86,7 @@ kea_dhcp4_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+kea_dhcp4_LDADD += $(BOOST_LIBS)
 
 kea_dhcp4dir = $(pkgdatadir)
 kea_dhcp4_DATA = dhcp4.spec

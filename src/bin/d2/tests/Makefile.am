@@ -71,7 +71,7 @@ d2_unittests_SOURCES += d_controller_unittests.cc
 
 d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 d2_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-d2_unittests_LDADD = $(GTEST_LDADD)
+d2_unittests_LDADD = $(BOOST_LIBS) $(GTEST_LDADD)
 d2_unittests_LDADD += $(top_builddir)/src/bin/d2/libd2.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
