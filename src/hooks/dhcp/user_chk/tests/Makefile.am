@@ -60,6 +60,6 @@ libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-ex
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcp_user_chk_unittests_LDADD += ${CRYPTO_LIBS} ${CRYPTO_RPATH}
-libdhcp_user_chk_unittests_LDADD += $(GTEST_LDADD)
+libdhcp_user_chk_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 endif
 noinst_PROGRAMS = $(TESTS)

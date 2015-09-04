@@ -141,7 +141,7 @@ libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libdhcpsrv_unittests_LDADD += $(GTEST_LDADD)
+libdhcpsrv_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)

@@ -20,7 +20,7 @@ run_unittests_SOURCES += io_fetch_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
-run_unittests_LDADD  = $(GTEST_LDADD)
+run_unittests_LDADD  = $(BOOST_LIBS) $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
