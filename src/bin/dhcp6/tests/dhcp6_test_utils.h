@@ -98,7 +98,11 @@ public:
     using Dhcpv6Srv::processSolicit;
     using Dhcpv6Srv::processRequest;
     using Dhcpv6Srv::processRenew;
+    using Dhcpv6Srv::processRebind;
+    using Dhcpv6Srv::processConfirm;
     using Dhcpv6Srv::processRelease;
+    using Dhcpv6Srv::processDecline;
+    using Dhcpv6Srv::processInfRequest;
     using Dhcpv6Srv::processClientFqdn;
     using Dhcpv6Srv::createNameChangeRequests;
     using Dhcpv6Srv::createRemovalNameChangeRequest;
