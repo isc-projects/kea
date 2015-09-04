@@ -134,6 +134,21 @@ public:
     ///
     /// destroys lease manager backend.
     virtual ~MemfileLeaseMgrTest() {
+        // Explicitly destroy the timer and the IO service. Note that they
+        // must be destroyed in this order because test_timer_ depends on
+        // the io_service_ as it is passed its reference during the
+        // construction. It usually doesn't matter unless the timer is
+        // running (hasn't been cancelled). Destroying an underlying
+        // IO service before cancelling the timer relying on it may lead
+        // to a crash. This has been proven on CentOS 6, running boost
+        // version 1.41. Note that destroying the timer also cancels it.
+        // In theory, we could avoid this explicit release of these objects
+        // and rely on the order in which they are declared in the class.
+        // But, this seems to be better as it makes it more visible
+        // what we are doing here.
+        test_timer_.reset();
+        io_service_.reset();
+
         LeaseMgrFactory::destroy();
         // Remove lease files and products of Lease File Cleanup.
         removeFiles(getLeaseFilePath("leasefile4_0.csv"));
@@ -243,11 +258,11 @@ public:
     /// @brief Object providing access to v6 lease IO.
     LeaseFileIO io6_;
 
-    /// @brief Test timer for the test.
-    boost::shared_ptr<IntervalTimer> test_timer_;
-
     /// @brief IO service object used for the timer tests.
     asiolink::IOServicePtr io_service_;
+
+    /// @brief Test timer for the test.
+    boost::shared_ptr<IntervalTimer> test_timer_;
 
     /// @brief Indicates if the @c testTimerCallback should cause test failure.
     bool fail_on_callback_;
