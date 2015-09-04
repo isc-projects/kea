@@ -52,8 +52,8 @@ namespace dhcp {
 /// performs the tasks to be executed periodically according to the timer's
 /// interval.
 ///
-/// The registered timer is not executed until the @c TimerMgr::setup
-/// method is called for it.
+/// The registered timer's interval does not begin to elapse until the
+/// @c TimerMgr::setup method is called for it.
 ///
 /// The @c TimerMgr uses worker thread to run the timers. The thread is
 /// started and stopped using the @c TimerMgr::startThread and
@@ -70,10 +70,9 @@ namespace dhcp {
 /// function is invoked for the timer, it obtains the instance of the
 /// @c util::WatchSocket and marks it "ready". This call effectively
 /// writes the data to a socket (pipe) which interrupts the call
-/// to the @c select() function in the main thread. Note that this
-/// operation may block the worker thread until the socket is cleared.
-/// When the @c IfaceMgr (in the main thread) detects data transmitted
-/// over the external socket it will invoke a callback function
+/// to the @c select() function in the main thread. When the
+/// @c IfaceMgr (in the main thread) detects data transmitted over
+/// the external socket it will invoke a callback function
 /// associated with this socket. This is the
 /// @c TimerMgr::ifaceMgrCallback associated with the socket when the
 /// timer is registered. This callback function is executed/ in the
@@ -102,7 +101,6 @@ namespace dhcp {
 /// not unregistered before the application terminates this will
 /// likely result in segmentation fault on some systems.
 ///
-/// All timers are associated with the callback function
 class TimerMgr : public boost::noncopyable {
 public:
 
@@ -235,19 +233,12 @@ private:
     /// @param timer_name Unique timer name.
     void ifaceMgrCallback(const std::string& timer_name);
 
-    /// @brief Common method called by the @c TimerMgr::timerCallback and
-    /// @c TimerMgr::ifaceMgrCallback.
-    ///
-    /// @param timer_name Unique timer name.
-    /// @param mark_ready If 'true' it indicates that the watch socket should
-    /// be marked 'ready'. If 'false' the socket is cleared. In this case the
-    /// callback supplied during the timer registration is also executed.
-    void watchSocketCallback(const std::string& timer_name,
-                             const bool mark_ready);
-
     //@}
 
     void clearReadySockets();
+
+    /// @brief Pointer to the io service.
+    asiolink::IOServicePtr io_service_;
 
     /// @brief Pointer to the worker thread.
     ///
@@ -263,10 +254,10 @@ private:
     /// interval timer and other parameters pertaining to it.
     struct TimerInfo {
         /// @brief Instance of the watch socket.
-        util::WatchSocketPtr watch_socket_;
+        util::WatchSocket watch_socket_;
 
         /// @brief Instance of the interval timer.
-        asiolink::IntervalTimerPtr interval_timer_;
+        asiolink::IntervalTimer interval_timer_;
 
         /// @brief Holds the pointer to the callback supplied when registering
         /// the timer.
@@ -290,15 +281,18 @@ private:
                   const asiolink::IntervalTimer::Callback& user_callback,
                   const long interval,
                   const asiolink::IntervalTimer::Mode& mode)
-            : watch_socket_(new util::WatchSocket()),
-              interval_timer_(new asiolink::IntervalTimer(io_service)),
+            : watch_socket_(),
+              interval_timer_(io_service),
               user_callback_(user_callback),
               interval_(interval),
               scheduling_mode_(mode) { };
     };
 
+    /// @brief A type definition for the pointer to @c TimerInfo structure.
+    typedef boost::shared_ptr<TimerInfo> TimerInfoPtr;
+
     /// @brief A type definition for the map holding timers configuration.
-    typedef std::map<std::string, TimerInfo> TimerInfoMap;
+    typedef std::map<std::string, TimerInfoPtr> TimerInfoMap;
 
     /// @brief Holds mapping of the timer name to the watch socket, timer
     /// instance and other parameters pertaining to the timer.

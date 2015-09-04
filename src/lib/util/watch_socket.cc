@@ -19,6 +19,7 @@
 
 #include <fcntl.h>
 #include <errno.h>
+#include <sstream>
 #include <string.h>
 #include <sys/select.h>
 
@@ -122,6 +123,7 @@ WatchSocket::closeSocket(std::string& error_string) {
     // Clear error string.
     error_string.clear();
 
+    std::ostringstream s;
     // Close the pipe fds.  Technically a close can fail (hugely unlikely)
     // but there's no recovery for it either.  If one does fail we log it
     // and go on. Plus this is called by the destructor and no one likes
@@ -129,7 +131,7 @@ WatchSocket::closeSocket(std::string& error_string) {
     if (source_ != SOCKET_NOT_VALID) {
         if (close(source_)) {
             // An error occured.
-            error_string = strerror(errno);
+            s << "Could not close source: " << strerror(errno);
         }
 
         source_ = SOCKET_NOT_VALID;
@@ -139,12 +141,14 @@ WatchSocket::closeSocket(std::string& error_string) {
         if (close(sink_)) {
             // An error occured.
             if (error_string.empty()) {
-                error_string = strerror(errno);
+                s << "could not close sink: " << strerror(errno);
             }
         }
 
         sink_ = SOCKET_NOT_VALID;
     }
+
+    error_string = s.str();
 
     // If any errors have been reported, return false.
     return (error_string.empty() ? true : false);

@@ -36,7 +36,8 @@ TimerMgr::instance() {
 }
 
 TimerMgr::TimerMgr()
-    : thread_(), registered_timers_() {
+    : io_service_(new IOService()), thread_(),
+      registered_timers_() {
 }
 
 TimerMgr::~TimerMgr() {
@@ -81,18 +82,20 @@ TimerMgr::registerTimer(const std::string& timer_name,
     // create the instance if the IntervalTimer and WatchSocket. It will
     // also hold the callback, interval and scheduling mode parameters.
     // This may throw a WatchSocketError if the socket creation fails.
-    TimerInfo timer_info(getIOService(), callback, interval, scheduling_mode);
+    TimerInfoPtr timer_info(new TimerInfo(getIOService(), callback,
+                                          interval, scheduling_mode));
 
     // Register the WatchSocket in the IfaceMgr and register our own callback
     // to be executed when the data is received over this socket. The only time
     // this may fail is when the socket failed to open which would have caused
     // an exception in the previous call. So we should be safe here.
-    IfaceMgr::instance().addExternalSocket(timer_info.watch_socket_->getSelectFd(),
+    IfaceMgr::instance().addExternalSocket(timer_info->watch_socket_.getSelectFd(),
                                            boost::bind(&TimerMgr::ifaceMgrCallback,
                                                        this, timer_name));
 
     // Actually register the timer.
-    registered_timers_.insert(std::pair<std::string, TimerInfo>(timer_name, timer_info));
+    registered_timers_.insert(std::pair<std::string, TimerInfoPtr>(timer_name,
+                                                                   timer_info));
 }
 
 void
@@ -119,10 +122,10 @@ TimerMgr::unregisterTimer(const std::string& timer_name) {
     // Cancel any pending asynchronous operation and stop the timer.
     cancel(timer_name);
 
-    TimerInfo& timer_info = timer_info_it->second;
+    const TimerInfoPtr& timer_info = timer_info_it->second;
 
     // Unregister the watch socket from the IfaceMgr.
-    IfaceMgr::instance().deleteExternalSocket(timer_info.watch_socket_->getSelectFd());
+    IfaceMgr::instance().deleteExternalSocket(timer_info->watch_socket_.getSelectFd());
 
     // Remove the timer.
     registered_timers_.erase(timer_info_it);
@@ -168,10 +171,10 @@ TimerMgr::setup(const std::string& timer_name) {
 
    // Schedule the execution of the timer using the parameters supplied
    // during the registration.
-   const TimerInfo& timer_info = timer_info_it->second;
-   timer_info.interval_timer_->setup(boost::bind(&TimerMgr::timerCallback, this, timer_name),
-                                     timer_info.interval_,
-                                     timer_info.scheduling_mode_);
+   const TimerInfoPtr& timer_info = timer_info_it->second;
+   timer_info->interval_timer_.setup(boost::bind(&TimerMgr::timerCallback, this, timer_name),
+                                     timer_info->interval_,
+                                     timer_info->scheduling_mode_);
 }
 
 void
@@ -188,9 +191,9 @@ TimerMgr::cancel(const std::string& timer_name) {
                   "no such timer registered");
     }
     // Cancel the timer.
-    timer_info_it->second.interval_timer_->cancel();
+    timer_info_it->second->interval_timer_.cancel();
     // Clear watch socket, if ready.
-    timer_info_it->second.watch_socket_->clearReady();
+    timer_info_it->second->watch_socket_.clearReady();
 }
 
 void
@@ -218,7 +221,7 @@ TimerMgr::stopThread() {
 
         // Stop the IO Service. This will break the IOService::run executed in the
         // worker thread. The thread will now terminate.
-        getIOService().post(boost::bind(&IOService::stop, &getIOService()));
+        getIOService().stop();
         // When the worker thread may be waiting on the call to
         // WatchSocket::markReady until main thread clears the socket.
         // To unblock the thread we have to clear all sockets to make
@@ -235,62 +238,45 @@ TimerMgr::stopThread() {
 }
 IOService&
 TimerMgr::getIOService() const {
-    // The IO service is now created internally by the TimerMgr and we don't allow
-    // overriding it with anything as there are currently no use cases for it.
-    // It is possible that someone may want to obtain this instance to use it
-    // for something else too, so we return a reference to a static object.
-    // If we decide to allow setting the IO service object we will have to
-    // replace this static object with a shared pointer allocated in the
-    // class constructor.
-    static asiolink::IOService io_service;
-    return (io_service);
+    return (*io_service_);
 }
 
 
 void
 TimerMgr::timerCallback(const std::string& timer_name) {
-    // Run callback. Value of true says "mark socket ready".
-    watchSocketCallback(timer_name, true);
+    // Find the specified timer setup.
+    TimerInfoMap::iterator timer_info_it = registered_timers_.find(timer_name);
+    if (timer_info_it != registered_timers_.end()) {
+        // We will mark watch socket ready - write data to a socket to
+        // interrupt the execution of the select() function. This is
+        // executed from the worker thread.
+        const TimerInfoPtr& timer_info = timer_info_it->second;
+        timer_info->watch_socket_.markReady();
+    }
 }
 
 void
 TimerMgr::ifaceMgrCallback(const std::string& timer_name) {
-    // Run callback. Value of false says "clear ready socket".
-    watchSocketCallback(timer_name, false);
-}
-
-void
-TimerMgr::watchSocketCallback(const std::string& timer_name, const bool mark_ready) {
     // Find the specified timer setup.
     TimerInfoMap::iterator timer_info_it = registered_timers_.find(timer_name);
     if (timer_info_it != registered_timers_.end()) {
-        TimerInfo& timer_info = timer_info_it->second;
-        // This is 'true' when we're executing a callback for the elapsed timer.
-        // It is supposed to mark watch socket ready - write data to a socket to
-        // interrupt the execution of the select() function. This is executed
-        // from the worker thrad and will likely block the thread until the socket
-        // is cleared.
-        if (mark_ready) {
-            timer_info.watch_socket_->markReady();
-        } else {
+        const TimerInfoPtr& timer_info = timer_info_it->second;
+        // We're executing a callback function from the Interface Manager.
+        // This callback function is executed when the call to select() is
+        // interrupted as a result of receiving some data over the watch
+        // socket. We have to clear the socket which has been marked as
+        // ready. Then execute the callback function supplied by the
+        // TimerMgr user to perform custom actions on the expiration of
+        // the given timer.
+        timer_info->watch_socket_.clearReady();
 
-            // We're executing a callback function from the Interface Manager.
-            // This callback function is executed when the call to select() is
-            // interrupted as a result of receiving some data over the watch
-            // socket. We have to clear the socket which has been marked as
-            // ready. Then execute the callback function supplied by the
-            // TimerMgr user to perform custom actions on the expiration of
-            // the given timer.
-            timer_info.watch_socket_->clearReady();
-
-            // Running user-defined operation for the timer. Logging it
-            // on the slightly lower debug level as there may be many
-            // such traces.
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-                      DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION)
-                .arg(timer_name);
-            timer_info.user_callback_();
-        }
+        // Running user-defined operation for the timer. Logging it
+        // on the slightly lower debug level as there may be many
+        // such traces.
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION)
+            .arg(timer_name);
+        timer_info->user_callback_();
     }
 }
 
@@ -298,7 +284,7 @@ void
 TimerMgr::clearReadySockets() {
     for (TimerInfoMap::iterator timer_info_it = registered_timers_.begin();
          timer_info_it != registered_timers_.end(); ++timer_info_it) {
-        timer_info_it->second.watch_socket_->clearReady();
+        timer_info_it->second->watch_socket_.clearReady();
    }
 }
 
