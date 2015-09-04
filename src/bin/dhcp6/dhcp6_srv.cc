@@ -259,12 +259,7 @@ Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt) {
     /// @todo Currently we always check server identifier regardless if
     /// it is allowed in the received message or not (per RFC3315).
     /// If the server identifier is not allowed in the message, the
-    /// sanityCheck function should deal with it. We may rethink this
-    /// design if we decide that it is appropriate to check at this stage
-    /// of message processing that the server identifier must or must not
-    /// be present. In such case however, the logic checking server id
-    /// will have to be removed from sanityCheck and placed here instead,
-    /// to avoid duplicate checks.
+    /// sanityCheck function should deal with it.
     OptionPtr server_id = pkt->getOption(D6O_SERVERID);
     if (server_id){
         // Let us test received ServerID if it is same as ServerID
@@ -1970,16 +1965,9 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
     // Renew or Rebind message.
     /// @todo add support for IA_TA
 
-    /// @todo - assignLeases() drops the packet as RFC violation, shouldn't
-    /// we do that here? Shouldn't sanityCheck defend against this? Maybe
-    /// this should treated as a code error instead. If we're this far with
-    /// no duid that seems wrong.
-    if (!ctx.duid_) {
-        // This should not happen. We have checked this before.
-        reply->addOption(createStatusCode(*query, STATUS_UnspecFail,
-                         "You did not include mandatory client-id"));
-        return;
-    }
+    // For the lease extension it is critical that the client has sent
+    // DUID. There is no need to check for the presence of the DUID here
+    // because we have already checked it in the sanityCheck().
 
     for (OptionCollection::iterator opt = query->options_.begin();
          opt != query->options_.end(); ++opt) {
