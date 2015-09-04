@@ -2466,6 +2466,8 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 Pkt6Ptr
 Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
 
+    sanityCheck(rebind, MANDATORY, FORBIDDEN);
+
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx = createContext(rebind);
 
@@ -2485,6 +2487,8 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
 
 Pkt6Ptr
 Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
+
+    sanityCheck(confirm, MANDATORY, FORBIDDEN);
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx = createContext(confirm);
@@ -2591,6 +2595,9 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
 
 Pkt6Ptr
 Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
+
+    sanityCheck(decline, MANDATORY, MANDATORY);
+
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, decline->getTransid()));
     return (reply);
@@ -2598,6 +2605,8 @@ Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
 
 Pkt6Ptr
 Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
+
+    sanityCheck(inf_request, OPTIONAL, OPTIONAL);
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx = createContext(inf_request);
