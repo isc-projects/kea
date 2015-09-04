@@ -13,9 +13,13 @@ dnl This macro also tries to identify some known portability issues, and
 dnl sets corresponding variables so the caller can react to (or ignore,
 dnl depending on other configuration) specific issues appropriately.
 dnl
+dnl Boost.Asio depends on Boost.System which can be header only with
+dnl versions >= 1.56. On older versions libboost_system is required.
+dnl
 dnl This macro calls:
 dnl
 dnl   AC_SUBST(BOOST_INCLUDES)
+dnl   AC_SUBST(BOOST_LIBS)
 dnl
 dnl And possibly sets:
 dnl   CPPFLAGS_BOOST_THREADCONF should be added to CPPFLAGS by caller
@@ -29,6 +33,9 @@ dnl                                 cause build error; otherwise set to "no"
 AC_DEFUN([AX_BOOST_FOR_KEA], [
 AC_LANG_SAVE
 AC_LANG([C++])
+
+# No library by default (and as goal)
+BOOST_LIBS=
 
 #
 # Configure Boost header path
@@ -56,7 +63,7 @@ if test "${boost_include_path}" ; then
 	BOOST_INCLUDES="-I${boost_include_path}"
 	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
-AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp boost/asio.hpp boost/asio/ip/address.hpp],,
+AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp boost/asio.hpp boost/asio/ip/address.hpp boost/system/error_code.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
 
 # clang can cause false positives with -Werror without -Qunused-arguments.
@@ -125,9 +132,34 @@ void testfn(void) { BOOST_STATIC_ASSERT(true); }
 [AC_MSG_RESULT(no)
  BOOST_STATIC_ASSERT_WOULDFAIL=yes])
 
+# BOOST_ERROR_CODE_HEADER_ONLY in versions below Boost 1.56.0 can fail
+# to find the error_code.cpp file.
+AC_MSG_CHECKING([BOOST_ERROR_CODE_HEADER_ONLY works])
+CXXFLAGS_SAVED2="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS -DBOOST_ERROR_CODE_HEADER_ONLY"
+CPPFLAGS="$CPPFLAGS -DBOOST_SYSTEM_NO_DEPRECATED"
+AC_TRY_COMPILE([
+#include <boost/system/error_code.hpp>
+],,
+[AC_MSG_RESULT(yes)],
+[AC_MSG_RESULT(no)
+ AC_MSG_WARN([The Boost system library is required.])
+ BOOST_LIBS="-lboost_system"
+ LIBS_SAVED="$LIBS"
+ LIBS="$BOOST_LIBS $LIBS"
+ CPPFLAGS="$CXXFLAGS_SAVED2"
+ AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM([#include <boost/system/error_code.hpp>],
+                   [boost::system::error_code ec;])],
+  [AC_MSG_RESULT([checking for Boost system library... yes])],
+  [AC_MSG_RESULT([checking for Boost system library... no])
+   AC_MSG_ERROR([Linking with ${BOOST_LIBS} is not enough: please make sure libboost_system is installed])])
+ LIBS="$LIBS_SAVED"])
+
 CXXFLAGS="$CXXFLAGS_SAVED"
 
 AC_SUBST(BOOST_INCLUDES)
+AC_SUBST(BOOST_LIBS)
 
 dnl Determine the Boost version, used mainly for config.report.
 AC_MSG_CHECKING([Boost version])
