@@ -48,7 +48,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
-run_unittests_LDADD += $(GTEST_LDADD)
+run_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)

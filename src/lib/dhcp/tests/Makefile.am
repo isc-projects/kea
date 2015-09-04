@@ -112,7 +112,7 @@ libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcp___unittests_LDADD += $(GTEST_LDADD)
+libdhcp___unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)

@@ -48,8 +48,7 @@ lfc_unittests_SOURCES += lfc_controller_unittests.cc
 
 lfc_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 lfc_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-lfc_unittests_LDADD = $(GTEST_LDADD)
-lfc_unittests_LDADD += $(top_builddir)/src/bin/lfc/liblfc.la
+lfc_unittests_LDADD  = $(top_builddir)/src/bin/lfc/liblfc.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -58,6 +57,7 @@ lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+lfc_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 
 endif
 

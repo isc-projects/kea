@@ -54,7 +54,7 @@ libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-except
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcp_ddns_unittests_LDADD += ${CRYPTO_LIBS} ${CRYPTO_RPATH}
-libdhcp_ddns_unittests_LDADD += $(GTEST_LDADD)
+libdhcp_ddns_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)

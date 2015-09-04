@@ -87,6 +87,7 @@ kea_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+kea_dhcp6_LDADD += $(BOOST_LIBS)
 
 kea_dhcp6dir = $(pkgdatadir)
 kea_dhcp6_DATA = dhcp6.spec
