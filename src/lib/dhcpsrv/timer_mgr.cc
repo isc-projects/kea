@@ -212,7 +212,7 @@ TimerMgr::startThread() {
 }
 
 void
-TimerMgr::stopThread() {
+TimerMgr::stopThread(const bool run_pending_callbacks) {
     // If thread is not running, this is no-op.
     if (thread_) {
         // Only log it if we really have something to stop.
@@ -222,11 +222,12 @@ TimerMgr::stopThread() {
         // Stop the IO Service. This will break the IOService::run executed in the
         // worker thread. The thread will now terminate.
         getIOService().stop();
-        // When the worker thread may be waiting on the call to
-        // WatchSocket::markReady until main thread clears the socket.
-        // To unblock the thread we have to clear all sockets to make
-        // sure that the thread doesn't remain blocked.
-        clearReadySockets();
+        // Some of the watch sockets may be already marked as ready and
+        // have some pending callbacks to be executed. If the caller
+        // wants us to run the callbacks we clear the sockets and run
+        // them. If pending callbacks shouldn't be executed, this will
+        // only clear the sockets (which should be substantially faster).
+        clearReadySockets(run_pending_callbacks);
         // Wait for the thread to terminate.
         thread_->wait();
         // Set the thread pointer to NULL to indicate that the thread is not running.
@@ -240,7 +241,6 @@ IOService&
 TimerMgr::getIOService() const {
     return (*io_service_);
 }
-
 
 void
 TimerMgr::timerCallback(const std::string& timer_name) {
@@ -260,7 +260,6 @@ TimerMgr::ifaceMgrCallback(const std::string& timer_name) {
     // Find the specified timer setup.
     TimerInfoMap::iterator timer_info_it = registered_timers_.find(timer_name);
     if (timer_info_it != registered_timers_.end()) {
-        const TimerInfoPtr& timer_info = timer_info_it->second;
         // We're executing a callback function from the Interface Manager.
         // This callback function is executed when the call to select() is
         // interrupted as a result of receiving some data over the watch
@@ -268,24 +267,33 @@ TimerMgr::ifaceMgrCallback(const std::string& timer_name) {
         // ready. Then execute the callback function supplied by the
         // TimerMgr user to perform custom actions on the expiration of
         // the given timer.
-        timer_info->watch_socket_.clearReady();
+        handleReadySocket(timer_info_it, true);
+    }
+}
 
+void
+TimerMgr::clearReadySockets(const bool run_pending_callbacks) {
+    for (TimerInfoMap::iterator timer_info_it = registered_timers_.begin();
+         timer_info_it != registered_timers_.end(); ++timer_info_it) {
+        handleReadySocket(timer_info_it, run_pending_callbacks);
+   }
+}
+
+template<typename Iterator>
+void
+TimerMgr::handleReadySocket(Iterator timer_info_iterator,
+                            const bool run_callback) {
+    timer_info_iterator->second->watch_socket_.clearReady();
+
+    if (run_callback) {
         // Running user-defined operation for the timer. Logging it
         // on the slightly lower debug level as there may be many
         // such traces.
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
                   DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION)
-            .arg(timer_name);
-        timer_info->user_callback_();
+            .arg(timer_info_iterator->first);
+        timer_info_iterator->second->user_callback_();
     }
-}
-
-void
-TimerMgr::clearReadySockets() {
-    for (TimerInfoMap::iterator timer_info_it = registered_timers_.begin();
-         timer_info_it != registered_timers_.end(); ++timer_info_it) {
-        timer_info_it->second->watch_socket_.clearReady();
-   }
 }
 
 } // end of namespace isc::dhcp
