@@ -180,8 +180,34 @@ public:
 
     /// @brief Stops worker thread.
     ///
+    /// When the thread is being stopped, it is possible that some of the
+    /// timers have elapsed and marked their respective watch sockets
+    /// as "ready", but the sockets haven't been yet cleared in the
+    /// main thread and the installed callbacks haven't been executed.
+    /// It is possible to control whether those pending callbacks should
+    /// be executed or not before the call to @c stopThread ends.
+    /// If the thread is being stopped as a result of the DHCP server
+    /// reconfiguration running pending callback may take significant
+    /// amount of time, e.g. when operations on the lease database are
+    /// involved. If this is a concern, the function parameter should
+    /// be left at its default value. In this case, however, it is
+    /// important to note that callbacks installed on ONE_SHOT timers
+    /// often reschedule the timer. If such callback is not executed
+    /// the timer will have to be setup by the application when the
+    /// thread is started again.
+    ///
+    /// Setting the @c run_pending_callbacks to true will guarantee
+    /// that all callbacks for which the timers have already elapsed
+    /// (and marked their watch sockets as ready) will be executed
+    /// prior to the return from @c stopThread method. However, this
+    /// should be avoided if the longer execution time of the
+    /// @c stopThread function is a concern.
+    ///
     /// This method has no effect if the thread is not running.
-    void stopThread();
+    ///
+    /// @param run_pending_callbacks Indicates if the pending callbacks
+    /// should be executed (if true).
+    void stopThread(const bool run_pending_callbacks = false);
 
     //@}
 
@@ -235,7 +261,37 @@ private:
 
     //@}
 
-    void clearReadySockets();
+    /// @name Methods to handle ready sockets.
+    //@{
+    ///
+    /// @brief Clear ready sockets and optionally run callbacks.
+    ///
+    /// This method is called by the @c TimerMgr::stopThread method
+    /// to clear watch sockets which may be marked as ready. It will
+    /// also optionally run callbacks installed for the timers which
+    /// marked sockets as ready.
+    ///
+    /// @param run_pending_callbacks Indicates if the callbacks should
+    /// be executed for the sockets being cleared (if true).
+    void clearReadySockets(const bool run_pending_callbacks);
+
+    /// @brief Clears a socket and optionally runs a callback.
+    ///
+    /// This method clears the ready socket pointed to by the specified
+    /// iterator. If the @c run_callback is set, the callback will
+    /// also be executed.
+    ///
+    /// @param timer_info_iterator Iterator pointing to the timer
+    /// configuration structure.
+    /// @param run_callback Boolean value indicating if the callback
+    /// should be executed for the socket being cleared (if true).
+    ///
+    /// @tparam Iterator Iterator pointing to the timer configuration
+    /// structure.
+    template<typename Iterator>
+    void handleReadySocket(Iterator timer_info_iterator, const bool run_callback);
+
+    //@}
 
     /// @brief Pointer to the io service.
     asiolink::IOServicePtr io_service_;
