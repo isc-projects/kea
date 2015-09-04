@@ -460,7 +460,6 @@ TEST(TCPSocket, sequenceTest) {
                 EXPECT_EQ(0, server_cb.getCode());
                 EXPECT_EQ((sizeof(INBOUND_DATA) + 2), server_cb.length());
                 server_complete = true;
-                continue;
             }
         }
 
