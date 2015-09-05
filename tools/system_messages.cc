@@ -24,6 +24,7 @@
 // system_messages [-o <output-file>] <files>
 //
 // If no output file is specified, output is written to stdout.
+// The produced format is docbook XML.
 
 #include <algorithm>
 #include <fstream>
@@ -35,48 +36,50 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef USE_BOOST_FILESYSTEM
-#include <boost/filesystem.hpp>
-#endif
 #include <boost/lexical_cast.hpp>
 
-typedef std::vector<std::string> lines_type;
+typedef std::vector<std::string> LinesType;
 
-/// dictionary values
+/// @brief dictionary values
 struct Details {
     std::string text;
-    lines_type description;
+    LinesType description;
     std::string sname;
     std::string filename;
 };
 
-/// Main dictionary holding all the messages.  The messages are
-/// accumulated here before being printed in alphabetical order.
-typedef std::map<const std::string, Details> dictionary_type;
-dictionary_type dictionary;
+/// @brief Main dictionary holding all the messages.
+/// The messages are accumulated here before being printed in
+/// alphabetical order.
+typedef std::map<const std::string, Details> dictionaryType;
+dictionaryType dictionary;
 
-// The structure of the output page is:
+/// @brief The structure of the output page
 //
-//        header
-//           section header
-//                 message
-//              separator
-//                 message
-//              separator
-//                :
-//              separator
-//                 message
-//           section trailer
-//           separator
-//           section header
-//             :
-//           section trailer
-//        trailer
+///        header
+///           section header
+///                 message
+///              separator
+///                 message
+///              separator
+///                :
+///              separator
+///                 message
+///           section trailer
+///           separator
+///           section header
+///             :
+///           section trailer
+///        trailer
 //
-// (Indentation is not relevant - it has only been added to the above
-// illustration to make the structure clearer.)  The text of these section is:
+/// (Indentation is not relevant - it has only been added to the above
+/// illustration to make the structure clearer.)  The text of these section is:
 
-// Header - this is output before anything else.
+/// @name Constants for the output page
+//@{
+
+/// @brief File header
+/// this is output before anything else.
 const std::string FILE_HEADER =
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
 <!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook XML V4.2//EN\"\n\
@@ -98,7 +101,7 @@ const std::string FILE_HEADER =
     <title>Kea Messages Manual</title>\n\
 \n\
     <copyright>\n\
-      <year>2011-2014</year><holder>Internet Systems Consortium, Inc.</holder>\n\
+      <year>2011-2015</year><holder>Internet Systems Consortium, Inc.</holder>\n\
     </copyright>\n\
 \n\
     <abstract>\n\
@@ -141,15 +144,17 @@ const std::string FILE_HEADER =
   <chapter id=\"messages\">\n\
     <title>Kea Log Messages</title>\n";
 
-// This is output one for each module. $M substitution token is the name.
+/// @brief Section header
+/// This is output one for each module. $M substitution token is the name.
 const std::string SECTION_HEADER = "  <section id=\"$M\">\n\
     <title>$M Module</title>\n\
     <para>\n\
       <variablelist>\n";
 
-// This is output once for each message.  The string contains
-// substitution tokens: $I is replaced by the message identification,
-// $T by the message text, and $D by the message description.
+/// @brief message ID
+/// This is output once for each message.  The string contains
+/// substitution tokens: $I is replaced by the message identification,
+/// $T by the message text, and $D by the message description.
 const std::string ID_MESSAGE =
 "<varlistentry id=\"$I\">\n\
 <term>$I $T</term>\n\
@@ -157,27 +162,35 @@ const std::string ID_MESSAGE =
 $D</para></listitem>\n\
 </varlistentry>";
 
-// A description may contain blank lines intended to separate
-// paragraphs.  If so, each blank line is replaced by the following.
+/// @brief Blank line
+/// A description may contain blank lines intended to separate
+/// paragraphs.  If so, each blank line is replaced by the following.
 const std::string BLANK = "</para><para>";
 
-// The separator is copied to the output verbatim after each message except
-// the last.
+/// @brief Separator
+/// The separator is copied to the output verbatim after each message except
+/// the last.
 const std::string SEPARATOR = "";
 
-// The trailier is copied to the output verbatim after the last message.
+/// @brief Section trailer
+/// The trailer is copied to the output verbatim after the last message.
 const std::string SECTION_TRAILER =
 "      </variablelist>\n\
     </para>\n\
   </section>";
 
-// The trailier is copied to the output verbatim after the last section.
+/// @brief File trailer
+/// The trailier is copied to the output verbatim after the last section.
 const std::string FILE_TRAILER =
 "  </chapter>\n\
 </book>";
 
+//@}
 
-/// Report an error and exit
+/// @name Utility routines
+//@{
+
+/// @brief Report an error and exit
 void reportError(const std::string& filename, const std::string& what)
 {
     std::cerr << "*** ERROR in " << filename << "\n";
@@ -186,7 +199,7 @@ void reportError(const std::string& filename, const std::string& what)
     exit(1);
 }
 
-
+/// @brief Replace tag
 /// Replaces the '<' and '>' in text about to be inserted into the template
 /// sections above with &lt; and &gt; to avoid problems with message text
 /// being interpreted as XML text.
@@ -202,10 +215,20 @@ std::string replaceTag(const std::string& src)
            result.push_back(*it);
         }
     }
-    return result;
+    return (result);
 }
 
-/// Replace $c in a string
+/// @brief Replace shell
+/// Replace $c in a string (or with other words performs macro expansion
+/// with '$' for introducing a macro followed by a character selecting
+/// a specific macro.
+///
+/// @param src  source string
+/// @param c    character selecting a macro when it follows '$'
+/// @param val  value which
+///
+/// @return     the source string where all occurrences of $c were
+///             replaced by val
 std::string replaceShell(const std::string& src, char c,
                          const std::string& val)
 {
@@ -226,33 +249,40 @@ std::string replaceShell(const std::string& src, char c,
             result.push_back(*it);
         }
     }
-    return result;
+    return (result);
 }
 
+/// @brief Replace blank lines
 /// Replaces blank lines in an array with the contents of the 'blank' section.
-lines_type replaceBlankLines(const lines_type lines)
+LinesType replaceBlankLines(const LinesType lines)
 {
-    lines_type result;
-    for (lines_type::const_iterator l = lines.begin(); l != lines.end(); ++l) {
+    LinesType result;
+    for (LinesType::const_iterator l = lines.begin(); l != lines.end(); ++l) {
         if (l->empty()) {
             result.push_back(BLANK);
         } else {
             result.push_back(*l);
         }
     }
-    return result;
+    return (result);
 }
 
+//@}
 
-/// Printing functions
+/// @name Printing functions
+//@{
+
+/// @brief Print file header
 void printHeader() {
     std::cout << FILE_HEADER << "\n";
 }
 
+/// @brief Print separator
 void printSeparator() {
     std::cout << SEPARATOR << "\n";
 }
 
+/// @brief Print section header
 void printSectionHeader(const std::string& sname)
 {
     // In the section name, replace "<" and ">" with XML-safe versions and
@@ -260,6 +290,7 @@ void printSectionHeader(const std::string& sname)
     std::cout << replaceShell(SECTION_HEADER, 'M', replaceTag(sname));
 }
 
+/// @brief print message id
 void printMessage(const std::string& msgid)
 {
     // In the message ID, replace "<" and ">" with XML-safe versions and
@@ -274,17 +305,17 @@ void printMessage(const std::string& msgid)
     // Do the same for the description then replace blank lines with the
     // specified separator.  (We do this in that order to avoid replacing
     // the "<" and ">" in the XML tags in the separator.)
-    lines_type desc0 = dictionary[msgid].description;
-    lines_type desc1;
-    for (lines_type::iterator l = desc0.begin(); l != desc0.end(); ++l) {
+    LinesType desc0 = dictionary[msgid].description;
+    LinesType desc1;
+    for (LinesType::iterator l = desc0.begin(); l != desc0.end(); ++l) {
         desc1.push_back(replaceTag(*l));
     }
-    lines_type desc2 = replaceBlankLines(desc1);
+    LinesType desc2 = replaceBlankLines(desc1);
 
     // Join the lines together to form a single string and insert into
     // current text.
     std::string m3;
-    for (lines_type::iterator l = desc2.begin(); l != desc2.end(); ++l) {
+    for (LinesType::iterator l = desc2.begin(); l != desc2.end(); ++l) {
         m3.append(*l);
         m3.push_back('\n');
     }
@@ -292,42 +323,43 @@ void printMessage(const std::string& msgid)
     std::cout << replaceShell(m2, 'D', m3) << "\n";
 }
 
+/// @brief print section trailer
 void printSectionTrailer() {
     std::cout << SECTION_TRAILER << "\n";
 }
 
+/// @brief print file trailer
 void printTrailer() {
     std::cout << FILE_TRAILER << "\n";
 }
 
+//@}
 
-/// Removes leading and trailing empty lines.
+/// @brief Removes leading and trailing empty lines.
 ///
 /// A list of strings is passed as argument, some of which may be empty.
 /// This function removes from the start and end of list a contiguous
 /// sequence of empty lines and returns the result.  Embedded sequence of
 /// empty lines are not touched.
 ///
-/// Parameters:
-///  lines List of strings to be modified.
+/// @param lines List of strings to be modified.
 ///
-/// Return:
-///  Input list of strings with leading/trailing blank line sequences
-///  removed.
-lines_type removeEmptyLeadingTrailing(lines_type lines)
+/// @return Input list of strings with leading/trailing blank line
+/// sequences removed.
+LinesType removeEmptyLeadingTrailing(const LinesType& lines)
 {
-    lines_type retlines = lines;
+    LinesType retlines = lines;
 
     // Dispose of degenerate case of empty array
     if (retlines.empty()) {
-        return retlines;
+        return (retlines);
     }
 
     // Search for first non-blank line
     for (;;) {
-        lines_type::iterator start = retlines.begin();
+        LinesType::iterator start = retlines.begin();
         if (start == retlines.end()) {
-            return retlines;
+            return (retlines);
         }
         if (start->empty()) {
             retlines.erase(start);
@@ -338,9 +370,9 @@ lines_type removeEmptyLeadingTrailing(lines_type lines)
 
     // Search for last non-blank line
     for (;;) {
-        lines_type::reverse_iterator finish = retlines.rbegin();
+        LinesType::reverse_iterator finish = retlines.rbegin();
         if (finish == retlines.rend()) {
-            return retlines;
+            return (retlines);
         }
         if (finish->empty()) {
             retlines.erase(retlines.end() - 1);
@@ -349,24 +381,25 @@ lines_type removeEmptyLeadingTrailing(lines_type lines)
         }
     }
 
-    return retlines;
+    return (retlines);
 }
 
 
-/// Add the current message ID and associated information to the global
-/// dictionary.  If a message with that ID already exists, loop appending
-/// suffixes of the form "(n)" to it until one is found that doesn't.
+/// @brief Add the current message ID and associated information to the global
+/// dictionary.
+/// If a message with that ID already exists, loop appending suffixes
+/// of the form "(n)" to it until one is found that doesn't.
 ///
-/// Parameters:
-///  msgid        Message ID
-///  msgtext      Message text
-///  desc         Message description
-///  filename     File from which the message came.  Currently this is
-///               not used, but a future enhancement may wish to include the
-///               name of the message file in the messages manual.
+///  @param msgid        Message ID
+///  @param msgtext      Message text
+///  @param desc         Message description
+///  @param filename     File from which the message came.  Currently this is
+///                      not used, but a future enhancement may wish to
+///                      include the name of the message file in the
+///                      messages manual.
 void addToDictionary(const std::string& msgid,
                      const std::string& msgtext,
-                     const lines_type& desc,
+                     const LinesType& desc,
                      const std::string& filename)
 {
     // If the ID is in the dictionary, append a "(n)" to the name - this will
@@ -397,22 +430,24 @@ void addToDictionary(const std::string& msgid,
 }
 
 
-/// Processes file content.  Messages and descriptions are identified and
-/// added to a dictionary (keyed by message ID).  If the key already exists,
-/// a numeric suffix is added to it.
+/// @brief Processes file content.
+/// Messages and descriptions are identified and added to a dictionary
+/// (keyed by message ID).  If the key already exists, a numeric
+/// suffix is added to it.
+
+/// The format of .mes files is fully described in src/lib/log/logging.dox
 ///
-/// Parameters:
-///  filename     Name of the message file being processed
-///  lines        Lines read from the file
+/// @param filename     Name of the message file being processed
+/// @param lines        Lines read from the file
 void processFileContent(const std::string& filename,
-                        const lines_type& lines)
+                        const LinesType& lines)
 {
     std::string prefix;         // Last prefix encountered
     std::string msgid;          // Last message ID encountered
     std::string msgtext;        // Text of the message
-    lines_type description;     // Description
+    LinesType description;      // Description
 
-    for (lines_type::const_iterator l = lines.begin(); l != lines.end(); ++l) {
+    for (LinesType::const_iterator l = lines.begin(); l != lines.end(); ++l) {
         if (l->empty()) {
             description.push_back(*l);
         } else if (l->at(0) == '$') {
@@ -464,26 +499,30 @@ void processFileContent(const std::string& filename,
     }
 }
 
-/// Processes a file by reading it in and stripping out all comments and
-/// and directives.  Leading and trailing blank lines in the file are removed
-/// and the remainder passed for message processing.
+/// @brief Process a file
+/// Read it in and strip out all comments and and directives.  Leading
+/// and trailing blank lines in the file are removed and the remainder
+/// passed for message processing.
 ///
-/// Parameters:
-///  filename     Name of the message file to process
+/// @param filename     Name of the message file to process
 void processFile(const std::string& filename)
 {
     std::ifstream cin;
     cin.open(filename, std::ios::in);
-    lines_type lines0;
+    if (!cin.is_open()) {
+        reportError(filename, "open for read failure");
+    }
+    LinesType lines0;
     while (!cin.eof()) {
         std::string line;
         getline(cin, line);
         lines0.push_back(line);
     }
+    cin.close();
 
     // Trim leading and trailing spaces from each line, and remove comments.
-    lines_type lines1;
-    for (lines_type::iterator l = lines0.begin(); l != lines0.end(); ++l) {
+    LinesType lines1;
+    for (LinesType::iterator l = lines0.begin(); l != lines0.end(); ++l) {
         std::string line = *l;
         if (line.empty()) {
             lines1.push_back(line);
@@ -512,51 +551,22 @@ void processFile(const std::string& filename)
     }  
 
     // Remove leading/trailing empty line sequences from the result
-    lines_type lines2 = removeEmptyLeadingTrailing(lines1);
+    LinesType lines2 = removeEmptyLeadingTrailing(lines1);
 
     // Interpret content
     processFileContent(filename, lines2);
 }
 
-/// Iterates through all files in the tree starting at the given root and
-/// calls processFile for all .mes files found.
-///
-/// Parameters:
-///  root     Directory that is the root of the source tree
-#ifdef USE_BOOST_FILESYSTEM
-void processAllFiles(const boost::filesystem::path& root)
-{
-    boost::filesystem::directory_iterator endd;
-    for (boost::filesystem::directory_iterator file(root);
-         file != endd;
-         ++file) {
-        boost::filesystem::path path = file->path();
-        if (boost::filesystem::is_directory(path)) {
-            processAllFiles(path);
-        } else if (boost::filesystem::is_regular_file(path)) {
-            boost::filesystem::path extension = path.extension();
-            // Identify message files
-            if (extension == ".mes") {
-               processFile(path.native());
-            }
-        }
-    }
-}
-#endif
-
+/// @brief Usage error routine
 void usage(char* progname)
 {
-#ifdef USE_BOOST_FILESYSTEM
-    std::cerr << "Usage: " << progname <<
-        " [--help | options] root|files\n";
-#else
     std::cerr << "Usage: " << progname <<
         " [--help | options] files\n";
-#endif
     std::cerr << " options: --output file: " <<
         "output file name (default to stdout)\n";
 }
 
+/// @brief Main (entry point)
 int main(int argc, char* argv[])
 {
     char* progname = argv[0];
@@ -578,9 +588,13 @@ int main(int argc, char* argv[])
                 exit(-1);
             }
             fout.open(argv[0], std::ofstream::out | std::ofstream::trunc);
+            if (!fout.is_open()) {
+                reportError(argv[0], "open for write failure");
+            }
             std::cout.rdbuf(fout.rdbuf());
             --argc;
             ++argv;
+            break;
         }
     }
 
@@ -588,30 +602,15 @@ int main(int argc, char* argv[])
         usage(progname);
         exit(-1);
     }
-#ifdef USE_BOOST_FILESYSTEM
-    if (argc > 1) {
-        for (int i = 0; i < argc; ++i) {
-            processFile(argv[i]);
-        }
-    } else {
-        boost::filesystem::path root(argv[0]);
-        if (boost::filesystem::is_directory(root)) {
-            processAllFiles(root);
-        } else {
-            processFile(argv[0]);
-        }
-    }
-#else
     for (int i = 0; i < argc; ++i) {
         processFile(argv[i]);
     }
-#endif
 
     // Now just print out everything we've read (in alphabetical order).
     bool first = true;
     std::string sname;
     printHeader();
-    for (dictionary_type::iterator it = dictionary.begin();
+    for (dictionaryType::iterator it = dictionary.begin();
          it != dictionary.end();
          ++it) {
         if (sname.compare(it->second.sname) != 0) {
