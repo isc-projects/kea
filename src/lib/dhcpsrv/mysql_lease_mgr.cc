@@ -2014,12 +2014,16 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
 void
 MySqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
                                  const size_t max_leases) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_EXPIRED6)
+        .arg(max_leases);
     getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE6_EXPIRE);
 }
 
 void
 MySqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                  const size_t max_leases) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_EXPIRED4)
+        .arg(max_leases);
     getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE4_EXPIRE);
 }
 
@@ -2203,11 +2207,17 @@ MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
 
 uint64_t
 MySqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED4)
+        .arg(secs);
     return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE4_STATE_EXPIRED));
 }
 
 uint64_t
 MySqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED6)
+        .arg(secs);
     return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE6_STATE_EXPIRED));
 }
 
@@ -2218,6 +2228,7 @@ MySqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
 
+    // State is reclaimed.
     uint32_t state = static_cast<uint32_t>(Lease::STATE_EXPIRED_RECLAIMED);
     inbind[0].buffer_type = MYSQL_TYPE_LONG;
     inbind[0].buffer = reinterpret_cast<char*>(&state);
@@ -2230,7 +2241,13 @@ MySqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
     inbind[1].buffer = reinterpret_cast<char*>(&expire_time);
     inbind[1].buffer_length = sizeof(expire_time);
 
-    return (deleteLeaseCommon(statement_index, inbind));
+    // Get the number of deleted leases and log it.
+    uint64_t deleted_leases = deleteLeaseCommon(statement_index, inbind);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_DELETED_EXPIRED_RECLAIMED)
+        .arg(deleted_leases);
+
+    return (deleted_leases);
 }
 
 
