@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2013  Internet Systems Consortium.
+# Copyright (C) 2012-2015  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -80,8 +80,8 @@ CREATE TABLE lease6 (
 
     ) ENGINE = INNODB;
 
-# Create search indexes for lease4 table 
-# index by iaid, subnet_id, and duid 
+# Create search indexes for lease4 table
+# index by iaid, subnet_id, and duid
 CREATE INDEX lease6_by_iaid_subnet_id_duid ON lease6 (iaid, subnet_id, duid);
 
 # ... and a definition of lease6 types.  This table is a convenience for
@@ -250,6 +250,28 @@ UPDATE schema_version
 SET version = '3', minor = '0';
 # This line concludes database upgrade to version 3.0.
 
+# This line starts database upgrade to version 4.0.
+# Upgrade extending MySQL schema with the state columns for lease tables.
+
+# Add state column to the lease4 table.
+ALTER TABLE lease4
+    ADD COLUMN state INT UNSIGNED DEFAULT 0;
+
+# Add state column to the lease6 table.
+ALTER TABLE lease6
+    ADD COLUMN state INT UNSIGNED DEFAULT 0;
+
+# Create indexes for querying leases in a given state and segregated
+# by the expiration time. One of the applications is to retrieve all
+# expired leases. However, these indexes can be also used to retrieve
+# leases in a given state regardless of the expiration time.
+CREATE INDEX lease4_by_state_expire ON lease4 (state, expire);
+CREATE INDEX lease6_by_state_expire ON lease6 (state, expire);
+
+UPDATE schema_version
+SET version = '4', minor = '0';
+# This line concludes database upgrade to version 4.0.
+
 # Notes:
 #
 # Indexes
@@ -261,9 +283,6 @@ SET version = '3', minor = '0';
 # will be determined by experiment during performance tests.
 #
 # The most likely additional indexes will cover the following columns:
-#
-# expire
-# To speed up the deletion of expired leases from the database.
 #
 # hwaddr and client_id
 # For lease stability: if a client requests a new lease, try to find an
