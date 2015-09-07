@@ -126,8 +126,14 @@ struct TaggedStatement {
 TaggedStatement tagged_statements[] = {
     {MySqlLeaseMgr::DELETE_LEASE4,
                     "DELETE FROM lease4 WHERE address = ?"},
+    {MySqlLeaseMgr::DELETE_LEASE4_STATE_EXPIRED,
+                    "DELETE FROM lease4 "
+                        "WHERE state = ? AND expire < ?"},
     {MySqlLeaseMgr::DELETE_LEASE6,
                     "DELETE FROM lease6 WHERE address = ?"},
+    {MySqlLeaseMgr::DELETE_LEASE6_STATE_EXPIRED,
+                    "DELETE FROM lease6 "
+                        "WHERE state = ? AND expire < ?"},
     {MySqlLeaseMgr::GET_LEASE4_ADDR,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
@@ -2145,7 +2151,7 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 // case, a single method for both V4 and V6 addresses) and a common method that
 // handles the common processing.
 
-bool
+uint64_t
 MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind) {
 
     // Bind the input parameters to the statement
@@ -2158,7 +2164,7 @@ MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind) {
 
     // See how many rows were affected.  Note that the statement may delete
     // multiple rows.
-    return (mysql_stmt_affected_rows(statements_[stindex]) > 0);
+    return (static_cast<uint64_t>(mysql_stmt_affected_rows(statements_[stindex])));
 }
 
 
@@ -2178,7 +2184,7 @@ MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
         inbind[0].buffer = reinterpret_cast<char*>(&addr4);
         inbind[0].is_unsigned = MLM_TRUE;
 
-        return (deleteLeaseCommon(DELETE_LEASE4, inbind));
+        return (deleteLeaseCommon(DELETE_LEASE4, inbind) > 0);
 
     } else {
         std::string addr6 = addr.toText();
@@ -2191,21 +2197,42 @@ MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
         inbind[0].buffer_length = addr6_length;
         inbind[0].length = &addr6_length;
 
-        return (deleteLeaseCommon(DELETE_LEASE6, inbind));
+        return (deleteLeaseCommon(DELETE_LEASE6, inbind) > 0);
     }
 }
 
 uint64_t
-MySqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t) {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::deleteExpiredReclaimedLeases4"
-              " is not implemented");
+MySqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
+    return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE4_STATE_EXPIRED));
 }
 
 uint64_t
-MySqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t) {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::deleteExpiredReclaimedLeases6"
-              " is not implemented");
+MySqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
+    return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE6_STATE_EXPIRED));
 }
+
+uint64_t
+MySqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
+                                                  StatementIndex statement_index) {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    uint32_t state = static_cast<uint32_t>(Lease::STATE_EXPIRED_RECLAIMED);
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&state);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Expiration timestamp.
+    MYSQL_TIME expire_time;
+    convertToDatabaseTime(time(NULL) - static_cast<time_t>(secs), expire_time);
+    inbind[1].buffer_type = MYSQL_TYPE_TIMESTAMP;
+    inbind[1].buffer = reinterpret_cast<char*>(&expire_time);
+    inbind[1].buffer_length = sizeof(expire_time);
+
+    return (deleteLeaseCommon(statement_index, inbind));
+}
+
 
 
 // Miscellaneous database methods.
