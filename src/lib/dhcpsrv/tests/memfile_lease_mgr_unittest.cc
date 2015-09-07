@@ -656,7 +656,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     EXPECT_EQ(current_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 5));
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -721,7 +721,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     EXPECT_EQ(current_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 5));
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
