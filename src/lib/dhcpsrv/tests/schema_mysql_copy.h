@@ -125,6 +125,18 @@ const char* create_statement[] = {
     "UPDATE schema_version SET version=\"2\", minor=\"0\";",
     // Schema upgrade to 2.0 ends here.
 
+    // Schema upgrade to 4.0 starts here.
+    "ALTER TABLE lease4 "
+    "ADD COLUMN state INT UNSIGNED DEFAULT 0",
+
+    "ALTER TABLE lease6 "
+    "ADD COLUMN state INT UNSIGNED DEFAULT 0",
+
+    "CREATE INDEX lease4_by_state_expire ON lease4 (state, expire)",
+    "CREATE INDEX lease6_by_state_expire ON lease6 (state, expire)",
+
+    // Schema upgrade to 4.0 ends here.
+
     NULL
 };
 
