@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <limits.h>
 #include <sstream>
 #include <string>
 #include <time.h>
@@ -162,6 +163,15 @@ TaggedStatement tagged_statements[] = {
                         "state "
                             "FROM lease4 "
                             "WHERE hwaddr = ? AND subnet_id = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_EXPIRE,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "state "
+                            "FROM lease4 "
+                            "WHERE state != ? AND expire < ? "
+                            "ORDER BY expire "
+                            "LIMIT ?"},
     {MySqlLeaseMgr::GET_LEASE6_ADDR,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -190,6 +200,17 @@ TaggedStatement tagged_statements[] = {
                             "FROM lease6 "
                             "WHERE duid = ? AND iaid = ? AND subnet_id = ? "
                             "AND lease_type = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_EXPIRE,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source, "
+                        "state "
+                            "FROM lease6 "
+                            "WHERE state != ? AND expire < ? "
+                            "ORDER BY expire "
+                            "LIMIT ?"},
     {MySqlLeaseMgr::GET_VERSION,
                     "SELECT version, minor FROM schema_version"},
     {MySqlLeaseMgr::INSERT_LEASE4,
@@ -936,7 +957,7 @@ public:
 
             // state:  uint32_t
             bind_[15].buffer_type = MYSQL_TYPE_LONG;
-            bind_[15].buffer = reinterpret_cast<char*>(&state_);
+            bind_[15].buffer = reinterpret_cast<char*>(&lease_->state_);
             bind_[15].is_unsigned = MLM_TRUE;
             // bind_[15].is_null = &MLM_FALSE; // commented out for performance
                                                // reasons, see memset() above
@@ -1337,6 +1358,25 @@ MySqlLeaseMgr::getDBVersion() {
 //    from a time read from the database into a local time.
 
 void
+MySqlLeaseMgr::convertToDatabaseTime(const time_t input_time,
+                                     MYSQL_TIME& output_time) {
+
+    // Convert to broken-out time
+    struct tm time_tm;
+    (void) localtime_r(&input_time, &time_tm);
+
+    // Place in output expire structure.
+    output_time.year = time_tm.tm_year + 1900;
+    output_time.month = time_tm.tm_mon + 1;     // Note different base
+    output_time.day = time_tm.tm_mday;
+    output_time.hour = time_tm.tm_hour;
+    output_time.minute = time_tm.tm_min;
+    output_time.second = time_tm.tm_sec;
+    output_time.second_part = 0;                  // No fractional seconds
+    output_time.neg = my_bool(0);                 // Not negative
+}
+
+void
 MySqlLeaseMgr::convertToDatabaseTime(const time_t cltt,
                                      const uint32_t valid_lifetime,
                                      MYSQL_TIME& expire) {
@@ -1352,21 +1392,7 @@ MySqlLeaseMgr::convertToDatabaseTime(const time_t cltt,
         isc_throw(BadValue, "Time value is too large: " << expire_time_64);
     }
 
-    const time_t expire_time = static_cast<const time_t>(expire_time_64);
-
-    // Convert to broken-out time
-    struct tm expire_tm;
-    (void) localtime_r(&expire_time, &expire_tm);
-
-    // Place in output expire structure.
-    expire.year = expire_tm.tm_year + 1900;
-    expire.month = expire_tm.tm_mon + 1;     // Note different base
-    expire.day = expire_tm.tm_mday;
-    expire.hour = expire_tm.tm_hour;
-    expire.minute = expire_tm.tm_min;
-    expire.second = expire_tm.tm_sec;
-    expire.second_part = 0;                  // No fractional seconds
-    expire.neg = my_bool(0);                 // Not negative
+    convertToDatabaseTime(static_cast<time_t>(expire_time_64), expire);
 }
 
 void
@@ -1980,16 +2006,52 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
 }
 
 void
-MySqlLeaseMgr::getExpiredLeases6(Lease6Collection&, const size_t) const {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::getExpiredLeases6 is currently"
-              " not implemented");
+MySqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
+                                 const size_t max_leases) const {
+    getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE6_EXPIRE);
 }
 
 void
-MySqlLeaseMgr::getExpiredLeases4(Lease4Collection&, const size_t) const {
-    isc_throw(NotImplemented, "MySqlLeaseMgr::getExpiredLeases4 is currently"
-              " not implemented");
+MySqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
+                                 const size_t max_leases) const {
+    getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE4_EXPIRE);
 }
+
+template<typename LeaseCollection>
+void
+MySqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
+                                      const size_t max_leases,
+                                      StatementIndex statement_index) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[3];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Exclude reclaimed leases.
+    uint32_t state = static_cast<uint32_t>(Lease::STATE_EXPIRED_RECLAIMED);
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&state);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Expiration timestamp.
+    MYSQL_TIME expire_time;
+    convertToDatabaseTime(time(NULL), expire_time);
+    inbind[1].buffer_type = MYSQL_TYPE_TIMESTAMP;
+    inbind[1].buffer = reinterpret_cast<char*>(&expire_time);
+    inbind[1].buffer_length = sizeof(expire_time);
+
+    // If the number of leases is 0, we will return all leases. This is
+    // achieved by setting the limit to a very high value.
+    uint32_t limit = max_leases > 0 ? static_cast<uint32_t>(max_leases) :
+        std::numeric_limits<uint32_t>::max();
+    inbind[2].buffer_type = MYSQL_TYPE_LONG;
+    inbind[2].buffer = reinterpret_cast<char*>(&limit);
+    inbind[2].is_unsigned = MLM_TRUE;
+
+    // Get the data
+    getLeaseCollection(statement_index, inbind, expired_leases);
+}
+
+
 
 // Update lease methods.  These comprise common code that handles the actual
 // update, and type-specific methods that set up the parameters for the prepared
