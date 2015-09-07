@@ -1,3 +1,5 @@
 if HAVE_GTEST_SOURCE
 SUBDIRS = gtest
 endif
+
+EXTRA_DIST = LICENSE_1_0.txt
