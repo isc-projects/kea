@@ -506,6 +506,9 @@ Memfile_LeaseMgr::getLeases6(Lease::Type type,
 void
 Memfile_LeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
                                     const size_t max_leases) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_EXPIRED4)
+        .arg(max_leases);
+
     // Obtain the index which segragates leases by state and time.
     const Lease6StorageExpirationIndex& index = storage6_.get<ExpirationIndexTag>();
 
@@ -528,6 +531,9 @@ Memfile_LeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
 void
 Memfile_LeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                     const size_t max_leases) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_EXPIRED6)
+        .arg(max_leases);
+
     // Obtain the index which segragates leases by state and time.
     const Lease4StorageExpirationIndex& index = storage4_.get<ExpirationIndexTag>();
 
