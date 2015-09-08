@@ -1,3 +1,11 @@
+999.	[func]*		tmark
+	The DHCPv4 server will now honor DHCPRELEASEs for leased addresses which
+	cannot be matched to subnet.  This allows leases to be released after
+	configuration changes have eliminated their subnet.  Prior to this
+	the server would reject the release and emit a DHCP4_RELEASE_FAIL_NO_SUBNET
+	log message.
+	(Trac #2615, git eeebf9f68cf5be6a0f7eefc78832d664361c4990)
+
 998.	[func]		tomek
 	'decline-probation-period' parameter has been added to DHCPv4
 	and DHCPv6 configuration. It can be configured, but is not yet
