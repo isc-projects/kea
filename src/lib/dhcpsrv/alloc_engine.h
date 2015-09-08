@@ -490,6 +490,21 @@ public:
     /// @return Returns renewed lease.
     Lease6Collection renewLeases6(ClientContext6& ctx);
 
+    /// @brief Reclaims expired leases.
+    ///
+    /// This method retrieves a collection of expired leases and reclaims them.
+    /// See http://kea.isc.org/wiki/LeaseExpirationDesign#LeasesReclamationRoutine
+    /// for the details.
+    ///
+    /// @param max_leases Maximum number of leases to be reclaimed.
+    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// may be processing expired leases, expressed in seconds.
+    /// @param remove_lease A boolean value indicating if the lease should
+    /// be removed when it is reclaimed (if true) or it should be left in the
+    /// database in the "expired-reclaimed" state (if false).
+    void reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeout,
+                               const bool remove_lease);
+
     /// @brief Attempts to find appropriate host reservation.
     ///
     /// Attempts to find appropriate host reservation in HostMgr. If found, it
@@ -662,6 +677,10 @@ private:
     ///        @ref ClientContext6 for details.
     /// @param lease IPv6 lease to be extended.
     void extendLease6(ClientContext6& ctx, Lease6Ptr lease);
+
+    template<typename LeasePtrType, typename IdentifierType>
+    void queueNameChangeRequest(const LeasePtrType& lease,
+                                const IdentifierType& identifier) const;
 
 public:
 
