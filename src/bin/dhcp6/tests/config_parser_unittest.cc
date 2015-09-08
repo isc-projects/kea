@@ -31,6 +31,7 @@
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <hooks/hooks_manager.h>
+#include <defaults.h>
 
 #include "test_data_files_config.h"
 #include "test_libraries.h"
@@ -3981,5 +3982,69 @@ TEST_F(Dhcp6ParserTest, rsooBogusName) {
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
+
+/// Check that the decline-probation-period value can be set properly.
+TEST_F(Dhcp6ParserTest, declineTimerDefault) {
+
+    ConstElementPtr status;
+
+    string config_txt = "{ " + genIfaceConfig() + ","
+        "\"subnet6\": [  ] "
+        "}";
+    ElementPtr config = Element::fromJSON(config_txt);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-perion must be equal to the
+    // default value.
+    EXPECT_EQ(DEFAULT_DECLINE_PROBATION_PERIOD,
+              CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+}
+
+/// Check that the decline-probation-period value can be set properly.
+TEST_F(Dhcp6ParserTest, declineTimer) {
+    ConstElementPtr status;
+
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"decline-probation-period\": 12345,"
+        "\"subnet6\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-perion must be equal to the
+    // value specified.
+    EXPECT_EQ(12345,
+              CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+}
+
+/// Check that an incorrect decline-probation-period value will be caught.
+TEST_F(Dhcp6ParserTest, declineTimerError) {
+    ConstElementPtr status;
+
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"decline-probation-period\": \"soon\","
+        "\"subnet6\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 1 (error)
+    checkResult(status, 1);
+
+    // Check that the error contains error position.
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
+
 
 };

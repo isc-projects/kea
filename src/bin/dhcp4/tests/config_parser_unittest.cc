@@ -33,6 +33,7 @@
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <hooks/hooks_manager.h>
+#include <defaults.h>
 
 #include "marker_file.h"
 #include "test_libraries.h"
@@ -3645,6 +3646,70 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
     subnet = subnets->selectSubnet(IOAddress("192.0.5.1"));
     ASSERT_TRUE(subnet);
     EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
+}
+
+/// Check that the decline-probation-period has a default value when not
+/// specified.
+TEST_F(Dhcp4ParserTest, declineTimerDefault) {
+    ConstElementPtr status;
+
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"subnet4\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-perion must be equal to the
+    // default value.
+    EXPECT_EQ(DEFAULT_DECLINE_PROBATION_PERIOD,
+              CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+}
+
+/// Check that the decline-probation-period value can be set properly.
+TEST_F(Dhcp4ParserTest, declineTimer) {
+    ConstElementPtr status;
+
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"decline-probation-period\": 12345,"
+        "\"subnet4\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-perion must be equal to the
+    // value specified.
+    EXPECT_EQ(12345,
+              CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+}
+
+/// Check that an incorrect decline-probation-period value will be caught.
+TEST_F(Dhcp4ParserTest, declineTimerError) {
+    ConstElementPtr status;
+
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"decline-probation-period\": \"soon\","
+        "\"subnet4\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 1 (error)
+    checkResult(status, 1);
+
+    // Check that the error contains error position.
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 }

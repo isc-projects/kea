@@ -36,6 +36,7 @@
 #include <log/logger_support.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
+#include <defaults.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
@@ -668,7 +669,8 @@ namespace dhcp {
     if ((config_id.compare("preferred-lifetime") == 0)  ||
         (config_id.compare("valid-lifetime") == 0)  ||
         (config_id.compare("renew-timer") == 0)  ||
-        (config_id.compare("rebind-timer") == 0))  {
+        (config_id.compare("rebind-timer") == 0) ||
+        (config_id.compare("decline-probation-period") == 0) )  {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
     } else if (config_id.compare("interfaces-config") == 0) {
@@ -702,6 +704,24 @@ namespace dhcp {
     }
 
     return (parser);
+}
+
+/// @brief Sets global parameters in the staging configuration
+///
+/// Currently this method sets the following global parameters:
+///
+/// - decline-probation-period
+void setGlobalParameters6() {
+
+    // Set the probation period for decline handling.
+    try {
+        uint32_t probation_period = globalContext()->uint32_values_
+            ->getOptionalParam("decline-probation-period",
+                               DEFAULT_DECLINE_PROBATION_PERIOD);
+        CfgMgr::instance().getStagingCfg()->setDeclinePeriod(probation_period);
+    } catch (...) {
+        // That's not really needed.
+    }
 }
 
 isc::data::ConstElementPtr
@@ -871,6 +891,9 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
             if (subnet_parser) {
                 subnet_parser->commit();
             }
+
+            // Apply global options in the staging config.
+            setGlobalParameters6();
 
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
