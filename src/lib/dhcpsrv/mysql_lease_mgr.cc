@@ -1378,8 +1378,8 @@ MySqlLeaseMgr::convertToDatabaseTime(const time_t input_time,
     output_time.hour = time_tm.tm_hour;
     output_time.minute = time_tm.tm_min;
     output_time.second = time_tm.tm_sec;
-    output_time.second_part = 0;                  // No fractional seconds
-    output_time.neg = my_bool(0);                 // Not negative
+    output_time.second_part = 0;                // No fractional seconds
+    output_time.neg = my_bool(0);               // Not negative
 }
 
 void
@@ -1389,7 +1389,7 @@ MySqlLeaseMgr::convertToDatabaseTime(const time_t cltt,
 
     // Calculate expiry time. Store it in the 64-bit value so as we can detect
     // overflows.
-    int64_t expire_time_64 = static_cast<int64_t>(cltt) +
+    const int64_t expire_time_64 = static_cast<int64_t>(cltt) +
         static_cast<int64_t>(valid_lifetime);
 
     // Even on 64-bit systems MySQL doesn't seem to accept the timestamps
