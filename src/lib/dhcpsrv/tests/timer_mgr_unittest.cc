@@ -62,7 +62,10 @@ public:
     /// @brief Wait for one or many ready handlers.
     ///
     /// @param timeout Wait timeout in milliseconds.
-    void doWait(const long timeout);
+    /// @param call_receive Indicates if the @c IfaceMgr::receive6
+    /// should be called to run pending callbacks and clear
+    /// watch sockets.
+    void doWait(const long timeout, const bool call_receive = true);
 
     /// @brief Generic callback for timers under test.
     ///
@@ -129,7 +132,7 @@ TimerMgrTest::registerTimer(const std::string& timer_name, const long timer_inte
 }
 
 void
-TimerMgrTest::doWait(const long timeout) {
+TimerMgrTest::doWait(const long timeout, const bool call_receive) {
     IntervalTimer timeout_timer(io_service_);
     timeout_timer.setup(boost::bind(&TimerMgrTest::timeoutCallback, this), timeout,
                         IntervalTimer::ONE_SHOT);
@@ -137,8 +140,10 @@ TimerMgrTest::doWait(const long timeout) {
     // The timeout flag will be set by the timeoutCallback if the test
     // lasts for too long. In this case we will return from here.
     while (!timeout_) {
-        // Block for one 1 millisecond.
-        IfaceMgr::instance().receive6(0, 1000);
+        if (call_receive) {
+            // Block for one 1 millisecond.
+            IfaceMgr::instance().receive6(0, 1000);
+        }
         // Run ready handlers from the local IO service to execute
         // the timeout callback if necessary.
         io_service_.get_io_service().poll_one();
@@ -417,6 +422,35 @@ TEST_F(TimerMgrTest, scheduleTimers) {
     EXPECT_EQ(calls_count_timer1, calls_count_["timer1"]);
     // There should be some new calls registered for the 'timer2'.
     EXPECT_GT(calls_count_["timer2"], calls_count_timer2);
+}
+
+// This test verifies that it is possible to force that the pending
+// timer callbacks are executed when the worker thread is stopped.
+TEST_F(TimerMgrTest, stopThreadWithRunningHandlers) {
+    TimerMgr& timer_mgr = TimerMgr::instance();
+
+    // Register 'timer1'.
+    ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
+
+    // We can start the worker thread before we even kick in the timers.
+    ASSERT_NO_THROW(timer_mgr.startThread());
+
+    // Kick in the timer.
+    ASSERT_NO_THROW(timer_mgr.setup("timer1"));
+
+    // Run the thread for 100ms. This should run some timers. The 'false'
+    // value indicates that the IfaceMgr::receive6 is not called, so the
+    // watch socket is never cleared.
+    doWait(100, false);
+
+    // There should be no calls registered for the timer1.
+    EXPECT_EQ(0, calls_count_["timer1"]);
+
+    // Stop the worker thread with completing pending callbacks.
+    ASSERT_NO_THROW(timer_mgr.stopThread(true));
+
+    // There should be one call registered.
+    EXPECT_EQ(1, calls_count_["timer1"]);
 }
 
 } // end of anonymous namespace
