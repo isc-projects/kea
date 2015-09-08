@@ -450,14 +450,6 @@ TEST_F(Dhcpv4SrvTest, processRelease) {
     EXPECT_NO_THROW(srv.processRelease(pkt));
 }
 
-TEST_F(Dhcpv4SrvTest, processDecline) {
-    NakedDhcpv4Srv srv;
-    Pkt4Ptr pkt(new Pkt4(DHCPDECLINE, 1234));
-
-    // Should not throw
-    EXPECT_NO_THROW(srv.processDecline(pkt));
-}
-
 // This test verifies that incoming DISCOVER can be handled properly, that an
 // OFFER is generated, that the response has an address and that address
 // really belongs to the configured pool.

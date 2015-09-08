@@ -38,7 +38,7 @@ namespace {
 /// @brief Set of JSON configurations used throughout the Decline tests.
 ///
 /// - Configuration 0:
-///   - Used for testing Release message processing
+///   - Used for testing Decline message processing
 ///   - 1 subnet: 10.0.0.0/24
 ///   - 1 pool: 10.0.0.10-10.0.0.100
 ///   - Router option present: 10.0.0.200 and 10.0.0.201
@@ -63,18 +63,16 @@ const char* DECLINE_CONFIGS[] = {
     "}"
 };
 
-/// @brief Test fixture class for testing 4-way (DORA) exchanges.
+/// @brief Test fixture class for testing DHCPDECLINE message handling.
 ///
-/// @todo Currently there is a limit number of test cases covered here.
-/// In the future it is planned that the tests from the
-/// dhcp4_srv_unittest.cc will be migrated here and will use the
-/// @c Dhcp4Client class.
+/// @todo This class is very similar to ReleaseTest. Maybe we could
+/// merge those two classes one day and use derived classes?
 class DeclineTest : public Dhcpv4SrvTest {
 public:
 
     enum ExpectedResult {
-        SHOULD_PASS,
-        SHOULD_FAIL
+        SHOULD_PASS, // pass = accept decline, move lease to declined state.
+        SHOULD_FAIL  // fail = reject the decline
     };
 
     /// @brief Constructor.
@@ -88,6 +86,8 @@ public:
 
     /// @brief Performs 4-way exchange to obtain new lease.
     ///
+    /// This is used as a preparatory step for Decline operation.
+    ///
     /// @param client Client to be used to obtain a lease.
     void acquireLease(Dhcp4Client& client);
 
@@ -98,8 +98,8 @@ public:
     /// @param hw_address_2 HW Address to be used to decline the lease.
     /// @param client_id_2 Client id to be used to decline the lease.
     /// @param expected_result SHOULD_PASS if the lease is expected to
-    /// be successfully released, or SHOULD_FAIL if the lease is expected
-    /// to not be released.
+    /// be successfully declined, or SHOULD_FAIL if the lease is expected
+    /// to not be declined.
     void acquireAndDecline(const std::string& hw_address_1,
                            const std::string& client_id_1,
                            const std::string& hw_address_2,
@@ -137,10 +137,22 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
                                const std::string& hw_address_2,
                                const std::string& client_id_2,
                                ExpectedResult expected_result) {
+
+    // Let's get the subnet-id and generate statistics name out of it.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    std::stringstream name;
+    name << "subnet[" << subnets->at(0)->getID() << "].declined-addresses";
+
+    // Set this statistic explicitly to zero.
+    isc::stats::StatsMgr::instance().setValue(name.str(), static_cast<int64_t>(0));
+
+    // Ok, do the normal lease aquisition.
     CfgMgr::instance().clear();
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
-    configure(RELEASE_CONFIGS[0], *client.getServer());
+    configure(DECLINE_CONFIGS[0], *client.getServer());
     // Explicitly set the client id.
     client.includeClientId(client_id_1);
     // Explicitly set the HW address.
@@ -148,14 +160,7 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
     // Perform 4-way exchange to obtain a new lease.
     acquireLease(client);
 
-    std::stringstream name;
-
-    // Let's get the subnet-id and generate statistics name out of it
-    const Subnet4Collection* subnets =
-        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    ASSERT_EQ(1, subnets->size());
-    name << "subnet[" << subnets->at(0)->getID() << "].declined-addresses";
-
+    // Check the delined-addresses statistic before the Decline operation.
     ObservationPtr declined_cnt = StatsMgr::instance().getObservation(name.str());
     ASSERT_TRUE(declined_cnt);
     uint64_t before = declined_cnt->getInteger().first;
@@ -163,12 +168,12 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
     // Remember the acquired address.
     IOAddress declined_address = client.config_.lease_.addr_;
 
-    // Explicitly set the client id for DHCPRELEASE.
+    // Explicitly set the client id for DHCPDECLINE.
     client.includeClientId(client_id_2);
-    // Explicitly set the HW address for DHCPRELEASE.
+    // Explicitly set the HW address for DHCPDECLINE.
     client.setHWAddress(hw_address_2);
 
-    // Send the release and make sure that the lease is removed from the
+    // Send the decline and make sure that the lease is removed from the
     // server.
     ASSERT_NO_THROW(client.doDecline());
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(declined_address);
@@ -181,14 +186,14 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
     // We check if the deline process was successful by checking if the
     // lease is in the database and what is its state.
     if (expected_result == SHOULD_PASS) {
-        EXPECT_EQ(DECLINED, lease->state);
+        EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
 
         // The decline succeded, so the declined-addresses statistic should
         // be increased by one
         EXPECT_EQ(after, before + 1);
     } else {
         // the decline was supposed, to be rejected.
-        EXPECT_EQ(DEFAULT, lease->state);
+        EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
 
         // The decline failed, so the declined-addresses should be the same
         // as before
@@ -196,42 +201,42 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
     }
 }
 
-// This test checks that the client can acquire and release the lease.
-TEST_F(DeclineTest, releaseNoIdentifierChange) {
+// This test checks that the client can acquire and decline the lease.
+TEST_F(DeclineTest, declineNoIdentifierChange) {
     acquireAndDecline("01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS);
 }
 
-// This test verifies the release correctness in the following case:
+// This test verifies the decline correctness in the following case:
 // - Client acquires new lease using HW address only
-// - Client sends the DHCPRELEASE with valid HW address and without
+// - Client sends the DHCPDECLINE with valid HW address and without
 //   client identifier.
-// - The server successfully releases the lease.
-TEST_F(DeclineTest, releaseHWAddressOnly) {
+// - The server successfully declines the lease.
+TEST_F(DeclineTest, declineHWAddressOnly) {
     acquireAndDecline("01:02:03:04:05:06", "",
                       "01:02:03:04:05:06", "",
                       SHOULD_PASS);
 }
 
-// This test verifies the release correctness in the following case:
+// This test verifies the decline correctness in the following case:
 // - Client acquires new lease using the client identifier and HW address
-// - Client sends the DHCPRELEASE with valid HW address but with no
+// - Client sends the DHCPDECLINE with valid HW address but with no
 //   client identifier.
-// - The server successfully releases the lease.
-TEST_F(DeclineTest, releaseNoClientId) {
+// - The server successfully declines the lease.
+TEST_F(DeclineTest, declineNoClientId) {
     acquireAndDecline("01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "",
                       SHOULD_PASS);
 }
 
-// This test verifies the release correctness in the following case:
+// This test verifies the decline correctness in the following case:
 // - Client acquires new lease using HW address
-// - Client sends the DHCPRELEASE with valid HW address and some
+// - Client sends the DHCPDECLINE with valid HW address and some
 //   client identifier.
-// - The server identifies the lease using HW address and releases
+// - The server identifies the lease using HW address and declines
 //   this lease.
-TEST_F(DeclineTest, releaseNoClientId2) {
+TEST_F(DeclineTest, declineNoClientId2) {
     acquireAndDecline("01:02:03:04:05:06", "",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS);
@@ -239,10 +244,10 @@ TEST_F(DeclineTest, releaseNoClientId2) {
 
 // This test checks the server's behavior in the following case:
 // - Client acquires new lease using the client identifier and HW address
-// - Client sends the DHCPRELEASE with the valid HW address but with invalid
+// - Client sends the DHCPDECLINE with the valid HW address but with invalid
 //   client identifier.
 // - The server should not remove the lease.
-TEST_F(DeclineTest, releaseNonMatchingClientId) {
+TEST_F(DeclineTest, declineNonMatchingClientId) {
     acquireAndDecline("01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:15:16",
                       SHOULD_FAIL);
@@ -250,11 +255,11 @@ TEST_F(DeclineTest, releaseNonMatchingClientId) {
 
 // This test checks the server's behavior in the following case:
 // - Client acquires new lease using client identifier and HW address
-// - Client sends the DHCPRELEASE with the same client identifier but
+// - Client sends the DHCPDECLINE with the same client identifier but
 //   different HW address.
 // - The server uses client identifier to find the client's lease and
-//   releases it.
-TEST_F(DeclineTest, releaseNonMatchingHWAddress) {
+//   declines it.
+TEST_F(DeclineTest, declineNonMatchingHWAddress) {
     acquireAndDecline("01:02:03:04:05:06", "12:14",
                       "06:06:06:06:06:06", "12:14",
                       SHOULD_PASS);
@@ -262,30 +267,30 @@ TEST_F(DeclineTest, releaseNonMatchingHWAddress) {
 
 // This test checks the server's behavior in the following case:
 // - Client acquires new lease.
-// - Client sends DHCPRELEASE with the ciaddr set to a different
+// - Client sends DHCPDECLINE with the ciaddr set to a different
 //   address than it has acquired from the server.
-// - Server determines that the client is trying to release a
-//   wrong address and will refuse to release.
-TEST_F(DeclineTest, releaseNonMatchingIPAddress) {
+// - Server determines that the client is trying to decline a
+//   wrong address and will refuse to decline.
+TEST_F(DeclineTest, declineNonMatchingIPAddress) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
-    configure(RELEASE_CONFIGS[0], *client.getServer());
+    configure(DECLINE_CONFIGS[0], *client.getServer());
     // Perform 4-way exchange to obtain a new lease.
     acquireLease(client);
 
     // Remember the acquired address.
     IOAddress leased_address = client.config_.lease_.addr_;
 
-    // Modify the client's address to force it to release a different address
+    // Modify the client's address to force it to decline a different address
     // than it has obtained from the server.
     client.config_.lease_.addr_ = IOAddress(static_cast<uint32_t>(leased_address) + 1);
 
-    // Send DHCPRELEASE and make sure it was unsuccessful, i.e. the lease
+    // Send DHCPDECLINE and make sure it was unsuccessful, i.e. the lease
     // remains in the database.
     ASSERT_NO_THROW(client.doDecline());
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(leased_address);
     ASSERT_TRUE(lease);
-    EXPECT_EQ(DEFAULT, lease->state_);
+    EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
 }
 
 } // end of anonymous namespace
