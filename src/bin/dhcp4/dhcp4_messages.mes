@@ -177,6 +177,18 @@ This message is printed when DHCPv4 server disables an interface from being
 used to receive DHCPv4 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
+% DHCP4_DECLINE_LEASE_NOT_FOUND Received DHCPDECLINE for addr %1, but no such lease found. Client: %2
+This warning message indicates that a client reported that his address was
+detected as a duplicate (i.e. other device in the network is using this address).
+However, the server hoes not have a record for this address. This may indicate
+client's error or purged server's database.
+
+% DHCP4_DECLINE_LEASE_MISMATCH Received DHCPDECLINE for addr %1 from %2, but the data doesn't match: received hwaddr: %3, lease hwaddr: %4, received client-id: %5, lease client-id: %6
+This informational message means that a client attempts to report his address
+as declined (i.e. used by unknown entity). The server has information about
+a lease for that address, but the client's hardware address or client identifier
+do not match the server's stored information. Client's request will be ignored.
+
 % DHCP4_DHCID_COMPUTE_ERROR failed to compute the DHCID for lease: %1, reason: %2
 This error message is logged when the attempt to compute DHCID for a specified
 lease has failed. The lease details and reason for failure is logged in the

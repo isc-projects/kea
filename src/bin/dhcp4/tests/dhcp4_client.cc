@@ -281,6 +281,30 @@ Dhcp4Client::doRelease() {
 }
 
 void
+Dhcp4Client::doDecline() {
+    if (config_.lease_.addr_ == IOAddress::IPV4_ZERO_ADDRESS()) {
+        isc_throw(Dhcp4ClientError, "failed to send the decline"
+                  " message because client doesn't have a lease");
+    }
+    context_.query_ = createMsg(DHCPDECLINE);
+
+    // Set ciaddr to 0.
+    context_.query_->setCiaddr(IOAddress("0.0.0.0"));
+
+    // Include Requested IP Address Option
+    addRequestedAddress(config_.lease_.addr_);
+
+    // Include client identifier.
+    appendClientId();
+
+    // Remove configuration.
+    config_.reset();
+
+    // Send the message to the server.
+    sendMsg(context_.query_);
+}
+
+void
 Dhcp4Client::doRequest() {
     context_.query_ = createMsg(DHCPREQUEST);
 
