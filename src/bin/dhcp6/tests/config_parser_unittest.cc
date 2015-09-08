@@ -27,11 +27,11 @@
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_hosts.h>
-#include <dhcpsrv/defaults.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <hooks/hooks_manager.h>
+#include <defaults.h>
 
 #include "test_data_files_config.h"
 #include "test_libraries.h"

@@ -14,7 +14,10 @@
 
 /// @file   defaults.h
 /// 
-/// @brief Contains the default values of the server.
+/// @brief Contains the default values for various parameters.
+///
+/// While the content of this file is currently small, it is envisaged that it
+/// will grow over time.
 
 #ifndef DEFAULTS_H
 #define DEFAULTS_H

@@ -27,7 +27,6 @@
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/triplet.h>
-#include <dhcpsrv/defaults.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
@@ -37,6 +36,7 @@
 #include <log/logger_support.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
+#include <defaults.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
