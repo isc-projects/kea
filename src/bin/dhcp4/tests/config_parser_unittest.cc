@@ -32,8 +32,8 @@
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/testutils/config_result_check.h>
-#include <dhcpsrv/defaults.h>
 #include <hooks/hooks_manager.h>
+#include <defaults.h>
 
 #include "marker_file.h"
 #include "test_libraries.h"
