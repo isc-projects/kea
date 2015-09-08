@@ -30,7 +30,6 @@ libdhcp_ddns_unittests_SOURCES  = run_unittests.cc
 libdhcp_ddns_unittests_SOURCES += ncr_unittests.cc
 libdhcp_ddns_unittests_SOURCES += ncr_udp_unittests.cc
 libdhcp_ddns_unittests_SOURCES += test_utils.cc test_utils.h
-libdhcp_ddns_unittests_SOURCES += watch_socket_unittests.cc
 
 libdhcp_ddns_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 

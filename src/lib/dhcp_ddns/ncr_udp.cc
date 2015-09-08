@@ -260,7 +260,8 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
 
     send_callback_->setDataSource(server_endpoint_);
 
-    watch_socket_.reset(new WatchSocket());
+    closeWatchSocket();
+    watch_socket_.reset(new util::WatchSocket());
 }
 
 void
@@ -288,6 +289,7 @@ NameChangeUDPSender::close() {
 
     socket_.reset();
 
+    closeWatchSocket();
     watch_socket_.reset();
 }
 
@@ -372,7 +374,17 @@ NameChangeUDPSender::ioReady() {
     return (false);
 }
 
-
+void
+NameChangeUDPSender::closeWatchSocket() {
+    if (watch_socket_) {
+        std::string error_string;
+        watch_socket_->closeSocket(error_string);
+        if (!error_string.empty()) {
+            LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_UDP_SENDER_WATCH_SOCKET_CLOSE_ERROR)
+                .arg(error_string);
+        }
+    }
+}
 
 }; // end of isc::dhcp_ddns namespace
 }; // end of isc namespace
