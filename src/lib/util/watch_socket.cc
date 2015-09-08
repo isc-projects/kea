@@ -120,9 +120,6 @@ WatchSocket::clearReady() {
 
 bool
 WatchSocket::closeSocket(std::string& error_string) {
-    // Clear error string.
-    error_string.clear();
-
     std::ostringstream s;
     // Close the pipe fds.  Technically a close can fail (hugely unlikely)
     // but there's no recovery for it either.  If one does fail we log it

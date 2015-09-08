@@ -112,6 +112,17 @@ public:
 
     /// @brief Registers new timers in the @c TimerMgr.
     ///
+    /// This method must not be called while the worker thread is running,
+    /// as it modifies the internal data structure holding registered
+    /// timers, which is also accessed from the worker thread via the
+    /// callback. Inserting new element to this data structure and
+    /// reading it at the same time would yield undefined behavior.
+    ///
+    /// In order to prevent race conditions between the worker thread and
+    /// this method a mutex could be introduced. However, locking the mutex
+    /// would be required for all callback invocations, which could have
+    /// negative impact on the performance.
+    ///
     /// @param timer_name Unique name for the timer.
     /// @param callback Pointer to the callback function to be invoked
     /// when the timer elapses, e.g. function processing expired leases
@@ -132,6 +143,17 @@ public:
     /// This method cancels the timer if it is setup. It removes the external
     /// socket from the @c IfaceMgr and closes it. It finally removes the
     /// timer from the internal collection of timers.
+    ///
+    /// This method must not be called while the worker thread is running,
+    /// as it modifies the internal data structure holding registered
+    /// timers, which is also accessed from the worker thread via the
+    /// callback. Removing element from this data structure and
+    /// reading it at the same time would yield undefined behavior.
+    ///
+    /// In order to prevent race conditions between the worker thread and
+    /// this method a mutex could be introduced. However, locking the mutex
+    /// would be required for all callback invocations which could have
+    /// negative impact on the performance.
     ///
     /// @param timer_name Name of the timer to be unregistered.
     ///
