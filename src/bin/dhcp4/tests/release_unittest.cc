@@ -286,7 +286,7 @@ TEST_F(ReleaseTest, releaseNonMatchingIPAddress) {
 }
 
 // This test verifies that an incoming RELEASE for an address within
-// a subnet that has been removed
+// a subnet that has been removed can still be released.
 TEST_F(ReleaseTest, releaseNoSubnet) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
