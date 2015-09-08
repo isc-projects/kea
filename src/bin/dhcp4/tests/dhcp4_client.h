@@ -172,6 +172,13 @@ public:
     /// The released lease is removed from the client's configuration.
     void doRelease();
 
+
+    /// @brief Sends DHCPDECLINE Message to the server.
+    ///
+    /// This method simulates sending the DHCPDECLINE message to the server.
+    /// The released lease is removed from the client's configuration.
+    void doDecline();
+
     /// @brief Sends DHCPREQUEST Message to the server and receives a response.
     ///
     /// This method simulates sending the DHCPREQUEST message to the server and
