@@ -376,6 +376,24 @@ public:
     /// @ref CfgSubnets6::removeStatistics for details.
     void removeStatistics();
 
+    /// @brief Sets decline probation-period
+    ///
+    /// Probation-period is the timer, expressed, in seconds, that specifies how
+    /// long a lease is unavailable after reported as declined.
+    ///
+    /// @param decline_timer number of seconds after declined lease is restored
+    void setDeclinePeriod(const uint32_t decline_timer) {
+        decline_timer_ = decline_timer;
+    }
+
+    /// @brief Returns probation-period
+    ///
+    /// See @ref setDeclinePeriod for brief discussion.
+    /// @return value of probation-period, expressed in seconds
+    uint32_t getDeclinePeriod() const {
+        return (decline_timer_);
+    }
+
 private:
 
     /// @brief Sequence number identifying the configuration.
@@ -425,6 +443,12 @@ private:
 
     /// @brief Pointer to the control-socket information
     isc::data::ConstElementPtr control_socket_;
+
+    /// @brief Decline Period time
+    ///
+    /// This timer specifies decline probation period, the time after a declined
+    /// lease is recovered back to available state. Expressed in seconds.
+    uint32_t decline_timer_;
 };
 
 /// @name Pointers to the @c SrvConfig object.
