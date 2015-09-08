@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -100,9 +100,9 @@ const char* create_statement[] = {
 
     // Schema upgrade to 2.0 starts here.
     "ALTER TABLE lease6 "
-    "ADD COLUMN hwaddr varbinary(20),"
-    "ADD COLUMN hwtype smallint unsigned,"
-    "ADD COLUMN hwaddr_source int unsigned;",
+        "ADD COLUMN hwaddr varbinary(20),"
+        "ADD COLUMN hwtype smallint unsigned,"
+        "ADD COLUMN hwaddr_source int unsigned;",
 
     // Production schema has lease_hwaddr_source table. It is not used by
     // kea code and is simply useful for formulating more human readable
@@ -127,10 +127,10 @@ const char* create_statement[] = {
 
     // Schema upgrade to 4.0 starts here.
     "ALTER TABLE lease4 "
-    "ADD COLUMN state INT UNSIGNED DEFAULT 0",
+        "ADD COLUMN state INT UNSIGNED DEFAULT 0",
 
     "ALTER TABLE lease6 "
-    "ADD COLUMN state INT UNSIGNED DEFAULT 0",
+        "ADD COLUMN state INT UNSIGNED DEFAULT 0",
 
     "CREATE INDEX lease4_by_state_expire ON lease4 (state, expire)",
     "CREATE INDEX lease6_by_state_expire ON lease6 (state, expire)",
