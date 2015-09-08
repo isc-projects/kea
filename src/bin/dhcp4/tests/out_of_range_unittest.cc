@@ -19,16 +19,12 @@
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/host.h>
-#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
-#include <boost/shared_ptr.hpp>
 
 using namespace isc;
 using namespace isc::asiolink;
-using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
@@ -46,10 +42,8 @@ namespace {
 ///   - 1 hostname reservation (dynamic host) for HW address:
 ///     dd:dd:dd:dd:dd:01,
 ///   - DDNS enabled
-/// - Configuration 1:
-///   - Same as configuration 1 but with a different pool range
-/// - Configuration 2 - same subnet as reference, different pool,
-///       no reservations
+/// - Configuration 1 - same subnet, different pool
+/// - Configuration 2 - same subnet, different pool, no reservations
 /// - Configuration 3 - different subnet with reservations
 /// - Configuration 4 - different subnet with no reservations
 /// - Configuration 5 - same as reference, no reservations
@@ -451,7 +445,7 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfSubnet) {
 // whose address is within the configured subnet and pool, but whose
 // reservation has been removed:
 //
-// a: Is allowed to renew 
+// a: Is allowed to renew
 // b: Is released properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, dynamicHostReservationRemoved) {
