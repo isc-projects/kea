@@ -1645,7 +1645,6 @@ Developer:
   Google Tests: $enable_gtest
   Valgrind: $found_valgrind
   C++ Code Coverage: $USE_LCOV
-  Python Code Coverage: $USE_PYCOVERAGE
   Logger checks: $enable_logger_checks
   Generate Documentation: $enable_generate_docs
 
