@@ -362,7 +362,7 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     int select_fd = sender.getSelectFd();
 
     // Verify select_fd is valid and currently shows no ready to read.
-    ASSERT_NE(dhcp_ddns::WatchSocket::SOCKET_NOT_VALID, select_fd);
+    ASSERT_NE(util::WatchSocket::SOCKET_NOT_VALID, select_fd);
 
     // Make sure select_fd does evaluates to not ready via select and
     // that ioReady() method agrees.
@@ -747,7 +747,7 @@ TEST(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
     close(sender.getSelectFd());
 
     // Send should fail as we interferred by closing the select-fd.
-    ASSERT_THROW(sender.sendRequest(ncr), WatchSocketError);
+    ASSERT_THROW(sender.sendRequest(ncr), util::WatchSocketError);
 
     // Verify we didn't invoke the handler.
     EXPECT_EQ(0, ncr_handler.pass_count_);
@@ -827,7 +827,7 @@ TEST(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
     // Interfere by reading part of the marker from the select-fd.
     uint32_t buf = 0;
     ASSERT_EQ((read (select_fd, &buf, 1)), 1);
-    ASSERT_NE(WatchSocket::MARKER, buf);
+    ASSERT_NE(util::WatchSocket::MARKER, buf);
 
     // Run one handler. This should execute the send completion handler
     // after sending the message.  Duing completion handling clearing the
