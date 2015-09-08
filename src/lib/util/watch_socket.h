@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,13 +18,14 @@
 /// @file watch_socket.h Defines the class, WatchSocket.
 
 #include <exceptions/exceptions.h>
-
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <stdint.h>
+#include <string>
 
 namespace isc {
-namespace dhcp_ddns {
+namespace util {
 
 /// @brief Exception thrown if an error occurs during IO source open.
 class WatchSocketError : public isc::Exception {
@@ -51,7 +52,7 @@ public:
 /// such as close, read, or altering behavior flags with fcntl or ioctl can have
 /// unpredictable results.  It is intended strictly use with functions such as select()
 /// poll() or their variants.
-class WatchSocket {
+class WatchSocket : public boost::noncopyable {
 public:
     /// @brief Value used to signify an invalid descriptor.
     static const int SOCKET_NOT_VALID = -1;
@@ -114,11 +115,23 @@ public:
     /// pipe.
     int getSelectFd();
 
-private:
     /// @brief Closes the descriptors associated with the socket.
     ///
-    /// Used internally in the destructor and if an error occurs marking or
-    /// clearing the socket.
+    /// This method is used to close the socket and capture errors that
+    /// may occur during this operation.
+    ///
+    /// @param [out] error_string Holds the error string if closing
+    /// the socket failed. It will hold empty string otherwise.
+    ///
+    /// @return true if the operation was successful, false otherwise.
+    bool closeSocket(std::string& error_string);
+
+private:
+
+    /// @brief Closes the descriptors associated with the socket.
+    ///
+    /// This method is called by the class destructor and it ignores
+    /// any errors that may occur while closing the sockets.
     void closeSocket();
 
     /// @brief The end of the pipe to which the marker is written
@@ -132,7 +145,7 @@ private:
 /// @brief Defines a smart pointer to an instance of a WatchSocket.
 typedef boost::shared_ptr<WatchSocket> WatchSocketPtr;
 
-} // namespace isc::dhcp_ddns
+} // namespace isc::util
 } // namespace isc
 
 #endif

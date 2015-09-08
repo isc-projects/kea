@@ -409,7 +409,7 @@ protected:
     /// @brief Fetches the select-fd that is currently registered.
     ///
     /// @return The currently registered select-fd or
-    /// dhcp_ddns::WatchSocket::SOCKET_NOT_VALID.
+    /// util::WatchSocket::SOCKET_NOT_VALID.
     ///
     /// @note This is only exposed for testing purposes.
     int getRegisteredSelectFd();

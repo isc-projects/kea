@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,15 +14,17 @@
 
 /// @file watch_socket.cc
 
-#include <dhcp_ddns/dhcp_ddns_log.h>
-#include <dhcp_ddns/watch_socket.h>
+//#include <dhcp_ddns/dhcp_ddns_log.h>
+#include <util/watch_socket.h>
 
 #include <fcntl.h>
 #include <errno.h>
+#include <sstream>
+#include <string.h>
 #include <sys/select.h>
 
 namespace isc {
-namespace dhcp_ddns {
+namespace util {
 
 
 const int WatchSocket::SOCKET_NOT_VALID;
@@ -116,17 +118,17 @@ WatchSocket::clearReady() {
     }
 }
 
-void
-WatchSocket::closeSocket() {
+bool
+WatchSocket::closeSocket(std::string& error_string) {
+    std::ostringstream s;
     // Close the pipe fds.  Technically a close can fail (hugely unlikely)
     // but there's no recovery for it either.  If one does fail we log it
     // and go on. Plus this is called by the destructor and no one likes
     // destructors that throw.
     if (source_ != SOCKET_NOT_VALID) {
         if (close(source_)) {
-            const char* errstr = strerror(errno);
-            LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_WATCH_SOURCE_CLOSE_ERROR)
-                      .arg(errstr);
+            // An error occured.
+            s << "Could not close source: " << strerror(errno);
         }
 
         source_ = SOCKET_NOT_VALID;
@@ -134,13 +136,25 @@ WatchSocket::closeSocket() {
 
     if (sink_ != SOCKET_NOT_VALID) {
         if (close(sink_)) {
-            const char* errstr = strerror(errno);
-            LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_WATCH_SINK_CLOSE_ERROR)
-                      .arg(errstr);
+            // An error occured.
+            if (error_string.empty()) {
+                s << "could not close sink: " << strerror(errno);
+            }
         }
 
         sink_ = SOCKET_NOT_VALID;
     }
+
+    error_string = s.str();
+
+    // If any errors have been reported, return false.
+    return (error_string.empty() ? true : false);
+}
+
+void
+WatchSocket::closeSocket() {
+    std::string error_string;
+    closeSocket(error_string);
 }
 
 int
@@ -148,5 +162,5 @@ WatchSocket::getSelectFd() {
     return (sink_);
 }
 
-} // namespace isc::dhcp_ddns
+} // namespace isc::util
 } // namespace isc
