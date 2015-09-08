@@ -1,3 +1,8 @@
+1000.	[func]		marcin
+	Implemented Timer Manager which holds the pool of interval
+	timers used by the DHCP servers.
+	(Trac #3970, git bc8503055338da36d07a2b67c64087f645c9a9e3)
+
 999.	[func]*		tmark
 	The DHCPv4 server will now honor DHCPRELEASEs for leased addresses which
 	cannot be matched to subnet.  This allows leases to be released after
