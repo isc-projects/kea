@@ -102,6 +102,13 @@ Dhcp4Client::appendClientId() {
 }
 
 void
+Dhcp4Client::appendServerId() {
+    OptionPtr opt(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
+                                     config_.serverid_));
+    context_.query_->addOption(opt);
+}
+
+void
 Dhcp4Client::appendName() {
     if (!context_.query_) {
         isc_throw(Dhcp4ClientError, "pointer to the query must not be NULL"
@@ -286,6 +293,7 @@ Dhcp4Client::doDecline() {
         isc_throw(Dhcp4ClientError, "failed to send the decline"
                   " message because client doesn't have a lease");
     }
+
     context_.query_ = createMsg(DHCPDECLINE);
 
     // Set ciaddr to 0.
@@ -296,6 +304,9 @@ Dhcp4Client::doDecline() {
 
     // Include client identifier.
     appendClientId();
+
+    // Incluer server identifier.
+    appendServerId();
 
     // Remove configuration.
     config_.reset();
