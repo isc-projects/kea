@@ -1,3 +1,7 @@
+997.	[build]		jreed
+	Removed obsolete Python coverage build options.
+	(Trac #3483, git a08cbbecbd3b11d0b73f68a40986a353b22ed3be)
+
 996.	[func]		marcin
 	Memfile lease database backend has been extended with new
 	functions to obtain expired leases and to delete expired
