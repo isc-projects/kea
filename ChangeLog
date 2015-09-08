@@ -1,3 +1,9 @@
+998.	[func]		tomek
+	'decline-probation-period' parameter has been added to DHCPv4
+	and DHCPv6 configuration. It can be configured, but is not yet
+	used, as the DECLINE message support is still pending implementation.
+	(Trac #3983, git 6b10d119c89685476335f268181c9982f6fa6161)
+
 997.	[build]		jreed
 	Removed obsolete Python coverage build options.
 	(Trac #3483, git a08cbbecbd3b11d0b73f68a40986a353b22ed3be)
