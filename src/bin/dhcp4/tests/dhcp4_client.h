@@ -390,6 +390,12 @@ private:
     /// option in the client's message to the server.
     void appendClientId();
 
+    /// @brief Includes the Server Identifier option in the client's message.
+    ///
+    /// This function creates an instance of the Server Identifier option.
+    /// It uses whatever information is stored in config_.serverid_.
+    void appendServerId();
+
     /// @brief Includes FQDN or Hostname option in the client's message.
     ///
     /// This method checks if @c fqdn_ or @c hostname_ is specified and

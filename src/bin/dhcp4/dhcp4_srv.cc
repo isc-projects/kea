@@ -1844,14 +1844,15 @@ void
 Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
 
     // Server-id is mandatory in DHCPDECLINE (see table 5, RFC2131)
-    sanityCheck(decline, MANDATORY);
+    /// @todo Uncomment this (see ticket #3116)
+    // sanityCheck(decline, MANDATORY);
 
     // Client is supposed to specify the address being declined in
     // Requested IP address option, but must not set its ciaddr.
     // (again, see table 5 in RFC2131).
 
     OptionCustomPtr opt_requested_address = boost::dynamic_pointer_cast<
-        OptionCustom>(query->getOption(DHO_DHCP_REQUESTED_ADDRESS));
+        OptionCustom>(decline->getOption(DHO_DHCP_REQUESTED_ADDRESS));
     if (!opt_requested_address) {
 
         isc_throw(RFCViolation, "Mandatory 'Requested IP address' option missing"
@@ -1864,7 +1865,7 @@ Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
 
     // Now we need to check whether this address really belongs to the client
     // that attempts to decline it.
-    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
+    const Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
 
     if (!lease) {
         // Client tried to decline an address, but we don't have a lease for
@@ -1875,39 +1876,42 @@ Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
         // opportunity for that to be useful is small and the attack vector
         // would be pretty severe.
         LOG_WARN(dhcp4_logger, DHCP4_DECLINE_LEASE_NOT_FOUND)
-            .arg(addr->toText()).arg(decline->getLabel());
+            .arg(addr.toText()).arg(decline->getLabel());
         return;
     }
 
     // Get client-id, if available.
-    OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    OptionPtr opt_clientid = decline->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
     ClientIdPtr client_id;
     if (opt_clientid) {
         client_id.reset(new ClientId(opt_clientid->getData()));
     }
 
     // Check if the client attempted to decline a lease it doesn't own.
-    if (!lease->belongsToClient(ctx.hwaddr_, ctx.clientid_)) {
+    if (!lease->belongsToClient(decline->getHWAddr(), client_id)) {
 
         // Get printable hardware addresses
         string client_hw = decline->getHWAddr() ?
             decline->getHWAddr()->toText(false) : "(none)";
         string lease_hw = lease->hwaddr_ ?
-            lease->hwaddr_->getHWAddr()->toText(false) : "(none)";
+            lease->hwaddr_->toText(false) : "(none)";
 
         // Get printable client-ids
-        string client_id = client_id ? client_id->toText() : "(none)";
-        string lease_id = lease->client_id ? lease->client_id_->toText() : "(none)";
+        string client_id_txt = client_id ? client_id->toText() : "(none)";
+        string lease_id_txt = lease->client_id_ ?
+            lease->client_id_->toText() : "(none)";
 
+        // Print the warning and we're done here.
         LOG_WARN(dhcp4_logger, DHCP4_DECLINE_LEASE_MISMATCH)
-            .arg(addr->toText()).arg(decline->getLabel())
-            .arg(client_hw).arg(lease_hw).arg(client_id).arg(lease_id);
+            .arg(addr.toText()).arg(decline->getLabel())
+            .arg(client_hw).arg(lease_hw).arg(client_id_txt).arg(lease_id_txt);
+
         return;
     }
 
     // Ok, all is good. The client is reporting its own address. Let's
     // process it.
-    declineLease(lease);
+    declineLease(lease, decline->getLabel());
 }
 
 void
@@ -1922,30 +1926,30 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const std::string& descr) {
     }
 
     // Bump up the statistics.
-    isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed",
-                                              static_cast<int64_t>(1));
+    std::stringstream name;
+    name << "subnet[" << lease->subnet_id_ << "].declined-addresses";
+    isc::stats::StatsMgr::instance().addValue(name.str(), static_cast<int64_t>(1));
 
     // @todo: Call hooks.
 
     // We need to disassociate the lease from the client. Once we move a lease
     // to declined state, it is no longer associated with the client in any
     // way.
-    lease->hwaddr_.resize(0);
-    lease->hwaddr_.client_id_.reset();
+    lease->hwaddr_.reset(new HWAddr());
+    lease->client_id_.reset();
     lease->t1_ = 0;
     lease->t2_ = 0;
-    lease->valid_lft_ = CfgMgr::instance().getCurrentCfg()->getDelinedPeriod();
-    lease->cltt_ = now();
+    lease->valid_lft_ = CfgMgr::instance().getCurrentCfg()->getDeclinePeriod();
+    lease->cltt_ = time(NULL);
     lease->hostname_ = string("");
     lease->fqdn_fwd_ = false;
     lease->fqdn_rev_ = false;
 
-    lease->state = DECLINED;
-    LeaseMgrFactory::instance().updateLease4();
+    lease->state_ = Lease::STATE_DECLINED;
+    LeaseMgrFactory::instance().updateLease4(lease);
 
-    LOG_INFO(dhcp4_logger, DHCP4_DECLINE_ADDR)
-        .arg(lease->addr_->toText()).arg(descr)
-        .arg(lease->valid_lft_);
+    LOG_INFO(dhcp4_logger, DHCP4_DECLINE_LEASE).arg(lease->addr_.toText())
+        .arg(descr).arg(lease->valid_lft_);
 }
 
 Pkt4Ptr

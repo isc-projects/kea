@@ -535,6 +535,20 @@ private:
     /// server's response.
     void processHostnameOption(Dhcpv4Exchange& ex);
 
+    /// @brief Marks lease as declined.
+    ///
+    /// This method moves a lease to declined state with all the steps involved:
+    /// - trigger DNS removal (if necessary)
+    /// - disassociate the client information
+    /// - update lease in the database (switch to DECLINED state)
+    /// - increase necessary statistics
+    /// - call appropriate hook (@todo)
+    ///
+    /// @param lease lease to be declined
+    /// @param descr textual description of the client (will be used for logging)
+    void
+    declineLease(const Lease4Ptr& lease, const std::string& descr);
+
 protected:
 
     /// @brief Creates NameChangeRequests which correspond to the lease
