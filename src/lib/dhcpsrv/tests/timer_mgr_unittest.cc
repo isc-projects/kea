@@ -446,6 +446,23 @@ TEST_F(TimerMgrTest, stopThreadWithRunningHandlers) {
     // There should be no calls registered for the timer1.
     EXPECT_EQ(0, calls_count_["timer1"]);
 
+    // Stop the worker thread without completing pending callbacks.
+    ASSERT_NO_THROW(timer_mgr.stopThread(false));
+
+    // There should be still not be any calls registered.
+    EXPECT_EQ(0, calls_count_["timer1"]);
+
+    // We can restart the worker thread before we even kick in the timers.
+    ASSERT_NO_THROW(timer_mgr.startThread());
+
+    // Run the thread for 100ms. This should run some timers. The 'false'
+    // value indicates that the IfaceMgr::receive6 is not called, so the
+    // watch socket is never cleared.
+    doWait(100, false);
+
+    // There should be no calls registered for the timer1.
+    EXPECT_EQ(0, calls_count_["timer1"]);
+
     // Stop the worker thread with completing pending callbacks.
     ASSERT_NO_THROW(timer_mgr.stopThread(true));
 
