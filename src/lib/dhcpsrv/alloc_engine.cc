@@ -14,8 +14,12 @@
 
 #include <config.h>
 
+#include <dhcp/option_data_types.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/alloc_engine_log.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host.h>
@@ -34,6 +38,7 @@
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::stats;
 
@@ -1270,6 +1275,66 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
         updated_leases.push_back(lease);
     }
     return (updated_leases);
+}
+
+void
+AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeout,
+                                   const bool remove_lease) {
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+
+    Lease6Collection leases;
+    lease_mgr.getExpiredLeases6(leases, max_leases);
+
+    for (Lease6Collection::const_iterator lease_it = leases.begin();
+         lease_it != leases.end(); ++lease_it) {
+
+        /// @todo execute a lease6_expire hook here
+
+        /// @todo perform DNS update here
+        queueNameChangeRequest(*lease_it, *(*lease_it)->duid_);
+
+        // Reclaim the lease - depending on the configuration, set the
+        // expired-reclaimed state or simply remove it.
+        if (remove_lease) {
+            LeaseMgrFactory::instance().deleteLease((*lease_it)->addr_);
+
+        } else {
+            (*lease_it)->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+            LeaseMgrFactory::instance().updateLease6(*lease_it);
+        }
+    }
+}
+
+template<typename LeasePtrType, typename IdentifierType>
+void
+AllocEngine::queueNameChangeRequest(const LeasePtrType& lease,
+                                    const IdentifierType& identifier) const {
+
+    if (lease->hostname_.empty() || !lease->fqdn_fwd_ || !lease->fqdn_rev_) {
+        return;
+    }
+
+    if (!CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
+        return;
+    }
+
+    std::vector<uint8_t> hostname_wire;
+    try {
+        OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
+
+    } catch (const std::exception& ex) {
+
+    }
+
+    isc::dhcp_ddns::D2Dhcid dhcid(identifier, hostname_wire);
+    NameChangeRequestPtr ncr;
+    ncr.reset(new NameChangeRequest(isc::dhcp_ddns::CHG_REMOVE,
+                                    lease->fqdn_fwd_, lease->fqdn_rev_,
+                                    lease->hostname_,
+                                    lease->addr_.toText(),
+                                    dhcid, 0, lease->valid_lft_));
+
+    CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
 }
 
 } // end of isc::dhcp namespace
