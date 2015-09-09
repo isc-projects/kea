@@ -136,7 +136,7 @@ public:
         if (getForwardDomain()) {
             initServerSelection(getForwardDomain());
             selectNextServer();
-            return (getCurrentServer());
+            return (getCurrentServer().get() != 0);
         }
 
         return (false);
@@ -150,7 +150,7 @@ public:
         if (getReverseDomain()) {
             initServerSelection(getReverseDomain());
             selectNextServer();
-            return (getCurrentServer());
+            return (getCurrentServer().get() != 0);
         }
 
         return (false);

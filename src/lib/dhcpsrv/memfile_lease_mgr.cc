@@ -221,6 +221,10 @@ LFCSetup::getExitStatus() const {
     return (process_->getExitStatus(pid_));
 }
 
+// Explicit definition of class static constants.  Values are given in the
+// declaration so they're not needed here.
+const int Memfile_LeaseMgr::MAJOR_VERSION;
+const int Memfile_LeaseMgr::MINOR_VERSION;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
     : LeaseMgr(parameters),

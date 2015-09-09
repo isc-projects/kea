@@ -99,7 +99,7 @@ public:
         if (getForwardDomain()) {
             initServerSelection(getForwardDomain());
             selectNextServer();
-            return (getCurrentServer());
+            return (getCurrentServer().get() != 0);
         }
 
         return (false);
