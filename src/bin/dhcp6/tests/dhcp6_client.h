@@ -269,6 +269,11 @@ public:
     /// receiving server's response (if any).
     void doConfirm();
 
+    /// @brief Sends Decline to the server and receives Reply.
+    ///
+    /// This function simulates sending the Decline message to the server and
+    /// receiving the server's response.
+    void doDecline();
 
     /// @brief Performs stateless (inf-request / reply) exchange.
     ///
@@ -571,11 +576,16 @@ private:
     /// or Rebind.
     ///
     /// @param reply Server response.
+    /// @param state specifies lease state (see Lease::STATE_* for details).
+    ///
+    /// The default for state is 0. We could have included dhcpsrv/lease.h
+    /// and used Lease::STATE_DEFAULT, but that would complicate the header
+    /// inclusion dependencies. It's easier to simply use 0 as the default.
     ///
     /// @todo Currently this function supports one IAAddr or IAPrefix option
     /// within IA. We will need to extend it to support multiple options
     /// within a single IA once server supports that.
-    void applyRcvdConfiguration(const Pkt6Ptr& reply);
+    void applyRcvdConfiguration(const Pkt6Ptr& reply, uint32_t state = 0);
 
     /// @brief Applies configuration for the single lease.
     ///
