@@ -121,7 +121,7 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
 }
 
 void
-Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
+Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply, uint32_t state) {
     typedef OptionCollection Opts;
     // Get all options in the reply message and pick IA_NA, IA_PD and
     // Status code.
@@ -161,6 +161,7 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
                                        ia->getT1(), ia->getT2(), 0,
                                        hwaddr);
                         lease.cltt_ = time(NULL);
+                        lease.state_ = state;
                         applyLease(lease);
                     }
                 }
@@ -526,6 +527,29 @@ Dhcp6Client::doConfirm() {
         applyRcvdConfiguration(context_.response_);
     }
 }
+
+void
+Dhcp6Client::doDecline() {
+    Pkt6Ptr query = createMsg(DHCPV6_DECLINE);
+    if (!forced_server_id_) {
+        query->addOption(context_.response_->getOption(D6O_SERVERID));
+    } else {
+        query->addOption(forced_server_id_);
+    }
+    copyIAs(context_.response_, query);
+    appendRequestedIAs(query);
+
+    context_.query_ = query;
+    sendMsg(context_.query_);
+    context_.response_ = receiveOneMsg();
+
+    // Apply new configuration only if the server has responded.
+    if (context_.response_) {
+        config_.clear();
+        applyRcvdConfiguration(context_.response_);
+    }
+}
+
 
 void
 Dhcp6Client::fastFwdTime(const uint32_t secs) {
