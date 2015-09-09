@@ -194,7 +194,7 @@ void
 Dhcp4Client::createLease(const asiolink::IOAddress& addr,
                          const uint32_t valid_lft) {
     Lease4 lease(addr, hwaddr_, 0, 0, valid_lft, valid_lft / 2, valid_lft,
-                 time(NULL), false, false, "");
+                 time(NULL), 0, false, false, "");
     config_.lease_ = lease;
 }
 

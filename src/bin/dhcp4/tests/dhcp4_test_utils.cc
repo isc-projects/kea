@@ -146,23 +146,23 @@ Dhcpv4SrvTest::basicOptionsPresent(const Pkt4Ptr& pkt) {
     errmsg << "option missing in the response";
     if (!pkt->getOption(DHO_DOMAIN_NAME)) {
         return (::testing::AssertionFailure(::testing::Message()
-                                            << "domain-name " << errmsg));
+                                            << "domain-name " << errmsg.str()));
 
     } else if (!pkt->getOption(DHO_DOMAIN_NAME_SERVERS)) {
         return (::testing::AssertionFailure(::testing::Message()
-                                            << "dns-servers " << errmsg));
+                                            << "dns-servers " << errmsg.str()));
 
     } else if (!pkt->getOption(DHO_SUBNET_MASK)) {
         return (::testing::AssertionFailure(::testing::Message()
-                                            << "subnet-mask " << errmsg));
+                                            << "subnet-mask " << errmsg.str()));
 
     } else if (!pkt->getOption(DHO_ROUTERS)) {
         return (::testing::AssertionFailure(::testing::Message() << "routers "
-                                            << errmsg));
+                                            << errmsg.str()));
 
     } else if (!pkt->getOption(DHO_DHCP_LEASE_TIME)) {
         return (::testing::AssertionFailure(::testing::Message() <<
-                                            "dhcp-lease-time " << errmsg));
+                                            "dhcp-lease-time " << errmsg.str()));
 
     }
     return (::testing::AssertionSuccess());
@@ -175,23 +175,23 @@ Dhcpv4SrvTest::noBasicOptions(const Pkt4Ptr& pkt) {
     errmsg << "option present in the response";
     if (pkt->getOption(DHO_DOMAIN_NAME)) {
         return (::testing::AssertionFailure(::testing::Message()
-                                            << "domain-name " << errmsg));
+                                            << "domain-name " << errmsg.str()));
 
     } else if (pkt->getOption(DHO_DOMAIN_NAME_SERVERS)) {
         return (::testing::AssertionFailure(::testing::Message()
-                                            << "dns-servers " << errmsg));
+                                            << "dns-servers " << errmsg.str()));
 
     } else if (pkt->getOption(DHO_SUBNET_MASK)) {
         return (::testing::AssertionFailure(::testing::Message()
-                                            << "subnet-mask " << errmsg));
+                                            << "subnet-mask " << errmsg.str()));
 
     } else if (pkt->getOption(DHO_ROUTERS)) {
         return (::testing::AssertionFailure(::testing::Message() << "routers "
-                                            << errmsg));
+                                            << errmsg.str()));
 
     } else if (pkt->getOption(DHO_DHCP_LEASE_TIME)) {
         return (::testing::AssertionFailure(::testing::Message()
-                                            << "dhcp-lease-time " << errmsg));
+                                            << "dhcp-lease-time " << errmsg.str()));
 
     }
     return (::testing::AssertionSuccess());
@@ -203,11 +203,11 @@ Dhcpv4SrvTest::requestedOptionsPresent(const Pkt4Ptr& pkt) {
     errmsg << "option missing in the response";
     if (!pkt->getOption(DHO_LOG_SERVERS)) {
         return (::testing::AssertionFailure(::testing::Message()
-                                            << "log-servers " << errmsg));
+                                            << "log-servers " << errmsg.str()));
 
     } else if (!pkt->getOption(DHO_COOKIE_SERVERS)) {
         return (::testing::AssertionFailure(::testing::Message()
-                                            << "cookie-servers " << errmsg));
+                                            << "cookie-servers " << errmsg.str()));
 
     }
     return (::testing::AssertionSuccess());
@@ -219,11 +219,11 @@ Dhcpv4SrvTest::noRequestedOptions(const Pkt4Ptr& pkt) {
     errmsg << "option present in the response";
     if (pkt->getOption(DHO_LOG_SERVERS)) {
         return (::testing::AssertionFailure(::testing::Message()
-                                            << "log-servers " << errmsg));
+                                            << "log-servers " << errmsg.str()));
 
     } else if (pkt->getOption(DHO_COOKIE_SERVERS)) {
         return (::testing::AssertionFailure(::testing::Message()
-                                            << "cookie-servers " << errmsg));
+                                            << "cookie-servers " << errmsg.str()));
 
     }
     return (::testing::AssertionSuccess());
