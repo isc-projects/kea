@@ -1,14 +1,23 @@
+1001.	[build]		fdupont
+	Fixed critical C++ issues in the Kea code. This does not cover
+	auto_ptr warnings (just ignore them) or the gtest 1.7.0 bug with
+	EXPECT_TRUE() and ASSERT_TRUE() macros (we recommend to download
+	last subversion souces at http://googletest.googlecode.com/svn/trunk
+	and use the --with-gtest-source configuration argument when
+	you'd like to build unit tests).
+	(Trac #4024, git xxx)
+
 1000.	[func]		marcin
 	Implemented Timer Manager which holds the pool of interval
 	timers used by the DHCP servers.
 	(Trac #3970, git bc8503055338da36d07a2b67c64087f645c9a9e3)
 
 999.	[func]*		tmark
-	The DHCPv4 server will now honor DHCPRELEASEs for leased addresses which
-	cannot be matched to subnet.  This allows leases to be released after
-	configuration changes have eliminated their subnet.  Prior to this
-	the server would reject the release and emit a DHCP4_RELEASE_FAIL_NO_SUBNET
-	log message.
+	The DHCPv4 server will now honor DHCPRELEASEs for leased addresses
+	which cannot be matched to subnet.  This allows leases to be
+	released after configuration changes have eliminated their subnet.
+	Prior to this the server would reject the release and emit a
+	DHCP4_RELEASE_FAIL_NO_SUBNET log message.
 	(Trac #2615, git eeebf9f68cf5be6a0f7eefc78832d664361c4990)
 
 998.	[func]		tomek
