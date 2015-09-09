@@ -252,10 +252,15 @@ public:
 
     /// @brief Lease algorithm checking if lease state is expired-reclaimed.
     ///
+    /// This algorithm also checks that the FQDN information has been removed
+    /// from the lease.
+    ///
     /// @param lease Pointer to lease.
     /// @return true if lease state is "expired-reclaimed".
     static bool leaseReclaimed(const Lease6Ptr& lease) {
-        return (lease && lease->stateExpiredReclaimed());
+        return (lease && lease->stateExpiredReclaimed() &&
+                lease->hostname_.empty() && !lease->fqdn_fwd_ &&
+                !lease->fqdn_rev_);
     }
 
     /// @brief Lease algorithm checking if lease state is not
@@ -299,6 +304,11 @@ ExpirationAllocEngine6Test::~ExpirationAllocEngine6Test() {
         mgr.stopSender();
         mgr.clearQueue();
     }
+    // Reset configuration. This is important because the CfgMgr is
+    // a singleton and test configuration would affect all subsequent
+    // tests.
+    D2ClientConfigPtr cfg(new D2ClientConfig());
+    mgr.setD2ClientConfig(cfg);
 }
 
 void
@@ -636,6 +646,46 @@ TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeases6WithDDNSAndLimit) {
     }
 }
 
+// This test verifies that if some leases have invalid hostnames, the
+// lease reclamation routine continues with reclamation of leases anyway.
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeases6InvalidHostname) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
+    ASSERT_TRUE(engine);
 
+    // DNS must be started for the D2 client to accept NCRs.
+    ASSERT_NO_THROW(enableDDNS());
+
+    for (size_t i = 0; i < TEST_LEASES_NUM; ++i) {
+        // Generate invalid hostname for every other lease.
+        if (evenLeaseIndex(i)) {
+            // Hostname with two consecutive dots is invalid and may result
+            // in exception if the reclamation routine doesn't protect
+            // aginst such exceptions.
+            std::ostringstream hostname_s;
+            hostname_s << "invalid-host" << i << "..example.com";
+            leases_[i]->hostname_ = hostname_s.str();
+            ASSERT_NO_THROW(LeaseMgrFactory::instance().updateLease6(leases_[i]));
+        }
+        // Every lease is expired.
+        expire(i, 10 + i);
+    }
+
+    // Although we know that some hostnames are broken we don't want the
+    // reclamation process to break when it finds a broken record.
+    // It should rather continue to process other leases.
+    ASSERT_NO_THROW(engine->reclaimExpiredLeases6(0, 0, false));
+
+    // All leases should have been reclaimed. Broken DNS entry doesn't
+    // warrant that we don't reclaim the lease.
+    EXPECT_TRUE(testLeases(&leaseReclaimed, &allLeaseIndexes));
+    // The routine should not generate DNS updates for the leases with broken
+    // hostname.
+    EXPECT_TRUE(testLeases(&dnsUpdateNotGeneratedForLease, &evenLeaseIndex));
+    // But it should generate DNS updates for the leases with the correct
+    // hostname.
+    EXPECT_TRUE(testLeases(&dnsUpdateGeneratedForLease, &oddLeaseIndex));
+}
 
 }; // end of anonymous namespace
