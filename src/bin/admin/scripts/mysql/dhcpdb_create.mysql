@@ -268,6 +268,18 @@ ALTER TABLE lease6
 CREATE INDEX lease4_by_state_expire ON lease4 (state, expire);
 CREATE INDEX lease6_by_state_expire ON lease6 (state, expire);
 
+# Create table holding mapping of the lease states to their names.
+# This is not used in queries from the DHCP server but rather in
+# direct queries from the lease database management tools.
+CREATE TABLE IF NOT EXISTS lease_state (
+  `state` INT UNSIGNED PRIMARY KEY NOT NULL,
+  `name` VARCHAR(64) NOT NULL);
+
+  # Insert currently defined state names.
+  INSERT INTO lease_state VALUES (0, "default");
+  INSERT INTO lease_state VALUES (1, "declined");
+  INSERT INTO lease_state VALUES (2, "expired-reclaimed");
+
 UPDATE schema_version
 SET version = '4', minor = '0';
 # This line concludes database upgrade to version 4.0.
