@@ -5,7 +5,7 @@
 	last subversion souces at http://googletest.googlecode.com/svn/trunk
 	and use the --with-gtest-source configuration argument when
 	you'd like to build unit tests).
-	(Trac #4024, git xxx)
+	(Trac #4024, git 55afd98fead0c16bb81107dfc1a5f49a5e295aa6)
 
 1000.	[func]		marcin
 	Implemented Timer Manager which holds the pool of interval
