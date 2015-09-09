@@ -114,15 +114,15 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
     ASSERT_NO_THROW(configure(DECLINE_CONFIGS[0], *client.getServer()));
 
     // Let's get the subnet-id and generate statistics name out of it.
-    const Subnet4Collection* subnets =
-        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     ASSERT_EQ(1, subnets->size());
     std::stringstream name;
     name << "subnet[" << subnets->at(0)->getID() << "].declined-addresses";
 
     // Set this statistic explicitly to zero.
     isc::stats::StatsMgr::instance().setValue(name.str(), static_cast<int64_t>(0));
-    
+
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
 
@@ -143,16 +143,22 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
     if (!decline_correct_address) {
 
         // Simple increase by one.
-        leases_client_na[0].addr_ = IOAddress::increase(leases_client_na[0].addr_);
+        client.config_.leases_[0].addr_ =
+            IOAddress::increase(client.config_.leases_[0].addr_);
     }
-    
-    // Ok, let's decline the lease.
+
+    // Use the second duid
     client.setDUID(duid2);
-    client.useNA(iaid2);
+
+    // Use the second IAID
+    client.config_.leases_[0].iaid_ = iaid2;
+
+    // Ok, let's decline the lease.
     ASSERT_NO_THROW(client.doDecline());
 
     // Let's check if there's a lease
-    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, acquired_address);
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                            acquired_address);
     ASSERT_TRUE(lease);
     
     declined_cnt = StatsMgr::instance().getObservation(name.str());
@@ -178,7 +184,7 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
 }
 
 // This test checks that the client can acquire and decline the lease.
-TEST_F(DeclineTest, declineBasic) {
+TEST_F(DeclineTest, basic) {
     acquireAndDecline("01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:06", 1234,
                       true, SHOULD_PASS);
@@ -188,7 +194,7 @@ TEST_F(DeclineTest, declineBasic) {
 // - Client acquires new lease using duid, iaid
 // - Client sends the DHCPDECLINE with duid, iaid, but uses wrong address.
 // - The server rejects Decline due to address mismatch
-TEST_F(DeclineTest, declineAddressMismatch) {
+TEST_F(DeclineTest, addressMismatch) {
     acquireAndDecline("01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:06", 1234,
                       false, SHOULD_FAIL);
@@ -198,7 +204,7 @@ TEST_F(DeclineTest, declineAddressMismatch) {
 // - Client acquires new lease using duid, iaid1
 // - Client sends the DHCPDECLINE with duid, iaid2
 // - The server rejects Decline due to IAID mismatch
-TEST_F(DeclineTest, declineIAIDMismatch) {
+TEST_F(DeclineTest, iaidMismatch) {
     acquireAndDecline("01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:06", 1235,
                       true, SHOULD_FAIL);
@@ -208,10 +214,10 @@ TEST_F(DeclineTest, declineIAIDMismatch) {
 // - Client acquires new lease using duid1, iaid
 // - Client sends the DHCPDECLINE using duid2, iaid
 // - The server rejects the Decline due to DUID mismatch
-TEST_F(DeclineTest, declineDuidMismatch) {
+TEST_F(DeclineTest, duidMismatch) {
     acquireAndDecline("01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:07", 1234,
-                      true, SHOULD_PASS);
+                      true, SHOULD_FAIL);
 }
 
 } // end of anonymous namespace
