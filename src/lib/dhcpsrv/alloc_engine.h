@@ -678,9 +678,20 @@ private:
     /// @param lease IPv6 lease to be extended.
     void extendLease6(ClientContext6& ctx, Lease6Ptr lease);
 
+    /// @brief Sends removal name change reuqest to D2.
+    ///
+    /// This method is exception safe.
+    ///
+    /// @param lease Pointer to a lease for which NCR should be sent.
+    /// @param identifier Identifier to be used to generate DHCID for
+    /// the DNS update. For DHCPv4 it will be hardware address, client
+    /// identifier. For DHCPv6 it will be a DUID.
+    ///
+    /// @tparam LeasePtrType Pointer to a lease.
+    /// @tparam Identifier HW Address, Client Identifier or DUID.
     template<typename LeasePtrType, typename IdentifierType>
-    void queueNameChangeRequest(const LeasePtrType& lease,
-                                const IdentifierType& identifier) const;
+    void queueRemovalNameChangeRequest(const LeasePtrType& lease,
+                                       const IdentifierType& identifier) const;
 
 public:
 
