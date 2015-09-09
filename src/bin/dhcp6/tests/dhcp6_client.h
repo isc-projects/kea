@@ -565,6 +565,12 @@ public:
         return (duid_);
     }
 
+    /// @brief Generates IA_NA based on lease information
+    ///
+    /// @param query generated IA_NA options will be added here
+    void
+    generateIAFromLeases(const Pkt6Ptr& query);
+
 private:
 
     /// @brief Applies the new leases for the client.

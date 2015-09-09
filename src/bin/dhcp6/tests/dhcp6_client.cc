@@ -536,8 +536,8 @@ Dhcp6Client::doDecline() {
     } else {
         query->addOption(forced_server_id_);
     }
-    copyIAs(context_.response_, query);
-    appendRequestedIAs(query);
+
+    generateIAFromLeases(query);
 
     context_.query_ = query;
     sendMsg(context_.query_);
@@ -550,6 +550,23 @@ Dhcp6Client::doDecline() {
     }
 }
 
+void
+Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query) {
+    /// @todo: add support for IAPREFIX here.
+
+    for (std::vector<Lease6>::const_iterator lease = config_.leases_.begin();
+         lease != config_.leases_.end(); ++lease) {
+        if (lease->type_ != Lease::TYPE_NA) {
+            continue;
+        }
+
+        Option6IAPtr ia(new Option6IA(D6O_IA_NA, lease->iaid_));
+
+        ia->addOption(Option6IAAddrPtr(new Option6IAAddr(D6O_IAADDR,
+                      lease->addr_, lease->preferred_lft_, lease->valid_lft_)));
+        query->addOption(ia);
+    }
+}
 
 void
 Dhcp6Client::fastFwdTime(const uint32_t secs) {
