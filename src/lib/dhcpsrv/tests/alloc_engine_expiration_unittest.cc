@@ -23,6 +23,7 @@
 #include <iomanip>
 #include <sstream>
 #include <time.h>
+#include <vector>
 
 using namespace std;
 using namespace isc;
@@ -83,7 +84,7 @@ struct UpperBound {
     size_t upper_bound_;
 };
 
-/// @brief Test fixture class for the lease reclamation routines in the
+/// @brief Base test fixture class for the lease reclamation routines in the
 /// @c AllocEngine.
 ///
 /// This class implements infrastructure for testing leases reclamation
@@ -107,7 +108,7 @@ struct UpperBound {
 /// check that DNS updates are not generated for them.
 ///
 /// The tests are built around the
-/// @c ExpirationAllocEngine6Test::testLeases methods. These methods
+/// @c ExpirationAllocEngineTest::testLeases methods. These methods
 /// verify that the certain operations have been performed by the
 /// lease reclamation routine on selected leases. The leases for which
 /// certain conditions should be met are selected using the "index
@@ -140,33 +141,55 @@ struct UpperBound {
 /// after lease reclamation leases with even indexes have state set to
 /// "expired-reclaimed".
 ///
-/// See @c ExpirationAllocEngine6Test::testLeases for further details.
-class ExpirationAllocEngine6Test : public AllocEngine6Test {
+/// See @c ExpirationAllocEngineTest::testLeases for further details.
+template<typename LeasePtrType>
+class ExpirationAllocEngineTest : public ::testing::Test {
 public:
 
     /// @brief Type definition for the lease algorithm.
-    typedef boost::function<bool (const Lease6Ptr)> LeaseAlgorithmFun;
+    typedef boost::function<bool (const LeasePtrType)> LeaseAlgorithmFun;
     /// @brief type definition for the lease index algorithm.
     typedef boost::function<bool (const size_t)> IndexAlgorithmFun;
 
-    /// @brief Class constructor.
+    /// @brief Constructor.
     ///
-    /// This constructor initializes @c TEST_LEASES_NUM leases and
-    /// stores them in the lease manager.
-    ExpirationAllocEngine6Test();
+    /// Clears configuration, creates new lease manager and allocation engine
+    /// instances.
+    ExpirationAllocEngineTest(const std::string& lease_mgr_params) {
+        CfgMgr::instance().clear();
+        LeaseMgrFactory::create(lease_mgr_params);
 
-    /// @brief Class destructor.
-    ///
-    /// It stops the D2 client, if it is running.
-    virtual ~ExpirationAllocEngine6Test();
+        engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                      100, false));
 
-    /// @brief Creates collection of leases for a test.
+    }
+
+    /// @brief Destructor
     ///
-    /// It is called internally at the construction time.
-    void createLeases();
+    /// Stops D2 client (if running), clears configuration and removes
+    /// an instance of the lease manager.
+    virtual ~ExpirationAllocEngineTest() {
+        // Stop D2 client if running and remove all queued name change
+        // requests.
+        D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
+        if (mgr.amSending()) {
+            mgr.stopSender();
+            mgr.clearQueue();
+        }
+
+        CfgMgr::instance().clear();
+        LeaseMgrFactory::destroy();
+    }
 
     /// @brief Starts D2 client.
-    void enableDDNS() const;
+    void enableDDNS() const {
+        // Start DDNS and assign no-op error handler.
+        D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
+        D2ClientConfigPtr cfg(new D2ClientConfig());
+        cfg->enableUpdates(true);
+        mgr.setD2ClientConfig(cfg);
+        mgr.startSender(boost::bind(&ExpirationAllocEngineTest::d2ErrorHandler, _1, _2));
+    }
 
     /// @brief No-op error handler for the D2 client.
     static void d2ErrorHandler(const dhcp_ddns::NameChangeSender::Result,
@@ -179,7 +202,35 @@ public:
     /// @c TEST_LEASES_NUM.
     /// @param secs Offset of the expiration time since now. For example
     /// a value of 2 would set the lease expiration time to 2 seconds ago.
-    void expire(const unsigned int lease_index, const time_t secs);
+    void expire(const unsigned int lease_index, const time_t secs) {
+        ASSERT_GT(leases_.size(), lease_index);
+        // We set the expiration time indirectly by modifying the cltt value.
+        leases_[lease_index]->cltt_ = time(NULL) - secs -
+            leases_[lease_index]->valid_lft_;
+        ASSERT_NO_THROW(updateLease(lease_index));
+    }
+
+    /// @brief Updates lease in the lease database.
+    ///
+    /// @param lease_index Index of the lease.
+    virtual void updateLease(const unsigned int lease_index) = 0;
+
+    /// @brief Retrieves lease from the database.
+    ///
+    /// @param lease_index Index of the lease.
+    virtual LeasePtrType getLease(const unsigned int lease_index) const = 0;
+
+    /// @brief Wrapper method running lease reclamation routine.
+    ///
+    /// @param max_leases Maximum number of leases to be reclaimed.
+    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// may be processing expired leases, expressed in seconds.
+    /// @param remove_lease A boolean value indicating if the lease should
+    /// be removed when it is reclaimed (if true) or it should be left in the
+    /// database in the "expired-reclaimed" state (if false).
+    virtual void reclaimExpiredLeases(const size_t max_leases,
+                                      const uint16_t timeout,
+                                      const bool remove_lease) = 0;
 
     /// @brief Test selected leases using the specified algorithms.
     ///
@@ -191,7 +242,12 @@ public:
     /// @param lease_algorithm Pointer to the lease algorithm function.
     /// @param index_algorithm Pointer to the index algorithm function.
     bool testLeases(const LeaseAlgorithmFun& lease_algorithm,
-                    const IndexAlgorithmFun& index_algorithm) const;
+                    const IndexAlgorithmFun& index_algorithm) const {
+        // No limits are specified, so test all leases in the range of
+        // 0 .. TEST_LEASES_NUM.
+        return (testLeases(lease_algorithm, index_algorithm, LowerBound(0),
+                           UpperBound(TEST_LEASES_NUM)));
+    }
 
 
     /// @brief Test selected leases using the specified algorithms.
@@ -208,7 +264,22 @@ public:
     bool testLeases(const LeaseAlgorithmFun& lease_algorithm,
                     const IndexAlgorithmFun& index_algorithm,
                     const LowerBound& lower_bound,
-                    const UpperBound& upper_bound) const;
+                    const UpperBound& upper_bound) const {
+        // Select leases between the lower_bound and upper_bound.
+        for (size_t i = lower_bound; i < upper_bound; ++i) {
+            // Get the lease from the lease database.
+            LeasePtrType lease = getLease(i);
+            // index_algorithm(i) checks if the lease should be checked.
+            // If so, check if the lease_algorithm indicates that the
+            // lease fulfils a given condition, e.g. is present in the
+            // database. If not, return false.
+            if (index_algorithm(i) && !lease_algorithm(lease)) {
+                return (false);
+            }
+        }
+        // All leases checked, so return true.
+        return (true);
+    }
 
     /// @brief Index algorithm selecting even indexes.
     ///
@@ -238,7 +309,7 @@ public:
     ///
     /// @param lease Pointer to lease.
     /// @return true if lease pointer is non-null.
-    static bool leaseExists(const Lease6Ptr& lease) {
+    static bool leaseExists(const LeasePtrType& lease) {
         return (static_cast<bool>(lease));
     }
 
@@ -246,7 +317,7 @@ public:
     ///
     /// @param lease Pointer to lease.
     /// @return true if lease pointer is null.
-    static bool leaseDoesntExist(const Lease6Ptr& lease) {
+    static bool leaseDoesntExist(const LeasePtrType& lease) {
         return (static_cast<bool>(!lease));
     }
 
@@ -257,7 +328,7 @@ public:
     ///
     /// @param lease Pointer to lease.
     /// @return true if lease state is "expired-reclaimed".
-    static bool leaseReclaimed(const Lease6Ptr& lease) {
+    static bool leaseReclaimed(const LeasePtrType& lease) {
         return (lease && lease->stateExpiredReclaimed() &&
                 lease->hostname_.empty() && !lease->fqdn_fwd_ &&
                 !lease->fqdn_rev_);
@@ -268,7 +339,7 @@ public:
     ///
     /// @param lease Pointer to lease.
     /// @return true if lease state is not "expired-reclaimed".
-    static bool leaseNotReclaimed(const Lease6Ptr& lease) {
+    static bool leaseNotReclaimed(const LeasePtrType& lease) {
         return (lease && !lease->stateExpiredReclaimed());
     }
 
@@ -277,38 +348,342 @@ public:
     ///
     /// @param lease Pointer to lease.
     /// @return true if NCR has been generated for the lease.
-    static bool dnsUpdateGeneratedForLease(const Lease6Ptr& lease);
+    static bool dnsUpdateGeneratedForLease(const LeasePtrType& lease) {
+        try {
+            // Iterate over the generated name change requests and try
+            // to find the match with our lease (using IP address). If
+            D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
+            for (size_t i = 0; i < mgr.getQueueSize(); ++i) {
+                const NameChangeRequestPtr& ncr = mgr.peekAt(i);
+                // If match found, return true.
+                if (ncr->getIpAddress() == lease->addr_.toText()) {
+                    return (true);
+                }
+            }
+        } catch (...) {
+            // If error occurred, treat it as no match.
+            return (false);
+        }
+
+        // All leases checked - no match.
+        return (false);
+
+    }
 
     /// @brief Lease algorithm checking if removal name change request
     /// hasn't been generated for lease.
     ///
     /// @param lease Pointer to lease.
     /// @return true if NCR has not been generated for the lease.
-    static bool dnsUpdateNotGeneratedForLease(const Lease6Ptr& lease);
+    static bool dnsUpdateNotGeneratedForLease(const LeasePtrType& lease) {
+        try {
+            // Iterate over the generated name change requests and try
+            // to find the match with our lease (using IP address). If
+            D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
+            for (size_t i = 0; i < mgr.getQueueSize(); ++i) {
+                const NameChangeRequestPtr& ncr = mgr.peekAt(i);
+                // If match found, we treat it as if the test fails
+                // because we expected no NCR.
+                if (ncr->getIpAddress() == lease->addr_.toText()) {
+                    return (false);
+                }
+            }
+        } catch (...) {
+            return (false);
+        }
+
+        // No match found, so we're good.
+        return (true);
+    }
+
+    /// @brief Test that leases can be reclaimed without being removed.
+    void testReclaimExpiredLeasesUpdateState() {
+        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+            // Mark leases with even indexes as expired.
+            if (evenLeaseIndex(i)) {
+                // The higher the index, the more expired the lease.
+                expire(i, 10 + i);
+            }
+        }
+
+        // Run leases reclamation routine on all leases. This should result
+        // in setting "expired-reclaimed" state for all leases with even
+        // indexes.
+        ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, false));
+
+        // Leases with even indexes should be marked as reclaimed.
+        EXPECT_TRUE(testLeases(&leaseReclaimed, &evenLeaseIndex));
+        // Leases with odd indexes shouldn't be marked as reclaimed.
+        EXPECT_TRUE(testLeases(&leaseNotReclaimed, &oddLeaseIndex));
+    }
+
+    /// @brief Test that the leases may be reclaimed by being deleted.
+    void testReclaimExpiredLeasesDelete() {
+        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+            // Mark leases with even indexes as expired.
+            if (evenLeaseIndex(i)) {
+                // The higher the index, the more expired the lease.
+                expire(i, 10 + i);
+            }
+        }
+
+        // Run leases reclamation routine on all leases. This should result
+        // in removal of all leases with even indexes.
+        ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, true));
+
+        // Leases with odd indexes should be retained and their state
+        // shouldn't be "expired-reclaimed".
+        EXPECT_TRUE(testLeases(&leaseNotReclaimed, &oddLeaseIndex));
+        // Leases with even indexes should have been removed.
+        EXPECT_TRUE(testLeases(&leaseDoesntExist, &evenLeaseIndex));
+    }
+
+    /// @brief Test that it is possible to specify the limit for the number
+    /// of reclaimed leases.
+    void testReclaimExpiredLeasesLimit() {
+        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+            // Mark all leaes as expired. The higher the index the less
+            // expired the lease.
+            expire(i, 1000 - i);
+        }
+
+        // We will be performing lease reclamation on lease groups of 10.
+        // Hence, it is convenient if the number of test leases is a
+        // multiple of 10.
+        const size_t reclamation_group_size = 10;
+        BOOST_STATIC_ASSERT(TEST_LEASES_NUM % reclamation_group_size == 0);
+
+        // Leases will be reclaimed in groups of 10.
+        for (int i = reclamation_group_size; i < TEST_LEASES_NUM;
+             i += reclamation_group_size) {
+
+            // Reclaim 10 most expired leases out of TEST_LEASES_NUM. Since
+            // leases are ordered from the most expired to the least expired
+            // this should reclaim leases between 0 and 9, then 10 and 19 etc.
+            ASSERT_NO_THROW(reclaimExpiredLeases(reclamation_group_size,
+                                                 0, false));
+
+            // Check that leases having all indexes between 0 and 9, 19, 29 etc.
+            // have been reclaimed.
+            EXPECT_TRUE(testLeases(&leaseReclaimed, &allLeaseIndexes,
+                                   LowerBound(0), UpperBound(i)))
+                << "check failed for i = " << i;
+
+            // Check that all remaining leases haven't been reclaimed.
+            EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes,
+                                   LowerBound(i), UpperBound(TEST_LEASES_NUM)))
+                << "check failed for i = " << i;
+        }
+    }
+
+    /// @brief Test that DNS updates are generated for the leases for which
+    /// the DNS records exist.
+    void testReclaimExpiredLeasesWithDDNS() {
+        // DNS must be started for the D2 client to accept NCRs.
+        ASSERT_NO_THROW(enableDDNS());
+
+        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+            // Expire all leases with even indexes.
+            if (evenLeaseIndex(i)) {
+                // The higher the index, the more expired the lease.
+                expire(i, 10 + i);
+            }
+        }
+
+        // Reclaim all expired leases.
+        ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, false));
+
+        // Leases with odd indexes shouldn't be reclaimed.
+        EXPECT_TRUE(testLeases(&leaseNotReclaimed, &oddLeaseIndex));
+        // Leases with even indexes should be reclaimed.
+        EXPECT_TRUE(testLeases(&leaseReclaimed, &evenLeaseIndex));
+        // DNS updates (removal NCRs) should be generated for leases with even
+        // indexes.
+        EXPECT_TRUE(testLeases(&dnsUpdateGeneratedForLease, &evenLeaseIndex));
+        // DNS updates (removal NCRs) shouldn't be generated for leases with
+        // odd indexes.
+        EXPECT_TRUE(testLeases(&dnsUpdateNotGeneratedForLease, &oddLeaseIndex));
+    }
+
+    /// @brief Test that DNS updates are only generated for the reclaimed
+    /// leases (not for all leases with hostname stored).
+    void testReclaimExpiredLeasesWithDDNSAndLimit() {
+        // DNS must be started for the D2 client to accept NCRs.
+        ASSERT_NO_THROW(enableDDNS());
+
+        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+            // Expire only leases with even indexes.
+            if (evenLeaseIndex(i)) {
+                // The higher the index, the more expired the lease.
+                expire(i, 10 + i);
+            }
+        }
+
+        const size_t reclamation_group_size = 10;
+        BOOST_STATIC_ASSERT(TEST_LEASES_NUM % reclamation_group_size == 0);
+
+        // Leases will be reclaimed in groups of 10
+        for (int i = 10; i < TEST_LEASES_NUM;  i += reclamation_group_size) {
+            // Reclaim 10 most expired leases. Note that the leases with the
+            // higher index are more expired. For example, if the
+            // TEST_LEASES_NUM is equal to 100, the most expired lease will
+            // be 98, then 96, 94 etc.
+            ASSERT_NO_THROW(reclaimExpiredLeases(reclamation_group_size, 0,
+                                                 false));
+
+            // After the first iteration the lower bound is 80, because there
+            // will be 10 the most expired leases in this group: 80, 82, 84,
+            // 86, 88, 90, 92, 94, 96, 98. For subsequent iterations
+            // accordingly.
+            int reclaimed_lower_bound = TEST_LEASES_NUM - 2 * i;
+            // At some point the lower bound will hit the negative value, which
+            // must be corrected to 0.
+            if (reclaimed_lower_bound < 0) {
+                reclaimed_lower_bound = 0;
+            }
+
+            // Leases between the lower bound calculated above and the upper
+            // bound of all leases, and having even indexes should have been
+            // reclaimed.
+            EXPECT_TRUE(testLeases(&leaseReclaimed, &evenLeaseIndex,
+                                   LowerBound(reclaimed_lower_bound),
+                                   UpperBound(TEST_LEASES_NUM)))
+                << "check failed for i = " << i;
+
+            // For the same leases we should have generated DNS updates
+            // (removal NCRs).
+            EXPECT_TRUE(testLeases(&dnsUpdateGeneratedForLease, &evenLeaseIndex,
+                                   LowerBound(reclaimed_lower_bound),
+                                   UpperBound(TEST_LEASES_NUM)))
+                << "check failed for i = " << i;
+
+            // Leases with odd indexes (falling between the reclaimed ones)
+            // shouldn't have been reclaimed, because they are not expired.
+            EXPECT_TRUE(testLeases(&leaseNotReclaimed, &oddLeaseIndex,
+                                   LowerBound(reclaimed_lower_bound),
+                                   UpperBound(TEST_LEASES_NUM)))
+                << "check failed for i = " << i;
+
+            EXPECT_TRUE(testLeases(&dnsUpdateNotGeneratedForLease,
+                                   &oddLeaseIndex,
+                                   LowerBound(reclaimed_lower_bound),
+                                   UpperBound(TEST_LEASES_NUM)))
+                << "check failed for i = " << i;
+
+
+            // At early stages of iterations, there should be conitnuous
+            // group of leases (expired and not expired) which haven't been
+            // reclaimed.
+            if (reclaimed_lower_bound > 0) {
+                EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes,
+                                       LowerBound(0),
+                                       UpperBound(reclaimed_lower_bound)))
+                    << "check failed for i = " << i;
+
+                EXPECT_TRUE(testLeases(&dnsUpdateNotGeneratedForLease,
+                                       &oddLeaseIndex,
+                                       LowerBound(0),
+                                       UpperBound(reclaimed_lower_bound)));
+            }
+        }
+    }
+
+    /// @brief This test verifies that reclamation routine continues if the
+    /// DNS update has failed for some leases.
+    void testReclaimExpiredLeasesInvalidHostname() {
+        // DNS must be started for the D2 client to accept NCRs.
+        ASSERT_NO_THROW(enableDDNS());
+
+        for (size_t i = 0; i < TEST_LEASES_NUM; ++i) {
+            // Generate invalid hostname for every other lease.
+            if (evenLeaseIndex(i)) {
+                // Hostname with two consecutive dots is invalid and may result
+                // in exception if the reclamation routine doesn't protect
+                // aginst such exceptions.
+                std::ostringstream hostname_s;
+                hostname_s << "invalid-host" << i << "..example.com";
+                leases_[i]->hostname_ = hostname_s.str();
+                ASSERT_NO_THROW(LeaseMgrFactory::instance().updateLease6(leases_[i]));
+            }
+            // Every lease is expired.
+            expire(i, 10 + i);
+        }
+
+        // Although we know that some hostnames are broken we don't want the
+        // reclamation process to break when it finds a broken record.
+        // It should rather continue to process other leases.
+        ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, false));
+
+        // All leases should have been reclaimed. Broken DNS entry doesn't
+        // warrant that we don't reclaim the lease.
+        EXPECT_TRUE(testLeases(&leaseReclaimed, &allLeaseIndexes));
+        // The routine should not generate DNS updates for the leases with
+        // broken hostname.
+        EXPECT_TRUE(testLeases(&dnsUpdateNotGeneratedForLease,
+                               &evenLeaseIndex));
+        // But it should generate DNS updates for the leases with the correct
+        // hostname.
+        EXPECT_TRUE(testLeases(&dnsUpdateGeneratedForLease, &oddLeaseIndex));
+    }
 
     /// @brief Collection of leases created at construction time.
-    Lease6Collection leases_;
+    std::vector<LeasePtrType> leases_;
+
+    /// @brief Allocation engine instance used for tests.
+    AllocEnginePtr engine_;
+
+};
+
+/// @brief Specialization of the @c ExpirationAllocEngineTest class to test
+/// reclamation of the IPv6 leases.
+class ExpirationAllocEngine6Test : public ExpirationAllocEngineTest<Lease6Ptr> {
+public:
+
+    /// @brief Class constructor.
+    ///
+    /// This constructor initializes @c TEST_LEASES_NUM leases and
+    /// stores them in the lease manager.
+    ExpirationAllocEngine6Test();
+
+    /// @brief Creates collection of leases for a test.
+    ///
+    /// It is called internally at the construction time.
+    void createLeases();
+
+    /// @brief Updates lease in the lease database.
+    ///
+    /// @param lease_index Index of the lease.
+    virtual void updateLease(const unsigned int lease_index) {
+        LeaseMgrFactory::instance().updateLease6(leases_[lease_index]);
+    }
+
+    /// @brief Retrieves lease from the database.
+    ///
+    /// @param lease_index Index of the lease.
+    virtual Lease6Ptr getLease(const unsigned int lease_index) const {
+        return (LeaseMgrFactory::instance().getLease6(leases_[lease_index]->type_,
+                                                      leases_[lease_index]->addr_));
+    }
+
+    /// @brief Wrapper method running lease reclamation routine.
+    ///
+    /// @param max_leases Maximum number of leases to be reclaimed.
+    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// may be processing expired leases, expressed in seconds.
+    /// @param remove_lease A boolean value indicating if the lease should
+    /// be removed when it is reclaimed (if true) or it should be left in the
+    /// database in the "expired-reclaimed" state (if false).
+    virtual void reclaimExpiredLeases(const size_t max_leases,
+                                      const uint16_t timeout,
+                                      const bool remove_lease) {
+        engine_->reclaimExpiredLeases6(max_leases, timeout, remove_lease);
+    }
 
 };
 
 ExpirationAllocEngine6Test::ExpirationAllocEngine6Test()
-    : AllocEngine6Test() {
+    : ExpirationAllocEngineTest("type=memfile universe=6 persist=false") {
     createLeases();
-}
-
-ExpirationAllocEngine6Test::~ExpirationAllocEngine6Test() {
-    // Stop D2 client if running and remove all queued name change
-    // requests.
-    D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
-    if (mgr.amSending()) {
-        mgr.stopSender();
-        mgr.clearQueue();
-    }
-    // Reset configuration. This is important because the CfgMgr is
-    // a singleton and test configuration would affect all subsequent
-    // tests.
-    D2ClientConfigPtr cfg(new D2ClientConfig());
-    mgr.setD2ClientConfig(cfg);
 }
 
 void
@@ -338,354 +713,165 @@ ExpirationAllocEngine6Test::createLeases() {
     }
 }
 
-void
-ExpirationAllocEngine6Test::enableDDNS() const {
-    // Start DDNS and assign no-op error handler.
-    D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
-    D2ClientConfigPtr cfg(new D2ClientConfig());
-    cfg->enableUpdates(true);
-    mgr.setD2ClientConfig(cfg);
-    mgr.startSender(boost::bind(&ExpirationAllocEngine6Test::d2ErrorHandler, _1, _2));
-}
-
-void
-ExpirationAllocEngine6Test::expire(const unsigned int lease_index,
-                                   const time_t secs) {
-    ASSERT_GT(leases_.size(), lease_index);
-    // We set the expiration time indirectly by modifying the cltt value.
-    leases_[lease_index]->cltt_ = time(NULL) - secs - leases_[lease_index]->valid_lft_;
-    ASSERT_NO_THROW(LeaseMgrFactory::instance().updateLease6(leases_[lease_index]));
-}
-
-bool
-ExpirationAllocEngine6Test::testLeases(const LeaseAlgorithmFun& lease_algorithm,
-                                       const IndexAlgorithmFun& index_algorithm) const {
-    // No limits are specified, so test all leases in the range of
-    // 0 .. TEST_LEASES_NUM.
-    return (testLeases(lease_algorithm, index_algorithm, LowerBound(0),
-                       UpperBound(TEST_LEASES_NUM)));
-}
-
-bool
-ExpirationAllocEngine6Test::testLeases(const LeaseAlgorithmFun& lease_algorithm,
-                                       const IndexAlgorithmFun& index_algorithm,
-                                       const LowerBound& lower_bound,
-                                       const UpperBound& upper_bound) const {
-    // Select leases between the lower_bound and upper_bound.
-    for (size_t i = lower_bound; i < upper_bound; ++i) {
-        // Get the lease from the lease database.
-        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(leases_[i]->type_,
-                                                                leases_[i]->addr_);
-        // index_algorithm(i) checks if the lease should be checked.
-        // If so, check if the lease_algorithm indicates that the
-        // lease fulfils a given condition, e.g. is present in the
-        // database. If not, return false.
-        if (index_algorithm(i) && !lease_algorithm(lease)) {
-            return (false);
-        }
-    }
-    // All leases checked, so return true.
-    return (true);
-}
-
-bool
-ExpirationAllocEngine6Test::dnsUpdateGeneratedForLease(const Lease6Ptr& lease) {
-    try {
-        // Iterate over the generated name change requests and try
-        // to find the match with our lease (using IP address). If
-        D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
-        for (size_t i = 0; i < mgr.getQueueSize(); ++i) {
-            const NameChangeRequestPtr& ncr = mgr.peekAt(i);
-            // If match found, return true.
-            if (ncr->getIpAddress() == lease->addr_.toText()) {
-                return (true);
-            }
-        }
-    } catch (...) {
-        // If error occurred, treat it as no match.
-        return (false);
-    }
-
-    // All leases checked - no match.
-    return (false);
-}
-
-bool
-ExpirationAllocEngine6Test::dnsUpdateNotGeneratedForLease(const Lease6Ptr& lease) {
-    try {
-        // Iterate over the generated name change requests and try
-        // to find the match with our lease (using IP address). If
-        D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
-        for (size_t i = 0; i < mgr.getQueueSize(); ++i) {
-            const NameChangeRequestPtr& ncr = mgr.peekAt(i);
-            // If match found, we treat it as if the test fails
-            // because we expected no NCR.
-            if (ncr->getIpAddress() == lease->addr_.toText()) {
-                return (false);
-            }
-        }
-    } catch (...) {
-        return (false);
-    }
-
-    // No match found, so we're good.
-    return (true);
-}
 
 // This test verifies that the leases can be reclaimed without being removed
 // from the database. In such case, the leases' state is set to
 // "expired-reclaimed".
 TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeases6UpdateState) {
-    boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
-    ASSERT_TRUE(engine);
-
-    for (int i = 0; i < TEST_LEASES_NUM; ++i) {
-        // Mark leases with even indexes as expired.
-        if (evenLeaseIndex(i)) {
-            // The higher the index, the more expired the lease.
-            expire(i, 10 + i);
-        }
-    }
-
-    // Run leases reclamation routine on all leases. This should result
-    // in setting "expired-reclaimed" state for all leases with even
-    // indexes.
-    ASSERT_NO_THROW(engine->reclaimExpiredLeases6(0, 0, false));
-
-    // Leases with even indexes should be marked as reclaimed.
-    EXPECT_TRUE(testLeases(&leaseReclaimed, &evenLeaseIndex));
-    // Leases with odd indexes shouldn't be marked as reclaimed.
-    EXPECT_TRUE(testLeases(&leaseNotReclaimed, &oddLeaseIndex));
-
+    testReclaimExpiredLeasesUpdateState();
 }
 
 // This test verifies that the reclaimed leases are deleted when requested.
-TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeases6Delete) {
-    boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
-    ASSERT_TRUE(engine);
-
-    for (int i = 0; i < TEST_LEASES_NUM; ++i) {
-        // Mark leases with even indexes as expired.
-        if (evenLeaseIndex(i)) {
-            // The higher the index, the more expired the lease.
-            expire(i, 10 + i);
-        }
-    }
-
-    // Run leases reclamation routine on all leases. This should result
-    // in removal of all leases with even indexes.
-    ASSERT_NO_THROW(engine->reclaimExpiredLeases6(0, 0, true));
-
-    // Leases with odd indexes should be retained and their state
-    // shouldn't be "expired-reclaimed".
-    EXPECT_TRUE(testLeases(&leaseNotReclaimed, &oddLeaseIndex));
-    // Leases with even indexes should have been removed.
-    EXPECT_TRUE(testLeases(&leaseDoesntExist, &evenLeaseIndex));
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesDelete) {
+    testReclaimExpiredLeasesDelete();
 }
 
 // This test verifies that it is possible to specify the limit for the
 // number of reclaimed leases.
-TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeases6Limit) {
-   boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
-    ASSERT_TRUE(engine);
-
-    for (int i = 0; i < TEST_LEASES_NUM; ++i) {
-        // Mark all leaes as expired. The higher the index the less
-        // expired the lease.
-        expire(i, 1000 - i);
-    }
-
-    // We will be performing lease reclamation on lease groups of 10.
-    // Hence, it is convenient if the number of test leases is a
-    // multiple of 10.
-    const size_t reclamation_group_size = 10;
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM % reclamation_group_size == 0);
-
-    // Leases will be reclaimed in groups of 10.
-    for (int i = reclamation_group_size; i < TEST_LEASES_NUM;
-         i += reclamation_group_size) {
-
-        // Reclaim 10 most expired leases out of TEST_LEASES_NUM. Since
-        // leases are ordered from the most expired to the least expired
-        // this should reclaim leases between 0 and 9, then 10 and 19 etc.
-        ASSERT_NO_THROW(engine->reclaimExpiredLeases6(reclamation_group_size, 0,
-                                                      false));
-
-        // Check that leases having all indexes between 0 and 9, 19, 29 etc.
-        // have been reclaimed.
-        EXPECT_TRUE(testLeases(&leaseReclaimed, &allLeaseIndexes,
-                               LowerBound(0), UpperBound(i)))
-            << "check failed for i = " << i;
-
-        // Check that all remaining leases haven't been reclaimed.
-        EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes,
-                               LowerBound(i), UpperBound(TEST_LEASES_NUM)))
-            << "check failed for i = " << i;
-    }
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesLimit) {
+    testReclaimExpiredLeasesLimit();
 }
 
 // This test verifies that DNS updates are generated for the leases
 // for which the DNS records exist.
-TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeases6WithDDNS) {
-    boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
-    ASSERT_TRUE(engine);
-
-    // DNS must be started for the D2 client to accept NCRs.
-    ASSERT_NO_THROW(enableDDNS());
-
-    for (int i = 0; i < TEST_LEASES_NUM; ++i) {
-        // Expire all leases with even indexes.
-        if (evenLeaseIndex(i)) {
-            // The higher the index, the more expired the lease.
-            expire(i, 10 + i);
-        }
-    }
-
-    // Reclaim all expired leases.
-    ASSERT_NO_THROW(engine->reclaimExpiredLeases6(0, 0, false));
-
-    // Leases with odd indexes shouldn't be reclaimed.
-    EXPECT_TRUE(testLeases(&leaseNotReclaimed, &oddLeaseIndex));
-    // Leases with even indexes should be reclaimed.
-    EXPECT_TRUE(testLeases(&leaseReclaimed, &evenLeaseIndex));
-    // DNS updates (removal NCRs) should be generated for leases with even
-    // indexes.
-    EXPECT_TRUE(testLeases(&dnsUpdateGeneratedForLease, &evenLeaseIndex));
-    // DNS updates (removal NCRs) shouldn't be generated for leases with
-    // odd indexes.
-    EXPECT_TRUE(testLeases(&dnsUpdateNotGeneratedForLease, &oddLeaseIndex));
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesWithDDNS) {
+    testReclaimExpiredLeasesWithDDNS();
 }
 
 // This test verifies that it is DNS updates are generated only for the
 // reclaimed expired leases. In this case we limit the number of leases
 // reclaimed during a single call to reclamation routine.
-TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeases6WithDDNSAndLimit) {
-    boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
-    ASSERT_TRUE(engine);
-
-    // DNS must be started for the D2 client to accept NCRs.
-    ASSERT_NO_THROW(enableDDNS());
-
-    for (int i = 0; i < TEST_LEASES_NUM; ++i) {
-        // Expire only leases with even indexes.
-        if (evenLeaseIndex(i)) {
-            // The higher the index, the more expired the lease.
-            expire(i, 10 + i);
-        }
-    }
-
-    const size_t reclamation_group_size = 10;
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM % reclamation_group_size == 0);
-
-    // Leases will be reclaimed in groups of 10
-    for (int i = 10; i < TEST_LEASES_NUM;  i += reclamation_group_size) {
-        // Reclaim 10 most expired leases. Note that the leases with the higher
-        // index are more expired. For example, if the TEST_LEASES_NUM is equal
-        // to 100, the most expired lease will be 98, then 96, 94 etc.
-        ASSERT_NO_THROW(engine->reclaimExpiredLeases6(reclamation_group_size, 0,
-                                                      false));
-
-        // After the first iteration the lower bound is 80, because there will
-        // be 10 the most expired leases in this group: 80, 82, 84, 86, 88, 90,
-        // 92, 94, 96, 98. For subsequent iterations accordingly.
-        int reclaimed_lower_bound = TEST_LEASES_NUM - 2 * i;
-        // At some point the lower bound will hit the negative value, which
-        // must be corrected to 0.
-        if (reclaimed_lower_bound < 0) {
-            reclaimed_lower_bound = 0;
-        }
-
-        // Leases between the lower bound calculated above and the upper bound
-        // of all leases, and having even indexes should have been reclaimed.
-        EXPECT_TRUE(testLeases(&leaseReclaimed, &evenLeaseIndex,
-                               LowerBound(reclaimed_lower_bound),
-                               UpperBound(TEST_LEASES_NUM)))
-            << "check failed for i = " << i;
-
-        // For the same leases we should have generated DNS updates (removal NCRs).
-        EXPECT_TRUE(testLeases(&dnsUpdateGeneratedForLease, &evenLeaseIndex,
-                               LowerBound(reclaimed_lower_bound),
-                               UpperBound(TEST_LEASES_NUM)))
-            << "check failed for i = " << i;
-
-        // Leases with odd indexes (falling between the reclaimed ones) shouldn't
-        // have been reclaimed, because they are not expired.
-        EXPECT_TRUE(testLeases(&leaseNotReclaimed, &oddLeaseIndex,
-                               LowerBound(reclaimed_lower_bound),
-                               UpperBound(TEST_LEASES_NUM)))
-            << "check failed for i = " << i;
-
-        EXPECT_TRUE(testLeases(&dnsUpdateNotGeneratedForLease, &oddLeaseIndex,
-                               LowerBound(reclaimed_lower_bound),
-                               UpperBound(TEST_LEASES_NUM)))
-            << "check failed for i = " << i;
-
-
-        // At early stages of iterations, there should be conitnuous group of leases
-        // (expired and not expired) which haven't been reclaimed.
-        if (reclaimed_lower_bound > 0) {
-            EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes,
-                                   LowerBound(0),
-                                   UpperBound(reclaimed_lower_bound)))
-                << "check failed for i = " << i;
-
-            EXPECT_TRUE(testLeases(&dnsUpdateNotGeneratedForLease, &oddLeaseIndex,
-                                   LowerBound(0), UpperBound(reclaimed_lower_bound)));
-
-        }
-    }
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesWithDDNSAndLimit) {
+    testReclaimExpiredLeasesWithDDNSAndLimit();
 }
 
 // This test verifies that if some leases have invalid hostnames, the
 // lease reclamation routine continues with reclamation of leases anyway.
-TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeases6InvalidHostname) {
-    boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
-    ASSERT_TRUE(engine);
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesInvalidHostname) {
+    testReclaimExpiredLeasesInvalidHostname();
+}
 
-    // DNS must be started for the D2 client to accept NCRs.
-    ASSERT_NO_THROW(enableDDNS());
+// *******************************************************
+//
+// DHCPv4 lease reclamation routine tests start here!
+//
+// *******************************************************
 
-    for (size_t i = 0; i < TEST_LEASES_NUM; ++i) {
-        // Generate invalid hostname for every other lease.
-        if (evenLeaseIndex(i)) {
-            // Hostname with two consecutive dots is invalid and may result
-            // in exception if the reclamation routine doesn't protect
-            // aginst such exceptions.
-            std::ostringstream hostname_s;
-            hostname_s << "invalid-host" << i << "..example.com";
-            leases_[i]->hostname_ = hostname_s.str();
-            ASSERT_NO_THROW(LeaseMgrFactory::instance().updateLease6(leases_[i]));
-        }
-        // Every lease is expired.
-        expire(i, 10 + i);
+/// @brief Specialization of the @c ExpirationAllocEngineTest class to test
+/// reclamation of the IPv4 leases.
+class ExpirationAllocEngine4Test : public ExpirationAllocEngineTest<Lease4Ptr> {
+public:
+
+    /// @brief Class constructor.
+    ///
+    /// This constructor initializes @c TEST_LEASES_NUM leases and
+    /// stores them in the lease manager.
+    ExpirationAllocEngine4Test();
+
+    /// @brief Creates collection of leases for a test.
+    ///
+    /// It is called internally at the construction time.
+    void createLeases();
+
+    /// @brief Updates lease in the lease database.
+    ///
+    /// @param lease_index Index of the lease.
+    virtual void updateLease(const unsigned int lease_index) {
+        LeaseMgrFactory::instance().updateLease4(leases_[lease_index]);
     }
 
-    // Although we know that some hostnames are broken we don't want the
-    // reclamation process to break when it finds a broken record.
-    // It should rather continue to process other leases.
-    ASSERT_NO_THROW(engine->reclaimExpiredLeases6(0, 0, false));
+    /// @brief Retrieves lease from the database.
+    ///
+    /// @param lease_index Index of the lease.
+    virtual Lease4Ptr getLease(const unsigned int lease_index) const {
+        return (LeaseMgrFactory::instance().getLease4(leases_[lease_index]->addr_));
+    }
 
-    // All leases should have been reclaimed. Broken DNS entry doesn't
-    // warrant that we don't reclaim the lease.
-    EXPECT_TRUE(testLeases(&leaseReclaimed, &allLeaseIndexes));
-    // The routine should not generate DNS updates for the leases with broken
-    // hostname.
-    EXPECT_TRUE(testLeases(&dnsUpdateNotGeneratedForLease, &evenLeaseIndex));
-    // But it should generate DNS updates for the leases with the correct
-    // hostname.
-    EXPECT_TRUE(testLeases(&dnsUpdateGeneratedForLease, &oddLeaseIndex));
+    /// @brief Wrapper method running lease reclamation routine.
+    ///
+    /// @param max_leases Maximum number of leases to be reclaimed.
+    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// may be processing expired leases, expressed in seconds.
+    /// @param remove_lease A boolean value indicating if the lease should
+    /// be removed when it is reclaimed (if true) or it should be left in the
+    /// database in the "expired-reclaimed" state (if false).
+    virtual void reclaimExpiredLeases(const size_t max_leases,
+                                      const uint16_t timeout,
+                                      const bool remove_lease) {
+        engine_->reclaimExpiredLeases4(max_leases, timeout, remove_lease);
+    }
+};
+
+ExpirationAllocEngine4Test::ExpirationAllocEngine4Test()
+    : ExpirationAllocEngineTest("type=memfile universe=4 persist=false") {
+    createLeases();
+}
+
+void
+ExpirationAllocEngine4Test::createLeases() {
+    // Create TEST_LEASES_NUM leases.
+    for (uint32_t i = 0; i < TEST_LEASES_NUM; ++i) {
+        // HW address
+        std::ostringstream hwaddr_s;
+        hwaddr_s << "01:02:03:04:" << std::setw(2) << std::setfill('0')
+                 << (i >> 16) << ":" << std::setw(2) << std::setfill('0')
+                 << (i & 0x00FF);
+        HWAddrPtr hwaddr(new HWAddr(HWAddr::fromText(hwaddr_s.str(), HTYPE_ETHER)));
+
+        // Address.
+        std::ostringstream address_s;
+        address_s << "10.0." << (i >> 16) << "." << (i & 0x00FF);
+        IOAddress address(address_s.str());
+
+        // Hostname.
+        std::ostringstream hostname_s;
+        hostname_s << "host" << std::setw(4) << std::setfill('0') << i
+            << ".example.org";
+
+        // Create lease.
+        Lease4Ptr lease(new Lease4(address, hwaddr, ClientIdPtr(), 60, 10, 20,
+                                   time(NULL), SubnetID(1), true, true,
+                                   hostname_s.str()));
+        leases_.push_back(lease);
+        LeaseMgrFactory::instance().addLease(lease);
+    }
+}
+
+// This test verifies that the leases can be reclaimed without being removed
+// from the database. In such case, the leases' state is set to
+// "expired-reclaimed".
+TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesUpdateState) {
+    testReclaimExpiredLeasesUpdateState();
+}
+
+// This test verifies that the reclaimed leases are deleted when requested.
+TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesDelete) {
+    testReclaimExpiredLeasesDelete();
+}
+
+// This test verifies that it is possible to specify the limit for the
+// number of reclaimed leases.
+TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesLimit) {
+    testReclaimExpiredLeasesLimit();
+}
+
+// This test verifies that DNS updates are generated for the leases
+// for which the DNS records exist.
+TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesWithDDNS) {
+    testReclaimExpiredLeasesWithDDNS();
+}
+
+// This test verifies that it is DNS updates are generated only for the
+// reclaimed expired leases. In this case we limit the number of leases
+// reclaimed during a single call to reclamation routine.
+TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesWithDDNSAndLimit) {
+    testReclaimExpiredLeasesWithDDNSAndLimit();
+}
+
+// This test verifies that if some leases have invalid hostnames, the
+// lease reclamation routine continues with reclamation of leases anyway.
+TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesInvalidHostname) {
+    testReclaimExpiredLeasesInvalidHostname();
 }
 
 }; // end of anonymous namespace

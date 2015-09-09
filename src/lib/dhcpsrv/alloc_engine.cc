@@ -1344,6 +1344,71 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
         .arg(stopwatch.logFormatTotalDuration());
 }
 
+void
+AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
+                                   const bool remove_lease) {
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V6_LEASES_RECLAMATION_START)
+        .arg(max_leases)
+        .arg(timeout);
+
+    // Create stopwatch and automatically start it to measure the time
+    // taken by the routine.
+    util::Stopwatch stopwatch;
+
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+
+    Lease4Collection leases;
+    lease_mgr.getExpiredLeases4(leases, max_leases);
+
+    for (Lease4Collection::const_iterator lease_it = leases.begin();
+         lease_it != leases.end(); ++lease_it) {
+
+        try {
+            /// @todo execute a lease6_expire hook here.
+
+            // Generate removal name change request for D2, if required.
+            // This will return immediatelly if the DNS wasn't updated
+            // when the lease was created.
+            queueRemovalNameChangeRequest(*lease_it, (*lease_it)->hwaddr_);
+
+            // Reclaim the lease - depending on the configuration, set the
+            // expired-reclaimed state or simply remove it.
+            if (remove_lease) {
+                lease_mgr.deleteLease((*lease_it)->addr_);
+
+            } else {
+                // Clear FQDN information as we have already sent the
+                // name change request to remove the DNS record.
+                (*lease_it)->hostname_.clear();
+                (*lease_it)->fqdn_fwd_ = false;
+                (*lease_it)->fqdn_rev_ = false;
+                (*lease_it)->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+                lease_mgr.updateLease4(*lease_it);
+            }
+
+            // Lease has been reclaimed.
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_LEASE_RECLAIMED)
+                .arg((*lease_it)->addr_.toText());
+
+        } catch (const std::exception& ex) {
+            LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_LEASE_RECLAMATION_FAILED)
+                .arg((*lease_it)->addr_.toText())
+                .arg(ex.what());
+        }
+    }
+
+    // Stop measuring the time.
+    stopwatch.stop();
+
+    // Mark completion of the lease reclamation routine and present some stats.
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V6_LEASES_RECLAMATION_COMPLETE)
+        .arg(leases.size())
+        .arg(stopwatch.logFormatTotalDuration());
+}
 
 
 template<typename LeasePtrType, typename IdentifierType>
