@@ -201,7 +201,7 @@ protected:
             isc_throw(isc::Unexpected, "failed to create UNIX domain socket" <<
                       strerror(errno));
         }
-        if (bind(listen_fd_, convertSockAddr(&test_un_), test_un_len_) == -1) {
+        if (::bind(listen_fd_, convertSockAddr(&test_un_), test_un_len_) == -1) {
             isc_throw(isc::Unexpected, "failed to bind UNIX domain socket" <<
                       strerror(errno));
         }

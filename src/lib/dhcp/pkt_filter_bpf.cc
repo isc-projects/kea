@@ -261,7 +261,8 @@ PktFilterBPF::openSocket(Iface& iface,
             // All other errors are fatal, so close the fallback socket
             // and throw.
             close(fallback);
-            isc_throw(SocketConfigError, "Failed to open BPF device " << s);
+            isc_throw(SocketConfigError,
+                      "Failed to open BPF device " << s.str());
         }
     }
 
