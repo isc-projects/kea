@@ -88,7 +88,7 @@ public:
     /// @brief returns Kea version on stdout and exit.
     /// redeclaration/redefinition. @ref Daemon::getVersion()
     static std::string getVersion(bool extended);
- 
+
     /// @brief Returns server-indentifier option.
     ///
     /// @return server-id option
@@ -692,6 +692,58 @@ protected:
     /// For example, a packet that sends vendor class with value of "FOO"
     /// will cause the packet to be assigned to class VENDOR_CLASS_FOO.
     static const std::string VENDOR_CLASS_PREFIX;
+
+    /// @brief Attempts to decline all leases in specified Decline message.
+    ///
+    /// This method iterates over all IA_NA options and calls @ref declineIA on
+    /// each of them.
+    ///
+    /// @param decline Decline messege sent by a client
+    /// @param reply Server's response (IA_NA with status will be added here)
+    /// @param client context
+    void
+    declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
+                  AllocEngine::ClientContext6& ctx);
+
+    /// @brief Declines leases in a single IA_NA container
+    ///
+    /// This method iterates over all addresses in this IA_NA, and verifies
+    /// whether it belongs to the client and calls @ref declineLease. If there's
+    /// an error, general_status (a status put in the top level scope), will be
+    /// updated.
+    ///
+    /// @param decline client's Decline message
+    /// @param duid client's duid (used to verify if the client owns the lease)
+    /// @param general_status [out] status in top-level message (may be updated)
+    /// @param ia specific IA_NA option to process.
+    OptionPtr
+    declineIA(const Pkt6Ptr& decline, const DuidPtr& duid, int& general_status,
+              boost::shared_ptr<Option6IA> ia);
+
+    /// @brief Declines specific IPv6 lease.
+    ///
+    /// This method performs the actual decline and all necessary operations:
+    /// - cleans up DNS, if necessary
+    /// - updates subnet[X].declined-addresses
+    /// - deassociates client information from the lease
+    /// - moves the lease to DECLINED state
+    /// - sets lease expiration time to decline-probation-period
+    /// - adds status-code success
+    ///
+    /// @param decline used for generating removal Name Change Request.
+    /// @param lease lease to be declined
+    /// @param ia_rsp response IA_NA.
+    void
+    declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
+                 boost::shared_ptr<Option6IA> ia_rsp);
+
+    /// @brief A simple utility method that sets the status code
+    ///
+    /// Removes old status code and sets a new one.
+    /// @param container status code will be added here
+    /// @param status status code option
+    void setStatusCode(boost::shared_ptr<Option6IA>& container,
+                       const OptionPtr& status);
 
 private:
 
