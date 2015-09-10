@@ -1314,6 +1314,35 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
                                               boost::bind(&LeaseMgr::updateLease6,
                                                           &lease_mgr, _1));
 
+            // Update statistics.
+
+            // Decrease number of assigned leases.
+            if (lease->type_ == Lease::TYPE_NA) {
+                // IA_NA
+                StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                     lease->subnet_id_,
+                                                                     "assigned-nas"),
+                                              int64_t(-1));
+
+            } else if (lease->type_ == Lease::TYPE_PD) {
+                // IA_PD
+                StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                     lease->subnet_id_,
+                                                                     "assigned-pds"),
+                                              int64_t(-1));
+
+            }
+
+            // Increase total number of reclaimed leases.
+            StatsMgr::instance().addValue("reclaimed-leases", int64_t(1));
+
+            // Increase number of reclaimed leases for a subnet.
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                 lease->subnet_id_,
+                                                                 "reclaimed-leases"),
+                                          int64_t(1));
+
+
         } catch (const std::exception& ex) {
             LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_LEASE_RECLAMATION_FAILED)
                 .arg(lease->addr_.toText())
@@ -1372,6 +1401,23 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
             reclaimLeaseInDatabase<Lease4Ptr>(lease, remove_lease,
                                               boost::bind(&LeaseMgr::updateLease4,
                                                           &lease_mgr, _1));
+
+            // Update statistics.
+
+            // Decrease number of assigned addresses.
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                 lease->subnet_id_,
+                                                                 "assigned-addresses"),
+                                          int64_t(-1));
+
+            // Increase total number of reclaimed leases.
+            StatsMgr::instance().addValue("reclaimed-leases", int64_t(1));
+
+            // Increase number of reclaimed leases for a subnet.
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                 lease->subnet_id_,
+                                                                 "reclaimed-leases"),
+                                          int64_t(1));
 
         } catch (const std::exception& ex) {
             LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V4_LEASE_RECLAMATION_FAILED)
