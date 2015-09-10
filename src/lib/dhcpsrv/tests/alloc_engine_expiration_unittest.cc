@@ -792,7 +792,7 @@ public:
 };
 
 ExpirationAllocEngine6Test::ExpirationAllocEngine6Test()
-    : ExpirationAllocEngineTest("type=memfile universe=6 persist=false") {
+    : ExpirationAllocEngineTest<Lease6Ptr>("type=memfile universe=6 persist=false") {
     createLeases();
 }
 
@@ -1033,7 +1033,7 @@ public:
 };
 
 ExpirationAllocEngine4Test::ExpirationAllocEngine4Test()
-    : ExpirationAllocEngineTest("type=memfile universe=4 persist=false") {
+    : ExpirationAllocEngineTest<Lease4Ptr>("type=memfile universe=4 persist=false") {
     createLeases();
 }
 
