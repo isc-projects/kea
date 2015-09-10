@@ -18,6 +18,7 @@
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <stats/stats_mgr.h>
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -33,6 +34,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::dhcp_ddns;
+using namespace isc::stats;
 
 namespace {
 
@@ -158,12 +160,20 @@ public:
     /// Clears configuration, creates new lease manager and allocation engine
     /// instances.
     ExpirationAllocEngineTest(const std::string& lease_mgr_params) {
+        // Clear configuration.
         CfgMgr::instance().clear();
+        D2ClientConfigPtr cfg(new D2ClientConfig());
+        CfgMgr::instance().setD2ClientConfig(cfg);
+
+        // Remove all statistics.
+        StatsMgr::instance().resetAll();
+
+        // Create lease manager.
         LeaseMgrFactory::create(lease_mgr_params);
 
+        // Create allocation engine instance.
         engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                       100, false));
-
     }
 
     /// @brief Destructor
@@ -179,7 +189,15 @@ public:
             mgr.clearQueue();
         }
 
+        // Clear configuration.
         CfgMgr::instance().clear();
+        D2ClientConfigPtr cfg(new D2ClientConfig());
+        CfgMgr::instance().setD2ClientConfig(cfg);
+
+        // Remove all statistics.
+        StatsMgr::instance().resetAll();
+
+        // Kill lease manager.
         LeaseMgrFactory::destroy();
     }
 
@@ -222,6 +240,14 @@ public:
     /// @param lease_index Index of the lease.
     virtual LeasePtrType getLease(const unsigned int lease_index) const = 0;
 
+    /// @brief Sets subnet id for a lease.
+    ///
+    /// It also updates statistics of assigned leases in the stats manager.
+    ///
+    /// @param lease_index Lease index.
+    /// @param id New subnet id.
+    virtual void setSubnetId(const uint16_t lease_index, const SubnetID& id) = 0;
+
     /// @brief Wrapper method running lease reclamation routine.
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
@@ -233,6 +259,30 @@ public:
     virtual void reclaimExpiredLeases(const size_t max_leases,
                                       const uint16_t timeout,
                                       const bool remove_lease) = 0;
+
+    /// @brief Test that statistic manager holds a given value.
+    ///
+    /// @param stat_name Statistic name.
+    /// @param exp_value Expected value.
+    bool testStatistics(const std::string& stat_name, const int64_t exp_value) const {
+        try {
+            ObservationPtr observation = StatsMgr::instance().getObservation(stat_name);
+            if (observation) {
+                if (observation->getInteger().first != exp_value) {
+                    ADD_FAILURE()
+                        << "value of the observed statistics '"
+                        << stat_name << "' " << "("
+                        << observation->getInteger().first << ") "
+                        <<  "doesn't match expected value (" << exp_value << ")";
+                }
+                return (observation->getInteger().first == exp_value);
+            }
+
+        } catch (...) {
+            ;
+        }
+        return (false);
+    }
 
     /// @brief Test selected leases using the specified algorithms.
     ///
@@ -698,6 +748,22 @@ public:
         LeaseMgrFactory::instance().updateLease6(leases_[lease_index]);
     }
 
+    /// @brief Sets subnet id for a lease.
+    ///
+    /// It also updates statistics of assigned leases in the stats manager.
+    ///
+    /// @param lease_index Lease index.
+    /// @param id New subnet id.
+    virtual void setSubnetId(const uint16_t lease_index, const SubnetID& id);
+
+    /// @brief Sets type of a lease.
+    ///
+    /// It also updates statistics of assigned leases in the stats manager.
+    ///
+    /// @param lease_index Lease index.
+    /// @param lease_type Lease type.
+    void setLeaseType(const uint16_t lease_index, const Lease6::Type& lease_type);
+
     /// @brief Retrieves lease from the database.
     ///
     /// @param lease_index Index of the lease.
@@ -719,6 +785,9 @@ public:
                                       const bool remove_lease) {
         engine_->reclaimExpiredLeases6(max_leases, timeout, remove_lease);
     }
+
+    /// @brief Test that statistics is updated when leases are reclaimed.
+    void testReclaimExpiredLeasesStats();
 
 };
 
@@ -747,9 +816,96 @@ ExpirationAllocEngine6Test::createLeases() {
                                    generateHostnameForLeaseIndex(i)));
         leases_.push_back(lease);
         LeaseMgrFactory::instance().addLease(lease);
+
+        // Note in the statistics that this lease has been added.
+        StatsMgr& stats_mgr = StatsMgr::instance();
+        std::string stat_name =
+            lease->type_ == Lease::TYPE_NA ? "assigned-nas" : "assigned-pds";
+        stats_mgr.addValue(stats_mgr.generateName("subnet", lease->subnet_id_, stat_name),
+                           int64_t(1));
     }
 }
 
+void
+ExpirationAllocEngine6Test::setSubnetId(const uint16_t lease_index, const SubnetID& id) {
+    ASSERT_GT(leases_.size(), lease_index);
+    if (leases_[lease_index]->subnet_id_ != id) {
+        StatsMgr& stats_mgr = StatsMgr::instance();
+        std::string stats_name = (leases_[lease_index]->type_ == Lease::TYPE_NA ?
+                                  "assigned-nas" : "assigned-pds");
+        stats_mgr.addValue(stats_mgr.generateName("subnet", id, stats_name),
+                           int64_t(1));
+        stats_mgr.addValue(stats_mgr.generateName("subnet",
+                                                  leases_[lease_index]->subnet_id_,
+                                                  stats_name),
+                           int64_t(-1));
+        leases_[lease_index]->subnet_id_ = id;
+        ASSERT_NO_THROW(updateLease(lease_index));
+    }
+}
+
+void
+ExpirationAllocEngine6Test::setLeaseType(const uint16_t lease_index,
+                                         const Lease6::Type& lease_type) {
+    ASSERT_GT(leases_.size(), lease_index);
+    if (leases_[lease_index]->type_ != lease_type) {
+        StatsMgr& stats_mgr = StatsMgr::instance();
+        std::string stats_name = (lease_type == Lease::TYPE_NA ?
+                                  "assigned-nas" : "assigned-pds");
+        stats_mgr.addValue(stats_mgr.generateName("subnet",
+                                                  leases_[lease_index]->subnet_id_,
+                                                  stats_name),
+                           int64_t(1));
+        stats_name = (leases_[lease_index]->type_ == Lease::TYPE_NA ?
+                      "assigned-nas" : "assigned-pds");
+        stats_mgr.addValue(stats_mgr.generateName("subnet",
+                                                  leases_[lease_index]->subnet_id_,
+                                                  stats_name),
+                           int64_t(-1));
+        leases_[lease_index]->type_ = lease_type;
+        ASSERT_NO_THROW(updateLease(lease_index));
+    }
+}
+
+
+void
+ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
+    // This test requires that the number of leases is an even number.
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
+
+    for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+        // Mark all leaes as expired. The higher the index the less
+        // expired the lease.
+        expire(i, 1000 - i);
+        // Modify subnet ids and lease types for some leases.
+        if (evenLeaseIndex(i)) {
+            setSubnetId(i, SubnetID(2));
+            setLeaseType(i, Lease::TYPE_PD);
+        }
+    }
+
+    // Leases will be reclaimed in groups of 8.
+    const size_t reclamation_group_size = 8;
+    for (int i = reclamation_group_size; i < TEST_LEASES_NUM;
+         i += reclamation_group_size) {
+
+        // Reclaim 8 most expired leases out of TEST_LEASES_NUM.
+        ASSERT_NO_THROW(reclaimExpiredLeases(reclamation_group_size,
+                                             0, false));
+
+        // Number of reclaimed leases should increase as we loop.
+        EXPECT_TRUE(testStatistics("reclaimed-leases", i));
+        // Make sure that the number of reclaimed leases is also distributed
+        // across two subnets.
+        EXPECT_TRUE(testStatistics("subnet[1].reclaimed-leases", i / 2));
+        EXPECT_TRUE(testStatistics("subnet[2].reclaimed-leases", i / 2));
+        // Number of assigned leases should decrease as we reclaim them.
+        EXPECT_TRUE(testStatistics("subnet[1].assigned-nas",
+                                   (TEST_LEASES_NUM - i) / 2));
+        EXPECT_TRUE(testStatistics("subnet[2].assigned-pds",
+                                   (TEST_LEASES_NUM - i) / 2));
+    }
+}
 
 // This test verifies that the leases can be reclaimed without being removed
 // from the database. In such case, the leases' state is set to
@@ -786,6 +942,12 @@ TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesWithDDNSAndLimit) {
 // lease reclamation routine continues with reclamation of leases anyway.
 TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesInvalidHostname) {
     testReclaimExpiredLeasesInvalidHostname();
+}
+
+// This test verifies that statistics is correctly updated when the leases
+// are reclaimed.
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesStats) {
+    testReclaimExpiredLeasesStats();
 }
 
 // *******************************************************
@@ -829,6 +991,14 @@ public:
         return (LeaseMgrFactory::instance().getLease4(leases_[lease_index]->addr_));
     }
 
+    /// @brief Sets subnet id for a lease.
+    ///
+    /// It also updates statistics of assigned leases in the stats manager.
+    ///
+    /// @param lease_index Lease index.
+    /// @param id New subnet id.
+    virtual void setSubnetId(const uint16_t lease_index, const SubnetID& id);
+
     /// @brief Wrapper method running lease reclamation routine.
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
@@ -856,6 +1026,10 @@ public:
     /// @brief Test that DNS updates are properly generated when the
     /// reclaimed leases contain client identifier.
     void testReclaimExpiredLeasesWithDDNSAndClientId();
+
+    /// @brief Test that statistics is updated when leases are reclaimed..
+    void testReclaimExpiredLeasesStats();
+
 };
 
 ExpirationAllocEngine4Test::ExpirationAllocEngine4Test()
@@ -886,6 +1060,12 @@ ExpirationAllocEngine4Test::createLeases() {
                                    generateHostnameForLeaseIndex(i)));
         leases_.push_back(lease);
         LeaseMgrFactory::instance().addLease(lease);
+
+        // Note in the statistics that this lease has been added.
+        StatsMgr& stats_mgr = StatsMgr::instance();
+        std::string stat_name = "assigned-addresses";
+        stats_mgr.addValue(stats_mgr.generateName("subnet", lease->subnet_id_, stat_name),
+                           int64_t(1));
     }
 }
 
@@ -899,6 +1079,23 @@ ExpirationAllocEngine4Test::setUniqueClientId(const uint16_t index) {
     leases_[index]->client_id_ = client_id;
     LeaseMgrFactory::instance().updateLease4(leases_[index]);
 }
+
+void
+ExpirationAllocEngine4Test::setSubnetId(const uint16_t lease_index, const SubnetID& id) {
+    ASSERT_GT(leases_.size(), lease_index);
+    if (leases_[lease_index]->subnet_id_ != id) {
+        StatsMgr& stats_mgr = StatsMgr::instance();
+        stats_mgr.addValue(stats_mgr.generateName("subnet", id, "assigned-addresses"),
+                           int64_t(1));
+        stats_mgr.addValue(stats_mgr.generateName("subnet",
+                                                  leases_[lease_index]->subnet_id_,
+                                                  "assigned-addresses"),
+                           int64_t(-1));
+        leases_[lease_index]->subnet_id_ = id;
+        ASSERT_NO_THROW(updateLease(lease_index));
+    }
+}
+
 
 bool
 ExpirationAllocEngine4Test::dnsUpdateGeneratedFromClientId(const Lease4Ptr& lease) {
@@ -996,6 +1193,45 @@ ExpirationAllocEngine4Test::testReclaimExpiredLeasesWithDDNSAndClientId() {
     EXPECT_TRUE(testLeases(&dnsUpdateGeneratedFromHWAddress, &oddLeaseIndex));
 }
 
+void
+ExpirationAllocEngine4Test::testReclaimExpiredLeasesStats() {
+    // This test requires that the number of leases is an even number.
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
+
+    for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+        // Mark all leaes as expired. The higher the index the less
+        // expired the lease.
+        expire(i, 1000 - i);
+        // Modify subnet ids of some leases.
+        if (evenLeaseIndex(i)) {
+            setSubnetId(i, 2);
+        }
+    }
+
+    // Leases will be reclaimed in groups of 8.
+    const size_t reclamation_group_size = 8;
+    for (int i = reclamation_group_size; i < TEST_LEASES_NUM;
+         i += reclamation_group_size) {
+
+        // Reclaim 8 most expired leases out of TEST_LEASES_NUM.
+        ASSERT_NO_THROW(reclaimExpiredLeases(reclamation_group_size,
+                                             0, false));
+
+        // Number of reclaimed leases should increase as we loop.
+        EXPECT_TRUE(testStatistics("reclaimed-leases", i));
+        // Make sure that the number of reclaimed leases is also distributed
+        // across two subnets.
+        EXPECT_TRUE(testStatistics("subnet[1].reclaimed-leases", i / 2));
+        EXPECT_TRUE(testStatistics("subnet[2].reclaimed-leases", i / 2));
+        // Number of assigned leases should decrease as we reclaim them.
+        EXPECT_TRUE(testStatistics("subnet[1].assigned-addresses",
+                                   (TEST_LEASES_NUM - i) / 2));
+        EXPECT_TRUE(testStatistics("subnet[2].assigned-addresses",
+                                   (TEST_LEASES_NUM - i) / 2));
+    }
+}
+
+
 // This test verifies that the leases can be reclaimed without being removed
 // from the database. In such case, the leases' state is set to
 // "expired-reclaimed".
@@ -1037,6 +1273,12 @@ TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesInvalidHostname) {
 // client id is used as a primary identifier in the lease.
 TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesWithDDNSAndClientId) {
     testReclaimExpiredLeasesWithDDNSAndClientId();
+}
+
+// This test verifies that statistics is correctly updated when the leases
+// are reclaimed.
+TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesStats) {
+    testReclaimExpiredLeasesStats();
 }
 
 }; // end of anonymous namespace
