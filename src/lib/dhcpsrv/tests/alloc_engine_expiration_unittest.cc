@@ -14,6 +14,8 @@
 
 #include <config.h>
 #include <dhcp/duid.h>
+#include <dhcp/option_data_types.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <gtest/gtest.h>
@@ -202,7 +204,7 @@ public:
     /// @c TEST_LEASES_NUM.
     /// @param secs Offset of the expiration time since now. For example
     /// a value of 2 would set the lease expiration time to 2 seconds ago.
-    void expire(const unsigned int lease_index, const time_t secs) {
+    void expire(const uint16_t lease_index, const time_t secs) {
         ASSERT_GT(leases_.size(), lease_index);
         // We set the expiration time indirectly by modifying the cltt value.
         leases_[lease_index]->cltt_ = time(NULL) - secs -
@@ -286,7 +288,7 @@ public:
     /// @param index Lease index.
     /// @return true if index is an even number.
     static bool evenLeaseIndex(const size_t index) {
-        return (index % 2);
+        return (index % 2 == 0);
     }
 
     /// @brief Index algorithm selecting odd indexes.
@@ -350,24 +352,12 @@ public:
     /// @return true if NCR has been generated for the lease.
     static bool dnsUpdateGeneratedForLease(const LeasePtrType& lease) {
         try {
-            // Iterate over the generated name change requests and try
-            // to find the match with our lease (using IP address). If
-            D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
-            for (size_t i = 0; i < mgr.getQueueSize(); ++i) {
-                const NameChangeRequestPtr& ncr = mgr.peekAt(i);
-                // If match found, return true.
-                if (ncr->getIpAddress() == lease->addr_.toText()) {
-                    return (true);
-                }
-            }
+            return (static_cast<bool>(getNCRForLease(lease)));
+
         } catch (...) {
             // If error occurred, treat it as no match.
             return (false);
         }
-
-        // All leases checked - no match.
-        return (false);
-
     }
 
     /// @brief Lease algorithm checking if removal name change request
@@ -394,6 +384,57 @@ public:
 
         // No match found, so we're good.
         return (true);
+    }
+
+    /// @brief Returns Name Change Request from the D2 client queue.
+    ///
+    /// @param lease Pointer to the lease to be matched with NCR.
+    ///
+    /// @return null pointer if no match found.
+    static NameChangeRequestPtr getNCRForLease(const LeasePtrType& lease) {
+        // Iterate over the generated name change requests and try
+        // to find the match with our lease (using IP address). If
+        D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
+        for (size_t i = 0; i < mgr.getQueueSize(); ++i) {
+            const NameChangeRequestPtr& ncr = mgr.peekAt(i);
+            // If match found, return true.
+            if (ncr->getIpAddress() == lease->addr_.toText()) {
+                return (ncr);
+            }
+        }
+        return (NameChangeRequestPtr());
+    }
+
+    /// @brief Returns index of the lease from the address.
+    ///
+    /// This method assumes that leases are ordered from the smallest to
+    /// the highest address, e.g. 10.0.0.0, 10.0.0.1, 10.0.0.2 etc. The
+    /// last two bytes can be used to extract index.
+    ///
+    /// @param address Address.
+    ///
+    /// @return index
+    static uint16_t getLeaseIndexFromAddress(const IOAddress& address) {
+        std::vector<uint8_t> bytes = address.toBytes();
+        std::vector<uint8_t>::reverse_iterator bytes_it = bytes.rbegin();
+        uint16_t index = static_cast<uint16_t>(*bytes_it) |
+            (static_cast<uint16_t>(*(bytes_it + 1)) << 8);
+        return (index);
+    }
+
+    /// @brief Generates hostname for lease index.
+    ///
+    /// Generates hostname in the form of "hostXXXX.example.org", where
+    /// XXXX is a lease index.
+    ///
+    /// @param index Lease index.
+    ///
+    /// @return Generated hostname.
+    static std::string generateHostnameForLeaseIndex(const uint16_t index) {
+        std::ostringstream hostname_s;
+        hostname_s << "host" << std::setw(4) << std::setfill('0')
+                   << index << ".example.org";
+        return (hostname_s.str());
     }
 
     /// @brief Test that leases can be reclaimed without being removed.
@@ -603,7 +644,7 @@ public:
                 std::ostringstream hostname_s;
                 hostname_s << "invalid-host" << i << "..example.com";
                 leases_[i]->hostname_ = hostname_s.str();
-                ASSERT_NO_THROW(LeaseMgrFactory::instance().updateLease6(leases_[i]));
+                ASSERT_NO_THROW(updateLease(i));
             }
             // Every lease is expired.
             expire(i, 10 + i);
@@ -689,7 +730,7 @@ ExpirationAllocEngine6Test::ExpirationAllocEngine6Test()
 void
 ExpirationAllocEngine6Test::createLeases() {
     // Create TEST_LEASES_NUM leases.
-    for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+    for (uint16_t i = 0; i < TEST_LEASES_NUM; ++i) {
         // DUID
         std::ostringstream duid_s;
         duid_s << "01020304050607" << std::setw(4) << std::setfill('0') << i;
@@ -700,14 +741,10 @@ ExpirationAllocEngine6Test::createLeases() {
         address_s << "2001:db8:1::" << std::setw(4) << std::setfill('0') << i;
         IOAddress address(address_s.str());
 
-        // Hostname.
-        std::ostringstream hostname_s;
-        hostname_s << "host" << std::setw(4) << std::setfill('0') << i
-            << ".example.org";
-
         // Create lease.
-        Lease6Ptr lease(new Lease6(Lease::TYPE_NA, address, duid, 1, 50, 60, 10, 20,
-                                   SubnetID(1), true, true, hostname_s.str()));
+        Lease6Ptr lease(new Lease6(Lease::TYPE_NA, address, duid, 1, 50, 60, 10,
+                                   20, SubnetID(1), true, true,
+                                   generateHostnameForLeaseIndex(i)));
         leases_.push_back(lease);
         LeaseMgrFactory::instance().addLease(lease);
     }
@@ -773,6 +810,11 @@ public:
     /// It is called internally at the construction time.
     void createLeases();
 
+    /// @brief Generates unique client identifier from lease index.
+    ///
+    /// @param index lease index.
+    void setUniqueClientId(const uint16_t index);
+
     /// @brief Updates lease in the lease database.
     ///
     /// @param lease_index Index of the lease.
@@ -800,6 +842,20 @@ public:
                                       const bool remove_lease) {
         engine_->reclaimExpiredLeases4(max_leases, timeout, remove_lease);
     }
+
+    /// @brief Lease algorithm checking if NCR has been generated from client
+    /// identifier.
+    ///
+    /// @param lease Pointer to the lease for which the NCR needs to be checked.
+    static bool dnsUpdateGeneratedFromClientId(const Lease4Ptr& lease);
+
+    /// @brief Lease algorithm checking if NCR has been generated from
+    /// HW address.
+    static bool dnsUpdateGeneratedFromHWAddress(const Lease4Ptr& lease);
+
+    /// @brief Test that DNS updates are properly generated when the
+    /// reclaimed leases contain client identifier.
+    void testReclaimExpiredLeasesWithDDNSAndClientId();
 };
 
 ExpirationAllocEngine4Test::ExpirationAllocEngine4Test()
@@ -810,31 +866,134 @@ ExpirationAllocEngine4Test::ExpirationAllocEngine4Test()
 void
 ExpirationAllocEngine4Test::createLeases() {
     // Create TEST_LEASES_NUM leases.
-    for (uint32_t i = 0; i < TEST_LEASES_NUM; ++i) {
+    for (uint16_t i = 0; i < TEST_LEASES_NUM; ++i) {
         // HW address
         std::ostringstream hwaddr_s;
         hwaddr_s << "01:02:03:04:" << std::setw(2) << std::setfill('0')
-                 << (i >> 16) << ":" << std::setw(2) << std::setfill('0')
+                 << (i >> 8) << ":" << std::setw(2) << std::setfill('0')
                  << (i & 0x00FF);
-        HWAddrPtr hwaddr(new HWAddr(HWAddr::fromText(hwaddr_s.str(), HTYPE_ETHER)));
+        HWAddrPtr hwaddr(new HWAddr(HWAddr::fromText(hwaddr_s.str(),
+                                                     HTYPE_ETHER)));
 
         // Address.
         std::ostringstream address_s;
-        address_s << "10.0." << (i >> 16) << "." << (i & 0x00FF);
+        address_s << "10.0." << (i >> 8) << "." << (i & 0x00FF);
         IOAddress address(address_s.str());
-
-        // Hostname.
-        std::ostringstream hostname_s;
-        hostname_s << "host" << std::setw(4) << std::setfill('0') << i
-            << ".example.org";
 
         // Create lease.
         Lease4Ptr lease(new Lease4(address, hwaddr, ClientIdPtr(), 60, 10, 20,
                                    time(NULL), SubnetID(1), true, true,
-                                   hostname_s.str()));
+                                   generateHostnameForLeaseIndex(i)));
         leases_.push_back(lease);
         LeaseMgrFactory::instance().addLease(lease);
     }
+}
+
+void
+ExpirationAllocEngine4Test::setUniqueClientId(const uint16_t index) {
+    std::ostringstream clientid_s;
+    clientid_s << "AA:BB:" << std::setw(2) << std::setfill('0')
+        << (index >> 16) << ":" << std::setw(2) << std::setfill('0')
+        << (index & 0x00FF);
+    ClientIdPtr client_id(ClientId::fromText(clientid_s.str()));
+    leases_[index]->client_id_ = client_id;
+    LeaseMgrFactory::instance().updateLease4(leases_[index]);
+}
+
+bool
+ExpirationAllocEngine4Test::dnsUpdateGeneratedFromClientId(const Lease4Ptr& lease) {
+    try {
+        NameChangeRequestPtr ncr = getNCRForLease(lease);
+        if (ncr) {
+            if (lease->client_id_) {
+                // Generate hostname for this lease. Note that the lease
+                // in the database doesn't have the hostname because it
+                // has been removed by the lease reclamation routine.
+                std::string hostname = generateHostnameForLeaseIndex(
+                      getLeaseIndexFromAddress(lease->addr_));
+
+                // Get DHCID from NCR.
+                const D2Dhcid& dhcid = ncr->getDhcid();
+                // Generate reference DHCID to compare with the one from
+                // the NCR.
+                std::vector<uint8_t> fqdn_wire;
+                OptionDataTypeUtil::writeFqdn(hostname, fqdn_wire, true);
+                D2Dhcid clientid_dhcid(lease->client_id_->getClientId(),
+                                       fqdn_wire);
+                // Return true if they match.
+                return (dhcid == clientid_dhcid);
+            }
+        }
+
+    } catch (...) {
+        // If error occurred, treat it as no match.
+        return (false);
+    }
+
+    // All leases checked - no match.
+    return (false);
+}
+
+bool
+ExpirationAllocEngine4Test::dnsUpdateGeneratedFromHWAddress(const Lease4Ptr& lease) {
+    try {
+        NameChangeRequestPtr ncr = getNCRForLease(lease);
+        if (ncr) {
+            if (lease->hwaddr_) {
+                // Generate hostname for this lease. Note that the lease
+                // in the database doesn't have the hostname because it
+                // has been removed by the lease reclamation routine.
+                std::string hostname = generateHostnameForLeaseIndex(
+                      getLeaseIndexFromAddress(lease->addr_));
+
+                // Get DHCID from NCR.
+                const D2Dhcid& dhcid = ncr->getDhcid();
+                // Generate reference DHCID to compare with the one from
+                // the NCR.
+                std::vector<uint8_t> fqdn_wire;
+                OptionDataTypeUtil::writeFqdn(hostname, fqdn_wire, true);
+                D2Dhcid hwaddr_dhcid(lease->hwaddr_, fqdn_wire);
+                // Return true if they match.
+                return (dhcid == hwaddr_dhcid);
+            }
+        }
+
+    } catch (...) {
+        // If error occurred, treat it as no match.
+        return (false);
+    }
+
+    // All leases checked - no match.
+    return (false);
+}
+
+void
+ExpirationAllocEngine4Test::testReclaimExpiredLeasesWithDDNSAndClientId() {
+    // DNS must be started for the D2 client to accept NCRs.
+    ASSERT_NO_THROW(enableDDNS());
+
+    for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+        // Set client identifiers for leases with even indexes only.
+        if (evenLeaseIndex(i)) {
+            setUniqueClientId(i);
+        }
+        // Expire all leases. The higher the index, the more expired the lease.
+        expire(i, 10 + i);
+    }
+
+    // Reclaim all expired leases.
+    ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, false));
+
+    // Leases with even indexes should be reclaimed.
+    EXPECT_TRUE(testLeases(&leaseReclaimed, &evenLeaseIndex));
+    // DNS updates (removal NCRs) should be generated for all leases.
+    EXPECT_TRUE(testLeases(&dnsUpdateGeneratedForLease, &allLeaseIndexes));
+    // Leases with even indexes include client identifiers so the DHCID should
+    // be generated from the client identifiers.
+    EXPECT_TRUE(testLeases(&dnsUpdateGeneratedFromClientId, &evenLeaseIndex));
+    // Leases with odd indexes do not include client identifiers so their
+    // DHCID should be generated from the HW address.
+    EXPECT_TRUE(testLeases(&dnsUpdateGeneratedFromHWAddress, &oddLeaseIndex));
 }
 
 // This test verifies that the leases can be reclaimed without being removed
@@ -872,6 +1031,12 @@ TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesWithDDNSAndLimit) {
 // lease reclamation routine continues with reclamation of leases anyway.
 TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesInvalidHostname) {
     testReclaimExpiredLeasesInvalidHostname();
+}
+
+// This test verifies that DNS updates are properly generated when the
+// client id is used as a primary identifier in the lease.
+TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesWithDDNSAndClientId) {
+    testReclaimExpiredLeasesWithDDNSAndClientId();
 }
 
 }; // end of anonymous namespace
