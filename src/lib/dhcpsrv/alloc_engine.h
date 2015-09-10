@@ -497,6 +497,14 @@ public:
     /// See http://kea.isc.org/wiki/LeaseExpirationDesign#LeasesReclamationRoutine
     /// for the details.
     ///
+    /// This method is executed periodically to act upon expired leases. This
+    /// includes for each lease:
+    /// - executing "lease_expire6" hook,
+    /// - removing DNS record for a lease,
+    /// - reclaiming a lease in the database, i.e. setting its state to
+    ///   "expired-reclaimed" or removing it from the lease databse,
+    /// - updating statistics of assigned and reclaimed leases
+    ///
     /// @param max_leases Maximum number of leases to be reclaimed.
     /// @param timeout Maximum amount of time that the reclaimation routine
     /// may be processing expired leases, expressed in seconds.
@@ -511,6 +519,14 @@ public:
     /// This method retrieves a collection of expired leases and reclaims them.
     /// See http://kea.isc.org/wiki/LeaseExpirationDesign#LeasesReclamationRoutine
     /// for the details.
+    ///
+    /// This method is executed periodically to act upon expired leases. This
+    /// includes for each lease:
+    /// - executing "lease_expire6" hook,
+    /// - removing DNS record for a lease,
+    /// - reclaiming a lease in the database, i.e. setting its state to
+    ///   "expired-reclaimed" or removing it from the lease databse,
+    /// - updating statistics of assigned and reclaimed leases
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
     /// @param timeout Maximum amount of time that the reclaimation routine
