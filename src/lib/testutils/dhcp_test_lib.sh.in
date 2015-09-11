@@ -247,6 +247,7 @@ cleanup() {
 
     # Remove temporary files.
     rm -rf ${LOG_FILE}
+    rm -rf ${LEASE_FILE}
     rm -rf ${CFG_FILE}
     rm -rf ${KEACTRL_CFG_FILE}
 }

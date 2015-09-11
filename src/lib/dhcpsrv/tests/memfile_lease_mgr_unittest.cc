@@ -14,12 +14,15 @@
 
 #include <config.h>
 
+#include <boost/asio.hpp>
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <dhcpsrv/tests/lease_file_io.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
@@ -106,8 +109,9 @@ public:
     MemfileLeaseMgrTest() :
         io4_(getLeaseFilePath("leasefile4_0.csv")),
         io6_(getLeaseFilePath("leasefile6_0.csv")),
-        io_service_(),
-        fail_on_callback_(false) {
+        io_service_(new IOService()),
+        fail_on_callback_(false),
+        timeout_(false) {
 
         std::ostringstream s;
         s << KEA_LFC_BUILD_DIR << "/kea-lfc";
@@ -134,21 +138,10 @@ public:
     ///
     /// destroys lease manager backend.
     virtual ~MemfileLeaseMgrTest() {
-        // Explicitly destroy the timer and the IO service. Note that they
-        // must be destroyed in this order because test_timer_ depends on
-        // the io_service_ as it is passed its reference during the
-        // construction. It usually doesn't matter unless the timer is
-        // running (hasn't been cancelled). Destroying an underlying
-        // IO service before cancelling the timer relying on it may lead
-        // to a crash. This has been proven on CentOS 6, running boost
-        // version 1.41. Note that destroying the timer also cancels it.
-        // In theory, we could avoid this explicit release of these objects
-        // and rely on the order in which they are declared in the class.
-        // But, this seems to be better as it makes it more visible
-        // what we are doing here.
-        test_timer_.reset();
-        io_service_.reset();
-
+        // Stop TimerMgr worker thread if it is running.
+        TimerMgr::instance()->stopThread();
+        // Make sure there are no timers registered.
+        TimerMgr::instance()->unregisterTimers();
         LeaseMgrFactory::destroy();
         // Remove lease files and products of Lease File Cleanup.
         removeFiles(getLeaseFilePath("leasefile4_0.csv"));
@@ -224,10 +217,24 @@ public:
             boost::bind(&MemfileLeaseMgrTest::testTimerCallback, this);
         test_timer_.reset(new IntervalTimer(*io_service_));
         test_timer_->setup(cb, ms, IntervalTimer::ONE_SHOT);
+
+        // The timeout flag will be set by the timeoutCallback if the test
+        // lasts for too long. In this case we will return from here.
+        while (!timeout_) {
+            // Block for one 1 millisecond.
+            IfaceMgr::instance().receive6(0, 1000);
+
+            // Run ready handlers from the local IO service to execute
+            // the timeout callback if necessary.
+            io_service_->get_io_service().poll_one();
+        }
+
+        timeout_ = false;
     }
 
     /// @brief Test timer callback function.
     void testTimerCallback() {
+        timeout_ = true;
         io_service_->stop();
         if (fail_on_callback_) {
             FAIL() << "Test timeout reached";
@@ -266,6 +273,9 @@ public:
 
     /// @brief Indicates if the @c testTimerCallback should cause test failure.
     bool fail_on_callback_;
+
+    /// @brief Boolean flag indicating if the test timeout occurred.
+    bool timeout_;
 
 };
 
@@ -368,16 +378,16 @@ TEST_F(MemfileLeaseMgrTest, lfcTimer) {
     boost::scoped_ptr<LFCMemfileLeaseMgr>
         lease_mgr(new LFCMemfileLeaseMgr(pmap));
 
-    // Check that the interval is correct.
-    EXPECT_EQ(1, lease_mgr->getIOServiceExecInterval());
-
-    io_service_ = lease_mgr->getIOService();
+    // Start worker thread to execute LFC periodically.
+    TimerMgr::instance()->startThread();
 
     // Run the test for at most 2.9 seconds.
     setTestTime(2900);
 
-    // Run the IO service to execute timers.
-    io_service_->run();
+    // Stop worker thread to make sure it is not running when lease
+    // manager is destroyed. The lease manager will be unable to
+    // unregster timer when the thread is active.
+    TimerMgr::instance()->stopThread();
 
     // Within 2.9 we should record two LFC executions.
     EXPECT_EQ(2, lease_mgr->getLFCCount());
@@ -397,15 +407,16 @@ TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
     boost::scoped_ptr<LFCMemfileLeaseMgr>
         lease_mgr(new LFCMemfileLeaseMgr(pmap));
 
-    EXPECT_EQ(0, lease_mgr->getIOServiceExecInterval());
-
-    io_service_ = lease_mgr->getIOService();
+    // Start worker thread to execute LFC periodically.
+    TimerMgr::instance()->startThread();
 
     // Run the test for at most 1.9 seconds.
     setTestTime(1900);
 
-    // Run the IO service to execute timers.
-    io_service_->run();
+    // Stop worker thread to make sure it is not running when lease
+    // manager is destroyed. The lease manager will be unable to
+    // unregster timer when the thread is active.
+    TimerMgr::instance()->stopThread();
 
     // There should be no LFC execution recorded.
     EXPECT_EQ(0, lease_mgr->getLFCCount());
@@ -737,34 +748,6 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
 
     // The input file should have been removed
     ASSERT_FALSE(input_file.exists());
-}
-
-
-// Test that the backend returns a correct value of the interval
-// at which the IOService must be executed to run the handlers
-// for the installed timers.
-TEST_F(MemfileLeaseMgrTest, getIOServiceExecInterval) {
-    LeaseMgr::ParameterMap pmap;
-    pmap["type"] = "memfile";
-    pmap["universe"] = "4";
-    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
-
-    // The lfc-interval is not set, so the returned value should be 0.
-    boost::scoped_ptr<LFCMemfileLeaseMgr> lease_mgr(new LFCMemfileLeaseMgr(pmap));
-    EXPECT_EQ(0, lease_mgr->getIOServiceExecInterval());
-
-    // lfc-interval = 10
-    pmap["lfc-interval"] = "10";
-    lease_mgr.reset();
-    lease_mgr.reset(new LFCMemfileLeaseMgr(pmap));
-    EXPECT_EQ(10, lease_mgr->getIOServiceExecInterval());
-
-    // lfc-interval = 20
-    pmap["lfc-interval"] = "20";
-    lease_mgr.reset();
-    lease_mgr.reset(new LFCMemfileLeaseMgr(pmap));
-    EXPECT_EQ(20, lease_mgr->getIOServiceExecInterval());
-
 }
 
 // Checks that adding/getting/deleting a Lease6 object works.
