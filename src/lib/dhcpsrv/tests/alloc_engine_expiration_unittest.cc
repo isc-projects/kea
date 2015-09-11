@@ -146,6 +146,16 @@ struct UpperBound {
 /// "expired-reclaimed".
 ///
 /// See @c ExpirationAllocEngineTest::testLeases for further details.
+///
+/// @todo These tests should be extended to cover the following cases:
+/// - timeout value in the lease reclamation routines - the most reliable
+///   way to test it will be by attaching a lease4_expire/lease6_expire
+///   hooks which would block for a specific period of time. This will
+///   allow for calculating the approximate number of reclaimed leases
+///   within a given timeout. See ticket #3972.
+/// - declined leases - declined leases expire and should be removed
+///   from the lease database by the lease reclamation routine. See
+///   ticket #3976.
 template<typename LeasePtrType>
 class ExpirationAllocEngineTest : public ::testing::Test {
 public:
