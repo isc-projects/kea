@@ -1291,6 +1291,8 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
 
     // Create stopwatch and automatically start it to measure the time
     // taken by the routine.
+    /// @todo Monitor time elapsed and return from the lease reclamation routine
+    /// if it hits the timeout value.
     util::Stopwatch stopwatch;
 
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
@@ -1371,6 +1373,8 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
 
     // Create stopwatch and automatically start it to measure the time
     // taken by the routine.
+    /// @todo Monitor time elapsed and return from the lease reclamation routine
+    /// if it hits the timeout value.
     util::Stopwatch stopwatch;
 
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
