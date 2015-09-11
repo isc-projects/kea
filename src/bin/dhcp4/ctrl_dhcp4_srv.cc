@@ -19,6 +19,7 @@
 #include <hooks/hooks_manager.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <config/command_mgr.h>
 #include <stats/stats_mgr.h>
 
@@ -123,7 +124,9 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
+    TimerMgr::instance()->stopThread();
     ConstElementPtr answer = configureDhcp4Server(*srv, config);
+    TimerMgr::instance()->startThread();
 
     // Check that configuration was successful. If not, do not reopen sockets
     // and don't bother with DDNS stuff.
@@ -156,6 +159,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     // of the interfaces.
     CfgMgr::instance().getStagingCfg()->getCfgIface()->
         openSockets(AF_INET, srv->getPort(), getInstance()->useBroadcast());
+
 
     return (answer);
 }

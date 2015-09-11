@@ -376,13 +376,6 @@ The first argument holds the client and the transaction identification
 information. The second argument holds the IAID. The third argument
 holds the detailed lease information.
 
-% DHCP6_LEASE_DATABASE_TIMERS_EXEC_FAIL failed to execute timer-based functions for lease database: %1
-A warning message executed when a server process is unable to execute
-the periodic actions for the lease database. An example of the periodic
-action is a Lease File Cleanup. One of the reasons for the failure is
-a misconfiguration of the lease database, whereby the lease database
-hasn't been selected.
-
 % DHCP6_LEASE_NA_WITHOUT_DUID %1: address lease for address %2 does not have a DUID
 This error message indicates a database consistency problem. The lease
 database has an entry indicating that the given address is in use,

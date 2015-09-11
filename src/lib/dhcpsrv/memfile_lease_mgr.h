@@ -49,12 +49,7 @@ class LFCSetup;
 /// The backend installs an @c asiolink::IntervalTimer to periodically execute
 /// the @c Memfile_LeaseMgr::lfcCallback. This callback function controls
 /// the startup of the background process which removes redundant information
-/// from the lease file(s). Note that the @c asiolink::IntervalTimer uses
-/// @c asiolink::IOService to execute the callback. The @c LeaseMgr class
-/// creates this object, which can be obtained by the caller using the
-/// @c LeaseMgr::getIOService. The caller should later call an appropriate
-/// method, @c boost::asio::io_service::poll_one to execute the callback when
-/// the timer is ready.
+/// from the lease file(s).
 ///
 /// When the backend is starting up, it reads leases from the lease file (one
 /// by one) and adds them to the in-memory container as follows:
@@ -457,19 +452,6 @@ public:
     ///       The following methods allow for retrieving useful information
     ///       about the state of the backend.
     //@{
-
-    /// @brief Returns the interval at which the @c IOService events should
-    /// be released.
-    ///
-    /// The Memfile backend may install a timer to execute the %Lease File
-    /// Cleanup periodically. If this timer is installed, the method returns
-    /// the LFC interval in milliseconds.
-    ///
-    /// @return A maximum interval (in seconds) at which the @c IOService
-    /// should be executed. A value of 0 means that no timers are installed
-    /// and that there is no requirement for the @c IOService to be
-    /// executed at any specific interval.
-    virtual uint32_t getIOServiceExecInterval() const;
 
     /// @brief Returns default path to the lease file.
     ///

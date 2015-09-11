@@ -317,16 +317,7 @@ bool Dhcpv6Srv::run() {
         Pkt6Ptr rsp;
 
         try {
-            // The lease database backend may install some timers for which
-            // the handlers need to be executed periodically. Retrieve the
-            // maximum interval at which the handlers must be executed from
-            // the lease manager.
-            uint32_t timeout = LeaseMgrFactory::instance().getIOServiceExecInterval();
-            // If the returned value is zero it means that there are no
-            // timers installed, so use a default value.
-            if (timeout == 0) {
-                timeout = 1000;
-            }
+            uint32_t timeout = 1000;
             LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT).arg(timeout);
             query = receivePacket(timeout);
 
@@ -383,15 +374,6 @@ bool Dhcpv6Srv::run() {
             // An (a standard or ISC) exception occurred.
             LOG_ERROR(dhcp6_logger, DHCP6_HANDLE_SIGNAL_EXCEPTION)
                 .arg(e.what());
-        }
-
-        // Execute ready timers for the lease database, e.g. Lease File Cleanup.
-        try {
-            LeaseMgrFactory::instance().getIOService()->poll();
-
-        } catch (const std::exception& ex) {
-            LOG_WARN(dhcp6_logger, DHCP6_LEASE_DATABASE_TIMERS_EXEC_FAIL)
-                .arg(ex.what());
         }
 
         // Timeout may be reached or signal received, which breaks select()
