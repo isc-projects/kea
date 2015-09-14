@@ -331,8 +331,9 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
     { "rsoo", D6O_RSOO, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "rsoo-opts" },
     { "client-linklayer-addr", D6O_CLIENT_LINKLAYER_ADDR, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
+    { "dhcpv4-message", D6O_DHCPV4_MSG, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "dhcp4o6-server-addr", D6O_DHCPV4_O_DHCPV6_SERVER, OPT_IPV6_ADDRESS_TYPE, true,
-      NO_RECORD_DEF, "" },
+      NO_RECORD_DEF, "" }
 
     // @todo There is still a bunch of options for which we have to provide
     // definitions but we don't do it because they are not really

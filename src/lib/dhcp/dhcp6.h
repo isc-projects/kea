@@ -68,6 +68,7 @@
 #define D6O_ERP_LOCAL_DOMAIN_NAME               65 /* RFC6440 */
 #define D6O_RSOO                                66 /* RFC6422 */
 #define D6O_CLIENT_LINKLAYER_ADDR               79 /* RFC6939 */
+#define D6O_DHCPV4_MSG                          87 /* RFC7341 */
 #define D6O_DHCPV4_O_DHCPV6_SERVER              88 /* RFC7341 */
 
 /*
@@ -192,5 +193,9 @@ extern const int dhcpv6_type_name_max;
 
 #define IRT_DEFAULT     86400
 #define IRT_MINIMUM     600
+
+/* DHCPv4-query message flags */
+
+#define DHCPV4_QUERY_FLAGS0_UNICAST 0x80
 
 #endif /* DHCP6_H */
