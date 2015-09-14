@@ -68,6 +68,7 @@
 #define D6O_ERP_LOCAL_DOMAIN_NAME               65 /* RFC6440 */
 #define D6O_RSOO                                66 /* RFC6422 */
 #define D6O_CLIENT_LINKLAYER_ADDR               79 /* RFC6939 */
+#define D6O_DHCPV4_O_DHCPV6_SERVER              88 /* RFC7341 */
 
 /*
  * Status Codes, from RFC 3315 section 24.4, and RFC 3633, 5007.
@@ -102,6 +103,9 @@
 #define DHCPV6_RELAY_REPL          13
 #define DHCPV6_LEASEQUERY          14
 #define DHCPV6_LEASEQUERY_REPLY    15
+/* RFC 7341 */
+#define DHCPV6_DHCPV4_QUERY        20
+#define DHCPV6_DHCPV4_RESPONSE     21
 
 extern const char *dhcpv6_type_names[];
 extern const int dhcpv6_type_name_max;

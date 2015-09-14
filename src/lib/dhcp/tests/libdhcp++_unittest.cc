@@ -1168,6 +1168,9 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_ERP_LOCAL_DOMAIN_NAME,
                                     fqdn_buf.begin(), fqdn_buf.end(),
                                     typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_DHCPV4_O_DHCPV6_SERVER, begin, end,
+                                    typeid(Option6AddrLst));
 }
 
 // This test checks if the DHCPv6 option definition can be searched by
