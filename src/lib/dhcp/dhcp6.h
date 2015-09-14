@@ -196,6 +196,6 @@ extern const int dhcpv6_type_name_max;
 
 /* DHCPv4-query message flags */
 
-#define DHCPV4_QUERY_FLAGS0_UNICAST 0x80
+#define DHCPV4_QUERY_FLAGS_UNICAST (1 << 24)
 
 #endif /* DHCP6_H */
