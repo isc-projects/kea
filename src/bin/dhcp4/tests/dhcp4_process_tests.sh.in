@@ -35,7 +35,7 @@ CONFIG="{
             \"type\": \"memfile\",
             \"name\": \"$LEASE_FILE\",
             \"persist\": false,
-            \"lfc-interval\": 1
+            \"lfc-interval\": 0
         },
         \"subnet4\": [
         {
@@ -286,8 +286,12 @@ lfc_timer_test() {
     test_start "dhcpv4_srv.lfc_timer_test"
     # Remove dangling Kea instances and remove log files.
     cleanup
+    # Create a configuration with the LFC enabled, by replacing the section
+    # with the lfc-interval parameter.
+    LFC_CONFIG=$(printf "${CONFIG}" | sed -e 's/\"lfc-interval\": 0/\"lfc-interval\": 1/g')
+    echo ${LFC_CONFIG}
     # Create new configuration file.
-    create_config "${CONFIG}"
+    create_config "${LFC_CONFIG}"
     # Instruct Kea to log to the specific file.
     set_logger
     # Start Kea.
@@ -308,16 +312,33 @@ lfc_timer_test() {
         clean_exit 1
     fi
 
-    wait_for_message 10 "DHCPSRV_MEMFILE_EXECUTE" 1
+    wait_for_message 10 "DHCPSRV_MEMFILE_LFC_EXECUTE" 1
     if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
         printf "ERROR: Server did not execute LFC.\n"
         clean_exit 1
     fi
 
+    sleep 3
+
+    # Send signal to Kea SIGTERM
+    send_signal 15 ${bin}
+
+    # Wait up to 10s for the server's graceful shutdown. The graceful shut down
+    # should be recorded in the log file with the appropriate message.
+    wait_for_message 10 "DHCP4_SHUTDOWN" 1
+    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+        printf "ERROR: Server did not record shutdown in the log.\n"
+        clean_exit 1
+    fi
+
+    # Make sure the server is down.
+    wait_for_server_down 5 ${bin}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
+
     # All ok. Shut down Kea and exit.
     test_finish 0
 }
-
 
 server_pid_file_test "${CONFIG}" DHCP4_ALREADY_RUNNING
 dynamic_reconfiguration_test
