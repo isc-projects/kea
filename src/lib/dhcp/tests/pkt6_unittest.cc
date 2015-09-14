@@ -593,6 +593,14 @@ TEST_F(Pkt6Test, getName) {
             EXPECT_STREQ("DECLINE", Pkt6::getName(type));
             break;
 
+        case DHCPV6_DHCPV4_QUERY:
+            EXPECT_STREQ("DHCPV4_QUERY", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_DHCPV4_RESPONSE:
+            EXPECT_STREQ("DHCPV4_RESPONSE", Pkt6::getName(type));
+            break;
+
         case DHCPV6_INFORMATION_REQUEST:
             EXPECT_STREQ("INFORMATION_REQUEST",
                          Pkt6::getName(type));
