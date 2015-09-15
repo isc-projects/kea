@@ -135,6 +135,19 @@ const char* create_statement[] = {
     "CREATE INDEX lease4_by_state_expire ON lease4 (state, expire)",
     "CREATE INDEX lease6_by_state_expire ON lease6 (state, expire)",
 
+    // Production schema includes the lease_state table which maps
+    // the lease states to their names. This is not used in the unit tests
+    // so it is commented out.
+
+    /*"CREATE TABLE IF NOT EXISTS lease_state (",
+        "state INT UNSIGNED PRIMARY KEY NOT NULL,"
+        "name VARCHAR(64) NOT NULL);",
+
+    "INSERT INTO lease_state VALUES (0, \"default\");",
+    "INSERT INTO lease_state VALUES (1, \"declined\");",
+    "INSERT INTO lease_state VALUES (2, \"expired-reclaimed\");",*/
+
+
     // Schema upgrade to 4.0 ends here.
 
     NULL
