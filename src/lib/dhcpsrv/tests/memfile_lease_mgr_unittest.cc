@@ -27,6 +27,7 @@
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <util/pid_file.h>
+#include <util/stopwatch.h>
 #include <gtest/gtest.h>
 
 #include <boost/bind.hpp>
@@ -108,10 +109,7 @@ public:
     /// Creates memfile and stores it in lmptr_ pointer
     MemfileLeaseMgrTest() :
         io4_(getLeaseFilePath("leasefile4_0.csv")),
-        io6_(getLeaseFilePath("leasefile6_0.csv")),
-        io_service_(new IOService()),
-        fail_on_callback_(false),
-        timeout_(false) {
+        io6_(getLeaseFilePath("leasefile6_0.csv")) {
 
         std::ostringstream s;
         s << KEA_LFC_BUILD_DIR << "/kea-lfc";
@@ -212,32 +210,15 @@ public:
         lmptr_ = &(LeaseMgrFactory::instance());
     }
 
+    /// @brief Runs @c IfaceMgr::receive6 in a look for a specified time.
+    ///
+    /// @param ms Duration in milliseconds.
     void setTestTime(const uint32_t ms) {
-        IntervalTimer::Callback cb =
-            boost::bind(&MemfileLeaseMgrTest::testTimerCallback, this);
-        test_timer_.reset(new IntervalTimer(*io_service_));
-        test_timer_->setup(cb, ms, IntervalTimer::ONE_SHOT);
-
-        // The timeout flag will be set by the timeoutCallback if the test
-        // lasts for too long. In this case we will return from here.
-        while (!timeout_) {
+        // Measure test time and exit if timeout hit.
+        Stopwatch stopwatch;
+        while (stopwatch.getTotalMilliseconds() < ms) {
             // Block for one 1 millisecond.
             IfaceMgr::instance().receive6(0, 1000);
-
-            // Run ready handlers from the local IO service to execute
-            // the timeout callback if necessary.
-            io_service_->get_io_service().poll_one();
-        }
-
-        timeout_ = false;
-    }
-
-    /// @brief Test timer callback function.
-    void testTimerCallback() {
-        timeout_ = true;
-        io_service_->stop();
-        if (fail_on_callback_) {
-            FAIL() << "Test timeout reached";
         }
     }
 
@@ -264,18 +245,6 @@ public:
 
     /// @brief Object providing access to v6 lease IO.
     LeaseFileIO io6_;
-
-    /// @brief IO service object used for the timer tests.
-    asiolink::IOServicePtr io_service_;
-
-    /// @brief Test timer for the test.
-    boost::shared_ptr<IntervalTimer> test_timer_;
-
-    /// @brief Indicates if the @c testTimerCallback should cause test failure.
-    bool fail_on_callback_;
-
-    /// @brief Boolean flag indicating if the test timeout occurred.
-    bool timeout_;
 
 };
 
