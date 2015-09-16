@@ -188,13 +188,13 @@ address that it is not supposed to. The server will fully recover from this
 situation, but if the underlying problem of a misconfigured or rogue device
 is not solved, this address may be declined again in the future.
 
-% DHCP4_DECLINE_LEASE_NOT_FOUND Received DHCPDECLINE for addr %1, but no such lease found. Client: %2
+% DHCP4_DECLINE_LEASE_NOT_FOUND Received DHCPDECLINE for addr %1 from client %2, but no such lease found.
 This warning message indicates that a client reported that his address was
 detected as a duplicate (i.e. another device in the network is using this address).
 However, the server does not have a record for this address. This may indicate
 a client's error or a server's purged database.
 
-% DHCP4_DECLINE_LEASE_MISMATCH Received DHCPDECLINE for addr %1 from %2, but the data doesn't match: received hwaddr: %3, lease hwaddr: %4, received client-id: %5, lease client-id: %6
+% DHCP4_DECLINE_LEASE_MISMATCH Received DHCPDECLINE for addr %1 from client %2, but the data doesn't match: received hwaddr: %3, lease hwaddr: %4, received client-id: %5, lease client-id: %6
 This informational message means that a client attempted to report his address
 as declined (i.e. used by unknown entity). The server has information about
 a lease for that address, but the client's hardware address or client identifier
