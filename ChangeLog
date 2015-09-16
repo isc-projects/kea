@@ -1,3 +1,9 @@
+1002.	[func]		marcin
+	MySQL lease database backend has been extended with new
+	functions to obtain expired leases and to delete expired
+	reclaimed leases.
+	(Trac #3966, git 419832a6279c70b5db04b1cab10737e31f2c99f9)
+
 1001.	[build]		fdupont
 	Fixed critical C++ issues in the Kea code. This does not cover
 	auto_ptr warnings (just ignore them) or the gtest 1.7.0 bug with
