@@ -2,7 +2,7 @@
 	Updated Makefiles to ensure that all required dynamic libraries
 	are included in the link command line as some systems are unable
 	handle implied library dependencies.
-	(Trac #3911, git xxx)
+	(Trac #3911, git 4d13f5234da33df03c0989829a0e1c1056e53a4e)
 
 1002.	[func]		marcin
 	MySQL lease database backend has been extended with new
