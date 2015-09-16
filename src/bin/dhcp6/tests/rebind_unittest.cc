@@ -245,20 +245,20 @@ public:
     }
 };
 
-// Test that clientID is mandatory and serverID forbidden for Rebind messages
+// Test that client-id is mandatory and server-id forbidden for Rebind messages
 TEST_F(RebindTest, sanityCheck) {
     NakedDhcpv6Srv srv(0);
 
-    // No clientID should fail
+    // A message with no client-id should fail
     Pkt6Ptr rebind = Pkt6Ptr(new Pkt6(DHCPV6_REBIND, 1234));
     EXPECT_THROW(srv.processRebind(rebind), RFCViolation);
 
-    // A clientID should succeed
+    // A message with a single client-id should succeed
     OptionPtr clientid = generateClientId();
     rebind->addOption(clientid);
     EXPECT_NO_THROW(srv.processRebind(rebind));
 
-    // A serverID should fail
+    // A message with server-id present should fail
     rebind->addOption(srv.getServerID());
     EXPECT_THROW(srv.processRebind(rebind), RFCViolation);
 }
