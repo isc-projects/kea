@@ -402,7 +402,11 @@ protected:
     /// @param release message received from client
     void processRelease(Pkt4Ptr& release);
 
-    /// @brief Stub function that will handle incoming DHCPDECLINE messages.
+    /// @brief Process incoming DHCPDECLINE messages.
+    ///
+    /// This method processes incoming DHCPDECLINE. In particular, it extracts
+    /// Requested IP Address option, check that the address really belongs to
+    /// the client and if it does, calls @ref declineLease.
     ///
     /// @param decline message received from client
     void processDecline(Pkt4Ptr& decline);

@@ -2718,6 +2718,27 @@ It is merely echoed by the server
 
     </section>
 
+    <section id="dhcp4-decline">
+      <title>Duplicate Addresses (DHCPDECLINE support)</title>
+      <note>
+        <para>@todo: Full text will be added as part of #3990.</para>
+      </note>
+
+      <para>
+        The server does not decrease assigned-addresses statistics
+        when DHCPDECLINE is received and processed successfully. While
+        technically declined address is not assigned anymore, the primary usage
+        of assigned-addresses statistic is to monitor pool utilization. Most
+        people would forget to include declined-addresses in the calculation,
+        and simply do assigned-addresses/total-addresses. This would have a bias
+        towards under-representing pool utilization. As this has a
+        potential for major issues, we decided to decrease assigned
+        addresses not immediately after receiving DHCPDECLINE, but do
+        it later when we recover the address back to the available pool.
+      </para>
+
+    </section>
+
     <section id="dhcp4-stats">
       <title>Statistics in DHCPv4 server</title>
       <note>
