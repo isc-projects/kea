@@ -256,9 +256,19 @@ Debian and Ubuntu:
           </varlistentry>
 
           <varlistentry>
+            <term>--with-boost-libs</term>
+            <listitem>
+              <simpara>Specify Boost libraries to link with (this option
+                exists only to provide a way to enforce such a list:
+                usually this should not be used).
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term>--with-botan-config</term>
             <listitem>
-              <simpara>To specific the path to the botan-config
+              <simpara>Specify the path to the botan-config
                 script to build with Botan for the crypto code.
               </simpara>
             </listitem>
