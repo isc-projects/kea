@@ -145,8 +145,12 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
     std::stringstream name;
     name << "subnet[" << subnets->at(0)->getID() << "].declined-addresses";
 
-    // Set this statistic explicitly to zero.
+    // Set the subnet specific statistic explicitly to zero.
     isc::stats::StatsMgr::instance().setValue(name.str(), static_cast<int64_t>(0));
+
+    // Set this global statistic explicitly to zero.
+    isc::stats::StatsMgr::instance().setValue("declined-addresses",
+                                              static_cast<int64_t>(0));
 
     // Ok, do the normal lease aquisition.
     CfgMgr::instance().clear();
@@ -160,10 +164,16 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
     // Perform 4-way exchange to obtain a new lease.
     acquireLease(client);
 
-    // Check the delined-addresses statistic before the Decline operation.
+    // Check the declined-addresses (subnet) statistic before the Decline operation.
     ObservationPtr declined_cnt = StatsMgr::instance().getObservation(name.str());
     ASSERT_TRUE(declined_cnt);
     uint64_t before = declined_cnt->getInteger().first;
+
+    // Check the global declined-addresses statistic before the Decline.
+    ObservationPtr declined_global = StatsMgr::instance()
+        .getObservation("declined-addresses");
+    ASSERT_TRUE(declined_global);
+    uint64_t before_global = declined_cnt->getInteger().first;
 
     // Remember the acquired address.
     IOAddress declined_address = client.config_.lease_.addr_;
@@ -182,6 +192,10 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
     ASSERT_TRUE(declined_cnt);
     uint64_t after = declined_cnt->getInteger().first;
 
+    declined_global = StatsMgr::instance().getObservation("declined-addresses");
+    ASSERT_TRUE(declined_global);
+    uint64_t after_global = declined_global->getInteger().first;
+
     ASSERT_TRUE(lease);
     // We check if the deline process was successful by checking if the
     // lease is in the database and what is its state.
@@ -191,6 +205,8 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
         // The decline succeded, so the declined-addresses statistic should
         // be increased by one
         EXPECT_EQ(after, before + 1);
+
+        EXPECT_EQ(after_global, before_global + 1);
     } else {
         // the decline was supposed, to be rejected.
         EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
@@ -198,6 +214,7 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
         // The decline failed, so the declined-addresses should be the same
         // as before
         EXPECT_EQ(before, after);
+        EXPECT_EQ(before_global, after_global);
     }
 }
 
@@ -266,9 +283,9 @@ TEST_F(DeclineTest, declineNonMatchingHWAddress) {
 }
 
 // This test checks the server's behavior in the following case:
-// - Client acquires new lease.
-// - Client sends DHCPDECLINE with the ciaddr set to a different
-//   address than it has acquired from the server.
+// - Client acquires new lease (address A).
+// - Client sends DHCPDECLINE with the requested IP address set to a different
+//   address B than it has acquired from the server.
 // - Server determines that the client is trying to decline a
 //   wrong address and will refuse to decline.
 TEST_F(DeclineTest, declineNonMatchingIPAddress) {

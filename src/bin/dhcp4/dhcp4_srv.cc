@@ -1926,9 +1926,23 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const std::string& descr) {
     }
 
     // Bump up the statistics.
-    std::stringstream name;
-    name << "subnet[" << lease->subnet_id_ << "].declined-addresses";
-    isc::stats::StatsMgr::instance().addValue(name.str(), static_cast<int64_t>(1));
+
+    // Per subnet declined addresses counter.
+    StatsMgr::instance().addValue(
+        StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
+        static_cast<int64_t>(1));
+
+    // Global declined addresses counter.
+    StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
+
+    // We do not want to decrease the assigned-addresses at this time. While
+    // technically declined address is not allocated anymore, the primary usage
+    // of assigned-addresses statistic is to monitor pool utilization. Most
+    // people would forget to include declined-addresses in the calculation,
+    // and simply do assigned-addresses/total-addresses. This would have a bias
+    // towards under-representing pool utilization, if we decreased allocated
+    // immediately after receiving DHCPDECLINE, rather than later when we recover
+    // the address.
 
     // @todo: Call hooks.
 
