@@ -103,8 +103,8 @@ private:
     /// To avoid unused variable errors
     void dummy() {
         std::string n = MARKER_FILE;
-	n = LOAD_CALLOUT_LIBRARY;
-	n = LOAD_ERROR_CALLOUT_LIBRARY;
+        n = LOAD_CALLOUT_LIBRARY;
+        n = LOAD_ERROR_CALLOUT_LIBRARY;
     }
 };
 
