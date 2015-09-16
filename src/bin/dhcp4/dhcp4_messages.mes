@@ -177,7 +177,7 @@ This message is printed when DHCPv4 server disables an interface from being
 used to receive DHCPv4 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
-% DHCP4_DECLINE_LEASE Address %1 was declined by client %2. The lease will be unavailable for %3 seconds.
+% DHCP4_DECLINE_LEASE Received DHCPDECLINE for addr %1 from client %2. The lease will be unavailable for %3 seconds.
 This informational message is printed when a client received an address, but
 discovered that it is being used by some other device and notified the server by
 sending a DHCPDECLINE message. The server checked that this address really was
