@@ -99,20 +99,20 @@ public:
 };
 
 
-// Test that clientID is mandatory and serverID forbidden for Confirm messages
+// Test that client-id is mandatory and server-id forbidden for Confirm messages
 TEST_F(ConfirmTest, sanityCheck) {
     NakedDhcpv6Srv srv(0);
 
-    // No clientID should fail
+    // A message with no client-id should fail
     Pkt6Ptr confirm = Pkt6Ptr(new Pkt6(DHCPV6_CONFIRM, 1234));
     EXPECT_THROW(srv.processConfirm(confirm), RFCViolation);
 
-    // A clientID should succeed
+    // A message with a single client-id should succeed
     OptionPtr clientid = generateClientId();
     confirm->addOption(clientid);
     EXPECT_NO_THROW(srv.processConfirm(confirm));
 
-    // A serverID should fail
+    // A message with server-id present should fail
     confirm->addOption(srv.getServerID());
     EXPECT_THROW(srv.processConfirm(confirm), RFCViolation);
 }
