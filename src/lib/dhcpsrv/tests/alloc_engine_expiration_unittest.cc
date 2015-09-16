@@ -102,6 +102,8 @@ struct UpperBound {
 /// - DNS records for some of the leases must be removed when the lease
 ///   is reclaimed and DNS updates are enabled,
 /// - hooks must be invoked (if installed) for each reclaimed lease
+/// - statistics must be updated to increase the number of reclaimed
+///   leases and decrease the number of allocated leases
 ///
 /// The typical test requires many leases to be initialized and stored
 /// in the lease database for the test. The test fixture class creates
@@ -274,6 +276,9 @@ public:
     ///
     /// @param stat_name Statistic name.
     /// @param exp_value Expected value.
+    ///
+    /// @return true if the statistic manager holds a particular value,
+    /// false otherwise.
     bool testStatistics(const std::string& stat_name, const int64_t exp_value) const {
         try {
             ObservationPtr observation = StatsMgr::instance().getObservation(stat_name);
@@ -389,7 +394,8 @@ public:
     /// from the lease.
     ///
     /// @param lease Pointer to lease.
-    /// @return true if lease state is "expired-reclaimed".
+    /// @return true if lease state is "expired-reclaimed" and the FQDN
+    /// information has been removed from the lease.
     static bool leaseReclaimed(const LeasePtrType& lease) {
         return (lease && lease->stateExpiredReclaimed() &&
                 lease->hostname_.empty() && !lease->fqdn_fwd_ &&
@@ -446,7 +452,7 @@ public:
         return (true);
     }
 
-    /// @brief Returns Name Change Request from the D2 client queue.
+    /// @brief Returns removal name change request from the D2 client queue.
     ///
     /// @param lease Pointer to the lease to be matched with NCR.
     ///
@@ -458,7 +464,8 @@ public:
         for (size_t i = 0; i < mgr.getQueueSize(); ++i) {
             const NameChangeRequestPtr& ncr = mgr.peekAt(i);
             // If match found, return true.
-            if (ncr->getIpAddress() == lease->addr_.toText()) {
+            if ((ncr->getIpAddress() == lease->addr_.toText()) &&
+                (ncr->getChangeType() == CHG_REMOVE)) {
                 return (ncr);
             }
         }

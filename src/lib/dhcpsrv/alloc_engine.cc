@@ -1308,7 +1308,9 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
             // Generate removal name change request for D2, if required.
             // This will return immediatelly if the DNS wasn't updated
             // when the lease was created.
-            queueRemovalNameChangeRequest(lease, *(lease->duid_));
+            if (lease->duid_) {
+                queueRemovalNameChangeRequest(lease, *(lease->duid_));
+            }
 
             // Reclaim the lease - depending on the configuration, set the
             // expired-reclaimed state or simply remove it.
