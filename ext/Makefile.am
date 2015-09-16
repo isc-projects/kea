@@ -1,5 +1,5 @@
-if HAVE_GTEST_SOURCE
-SUBDIRS = gtest
-endif
+SUBDIRS = coroutine
 
-EXTRA_DIST = LICENSE_1_0.txt
+if HAVE_GTEST_SOURCE
+SUBDIRS += gtest
+endif
