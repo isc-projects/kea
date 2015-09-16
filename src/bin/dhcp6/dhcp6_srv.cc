@@ -2616,13 +2616,13 @@ void
 Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
                          AllocEngine::ClientContext6& ctx) {
 
-    // We need to deline addresses for all IA_NA options in the client's
+    // We need to decline addresses for all IA_NA options in the client's
     // RELEASE message.
 
     // Let's set the status to be success by default. We can override it with
     // error status if needed. The important thing to understand here is that
     // the global status code may be set to success only if all IA options were
-    // handled properly. Therefore the releaseIA_NA and releaseIA_PD options
+    // handled properly. Therefore the declineIA  options
     // may turn the status code to some error, but can't turn it back to success.
     int general_status = STATUS_Success;
 
@@ -2652,12 +2652,12 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
         .arg(decline->getLabel())
         .arg(ia->getIAID());
 
-    // Release can be done in one of two ways:
+    // Decline can be done in one of two ways:
     // Approach 1: extract address from client's IA_NA and see if it belongs
     // to this particular client.
     // Approach 2: find a subnet for this client, get a lease for
     // this subnet/duid/iaid and check if its content matches to what the
-    // client is asking us to release.
+    // client is asking us to decline.
     //
     // This method implements approach 1.
 
@@ -2753,7 +2753,7 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
 
     if (total_addrs == 0) {
         setStatusCode(ia_rsp, createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
-                                               "Not addresses sent in IA_NA."));
+                                               "No addresses sent in IA_NA."));
         general_status = STATUS_NoBinding;
         return (ia_rsp);
     }
