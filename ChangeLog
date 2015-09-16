@@ -1,3 +1,9 @@
+1004.	[bug]		fdupont
+	Incoming Confirm, Rebind and Information-Request messages are
+	now more thoroughly checked against presence of client-id
+	and server-id options.
+	(Trac #3773, git xxx)
+
 1003.	[build]		fdupont
 	Updated Makefiles to ensure that all required dynamic libraries
 	are included in the link command line as some systems are unable
