@@ -231,17 +231,17 @@ A debug message issued when the server is attempting to delete a lease
 for the specified address from the memory file database for the specified
 address.
 
-% DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4 deleting reclaimed leases expired more than %1 s ago
+% DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4 deleting reclaimed IPv4 leases that expired more than %1 seconds ago
 A debug message issued when the server is removing reclaimed DHCPv4
 leases which have expired longer than a specified period of time.
-The argument specified the number of seconds since leases' expiration
-before they can be removed.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
 
-% DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6 deleting reclaimed leases expired more than %1 s ago
+% DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6 deleting reclaimed IPv6 leases that expired more than %1 seconds ago
 A debug message issued when the server is removing reclaimed DHCPv6
 leases which have expired longer than a specified period of time.
-The argument specified the number of seconds since leases' expiration
-before they can be removed.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
 
 % DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START starting deletion of %1 expired-reclaimed leases
 A debug message issued wheb the server has found expired-reclaimed
@@ -265,6 +265,16 @@ client identification.
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the memory file database for a client with the specified
 client ID, hardware address and subnet ID.
+
+% DHCPSRV_MEMFILE_GET_EXPIRED4 obtaining maximum %1 of expired IPv4 leases
+A debug message issued when the server is attempting to obtain expired
+IPv4 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+% DHCPSRV_MEMFILE_GET_EXPIRED6 obtaining maximum %1 of expired IPv6 leases
+A debug message issued when the server is attempting to obtain expired
+IPv6 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
 
 % DHCPSRV_MEMFILE_GET_HWADDR obtaining IPv4 leases for hardware address %1
 A debug message issued when the server is attempting to obtain a set of
@@ -391,6 +401,23 @@ connection including database name and username needed to access it
 A debug message issued when the server is attempting to delete a lease for
 the specified address from the MySQL database for the specified address.
 
+% DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED4 deleting reclaimed IPv4 leases that expired more than %1 seconds ago
+A debug message issued when the server is removing reclaimed DHCPv4
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+% DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED6 deleting reclaimed IPv6 leases that expired more than %1 seconds ago
+A debug message issued when the server is removing reclaimed DHCPv6
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+% DHCPSRV_MYSQL_DELETED_EXPIRED_RECLAIMED deleted %1 reclaimed leases from the database
+A debug message issued when the server has removed a number of reclaimed
+leases from the database. The number of removed leases is included in the
+message.
+
 % DHCPSRV_MYSQL_GET_ADDR4 obtaining IPv4 lease for address %1
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the MySQL database for the specified address.
@@ -403,6 +430,16 @@ lease from the MySQL database for the specified address.
 A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database for a client with the specified
 client identification.
+
+% DHCPSRV_MYSQL_GET_EXPIRED4 obtaining maximum %1 of expired IPv4 leases
+A debug message issued when the server is attempting to obtain expired
+IPv4 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+% DHCPSRV_MYSQL_GET_EXPIRED6 obtaining maximum %1 of expired IPv6 leases
+A debug message issued when the server is attempting to obtain expired
+IPv6 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
 
 % DHCPSRV_MYSQL_GET_HWADDR obtaining IPv4 leases for hardware address %1
 A debug message issued when the server is attempting to obtain a set
