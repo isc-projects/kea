@@ -1,4 +1,4 @@
-// Copyright (C) 2010, 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,7 @@
 #include <errno.h>
 #include <stdlib.h>             // for malloc and free
 #include <unistd.h>
-#include "fd_share.h"
+#include <util/io/fd_share.h>
 
 namespace isc {
 namespace util {

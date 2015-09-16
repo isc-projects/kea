@@ -1,3 +1,9 @@
+1003.	[build]		fdupont
+	Updated Makefiles to ensure that all required dynamic libraries
+	are included in the link command line as some systems are unable
+	handle implied library dependencies.
+	(Trac #3911, git xxx)
+
 1002.	[func]		marcin
 	MySQL lease database backend has been extended with new
 	functions to obtain expired leases and to delete expired

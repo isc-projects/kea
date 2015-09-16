@@ -140,6 +140,10 @@ TEST(ServerHooksTest, Reset) {
     int beta = hooks.registerHook("beta");
     int gamma = hooks.registerHook("gamma");
 
+    EXPECT_EQ(std::string("alpha"), hooks.getName(alpha));
+    EXPECT_EQ(std::string("beta"), hooks.getName(beta));
+    EXPECT_EQ(std::string("gamma"), hooks.getName(gamma));
+
     // Check the counts before and after a reset.
     EXPECT_EQ(5, hooks.getCount());
     hooks.reset();

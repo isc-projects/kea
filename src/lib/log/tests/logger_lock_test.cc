@@ -17,7 +17,7 @@
 #include <log/logger_manager.h>
 #include <log/log_messages.h>
 #include <log/interprocess/interprocess_sync.h>
-#include "log_test_messages.h"
+#include <log/tests/log_test_messages.h>
 
 #include <util/threads/sync.h>
 #include <iostream>
