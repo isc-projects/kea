@@ -143,19 +143,24 @@ nodist_libkea_dhcpsrv_la_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
 nodist_libkea_dhcpsrv_la_SOURCES += hosts_messages.h hosts_messages.cc
 
 libkea_dhcpsrv_la_CXXFLAGS = $(AM_CXXFLAGS)
-libkea_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libkea_dhcpsrv_la_LIBADD   = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libkea_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS)
+libkea_dhcpsrv_la_LIBADD   = $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/stats/libkea-stats.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dns/libkea-dns++.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/stats/libkea-stats.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_dhcpsrv_la_LIBADD  += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 
 libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 4:0:0
+libkea_dhcpsrv_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 if HAVE_MYSQL
 libkea_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)
 endif

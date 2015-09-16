@@ -27,6 +27,7 @@ logger_example_SOURCES = logger_example.cc
 logger_example_CPPFLAGS = $(AM_CPPFLAGS)
 logger_example_LDFLAGS = $(AM_LDFLAGS)
 logger_example_LDADD  = $(top_builddir)/src/lib/log/libkea-log.la
+logger_example_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 logger_example_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 logger_example_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 logger_example_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
@@ -36,6 +37,7 @@ init_logger_test_SOURCES = init_logger_test.cc
 init_logger_test_CPPFLAGS = $(AM_CPPFLAGS)
 init_logger_test_LDFLAGS = $(AM_LDFLAGS)
 init_logger_test_LDADD  = $(top_builddir)/src/lib/log/libkea-log.la
+init_logger_test_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 init_logger_test_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 init_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 init_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
@@ -45,20 +47,19 @@ buffer_logger_test_SOURCES = buffer_logger_test.cc
 buffer_logger_test_CPPFLAGS = $(AM_CPPFLAGS)
 buffer_logger_test_LDFLAGS = $(AM_LDFLAGS)
 buffer_logger_test_LDADD  = $(top_builddir)/src/lib/log/libkea-log.la
+buffer_logger_test_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 buffer_logger_test_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 buffer_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 buffer_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
-# This test directly uses libkea-threads, and on some systems it seems to
-# require explicit LDADD (even if libkea-log has indirect dependencies)
 noinst_PROGRAMS += logger_lock_test
 logger_lock_test_SOURCES = logger_lock_test.cc
 nodist_logger_lock_test_SOURCES = log_test_messages.cc log_test_messages.h
 logger_lock_test_CPPFLAGS = $(AM_CPPFLAGS)
 logger_lock_test_LDFLAGS = $(AM_LDFLAGS)
 logger_lock_test_LDADD  = $(top_builddir)/src/lib/log/libkea-log.la
-logger_lock_test_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 logger_lock_test_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+logger_lock_test_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 logger_lock_test_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 logger_lock_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
@@ -69,19 +70,21 @@ if HAVE_GTEST
 TESTS =
 
 # Define the flags used in each set of tests
+TESTSCXXFLAGS  = $(AM_CXXFLAGS)
 if USE_CLANGPP
 # Workaround unused variables tcout and tcerr in log4cplus's streams.h.
-AM_CXXFLAGS += -Wno-unused-variable
+TESTSCXXFLAGS += -Wno-unused-variable
 endif
-AM_CPPFLAGS += $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
-AM_LDFLAGS  += $(GTEST_LDFLAGS)
+TESTSCPPFLAGS  = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
+TESTSLDFLAGS  = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
-AM_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
-AM_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-AM_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-AM_LDADD += $(GTEST_LDADD)
+TESTSLDADD  = $(AM_LDADD)
+TESTSLDADD += $(top_builddir)/src/lib/log/libkea-log.la
+TESTSLDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+TESTSLDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+TESTSLDADD += $(top_builddir)/src/lib/util/libkea-util.la
+TESTSLDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+TESTSLDADD += $(LOG4CPLUS_LIBS) $(GTEST_LDADD)
 
 # Set of unit tests for the general logging classes
 TESTS += run_unittests
@@ -100,11 +103,10 @@ run_unittests_SOURCES += output_option_unittest.cc
 run_unittests_SOURCES += buffer_appender_unittest.cc
 nodist_run_unittests_SOURCES = log_test_messages.cc log_test_messages.h
 
-run_unittests_CPPFLAGS = $(AM_CPPFLAGS)
-run_unittests_CXXFLAGS = $(AM_CXXFLAGS)
-run_unittests_LDADD    = $(AM_LDADD)
-run_unittests_LDADD    +=  $(LOG4CPLUS_LIBS)
-run_unittests_LDFLAGS  = $(AM_LDFLAGS)
+run_unittests_CPPFLAGS = $(TESTSCPPFLAGS)
+run_unittests_CXXFLAGS = $(TESTSCXXFLAGS)
+run_unittests_LDADD    = $(TESTSLDADD)
+run_unittests_LDFLAGS  = $(TESTSLDFLAGS)
 
 # logging initialization tests.  These are put in separate programs to
 # ensure that the initialization status at the start of each test is known,
@@ -115,10 +117,10 @@ initializer_unittests_1_SOURCES  = run_initializer_unittests.cc
 initializer_unittests_1_SOURCES += message_initializer_1_unittest.cc
 initializer_unittests_1_SOURCES += message_initializer_1a_unittest.cc
 
-initializer_unittests_1_CPPFLAGS = $(AM_CPPFLAGS)
-initializer_unittests_1_CXXFLAGS = $(AM_CXXFLAGS)
-initializer_unittests_1_LDADD    = $(AM_LDADD)
-initializer_unittests_1_LDFLAGS  = $(AM_LDFLAGS)
+initializer_unittests_1_CPPFLAGS = $(TESTSCPPFLAGS)
+initializer_unittests_1_CXXFLAGS = $(TESTSCXXFLAGS)
+initializer_unittests_1_LDADD    = $(TESTSLDADD)
+initializer_unittests_1_LDFLAGS  = $(TESTSLDFLAGS)
 
 noinst_PROGRAMS += $(TESTS)
 endif

@@ -20,8 +20,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
 AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin
-AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
-AM_CPPFLAGS += -I$(top_srcdir)/src/lib/asiolink
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/dhcp4/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
@@ -36,6 +34,10 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 if USE_CLANGPP
 # Disable unused parameter warning caused by some Boost headers when compiling with clang
 AM_CXXFLAGS += -Wno-unused-parameter
+endif
+
+if USE_STATIC_LINK
+AM_LDFLAGS = -static
 endif
 
 TESTS_ENVIRONMENT = \
@@ -93,26 +95,35 @@ dhcp4_unittests_SOURCES += kea_controller_unittest.cc
 nodist_dhcp4_unittests_SOURCES = marker_file.h test_libraries.h
 
 dhcp4_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-dhcp4_unittests_LDADD = $(GTEST_LDADD)
-dhcp4_unittests_LDADD += $(top_builddir)/src/bin/dhcp4/libdhcp4.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
+if HAVE_MYSQL
+dhcp4_unittests_LDFLAGS += $(MYSQL_LIBS)
+endif
+if HAVE_PGSQL
+dhcp4_unittests_LDFLAGS += $(PGSQL_LIBS)
+endif
+dhcp4_unittests_LDFLAGS += $(GTEST_LDFLAGS)
+
+dhcp4_unittests_LDADD = $(top_builddir)/src/bin/dhcp4/libdhcp4.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+dhcp4_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(GTEST_LDADD)
 endif
 
 noinst_EXTRA_DIST = configs-list.txt

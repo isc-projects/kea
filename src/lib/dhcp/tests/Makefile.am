@@ -94,9 +94,9 @@ endif
 libdhcp___unittests_SOURCES += protocol_util_unittest.cc
 libdhcp___unittests_SOURCES += duid_unittest.cc
 
-libdhcp___unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
+libdhcp___unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
-libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
+libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
 libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_CLANGPP
@@ -107,12 +107,14 @@ libdhcp___unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 endif
 
 libdhcp___unittests_LDADD  = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcp___unittests_LDADD += $(GTEST_LDADD)
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libdhcp___unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)

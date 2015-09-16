@@ -30,6 +30,8 @@ run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) $(PTHREAD_LDFLAGS)
 
 run_unittests_LDADD = $(top_builddir)/src/lib/util/threads/libkea-threads.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 run_unittests_LDADD += $(GTEST_LDADD)
 endif
 

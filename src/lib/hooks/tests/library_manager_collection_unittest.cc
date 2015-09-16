@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,6 +37,13 @@ namespace {
 
 class LibraryManagerCollectionTest : public ::testing::Test,
                                      public HooksCommonTestClass {
+private:
+    /// To avoid unused variable errors
+    void dummy() {
+        std::string n = MARKER_FILE;
+        n = LOAD_CALLOUT_LIBRARY;
+        n = LOAD_ERROR_CALLOUT_LIBRARY;
+    }
 };
 
 /// @brief Public library manager collection class
