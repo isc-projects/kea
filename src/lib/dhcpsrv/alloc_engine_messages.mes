@@ -16,12 +16,12 @@ $NAMESPACE isc::dhcp
 
 % ALLOC_ENGINE_LEASE_RECLAIMED successfully reclaimed lease %1
 This debug message is logged when the allocation engine successfully
-reclaims a lease.
+reclaims a lease. The lease is now available for assignment.
 
 % ALLOC_ENGINE_REMOVAL_NCR_FAILED sending removal name change request failed for lease %1: %2
 This error message is logged when sending a removal name change request
-to D2 failed. This name change request is usually generated when the
-lease reclamation routine acts upon expired leases. If a lease being
+to DHCP DDNS failed. This name change request is usually generated when
+the lease reclamation routine acts upon expired leases. If a lease being
 reclaimed has a corresponding DNS entry it needs to be removed.
 This message indicates that removal of the DNS entry has failed.
 Nevertheless the lease will be reclaimed. 
@@ -71,11 +71,12 @@ while performing the operation on the lease database.
 This debug message is logged when the allocation engine completes
 reclamation of a set of expired leases. The maximum number of leases
 to be reclaimed in a single pass of the lease reclamation routine
-is configurable. However, the number of reclaimed leases may also
-be limited by the timeout value. The message includes the number
-of reclaimed leases and the total time.
+is configurable using 'max-reclaim-leases' parameter. However,
+the number of reclaimed leases may also be limited by the timeout
+value, configured with 'max-reclaim-time'. The message includes the
+number of reclaimed leases and the total time.
 
-% ALLOC_ENGINE_V4_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases, timeout = %2 seconds)
+% ALLOC_ENGINE_V4_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 seconds)
 This debug message is issued when the allocation engine starts the
 reclamation of the expired leases. The maximum number of leases to
 be reclaimed and the timeout is included in the message. If any of
@@ -288,11 +289,12 @@ while performing the operation on the lease database.
 This debug message is logged when the allocation engine completes
 reclamation of a set of expired leases. The maximum number of leases
 to be reclaimed in a single pass of the lease reclamation routine
-is configurable. However, the number of reclaimed leases may also
-be limited by the timeout value. The message includes the number
-of reclaimed leases and the total time.
+is configurable using 'max-reclaim-leases' parameter. However,
+the number of reclaimed leases may also be limited by the timeout
+value, configured with 'max-reclaim-time'. The message includes the
+number of reclaimed leases and the total time.
 
-% ALLOC_ENGINE_V6_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases, timeout = %2 seconds)
+% ALLOC_ENGINE_V6_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 seconds)
 This debug message is issued when the allocation engine starts the
 reclamation of the expired leases. The maximum number of leases to
 be reclaimed and the timeout is included in the message. If any of
