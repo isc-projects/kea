@@ -73,7 +73,8 @@ TEST_F(ExceptionTest, verbose) {
 
 }
 
-// Test matching message.
+// A full example of how to check both the exception (e.g., EXPECT_THROW)
+// and its associated message (something no gtest macros do).
 TEST_F(ExceptionTest, message) {
     try {
         raise_foobar();
