@@ -3,8 +3,6 @@ AUTOMAKE_OPTIONS = subdir-objects
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
-AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -104,6 +102,7 @@ BUILT_SOURCES += rdataclass.h rdataclass.cc
 lib_LTLIBRARIES = libkea-dns++.la
 
 libkea_dns___la_LDFLAGS = -no-undefined -version-info 2:0:1
+libkea_dns___la_LDFLAGS += $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 
 libkea_dns___la_SOURCES =
 libkea_dns___la_SOURCES += dns_fwd.h
@@ -152,12 +151,10 @@ libkea_dns___la_SOURCES += rdata/generic/detail/txt_like.h
 libkea_dns___la_SOURCES += rdata/generic/detail/ds_like.h
 
 libkea_dns___la_CPPFLAGS = $(AM_CPPFLAGS)
-# Most applications of libdns++ will only implicitly rely on libcryptolink,
-# so we add the dependency here so that the applications don't have to link
-# libcryptolink explicitly.
 libkea_dns___la_LIBADD = $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libkea_dns___la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dns___la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_dns___la_LIBADD += $(CRYPTO_LIBS)
 
 # The following files used to be generated, but they are now part of the git tree:
 # rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc
