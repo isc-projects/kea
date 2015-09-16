@@ -18,6 +18,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
+#include <dhcpsrv/utils.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -97,6 +98,24 @@ public:
 
 };
 
+
+// Test that client-id is mandatory and server-id forbidden for Confirm messages
+TEST_F(ConfirmTest, sanityCheck) {
+    NakedDhcpv6Srv srv(0);
+
+    // A message with no client-id should fail
+    Pkt6Ptr confirm = Pkt6Ptr(new Pkt6(DHCPV6_CONFIRM, 1234));
+    EXPECT_THROW(srv.processConfirm(confirm), RFCViolation);
+
+    // A message with a single client-id should succeed
+    OptionPtr clientid = generateClientId();
+    confirm->addOption(clientid);
+    EXPECT_NO_THROW(srv.processConfirm(confirm));
+
+    // A message with server-id present should fail
+    confirm->addOption(srv.getServerID());
+    EXPECT_THROW(srv.processConfirm(confirm), RFCViolation);
+}
 
 // Test that directly connected client's Confirm message is processed and Reply
 // message is sent back. In this test case, the client sends Confirm for two
