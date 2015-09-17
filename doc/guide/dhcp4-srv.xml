@@ -2727,13 +2727,13 @@ It is merely echoed by the server
       <para>
         The server does not decrease assigned-addresses statistics
         when DHCPDECLINE is received and processed successfully. While
-        technically declined address is not assigned anymore, the primary usage
-        of assigned-addresses statistic is to monitor pool utilization. Most
+        technically a declined address is no longer assigned, the primary usage
+        of the assigned-addresses statistic is to monitor pool utilization. Most
         people would forget to include declined-addresses in the calculation,
         and simply do assigned-addresses/total-addresses. This would have a bias
         towards under-representing pool utilization. As this has a
-        potential for major issues, we decided to decrease assigned
-        addresses not immediately after receiving DHCPDECLINE, but do
+        potential for major issues, we decided not to decrease assigned
+        addresses immediately after receiving DHCPDECLINE, but to do
         it later when we recover the address back to the available pool.
       </para>
 
