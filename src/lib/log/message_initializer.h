@@ -15,7 +15,6 @@
 #ifndef MESSAGEINITIALIZER_H
 #define MESSAGEINITIALIZER_H
 
-#include <log/message_dictionary.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <cstdlib>
@@ -24,6 +23,9 @@
 
 namespace isc {
 namespace log {
+
+// Declare the MessageDictionary class to allow a pointer to it to be defined.
+class MessageDictionary;
 
 /// @name Type definitions for containers shared among instances of the class.
 ///
@@ -143,13 +145,13 @@ private:
 
     /// \brief Holds the pointer to the global dictionary.
     ///
-    /// The \c MessageInitializer instantiates the global dictionary and
-    /// keeps the reference to it throughout its lifetime as the global
-    /// dictionary is instantiated in the destructor. If the reference is
-    /// not held then it is possible that the global dictionary is destroyed
-    /// before the \c MessageInitializer destructor is called, causing the
-    /// static initialization order fiasco.
-    MessageDictionaryPtr global_dictionary_;
+    /// One or more instances of \c MessageInitalizer are created statically,
+    /// the \c MessageDictionary being created by the first one to run. As the
+    /// \c MessageDictionary is also accessed by the \c MessageInitializer
+    /// destructor, a smart pointer to it is kept.  This avoids the possibility
+    /// that, during shutdown, the \c MessageDictionary is destroyed before all
+    /// instances of \c MessageInitializer.
+    boost::shared_ptr<MessageDictionary> global_dictionary_;
 
     /// \brief Holds the shared pointer to the list of pointers to the
     /// log messages defined by various instances of this class.
