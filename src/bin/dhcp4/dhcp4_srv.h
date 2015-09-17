@@ -405,7 +405,7 @@ protected:
     /// @brief Process incoming DHCPDECLINE messages.
     ///
     /// This method processes incoming DHCPDECLINE. In particular, it extracts
-    /// Requested IP Address option, check that the address really belongs to
+    /// Requested IP Address option, checks that the address really belongs to
     /// the client and if it does, calls @ref declineLease.
     ///
     /// @param decline message received from client

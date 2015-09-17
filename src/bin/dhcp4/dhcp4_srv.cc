@@ -1936,8 +1936,8 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const std::string& descr) {
     StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
 
     // We do not want to decrease the assigned-addresses at this time. While
-    // technically declined address is not allocated anymore, the primary usage
-    // of assigned-addresses statistic is to monitor pool utilization. Most
+    // technically a declined address is no longer allocated, the primary usage
+    // of the assigned-addresses statistic is to monitor pool utilization. Most
     // people would forget to include declined-addresses in the calculation,
     // and simply do assigned-addresses/total-addresses. This would have a bias
     // towards under-representing pool utilization, if we decreased allocated

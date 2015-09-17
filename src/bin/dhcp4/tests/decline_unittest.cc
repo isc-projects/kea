@@ -197,7 +197,7 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
     uint64_t after_global = declined_global->getInteger().first;
 
     ASSERT_TRUE(lease);
-    // We check if the deline process was successful by checking if the
+    // We check if the decline process was successful by checking if the
     // lease is in the database and what is its state.
     if (expected_result == SHOULD_PASS) {
         EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
