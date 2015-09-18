@@ -75,14 +75,12 @@ libbcl_la_SOURCES  = basic_callout_library.cc
 libbcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libbcl_la_CPPFLAGS = $(AM_CPPFLAGS)
 libbcl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
-libbcl_la_LIBADD   = $(ALL_LIBS)
 
 # The load callout library - contains a load function
 liblcl_la_SOURCES  = load_callout_library.cc
 liblcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 liblcl_la_CPPFLAGS = $(AM_CPPFLAGS)
 liblcl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
-liblcl_la_LIBADD   = $(ALL_LIBS)
 
 # The load error callout library - contains a load function that returns
 # an error.
@@ -103,7 +101,6 @@ libfcl_la_SOURCES  = full_callout_library.cc
 libfcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libfcl_la_CPPFLAGS = $(AM_CPPFLAGS)
 libfcl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
-libfcl_la_LIBADD   = $(ALL_LIBS)
 
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
@@ -123,7 +120,7 @@ run_unittests_CXXFLAGS  = $(AM_CXXFLAGS)
 run_unittests_CPPFLAGS  = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS   = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 if USE_STATIC_LINK
-run_unittests_LDFLAGS  += -static
+run_unittests_LDFLAGS  += -static -export-dynamic
 endif
 
 run_unittests_LDADD     = $(AM_LDADD)
@@ -139,13 +136,6 @@ run_unittests_LDADD    += $(GTEST_LDADD)
 # libtool and specifying paths via -dlopen switches.  So... If running in an
 # environment where we have to set the library path AND if linking statically,
 # override the "check" target and run the unit tests ourselves.
-
-if USE_STATIC_LINK
-if SET_ENV_LIBRARY_PATH
-check-TESTS:
-	$(LIBTOOL) --mode=execute -dlopen $(HOOKS_LIB)  -dlopen $(LOG_LIB) -dlopen $(THREADS_LIB) -dlopen $(UTIL_LIB) -dlopen $(EXCEPTIONS_LIB) ./run_unittests
-endif
-endif
 
 endif
 
