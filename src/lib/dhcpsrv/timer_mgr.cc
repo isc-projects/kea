@@ -184,9 +184,6 @@ public:
 
     /// @brief Cancels the execution of the interval timer.
     ///
-    /// This method has no effect if the timer hasn't been scheduled with
-    /// the @c TimerMgr::setup method.
-    ///
     /// @param timer_name Unique timer name.
     ///
     /// @throw BadValue if the timer hasn't been registered.
@@ -220,8 +217,8 @@ private:
     ///
     /// This method marks the @c util::Watch socket associated with the
     /// timer as ready (writes data to a pipe). This method will block until
-    /// @c TimerMgr::ifaceMgrCallback is executed from the main thread by the
-    /// @c IfaceMgr.
+    /// @c TimerMgrImpl::if§aceMgrCallback is executed from the main thread by
+    /// the @c IfaceMgr.
     ///
     /// @param timer_name Unique timer name to be passed to the callback.
     void timerCallback(const std::string& timer_name);
@@ -267,7 +264,8 @@ private:
     /// @tparam Iterator Iterator pointing to the timer configuration
     /// structure.
     template<typename Iterator>
-    void handleReadySocket(Iterator timer_info_iterator, const bool run_callback);
+    void handleReadySocket(Iterator timer_info_iterator,
+                           const bool run_callback);
 
     //@}
 
