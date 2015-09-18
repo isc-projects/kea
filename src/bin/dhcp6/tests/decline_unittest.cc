@@ -134,7 +134,7 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
     // Remember the acquired address.
     IOAddress acquired_address = leases_client_na[0].addr_;
 
-    // Check the delined-addresses statistic before the Decline operation.
+    // Check the declined-addresses statistic before the Decline operation.
     ObservationPtr declined_cnt = StatsMgr::instance().getObservation(name.str());
     ASSERT_TRUE(declined_cnt);
     uint64_t before = declined_cnt->getInteger().first;
@@ -165,7 +165,7 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
     ASSERT_TRUE(declined_cnt);
     uint64_t after = declined_cnt->getInteger().first;
 
-    // We check if the deline process was successful by checking if the
+    // We check if the decline process was successful by checking if the
     // lease is in the database and what is its state.
     if (expected_result == SHOULD_PASS) {
         EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
