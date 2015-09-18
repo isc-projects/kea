@@ -771,7 +771,7 @@ TEST(Lease6Test, getDuidVector) {
 }
 
 // Verify that decline() method properly clears up specific fields.
-TEST_F(Lease6Test, decline) {
+TEST(Lease6Test, decline) {
     /// @todo (see ticket 3981)
 }
 
