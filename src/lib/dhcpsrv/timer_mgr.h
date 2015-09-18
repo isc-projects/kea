@@ -74,7 +74,7 @@ class TimerMgrImpl;
 /// the external socket it will invoke a callback function
 /// associated with this socket. This is the
 /// @c TimerMgr::ifaceMgrCallback associated with the socket when the
-/// timer is registered. This callback function is executed/ in the
+/// timer is registered. This callback function is executed in the
 /// main thread. It clears the socket, which unblocks the worker
 /// thread. It also invokes the user callback function specified
 /// for a given timer.
@@ -86,19 +86,13 @@ class TimerMgrImpl;
 /// timers. Therefore, the @c TimerMgr does not allow for
 /// registering or unregistering the timers when the worker thread
 /// is running. The worker thread must be stopped first.
-///
-/// @warning The application (DHCP server) is responsible for
-///  unregistering the timers before it terminates:
-/// @code
-///     TimerMgr::instance().unregisterTimers();
-/// @endcode
-///
-/// to avoid the static deinitialization fiasco between the @c TimerMgr
-/// and @c IfaceMgr. Note that the @c TimerMgr destructor doesn't
-/// unregister the timers to avoid referencing the @c IfaceMgr
-/// instance which may not exist at this point. If the timers are
-/// not unregistered before the application terminates this will
-/// likely result in segmentation fault on some systems.
+/// It is possible to call @c TimerMgr::setup and @c TimerMgr::cancel
+/// while the worker thread is running but this is considered
+/// unreliable (may cause race conditions) except the case when the
+/// @c TimerMgr::setup is called from the installed callback
+/// function to reschedule the ONE_SHOT timer. This is thread safe
+/// because the worker thread is blocked while the callback function
+/// is executed.
 ///
 class TimerMgr : public boost::noncopyable {
 public:
@@ -116,11 +110,6 @@ public:
     /// timers, which is also accessed from the worker thread via the
     /// callback. Inserting new element to this data structure and
     /// reading it at the same time would yield undefined behavior.
-    ///
-    /// In order to prevent race conditions between the worker thread and
-    /// this method a mutex could be introduced. However, locking the mutex
-    /// would be required for all callback invocations, which could have
-    /// negative impact on the performance.
     ///
     /// @param timer_name Unique name for the timer.
     /// @param callback Pointer to the callback function to be invoked
@@ -149,20 +138,12 @@ public:
     /// callback. Removing element from this data structure and
     /// reading it at the same time would yield undefined behavior.
     ///
-    /// In order to prevent race conditions between the worker thread and
-    /// this method a mutex could be introduced. However, locking the mutex
-    /// would be required for all callback invocations which could have
-    /// negative impact on the performance.
-    ///
     /// @param timer_name Name of the timer to be unregistered.
     ///
     /// @throw BadValue if the specified timer hasn't been registered.
     void unregisterTimer(const std::string& timer_name);
 
     /// @brief Unregisters all timers.
-    ///
-    /// This method must be explicitly called prior to termination of the
-    /// process.
     void unregisterTimers();
 
     /// @brief Schedules the execution of the interval timer.
@@ -249,8 +230,8 @@ private:
 
     /// @brief Private destructor.
     ///
-    /// Stops the worker thread if it is running. It doesn't unregister any
-    /// timers to avoid static deinitialization fiasco with the @c IfaceMgr.
+    /// Stops the worker thread if it is running and unregisteres any
+    /// registered timers.
     ~TimerMgr();
 
     //@}
