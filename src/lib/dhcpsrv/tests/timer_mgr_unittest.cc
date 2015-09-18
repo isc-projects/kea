@@ -75,11 +75,20 @@ public:
     /// be increased.
     void timerCallback(const std::string& timer_name);
 
+    /// @brief Callback which generates exception.
+    ///
+    /// This callback is used to test that the @c TimerMgr can handle
+    /// the case when the callback generates exceptions.
+    void timerCallbackWithException();
+
     /// @brief Create a generic callback function for the timer.
     ///
     /// This is just a wrapped to make it a bit more convenient
     /// in the test.
     boost::function<void ()> makeCallback(const std::string& timer_name);
+
+    /// @brief Create a callback which generates exception.
+    boost::function<void ()> makeCallbackWithException();
 
     /// @brief Callback for timeout.
     ///
@@ -162,9 +171,19 @@ TimerMgrTest::timerCallback(const std::string& timer_name) {
     TimerMgr::instance().setup(timer_name);
 }
 
+void
+TimerMgrTest::timerCallbackWithException() {
+    isc_throw(Exception, "timerCallbackWithException");
+}
+
 boost::function<void ()>
 TimerMgrTest::makeCallback(const std::string& timer_name) {
     return (boost::bind(&TimerMgrTest::timerCallback, this, timer_name));
+}
+
+boost::function<void ()>
+TimerMgrTest::makeCallbackWithException() {
+    return (boost::bind(&TimerMgrTest::timerCallbackWithException, this));
 }
 
 
@@ -255,7 +274,7 @@ TEST_F(TimerMgrTest, unregisterTimer) {
 /// Replacing it with the ASIO implementation from BOOST does
 /// solve the problem. See ticket #4009. Until this ticket is
 /// implemented, the test should remain disabled.
-TEST_F(TimerMgrTest, DISABLED_unregisterTimers) {
+TEST_F(TimerMgrTest, unregisterTimers) {
     TimerMgr& timer_mgr = TimerMgr::instance();
 
     // Register 10 timers.
@@ -349,8 +368,11 @@ TEST_F(TimerMgrTest, cancel) {
     // cancelled.
     ASSERT_EQ(calls_count, calls_count_["timer1"]);
 
+    TimerMgr::instance().stopThread();
+
     // Setup the timer again.
     ASSERT_NO_THROW(timer_mgr.setup("timer1"));
+    TimerMgr::instance().startThread();
     doWait(500);
 
     // New calls should be recorded.
@@ -468,6 +490,27 @@ TEST_F(TimerMgrTest, stopThreadWithRunningHandlers) {
 
     // There should be one call registered.
     EXPECT_EQ(1, calls_count_["timer1"]);
+}
+
+// This test verifies that exceptions emitted from the callback would
+// be handled by the TimerMgr.
+TEST_F(TimerMgrTest, callbackWithException) {
+    TimerMgr& timer_mgr = TimerMgr::instance();
+
+    // Create timer which will trigger callback generating exception.
+    ASSERT_NO_THROW(
+        timer_mgr.registerTimer("timer1", makeCallbackWithException(), 1,
+                                IntervalTimer::ONE_SHOT)
+    );
+
+    // Setup the timer.
+    ASSERT_NO_THROW(timer_mgr.setup("timer1"));
+
+    // Start thread. We hope that exception will be caught by the @c TimerMgr
+    // and will not kill the process.
+    ASSERT_NO_THROW(timer_mgr.startThread());
+    doWait(500);
+    ASSERT_NO_THROW(timer_mgr.stopThread(true));
 }
 
 } // end of anonymous namespace
