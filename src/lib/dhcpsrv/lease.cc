@@ -179,6 +179,20 @@ Lease4::belongsToClient(const HWAddrPtr& hw_address,
     return (false);
 }
 
+void
+Lease4::decline(uint32_t probation_period) {
+    hwaddr_.reset(new HWAddr());
+    client_id_.reset();
+    t1_ = 0;
+    t2_ = 0;
+    cltt_ = time(NULL);
+    hostname_ = string("");
+    fqdn_fwd_ = false;
+    fqdn_rev_ = false;
+    state_ = STATE_DECLINED;
+    valid_lft_ = probation_period;
+}
+
 Lease4&
 Lease4::operator=(const Lease4& other) {
     if (this != &other) {
@@ -259,6 +273,11 @@ Lease6::getDuidVector() const {
     }
 
     return (duid_->getDuid());
+}
+
+void
+Lease6::decline(uint32_t ) {
+    /// @todo: implement this
 }
 
 std::string

@@ -1831,8 +1831,120 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 }
 
 void
-Dhcpv4Srv::processDecline(Pkt4Ptr&) {
-    /// @todo Implement this (also see ticket #3116)
+Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
+
+    // Server-id is mandatory in DHCPDECLINE (see table 5, RFC2131)
+    /// @todo Uncomment this (see ticket #3116)
+    // sanityCheck(decline, MANDATORY);
+
+    // Client is supposed to specify the address being declined in
+    // Requested IP address option, but must not set its ciaddr.
+    // (again, see table 5 in RFC2131).
+
+    OptionCustomPtr opt_requested_address = boost::dynamic_pointer_cast<
+        OptionCustom>(decline->getOption(DHO_DHCP_REQUESTED_ADDRESS));
+    if (!opt_requested_address) {
+
+        isc_throw(RFCViolation, "Mandatory 'Requested IP address' option missing"
+                  "in DHCPDECLINE sent from " << decline->getLabel());
+    }
+    IOAddress addr(opt_requested_address->readAddress());
+
+    // We could also extract client's address from ciaddr, but that's clearly
+    // against RFC2131.
+
+    // Now we need to check whether this address really belongs to the client
+    // that attempts to decline it.
+    const Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
+
+    if (!lease) {
+        // Client tried to decline an address, but we don't have a lease for
+        // that address. Let's ignore it.
+        //
+        // We could assume that we're recovering from a mishandled migration
+        // to a new server and mark the address as declined, but the window of
+        // opportunity for that to be useful is small and the attack vector
+        // would be pretty severe.
+        LOG_WARN(dhcp4_logger, DHCP4_DECLINE_LEASE_NOT_FOUND)
+            .arg(addr.toText()).arg(decline->getLabel());
+        return;
+    }
+
+    // Get client-id, if available.
+    OptionPtr opt_clientid = decline->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    ClientIdPtr client_id;
+    if (opt_clientid) {
+        client_id.reset(new ClientId(opt_clientid->getData()));
+    }
+
+    // Check if the client attempted to decline a lease it doesn't own.
+    if (!lease->belongsToClient(decline->getHWAddr(), client_id)) {
+
+        // Get printable hardware addresses
+        string client_hw = decline->getHWAddr() ?
+            decline->getHWAddr()->toText(false) : "(none)";
+        string lease_hw = lease->hwaddr_ ?
+            lease->hwaddr_->toText(false) : "(none)";
+
+        // Get printable client-ids
+        string client_id_txt = client_id ? client_id->toText() : "(none)";
+        string lease_id_txt = lease->client_id_ ?
+            lease->client_id_->toText() : "(none)";
+
+        // Print the warning and we're done here.
+        LOG_WARN(dhcp4_logger, DHCP4_DECLINE_LEASE_MISMATCH)
+            .arg(addr.toText()).arg(decline->getLabel())
+            .arg(client_hw).arg(lease_hw).arg(client_id_txt).arg(lease_id_txt);
+
+        return;
+    }
+
+    // Ok, all is good. The client is reporting its own address. Let's
+    // process it.
+    declineLease(lease, decline->getLabel());
+}
+
+void
+Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const std::string& descr) {
+
+    // Clean up DDNS, if needed.
+    if (CfgMgr::instance().ddnsEnabled()) {
+        // Remove existing DNS entries for the lease, if any.
+        // queueNameChangeRequest will do the necessary checks and will
+        // skip the update, if not needed.
+        queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, lease);
+    }
+
+    // Bump up the statistics.
+
+    // Per subnet declined addresses counter.
+    StatsMgr::instance().addValue(
+        StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
+        static_cast<int64_t>(1));
+
+    // Global declined addresses counter.
+    StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
+
+    // We do not want to decrease the assigned-addresses at this time. While
+    // technically a declined address is no longer allocated, the primary usage
+    // of the assigned-addresses statistic is to monitor pool utilization. Most
+    // people would forget to include declined-addresses in the calculation,
+    // and simply do assigned-addresses/total-addresses. This would have a bias
+    // towards under-representing pool utilization, if we decreased allocated
+    // immediately after receiving DHCPDECLINE, rather than later when we recover
+    // the address.
+
+    // @todo: Call hooks.
+
+    // We need to disassociate the lease from the client. Once we move a lease
+    // to declined state, it is no longer associated with the client in any
+    // way.
+    lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
+
+    LeaseMgrFactory::instance().updateLease4(lease);
+
+    LOG_INFO(dhcp4_logger, DHCP4_DECLINE_LEASE).arg(lease->addr_.toText())
+        .arg(descr).arg(lease->valid_lft_);
 }
 
 Pkt4Ptr
