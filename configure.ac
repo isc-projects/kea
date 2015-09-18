@@ -246,8 +246,6 @@ if test $enable_shared = no; then
 fi
 
 # OS dependent configuration
-SET_ENV_LIBRARY_PATH=no
-ENV_LIBRARY_PATH=LD_LIBRARY_PATH
 kea_undefined_pthread_behavior=no
 
 case "$host" in
@@ -281,15 +279,6 @@ case "$host" in
 	[AC_MSG_RESULT([OS X < 10.9])],
 	[AC_MSG_RESULT([OS X >= 10.9])
 	 kea_undefined_pthread_behavior=yes])
-
-	# libtool doesn't work perfectly with Darwin: libtool embeds the
-	# final install path in dynamic libraries and our loadable python
-	# modules always refer to that path even if it's loaded within the
-	# source tree.  This prevents pre-install tests from working.
-	# To work around this problem we explicitly specify paths to dynamic
-	# libraries when we use them in the source tree.
-	SET_ENV_LIBRARY_PATH=yes
-	ENV_LIBRARY_PATH=DYLD_LIBRARY_PATH
 	;;
 *-freebsd*)
 	# On FreeBSD10.1 pthread_cond_destroy doesn't work as documented, which
@@ -302,19 +291,8 @@ case "$host" in
 	# didn't seem to have support for the death tests on FreeBSD. As a
 	# result, the test was not executed and the error didn't occur.
 	kea_undefined_pthread_behavior=yes
-
-	SET_ENV_LIBRARY_PATH=yes
-	;;
-*-netbsd*)
-	SET_ENV_LIBRARY_PATH=yes
-	;;
-*-openbsd*)
-	SET_ENV_LIBRARY_PATH=yes
 	;;
 esac
-AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
-AC_SUBST(SET_ENV_LIBRARY_PATH)
-AC_SUBST(ENV_LIBRARY_PATH)
 if [ test $kea_undefined_pthread_behavior = "yes" ]; then
    AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
 fi
