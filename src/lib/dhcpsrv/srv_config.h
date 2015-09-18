@@ -394,6 +394,24 @@ public:
         return (decline_timer_);
     }
 
+    /// @brief Sets DHCP4o6 IPC port
+    ///
+    /// DHCPv4-over-DHCPv6 uses a UDP socket for interserver communication,
+    /// this socket is bound and connected to this port and port + 1
+    ///
+    /// @param port port and port + 1 to use
+    void setDhcp4o6Port(uint32_t port) {
+        dhcp4o6_port_ = port;
+    }
+
+    /// @brief Returns DHCP4o6 IPC port
+    ///
+    /// See @ref setDhcp4o6Port or brief discussion.                         
+    /// @return value of DHCP4o6 IPC port
+    uint32_t getDhcp4o6Port() {
+        return (dhcp4o6_port_);
+    }
+
 private:
 
     /// @brief Sequence number identifying the configuration.
@@ -449,6 +467,12 @@ private:
     /// This timer specifies decline probation period, the time after a declined
     /// lease is recovered back to available state. Expressed in seconds.
     uint32_t decline_timer_;
+
+    /// @brief DHCP4o6 IPC port
+    ///
+    /// DHCPv4-over-DHCPv6 uses a UDP socket for interserver communication,
+    /// this socket is bound and connected to this port and port + 1
+    uint32_t dhcp4o6_port_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

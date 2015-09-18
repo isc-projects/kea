@@ -366,6 +366,14 @@ public:
     /// (true) or non-relayed (false).
     bool isRelayed() const;
 
+    /// @brief Checks if a DHCPv4 message has beeb transported over DHCPv6
+    ///
+    /// @return Boolean value which indicates whether the message is
+    /// transported over DHCPv6 (true) or native DHCPv4 (false)
+    virtual bool isDhcp4o6() const {
+        return (false);
+    }
+
 private:
 
     /// @brief Generic method that validates and sets HW address.

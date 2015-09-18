@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #include <cc/data.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
+#include <dhcp4/dhcp4_dhcp4o6_ipc.h>
 #include <hooks/hooks_manager.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -144,6 +145,16 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     } catch (const std::exception& ex) {
         err << "Error starting DHCP_DDNS client after server reconfiguration: "
             << ex.what();
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
+    // Setup DHCPv4-over-DHCPv6 IPC
+    try {
+        Dhcp4o6Ipc::instance().open();
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "error starting DHCPv4-over-DHCPv6 IPC "
+               " after server reconfiguration: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
     }
 

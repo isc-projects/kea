@@ -32,6 +32,7 @@
 #include <dhcp/option_vendor_class.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
+#include <dhcp6/dhcp6_dhcp4o6_ipc.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/callout_handle_store.h>
@@ -234,6 +235,13 @@ Dhcpv6Srv::~Dhcpv6Srv() {
     } catch(const std::exception& ex) {
         // Highly unlikely, but lets Report it but go on
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_D2STOP_ERROR).arg(ex.what());
+    }
+
+    try {
+        Dhcp4o6Ipc::instance().close();
+    } catch(const std::exception& ex) {
+        // Highly unlikely, but lets Report it but go on
+        // LOG_ERROR(dhcp6_logger, DHCP6_SRV_DHCP4O6_ERROR).arg(ex.what());
     }
 
     IfaceMgr::instance().closeSockets();
@@ -569,6 +577,10 @@ bool Dhcpv6Srv::run() {
 
             case DHCPV6_INFORMATION_REQUEST:
                 rsp = processInfRequest(query);
+                break;
+
+            case DHCPV6_DHCPV4_QUERY:
+                rsp = processDhcp4Query(query);
                 break;
 
             default:
@@ -2617,6 +2629,26 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     appendRequestedOptions(inf_request, reply, ctx);
 
     return (reply);
+}
+
+Pkt6Ptr
+Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
+
+    sanityCheck(dhcp4_query, OPTIONAL, OPTIONAL);
+
+    // flags are in transid
+    // uint32_t flags = dhcp4_query->getTransid();
+    // do nothing with DHCPV4_QUERY_FLAGS_UNICAST
+
+    // Get the DHCPv4 message option
+    OptionPtr dhcp4_msg = dhcp4_query->getOption(D6O_DHCPV4_MSG);
+    if (dhcp4_msg) {
+        // Forward the whole message to the DHCPv4 server via IPC
+        Dhcp4o6Ipc::instance().send(dhcp4_query);
+    }
+
+    // Our job is finished
+    return (Pkt6Ptr());
 }
 
 size_t

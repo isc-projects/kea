@@ -149,6 +149,10 @@ server will continue to use an old configuration.
 This is an informational message reporting that the configuration has
 been extended to include the specified IPv4 subnet.
 
+% DHCP4_CONFIG_NEW_SUBNET6 a new subnet has been added to configuration: %1
+This is an informational message reporting that the configuration has
+been extended to include the specified IPv6 subnet.
+
 % DHCP4_CONFIG_OPTION_DUPLICATE multiple options with the code %1 added to the subnet %2
 This warning message is issued on an attempt to configure multiple options
 with the same option code for a particular subnet. Adding multiple options

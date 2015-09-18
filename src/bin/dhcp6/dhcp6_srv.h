@@ -274,6 +274,12 @@ protected:
     /// @return Reply message to be sent to the client.
     Pkt6Ptr processInfRequest(const Pkt6Ptr& inf_request);
 
+    /// @brief Processes incoming DHCPv4-query message.
+    ///
+    /// @param dhcp4_query message received from client
+    /// @return Reply (empty) message to (not) be sent to the client.
+    Pkt6Ptr processDhcp4Query(const Pkt6Ptr& dhcp4_query);
+
     /// @brief Selects a subnet for a given client's packet.
     ///
     /// @param question client's message

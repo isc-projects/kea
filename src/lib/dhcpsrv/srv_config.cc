@@ -31,7 +31,7 @@ SrvConfig::SrvConfig()
       cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
-      decline_timer_(0) {
+      decline_timer_(0), dhcp4o6_port_(0) {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
@@ -39,7 +39,7 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
-      decline_timer_(0) {
+      decline_timer_(0), dhcp4o6_port_(0) {
 }
 
 std::string

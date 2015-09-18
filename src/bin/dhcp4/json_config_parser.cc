@@ -238,6 +238,9 @@ protected:
         SubnetID subnet_id =
             static_cast<SubnetID>(uint32_values_->getOptionalParam("id", 0));
 
+        Subnet4Ptr subnet4(new Subnet4(addr, len, t1, t2, valid, subnet_id));
+	subnet_id = subnet4->getID();
+
         stringstream s;
         s << addr << "/" << static_cast<int>(len) << " with params: ";
         // t1 and t2 are optional may be not specified.
@@ -247,11 +250,11 @@ protected:
         if (!t2.unspecified()) {
             s << "t2=" << t2 << ", ";
         }
-        s <<"valid-lifetime=" << valid;
+        s << "valid-lifetime=" << valid;
+	s << ", id=" << subnet_id;
 
         LOG_INFO(dhcp4_logger, DHCP4_CONFIG_NEW_SUBNET).arg(s.str());
 
-        Subnet4Ptr subnet4(new Subnet4(addr, len, t1, t2, valid, subnet_id));
         subnet_ = subnet4;
 
         // match-client-id
@@ -314,7 +317,7 @@ protected:
     }
 };
 
-/// @brief this class parses list of DHCP4 subnets
+/// @brief this class parses list of IPv4 subnets
 ///
 /// This is a wrapper parser that handles the whole list of Subnet4
 /// definitions. It iterates over all entries and creates Subnet4ConfigParser
@@ -356,6 +359,225 @@ public:
     }
 };
 
+/// @brief This class parses a single IPv6 subnet.
+///
+/// This is the IPv6 derivation of the SubnetConfigParser class and it parses
+/// the whole subnet definition. It creates parsersfor received configuration
+/// parameters as needed.
+class Subnet6ConfigParser : public SubnetConfigParser {
+public:
+
+    /// @brief Constructor
+    ///
+    /// @param ignored first parameter
+    /// stores global scope parameters, options, option definitions.
+    Subnet6ConfigParser(const std::string&)
+        :SubnetConfigParser("", globalContext(), IOAddress("::")) {
+    }
+
+    /// @brief Parses a single IPv6 subnet configuration and adds to the
+    /// Configuration Manager.
+    ///
+    /// @param subnet A new subnet being configured.
+    void build(ConstElementPtr subnet) {
+        SubnetConfigParser::build(subnet);
+
+        if (subnet_) {
+            Subnet6Ptr sub6ptr = boost::dynamic_pointer_cast<Subnet6>(subnet_);
+            if (!sub6ptr) {
+                // If we hit this, it is a programming error.
+                isc_throw(Unexpected,
+                          "Invalid cast in Subnet6ConfigParser::commit");
+            }
+
+            // Set relay information if it was provided
+            if (relay_info_) {
+                sub6ptr->setRelayInfo(*relay_info_);
+            }
+
+            // Adding a subnet to the Configuration Manager may fail if the
+            // subnet id is invalid (duplicate). Thus, we catch exceptions
+            // here to append a position in the configuration string.
+            try {
+                CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(sub6ptr);
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << subnet->getPosition() << ")");
+            }
+        }
+    }
+
+    /// @brief Commits subnet configuration.
+    ///
+    /// This function is currently no-op because subnet should already
+    /// be added into the Config Manager in the build().
+    void commit() { }
+
+protected:
+
+    /// @brief creates parsers for entries in subnet definition
+    ///
+    /// @param config_id name of the entry
+    ///
+    /// @return parser object for specified entry name. Note the caller is
+    /// responsible for deleting the parser created.
+    /// @throw isc::dhcp::DhcpConfigError if trying to create a parser
+    /// for unknown config element
+    DhcpConfigParser* createSubnetConfigParser(const std::string& config_id) {
+        DhcpConfigParser* parser = NULL;
+        if (config_id.compare("id") == 0) {
+            parser = new Uint32Parser(config_id, uint32_values_);
+        } else if ((config_id.compare("subnet") == 0) ||
+                   (config_id.compare("interface") == 0) ||
+                   (config_id.compare("client-class") == 0) ||
+                   (config_id.compare("interface-id") == 0)) {
+            parser = new StringParser(config_id, string_values_);
+        } else if (config_id.compare("relay") == 0) {
+            parser = new RelayInfoParser(config_id, relay_info_, Option::V6);
+        } else {
+            isc_throw(NotImplemented, "unsupported parameter: " << config_id);
+        }
+
+        return (parser);
+    }
+
+    /// @brief Issues a DHCP server specific warning regarding duplicate subnet
+    /// options.
+    ///
+    /// @param code is the numeric option code of the duplicate option
+    /// @param addr is the subnet address
+    /// @todo A means to know the correct logger and perhaps a common
+    /// message would allow this message to be emitted by the base class.
+    /// Required to make Subnet6ConfigParser not abstract.
+    virtual void duplicate_option_warning(uint32_t code,
+                                         isc::asiolink::IOAddress& addr) {
+        LOG_WARN(dhcp4_logger, DHCP4_CONFIG_OPTION_DUPLICATE)
+            .arg(code).arg(addr.toText());
+    }
+
+    /// @brief Instantiates the IPv6 Subnet based on a given IPv6 address
+    /// and prefix length.
+    ///
+    /// @param addr is IPv6 prefix of the subnet.
+    /// @param len is the prefix length
+    void initSubnet(isc::asiolink::IOAddress addr, uint8_t len) {
+        // Subnet ID is not optional because without IPv6 subnets
+        // can't be used for DHCPv4-over-DHCPv6 subnet selection.
+        SubnetID subnet_id =
+            static_cast<SubnetID>(uint32_values_->getParam("id"));
+
+        // Get interface-id option content. For now we support string
+        // representation only
+        std::string ifaceid;
+        try {
+            ifaceid = string_values_->getParam("interface-id");
+        } catch (const DhcpConfigError &) {
+            // interface-id is not mandatory
+        }
+
+        // Specifying both interface for locally reachable subnets and
+        // interface id for relays is mutually exclusive. Need to test for
+        // this condition.
+        if (!ifaceid.empty()) {
+            std::string iface;
+            try {
+                iface = string_values_->getParam("interface");
+            } catch (const DhcpConfigError &) {
+                // iface not mandatory
+            }
+
+            if (!iface.empty()) {
+                isc_throw(isc::dhcp::DhcpConfigError,
+                      "parser error: interface (defined for locally reachable "
+                      "subnets) and interface-id (defined for subnets reachable"
+                      " via relays) cannot be defined at the same time for "
+                      "subnet " << addr << "/" << (int)len);
+            }
+        }
+
+        // Create a new subnet.
+        Triplet<uint32_t> t;
+        Subnet6* subnet6 = new Subnet6(addr, len, t, t, t, t, subnet_id);
+        subnet_id = subnet6->getID();
+
+        std::ostringstream output;
+        output << addr << "/" << static_cast<int>(len) << " id=" << subnet_id;
+
+        LOG_INFO(dhcp4_logger, DHCP4_CONFIG_NEW_SUBNET).arg(output.str());
+
+        // Configure interface-id for remote interfaces, if defined
+        if (!ifaceid.empty()) {
+            OptionBuffer tmp(ifaceid.begin(), ifaceid.end());
+            OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
+            subnet6->setInterfaceId(opt);
+        }
+
+        // Try setting up client class (if specified)
+        try {
+            string client_class = string_values_->getParam("client-class");
+            subnet6->allowClientClass(client_class);
+        } catch (const DhcpConfigError&) {
+            // That's ok if it fails. client-class is optional.
+        }
+
+        subnet_.reset(subnet6);
+    }
+
+};
+
+
+/// @brief this class parses a list of IPv6 subnets
+///
+/// This is a wrapper parser that handles the whole list of Subnet6
+/// definitions. It iterates over all entries and creates Subnet6ConfigParser
+/// for each entry.
+class Subnets6ListConfigParser : public DhcpConfigParser {
+public:
+
+    /// @brief constructor
+    ///
+    /// @param dummy first argument, always ignored. All parsers accept a
+    /// string parameter "name" as their first argument.
+    Subnets6ListConfigParser(const std::string&) {
+    }
+
+    /// @brief parses contents of the list
+    ///
+    /// Iterates over all entries on the list and creates a Subnet6ConfigParser
+    /// for each entry.
+    ///
+    /// @param subnets_list pointer to a list of IPv6 subnets
+    void build(ConstElementPtr subnets_list) {
+        BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
+            ParserPtr parser(new Subnet6ConfigParser("subnet"));
+            parser->build(subnet);
+            subnets_.push_back(parser);
+        }
+
+    }
+
+    /// @brief commits subnets definitions.
+    ///
+    /// Iterates over all Subnet6 parsers. Each parser contains definitions of
+    /// a single subnet and its parameters and commits each subnet separately.
+    void commit() {
+        BOOST_FOREACH(ParserPtr subnet, subnets_) {
+            subnet->commit();
+        }
+
+    }
+
+    /// @brief Returns Subnet6ListConfigParser object
+    /// @param param_name name of the parameter
+    /// @return Subnets6ListConfigParser object
+    static DhcpConfigParser* factory(const std::string& param_name) {
+        return (new Subnets6ListConfigParser(param_name));
+    }
+
+    /// @brief collection of subnet parsers.
+    ParserCollection subnets_;
+};
+
 } // anonymous namespace
 
 namespace isc {
@@ -377,13 +599,16 @@ namespace dhcp {
     if ((config_id.compare("valid-lifetime") == 0)  ||
         (config_id.compare("renew-timer") == 0)  ||
         (config_id.compare("rebind-timer") == 0) ||
-        (config_id.compare("decline-probation-period") == 0) )  {
+        (config_id.compare("decline-probation-period") == 0) ||
+        (config_id.compare("dhcp4o6-port") == 0) )  {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
     } else if (config_id.compare("interfaces-config") == 0) {
         parser = new IfacesConfigParser4();
     } else if (config_id.compare("subnet4") == 0) {
         parser = new Subnets4ListConfigParser(config_id);
+    } else if (config_id.compare("subnet6") == 0) {
+        parser = new Subnets6ListConfigParser(config_id);
     } else if (config_id.compare("option-data") == 0) {
         parser = new OptionDataListParser(config_id, CfgOptionPtr(), AF_INET);
     } else if (config_id.compare("option-def") == 0) {
@@ -419,6 +644,7 @@ namespace dhcp {
 ///
 /// - echo-client-id
 /// - decline-probation-period
+/// - dhcp4o6-port
 void setGlobalParameters4() {
     // Although the function is modest for now, it is certain that the number
     // of global switches will increase over time, hence the name.
@@ -440,6 +666,15 @@ void setGlobalParameters4() {
         CfgMgr::instance().getStagingCfg()->setDeclinePeriod(probation_period);
     } catch (...) {
         // That's not really needed.
+    }
+
+    // Set the DHCPv4-over-DHCPv6 interserver port.
+    try {
+        uint32_t dhcp4o6_port = globalContext()->uint32_values_
+            ->getOptionalParam("dhcp4o6-port", 0);
+        CfgMgr::instance().getStagingCfg()->setDhcp4o6Port(dhcp4o6_port);
+    } catch (...) {
+        // Ignore errors. This flag is optional
     }
 }
 
@@ -466,11 +701,12 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // depend on the global values. Also, option values configuration
     // must be performed after the option definitions configurations.
     // Thus we group parsers and will fire them in the right order:
-    // all parsers other than: lease-database, subnet4 and option-data parser,
-    // then: option-data parser, subnet4 parser, lease-database parser.
+    // all parsers other than: lease-database, subnet and option-data parser,
+    // then: option-data parser, subnet parser, lease-database parser.
     // Please do not change this order!
     ParserCollection independent_parsers;
-    ParserPtr subnet_parser;
+    ParserPtr subnet4_parser;
+    ParserPtr subnet6_parser;
     ParserPtr option_parser;
     ParserPtr iface_parser;
     ParserPtr leases_parser;
@@ -508,7 +744,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED)
                       .arg(config_pair.first);
             if (config_pair.first == "subnet4") {
-                subnet_parser = parser;
+                subnet4_parser = parser;
+            } else if (config_pair.first == "subnet6") {
+                subnet6_parser = parser;
             } else if (config_pair.first == "lease-database") {
                 leases_parser = parser;
             } else if (config_pair.first == "option-data") {
@@ -530,7 +768,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 independent_parsers.push_back(parser);
                 parser->build(config_pair.second);
                 // The commit operation here may modify the global storage
-                // but we need it so as the subnet6 parser can access the
+                // but we need it so as subnet parsers can access the
                 // parsed data.
                 parser->commit();
             }
@@ -545,12 +783,18 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             option_parser->commit();
         }
 
-        // The subnet parser is the next one to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
+        // Subnet parsers are the next to be run.
+        std::map<std::string, ConstElementPtr>::const_iterator subnet4_config =
             values_map.find("subnet4");
-        if (subnet_config != values_map.end()) {
+        if (subnet4_config != values_map.end()) {
             config_pair.first = "subnet4";
-            subnet_parser->build(subnet_config->second);
+            subnet4_parser->build(subnet4_config->second);
+        }
+        std::map<std::string, ConstElementPtr>::const_iterator subnet6_config =
+            values_map.find("subnet6");
+        if (subnet6_config != values_map.end()) {
+            config_pair.first = "subnet6";
+            subnet6_parser->build(subnet6_config->second);
         }
 
         // Get command socket configuration from the config file.

@@ -207,7 +207,7 @@ private:
         // And the actual object type is the one that we expect.
         // Note that for many options there are dedicated classes
         // derived from Option class to represent them.
-	const Option* optptr = option.get();
+        const Option* optptr = option.get();
         EXPECT_TRUE(typeid(*optptr) == expected_type)
             << "Invalid class returned for option code " << code;
     }

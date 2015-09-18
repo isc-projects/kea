@@ -17,6 +17,8 @@
 
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
+#include <dhcp/pkt4o6.h>
+#include <dhcp/pkt6.h>
 #include <dhcp/option.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option4_client_fqdn.h>
@@ -94,6 +96,11 @@ public:
     /// and DHCPINFORM the DHCPACK is created. For the DHCPRELEASE the
     /// response is not initialized.
     void initResponse();
+
+    /// @brief Initializes the DHCPv6 part of the response message
+    ///
+    /// Called by initResponse() when the query is a DHCP4o6 message
+    void initResponse4o6();
 
     /// @brief Returns the pointer to the query from the client.
     Pkt4Ptr getQuery() const {
@@ -689,6 +696,12 @@ protected:
     /// @param query client's message
     /// @return selected subnet (or NULL if no suitable subnet was found)
     isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query) const;
+
+    /// @brief Selects a subnet for a given client's DHCP4o6 packet.
+    ///
+    /// @param query client's message
+    /// @return selected subnet (or NULL if no suitable subnet was found)
+    isc::dhcp::Subnet4Ptr selectSubnet4o6(const Pkt4Ptr& query) const;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
