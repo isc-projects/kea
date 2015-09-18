@@ -581,6 +581,11 @@ lease from the PostgreSQL database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the PostgreSQL database for the specified address.
 
+% DHCPSRV_TIMERMGR_CALLBACK_FAILED running handler for timer %1 caused exception: %2
+This error message is emitted when the timer elapsed and the
+operation associated with this timer has thrown an exception.
+The timer name and the reason for exception is logged.
+
 % DHCPSRV_TIMERMGR_REGISTER_TIMER registering timer: %1, using interval: %2 ms
 A debug message issued when the new interval timer is registered in
 the Timer Manager. This timer will have a callback function
@@ -595,6 +600,24 @@ run a periodic operation associated with the given timer.
 An example of such operation is a periodic cleanup of
 expired leases. The name of the timer is included in the
 message.
+
+% DHCPSRV_TIMERMGR_SOCKET_CLEAR_FAILED clearing watch socket for timer %1 failed: %2
+An error message indicating that the specified timer elapsed,
+the operation associated with the timer was executed but the
+server was unable to signal this to the worker thread responsible
+for dispatching timers. The thread will continue but it will
+not be able to dispatch any operations for this timer. The
+server reconfiguration or restart may solve the problem
+but the situation may repeat.
+
+% DHCPSRV_TIMERMGR_SOCKET_MARK_FAILED marking watch socket for timer %1 failed: %2
+An error message indicating that the specified timer elapsed,
+but the server was unable to flag that the handler function
+should be executed for this timer. The callback will not
+be executed this time and most likely the subsequent attempts
+will not be successful too. This error is highly unlikely.
+The name of the timer and thre reason for failure is included
+in the message.
 
 % DHCPSRV_TIMERMGR_START_THREAD starting thread for timers
 A debug message issued when the Timer Manager is starting a
