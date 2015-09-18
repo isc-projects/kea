@@ -18,6 +18,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/base_host_data_source.h>
+#include <dhcpsrv/mysql_host_data_source.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/noncopyable.hpp>

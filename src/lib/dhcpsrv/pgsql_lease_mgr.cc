@@ -307,7 +307,7 @@ public:
     ///
     /// @return std::string containing the stringified time
     /// @throw isc::BadValue if the sum of the calculated expiration time is
-    /// greater than the value of @c LeaseMgr::MAX_DB_TIME.
+    /// greater than the value of @c DataSource::MAX_DB_TIME.
     static std::string
     convertToDatabaseTime(const time_t cltt, const uint32_t valid_lifetime) {
         // Calculate expiry time. Store it in the 64-bit value so as we can detect
@@ -316,11 +316,11 @@ public:
             static_cast<int64_t>(valid_lifetime);
 
         // It has been observed that the PostgreSQL doesn't deal well with the
-        // timestamp values beyond the LeaseMgr::MAX_DB_TIME seconds since the
+        // timestamp values beyond the DataSource::MAX_DB_TIME seconds since the
         // beginning of the epoch (around year 2038). The value is often
         // stored in the database but it is invalid when read back (overflow?).
         // Hence, the maximum timestamp value is restricted here.
-        if (expire_time_64 > LeaseMgr::MAX_DB_TIME) {
+        if (expire_time_64 > DataSource::MAX_DB_TIME) {
             isc_throw(isc::BadValue, "Time value is too large: " << expire_time_64);
         }
 
