@@ -1,3 +1,10 @@
+1005.	[func]		tomek
+	DHCPDECLINE message in DHCPv4 is now supported. The server is able
+	to receive it, check its correctness and move the lease to
+	DECLINED state. Currently there is no way to recover the lease
+	before 'decline-probation-period' time.
+	(Trac #3981, git c14a63c0d3a56ea3e880e874f854adc0077de75e)
+
 1004.	[bug]		fdupont
 	Incoming Confirm, Rebind and Information-Request messages are
 	now more thoroughly checked against presence of client-id
