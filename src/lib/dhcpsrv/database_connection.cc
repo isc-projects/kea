@@ -25,7 +25,7 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-const time_t DataSource::MAX_DB_TIME = 2147483647;
+const time_t DatabaseConnection::MAX_DB_TIME = 2147483647;
 
 std::string
 DatabaseConnection::getParameter(const std::string& name) const {

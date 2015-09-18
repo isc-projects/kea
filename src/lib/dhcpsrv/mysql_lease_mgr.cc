@@ -374,8 +374,8 @@ public:
             // expiry time (expire).  The relationship is given by:
             //
             // expire = cltt_ + valid_lft_
-            MySqlLeaseMgr::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
-                                                 expire_);
+            MySqlConnection::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+                                                   expire_);
             bind_[4].buffer_type = MYSQL_TYPE_TIMESTAMP;
             bind_[4].buffer = reinterpret_cast<char*>(&expire_);
             bind_[4].buffer_length = sizeof(expire_);
@@ -536,7 +536,7 @@ public:
         // Convert times received from the database to times for the lease
         // structure
         time_t cltt = 0;
-        MySqlLeaseMgr::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+        MySqlConnection::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
 
         if (client_id_null_==MLM_TRUE) {
             // There's no client-id, so we pass client-id_length_ set to 0
@@ -734,8 +734,8 @@ public:
             //
             // expire = cltt_ + valid_lft_
             //
-            MySqlLeaseMgr::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
-                                                 expire_);
+            MySqlConnection::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+                                                   expire_);
             bind_[3].buffer_type = MYSQL_TYPE_TIMESTAMP;
             bind_[3].buffer = reinterpret_cast<char*>(&expire_);
             bind_[3].buffer_length = sizeof(expire_);
@@ -1087,7 +1087,7 @@ public:
                                     subnet_id_, fqdn_fwd_, fqdn_rev_,
                                     hostname, hwaddr, prefixlen_));
         time_t cltt = 0;
-        MySqlLeaseMgr::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+        MySqlConnection::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
         result->cltt_ = cltt;
 
         return (result);

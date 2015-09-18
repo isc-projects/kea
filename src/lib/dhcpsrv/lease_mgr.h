@@ -22,7 +22,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
-#include <exceptions/exceptions.h>
+#include <dhcpsrv/db_exceptions.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -67,28 +67,6 @@
 
 namespace isc {
 namespace dhcp {
-
-/// @brief Multiple lease records found where one expected
-class MultipleRecords : public Exception {
-public:
-    MultipleRecords(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
-/// @brief Attempt to update lease that was not there
-class NoSuchLease : public Exception {
-public:
-    NoSuchLease(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
-/// @brief Data is truncated
-class DataTruncated : public Exception {
-public:
-    DataTruncated(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
 
 /// @brief Abstract Lease Manager
 ///

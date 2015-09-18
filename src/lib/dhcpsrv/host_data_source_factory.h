@@ -16,7 +16,7 @@
 #define HOST_DATA_SOURCE_FACTORY_H
 
 #include <dhcpsrv/base_host_data_source.h>
-#include <dhcpsrv/data_source.h>
+#include <dhcpsrv/database_connection.h>
 #include <exceptions/exceptions.h>
 
 #include <string>

@@ -14,7 +14,7 @@
 
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
-#include <dhcpsrv/data_source.h>
+#include <dhcpsrv/database_connection.h>
 #include <asiolink/io_address.h>
 #include <gtest/gtest.h>
 #include <sstream>

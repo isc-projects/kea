@@ -20,6 +20,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/mysql_host_data_source.h>
 #include <dhcpsrv/mysql_connection.h>
+#include <dhcpsrv/db_exceptions.h>
 
 #include <boost/static_assert.hpp>
 #include <mysqld_error.h>

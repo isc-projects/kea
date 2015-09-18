@@ -192,6 +192,7 @@ MySqlConnection::~MySqlConnection() {
     }
     statements_.clear();
     text_statements_.clear();
+}
 
 // Time conversion methods.
 //
@@ -216,7 +217,7 @@ MySqlConnection::convertToDatabaseTime(const time_t cltt,
 
     // Even on 64-bit systems MySQL doesn't seem to accept the timestamps
     // beyond the max value of int32_t.
-    if (expire_time_64 > DataSource::MAX_DB_TIME) {
+    if (expire_time_64 > DatabaseConnection::MAX_DB_TIME) {
         isc_throw(BadValue, "Time value is too large: " << expire_time_64);
     }
 
