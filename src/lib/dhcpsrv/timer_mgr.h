@@ -16,16 +16,15 @@
 #define TIMER_MGR_H
 
 #include <asiolink/interval_timer.h>
-#include <asiolink/io_service.h>
-#include <util/threads/thread.h>
-#include <util/watch_socket.h>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <map>
 #include <string>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Forward declaration of the @c TimerMgr implementation.
+class TimerMgrImpl;
 
 /// @brief Manages a pool of asynchronous interval timers for DHCP server.
 ///
@@ -256,129 +255,9 @@ private:
 
     //@}
 
-    /// @name Internal callbacks.
-    //@{
-    ///
-    /// @brief Callback function to be executed for each interval timer when
-    /// its scheduled interval elapses.
-    ///
-    /// This method marks the @c util::Watch socket associated with the
-    /// timer as ready (writes data to a pipe). This method will block until
-    /// @c TimerMgr::ifaceMgrCallback is executed from the main thread by the
-    /// @c IfaceMgr.
-    ///
-    /// @param timer_name Unique timer name to be passed to the callback.
-    void timerCallback(const std::string& timer_name);
+    /// @brief Pointer to @c TimerMgr implementation.
+    TimerMgrImpl* impl_;
 
-    /// @brief Callback function installed on the @c IfaceMgr and associated
-    /// with the particular timer.
-    ///
-    /// This callback function is executed by the @c IfaceMgr when the data
-    /// over the specific @c util::WatchSocket is received. This method clears
-    /// the socket (reads the data from the pipe) and executes the callback
-    /// supplied when the timer was registered.
-    ///
-    /// @param timer_name Unique timer name.
-    void ifaceMgrCallback(const std::string& timer_name);
-
-    //@}
-
-    /// @name Methods to handle ready sockets.
-    //@{
-    ///
-    /// @brief Clear ready sockets and optionally run callbacks.
-    ///
-    /// This method is called by the @c TimerMgr::stopThread method
-    /// to clear watch sockets which may be marked as ready. It will
-    /// also optionally run callbacks installed for the timers which
-    /// marked sockets as ready.
-    ///
-    /// @param run_pending_callbacks Indicates if the callbacks should
-    /// be executed for the sockets being cleared (if true).
-    void clearReadySockets(const bool run_pending_callbacks);
-
-    /// @brief Clears a socket and optionally runs a callback.
-    ///
-    /// This method clears the ready socket pointed to by the specified
-    /// iterator. If the @c run_callback is set, the callback will
-    /// also be executed.
-    ///
-    /// @param timer_info_iterator Iterator pointing to the timer
-    /// configuration structure.
-    /// @param run_callback Boolean value indicating if the callback
-    /// should be executed for the socket being cleared (if true).
-    ///
-    /// @tparam Iterator Iterator pointing to the timer configuration
-    /// structure.
-    template<typename Iterator>
-    void handleReadySocket(Iterator timer_info_iterator, const bool run_callback);
-
-    //@}
-
-    /// @brief Pointer to the io service.
-    asiolink::IOServicePtr io_service_;
-
-    /// @brief Pointer to the worker thread.
-    ///
-    /// This is initially set to NULL until the thread is started using the
-    /// @c TimerMgr::startThread. The @c TimerMgr::stopThread sets it back
-    /// to NULL.
-    boost::scoped_ptr<util::thread::Thread> thread_;
-
-    /// @brief Structure holding information for a single timer.
-    ///
-    /// This structure holds the instance of the watch socket being used to
-    /// signal that the timer is "ready". It also holds the instance of the
-    /// interval timer and other parameters pertaining to it.
-    struct TimerInfo {
-        /// @brief Instance of the watch socket.
-        util::WatchSocket watch_socket_;
-
-        /// @brief Instance of the interval timer.
-        asiolink::IntervalTimer interval_timer_;
-
-        /// @brief Holds the pointer to the callback supplied when registering
-        /// the timer.
-        asiolink::IntervalTimer::Callback user_callback_;
-
-        /// @brief Interval timer interval supplied during registration.
-        long interval_;
-
-        /// @brief Interval timer scheduling mode supplied during registration.
-        asiolink::IntervalTimer::Mode scheduling_mode_;
-
-        /// @brief Constructor.
-        ///
-        /// @param io_service Reference to the IO service to be used by the
-        /// interval timer created.
-        /// @param user_callback Pointer to the callback function supplied
-        /// during the timer registration.
-        /// @param interval Timer interval in milliseconds.
-        /// @param mode Interval timer scheduling mode.
-        TimerInfo(asiolink::IOService& io_service,
-                  const asiolink::IntervalTimer::Callback& user_callback,
-                  const long interval,
-                  const asiolink::IntervalTimer::Mode& mode)
-            : watch_socket_(),
-              interval_timer_(io_service),
-              user_callback_(user_callback),
-              interval_(interval),
-              scheduling_mode_(mode) { };
-    };
-
-    /// @brief A type definition for the pointer to @c TimerInfo structure.
-    typedef boost::shared_ptr<TimerInfo> TimerInfoPtr;
-
-    /// @brief A type definition for the map holding timers configuration.
-    typedef std::map<std::string, TimerInfoPtr> TimerInfoMap;
-
-    /// @brief Holds mapping of the timer name to the watch socket, timer
-    /// instance and other parameters pertaining to the timer.
-    ///
-    /// Each registered timer has a unique name which is used as a key to
-    /// the map. The timer is associated with an instance of the @c WatchSocket
-    /// which is marked ready when the interval for the particular elapses.
-    TimerInfoMap registered_timers_;
 };
 
 } // end of namespace isc::dhcp
