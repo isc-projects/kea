@@ -603,9 +603,9 @@ TimerMgrImpl::signalSocketClearing() {
     cond_var_.signal();
 }
 
-TimerMgr&
+const TimerMgrPtr&
 TimerMgr::instance() {
-    static TimerMgr timer_mgr;
+    static TimerMgrPtr timer_mgr(new TimerMgr());
     return (timer_mgr);
 }
 
