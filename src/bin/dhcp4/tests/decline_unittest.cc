@@ -138,16 +138,6 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
                                const std::string& client_id_2,
                                ExpectedResult expected_result) {
 
-    // Let's get the subnet-id and generate statistics name out of it.
-    const Subnet4Collection* subnets =
-        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    ASSERT_EQ(1, subnets->size());
-    std::stringstream name;
-    name << "subnet[" << subnets->at(0)->getID() << "].declined-addresses";
-
-    // Set the subnet specific statistic explicitly to zero.
-    isc::stats::StatsMgr::instance().setValue(name.str(), static_cast<int64_t>(0));
-
     // Set this global statistic explicitly to zero.
     isc::stats::StatsMgr::instance().setValue("declined-addresses",
                                               static_cast<int64_t>(0));
@@ -163,6 +153,16 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
     client.setHWAddress(hw_address_1);
     // Perform 4-way exchange to obtain a new lease.
     acquireLease(client);
+
+    // Let's get the subnet-id and generate statistics name out of it.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    std::stringstream name;
+    name << "subnet[" << subnets->at(0)->getID() << "].declined-addresses";
+
+    // Set the subnet specific statistic explicitly to zero.
+    isc::stats::StatsMgr::instance().setValue(name.str(), static_cast<int64_t>(0));
 
     // Check the declined-addresses (subnet) statistic before the Decline operation.
     ObservationPtr declined_cnt = StatsMgr::instance().getObservation(name.str());
