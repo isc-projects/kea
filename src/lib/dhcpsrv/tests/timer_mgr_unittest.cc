@@ -366,13 +366,12 @@ TEST_F(TimerMgrTest, scheduleTimers) {
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer2", 5));
 
-    // We can start the worker thread before we even kick in the timers.
-    ASSERT_NO_THROW(timer_mgr->startThread());
-
-    // Kick in the timers. The timers have been registered so there
-    // should be no exception.
+    // Kick in the timers.
     ASSERT_NO_THROW(timer_mgr->setup("timer1"));
     ASSERT_NO_THROW(timer_mgr->setup("timer2"));
+
+    // We can start the worker thread before we even kick in the timers.
+    ASSERT_NO_THROW(timer_mgr->startThread());
 
     // Run IfaceMgr::receive6() in the loop for 500ms. This function
     // will read data from the watch sockets created when the timers
