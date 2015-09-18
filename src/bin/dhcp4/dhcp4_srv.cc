@@ -1949,17 +1949,8 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const std::string& descr) {
     // We need to disassociate the lease from the client. Once we move a lease
     // to declined state, it is no longer associated with the client in any
     // way.
-    lease->hwaddr_.reset(new HWAddr());
-    lease->client_id_.reset();
-    lease->t1_ = 0;
-    lease->t2_ = 0;
-    lease->valid_lft_ = CfgMgr::instance().getCurrentCfg()->getDeclinePeriod();
-    lease->cltt_ = time(NULL);
-    lease->hostname_ = string("");
-    lease->fqdn_fwd_ = false;
-    lease->fqdn_rev_ = false;
+    lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
 
-    lease->state_ = Lease::STATE_DECLINED;
     LeaseMgrFactory::instance().updateLease4(lease);
 
     LOG_INFO(dhcp4_logger, DHCP4_DECLINE_LEASE).arg(lease->addr_.toText())

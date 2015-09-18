@@ -200,6 +200,18 @@ struct Lease {
     /// The lease expiration time is a sum of a client last transmission time
     /// and valid lifetime.
     int64_t getExpirationTime() const;
+
+    /// @brief Sets lease to DECLINED state.
+    ///
+    /// All client identifying parameters will be stripped off (HWaddr,
+    /// client_id, hostname), timers set to 0 (t1, t2), cltt will be set
+    /// to current time and valid_lft to parameter specified as probation
+    /// period. Note that This method only sets fields in the structure.
+    /// It is caller's responsibility to clean up DDNS, bump up stats,
+    /// log, call hooks ets.
+    ///
+    /// @param probation_period lease lifetime will be set to this value
+    virtual void decline(uint32_t probation_period) = 0;
 };
 
 /// @brief Structure that holds a lease for IPv4 address
@@ -386,6 +398,13 @@ struct Lease4 : public Lease {
     /// @return Textual represenation of lease data
     virtual std::string toText() const;
 
+    /// @brief Sets IPv4 lease to declined state.
+    ///
+    /// See @ref Lease::decline for detailed description.
+    ///
+    /// @param probation_period valid lifetime will be set to this value
+    void decline(uint32_t probation_period);
+
     /// @todo: Add DHCPv4 failover related fields here
 };
 
@@ -494,6 +513,13 @@ struct Lease6 : public Lease {
     ///
     /// @return A reference to a vector holding a DUID.
     const std::vector<uint8_t>& getDuidVector() const;
+
+    /// @brief Sets IPv6 lease to declined state.
+    ///
+    /// See @ref Lease::decline for detailed description.
+    ///
+    /// @param probation_period valid lifetime will be set to this value
+    void decline(uint32_t probation_period);
 
     /// @brief Compare two leases for equality
     ///
