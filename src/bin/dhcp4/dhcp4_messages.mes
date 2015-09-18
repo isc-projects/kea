@@ -177,6 +177,29 @@ This message is printed when DHCPv4 server disables an interface from being
 used to receive DHCPv4 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
+% DHCP4_DECLINE_LEASE Received DHCPDECLINE for addr %1 from client %2. The lease will be unavailable for %3 seconds.
+This informational message is printed when a client received an address, but
+discovered that it is being used by some other device and notified the server by
+sending a DHCPDECLINE message. The server checked that this address really was
+leased to the client and marked this address as unusable for a certain
+amount of time. This message may indicate a misconfiguration in a network,
+as there is either a buggy client or more likely a device that is using an
+address that it is not supposed to. The server will fully recover from this
+situation, but if the underlying problem of a misconfigured or rogue device
+is not solved, this address may be declined again in the future.
+
+% DHCP4_DECLINE_LEASE_NOT_FOUND Received DHCPDECLINE for addr %1 from client %2, but no such lease found.
+This warning message indicates that a client reported that his address was
+detected as a duplicate (i.e. another device in the network is using this address).
+However, the server does not have a record for this address. This may indicate
+a client's error or a server's purged database.
+
+% DHCP4_DECLINE_LEASE_MISMATCH Received DHCPDECLINE for addr %1 from client %2, but the data doesn't match: received hwaddr: %3, lease hwaddr: %4, received client-id: %5, lease client-id: %6
+This informational message means that a client attempted to report his address
+as declined (i.e. used by unknown entity). The server has information about
+a lease for that address, but the client's hardware address or client identifier
+does not match the server's stored information. The client's request will be ignored.
+
 % DHCP4_DHCID_COMPUTE_ERROR failed to compute the DHCID for lease: %1, reason: %2
 This error message is logged when the attempt to compute DHCID for a specified
 lease has failed. The lease details and reason for failure is logged in the
