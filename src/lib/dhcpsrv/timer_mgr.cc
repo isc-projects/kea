@@ -277,6 +277,9 @@ private:
     /// @brief Signals that a watch socket has been cleared.
     void signalSocketClearing();
 
+    /// @brief Pointer to the @c IfaceMgr.
+    IfaceMgrPtr iface_mgr_;
+
     /// @brief Pointer to the io service.
     asiolink::IOServicePtr io_service_;
 
@@ -304,12 +307,11 @@ private:
     /// the map. The timer is associated with an instance of the @c WatchSocket
     /// which is marked ready when the interval for the particular elapses.
     TimerInfoMap registered_timers_;
-
 };
 
 TimerMgrImpl::TimerMgrImpl() :
-    io_service_(new IOService()), thread_(), mutex_(), cond_var_(),
-    stopping_(false), registered_timers_() {
+    iface_mgr_(IfaceMgr::instancePtr()), io_service_(new IOService()), thread_(),
+    mutex_(), cond_var_(), stopping_(false), registered_timers_() {
 }
 
 void
@@ -348,9 +350,9 @@ TimerMgrImpl::registerTimer(const std::string& timer_name,
     // to be executed when the data is received over this socket. The only time
     // this may fail is when the socket failed to open which would have caused
     // an exception in the previous call. So we should be safe here.
-    IfaceMgr::instance().addExternalSocket(timer_info->watch_socket_.getSelectFd(),
-                                           boost::bind(&TimerMgrImpl::ifaceMgrCallback,
-                                                       this, timer_name));
+    iface_mgr_->addExternalSocket(timer_info->watch_socket_.getSelectFd(),
+                                  boost::bind(&TimerMgrImpl::ifaceMgrCallback,
+                                              this, timer_name));
 
     // Actually register the timer.
     registered_timers_.insert(std::pair<std::string, TimerInfoPtr>(timer_name,
@@ -380,7 +382,7 @@ TimerMgrImpl::unregisterTimer(const std::string& timer_name) {
     const TimerInfoPtr& timer_info = timer_info_it->second;
 
     // Unregister the watch socket from the IfaceMgr.
-    IfaceMgr::instance().deleteExternalSocket(timer_info->watch_socket_.getSelectFd());
+    iface_mgr_->deleteExternalSocket(timer_info->watch_socket_.getSelectFd());
 
     // Remove the timer.
     registered_timers_.erase(timer_info_it);
@@ -614,12 +616,8 @@ TimerMgr::TimerMgr()
 }
 
 TimerMgr::~TimerMgr() {
-    // Stop the thread, but do not unregister any timers. Unregistering
-    // the timers could cause static deinitialization fiasco between the
-    // TimerMgr and IfaceMgr. By now, the caller should have unregistered
-    // the timers.
     stopThread();
-
+    unregisterTimers();
     delete impl_;
 }
 
