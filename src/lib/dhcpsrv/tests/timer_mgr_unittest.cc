@@ -17,6 +17,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
+#include <util/stopwatch.h>
 #include <boost/bind.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
@@ -36,13 +37,6 @@ private:
 
     /// @brief Cleans up after the test.
     virtual void TearDown();
-
-    /// @brief IO service used by the test fixture class.
-    IOService io_service_;
-
-    /// @brief Boolean flag which indicates that the timeout
-    /// for the @c doWait function has been reached.
-    bool timeout_;
 
 public:
 
@@ -111,7 +105,6 @@ public:
 void
 TimerMgrTest::SetUp() {
     calls_count_.clear();
-    timeout_ = false;
     // Make sure there are no dangling threads.
     TimerMgr::instance()->stopThread();
 }
@@ -142,23 +135,13 @@ TimerMgrTest::registerTimer(const std::string& timer_name, const long timer_inte
 
 void
 TimerMgrTest::doWait(const long timeout, const bool call_receive) {
-    IntervalTimer timeout_timer(io_service_);
-    timeout_timer.setup(boost::bind(&TimerMgrTest::timeoutCallback, this), timeout,
-                        IntervalTimer::ONE_SHOT);
-
-    // The timeout flag will be set by the timeoutCallback if the test
-    // lasts for too long. In this case we will return from here.
-    while (!timeout_) {
+    util::Stopwatch stopwatch;
+    while (stopwatch.getTotalMilliseconds() < timeout) {
         if (call_receive) {
             // Block for one 1 millisecond.
             IfaceMgr::instancePtr()->receive6(0, 1000);
         }
-        // Run ready handlers from the local IO service to execute
-        // the timeout callback if necessary.
-        io_service_.get_io_service().poll_one();
     }
-
-    timeout_ = false;
 }
 
 void
@@ -184,16 +167,6 @@ TimerMgrTest::makeCallback(const std::string& timer_name) {
 boost::function<void ()>
 TimerMgrTest::makeCallbackWithException() {
     return (boost::bind(&TimerMgrTest::timerCallbackWithException, this));
-}
-
-
-void
-TimerMgrTest::timeoutCallback() {
-    // Timeout occurred. Stop and reset IO service and mark
-    // the timeout flag.
-    io_service_.stop();
-    io_service_.get_io_service().reset();
-    timeout_ = true;
 }
 
 // This test checks that certain errors are returned when invalid
