@@ -17,7 +17,7 @@
 
 #include <asiolink/interval_timer.h>
 #include <boost/noncopyable.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include <string>
 
 namespace isc {
@@ -25,6 +25,12 @@ namespace dhcp {
 
 /// @brief Forward declaration of the @c TimerMgr implementation.
 class TimerMgrImpl;
+
+/// @brief Forward declaration of the @c TimerMgr.
+class TimerMgr;
+
+/// @brief Type definition of the shared pointer to @c TimerMgr.
+typedef boost::shared_ptr<TimerMgr> TimerMgrPtr;
 
 /// @brief Manages a pool of asynchronous interval timers for DHCP server.
 ///
@@ -97,8 +103,14 @@ class TimerMgrImpl;
 class TimerMgr : public boost::noncopyable {
 public:
 
-    /// @brief Returns sole instance of the @c TimerMgr singleton.
-    static TimerMgr& instance();
+    /// @brief Returns pointer to the sole instance of the @c TimerMgr.
+    static const TimerMgrPtr& instance();
+
+    /// @brief Destructor.
+    ///
+    /// Stops the worker thread if it is running and unregisteres any
+    /// registered timers.
+    ~TimerMgr();
 
     /// @name Registering, unregistering and scheduling the timers.
     //@{
@@ -218,23 +230,12 @@ public:
 
 private:
 
-    /// @name Constructor and destructor.
-    //@{
-    ///
     /// @brief Private default constructor.
     ///
     /// The @c TimerMgr is a singleton class which instance must be created
     /// using the @c TimerMgr::instance method. Private constructor enforces
     /// construction via @c TimerMgr::instance.
     TimerMgr();
-
-    /// @brief Private destructor.
-    ///
-    /// Stops the worker thread if it is running and unregisteres any
-    /// registered timers.
-    ~TimerMgr();
-
-    //@}
 
     /// @brief Pointer to @c TimerMgr implementation.
     TimerMgrImpl* impl_;
