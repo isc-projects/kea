@@ -137,7 +137,7 @@ enum DHCPOptionType {
     DHO_AUTHENTICATE                 = 90,  /* RFC3118, was 210 */
     DHO_CLIENT_LAST_TRANSACTION_TIME = 91,
     DHO_ASSOCIATED_IP                = 92,
-    DHO_SUBNET_SELECTION             = 118, /* RFC3011! */
+    DHO_SUBNET_SELECTION             = 118, /* RFC3011 */
     DHO_DOMAIN_SEARCH                = 119, /* RFC3397 */
     DHO_VIVCO_SUBOPTIONS             = 124,
     DHO_VIVSO_SUBOPTIONS             = 125,
