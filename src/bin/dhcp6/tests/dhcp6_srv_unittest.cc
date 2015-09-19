@@ -1323,6 +1323,20 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
     EXPECT_EQ(selected, subnet2);
 
     // CASE 4: We have three subnets defined and we received relayed traffic
+    // that came out a layer 2 relay on subnet 2. We should select subnet2 then
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
+    CfgMgr::instance().commit();
+    Pkt6::RelayInfo relay2;
+    relay2.hop_count_ = 1;
+    relay2.peeraddr_ = IOAddress("fe80::1");
+    pkt->relay_info_.push_back(relay2);
+    selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet2);
+
+    // CASE 5: We have three subnets defined and we received relayed traffic
     // that came out of undefined subnet. We should select nothing
     CfgMgr::instance().clear();
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1);
