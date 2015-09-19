@@ -1051,7 +1051,13 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
 
     // Initialize fields specific to relayed messages.
     if (!question->relay_info_.empty()) {
-        selector.first_relay_linkaddr_ = question->relay_info_.back().linkaddr_;
+        BOOST_REVERSE_FOREACH(Pkt6::RelayInfo relay, question->relay_info_) {
+            if (!relay.linkaddr_.isV6Zero() &&
+                !relay.linkaddr_.isV6LinkLocal()) {
+                selector.first_relay_linkaddr_ = relay.linkaddr_;
+                break;
+            }
+        }
         selector.interface_id_ =
             question->getAnyRelayOption(D6O_INTERFACE_ID,
                                         Pkt6::RELAY_GET_FIRST);
