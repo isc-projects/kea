@@ -74,6 +74,9 @@ public:
 // Very simple test. Checks whether Daemon can be instantiated and its
 // default parameters are sane
 TEST_F(DaemonTest, constructor) {
+    // Disable KEA_PIDFILE_DIR
+    EXPECT_EQ(0, unsetenv("KEA_PIDFILE_DIR"));
+
     EXPECT_NO_THROW(Daemon instance1);
 
     // Check that the verbose mode is not set by default.
@@ -164,7 +167,7 @@ TEST_F(DaemonTest, makePIDFileName) {
 
     // Make sure the name is as we expect
     std::ostringstream stream;
-    stream  << CfgMgr::instance().getDataDir() << "/test.myproc.pid";
+    stream  << instance.getPIDFileDir() << "/test.myproc.pid";
     EXPECT_EQ(stream.str(), name);
 
     // Verify that the default directory can be overridden
@@ -207,8 +210,12 @@ TEST_F(DaemonTest, createPIDFileOverwrite) {
     }
 
     // Back in the parent test, we need to wait for the child to die
+    // As with debugging waitpid() can be interrupted ignore EINTR.
     int stat;
-    int ret = waitpid(pid, &stat, 0);
+    int ret;
+    do {
+        ret = waitpid(pid, &stat, 0);
+    } while ((ret == -1) && (errno == EINTR));
     ASSERT_EQ(ret, pid);
 
     // Ok, so we should now have a PID that we know to be dead.
