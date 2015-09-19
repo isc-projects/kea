@@ -337,7 +337,7 @@ TEST(CfgSubnets6Test, selectSubnetByInterfaceIdAndClassify) {
 
 // Checks that detection of duplicated subnet IDs works as expected. It should
 // not be possible to add two IPv6 subnets holding the same ID.
-TEST(CfgSubnets6, duplication) {
+TEST(CfgSubnets6Test, duplication) {
     CfgSubnets6 cfg;
 
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4, 123));
