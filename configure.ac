@@ -241,8 +241,8 @@ AM_COND_IF([USE_STATIC_LINK], [AC_DEFINE([USE_STATIC_LINK], [1], [Was Kea static
 if test $enable_static_link = yes -a $enable_static = no; then
 	AC_MSG_ERROR([--enable-static-link requires --enable-static])
 fi
-if test $enable_shared = no; then
-	AC_MSG_ERROR([Kea requires shared libraries to be built])
+if test $enable_static_link = no -a $enable_shared = no; then
+	AC_MSG_ERROR([--disable-static-link requires --enable-shared])
 fi
 
 # OS dependent configuration
