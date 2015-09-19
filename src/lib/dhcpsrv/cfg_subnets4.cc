@@ -21,16 +21,6 @@
 
 using namespace isc::asiolink;
 
-namespace {
-
-/// @brief Holds IPv4 address set to "0.0.0.0".
-const IOAddress ZERO_ADDRESS("0.0.0.0");
-
-/// @brief Holds IPv4 broadcast address.
-const IOAddress BCAST_ADDRESS("255.255.255.255");
-
-} // end of anonymous namespace
-
 namespace isc {
 namespace dhcp {
 
@@ -54,7 +44,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     // address will not match with any of the relay addresses accross all
     // subnets, but we need to verify that for all subnets before we can try
     // to use the giaddr to match with the subnet prefix.
-    if (selector.giaddr_ != ZERO_ADDRESS) {
+    if (!selector.giaddr_.isV4Zero()) {
         for (Subnet4Collection::const_iterator subnet = subnets_.begin();
              subnet != subnets_.end(); ++subnet) {
 
@@ -75,19 +65,19 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     // what address from the client's packet to use to match with the
     // subnets' prefixes.
 
-    IOAddress address = ZERO_ADDRESS;
+    IOAddress address = IOAddress::IPV6_ZERO_ADDRESS();
     // If there is a giaddr, use it for subnet selection.
-    if (selector.giaddr_ != ZERO_ADDRESS) {
+    if (!selector.giaddr_.isV4Zero()) {
         address = selector.giaddr_;
 
     // If it is a Renew or Rebind, use the ciaddr.
-    } else if ((selector.ciaddr_ != ZERO_ADDRESS) &&
-               (selector.local_address_ != BCAST_ADDRESS)) {
+    } else if (!selector.ciaddr_.isV4Zero() &&
+               !selector.local_address_.isV4Bcast()) {
         address = selector.ciaddr_;
 
     // If ciaddr is not specified, use the source address.
-    } else if ((selector.remote_address_ != ZERO_ADDRESS) &&
-               (selector.local_address_ != BCAST_ADDRESS)) {
+    } else if (!selector.remote_address_.isV4Zero() &&
+               !selector.local_address_.isV4Bcast()) {
         address = selector.remote_address_;
 
     // If local interface name is known, use the local address on this
@@ -105,7 +95,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     }
 
     // Unable to find a suitable address to use for subnet selection.
-    if (address == ZERO_ADDRESS) {
+    if (address.isV4Zero()) {
         return (Subnet4Ptr());
     }
 
