@@ -292,6 +292,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
     selector.client_classes_ = query->classes_;
     selector.iface_name_ = query->getIface();
 
+    // Try first Relay Agent Link Selection sub-option
     OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
     if (rai) {
         OptionCustomPtr oc = boost::dynamic_pointer_cast<OptionCustom>(rai);
@@ -303,6 +304,16 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
                     selector.option_select_ =
                         IOAddress::fromBytes(AF_INET, &lsb[0]);
                 }
+            }
+        }
+    } else {
+        // Or Subnet Selection option
+        OptionPtr sbnsel = query->getOption(DHO_SUBNET_SELECTION);
+        if (sbnsel) {
+            OptionCustomPtr oc =
+                boost::dynamic_pointer_cast<OptionCustom>(sbnsel);
+            if (oc) {
+                selector.option_select_ = oc->readAddress();
             }
         }
     }
