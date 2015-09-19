@@ -3310,6 +3310,17 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     dis->addOption(rai);
     EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
 
+    // Subnet select option has a lower precedence
+    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(Option::V4,
+                                                           DHO_SUBNET_SELECTION);
+    ASSERT_TRUE(sbnsel_def);
+    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    ASSERT_TRUE(sbnsel);
+    sbnsel->writeAddress(IOAddress("192.0.2.3"));
+    dis->addOption(sbnsel);
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+    dis->delOption(DHO_SUBNET_SELECTION);
+
     // Check client-classification still applies
     IOAddress addr_foo("192.0.4.2");
     ols.reset(new Option(Option::V4, RAI_OPTION_LINK_SELECTION,
@@ -3333,7 +3344,88 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     rai->addOption(ols);
     dis->addOption(rai);
     EXPECT_FALSE(srv_.selectSubnet(dis));
+}
 
+// Checks if a subnet selection option works as expected
+TEST_F(Dhcpv4SrvTest, subnetSelect) {
+
+    // We have 3 subnets defined.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.2 - 192.0.2.100\" } ],"
+        "    \"relay\": { "
+        "        \"ip-address\": \"192.0.5.1\""
+        "    },"
+        "    \"subnet\": \"192.0.2.0/24\" }, "
+        "{   \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
+        "    \"subnet\": \"192.0.3.0/24\" }, "
+        "{   \"pools\": [ { \"pool\": \"192.0.4.1 - 192.0.4.100\" } ],"
+        "    \"client-class\": \"foo\", "
+        "    \"subnet\": \"192.0.4.0/24\" } "
+        "],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Use this config to set up the server
+    ASSERT_NO_THROW(configure(config));
+
+    // Let's get the subnet configuration objects
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    ASSERT_EQ(3, subnets->size());
+
+    // Let's get them for easy reference
+    Subnet4Ptr subnet1 = (*subnets)[0];
+    Subnet4Ptr subnet2 = (*subnets)[1];
+    Subnet4Ptr subnet3 = (*subnets)[2];
+    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet2);
+    ASSERT_TRUE(subnet3);
+
+    // Let's create a packet.
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    dis->setIface("eth0");
+    dis->setHops(1);
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Let's create a Subnet Selection option
+    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(Option::V4,
+                                                           DHO_SUBNET_SELECTION);
+    ASSERT_TRUE(sbnsel_def);
+    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    ASSERT_TRUE(sbnsel);
+    sbnsel->writeAddress(IOAddress("192.0.3.2"));
+
+    // This is just a sanity check, we're using regular method: ciaddr 192.0.3.1
+    // belongs to the second subnet, so it is selected
+    dis->setGiaddr(IOAddress("192.0.3.1"));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+
+    // Setup a relay override for the first subnet as it has a high precedence
+    dis->setGiaddr(IOAddress("192.0.5.1"));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis));
+
+    // Put a subnet select option to select back the second subnet as
+    // it has the second highest precedence
+    dis->addOption(sbnsel);
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+
+    // Check client-classification still applies
+    sbnsel->writeAddress(IOAddress("192.0.4.2"));
+    // Note it shall fail (vs. try the next criterion).
+    EXPECT_FALSE(srv_.selectSubnet(dis));
+    // Add the packet to the class and check again: now it shall succeed
+    dis->addClass("foo");
+    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis));
+
+    // Check it fails with a bad address in the sub-option
+    sbnsel->writeAddress(IOAddress("10.0.0.1"));
+    EXPECT_FALSE(srv_.selectSubnet(dis));
 }
 
 // This test verifies that the direct message is dropped when it has been
