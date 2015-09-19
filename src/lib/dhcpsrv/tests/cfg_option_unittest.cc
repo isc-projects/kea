@@ -132,7 +132,7 @@ TEST(CfgOptionTest, add) {
 }
 
 // This test verifies that two option configurations can be merged.
-TEST(CfgOption, merge) {
+TEST(CfgOptionTest, merge) {
     CfgOption cfg_src;
     CfgOption cfg_dst;
 
@@ -308,7 +308,7 @@ TEST(CfgOptionTest, encapsulate) {
 
 // This test verifies that single option can be retrieved from the configuration
 // using option code and option space.
-TEST(CfgOption, get) {
+TEST(CfgOptionTest, get) {
     CfgOption cfg;
 
     // Add 10 options to a "dhcp6" option space in the subnet.

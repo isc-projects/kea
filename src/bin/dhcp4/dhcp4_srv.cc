@@ -292,6 +292,21 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
     selector.client_classes_ = query->classes_;
     selector.iface_name_ = query->getIface();
 
+    OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (rai) {
+        OptionCustomPtr oc = boost::dynamic_pointer_cast<OptionCustom>(rai);
+        if (oc) {
+            OptionPtr ols = oc->getOption(RAI_OPTION_LINK_SELECTION);
+            if (ols) {
+                OptionBuffer lsb = ols->getData();
+                if (lsb.size() == sizeof(uint32_t)) {
+                    selector.option_select_ =
+                        IOAddress::fromBytes(AF_INET, &lsb[0]);
+                }
+            }
+        }
+    }
+
     CfgMgr& cfgmgr = CfgMgr::instance();
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
 
