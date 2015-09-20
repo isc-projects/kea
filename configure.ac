@@ -1273,7 +1273,7 @@ AC_CHECK_FUNCS([pselect])
 # code will be updated by the time we really need it.
 AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
 if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
-	CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_DEV_POLL=1"
+	CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_DEV_POLL=1"
 fi
 
 #
