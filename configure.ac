@@ -1387,6 +1387,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  doc/guide/Makefile
                  doc/Makefile
                  doc/version.ent
+                 ext/coroutine/Makefile
                  ext/gtest/Makefile
                  ext/Makefile
                  m4macros/Makefile
