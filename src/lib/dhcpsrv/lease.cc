@@ -261,6 +261,21 @@ Lease6::getDuidVector() const {
     return (duid_->getDuid());
 }
 
+void
+Lease6::decline(uint32_t probation_period) {
+    hwaddr_.reset();
+    duid_ = DUID::generateEmpty();
+    t1_ = 0;
+    t2_ = 0;
+    preferred_lft_ = 0;
+    valid_lft_ = probation_period;
+    cltt_ = time(NULL);
+    hostname_ = string("");
+    fqdn_fwd_ = false;
+    fqdn_rev_ = false;
+    state_ = Lease::STATE_DECLINED;
+}
+
 std::string
 Lease6::toText() const {
     ostringstream stream;
