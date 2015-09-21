@@ -56,17 +56,19 @@ const char* DECLINE_CONFIGS[] = {
 class DeclineTest : public Dhcpv6MessageTest {
 public:
 
+    /// @brief Specifies expected outcome
     enum ExpectedResult {
         SHOULD_PASS, // pass = accept decline, move lease to declined state.
         SHOULD_FAIL  // fail = reject the decline
     };
 
-    /// @brief Performs 4-way exchange to obtain new lease.
-    ///
-    /// This is used as a preparatory step for Decline operation.
-    ///
-    /// @param client Client to be used to obtain a lease.
-    void acquireLease(Dhcp6Client& client);
+    /// @brief Specifies what address should the client include in its Decline
+    enum AddressInclusion {
+        VALID_ADDR, // Client will include its own, valid address
+        BOGUS_ADDR, // Client will include an address it doesn't own
+        NO_ADDR,    // Client will send empty IA_NA (without address)
+        NO_IA       // Client will not send IA_NA at all
+    };
 
     /// @brief Tests if the acquired lease is or is not declined.
     ///
@@ -74,9 +76,8 @@ public:
     /// @param iaid1 IAID used during lease acquisition
     /// @param duid2 DUID used during Decline exchange
     /// @param iaid2 IAID used during Decline exchange
-    /// @param declient_correct_address specify if the valid address should
-    ///        be used (true = use the address client actually received,
-    ///        false = use a different address)
+    /// @param addr_type specify what sort of address the client should
+    ///        include (its own, a bogus one or no address at all)
     /// @param expected_result SHOULD_PASS if the lease is expected to
     /// be successfully declined, or SHOULD_FAIL if the lease is expected
     /// to not be declined.
@@ -84,9 +85,9 @@ public:
                            const uint32_t iaid1,
                            const std::string& duid2,
                            const uint32_t iaid2,
-                           bool decline_correct_address,
+                           AddressInclusion addr_type,
                            ExpectedResult expected_result);
-    
+
     /// @brief Constructor.
     ///
     /// Sets up fake interfaces.
@@ -104,8 +105,11 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
                                const uint32_t iaid1,
                                const std::string& duid2,
                                const uint32_t iaid2,
-                               bool decline_correct_address,
+                               AddressInclusion addr_type,
                                ExpectedResult expected_result) {
+    // Set this global statistic explicitly to zero.
+    StatsMgr::instance().setValue("declined-addresses", static_cast<int64_t>(0));
+
     Dhcp6Client client;
     client.setDUID(duid1);
     client.useNA(iaid1);
@@ -117,11 +121,13 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
     const Subnet6Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     ASSERT_EQ(1, subnets->size());
-    std::stringstream name;
-    name << "subnet[" << subnets->at(0)->getID() << "].declined-addresses";
+
+    // Let's generate the subnet specific statistic
+    std::string name = StatsMgr::generateName("subnet", subnets->at(0)->getID(),
+                                              "declined-addresses");
 
     // Set this statistic explicitly to zero.
-    isc::stats::StatsMgr::instance().setValue(name.str(), static_cast<int64_t>(0));
+    StatsMgr::instance().setValue(name, static_cast<int64_t>(0));
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -134,17 +140,34 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
     // Remember the acquired address.
     IOAddress acquired_address = leases_client_na[0].addr_;
 
-    // Check the declined-addresses statistic before the Decline operation.
-    ObservationPtr declined_cnt = StatsMgr::instance().getObservation(name.str());
+    // Check the declined-addresses (subnet) before the Decline operation.
+    ObservationPtr declined_cnt = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(declined_cnt);
     uint64_t before = declined_cnt->getInteger().first;
-    
-    // Let's tamper with the address if necessary.
-    if (!decline_correct_address) {
 
+        // Check the global declined-addresses statistic before the Decline.
+    ObservationPtr declined_global = StatsMgr::instance()
+        .getObservation("declined-addresses");
+    ASSERT_TRUE(declined_global);
+    uint64_t before_global = declined_cnt->getInteger().first;
+
+    // Let's tamper with the address if necessary.
+    switch (addr_type) {
+    case VALID_ADDR:
+        // Nothing to do, client will do its job correctly by default
+        break;
+    case BOGUS_ADDR:
         // Simple increase by one.
         client.config_.leases_[0].addr_ =
             IOAddress::increase(client.config_.leases_[0].addr_);
+        break;
+    case NO_ADDR:
+        // Tell the client to not include an address in its IA_NA
+        client.includeAddress(false);
+        break;
+    case NO_IA:
+        // Tell the client to not include IA_NA at all
+        client.useNA(false);
     }
 
     // Use the second duid
@@ -160,10 +183,14 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                             acquired_address);
     ASSERT_TRUE(lease);
-    
-    declined_cnt = StatsMgr::instance().getObservation(name.str());
+
+    declined_cnt = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(declined_cnt);
     uint64_t after = declined_cnt->getInteger().first;
+
+    declined_global = StatsMgr::instance().getObservation("declined-addresses");
+    ASSERT_TRUE(declined_global);
+    uint64_t after_global = declined_global->getInteger().first;
 
     // We check if the decline process was successful by checking if the
     // lease is in the database and what is its state.
@@ -173,6 +200,7 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
         // The decline succeded, so the declined-addresses statistic should
         // be increased by one
         EXPECT_EQ(after, before + 1);
+        EXPECT_EQ(after_global, before_global + 1);
     } else {
         // the decline was supposed, to be rejected.
         EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
@@ -180,6 +208,7 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
         // The decline failed, so the declined-addresses should be the same
         // as before
         EXPECT_EQ(before, after);
+        EXPECT_EQ(before_global, after_global);
     }
 }
 
@@ -187,37 +216,59 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
 TEST_F(DeclineTest, basic) {
     acquireAndDecline("01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:06", 1234,
-                      true, SHOULD_PASS);
+                      VALID_ADDR, SHOULD_PASS);
 }
 
 // This test verifies the decline is rejected in the following case:
 // - Client acquires new lease using duid, iaid
-// - Client sends the DHCPDECLINE with duid, iaid, but uses wrong address.
+// - Client sends the DECLINE with duid, iaid, but uses wrong address.
 // - The server rejects Decline due to address mismatch
 TEST_F(DeclineTest, addressMismatch) {
     acquireAndDecline("01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:06", 1234,
-                      false, SHOULD_FAIL);
+                      BOGUS_ADDR, SHOULD_FAIL);
 }
 
 // This test verifies the decline is rejected in the following case:
 // - Client acquires new lease using duid, iaid1
-// - Client sends the DHCPDECLINE with duid, iaid2
+// - Client sends the DECLINE with duid, iaid2
 // - The server rejects Decline due to IAID mismatch
 TEST_F(DeclineTest, iaidMismatch) {
     acquireAndDecline("01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:06", 1235,
-                      true, SHOULD_FAIL);
+                      VALID_ADDR, SHOULD_FAIL);
 }
 
 // This test verifies the decline correctness in the following case:
 // - Client acquires new lease using duid1, iaid
-// - Client sends the DHCPDECLINE using duid2, iaid
+// - Client sends the DECLINE using duid2, iaid
 // - The server rejects the Decline due to DUID mismatch
 TEST_F(DeclineTest, duidMismatch) {
     acquireAndDecline("01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:07", 1234,
-                      true, SHOULD_FAIL);
+                      VALID_ADDR, SHOULD_FAIL);
+}
+
+// This test verifies the decline correctness in the following case:
+// - Client acquires new lease using duid1, iaid
+// - Client sends the DECLINE using valid duid/iaid, but does not
+//   include the address in it
+// - The server rejects the Decline due to missing address
+TEST_F(DeclineTest, noAddrsSent) {
+    acquireAndDecline("01:02:03:04:05:06", 1234,
+                      "01:02:03:04:05:06", 1234,
+                      NO_ADDR, SHOULD_FAIL);
+}
+
+// This test verifies the decline correctness in the following case:
+// - Client acquires new lease using duid1, iaid
+// - Client sends the DECLINE using valid duid, but does not
+//   include IA_NA at all
+// - The server rejects the Decline due to missing IA_NA
+TEST_F(DeclineTest, noIAs) {
+    acquireAndDecline("01:02:03:04:05:06", 1234,
+                      "01:02:03:04:05:06", 1234,
+                      NO_IA, SHOULD_FAIL);
 }
 
 } // end of anonymous namespace

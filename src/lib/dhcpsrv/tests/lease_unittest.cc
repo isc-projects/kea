@@ -415,7 +415,7 @@ TEST_F(Lease4Test, toText) {
     const time_t current_time = 12345678;
     Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, clientid_, 3600, 123,
                  456, current_time, 789);
-    
+
     std::stringstream expected;
     expected << "Address:       192.0.2.3\n"
              << "Valid life:    3600\n"
@@ -741,6 +741,42 @@ TEST(Lease6Test, getDuidVector) {
     EXPECT_TRUE(returned_vec == duid_vec);
 }
 
+// This test verifies if the IPv6 lease can be declined properly.
+TEST(Lease6Test, decline) {
+
+    uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
+    DuidPtr duid(new DUID(llt, sizeof(llt)));
+
+    HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
+
+    // Let's create a lease for 2001:db8::1, DUID, iaid=1234,
+    // t1=1000, t2=2000, pref=3000, valid=4000, subnet-id = 1
+    Lease6 lease(Lease::TYPE_NA, IOAddress("2001:db8::1"), duid,
+                 1234, 3000, 4000, 1000, 2000, 1, hwaddr);
+    lease.cltt_ = 12345678;
+    lease.hostname_ = "foo.example.org";
+    lease.fqdn_fwd_ = true;
+    lease.fqdn_rev_ = true;
+
+    time_t now = time(NULL);
+
+    // Move the lease to declined state and set probation-period to 123 seconds
+    lease.decline(123);
+
+    ASSERT_FALSE(lease.hwaddr_);
+    EXPECT_EQ(0, lease.t1_);
+    EXPECT_EQ(0, lease.t2_);
+    EXPECT_EQ(0, lease.preferred_lft_);
+
+    EXPECT_TRUE(now <= lease.cltt_);
+    EXPECT_TRUE(lease.cltt_ <= now + 1);
+    EXPECT_EQ("", lease.hostname_);
+    EXPECT_FALSE(lease.fqdn_fwd_);
+    EXPECT_FALSE(lease.fqdn_rev_);
+    EXPECT_EQ(Lease::STATE_DECLINED, lease.state_);
+    EXPECT_EQ(123, lease.valid_lft_);
+}
+
 // Verify the behavior of the function which checks FQDN data for equality.
 TEST(Lease6Test, hasIdenticalFqdn) {
     Lease6 lease = createLease6("myhost.example.com.", true, true);
@@ -765,12 +801,12 @@ TEST(Lease6Test, toText) {
 
     uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     DuidPtr duid(new DUID(llt, sizeof(llt)));
-    
+
     Lease6 lease(Lease::TYPE_NA, IOAddress("2001:db8::1"), duid, 123456,
                  400, 800, 100, 200, 5678, hwaddr, 128);
     lease.cltt_ = 12345678;
     lease.state_ = Lease::STATE_DECLINED;
-    
+
     std::stringstream expected;
     expected << "Type:          IA_NA(" << static_cast<int>(Lease::TYPE_NA) << ")\n"
              << "Address:       2001:db8::1\n"

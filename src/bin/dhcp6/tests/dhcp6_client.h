@@ -500,6 +500,14 @@ public:
         use_client_id_ = send;
     }
 
+    /// @brief Controls whether the client should send an addres in IA_NA
+    ///
+    /// @todo: For now, this flag is only used in Decline
+    /// @param send should the address be included?
+    void includeAddress(const bool send) {
+        include_address_ = send;
+    }
+
     /// @brief Specifies if the Rapid Commit option should be included in
     /// the Solicit message.
     ///
@@ -751,6 +759,12 @@ private:
     uint32_t na_iaid_;
     /// @brief IAID used by the client when requesting prefix delegation.
     uint32_t pd_iaid_;
+
+    /// @brief Determines if the client will include address in the messages
+    ///        it sends.
+    ///
+    /// @todo this flag is currently supported in Decline only.
+    bool include_address_;
 };
 
 } // end of namespace isc::dhcp::test
