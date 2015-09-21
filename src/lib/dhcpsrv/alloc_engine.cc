@@ -14,16 +14,23 @@
 
 #include <config.h>
 
+#include <dhcp/option_data_types.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/alloc_engine_log.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp/dhcp6.h>
 #include <stats/stats_mgr.h>
+#include <util/stopwatch.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
+
+#include <boost/foreach.hpp>
 
 #include <cstring>
 #include <sstream>
@@ -34,6 +41,7 @@
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::stats;
 
@@ -1271,6 +1279,230 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
     }
     return (updated_leases);
 }
+
+void
+AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeout,
+                                   const bool remove_lease) {
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V6_LEASES_RECLAMATION_START)
+        .arg(max_leases)
+        .arg(timeout);
+
+    // Create stopwatch and automatically start it to measure the time
+    // taken by the routine.
+    /// @todo Monitor time elapsed and return from the lease reclamation routine
+    /// if it hits the timeout value.
+    util::Stopwatch stopwatch;
+
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+
+    Lease6Collection leases;
+    lease_mgr.getExpiredLeases6(leases, max_leases);
+
+    BOOST_FOREACH(Lease6Ptr lease, leases) {
+
+        try {
+            /// @todo execute a lease6_expire hook here.
+
+            // Generate removal name change request for D2, if required.
+            // This will return immediatelly if the DNS wasn't updated
+            // when the lease was created.
+            if (lease->duid_) {
+                queueRemovalNameChangeRequest(lease, *(lease->duid_));
+            }
+
+            // Reclaim the lease - depending on the configuration, set the
+            // expired-reclaimed state or simply remove it.
+            reclaimLeaseInDatabase<Lease6Ptr>(lease, remove_lease,
+                                              boost::bind(&LeaseMgr::updateLease6,
+                                                          &lease_mgr, _1));
+
+            // Update statistics.
+
+            // Decrease number of assigned leases.
+            if (lease->type_ == Lease::TYPE_NA) {
+                // IA_NA
+                StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                     lease->subnet_id_,
+                                                                     "assigned-nas"),
+                                              int64_t(-1));
+
+            } else if (lease->type_ == Lease::TYPE_PD) {
+                // IA_PD
+                StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                     lease->subnet_id_,
+                                                                     "assigned-pds"),
+                                              int64_t(-1));
+
+            }
+
+            // Increase total number of reclaimed leases.
+            StatsMgr::instance().addValue("reclaimed-leases", int64_t(1));
+
+            // Increase number of reclaimed leases for a subnet.
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                 lease->subnet_id_,
+                                                                 "reclaimed-leases"),
+                                          int64_t(1));
+
+
+        } catch (const std::exception& ex) {
+            LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_LEASE_RECLAMATION_FAILED)
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
+        }
+    }
+
+    // Stop measuring the time.
+    stopwatch.stop();
+
+    // Mark completion of the lease reclamation routine and present some stats.
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V6_LEASES_RECLAMATION_COMPLETE)
+        .arg(leases.size())
+        .arg(stopwatch.logFormatTotalDuration());
+}
+
+void
+AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
+                                   const bool remove_lease) {
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V4_LEASES_RECLAMATION_START)
+        .arg(max_leases)
+        .arg(timeout);
+
+    // Create stopwatch and automatically start it to measure the time
+    // taken by the routine.
+    /// @todo Monitor time elapsed and return from the lease reclamation routine
+    /// if it hits the timeout value.
+    util::Stopwatch stopwatch;
+
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+
+    Lease4Collection leases;
+    lease_mgr.getExpiredLeases4(leases, max_leases);
+
+    BOOST_FOREACH(Lease4Ptr lease, leases) {
+
+        try {
+            /// @todo execute a lease4_expire hook here.
+
+            // Generate removal name change request for D2, if required.
+            // This will return immediatelly if the DNS wasn't updated
+            // when the lease was created.
+            if (lease->client_id_) {
+                // Client id takes precedence over HW address.
+                queueRemovalNameChangeRequest(lease, lease->client_id_->getClientId());
+
+            } else {
+                // Client id is not specified for the lease. Use HW address
+                // instead.
+                queueRemovalNameChangeRequest(lease, lease->hwaddr_);
+            }
+
+            // Reclaim the lease - depending on the configuration, set the
+            // expired-reclaimed state or simply remove it.
+            reclaimLeaseInDatabase<Lease4Ptr>(lease, remove_lease,
+                                              boost::bind(&LeaseMgr::updateLease4,
+                                                          &lease_mgr, _1));
+
+            // Update statistics.
+
+            // Decrease number of assigned addresses.
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                 lease->subnet_id_,
+                                                                 "assigned-addresses"),
+                                          int64_t(-1));
+
+            // Increase total number of reclaimed leases.
+            StatsMgr::instance().addValue("reclaimed-leases", int64_t(1));
+
+            // Increase number of reclaimed leases for a subnet.
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                 lease->subnet_id_,
+                                                                 "reclaimed-leases"),
+                                          int64_t(1));
+
+        } catch (const std::exception& ex) {
+            LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V4_LEASE_RECLAMATION_FAILED)
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
+        }
+    }
+
+    // Stop measuring the time.
+    stopwatch.stop();
+
+    // Mark completion of the lease reclamation routine and present some stats.
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V4_LEASES_RECLAMATION_COMPLETE)
+        .arg(leases.size())
+        .arg(stopwatch.logFormatTotalDuration());
+}
+
+template<typename LeasePtrType, typename IdentifierType>
+void
+AllocEngine::queueRemovalNameChangeRequest(const LeasePtrType& lease,
+                                           const IdentifierType& identifier) const {
+
+    // Check if there is a need for update.
+    if (!lease || lease->hostname_.empty() || (!lease->fqdn_fwd_ && !lease->fqdn_rev_)
+        || !CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
+        return;
+    }
+
+    try {
+        // Create DHCID
+        std::vector<uint8_t> hostname_wire;
+        OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
+        dhcp_ddns::D2Dhcid dhcid = D2Dhcid(identifier, hostname_wire);
+
+        // Create name change request.
+        NameChangeRequestPtr ncr(new NameChangeRequest(isc::dhcp_ddns::CHG_REMOVE,
+                                                       lease->fqdn_fwd_, lease->fqdn_rev_,
+                                                       lease->hostname_,
+                                                       lease->addr_.toText(),
+                                                       dhcid, 0, lease->valid_lft_));
+        // Send name change request.
+        CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_REMOVAL_NCR_FAILED)
+            .arg(lease->addr_.toText())
+            .arg(ex.what());
+    }
+}
+
+template<typename LeasePtrType>
+void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
+                                         const bool remove_lease,
+                                         const boost::function<void (const LeasePtrType&)>&
+                                         lease_update_fun) const {
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+
+    // Reclaim the lease - depending on the configuration, set the
+    // expired-reclaimed state or simply remove it.
+    if (remove_lease) {
+        lease_mgr.deleteLease(lease->addr_);
+
+    } else {
+        // Clear FQDN information as we have already sent the
+        // name change request to remove the DNS record.
+        lease->hostname_.clear();
+        lease->fqdn_fwd_ = false;
+        lease->fqdn_rev_ = false;
+        lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+        lease_update_fun(lease);
+    }
+
+    // Lease has been reclaimed.
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_LEASE_RECLAIMED)
+        .arg(lease->addr_.toText());
+}
+
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

@@ -26,6 +26,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <hooks/callout_handle.h>
 
+#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
@@ -490,6 +491,52 @@ public:
     /// @return Returns renewed lease.
     Lease6Collection renewLeases6(ClientContext6& ctx);
 
+    /// @brief Reclaims expired IPv6 leases.
+    ///
+    /// This method retrieves a collection of expired leases and reclaims them.
+    /// See http://kea.isc.org/wiki/LeaseExpirationDesign#LeasesReclamationRoutine
+    /// for the details.
+    ///
+    /// This method is executed periodically to act upon expired leases. This
+    /// includes for each lease:
+    /// - executing "lease_expire6" hook,
+    /// - removing DNS record for a lease,
+    /// - reclaiming a lease in the database, i.e. setting its state to
+    ///   "expired-reclaimed" or removing it from the lease databse,
+    /// - updating statistics of assigned and reclaimed leases
+    ///
+    /// @param max_leases Maximum number of leases to be reclaimed.
+    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// may be processing expired leases, expressed in seconds.
+    /// @param remove_lease A boolean value indicating if the lease should
+    /// be removed when it is reclaimed (if true) or it should be left in the
+    /// database in the "expired-reclaimed" state (if false).
+    void reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeout,
+                               const bool remove_lease);
+
+    /// @brief Reclaims expired IPv4 leases.
+    ///
+    /// This method retrieves a collection of expired leases and reclaims them.
+    /// See http://kea.isc.org/wiki/LeaseExpirationDesign#LeasesReclamationRoutine
+    /// for the details.
+    ///
+    /// This method is executed periodically to act upon expired leases. This
+    /// includes for each lease:
+    /// - executing "lease_expire6" hook,
+    /// - removing DNS record for a lease,
+    /// - reclaiming a lease in the database, i.e. setting its state to
+    ///   "expired-reclaimed" or removing it from the lease databse,
+    /// - updating statistics of assigned and reclaimed leases
+    ///
+    /// @param max_leases Maximum number of leases to be reclaimed.
+    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// may be processing expired leases, expressed in seconds.
+    /// @param remove_lease A boolean value indicating if the lease should
+    /// be removed when it is reclaimed (if true) or it should be left in the
+    /// database in the "expired-reclaimed" state (if false).
+    void reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
+                               const bool remove_lease);
+
     /// @brief Attempts to find appropriate host reservation.
     ///
     /// Attempts to find appropriate host reservation in HostMgr. If found, it
@@ -662,6 +709,45 @@ private:
     ///        @ref ClientContext6 for details.
     /// @param lease IPv6 lease to be extended.
     void extendLease6(ClientContext6& ctx, Lease6Ptr lease);
+
+    /// @brief Sends removal name change reuqest to D2.
+    ///
+    /// This method is exception safe.
+    ///
+    /// @param lease Pointer to a lease for which NCR should be sent.
+    /// @param identifier Identifier to be used to generate DHCID for
+    /// the DNS update. For DHCPv4 it will be hardware address or client
+    /// identifier. For DHCPv6 it will be a DUID.
+    ///
+    /// @tparam LeasePtrType Pointer to a lease.
+    /// @tparam IdentifierType HW Address, Client Identifier or DUID.
+    template<typename LeasePtrType, typename IdentifierType>
+    void queueRemovalNameChangeRequest(const LeasePtrType& lease,
+                                       const IdentifierType& identifier) const;
+
+    /// @brief Marks lease as reclaimed in the database.
+    ///
+    /// This method is called internally by the leases reclaimation routines.
+    /// Depending on the value of the @c remove_lease parameter this method
+    /// will delete the reclaimed lease from the database or set its sate
+    /// to "expired-reclaimed". In the latter case it will also clear the
+    /// FQDN information.
+    ///
+    /// This method may throw exceptions if the operation on the lease database
+    /// fails for any reason.
+    ///
+    /// @param lease Pointer to the lease.
+    /// @param remove_lease Boolean flag indicating if the lease should be
+    /// removed from the database (if true).
+    /// @param lease_update_fun Pointer to the function in the @c LeaseMgr to
+    /// be used to update the lease if the @c remove_lease is set to false.
+    ///
+    /// @tparam LeasePtrType One of the @c Lease6Ptr or @c Lease4Ptr.
+    template<typename LeasePtrType>
+    void reclaimLeaseInDatabase(const LeasePtrType& lease,
+                                const bool remove_lease,
+                                const boost::function<void (const LeasePtrType&)>&
+                                lease_update_fun) const;
 
 public:
 
