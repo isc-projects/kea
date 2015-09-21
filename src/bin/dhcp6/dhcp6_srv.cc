@@ -2675,7 +2675,7 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
             continue;
         }
         Option6IAAddrPtr decline_addr = boost::dynamic_pointer_cast<Option6IAAddr>
-            (ia->getOption(D6O_IAADDR));
+            (opt->second);
         if (!decline_addr) {
             continue;
         }
@@ -2739,9 +2739,9 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
             LOG_INFO(lease6_logger, DHCP6_DECLINE_FAIL_IAID_MISMATCH)
                 .arg(decline->getLabel())
                 .arg(lease->addr_.toText())
-                .arg(lease->iaid_)
-                .arg(ia->getIAID());
-            ia_rsp->addOption(createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
+                .arg(ia->getIAID())
+                .arg(lease->iaid_);
+            setStatusCode(ia_rsp, createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
                               "This is your address, but you used wrong IAID"));
 
             continue;
@@ -2753,9 +2753,8 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
 
     if (total_addrs == 0) {
         setStatusCode(ia_rsp, createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
-                                               "No addresses sent in IA_NA."));
+                                               "No addresses sent in IA_NA"));
         general_status = STATUS_NoBinding;
-        return (ia_rsp);
     }
 
     return (ia_rsp);
@@ -2779,32 +2778,24 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     // the entries. This method does all necessary checks.
     createRemovalNameChangeRequest(decline, lease);
 
-    // Bump up the statistics.
-    std::stringstream name;
-    name << "subnet[" << lease->subnet_id_ << "].declined-addresses";
-    isc::stats::StatsMgr::instance().addValue(name.str(), static_cast<int64_t>(1));
+    // Bump up the subnet-specific statistic.
+    StatsMgr::instance().addValue(
+        StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
+        static_cast<int64_t>(1));
+
+    // Global declined addresses counter.
+    StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
 
     // @todo: Call hooks.
 
     // We need to disassociate the lease from the client. Once we move a lease
     // to declined state, it is no longer associated with the client in any
     // way.
-    vector<uint8_t> empty_duid(1,0);
-    lease->hwaddr_.reset(new HWAddr());
-    lease->duid_.reset(new DUID(empty_duid));
-    lease->t1_ = 0;
-    lease->t2_ = 0;
-    lease->valid_lft_ = CfgMgr::instance().getCurrentCfg()->getDeclinePeriod();
-    lease->cltt_ = time(NULL);
-    lease->hostname_ = string("");
-    lease->fqdn_fwd_ = false;
-    lease->fqdn_rev_ = false;
-
-    lease->state_ = Lease::STATE_DECLINED;
+    lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
     LeaseMgrFactory::instance().updateLease6(lease);
 
-    LOG_INFO(dhcp6_logger, DHCP6_DECLINE_LEASE).arg(lease->addr_.toText())
-        .arg(decline->getLabel()).arg(lease->valid_lft_);
+    LOG_INFO(dhcp6_logger, DHCP6_DECLINE_LEASE).arg(decline->getLabel())
+        .arg(lease->addr_.toText()).arg(lease->valid_lft_);
 
     ia_rsp->addOption(createStatusCode(*decline, *ia_rsp, STATUS_Success,
                       "Lease declined. Hopefully the next one will be better."));

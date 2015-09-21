@@ -263,7 +263,15 @@ protected:
     /// @return Reply message to be sent to the client.
     Pkt6Ptr processRelease(const Pkt6Ptr& release);
 
-    /// @brief Stub function that will handle incoming Decline.
+    /// @brief Process incoming Decline message.
+    ///
+    /// This method processes Decline message. It conducts standard sanity
+    /// checks, creates empty reply and copies the necessary options from
+    /// the client's message. Finally, it calls @ref declineLeases, where
+    /// the actual address processing takes place.
+    ///
+    /// @throw RFCViolation if Decline message is invalid (lacking mandatory
+    ///                     options)
     ///
     /// @param decline message received from client
     Pkt6Ptr processDecline(const Pkt6Ptr& decline);
@@ -705,10 +713,10 @@ protected:
     declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
                   AllocEngine::ClientContext6& ctx);
 
-    /// @brief Declines leases in a single IA_NA container
+    /// @brief Declines leases in a single IA_NA option
     ///
-    /// This method iterates over all addresses in this IA_NA, and verifies
-    /// whether it belongs to the client and calls @ref declineLease. If there's
+    /// This method iterates over all addresses in this IA_NA, verifies
+    /// whether they belong to the client and calls @ref declineLease. If there's
     /// an error, general_status (a status put in the top level scope), will be
     /// updated.
     ///
@@ -716,6 +724,7 @@ protected:
     /// @param duid client's duid (used to verify if the client owns the lease)
     /// @param general_status [out] status in top-level message (may be updated)
     /// @param ia specific IA_NA option to process.
+    /// @return IA_NA option with response (to be included in Reply message)
     OptionPtr
     declineIA(const Pkt6Ptr& decline, const DuidPtr& duid, int& general_status,
               boost::shared_ptr<Option6IA> ia);
@@ -724,7 +733,8 @@ protected:
     ///
     /// This method performs the actual decline and all necessary operations:
     /// - cleans up DNS, if necessary
-    /// - updates subnet[X].declined-addresses
+    /// - updates subnet[X].declined-addresses (per subnet stat)
+    /// - updates declined-addresses (global stat)
     /// - deassociates client information from the lease
     /// - moves the lease to DECLINED state
     /// - sets lease expiration time to decline-probation-period

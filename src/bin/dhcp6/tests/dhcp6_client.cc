@@ -96,7 +96,8 @@ Dhcp6Client::Dhcp6Client() :
     prefix_hint_(),
     fqdn_(),
     na_iaid_(1234),
-    pd_iaid_(5678) {
+    pd_iaid_(5678),
+    include_address_(true) {
 }
 
 Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
@@ -117,7 +118,8 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     prefix_hint_(),
     fqdn_(),
     na_iaid_(1234),
-    pd_iaid_(5678) {
+    pd_iaid_(5678),
+    include_address_(true) {
 }
 
 void
@@ -554,6 +556,11 @@ void
 Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query) {
     /// @todo: add support for IAPREFIX here.
 
+    if (!use_na_) {
+        // If we're told to not use IA_NA at all, there's nothing to be done here
+        return;
+    }
+
     for (std::vector<Lease6>::const_iterator lease = config_.leases_.begin();
          lease != config_.leases_.end(); ++lease) {
         if (lease->type_ != Lease::TYPE_NA) {
@@ -562,8 +569,10 @@ Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query) {
 
         Option6IAPtr ia(new Option6IA(D6O_IA_NA, lease->iaid_));
 
-        ia->addOption(Option6IAAddrPtr(new Option6IAAddr(D6O_IAADDR,
-                      lease->addr_, lease->preferred_lft_, lease->valid_lft_)));
+        if (include_address_) {
+            ia->addOption(OptionPtr(new Option6IAAddr(D6O_IAADDR,
+                  lease->addr_, lease->preferred_lft_, lease->valid_lft_)));
+        }
         query->addOption(ia);
     }
 }

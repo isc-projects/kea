@@ -222,21 +222,22 @@ received in Decline message. It's expected that the option will contain an
 address that is being declined. Specific information will be printed in a
 separate message.
 
-% DHCP6_DECLINE_FAIL_DUID_MISMATCH Client %1 tried to decline address %2, but it belongs to client with DUID %3
+% DHCP6_DECLINE_FAIL_DUID_MISMATCH Client %1 sent DECLINE for address %2, but it belongs to client with DUID %3
 This informational message is printed when a client attempts to decline
-a lease, but that lease belongs to a different client.
+a lease, but that lease belongs to a different client. The decline request
+will be rejected.
 
-% DHCP6_DECLINE_FAIL_IAID_MISMATCH Client %1 tried to decline address %2, but used a wrong IAID (%3), instead of expected %4
+% DHCP6_DECLINE_FAIL_IAID_MISMATCH Client %1 sent DECLINE for address %2, but used a wrong IAID (%3), instead of expected %4
 This informational message is printed when a client attempts to decline
 a lease. The server has a lease for this address, it belongs to this client,
 but the recorded IAID does not match what client has sent. This means
 the server will reject this Decline.
 
-% DHCP6_DECLINE_FAIL_LEASE_WITHOUT_DUID Client %1 attempted to decline address %2, but the associated lease has no DUID
+% DHCP6_DECLINE_FAIL_LEASE_WITHOUT_DUID Client %1 sent DECLINE for address %2, but the associated lease has no DUID
 This error condition likely indicates database corruption, as every IPv6
 lease is supposed to have a DUID, even if it is an empty one.
 
-% DHCP6_DECLINE_FAIL_NO_LEASE Client %1 attempted to decline address %2, but there's no lease for it
+% DHCP6_DECLINE_FAIL_NO_LEASE Client %1 sent DECLINE for address %2, but there's no lease for it
 This informational message is printed when a client tried to decline an address,
 but the server has no lease for said address. This means that the server's
 and client's perception of the leases are different. The likely causes
@@ -246,7 +247,7 @@ moved to a different location and didn't notice) or possibly an attack
 inform the client that his decline request was rejected and client should
 be able to recover from that.
 
-% DHCP6_DECLINE_LEASE Address %1 was declined by client %2. The lease will be recovered in %3 seconds.
+% DHCP6_DECLINE_LEASE Client %1 sent DECLINE for address %2 and the server marked it as declined. The lease will be recovered in %3 seconds.
 This informational message indicates that the client leased an address, but
 discovered that it is being used by some other devicea and reported this to the
 server by sending a Decline message. The server marked the lease as

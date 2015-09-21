@@ -495,6 +495,13 @@ struct Lease6 : public Lease {
     /// @return A reference to a vector holding a DUID.
     const std::vector<uint8_t>& getDuidVector() const;
 
+    /// @brief Sets IPv6 lease to declined state.
+    ///
+    /// See @ref Lease::decline for detailed description.
+    ///
+    /// @param probation_period valid lifetime will be set to this value
+    void decline(uint32_t probation_period);
+
     /// @brief Compare two leases for equality
     ///
     /// @param other lease6 object with which to compare
