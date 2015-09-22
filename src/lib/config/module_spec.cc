@@ -1,4 +1,4 @@
-// Copyright (C) 2010, 2011  Internet Systems Consortium.
+// Copyright (C) 2010, 2011, 2015  Internet Systems Consortium.
 //
 // Permission to use, copy, modify, and distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -310,6 +310,9 @@ moduleSpecFromFile(const std::string& file_name, const bool check)
                    throw(JSONError, ModuleSpecError)
 {
     std::ifstream file;
+
+    // zero out the errno to be safe
+    errno = 0;
 
     file.open(file_name.c_str());
     if (!file) {

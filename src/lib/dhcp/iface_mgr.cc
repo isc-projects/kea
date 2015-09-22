@@ -810,6 +810,10 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
         // @todo: We don't specify interface in any way here. 255.255.255.255
         // We can very easily end up with a socket working on a different
         // interface.
+
+        // zero out the errno to be safe
+        errno = 0;
+
         sock.open(asio::ip::udp::v4(), err_code);
         if (err_code) {
             const char* errstr = strerror(errno);
@@ -927,6 +931,9 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     select_timeout.tv_sec = timeout_sec;
     select_timeout.tv_usec = timeout_usec;
 
+    // zero out the errno to be safe
+    errno = 0;
+
     int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
 
     if (result == 0) {
@@ -1033,6 +1040,9 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     struct timeval select_timeout;
     select_timeout.tv_sec = timeout_sec;
     select_timeout.tv_usec = timeout_usec;
+
+    // zero out the errno to be safe
+    errno = 0;
 
     int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
 
