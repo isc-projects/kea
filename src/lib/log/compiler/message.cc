@@ -276,6 +276,9 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
     // Text to use as the sentinels.
     string sentinel_text = sentinel(header_file);
 
+    // zero out the errno to be safe
+    errno = 0;
+
     // Open the output file for writing
     ofstream hfile(header_file.fullName().c_str());
 
@@ -377,6 +380,9 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
     if (output_directory) {
         program_file.setDirectory(output_directory);
     }
+
+    // zero out the errno to be safe
+    errno = 0;
 
     // Open the output file for writing
     ofstream ccfile(program_file.fullName().c_str());
