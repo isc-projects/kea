@@ -91,6 +91,7 @@ dhcp6_unittests_SOURCES += sarr_unittest.cc
 dhcp6_unittests_SOURCES += config_parser_unittest.cc
 dhcp6_unittests_SOURCES += confirm_unittest.cc
 dhcp6_unittests_SOURCES += infrequest_unittest.cc
+dhcp6_unittests_SOURCES += decline_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
 
 dhcp6_unittests_SOURCES += kea_controller_unittest.cc

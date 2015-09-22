@@ -269,6 +269,11 @@ public:
     /// receiving server's response (if any).
     void doConfirm();
 
+    /// @brief Sends Decline to the server and receives Reply.
+    ///
+    /// This function simulates sending the Decline message to the server and
+    /// receiving the server's response.
+    void doDecline();
 
     /// @brief Performs stateless (inf-request / reply) exchange.
     ///
@@ -495,6 +500,14 @@ public:
         use_client_id_ = send;
     }
 
+    /// @brief Controls whether the client should send an addres in IA_NA
+    ///
+    /// @todo: For now, this flag is only used in Decline
+    /// @param send should the address be included?
+    void includeAddress(const bool send) {
+        include_address_ = send;
+    }
+
     /// @brief Specifies if the Rapid Commit option should be included in
     /// the Solicit message.
     ///
@@ -560,6 +573,12 @@ public:
         return (duid_);
     }
 
+    /// @brief Generates IA_NA based on lease information
+    ///
+    /// @param query generated IA_NA options will be added here
+    void
+    generateIAFromLeases(const Pkt6Ptr& query);
+
 private:
 
     /// @brief Applies the new leases for the client.
@@ -571,11 +590,16 @@ private:
     /// or Rebind.
     ///
     /// @param reply Server response.
+    /// @param state specifies lease state (see Lease::STATE_* for details).
+    ///
+    /// The default for state is 0. We could have included dhcpsrv/lease.h
+    /// and used Lease::STATE_DEFAULT, but that would complicate the header
+    /// inclusion dependencies. It's easier to simply use 0 as the default.
     ///
     /// @todo Currently this function supports one IAAddr or IAPrefix option
     /// within IA. We will need to extend it to support multiple options
     /// within a single IA once server supports that.
-    void applyRcvdConfiguration(const Pkt6Ptr& reply);
+    void applyRcvdConfiguration(const Pkt6Ptr& reply, uint32_t state = 0);
 
     /// @brief Applies configuration for the single lease.
     ///
@@ -735,6 +759,12 @@ private:
     uint32_t na_iaid_;
     /// @brief IAID used by the client when requesting prefix delegation.
     uint32_t pd_iaid_;
+
+    /// @brief Determines if the client will include address in the messages
+    ///        it sends.
+    ///
+    /// @todo this flag is currently supported in Decline only.
+    bool include_address_;
 };
 
 } // end of namespace isc::dhcp::test

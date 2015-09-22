@@ -96,7 +96,8 @@ Dhcp6Client::Dhcp6Client() :
     prefix_hint_(),
     fqdn_(),
     na_iaid_(1234),
-    pd_iaid_(5678) {
+    pd_iaid_(5678),
+    include_address_(true) {
 }
 
 Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
@@ -117,11 +118,12 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     prefix_hint_(),
     fqdn_(),
     na_iaid_(1234),
-    pd_iaid_(5678) {
+    pd_iaid_(5678),
+    include_address_(true) {
 }
 
 void
-Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
+Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply, uint32_t state) {
     typedef OptionCollection Opts;
     // Get all options in the reply message and pick IA_NA, IA_PD and
     // Status code.
@@ -161,6 +163,7 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
                                        ia->getT1(), ia->getT2(), 0,
                                        hwaddr);
                         lease.cltt_ = time(NULL);
+                        lease.state_ = state;
                         applyLease(lease);
                     }
                 }
@@ -524,6 +527,53 @@ Dhcp6Client::doConfirm() {
     if (context_.response_) {
         config_.resetGlobalStatusCode();
         applyRcvdConfiguration(context_.response_);
+    }
+}
+
+void
+Dhcp6Client::doDecline() {
+    Pkt6Ptr query = createMsg(DHCPV6_DECLINE);
+    if (!forced_server_id_) {
+        query->addOption(context_.response_->getOption(D6O_SERVERID));
+    } else {
+        query->addOption(forced_server_id_);
+    }
+
+    generateIAFromLeases(query);
+
+    context_.query_ = query;
+    sendMsg(context_.query_);
+    context_.response_ = receiveOneMsg();
+
+    // Apply new configuration only if the server has responded.
+    if (context_.response_) {
+        config_.clear();
+        applyRcvdConfiguration(context_.response_);
+    }
+}
+
+void
+Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query) {
+    /// @todo: add support for IAPREFIX here.
+
+    if (!use_na_) {
+        // If we're told to not use IA_NA at all, there's nothing to be done here
+        return;
+    }
+
+    for (std::vector<Lease6>::const_iterator lease = config_.leases_.begin();
+         lease != config_.leases_.end(); ++lease) {
+        if (lease->type_ != Lease::TYPE_NA) {
+            continue;
+        }
+
+        Option6IAPtr ia(new Option6IA(D6O_IA_NA, lease->iaid_));
+
+        if (include_address_) {
+            ia->addOption(OptionPtr(new Option6IAAddr(D6O_IAADDR,
+                  lease->addr_, lease->preferred_lft_, lease->valid_lft_)));
+        }
+        query->addOption(ia);
     }
 }
 

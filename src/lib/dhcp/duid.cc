@@ -123,6 +123,18 @@ DUID::fromText(const std::string& text) {
     return DUID(binary);
 }
 
+DuidPtr
+DUID::generateEmpty() {
+
+    // Technically this is a one byte DUID with value of 0. However, we do have
+    // a number of safety checks against invalid duids (too long or empty) and
+    // we should keep them. Therefore "empty" means a single byte with value of 0.
+    std::vector<uint8_t> empty_duid(1,0);
+
+    DuidPtr duid(new DUID(empty_duid));
+    return (duid);
+}
+
 std::string DUID::toText() const {
     std::stringstream tmp;
     tmp << std::hex;
