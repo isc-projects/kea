@@ -177,6 +177,11 @@ struct Lease {
     /// otherwise.
     bool stateExpiredReclaimed() const;
 
+    /// @brief Indicates if the lease is in the "declined" state.
+    ///
+    /// @return true if the lease is in the "declined" state, false otherwise.
+    bool stateDeclined() const;
+
     /// @brief Returns true if the other lease has equal FQDN data.
     ///
     /// @param other Lease which FQDN data is to be compared with our lease.
