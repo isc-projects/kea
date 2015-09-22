@@ -74,6 +74,10 @@ extern "C" {
 int load(LibraryHandle&) {
     // non-zero indicates an error.
     int ret_val = 0;
+
+    // zero out the errno to be safe
+    errno = 0;
+
     try {
         // Instantiate the registry.
         user_registry.reset(new UserRegistry());
