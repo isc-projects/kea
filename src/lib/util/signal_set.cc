@@ -178,9 +178,10 @@ SignalSet::add(const int sig) {
     sa.sa_handler = internalHandler;
     sigfillset(&sa.sa_mask);
     if (sigaction(sig, &sa, 0) < 0) {
+        const char* errmsg = strerror(errno);
         erase(sig);
         isc_throw(SignalSetError, "failed to register a signal handler for"
-                  " signal " << sig << ": " << strerror(errno));
+                  " signal " << sig << ": " << errmsg);
     }
 }
 
