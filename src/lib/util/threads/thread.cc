@@ -42,14 +42,14 @@ class Blocker : boost::noncopyable {
 public:
     // Constructor blocks all signals
     Blocker() {
-	sigset_t new_mask;
-	sigfillset(&new_mask);
-	pthread_sigmask(SIG_BLOCK, &new_mask, &old_mask_);
+        sigset_t new_mask;
+        sigfillset(&new_mask);
+        pthread_sigmask(SIG_BLOCK, &new_mask, &old_mask_);
     }
 
     // Destructor restores the previous signal mask
     ~Blocker() {
-	pthread_sigmask(SIG_SETMASK, &old_mask_, 0);
+        pthread_sigmask(SIG_SETMASK, &old_mask_, 0);
     }
 
 private:
