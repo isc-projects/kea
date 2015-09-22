@@ -884,7 +884,7 @@ TEST_F(ParseConfigTest, oneHooksLibrary) {
     bool changed;
     hooks_libraries_parser_->getLibraries(libraries, changed);
     EXPECT_TRUE(changed);
-    EXPECT_EQ(1, libraries.size());
+    ASSERT_EQ(1, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0]);
 }
 
@@ -904,7 +904,7 @@ TEST_F(ParseConfigTest, twoHooksLibraries) {
     bool changed;
     hooks_libraries_parser_->getLibraries(libraries, changed);
     EXPECT_TRUE(changed);
-    EXPECT_EQ(2, libraries.size());
+    ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0]);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1]);
 }
@@ -931,7 +931,7 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
     bool changed;
     hooks_libraries_parser_->getLibraries(libraries, changed);
     EXPECT_FALSE(changed);
-    EXPECT_EQ(2, libraries.size());
+    ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0]);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1]);
 }
@@ -959,7 +959,7 @@ TEST_F(ParseConfigTest, reconfigureReverseHooksLibraries) {
     bool changed;
     hooks_libraries_parser_->getLibraries(libraries, changed);
     EXPECT_TRUE(changed);
-    EXPECT_EQ(2, libraries.size());
+    ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[0]);
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[1]);
 }
