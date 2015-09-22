@@ -1024,6 +1024,13 @@ TEST_F(MemfileLeaseMgrTest, versionCheck) {
     LeaseMgrFactory::destroy();
 }
 
+// Checks that declined leases can be returned correctly.
+TEST_F(MemfileLeaseMgrTest, getDeclined4) {
+
+    startBackend(V4);
+    testGetDeclinedLeases4();
+}
+
 // This test checks that the backend reads DHCPv4 lease data from multiple
 // files.
 TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {

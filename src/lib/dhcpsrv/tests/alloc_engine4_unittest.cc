@@ -553,6 +553,175 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     EXPECT_TRUE(*ctx.old_lease_ == original_lease);
 }
 
+// This test checks if an expired declined lease can be reused when responding
+// to DHCPDISCOVER (fake allocation)
+TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4) {
+
+    AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                          100, false));
+    ASSERT_TRUE(engine);
+
+    // Now prepare a configuration with single address pool.
+    IOAddress addr("192.0.2.15");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+    subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Now create a declined lease, decline it and rewind its cltt, so it
+    // is expired.
+    Lease4Ptr declined = generateDeclinedLease("192.0.2.15", 100, -10);
+
+    // CASE 1: Ask for any address
+    Lease4Ptr assigned;
+    testReuseLease4(engine, declined, "0.0.0.0", true, SHOULD_PASS, assigned);
+
+    // Check that we got that single lease
+    ASSERT_TRUE(assigned);
+    EXPECT_EQ(addr, assigned->addr_);
+
+    // CASE 2: Asking specifically for this address
+    testReuseLease4(engine, declined, "192.0.2.15", true, SHOULD_PASS, assigned);
+
+    // Check that we get it again
+    ASSERT_TRUE(assigned);
+    EXPECT_EQ(addr, assigned->addr_);
+}
+
+// This test checks if statistics are not updated when expired declined lease
+// is resued when responding to DHCPDISCOVER (fake allocation)
+TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
+
+    // Now prepare for DISCOVER processing
+    AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                          100, false));
+    ASSERT_TRUE(engine);
+
+    // Now prepare a configuration with single address pool.
+    IOAddress addr("192.0.2.15");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+    subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Now create a declined lease, decline it and rewind its cltt, so it
+    // is expired.
+    Lease4Ptr declined = generateDeclinedLease("192.0.2.15", 100, -10);
+
+    // Let's fix some global stats...
+    StatsMgr& stats_mgr = StatsMgr::instance();
+    stats_mgr.setValue("declined-addresses", static_cast<int64_t>(1000));
+    stats_mgr.setValue("reclaimed-declined-addresses", static_cast<int64_t>(1000));
+
+    // ...and subnet specific stats as well.
+    string stat1 = StatsMgr::generateName("subnet", subnet_->getID(),
+                                          "declined-addresses");
+    string stat2 = StatsMgr::generateName("subnet", subnet_->getID(),
+                                          "reclaimed-declined-addresses");
+    stats_mgr.setValue(stat1, static_cast<int64_t>(1000));
+    stats_mgr.setValue(stat2, static_cast<int64_t>(1000));
+
+    // Ask for any address. There's only one address in the pool, so it doesn't
+    // matter much.
+    Lease4Ptr assigned;
+    testReuseLease4(engine, declined, "0.0.0.0", true, SHOULD_PASS, assigned);
+
+    // Check that the stats were not modified
+    testStatistics("declined-addresses", 1000);
+    testStatistics("reclaimed-declined-addresses", 1000);
+
+    testStatistics(stat1, 1000);
+    testStatistics(stat2, 1000);
+}
+
+// This test checks if an expired declined lease can be reused when responding
+// to REQUEST (actual allocation)
+TEST_F(AllocEngine4Test, requestReuseDeclinedLease4) {
+
+    AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                          100, false));
+    ASSERT_TRUE(engine);
+
+    // Now prepare a configuration with single address pool.
+    IOAddress addr("192.0.2.15");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+    subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Now create a declined lease, decline it and rewind its cltt, so it
+    // is expired.
+    Lease4Ptr declined = generateDeclinedLease("192.0.2.15", 100, -10);
+
+    // Asking specifically for this address
+    Lease4Ptr assigned;
+    testReuseLease4(engine, declined, "192.0.2.15", false, SHOULD_PASS, assigned);
+    // Check that we got it.
+    ASSERT_TRUE(assigned);
+    EXPECT_EQ(addr, assigned->addr_);
+
+    // Check that the lease is indeed updated in LeaseMgr
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(assigned, from_mgr);
+}
+
+// This test checks if statistics are not updated when expired declined lease
+// is resued when responding to DHCPREQUEST (actual allocation)
+TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
+
+    AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                          100, false));
+    ASSERT_TRUE(engine);
+
+    // Now prepare a configuration with single address pool.
+    IOAddress addr("192.0.2.15");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+    subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Now create a declined lease, decline it and rewind its cltt, so it
+    // is expired.
+    Lease4Ptr declined = generateDeclinedLease("192.0.2.15", 100, -10);
+
+    // Let's fix some global stats...
+    StatsMgr& stats_mgr = StatsMgr::instance();
+    stats_mgr.setValue("declined-addresses", static_cast<int64_t>(1000));
+    stats_mgr.setValue("reclaimed-declined-addresses", static_cast<int64_t>(1000));
+
+    // ...and subnet specific stats as well.
+    string stat1 = StatsMgr::generateName("subnet", subnet_->getID(),
+                                          "declined-addresses");
+    string stat2 = StatsMgr::generateName("subnet", subnet_->getID(),
+                                          "reclaimed-declined-addresses");
+    stats_mgr.setValue(stat1, static_cast<int64_t>(1000));
+    stats_mgr.setValue(stat2, static_cast<int64_t>(1000));
+
+    // Asking specifically for this address
+    Lease4Ptr assigned;
+    testReuseLease4(engine, declined, "192.0.2.15", false, SHOULD_PASS, assigned);
+    // Check that we got it.
+    ASSERT_TRUE(assigned);
+
+    // Check that the stats were modified
+    testStatistics("declined-addresses", 999);
+    testStatistics("reclaimed-declined-addresses", 1001);
+
+    testStatistics(stat1, 999);
+    testStatistics(stat2, 1001);
+}
+
 // This test checks that the Allocation Engine correcly identifies the
 // existing client's lease in the lease database, using the client
 // identifier and HW address.
