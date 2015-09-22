@@ -763,6 +763,8 @@ TEST(Lease6Test, decline) {
     // Move the lease to declined state and set probation-period to 123 seconds
     lease.decline(123);
 
+    ASSERT_TRUE(lease.duid_);
+    ASSERT_EQ("00", lease.duid_->toText());
     ASSERT_FALSE(lease.hwaddr_);
     EXPECT_EQ(0, lease.t1_);
     EXPECT_EQ(0, lease.t2_);
