@@ -1,3 +1,10 @@
+1007.	[func]		tomek
+	DECLINE message in DHCPv6 is now supported. The server is able
+	to receive it, check its correctness and move the lease to
+	DECLINED state. Currently there is no way to recover the lease
+	before 'decline-probation-period' time.
+	(Trac #3982, git 11e2c4366d8624601172c01e95cff6a8b95833b3)
+
 1006.	[bug]		marcin
 	Fixed issues with threads concurrency in the TimerMgr.
 	(Trac #4047, git 48297af6e0443808a482536b61436a42bc6a5b38)
