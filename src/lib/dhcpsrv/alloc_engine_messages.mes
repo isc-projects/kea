@@ -48,6 +48,12 @@ consider reducing the lease lifetime.  In this way, addresses allocated
 to clients that are no longer active on the network will become available
 sooner.
 
+% ALLOC_ENGINE_V4_DECLINED_RECOVERED Address %1 was recovered after %2 seconds of probation-period
+This informational message indicates that the specified address was reported
+as duplicate (client sent DECLINE) and the server marked this address as
+unvailable for a period of time. This time now has elapsed and the address
+is now returned to available pool. This step concludes decline recovery process.
+
 % ALLOC_ENGINE_V4_DISCOVER_ADDRESS_CONFLICT %1: conflicting reservation for address %2 with existing lease %3
 This warning message is issued when the DHCP server finds that the
 address reserved for the client can't be offered because this address

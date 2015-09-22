@@ -285,6 +285,16 @@ public:
     /// - reclaimed leases are not returned.
     void testGetExpiredLeases6();
 
+    /// @brief Checks that declined DHCPv4 leases that have expired can be retrieved.
+    ///
+    /// This test checks that the following:
+    /// - all expired and not reclaimed leases are returned, regardless if
+    ///   they're normal or declined
+    /// - the order in which they're updated in LeaseMgr doesn't matter
+    /// - leases are returned in the order from most expired to the least
+    ///   expired
+    void testGetDeclinedLeases4();
+
     /// @brief Checks that selected expired-reclaimed DHCPv6 leases
     /// are removed.
     ///
