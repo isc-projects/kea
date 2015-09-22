@@ -508,6 +508,12 @@ private:
 
 typedef boost::shared_ptr<Iface> IfacePtr;
 
+/// @brief Forward declaration to the @c IfaceMgr.
+class IfaceMgr;
+
+/// @brief Type definition for the pointer to the @c IfaceMgr.
+typedef boost::shared_ptr<IfaceMgr> IfaceMgrPtr;
+
 /// @brief This type describes the callback function invoked when error occurs
 /// in the IfaceMgr.
 ///
@@ -560,9 +566,26 @@ public:
     /// @return the only existing instance of interface manager
     static IfaceMgr& instance();
 
+    /// @brief Returns pointer to the sole instance of the interface manager.
+    ///
+    /// This method returns the pointer to the instance of the interface manager
+    /// which can be held in singleton objects that depend on it. This will
+    /// eliminate issues with the static deinitialization fiasco between this
+    /// object and dependent singleton objects.
+    ///
+    /// The @c IfaceMgr::instance method should be considered deprecated.
+    ///
+    /// @return Shared pointer to the @c IfaceMgr instance.
+    static const IfaceMgrPtr& instancePtr();
+
+    /// @brief Destructor.
+    ///
+    /// Closes open sockets.
+    virtual ~IfaceMgr();
+
     /// @brief Sets or clears the test mode for @c IfaceMgr.
     ///
-    /// Various unit test may set this flag to true, to indicate that the 
+    /// Various unit test may set this flag to true, to indicate that the
     /// @c IfaceMgr is in the test mode. There are places in the code that
     /// modify the behavior depending if the @c IfaceMgr is in the test
     /// mode or not.
@@ -1073,8 +1096,6 @@ protected:
     /// Protected constructor. This is a singleton class. We don't want
     /// anyone to create instances of IfaceMgr. Use instance() method instead.
     IfaceMgr();
-
-    virtual ~IfaceMgr();
 
     /// @brief Opens IPv4 socket.
     ///
