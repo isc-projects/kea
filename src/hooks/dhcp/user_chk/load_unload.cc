@@ -75,9 +75,6 @@ int load(LibraryHandle&) {
     // non-zero indicates an error.
     int ret_val = 0;
 
-    // zero out the errno to be safe
-    errno = 0;
-
     try {
         // Instantiate the registry.
         user_registry.reset(new UserRegistry());
@@ -90,6 +87,9 @@ int load(LibraryHandle&) {
 
         // Do an initial load of the registry.
         user_registry->refresh();
+
+        // zero out the errno to be safe
+        errno = 0;
 
         // Open up the output file for user_chk results.
         user_chk_output.open(user_chk_output_fname,
