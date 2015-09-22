@@ -2584,11 +2584,213 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
 Pkt6Ptr
 Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
 
+    // Do sanity check.
     sanityCheck(decline, MANDATORY, MANDATORY);
 
-    /// @todo: Implement this
+    // Create an empty Reply message.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, decline->getTransid()));
+
+    // Let's create a simplified client context here.
+    AllocEngine::ClientContext6 ctx = createContext(decline);
+
+    // Copy client options (client-id, also relay information if present)
+    copyClientOptions(decline, reply);
+
+    // Include server-id
+    appendDefaultOptions(decline, reply);
+
+    declineLeases(decline, reply, ctx);
+
     return (reply);
+}
+
+void
+Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
+                         AllocEngine::ClientContext6& ctx) {
+
+    // We need to decline addresses for all IA_NA options in the client's
+    // RELEASE message.
+
+    // Let's set the status to be success by default. We can override it with
+    // error status if needed. The important thing to understand here is that
+    // the global status code may be set to success only if all IA options were
+    // handled properly. Therefore the declineIA  options
+    // may turn the status code to some error, but can't turn it back to success.
+    int general_status = STATUS_Success;
+
+    for (OptionCollection::iterator opt = decline->options_.begin();
+         opt != decline->options_.end(); ++opt) {
+        switch (opt->second->getType()) {
+        case D6O_IA_NA: {
+            OptionPtr answer_opt = declineIA(decline, ctx.duid_, general_status,
+                                   boost::dynamic_pointer_cast<Option6IA>(opt->second));
+            if (answer_opt) {
+                reply->addOption(answer_opt);
+            }
+            break;
+        }
+        default:
+            // We don't care for the remaining options
+            ;
+        }
+    }
+}
+
+OptionPtr
+Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
+                     int& general_status, boost::shared_ptr<Option6IA> ia) {
+
+    LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_DECLINE_PROCESS_IA)
+        .arg(decline->getLabel())
+        .arg(ia->getIAID());
+
+    // Decline can be done in one of two ways:
+    // Approach 1: extract address from client's IA_NA and see if it belongs
+    // to this particular client.
+    // Approach 2: find a subnet for this client, get a lease for
+    // this subnet/duid/iaid and check if its content matches to what the
+    // client is asking us to decline.
+    //
+    // This method implements approach 1.
+
+    // That's our response
+    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
+
+    const OptionCollection& opts = ia->getOptions();
+    int total_addrs = 0; // Let's count the total number of addresses.
+    for (OptionCollection::const_iterator opt = opts.begin(); opt != opts.end();
+         ++opt) {
+
+        // Let's ignore nested options other than IAADDR (there shouldn't be anything
+        // else in IA_NA in Decline message, but let's be on the safe side).
+        if (opt->second->getType() != D6O_IAADDR) {
+            continue;
+        }
+        Option6IAAddrPtr decline_addr = boost::dynamic_pointer_cast<Option6IAAddr>
+            (opt->second);
+        if (!decline_addr) {
+            continue;
+        }
+
+        total_addrs++;
+
+        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                                decline_addr->getAddress());
+
+        if (!lease) {
+            // Client trying to decline a lease that we don't know about.
+            LOG_INFO(lease6_logger, DHCP6_DECLINE_FAIL_NO_LEASE)
+                .arg(decline->getLabel()).arg(decline_addr->getAddress().toText());
+
+            // RFC3315, section 18.2.7: "For each IA in the Decline message for
+            // which the server has no binding information, the server adds an
+            // IA option using the IAID from the Release message and includes
+            // a Status Code option with the value NoBinding in the IA option.
+            setStatusCode(ia_rsp, createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
+                                  "Server does not know about such an address."));
+
+            // RFC3315, section 18.2.7:  The server ignores addresses not
+            // assigned to the IA (though it may choose to log an error if it
+            // finds such an address).
+            continue; // There may be other addresses.
+        }
+
+        if (!lease->duid_) {
+            // Something is gravely wrong here. We do have a lease, but it does not
+            // have mandatory DUID information attached. Someone was messing with our
+            // database.
+
+            LOG_ERROR(lease6_logger, DHCP6_DECLINE_FAIL_LEASE_WITHOUT_DUID)
+                .arg(decline->getLabel())
+                .arg(decline_addr->getAddress().toText());
+
+            ia_rsp->addOption(createStatusCode(*decline, *ia_rsp, STATUS_UnspecFail,
+                    "Database consistency check failed when attempting Decline."));
+
+            continue;
+        }
+
+        // Ok, there's a sane lease with an address. Let's check if DUID matches first.
+        if (*duid != *(lease->duid_)) {
+
+            // Sorry, it's not your address. You can't release it.
+            LOG_INFO(lease6_logger, DHCP6_DECLINE_FAIL_DUID_MISMATCH)
+                .arg(decline->getLabel())
+                .arg(decline_addr->getAddress().toText())
+                .arg(lease->duid_->toText());
+
+            ia_rsp->addOption(createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
+                     "This address does not belong to you, you can't decline it"));
+
+            continue;
+        }
+
+        // Let's check if IAID matches.
+        if (ia->getIAID() != lease->iaid_) {
+            // This address belongs to this client, but to a different IA
+            LOG_INFO(lease6_logger, DHCP6_DECLINE_FAIL_IAID_MISMATCH)
+                .arg(decline->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(ia->getIAID())
+                .arg(lease->iaid_);
+            setStatusCode(ia_rsp, createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
+                              "This is your address, but you used wrong IAID"));
+
+            continue;
+        }
+
+        // Ok, all is good. Decline this lease.
+        declineLease(decline, lease, ia_rsp);
+    }
+
+    if (total_addrs == 0) {
+        setStatusCode(ia_rsp, createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
+                                               "No addresses sent in IA_NA"));
+        general_status = STATUS_NoBinding;
+    }
+
+    return (ia_rsp);
+}
+
+void
+Dhcpv6Srv::setStatusCode(boost::shared_ptr<isc::dhcp::Option6IA>& container,
+                         const OptionPtr& status) {
+    // Let's delete any old status code we may have.
+    container->delOption(D6O_STATUS_CODE);
+
+    container->addOption(status);
+}
+
+void
+Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
+                        boost::shared_ptr<Option6IA> ia_rsp) {
+
+    // Check if a lease has flags indicating that the FQDN update has
+    // been performed. If so, create NameChangeRequest which removes
+    // the entries. This method does all necessary checks.
+    createRemovalNameChangeRequest(decline, lease);
+
+    // Bump up the subnet-specific statistic.
+    StatsMgr::instance().addValue(
+        StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
+        static_cast<int64_t>(1));
+
+    // Global declined addresses counter.
+    StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
+
+    // @todo: Call hooks.
+
+    // We need to disassociate the lease from the client. Once we move a lease
+    // to declined state, it is no longer associated with the client in any
+    // way.
+    lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
+    LeaseMgrFactory::instance().updateLease6(lease);
+
+    LOG_INFO(dhcp6_logger, DHCP6_DECLINE_LEASE).arg(decline->getLabel())
+        .arg(lease->addr_.toText()).arg(lease->valid_lft_);
+
+    ia_rsp->addOption(createStatusCode(*decline, *ia_rsp, STATUS_Success,
+                      "Lease declined. Hopefully the next one will be better."));
 }
 
 Pkt6Ptr
