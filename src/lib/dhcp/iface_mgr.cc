@@ -50,7 +50,12 @@ namespace dhcp {
 
 IfaceMgr&
 IfaceMgr::instance() {
-    static IfaceMgr iface_mgr;
+    return (*instancePtr());
+}
+
+const IfaceMgrPtr&
+IfaceMgr::instancePtr() {
+    static IfaceMgrPtr iface_mgr(new IfaceMgr());
     return (iface_mgr);
 }
 
