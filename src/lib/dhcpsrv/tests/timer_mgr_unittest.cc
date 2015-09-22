@@ -17,6 +17,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
+#include <util/stopwatch.h>
 #include <boost/bind.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
@@ -36,13 +37,6 @@ private:
 
     /// @brief Cleans up after the test.
     virtual void TearDown();
-
-    /// @brief IO service used by the test fixture class.
-    IOService io_service_;
-
-    /// @brief Boolean flag which indicates that the timeout
-    /// for the @c doWait function has been reached.
-    bool timeout_;
 
 public:
 
@@ -75,11 +69,20 @@ public:
     /// be increased.
     void timerCallback(const std::string& timer_name);
 
+    /// @brief Callback which generates exception.
+    ///
+    /// This callback is used to test that the @c TimerMgr can handle
+    /// the case when the callback generates exceptions.
+    void timerCallbackWithException();
+
     /// @brief Create a generic callback function for the timer.
     ///
     /// This is just a wrapped to make it a bit more convenient
     /// in the test.
     boost::function<void ()> makeCallback(const std::string& timer_name);
+
+    /// @brief Create a callback which generates exception.
+    boost::function<void ()> makeCallbackWithException();
 
     /// @brief Callback for timeout.
     ///
@@ -97,34 +100,34 @@ public:
     /// of calls to the timer handlers.
     CallsCount calls_count_;
 
+    /// @brief Instance of @c TimerMgr used by the tests.
+    TimerMgrPtr timer_mgr_;
 };
 
 void
 TimerMgrTest::SetUp() {
+    timer_mgr_ = TimerMgr::instance();
     calls_count_.clear();
-    timeout_ = false;
     // Make sure there are no dangling threads.
-    TimerMgr::instance().stopThread();
+    timer_mgr_->stopThread();
 }
 
 void
 TimerMgrTest::TearDown() {
     // Make sure there are no dangling threads.
-    TimerMgr::instance().stopThread();
+    timer_mgr_->stopThread();
     // Remove all timers.
-    TimerMgr::instance().unregisterTimers();
+    timer_mgr_->unregisterTimers();
 }
 
 void
 TimerMgrTest::registerTimer(const std::string& timer_name, const long timer_interval,
                             const IntervalTimer::Mode& timer_mode) {
-    TimerMgr& timer_mgr = TimerMgr::instance();
-
     // Register the timer with the generic callback that counts the
     // number of callback invocations.
     ASSERT_NO_THROW(
-        timer_mgr.registerTimer(timer_name, makeCallback(timer_name), timer_interval,
-                                timer_mode)
+        timer_mgr_->registerTimer(timer_name, makeCallback(timer_name), timer_interval,
+                                 timer_mode)
     );
 
     calls_count_[timer_name] = 0;
@@ -133,23 +136,13 @@ TimerMgrTest::registerTimer(const std::string& timer_name, const long timer_inte
 
 void
 TimerMgrTest::doWait(const long timeout, const bool call_receive) {
-    IntervalTimer timeout_timer(io_service_);
-    timeout_timer.setup(boost::bind(&TimerMgrTest::timeoutCallback, this), timeout,
-                        IntervalTimer::ONE_SHOT);
-
-    // The timeout flag will be set by the timeoutCallback if the test
-    // lasts for too long. In this case we will return from here.
-    while (!timeout_) {
+    util::Stopwatch stopwatch;
+    while (stopwatch.getTotalMilliseconds() < timeout) {
         if (call_receive) {
             // Block for one 1 millisecond.
-            IfaceMgr::instance().receive6(0, 1000);
+            IfaceMgr::instancePtr()->receive6(0, 1000);
         }
-        // Run ready handlers from the local IO service to execute
-        // the timeout callback if necessary.
-        io_service_.get_io_service().poll_one();
     }
-
-    timeout_ = false;
 }
 
 void
@@ -159,7 +152,12 @@ TimerMgrTest::timerCallback(const std::string& timer_name) {
 
     // The timer installed is the ONE_SHOT timer, so we have
     // to reschedule the timer.
-    TimerMgr::instance().setup(timer_name);
+    timer_mgr_->setup(timer_name);
+}
+
+void
+TimerMgrTest::timerCallbackWithException() {
+    isc_throw(Exception, "timerCallbackWithException");
 }
 
 boost::function<void ()>
@@ -167,66 +165,57 @@ TimerMgrTest::makeCallback(const std::string& timer_name) {
     return (boost::bind(&TimerMgrTest::timerCallback, this, timer_name));
 }
 
-
-void
-TimerMgrTest::timeoutCallback() {
-    // Timeout occurred. Stop and reset IO service and mark
-    // the timeout flag.
-    io_service_.stop();
-    io_service_.get_io_service().reset();
-    timeout_ = true;
+boost::function<void ()>
+TimerMgrTest::makeCallbackWithException() {
+    return (boost::bind(&TimerMgrTest::timerCallbackWithException, this));
 }
 
 // This test checks that certain errors are returned when invalid
 // parameters are specified when registering a timer, or when
 // the registration can't be made.
 TEST_F(TimerMgrTest, registerTimer) {
-    TimerMgr& timer_mgr = TimerMgr::instance();
-
     // Empty timer name is not allowed.
-    ASSERT_THROW(timer_mgr.registerTimer("", makeCallback("timer1"), 1,
-                                         IntervalTimer::ONE_SHOT),
+    ASSERT_THROW(timer_mgr_->registerTimer("", makeCallback("timer1"), 1,
+                                           IntervalTimer::ONE_SHOT),
                  BadValue);
 
     // Add a timer with a correct name.
-    ASSERT_NO_THROW(timer_mgr.registerTimer("timer2", makeCallback("timer2"), 1,
-                                         IntervalTimer::ONE_SHOT));
+    ASSERT_NO_THROW(timer_mgr_->registerTimer("timer2", makeCallback("timer2"), 1,
+                                              IntervalTimer::ONE_SHOT));
     // Adding the timer with the same name as the existing timer is not
     // allowed.
-    ASSERT_THROW(timer_mgr.registerTimer("timer2", makeCallback("timer2"), 1,
-                                         IntervalTimer::ONE_SHOT),
+    ASSERT_THROW(timer_mgr_->registerTimer("timer2", makeCallback("timer2"), 1,
+                                           IntervalTimer::ONE_SHOT),
                  BadValue);
 
     // Start worker thread.
-    ASSERT_NO_THROW(timer_mgr.startThread());
+    ASSERT_NO_THROW(timer_mgr_->startThread());
 
     // Can't register the timer when the thread is running.
-    ASSERT_THROW(timer_mgr.registerTimer("timer1", makeCallback("timer1"), 1,
-                                         IntervalTimer::ONE_SHOT),
+    ASSERT_THROW(timer_mgr_->registerTimer("timer1", makeCallback("timer1"), 1,
+                                           IntervalTimer::ONE_SHOT),
                  InvalidOperation);
 
     // Stop the thread and retry.
-    ASSERT_NO_THROW(timer_mgr.stopThread());
-    EXPECT_NO_THROW(timer_mgr.registerTimer("timer1", makeCallback("timer1"), 1,
-                                            IntervalTimer::ONE_SHOT));
+    ASSERT_NO_THROW(timer_mgr_->stopThread());
+    EXPECT_NO_THROW(timer_mgr_->registerTimer("timer1", makeCallback("timer1"), 1,
+                                              IntervalTimer::ONE_SHOT));
 
 }
 
 // This test verifies that it is possible to unregister a timer from
 // the TimerMgr.
 TEST_F(TimerMgrTest, unregisterTimer) {
-    TimerMgr& timer_mgr = TimerMgr::instance();
-
     // Register a timer and start it.
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
-    ASSERT_NO_THROW(timer_mgr.setup("timer1"));
-    ASSERT_NO_THROW(timer_mgr.startThread());
+    ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
+    ASSERT_NO_THROW(timer_mgr_->startThread());
 
     // Wait for the timer to execute several times.
     doWait(100);
 
     // Stop the thread but execute pending callbacks.
-    ASSERT_NO_THROW(timer_mgr.stopThread(true));
+    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
 
     // Remember how many times the timer's callback was executed.
     const unsigned int calls_count = calls_count_["timer1"];
@@ -234,15 +223,15 @@ TEST_F(TimerMgrTest, unregisterTimer) {
 
     // Check that an attempt to unregister a non-existing timer would
     // result in exeception.
-    EXPECT_THROW(timer_mgr.unregisterTimer("timer2"), BadValue);
+    EXPECT_THROW(timer_mgr_->unregisterTimer("timer2"), BadValue);
 
     // Now unregister the correct one.
-    ASSERT_NO_THROW(timer_mgr.unregisterTimer("timer1"));
+    ASSERT_NO_THROW(timer_mgr_->unregisterTimer("timer1"));
 
     // Start the thread again and wait another 100ms.
-    ASSERT_NO_THROW(timer_mgr.startThread());
+    ASSERT_NO_THROW(timer_mgr_->startThread());
     doWait(100);
-    ASSERT_NO_THROW(timer_mgr.stopThread(true));
+    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
 
     // The number of calls for the timer1 shouldn't change as the
     // timer had been unregistered.
@@ -255,9 +244,7 @@ TEST_F(TimerMgrTest, unregisterTimer) {
 /// Replacing it with the ASIO implementation from BOOST does
 /// solve the problem. See ticket #4009. Until this ticket is
 /// implemented, the test should remain disabled.
-TEST_F(TimerMgrTest, DISABLED_unregisterTimers) {
-    TimerMgr& timer_mgr = TimerMgr::instance();
-
+TEST_F(TimerMgrTest, unregisterTimers) {
     // Register 10 timers.
     for (int i = 1; i <= 20; ++i) {
         std::ostringstream s;
@@ -265,15 +252,15 @@ TEST_F(TimerMgrTest, DISABLED_unregisterTimers) {
         ASSERT_NO_FATAL_FAILURE(registerTimer(s.str(), 1))
             << "fatal failure occurred while registering "
             << s.str();
-        ASSERT_NO_THROW(timer_mgr.setup(s.str()))
+        ASSERT_NO_THROW(timer_mgr_->setup(s.str()))
             << "exception thrown while calling setup() for the "
             << s.str();
     }
 
     // Start worker thread and wait for 500ms.
-    ASSERT_NO_THROW(timer_mgr.startThread());
+    ASSERT_NO_THROW(timer_mgr_->startThread());
     doWait(500);
-    ASSERT_NO_THROW(timer_mgr.stopThread(true));
+    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
 
     // Make sure that all timers have been executed at least once.
     for (CallsCount::iterator it = calls_count_.begin();
@@ -289,12 +276,12 @@ TEST_F(TimerMgrTest, DISABLED_unregisterTimers) {
     CallsCount calls_count(calls_count_);
 
     // Let's unregister all timers.
-    ASSERT_NO_THROW(timer_mgr.unregisterTimers());
+    ASSERT_NO_THROW(timer_mgr_->unregisterTimers());
 
     // Start worker thread again and wait for 500ms.
-    ASSERT_NO_THROW(timer_mgr.startThread());
+    ASSERT_NO_THROW(timer_mgr_->startThread());
     doWait(500);
-    ASSERT_NO_THROW(timer_mgr.stopThread(true));
+    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
 
     // The calls counter shouldn't change because there are
     // no timers registered.
@@ -304,16 +291,16 @@ TEST_F(TimerMgrTest, DISABLED_unregisterTimers) {
 // This test checks that it is not possible to unregister timers
 // while the thread is running.
 TEST_F(TimerMgrTest, unregisterTimerWhileRunning) {
-    TimerMgr& timer_mgr = TimerMgr::instance();
+    const TimerMgrPtr& timer_mgr = TimerMgr::instance();
 
     // Register two timers.
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer2", 1));
 
     // Start the thread and make sure we can't unregister them.
-    ASSERT_NO_THROW(timer_mgr.startThread());
-    EXPECT_THROW(timer_mgr.unregisterTimer("timer1"), InvalidOperation);
-    EXPECT_THROW(timer_mgr.unregisterTimers(), InvalidOperation);
+    ASSERT_NO_THROW(timer_mgr_->startThread());
+    EXPECT_THROW(timer_mgr_->unregisterTimer("timer1"), InvalidOperation);
+    EXPECT_THROW(timer_mgr_->unregisterTimers(), InvalidOperation);
 
     // No need to stop the thread as it will be stopped by the
     // test fixture destructor.
@@ -321,36 +308,40 @@ TEST_F(TimerMgrTest, unregisterTimerWhileRunning) {
 
 // This test verifies that the timer execution can be cancelled.
 TEST_F(TimerMgrTest, cancel) {
-    TimerMgr& timer_mgr = TimerMgr::instance();
-
     // Register timer.
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
 
-    // We can start the worker thread before we even kick in the timers.
-    ASSERT_NO_THROW(timer_mgr.startThread());
-
     // Kick in the timer and wait for 500ms.
-    ASSERT_NO_THROW(timer_mgr.setup("timer1"));
+    ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
+    ASSERT_NO_THROW(timer_mgr_->startThread());
     doWait(500);
+    ASSERT_NO_THROW(timer_mgr_->stopThread());
 
     // Cancelling non-existing timer should fail.
-    EXPECT_THROW(timer_mgr.cancel("timer2"), BadValue);
+    EXPECT_THROW(timer_mgr_->cancel("timer2"), BadValue);
 
     // Cancelling the good one should pass, even when the worker
     // thread is running.
-    ASSERT_NO_THROW(timer_mgr.cancel("timer1"));
+    ASSERT_NO_THROW(timer_mgr_->cancel("timer1"));
 
     // Remember how many calls have been invoked and wait for
     // another 500ms.
     unsigned int calls_count = calls_count_["timer1"];
+
+    ASSERT_NO_THROW(timer_mgr_->startThread());
     doWait(500);
+    // Stop thread before we setup again.
+    ASSERT_NO_THROW(timer_mgr_->stopThread());
 
     // The number of calls shouldn't change because the timer had been
     // cancelled.
     ASSERT_EQ(calls_count, calls_count_["timer1"]);
 
     // Setup the timer again.
-    ASSERT_NO_THROW(timer_mgr.setup("timer1"));
+    ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
+
+    // Restart the thread.
+    ASSERT_NO_THROW(timer_mgr_->startThread());
     doWait(500);
 
     // New calls should be recorded.
@@ -360,21 +351,18 @@ TEST_F(TimerMgrTest, cancel) {
 // This test verifies that the callbacks for the scheduled timers are
 // actually called.
 TEST_F(TimerMgrTest, scheduleTimers) {
-    TimerMgr& timer_mgr = TimerMgr::instance();
-
     // Register two timers: 'timer1' and 'timer2'. The first timer will
     // be executed at the 1ms interval. The second one at the 5ms
     // interval.
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer2", 5));
 
-    // We can start the worker thread before we even kick in the timers.
-    ASSERT_NO_THROW(timer_mgr.startThread());
+    // Kick in the timers.
+    ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
+    ASSERT_NO_THROW(timer_mgr_->setup("timer2"));
 
-    // Kick in the timers. The timers have been registered so there
-    // should be no exception.
-    ASSERT_NO_THROW(timer_mgr.setup("timer1"));
-    ASSERT_NO_THROW(timer_mgr.setup("timer2"));
+    // We can start the worker thread before we even kick in the timers.
+    ASSERT_NO_THROW(timer_mgr_->startThread());
 
     // Run IfaceMgr::receive6() in the loop for 500ms. This function
     // will read data from the watch sockets created when the timers
@@ -386,7 +374,7 @@ TEST_F(TimerMgrTest, scheduleTimers) {
 
     // Stop the worker thread, which would halt the execution of
     // the timers.
-    timer_mgr.stopThread(true);
+    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
 
     // We have been running the timer for 500ms at the interval of
     // 1 ms. The maximum number of callbacks is 500. However, the
@@ -408,10 +396,10 @@ TEST_F(TimerMgrTest, scheduleTimers) {
     unsigned int calls_count_timer2 = calls_count_["timer2"];
 
     // Unregister the 'timer1'.
-    ASSERT_NO_THROW(timer_mgr.unregisterTimer("timer1"));
+    ASSERT_NO_THROW(timer_mgr_->unregisterTimer("timer1"));
 
     // Restart the thread.
-    ASSERT_NO_THROW(timer_mgr.startThread());
+    ASSERT_NO_THROW(timer_mgr_->startThread());
 
     // Wait another 500ms. The 'timer1' was unregistered so it
     // should not make any more calls. The 'timer2' should still
@@ -427,16 +415,12 @@ TEST_F(TimerMgrTest, scheduleTimers) {
 // This test verifies that it is possible to force that the pending
 // timer callbacks are executed when the worker thread is stopped.
 TEST_F(TimerMgrTest, stopThreadWithRunningHandlers) {
-    TimerMgr& timer_mgr = TimerMgr::instance();
-
     // Register 'timer1'.
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
 
-    // We can start the worker thread before we even kick in the timers.
-    ASSERT_NO_THROW(timer_mgr.startThread());
-
     // Kick in the timer.
-    ASSERT_NO_THROW(timer_mgr.setup("timer1"));
+    ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
+    ASSERT_NO_THROW(timer_mgr_->startThread());
 
     // Run the thread for 100ms. This should run some timers. The 'false'
     // value indicates that the IfaceMgr::receive6 is not called, so the
@@ -447,13 +431,13 @@ TEST_F(TimerMgrTest, stopThreadWithRunningHandlers) {
     EXPECT_EQ(0, calls_count_["timer1"]);
 
     // Stop the worker thread without completing pending callbacks.
-    ASSERT_NO_THROW(timer_mgr.stopThread(false));
+    ASSERT_NO_THROW(timer_mgr_->stopThread(false));
 
     // There should be still not be any calls registered.
     EXPECT_EQ(0, calls_count_["timer1"]);
 
     // We can restart the worker thread before we even kick in the timers.
-    ASSERT_NO_THROW(timer_mgr.startThread());
+    ASSERT_NO_THROW(timer_mgr_->startThread());
 
     // Run the thread for 100ms. This should run some timers. The 'false'
     // value indicates that the IfaceMgr::receive6 is not called, so the
@@ -464,10 +448,29 @@ TEST_F(TimerMgrTest, stopThreadWithRunningHandlers) {
     EXPECT_EQ(0, calls_count_["timer1"]);
 
     // Stop the worker thread with completing pending callbacks.
-    ASSERT_NO_THROW(timer_mgr.stopThread(true));
+    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
 
     // There should be one call registered.
     EXPECT_EQ(1, calls_count_["timer1"]);
+}
+
+// This test verifies that exceptions emitted from the callback would
+// be handled by the TimerMgr.
+TEST_F(TimerMgrTest, callbackWithException) {
+    // Create timer which will trigger callback generating exception.
+    ASSERT_NO_THROW(
+        timer_mgr_->registerTimer("timer1", makeCallbackWithException(), 1,
+                                  IntervalTimer::ONE_SHOT)
+    );
+
+    // Setup the timer.
+    ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
+
+    // Start thread. We hope that exception will be caught by the @c TimerMgr
+    // and will not kill the process.
+    ASSERT_NO_THROW(timer_mgr_->startThread());
+    doWait(500);
+    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
 }
 
 } // end of anonymous namespace
