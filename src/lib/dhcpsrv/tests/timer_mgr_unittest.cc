@@ -291,8 +291,6 @@ TEST_F(TimerMgrTest, unregisterTimers) {
 // This test checks that it is not possible to unregister timers
 // while the thread is running.
 TEST_F(TimerMgrTest, unregisterTimerWhileRunning) {
-    const TimerMgrPtr& timer_mgr = TimerMgr::instance();
-
     // Register two timers.
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer2", 1));
