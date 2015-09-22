@@ -853,6 +853,9 @@ setHooksLibrariesConfig(const char* lib1 = NULL, const char* lib2 = NULL,
 
 // hooks-libraries element that does not contain anything.
 TEST_F(ParseConfigTest, noHooksLibraries) {
+    // Check that no libraries are currently loaded
+    vector<string> hooks_libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(hooks_libraries.empty());
 
     // Create an empty hooks-libraries configuration element.
     const string config = setHooksLibrariesConfig();
@@ -861,16 +864,23 @@ TEST_F(ParseConfigTest, noHooksLibraries) {
     const int rcode = parseConfiguration(config);
     ASSERT_TRUE(rcode == 0) << error_text_;
 
-    // Check that the parser recorded no libraries (and no change of state).
+    // Check that the parser recorded nothing.
     std::vector<std::string> libraries;
     bool changed;
     hooks_libraries_parser_->getLibraries(libraries, changed);
     EXPECT_FALSE(changed);
     EXPECT_TRUE(libraries.empty());
+
+    // Check that there are still no libraries loaded.
+    hooks_libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(hooks_libraries.empty());
 }
 
 // hooks-libraries element that contains a single library.
 TEST_F(ParseConfigTest, oneHooksLibrary) {
+    // Check that no libraries are currently loaded
+    vector<string> hooks_libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(hooks_libraries.empty());
 
     // Configuration with hooks-libraries set to a single library.
     const string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1);
@@ -886,10 +896,18 @@ TEST_F(ParseConfigTest, oneHooksLibrary) {
     EXPECT_TRUE(changed);
     ASSERT_EQ(1, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0]);
+
+    // Check that the change was propagated to the hooks manager.
+    hooks_libraries = HooksManager::getLibraryNames();
+    ASSERT_EQ(1, hooks_libraries.size());
+    EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[0]);
 }
 
 // hooks-libraries element that contains two libraries
 TEST_F(ParseConfigTest, twoHooksLibraries) {
+    // Check that no libraries are currently loaded
+    vector<string> hooks_libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(hooks_libraries.empty());
 
     // Configuration with hooks-libraries set to two libraries.
     const string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1,
@@ -907,10 +925,19 @@ TEST_F(ParseConfigTest, twoHooksLibraries) {
     ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0]);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1]);
+
+    // Verify that the change was propagated to the hooks manager.
+    hooks_libraries = HooksManager::getLibraryNames();
+    ASSERT_EQ(2, hooks_libraries.size());
+    EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[0]);
+    EXPECT_EQ(CALLOUT_LIBRARY_2, hooks_libraries[1]);
 }
 
 // Configure with two libraries, then reconfigure with the same libraries.
 TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
+    // Check that no libraries are currently loaded
+    vector<string> hooks_libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(hooks_libraries.empty());
 
     // Configuration with hooks-libraries set to two libraries.
     const std::string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1,
@@ -920,6 +947,9 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
     // test shows that the list will be as expected.
     int rcode = parseConfiguration(config);
     ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // The previous test shows that the parser correctly recorded the two
+    // libraries and that they loaded correctly.
 
     // Parse the string again.
     rcode = parseConfiguration(config);
@@ -934,11 +964,21 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
     ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0]);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1]);
+
+    // ... and check that the same two libraries are still loaded in the
+    // HooksManager.
+    hooks_libraries = HooksManager::getLibraryNames();
+    ASSERT_EQ(2, hooks_libraries.size());
+    EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[0]);
+    EXPECT_EQ(CALLOUT_LIBRARY_2, hooks_libraries[1]);
 }
 
-// Configure the hooks with two libraries, then reconfigure with
-// the same libraries, but in reverse order.
+// Configure the hooks with two libraries, then reconfigure with the same
+// libraries, but in reverse order.
 TEST_F(ParseConfigTest, reconfigureReverseHooksLibraries) {
+    // Check that no libraries are currently loaded
+    vector<string> hooks_libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(hooks_libraries.empty());
 
     // Configuration with hooks-libraries set to two libraries.
     std::string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1,
@@ -948,6 +988,9 @@ TEST_F(ParseConfigTest, reconfigureReverseHooksLibraries) {
     // test shows that the list will be as expected.
     int rcode = parseConfiguration(config);
     ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // A previous test shows that the parser correctly recorded the two
+    // libraries and that they loaded correctly.
 
     // Parse the reversed set of libraries.
     config = setHooksLibrariesConfig(CALLOUT_LIBRARY_2, CALLOUT_LIBRARY_1);
@@ -962,11 +1005,20 @@ TEST_F(ParseConfigTest, reconfigureReverseHooksLibraries) {
     ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[0]);
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[1]);
+
+    // ... and check that this was propagated to the HooksManager.
+    hooks_libraries = HooksManager::getLibraryNames();
+    ASSERT_EQ(2, hooks_libraries.size());
+    EXPECT_EQ(CALLOUT_LIBRARY_2, hooks_libraries[0]);
+    EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[1]);
 }
 
 // Configure the hooks with two libraries, then reconfigure with
 // no libraries.
 TEST_F(ParseConfigTest, reconfigureZeroHooksLibraries) {
+    // Check that no libraries are currently loaded
+    vector<string> hooks_libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(hooks_libraries.empty());
 
     // Configuration with hooks-libraries set to two libraries.
     std::string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1,
@@ -975,6 +1027,9 @@ TEST_F(ParseConfigTest, reconfigureZeroHooksLibraries) {
     // Verify that the configuration string parses.
     int rcode = parseConfiguration(config);
     ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // A previous test shows that the parser correctly recorded the two
+    // libraries and that they loaded correctly.
 
     // Parse the string again, this time without any libraries.
     config = setHooksLibrariesConfig();
@@ -987,10 +1042,17 @@ TEST_F(ParseConfigTest, reconfigureZeroHooksLibraries) {
     hooks_libraries_parser_->getLibraries(libraries, changed);
     EXPECT_TRUE(changed);
     EXPECT_TRUE(libraries.empty());
+
+    // Check that no libraries are currently loaded
+    hooks_libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(hooks_libraries.empty());
 }
 
 // Check with a set of libraries, some of which are invalid.
 TEST_F(ParseConfigTest, invalidHooksLibraries) {
+    // Check that no libraries are currently loaded
+    vector<string> hooks_libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(hooks_libraries.empty());
 
     // Configuration string.  This contains an invalid library which should
     // trigger an error in the "build" stage.
@@ -1006,15 +1068,36 @@ TEST_F(ParseConfigTest, invalidHooksLibraries) {
     // Check that the message contains the library in error.
     EXPECT_FALSE(error_text_.find(NOT_PRESENT_LIBRARY) == string::npos) <<
         "Error text returned from parse failure is " << error_text_;
+
+    // Check that the parser recorded the names but, as they were in error,
+    // does not flag them as changed.
+    vector<string> libraries;
+    bool changed;
+    hooks_libraries_parser_->getLibraries(libraries, changed);
+    EXPECT_FALSE(changed);
+    ASSERT_EQ(3, libraries.size());
+    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0]);
+    EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1]);
+    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[2]);
+
+    // ...and check it did not alter the libraries in the hooks manager.
+    hooks_libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(hooks_libraries.empty());
 }
 
 // Check that trying to reconfigure with an invalid set of libraries fails.
 TEST_F(ParseConfigTest, reconfigureInvalidHooksLibraries) {
+    // Check that no libraries are currently loaded
+    vector<string> hooks_libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(hooks_libraries.empty());
 
     // Configure with a single library.
     std::string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1);
     int rcode = parseConfiguration(config);
     ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // A previous test shows that the parser correctly recorded the two
+    // libraries and that they loaded correctly.
 
     // Configuration string.  This contains an invalid library which should
     // trigger an error in the "build" stage.
@@ -1029,6 +1112,24 @@ TEST_F(ParseConfigTest, reconfigureInvalidHooksLibraries) {
     // Check that the message contains the library in error.
     EXPECT_FALSE(error_text_.find(NOT_PRESENT_LIBRARY) == string::npos) <<
         "Error text returned from parse failure is " << error_text_;
+
+    // Check that the parser recorded the names but, as the library set was
+    // incorrect, did not mark the configuration as changed.
+    vector<string> libraries;
+    bool changed;
+    hooks_libraries_parser_->getLibraries(libraries, changed);
+    EXPECT_FALSE(changed);
+    ASSERT_EQ(3, libraries.size());
+    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0]);
+    EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1]);
+    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[2]);
+
+    // ... but check that the hooks manager was not updated with the incorrect
+    // names.
+    hooks_libraries.clear();
+    hooks_libraries = HooksManager::getLibraryNames();
+    ASSERT_EQ(1, hooks_libraries.size());
+    EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[0]);
 }
 
 /// @brief Checks that a valid, enabled D2 client configuration works correctly.
