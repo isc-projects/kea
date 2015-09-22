@@ -100,6 +100,24 @@ typedef boost::shared_ptr<TimerMgr> TimerMgrPtr;
 /// because the worker thread is blocked while the callback function
 /// is executed.
 ///
+/// The worker thread is blocked when it executes a generic callback
+/// function in the @c TimerMgr, which marks the watch socket
+/// associated with the elapsed timer as "ready". The thread waits
+/// in the callback function until it is notified by the main thread
+/// (via conditional variable), that one of the watch sockets has
+/// been cleared. It then checks if the main thread cleared the
+/// socket that the worker thread had set. It continues to block
+/// if this was a different socket. It returns (unblocks) otherwise.
+/// The main thread clears the socket when the @c IfaceMgr detects
+/// that this socket has been marked ready by the worker thread.
+/// This is triggered only when the @c IfaceMgr::receive4 or
+/// @c IfaceMgr::receive6 is called. They are called in the main
+/// loops of the DHCP servers, which are also responsible for
+/// processing received packets. Therefore it may take some
+/// time for the main loop to detect that the socket has been
+/// marked ready, call appropriate handler for it and clear it.
+/// In the mean time, the worker thread will remain blocked.
+///
 class TimerMgr : public boost::noncopyable {
 public:
 
