@@ -205,7 +205,7 @@ public:
     ///
     /// @param run_pending_callbacks Indicates if the pending callbacks
     /// should be executed (if true).
-    void controlledStopThread(const bool run_pending_callbacks);
+    void stopThread(const bool run_pending_callbacks);
 
 private:
 
@@ -216,8 +216,8 @@ private:
     /// its scheduled interval elapses.
     ///
     /// This method marks the @c util::Watch socket associated with the
-    /// timer as ready (writes data to a pipe). This method will block until
-    /// @c TimerMgrImpl::if§aceMgrCallback is executed from the main thread by
+    /// timer as ready (writes data to a pipe). This method will BLOCK until
+    /// @c TimerMgrImpl::ifaceMgrCallback is executed from the main thread by
     /// the @c IfaceMgr.
     ///
     /// @param timer_name Unique timer name to be passed to the callback.
@@ -452,7 +452,7 @@ TimerMgrImpl::createThread() {
 }
 
 void
-TimerMgrImpl::controlledStopThread(const bool run_pending_callbacks) {
+TimerMgrImpl::stopThread(const bool run_pending_callbacks) {
     // Set the stopping flag to true while we're stopping. This will be
     // automatically reset to false when the function exits or exception
     // is thrown.
@@ -692,7 +692,7 @@ TimerMgr::stopThread(const bool run_pending_callbacks) {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                   DHCPSRV_TIMERMGR_STOP_THREAD);
 
-        impl_->controlledStopThread(run_pending_callbacks);
+        impl_->stopThread(run_pending_callbacks);
     }
 }
 IOService&
