@@ -42,6 +42,7 @@ DISTCHECK_BOOST_CONFIGURE_FLAG=
 
 # No library by default (and as goal)
 BOOST_LIBS=
+BOOST_LIB_DIR=
 boost_lib_path=
 
 #
@@ -59,7 +60,7 @@ if test -z "$with_boost_include"; then
 	do
 		if test -f $d/include/boost/shared_ptr.hpp; then
 			boost_include_path=$d/include
-			boost_lib_path="-L$d/lib"
+			boost_lib_path=$d/lib
 			break
 		fi
 	done
@@ -149,6 +150,13 @@ AC_ARG_WITH([boost-libs],
     [BOOST_LIBS="$withval"
      DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boost-libs=$withval"])
 
+# Get lib dir when explicitly configured
+AC_ARG_WITH([boost-lib-dir],
+  AC_HELP_STRING([--with-boost-lib-dir=PATH],
+    [specify directory where to find Boost libraries]),
+    [BOOST_LIB_DIR="$withval"
+     DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boot-lib-dir=$withval"])
+
 # BOOST_ERROR_CODE_HEADER_ONLY in versions below Boost 1.56.0 can fail
 # to find the error_code.cpp file.
 if test "x${BOOST_LIBS}" = "x"; then
@@ -163,13 +171,19 @@ if test "x${BOOST_LIBS}" = "x"; then
    [AC_MSG_RESULT(yes)],
    [AC_MSG_RESULT(no)
     AC_MSG_WARN([The Boost system library is required.])
-    BOOST_LIBS="$boost_lib_path -lboost_system"])
+    BOOST_LIBS="-lboost_system"
+    if test "x${BOOST_LIB_DIR}" = "x"; then
+       BOOST_LIB_DIR="$boost_lib_path"
+    fi])
 
    CPPFLAGS="$CXXFLAGS_SAVED2"
 fi
 
 # A Boost library is used.
 if test "x${BOOST_LIBS}" != "x"; then
+   if test "x${BOOST_LIB_DIR}" != "x"; then
+      BOOST_LIBS="-L$BOOST_LIB_DIR $BOOST_LIBS"
+   fi
    LIBS_SAVED="$LIBS"
    LIBS="$BOOST_LIBS $LIBS"
 
