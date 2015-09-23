@@ -42,6 +42,7 @@ DISTCHECK_BOOST_CONFIGURE_FLAG=
 
 # No library by default (and as goal)
 BOOST_LIBS=
+boost_lib_path=
 
 #
 # Configure Boost header path
@@ -58,6 +59,7 @@ if test -z "$with_boost_include"; then
 	do
 		if test -f $d/include/boost/shared_ptr.hpp; then
 			boost_include_path=$d/include
+			boost_lib_path="-L$d/lib"
 			break
 		fi
 	done
@@ -161,7 +163,7 @@ if test "x${BOOST_LIBS}" = "x"; then
    [AC_MSG_RESULT(yes)],
    [AC_MSG_RESULT(no)
     AC_MSG_WARN([The Boost system library is required.])
-    BOOST_LIBS="-lboost_system"])
+    BOOST_LIBS="$boost_lib_path -lboost_system"])
 
    CPPFLAGS="$CXXFLAGS_SAVED2"
 fi
