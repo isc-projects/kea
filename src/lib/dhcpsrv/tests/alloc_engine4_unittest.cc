@@ -591,7 +591,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4) {
 }
 
 // This test checks if statistics are not updated when expired declined lease
-// is resued when responding to DHCPDISCOVER (fake allocation)
+// is reused when responding to DHCPDISCOVER (fake allocation)
 TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
 
     // Now prepare for DISCOVER processing
@@ -675,7 +675,7 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4) {
 }
 
 // This test checks if statistics are not updated when expired declined lease
-// is resued when responding to DHCPREQUEST (actual allocation)
+// is reused when responding to DHCPREQUEST (actual allocation)
 TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
 
     AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
