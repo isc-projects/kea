@@ -101,10 +101,14 @@ public:
 
 private:
     /// To avoid unused variable errors
-    void dummy() {
-        std::string n = MARKER_FILE;
-        n = LOAD_CALLOUT_LIBRARY;
-        n = LOAD_ERROR_CALLOUT_LIBRARY;
+    std::string dummy(int i) {
+        if (i == 0) {
+            return (MARKER_FILE);
+        } else if (i > 0) {
+            return (LOAD_CALLOUT_LIBRARY);
+        } else {
+            return (LOAD_ERROR_CALLOUT_LIBRARY);
+        }
     }
 };
 
