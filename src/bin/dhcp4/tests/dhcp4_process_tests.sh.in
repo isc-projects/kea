@@ -18,6 +18,8 @@ CFG_FILE=@abs_top_builddir@/src/bin/dhcp4/tests/test_config.json
 LOG_FILE=@abs_top_builddir@/src/bin/dhcp4/tests/test.log
 # Path to the Kea lease file.
 LEASE_FILE=@abs_top_builddir@/src/bin/dhcp4/tests/test_leases.csv
+# Path to the Kea LFC application
+export KEA_LFC_EXECUTABLE=@abs_top_builddir@/src/bin/lfc/kea-lfc
 # Expected version
 EXPECTED_VERSION="@PACKAGE_VERSION@"
 # Kea configuration to be stored in the configuration file.
@@ -288,7 +290,8 @@ lfc_timer_test() {
     cleanup
     # Create a configuration with the LFC enabled, by replacing the section
     # with the lfc-interval parameter.
-    LFC_CONFIG=$(printf "${CONFIG}" | sed -e 's/\"lfc-interval\": 0/\"lfc-interval\": 1/g')
+    LFC_CONFIG=$(printf "${CONFIG}" | sed -e 's/\"lfc-interval\": 0/\"lfc-interval\": 1/g' \
+                        | sed -e 's/\"persist\": false/\"persist\": true/g')
     echo ${LFC_CONFIG}
     # Create new configuration file.
     create_config "${LFC_CONFIG}"
