@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,10 @@ protected:
     ExceptionTest() : teststring("test") {}
     const char* teststring;
 };
+
+void raise_foobar() {
+    isc_throw(isc::BadValue, "foobar");
+}
 
 TEST_F(ExceptionTest, basicMethods) {
     try {
@@ -68,4 +72,22 @@ TEST_F(ExceptionTest, verbose) {
     }
 
 }
+
+// A full example of how to check both the exception (e.g., EXPECT_THROW)
+// and its associated message (something no gtest macros do).
+TEST_F(ExceptionTest, message) {
+    try {
+        raise_foobar();
+        ADD_FAILURE() << "Expected " "raise_foobar()" \
+            " throws an exception of type " "BadValue" \
+            ".\n Actual: it throws nothing.";
+    } catch (const isc::BadValue& ex) {
+        EXPECT_EQ(std::string(ex.getMessage()), "foobar");
+    } catch (...) {
+        ADD_FAILURE() << "Expected " "raise_foobar()" \
+            " throws an exception of type " "BadValue" \
+            ".\n Actual: it throws a different type.";
+    }
+}
+
 }
