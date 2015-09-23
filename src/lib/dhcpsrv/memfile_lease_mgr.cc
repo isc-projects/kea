@@ -116,7 +116,10 @@ private:
     /// @brief A PID of the last executed LFC process.
     pid_t pid_;
 
-    /// @brief Pointer to the Timer Manager.
+    /// @brief Pointer to the timer manager.
+    ///
+    /// We have to hold this pointer here to make sure that the timer
+    /// manager is not destroyed before the lease manager.
     TimerMgrPtr timer_mgr_;
 };
 
