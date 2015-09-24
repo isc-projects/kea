@@ -1,3 +1,10 @@
+1011.	[func]		fdupont
+	Added definitions and tests for the options from secure DHCPv6.
+	This protocol is still experimental. The option and other protocol
+	codes are for testing, they will be updated when IANA assigns
+	official values.
+	(Trac #4015, git xxx)
+
 1010.	[bug]		tmark
 	Fixed test failures occuring for some tests after
 	IfaceMgr::closeSockets was called.
