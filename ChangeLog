@@ -1,3 +1,8 @@
+1010.	[bug]		tmark
+	Fixed test failures occuring for some tests after
+	IfaceMgr::closeSockets was called.
+	(Trac #4067, git 9161867dc6a354659ae8b5115ee437ec76c1771e)
+
 1009.	[bug]		fdupont
 	Now libutil blocks all signals when creating a new thread
 	(so signals are delivered only to the main thread).
