@@ -13,6 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
 
 #include <dhcp/tests/pkt_filter_test_stub.h>
 
@@ -33,7 +36,14 @@ SocketInfo
 PktFilterTestStub::openSocket(Iface&,
            const isc::asiolink::IOAddress& addr,
            const uint16_t port, const bool, const bool) {
-    return (SocketInfo(addr, port, 0));
+    int fd = open("/dev/null", O_RDONLY);
+    if (fd < 0) {
+        const char* errmsg = strerror(errno);
+        isc_throw(Unexpected,
+                  "PktFilterTestStub: cannot open /dev/null:" << errmsg);
+    }
+
+    return (SocketInfo(addr, port, fd));
 }
 
 Pkt4Ptr

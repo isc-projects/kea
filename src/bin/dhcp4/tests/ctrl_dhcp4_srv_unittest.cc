@@ -76,26 +76,12 @@ public:
             socket_path_ = string(TEST_DATA_BUILDDIR) + "/kea4.sock";
         }
         reset();
-
-        // This is a workaround for odd problems with gtest. gtest does
-        // shady with socket decriptors. In particular, sometimes we
-        // get 0 as descriptor for socket() call. Technically it is valid,
-        // but then gtest closes descriptor 0 and the socket becomes
-        // unusable. This workaround opens up one file decriptor. In case
-        // 0 is available, it will be consumed here.
-        dummy_fd_ = socket(AF_INET, SOCK_DGRAM, 0);
-        if (dummy_fd_ == 0) {
-            std::cout << "Socket descriptor 0 workaround is useful." << std::endl;
-        }
     }
 
     /// @brief Destructor
     ~CtrlChannelDhcpv4SrvTest() {
         server_.reset();
         reset();
-
-        // close dummy descriptor
-        close(dummy_fd_);
     };
 
     void createUnixChannelServer() {
@@ -197,11 +183,6 @@ public:
         client->disconnectFromServer();
         ASSERT_NO_THROW(server_->receivePacket(0));
     }
-
-    /// @brief dummy file descriptor
-    ///
-    /// See ctor for details.
-    int dummy_fd_;
 };
 
 TEST_F(CtrlChannelDhcpv4SrvTest, commands) {
