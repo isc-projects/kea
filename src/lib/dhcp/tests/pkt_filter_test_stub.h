@@ -47,9 +47,11 @@ public:
 
     /// @brief Simulate opening of the socket.
     ///
-    /// This function simulates opening a primary socket. In reality, it doesn't
-    /// open a socket but the socket descriptor returned in the SocketInfo
-    /// structure is always set to 0.
+    /// This function simulates opening a primary socket. Rather than open
+    /// an actual socket, the stub peforms a read-only open of "/dev/null".
+    /// The fd returned by this open saved as the socket's descriptor in the
+    /// SocketInfo structure.  This way the filter consumes an actual
+    /// descriptor and retains it until its socket is closed.
     ///
     /// @param iface An interface descriptor.
     /// @param addr Address on the interface to be used to send packets.
