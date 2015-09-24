@@ -21,6 +21,8 @@
 
 #include <gtest/gtest.h>
 
+#include <signal.h>
+
 // This file tests the Thread class. It's hard to test an actual thread is
 // started, but we at least check the function is run and exceptions are
 // propagated as they should.
@@ -104,6 +106,23 @@ TEST(ThreadTest, exception) {
             ASSERT_THROW(thread2.wait(), Thread::UncaughtException);
         }
     }
+}
+
+// Returns signal mask set for a thread.
+void
+getSignalMask(sigset_t* mask) {
+    pthread_sigmask(SIG_SETMASK, 0, mask);
+}
+
+// Verify that all signals are blocked.
+TEST(ThreadTest, sigmask) {
+    sigset_t mask;
+    sigemptyset(&mask);
+    Thread thread(boost::bind(getSignalMask, &mask));
+    ASSERT_NO_THROW(thread.wait());
+    EXPECT_EQ(1, sigismember(&mask, SIGHUP));
+    EXPECT_EQ(1, sigismember(&mask, SIGINT));
+    EXPECT_EQ(1, sigismember(&mask, SIGTERM));
 }
 
 }
