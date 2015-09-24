@@ -861,6 +861,11 @@ temporarily override a list of interface names and listen on all interfaces.
       the various types is given in <xref linkend="dhcp-types"/>.
     </para>
     <para>
+      Experimental options (like standard options but with a code
+      which was not assigned by IANA) are listed in
+      <xref linkend="dhcp6-exp-options-list"/>.
+    </para>
+    <para>
       Some options are designated as arrays, which means that more than one
       value is allowed in such an option. For example the option dns-servers
       allows the specification of more than one IPv6 address, allowing
@@ -952,6 +957,27 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>erp-local-domain-name</entry><entry>65</entry><entry>fqdn</entry><entry>false</entry></row>
 <row><entry>rsoo</entry><entry>66</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>client-linklayer-addr</entry><entry>79</entry><entry>binary</entry><entry>false</entry></row>
+        </tbody>
+        </tgroup>
+      </table>
+    </para>
+
+    <para>
+      <table frame="all" id="dhcp6-exp-options-list">
+        <title>List of experimental DHCPv6 options</title>
+        <tgroup cols='4'>
+        <colspec colname='name'/>
+        <colspec colname='code' align='center'/>
+        <colspec colname='type' align='center'/>
+        <colspec colname='array' align='center'/>
+        <thead>
+          <row><entry>Name</entry><entry>Code</entry><entry>Type</entry><entry>Array?</entry></row>
+        </thead>
+        <tbody>
+<row><entry>public-key</entry><entry>701</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>certificate</entry><entry>702</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>signature</entry><entry>703</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>timestamp</entry><entry>704</entry><entry>binary</entry><entry>false</entry></row>
         </tbody>
         </tgroup>
       </table>
