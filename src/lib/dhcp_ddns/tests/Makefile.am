@@ -54,9 +54,8 @@ libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libdhcp_ddns_unittests_LDADD += $(LOG4CPLUS_LIBS)
-libdhcp_ddns_unittests_LDADD += $(CRYPTO_LIBS)
-libdhcp_ddns_unittests_LDADD += $(GTEST_LDADD)
+libdhcp_ddns_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
+libdhcp_ddns_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)

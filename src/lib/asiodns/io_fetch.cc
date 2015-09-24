@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,8 +23,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-#include <asio.hpp>
-#include <asio/deadline_timer.hpp>
+#include <boost/asio.hpp>
+#include <boost/asio/deadline_timer.hpp>
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_asio_socket.h>
@@ -46,7 +46,7 @@
 
 #include <asiodns/logger.h>
 
-using namespace asio;
+using namespace boost::asio;
 using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::util;
@@ -83,7 +83,7 @@ struct IOFetchData {
     OutputBufferPtr   msgbuf;      ///< Wire buffer for question
     OutputBufferPtr   received;    ///< Received data put here
     IOFetch::Callback*          callback;    ///< Called on I/O Completion
-    asio::deadline_timer        timer;       ///< Timer to measure timeouts
+    boost::asio::deadline_timer timer;       ///< Timer to measure timeouts
     IOFetch::Protocol           protocol;    ///< Protocol being used
     size_t                      cumulative;  ///< Cumulative received amount
     size_t                      expected;    ///< Expected amount of data
@@ -243,7 +243,7 @@ IOFetch::getProtocol() const {
 /// pattern; see internal/coroutine.h for details.
 
 void
-IOFetch::operator()(asio::error_code ec, size_t length) {
+IOFetch::operator()(boost::system::error_code ec, size_t length) {
 
     if (data_->stopped) {
         return;
@@ -402,7 +402,7 @@ IOFetch::stop(Result result) {
 
 // Log an error - called on I/O failure
 
-void IOFetch::logIOFailure(asio::error_code ec) {
+void IOFetch::logIOFailure(boost::system::error_code ec) {
 
     // Should only get here with a known error code.
     assert((data_->origin == ASIODNS_OPEN_SOCKET) ||

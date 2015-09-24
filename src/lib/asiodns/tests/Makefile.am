@@ -21,8 +21,6 @@ run_unittests_SOURCES += io_fetch_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
-run_unittests_LDADD  = $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
-run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
@@ -30,7 +28,8 @@ run_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-run_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(GTEST_LDADD)
+run_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
+run_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 

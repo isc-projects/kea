@@ -62,7 +62,7 @@
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>

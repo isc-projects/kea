@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
 #include <dns/opcode.h>
 #include <dns/messagerenderer.h>
 #include <nc_test_utils.h>
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <asiolink/udp_endpoint.h>
 #include <util/encode/base64.h>
 
@@ -45,9 +45,9 @@ FauxServer::FauxServer(asiolink::IOService& io_service,
      server_socket_(), receive_pending_(false), perpetual_receive_(true),
      tsig_key_() {
 
-    server_socket_.reset(new asio::ip::udp::socket(io_service_.get_io_service(),
-                                                   asio::ip::udp::v4()));
-    server_socket_->set_option(asio::socket_base::reuse_address(true));
+    server_socket_.reset(new boost::asio::ip::udp::socket(io_service_.get_io_service(),
+                                                   boost::asio::ip::udp::v4()));
+    server_socket_->set_option(boost::asio::socket_base::reuse_address(true));
 
     isc::asiolink::UDPEndpoint endpoint(address_, port_);
     server_socket_->bind(endpoint.getASIOEndpoint());
@@ -58,9 +58,9 @@ FauxServer::FauxServer(asiolink::IOService& io_service,
     :io_service_(io_service), address_(server.getIpAddress()),
      port_(server.getPort()), server_socket_(), receive_pending_(false),
      perpetual_receive_(true), tsig_key_() {
-    server_socket_.reset(new asio::ip::udp::socket(io_service_.get_io_service(),
-                                                   asio::ip::udp::v4()));
-    server_socket_->set_option(asio::socket_base::reuse_address(true));
+    server_socket_.reset(new boost::asio::ip::udp::socket(io_service_.get_io_service(),
+                                                   boost::asio::ip::udp::v4()));
+    server_socket_->set_option(boost::asio::socket_base::reuse_address(true));
     isc::asiolink::UDPEndpoint endpoint(address_, port_);
     server_socket_->bind(endpoint.getASIOEndpoint());
 }
@@ -77,7 +77,7 @@ FauxServer::receive (const ResponseMode& response_mode,
     }
 
     receive_pending_ = true;
-    server_socket_->async_receive_from(asio::buffer(receive_buffer_,
+    server_socket_->async_receive_from(boost::asio::buffer(receive_buffer_,
                                                     sizeof(receive_buffer_)),
                                        remote_,
                                        boost::bind(&FauxServer::requestHandler,
@@ -87,7 +87,7 @@ FauxServer::receive (const ResponseMode& response_mode,
 }
 
 void
-FauxServer::requestHandler(const asio::error_code& error,
+FauxServer::requestHandler(const boost::system::error_code& error,
                            std::size_t bytes_recvd,
                            const ResponseMode& response_mode,
                            const dns::Rcode& response_rcode) {
@@ -174,7 +174,7 @@ FauxServer::requestHandler(const asio::error_code& error,
 
     // Ship the response via synchronous send.
     try {
-        int cnt = server_socket_->send_to(asio::
+        int cnt = server_socket_->send_to(boost::asio::
                                           buffer(response_buf.getData(),
                                                  response_buf.getLength()),
                                           remote_);

@@ -242,9 +242,9 @@ TEST_F(DStubControllerTest, launchRuntimeError) {
     isc::asiolink::IntervalTimer timer(*getIOService());
     timer.setup(genFatalErrorCallback, 2000);
 
-    // Write the valid, empty, config and then run launch() for 1000 ms
+    // Write the valid, empty, config and then run launch() for 5000 ms
     time_duration elapsed_time;
-    EXPECT_THROW(runWithConfig("{}", 2000, elapsed_time), ProcessRunError);
+    EXPECT_THROW(runWithConfig("{}", 5000, elapsed_time), ProcessRunError);
 
     // Verify that duration of the run invocation is the same as the
     // timer duration.  This demonstrates that the shutdown was driven

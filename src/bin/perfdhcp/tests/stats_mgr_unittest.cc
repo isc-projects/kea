@@ -24,6 +24,8 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/scoped_ptr.hpp>
+
 #include "../stats_mgr.h"
 
 using namespace std;

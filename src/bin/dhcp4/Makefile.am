@@ -88,7 +88,7 @@ kea_dhcp4_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-kea_dhcp4_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
+kea_dhcp4_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 kea_dhcp4_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 if HAVE_MYSQL
