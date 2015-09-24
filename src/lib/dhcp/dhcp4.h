@@ -36,6 +36,13 @@
 
 #include <stdint.h>
 
+/// @note Code points in comments are those assigned by IANA
+/// but not yet implemented in Kea.
+/// To implement a standard option, remove the comment characters,
+/// add an entry in std_option_defs.h, add a stdOptionDefs4 unit test
+/// in tests/libdhcp++_unittest.cc and update dhcp4-std-options-list-part2
+/// in the dhcp4-srv.xml source file of the user guide.
+
 namespace isc {
 namespace dhcp {
 
