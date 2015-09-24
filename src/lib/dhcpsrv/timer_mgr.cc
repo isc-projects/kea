@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <asiolink/io_service.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
