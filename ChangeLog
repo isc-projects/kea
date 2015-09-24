@@ -4,7 +4,7 @@
 	attempts to use the header-only error code (ASIO dependency), but
 	may also use the version in the boost system library.  The
 	location of this library can be specified.
-	(Trac #4009, git xxx)
+	(Trac #4009, git 8c293bc0d1804a512964621f114e64fcba0abcb9)
 
 1007.	[func]		tomek
 	DECLINE message in DHCPv6 is now supported. The server is able
