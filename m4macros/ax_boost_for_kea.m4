@@ -16,8 +16,8 @@ dnl
 dnl Boost.Asio depends on Boost.System which can be header only with
 dnl versions >= 1.56. On older and perhaps some recent versions
 dnl libboost_system is required.
-dnl --with-boost-libs can help giving extra arguments or forcing link
-dnl with a Boost library
+dnl --with-boost-libs can help forcing link with a Boost library,
+dnl e.g., --with-boost-libs=-lboost_system
 dnl
 dnl This macro calls:
 dnl
@@ -146,7 +146,7 @@ void testfn(void) { BOOST_STATIC_ASSERT(true); }
 # Get libs when explicitly configured
 AC_ARG_WITH([boost-libs],
   AC_HELP_STRING([--with-boost-libs=SPEC],
-    [specify Boost libraries to link with]),
+    [specify Boost libraries to link with, e.g., '-lboost_system']),
     [BOOST_LIBS="$withval"
      DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boost-libs=$withval"])
 
