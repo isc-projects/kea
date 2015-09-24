@@ -54,6 +54,7 @@ perfdhcp_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 perfdhcp_LDADD += $(CRYPTO_LIBS)
+perfdhcp_LDADD += $(BOOST_LIBS)
 
 # ... and the documentation
 EXTRA_DIST = perfdhcp_internals.dox

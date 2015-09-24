@@ -28,6 +28,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
+#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>

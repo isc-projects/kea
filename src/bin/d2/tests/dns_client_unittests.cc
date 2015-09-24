@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,8 +19,8 @@
 #include <asiodns/logger.h>
 #include <asiolink/interval_timer.h>
 #include <dns/messagerenderer.h>
-#include <asio/ip/udp.hpp>
-#include <asio/socket_base.hpp>
+#include <boost/asio/ip/udp.hpp>
+#include <boost/asio/socket_base.hpp>
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -35,8 +35,8 @@ using namespace isc::d2;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
-using namespace asio;
-using namespace asio::ip;
+using namespace boost::asio;
+using namespace boost::asio::ip;
 
 namespace {
 
@@ -183,7 +183,7 @@ public:
             response_buf.writeUint8At(0xA8, 2);
         }
         // A response message is now ready to send. Send it!
-        socket->send_to(asio::buffer(response_buf.getData(),
+        socket->send_to(boost::asio::buffer(response_buf.getData(),
                                      response_buf.getLength()),
                         *remote);
     }
@@ -258,7 +258,7 @@ public:
 
         response.toWire(renderer, context.get());
         // A response message is now ready to send. Send it!
-        socket->send_to(asio::buffer(renderer.getData(), renderer.getLength()),
+        socket->send_to(boost::asio::buffer(renderer.getData(), renderer.getLength()),
                         *remote);
     }
 
@@ -360,7 +360,7 @@ public:
         // responses. The reuse address option is set so as both sockets can
         // use the same address. This new socket is bound to the test address
         // and port, where requests will be sent.
-        udp::socket udp_socket(service_.get_io_service(), asio::ip::udp::v4());
+        udp::socket udp_socket(service_.get_io_service(), boost::asio::ip::udp::v4());
         udp_socket.set_option(socket_base::reuse_address(true));
         udp_socket.bind(udp::endpoint(address::from_string(TEST_ADDRESS),
                                       TEST_PORT));
@@ -377,7 +377,7 @@ public:
         // The last parameter holds a length of the received request. It is
         // required to construct a response.
         udp::endpoint remote;
-        udp_socket.async_receive_from(asio::buffer(receive_buffer_,
+        udp_socket.async_receive_from(boost::asio::buffer(receive_buffer_,
                                                    sizeof(receive_buffer_)),
                                       remote,
                                       boost::bind(&DNSClientTest::udpReceiveHandler,
@@ -432,12 +432,12 @@ public:
         ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
 
         // Setup our "loopback" server.
-        udp::socket udp_socket(service_.get_io_service(), asio::ip::udp::v4());
+        udp::socket udp_socket(service_.get_io_service(), boost::asio::ip::udp::v4());
         udp_socket.set_option(socket_base::reuse_address(true));
         udp_socket.bind(udp::endpoint(address::from_string(TEST_ADDRESS),
                                       TEST_PORT));
         udp::endpoint remote;
-        udp_socket.async_receive_from(asio::buffer(receive_buffer_,
+        udp_socket.async_receive_from(boost::asio::buffer(receive_buffer_,
                                                    sizeof(receive_buffer_)),
                                       remote,
                                       boost::bind(&DNSClientTest::

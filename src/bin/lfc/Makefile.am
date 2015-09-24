@@ -73,7 +73,7 @@ kea_lfc_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-kea_lfc_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
+kea_lfc_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 kea_lfc_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 if HAVE_MYSQL

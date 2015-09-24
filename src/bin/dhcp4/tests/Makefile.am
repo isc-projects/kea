@@ -123,7 +123,8 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-dhcp4_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(GTEST_LDADD)
+dhcp4_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
+dhcp4_unittests_LDADD = $(BOOST_LIBS) $(GTEST_LDADD)
 endif
 
 noinst_EXTRA_DIST = configs-list.txt

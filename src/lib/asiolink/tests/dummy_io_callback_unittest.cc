@@ -1,4 +1,4 @@
-// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,18 +15,18 @@
 #include <config.h>
 #include <gtest/gtest.h>
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 
 #include <asiolink/dummy_io_cb.h>
 
 using namespace isc::asiolink;
-using namespace asio;
+using namespace boost::asio;
 
 namespace { // begin unnamed namespace
 
 TEST(DummyIOCallbackTest, throws) {
     DummyIOCallback cb;
-    asio::error_code error_code;
+    boost::system::error_code error_code;
 
     // All methods should throw isc::Unexpected.
     EXPECT_THROW(cb(error_code), isc::Unexpected);

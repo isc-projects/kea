@@ -18,6 +18,8 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <string>
 
 namespace isc {

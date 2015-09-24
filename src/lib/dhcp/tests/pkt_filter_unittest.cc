@@ -17,6 +17,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/tests/pkt_filter_test_utils.h>
 #include <gtest/gtest.h>
+#include <fcntl.h>
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;

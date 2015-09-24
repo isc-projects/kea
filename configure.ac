@@ -1241,15 +1241,22 @@ AC_SUBST(GTEST_SOURCE)
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
-# Use local ASIO headers from ext
-#
-CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/asio"
-#
 # Use our 'coroutine' header from ext
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
 #
+# Doesn't seem to be required?
+CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
+#
 # Disable threads: Currently we don't use them.
-CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_THREADS=1"
+CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
+
+# We tried to stay header only
+if test "x${BOOST_LIBS}" = "x"; then
+   # Don't want boost system library
+   CPPFLAGS="$CPPFLAGS -DBOOST_ERROR_CODE_HEADER_ONLY"
+   # Avoid boost::system::throws multiple defines
+   CPPFLAGS="$CPPFLAGS -DBOOST_SYSTEM_NO_DEPRECATED"
+fi
 
 # Check for functions that are not available on all platforms
 AC_CHECK_FUNCS([pselect])
@@ -1266,7 +1273,7 @@ AC_CHECK_FUNCS([pselect])
 # code will be updated by the time we really need it.
 AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
 if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
-	CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_DEV_POLL=1"
+	CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_DEV_POLL=1"
 fi
 
 #
@@ -1380,8 +1387,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  doc/guide/Makefile
                  doc/Makefile
                  doc/version.ent
-                 ext/asio/asio/Makefile
-                 ext/asio/Makefile
+                 ext/coroutine/Makefile
                  ext/gtest/Makefile
                  ext/Makefile
                  m4macros/Makefile
@@ -1570,6 +1576,7 @@ cat >> config.report << END
 Boost:
   BOOST_VERSION:   ${BOOST_VERSION}
   BOOST_INCLUDES:  ${BOOST_INCLUDES}
+  BOOST_LIBS:      ${BOOST_LIBS}
 
 ${CRYPTO_NAME}:
   CRYPTO_VERSION:  ${CRYPTO_VERSION}
