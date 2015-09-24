@@ -56,7 +56,7 @@
 ///
 /// The callback class must provide an operator() with the following signature:
 /// @code
-///    void operator ()(const asio::error_code error_code,
+///    void operator ()(const boost::system::error_code error_code,
 ///                     const size_t bytes_transferred);
 /// @endcode
 ///
@@ -106,7 +106,7 @@
 /// NameChangeListener::invokeRecvHandler in the case of the UDP listener, or
 /// NameChangeSender::invokeSendHandler in the case of UDP sender.
 ///
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <asiolink/udp_endpoint.h>
@@ -190,7 +190,7 @@ public:
         size_t put_len_;
 
         /// @brief Stores the IO layer result code of the completed IO service.
-        asio::error_code error_code_;
+        boost::system::error_code error_code_;
 
         /// @brief Stores the number of bytes transferred by completed IO
         /// service.
@@ -226,7 +226,7 @@ public:
     /// For a read it is the number of bytes written into the
     /// buffer.  For a write it is the number of bytes read from the
     /// buffer.
-    void operator ()(const asio::error_code error_code,
+    void operator ()(const boost::system::error_code error_code,
                      const size_t bytes_transferred);
 
     /// @brief Returns the number of bytes transferred by the completed IO
@@ -247,14 +247,14 @@ public:
     }
 
     /// @brief Returns the completed IO layer service outcome status.
-    asio::error_code getErrorCode() const {
+    boost::system::error_code getErrorCode() const {
         return (data_->error_code_);
     }
 
     /// @brief Sets the completed IO layer service outcome status.
     ///
     /// @param value is the new value to assign to outcome status.
-    void setErrorCode(const asio::error_code value) {
+    void setErrorCode(const boost::system::error_code value) {
         data_->error_code_  = value;
     }
 
@@ -415,7 +415,7 @@ private:
     NameChangeFormat format_;
 
     /// @brief Low level socket underneath the listening socket
-    boost::shared_ptr<asio::ip::udp::socket> asio_socket_;
+    boost::shared_ptr<boost::asio::ip::udp::socket> asio_socket_;
 
     /// @brief NameChangeUDPSocket listening socket
     boost::shared_ptr<NameChangeUDPSocket> socket_;
@@ -571,7 +571,7 @@ private:
     NameChangeFormat format_;
 
     /// @brief Low level socket underneath the sending socket.
-    boost::shared_ptr<asio::ip::udp::socket> asio_socket_;
+    boost::shared_ptr<boost::asio::ip::udp::socket> asio_socket_;
 
     /// @brief NameChangeUDPSocket sending socket.
     boost::shared_ptr<NameChangeUDPSocket> socket_;

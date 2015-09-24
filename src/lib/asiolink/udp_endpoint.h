@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 #ifndef UDP_ENDPOINT_H
 #define UDP_ENDPOINT_H 1
 
-#ifndef ASIO_HPP
+#ifndef BOOST_ASIO_HPP
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
 
@@ -40,7 +40,7 @@ public:
     /// Creates an internal endpoint.  This is expected to be set by some
     /// external call.
     UDPEndpoint() :
-        asio_endpoint_placeholder_(new asio::ip::udp::endpoint()),
+        asio_endpoint_placeholder_(new boost::asio::ip::udp::endpoint()),
         asio_endpoint_(*asio_endpoint_placeholder_)
     {}
 
@@ -50,7 +50,7 @@ public:
     /// \param port The UDP port number of the endpoint.
     UDPEndpoint(const IOAddress& address, const unsigned short port) :
         asio_endpoint_placeholder_(
-            new asio::ip::udp::endpoint(asio::ip::address::from_string(address.toText()),
+            new boost::asio::ip::udp::endpoint(boost::asio::ip::address::from_string(address.toText()),
                               port)),
         asio_endpoint_(*asio_endpoint_placeholder_)
     {}
@@ -61,7 +61,7 @@ public:
     /// corresponding ASIO class, \c udp::endpoint.
     ///
     /// \param asio_endpoint The ASIO representation of the UDP endpoint.
-    UDPEndpoint(asio::ip::udp::endpoint& asio_endpoint) :
+    UDPEndpoint(boost::asio::ip::udp::endpoint& asio_endpoint) :
         asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
     {}
 
@@ -71,8 +71,8 @@ public:
     /// corresponding ASIO class, \c udp::endpoint.
     ///
     /// \param asio_endpoint The ASIO representation of the TCP endpoint.
-    UDPEndpoint(const asio::ip::udp::endpoint& asio_endpoint) :
-        asio_endpoint_placeholder_(new asio::ip::udp::endpoint(asio_endpoint)),
+    UDPEndpoint(const boost::asio::ip::udp::endpoint& asio_endpoint) :
+        asio_endpoint_placeholder_(new boost::asio::ip::udp::endpoint(asio_endpoint)),
         asio_endpoint_(*asio_endpoint_placeholder_)
     {}
 
@@ -102,16 +102,16 @@ public:
 
     // This is not part of the exposed IOEndpoint API but allows
     // direct access to the ASIO implementation of the endpoint
-    inline const asio::ip::udp::endpoint& getASIOEndpoint() const {
+    inline const boost::asio::ip::udp::endpoint& getASIOEndpoint() const {
         return (asio_endpoint_);
     }
-    inline asio::ip::udp::endpoint& getASIOEndpoint() {
+    inline boost::asio::ip::udp::endpoint& getASIOEndpoint() {
         return (asio_endpoint_);
     }
 
 private:
-    asio::ip::udp::endpoint* asio_endpoint_placeholder_;
-    asio::ip::udp::endpoint& asio_endpoint_;
+    boost::asio::ip::udp::endpoint* asio_endpoint_placeholder_;
+    boost::asio::ip::udp::endpoint& asio_endpoint_;
 };
 
 } // namespace asiolink

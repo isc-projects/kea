@@ -109,6 +109,8 @@
           At least Boost version 1.35 is required.
   <!-- TODO: we don't check for this version -->
   <!-- NOTE: jreed has tested with 1.34, 1.38, and 1.41. -->
+          When header-only Boost error code is not available or wanted, the
+          Boost system library is required too.
         </para>
         </listitem>
 
@@ -256,9 +258,28 @@ Debian and Ubuntu:
           </varlistentry>
 
           <varlistentry>
+            <term>--with-boost-libs</term>
+            <listitem>
+              <simpara>Specify Boost libraries to link with (this option
+                exists only to provide a way to enforce such a list:
+                usually this should not be used).
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-boost-lib-dir</term>
+            <listitem>
+              <simpara>Specify the path to Boost libraries to link with
+                (usually there should be no reason to specify this option).
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term>--with-botan-config</term>
             <listitem>
-              <simpara>To specific the path to the botan-config
+              <simpara>Specify the path to the botan-config
                 script to build with Botan for the crypto code.
               </simpara>
             </listitem>
@@ -327,6 +348,16 @@ Debian and Ubuntu:
       --with-boost-include=/usr/pkg/include \
       --with-dhcp-pgsql=/usr/local/bin/pg_config \
       --prefix=/opt/kea</userinput></screen>
+        </para>
+
+        <para>
+          If you have some problems with building Kea using the header-only
+          Boost error code or you'd like to use the Boost system library
+          (e.g., located in /usr/pkg/lib):
+
+          <screen>$ <userinput>./configure \
+      --with-boost-libs=-lboost_system \
+      --with-boost-lib-dir=/usr/pkg/lib</userinput></screen>
         </para>
 
         <para>

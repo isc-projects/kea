@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 
@@ -47,7 +47,7 @@ public:
     void setup(const IntervalTimer::Callback& cbfunc, const long interval,
                const IntervalTimer::Mode& interval_mode
                = IntervalTimer::REPEATING);
-    void callback(const asio::error_code& error);
+    void callback(const boost::system::error_code& error);
     void cancel() {
         timer_.cancel();
         interval_ = 0;
@@ -61,7 +61,7 @@ private:
     // interval in milliseconds
     long interval_;
     // asio timer
-    asio::deadline_timer timer_;
+    boost::asio::deadline_timer timer_;
 
     // Controls how the timer behaves after expiration.
     IntervalTimer::Mode mode_;
@@ -113,8 +113,8 @@ IntervalTimerImpl::update() {
         // Pass a function bound with a shared_ptr to this.
         timer_.async_wait(boost::bind(&IntervalTimerImpl::callback,
                                       shared_from_this(),
-                                      asio::placeholders::error));
-    } catch (const asio::system_error& e) {
+                                      boost::asio::placeholders::error));
+    } catch (const boost::system::system_error& e) {
         isc_throw(isc::Unexpected, "Failed to update timer: " << e.what());
     } catch (const boost::bad_weak_ptr&) {
         // Can't happen. It means a severe internal bug.
@@ -123,7 +123,7 @@ IntervalTimerImpl::update() {
 }
 
 void
-IntervalTimerImpl::callback(const asio::error_code& ec) {
+IntervalTimerImpl::callback(const boost::system::error_code& ec) {
     assert(interval_ != INVALIDATED_INTERVAL);
     if (interval_ == 0 || ec) {
         // timer has been canceled. Do nothing.

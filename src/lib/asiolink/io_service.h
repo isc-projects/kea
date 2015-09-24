@@ -17,8 +17,10 @@
 
 #include <boost/function.hpp>
 
+namespace boost {
 namespace asio {
     class io_service;
+}
 }
 
 namespace isc {
@@ -76,7 +78,7 @@ public:
     /// that share the same \c io_service with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
-    asio::io_service& get_io_service();
+    boost::asio::io_service& get_io_service();
 
     /// \brief Post a callback to the end of the queue.
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
 
 #include <gtest/gtest.h>
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <asiolink/io_address.h>
 #include <asiolink/tcp_endpoint.h>
 
@@ -26,7 +26,7 @@ using namespace isc::asiolink;
 using namespace std;
 
 // This test checks that the endpoint can manage its own internal
-// asio::ip::tcp::endpoint object.
+// boost::asio::ip::tcp::endpoint object.
 
 TEST(TCPEndpointTest, v4Address) {
     const string test_address("192.0.2.1");

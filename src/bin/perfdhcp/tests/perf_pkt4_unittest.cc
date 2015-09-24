@@ -22,6 +22,8 @@
 #include <dhcp/option.h>
 #include <dhcp/dhcp4.h>
 
+#include <boost/scoped_ptr.hpp>
+
 #include "../localized_option.h"
 #include "../perf_pkt4.h"
 

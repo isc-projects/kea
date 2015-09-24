@@ -20,7 +20,7 @@
 // See the description of the namespace below.
 #include <unistd.h>             // for some network system calls
 #include <stdint.h>             // for uint32_t
-#include <asio/ip/address.hpp>
+#include <boost/asio/ip/address.hpp>
 
 #include <functional>
 #include <string>
@@ -70,7 +70,7 @@ public:
     /// This constructor never throws an exception.
     ///
     /// \param asio_address The ASIO \c ip::address to be converted.
-    IOAddress(const asio::ip::address& asio_address);
+    IOAddress(const boost::asio::ip::address& asio_address);
     //@}
 
     /// @brief Constructor for ip::address_v4 object.
@@ -192,7 +192,7 @@ public:
     /// It is useful for comparing which address is bigger.
     /// Operations within one protocol family are obvious.
     /// Comparisons between v4 and v6 will allways return v4
-    /// being smaller. This follows boost::asio::ip implementation
+    /// being smaller. This follows boost::boost::asio::ip implementation
     bool lessThan(const IOAddress& other) const {
         if (this->getFamily() == other.getFamily()) {
             if (this->getFamily() == AF_INET6) {
@@ -317,7 +317,7 @@ public:
     //@}
 
 private:
-    asio::ip::address asio_address_;
+    boost::asio::ip::address asio_address_;
 };
 
 /// \brief Insert the IOAddress as a string into stream.

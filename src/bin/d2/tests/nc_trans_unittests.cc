@@ -24,10 +24,9 @@
 #include <util/buffer.h>
 #include <nc_test_utils.h>
 
-#include <asio/ip/udp.hpp>
-#include <asio/socket_base.hpp>
-#include <asio.hpp>
-#include <asio/error_code.hpp>
+#include <boost/asio/ip/udp.hpp>
+#include <boost/asio/socket_base.hpp>
+#include <boost/asio.hpp>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>

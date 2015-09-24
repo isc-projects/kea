@@ -21,7 +21,7 @@
 
 #include <coroutine.h>
 
-#include <asio/error_code.hpp>
+#include <boost/system/error_code.hpp>
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 
@@ -189,7 +189,7 @@ public:
     ///
     /// \param ec Error code, the result of the last asynchronous I/O operation.
     /// \param length Amount of data received on the last asynchronous read
-    void operator()(asio::error_code ec = asio::error_code(), size_t length = 0);
+    void operator()(boost::system::error_code ec = boost::system::error_code(), size_t length = 0);
 
     /// \brief Terminate query
     ///
@@ -215,7 +215,7 @@ private:
     /// Records an I/O failure to the log file
     ///
     /// \param ec ASIO error code
-    void logIOFailure(asio::error_code ec);
+    void logIOFailure(boost::system::error_code ec);
 
     // Member variables.  All data is in a structure pointed to by a shared
     // pointer.  The IOFetch object is copied a number of times during its

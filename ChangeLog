@@ -1,3 +1,11 @@
+1008.	[build]		fdupont
+	Removed the included header-only ASIO code.  Kea is now built
+	against the installed copy of Boost.  The build by default
+	attempts to use the header-only error code (ASIO dependency), but
+	may also use the version in the boost system library.  The
+	location of this library can be specified.
+	(Trac #4009, git xxx)
+
 1007.	[func]		tomek
 	DECLINE message in DHCPv6 is now supported. The server is able
 	to receive it, check its correctness and move the lease to

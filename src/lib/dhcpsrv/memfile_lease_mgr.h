@@ -53,7 +53,7 @@ class LFCSetup;
 /// @c asiolink::IOService to execute the callback. The @c LeaseMgr class
 /// creates this object, which can be obtained by the caller using the
 /// @c LeaseMgr::getIOService. The caller should later call an appropriate
-/// method, @c asio::io_service::poll_one to execute the callback when
+/// method, @c boost::asio::io_service::poll_one to execute the callback when
 /// the timer is ready.
 ///
 /// When the backend is starting up, it reads leases from the lease file (one

@@ -40,14 +40,14 @@
 #include <util/buffer.h>
 #include <util/io_utilities.h>
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 
 #include <asiolink/io_service.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tcp_socket.h>
 
-using namespace asio;
-using namespace asio::ip;
+using namespace boost::asio;
+using namespace boost::asio::ip;
 using namespace isc::util;
 using namespace isc::asiolink;
 using namespace std;
@@ -87,15 +87,15 @@ public:
             name_(""), queued_(NONE), called_(NONE), data_(MIN_SIZE, 0)
         {}
 
-        asio::error_code    error_code_;    ///< Completion error code
-        size_t              length_;        ///< Bytes transferred in this I/O
-        size_t              cumulative_;    ///< Cumulative bytes transferred
-        size_t              expected_;      ///< Expected amount of data
-        size_t              offset_;        ///< Where to put data in buffer
-        std::string         name_;          ///< Which of the objects this is
-        Operation           queued_;        ///< Queued operation
-        Operation           called_;        ///< Which callback called
-        std::vector<uint8_t> data_;  ///< Receive buffer
+        boost::system::error_code  error_code_;    ///< Completion error code
+        size_t                     length_;        ///< Bytes transferred in this I/O
+        size_t                     cumulative_;    ///< Cumulative bytes transferred
+        size_t                     expected_;      ///< Expected amount of data
+        size_t                     offset_;        ///< Where to put data in buffer
+        std::string                name_;          ///< Which of the objects this is
+        Operation                  queued_;        ///< Queued operation
+        Operation                  called_;        ///< Which callback called
+        std::vector<uint8_t>       data_;          ///< Receive buffer
     };
 
     /// \brief Constructor
@@ -128,7 +128,7 @@ public:
     ///
     /// \param ec I/O completion error code passed to callback function.
     /// \param length Number of bytes transferred
-    void operator()(asio::error_code ec = asio::error_code(),
+    void operator()(boost::system::error_code ec = boost::system::error_code(),
                             size_t length = 0)
     {
         setCode(ec.value());
@@ -145,7 +145,7 @@ public:
     ///
     /// \param code New value of completion code
     void setCode(int code) {
-        ptr_->error_code_ = asio::error_code(code, asio::error_code().category());
+        ptr_->error_code_ = boost::system::error_code(code, boost::system::error_code().category());
     }
 
     /// \brief Get number of bytes transferred in I/O
@@ -222,7 +222,7 @@ serverRead(tcp::socket& socket, TCPCallback& server_cb) {
 
         // Read block of data and update cumulative amount of data received.
         server_cb.length() = socket.receive(
-            asio::buffer(server_cb.data() + server_cb.cumulative(),
+            boost::asio::buffer(server_cb.data() + server_cb.cumulative(),
                 TCPCallback::MIN_SIZE - server_cb.cumulative()));
         server_cb.cumulative() += server_cb.length();
 
@@ -413,7 +413,7 @@ TEST(TCPSocket, sequenceTest) {
     writeUint16(sizeof(INBOUND_DATA), server_cb.data(), TCPCallback::MIN_SIZE);
     copy(INBOUND_DATA, (INBOUND_DATA + sizeof(INBOUND_DATA) - 1),
         (server_cb.data() + 2));
-    server_socket.async_send(asio::buffer(server_cb.data(),
+    server_socket.async_send(boost::asio::buffer(server_cb.data(),
                                           (sizeof(INBOUND_DATA) + 2)),
                              server_cb);
 
@@ -460,11 +460,16 @@ TEST(TCPSocket, sequenceTest) {
                 EXPECT_EQ(0, server_cb.getCode());
                 EXPECT_EQ((sizeof(INBOUND_DATA) + 2), server_cb.length());
                 server_complete = true;
-                continue;
             }
         }
 
+	// Has the client run?
         if (!client_complete) {
+
+	    if (client_cb.called() != client_cb.queued()) {
+		// No. Run the service another time.
+		continue;
+	    }
 
             // Client callback must have run.  Check that it ran OK.
             EXPECT_EQ(TCPCallback::READ, client_cb.called());
