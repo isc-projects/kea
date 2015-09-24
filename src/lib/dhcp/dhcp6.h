@@ -15,6 +15,13 @@
 #ifndef DHCP6_H
 #define DHCP6_H
 
+/// @note Not yet implemented but assigned by IANA code points are
+/// left in a comment.
+/// To implement a standard option, remove the comment,
+/// add an entry in std_option_defs.h, stdOptionDefs6 unit test
+/// in tests/libdhcp++_unittest.cc and dhcp6-std-options-list in
+/// the dhcp6-srv.xml source file of the user guide.
+
 /* DHCPv6 Option codes: */
 
 #define D6O_CLIENTID                            1 /* RFC3315 */
@@ -122,6 +129,8 @@
 //#define D6O_LQ_END_TIME                        102
 /* 103-142 unassigned */
 //#define D6O_IPV6_ADDRESS_ANDSF                 143 /* RFC6153 */
+
+// EXPERIMENTAL
 /* secure DHCPv6 (draft-ietf-dhc-sedhcpv6-08) */
 /* temporary values for hackathon 93 */
 #define D6O_PUBLIC_KEY                         701
@@ -149,6 +158,8 @@
 //#define STATUS_CatchUpComplete          13
 //#define STATUS_NotSupported             14
 //#define STATUS_TLSConnectionRefused     15
+
+// EXPERIMENTAL
 /* secure DHCPv6 (draft-ietf-dhc-sedhcpv6-08) */
 /* temporary values for hackathon 93 */
 #define STATUS_AlgorithmNotSupported   705
@@ -199,6 +210,7 @@ extern const int dhcpv6_type_name_max;
 #define HWTYPE_ETHERNET    0x0001
 #define HWTYPE_INFINIBAND  0x0020
 
+// EXPERIMENTAL
 // Secure DHCPv6 (draft-ietf-dhc-sedhcpv6-08.txt)
 // (can't use an enum because HashAlgorithm name is already taken)
 #define SHA_256                 1

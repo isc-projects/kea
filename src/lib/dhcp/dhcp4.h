@@ -36,6 +36,13 @@
 
 #include <stdint.h>
 
+/// @note Not yet implemented but assigned by IANA code points are
+/// left in a comment.
+/// To implement a standard option, remove the comment,
+/// add an entry in std_option_defs.h, stdOptionDefs4 unit test
+/// in tests/libdhcp++_unittest.cc and dhcp4-std-options-list-part2
+/// in the dhcp4-srv.xml source file of the user guide.
+
 namespace isc {
 namespace dhcp {
 
