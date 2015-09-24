@@ -21,6 +21,8 @@ run_unittests_SOURCES += io_fetch_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
+run_unittests_LDADD  = $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
+run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
