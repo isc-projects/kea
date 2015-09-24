@@ -1,3 +1,8 @@
+1009.	[bug]		fdupont
+	Now libutil blocks all signals when creating a new thread
+	(so signals are delivered only to the main thread).
+	(Trac #4065, git a4a8e422e613e4378f0a0641e4c480b73d67ebeb)
+
 1008.	[build]		fdupont
 	Removed the included header-only ASIO code.  Kea is now built
 	against the installed copy of Boost.  The build by default
