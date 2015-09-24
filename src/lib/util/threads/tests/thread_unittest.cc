@@ -108,12 +108,13 @@ TEST(ThreadTest, exception) {
     }
 }
 
+// Returns signal mask set for a thread.
 void
 getSignalMask(sigset_t* mask) {
     pthread_sigmask(SIG_SETMASK, 0, mask);
 }
 
-// Verify that all signals are blocked
+// Verify that all signals are blocked.
 TEST(ThreadTest, sigmask) {
     sigset_t mask;
     sigemptyset(&mask);
