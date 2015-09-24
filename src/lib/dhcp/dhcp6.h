@@ -66,7 +66,7 @@
 #define D6O_LQ_RELAY_DATA                       47 /* RFC5007 */
 #define D6O_LQ_CLIENT_LINK                      48 /* RFC5007 */
 //#define D6O_MIP6_HNIDF                          49 /* RFC6610 */
-//#define D6O_MIP6_VDIDF                          50 /* RFC6610 */
+//#define D6O_MIP6_VDINF                          50 /* RFC6610 */
 //#define D6O_V6_LOST                             51 /* RFC5223 */
 //#define D6O_CAPWAP_AC_V6                        52 /* RFC5417 */
 //#define D6O_RELAY_ID                            53 /* RFC5460 */
