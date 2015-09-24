@@ -89,7 +89,8 @@ typedef boost::function<bool(int signum)> BoolSignalHandler;
 ///
 /// @note This class is not thread safe. It uses static variables and
 /// functions to track a global state of signal registration and received
-/// signals' queue.
+/// signals' queue. But the thread library is signal safe as new threads
+/// are created with all signals blocked.
 class SignalSet : public boost::noncopyable {
 public:
     /// @brief Constructor installing one signal.
