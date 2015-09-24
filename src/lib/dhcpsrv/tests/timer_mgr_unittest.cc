@@ -350,10 +350,10 @@ TEST_F(TimerMgrTest, cancel) {
 // actually called.
 TEST_F(TimerMgrTest, scheduleTimers) {
     // Register two timers: 'timer1' and 'timer2'. The first timer will
-    // be executed at the 1ms interval. The second one at the 5ms
+    // be executed at the 50ms interval. The second one at the 100ms
     // interval.
-    ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
-    ASSERT_NO_FATAL_FAILURE(registerTimer("timer2", 5));
+    ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 50));
+    ASSERT_NO_FATAL_FAILURE(registerTimer("timer2", 100));
 
     // Kick in the timers.
     ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
@@ -362,25 +362,25 @@ TEST_F(TimerMgrTest, scheduleTimers) {
     // We can start the worker thread before we even kick in the timers.
     ASSERT_NO_THROW(timer_mgr_->startThread());
 
-    // Run IfaceMgr::receive6() in the loop for 500ms. This function
+    // Run IfaceMgr::receive6() in the loop for 1000ms. This function
     // will read data from the watch sockets created when the timers
     // were registered. The data is delivered to the watch sockets
     // at the interval of the timers, which should break the blocking
     // call to receive6(). As a result, the callbacks associated
     // with the watch sockets should be called.
-    doWait(500);
+    doWait(1000);
 
     // Stop the worker thread, which would halt the execution of
     // the timers.
     ASSERT_NO_THROW(timer_mgr_->stopThread(true));
 
-    // We have been running the timer for 500ms at the interval of
-    // 1 ms. The maximum number of callbacks is 500. However, the
+    // We have been running the timer for 1000ms at the interval of
+    // 50ms. The maximum number of callbacks is 20. However, the
     // callback itself takes time. Stoping the thread takes time.
     // So, the real number differs significantly. We don't know
     // exactly how many have been executed. It should be more
     // than 10 for sure. But we really made up the numbers here.
-    EXPECT_GT(calls_count_["timer1"], 25);
+    EXPECT_GT(calls_count_["timer1"], 10);
     // For the second timer it should be more than 5.
     EXPECT_GT(calls_count_["timer2"], 5);
 
