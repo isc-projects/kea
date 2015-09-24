@@ -271,7 +271,7 @@ Debian and Ubuntu:
             <term>--with-boost-lib-dir</term>
             <listitem>
               <simpara>Specify the path to Boost libraries to link with
-                (same comment than for <option>--with-boost-libs</option>).
+                (usually there should be no reason to specify this option).
               </simpara>
             </listitem>
           </varlistentry>
@@ -351,8 +351,9 @@ Debian and Ubuntu:
         </para>
 
         <para>
-          If you have some problems with the header-only Boost error code
-          or you'd like to use the Boost system library in /usr/pkg/lib:
+          If you have some problems with building Kea using the header-only
+          Boost error code or you'd like to use the Boost system library
+          (e.g., located in /usr/pkg/lib):
 
           <screen>$ <userinput>./configure \
       --with-boost-libs=-lboost_system \
