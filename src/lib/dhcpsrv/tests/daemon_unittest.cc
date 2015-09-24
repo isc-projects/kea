@@ -57,7 +57,12 @@ namespace {
 class DaemonTest : public ::testing::Test {
 public:
     /// @brief Constructor
-    DaemonTest() {
+    DaemonTest() : env_(0), copy_() {
+        // Take a copy of KEA_PIDFILE_DIR environment variable value
+        env_ = getenv("KEA_PIDFILE_DIR");
+        if (env_) {
+            copy_ = std::string(env_);
+        }
     }
 
     /// @brief Destructor
@@ -67,7 +72,19 @@ public:
     /// the default after each test completes.
     ~DaemonTest() {
         isc::log::setDefaultLoggingOutput();
+        // Restore KEA_PIDFILE_DIR environment variable value
+        env_ = getenv("KEA_PIDFILE_DIR");
+        if (!copy_.empty() && (!env_ || !copy_.compare(env_))) {
+            setenv("KEA_PIDFILE_DIR", copy_.c_str(), 1);
+        }
     }
+
+private:
+    /// @brief KEA_PIDFILE_DIR environment variable value
+    char* env_;
+
+    /// @brief copy of KEA_PIDFILE_DIR environment variable value
+    std::string copy_;
 };
 
 
