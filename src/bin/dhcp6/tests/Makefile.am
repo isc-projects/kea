@@ -128,7 +128,7 @@ dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 dhcp6_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
-dhcp6_unittests_LDADD = $(BOOST_LIBS) $(GTEST_LDADD)
+dhcp6_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)
