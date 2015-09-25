@@ -40,6 +40,7 @@ lib_LTLIBRARIES = libkea-hooks.la
 libkea_hooks_la_SOURCES  =
 libkea_hooks_la_SOURCES += callout_handle.cc callout_handle.h
 libkea_hooks_la_SOURCES += callout_manager.cc callout_manager.h
+libkea_hooks_la_SOURCES += hooks.h
 libkea_hooks_la_SOURCES += hooks_log.cc hooks_log.h
 libkea_hooks_la_SOURCES += hooks_manager.cc hooks_manager.h
 libkea_hooks_la_SOURCES += library_handle.cc library_handle.h
