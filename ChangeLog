@@ -3,7 +3,7 @@
 	This protocol is still experimental. The option and other protocol
 	codes are for testing, they will be updated when IANA assigns
 	official values.
-	(Trac #4015, git 8236e0487265d7cb13d4c056bca08aa1c25a99e7)
+	(Trac #4015, git 95f8c0d0af45807c1f303b9bbbb08f82b3bfc343)
 
 1010.	[bug]		tmark
 	Fixed test failures occuring for some tests after
