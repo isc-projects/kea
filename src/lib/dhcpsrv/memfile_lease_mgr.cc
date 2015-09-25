@@ -567,7 +567,7 @@ Memfile_LeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
     // Lease must exist if it is to be updated.
     Lease4StorageAddressIndex::const_iterator lease_it = index.find(lease->addr_);
-    if (lease_it == storage4_.end()) {
+    if (lease_it == index.end()) {
         isc_throw(NoSuchLease, "failed to update the lease with address "
                   << lease->addr_ << " - no such lease");
     }
