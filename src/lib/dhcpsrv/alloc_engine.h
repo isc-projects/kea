@@ -480,7 +480,7 @@ public:
     ///   else (see host reservation)
     /// - client's leases does not match his reservations
     ///
-    /// This method will call  the lease6_renew callout.
+    /// This method will call the lease6_renew callout.
     ///
     /// @param ctx Message processing context. It holds various information
     /// extracted from the client's message and required to allocate a lease.
@@ -507,7 +507,7 @@ public:
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
     /// @param timeout Maximum amount of time that the reclaimation routine
-    /// may be processing expired leases, expressed in seconds.
+    /// may be processing expired leases, expressed in milliseconds.
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the
     /// database in the "expired-reclaimed" state (if false).
@@ -522,7 +522,7 @@ public:
     ///
     /// This method is executed periodically to act upon expired leases. This
     /// includes for each lease:
-    /// - executing "lease_expire6" hook,
+    /// - executing "lease_expire4" hook,
     /// - removing DNS record for a lease,
     /// - reclaiming a lease in the database, i.e. setting its state to
     ///   "expired-reclaimed" or removing it from the lease databse,
@@ -530,7 +530,7 @@ public:
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
     /// @param timeout Maximum amount of time that the reclaimation routine
-    /// may be processing expired leases, expressed in seconds.
+    /// may be processing expired leases, expressed in milliseconds.
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the
     /// database in the "expired-reclaimed" state (if false).

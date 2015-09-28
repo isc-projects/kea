@@ -18,6 +18,7 @@
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
@@ -26,6 +27,7 @@
 #include <iomanip>
 #include <sstream>
 #include <time.h>
+#include <unistd.h>
 #include <vector>
 
 using namespace std;
@@ -34,6 +36,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::dhcp_ddns;
+using namespace isc::hooks;
 using namespace isc::stats;
 
 namespace {
@@ -87,6 +90,12 @@ struct UpperBound {
     /// @brief Value wrapped in the structure.
     size_t upper_bound_;
 };
+
+/// @brief List holding addresses for executed callouts.
+std::list<IOAddress> callouts_;
+
+/// @brief Callout argument name for expired lease.
+std::string callout_argument_name("lease4");
 
 /// @brief Base test fixture class for the lease reclamation routines in the
 /// @c AllocEngine.
@@ -150,11 +159,6 @@ struct UpperBound {
 /// See @c ExpirationAllocEngineTest::testLeases for further details.
 ///
 /// @todo These tests should be extended to cover the following cases:
-/// - timeout value in the lease reclamation routines - the most reliable
-///   way to test it will be by attaching a lease4_expire/lease6_expire
-///   hooks which would block for a specific period of time. This will
-///   allow for calculating the approximate number of reclaimed leases
-///   within a given timeout. See ticket #3972.
 /// - declined leases - declined leases expire and should be removed
 ///   from the lease database by the lease reclamation routine. See
 ///   ticket #3976.
@@ -211,6 +215,9 @@ public:
 
         // Kill lease manager.
         LeaseMgrFactory::destroy();
+
+        // Remove callouts executed.
+        callouts_.clear();
     }
 
     /// @brief Starts D2 client.
@@ -450,6 +457,75 @@ public:
 
         // No match found, so we're good.
         return (true);
+    }
+
+    /// @brief Lease algorithm checking if callout has been executed for
+    /// the expired lease.
+    ///
+    /// @param lease Pointer to lease.
+    /// @return true if callout has been executed for the lease.
+    static bool leaseCalloutExecuted(const LeasePtrType& lease) {
+        return (std::find(callouts_.begin(), callouts_.end(), lease->addr_) !=
+                callouts_.end());
+    }
+
+    /// @brief Lease algorithm checking if callout hasn't been executed for
+    /// the expired lease.
+    ///
+    /// @param lease Pointer to lease.
+    /// @return true if callout hasn't been executed for the lease.
+    static bool leaseCalloutNotExecuted(const LeasePtrType& lease) {
+        return (!leaseCalloutExecuted(lease));
+    }
+
+    /// @brief Implements "lease{4,6}_expire" callout.
+    ///
+    /// @param callout_handle Callout handle.
+    /// @return Zero.
+    static int leaseExpireCallout(CalloutHandle& callout_handle) {
+        LeasePtrType lease;
+        callout_handle.getArgument(callout_argument_name, lease);
+        bool remove_lease = true;
+        callout_handle.getArgument("remove_lease", remove_lease);
+
+        // Check if the remove_lease is set to false and assume that the callout
+        // has been successfully executed if it is. This is mainly to test
+        // that the lease reclamation routine sets this value at all.
+        if (!remove_lease) {
+            callouts_.push_back(lease->addr_);
+        }
+
+        return (0);
+    }
+
+    /// @brief Implements "lease{4,6}_expire callout returning skip flag.
+    ///
+    /// @param callout_handle Callout handle.
+    /// @return Zero.
+    static int leaseExpireWithSkipCallout(CalloutHandle& callout_handle) {
+        leaseExpireCallout(callout_handle);
+        callout_handle.setSkip(true);
+
+        return (0);
+    }
+
+    /// @brief Implements "lease{4,6}_expire callout, which lasts at least
+    /// 2ms.
+    ///
+    /// This callout is useful to test scenarios where the reclamation of the
+    /// lease needs to take a known amount of time. If the callout is installed
+    /// it will take at least 2ms for each lease. It is then possible to calculate
+    /// the approximate time that the reclamation of all leases would take and
+    /// test that the timeouts for the leases' reclamation work as expected.
+    ///
+    /// @param callout_handle Callout handle.
+    /// @return Zero.
+    static int leaseExpireWithDelayCallout(CalloutHandle& callout_handle) {
+        leaseExpireCallout(callout_handle);
+        // Delay the return from the callout by 2ms.
+        usleep(2000);
+
+        return (0);
     }
 
     /// @brief Returns removal name change request from the D2 client queue.
@@ -734,12 +810,113 @@ public:
         EXPECT_TRUE(testLeases(&dnsUpdateGeneratedForLease, &oddLeaseIndex));
     }
 
+    /// @brief This test verfies that callouts are executed for each expired
+    /// lease when installed.
+    void testReclaimExpiredLeasesHooks() {
+        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+            if (evenLeaseIndex(i)) {
+                expire(i, 1000 - i);
+            }
+        }
+
+        vector<string> libraries; // no libraries at this time
+        HooksManager::loadLibraries(libraries);
+
+        // Install a callout: lease4_expire or lease6_expire.
+        std::ostringstream callout_name;
+        callout_name << callout_argument_name << "_expire";
+        EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        callout_name.str(), leaseExpireCallout));
+
+        ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, false));
+
+        // Callouts should be executed for leases with even indexes and these
+        // leases should be reclaimed.
+        EXPECT_TRUE(testLeases(&leaseCalloutExecuted, &evenLeaseIndex));
+        EXPECT_TRUE(testLeases(&leaseReclaimed, &evenLeaseIndex));
+        // Callouts should not be executed for leases with odd indexes and these
+        // leases should not be reclaimed.
+        EXPECT_TRUE(testLeases(&leaseCalloutNotExecuted, &oddLeaseIndex));
+        EXPECT_TRUE(testLeases(&leaseNotReclaimed, &oddLeaseIndex));
+    }
+
+    /// @brief This test verfies that callouts are executed for each expired
+    /// lease and that the lease is not reclaimed when skip flag is set.
+    void testReclaimExpiredLeasesHooksWithSkip() {
+        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+            if (evenLeaseIndex(i)) {
+                expire(i, 1000 - i);
+            }
+        }
+
+        vector<string> libraries; // no libraries at this time
+        HooksManager::loadLibraries(libraries);
+
+        // Install a callout: lease4_expire or lease6_expire.
+        std::ostringstream callout_name;
+        callout_name << callout_argument_name << "_expire";
+        EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        callout_name.str(), leaseExpireWithSkipCallout));
+
+        ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, false));
+
+        // Callouts should have been executed for leases with even indexes.
+        EXPECT_TRUE(testLeases(&leaseCalloutExecuted, &evenLeaseIndex));
+        // Callouts should not be executed for leases with odd indexes.
+        EXPECT_TRUE(testLeases(&leaseCalloutNotExecuted, &oddLeaseIndex));
+        // Leases shouldn't be reclaimed because the callout sets the
+        // skip flag for each of them.
+        EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes));
+    }
+
+    /// @brief This test verifies that it is possible to set the timeout for
+    /// the execution of the lease reclamation routine.
+    void testReclaimExpiredLeasesTimeout(const uint16_t timeout) {
+        // Leases are segregated from the most expired to the least expired.
+        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+            expire(i, 2000 - i);
+        }
+
+        vector<string> libraries;
+        HooksManager::loadLibraries(libraries);
+
+        // Install a callout: lease4_expire or lease6_expire. Each callout
+        // takes at least 2ms to run (it uses usleep).
+        std::ostringstream callout_name;
+        callout_name << callout_argument_name << "_expire";
+        EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        callout_name.str(), leaseExpireWithDelayCallout));
+
+        // Reclaim leases with timeout.
+        ASSERT_NO_THROW(reclaimExpiredLeases(0, timeout, false));
+
+        // We reclaimed at most (timeout / 2ms) leases.
+        const uint16_t theoretical_reclaimed = static_cast<uint16_t>(timeout / 2);
+
+        // The actual number of leases reclaimed is likely to be lower than
+        // the theoretical number. For low theoretical number the adjusted
+        // number is always 1. For higher number, it will be 10 less than the
+        // theoretical number.
+        const uint16_t adjusted_reclaimed = (theoretical_reclaimed > 10 ?
+                                             theoretical_reclaimed - 10 : 1);
+
+        EXPECT_TRUE(testLeases(&leaseCalloutExecuted, &allLeaseIndexes,
+                               LowerBound(0), UpperBound(adjusted_reclaimed)));
+        EXPECT_TRUE(testLeases(&leaseReclaimed, &allLeaseIndexes,
+                               LowerBound(0), UpperBound(adjusted_reclaimed)));
+        EXPECT_TRUE(testLeases(&leaseCalloutNotExecuted, &allLeaseIndexes,
+                               LowerBound(theoretical_reclaimed + 1),
+                               UpperBound(TEST_LEASES_NUM)));
+        EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes,
+                               LowerBound(theoretical_reclaimed + 1),
+                               UpperBound(TEST_LEASES_NUM)));
+    }
+
     /// @brief Collection of leases created at construction time.
     std::vector<LeasePtrType> leases_;
 
     /// @brief Allocation engine instance used for tests.
     AllocEnginePtr engine_;
-
 };
 
 /// @brief Specialization of the @c ExpirationAllocEngineTest class to test
@@ -811,6 +988,7 @@ public:
 ExpirationAllocEngine6Test::ExpirationAllocEngine6Test()
     : ExpirationAllocEngineTest<Lease6Ptr>("type=memfile universe=6 persist=false") {
     createLeases();
+    callout_argument_name = "lease6";
 }
 
 void
@@ -967,6 +1145,39 @@ TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesStats) {
     testReclaimExpiredLeasesStats();
 }
 
+// This test verifies that callouts are executed for each expired lease.
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesHooks) {
+    testReclaimExpiredLeasesHooks();
+}
+
+// This test verifies that callouts are executed for each expired lease
+// and that the lease is not reclaimed when the skip flag is set.
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesHooksWithSkip) {
+    testReclaimExpiredLeasesHooksWithSkip();
+}
+
+// This test verifies that it is possible to set the timeout for the
+// execution of the lease reclamation routine.
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesTimeout) {
+    // For this test to make sense we need significantly more than 30
+    // leases so it is ok if we have 40.
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 40);
+    // Run with timeout of 60ms.
+    testReclaimExpiredLeasesTimeout(60);
+}
+
+// This test verifies that at least one lease is reclaimed if the timeout
+// for the lease reclamation routine is shorter than the time needed for
+// the reclamation of a single lease. This prevents the situation when
+// very short timeout (perhaps misconfigured) effectively precludes leases
+// reclamation.
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesShortTimeout) {
+    // We will most likely reclaim just one lease, so 5 is more than enough.
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 5);
+    // Reclaim leases with the 1ms timeout.
+    testReclaimExpiredLeasesTimeout(1);
+}
+
 // *******************************************************
 //
 // DHCPv4 lease reclamation routine tests start here!
@@ -1052,6 +1263,7 @@ public:
 ExpirationAllocEngine4Test::ExpirationAllocEngine4Test()
     : ExpirationAllocEngineTest<Lease4Ptr>("type=memfile universe=4 persist=false") {
     createLeases();
+    callout_argument_name = "lease4";
 }
 
 void
@@ -1296,6 +1508,39 @@ TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesWithDDNSAndClientId) {
 // are reclaimed.
 TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesStats) {
     testReclaimExpiredLeasesStats();
+}
+
+// This test verifies that callouts are executed for each expired lease.
+TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesHooks) {
+    testReclaimExpiredLeasesHooks();
+}
+
+// This test verifies that callouts are executed for each expired lease
+// and that the lease is not reclaimed when the skip flag is set.
+TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesHooksWithSkip) {
+    testReclaimExpiredLeasesHooksWithSkip();
+}
+
+// This test verifies that it is possible to set the timeout for the
+// execution of the lease reclamation routine.
+TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesTimeout) {
+    // For this test to make sense we need significantly more than 30
+    // leases so it is ok if we have 40.
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 40);
+    // Run with timeout of 60ms.
+    testReclaimExpiredLeasesTimeout(60);
+}
+
+// This test verifies that at least one lease is reclaimed if the timeout
+// for the lease reclamation routine is shorter than the time needed for
+// the reclamation of a single lease. This prevents the situation when
+// very short timeout (perhaps misconfigured) effectively precludes leases
+// reclamation.
+TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesShortTimeout) {
+    // We will most likely reclaim just one lease, so 5 is more than enough.
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 5);
+    // Reclaim leases with the 1ms timeout.
+    testReclaimExpiredLeasesTimeout(1);
 }
 
 }; // end of anonymous namespace

@@ -25,6 +25,8 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp/dhcp6.h>
+#include <hooks/callout_handle.h>
+#include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <util/stopwatch.h>
 #include <hooks/server_hooks.h>
@@ -51,17 +53,21 @@ namespace {
 struct AllocEngineHooks {
     int hook_index_lease4_select_; ///< index for "lease4_receive" hook point
     int hook_index_lease4_renew_;  ///< index for "lease4_renew" hook point
+    int hook_index_lease4_expire_; ///< index for "lease4_expire" hook point
     int hook_index_lease6_select_; ///< index for "lease6_receive" hook point
     int hook_index_lease6_renew_;  ///< index for "lease6_renew" hook point
     int hook_index_lease6_rebind_; ///< index for "lease6_rebind" hook point
+    int hook_index_lease6_expire_; ///< index for "lease6_expire" hook point
 
     /// Constructor that registers hook points for AllocationEngine
     AllocEngineHooks() {
         hook_index_lease4_select_ = HooksManager::registerHook("lease4_select");
         hook_index_lease4_renew_  = HooksManager::registerHook("lease4_renew");
+        hook_index_lease4_expire_ = HooksManager::registerHook("lease4_expire");
         hook_index_lease6_select_ = HooksManager::registerHook("lease6_select");
-        hook_index_lease6_renew_   = HooksManager::registerHook("lease6_renew");
-        hook_index_lease6_rebind_   = HooksManager::registerHook("lease6_rebind");
+        hook_index_lease6_renew_  = HooksManager::registerHook("lease6_renew");
+        hook_index_lease6_rebind_ = HooksManager::registerHook("lease6_rebind");
+        hook_index_lease6_expire_ = HooksManager::registerHook("lease6_expire");
     }
 };
 
@@ -1291,8 +1297,6 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
 
     // Create stopwatch and automatically start it to measure the time
     // taken by the routine.
-    /// @todo Monitor time elapsed and return from the lease reclamation routine
-    /// if it hits the timeout value.
     util::Stopwatch stopwatch;
 
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
@@ -1300,23 +1304,50 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
     Lease6Collection leases;
     lease_mgr.getExpiredLeases6(leases, max_leases);
 
+    // Do not initialize the callout handle until we know if there are any
+    // lease6_expire callouts installed.
+    CalloutHandlePtr callout_handle;
+    if (!leases.empty() &&
+        HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_expire_)) {
+        callout_handle = HooksManager::createCalloutHandle();
+    }
+
+    size_t leases_processed = 0;
     BOOST_FOREACH(Lease6Ptr lease, leases) {
 
         try {
-            /// @todo execute a lease6_expire hook here.
+            // The skip flag indicates if the callouts have taken responsibility
+            // for reclaiming the lease. The callout will set this to true if
+            // it reclaims the lease itself. In this case the reclamation routine
+            // will not update DNS nor update the database.
+            bool skipped = false;
+            if (callout_handle) {
+                callout_handle->deleteAllArguments();
+                callout_handle->setArgument("lease6", lease);
+                callout_handle->setArgument("remove_lease", remove_lease);
 
-            // Generate removal name change request for D2, if required.
-            // This will return immediatelly if the DNS wasn't updated
-            // when the lease was created.
-            if (lease->duid_) {
-                queueRemovalNameChangeRequest(lease, *(lease->duid_));
+                HooksManager::callCallouts(Hooks.hook_index_lease6_expire_,
+                                           *callout_handle);
+
+                skipped = callout_handle->getSkip();
             }
 
-            // Reclaim the lease - depending on the configuration, set the
-            // expired-reclaimed state or simply remove it.
-            reclaimLeaseInDatabase<Lease6Ptr>(lease, remove_lease,
-                                              boost::bind(&LeaseMgr::updateLease6,
-                                                          &lease_mgr, _1));
+            if (!skipped) {
+                // Generate removal name change request for D2, if required.
+                // This will return immediatelly if the DNS wasn't updated
+                // when the lease was created.
+                if (lease->duid_) {
+                    queueRemovalNameChangeRequest(lease, *(lease->duid_));
+                }
+
+                // Reclaim the lease - depending on the configuration, set the
+                // expired-reclaimed state or simply remove it.
+                reclaimLeaseInDatabase<Lease6Ptr>(lease, remove_lease,
+                                                  boost::bind(&LeaseMgr::updateLease6,
+                                                              &lease_mgr, _1));
+            }
+
+            ++leases_processed;
 
             // Update statistics.
 
@@ -1352,6 +1383,16 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
                 .arg(lease->addr_.toText())
                 .arg(ex.what());
         }
+
+        // Check if we have hit the timeout for running reclamation routine and
+        // return if we have. We're checking it here, because we always want to
+        // allow reclaiming at least one lease.
+        if ((timeout > 0) && (stopwatch.getTotalMilliseconds() >= timeout)) {
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT)
+                .arg(timeout);
+            break;
+        }
     }
 
     // Stop measuring the time.
@@ -1360,7 +1401,7 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
     // Mark completion of the lease reclamation routine and present some stats.
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
               ALLOC_ENGINE_V6_LEASES_RECLAMATION_COMPLETE)
-        .arg(leases.size())
+        .arg(leases_processed)
         .arg(stopwatch.logFormatTotalDuration());
 }
 
@@ -1375,8 +1416,6 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
 
     // Create stopwatch and automatically start it to measure the time
     // taken by the routine.
-    /// @todo Monitor time elapsed and return from the lease reclamation routine
-    /// if it hits the timeout value.
     util::Stopwatch stopwatch;
 
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
@@ -1384,29 +1423,56 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
     Lease4Collection leases;
     lease_mgr.getExpiredLeases4(leases, max_leases);
 
+    // Do not initialize the callout handle until we know if there are any
+    // lease6_expire callouts installed.
+    CalloutHandlePtr callout_handle;
+    if (!leases.empty() &&
+        HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease4_expire_)) {
+        callout_handle = HooksManager::createCalloutHandle();
+    }
+
+    size_t leases_processed = 0;
     BOOST_FOREACH(Lease4Ptr lease, leases) {
 
         try {
-            /// @todo execute a lease4_expire hook here.
+            // The skip flag indicates if the callouts have taken responsibility
+            // for reclaiming the lease. The callout will set this to true if
+            // it reclaims the lease itself. In this case the reclamation routine
+            // will not update DNS nor update the database.
+            bool skipped = false;
+            if (callout_handle) {
+                callout_handle->deleteAllArguments();
+                callout_handle->setArgument("lease4", lease);
+                callout_handle->setArgument("remove_lease", remove_lease);
 
-            // Generate removal name change request for D2, if required.
-            // This will return immediatelly if the DNS wasn't updated
-            // when the lease was created.
-            if (lease->client_id_) {
-                // Client id takes precedence over HW address.
-                queueRemovalNameChangeRequest(lease, lease->client_id_->getClientId());
+                HooksManager::callCallouts(Hooks.hook_index_lease4_expire_,
+                                           *callout_handle);
 
-            } else {
-                // Client id is not specified for the lease. Use HW address
-                // instead.
-                queueRemovalNameChangeRequest(lease, lease->hwaddr_);
+                skipped = callout_handle->getSkip();
             }
 
-            // Reclaim the lease - depending on the configuration, set the
-            // expired-reclaimed state or simply remove it.
-            reclaimLeaseInDatabase<Lease4Ptr>(lease, remove_lease,
-                                              boost::bind(&LeaseMgr::updateLease4,
-                                                          &lease_mgr, _1));
+            if (!skipped) {
+                // Generate removal name change request for D2, if required.
+                // This will return immediatelly if the DNS wasn't updated
+                // when the lease was created.
+                if (lease->client_id_) {
+                    // Client id takes precedence over HW address.
+                    queueRemovalNameChangeRequest(lease, lease->client_id_->getClientId());
+
+                } else {
+                    // Client id is not specified for the lease. Use HW address
+                    // instead.
+                    queueRemovalNameChangeRequest(lease, lease->hwaddr_);
+                }
+
+                // Reclaim the lease - depending on the configuration, set the
+                // expired-reclaimed state or simply remove it.
+                reclaimLeaseInDatabase<Lease4Ptr>(lease, remove_lease,
+                                                  boost::bind(&LeaseMgr::updateLease4,
+                                                              &lease_mgr, _1));
+            }
+
+            ++leases_processed;
 
             // Update statistics.
 
@@ -1430,6 +1496,16 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
                 .arg(lease->addr_.toText())
                 .arg(ex.what());
         }
+
+        // Check if we have hit the timeout for running reclamation routine and
+        // return if we have. We're checking it here, because we always want to
+        // allow reclaiming at least one lease.
+        if ((timeout > 0) && (stopwatch.getTotalMilliseconds() >= timeout)) {
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT)
+                .arg(timeout);
+            break;
+        }
     }
 
     // Stop measuring the time.
@@ -1438,7 +1514,7 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
     // Mark completion of the lease reclamation routine and present some stats.
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
               ALLOC_ENGINE_V4_LEASES_RECLAMATION_COMPLETE)
-        .arg(leases.size())
+        .arg(leases_processed)
         .arg(stopwatch.logFormatTotalDuration());
 }
 
