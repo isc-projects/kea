@@ -222,22 +222,29 @@ void ControlledDhcpv6Srv::shutdown() {
 }
 
 ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
-    cleanup();
+    try {
+        cleanup();
 
-    // Stop worker thread running timers, if it is running.
-    timer_mgr_->stopThread();
+        // Stop worker thread running timers, if it is running.
+        timer_mgr_->stopThread();
 
-   // Close the command socket (if it exists).
-    CommandMgr::instance().closeCommandSocket();
+        // Close the command socket (if it exists).
+        CommandMgr::instance().closeCommandSocket();
 
-    // Deregister any registered commands
-    CommandMgr::instance().deregisterCommand("shutdown");
-    CommandMgr::instance().deregisterCommand("statistic-get");
-    CommandMgr::instance().deregisterCommand("statistic-reset");
-    CommandMgr::instance().deregisterCommand("statistic-remove");
-    CommandMgr::instance().deregisterCommand("statistic-get-all");
-    CommandMgr::instance().deregisterCommand("statistic-reset-all");
-    CommandMgr::instance().deregisterCommand("statistic-remove-all");
+        // Deregister any registered commands
+        CommandMgr::instance().deregisterCommand("shutdown");
+        CommandMgr::instance().deregisterCommand("statistic-get");
+        CommandMgr::instance().deregisterCommand("statistic-reset");
+        CommandMgr::instance().deregisterCommand("statistic-remove");
+        CommandMgr::instance().deregisterCommand("statistic-get-all");
+        CommandMgr::instance().deregisterCommand("statistic-reset-all");
+        CommandMgr::instance().deregisterCommand("statistic-remove-all");
+
+    } catch (...) {
+        // Don't want to throw exceptions from the destructor. The server
+        // is shutting down anyway.
+        ;
+    }
 
     server_ = NULL; // forget this instance. There should be no callback anymore
                     // at this stage anyway.
