@@ -168,6 +168,9 @@ public:
     /// process.
     void unregisterTimers();
 
+    /// @brief Returns the number of registered timers.
+    size_t timersCount() const;
+
     /// @brief Schedules the execution of the interval timer.
     ///
     /// This method schedules the timer, i.e. the callback will be executed
@@ -404,6 +407,11 @@ TimerMgrImpl::unregisterTimers() {
          timer_info_it != registered_timers_copy.end(); ++timer_info_it) {
         unregisterTimer(timer_info_it->first);
     }
+}
+
+size_t
+TimerMgrImpl::timersCount() const {
+    return (registered_timers_.size());
 }
 
 void
@@ -650,6 +658,11 @@ TimerMgr::unregisterTimers() {
               DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS);
 
     impl_->unregisterTimers();
+}
+
+size_t
+TimerMgr::timersCount() const {
+    return (impl_->timersCount());
 }
 
 void
