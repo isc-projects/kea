@@ -247,7 +247,10 @@ cleanup() {
 
     # Remove temporary files.
     rm -rf ${LOG_FILE}
-    rm -rf ${LEASE_FILE}
+    # Use asterisk to remove all files starting with the given name,
+    # in case the LFC has been run. LFC creates files with postfixes
+    # appended to the lease file name.
+    rm -rf ${LEASE_FILE}*
     rm -rf ${CFG_FILE}
     rm -rf ${KEACTRL_CFG_FILE}
 }
