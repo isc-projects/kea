@@ -109,7 +109,8 @@ public:
     /// Creates memfile and stores it in lmptr_ pointer
     MemfileLeaseMgrTest() :
         io4_(getLeaseFilePath("leasefile4_0.csv")),
-        io6_(getLeaseFilePath("leasefile6_0.csv")) {
+        io6_(getLeaseFilePath("leasefile6_0.csv")),
+        timer_mgr_(TimerMgr::instance()) {
 
         std::ostringstream s;
         s << KEA_LFC_BUILD_DIR << "/kea-lfc";
@@ -137,9 +138,9 @@ public:
     /// destroys lease manager backend.
     virtual ~MemfileLeaseMgrTest() {
         // Stop TimerMgr worker thread if it is running.
-        TimerMgr::instance()->stopThread();
+        timer_mgr_->stopThread();
         // Make sure there are no timers registered.
-        TimerMgr::instance()->unregisterTimers();
+        timer_mgr_->unregisterTimers();
         LeaseMgrFactory::destroy();
         // Remove lease files and products of Lease File Cleanup.
         removeFiles(getLeaseFilePath("leasefile4_0.csv"));
@@ -246,6 +247,8 @@ public:
     /// @brief Object providing access to v6 lease IO.
     LeaseFileIO io6_;
 
+    /// @brief Pointer to the instance of the @c TimerMgr.
+    TimerMgrPtr timer_mgr_;
 };
 
 // This test checks if the LeaseMgr can be instantiated and that it
@@ -348,7 +351,7 @@ TEST_F(MemfileLeaseMgrTest, lfcTimer) {
         lease_mgr(new LFCMemfileLeaseMgr(pmap));
 
     // Start worker thread to execute LFC periodically.
-    TimerMgr::instance()->startThread();
+    ASSERT_NO_THROW(timer_mgr_->startThread());
 
     // Run the test for at most 2.9 seconds.
     setTestTime(2900);
@@ -356,7 +359,7 @@ TEST_F(MemfileLeaseMgrTest, lfcTimer) {
     // Stop worker thread to make sure it is not running when lease
     // manager is destroyed. The lease manager will be unable to
     // unregster timer when the thread is active.
-    TimerMgr::instance()->stopThread();
+    ASSERT_NO_THROW(timer_mgr_->stopThread());
 
     // Within 2.9 we should record two LFC executions.
     EXPECT_EQ(2, lease_mgr->getLFCCount());
@@ -377,7 +380,7 @@ TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
         lease_mgr(new LFCMemfileLeaseMgr(pmap));
 
     // Start worker thread to execute LFC periodically.
-    TimerMgr::instance()->startThread();
+    ASSERT_NO_THROW(timer_mgr_->startThread());
 
     // Run the test for at most 1.9 seconds.
     setTestTime(1900);
@@ -385,7 +388,7 @@ TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
     // Stop worker thread to make sure it is not running when lease
     // manager is destroyed. The lease manager will be unable to
     // unregster timer when the thread is active.
-    TimerMgr::instance()->stopThread();
+    ASSERT_NO_THROW(timer_mgr_->stopThread());
 
     // There should be no LFC execution recorded.
     EXPECT_EQ(0, lease_mgr->getLFCCount());
