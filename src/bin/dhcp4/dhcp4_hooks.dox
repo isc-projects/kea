@@ -217,5 +217,33 @@ packet processing. Hook points that are not specific to packet processing
    (e.g. lease was allocated). Setting this flag merely stops the change
    being communicated to the client.
 
+@subsection dhcpv4HooksLease4Expire lease4_expire
+
+- @b Arguments:
+  - name: @b lease4, type: isc::dhcp::Lease4Ptr, direction: <b>in/out</b>
+  - name: @b remove_lease, type: bool, direction: <b>in</b>
+
+- @b Description: this callout is executed for each expired lease when
+  the server performs reclamation of the expired leases. During this
+  process the server executes "lease4_expire" callout, removes the DNS
+  records associated with this lease and finally removes the lease from
+  the database or updates its status to "expired-reclaimed". The "lease4"
+  argument contains the pointer to the lease being reclaimed. The second
+  argument "remove_lease" indicates if the reclaimed leases should be
+  removed from the lease database (if true), or their state should be
+  set to "expired-reclaimed" in the lease database. This parameter
+  is only used by the callout if it takes responsibility for the lease
+  reclamation, i.e. it sets the "skip" flag to "true".
+
+- <b>Skip flag action</b>: if the callout sets the skip flag, the server
+  will assume that the callout has fully reclaimed the lease, i.e.
+  performed the DNS update and updated the lease in the database. The
+  server will not perform any further actions on the lease for which the
+  skip flag has been set. It is important to note that if the callout
+  sets this flag but fails to reclaim the lease in the database, the
+  reclamation routine will repeatedly process this lease in subsequent
+  runs. Therefore, the implementors of this callout must make sure that
+  skip flag is only set when the lease has been actually reclaimed in the
+  database by the callout.
 
 */

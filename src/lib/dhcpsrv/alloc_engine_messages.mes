@@ -82,6 +82,14 @@ reclamation of the expired leases. The maximum number of leases to
 be reclaimed and the timeout is included in the message. If any of
 these values is 0, it means "unlimited".
 
+% ALLOC_ENGINE_V4_LEASES_RECLAMATION_TIMEOUT timeout of %1 ms reached while reclaiming IPv4 leases
+This debug message is issued when the allocation engine hits the
+timeout for performing reclamation of the expired leases. The
+reclamation will now be interrupted and all leases which haven't
+been reclaimed, because of the timeout, will be reclaimed when the
+next scheduled reclamation is started. The argument is the timeout
+value expressed in milliseconds.
+
 % ALLOC_ENGINE_V4_OFFER_EXISTING_LEASE allocation engine will try to offer existing lease to the client %1
 This message is issued when the allocation engine determines that
 the client has a lease in the lease database, it doesn't have
@@ -299,6 +307,14 @@ This debug message is issued when the allocation engine starts the
 reclamation of the expired leases. The maximum number of leases to
 be reclaimed and the timeout is included in the message. If any of
 these values is 0, it means "unlimited".
+
+% ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT timeout of %1 ms reached while reclaiming IPv6 leases
+This debug message is issued when the allocation engine hits the
+timeout for performing reclamation of the expired leases. The
+reclamation will now be interrupted and all leases which haven't
+been reclaimed, because of the timeout, will be reclaimed when the
+next scheduled reclamation is started. The argument is the timeout
+value expressed in milliseconds.
 
 % ALLOC_ENGINE_V6_RENEW_HR allocating leases reserved for the client %1 as a result of Renew
 This debug message is issued when the allocation engine tries to
