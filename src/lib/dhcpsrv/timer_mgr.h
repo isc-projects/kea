@@ -176,6 +176,9 @@ public:
     /// @brief Unregisters all timers.
     void unregisterTimers();
 
+    /// @brief Returns the number of registered timers.
+    size_t timersCount() const;
+
     /// @brief Schedules the execution of the interval timer.
     ///
     /// This method schedules the timer, i.e. the callback will be executed
