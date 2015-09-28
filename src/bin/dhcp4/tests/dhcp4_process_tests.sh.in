@@ -282,17 +282,17 @@ shutdown_test() {
     test_finish 0
 }
 
-# This test verifies that DHCPv4 can be reconfigured with a SIGHUP signal.
+# This test verifies that DHCPv4 can be configured to run lease file cleanup
+# periodially.
 lfc_timer_test() {
     # Log the start of the test and print test name.
     test_start "dhcpv4_srv.lfc_timer_test"
     # Remove dangling Kea instances and remove log files.
     cleanup
     # Create a configuration with the LFC enabled, by replacing the section
-    # with the lfc-interval parameter.
+    # with the lfc-interval and persist parameters.
     LFC_CONFIG=$(printf "${CONFIG}" | sed -e 's/\"lfc-interval\": 0/\"lfc-interval\": 1/g' \
                         | sed -e 's/\"persist\": false/\"persist\": true/g')
-    echo ${LFC_CONFIG}
     # Create new configuration file.
     create_config "${LFC_CONFIG}"
     # Instruct Kea to log to the specific file.
@@ -315,13 +315,51 @@ lfc_timer_test() {
         clean_exit 1
     fi
 
+    # Check if Kea emits the log message indicating that LFC is started.
     wait_for_message 10 "DHCPSRV_MEMFILE_LFC_EXECUTE" 1
     if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
         printf "ERROR: Server did not execute LFC.\n"
         clean_exit 1
     fi
 
-    sleep 3
+    # Give it a short time to run.
+    sleep 1
+
+    # Modify the interval.
+    LFC_CONFIG=$(printf "${CONFIG}" | sed -e 's/\"lfc-interval\": 1/\"lfc-interval\": 2/g')
+    # Create new configuration file.
+    create_config "${LFC_CONFIG}"
+
+    # Reconfigure the server with SIGHUP.
+    send_signal 1 ${bin}
+
+    # There should be two occurrences of the DHCP4_CONFIG_COMPLETE messages.
+    # Wait for it up to 10s.
+    wait_for_message 10 "DHCP4_CONFIG_COMPLETE" 2
+
+    # After receiving SIGHUP the server should get reconfigured and the
+    # reconfiguration should be noted in the log file. We should now
+    # have two configurations logged in the log file.
+    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+        printf "ERROR: server hasn't been reconfigured.\n"
+        clean_exit 1
+    else
+        printf "Server successfully reconfigured.\n"
+    fi
+
+    # Make sure the server is still operational.
+    get_pids ${bin}
+    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+        printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
+        clean_exit 1
+    fi
+
+    # Wait for the LFC to run the second time.
+    wait_for_message 10 "DHCPSRV_MEMFILE_LFC_EXECUTE" 2
+    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+        printf "ERROR: Server did not execute LFC.\n"
+        clean_exit 1
+    fi
 
     # Send signal to Kea SIGTERM
     send_signal 15 ${bin}

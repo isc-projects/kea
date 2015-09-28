@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,6 @@
 #include <hooks/hooks_manager.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/timer_mgr.h>
 #include <config/command_mgr.h>
 #include <stats/stats_mgr.h>
 
@@ -124,9 +123,31 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
-    TimerMgr::instance()->stopThread();
+    // We're going to modify the timers configuration. This is not allowed
+    // when the thread is running.
+    try {
+        TimerMgr::instance()->stopThread();
+    } catch (const std::exception& ex) {
+        err << "Unable to stop worker thread running timers: "
+            << ex.what() << ".";
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
     ConstElementPtr answer = configureDhcp4Server(*srv, config);
-    TimerMgr::instance()->startThread();
+
+    // Start worker thread if there are any timers installed. Note that
+    // we also start worker thread when the reconfiguration failed, because
+    // in that case we continue using an old configuration and the server
+    // should still run installed timers.
+    if (TimerMgr::instance()->timersCount() > 0) {
+        try {
+            TimerMgr::instance()->startThread();
+        } catch (const std::exception& ex) {
+            err << "Unable to start worker thread running timers: "
+                << ex.what() << ".";
+            return (isc::config::createAnswer(1, err.str()));
+        }
+    }
 
     // Check that configuration was successful. If not, do not reopen sockets
     // and don't bother with DDNS stuff.
@@ -165,7 +186,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 }
 
 ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
-    :Dhcpv4Srv(port) {
+    : Dhcpv4Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()) {
     if (getInstance()) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv4Srv instance already.");
@@ -206,6 +227,9 @@ void ControlledDhcpv4Srv::shutdown() {
 
 ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
     cleanup();
+
+    // Stop worker thread running timers, if it is running.
+    timer_mgr_->stopThread();
 
     // Close the command socket (if it exists).
     CommandMgr::instance().closeCommandSocket();
