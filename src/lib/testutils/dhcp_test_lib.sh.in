@@ -250,7 +250,9 @@ cleanup() {
     # Use asterisk to remove all files starting with the given name,
     # in case the LFC has been run. LFC creates files with postfixes
     # appended to the lease file name.
-    rm -rf ${LEASE_FILE}*
+    if [ ! -z "${LEASE_FILE}" ]; then
+        rm -rf ${LEASE_FILE}*
+    fi
     rm -rf ${CFG_FILE}
     rm -rf ${KEACTRL_CFG_FILE}
 }
