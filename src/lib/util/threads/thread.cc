@@ -152,6 +152,7 @@ Thread::Thread(const boost::function<void ()>& main) :
 
 Thread::~Thread() {
     if (impl_ != NULL) {
+
         int result = pthread_detach(impl_->tid_);
         // If the error indicates that thread doesn't exist but we're
         // in child process (after fork) it is expected. We should
