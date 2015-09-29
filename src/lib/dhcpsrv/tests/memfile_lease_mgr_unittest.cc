@@ -356,9 +356,7 @@ TEST_F(MemfileLeaseMgrTest, lfcTimer) {
     // Run the test for at most 2.9 seconds.
     setTestTime(2900);
 
-    // Stop worker thread to make sure it is not running when lease
-    // manager is destroyed. The lease manager will be unable to
-    // unregster timer when the thread is active.
+    // Stop worker thread.
     ASSERT_NO_THROW(timer_mgr_->stopThread());
 
     // Within 2.9 we should record two LFC executions.
