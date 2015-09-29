@@ -136,9 +136,14 @@ private:
 /// @brief Static instance of the stoppable thread.
 boost::scoped_ptr<StoppableThread> thread;
 
+/// @brief Test fixture class for testing @c Thread.
 class ThreadTest : public ::testing::Test {
 public:
 
+    /// @brief Destructor.
+    ///
+    /// Stops the thread and resets the static pointer to
+    /// @c StoppableThread.
     virtual ~ThreadTest() {
         if (thread) {
             thread->stop();
