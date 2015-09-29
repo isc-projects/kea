@@ -1,3 +1,9 @@
+1012.	[bug]		stephen
+	Replace #include of message_dictionary.h in message_initializer.h
+	with a declaration of the MessageDictionary class, avoing the need
+	to include message_dictionary.h in the set of header files installed.
+	(Trac #4046, git 9f1801b4326f62632a7c9f0aa939d58f120c10e8)
+
 1011.	[func]		fdupont
 	Added definitions and tests for the options from secure DHCPv6.
 	This protocol is still experimental. The option and other protocol
