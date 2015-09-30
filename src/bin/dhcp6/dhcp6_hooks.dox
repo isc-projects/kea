@@ -249,9 +249,11 @@ packet processing. Hook points that are not specific to packet processing
   argument contains the pointer to the lease being reclaimed. The second
   argument "remove_lease" indicates if the reclaimed leases should be
   removed from the lease database (if true), or their state should be
-  set to "expired-reclaimed" in the lease database. This parameter
+  set to "expired-reclaimed" in the lease database. This argument
   is only used by the callout if it takes responsibility for the lease
-  reclamation, i.e. it sets the "skip" flag to "true".
+  reclamation, i.e. it sets the "skip" flag to "true".  The "remove_lease"
+  argument is set to "true" if the "recycle-timer-wait-time" is set
+  to 0 in the server configuration file.
 
 - <b>Skip flag action</b>: if the callout sets the skip flag, the server
   will assume that the callout has fully reclaimed the lease, i.e.

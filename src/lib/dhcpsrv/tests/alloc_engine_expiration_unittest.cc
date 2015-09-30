@@ -1159,8 +1159,7 @@ TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesHooksWithSkip) {
 // This test verifies that it is possible to set the timeout for the
 // execution of the lease reclamation routine.
 TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesTimeout) {
-    // For this test to make sense we need significantly more than 30
-    // leases so it is ok if we have 40.
+    // This test needs at least 40 leases to make sense.
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 40);
     // Run with timeout of 60ms.
     testReclaimExpiredLeasesTimeout(60);
@@ -1524,8 +1523,7 @@ TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesHooksWithSkip) {
 // This test verifies that it is possible to set the timeout for the
 // execution of the lease reclamation routine.
 TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesTimeout) {
-    // For this test to make sense we need significantly more than 30
-    // leases so it is ok if we have 40.
+    // This test needs at least 40 leases to make sense.
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 40);
     // Run with timeout of 60ms.
     testReclaimExpiredLeasesTimeout(60);
