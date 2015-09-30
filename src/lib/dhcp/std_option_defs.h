@@ -72,6 +72,13 @@ RECORD_DECL(FQDN_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
 // Opaque data is represented here by the binary data field.
 RECORD_DECL(VIVCO_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 
+// RFC4578 (PXE) record fields
+//
+// Three 1 byte fileds to describe a network interface: type, major and minor
+RECORD_DECL(CLIENT_NDI_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
+// A client identifer: a 1 byte type field followed by opaque data depending on the type
+RECORD_DECL(UUID_GUID_RECORDS, OPT_UINT8_TYPE, OPT_BINARY_TYPE);
+
 /// @brief Definitions of standard DHCPv4 options.
 const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "subnet-mask", DHO_SUBNET_MASK, OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
@@ -188,6 +195,9 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "client-last-transaction-time", DHO_CLIENT_LAST_TRANSACTION_TIME,
       OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
     { "associated-ip", DHO_ASSOCIATED_IP, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "client-system", DHO_SYSTEM, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
+    { "client-ndi", DHO_NDI, OPT_RECORD_TYPE, false, RECORD_DEF(CLIENT_NDI_RECORDS), "" },
+    { "uuid-guid", DHO_UUID_GUID, OPT_RECORD_TYPE, false, RECORD_DEF(UUID_GUID_RECORDS), "" },
     { "subnet-selection", DHO_SUBNET_SELECTION,
       OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
     // The following options need a special encoding of data
@@ -239,6 +249,11 @@ RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 // sedhcpv6 signature
 RECORD_DECL(SIGNATURE_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
             OPT_BINARY_TYPE);
+
+// RFC5970 (PXE) Class record fields
+//
+// Three 1 byte fileds to describe a network interface: type, major and minor
+RECORD_DECL(CLIENT_NII_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
 
 /// Standard DHCPv6 option definitions.
 ///
@@ -329,6 +344,10 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
       RECORD_DEF(LQ_RELAY_DATA_RECORDS), "" },
     { "lq-client-link", D6O_LQ_CLIENT_LINK, OPT_IPV6_ADDRESS_TYPE, true,
       NO_RECORD_DEF, "" },
+    { "bootfile-url", D6O_BOOTFILE_URL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "bootfile-param", D6O_BOOTFILE_PARAM, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "client-arch-type", D6O_CLIENT_ARCH_TYPE, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
+    { "nii", D6O_NII, OPT_RECORD_TYPE, false, RECORD_DEF(CLIENT_NII_RECORDS), "" },
     { "erp-local-domain-name", D6O_ERP_LOCAL_DOMAIN_NAME, OPT_FQDN_TYPE, false,
       NO_RECORD_DEF, "" },
     { "rsoo", D6O_RSOO, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "rsoo-opts" },

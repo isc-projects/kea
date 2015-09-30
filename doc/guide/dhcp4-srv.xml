@@ -1085,7 +1085,9 @@ It is merely echoed by the server
 <row><entry>client-last-transaction-time</entry><entry>91</entry><entry>uint32</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>associated-ip</entry><entry>92</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 -->
-<row><entry>subnet-selection</entry><entry>118</entry><entry>ipv4-address</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>client-system</entry><entry>93</entry><entry>uint16</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>client-ndi</entry><entry>94</entry><entry>record</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>uuid-guid</entry><entry>97</entry><entry>record</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>domain-search</entry><entry>119</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>vivco-suboptions</entry><entry>124</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>vivso-suboptions</entry><entry>125</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>

@@ -165,11 +165,11 @@ enum DHCPOptionType {
     DHO_AUTHENTICATE                 = 90,  /* RFC3118, was 210 */
     DHO_CLIENT_LAST_TRANSACTION_TIME = 91,
     DHO_ASSOCIATED_IP                = 92,
-//  DHO_SYSTEM                       = 93,
-//  DHO_NDI                          = 94,
+    DHO_SYSTEM                       = 93, /* RFC4578 */
+    DHO_NDI                          = 94, /* RFC4578 */
 //  DHO_LDAP                         = 95,
     // 96 is removed/unassigned
-//  DHO_UUID_GUID                    = 97,
+    DHO_UUID_GUID                    = 97, /* RFC4578 */
 //  DHO_USER_AUTH                    = 98,
 //  DHO_GEOCONF_CIVIC                = 99,
 //  DHO_PCODE                        = 100,
