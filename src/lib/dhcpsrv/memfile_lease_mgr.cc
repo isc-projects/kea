@@ -17,6 +17,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
 #include <util/pid_file.h>
 #include <util/process_spawn.h>
@@ -73,9 +74,12 @@ public:
     /// @c Memfile_LeaseMgr class.
     ///
     /// @param callback A pointer to the callback function.
-    /// @param io_service An io service used to create the interval timer.
-    LFCSetup(asiolink::IntervalTimer::Callback callback,
-             asiolink::IOService& io_service);
+    LFCSetup(asiolink::IntervalTimer::Callback callback);
+
+    /// @brief Destructor.
+    ///
+    /// Unregisters LFC timer.
+    ~LFCSetup();
 
     /// @brief Sets the new configuration for the %Lease File Cleanup.
     ///
@@ -92,11 +96,6 @@ public:
     /// @brief Spawns a new process.
     void execute();
 
-    /// @brief Returns interval at which the cleanup is performed.
-    ///
-    /// @return Interval in milliseconds.
-    long getInterval() const;
-
     /// @brief Checks if the lease file cleanup is in progress.
     ///
     /// @return true if the lease file cleanup is being executed.
@@ -107,9 +106,6 @@ public:
 
 private:
 
-    /// @brief Interval timer for LFC.
-    asiolink::IntervalTimer timer_;
-
     /// @brief A pointer to the @c ProcessSpawn object used to execute
     /// the LFC.
     boost::scoped_ptr<util::ProcessSpawn> process_;
@@ -119,11 +115,40 @@ private:
 
     /// @brief A PID of the last executed LFC process.
     pid_t pid_;
+
+    /// @brief Pointer to the timer manager.
+    ///
+    /// We have to hold this pointer here to make sure that the timer
+    /// manager is not destroyed before the lease manager.
+    TimerMgrPtr timer_mgr_;
 };
 
-LFCSetup::LFCSetup(asiolink::IntervalTimer::Callback callback,
-                   asiolink::IOService& io_service)
-    : timer_(io_service), process_(), callback_(callback), pid_(0) {
+LFCSetup::LFCSetup(asiolink::IntervalTimer::Callback callback)
+    : process_(), callback_(callback), pid_(0),
+      timer_mgr_(TimerMgr::instance()) {
+}
+
+LFCSetup::~LFCSetup() {
+    try {
+        // If we're here it means that either the process is terminating
+        // or we're reconfiguring the server. In the latter case the
+        // thread has been stopped probably, but we need to handle the
+        // former case so we call stopThread explicitly here.
+        timer_mgr_->stopThread();
+        // This may throw exception if the timer hasn't been registered
+        // but if the LFC Setup instance exists it means that the timer
+        // must have been registered or such registration have been
+        // attempted. The registration may fail if the duplicate timer
+        // exists or if the TimerMgr's worker thread is running but if
+        // this happens it is a programming error. In any case, we
+        // don't want exceptions being thrown from the destructor so
+        // we just log an error here.
+        timer_mgr_->unregisterTimer("memfile-lfc");
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED)
+            .arg(ex.what());
+    }
 }
 
 void
@@ -142,13 +167,6 @@ LFCSetup::setup(const uint32_t lfc_interval,
         } else {
             executable = c_executable;
         }
-
-        // Set the timer to call callback function periodically.
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SETUP).arg(lfc_interval);
-        // Multiple the lfc_interval value by 1000 as this value specifies
-        // a timeout in seconds, whereas the setup() method expects the
-        // timeout in milliseconds.
-        timer_.setup(callback_, lfc_interval * 1000);
 
         // Start preparing the command line for kea-lfc.
 
@@ -187,12 +205,17 @@ LFCSetup::setup(const uint32_t lfc_interval,
 
         // Create the process (do not start it yet).
         process_.reset(new util::ProcessSpawn(executable, args));
-    }
-}
 
-long
-LFCSetup::getInterval() const {
-    return (timer_.getInterval());
+        // Set the timer to call callback function periodically.
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SETUP).arg(lfc_interval);
+
+        // Multiple the lfc_interval value by 1000 as this value specifies
+        // a timeout in seconds, whereas the setup() method expects the
+        // timeout in milliseconds.
+        timer_mgr_->registerTimer("memfile-lfc", callback_, lfc_interval * 1000,
+                                  asiolink::IntervalTimer::REPEATING);
+        timer_mgr_->setup("memfile-lfc");
+    }
 }
 
 void
@@ -227,9 +250,7 @@ const int Memfile_LeaseMgr::MAJOR_VERSION;
 const int Memfile_LeaseMgr::MINOR_VERSION;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
-    : LeaseMgr(parameters),
-      lfc_setup_(new LFCSetup(boost::bind(&Memfile_LeaseMgr::lfcCallback, this),
-                              *getIOService()))
+    : LeaseMgr(parameters), lfc_setup_()
     {
     // Check the universe and use v4 file or v6 file.
     std::string universe = getParameter("universe");
@@ -255,7 +276,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
 
     } else  {
-        lfcSetup();
+       lfcSetup();
     }
 }
 
@@ -785,12 +806,6 @@ Memfile_LeaseMgr::appendSuffix(const std::string& file_name,
     return (name);
 }
 
-
-uint32_t
-Memfile_LeaseMgr::getIOServiceExecInterval() const {
-    return (static_cast<uint32_t>(lfc_setup_->getInterval() / 1000));
-}
-
 std::string
 Memfile_LeaseMgr::getDefaultLeaseFilePath(Universe u) const {
     std::ostringstream s;
@@ -943,6 +958,7 @@ Memfile_LeaseMgr::lfcSetup() {
     }
 
     if (lfc_interval > 0) {
+        lfc_setup_.reset(new LFCSetup(boost::bind(&Memfile_LeaseMgr::lfcCallback, this)));
         lfc_setup_->setup(lfc_interval, lease_file4_, lease_file6_);
     }
 }

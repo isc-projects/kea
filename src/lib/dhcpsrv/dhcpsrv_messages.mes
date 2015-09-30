@@ -346,6 +346,12 @@ failure persist however, the size of the lease file will increase without bound.
 An informational message issued when the Memfile lease database backend
 starts the periodic Lease File Cleanup.
 
+% DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED failed to unregister timer 'memfile-lfc': %1
+This error message is logged when Memfile backend fails to unregister
+timer used for lease file cleanup scheduling. This is highly unlikely
+and indicates programming error. The message include the reason for this
+error.
+
 % DHCPSRV_MEMFILE_NO_STORAGE running in non-persistent mode, leases will be lost after restart
 A warning message issued when writes of leases to disk have been disabled
 in the configuration. This mode is useful for some kinds of performance

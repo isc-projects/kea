@@ -208,6 +208,7 @@ TEST_F(TimerMgrTest, registerTimer) {
 TEST_F(TimerMgrTest, unregisterTimer) {
     // Register a timer and start it.
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
+    ASSERT_EQ(1, timer_mgr_->timersCount());
     ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
     ASSERT_NO_THROW(timer_mgr_->startThread());
 
@@ -223,10 +224,13 @@ TEST_F(TimerMgrTest, unregisterTimer) {
 
     // Check that an attempt to unregister a non-existing timer would
     // result in exeception.
-    EXPECT_THROW(timer_mgr_->unregisterTimer("timer2"), BadValue);
+    ASSERT_THROW(timer_mgr_->unregisterTimer("timer2"), BadValue);
+    // Number of timers shouldn't have changed.
+    ASSERT_EQ(1, timer_mgr_->timersCount());
 
     // Now unregister the correct one.
     ASSERT_NO_THROW(timer_mgr_->unregisterTimer("timer1"));
+    ASSERT_EQ(0, timer_mgr_->timersCount());
 
     // Start the thread again and wait another 100ms.
     ASSERT_NO_THROW(timer_mgr_->startThread());
@@ -239,11 +243,6 @@ TEST_F(TimerMgrTest, unregisterTimer) {
 }
 
 // This test verifies taht it is possible to unregister all timers.
-/// @todo This test is disabled because it may occassionally hang
-/// due to bug in the ASIO implementation shipped with Kea.
-/// Replacing it with the ASIO implementation from BOOST does
-/// solve the problem. See ticket #4009. Until this ticket is
-/// implemented, the test should remain disabled.
 TEST_F(TimerMgrTest, unregisterTimers) {
     // Register 10 timers.
     for (int i = 1; i <= 20; ++i) {
@@ -252,6 +251,8 @@ TEST_F(TimerMgrTest, unregisterTimers) {
         ASSERT_NO_FATAL_FAILURE(registerTimer(s.str(), 1))
             << "fatal failure occurred while registering "
             << s.str();
+        ASSERT_EQ(i, timer_mgr_->timersCount())
+            << "invalid number of registered timers returned";
         ASSERT_NO_THROW(timer_mgr_->setup(s.str()))
             << "exception thrown while calling setup() for the "
             << s.str();
@@ -277,6 +278,9 @@ TEST_F(TimerMgrTest, unregisterTimers) {
 
     // Let's unregister all timers.
     ASSERT_NO_THROW(timer_mgr_->unregisterTimers());
+
+    // Make sure there are no timers registered.
+    ASSERT_EQ(0, timer_mgr_->timersCount());
 
     // Start worker thread again and wait for 500ms.
     ASSERT_NO_THROW(timer_mgr_->startThread());
