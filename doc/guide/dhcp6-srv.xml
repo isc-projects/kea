@@ -954,6 +954,10 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>clt-time</entry><entry>46</entry><entry>uint32</entry><entry>false</entry></row>
 <row><entry>lq-relay-data</entry><entry>47</entry><entry>record</entry><entry>false</entry></row>
 <row><entry>lq-client-link</entry><entry>48</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>bootfile-url</entry><entry>59</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>bootfile-param</entry><entry>60</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>client-arch-type</entry><entry>61</entry><entry>uint16</entry><entry>true</entry></row>
+<row><entry>nii</entry><entry>62</entry><entry>record</entry><entry>false</entry></row>
 <row><entry>erp-local-domain-name</entry><entry>65</entry><entry>fqdn</entry><entry>false</entry></row>
 <row><entry>rsoo</entry><entry>66</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>client-linklayer-addr</entry><entry>79</entry><entry>binary</entry><entry>false</entry></row>
