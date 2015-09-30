@@ -1,3 +1,8 @@
+1013.	[func]		marcin
+	New mechanism for scheduling lease file cleanup is used in the
+	DHCPv4 and DHCPv6 servers.
+	(Trac #3971, git 431d515fc3d64aa82369c8eaf48d03339f12dc69)
+
 1012.	[bug]		stephen
 	Replace #include of message_dictionary.h in message_initializer.h
 	with a declaration of the MessageDictionary class, avoing the need
