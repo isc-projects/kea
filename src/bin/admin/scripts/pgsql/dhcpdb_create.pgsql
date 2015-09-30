@@ -50,6 +50,41 @@ CREATE INDEX lease4_by_hwaddr_subnet_id ON lease4 (hwaddr, subnet_id);
 -- index by client_id and subnet_id
 CREATE INDEX lease4_by_client_id_subnet_id ON lease4 (client_id, subnet_id);
 
+--
+--  FUNCTION that returns a result set containing the column names for lease4 dumps
+DROP FUNCTION IF EXISTS lease4DumpHeader();
+CREATE FUNCTION lease4DumpHeader() RETURNS text AS  $$
+    select cast('address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname' as text) as result;
+$$ LANGUAGE SQL;
+--
+
+--
+--  FUNCTION that returns a result set containing the data for lease4 dumps
+DROP FUNCTION IF EXISTS lease4DumpData();
+CREATE FUNCTION lease4DumpData() RETURNS 
+    table (address inet, 
+           hwaddr text, 
+           client_id text,
+           valid_lifetime bigint,
+           expire timestamp with time zone,
+           subnet_id bigint, 
+           fqdn_fwd int,
+           fqdn_rev int,
+           hostname text
+    ) as $$
+    SELECT ('0.0.0.0'::inet + address), 
+            encode(hwaddr,'hex'), 
+            encode(client_id,'hex'),
+            valid_lifetime,
+            expire,
+            subnet_id,
+            fqdn_fwd::int,
+            fqdn_rev::int,
+            hostname
+    from lease4;
+$$ LANGUAGE SQL;
+--
+
 -- Holds the IPv6 leases.
 -- N.B. The use of a VARCHAR for the address is temporary for development:
 -- it will eventually be replaced by BINARY(16).
@@ -102,6 +137,48 @@ CREATE TABLE schema_version (
 START TRANSACTION;
 INSERT INTO schema_version VALUES (1, 0);
 COMMIT;
+
+--
+--  FUNCTION that returns a result set containing the column names for lease6 dumps
+DROP FUNCTION IF EXISTS lease6DumpHeader();
+CREATE FUNCTION lease6DumpHeader() RETURNS text AS  $$
+    select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname' as text) as result;
+$$ LANGUAGE SQL;
+--
+
+--
+--  FUNCTION that returns a result set containing the data for lease6 dumps
+DROP FUNCTION IF EXISTS lease6DumpData();
+CREATE FUNCTION lease6DumpData() RETURNS
+    TABLE (
+           address text,
+           duid text,
+           valid_lifetime bigint,
+           expire timestamp with time zone,
+           subnet_id bigint,
+           pref_lifetime bigint,
+           name text,
+           iaid integer,
+           prefix_len smallint,
+           fqdn_fwd int,
+           fqdn_rev int,
+           hostname text
+    ) AS $$
+    SELECT (a.address,
+            encode(a.duid,'hex'),
+            a.valid_lifetime,
+            a.expire,
+            a.subnet_id,
+            a.pref_lifetime,
+            b.name,
+            a.iaid,
+            a.prefix_len,
+            a.fqdn_fwd::int,
+            a.fqdn_rev::int,
+            a.hostname)
+     FROM lease6 a left outer join lease6_types b on (a.lease_type = b.lease_type);
+$$ LANGUAGE SQL;
+--
 
 -- Notes:
 
