@@ -118,7 +118,33 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         return (no_srv);
     }
 
+    // We're going to modify the timers configuration. This is not allowed
+    // when the thread is running.
+    try {
+        TimerMgr::instance()->stopThread();
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "Unable to stop worker thread running timers: "
+            << ex.what() << ".";
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
     ConstElementPtr answer = configureDhcp6Server(*srv, config);
+
+    // Start worker thread if there are any timers installed. Note that
+    // we also start worker thread when the reconfiguration failed, because
+    // in that case we continue using an old configuration and the server
+    // should still run installed timers.
+    if (TimerMgr::instance()->timersCount() > 0) {
+        try {
+            TimerMgr::instance()->startThread();
+        } catch (const std::exception& ex) {
+            std::ostringstream err;
+            err << "Unable to start worker thread running timers: "
+                << ex.what() << ".";
+            return (isc::config::createAnswer(1, err.str()));
+        }
+    }
 
     // Check that configuration was successful. If not, do not reopen sockets
     // and don't bother with DDNS stuff.
@@ -156,7 +182,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 }
 
 ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
-    : Dhcpv6Srv(port) {
+    : Dhcpv6Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()) {
     if (server_) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv6Srv instance already.");
@@ -196,19 +222,29 @@ void ControlledDhcpv6Srv::shutdown() {
 }
 
 ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
-    cleanup();
+    try {
+        cleanup();
 
-   // Close the command socket (if it exists).
-    CommandMgr::instance().closeCommandSocket();
+        // Stop worker thread running timers, if it is running.
+        timer_mgr_->stopThread();
 
-    // Deregister any registered commands
-    CommandMgr::instance().deregisterCommand("shutdown");
-    CommandMgr::instance().deregisterCommand("statistic-get");
-    CommandMgr::instance().deregisterCommand("statistic-reset");
-    CommandMgr::instance().deregisterCommand("statistic-remove");
-    CommandMgr::instance().deregisterCommand("statistic-get-all");
-    CommandMgr::instance().deregisterCommand("statistic-reset-all");
-    CommandMgr::instance().deregisterCommand("statistic-remove-all");
+        // Close the command socket (if it exists).
+        CommandMgr::instance().closeCommandSocket();
+
+        // Deregister any registered commands
+        CommandMgr::instance().deregisterCommand("shutdown");
+        CommandMgr::instance().deregisterCommand("statistic-get");
+        CommandMgr::instance().deregisterCommand("statistic-reset");
+        CommandMgr::instance().deregisterCommand("statistic-remove");
+        CommandMgr::instance().deregisterCommand("statistic-get-all");
+        CommandMgr::instance().deregisterCommand("statistic-reset-all");
+        CommandMgr::instance().deregisterCommand("statistic-remove-all");
+
+    } catch (...) {
+        // Don't want to throw exceptions from the destructor. The server
+        // is shutting down anyway.
+        ;
+    }
 
     server_ = NULL; // forget this instance. There should be no callback anymore
                     // at this stage anyway.

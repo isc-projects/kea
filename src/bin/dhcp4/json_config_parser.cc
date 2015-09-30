@@ -27,6 +27,7 @@
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <config/command_mgr.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -460,6 +461,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Before starting any subnet operations, let's reset the subnet-id counter,
     // so newly recreated configuration starts with first subnet-id equal 1.
     Subnet::resetSubnetID();
+
+    // Remove any existing timers.
+    TimerMgr::instance()->unregisterTimers();
 
     // Some of the values specified in the configuration depend on
     // other values. Typically, the values in the subnet4 structure
