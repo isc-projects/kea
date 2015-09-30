@@ -1424,7 +1424,7 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
     lease_mgr.getExpiredLeases4(leases, max_leases);
 
     // Do not initialize the callout handle until we know if there are any
-    // lease6_expire callouts installed.
+    // lease4_expire callouts installed.
     CalloutHandlePtr callout_handle;
     if (!leases.empty() &&
         HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease4_expire_)) {
