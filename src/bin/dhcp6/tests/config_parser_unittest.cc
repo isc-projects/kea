@@ -2067,15 +2067,15 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
-    /// @todo The option 59 is a standard DHCPv6 option. However, at this point
+    /// @todo The option 63 is a standard DHCPv6 option. However, at this point
     /// there is no definition for this option in libdhcp++, so it should be
     /// allowed to define it from the configuration interface. This test will
     /// have to be removed once definitions for remaining standard options are
     /// created.
     config =
         "{ \"option-def\": [ {"
-        "      \"name\": \"boot-file-name\","
-        "      \"code\": 59,"
+        "      \"name\": \"geolocation\","
+        "      \"code\": 63,"
         "      \"type\": \"string\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
@@ -2092,12 +2092,12 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     checkResult(status, 0);
 
     def = CfgMgr::instance().getStagingCfg()->
-        getCfgOptionDef()->get("dhcp6", 59);
+        getCfgOptionDef()->get("dhcp6", 63);
     ASSERT_TRUE(def);
 
     // Check the option data.
-    EXPECT_EQ("boot-file-name", def->getName());
-    EXPECT_EQ(59, def->getCode());
+    EXPECT_EQ("geolocation", def->getName());
+    EXPECT_EQ(63, def->getCode());
     EXPECT_EQ(OPT_STRING_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
 }
