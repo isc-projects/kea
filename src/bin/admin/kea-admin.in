@@ -312,42 +312,21 @@ check_file_overwrite () {
 get_dump_query() {
     local version=$1
 
-    dump_qry=""
-    dump_sql_file="$scripts_dir/${backend}/lease_dump_$version.sh"
-    if [ ! -e $dump_sql_file ]
-    then
-        log_error "lease-dump: cannot access dump_sql_file: $dump_sql_file"
-        exit 1;
-    fi
-
-    # source in the dump file which defines the sql text we'll need
-    . $dump_sql_file
-    if [ $? -ne 0 ]
-    then
-        log_error "lease-dump: error sourcing dump_sql_file: $dump_sql_file"
+    case ${backend} in
+    mysql)
+        invoke="call"
+        ;;
+    pgsql)
+        invoke="select * from"
+        ;;
+    *)
+        log_error "unsupported backend ${backend}"
+        usage
         exit 1
-    fi
-
-    # Construct the SQL text to dump the leases based on protocol type
-    case ${dump_type} in
-        4)
-            dump_qry="$lease4_dump_sql";
-            ;;
-        6)
-            dump_qry="$lease6_dump_sql";
-            ;;
-        *)
-            log_error "you must specify -4 or -6 for lease-dump"
-            usage
-            exit 1
-            ;;
+        ;;
     esac
 
-    if [ "$dump_qry" = "" ]
-    then
-        log_error "lease-dump: dump query appears to be undefined"
-        exit 1
-    fi
+    dump_qry="${invoke} lease${dump_type}DumpHeader();${invoke} lease${dump_type}DumpData();";
 }
 
 memfile_dump() {
