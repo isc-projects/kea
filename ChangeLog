@@ -1,3 +1,10 @@
+1017.	[func]		tmark
+	Lease dump SQL logic, used by kea-admin, is now supplied via stored
+	procedures rather than external text files.  Files of the form
+	lease_dump_<version>.sh will no longer be installed under
+	<prefix>/share/kea/scripts.
+	(Trac #3916, git 09cdd86a5e284250d7657a93a36df2e2705947d2)
+
 1016.	[bug]		fdupont
 	Fixed problems when --enable-static-link is specified as a
 	"configure" option. With this switch present, all Kea
