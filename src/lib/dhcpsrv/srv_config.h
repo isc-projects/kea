@@ -15,6 +15,7 @@
 #ifndef DHCPSRV_CONFIG_H
 #define DHCPSRV_CONFIG_H
 
+#include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
@@ -259,6 +260,18 @@ public:
         return (cfg_rsoo_);
     }
 
+    /// @brief Returns pointer to the object holding configuration pertaining
+    /// to processing expired leases.
+    CfgExpirationPtr getCfgExpiration() {
+        return (cfg_expiration_);
+    }
+
+    /// @brief Returns pointer to the const object holding configuration
+    /// pertaining to processing expired leases.
+    ConstCfgExpirationPtr getCfgExpiration() const {
+        return (cfg_expiration_);
+    }
+
     //@}
 
     /// @brief Returns non-const reference to an array that stores
@@ -440,6 +453,10 @@ private:
     /// This object holds a set of RSOO-enabled options. See
     /// RFC 6422 for the definition of the RSOO-enabled option.
     CfgRSOOPtr cfg_rsoo_;
+
+    /// @brief Pointer to the configuration pertaining to processing of
+    /// expired leases.
+    CfgExpirationPtr cfg_expiration_;
 
     /// @brief Pointer to the control-socket information
     isc::data::ConstElementPtr control_socket_;

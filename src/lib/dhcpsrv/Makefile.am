@@ -80,6 +80,7 @@ libkea_dhcpsrv_la_SOURCES += base_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
 libkea_dhcpsrv_la_SOURCES += cfg_hosts.cc cfg_hosts.h
 libkea_dhcpsrv_la_SOURCES += cfg_iface.cc cfg_iface.h
+libkea_dhcpsrv_la_SOURCES += cfg_expiration.cc cfg_expiration.h
 libkea_dhcpsrv_la_SOURCES += cfg_option.cc cfg_option.h
 libkea_dhcpsrv_la_SOURCES += cfg_option_def.cc cfg_option_def.h
 libkea_dhcpsrv_la_SOURCES += cfg_rsoo.cc cfg_rsoo.h
