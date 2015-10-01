@@ -41,7 +41,6 @@ OptionOpaqueDataTuples::pack(isc::util::OutputBuffer& buf) {
          it != tuples_.end(); ++it) {
         it->pack(buf);
     }
-
 }
 
 void
@@ -69,7 +68,7 @@ OptionOpaqueDataTuples::addTuple(const OpaqueDataTuple& tuple) {
     if (tuple.getLengthFieldType() != getLengthFieldType()) {
         isc_throw(isc::BadValue, "attempted to add opaque data tuple having"
                   " invalid size of the length field "
-                  << tuple.getDataFieldSize() << " to Vendor Class option");
+                  << tuple.getDataFieldSize() << " to opaque data tuple option");
     }
 
     tuples_.push_back(tuple);
@@ -80,13 +79,13 @@ void
 OptionOpaqueDataTuples::setTuple(const size_t at, const OpaqueDataTuple& tuple) {
     if (at >= getTuplesNum()) {
         isc_throw(isc::OutOfRange, "attempted to set an opaque data for the"
-                  " vendor option at position " << at << " which is out of"
-                  " range");
+                  " opaque data tuple option at position " << at << " which"
+                  " is out of range");
 
     } else if (tuple.getLengthFieldType() != getLengthFieldType()) {
         isc_throw(isc::BadValue, "attempted to set opaque data tuple having"
                   " invalid size of the length field "
-                  << tuple.getDataFieldSize() << " to Vendor Class option");
+                  << tuple.getDataFieldSize() << " to opaque data tuple option");
     }
 
     tuples_[at] = tuple;
@@ -96,8 +95,8 @@ OpaqueDataTuple
 OptionOpaqueDataTuples::getTuple(const size_t at) const {
     if (at >= getTuplesNum()) {
         isc_throw(isc::OutOfRange, "attempted to get an opaque data for the"
-                  " vendor option at position " << at << " which is out of"
-                  " range. There are only " << getTuplesNum() << " tuples");
+                  " opaque data tuple option at position " << at << " which is"
+                  " out of range. There are only " << getTuplesNum() << " tuples");
     }
     return (tuples_[at]);
 }
@@ -114,7 +113,6 @@ OptionOpaqueDataTuples::hasTuple(const std::string& tuple_str) const {
     }
     return (false);
 }
-
 
 uint16_t
 OptionOpaqueDataTuples::len() {
@@ -135,8 +133,6 @@ OptionOpaqueDataTuples::toText(int indent) {
 
     // Apply indentation
     s << std::string(indent, ' ');
-
-
 
     // Print type and length
     s << "type=" << getType() << ", len=" << len() - getHeaderLen() << std::dec;
