@@ -5,7 +5,7 @@
 	to the static (vs. shared) version of Kea libraries.
 	However, note that they can still be linked to dynamic
 	system libraries.
-	(Trac #4004, git xxx)
+	(Trac #4004, git 760a343efbd241f5ed333cfff088124378f69115)
 
 1015.	[func]		tomek
 	Expired declined leases can now be reclaimed (returned to the
