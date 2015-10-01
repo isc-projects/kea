@@ -57,11 +57,11 @@ namespace {
 class DaemonTest : public ::testing::Test {
 public:
     /// @brief Constructor
-    DaemonTest() : env_(0), env_copy_() {
+    DaemonTest() : env_copy_() {
         // Take a copy of KEA_PIDFILE_DIR environment variable value
-        char *env_ = getenv("KEA_PIDFILE_DIR");
-        if (env_) {
-            env_copy_ = std::string(env_);
+        char *env_value = getenv("KEA_PIDFILE_DIR");
+        if (env_value) {
+            env_copy_ = std::string(env_value);
         }
     }
 
