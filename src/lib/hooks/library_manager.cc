@@ -23,6 +23,7 @@
 #include <hooks/pointer_converter.h>
 #include <hooks/server_hooks.h>
 #include <log/logger_manager.h>
+#include <log/logger_support.h>
 #include <log/message_initializer.h>
 
 #include <string>
@@ -373,6 +374,14 @@ LibraryManager::validateLibrary(const std::string& name) {
     static_cast<void>(manager.closeLibrary());
 
     return (validated);
+}
+
+// @note Moved from its own hooks.cc file to avoid undefined reference
+// with static link.
+void hooksStaticLinkInit() {
+    if (!isc::log::isLoggingInitialized()) {
+        isc::log::initLogger(std::string("userlib"));
+    }
 }
 
 } // namespace hooks
