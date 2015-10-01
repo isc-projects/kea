@@ -1,3 +1,8 @@
+1015.	[func]		tomek
+	Expired declined leases can now be reclaimed (returned to the
+	available pool) after probation	period elapses.
+	(Trac #3984, #3976, git 32a8ec68e0e5ea93991915812158d7628d2b4709)
+
 1014.	[func]		marcin
 	Implemented lease4_expire and lease6_expire hooks in libdhcpsrv.
 	(Trac #3972, git 8a8547aec1caf2a8d1c7ca206f68534f3c03f1d9)
