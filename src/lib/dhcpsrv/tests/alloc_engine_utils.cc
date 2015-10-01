@@ -47,6 +47,84 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
+bool testStatistics(const std::string& stat_name, const int64_t exp_value) {
+    try {
+        ObservationPtr observation = StatsMgr::instance().getObservation(stat_name);
+        if (observation) {
+            if (observation->getInteger().first != exp_value) {
+                ADD_FAILURE()
+                    << "value of the observed statistics '"
+                    << stat_name << "' " << "("
+                    << observation->getInteger().first << ") "
+                    <<  "doesn't match expected value (" << exp_value << ")";
+            }
+            return (observation->getInteger().first == exp_value);
+        }
+
+    } catch (...) {
+        ;
+    }
+    return (false);
+}
+
+void
+AllocEngine4Test::testReuseLease4(const AllocEnginePtr& engine,
+                                  Lease4Ptr& existing_lease,
+                                  const std::string& addr,
+                                  const bool fake_allocation,
+                                  ExpectedResult exp_result,
+                                  Lease4Ptr& result) {
+    ASSERT_TRUE(engine);
+
+    if (existing_lease) {
+        // If an existing lease was specified, we need to add it to the
+        // database. Let's wipe any leases for that address (if any). We
+        // ignore any errors (previous lease may not exist)
+        LeaseMgrFactory::instance().deleteLease(existing_lease->addr_);
+
+        // Let's add it.
+        ASSERT_TRUE(LeaseMgrFactory::instance().addLease(existing_lease));
+    }
+
+    // A client comes along, asking specifically for a given address
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress(addr), false, false,
+                                    "", fake_allocation);
+    if (fake_allocation) {
+        ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    } else {
+        ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    }
+    result = engine->allocateLease4(ctx);
+
+    switch (exp_result) {
+    case SHOULD_PASS:
+        ASSERT_TRUE(result);
+
+        checkLease4(result);
+        break;
+
+    case SHOULD_FAIL:
+        ASSERT_FALSE(result);
+        break;
+    }
+}
+
+Lease4Ptr
+AllocEngine4Test::generateDeclinedLease(const std::string& addr,
+                                        time_t probation_period,
+                                        int32_t expired) {
+    // There's an assumption that hardware address is always present for IPv4
+    // packet (always non-null). Client-id is optional (may be null).
+    HWAddrPtr hwaddr(new HWAddr());
+    time_t now = time(NULL);
+    Lease4Ptr declined(new Lease4(addr, hwaddr, ClientIdPtr(), 495,
+                                  100, 200, now, subnet_->getID()));
+    declined->decline(probation_period);
+    declined->cltt_ = now - probation_period + expired;
+    return (declined);
+}
+
 AllocEngine6Test::AllocEngine6Test() {
     CfgMgr::instance().clear();
 

@@ -147,6 +147,7 @@ std::string callout_argument_name("lease4");
 /// - leaseDoesntExist - lease removed from the database,
 /// - leaseReclaimed - lease exists but has reclaimed status,
 /// - leaseNotReclaimed - lease exists and is not in the reclaimed status,
+/// - leaseDeclined - lease exists and is in declined state,
 /// - dnsUpdateGeneratedForLease - DNS updates generated for lease,
 /// - dnsUpdateNotGeneratedForLease - DNS updates not generated for lease
 ///
@@ -249,6 +250,17 @@ public:
         ASSERT_NO_THROW(updateLease(lease_index));
     }
 
+    /// @brief Declines specified lease
+    ///
+    /// Sets specified lease to declined state and sets its probation-period.
+    /// @param lease_index Index of the lease.
+    /// @param probation_time value of probation period to be set (in seconds)
+    void decline(const uint16_t lease_index, const time_t probation_time) {
+        ASSERT_GT(leases_.size(), lease_index);
+        leases_[lease_index]->decline(probation_time);
+        ASSERT_NO_THROW(updateLease(lease_index));
+    }
+
     /// @brief Updates lease in the lease database.
     ///
     /// @param lease_index Index of the lease.
@@ -278,33 +290,6 @@ public:
     virtual void reclaimExpiredLeases(const size_t max_leases,
                                       const uint16_t timeout,
                                       const bool remove_lease) = 0;
-
-    /// @brief Test that statistic manager holds a given value.
-    ///
-    /// @param stat_name Statistic name.
-    /// @param exp_value Expected value.
-    ///
-    /// @return true if the statistic manager holds a particular value,
-    /// false otherwise.
-    bool testStatistics(const std::string& stat_name, const int64_t exp_value) const {
-        try {
-            ObservationPtr observation = StatsMgr::instance().getObservation(stat_name);
-            if (observation) {
-                if (observation->getInteger().first != exp_value) {
-                    ADD_FAILURE()
-                        << "value of the observed statistics '"
-                        << stat_name << "' " << "("
-                        << observation->getInteger().first << ") "
-                        <<  "doesn't match expected value (" << exp_value << ")";
-                }
-                return (observation->getInteger().first == exp_value);
-            }
-
-        } catch (...) {
-            ;
-        }
-        return (false);
-    }
 
     /// @brief Test selected leases using the specified algorithms.
     ///
@@ -407,6 +392,14 @@ public:
         return (lease && lease->stateExpiredReclaimed() &&
                 lease->hostname_.empty() && !lease->fqdn_fwd_ &&
                 !lease->fqdn_rev_);
+    }
+
+    /// @brief Lease algorithm checking if lease state is Declined.
+    ///
+    /// @param lease Pointer to lease.
+    /// @return true if lease state is "declined".
+    static bool leaseDeclined(const LeasePtrType& lease) {
+        return (lease && lease->stateDeclined());
     }
 
     /// @brief Lease algorithm checking if lease state is not
@@ -910,6 +903,119 @@ public:
         EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes,
                                LowerBound(theoretical_reclaimed + 1),
                                UpperBound(TEST_LEASES_NUM)));
+    }
+
+    /// @brief Test that declined expired leases can be removed.
+    ///
+    /// This method allows controlling remove_leases parameter when calling
+    /// @ref AllocEngine::reclaimExpiredLeases4. This should not matter, as
+    /// the address affinity doesn't make sense for declined leases (they don't
+    /// have any useful information in them anymore), so AllocEngine should
+    /// remove them all the time.
+    ///
+    /// @param remove see description above
+    void testReclaimDeclined4(bool remove) {
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
+
+            // Mark leases with even indexes as expired.
+            if (evenLeaseIndex(i)) {
+
+                // Mark lease as declined with 100 seconds of probation-period
+                // (i.e. lease is supposed to be off limits for 100 seconds)
+                decline(i, 100);
+
+                // The higher the index, the more expired the lease.
+                expire(i, 10 + i);
+            }
+        }
+
+        // Run leases reclamation routine on all leases. This should result
+        // in removing all leases with status = declined, i.e. all
+        // even leases should be gone.
+        ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, remove));
+
+        // Leases with even indexes should not exist in the DB
+        EXPECT_TRUE(testLeases(&leaseDoesntExist, &evenLeaseIndex));
+    }
+
+    /// @brief Test that appropriate statistics are updated when
+    ///        declined expired leases are processed by AllocEngine.
+    void testReclaimDeclined4Stats() {
+
+        // Leases by default all belong to subnet_id_ = 1. Let's count the
+        // number of declined leases.
+        int subnet1_cnt = 0;
+        int subnet2_cnt = 0;
+
+        // Let's move all leases to declined,expired state.
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
+
+            // Move the lease to declined state
+            decline(i, 100);
+
+            // And expire it, so it will be reclaimed
+            expire(i, 10 + 1);
+
+            // Move every other lease to subnet-id = 2.
+            if (evenLeaseIndex(i)) {
+                subnet1_cnt++;
+            } else {
+                subnet2_cnt++;
+                setSubnetId(i, 2);
+            }
+        }
+
+        StatsMgr& stats_mgr = StatsMgr::instance();
+        // Let's set the global statistic. Values are arbitrary and can
+        // be used to easily detect whether a given stat was decreased or
+        // increased. They are sufficiently high compared to number of leases
+        // to avoid any chances of going into negative.
+        stats_mgr.setValue("declined-addresses", static_cast<int64_t>(1000));
+
+        // Let's set global the counter for reclaimed declined addresses.
+        stats_mgr.setValue("reclaimed-declined-addresses",
+                           static_cast<int64_t>(2000));
+
+        // And those subnet specific as well
+        stats_mgr.setValue(stats_mgr.generateName("subnet", 1,
+                           "assigned-addresses"), int64_t(1000));
+        stats_mgr.setValue(stats_mgr.generateName("subnet", 2,
+                           "assigned-addresses"), int64_t(2000));
+
+        stats_mgr.setValue(stats_mgr.generateName("subnet", 1,
+                           "reclaimed-declined-addresses"), int64_t(3000));
+        stats_mgr.setValue(stats_mgr.generateName("subnet", 2,
+                           "reclaimed-declined-addresses"), int64_t(4000));
+
+        stats_mgr.setValue(stats_mgr.generateName("subnet", 1,
+                           "declined-addresses"), int64_t(10));
+        stats_mgr.setValue(stats_mgr.generateName("subnet", 2,
+                           "declined-addresses"), int64_t(20));
+
+        // Run leases reclamation routine on all leases. This should result
+        // in removal of all leases with even indexes.
+        ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, true));
+
+        // Declined-addresses should be decreased from its initial value (1000)
+        // for both recovered addresses from subnet1 and subnet2.
+        testStatistics("declined-addresses", 1000 - subnet1_cnt - subnet2_cnt);
+
+        // The code should bump up global counter for reclaimed declined
+        // addresses.
+        testStatistics("reclaimed-declined-addresses", 2000 + subnet1_cnt + subnet2_cnt);
+
+        // subnet[X].assigned-addresses should go down. Between the time
+        // of DHCPDECLINE reception and declined expired lease reclaimation,
+        // we count this address as assigned-addresses. We decrease assigned-
+        // addresses when we reclaim the lease, not when the packet is received.
+        // For explanation, see Duplicate Addresses (DHCPDECLINE support)
+        // section in the User's Guide or a comment in Dhcpv4Srv::declineLease.
+        testStatistics("subnet[1].assigned-addresses", 1000 - subnet1_cnt);
+        testStatistics("subnet[2].assigned-addresses", 2000 - subnet2_cnt);
+
+        // subnet[X].reclaimed-declined-addresses should go up in each subnet
+        testStatistics("subnet[1].reclaimed-declined-addresses", 3000 + subnet1_cnt);
+        testStatistics("subnet[2].reclaimed-declined-addresses", 4000 + subnet1_cnt);
     }
 
     /// @brief Collection of leases created at construction time.
@@ -1539,6 +1645,27 @@ TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesShortTimeout) {
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 5);
     // Reclaim leases with the 1ms timeout.
     testReclaimExpiredLeasesTimeout(1);
+}
+
+/// This test verifies that @ref AllocEngine::reclaimExpiredLeases4 properly
+/// handles declined leases that have expired in case when it is told to
+/// remove leases.
+TEST_F(ExpirationAllocEngine4Test, reclaimDeclined1) {
+    testReclaimDeclined4(true);
+}
+
+/// This test verifies that @ref AllocEngine::reclaimExpiredLeases4 properly
+/// handles declined leases that have expired in case when it is told to
+/// not remove leases. This flag should not matter and declined expired
+/// leases should always be removed.
+TEST_F(ExpirationAllocEngine4Test, reclaimDeclined2) {
+    testReclaimDeclined4(false);
+}
+
+/// This test verifies that statistics are modified correctly after
+/// reclaim expired leases is called.
+TEST_F(ExpirationAllocEngine4Test, reclaimDeclinedStats) {
+    testReclaimDeclined4Stats();
 }
 
 }; // end of anonymous namespace

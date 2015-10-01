@@ -528,6 +528,29 @@ public:
     ///   "expired-reclaimed" or removing it from the lease databse,
     /// - updating statistics of assigned and reclaimed leases
     ///
+    /// Note: declined leases fall under the same expiration/reclaimation
+    /// processing as normal leases. In principle, it would more elegant
+    /// to have a separate processing for declined leases reclaimation. However,
+    /// due to performance reasons we decided to use them together. Several
+    /// aspects were taken into consideration. First, normal leases are expected
+    /// to expire frequently, so in a typical deployment this method will have
+    /// some leases to process. Second, declined leases are expected to be very
+    /// rare event, so in most cases there won't be any declined expired leases.
+    /// Third, the calls to LeaseMgr to obtain all leases of specific expiration
+    /// criteria are expensive, so it is better to have one call rather than
+    /// two, especially if one of those calls is expected to usually return no
+    /// leases.
+    ///
+    /// It doesn't make sense to retain declined leases that are reclaimed,
+    /// because those leases don't contain any useful information (all client
+    /// identifying information was stripped when the leave was moved to the
+    /// declined state). Therefore remove_leases parameter is ignored for
+    /// declined leases. They are always removed.
+    ///
+    /// Also, for delined leases @ref reclaimDeclined is called. It conducts
+    /// several declined specific operation (extra log entry, stats dump,
+    /// hooks).
+    ///
     /// @param max_leases Maximum number of leases to be reclaimed.
     /// @param timeout Maximum amount of time that the reclaimation routine
     /// may be processing expired leases, expressed in milliseconds.
@@ -748,6 +771,16 @@ private:
                                 const bool remove_lease,
                                 const boost::function<void (const LeasePtrType&)>&
                                 lease_update_fun) const;
+
+    /// @brief Conducts steps necessary for reclaiming declined lease.
+    ///
+    /// These are the additional steps required when recoving a declined lease:
+    /// - bump decline recovered stat
+    /// - log lease recovery
+    /// - call hook (@todo)
+    ///
+    /// @param lease Lease to be reclaimed from Declined state
+    void reclaimDeclined(const Lease4Ptr& lease);
 
 public:
 
