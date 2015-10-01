@@ -164,19 +164,19 @@ CREATE FUNCTION lease6DumpData() RETURNS
            fqdn_rev int,
            hostname text
     ) AS $$
-    SELECT (a.address,
-            encode(a.duid,'hex'),
-            a.valid_lifetime,
-            a.expire,
-            a.subnet_id,
-            a.pref_lifetime,
-            b.name,
-            a.iaid,
-            a.prefix_len,
-            a.fqdn_fwd::int,
-            a.fqdn_rev::int,
-            a.hostname)
-     FROM lease6 a left outer join lease6_types b on (a.lease_type = b.lease_type);
+    SELECT (l.address,
+            encode(l.duid,'hex'),
+            l.valid_lifetime,
+            l.expire,
+            l.subnet_id,
+            l.pref_lifetime,
+            t.name,
+            l.iaid,
+            l.prefix_len,
+            l.fqdn_fwd::int,
+            l.fqdn_rev::int,
+            l.hostname)
+     FROM lease6 l left outer join lease6_types t on (l.lease_type = t.lease_type);
 $$ LANGUAGE SQL;
 --
 
