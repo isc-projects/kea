@@ -270,7 +270,7 @@ Dhcp4Client::doInform(const bool set_ciaddr) {
 
 void
 Dhcp4Client::doRelease() {
-    if (config_.lease_.addr_ == IOAddress::IPV4_ZERO_ADDRESS()) {
+    if (config_.lease_.addr_.isV4Zero()) {
         isc_throw(Dhcp4ClientError, "failed to send the release"
                   " message because client doesn't have a lease");
     }
@@ -289,7 +289,7 @@ Dhcp4Client::doRelease() {
 
 void
 Dhcp4Client::doDecline() {
-    if (config_.lease_.addr_ == IOAddress::IPV4_ZERO_ADDRESS()) {
+    if (config_.lease_.addr_.isV4Zero()) {
         isc_throw(Dhcp4ClientError, "failed to send the decline"
                   " message because client doesn't have a lease");
     }
