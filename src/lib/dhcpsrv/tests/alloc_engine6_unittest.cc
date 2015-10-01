@@ -1385,7 +1385,7 @@ TEST_F(AllocEngine6Test, reserved2Addresses) {
     AllocEngine::ClientContext6 ctx3(subnet_, duid_, iaid_ + 1, IOAddress("::"),
                                     pool_->getType(), false, false, "", false);
     ctx3.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
-    
+
     Lease6Collection leases3;
     findReservation(engine, ctx3);
     EXPECT_NO_THROW(leases3 = engine.allocateLeases6(ctx3));
@@ -1653,6 +1653,161 @@ TEST_F(AllocEngine6Test, largeAllocationAttemptsOverride) {
     AllocEngine engine2(AllocEngine::ALLOC_ITERATIVE, 6);
     leases = allocateTest(engine2, pool_, IOAddress("::"), false, true);
     ASSERT_EQ(1, leases.size());
+}
+
+// This test checks if an expired declined lease can be reused in SOLICIT (fake allocation)
+TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6) {
+
+    AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
+    ASSERT_TRUE(engine);
+
+    // Now prepare a configuration with single address pool.
+    // Create one subnet with a pool holding one address.
+    string addr_txt("2001:db8:1::ad");
+    IOAddress addr(addr_txt);
+    initSubnet(IOAddress("2001:db8:1::"), addr, addr);
+
+    // Use information that is different than what we'll request
+    Lease6Ptr declined = generateDeclinedLease(addr_txt, 100, -10);
+    ASSERT_TRUE(declined->expired());
+
+    // CASE 1: Asking for any address
+    Lease6Ptr assigned;
+    testReuseLease6(engine, declined, "::", true, SHOULD_PASS, assigned);
+
+    // Check that we got that single lease
+    ASSERT_TRUE(assigned);
+    EXPECT_EQ(addr, assigned->addr_);
+
+    // Do all checks on the lease (if subnet-id, preferred/valid times are ok etc.)
+    checkLease6(assigned, Lease::TYPE_NA, 128);
+
+    // CASE 2: Asking specifically for this address
+    testReuseLease6(engine, declined, addr_txt, true, SHOULD_PASS, assigned);
+
+    // Check that we got that single lease
+    ASSERT_TRUE(assigned);
+    EXPECT_EQ(addr, assigned->addr_);
+}
+
+// This test checks if an expired declined lease can be reused when responding
+// to REQUEST (actual allocation)
+TEST_F(AllocEngine6Test, requestReuseDeclinedLease6) {
+
+    AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100, true));
+    ASSERT_TRUE(engine);
+
+    // Now prepare a configuration with single address pool.
+    string addr_txt("2001:db8::7");
+    IOAddress addr(addr_txt);
+    initSubnet(IOAddress("2001:db8::"), addr, addr);
+
+    // Now create a declined lease, decline it and rewind its cltt, so it
+    // is expired.
+    Lease6Ptr declined = generateDeclinedLease(addr_txt, 100, -10);
+
+    // Asking specifically for this address
+    Lease6Ptr assigned;
+    testReuseLease6(engine, declined, addr_txt, false, SHOULD_PASS, assigned);
+    // Check that we got it.
+    ASSERT_TRUE(assigned);
+    EXPECT_EQ(addr, assigned->addr_);
+
+    // Check that the lease is indeed updated in LeaseMgr
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                               addr);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(assigned, from_mgr);
+}
+
+// This test checks if statistics are not updated when expired declined lease
+// is reused when responding to SOLICIT (fake allocation)
+TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6Stats) {
+
+    // Now prepare for SOLICIT processing
+    AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                          100, true));
+    ASSERT_TRUE(engine);
+
+    // Now prepare a configuration with single address pool.
+    string addr_txt("2001:db8:1::1");
+    IOAddress addr(addr_txt);
+    initSubnet(IOAddress("2001:db8:1::"), addr, addr);
+
+    // Now create a declined lease, decline it and rewind its cltt, so it
+    // is expired.
+    Lease6Ptr declined = generateDeclinedLease(addr_txt, 100, -10);
+
+    // Let's fix some global stats...
+    StatsMgr& stats_mgr = StatsMgr::instance();
+    stats_mgr.setValue("declined-addresses", static_cast<int64_t>(1000));
+    stats_mgr.setValue("reclaimed-declined-addresses", static_cast<int64_t>(1000));
+
+    // ...and subnet specific stats as well.
+    string stat1 = StatsMgr::generateName("subnet", subnet_->getID(),
+                                          "declined-addresses");
+    string stat2 = StatsMgr::generateName("subnet", subnet_->getID(),
+                                          "reclaimed-declined-addresses");
+    stats_mgr.setValue(stat1, static_cast<int64_t>(1000));
+    stats_mgr.setValue(stat2, static_cast<int64_t>(1000));
+
+    // Ask for any address. There's only one address in the pool, so it doesn't
+    // matter much.
+    Lease6Ptr assigned;
+    testReuseLease6(engine, declined, "::", true, SHOULD_PASS, assigned);
+
+    // Check that the stats were not modified
+    testStatistics("declined-addresses", 1000);
+    testStatistics("reclaimed-declined-addresses", 1000);
+
+    testStatistics(stat1, 1000);
+    testStatistics(stat2, 1000);
+}
+
+// This test checks if statistics are not updated when expired declined lease
+// is reused when responding to REQUEST (fake allocation)
+TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
+
+    // Now prepare for SOLICIT processing
+    AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                          100, true));
+    ASSERT_TRUE(engine);
+
+    // Now prepare a configuration with single address pool.
+    string addr_txt("2001:db8::1");
+    IOAddress addr(addr_txt);
+    initSubnet(IOAddress("2001:db8::"), addr, addr);
+
+    // Now create a declined lease, decline it and rewind its cltt, so it
+    // is expired.
+    Lease6Ptr declined = generateDeclinedLease(addr_txt, 100, -10);
+
+    // Let's fix some global stats...
+    StatsMgr& stats_mgr = StatsMgr::instance();
+    stats_mgr.setValue("declined-addresses", static_cast<int64_t>(1000));
+    stats_mgr.setValue("reclaimed-declined-addresses", static_cast<int64_t>(1000));
+
+    // ...and subnet specific stats as well.
+    string stat1 = StatsMgr::generateName("subnet", subnet_->getID(),
+                                          "declined-addresses");
+    string stat2 = StatsMgr::generateName("subnet", subnet_->getID(),
+                                          "reclaimed-declined-addresses");
+    stats_mgr.setValue(stat1, static_cast<int64_t>(1000));
+    stats_mgr.setValue(stat2, static_cast<int64_t>(1000));
+
+    // Ask for any address. There's only one address in the pool, so it doesn't
+    // matter much.
+    Lease6Ptr assigned;
+    testReuseLease6(engine, declined, "::", false, SHOULD_PASS, assigned);
+
+    // Check that the stats were not modified
+    testStatistics("declined-addresses", 999);
+    testStatistics("reclaimed-declined-addresses", 1001);
+
+    testStatistics(stat1, 999);
+    testStatistics(stat2, 1001);
 }
 
 }; // namespace test

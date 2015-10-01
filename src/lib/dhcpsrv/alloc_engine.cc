@@ -936,6 +936,17 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         prefix_len = 128; // non-PD lease types must be always /128
     }
 
+    if ( (expired->state_ == Lease::STATE_DECLINED) &&
+         (ctx.fake_allocation_ == false)) {
+        // If this is a declined lease that expired, we need to conduct
+        // extra steps for it. However, we do want to conduct those steps
+        // only once. In paricular, if we have an expired declined lease
+        // and client sent DHCPDISCOVER and will later send DHCPREQUEST,
+        // we only want to call this method once when responding to
+        // DHCPREQUEST (when the actual reclaimation takes place).
+        reclaimDeclined(expired);
+    }
+
     // address, lease type and prefixlen (0) stay the same
     expired->iaid_ = ctx.iaid_;
     expired->duid_ = ctx.duid_;
@@ -1340,9 +1351,25 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
                     queueRemovalNameChangeRequest(lease, *(lease->duid_));
                 }
 
+                // Let's check if the lease that just expired is in DECLINED state.
+                // If it is, we need to conduct couple extra steps and also force
+                // its removal.
+                bool remove_tmp = remove_lease;
+                if (lease->state_ == Lease::STATE_DECLINED) {
+                    // There's no point in keeping declined lease after its
+                    // reclaimation. Declined lease doesn't have any client
+                    // identifying information anymore.
+                    remove_tmp = true;
+
+                    // Do extra steps required for declined lease reclaimation:
+                    // - bump decline-related stats
+                    // - log separate message
+                    reclaimDeclined(lease);
+                }
+
                 // Reclaim the lease - depending on the configuration, set the
                 // expired-reclaimed state or simply remove it.
-                reclaimLeaseInDatabase<Lease6Ptr>(lease, remove_lease,
+                reclaimLeaseInDatabase<Lease6Ptr>(lease, remove_tmp,
                                                   boost::bind(&LeaseMgr::updateLease6,
                                                               &lease_mgr, _1));
             }
@@ -1563,6 +1590,37 @@ AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
     // modified in whatever code calls this method.
 
     /// @todo: call lease4_decline_recycle hook here.
+}
+
+void
+AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
+
+    if (!lease || (lease->state_ != Lease::STATE_DECLINED) ) {
+        return;
+    }
+
+    LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_DECLINED_RECOVERED)
+        .arg(lease->addr_.toText())
+        .arg(lease->valid_lft_);
+
+    StatsMgr& stats_mgr = StatsMgr::instance();
+
+    // Decrease subnet specific counter for currently declined addresses
+    stats_mgr.addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
+        "declined-addresses"), static_cast<int64_t>(-1));
+
+    // Decrease global counter for declined addresses
+    stats_mgr.addValue("declined-addresses", static_cast<int64_t>(-1));
+
+    stats_mgr.addValue("reclaimed-declined-addresses", static_cast<int64_t>(1));
+
+    stats_mgr.addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
+        "reclaimed-declined-addresses"), static_cast<int64_t>(1));
+
+    // Note that we do not touch assigned-addresses counters. Those are
+    // modified in whatever code calls this method.
+
+    /// @todo: call lease6_decline_recycle hook here.
 }
 
 template<typename LeasePtrType, typename IdentifierType>

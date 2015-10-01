@@ -908,13 +908,14 @@ public:
     /// @brief Test that declined expired leases can be removed.
     ///
     /// This method allows controlling remove_leases parameter when calling
-    /// @ref AllocEngine::reclaimExpiredLeases4. This should not matter, as
+    /// @ref AllocEngine::reclaimExpiredLeases4 or
+    /// @ref AllocEngine::reclaimExpiredLeases6. This should not matter, as
     /// the address affinity doesn't make sense for declined leases (they don't
     /// have any useful information in them anymore), so AllocEngine should
     /// remove them all the time.
     ///
     /// @param remove see description above
-    void testReclaimDeclined4(bool remove) {
+    void testReclaimDeclined(bool remove) {
         for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
 
             // Mark leases with even indexes as expired.
@@ -940,7 +941,13 @@ public:
 
     /// @brief Test that appropriate statistics are updated when
     ///        declined expired leases are processed by AllocEngine.
-    void testReclaimDeclined4Stats() {
+    ///
+    /// This method works for both v4 and v6. Just make sure the correct
+    /// statistic name is passed.
+    ///
+    /// @param stat_name name of the statistic for declined addresses statistic
+    ///        ("declined-addresses" for v4 and "declined-nas" for v6)
+    void testReclaimDeclinedStats(const std::string& stat_name) {
 
         // Leases by default all belong to subnet_id_ = 1. Let's count the
         // number of declined leases.
@@ -978,9 +985,9 @@ public:
 
         // And those subnet specific as well
         stats_mgr.setValue(stats_mgr.generateName("subnet", 1,
-                           "assigned-addresses"), int64_t(1000));
+                           stat_name), int64_t(1000));
         stats_mgr.setValue(stats_mgr.generateName("subnet", 2,
-                           "assigned-addresses"), int64_t(2000));
+                           stat_name), int64_t(2000));
 
         stats_mgr.setValue(stats_mgr.generateName("subnet", 1,
                            "reclaimed-declined-addresses"), int64_t(3000));
@@ -988,9 +995,9 @@ public:
                            "reclaimed-declined-addresses"), int64_t(4000));
 
         stats_mgr.setValue(stats_mgr.generateName("subnet", 1,
-                           "declined-addresses"), int64_t(10));
+                           "declined-addresses"), int64_t(100));
         stats_mgr.setValue(stats_mgr.generateName("subnet", 2,
-                           "declined-addresses"), int64_t(20));
+                           "declined-addresses"), int64_t(200));
 
         // Run leases reclamation routine on all leases. This should result
         // in removal of all leases with even indexes.
@@ -1010,8 +1017,11 @@ public:
         // addresses when we reclaim the lease, not when the packet is received.
         // For explanation, see Duplicate Addresses (DHCPDECLINE support)
         // section in the User's Guide or a comment in Dhcpv4Srv::declineLease.
-        testStatistics("subnet[1].assigned-addresses", 1000 - subnet1_cnt);
-        testStatistics("subnet[2].assigned-addresses", 2000 - subnet2_cnt);
+        testStatistics("subnet[1]." + stat_name, 1000 - subnet1_cnt);
+        testStatistics("subnet[2]." + stat_name, 2000 - subnet2_cnt);
+
+        testStatistics("subnet[1].declined-addresses", 100 - subnet1_cnt);
+        testStatistics("subnet[2.declined-addresses", 100 - subnet1_cnt);
 
         // subnet[X].reclaimed-declined-addresses should go up in each subnet
         testStatistics("subnet[1].reclaimed-declined-addresses", 3000 + subnet1_cnt);
@@ -1281,6 +1291,27 @@ TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesShortTimeout) {
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 5);
     // Reclaim leases with the 1ms timeout.
     testReclaimExpiredLeasesTimeout(1);
+}
+
+/// This test verifies that @ref AllocEngine::reclaimExpiredLeases4 properly
+/// handles declined leases that have expired in case when it is told to
+/// remove leases.
+TEST_F(ExpirationAllocEngine6Test, reclaimDeclined1) {
+    testReclaimDeclined(true);
+}
+
+/// This test verifies that @ref AllocEngine::reclaimExpiredLeases4 properly
+/// handles declined leases that have expired in case when it is told to
+/// not remove leases. This flag should not matter and declined expired
+/// leases should always be removed.
+TEST_F(ExpirationAllocEngine6Test, reclaimDeclined2) {
+    testReclaimDeclined(false);
+}
+
+/// This test verifies that statistics are modified correctly after
+/// reclaim expired leases is called.
+TEST_F(ExpirationAllocEngine6Test, reclaimDeclinedStats) {
+    testReclaimDeclinedStats("assigned-nas");
 }
 
 // *******************************************************
@@ -1651,7 +1682,7 @@ TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesShortTimeout) {
 /// handles declined leases that have expired in case when it is told to
 /// remove leases.
 TEST_F(ExpirationAllocEngine4Test, reclaimDeclined1) {
-    testReclaimDeclined4(true);
+    testReclaimDeclined(true);
 }
 
 /// This test verifies that @ref AllocEngine::reclaimExpiredLeases4 properly
@@ -1659,13 +1690,13 @@ TEST_F(ExpirationAllocEngine4Test, reclaimDeclined1) {
 /// not remove leases. This flag should not matter and declined expired
 /// leases should always be removed.
 TEST_F(ExpirationAllocEngine4Test, reclaimDeclined2) {
-    testReclaimDeclined4(false);
+    testReclaimDeclined(false);
 }
 
 /// This test verifies that statistics are modified correctly after
 /// reclaim expired leases is called.
 TEST_F(ExpirationAllocEngine4Test, reclaimDeclinedStats) {
-    testReclaimDeclined4Stats();
+    testReclaimDeclinedStats("assigned-addresses");
 }
 
 }; // end of anonymous namespace

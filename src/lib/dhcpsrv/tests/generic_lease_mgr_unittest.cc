@@ -2240,6 +2240,160 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
     }
 }
 
+void
+GenericLeaseMgrTest::testGetDeclinedLeases6() {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Make sure we have at least 8 leases there.
+    ASSERT_GE(leases.size(), 8);
+
+    // Use the same current time for all leases.
+    time_t current_time = time(NULL);
+
+    // Add them to the database
+    for (size_t i = 0; i < leases.size(); ++i) {
+
+        // Mark the first half of the leases as DECLINED
+        if (i < leases.size()/2) {
+            // Mark as declined with 1000 seconds of probation-period
+            leases[i]->decline(1000);
+        }
+
+        // Mark every second lease as expired.
+        if (i % 2 == 0) {
+            // Set client last transmission time to the value older than the
+            // valid lifetime to make it expired. The expiration time also
+            // depends on the lease index, so as we can later check that the
+            // leases are ordered by the expiration time.
+            leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 10 - i;
+
+        } else {
+            // Set current time as cltt for remaining leases. These leases are
+            // not expired.
+            leases[i]->cltt_ = current_time;
+        }
+
+        ASSERT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // The leases are:
+    // 0 - declined, expired
+    // 1 - declined, not expired
+    // 2 - declined, expired
+    // 3 - declined, not expired
+    // 4 - default, expired
+    // 5 - default, not expired
+    // 6 - default, expired
+    // 7 - default, not expired
+
+    // Retrieve at most 1000 expired leases.
+    Lease6Collection expired_leases;
+    ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 1000));
+
+    // Leases with even indexes should be returned as expired. It shouldn't
+    // matter if the state is default or expired. The getExpiredLeases4 does
+    // not pay attention to state, just expiration timers.
+    ASSERT_EQ(static_cast<size_t>(leases.size() / 2), expired_leases.size());
+
+    unsigned int declined_state = 0;
+    unsigned int default_state = 0;
+
+    // The expired leases should be returned from the most to least expired.
+    // This matches the reverse order to which they have been added.
+    for (Lease6Collection::reverse_iterator lease = expired_leases.rbegin();
+         lease != expired_leases.rend(); ++lease) {
+        int index = static_cast<int>(std::distance(expired_leases.rbegin(), lease));
+        // Multiple current index by two, because only leases with even indexes
+        // should have been returned.
+        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+
+        // Count leases in default and declined states
+        if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+            default_state++;
+        } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
+            declined_state++;
+        }
+    }
+
+    // LeaseMgr is supposed to return both default and declined leases
+    EXPECT_NE(0, declined_state);
+    EXPECT_NE(0, default_state);
+
+    // Update current time for the next test.
+    current_time = time(NULL);
+    // Also, remove expired leases collected during the previous test.
+    expired_leases.clear();
+
+    // This time let's reverse the expiration time and see if they will be returned
+    // in the correct order.
+    leases = createLeases6();
+    for (int i = 0; i < leases.size(); ++i) {
+
+        // Mark the second half of the leases as DECLINED
+        if (i >= leases.size()/2) {
+            // Mark as declined with 1000 seconds of probation-period
+            leases[i]->decline(1000);
+        }
+
+        // Update the time of expired leases with even indexes.
+        if (i % 2 == 0) {
+            leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
+
+        } else {
+            // Make sure remaining leases remain unexpired.
+            leases[i]->cltt_ = current_time + 100;
+        }
+        ASSERT_NO_THROW(lmptr_->updateLease6(leases[i]));
+    }
+
+    // Retrieve expired leases again. The limit of 0 means return all expired
+    // leases.
+    ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0));
+    // The same leases should be returned.
+    ASSERT_EQ(static_cast<size_t>(leases.size() / 2), expired_leases.size());
+
+    // This time leases should be returned in the non-reverse order.
+    declined_state = 0;
+    default_state = 0;
+    for (Lease6Collection::iterator lease = expired_leases.begin();
+         lease != expired_leases.end(); ++lease) {
+        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+
+        // Count leases in default and declined states
+        if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+            default_state++;
+        } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
+            declined_state++;
+        }
+    }
+
+    // Check that both declined and default state leases were returned.
+    EXPECT_NE(0, declined_state);
+    EXPECT_NE(0, default_state);
+
+    // Remember expired leases returned.
+    std::vector<Lease6Ptr> saved_expired_leases = expired_leases;
+
+    // Remove expired leases again.
+    expired_leases.clear();
+
+    // Limit the number of leases to be returned to 2.
+    ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 2));
+
+    // Make sure we have exactly 2 leases returned.
+    ASSERT_EQ(2, expired_leases.size());
+
+    // Test that most expired leases have been returned.
+    for (Lease6Collection::iterator lease = expired_leases.begin();
+         lease != expired_leases.end(); ++lease) {
+        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+    }
+}
+
+
 }; // namespace test
 }; // namespace dhcp
 }; // namespace isc
