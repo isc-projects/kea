@@ -389,7 +389,7 @@ public:
 
     /// @brief Generic test used for lease allocation and reuse
     ///
-    /// This test inserts old_lease (if specified, may be null) into the
+    /// This test inserts existing_lease (if specified, may be null) into the
     /// LeaseMgr, then conducts lease allocation (pretends that client
     /// sent either Discover or Request, depending on fake_allocation).
     /// Allocated lease is then returned (using result) for further inspection.
@@ -397,6 +397,7 @@ public:
     /// @param alloc_engine allocation engine
     /// @param existing_lease optional lease to be inserted in the database
     /// @param addr address to be requested by client
+    /// @param fake_allocation true = DISCOVER, false = REQUEST
     /// @param exp_result expected result
     /// @param result [out] allocated lease
     void testReuseLease4(const AllocEnginePtr& alloc_engine,
@@ -410,9 +411,9 @@ public:
     ///
     /// expired parameter controls probation period. Positive value
     /// means that the lease will expire in X seconds. Negative means
-    /// that the lease had expired X seconds ago. 0 means it expires now.
+    /// that the lease expired X seconds ago. 0 means it expires now.
     /// Probation period is a parameter that specifies for how long
-    /// a lease will become unavailable after decline.
+    /// a lease will stay unavailable after decline.
     ///
     /// @param addr address of the lease
     /// @param probation_period expressed in seconds

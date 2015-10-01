@@ -1402,11 +1402,14 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
                 queueRemovalNameChangeRequest(lease, lease->hwaddr_);
             }
 
+            // Let's check if the lease that just expired is in DECLINED state.
+            // If it is, we need to conduct couple extra steps and also force
+            // its removal.
             bool remove_tmp = remove_lease;
             if (lease->state_ == Lease::STATE_DECLINED) {
-                // There's no point keep declined lease after its reclaimation.
-                // Declined lease doesn't have any client identifying information
-                // anymore.
+                // There's no point in keeping declined lease after its
+                // reclaimation. Declined lease doesn't have any client
+                // identifying information anymore.
                 remove_tmp = true;
 
                 // Do extra steps required for declined lease reclaimation:
@@ -1462,8 +1465,9 @@ AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
         return;
     }
 
-    LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V4_DECLINED_RECOVERED).
-        arg(lease->addr_.toText()).arg(lease->valid_lft_);
+    LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V4_DECLINED_RECOVERED)
+        .arg(lease->addr_.toText())
+        .arg(lease->valid_lft_);
 
     StatsMgr& stats_mgr = StatsMgr::instance();
 
