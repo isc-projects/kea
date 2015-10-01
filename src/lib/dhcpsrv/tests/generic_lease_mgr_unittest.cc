@@ -1691,6 +1691,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
         int index = static_cast<int>(std::distance(expired_leases.rbegin(), lease));
         // Multiple current index by two, because only leases with even indexes
         // should have been returned.
+        ASSERT_LE(2 * index, leases.size());
         EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
     }
 
@@ -1723,6 +1724,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     for (Lease4Collection::iterator lease = expired_leases.begin();
          lease != expired_leases.end(); ++lease) {
         int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        ASSERT_LE(2 * index, leases.size());
         EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
     }
 
@@ -1742,6 +1744,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     for (Lease4Collection::iterator lease = expired_leases.begin();
          lease != expired_leases.end(); ++lease) {
         int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        ASSERT_LE(2 * index, leases.size());
         EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
     }
 
@@ -2104,7 +2107,7 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
             leases[i]->decline(1000);
         }
 
-        // Mark every other lease as expired.
+        // Mark every second lease as expired.
         if (i % 2 == 0) {
             // Set client last transmission time to the value older than the
             // valid lifetime to make it expired. The expiration time also
@@ -2140,8 +2143,8 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
     // not pay attention to state, just expiration timers.
     ASSERT_EQ(static_cast<size_t>(leases.size() / 2), expired_leases.size());
 
-    int declined_state = 0;
-    int default_state = 0;
+    unsigned int declined_state = 0;
+    unsigned int default_state = 0;
 
     // The expired leases should be returned from the most to least expired.
     // This matches the reverse order to which they have been added.
