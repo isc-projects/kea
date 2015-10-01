@@ -53,7 +53,7 @@ CREATE TABLE lease4 (
     ) ENGINE = INNODB;
 
 
-# Create search indexes for lease4 table 
+# Create search indexes for lease4 table
 # index by hwaddr and subnet_id
 CREATE INDEX lease4_by_hwaddr_subnet_id ON lease4 (hwaddr, subnet_id);
 
@@ -280,6 +280,75 @@ INSERT INTO lease_state VALUES (0, "default");
 INSERT INTO lease_state VALUES (1, "declined");
 INSERT INTO lease_state VALUES (2, "expired-reclaimed");
 
+# FUNCTION that returns a result set containing the column names for lease4 dumps
+DROP PROCEDURE IF EXISTS lease4DumpHeader;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpHeader()
+BEGIN
+SELECT 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state';
+END  $$
+DELIMITER ;
+
+# FUNCTION that returns a result set containing the data for lease4 dumps
+DROP PROCEDURE IF EXISTS lease4DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpData()
+BEGIN
+SELECT
+    INET_NTOA(l.address),
+    IFNULL(HEX(l.hwaddr), ''),
+    IFNULL(HEX(l.client_id), ''),
+    l.valid_lifetime,
+    l.expire,
+    l.subnet_id,
+    l.fqdn_fwd,
+    l.fqdn_rev,
+    l.hostname,
+    s.name
+from
+    lease4 l
+    LEFT OUTER JOIN lease_state s on (l.state = s.state);
+END $$
+DELIMITER ;
+
+# FUNCTION that returns a result set containing the column names for lease6 dumps
+DROP PROCEDURE IF EXISTS lease6DumpHeader;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpHeader()
+BEGIN
+SELECT 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state';
+END  $$
+DELIMITER ;
+
+# FUNCTION that returns a result set containing the data for lease6 dumps
+DROP PROCEDURE IF EXISTS lease6DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpData()
+BEGIN
+SELECT
+    l.address,
+    IFNULL(HEX(l.duid), ''),
+    l.valid_lifetime,
+    l.expire,
+    l.subnet_id,
+    l.pref_lifetime,
+    IFNULL(t.name, ''),
+    l.iaid,
+    l.prefix_len,
+    l.fqdn_fwd,
+    l.fqdn_rev,
+    l.hostname,
+    IFNULL(HEX(l.hwaddr), ''),
+    IFNULL(l.hwtype, ''),
+    IFNULL(l.hwaddr_source, ''),
+    IFNULL(s.name, '')
+FROM lease6 l
+    left outer join lease6_types t on (l.lease_type = t.lease_type)
+    left outer join lease_state s on (l.state = s.state);
+END $$
+DELIMITER ;
+
+# Update the schema version number
 UPDATE schema_version
 SET version = '4', minor = '0';
 # This line concludes database upgrade to version 4.0.
