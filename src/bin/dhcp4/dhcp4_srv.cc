@@ -1479,7 +1479,7 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     // Instead we will need to use the address assigned to the interface
     // on which the query has been received. In other cases, we will just
     // use this address as a source address for the response.
-    if (local_addr == IOAddress::IPV4_BCAST_ADDRESS()) {
+    if (local_addr.isV4Bcast()) {
         SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
         local_addr = sock_info.addr_;
     }
@@ -1519,7 +1519,7 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
     if (query->getType() == DHCPINFORM) {
         // If client adheres to RFC2131 it will set the ciaddr and in this
         // case we always unicast our response to this address.
-        if (query->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
+        if (!query->getCiaddr().isV4Zero()) {
             response->setRemoteAddr(query->getCiaddr());
 
         // If we received DHCPINFORM via relay and the ciaddr is not set we
@@ -1550,14 +1550,14 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
         // the message is relayed. Therefore, we set the BROADCAST flag so
         // as the relay can broadcast the packet.
         if ((query->getType() == DHCPINFORM) &&
-            (query->getCiaddr() == IOAddress::IPV4_ZERO_ADDRESS())) {
+            query->getCiaddr().isV4Zero()) {
             response->setFlags(BOOTP_BROADCAST);
         }
         response->setRemoteAddr(query->getGiaddr());
 
     // If giaddr is 0 but client set ciaddr, server should unicast the
     // response to ciaddr.
-    } else if (query->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
+    } else if (!query->getCiaddr().isV4Zero()) {
         response->setRemoteAddr(query->getCiaddr());
 
     // We can't unicast the response to the client when sending NAK,
@@ -1567,7 +1567,7 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
         response->setRemoteAddr(IOAddress::IPV4_BCAST_ADDRESS());
 
     // If yiaddr is set it means that we have created a lease for a client.
-    } else if (response->getYiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
+    } else if (!response->getYiaddr().isV4Zero()) {
         // If the broadcast bit is set in the flags field, we have to
         // send the response to broadcast address. Client may have requested it
         // because it doesn't support reception of messages on the interface
@@ -2011,8 +2011,8 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
     // to respond if the ciaddr was not present.
     try {
         if (pkt->getType() == DHCPINFORM) {
-            if ((pkt->getRemoteAddr() == IOAddress::IPV4_ZERO_ADDRESS()) &&
-                (pkt->getCiaddr() == IOAddress::IPV4_ZERO_ADDRESS())) {
+            if (pkt->getRemoteAddr().isV4Zero() &&
+                pkt->getCiaddr().isV4Zero()) {
                 return (false);
             }
         }
@@ -2022,8 +2022,7 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
         // we validate the message type prior to calling this function.
         return (false);
     }
-    return ((pkt->getLocalAddr() != IOAddress::IPV4_BCAST_ADDRESS()
-             || selectSubnet(pkt)));
+    return (!pkt->getLocalAddr().isV4Bcast() || selectSubnet(pkt));
 }
 
 bool
