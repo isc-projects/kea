@@ -19,6 +19,7 @@
 #include <dhcp/pkt_filter_lpf.h>
 #include <dhcp/protocol_util.h>
 #include <exceptions/exceptions.h>
+#include <fcntl.h>
 #include <linux/filter.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
@@ -152,6 +153,14 @@ PktFilterLPF::openSocket(Iface& iface,
     if (sock < 0) {
         close(fallback);
         isc_throw(SocketConfigError, "Failed to create raw LPF socket");
+    }
+
+    // Set the close-on-exec flag.
+    if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
+        close(sock);
+        close(fallback);
+        isc_throw(SocketConfigError, "Failed to set close-on-exec flag"
+                  << " on the socket " << sock);
     }
 
     // Create socket filter program. This program will only allow incoming UDP
