@@ -53,7 +53,7 @@ public:
     /// be used for an option such as DHCPv6 Bootfile Parameters (60).
     ///
     /// @param u universe (v4 or v6).
-    /// @param type option type 
+    /// @param type option type
     OptionOpaqueDataTuples(Option::Universe u, const uint16_t type);
 
     /// @brief Constructor.
@@ -62,7 +62,7 @@ public:
     /// on-wire data. It may throw an exception if the @c unpack method throws.
     ///
     /// @param u universe (v4 or v6)
-    /// @param type option type 
+    /// @param type option type
     /// @param begin Iterator pointing to the beginning of the buffer holding an
     /// option.
     /// @param end Iterator pointing to the end of the buffer holding an option.
@@ -146,7 +146,7 @@ private:
     /// This function returns the length field type which should be used
     /// for the opaque data tuples being added to this option.
     /// Currently this class is only used for a DHCPv6 option it may be expanded
-    /// for DHCPv4 in the future 
+    /// for DHCPv4 in the future.
     ///
     /// @return Tuple length field type for the universe this option belongs to.
     OpaqueDataTuple::LengthFieldType getLengthFieldType() const {
@@ -155,7 +155,7 @@ private:
 
     /// @brief Returns minimal length of the option for the given universe.
     /// Currently this class is only used for a DHCPv6 option it may be expanded
-    /// for DHCPv4 in the future 
+    /// for DHCPv4 in the future.
     uint16_t getMinimalLength() const {
         return (4);
     }

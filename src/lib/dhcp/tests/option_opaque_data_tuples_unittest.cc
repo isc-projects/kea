@@ -179,9 +179,7 @@ TEST(OptionOpaqueDataTuples, unpack6) {
 // is correctly parsed.
 TEST(OptionOpaqueDataTuples, unpack6EmptyTuple) {
     // Prepare data to decode.
-    const uint8_t buf_data[] = {
-        0x00, 0x00        // tuple length is 0
-    };
+    const uint8_t buf_data[] = {0x00, 0x00}; // tuple length is 0
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     OptionOpaqueDataTuplesPtr data_tuple;
@@ -255,4 +253,3 @@ TEST(OptionOpaqueDataTuples, toText6) {
 }
 
 } // end of anonymous namespace
-
