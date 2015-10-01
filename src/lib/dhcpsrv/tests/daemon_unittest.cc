@@ -59,7 +59,7 @@ public:
     /// @brief Constructor
     DaemonTest() : env_(0), env_copy_() {
         // Take a copy of KEA_PIDFILE_DIR environment variable value
-        env_ = getenv("KEA_PIDFILE_DIR");
+        char *env_ = getenv("KEA_PIDFILE_DIR");
         if (env_) {
             env_copy_ = std::string(env_);
         }
@@ -73,16 +73,14 @@ public:
     ~DaemonTest() {
         isc::log::setDefaultLoggingOutput();
         // Restore KEA_PIDFILE_DIR environment variable value
-        env_ = getenv("KEA_PIDFILE_DIR");
-        if (!env_copy_.empty() && (!env_ || !env_copy_.compare(env_))) {
-            setenv("KEA_PIDFILE_DIR", env_copy_.c_str(), 1);
+        if (env_copy_.empty()) {
+            static_cast<void>(unsetenv("KEA_PIDFILE_DIR"));
+        } else {
+            static_cast<void>(setenv("KEA_PIDFILE_DIR", env_copy_.c_str(), 1));
         }
     }
 
 private:
-    /// @brief KEA_PIDFILE_DIR environment variable value
-    char* env_;
-
     /// @brief copy of KEA_PIDFILE_DIR environment variable value
     std::string env_copy_;
 };
