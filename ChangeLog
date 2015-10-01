@@ -1,3 +1,12 @@
+1016.	[bug]		fdupont
+	Fixed problems when --enable-static-link is specified as a
+	"configure" option. With this switch present, all Kea
+	executables (servers, tools, unit tests, etc) are linked
+	to the static (vs. shared) version of Kea libraries.
+	However, note that they can still be linked to dynamic
+	system libraries.
+	(Trac #4004, git xxx)
+
 1015.	[func]		tomek
 	Expired declined leases can now be reclaimed (returned to the
 	available pool) after probation	period elapses.
