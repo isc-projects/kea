@@ -737,7 +737,7 @@ public:
     ///
     /// @param remove see description above
     void testReclaimDeclined4(bool remove) {
-        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
 
             // Mark leases with even indexes as expired.
             if (evenLeaseIndex(i)) {
@@ -770,7 +770,7 @@ public:
         int subnet2_cnt = 0;
 
         // Let's move all leases to declined,expired state.
-        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
 
             // Move the lease to declined state
             decline(i, 100);

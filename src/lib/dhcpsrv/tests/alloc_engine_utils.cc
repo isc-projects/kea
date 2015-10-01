@@ -77,9 +77,9 @@ AllocEngine4Test::testReuseLease4(const AllocEnginePtr& engine,
     ASSERT_TRUE(engine);
 
     if (existing_lease) {
-        // If old lease was specified, we need to add it to the database.
-        // Let's wipe any leases for that address (if any). We ignore
-        // any errors (previous lease may not exist)
+        // If an existing lease was specified, we need to add it to the
+        // database. Let's wipe any leases for that address (if any). We
+        // ignore any errors (previous lease may not exist)
         LeaseMgrFactory::instance().deleteLease(existing_lease->addr_);
 
         // Let's add it.
@@ -114,12 +114,14 @@ Lease4Ptr
 AllocEngine4Test::generateDeclinedLease(const std::string& addr,
                                         time_t probation_period,
                                         int32_t expired) {
+    // There's an assumption that hardware address is always present for IPv4
+    // packet (always non-null). Client-id is optional (may be null).
     HWAddrPtr hwaddr(new HWAddr());
     time_t now = time(NULL);
     Lease4Ptr declined(new Lease4(addr, hwaddr, ClientIdPtr(), 495,
                                   100, 200, now, subnet_->getID()));
     declined->decline(probation_period);
-    declined->cltt_ = time(NULL) - probation_period + expired;
+    declined->cltt_ = now - probation_period + expired;
     return (declined);
 }
 
