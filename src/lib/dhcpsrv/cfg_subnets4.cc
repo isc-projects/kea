@@ -65,7 +65,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     // what address from the client's packet to use to match with the
     // subnets' prefixes.
 
-    IOAddress address = IOAddress::IPV6_ZERO_ADDRESS();
+    IOAddress address = IOAddress::IPV4_ZERO_ADDRESS();
     // If there is a giaddr, use it for subnet selection.
     if (!selector.giaddr_.isV4Zero()) {
         address = selector.giaddr_;
