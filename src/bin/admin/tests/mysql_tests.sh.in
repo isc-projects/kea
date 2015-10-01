@@ -207,7 +207,7 @@ mysql_upgrade_test() {
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 3.0
+    # Ok, we have a 1.0 database. Let's upgrade it to 4.0
     ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts
     ERRCODE=$?
 
@@ -257,11 +257,38 @@ EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "dhcp6_options table is missing or broken. (returned status code %d, expected %d)"
 
+    #table: lease_state table added (upgrade 3.0 -> 4.0)
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
+    SELECT state,name from lease_state;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_options table is missing or broken. (returned status code %d, expected %d)"
 
-    # Verify that it reports version 3.0.
+    #table: state column added to lease4 (upgrade 3.0 -> 4.0)
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
+    SELECT state from lease4;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease4 is missing state column. (returned status code %d, expected %d)"
+
+    #table: state column added to lease6 (upgrade 3.0 -> 4.0)
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
+    SELECT state from lease6;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease6 is missing state column. (returned status code %d, expected %d)"
+
+    #table: stored procedures for lease dumps added (upgrade 3.0 -> 4.0)
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
+    call lease4DumpHeader(); call lease4DumpData(); call lease6DumpHeader(); call lease6DumpHeader();
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease dump stored procedures are missing or broken. (returned status code %d, expected %d)"
+
+    # Verify that it reports version 4.0.
     version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name)
 
-    assert_str_eq "3.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "4.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
