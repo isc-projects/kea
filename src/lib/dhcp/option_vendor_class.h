@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -177,7 +177,7 @@ private:
 
     /// @brief Returns minimal length of the option for the given universe.
     uint16_t getMinimalLength() const {
-        return (getUniverse() == Option::V4 ? 7 : 6);
+        return (getUniverse() == Option::V4 ? 7 : 8);
     }
 
     /// @brief Enterprise ID.
