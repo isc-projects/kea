@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,14 @@ PktFilter::openFallbackSocket(const isc::asiolink::IOAddress& addr,
     if (sock < 0) {
         isc_throw(SocketConfigError, "failed to create fallback socket for"
                   " address " << addr << ", port " << port
+                  << ", reason: " << strerror(errno));
+    }
+    // Set the close-on-exec flag.
+    if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
+        close(sock);
+        isc_throw(SocketConfigError, "Failed to set close-on-exec flag"
+                  << " on fallback socket for address " << addr
+                  << ", port " << port
                   << ", reason: " << strerror(errno));
     }
     // Bind the socket to a specified address and port.

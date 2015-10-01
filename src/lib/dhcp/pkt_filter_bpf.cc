@@ -266,6 +266,14 @@ PktFilterBPF::openSocket(Iface& iface,
         }
     }
 
+    // Set the close-on-exec flag.
+    if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
+        close(fallback);
+        close(sock);
+        isc_throw(SocketConfigError, "Failed to set close-on-exec flag"
+                  << " on BPF device with interface " << iface.getName());
+    }
+
     // The BPF device is now open. Now it needs to be configured.
 
     // Associate the device with the interface name.

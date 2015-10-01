@@ -85,8 +85,17 @@ private:
         // shut down properly.
         static_cast<void>(remove(file_name.c_str()));
 
+        // Set this socket to be closed-on-exec.
+        if (fcntl(fd, F_SETFD, FD_CLOEXEC) != 0) {
+            const char* errmsg = strerror(errno);
+            ::close(fd);
+            isc_throw(SocketError, "Failed to set close-on-exec on unix socket\
+ "
+                      << fd << ": " << errmsg);
+        }
+
         // Set this socket to be non-blocking one.
-        if (fcntl(fd, F_SETFL, O_NONBLOCK) !=0 ) {
+        if (fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
             const char* errmsg = strerror(errno);
             ::close(fd);
             isc_throw(SocketError, "Failed to set non-block mode on unix socket "
