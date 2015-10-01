@@ -19,6 +19,7 @@
 #include <dhcp/pkt_filter_inet6.h>
 #include <util/io/pktinfo_utilities.h>
 
+#include <fcntl.h>
 #include <netinet/in.h>
 
 using namespace isc::asiolink;
@@ -64,6 +65,13 @@ PktFilterInet6::openSocket(const Iface& iface,
     int sock = socket(AF_INET6, SOCK_DGRAM, 0);
     if (sock < 0) {
         isc_throw(SocketConfigError, "Failed to create UDP6 socket.");
+    }
+
+    // Set the close-on-exec flag.
+    if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
+        close(sock);
+        isc_throw(SocketConfigError, "Failed to set close-on-exec flag"
+                  << " on IPv6 socket.");
     }
 
     // Set SO_REUSEADDR option.
