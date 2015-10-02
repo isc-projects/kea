@@ -994,14 +994,12 @@ TEST_F(MemfileLeaseMgrTest, versionCheck) {
 
 // Checks that declined IPv4 leases can be returned correctly.
 TEST_F(MemfileLeaseMgrTest, getDeclined4) {
-
     startBackend(V4);
     testGetDeclinedLeases4();
 }
 
 // Checks that declined IPv6 leases can be returned correctly.
 TEST_F(MemfileLeaseMgrTest, getDeclined6) {
-
     startBackend(V6);
     testGetDeclinedLeases6();
 }

@@ -59,6 +59,9 @@ bool testStatistics(const std::string& stat_name, const int64_t exp_value) {
                     <<  "doesn't match expected value (" << exp_value << ")";
             }
             return (observation->getInteger().first == exp_value);
+        } else {
+            ADD_FAILURE() << "Expected statistic " << stat_name
+                          << " not found.";
         }
 
     } catch (...) {
