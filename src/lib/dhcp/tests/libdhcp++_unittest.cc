@@ -1179,7 +1179,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(Option6AddrLst));
 
     LibDhcpTest::testStdOptionDefs6(D6O_BOOTFILE_URL, begin, end,
-				    typeid(OptionString));
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs6(D6O_BOOTFILE_PARAM, bparam_buf.begin(),
                                     bparam_buf.end(),
