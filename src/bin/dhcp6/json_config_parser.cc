@@ -30,6 +30,7 @@
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/parsers/expiration_config_parser.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
@@ -697,6 +698,8 @@ namespace dhcp {
         parser = new RSOOListConfigParser(config_id);
     } else if (config_id.compare("control-socket") == 0) {
         parser = new ControlSocketParser(config_id);
+    } else if (config_id.compare("expired-leases-processing") == 0) {
+        parser = new ExpirationConfigParser();
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "
