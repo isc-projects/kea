@@ -2,7 +2,7 @@
 	Added support for several options for use by PXE.
 	From RFC4578 (for DHCPv4) these are: 93 - client-system,
 	94 - client-ndi, 97 - uuid-guid.
-	From RFC5970 (for  DHCPv6) these are: 59 - bootfile-url,
+	From RFC5970 (for DHCPv6) these are: 59 - bootfile-url,
 	60 - bootfile-param, 61 - client-arch-type, 62 - nii.
 	(trac #3576, git <TBD>)
 
