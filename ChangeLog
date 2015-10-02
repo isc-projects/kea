@@ -4,7 +4,7 @@
 	94 - client-ndi, 97 - uuid-guid.
 	From RFC5970 (for DHCPv6) these are: 59 - bootfile-url,
 	60 - bootfile-param, 61 - client-arch-type, 62 - nii.
-	(trac #3576, git <TBD>)
+	(trac #3576, git fdcc73afe7e26bd427817fd771567b1c44713b06)
 
 1017.	[func]		tmark
 	Lease dump SQL logic, used by kea-admin, is now supplied via stored
