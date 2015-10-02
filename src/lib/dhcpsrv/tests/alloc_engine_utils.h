@@ -289,7 +289,7 @@ public:
     ///
     /// This test inserts existing_lease (if specified, may be null) into the
     /// LeaseMgr, then conducts lease allocation (pretends that client
-    /// sent either Discover or Request, depending on fake_allocation).
+    /// sent either Solicit or Request, depending on fake_allocation).
     /// Allocated lease is then returned (using result) for further inspection.
     ///
     /// @param alloc_engine allocation engine
@@ -315,7 +315,7 @@ public:
     ///
     /// @param addr address of the lease
     /// @param probation_period expressed in seconds
-    /// @param expired number of seconds where it will expire
+    /// @param expired number of seconds when the lease will expire
     Lease6Ptr generateDeclinedLease(const std::string& addr,
                                     time_t probation_period,
                                     int32_t expired);
@@ -448,7 +448,7 @@ public:
                          ExpectedResult exp_result,
                          Lease4Ptr& result);
 
-    /// @brief Creates a declined lease with specified expiration time
+    /// @brief Creates a declined IPv4 lease with specified expiration time
     ///
     /// expired parameter controls probation period. Positive value
     /// means that the lease will expire in X seconds. Negative means
@@ -458,7 +458,7 @@ public:
     ///
     /// @param addr address of the lease
     /// @param probation_period expressed in seconds
-    /// @param expired number of seconds where it will expire
+    /// @param expired number of seconds when the lease will expire
     Lease4Ptr generateDeclinedLease(const std::string& addr,
                                     time_t probation_period,
                                     int32_t expired);

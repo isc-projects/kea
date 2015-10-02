@@ -250,7 +250,7 @@ public:
     /// Checks that the code is able to update an IPv6 lease in the database.
     void testUpdateLease6();
 
-    /// @brief Check that the DHCPv6 lease can be added, removed and recreated.
+    /// @brief Check that the IPv6 lease can be added, removed and recreated.
     ///
     /// This test creates a lease, removes it and then recreates it with some
     /// of the attributes changed. Next it verifies that the lease in the
@@ -275,7 +275,7 @@ public:
     /// - reclaimed leases are not returned.
     void testGetExpiredLeases4();
 
-    /// @brief Checks that the expired DHCPv6 leases can be retrieved.
+    /// @brief Checks that the expired IPv6 leases can be retrieved.
     ///
     /// This test checks the following:
     /// - all expired and not reclaimed leases are retured
@@ -285,7 +285,7 @@ public:
     /// - reclaimed leases are not returned.
     void testGetExpiredLeases6();
 
-    /// @brief Checks that declined DHCPv4 leases that have expired can be retrieved.
+    /// @brief Checks that declined IPv4 leases that have expired can be retrieved.
     ///
     /// This test checks that the following:
     /// - all expired and not reclaimed leases are returned, regardless if
@@ -295,7 +295,7 @@ public:
     ///   expired
     void testGetDeclinedLeases4();
 
-    /// @brief Checks that declined DHCPv6 leases that have expired can be retrieved.
+    /// @brief Checks that declined IPv6 leases that have expired can be retrieved.
     ///
     /// This test checks that the following:
     /// - all expired and not reclaimed leases are returned, regardless if
@@ -305,7 +305,7 @@ public:
     ///   expired
     void testGetDeclinedLeases6();
 
-    /// @brief Checks that selected expired-reclaimed DHCPv6 leases
+    /// @brief Checks that selected expired-reclaimed IPv6 leases
     /// are removed.
     ///
     /// This creates a number of DHCPv6 leases and marks some of them
@@ -313,7 +313,7 @@ public:
     /// leases can be removed.
     void testDeleteExpiredReclaimedLeases6();
 
-    /// @brief Checks that selected expired-reclaimed DHCPv4 leases
+    /// @brief Checks that selected expired-reclaimed IPv4 leases
     /// are removed.
     ///
     /// This creates a number of DHCPv4 leases and marks some of them

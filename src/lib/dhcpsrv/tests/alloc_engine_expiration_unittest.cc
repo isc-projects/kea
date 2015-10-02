@@ -990,9 +990,9 @@ public:
                            stat_name), int64_t(2000));
 
         stats_mgr.setValue(stats_mgr.generateName("subnet", 1,
-                           "reclaimed-declined-addresses"), int64_t(3000));
+                           "reclaimed-declined-addresses"), int64_t(10000));
         stats_mgr.setValue(stats_mgr.generateName("subnet", 2,
-                           "reclaimed-declined-addresses"), int64_t(4000));
+                           "reclaimed-declined-addresses"), int64_t(20000));
 
         stats_mgr.setValue(stats_mgr.generateName("subnet", 1,
                            "declined-addresses"), int64_t(100));
@@ -1021,11 +1021,11 @@ public:
         testStatistics("subnet[2]." + stat_name, 2000 - subnet2_cnt);
 
         testStatistics("subnet[1].declined-addresses", 100 - subnet1_cnt);
-        testStatistics("subnet[2.declined-addresses", 100 - subnet1_cnt);
+        testStatistics("subnet[2].declined-addresses", 200 - subnet2_cnt);
 
         // subnet[X].reclaimed-declined-addresses should go up in each subnet
-        testStatistics("subnet[1].reclaimed-declined-addresses", 3000 + subnet1_cnt);
-        testStatistics("subnet[2].reclaimed-declined-addresses", 4000 + subnet1_cnt);
+        testStatistics("subnet[1].reclaimed-declined-addresses", 10000 + subnet1_cnt);
+        testStatistics("subnet[2].reclaimed-declined-addresses", 20000 + subnet1_cnt);
     }
 
     /// @brief Collection of leases created at construction time.

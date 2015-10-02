@@ -2676,7 +2676,29 @@ should include options from the isc option space:
       </listitem>
     </itemizedlist>
     </para>
+  </section>
+
+    <section id="dhcp6-decline">
+      <title>Duplicate Addresses (DECLINE support)</title>
+      <note>
+        <para>@todo: Full text will be added as part of #3990.</para>
+      </note>
+
+      <para>
+        The server does not decrease assigned-addresses statistics
+        when Decline message is received and processed successfully. While
+        technically a declined address is no longer assigned, the primary usage
+        of the assigned-addresses statistic is to monitor pool utilization. Most
+        people would forget to include declined-addresses in the calculation,
+        and simply do assigned-addresses/total-addresses. This would have a bias
+        towards under-representing pool utilization. As this has a
+        potential for major issues, we decided not to decrease assigned
+        addresses immediately after receiving Decline, but to do
+        it later when we recover the address back to the available pool.
+      </para>
+
     </section>
+
 
     <section id="dhcp6-stats">
       <title>Statistics in DHCPv6 server</title>
