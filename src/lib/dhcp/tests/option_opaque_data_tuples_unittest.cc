@@ -215,7 +215,7 @@ TEST(OptionOpaqueDataTuples, unpack6NoTuple) {
     // Prepare data to decode.
     const uint8_t buf_data[] = {
     };
-    OptionBuffer buf(buf_data,buf_data + sizeof(buf_data));
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     OptionOpaqueDataTuplesPtr data_tuple;
     ASSERT_NO_THROW(

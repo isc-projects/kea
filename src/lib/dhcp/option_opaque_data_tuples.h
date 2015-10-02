@@ -107,9 +107,9 @@ public:
 
     /// @brief Returns opaque data tuple at the specified position.
     ///
-    ///  If the specified position is out of range an exception is thrown.
+    /// If the specified position is out of range an exception is thrown.
     ///
-    /// @param at Index at which the tuple should be replaced.
+    /// @param at Index for which tuple to get.
     /// @throw isc::OutOfRange if the tuple position is out of range.
     OpaqueDataTuple getTuple(const size_t at) const;
 
@@ -123,7 +123,7 @@ public:
         return (tuples_);
     }
 
-    /// @brief Checks if the object  holds the opaque data tuple with the
+    /// @brief Checks if the object holds the opaque data tuple with the
     /// specified string.
     ///
     /// @param tuple_str String representation of the tuple being searched.
