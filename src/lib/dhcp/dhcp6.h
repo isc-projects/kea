@@ -82,10 +82,10 @@
 //#define D6O_NTP_SERVER                          56 /* RFC5908 */
 //#define D6O_V6_ACCESS_DOMAIN                    57 /* RFC5986 */
 //#define D6O_SIP_UA_CS_LIST                      58 /* RFC6011 */
-//#define D6O_BOOTFILE_URL                        59 /* RFC5970 */
-//#define D6O_BOOTFILE_PARAM                      60 /* RFC5970 */
-//#define D6O_CLIENT_ARCH_TYPE                    61 /* RFC5970 */
-//#define D6O_NII                                 62 /* RFC5970 */
+#define D6O_BOOTFILE_URL                        59 /* RFC5970 */
+#define D6O_BOOTFILE_PARAM                      60 /* RFC5970 */
+#define D6O_CLIENT_ARCH_TYPE                    61 /* RFC5970 */
+#define D6O_NII                                 62 /* RFC5970 */
 //#define D6O_GEOLOCATION                         63 /* RFC6225 */
 //#define D6O_AFTR_NAME                           64 /* RFC6334 */
 #define D6O_ERP_LOCAL_DOMAIN_NAME               65 /* RFC6440 */
