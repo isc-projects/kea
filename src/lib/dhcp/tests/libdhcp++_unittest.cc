@@ -29,6 +29,7 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_opaque_data_tuples.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
@@ -942,6 +943,15 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_SUBNET_SELECTION, begin, end,
                                     typeid(OptionCustom));
 
+    LibDhcpTest::testStdOptionDefs4(DHO_SYSTEM, begin, end,
+                                    typeid(OptionIntArray<uint16_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NDI, begin, begin + 3,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_UUID_GUID, begin, begin + 17,
+                                    typeid(OptionCustom));
+
     LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_SEARCH, begin, end,
                                     typeid(Option));
 
@@ -1016,6 +1026,13 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     };
     std::vector<uint8_t> vclass_buf(vclass_data,
                                     vclass_data + sizeof(vclass_data));;
+
+    // Initialize test buffer for Bootfile Param option.
+    const char bparam_data[] = {
+        0x00, 0x01, 0x02
+    };
+    std::vector<uint8_t> bparam_buf(bparam_data,
+                                    bparam_data + sizeof(bparam_data));;
 
     // The actual test starts here for all supported option codes.
     LibDhcpTest::testStdOptionDefs6(D6O_CLIENTID, begin, end,
@@ -1161,6 +1178,19 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     LibDhcpTest::testStdOptionDefs6(D6O_LQ_CLIENT_LINK, begin, end,
                                     typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_BOOTFILE_URL, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_BOOTFILE_PARAM, bparam_buf.begin(),
+                                    bparam_buf.end(),
+                                    typeid(OptionOpaqueDataTuples));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_ARCH_TYPE, begin, end,
+                                    typeid(OptionIntArray<uint16_t>));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_NII, begin, begin + 3,
+                                    typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs6(D6O_RSOO, begin, end,
                                     typeid(OptionCustom),

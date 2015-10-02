@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION_VENDOR_CLASS_H
-#define OPTION_VENDOR_CLASS_H
+#ifndef OPTION_OPAQUE_DATA_TUPLES_H
+#define OPTION_OPAQUE_DATA_TUPLES_H
 
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
@@ -26,27 +26,22 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief This class encapsulates DHCPv6 Vendor Class and DHCPv4 V-I Vendor
-/// Class options.
+/// @brief This class encapsulates a collection of data tuples and could be
+/// used by multiple options.  It is tailored for use with the DHCPv6
+/// Bootfile-param option (option 60).
 ///
-/// The format of DHCPv6 Vendor Class option (16) is described in section 22.16
-/// of RFC3315 and the format of the DHCPv4 V-I Vendor Class option (124) is
-/// described in section 3 of RFC3925. Each of these options carries enterprise
-/// id followed by the collection of tuples carring opaque data. A single tuple
-/// consists of the field holding opaque data length and the actual data.
-/// In case of the DHCPv4 V-I Vendor Class each tuple is preceded by the
-/// 4-byte long enterprise id. Also, the field which carries the length of
-/// the tuple is 1-byte long for DHCPv4 V-I Vendor Class and 2-bytes long
-/// for the DHCPv6 Vendor Class option.
+/// The format of the option is described in section 3.2 of RFC5970.
+/// This option may carry an arbitrary number of tuples carrying opaque data.
+/// Each tuple consists of a field holding the length of the opaque data
+/// followed by a string containing the data itself.  For option 60 each
+/// length field is 2 bytes long and the data is a UTF-8 string that is not
+/// null terminated.
 ///
-/// Whether the encapsulated format is DHCPv4 V-I Vendor Class or DHCPv6
-/// Vendor Class option is controlled by the @c u (universe) parameter passed
-/// to the constructor.
-///
-/// @todo Currently, the enterprise id field is set to a value of the first
-/// enterprise id occurrence in the parsed option. At some point we should
-/// be able to differentiate between enterprise ids.
-class OptionVendorClass : public Option {
+/// @todo The class is similar to the class used by the DHCPv6 Vendor Class
+/// (16) and DHCPv4 V-I Vendor Class (124) options, though they include an
+/// enterprise (or vendor) ID in the option.  In the future it may
+/// make sense to rewrite the OptionVendorClass to derive from this class.
+class OptionOpaqueDataTuples : public Option {
 public:
 
     /// @brief Collection of opaque data tuples carried by the option.
@@ -54,16 +49,12 @@ public:
 
     /// @brief Constructor.
     ///
-    /// This constructor instance of the DHCPv4 V-I Vendor Class option (124)
-    /// or DHCPv6 Vendor Class option (16), depending on universe specified.
-    /// If the universe is v4, the constructor adds one empty tuple to the
-    /// option, as per RFC3925, section 3. the complete option must hold at
-    /// least one data-len field for opaque data. If the specified universe
-    /// is v6, the constructor adds no tuples.
+    /// This constructor creates an instance of an OpaqueDataTuple that can
+    /// be used for an option such as DHCPv6 Bootfile Parameters (60).
     ///
     /// @param u universe (v4 or v6).
-    /// @param vendor_id vendor enterprise id (unique 32-bit integer).
-    OptionVendorClass(Option::Universe u, const uint32_t vendor_id);
+    /// @param type option type
+    OptionOpaqueDataTuples(Option::Universe u, const uint16_t type);
 
     /// @brief Constructor.
     ///
@@ -71,11 +62,13 @@ public:
     /// on-wire data. It may throw an exception if the @c unpack method throws.
     ///
     /// @param u universe (v4 or v6)
+    /// @param type option type
     /// @param begin Iterator pointing to the beginning of the buffer holding an
     /// option.
     /// @param end Iterator pointing to the end of the buffer holding an option.
-    OptionVendorClass(Option::Universe u, OptionBufferConstIter begin,
-                      OptionBufferConstIter end);
+    OptionOpaqueDataTuples(Option::Universe u, const uint16_t type,
+                           OptionBufferConstIter begin,
+                           OptionBufferConstIter end);
 
     /// @brief Renders option into the buffer in the wire format.
     ///
@@ -85,17 +78,12 @@ public:
     /// @brief Parses buffer holding an option.
     ///
     /// This function parses the buffer holding an option and initializes option
-    /// properties: enterprise ids and the collection of tuples.
+    /// properties: the collection of tuples.
     ///
     /// @param begin Iterator pointing to the beginning of the buffer holding an
     /// option.
     /// @param end Iterator pointing to the end of the buffer holding an option.
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
-
-    /// @brief Returns enterprise id.
-    uint32_t getVendorId() const {
-        return (vendor_id_);
-    }
 
     /// @brief Adds a new opaque data tuple to the option.
     ///
@@ -135,7 +123,7 @@ public:
         return (tuples_);
     }
 
-    /// @brief Checks if the Vendor Class holds the opaque data tuple with the
+    /// @brief Checks if the object holds the opaque data tuple with the
     /// specified string.
     ///
     /// @param tuple_str String representation of the tuple being searched.
@@ -153,45 +141,34 @@ public:
 
 private:
 
-    /// @brief Returns option code appropriate for the specified universe.
-    ///
-    /// This function is called by the constructor to map the specified
-    /// universe to the option code.
-    ///
-    /// @param u universe (V4 or V6).
-    /// @return DHCPv4 V-I Vendor Class or DHCPv6 Vendor Class option code.
-    static uint16_t getOptionCode(Option::Universe u) {
-        return (u == V4 ? DHO_VIVCO_SUBOPTIONS : D6O_VENDOR_CLASS);
-    }
-
     /// @brief Returns the tuple length field type for the given universe.
     ///
     /// This function returns the length field type which should be used
     /// for the opaque data tuples being added to this option.
+    /// Currently this class is only used for a DHCPv6 option it may be expanded
+    /// for DHCPv4 in the future.
     ///
     /// @return Tuple length field type for the universe this option belongs to.
     OpaqueDataTuple::LengthFieldType getLengthFieldType() const {
-        return (getUniverse() == V4 ? OpaqueDataTuple::LENGTH_1_BYTE :
-                OpaqueDataTuple::LENGTH_2_BYTES);
+        return (OpaqueDataTuple::LENGTH_2_BYTES);
     }
 
     /// @brief Returns minimal length of the option for the given universe.
+    /// Currently this class is only used for a DHCPv6 option it may be expanded
+    /// for DHCPv4 in the future.
     uint16_t getMinimalLength() const {
-        return (getUniverse() == Option::V4 ? 7 : 8);
+        return (4);
     }
-
-    /// @brief Enterprise ID.
-    uint32_t vendor_id_;
 
     /// @brief Collection of opaque data tuples carried by the option.
     TuplesCollection tuples_;
 
 };
 
-/// @brief Defines a pointer to the @c OptionVendorClass.
-typedef boost::shared_ptr<OptionVendorClass> OptionVendorClassPtr;
+/// @brief Defines a pointer to the @c OptionOpaqueDataTuples.
+typedef boost::shared_ptr<OptionOpaqueDataTuples> OptionOpaqueDataTuplesPtr;
 
 }
 }
 
-#endif // OPTION_VENDOR_CLASS_H
+#endif // OPTION_OPAQUE_DATA_TUPLES_H

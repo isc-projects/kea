@@ -27,6 +27,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_opaque_data_tuples.h>
 #include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
@@ -437,6 +438,11 @@ OptionDefinition::haveStatusCodeFormat() const {
 }
 
 bool
+OptionDefinition::haveOpaqueDataTuplesFormat() const {
+    return (getType() == OPT_BINARY_TYPE);
+}
+
+bool
 OptionDefinition::convertToBool(const std::string& value_str) const {
     // Case insensitve check that the input is one of: "true" or "false".
     if (boost::iequals(value_str, "true")) {
@@ -696,6 +702,9 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
         } else if (getCode() == D6O_STATUS_CODE && haveStatusCodeFormat()) {
             // Status Code (option code 13)
             return (OptionPtr(new Option6StatusCode(begin, end)));
+        } else if (getCode() == D6O_BOOTFILE_PARAM && haveOpaqueDataTuplesFormat()) {
+            // Bootfile params (option code 60)
+            return (OptionPtr(new OptionOpaqueDataTuples(Option::V6, getCode(), begin, end)));
         }
     } else {
         if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
