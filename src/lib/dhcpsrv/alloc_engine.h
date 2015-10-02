@@ -506,7 +506,7 @@ public:
     /// - updating statistics of assigned and reclaimed leases
     ///
     /// Note: declined leases fall under the same expiration/reclaimation
-    /// processing as normal leases. In principle, it would more elegant
+    /// processing as normal leases. In principle, it would be more elegant
     /// to have a separate processing for declined leases reclaimation. However,
     /// due to performance reasons we decided to use them together. Several
     /// aspects were taken into consideration. First, normal leases are expected
@@ -524,7 +524,7 @@ public:
     /// declined state). Therefore remove_leases parameter is ignored for
     /// declined leases. They are always removed.
     ///
-    /// Also, for delined leases @ref reclaimDeclined is called. It conducts
+    /// Also, for declined leases @ref reclaimDeclined is called. It conducts
     /// several declined specific operation (extra log entry, stats dump,
     /// hooks).
     ///
@@ -552,7 +552,7 @@ public:
     /// - updating statistics of assigned and reclaimed leases
     ///
     /// Note: declined leases fall under the same expiration/reclaimation
-    /// processing as normal leases. In principle, it would more elegant
+    /// processing as normal leases. In principle, it would be more elegant
     /// to have a separate processing for declined leases reclaimation. However,
     /// due to performance reasons we decided to use them together. Several
     /// aspects were taken into consideration. First, normal leases are expected
@@ -570,7 +570,7 @@ public:
     /// declined state). Therefore remove_leases parameter is ignored for
     /// declined leases. They are always removed.
     ///
-    /// Also, for delined leases @ref reclaimDeclined is called. It conducts
+    /// Also, for declined leases @ref reclaimDeclined is called. It conducts
     /// several declined specific operation (extra log entry, stats dump,
     /// hooks).
     ///
