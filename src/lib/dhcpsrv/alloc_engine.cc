@@ -940,7 +940,7 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
          (ctx.fake_allocation_ == false)) {
         // If this is a declined lease that expired, we need to conduct
         // extra steps for it. However, we do want to conduct those steps
-        // only once. In paricular, if we have an expired declined lease
+        // only once. In particular, if we have an expired declined lease
         // and client sent DHCPDISCOVER and will later send DHCPREQUEST,
         // we only want to call this method once when responding to
         // DHCPREQUEST (when the actual reclaimation takes place).
@@ -2327,7 +2327,7 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
          (ctx.fake_allocation_ == false)) {
         // If this is a declined lease that expired, we need to conduct
         // extra steps for it. However, we do want to conduct those steps
-        // only once. In paricular, if we have an expired declined lease
+        // only once. In particular, if we have an expired declined lease
         // and client sent DHCPDISCOVER and will later send DHCPREQUEST,
         // we only want to call this method once when responding to
         // DHCPREQUEST (when the actual reclaimation takes place).
