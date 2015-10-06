@@ -40,8 +40,10 @@
  - Description of the hook. This explains where in the processing the hook
    is located, the possible actions a callout attached to this hook could take,
    and a description of the data passed to the callouts.
- - Skip flag action: the action taken by the server if a callout chooses to set
-    the "skip" flag.
+ - Next step status: the action taken by the server when a callout chooses to set
+    status to specified value. Actions not listed explicitly are not supported.
+   If a callout sets status to unsupported value, this specific value will be
+   ignored and treated as if the status was CONTINUE.
 
 @section dhcpv4HooksHookPoints Hooks in the DHCPv4 Server
 
@@ -64,7 +66,7 @@ packet processing. Hook points that are not specific to packet processing
    are set yet. Callouts installed on this hook point can modify the data
     in the received buffer. The server will parse the buffer afterwards.
 
- - <b>Skip flag action</b>: If any callout sets the skip flag, the server will
+ - <b>Next step status</b>: If any callout sets the status to SKIP, the server will
    skip the buffer parsing. In this case there is an expectation that
    the callout will parse the options carried in the buffer, create
    @c isc::dhcp::Option objects (or derived) and add them to the "query4"
@@ -90,7 +92,7 @@ packet processing. Hook points that are not specific to packet processing
    field has been already parsed and stored in other fields. Therefore,
    the modification in the data_ field has no effect.
 
- - <b>Skip flag action</b>: If any callout sets the skip flag, the server will
+ - <b>Nest step status</b>: If any callout sets the status to SKIP, the server will
    drop the packet and start processing the next one.  The reason for the drop
    will be logged if logging is set to the appropriate debug level.
 
@@ -109,9 +111,9 @@ packet processing. Hook points that are not specific to packet processing
    configured are provided as "subnet4collection". The list itself must
    not be modified.
 
- - <b>Skip flag action</b>: If any callout, installed on "subnet4_select",
-   sets the skip flag, the server will not select any subnet. Packet processing
-   will continue, but will be severely limited.
+ - <b>Next step status</b>: If any callout installed on the "subnet4_select" hook
+   sets the next step status to SKIP, the server will not select any subnet.
+   Packet processing will continue, but will be severely limited.
 
 @subsection dhcpv4HooksLeaseSelect lease4_select
 
@@ -134,11 +136,11 @@ packet processing. Hook points that are not specific to packet processing
    lease won't be inserted into the database (DHCPDISCOVER case), a value of
    false indicates that it will (DHCPREQUEST case).
 
- - <b>Skip flag action</b>: If any callout installed on "lease4_select"
-   sets the skip flag, the server will not assign any lease and the callouts
-   become responsible for the lease assignment. If the callouts fail to provide
-   a lease, the packet processing will continue, but client will not get
-   an address.
+ - <b>Next step status</b>: If any callout installed on the "lease4_select" hook
+   sets the next step action to SKIP, the server will not assign any lease and
+   the callouts become responsible for the lease assignment. If the callouts
+   fail to provide a lease, the packet processing will continue, but client
+   will not get an address.
 
 @subsection dhcpv4HooksLeaseRenew lease4_renew
 
@@ -155,8 +157,8 @@ packet processing. Hook points that are not specific to packet processing
    be taken as the server will attempt to update the lease in the database
    without any additional checks.
 
- - <b>Skip flag action</b>: If any callout installed on "lease4_renew"
-   sets the skip flag, the server will not update the lease in the
+ - <b>Next step status</b>: If any callout installed on the "lease4_renew" hook
+   sets the next step action to SKIP, the server will not update the lease in the
    database and will continue using the old values instead.
 
 @subsection dhcpv4HooksLeaseRelease lease4_release
@@ -170,9 +172,9 @@ packet processing. Hook points that are not specific to packet processing
    The "lease4" argument points to @c Lease4 object that contains the lease to
    be released. It doesn't make sense to modify it at this time.
 
- - <b>Skip flag action</b>: If any callout installed on "lease4_release"
-   sets the skip flag, the server will not delete the lease. It will be
-   kept in the database and will go through the regular expiration/reuse
+ - <b>Nest step status</b>: If any callout installed on the "lease4_release" hook
+   sets the next step action to SKIP, the server will not delete the lease.
+   It will be kept in the database and will go through the regular expiration/reuse
    process.
 
 @subsection dhcpv4HooksPkt4Send pkt4_send
@@ -190,10 +192,11 @@ packet processing. Hook points that are not specific to packet processing
    pkt4_send callouts are complete, so any changes to that field will
    be overwritten.)
 
- - <b>Skip flag action</b>: if any callout sets the skip flag, the server
-   will not construct the raw buffer. The expectation is that if the callout
-   set skip flag, it is responsible for constructing raw form on its own.
-   Otherwise the output packet will be sent with zero length.
+ - <b>Nest step action</b>: if any callout installed on the "pkt4_send" hook
+   sets the next step action to SKIP, the server will not construct the raw
+   buffer. The expectation is that if the callout set skip flag, it is
+   responsible for constructing raw form on its own. Otherwise the output
+   packet will be sent with zero length.
 
 @subsection dhcpv4HooksBuffer4Send buffer4_send
 
@@ -211,9 +214,9 @@ packet processing. Hook points that are not specific to packet processing
    time, because they were already used to construct on-wire buffer. Their
    modification would have no effect.
 
- - <b>Skip flag action</b>: if any callout sets the skip flag, the server
-   will drop this response packet. However, the original request packet
-   from a client was processed, so server's state most likely has changed
+ - <b>Next step status</b>: if any callout sets the next step action to SKIP,
+   the server will drop this response packet. However, the original request
+   packet from a client was processed, so server's state most likely has changed
    (e.g. lease was allocated). Setting this flag merely stops the change
    being communicated to the client.
 
@@ -237,8 +240,8 @@ packet processing. Hook points that are not specific to packet processing
   argument is set to "true" if the "flush-reclaimed-timer-wait-time" is
   set to 0 in the server configuration file.
 
-- <b>Skip flag action</b>: if the callout sets the skip flag, the server
-  will assume that the callout has fully reclaimed the lease, i.e.
+- <b>Next step status</b>: if the callout sets the next step action to SKIP,
+  the server will assume that the callout has fully reclaimed the lease, i.e.
   performed the DNS update and updated the lease in the database. The
   server will not perform any further actions on the lease for which the
   skip flag has been set. It is important to note that if the callout

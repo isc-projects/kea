@@ -120,7 +120,7 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
     // Clear the "skip" flag so we don't carry state from a previous call.
     // This is done regardless of whether callouts are present to avoid passing
     // any state from the previous call of callCallouts().
-    callout_handle.setSkip(false);
+    callout_handle.setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
 
     // Only initialize and iterate if there are callouts present.  This check
     // also catches the case of an invalid index.
