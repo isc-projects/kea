@@ -1,3 +1,8 @@
+1019.	[func]		marcin
+	Added new configuration parameters controlling processing of the
+	expired leases in the DHCPv4 and DHCPv6 server.
+	(Trac #3974, git c998d36c40cc46ffe9f888e615bbcfa0a311d40d)
+
 1018.   [func]		sar
 	Added support for several options for use by PXE.
 	From RFC4578 (for DHCPv4) these are: 93 - client-system,
