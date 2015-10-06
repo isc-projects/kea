@@ -374,14 +374,11 @@ the server.
 - If you alter an argument, call @c CalloutHandle::setArgument to update the
 value in the @c CalloutHandle object.
 
-@subsubsection hooksdgSkipFlag Next step status (formerly The "Skip" Flag)
+@subsubsection hooksdgNextStep The Next step status
 
-Note: In releases 0.9.2 and earlier, this functionality was provided by
-a boolean flag called "Skip". However, since it only allowed to either continue
-or skip the next processing step and was not extensible to other decisions,
-setSkip(bool) call was replaced with a setStatus(enum) in Kea 1.0. This
-new approach is extensible. If we decide to add new results (e.g. WAIT
-or RATELIMIT), we will be able to do so without changing the API again.
+Note: This functionality used to be provided in Kea 0.9.2 and earlier using
+boolean skip flag. See @ref hooksdgSkipFlag for explantion and tips how
+to migrate your hooks code to this new API.
 
 When a to callouts attached to a hook returns, the server will usually continue
 its processing.  However, a callout might have done something that means that
@@ -437,6 +434,49 @@ usage is intuitive:
 
 Like arguments, the next step status is passed to all callouts on a hook.  Callouts
 later in the list are able to examine (and modify) the settings of earlier ones.
+
+@subsubsection hooksdgSkipFlag The "Skip" Flag (deprecated)
+
+In releases 0.9.2 and earlier, the functionality currently offered by next step
+status (see @ref hooksdgNextStep) was provided by
+a boolean flag called "Skip". However, since it only allowed to either continue
+or skip the next processing step and was not extensible to other decisions,
+setSkip(bool) call was replaced with a setStatus(enum) in Kea 1.0. This
+new approach is extensible. If we decide to add new results (e.g. WAIT
+or RATELIMIT), we will be able to do so without changing the API again.
+
+If you have your hooks libraries that take advantage of skip flag, migrating
+to the next step status is very easy. See @ref hooksdgNextStep for detailed
+explanation of the new status field.
+
+To migrate, replace this old code:
+@code
+handle.setSkip(false); // This is the default.
+
+handle.setSkip(true);  // Tell the server to skip the next processing step.
+
+bool skip = hangle.getSkip(); // Check the skip flag state.
+if (skip) {
+   ...
+}
+@endcode
+
+with this:
+
+@code
+
+// This is the default.
+handle.setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+
+// Tell the server to skip the next processing step.
+handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+// Check the status state.
+CalloutHandle::NextStepStatus status = handle.getStatus();
+if (status == CalloutHandle::NEXT_STEP_SKIP) {
+    ...
+}
+@endcode
 
 @subsubsection hooksdgCalloutContext Per-Request Context
 
