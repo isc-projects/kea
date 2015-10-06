@@ -69,6 +69,10 @@ testAccessModify(const int64_t limit, const ModifierFun& modifier,
     // Setting the value to the maximum allowed - 1 should pass.
     ASSERT_NO_THROW(modifier(&cfg, limit - 1));
     EXPECT_EQ(limit - 1, accessor(&cfg));
+
+    // Setting the value to 0 should pass.
+    ASSERT_NO_THROW(modifier(&cfg, 0));
+    EXPECT_EQ(0, accessor(&cfg));
 }
 
 /// @brief Tests that modifier and the accessor returning uint16_t value
