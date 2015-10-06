@@ -29,6 +29,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/testutils/config_result_check.h>
@@ -3706,6 +3707,75 @@ TEST_F(Dhcp4ParserTest, declineTimerError) {
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
     // returned value should be 1 (error)
+    checkResult(status, 1);
+
+    // Check that the error contains error position.
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
+
+// Check that configuration for the expired leases processing may be
+// specified.
+TEST_F(Dhcp4ParserTest, expiredLeasesProcessing) {
+    // Create basic configuration with the expiration specific parameters.
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"expired-leases-processing\": "
+        "{"
+        "    \"reclaim-timer-wait-time\": 20,"
+        "    \"flush-reclaimed-timer-wait-time\": 35,"
+        "    \"hold-reclaimed-time\": 1800,"
+        "    \"max-reclaim-leases\": 50,"
+        "    \"max-reclaim-time\": 100,"
+        "    \"unwarned-reclaim-cycles\": 10"
+        "},"
+        "\"subnet4\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // Returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-perion must be equal to the
+    // value specified.
+    CfgExpirationPtr cfg = CfgMgr::instance().getStagingCfg()->getCfgExpiration();
+    ASSERT_TRUE(cfg);
+
+    // Verify that parameters are correct.
+    EXPECT_EQ(20, cfg->getReclaimTimerWaitTime());
+    EXPECT_EQ(35, cfg->getFlushReclaimedTimerWaitTime());
+    EXPECT_EQ(1800, cfg->getHoldReclaimedTime());
+    EXPECT_EQ(50, cfg->getMaxReclaimLeases());
+    EXPECT_EQ(100, cfg->getMaxReclaimTime());
+    EXPECT_EQ(10, cfg->getUnwarnedReclaimCycles());
+}
+
+// Check that invalid configuration for the expired leases processing is
+// causing an error.
+TEST_F(Dhcp4ParserTest, expiredLeasesProcessingError) {
+    // Create basic configuration with the expiration specific parameters.
+    // One of the parameters holds invalid value.
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"expired-leases-processing\": "
+        "{"
+        "    \"reclaim-timer-wait-time\": -5,"
+        "    \"flush-reclaimed-timer-wait-time\": 35,"
+        "    \"hold-reclaimed-time\": 1800,"
+        "    \"max-reclaim-leases\": 50,"
+        "    \"max-reclaim-time\": 100,"
+        "    \"unwarned-reclaim-cycles\": 10"
+        "},"
+        "\"subnet4\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // Returned value should be 0 (error)
     checkResult(status, 1);
 
     // Check that the error contains error position.
