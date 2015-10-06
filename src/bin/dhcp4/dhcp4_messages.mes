@@ -247,6 +247,13 @@ setting of the flag by a callout instructs the server to drop the packet.
 Server completed all the processing (e.g. may have assigned, updated
 or released leases), but the response will not be send to the client.
 
+% DHCP4_HOOK_DECLINE_SKIP Decline4 hook callouts set status to DROP, ignoring packet.
+This message indicates that the server received DHCPDECLINE message, it was verified
+to be correct and matching server's lease information. The server called hooks
+for decline4 hook point and one of the callouts set next step status to DROP.
+The server will now abort processing of the packet as if it was never
+received. The lease will continue to be assigned to this client.
+
 % DHCP4_HOOK_LEASE4_RELEASE_SKIP %1: lease was not released because a callout set the skip flag.
 This debug message is printed when a callout installed on lease4_release
 hook point set the skip flag. For this particular hook point, the
