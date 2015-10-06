@@ -80,6 +80,7 @@ struct Dhcp4Hooks {
     int hook_index_lease4_release_; ///< index for "lease4_release" hook point
     int hook_index_pkt4_send_;      ///< index for "pkt4_send" hook point
     int hook_index_buffer4_send_;   ///< index for "buffer4_send" hook point
+    int hook_index_lease4_decline_; ///< index for "lease4_decline" hook point
 
     /// Constructor that registers hook points for DHCPv4 engine
     Dhcp4Hooks() {
@@ -89,6 +90,7 @@ struct Dhcp4Hooks {
         hook_index_pkt4_send_      = HooksManager::registerHook("pkt4_send");
         hook_index_lease4_release_ = HooksManager::registerHook("lease4_release");
         hook_index_buffer4_send_   = HooksManager::registerHook("buffer4_send");
+        hook_index_lease4_decline_ = HooksManager::registerHook("lease4_decline");
     }
 };
 
@@ -1895,11 +1897,37 @@ Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
 
     // Ok, all is good. The client is reporting its own address. Let's
     // process it.
-    declineLease(lease, decline->getLabel());
+    declineLease(lease, decline);
 }
 
 void
-Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const std::string& descr) {
+Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline) {
+
+    // Let's check if there are hooks installed for decline4 hook point.
+    // If they are, let's pass the lease and client's packet. If the hook
+    // sets status to drop, we reject this Decline.
+    if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_decline_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(decline);
+
+        // Delete previously set arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass incoming Decline and the lease to be declined.
+        callout_handle->setArgument("lease4", lease);
+        callout_handle->setArgument("query4", decline);
+
+        // Call callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease4_decline_,
+                                   *callout_handle);
+
+        // Check if callouts decided to drop the packet. If any of them did,
+        // we will drop the packet.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_DECLINE_SKIP)
+                .arg(decline->getLabel()).arg(lease->addr_.toText());
+            return;
+        }
+    }
 
     // Clean up DDNS, if needed.
     if (CfgMgr::instance().ddnsEnabled()) {
@@ -1938,7 +1966,7 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const std::string& descr) {
     LeaseMgrFactory::instance().updateLease4(lease);
 
     LOG_INFO(dhcp4_logger, DHCP4_DECLINE_LEASE).arg(lease->addr_.toText())
-        .arg(descr).arg(lease->valid_lft_);
+        .arg(decline->getLabel()).arg(lease->valid_lft_);
 }
 
 Pkt4Ptr
