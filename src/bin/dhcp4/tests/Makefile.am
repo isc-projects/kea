@@ -85,6 +85,7 @@ dhcp4_unittests_SOURCES += config_parser_unittest.cc
 dhcp4_unittests_SOURCES += fqdn_unittest.cc
 dhcp4_unittests_SOURCES += marker_file.cc
 dhcp4_unittests_SOURCES += dhcp4_client.cc dhcp4_client.h
+dhcp4_unittests_SOURCES += hooks_unittest.cc
 dhcp4_unittests_SOURCES += inform_unittest.cc
 dhcp4_unittests_SOURCES += dora_unittest.cc
 dhcp4_unittests_SOURCES += release_unittest.cc
