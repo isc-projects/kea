@@ -1454,15 +1454,13 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
     EXPECT_TRUE(l);
 
-    // Try to get the lease by hardware address
-    // @todo: Uncomment this once trac2592 is implemented
-    // Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
-    // EXPECT_EQ(leases.size(), 1);
+    // Try to get the lease by hardware address, should succeed
+    Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*hw);
+    EXPECT_EQ(leases.size(), 1);
 
-    // Try by client-id
-    // @todo: Uncomment this once trac2592 is implemented
-    //Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*client_id_);
-    //EXPECT_EQ(leases.size(), 1);
+    // Try by client-id, should be successful as well.
+    leases = LeaseMgrFactory::instance().getLease4(*client_id_);
+    EXPECT_EQ(leases.size(), 1);
 }
 
 // Checks that decline4 hooks are triggered properly.
