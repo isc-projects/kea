@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -90,6 +90,18 @@ class LibraryManagerCollection;
 
 class CalloutHandle {
 public:
+
+    /// @brief Specifies allowed next steps
+    ///
+    /// Those values are used to designate the next step in packet processing.
+    /// They are set by hook callouts and read by the Kea server. See
+    /// @ref setStatus for detailed description of each value.
+    enum CalloutNextStep {
+        NEXT_STEP_CONTINUE = 0, ///< continue normally
+        NEXT_STEP_SKIP = 1,     ///< skip the next processing step
+        NEXT_STEP_DROP = 2      ///< drop the packet
+    };
+
 
     /// Typedef to allow abbreviation of iterator specification in methods.
     /// The std::string is the argument name and the "boost::any" is the
@@ -202,24 +214,39 @@ public:
         arguments_.clear();
     }
 
-    /// @brief Set skip flag
+    /// @brief Sets the next processing step.
     ///
-    /// Sets the "skip" variable in the callout handle.  This variable is
-    /// interrogated by the server to see if the remaining callouts associated
-    /// with the current hook should be bypassed.
+    /// This method is used by the callouts to determine the next step
+    /// in processing. This method replaces former setSkip() method
+    /// that allowed only two values.
+    ///
+    /// Currently there are three possible value allowed:
+    /// NEXT_STEP_CONTINUE - tells the server to continue processing as usual
+    ///                      (equivalent of previous setSkip(false) )
+    ///
+    /// NEXT_STEP_SKIP - tells the server to skip the processing. Exact meaning
+    ///                  is hook specific. See hook documentation for details.
+    ///                  (equivalent of previous setSkip(true))
+    ///
+    /// NEXT_STEP_DROP - tells the server to unconditionally drop the packet
+    ///                  and do not process it further.
+    ///
+    /// This variable is interrogated by the server to see if the remaining
+    /// callouts associated with the current hook should be bypassed.
     ///
     /// @param skip New value of the "skip" flag.
-    void setSkip(bool skip) {
-        skip_ = skip;
+    void setStatus(const CalloutNextStep next) {
+        next_step_ = next;
     }
 
-    /// @brief Get skip flag
+    /// @brief Returns the next processing step.
     ///
-    /// Gets the current value of the "skip" flag.
+    /// Gets the current value of the next step. See @ref setStatus for detailed
+    /// definition.
     ///
     /// @return Current value of the skip flag.
-    bool getSkip() const {
-        return (skip_);
+    CalloutNextStep getStatus() const {
+        return (next_step_);
     }
 
     /// @brief Access current library handle
@@ -376,8 +403,8 @@ private:
     /// a reference instead of accessing the singleton within the code.
     ServerHooks& server_hooks_;
 
-    /// "Skip" flag, indicating if the caller should bypass remaining callouts.
-    bool skip_;
+    /// Next processing step, indicating what the server should do next.
+    CalloutNextStep next_step_;
 };
 
 /// A shared pointer to a CalloutHandle object.

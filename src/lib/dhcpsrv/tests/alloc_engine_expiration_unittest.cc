@@ -497,7 +497,7 @@ public:
     /// @return Zero.
     static int leaseExpireWithSkipCallout(CalloutHandle& callout_handle) {
         leaseExpireCallout(callout_handle);
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         return (0);
     }

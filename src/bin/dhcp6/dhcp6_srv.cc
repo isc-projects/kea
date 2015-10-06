@@ -411,13 +411,15 @@ bool Dhcpv6Srv::run() {
             // processing step would to parse the packet, so skip at this
             // stage means that callouts did the parsing already, so server
             // should skip parsing.
-            if (callout_handle->getSkip()) {
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP6_DETAIL, DHCP6_HOOK_BUFFER_RCVD_SKIP)
                     .arg(query->getRemoteAddr().toText())
                     .arg(query->getLocalAddr().toText())
                     .arg(query->getIface());
                 skip_unpack = true;
             }
+
+            /// @todo: Add support for DROP status.
 
             callout_handle->getArgument("query6", query);
         }
@@ -500,11 +502,13 @@ bool Dhcpv6Srv::run() {
             // Callouts decided to skip the next processing step. The next
             // processing step would to process the packet, so skip at this
             // stage means drop.
-            if (callout_handle->getSkip()) {
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_RCVD_SKIP)
                     .arg(query->getLabel());
                 continue;
             }
+
+            /// @todo: Add support for DROP status.
 
             callout_handle->getArgument("query6", query);
         }
@@ -639,11 +643,13 @@ bool Dhcpv6Srv::run() {
                 // That step will be skipped if any callout sets skip flag.
                 // It essentially means that the callout already did packing,
                 // so the server does not have to do it again.
-                if (callout_handle->getSkip()) {
+                if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                     LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_SEND_SKIP)
                         .arg(rsp->getLabel());
                     skip_pack = true;
                 }
+
+                /// @todo: Add support for DROP status
             }
 
             if (!skip_pack) {
@@ -678,11 +684,13 @@ bool Dhcpv6Srv::run() {
                     // Callouts decided to skip the next processing step. The next
                     // processing step would to parse the packet, so skip at this
                     // stage means drop.
-                    if (callout_handle->getSkip()) {
+                    if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                         LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP)
                             .arg(rsp->getLabel());
                         continue;
                     }
+
+                    /// @todo: Add support for DROP status
 
                     callout_handle->getArgument("response6", rsp);
                 }
@@ -1068,11 +1076,13 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
         // subnet will be selected. Packet processing will continue,
         // but it will be severely limited (i.e. only global options
         // will be assigned)
-        if (callout_handle->getSkip()) {
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_SUBNET6_SELECT_SKIP)
                 .arg(question->getLabel());
             return (Subnet6Ptr());
         }
+
+        /// @todo: Add support for DROP status.
 
         // Use whatever subnet was specified by the callout
         callout_handle->getArgument("subnet6", subnet);
@@ -2142,11 +2152,13 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         // Callouts decided to skip the next processing step. The next
         // processing step would to send the packet, so skip at this
         // stage means "drop response".
-        if (callout_handle->getSkip()) {
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             skip = true;
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP)
                 .arg(query->getLabel());
         }
+
+        /// @todo: Add support for DROP status
     }
 
     // Ok, we've passed all checks. Let's release this address.
@@ -2295,7 +2307,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
         // Call all installed callouts
         HooksManager::callCallouts(Hooks.hook_index_lease6_release_, *callout_handle);
 
-        skip = callout_handle->getSkip();
+        skip = callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP;
     }
 
     // Ok, we've passed all checks. Let's release this prefix.

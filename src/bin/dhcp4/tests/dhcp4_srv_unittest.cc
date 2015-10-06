@@ -1599,7 +1599,7 @@ public:
     static int
     buffer4_receive_skip(CalloutHandle& callout_handle) {
 
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         // Carry on as usual
         return buffer4_receive_callout(callout_handle);
@@ -1664,7 +1664,7 @@ public:
         Pkt4Ptr pkt;
         callout_handle.getArgument("query4", pkt);
 
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         // carry on as usual
         return pkt4_receive_callout(callout_handle);
@@ -1727,7 +1727,7 @@ public:
         Pkt4Ptr pkt;
         callout_handle.getArgument("response4", pkt);
 
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         // carry on as usual
         return pkt4_send_callout(callout_handle);
@@ -1768,7 +1768,7 @@ public:
     static int
     skip_callout(CalloutHandle& callout_handle) {
 
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         return (0);
     }
