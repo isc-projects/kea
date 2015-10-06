@@ -476,6 +476,7 @@ public:
     }
 
     /// Test lease4_decline callback that stores received parameters.
+    ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -485,6 +486,17 @@ public:
         callout_handle.getArgument("lease4", callback_lease4_);
 
         return (0);
+    }
+
+    /// Test lease4_decline callback that sets next step to DROP.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease4_decline_drop_callout(CalloutHandle& callout_handle) {
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+
+        return (lease4_decline_callout(callout_handle));
     }
 
     /// resets buffers used to store data received by callouts
@@ -1472,6 +1484,7 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_decline", lease4_decline_callout));
 
+    // Conduct the actual DORA + Decline.
     acquireAndDecline("01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS);
@@ -1500,6 +1513,50 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
 
     // Let's now check that those 3 things (packet, lease returned and lease from
     // the lease manager) all match.
+    EXPECT_EQ(addr, from_mgr->addr_);
+    EXPECT_EQ(addr, callback_lease4_->addr_);
+}
+
+// Checks that decline4 hooks are triggered properly.
+TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_decline", lease4_decline_drop_callout));
+
+    // Conduct the actual DORA + Decline. The DECLINE should fail, as the
+    // hook will set the status to DROP.
+    acquireAndDecline("01:02:03:04:05:06", "12:14",
+                      "01:02:03:04:05:06", "12:14",
+                      SHOULD_FAIL);
+
+    EXPECT_EQ("lease4_decline", callback_name_);
+
+    // Verifying DHCPDECLINE is a bit tricky, as it is created somewhere in
+    // acquireAndDecline. We'll just verify that it's really a DECLINE
+    // and that its address is equal to what we have in LeaseMgr.
+    ASSERT_TRUE(callback_pkt4_);
+    ASSERT_TRUE(callback_lease4_);
+
+    // Check that it's the proper packet that was reported.
+    EXPECT_EQ(DHCPDECLINE, callback_pkt4_->getType());
+
+    // Extract the address being declined.
+    OptionCustomPtr opt_declined_addr = boost::dynamic_pointer_cast<
+        OptionCustom>(callback_pkt4_->getOption(DHO_DHCP_REQUESTED_ADDRESS));
+    ASSERT_TRUE(opt_declined_addr);
+    IOAddress addr(opt_declined_addr->readAddress());
+
+    // And try to get a matching lease from the lease mgr. The lease should
+    // still be there in default state, not in declined state.
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(from_mgr);
+    EXPECT_EQ(Lease::STATE_DEFAULT, from_mgr->state_);
+
+    // As a final sanity check, let's now check that those 3 things (packet,
+    // lease returned and lease from the lease manager) all match.
     EXPECT_EQ(addr, from_mgr->addr_);
     EXPECT_EQ(addr, callback_lease4_->addr_);
 }
