@@ -140,6 +140,11 @@ ExpirationConfigParserTest::testOutOfRange(const std::string& param,
     addParam(param, max_value);
     EXPECT_NO_THROW(renderConfig())
         << "test for in range value of '" << param << "' failed";
+
+    // Value of 0 should be accepted.
+    addParam(param, 0);
+    EXPECT_NO_THROW(renderConfig())
+        << "test for zero value of '" << param << "' failed";
 }
 
 
