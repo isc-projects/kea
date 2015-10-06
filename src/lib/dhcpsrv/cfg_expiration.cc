@@ -14,7 +14,7 @@
 
 #include <dhcpsrv/cfg_expiration.h>
 #include <exceptions/exceptions.h>
-#include <limits.h>
+#include <limits>
 
 namespace isc {
 namespace dhcp {
