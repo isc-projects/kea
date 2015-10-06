@@ -374,48 +374,68 @@ the server.
 - If you alter an argument, call @c CalloutHandle::setArgument to update the
 value in the @c CalloutHandle object.
 
-@subsubsection hooksdgSkipFlag The "Skip" Flag
+@subsubsection hooksdgSkipFlag Next step status (formerly The "Skip" Flag)
+
+Note: In releases 0.9.2 and earlier, this functionality was provided by
+a boolean flag called "Skip". However, since it only allowed to either continue
+or skip the next processing step and was not extensible to other decisions,
+setSkip(bool) call was replaced with a setStatus(enum) in Kea 1.0. This
+new approach is extensible. If we decide to add new results (e.g. WAIT
+or RATELIMIT), we will be able to do so without changing the API again.
 
 When a to callouts attached to a hook returns, the server will usually continue
 its processing.  However, a callout might have done something that means that
 the server should follow another path.  Possible actions a server could take
 include:
 
+- Continue as usual. This is the default value. Unless callouts explicitly
+change the status, the server will continue processing. There is no need
+to set the status, unless one callout wants to override the status set
+by another callout. This action is represented by CalloutHandle::NEXT_STEP_CONTINUE.
+
 - Skip the next stage of processing because the callout has already
 done it.  For example, a hook is located just before the DHCP server
 allocates an address to the client.  A callout may decide to allocate
 special addresses for certain clients, in which case it needs to tell
-the server not to allocate an address in this case.
+the server not to allocate an address in this case. This action is
+hook specific and is represented by CalloutHandle::NEXT_STEP_SKIP.
+
 - Drop the packet and continue with the next request. A possible scenario
 is a server where a callout inspects the hardware address of the client
 sending the packet and compares it against a black list; if the address
-is on it, the callout notifies the server to drop the packet.
+is on it, the callout notifies the server to drop the packet. This
+action is represented by CalloutHandle::NEXT_STEP_DROP.
 
-To handle these common cases, the @c CalloutHandle has a "skip" flag.
-This is set by a callout when it wishes the server to skip normal
-processing.  It is set false by the hooks framework before callouts on a
-hook are called.  If the flag is set on return, the server will take the
-"skip" action relevant for the hook.
+To handle these common cases, the @c CalloutHandle has a setStatus method.
+This is set by a callout when it wishes the server to change the normal
+processing. Exact meaning is hook specific. Please consult hook API
+documentation for details. For historic reasons (Kea 0.9.2 used a single
+boolean flag called skip that also doubled in some cases as an indicator
+to drop the packet) several hooks use SKIP status to drop the packet.
 
 The methods to get and set the "skip" flag are getSkip and setSkip. Their
 usage is intuitive:
 
 @code
-    // Get the current setting of the skip flag.
-    bool skip = handle.getSkip();
+    // Get the current setting of the next step status.
+    CalloutHandle::NextStepStatus status = handle.getStatus();
+
+    if (status == CalloutHandle::NEXT_STEP_DROP)
+       // Do something...
+       :
 
     // Do some processing...
         :
     if (lease_allocated) {
         // Flag the server to skip the next step of the processing as we
         // already have an address.
-        handle.setSkip(true);
+        handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
     }
     return;
 
 @endcode
 
-Like arguments, the "skip" flag is passed to all callouts on a hook.  Callouts
+Like arguments, the next step status is passed to all callouts on a hook.  Callouts
 later in the list are able to examine (and modify) the settings of earlier ones.
 
 @subsubsection hooksdgCalloutContext Per-Request Context
