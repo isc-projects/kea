@@ -389,9 +389,9 @@ mysql_lease6_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease6 values(10,20,30,\"2015-04-04 01:15:30\",40,50,1,60,70,1,1,\"one.example.com\",80,90,100, 0);\
-insert into lease6 values(11,NULL,30,\"2015-05-05 02:30:45\",40,50,1,60,70,1,1,\"\",80,90,100, 1);\
-insert into lease6 values(12,21,30,\"2015-06-06 11:01:07\",40,50,1,60,70,1,1,\"three.example.com\",80,90,100, 2);"
+insert into lease6 values(10,20,30,\"2015-04-04 01:15:30\",40,50,1,60,70,1,1,\"one.example.com\",80,90,0,0);\
+insert into lease6 values(11,NULL,30,\"2015-05-05 02:30:45\",40,50,1,60,70,1,1,\"\",80,90,1,1);\
+insert into lease6 values(12,21,30,\"2015-06-06 11:01:07\",40,50,1,60,70,1,1,\"three.example.com\",80,90,4,2);"
 
     mysql_execute "$insert_sql"
     ERRCODE=$?
