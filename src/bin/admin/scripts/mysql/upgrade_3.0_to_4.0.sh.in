@@ -103,11 +103,12 @@ SELECT
     l.hostname,
     IFNULL(HEX(l.hwaddr), ''),
     IFNULL(l.hwtype, ''),
-    IFNULL(l.hwaddr_source, ''),
+    IFNULL(h.name, ''),
     IFNULL(s.name, '')
 FROM lease6 l
     left outer join lease6_types t on (l.lease_type = t.lease_type)
-    left outer join lease_state s on (l.state = s.state);
+    left outer join lease_state s on (l.state = s.state)
+    left outer join lease_hwaddr_source h on (l.hwaddr_source = h.hwaddr_source);
 END $$
 DELIMITER ;
 
