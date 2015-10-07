@@ -177,6 +177,29 @@ packet processing. Hook points that are not specific to packet processing
    It will be kept in the database and will go through the regular expiration/reuse
    process.
 
+@subsection dhcpv4HooksLeaseDecline lease4_decline
+
+ - @b Arguments:
+   - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
+   - name: @b lease4, type: isc::dhcp::Lease4Ptr, direction: <b>in</b>
+
+ - @b Description: this callout is executed when the server engine
+   is about to decline a lease, as a result of receiving DHCPDECLINE packet.
+   The server already sanity checked it (the packet is sane, attempts to decline
+   a lease that is valid and belongs to the client that requests its decline).
+   The "lease4" argument points to @c Lease4 object that contains the lease to
+   be released. Note this lease still contains client identifying information.
+   That data is provided for informational purposes and it doesn't make sense to
+   modify it at this time. All the information will be removed from the lease
+   before it is updated in the database.
+
+ - <b>Nest step status</b>: If any callout installed on the "lease4_release" hook
+   sets the next step action to DROP, the server will not decline the lease.
+   Care should be taken when setting this status.  The lease will be kept in
+   the database as is and the client will incorrectly assume that the server
+   marked this lease as unavailable. If the client restarts its configuration,
+   it will get the same (not declined) lease as a result.
+
 @subsection dhcpv4HooksPkt4Send pkt4_send
 
  - @b Arguments:
