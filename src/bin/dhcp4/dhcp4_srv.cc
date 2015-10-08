@@ -271,6 +271,8 @@ Dhcpv4Srv::~Dhcpv4Srv() {
     }
 
     IfaceMgr::instance().closeSockets();
+
+    LeaseMgrFactory::destroy();
 }
 
 void
