@@ -44,6 +44,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using boost::scoped_ptr;
 
 namespace {
@@ -1284,7 +1285,7 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_Modem) {
 
     // Let's use a captured traffic. The one we have comes from a
     // modem with MAC address 10:0d:7f:00:07:88.
-    Pkt6Ptr pkt = isc::test::PktCaptures::captureDocsisRelayedSolicit();
+    Pkt6Ptr pkt = PktCaptures::captureDocsisRelayedSolicit();
     ASSERT_NO_THROW(pkt->unpack());
 
     // The method should return MAC based on the vendor-specific info,
@@ -1312,7 +1313,7 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_CMTS) {
 
     // Let's use a captured traffic. The one we have comes from a
     // modem with MAC address 20:e5:2a:b8:15:14.
-    Pkt6Ptr pkt = isc::test::PktCaptures::captureeRouterRelayedSolicit();
+    Pkt6Ptr pkt = PktCaptures::captureeRouterRelayedSolicit();
     ASSERT_NO_THROW(pkt->unpack());
 
     // The method should return MAC based on the vendor-specific info,

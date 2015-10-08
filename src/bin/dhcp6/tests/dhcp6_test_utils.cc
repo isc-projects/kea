@@ -29,6 +29,7 @@ using namespace isc::asiolink;
 using namespace isc::stats;
 
 namespace isc {
+namespace dhcp {
 namespace test {
 
 const char* NakedDhcpv6SrvTest::DUID_FILE = "server-id-test.txt";
@@ -827,6 +828,6 @@ NakedDhcpv6SrvTest::checkIA_NAStatusCode(
     }
 }
 
-
-}; // end of isc::test namespace
+}; // end of isc::dhcp::test namespace
+}; // end of isc::dhcp namespace
 }; // end of isc namespace

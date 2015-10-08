@@ -53,7 +53,6 @@
 
 using namespace isc;
 using namespace isc::data;
-using namespace isc::test;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
