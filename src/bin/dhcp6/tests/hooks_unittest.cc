@@ -28,6 +28,7 @@
 #include <hooks/server_hooks.h>
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <cc/command_interpreter.h>
 #include <boost/scoped_ptr.hpp>
@@ -39,7 +40,7 @@
 
 using namespace isc;
 using namespace isc::data;
-using namespace isc::test;
+using namespace isc::dhcp::test;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
@@ -455,6 +456,43 @@ public:
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         return (0);
+    }
+
+    /// Lease6_decline test callback
+    ///
+    /// Stores all parameters in callback_* fields.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease6_decline_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease6_decline");
+        callout_handle.getArgument("query6", callback_pkt6_);
+        callout_handle.getArgument("lease6", callback_lease6_);
+
+        return (0);
+    }
+
+    /// Lease6_decline callout that sets status to SKIP
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease6_decline_skip_callout(CalloutHandle& callout_handle) {
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+        return (lease6_decline_callout(callout_handle));
+    }
+
+    /// Lease6_decline callout that sets status to DROP
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease6_decline_drop_callout(CalloutHandle& callout_handle) {
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+
+        return (lease6_decline_callout(callout_handle));
     }
 
     /// Resets buffers used to store data received by callouts
@@ -1450,6 +1488,132 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, *duid_, iaid,
                                               subnet_->getID());
     ASSERT_TRUE(l);
+}
+
+// This test checks that the basic decline hook (lease6_decline) is
+// triggered properly.
+TEST_F(HooksDhcpv6SrvTest, declineBasic) {
+
+    // Install lease6_decline callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_decline", lease6_decline_callout));
+
+    // Get an address and decline it. DUIDs, IAID match and we send valid
+    // address, so the decline procedure should be successful.
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
+                      1234, VALID_ADDR, SHOULD_PASS);
+
+    // Check that the proper callback was called.
+    EXPECT_EQ("lease6_decline", callback_name_);
+
+    // And valid parameters were passed.
+    ASSERT_TRUE(callback_pkt6_);
+    ASSERT_TRUE(callback_lease6_);
+
+    // Test sanity check - it was a decline, right?
+    EXPECT_EQ(DHCPV6_DECLINE, callback_pkt6_->getType());
+
+    // Get the address from this decline.
+    OptionPtr ia = callback_pkt6_->getOption(D6O_IA_NA);
+    ASSERT_TRUE(ia);
+    boost::shared_ptr<Option6IAAddr> addr_opt =
+        boost::dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
+    ASSERT_TRUE(addr_opt);
+    IOAddress addr(addr_opt->getAddress());
+
+    // Now get a lease from the database.
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                               addr);
+    ASSERT_TRUE(from_mgr);
+    // Now check that it's indeed declined.
+    EXPECT_EQ(Lease::STATE_DECLINED, from_mgr->state_);
+
+    // And that the parameters passed to callout are consistent with the database
+    EXPECT_EQ(addr, from_mgr->addr_);
+    EXPECT_EQ(addr, callback_lease6_->addr_);
+}
+
+// Test that the lease6_decline hook point can handle SKIP status.
+TEST_F(HooksDhcpv6SrvTest, declineSkip) {
+    // Install lease6_decline callout. It will set the status to skip
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_decline", lease6_decline_skip_callout));
+
+    // Get an address and decline it. DUIDs, IAID match and we send valid
+    // address, so the decline procedure should be successful.
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
+                      1234, VALID_ADDR, SHOULD_FAIL);
+
+    // Check that the proper callback was called.
+    EXPECT_EQ("lease6_decline", callback_name_);
+
+    // And valid parameters were passed.
+    ASSERT_TRUE(callback_pkt6_);
+    ASSERT_TRUE(callback_lease6_);
+
+    // Test sanity check - it was a decline, right?
+    EXPECT_EQ(DHCPV6_DECLINE, callback_pkt6_->getType());
+
+    // Get the address from this decline.
+    OptionPtr ia = callback_pkt6_->getOption(D6O_IA_NA);
+    ASSERT_TRUE(ia);
+    boost::shared_ptr<Option6IAAddr> addr_opt =
+        boost::dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
+    ASSERT_TRUE(addr_opt);
+    IOAddress addr(addr_opt->getAddress());
+
+    // Now get a lease from the database.
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                               addr);
+    ASSERT_TRUE(from_mgr);
+    // Now check that it's NOT declined.
+    EXPECT_EQ(Lease::STATE_DEFAULT, from_mgr->state_);
+
+    // And that the parameters passed to callout are consistent with the database
+    EXPECT_EQ(addr, from_mgr->addr_);
+    EXPECT_EQ(addr, callback_lease6_->addr_);
+}
+
+// Test that the lease6_decline hook point can handle DROP status.
+TEST_F(HooksDhcpv6SrvTest, declineDrop) {
+    // Install lease6_decline callout. It will set the status to skip
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_decline", lease6_decline_drop_callout));
+
+    // Get an address and decline it. DUIDs, IAID match and we send valid
+    // address, so it would work, but the callout sets status to DROP, so
+    // the server should not update the lease and should not send back any
+    // packets.
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
+                      1234, VALID_ADDR, SHOULD_FAIL);
+
+    // Check that the proper callback was called.
+    EXPECT_EQ("lease6_decline", callback_name_);
+
+    // And valid parameters were passed.
+    ASSERT_TRUE(callback_pkt6_);
+    ASSERT_TRUE(callback_lease6_);
+
+    // Test sanity check - it was a decline, right?
+    EXPECT_EQ(DHCPV6_DECLINE, callback_pkt6_->getType());
+
+    // Get the address from this decline.
+    OptionPtr ia = callback_pkt6_->getOption(D6O_IA_NA);
+    ASSERT_TRUE(ia);
+    boost::shared_ptr<Option6IAAddr> addr_opt =
+        boost::dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
+    ASSERT_TRUE(addr_opt);
+    IOAddress addr(addr_opt->getAddress());
+
+    // Now get a lease from the database.
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                               addr);
+    ASSERT_TRUE(from_mgr);
+    // Now check that it's NOT declined.
+    EXPECT_EQ(Lease::STATE_DEFAULT, from_mgr->state_);
 }
 
 }   // end of anonymous namespace
