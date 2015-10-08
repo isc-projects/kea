@@ -59,7 +59,6 @@ using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::config;
 using namespace isc::dhcp::test;
-using namespace isc::test;
 
 namespace {
 
