@@ -247,8 +247,8 @@ void LoggerManagerImpl::setConsoleAppenderLayout(
     string pattern = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i] %m\n";
 
     // Finally the text of the message
-    auto_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));
-    appender->setLayout(layout);
+    unique_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));
+    appender->setLayout(move(layout));
 }
 
 // Set the the "syslog" layout for the given appenders.  This is the same
@@ -262,8 +262,8 @@ void LoggerManagerImpl::setSyslogAppenderLayout(
     string pattern = "%-5p [%c] %m\n";
 
     // Finally the text of the message
-    auto_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));
-    appender->setLayout(layout);
+    unique_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));
+    appender->setLayout(move(layout));
 }
 
 void LoggerManagerImpl::storeBufferAppenders() {
