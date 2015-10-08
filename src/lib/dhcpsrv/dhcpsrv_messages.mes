@@ -231,6 +231,23 @@ A debug message issued when the server is attempting to delete a lease
 for the specified address from the memory file database for the specified
 address.
 
+% DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4 deleting reclaimed IPv4 leases that expired more than %1 seconds ago
+A debug message issued when the server is removing reclaimed DHCPv4
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+% DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6 deleting reclaimed IPv6 leases that expired more than %1 seconds ago
+A debug message issued when the server is removing reclaimed DHCPv6
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+% DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START starting deletion of %1 expired-reclaimed leases
+A debug message issued wheb the server has found expired-reclaimed
+leases to be removed. The number of leases to be removed is logged
+in the message.
+
 % DHCPSRV_MEMFILE_GET_ADDR4 obtaining IPv4 lease for address %1
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the memory file database for the specified address.
@@ -248,6 +265,16 @@ client identification.
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the memory file database for a client with the specified
 client ID, hardware address and subnet ID.
+
+% DHCPSRV_MEMFILE_GET_EXPIRED4 obtaining maximum %1 of expired IPv4 leases
+A debug message issued when the server is attempting to obtain expired
+IPv4 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+% DHCPSRV_MEMFILE_GET_EXPIRED6 obtaining maximum %1 of expired IPv6 leases
+A debug message issued when the server is attempting to obtain expired
+IPv6 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
 
 % DHCPSRV_MEMFILE_GET_HWADDR obtaining IPv4 leases for hardware address %1
 A debug message issued when the server is attempting to obtain a set of
@@ -319,6 +346,12 @@ failure persist however, the size of the lease file will increase without bound.
 An informational message issued when the Memfile lease database backend
 starts the periodic Lease File Cleanup.
 
+% DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED failed to unregister timer 'memfile-lfc': %1
+This error message is logged when Memfile backend fails to unregister
+timer used for lease file cleanup scheduling. This is highly unlikely
+and indicates programming error. The message include the reason for this
+error.
+
 % DHCPSRV_MEMFILE_NO_STORAGE running in non-persistent mode, leases will be lost after restart
 A warning message issued when writes of leases to disk have been disabled
 in the configuration. This mode is useful for some kinds of performance
@@ -374,6 +407,23 @@ connection including database name and username needed to access it
 A debug message issued when the server is attempting to delete a lease for
 the specified address from the MySQL database for the specified address.
 
+% DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED4 deleting reclaimed IPv4 leases that expired more than %1 seconds ago
+A debug message issued when the server is removing reclaimed DHCPv4
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+% DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED6 deleting reclaimed IPv6 leases that expired more than %1 seconds ago
+A debug message issued when the server is removing reclaimed DHCPv6
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+% DHCPSRV_MYSQL_DELETED_EXPIRED_RECLAIMED deleted %1 reclaimed leases from the database
+A debug message issued when the server has removed a number of reclaimed
+leases from the database. The number of removed leases is included in the
+message.
+
 % DHCPSRV_MYSQL_GET_ADDR4 obtaining IPv4 lease for address %1
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the MySQL database for the specified address.
@@ -386,6 +436,16 @@ lease from the MySQL database for the specified address.
 A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database for a client with the specified
 client identification.
+
+% DHCPSRV_MYSQL_GET_EXPIRED4 obtaining maximum %1 of expired IPv4 leases
+A debug message issued when the server is attempting to obtain expired
+IPv4 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+% DHCPSRV_MYSQL_GET_EXPIRED6 obtaining maximum %1 of expired IPv6 leases
+A debug message issued when the server is attempting to obtain expired
+IPv6 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
 
 % DHCPSRV_MYSQL_GET_HWADDR obtaining IPv4 leases for hardware address %1
 A debug message issued when the server is attempting to obtain a set
@@ -526,6 +586,79 @@ lease from the PostgreSQL database for the specified address.
 % DHCPSRV_PGSQL_UPDATE_ADDR6 updating IPv6 lease for address %1
 A debug message issued when the server is attempting to update IPv6
 lease from the PostgreSQL database for the specified address.
+
+% DHCPSRV_TIMERMGR_CALLBACK_FAILED running handler for timer %1 caused exception: %2
+This error message is emitted when the timer elapsed and the
+operation associated with this timer has thrown an exception.
+The timer name and the reason for exception is logged.
+
+% DHCPSRV_TIMERMGR_REGISTER_TIMER registering timer: %1, using interval: %2 ms
+A debug message issued when the new interval timer is registered in
+the Timer Manager. This timer will have a callback function
+associated with it, and this function will be executed according
+to the interval specified. The unique name of the timer and the
+interval at which the callback function will be executed is
+included in the message.
+
+% DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION running operation for timer: %1
+A debug message issued when the Timer Manager is about to
+run a periodic operation associated with the given timer.
+An example of such operation is a periodic cleanup of
+expired leases. The name of the timer is included in the
+message.
+
+% DHCPSRV_TIMERMGR_SOCKET_CLEAR_FAILED clearing watch socket for timer %1 failed: %2
+An error message indicating that the specified timer elapsed,
+the operation associated with the timer was executed but the
+server was unable to signal this to the worker thread responsible
+for dispatching timers. The thread will continue but it will
+not be able to dispatch any operations for this timer. The
+server reconfiguration or restart may solve the problem
+but the situation may repeat.
+
+% DHCPSRV_TIMERMGR_SOCKET_MARK_FAILED marking watch socket for timer %1 failed: %2
+An error message indicating that the specified timer elapsed,
+but the server was unable to flag that the handler function
+should be executed for this timer. The callback will not
+be executed this time and most likely the subsequent attempts
+will not be successful too. This error is highly unlikely.
+The name of the timer and thre reason for failure is included
+in the message.
+
+% DHCPSRV_TIMERMGR_START_THREAD starting thread for timers
+A debug message issued when the Timer Manager is starting a
+worker thread to run started timers. The worker thread is
+typically started right after all timers have been registered
+and runs until timers need to be reconfigured, e.g. their
+interval is changed, new timers are registered or existing
+timers are unregistered.
+
+% DHCPSRV_TIMERMGR_START_TIMER starting timer: %1
+A debug message issued when the registered interval timer is
+being started. If this operation is successful the timer will
+periodically execute the operation associated with it. The
+name of the started timer is included in the message.
+
+% DHCPSRV_TIMERMGR_STOP_THREAD stopping thread for timers
+A debug message issued when the Timer Manager is stopping
+the worker thread which executes interval timers. When the
+thread is stopped no timers will be executed. The thread is
+typically stopped at the server reconfiguration or when the
+server shuts down.
+
+% DHCPSRV_TIMERMGR_STOP_TIMER stopping timer: %1
+A debug message issued when the registered interval timer is
+being stopped. The timer remains registered and can be restarted
+if necessary. The name of the timer is included in the message.
+
+% DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS unregistering all timers
+A debug message issued when all registered interval timers are
+being unregistered from the Timer Manager.
+
+% DHCPSRV_TIMERMGR_UNREGISTER_TIMER unregistering timer: %1
+A debug message issued when one of the registered interval timers
+is unregistered from the Timer Manager. The name of the timer is
+included in the message.
 
 % DHCPSRV_UNEXPECTED_NAME database access parameters passed through '%1', expected 'lease-database'
 The parameters for access the lease database were passed to the server through

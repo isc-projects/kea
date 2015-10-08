@@ -939,23 +939,6 @@ TEST_F(Dhcpv6SrvTest, RenewSomeoneElesesLease) {
     testRenewSomeoneElsesLease(Lease::TYPE_NA, IOAddress("2001:db8::1"));
 }
 
-// This test verifies that incoming (invalid) RENEW with a prefix
-// can be handled properly.
-//
-// This test checks 3 scenarios:
-// 1. there is no such lease at all
-// 2. there is such a lease, but it is assigned to a different IAID
-// 3. there is such a lease, but it belongs to a different client
-//
-// expected:
-// - returned REPLY message has copy of client-id
-// - returned REPLY message has server-id
-// - returned REPLY message has IA_PD that includes STATUS-CODE
-// - No lease in LeaseMgr
-TEST_F(Dhcpv6SrvTest, pdRenewReject) {
-    testRenewReject(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"));
-}
-
 // This test verifies that incoming (positive) RELEASE with address can be
 // handled properly, that a REPLY is generated, that the response has status
 // code and that the lease is indeed removed from the database.

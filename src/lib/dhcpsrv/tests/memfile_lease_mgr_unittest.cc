@@ -14,16 +14,20 @@
 
 #include <config.h>
 
+#include <boost/asio.hpp>
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <dhcpsrv/tests/lease_file_io.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <util/pid_file.h>
+#include <util/stopwatch.h>
 #include <gtest/gtest.h>
 
 #include <boost/bind.hpp>
@@ -106,8 +110,7 @@ public:
     MemfileLeaseMgrTest() :
         io4_(getLeaseFilePath("leasefile4_0.csv")),
         io6_(getLeaseFilePath("leasefile6_0.csv")),
-        io_service_(),
-        fail_on_callback_(false) {
+        timer_mgr_(TimerMgr::instance()) {
 
         std::ostringstream s;
         s << KEA_LFC_BUILD_DIR << "/kea-lfc";
@@ -134,6 +137,10 @@ public:
     ///
     /// destroys lease manager backend.
     virtual ~MemfileLeaseMgrTest() {
+        // Stop TimerMgr worker thread if it is running.
+        timer_mgr_->stopThread();
+        // Make sure there are no timers registered.
+        timer_mgr_->unregisterTimers();
         LeaseMgrFactory::destroy();
         // Remove lease files and products of Lease File Cleanup.
         removeFiles(getLeaseFilePath("leasefile4_0.csv"));
@@ -204,18 +211,15 @@ public:
         lmptr_ = &(LeaseMgrFactory::instance());
     }
 
+    /// @brief Runs @c IfaceMgr::receive6 in a look for a specified time.
+    ///
+    /// @param ms Duration in milliseconds.
     void setTestTime(const uint32_t ms) {
-        IntervalTimer::Callback cb =
-            boost::bind(&MemfileLeaseMgrTest::testTimerCallback, this);
-        test_timer_.reset(new IntervalTimer(*io_service_));
-        test_timer_->setup(cb, ms, IntervalTimer::ONE_SHOT);
-    }
-
-    /// @brief Test timer callback function.
-    void testTimerCallback() {
-        io_service_->stop();
-        if (fail_on_callback_) {
-            FAIL() << "Test timeout reached";
+        // Measure test time and exit if timeout hit.
+        Stopwatch stopwatch;
+        while (stopwatch.getTotalMilliseconds() < ms) {
+            // Block for one 1 millisecond.
+            IfaceMgr::instance().receive6(0, 1000);
         }
     }
 
@@ -243,15 +247,8 @@ public:
     /// @brief Object providing access to v6 lease IO.
     LeaseFileIO io6_;
 
-    /// @brief Test timer for the test.
-    boost::shared_ptr<IntervalTimer> test_timer_;
-
-    /// @brief IO service object used for the timer tests.
-    asiolink::IOServicePtr io_service_;
-
-    /// @brief Indicates if the @c testTimerCallback should cause test failure.
-    bool fail_on_callback_;
-
+    /// @brief Pointer to the instance of the @c TimerMgr.
+    TimerMgrPtr timer_mgr_;
 };
 
 // This test checks if the LeaseMgr can be instantiated and that it
@@ -353,16 +350,14 @@ TEST_F(MemfileLeaseMgrTest, lfcTimer) {
     boost::scoped_ptr<LFCMemfileLeaseMgr>
         lease_mgr(new LFCMemfileLeaseMgr(pmap));
 
-    // Check that the interval is correct.
-    EXPECT_EQ(1, lease_mgr->getIOServiceExecInterval());
-
-    io_service_ = lease_mgr->getIOService();
+    // Start worker thread to execute LFC periodically.
+    ASSERT_NO_THROW(timer_mgr_->startThread());
 
     // Run the test for at most 2.9 seconds.
     setTestTime(2900);
 
-    // Run the IO service to execute timers.
-    io_service_->run();
+    // Stop worker thread.
+    ASSERT_NO_THROW(timer_mgr_->stopThread());
 
     // Within 2.9 we should record two LFC executions.
     EXPECT_EQ(2, lease_mgr->getLFCCount());
@@ -382,15 +377,16 @@ TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
     boost::scoped_ptr<LFCMemfileLeaseMgr>
         lease_mgr(new LFCMemfileLeaseMgr(pmap));
 
-    EXPECT_EQ(0, lease_mgr->getIOServiceExecInterval());
-
-    io_service_ = lease_mgr->getIOService();
+    // Start worker thread to execute LFC periodically.
+    ASSERT_NO_THROW(timer_mgr_->startThread());
 
     // Run the test for at most 1.9 seconds.
     setTestTime(1900);
 
-    // Run the IO service to execute timers.
-    io_service_->run();
+    // Stop worker thread to make sure it is not running when lease
+    // manager is destroyed. The lease manager will be unable to
+    // unregster timer when the thread is active.
+    ASSERT_NO_THROW(timer_mgr_->stopThread());
 
     // There should be no LFC execution recorded.
     EXPECT_EQ(0, lease_mgr->getLFCCount());
@@ -404,20 +400,20 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     // stored.
     std::string new_file_contents =
         "address,hwaddr,client_id,valid_lifetime,expire,"
-        "subnet_id,fqdn_fwd,fqdn_rev,hostname\n";
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state\n";
 
     // This string contains the contents of the lease file with exactly
     // one lease, but two entries. One of the entries should be removed
     // as a result of lease file cleanup.
     std::string current_file_contents = new_file_contents +
-        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,\n"
-        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,,\n";
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1\n"
+        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,,1\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile4_0.csv"));
     current_file.writeFile(current_file_contents);
 
     std::string previous_file_contents = new_file_contents +
-        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,\n"
-        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,\n";
+        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,1\n"
+        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,1\n";
     LeaseFileIO previous_file(getLeaseFilePath("leasefile4_0.csv.2"));
     previous_file.writeFile(previous_file_contents);
 
@@ -453,15 +449,15 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     ASSERT_NO_THROW(lease_mgr->addLease(new_lease));
 
     std::string updated_file_contents = new_file_contents +
-        "192.0.2.45,00:00:00:00:00:00,,100,100,1,0,0,\n";
+        "192.0.2.45,00:00:00:00:00:00,,100,100,1,0,0,,0\n";
     EXPECT_EQ(updated_file_contents, current_file.readFile());
 
     // This string contains the contents of the lease file we
     // expect after the LFC run.  It has two leases with one
     // entry each.
     std::string result_file_contents = new_file_contents +
-        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,\n"
-        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,\n";
+        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,,1\n"
+        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,1\n";
 
     // The LFC should have created a file with the two leases and moved it
     // to leasefile4_0.csv.2
@@ -480,24 +476,24 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     std::string new_file_contents =
         "address,duid,valid_lifetime,expire,subnet_id,"
         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-        "fqdn_rev,hostname,hwaddr\n";
+        "fqdn_rev,hostname,hwaddr,state\n";
 
     // This string contains the contents of the lease file with exactly
     // one lease, but two entries. One of the entries should be removed
     // as a result of lease file cleanup.
     std::string current_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
-        "8,100,0,7,0,1,1,,\n"
+        "8,100,0,7,0,1,1,,,1\n"
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,\n";
+        "8,100,0,7,0,1,1,,,1\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
     current_file.writeFile(current_file_contents);
 
     std::string previous_file_contents = new_file_contents +
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,200,"
-        "8,100,0,7,0,1,1,,\n"
+        "8,100,0,7,0,1,1,,,1\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,\n";
+        "8,100,0,7,0,1,1,,,1\n";
     LeaseFileIO previous_file(getLeaseFilePath("leasefile6_0.csv.2"));
     previous_file.writeFile(previous_file_contents);
 
@@ -536,7 +532,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
 
     std::string update_file_contents = new_file_contents +
         "3000::1,00:00:00:00:00:00:00:00:00:00:00:00:00,400,"
-        "400,2,300,0,123,128,0,0,,\n";
+        "400,2,300,0,123,128,0,0,,,0\n";
     EXPECT_EQ(update_file_contents, current_file.readFile());
 
     // This string contains the contents of the lease file we
@@ -544,9 +540,9 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     // entry each.
     std::string result_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,\n"
+        "8,100,0,7,0,1,1,,,1\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,\n";
+        "8,100,0,7,0,1,1,,,1\n";
 
     // The LFC should have created a file with the two leases and moved it
     // to leasefile6_0.csv.2
@@ -564,11 +560,11 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanupStartFail) {
     // stored.
     std::string new_file_contents =
         "address,hwaddr,client_id,valid_lifetime,expire,"
-        "subnet_id,fqdn_fwd,fqdn_rev,hostname\n";
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state\n";
 
     // Create the lease file to be used by the backend.
     std::string current_file_contents = new_file_contents +
-        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,\n";
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile4_0.csv"));
     current_file.writeFile(current_file_contents);
 
@@ -605,15 +601,15 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     std::string new_file_contents =
         "address,duid,valid_lifetime,expire,subnet_id,"
         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-        "fqdn_rev,hostname,hwaddr\n";
+        "fqdn_rev,hostname,hwaddr,state\n";
 
     // This string contains the contents of the current lease file.
     // It should not be moved.
     std::string current_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
-        "8,100,0,7,0,1,1,,\n"
+        "8,100,0,7,0,1,1,,,1\n"
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,\n";
+        "8,100,0,7,0,1,1,,,1\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
     current_file.writeFile(current_file_contents);
 
@@ -621,7 +617,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     // be moved to the previous file.
     std::string finish_file_contents = new_file_contents +
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,\n";
+        "8,100,0,7,0,1,1,,,1\n";
     LeaseFileIO finish_file(getLeaseFilePath("leasefile6_0.csv.completed"));
     finish_file.writeFile(finish_file_contents);
 
@@ -641,7 +637,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     EXPECT_EQ(current_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 5));
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -668,15 +664,15 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     std::string new_file_contents =
         "address,duid,valid_lifetime,expire,subnet_id,"
         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-        "fqdn_rev,hostname,hwaddr\n";
+        "fqdn_rev,hostname,hwaddr,state\n";
 
     // This string contains the contents of the current lease file.
     // It should not be moved.
     std::string current_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
-        "8,100,0,7,0,1,1,,\n"
+        "8,100,0,7,0,1,1,,,1\n"
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,\n";
+        "8,100,0,7,0,1,1,,,1\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
     current_file.writeFile(current_file_contents);
 
@@ -686,7 +682,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     // the same.
     std::string input_file_contents = new_file_contents +
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,\n";
+        "8,100,0,7,0,1,1,,,1\n";
     LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.1"));
     input_file.writeFile(input_file_contents);
 
@@ -706,7 +702,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     EXPECT_EQ(current_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 5));
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -722,34 +718,6 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
 
     // The input file should have been removed
     ASSERT_FALSE(input_file.exists());
-}
-
-
-// Test that the backend returns a correct value of the interval
-// at which the IOService must be executed to run the handlers
-// for the installed timers.
-TEST_F(MemfileLeaseMgrTest, getIOServiceExecInterval) {
-    LeaseMgr::ParameterMap pmap;
-    pmap["type"] = "memfile";
-    pmap["universe"] = "4";
-    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
-
-    // The lfc-interval is not set, so the returned value should be 0.
-    boost::scoped_ptr<LFCMemfileLeaseMgr> lease_mgr(new LFCMemfileLeaseMgr(pmap));
-    EXPECT_EQ(0, lease_mgr->getIOServiceExecInterval());
-
-    // lfc-interval = 10
-    pmap["lfc-interval"] = "10";
-    lease_mgr.reset();
-    lease_mgr.reset(new LFCMemfileLeaseMgr(pmap));
-    EXPECT_EQ(10, lease_mgr->getIOServiceExecInterval());
-
-    // lfc-interval = 20
-    pmap["lfc-interval"] = "20";
-    lease_mgr.reset();
-    lease_mgr.reset(new LFCMemfileLeaseMgr(pmap));
-    EXPECT_EQ(20, lease_mgr->getIOServiceExecInterval());
-
 }
 
 // Checks that adding/getting/deleting a Lease6 object works.
@@ -872,13 +840,46 @@ TEST_F(MemfileLeaseMgrTest, getLeases6DuidIaid) {
     testGetLeases6DuidIaid();
 }
 
-// Check that the system can cope with a DUID of allowed size.
-
-/// @todo: test disabled, because Memfile_LeaseMgr::getLeases6(Lease::Type,
-/// const DUID& duid, uint32_t iaid) const is not implemented yet.
+/// @brief Check that the system can cope with a DUID of allowed size.
 TEST_F(MemfileLeaseMgrTest, getLeases6DuidSize) {
     startBackend(V6);
     testGetLeases6DuidSize();
+}
+
+/// @brief Check that the expired DHCPv4 leases can be retrieved.
+///
+/// This test adds a number of leases to the lease database and marks
+/// some of them as expired. Then it queries for expired leases and checks
+/// whether only expired leases are returned, and that they are returned in
+/// the order from most to least expired. It also checks that the lease
+/// which is marked as 'reclaimed' is not returned.
+TEST_F(MemfileLeaseMgrTest, getExpiredLeases4) {
+    startBackend(V4);
+    testGetExpiredLeases4();
+}
+
+/// @brief Check that the expired DHCPv6 leases can be retrieved.
+///
+/// This test adds a number of leases to the lease database and marks
+/// some of them as expired. Then it queries for expired leases and checks
+/// whether only expired leases are returned, and that they are returned in
+/// the order from most to least expired. It also checks that the lease
+/// which is marked as 'reclaimed' is not returned.
+TEST_F(MemfileLeaseMgrTest, getExpiredLeases6) {
+    startBackend(V6);
+    testGetExpiredLeases6();
+}
+
+/// @brief Check that expired reclaimed DHCPv6 leases are removed.
+TEST_F(MemfileLeaseMgrTest, deleteExpiredReclaimedLeases6) {
+    startBackend(V6);
+    testDeleteExpiredReclaimedLeases6();
+}
+
+/// @brief Check that expired reclaimed DHCPv4 leases are removed.
+TEST_F(MemfileLeaseMgrTest, deleteExpiredReclaimedLeases4) {
+    startBackend(V4);
+    testDeleteExpiredReclaimedLeases4();
 }
 
 /// @brief Check that getLease6 methods discriminate by lease type.
@@ -975,43 +976,6 @@ TEST_F(MemfileLeaseMgrTest, testLease6Mac) {
     testLease6MAC();
 }
 
-/// @brief Tests whether memfile is able to work with old CSV file (without mac)
-///
-/// Ticket #3555 introduced MAC address support in Lease6. Instead of developing
-/// an upgrade script, the code is written in a way that allows reading old CSV
-/// (i.e. format that was used in Kea 0.9), hence no upgrade is necessary.
-TEST_F(MemfileLeaseMgrTest, testUpgrade0_9_0_to_0_9_1) {
-
-    // Let's write a CSV file without hwaddr column. Sorry about the long
-    // lines, but nobody was around to whine about 80 columns limit when CSV
-    // format was invented :).
-    string csv_nohwaddr =
-        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname\n"
-        "2001:db8::1,42:42:42:42:42:42:42:42,3677,127133,73,3600,1,42,0,0,1,myhost.example.com.\n"
-        "2001:db8::2,3a:3a:3a:3a:3a:3a:3a:3a,5412,239979,73,1800,2,89,7,0,0,myhost.example.com.\n"
-        "2001:db8::3,1f:20:21:22:23:24:25:26,7000,241567,37,7200,0,4294967294,28,1,0,myhost.example.com.\n";
-
-    ofstream csv(getLeaseFilePath("leasefile6_0.csv").c_str(), ios::out | ios::trunc);
-    ASSERT_TRUE(csv.is_open());
-    csv << csv_nohwaddr;
-    csv.close();
-
-    startBackend(V6);
-
-    // None of the leases should have any hardware addresses assigned.
-    Lease6Ptr stored1 = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
-    ASSERT_TRUE(stored1);
-    EXPECT_FALSE(stored1->hwaddr_);
-
-    Lease6Ptr stored2 = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
-    ASSERT_TRUE(stored2);
-    EXPECT_FALSE(stored2->hwaddr_);
-
-    Lease6Ptr stored3 = lmptr_->getLease6(leasetype6_[3], ioaddress6_[3]);
-    ASSERT_TRUE(stored3);
-    EXPECT_FALSE(stored3->hwaddr_);
-}
-
 // Check that memfile reports version correctly.
 TEST_F(MemfileLeaseMgrTest, versionCheck) {
 
@@ -1028,27 +992,34 @@ TEST_F(MemfileLeaseMgrTest, versionCheck) {
     LeaseMgrFactory::destroy();
 }
 
+// Checks that declined leases can be returned correctly.
+TEST_F(MemfileLeaseMgrTest, getDeclined4) {
+
+    startBackend(V4);
+    testGetDeclinedLeases4();
+}
+
 // This test checks that the backend reads DHCPv4 lease data from multiple
 // files.
 TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {
     LeaseFileIO io2(getLeaseFilePath("leasefile4_0.csv.2"));
     io2.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname\n"
-                  "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,\n"
-                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state\n"
+                  "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,1\n");
 
     LeaseFileIO io1(getLeaseFilePath("leasefile4_0.csv.1"));
     io1.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname\n"
-                  "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,\n"
-                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,\n"
-                  "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state\n"
+                  "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,1\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,1\n"
+                  "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,1\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile4_0.csv"));
     io.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                 "fqdn_fwd,fqdn_rev,hostname\n"
-                 "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,\n"
-                 "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,400,8,1,1,,\n");
+                 "fqdn_fwd,fqdn_rev,hostname,state\n"
+                 "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,1\n"
+                 "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,400,8,1,1,,1\n");
 
     startBackend(V4);
 
@@ -1091,27 +1062,27 @@ TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {
 TEST_F(MemfileLeaseMgrTest, load4CompletedFile) {
     LeaseFileIO io2(getLeaseFilePath("leasefile4_0.csv.2"));
     io2.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname\n"
-                  "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,\n"
-                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state\n"
+                  "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,1\n");
 
     LeaseFileIO io1(getLeaseFilePath("leasefile4_0.csv.1"));
     io1.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname\n"
-                  "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,\n"
-                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,\n"
-                  "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state\n"
+                  "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,1\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,1\n"
+                  "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,1\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile4_0.csv"));
     io.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                 "fqdn_fwd,fqdn_rev,hostname\n"
-                 "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,\n"
-                 "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,400,8,1,1,,\n");
+                 "fqdn_fwd,fqdn_rev,hostname,state\n"
+                 "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,1\n"
+                 "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,400,8,1,1,,1\n");
 
     LeaseFileIO ioc(getLeaseFilePath("leasefile4_0.csv.completed"));
     ioc.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname\n"
-                  "192.0.2.13,ff:ff:ff:ff:ff:ff,,200,200,8,1,1,,\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state\n"
+                  "192.0.2.13,ff:ff:ff:ff:ff:ff,,200,200,8,1,1,,1\n");
 
     startBackend(V4);
 
@@ -1167,29 +1138,32 @@ TEST_F(MemfileLeaseMgrTest, load4LFCInProgress) {
 TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
     LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
-                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
+                  "state\n"
                   "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
-                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "200,200,8,100,0,7,0,1,1,,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1\n");
 
     LeaseFileIO io1(getLeaseFilePath("leasefile6_0.csv.1"));
     io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
-                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
+                  "state\n"
                   "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
-                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "300,800,8,100,0,7,0,1,1,,\n"
+                  "300,800,8,100,0,7,0,1,1,,,1\n"
                   "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                  "200,200,8,100,0,7,0,1,1,,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
-                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
+                 "state\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                 "400,1000,8,100,0,7,0,1,1,,\n"
+                 "400,1000,8,100,0,7,0,1,1,,,1\n"
                  "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
-                 "200,200,8,100,0,7,0,1,1,,\n");
+                 "200,200,8,100,0,7,0,1,1,,,1\n");
 
     startBackend(V6);
 
@@ -1230,21 +1204,23 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
 TEST_F(MemfileLeaseMgrTest, load6MultipleNoSecondFile) {
     LeaseFileIO io1(getLeaseFilePath("leasefile6_0.csv.1"));
     io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
-                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
+                  "state\n"
                   "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
-                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "300,800,8,100,0,7,0,1,1,,\n"
+                  "300,800,8,100,0,7,0,1,1,,,1\n"
                   "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                  "200,200,8,100,0,7,0,1,1,,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
-                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
+                 "state\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                 "400,1000,8,100,0,7,0,1,1,,\n"
+                 "400,1000,8,100,0,7,0,1,1,,,1\n"
                  "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
-                 "200,200,8,100,0,7,0,1,1,,\n");
+                 "200,200,8,100,0,7,0,1,1,,,1\n");
 
     startBackend(V6);
 
@@ -1276,19 +1252,21 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoSecondFile) {
 TEST_F(MemfileLeaseMgrTest, load6MultipleNoFirstFile) {
     LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
-                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
+                  "state\n"
                   "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
-                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "200,200,8,100,0,7,0,1,1,,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
-                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
+                 "state\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                 "400,1000,8,100,0,7,0,1,1,,\n"
+                 "400,1000,8,100,0,7,0,1,1,,,1\n"
                  "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
-                 "200,200,8,100,0,7,0,1,1,,\n");
+                 "200,200,8,100,0,7,0,1,1,,,1\n");
 
     startBackend(V6);
 
@@ -1322,35 +1300,39 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoFirstFile) {
 TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
     LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
-                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
+                  "state\n"
                   "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
-                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "200,200,8,100,0,7,0,1,1,,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1\n");
 
     LeaseFileIO io1(getLeaseFilePath("leasefile6_0.csv.1"));
     io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
-                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
+                  "state\n"
                   "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
-                  "200,200,8,100,0,7,0,1,1,,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "300,800,8,100,0,7,0,1,1,,\n"
+                  "300,800,8,100,0,7,0,1,1,,,1\n"
                   "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                  "200,200,8,100,0,7,0,1,1,,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
-                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
+                 "state\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                 "400,1000,8,100,0,7,0,1,1,,\n"
+                 "400,1000,8,100,0,7,0,1,1,,,1\n"
                  "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
-                 "200,200,8,100,0,7,0,1,1,,\n");
+                 "200,200,8,100,0,7,0,1,1,,,1\n");
 
     LeaseFileIO ioc(getLeaseFilePath("leasefile6_0.csv.completed"));
     ioc.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
-                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr\n"
+                  "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
+                  "state\n"
                   "2001:db8:1::125,ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff,"
-                  "400,1000,8,100,0,7,0,1,1,,\n");
+                  "400,1000,8,100,0,7,0,1,1,,,1\n");
 
     startBackend(V6);
 

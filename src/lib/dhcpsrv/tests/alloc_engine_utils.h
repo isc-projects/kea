@@ -39,6 +39,19 @@ namespace test {
 /// alloc_engine6_unittest.cc - all unit-tests dedicated to IPv6
 /// alloc_engine_hooks_unittest.cc - all unit-tests dedicated to hooks
 
+
+/// @brief Test that statistic manager holds a given value.
+///
+/// This function may be used in many allocation tests and there's no
+/// single base class for it. @todo consider moving it src/lib/util.
+///
+/// @param stat_name Statistic name.
+/// @param exp_value Expected value.
+///
+/// @return true if the statistic manager holds a particular value,
+/// false otherwise.
+bool testStatistics(const std::string& stat_name, const int64_t exp_value);
+
 /// @brief Allocation engine with some internal methods exposed
 class NakedAllocEngine : public AllocEngine {
 public:
@@ -246,13 +259,10 @@ public:
     /// @param engine a reference to Allocation Engine
     /// @param pool pool from which the lease will be allocated from
     /// @param hints address to be used as a hint
-    /// @param allow_new_leases_in_renewal - specifies how to set the
-    ///        allow_new_leases_in_renewal flag in ClientContext6
     /// @param in_pool specifies whether the lease is expected to be in pool
     /// @return allocated lease(s) (may be empty)
     Lease6Collection renewTest(AllocEngine& engine, const Pool6Ptr& pool,
                                AllocEngine::HintContainer& hints,
-                               bool allow_new_leases_in_renewal,
                                bool in_pool = true);
 
     /// @brief Checks if the address allocation with a hint that is in range,
@@ -336,6 +346,12 @@ public:
 class AllocEngine4Test : public ::testing::Test {
 public:
 
+    /// @brief Specified expected result of a given operation
+    enum ExpectedResult {
+        SHOULD_PASS,
+        SHOULD_FAIL
+    };
+
     /// @brief Default constructor
     ///
     /// Sets clientid_, hwaddr_, subnet_, pool_ fields to example values
@@ -369,7 +385,42 @@ public:
         }
         EXPECT_TRUE(*lease->hwaddr_ == *hwaddr_);
         /// @todo: check cltt
-     }
+    }
+
+    /// @brief Generic test used for lease allocation and reuse
+    ///
+    /// This test inserts existing_lease (if specified, may be null) into the
+    /// LeaseMgr, then conducts lease allocation (pretends that client
+    /// sent either Discover or Request, depending on fake_allocation).
+    /// Allocated lease is then returned (using result) for further inspection.
+    ///
+    /// @param alloc_engine allocation engine
+    /// @param existing_lease optional lease to be inserted in the database
+    /// @param addr address to be requested by client
+    /// @param fake_allocation true = DISCOVER, false = REQUEST
+    /// @param exp_result expected result
+    /// @param result [out] allocated lease
+    void testReuseLease4(const AllocEnginePtr& alloc_engine,
+                         Lease4Ptr& existing_lease,
+                         const std::string& addr,
+                         const bool fake_allocation,
+                         ExpectedResult exp_result,
+                         Lease4Ptr& result);
+
+    /// @brief Creates a declined lease with specified expiration time
+    ///
+    /// expired parameter controls probation period. Positive value
+    /// means that the lease will expire in X seconds. Negative means
+    /// that the lease expired X seconds ago. 0 means it expires now.
+    /// Probation period is a parameter that specifies for how long
+    /// a lease will stay unavailable after decline.
+    ///
+    /// @param addr address of the lease
+    /// @param probation_period expressed in seconds
+    /// @param expired number of seconds where it will expire
+    Lease4Ptr generateDeclinedLease(const std::string& addr,
+                                    time_t probation_period,
+                                    int32_t expired);
 
     /// @brief Create a subnet with a specified pool of addresses.
     ///

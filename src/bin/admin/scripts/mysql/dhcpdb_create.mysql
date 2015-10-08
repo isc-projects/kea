@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2013  Internet Systems Consortium.
+# Copyright (C) 2012-2015  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -53,7 +53,7 @@ CREATE TABLE lease4 (
     ) ENGINE = INNODB;
 
 
-# Create search indexes for lease4 table 
+# Create search indexes for lease4 table
 # index by hwaddr and subnet_id
 CREATE INDEX lease4_by_hwaddr_subnet_id ON lease4 (hwaddr, subnet_id);
 
@@ -80,8 +80,8 @@ CREATE TABLE lease6 (
 
     ) ENGINE = INNODB;
 
-# Create search indexes for lease4 table 
-# index by iaid, subnet_id, and duid 
+# Create search indexes for lease4 table
+# index by iaid, subnet_id, and duid
 CREATE INDEX lease6_by_iaid_subnet_id_duid ON lease6 (iaid, subnet_id, duid);
 
 # ... and a definition of lease6 types.  This table is a convenience for
@@ -250,6 +250,109 @@ UPDATE schema_version
 SET version = '3', minor = '0';
 # This line concludes database upgrade to version 3.0.
 
+# This line starts database upgrade to version 4.0.
+# Upgrade extending MySQL schema with the state columns for lease tables.
+
+# Add state column to the lease4 table.
+ALTER TABLE lease4
+    ADD COLUMN state INT UNSIGNED DEFAULT 0;
+
+# Add state column to the lease6 table.
+ALTER TABLE lease6
+    ADD COLUMN state INT UNSIGNED DEFAULT 0;
+
+# Create indexes for querying leases in a given state and segregated
+# by the expiration time. One of the applications is to retrieve all
+# expired leases. However, these indexes can be also used to retrieve
+# leases in a given state regardless of the expiration time.
+CREATE INDEX lease4_by_state_expire ON lease4 (state, expire);
+CREATE INDEX lease6_by_state_expire ON lease6 (state, expire);
+
+# Create table holding mapping of the lease states to their names.
+# This is not used in queries from the DHCP server but rather in
+# direct queries from the lease database management tools.
+CREATE TABLE IF NOT EXISTS lease_state (
+  state INT UNSIGNED PRIMARY KEY NOT NULL,
+  name VARCHAR(64) NOT NULL);
+
+# Insert currently defined state names.
+INSERT INTO lease_state VALUES (0, "default");
+INSERT INTO lease_state VALUES (1, "declined");
+INSERT INTO lease_state VALUES (2, "expired-reclaimed");
+
+# FUNCTION that returns a result set containing the column names for lease4 dumps
+DROP PROCEDURE IF EXISTS lease4DumpHeader;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpHeader()
+BEGIN
+SELECT 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state';
+END  $$
+DELIMITER ;
+
+# FUNCTION that returns a result set containing the data for lease4 dumps
+DROP PROCEDURE IF EXISTS lease4DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpData()
+BEGIN
+SELECT
+    INET_NTOA(l.address),
+    IFNULL(HEX(l.hwaddr), ''),
+    IFNULL(HEX(l.client_id), ''),
+    l.valid_lifetime,
+    l.expire,
+    l.subnet_id,
+    l.fqdn_fwd,
+    l.fqdn_rev,
+    l.hostname,
+    s.name
+from
+    lease4 l
+    LEFT OUTER JOIN lease_state s on (l.state = s.state);
+END $$
+DELIMITER ;
+
+# FUNCTION that returns a result set containing the column names for lease6 dumps
+DROP PROCEDURE IF EXISTS lease6DumpHeader;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpHeader()
+BEGIN
+SELECT 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state';
+END  $$
+DELIMITER ;
+
+# FUNCTION that returns a result set containing the data for lease6 dumps
+DROP PROCEDURE IF EXISTS lease6DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpData()
+BEGIN
+SELECT
+    l.address,
+    IFNULL(HEX(l.duid), ''),
+    l.valid_lifetime,
+    l.expire,
+    l.subnet_id,
+    l.pref_lifetime,
+    IFNULL(t.name, ''),
+    l.iaid,
+    l.prefix_len,
+    l.fqdn_fwd,
+    l.fqdn_rev,
+    l.hostname,
+    IFNULL(HEX(l.hwaddr), ''),
+    IFNULL(l.hwtype, ''),
+    IFNULL(l.hwaddr_source, ''),
+    IFNULL(s.name, '')
+FROM lease6 l
+    left outer join lease6_types t on (l.lease_type = t.lease_type)
+    left outer join lease_state s on (l.state = s.state);
+END $$
+DELIMITER ;
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '4', minor = '0';
+# This line concludes database upgrade to version 4.0.
+
 # Notes:
 #
 # Indexes
@@ -261,9 +364,6 @@ SET version = '3', minor = '0';
 # will be determined by experiment during performance tests.
 #
 # The most likely additional indexes will cover the following columns:
-#
-# expire
-# To speed up the deletion of expired leases from the database.
 #
 # hwaddr and client_id
 # For lease stability: if a client requests a new lease, try to find an

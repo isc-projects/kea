@@ -26,11 +26,13 @@
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <hooks/hooks_manager.h>
+#include <defaults.h>
 
 #include "test_data_files_config.h"
 #include "test_libraries.h"
@@ -2066,15 +2068,15 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
-    /// @todo The option 59 is a standard DHCPv6 option. However, at this point
+    /// @todo The option 63 is a standard DHCPv6 option. However, at this point
     /// there is no definition for this option in libdhcp++, so it should be
     /// allowed to define it from the configuration interface. This test will
     /// have to be removed once definitions for remaining standard options are
     /// created.
     config =
         "{ \"option-def\": [ {"
-        "      \"name\": \"boot-file-name\","
-        "      \"code\": 59,"
+        "      \"name\": \"geolocation\","
+        "      \"code\": 63,"
         "      \"type\": \"string\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
@@ -2091,12 +2093,12 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     checkResult(status, 0);
 
     def = CfgMgr::instance().getStagingCfg()->
-        getCfgOptionDef()->get("dhcp6", 59);
+        getCfgOptionDef()->get("dhcp6", 63);
     ASSERT_TRUE(def);
 
     // Check the option data.
-    EXPECT_EQ("boot-file-name", def->getName());
-    EXPECT_EQ(59, def->getCode());
+    EXPECT_EQ("geolocation", def->getName());
+    EXPECT_EQ(63, def->getCode());
     EXPECT_EQ(OPT_STRING_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
 }
@@ -3981,5 +3983,138 @@ TEST_F(Dhcp6ParserTest, rsooBogusName) {
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
+
+/// Check that the decline-probation-period value can be set properly.
+TEST_F(Dhcp6ParserTest, declineTimerDefault) {
+
+    ConstElementPtr status;
+
+    string config_txt = "{ " + genIfaceConfig() + ","
+        "\"subnet6\": [  ] "
+        "}";
+    ElementPtr config = Element::fromJSON(config_txt);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-perion must be equal to the
+    // default value.
+    EXPECT_EQ(DEFAULT_DECLINE_PROBATION_PERIOD,
+              CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+}
+
+/// Check that the decline-probation-period value can be set properly.
+TEST_F(Dhcp6ParserTest, declineTimer) {
+    ConstElementPtr status;
+
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"decline-probation-period\": 12345,"
+        "\"subnet6\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-perion must be equal to the
+    // value specified.
+    EXPECT_EQ(12345,
+              CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+}
+
+/// Check that an incorrect decline-probation-period value will be caught.
+TEST_F(Dhcp6ParserTest, declineTimerError) {
+    ConstElementPtr status;
+
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"decline-probation-period\": \"soon\","
+        "\"subnet6\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 1 (error)
+    checkResult(status, 1);
+
+    // Check that the error contains error position.
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
+
+// Check that configuration for the expired leases processing may be
+// specified.
+TEST_F(Dhcp6ParserTest, expiredLeasesProcessing) {
+    // Create basic configuration with the expiration specific parameters.
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"expired-leases-processing\": "
+        "{"
+        "    \"reclaim-timer-wait-time\": 20,"
+        "    \"flush-reclaimed-timer-wait-time\": 35,"
+        "    \"hold-reclaimed-time\": 1800,"
+        "    \"max-reclaim-leases\": 50,"
+        "    \"max-reclaim-time\": 100,"
+        "    \"unwarned-reclaim-cycles\": 10"
+        "},"
+        "\"subnet6\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // Returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-perion must be equal to the
+    // value specified.
+    CfgExpirationPtr cfg = CfgMgr::instance().getStagingCfg()->getCfgExpiration();
+    ASSERT_TRUE(cfg);
+
+    // Verify that parameters are correct.
+    EXPECT_EQ(20, cfg->getReclaimTimerWaitTime());
+    EXPECT_EQ(35, cfg->getFlushReclaimedTimerWaitTime());
+    EXPECT_EQ(1800, cfg->getHoldReclaimedTime());
+    EXPECT_EQ(50, cfg->getMaxReclaimLeases());
+    EXPECT_EQ(100, cfg->getMaxReclaimTime());
+    EXPECT_EQ(10, cfg->getUnwarnedReclaimCycles());
+}
+
+// Check that invalid configuration for the expired leases processing is
+// causing an error.
+TEST_F(Dhcp6ParserTest, expiredLeasesProcessingError) {
+    // Create basic configuration with the expiration specific parameters.
+    // One of the parameters holds invalid value.
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"expired-leases-processing\": "
+        "{"
+        "    \"reclaim-timer-wait-time\": -5,"
+        "    \"flush-reclaimed-timer-wait-time\": 35,"
+        "    \"hold-reclaimed-time\": 1800,"
+        "    \"max-reclaim-leases\": 50,"
+        "    \"max-reclaim-time\": 100,"
+        "    \"unwarned-reclaim-cycles\": 10"
+        "},"
+        "\"subnet6\": [ ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // Returned value should be 0 (error)
+    checkResult(status, 1);
+
+    // Check that the error contains error position.
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
+
 
 };

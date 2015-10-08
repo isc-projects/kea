@@ -89,14 +89,8 @@ caught in the application's send completion handler.  This is a programmatic
 error that needs to be reported.  Dependent upon the nature of the error the
 client may or may not continue operating normally.
 
-% DHCP_DDNS_WATCH_SINK_CLOSE_ERROR Sink-side watch socket failed to close: %1
+% DHCP_DDNS_UDP_SENDER_WATCH_SOCKET_CLOSE_ERROR watch socket failed to close: %1
 This is an error message that indicates the application was unable to close
-the inbound side of a NCR sender's watch socket.  While technically possible
-this error is highly unlikely to occur and should not impair the application's
-ability to process requests.
-
-% DHCP_DDNS_WATCH_SOURCE_CLOSE_ERROR Source-side watch socket failed to close: %1
-This is an error message that indicates the application was unable to close
-the outbound side of a NCR sender's watch socket.  While technically possible
-this error is highly unlikely to occur and should not impair the application's
-ability to process requests.
+the inbound or outbound side of a NCR sender's watch socket. While technically
+possible the error is highly unlikely to occur and should not impair the
+application's ability to process requests.

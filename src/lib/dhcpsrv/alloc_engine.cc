@@ -14,16 +14,25 @@
 
 #include <config.h>
 
+#include <dhcp/option_data_types.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/alloc_engine_log.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp/dhcp6.h>
+#include <hooks/callout_handle.h>
+#include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
+#include <util/stopwatch.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
+
+#include <boost/foreach.hpp>
 
 #include <cstring>
 #include <sstream>
@@ -34,6 +43,7 @@
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::stats;
 
@@ -43,17 +53,21 @@ namespace {
 struct AllocEngineHooks {
     int hook_index_lease4_select_; ///< index for "lease4_receive" hook point
     int hook_index_lease4_renew_;  ///< index for "lease4_renew" hook point
+    int hook_index_lease4_expire_; ///< index for "lease4_expire" hook point
     int hook_index_lease6_select_; ///< index for "lease6_receive" hook point
     int hook_index_lease6_renew_;  ///< index for "lease6_renew" hook point
     int hook_index_lease6_rebind_; ///< index for "lease6_rebind" hook point
+    int hook_index_lease6_expire_; ///< index for "lease6_expire" hook point
 
     /// Constructor that registers hook points for AllocationEngine
     AllocEngineHooks() {
         hook_index_lease4_select_ = HooksManager::registerHook("lease4_select");
         hook_index_lease4_renew_  = HooksManager::registerHook("lease4_renew");
+        hook_index_lease4_expire_ = HooksManager::registerHook("lease4_expire");
         hook_index_lease6_select_ = HooksManager::registerHook("lease6_select");
-        hook_index_lease6_renew_   = HooksManager::registerHook("lease6_renew");
-        hook_index_lease6_rebind_   = HooksManager::registerHook("lease6_rebind");
+        hook_index_lease6_renew_  = HooksManager::registerHook("lease6_renew");
+        hook_index_lease6_rebind_ = HooksManager::registerHook("lease6_rebind");
+        hook_index_lease6_expire_ = HooksManager::registerHook("lease6_expire");
     }
 };
 
@@ -297,7 +311,7 @@ AllocEngine::ClientContext6::ClientContext6()
     : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
       hints_(), fwd_dns_update_(false), rev_dns_update_(false), hostname_(""),
       callout_handle_(), fake_allocation_(false), old_leases_(), host_(),
-      query_(), ia_rsp_(), allow_new_leases_in_renewals_(false) {
+      query_(), ia_rsp_() {
 }
 
 AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const DuidPtr& duid,
@@ -310,8 +324,7 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const Duid
     subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
     hints_(), fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
     hostname_(hostname), fake_allocation_(fake_allocation),
-    old_leases_(), host_(), query_(), ia_rsp_(),
-    allow_new_leases_in_renewals_(false) {
+    old_leases_(), host_(), query_(), ia_rsp_() {
 
     static asiolink::IOAddress any("::");
 
@@ -932,7 +945,6 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     expired->t2_ = ctx.subnet_->getT2();
     expired->cltt_ = time(NULL);
     expired->subnet_id_ = ctx.subnet_->getID();
-    expired->fixed_ = false;
     expired->hostname_ = ctx.hostname_;
     expired->fqdn_fwd_ = ctx.fwd_dns_update_;
     expired->fqdn_rev_ = ctx.rev_dns_update_;
@@ -1121,7 +1133,7 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
         // Depending on the configuration, we may enable or disable granting
         // new leases during renewals. This is controlled with the
         // allow_new_leases_in_renewals_ field.
-        if (leases.empty() && ctx.allow_new_leases_in_renewals_) {
+        if (leases.empty()) {
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V6_EXTEND_ALLOC_UNRESERVED)
@@ -1273,6 +1285,347 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
     }
     return (updated_leases);
 }
+
+void
+AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeout,
+                                   const bool remove_lease) {
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V6_LEASES_RECLAMATION_START)
+        .arg(max_leases)
+        .arg(timeout);
+
+    // Create stopwatch and automatically start it to measure the time
+    // taken by the routine.
+    util::Stopwatch stopwatch;
+
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+
+    Lease6Collection leases;
+    lease_mgr.getExpiredLeases6(leases, max_leases);
+
+    // Do not initialize the callout handle until we know if there are any
+    // lease6_expire callouts installed.
+    CalloutHandlePtr callout_handle;
+    if (!leases.empty() &&
+        HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_expire_)) {
+        callout_handle = HooksManager::createCalloutHandle();
+    }
+
+    size_t leases_processed = 0;
+    BOOST_FOREACH(Lease6Ptr lease, leases) {
+
+        try {
+            // The skip flag indicates if the callouts have taken responsibility
+            // for reclaiming the lease. The callout will set this to true if
+            // it reclaims the lease itself. In this case the reclamation routine
+            // will not update DNS nor update the database.
+            bool skipped = false;
+            if (callout_handle) {
+                callout_handle->deleteAllArguments();
+                callout_handle->setArgument("lease6", lease);
+                callout_handle->setArgument("remove_lease", remove_lease);
+
+                HooksManager::callCallouts(Hooks.hook_index_lease6_expire_,
+                                           *callout_handle);
+
+                skipped = callout_handle->getSkip();
+            }
+
+            if (!skipped) {
+                // Generate removal name change request for D2, if required.
+                // This will return immediatelly if the DNS wasn't updated
+                // when the lease was created.
+                if (lease->duid_) {
+                    queueRemovalNameChangeRequest(lease, *(lease->duid_));
+                }
+
+                // Reclaim the lease - depending on the configuration, set the
+                // expired-reclaimed state or simply remove it.
+                reclaimLeaseInDatabase<Lease6Ptr>(lease, remove_lease,
+                                                  boost::bind(&LeaseMgr::updateLease6,
+                                                              &lease_mgr, _1));
+            }
+
+            ++leases_processed;
+
+            // Update statistics.
+
+            // Decrease number of assigned leases.
+            if (lease->type_ == Lease::TYPE_NA) {
+                // IA_NA
+                StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                     lease->subnet_id_,
+                                                                     "assigned-nas"),
+                                              int64_t(-1));
+
+            } else if (lease->type_ == Lease::TYPE_PD) {
+                // IA_PD
+                StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                     lease->subnet_id_,
+                                                                     "assigned-pds"),
+                                              int64_t(-1));
+
+            }
+
+            // Increase total number of reclaimed leases.
+            StatsMgr::instance().addValue("reclaimed-leases", int64_t(1));
+
+            // Increase number of reclaimed leases for a subnet.
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                 lease->subnet_id_,
+                                                                 "reclaimed-leases"),
+                                          int64_t(1));
+
+
+        } catch (const std::exception& ex) {
+            LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_LEASE_RECLAMATION_FAILED)
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
+        }
+
+        // Check if we have hit the timeout for running reclamation routine and
+        // return if we have. We're checking it here, because we always want to
+        // allow reclaiming at least one lease.
+        if ((timeout > 0) && (stopwatch.getTotalMilliseconds() >= timeout)) {
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT)
+                .arg(timeout);
+            break;
+        }
+    }
+
+    // Stop measuring the time.
+    stopwatch.stop();
+
+    // Mark completion of the lease reclamation routine and present some stats.
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V6_LEASES_RECLAMATION_COMPLETE)
+        .arg(leases_processed)
+        .arg(stopwatch.logFormatTotalDuration());
+}
+
+void
+AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
+                                   const bool remove_lease) {
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V4_LEASES_RECLAMATION_START)
+        .arg(max_leases)
+        .arg(timeout);
+
+    // Create stopwatch and automatically start it to measure the time
+    // taken by the routine.
+    util::Stopwatch stopwatch;
+
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+
+    Lease4Collection leases;
+    lease_mgr.getExpiredLeases4(leases, max_leases);
+
+    // Do not initialize the callout handle until we know if there are any
+    // lease4_expire callouts installed.
+    CalloutHandlePtr callout_handle;
+    if (!leases.empty() &&
+        HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease4_expire_)) {
+        callout_handle = HooksManager::createCalloutHandle();
+    }
+
+    size_t leases_processed = 0;
+    BOOST_FOREACH(Lease4Ptr lease, leases) {
+
+        try {
+            // The skip flag indicates if the callouts have taken responsibility
+            // for reclaiming the lease. The callout will set this to true if
+            // it reclaims the lease itself. In this case the reclamation routine
+            // will not update DNS nor update the database.
+            bool skipped = false;
+            if (callout_handle) {
+                callout_handle->deleteAllArguments();
+                callout_handle->setArgument("lease4", lease);
+                callout_handle->setArgument("remove_lease", remove_lease);
+
+                HooksManager::callCallouts(Hooks.hook_index_lease4_expire_,
+                                           *callout_handle);
+
+                skipped = callout_handle->getSkip();
+            }
+
+            if (!skipped) {
+                // Generate removal name change request for D2, if required.
+                // This will return immediatelly if the DNS wasn't updated
+                // when the lease was created.
+                if (lease->client_id_) {
+                    // Client id takes precedence over HW address.
+                    queueRemovalNameChangeRequest(lease, lease->client_id_->getClientId());
+
+                } else {
+                    // Client id is not specified for the lease. Use HW address
+                    // instead.
+                    queueRemovalNameChangeRequest(lease, lease->hwaddr_);
+                }
+
+                // Let's check if the lease that just expired is in DECLINED state.
+                // If it is, we need to conduct couple extra steps and also force
+                // its removal.
+                bool remove_tmp = remove_lease;
+                if (lease->state_ == Lease::STATE_DECLINED) {
+                    // There's no point in keeping declined lease after its
+                    // reclaimation. Declined lease doesn't have any client
+                    // identifying information anymore.
+                    remove_tmp = true;
+
+                    // Do extra steps required for declined lease reclaimation:
+                    // - bump decline-related stats
+                    // - log separate message
+                    reclaimDeclined(lease);
+                }
+
+                // Reclaim the lease - depending on the configuration, set the
+                // expired-reclaimed state or simply remove it.
+                reclaimLeaseInDatabase<Lease4Ptr>(lease, remove_tmp,
+                                                  boost::bind(&LeaseMgr::updateLease4,
+                                                              &lease_mgr, _1));
+            }
+
+            ++leases_processed;
+
+            // Update statistics.
+
+            // Decrease number of assigned addresses.
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                 lease->subnet_id_,
+                                                                 "assigned-addresses"),
+                                          int64_t(-1));
+
+            // Increase total number of reclaimed leases.
+            StatsMgr::instance().addValue("reclaimed-leases", int64_t(1));
+
+            // Increase number of reclaimed leases for a subnet.
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                 lease->subnet_id_,
+                                                                 "reclaimed-leases"),
+                                          int64_t(1));
+
+        } catch (const std::exception& ex) {
+            LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V4_LEASE_RECLAMATION_FAILED)
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
+        }
+
+        // Check if we have hit the timeout for running reclamation routine and
+        // return if we have. We're checking it here, because we always want to
+        // allow reclaiming at least one lease.
+        if ((timeout > 0) && (stopwatch.getTotalMilliseconds() >= timeout)) {
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT)
+                .arg(timeout);
+            break;
+        }
+    }
+
+    // Stop measuring the time.
+    stopwatch.stop();
+
+    // Mark completion of the lease reclamation routine and present some stats.
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V4_LEASES_RECLAMATION_COMPLETE)
+        .arg(leases_processed)
+        .arg(stopwatch.logFormatTotalDuration());
+}
+
+void
+AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
+
+    if (!lease || (lease->state_ != Lease::STATE_DECLINED) ) {
+        return;
+    }
+
+    LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V4_DECLINED_RECOVERED)
+        .arg(lease->addr_.toText())
+        .arg(lease->valid_lft_);
+
+    StatsMgr& stats_mgr = StatsMgr::instance();
+
+    // Decrease subnet specific counter for currently declined addresses
+    stats_mgr.addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
+        "declined-addresses"), static_cast<int64_t>(-1));
+
+    // Decrease global counter for declined addresses
+    stats_mgr.addValue("declined-addresses", static_cast<int64_t>(-1));
+
+    stats_mgr.addValue("reclaimed-declined-addresses", static_cast<int64_t>(1));
+
+    stats_mgr.addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
+        "reclaimed-declined-addresses"), static_cast<int64_t>(1));
+
+    // Note that we do not touch assigned-addresses counters. Those are
+    // modified in whatever code calls this method.
+
+    /// @todo: call lease4_decline_recycle hook here.
+}
+
+template<typename LeasePtrType, typename IdentifierType>
+void
+AllocEngine::queueRemovalNameChangeRequest(const LeasePtrType& lease,
+                                           const IdentifierType& identifier) const {
+
+    // Check if there is a need for update.
+    if (!lease || lease->hostname_.empty() || (!lease->fqdn_fwd_ && !lease->fqdn_rev_)
+        || !CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
+        return;
+    }
+
+    try {
+        // Create DHCID
+        std::vector<uint8_t> hostname_wire;
+        OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
+        dhcp_ddns::D2Dhcid dhcid = D2Dhcid(identifier, hostname_wire);
+
+        // Create name change request.
+        NameChangeRequestPtr ncr(new NameChangeRequest(isc::dhcp_ddns::CHG_REMOVE,
+                                                       lease->fqdn_fwd_, lease->fqdn_rev_,
+                                                       lease->hostname_,
+                                                       lease->addr_.toText(),
+                                                       dhcid, 0, lease->valid_lft_));
+        // Send name change request.
+        CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_REMOVAL_NCR_FAILED)
+            .arg(lease->addr_.toText())
+            .arg(ex.what());
+    }
+}
+
+template<typename LeasePtrType>
+void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
+                                         const bool remove_lease,
+                                         const boost::function<void (const LeasePtrType&)>&
+                                         lease_update_fun) const {
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+
+    // Reclaim the lease - depending on the configuration, set the
+    // expired-reclaimed state or simply remove it.
+    if (remove_lease) {
+        lease_mgr.deleteLease(lease->addr_);
+
+    } else {
+        // Clear FQDN information as we have already sent the
+        // name change request to remove the DNS record.
+        lease->hostname_.clear();
+        lease->fqdn_fwd_ = false;
+        lease->fqdn_rev_ = false;
+        lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+        lease_update_fun(lease);
+    }
+
+    // Lease has been reclaimed.
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_LEASE_RECLAIMED)
+        .arg(lease->addr_.toText());
+}
+
 
 } // end of isc::dhcp namespace
 } // end of isc namespace
@@ -1912,8 +2265,18 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         isc_throw(BadValue, "null subnet specified for the reuseExpiredLease");
     }
 
+    if ( (expired->state_ == Lease::STATE_DECLINED) &&
+         (ctx.fake_allocation_ == false)) {
+        // If this is a declined lease that expired, we need to conduct
+        // extra steps for it. However, we do want to conduct those steps
+        // only once. In paricular, if we have an expired declined lease
+        // and client sent DHCPDISCOVER and will later send DHCPREQUEST,
+        // we only want to call this method once when responding to
+        // DHCPREQUEST (when the actual reclaimation takes place).
+        reclaimDeclined(expired);
+    }
+
     updateLease4Information(expired, ctx);
-    expired->fixed_ = false;
 
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA,
               ALLOC_ENGINE_V4_REUSE_EXPIRED_LEASE_DATA)

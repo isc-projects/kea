@@ -96,7 +96,6 @@ TEST_F(Lease4Test, constructor) {
                      "hostname.example.com.");
 
         EXPECT_EQ(ADDRESS[i], static_cast<uint32_t>(lease.addr_));
-        EXPECT_EQ(0, lease.ext_);
         EXPECT_TRUE(util::equalValues(hwaddr_, lease.hwaddr_));
         EXPECT_TRUE(util::equalValues(clientid_, lease.client_id_));
         EXPECT_EQ(0, lease.t1_);
@@ -104,11 +103,10 @@ TEST_F(Lease4Test, constructor) {
         EXPECT_EQ(VALID_LIFETIME, lease.valid_lft_);
         EXPECT_EQ(current_time, lease.cltt_);
         EXPECT_EQ(SUBNET_ID, lease.subnet_id_);
-        EXPECT_FALSE(lease.fixed_);
         EXPECT_EQ("hostname.example.com.", lease.hostname_);
         EXPECT_TRUE(lease.fqdn_fwd_);
         EXPECT_TRUE(lease.fqdn_rev_);
-        EXPECT_TRUE(lease.comments_.empty());
+        EXPECT_EQ(Lease::STATE_DEFAULT, lease.state_);
     }
 }
 
@@ -125,6 +123,10 @@ TEST_F(Lease4Test, copyConstructor) {
     // Create the lease
     Lease4 lease(0xffffffff, hwaddr_, clientid_, VALID_LIFETIME, 0, 0, current_time,
                  SUBNET_ID);
+
+    // Declined is a non-default state. We'll see if the state will be copied
+    // or the default state will be set for the copied lease.
+    lease.state_ = Lease::STATE_DECLINED;
 
     // Use copy constructor to copy the lease.
     Lease4 copied_lease(lease);
@@ -163,8 +165,14 @@ TEST_F(Lease4Test, operatorAssign) {
     Lease4 lease(0xffffffff, hwaddr_, clientid_, VALID_LIFETIME, 0, 0, current_time,
                  SUBNET_ID);
 
-    // Use assignment operator to assign the lease.
-    Lease4 copied_lease = lease;
+    // Declined is a non-default state. We'll see if the state will be copied
+    // or the default state will be set for the copied lease.
+    lease.state_ = Lease::STATE_DECLINED;
+
+    // Create a default lease.
+    Lease4 copied_lease;
+    // Use assignment operator to assign new lease.
+    copied_lease = lease;
 
     // Both leases should be now equal. When doing this check we assume that
     // the equality operator works correctly.
@@ -284,13 +292,6 @@ TEST_F(Lease4Test, operatorEquals) {
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
-    ++lease1.ext_;
-    EXPECT_FALSE(lease1 == lease2);
-    EXPECT_TRUE(lease1 != lease2);
-    lease1.ext_ = lease2.ext_;
-    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... leases equal
-
     ++lease1.hwaddr_->hwaddr_[0];
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
@@ -343,13 +344,6 @@ TEST_F(Lease4Test, operatorEquals) {
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
-    lease1.fixed_ = !lease1.fixed_;
-    EXPECT_FALSE(lease1 == lease2);
-    EXPECT_TRUE(lease1 != lease2);
-    lease1.fixed_ = lease2.fixed_;
-    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... leases equal
-
     lease1.hostname_ += std::string("Something random");
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
@@ -371,10 +365,10 @@ TEST_F(Lease4Test, operatorEquals) {
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
-    lease1.comments_ += std::string("Something random");
+    lease1.state_  += 1;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
-    lease1.comments_ = lease2.comments_;
+    lease2.state_ += 1;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 }
@@ -421,7 +415,7 @@ TEST_F(Lease4Test, toText) {
     const time_t current_time = 12345678;
     Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, clientid_, 3600, 123,
                  456, current_time, 789);
-    
+
     std::stringstream expected;
     expected << "Address:       192.0.2.3\n"
              << "Valid life:    3600\n"
@@ -430,7 +424,8 @@ TEST_F(Lease4Test, toText) {
              << "Cltt:          12345678\n"
              << "Hardware addr: " << hwaddr_->toText(false) << "\n"
              << "Client id:     " << clientid_->toText() << "\n"
-             << "Subnet ID:     789\n";
+             << "Subnet ID:     789\n"
+             << "State:         default\n";
 
     EXPECT_EQ(expected.str(), lease.toText());
 
@@ -445,8 +440,45 @@ TEST_F(Lease4Test, toText) {
              << "Cltt:          12345678\n"
              << "Hardware addr: (none)\n"
              << "Client id:     (none)\n"
-             << "Subnet ID:     789\n";
+             << "Subnet ID:     789\n"
+             << "State:         default\n";
     EXPECT_EQ(expected.str(), lease.toText());
+}
+
+// Verify that decline() method properly clears up specific fields.
+TEST_F(Lease4Test, decline) {
+
+    const time_t current_time = 12345678;
+    Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, clientid_, 3600, 123,
+                 456, current_time, 789);
+    lease.hostname_="foo.example.org";
+    lease.fqdn_fwd_ = true;
+    lease.fqdn_rev_ = true;
+
+    time_t now = time(NULL);
+
+    // Move lease to declined state and set its valid-lifetime to 123 seconds
+    lease.decline(123);
+    ASSERT_TRUE(lease.hwaddr_);
+    EXPECT_EQ("", lease.hwaddr_->toText(false));
+    EXPECT_FALSE(lease.client_id_);
+    EXPECT_EQ(0, lease.t1_);
+    EXPECT_EQ(0, lease.t2_);
+
+    EXPECT_TRUE(now <= lease.cltt_);
+    EXPECT_TRUE(lease.cltt_ <= now + 1);
+    EXPECT_EQ("", lease.hostname_);
+    EXPECT_FALSE(lease.fqdn_fwd_);
+    EXPECT_FALSE(lease.fqdn_rev_);
+    EXPECT_EQ(Lease::STATE_DECLINED, lease.state_);
+    EXPECT_EQ(123, lease.valid_lft_);
+}
+
+// Verify that the lease states are correctly returned in the textual format.
+TEST_F(Lease4Test, stateToText) {
+    EXPECT_EQ("default", Lease4::statesToText(Lease::STATE_DEFAULT));
+    EXPECT_EQ("declined", Lease4::statesToText(Lease::STATE_DECLINED));
+    EXPECT_EQ("expired-reclaimed", Lease4::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
 }
 
 /// @brief Creates an instance of the lease with certain FQDN data.
@@ -467,7 +499,7 @@ Lease6 createLease6(const std::string& hostname, const bool fqdn_fwd,
 
 // Lease6 is also defined in lease_mgr.h, so is tested in this file as well.
 // This test checks if the Lease6 structure can be instantiated correctly
-TEST(Lease6, Lease6ConstructorDefault) {
+TEST(Lease6Test, Lease6ConstructorDefault) {
 
     // check a variety of addresses with different bits set.
     const char* ADDRESS[] = {
@@ -514,7 +546,7 @@ TEST(Lease6, Lease6ConstructorDefault) {
 
 // This test verifies that the Lease6 constructor which accepts FQDN data,
 // sets the data correctly for the lease.
-TEST(Lease6, Lease6ConstructorWithFQDN) {
+TEST(Lease6Test, Lease6ConstructorWithFQDN) {
 
     // check a variety of addresses with different bits set.
     const char* ADDRESS[] = {
@@ -563,7 +595,7 @@ TEST(Lease6, Lease6ConstructorWithFQDN) {
 /// Checks that the operator==() correctly compares two leases for equality.
 /// As operator!=() is also defined for this class, every check on operator==()
 /// is followed by the reverse check on operator!=().
-TEST(Lease6, OperatorEquals) {
+TEST(Lease6Test, operatorEquals) {
 
     // check a variety of addresses with different bits set.
     const IOAddress addr("2001:db8:1::456");
@@ -665,13 +697,6 @@ TEST(Lease6, OperatorEquals) {
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
-    lease1.fixed_ = !lease1.fixed_;
-    EXPECT_FALSE(lease1 == lease2);
-    EXPECT_TRUE(lease1 != lease2);
-    lease1.fixed_ = lease2.fixed_;
-    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... leases equal
-
     lease1.hostname_ += std::string("Something random");
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
@@ -693,16 +718,16 @@ TEST(Lease6, OperatorEquals) {
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
-    lease1.comments_ += std::string("Something random");
+    lease1.state_  += 1;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
-    lease1.comments_ = lease2.comments_;
+    lease2.state_ += 1;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 }
 
 // Checks if lease expiration is calculated properly
-TEST(Lease6, Lease6Expired) {
+TEST(Lease6Test, Lease6Expired) {
     const IOAddress addr("2001:db8:1::456");
     const uint8_t duid_array[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     const DuidPtr duid(new DUID(duid_array, sizeof(duid_array)));
@@ -727,7 +752,7 @@ TEST(Lease6, Lease6Expired) {
 
 // Verify that the DUID can be returned as a vector object and if DUID is NULL
 // the empty vector is returned.
-TEST(Lease6, getDuidVector) {
+TEST(Lease6Test, getDuidVector) {
     // Create a lease.
     Lease6 lease;
     // By default, the lease should have client id set to NULL. If it doesn't,
@@ -745,8 +770,46 @@ TEST(Lease6, getDuidVector) {
     EXPECT_TRUE(returned_vec == duid_vec);
 }
 
+// Verify that decline() method properly clears up specific fields.
+TEST(Lease6Test, decline) {
+
+    uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
+    DuidPtr duid(new DUID(llt, sizeof(llt)));
+
+    HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
+
+    // Let's create a lease for 2001:db8::1, DUID, iaid=1234,
+    // t1=1000, t2=2000, pref=3000, valid=4000, subnet-id = 1
+    Lease6 lease(Lease::TYPE_NA, IOAddress("2001:db8::1"), duid,
+                 1234, 3000, 4000, 1000, 2000, 1, hwaddr);
+    lease.cltt_ = 12345678;
+    lease.hostname_ = "foo.example.org";
+    lease.fqdn_fwd_ = true;
+    lease.fqdn_rev_ = true;
+
+    time_t now = time(NULL);
+
+    // Move the lease to declined state and set probation-period to 123 seconds
+    lease.decline(123);
+
+    ASSERT_TRUE(lease.duid_);
+    ASSERT_EQ("00", lease.duid_->toText());
+    ASSERT_FALSE(lease.hwaddr_);
+    EXPECT_EQ(0, lease.t1_);
+    EXPECT_EQ(0, lease.t2_);
+    EXPECT_EQ(0, lease.preferred_lft_);
+
+    EXPECT_TRUE(now <= lease.cltt_);
+    EXPECT_TRUE(lease.cltt_ <= now + 1);
+    EXPECT_EQ("", lease.hostname_);
+    EXPECT_FALSE(lease.fqdn_fwd_);
+    EXPECT_FALSE(lease.fqdn_rev_);
+    EXPECT_EQ(Lease::STATE_DECLINED, lease.state_);
+    EXPECT_EQ(123, lease.valid_lft_);
+}
+
 // Verify the behavior of the function which checks FQDN data for equality.
-TEST(Lease6, hasIdenticalFqdn) {
+TEST(Lease6Test, hasIdenticalFqdn) {
     Lease6 lease = createLease6("myhost.example.com.", true, true);
     EXPECT_TRUE(lease.hasIdenticalFqdn(createLease6("myhost.example.com.",
                                                     true, true)));
@@ -763,17 +826,18 @@ TEST(Lease6, hasIdenticalFqdn) {
 }
 
 // Verify that toText() method reports Lease4 structure properly.
-TEST(Lease6, toText) {
+TEST(Lease6Test, toText) {
 
     HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
 
     uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     DuidPtr duid(new DUID(llt, sizeof(llt)));
-    
+
     Lease6 lease(Lease::TYPE_NA, IOAddress("2001:db8::1"), duid, 123456,
                  400, 800, 100, 200, 5678, hwaddr, 128);
     lease.cltt_ = 12345678;
-    
+    lease.state_ = Lease::STATE_DECLINED;
+
     std::stringstream expected;
     expected << "Type:          IA_NA(" << static_cast<int>(Lease::TYPE_NA) << ")\n"
              << "Address:       2001:db8::1\n"
@@ -783,7 +847,8 @@ TEST(Lease6, toText) {
              << "Valid life:    800\n"
              << "Cltt:          12345678\n"
              << "Hardware addr: " << hwaddr->toText(false) << "\n"
-             << "Subnet ID:     5678\n";
+             << "Subnet ID:     5678\n"
+             << "State:         declined\n";
 
     EXPECT_EQ(expected.str(), lease.toText());
 
@@ -798,8 +863,17 @@ TEST(Lease6, toText) {
              << "Valid life:    800\n"
              << "Cltt:          12345678\n"
              << "Hardware addr: (none)\n"
-             << "Subnet ID:     5678\n";
+             << "Subnet ID:     5678\n"
+             << "State:         declined\n";
     EXPECT_EQ(expected.str(), lease.toText());
 }
+
+// Verify that the lease states are correctly returned in the textual format.
+TEST(Lease6Test, stateToText) {
+    EXPECT_EQ("default", Lease6::statesToText(Lease::STATE_DEFAULT));
+    EXPECT_EQ("declined", Lease6::statesToText(Lease::STATE_DECLINED));
+    EXPECT_EQ("expired-reclaimed", Lease6::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
+}
+
 
 }; // end of anonymous namespace

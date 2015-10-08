@@ -40,8 +40,7 @@ public:
     /// @param file the file name where the exception was thrown.
     /// @param line the line in \a file where the exception was thrown.
     /// @param what a description (type) of the exception.
-    Exception(const char* file, size_t line, const char* what) :
-        file_(file), line_(line), what_(what) {}
+    Exception(const char* file, size_t line, const char* what);
 
     /// \brief Constructor for a given type for exceptions with file name and
     /// file line number.
@@ -49,8 +48,7 @@ public:
     /// @param file the file name where the exception was thrown.
     /// @param line the line in \a file where the exception was thrown.
     /// @param what a description (type) of the exception.
-    Exception(const char* file, size_t line, const std::string& what) :
-        file_(file), line_(line), what_(what) {}
+    Exception(const char* file, size_t line, const std::string& what);
 
     /// The destructor
     virtual ~Exception() throw() {}
@@ -73,6 +71,16 @@ public:
     ///
     /// @return A C-style character string of the exception cause.
     virtual const char* what() const throw();
+
+    /// \brief Returns a C-style charater string of the cause of exception.
+    ///
+    /// With verbose set to true, also returns file name and line numbers.
+    /// Note that we can't simply define a single what() method with parameters,
+    /// as the compiler would complain that it shadows the base class method.
+    ///
+    /// \param verbose if set to true, filename and line number will be added.
+    /// \return A C-style character string of the exception cause.
+    virtual const char* what(bool verbose) const throw();
     //@}
 
     ///
@@ -96,9 +104,18 @@ public:
     //@}
 
 private:
+
+    /// Specifies the filename where this exception was raised
     const char* const file_;
+
+    /// Specifies the line number where this exception was raised
     size_t line_;
+
+    /// Specifies actual content of the exception
     const std::string what_;
+
+    /// Specifies actual context of the exception (with file:line added)
+    std::string verbose_what_;
 };
 
 /// \brief A generic exception that is thrown if a parameter given

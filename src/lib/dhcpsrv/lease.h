@@ -48,6 +48,29 @@ struct Lease {
     /// @return text decription
     static std::string typeToText(Type type);
 
+    /// @name Common lease states constants.
+    //@{
+    ///
+    /// @brief A lease in the default state.
+    static const uint32_t STATE_DEFAULT;
+
+    /// @brief Declined lease.
+    static const uint32_t STATE_DECLINED;
+
+    /// @brief Expired and reclaimed lease.
+    static const uint32_t STATE_EXPIRED_RECLAIMED;
+
+    //@}
+
+    /// @brief Returns name(s) of the basic lease state(s).
+    ///
+    /// @param state A numeric value holding a state information.
+    /// Some states may be composite, i.e. the single state value
+    /// maps to multiple logical states of the lease.
+    ///
+    /// @return Comma separated list of state names.
+    static std::string basicStatesToText(const uint32_t state);
+
     /// @brief Constructor
     ///
     /// @param addr IP address
@@ -108,11 +131,6 @@ struct Lease {
     /// Specifies the identification of the subnet to which the lease belongs.
     SubnetID subnet_id_;
 
-    /// @brief Fixed lease?
-    ///
-    /// Fixed leases are kept after they are released/expired.
-    bool fixed_;
-
     /// @brief Client hostname
     ///
     /// This field may be empty
@@ -133,11 +151,16 @@ struct Lease {
     /// This information may not be available in certain cases.
     HWAddrPtr hwaddr_;
 
-    /// @brief Lease comments
+    /// @brief Holds the lease state(s).
     ///
-    /// Currently not used. It may be used for keeping comments made by the
-    /// system administrator.
-    std::string comments_;
+    /// This is the field that holds the lease state(s). Typically, a
+    /// lease remains in a single states. However, it is posible to
+    /// define a value for state which indicates that the lease remains
+    /// in multiple logical states.
+    ///
+    /// The defined states are represented by the "STATE_*" constants
+    /// belonging to this class.
+    uint32_t state_;
 
     /// @brief Convert Lease to Printable Form
     ///
@@ -147,6 +170,17 @@ struct Lease {
     /// @brief returns true if the lease is expired
     /// @return true if the lease is expired
     bool expired() const;
+
+    /// @brief Indicates if the lease is in the "expired-reclaimed" state.
+    ///
+    /// @return true if the lease is in the "expired-reclaimed" state, false
+    /// otherwise.
+    bool stateExpiredReclaimed() const;
+
+    /// @brief Indicates if the lease is in the "declined" state.
+    ///
+    /// @return true if the lease is in the "declined" state, false otherwise.
+    bool stateDeclined() const;
 
     /// @brief Returns true if the other lease has equal FQDN data.
     ///
@@ -165,6 +199,24 @@ struct Lease {
     ///
     /// @return const reference to the hardware address
     const std::vector<uint8_t>& getHWAddrVector() const;
+
+    /// @brief Returns lease expiration time.
+    ///
+    /// The lease expiration time is a sum of a client last transmission time
+    /// and valid lifetime.
+    int64_t getExpirationTime() const;
+
+    /// @brief Sets lease to DECLINED state.
+    ///
+    /// All client identifying parameters will be stripped off (HWaddr,
+    /// client_id, hostname), timers set to 0 (t1, t2), cltt will be set
+    /// to current time and valid_lft to parameter specified as probation
+    /// period. Note that This method only sets fields in the structure.
+    /// It is caller's responsibility to clean up DDNS, bump up stats,
+    /// log, call hooks ets.
+    ///
+    /// @param probation_period lease lifetime will be set to this value
+    virtual void decline(uint32_t probation_period) = 0;
 };
 
 /// @brief Structure that holds a lease for IPv4 address
@@ -174,16 +226,6 @@ struct Lease {
 /// would be required. As this is a critical part of the code that will be used
 /// extensively, direct access is warranted.
 struct Lease4 : public Lease {
-
-    /// @brief Address extension
-    ///
-    /// It is envisaged that in some cases IPv4 address will be accompanied
-    /// with some additional data. One example of such use are Address + Port
-    /// solutions (or Port-restricted Addresses), where several clients may get
-    /// the same address, but different port ranges. This feature is not
-    /// expected to be widely used.  Under normal circumstances, the value
-    /// should be 0.
-    uint32_t ext_;
 
     /// @brief Client identifier
     ///
@@ -211,7 +253,7 @@ struct Lease4 : public Lease {
            const bool fqdn_fwd = false, const bool fqdn_rev = false,
            const std::string& hostname = "")
         : Lease(addr, t1, t2, valid_lft, subnet_id, cltt, fqdn_fwd, fqdn_rev,
-                hostname, hwaddr), ext_(0) {
+                hostname, hwaddr) {
         if (clientid_len) {
             client_id_.reset(new ClientId(clientid, clientid_len));
         }
@@ -246,7 +288,7 @@ struct Lease4 : public Lease {
     /// @brief Default constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease4() : Lease(0, 0, 0, 0, 0, 0, false, false, "", HWAddrPtr()), ext_(0)
+    Lease4() : Lease(0, 0, 0, 0, 0, 0, false, false, "", HWAddrPtr())
     {
     }
 
@@ -254,6 +296,16 @@ struct Lease4 : public Lease {
     ///
     /// @param other the @c Lease4 object to be copied.
     Lease4(const Lease4& other);
+
+    /// @brief Returns name of the lease states specific to DHCPv4.
+    ///
+    /// @todo Currently it simply returns common states for DHCPv4 and DHCPv6.
+    /// This method will have to be extended to handle DHCPv4 specific states
+    /// when they are defined.
+    ///
+    /// @param state Numeric value holding lease states.
+    /// @return Comma separated list of lease state names.
+    static std::string statesToText(const uint32_t state);
 
     /// @brief Returns a client identifier.
     ///
@@ -351,6 +403,13 @@ struct Lease4 : public Lease {
     /// @return Textual represenation of lease data
     virtual std::string toText() const;
 
+    /// @brief Sets IPv4 lease to declined state.
+    ///
+    /// See @ref Lease::decline for detailed description.
+    ///
+    /// @param probation_period valid lifetime will be set to this value
+    void decline(uint32_t probation_period);
+
     /// @todo: Add DHCPv4 failover related fields here
 };
 
@@ -440,6 +499,16 @@ struct Lease6 : public Lease {
     /// Initialize fields that don't have a default constructor.
     Lease6();
 
+    /// @brief Returns name of the lease states specific to DHCPv6.
+    ///
+    /// @todo Currently it simply returns common states for DHCPv4 and DHCPv6.
+    /// This method will have to be extended to handle DHCPv6 specific states
+    /// when they are defined.
+    ///
+    /// @param state Numeric value holding lease states.
+    /// @return Comma separated list of lease state names.
+    static std::string statesToText(const uint32_t state);
+
     /// @brief Returns a reference to a vector representing a DUID.
     ///
     /// @warning Since the function returns the reference to a vector (not a
@@ -449,6 +518,13 @@ struct Lease6 : public Lease {
     ///
     /// @return A reference to a vector holding a DUID.
     const std::vector<uint8_t>& getDuidVector() const;
+
+    /// @brief Sets IPv6 lease to declined state.
+    ///
+    /// See @ref Lease::decline for detailed description.
+    ///
+    /// @param probation_period valid lifetime will be set to this value
+    void decline(uint32_t probation_period);
 
     /// @brief Compare two leases for equality
     ///

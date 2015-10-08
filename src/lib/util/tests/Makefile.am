@@ -36,7 +36,6 @@ run_unittests_SOURCES += fd_tests.cc
 run_unittests_SOURCES += filename_unittest.cc
 run_unittests_SOURCES += hex_unittest.cc
 run_unittests_SOURCES += io_utilities_unittest.cc
-run_unittests_SOURCES += lru_list_unittest.cc
 run_unittests_SOURCES += memory_segment_local_unittest.cc
 run_unittests_SOURCES += memory_segment_common_unittest.h
 run_unittests_SOURCES += memory_segment_common_unittest.cc
@@ -51,13 +50,15 @@ run_unittests_SOURCES += time_utilities_unittest.cc
 run_unittests_SOURCES += range_utilities_unittest.cc
 run_unittests_SOURCES += signal_set_unittest.cc
 run_unittests_SOURCES += stopwatch_unittest.cc
+run_unittests_SOURCES += watch_socket_unittests.cc
+
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
-run_unittests_LDADD = $(top_builddir)/src/lib/util/libkea-util.la
+run_unittests_LDADD  = $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
-run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 run_unittests_LDADD += $(GTEST_LDADD)
 endif

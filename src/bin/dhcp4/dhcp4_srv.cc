@@ -55,7 +55,7 @@
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
@@ -263,6 +263,13 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
 }
 
 Dhcpv4Srv::~Dhcpv4Srv() {
+    try {
+        stopD2();
+    } catch(const std::exception& ex) {
+        // Highly unlikely, but lets Report it but go on
+        LOG_ERROR(dhcp4_logger, DHCP4_SRV_D2STOP_ERROR).arg(ex.what());
+    }
+
     IfaceMgr::instance().closeSockets();
 }
 
@@ -358,16 +365,7 @@ Dhcpv4Srv::run() {
         Pkt4Ptr rsp;
 
         try {
-            // The lease database backend may install some timers for which
-            // the handlers need to be executed periodically. Retrieve the
-            // maximum interval at which the handlers must be executed from
-            // the lease manager.
-            uint32_t timeout = LeaseMgrFactory::instance().getIOServiceExecInterval();
-            // If the returned value is zero it means that there are no
-            // timers installed, so use a default value.
-            if (timeout == 0) {
-                timeout = 1000;
-            }
+            uint32_t timeout = 1000;
             LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT).arg(timeout);
             query = receivePacket(timeout);
 
@@ -393,8 +391,8 @@ Dhcpv4Srv::run() {
         } catch (const SignalInterruptOnSelect) {
             // Packet reception interrupted because a signal has been received.
             // This is not an error because we might have received a SIGTERM,
-            // SIGINT or SIGHUP which are handled by the server. For signals
-            // that are not handled by the server we rely on the default
+            // SIGINT, SIGHUP or SIGCHILD which are handled by the server. For
+            // signals that are not handled by the server we rely on the default
             // behavior of the system.
             LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
                 .arg(signal_set_->getNext());
@@ -413,15 +411,13 @@ Dhcpv4Srv::run() {
         // select() function is called. If the function was called before
         // receivePacket the process could wait up to the duration of timeout
         // of select() to terminate.
-        handleSignal();
-
-        // Execute ready timers for the lease database, e.g. Lease File Cleanup.
         try {
-            LeaseMgrFactory::instance().getIOService()->poll();
-
-        } catch (const std::exception& ex) {
-            LOG_WARN(dhcp4_logger, DHCP4_LEASE_DATABASE_TIMERS_EXEC_FAIL)
-                .arg(ex.what());
+            handleSignal();
+        } catch (const std::exception& e) {
+            // Standard exception occurred. Let's be on the safe side to
+            // catch std::exception.
+            LOG_ERROR(dhcp4_logger, DHCP4_HANDLE_SIGNAL_EXCEPTION)
+                .arg(e.what());
         }
 
         // Timeout may be reached or signal received, which breaks select()
@@ -594,11 +590,12 @@ Dhcpv4Srv::run() {
                 // "switch" statement.
                 ;
             }
-        } catch (const isc::Exception& e) {
+        } catch (const std::exception& e) {
 
-            // Catch-all exception (at least for ones based on the isc Exception
-            // class, which covers more or less all that are explicitly raised
-            // in the Kea code).  Just log the problem and ignore the packet.
+            // Catch-all exception (we used to call only isc::Exception, but
+            // std::exception could potentially be raised and if we don't catch
+            // it here, it would be caught in main() and the process would
+            // terminate).  Just log the problem and ignore the packet.
             // (The problem is logged as a debug message because debug is
             // disabled by default - it prevents a DDOS attack based on the
             // sending of problem packets.)
@@ -1482,7 +1479,7 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     // Instead we will need to use the address assigned to the interface
     // on which the query has been received. In other cases, we will just
     // use this address as a source address for the response.
-    if (local_addr == IOAddress::IPV4_BCAST_ADDRESS()) {
+    if (local_addr.isV4Bcast()) {
         SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
         local_addr = sock_info.addr_;
     }
@@ -1522,7 +1519,7 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
     if (query->getType() == DHCPINFORM) {
         // If client adheres to RFC2131 it will set the ciaddr and in this
         // case we always unicast our response to this address.
-        if (query->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
+        if (!query->getCiaddr().isV4Zero()) {
             response->setRemoteAddr(query->getCiaddr());
 
         // If we received DHCPINFORM via relay and the ciaddr is not set we
@@ -1553,14 +1550,14 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
         // the message is relayed. Therefore, we set the BROADCAST flag so
         // as the relay can broadcast the packet.
         if ((query->getType() == DHCPINFORM) &&
-            (query->getCiaddr() == IOAddress::IPV4_ZERO_ADDRESS())) {
+            query->getCiaddr().isV4Zero()) {
             response->setFlags(BOOTP_BROADCAST);
         }
         response->setRemoteAddr(query->getGiaddr());
 
     // If giaddr is 0 but client set ciaddr, server should unicast the
     // response to ciaddr.
-    } else if (query->getCiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
+    } else if (!query->getCiaddr().isV4Zero()) {
         response->setRemoteAddr(query->getCiaddr());
 
     // We can't unicast the response to the client when sending NAK,
@@ -1570,7 +1567,7 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
         response->setRemoteAddr(IOAddress::IPV4_BCAST_ADDRESS());
 
     // If yiaddr is set it means that we have created a lease for a client.
-    } else if (response->getYiaddr() != IOAddress::IPV4_ZERO_ADDRESS()) {
+    } else if (!response->getYiaddr().isV4Zero()) {
         // If the broadcast bit is set in the flags field, we have to
         // send the response to broadcast address. Client may have requested it
         // because it doesn't support reception of messages on the interface
@@ -1731,16 +1728,6 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
         client_id = ClientIdPtr(new ClientId(opt->getData()));
     }
 
-    Subnet4Ptr subnet = selectSubnet(release);
-    if (!subnet) {
-        // No subnet - release no sent from the proper location
-        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
-                  DHCP4_RELEASE_FAIL_NO_SUBNET)
-            .arg(release->getLabel())
-            .arg(release->getCiaddr().toText());
-        return;
-    }
-
     try {
         // Do we have a lease for that particular address?
         Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(release->getCiaddr());
@@ -1826,8 +1813,120 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 }
 
 void
-Dhcpv4Srv::processDecline(Pkt4Ptr&) {
-    /// @todo Implement this (also see ticket #3116)
+Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
+
+    // Server-id is mandatory in DHCPDECLINE (see table 5, RFC2131)
+    /// @todo Uncomment this (see ticket #3116)
+    // sanityCheck(decline, MANDATORY);
+
+    // Client is supposed to specify the address being declined in
+    // Requested IP address option, but must not set its ciaddr.
+    // (again, see table 5 in RFC2131).
+
+    OptionCustomPtr opt_requested_address = boost::dynamic_pointer_cast<
+        OptionCustom>(decline->getOption(DHO_DHCP_REQUESTED_ADDRESS));
+    if (!opt_requested_address) {
+
+        isc_throw(RFCViolation, "Mandatory 'Requested IP address' option missing"
+                  "in DHCPDECLINE sent from " << decline->getLabel());
+    }
+    IOAddress addr(opt_requested_address->readAddress());
+
+    // We could also extract client's address from ciaddr, but that's clearly
+    // against RFC2131.
+
+    // Now we need to check whether this address really belongs to the client
+    // that attempts to decline it.
+    const Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
+
+    if (!lease) {
+        // Client tried to decline an address, but we don't have a lease for
+        // that address. Let's ignore it.
+        //
+        // We could assume that we're recovering from a mishandled migration
+        // to a new server and mark the address as declined, but the window of
+        // opportunity for that to be useful is small and the attack vector
+        // would be pretty severe.
+        LOG_WARN(dhcp4_logger, DHCP4_DECLINE_LEASE_NOT_FOUND)
+            .arg(addr.toText()).arg(decline->getLabel());
+        return;
+    }
+
+    // Get client-id, if available.
+    OptionPtr opt_clientid = decline->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    ClientIdPtr client_id;
+    if (opt_clientid) {
+        client_id.reset(new ClientId(opt_clientid->getData()));
+    }
+
+    // Check if the client attempted to decline a lease it doesn't own.
+    if (!lease->belongsToClient(decline->getHWAddr(), client_id)) {
+
+        // Get printable hardware addresses
+        string client_hw = decline->getHWAddr() ?
+            decline->getHWAddr()->toText(false) : "(none)";
+        string lease_hw = lease->hwaddr_ ?
+            lease->hwaddr_->toText(false) : "(none)";
+
+        // Get printable client-ids
+        string client_id_txt = client_id ? client_id->toText() : "(none)";
+        string lease_id_txt = lease->client_id_ ?
+            lease->client_id_->toText() : "(none)";
+
+        // Print the warning and we're done here.
+        LOG_WARN(dhcp4_logger, DHCP4_DECLINE_LEASE_MISMATCH)
+            .arg(addr.toText()).arg(decline->getLabel())
+            .arg(client_hw).arg(lease_hw).arg(client_id_txt).arg(lease_id_txt);
+
+        return;
+    }
+
+    // Ok, all is good. The client is reporting its own address. Let's
+    // process it.
+    declineLease(lease, decline->getLabel());
+}
+
+void
+Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const std::string& descr) {
+
+    // Clean up DDNS, if needed.
+    if (CfgMgr::instance().ddnsEnabled()) {
+        // Remove existing DNS entries for the lease, if any.
+        // queueNameChangeRequest will do the necessary checks and will
+        // skip the update, if not needed.
+        queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, lease);
+    }
+
+    // Bump up the statistics.
+
+    // Per subnet declined addresses counter.
+    StatsMgr::instance().addValue(
+        StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
+        static_cast<int64_t>(1));
+
+    // Global declined addresses counter.
+    StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
+
+    // We do not want to decrease the assigned-addresses at this time. While
+    // technically a declined address is no longer allocated, the primary usage
+    // of the assigned-addresses statistic is to monitor pool utilization. Most
+    // people would forget to include declined-addresses in the calculation,
+    // and simply do assigned-addresses/total-addresses. This would have a bias
+    // towards under-representing pool utilization, if we decreased allocated
+    // immediately after receiving DHCPDECLINE, rather than later when we recover
+    // the address.
+
+    // @todo: Call hooks.
+
+    // We need to disassociate the lease from the client. Once we move a lease
+    // to declined state, it is no longer associated with the client in any
+    // way.
+    lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
+
+    LeaseMgrFactory::instance().updateLease4(lease);
+
+    LOG_INFO(dhcp4_logger, DHCP4_DECLINE_LEASE).arg(lease->addr_.toText())
+        .arg(descr).arg(lease->valid_lft_);
 }
 
 Pkt4Ptr
@@ -1912,8 +2011,8 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
     // to respond if the ciaddr was not present.
     try {
         if (pkt->getType() == DHCPINFORM) {
-            if ((pkt->getRemoteAddr() == IOAddress::IPV4_ZERO_ADDRESS()) &&
-                (pkt->getCiaddr() == IOAddress::IPV4_ZERO_ADDRESS())) {
+            if (pkt->getRemoteAddr().isV4Zero() &&
+                pkt->getCiaddr().isV4Zero()) {
                 return (false);
             }
         }
@@ -1923,8 +2022,7 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
         // we validate the message type prior to calling this function.
         return (false);
     }
-    return ((pkt->getLocalAddr() != IOAddress::IPV4_BCAST_ADDRESS()
-             || selectSubnet(pkt)));
+    return (!pkt->getLocalAddr().isV4Bcast() || selectSubnet(pkt));
 }
 
 bool
@@ -2255,6 +2353,15 @@ Dhcpv4Srv::startD2() {
         // This may throw so wherever this is called needs to ready.
         d2_mgr.startSender(boost::bind(&Dhcpv4Srv::d2ClientErrorHandler,
                                        this, _1, _2));
+    }
+}
+
+void
+Dhcpv4Srv::stopD2() {
+    D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    if (d2_mgr.ddnsEnabled()) {
+        // Updates are enabled, so lets stop the sender
+        d2_mgr.stopSender();
     }
 }
 

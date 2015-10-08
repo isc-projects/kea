@@ -15,6 +15,7 @@
 #ifndef DHCPSRV_CONFIG_H
 #define DHCPSRV_CONFIG_H
 
+#include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
@@ -259,6 +260,18 @@ public:
         return (cfg_rsoo_);
     }
 
+    /// @brief Returns pointer to the object holding configuration pertaining
+    /// to processing expired leases.
+    CfgExpirationPtr getCfgExpiration() {
+        return (cfg_expiration_);
+    }
+
+    /// @brief Returns pointer to the const object holding configuration
+    /// pertaining to processing expired leases.
+    ConstCfgExpirationPtr getCfgExpiration() const {
+        return (cfg_expiration_);
+    }
+
     //@}
 
     /// @brief Returns non-const reference to an array that stores
@@ -376,6 +389,24 @@ public:
     /// @ref CfgSubnets6::removeStatistics for details.
     void removeStatistics();
 
+    /// @brief Sets decline probation-period
+    ///
+    /// Probation-period is the timer, expressed, in seconds, that specifies how
+    /// long a lease is unavailable after reported as declined.
+    ///
+    /// @param decline_timer number of seconds after declined lease is restored
+    void setDeclinePeriod(const uint32_t decline_timer) {
+        decline_timer_ = decline_timer;
+    }
+
+    /// @brief Returns probation-period
+    ///
+    /// See @ref setDeclinePeriod for brief discussion.
+    /// @return value of probation-period, expressed in seconds
+    uint32_t getDeclinePeriod() const {
+        return (decline_timer_);
+    }
+
 private:
 
     /// @brief Sequence number identifying the configuration.
@@ -423,8 +454,18 @@ private:
     /// RFC 6422 for the definition of the RSOO-enabled option.
     CfgRSOOPtr cfg_rsoo_;
 
+    /// @brief Pointer to the configuration pertaining to processing of
+    /// expired leases.
+    CfgExpirationPtr cfg_expiration_;
+
     /// @brief Pointer to the control-socket information
     isc::data::ConstElementPtr control_socket_;
+
+    /// @brief Decline Period time
+    ///
+    /// This timer specifies decline probation period, the time after a declined
+    /// lease is recovered back to available state. Expressed in seconds.
+    uint32_t decline_timer_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

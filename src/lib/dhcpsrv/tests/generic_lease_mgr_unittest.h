@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -264,6 +264,52 @@ public:
     /// @param major Expected major version to be reported.
     /// @param minor Expected minor version to be reported.
     void testVersion(int major, int minor);
+
+    /// @brief Checks that the expired DHCPv4 leases can be retrieved.
+    ///
+    /// This test checks the following:
+    /// - all expired and not reclaimed leases are retured
+    /// - number of leases returned can be limited
+    /// - leases are returned in the order from the most expired to the
+    ///   least expired
+    /// - reclaimed leases are not returned.
+    void testGetExpiredLeases4();
+
+    /// @brief Checks that the expired DHCPv6 leases can be retrieved.
+    ///
+    /// This test checks the following:
+    /// - all expired and not reclaimed leases are retured
+    /// - number of leases returned can be limited
+    /// - leases are returned in the order from the most expired to the
+    ///   least expired
+    /// - reclaimed leases are not returned.
+    void testGetExpiredLeases6();
+
+    /// @brief Checks that declined DHCPv4 leases that have expired can be retrieved.
+    ///
+    /// This test checks that the following:
+    /// - all expired and not reclaimed leases are returned, regardless if
+    ///   they're normal or declined
+    /// - the order in which they're updated in LeaseMgr doesn't matter
+    /// - leases are returned in the order from most expired to the least
+    ///   expired
+    void testGetDeclinedLeases4();
+
+    /// @brief Checks that selected expired-reclaimed DHCPv6 leases
+    /// are removed.
+    ///
+    /// This creates a number of DHCPv6 leases and marks some of them
+    /// as expired-reclaimed. It later verifies that the expired-reclaimed
+    /// leases can be removed.
+    void testDeleteExpiredReclaimedLeases6();
+
+    /// @brief Checks that selected expired-reclaimed DHCPv4 leases
+    /// are removed.
+    ///
+    /// This creates a number of DHCPv4 leases and marks some of them
+    /// as expired-reclaimed. It later verifies that the expired-reclaimed
+    /// leases can be removed.
+    void testDeleteExpiredReclaimedLeases4();
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;

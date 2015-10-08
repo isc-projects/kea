@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -123,7 +123,31 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
+    // We're going to modify the timers configuration. This is not allowed
+    // when the thread is running.
+    try {
+        TimerMgr::instance()->stopThread();
+    } catch (const std::exception& ex) {
+        err << "Unable to stop worker thread running timers: "
+            << ex.what() << ".";
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
     ConstElementPtr answer = configureDhcp4Server(*srv, config);
+
+    // Start worker thread if there are any timers installed. Note that
+    // we also start worker thread when the reconfiguration failed, because
+    // in that case we continue using an old configuration and the server
+    // should still run installed timers.
+    if (TimerMgr::instance()->timersCount() > 0) {
+        try {
+            TimerMgr::instance()->startThread();
+        } catch (const std::exception& ex) {
+            err << "Unable to start worker thread running timers: "
+                << ex.what() << ".";
+            return (isc::config::createAnswer(1, err.str()));
+        }
+    }
 
     // Check that configuration was successful. If not, do not reopen sockets
     // and don't bother with DDNS stuff.
@@ -157,11 +181,12 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     CfgMgr::instance().getStagingCfg()->getCfgIface()->
         openSockets(AF_INET, srv->getPort(), getInstance()->useBroadcast());
 
+
     return (answer);
 }
 
 ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
-    :Dhcpv4Srv(port) {
+    : Dhcpv4Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()) {
     if (getInstance()) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv4Srv instance already.");
@@ -201,19 +226,29 @@ void ControlledDhcpv4Srv::shutdown() {
 }
 
 ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
-    cleanup();
+    try {
+        cleanup();
 
-    // Close the command socket (if it exists).
-    CommandMgr::instance().closeCommandSocket();
+        // Stop worker thread running timers, if it is running.
+        timer_mgr_->stopThread();
 
-    // Deregister any registered commands
-    CommandMgr::instance().deregisterCommand("shutdown");
-    CommandMgr::instance().deregisterCommand("statistic-get");
-    CommandMgr::instance().deregisterCommand("statistic-reset");
-    CommandMgr::instance().deregisterCommand("statistic-remove");
-    CommandMgr::instance().deregisterCommand("statistic-get-all");
-    CommandMgr::instance().deregisterCommand("statistic-reset-all");
-    CommandMgr::instance().deregisterCommand("statistic-remove-all");
+        // Close the command socket (if it exists).
+        CommandMgr::instance().closeCommandSocket();
+
+        // Deregister any registered commands
+        CommandMgr::instance().deregisterCommand("shutdown");
+        CommandMgr::instance().deregisterCommand("statistic-get");
+        CommandMgr::instance().deregisterCommand("statistic-reset");
+        CommandMgr::instance().deregisterCommand("statistic-remove");
+        CommandMgr::instance().deregisterCommand("statistic-get-all");
+        CommandMgr::instance().deregisterCommand("statistic-reset-all");
+        CommandMgr::instance().deregisterCommand("statistic-remove-all");
+
+    } catch (...) {
+        // Don't want to throw exceptions from the destructor. The server
+        // is shutting down anyway.
+        ;
+    }
 
     server_ = NULL; // forget this instance. Noone should call any handlers at
                     // this stage.

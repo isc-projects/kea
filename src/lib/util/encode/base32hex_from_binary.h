@@ -1,11 +1,6 @@
 #ifndef BOOST_ARCHIVE_ITERATORS_BASE32HEX_FROM_BINARY_HPP
 #define BOOST_ARCHIVE_ITERATORS_BASE32HEX_FROM_BINARY_HPP
 
-// MS compatible compilers support #pragma once
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
-# pragma once
-#endif
-
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
 // base32hex_from_binary.h (derived from boost base64_from_binary.hpp)
 
@@ -87,9 +82,9 @@ class base32hex_from_binary :
 public:
     // make composable by using templated constructor
     template<class T>
-    base32hex_from_binary(BOOST_PFTO_WRAPPER(T) start) :
+    base32hex_from_binary(T start) :
         super_t(
-            Base(BOOST_MAKE_PFTO_WRAPPER(static_cast<T>(start))),
+            Base(static_cast<T>(start)),
             detail::from_5_bit<CharType>()
         )
     {}

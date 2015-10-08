@@ -20,7 +20,7 @@
 #include <util/time_utilities.h>
 #include <test_utils.h>
 
-#include <asio/ip/udp.hpp>
+#include <boost/asio/ip/udp.hpp>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include <gtest/gtest.h>
@@ -198,18 +198,18 @@ public:
         ASSERT_NO_THROW(sent_ncr_->toFormat(FMT_JSON, ncr_buffer));
 
         // Create a UDP socket through which our "sender" will send the NCR.
-        asio::ip::udp::socket
-            udp_socket(io_service_.get_io_service(), asio::ip::udp::v4());
+        boost::asio::ip::udp::socket
+            udp_socket(io_service_.get_io_service(), boost::asio::ip::udp::v4());
 
         // Create an endpoint pointed at the listener.
-        asio::ip::udp::endpoint
-            listener_endpoint(asio::ip::address::from_string(TEST_ADDRESS),
+        boost::asio::ip::udp::endpoint
+            listener_endpoint(boost::asio::ip::address::from_string(TEST_ADDRESS),
                               LISTENER_PORT);
 
         // A response message is now ready to send. Send it!
         // Note this uses a synchronous send so it ships immediately.
         // If listener isn't in listening mode, it will get missed.
-        udp_socket.send_to(asio::buffer(ncr_buffer.getData(),
+        udp_socket.send_to(boost::asio::buffer(ncr_buffer.getData(),
                                      ncr_buffer.getLength()),
                             listener_endpoint);
     }
@@ -362,7 +362,7 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     int select_fd = sender.getSelectFd();
 
     // Verify select_fd is valid and currently shows no ready to read.
-    ASSERT_NE(dhcp_ddns::WatchSocket::SOCKET_NOT_VALID, select_fd);
+    ASSERT_NE(util::WatchSocket::SOCKET_NOT_VALID, select_fd);
 
     // Make sure select_fd does evaluates to not ready via select and
     // that ioReady() method agrees.
@@ -747,7 +747,7 @@ TEST(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
     close(sender.getSelectFd());
 
     // Send should fail as we interferred by closing the select-fd.
-    ASSERT_THROW(sender.sendRequest(ncr), WatchSocketError);
+    ASSERT_THROW(sender.sendRequest(ncr), util::WatchSocketError);
 
     // Verify we didn't invoke the handler.
     EXPECT_EQ(0, ncr_handler.pass_count_);
@@ -827,7 +827,7 @@ TEST(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
     // Interfere by reading part of the marker from the select-fd.
     uint32_t buf = 0;
     ASSERT_EQ((read (select_fd, &buf, 1)), 1);
-    ASSERT_NE(WatchSocket::MARKER, buf);
+    ASSERT_NE(util::WatchSocket::MARKER, buf);
 
     // Run one handler. This should execute the send completion handler
     // after sending the message.  Duing completion handling clearing the

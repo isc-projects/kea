@@ -1,4 +1,188 @@
+1019.	[func]		marcin
+	Added new configuration parameters controlling processing of the
+	expired leases in the DHCPv4 and DHCPv6 server.
+	(Trac #3974, git c998d36c40cc46ffe9f888e615bbcfa0a311d40d)
+
+1018.   [func]		sar
+	Added support for several options for use by PXE.
+	From RFC4578 (for DHCPv4) these are: 93 - client-system,
+	94 - client-ndi, 97 - uuid-guid.
+	From RFC5970 (for DHCPv6) these are: 59 - bootfile-url,
+	60 - bootfile-param, 61 - client-arch-type, 62 - nii.
+	(trac #3576, git fdcc73afe7e26bd427817fd771567b1c44713b06)
+
+1017.	[func]		tmark
+	Lease dump SQL logic, used by kea-admin, is now supplied via stored
+	procedures rather than external text files.  Files of the form
+	lease_dump_<version>.sh will no longer be installed under
+	<prefix>/share/kea/scripts.
+	(Trac #3916, git 09cdd86a5e284250d7657a93a36df2e2705947d2)
+
+1016.	[bug]		fdupont
+	Fixed problems when --enable-static-link is specified as a
+	"configure" option. With this switch present, all Kea
+	executables (servers, tools, unit tests, etc) are linked
+	to the static (vs. shared) version of Kea libraries.
+	However, note that they can still be linked to dynamic
+	system libraries.
+	(Trac #4004, git 760a343efbd241f5ed333cfff088124378f69115)
+
+1015.	[func]		tomek
+	Expired declined leases can now be reclaimed (returned to the
+	available pool) after probation	period elapses.
+	(Trac #3984, #3976, git 32a8ec68e0e5ea93991915812158d7628d2b4709)
+
+1014.	[func]		marcin
+	Implemented lease4_expire and lease6_expire hooks in libdhcpsrv.
+	(Trac #3972, git 8a8547aec1caf2a8d1c7ca206f68534f3c03f1d9)
+
+1013.	[func]		marcin
+	New mechanism for scheduling lease file cleanup is used in the
+	DHCPv4 and DHCPv6 servers.
+	(Trac #3971, git 431d515fc3d64aa82369c8eaf48d03339f12dc69)
+
+1012.	[bug]		stephen
+	Replace #include of message_dictionary.h in message_initializer.h
+	with a declaration of the MessageDictionary class, avoing the need
+	to include message_dictionary.h in the set of header files installed.
+	(Trac #4046, git 9f1801b4326f62632a7c9f0aa939d58f120c10e8)
+
+1011.	[func]		fdupont
+	Added definitions and tests for the options from secure DHCPv6.
+	This protocol is still experimental. The option and other protocol
+	codes are for testing, they will be updated when IANA assigns
+	official values.
+	(Trac #4015, git 95f8c0d0af45807c1f303b9bbbb08f82b3bfc343)
+
+1010.	[bug]		tmark
+	Fixed test failures occuring for some tests after
+	IfaceMgr::closeSockets was called.
+	(Trac #4067, git 9161867dc6a354659ae8b5115ee437ec76c1771e)
+
+1009.	[bug]		fdupont
+	Now libutil blocks all signals when creating a new thread
+	(so signals are delivered only to the main thread).
+	(Trac #4065, git a4a8e422e613e4378f0a0641e4c480b73d67ebeb)
+
+1008.	[build]		fdupont
+	Removed the included header-only ASIO code.  Kea is now built
+	against the installed copy of Boost.  The build by default
+	attempts to use the header-only error code (ASIO dependency), but
+	may also use the version in the boost system library.  The
+	location of this library can be specified.
+	(Trac #4009, git 8c293bc0d1804a512964621f114e64fcba0abcb9)
+
+1007.	[func]		tomek
+	DECLINE message in DHCPv6 is now supported. The server is able
+	to receive it, check its correctness and move the lease to
+	DECLINED state. Currently there is no way to recover the lease
+	before 'decline-probation-period' time.
+	(Trac #3982, git 11e2c4366d8624601172c01e95cff6a8b95833b3)
+
+1006.	[bug]		marcin
+	Fixed issues with threads concurrency in the TimerMgr.
+	(Trac #4047, git 48297af6e0443808a482536b61436a42bc6a5b38)
+
+1005.	[func]		tomek
+	DHCPDECLINE message in DHCPv4 is now supported. The server is able
+	to receive it, check its correctness and move the lease to
+	DECLINED state. Currently there is no way to recover the lease
+	before 'decline-probation-period' time.
+	(Trac #3981, git c14a63c0d3a56ea3e880e874f854adc0077de75e)
+
+1004.	[bug]		fdupont
+	Incoming Confirm, Rebind and Information-Request messages are
+	now more thoroughly checked against presence of client-id
+	and server-id options.
+	(Trac #3773, git fd2889b9de45e2822b6713663bee06b75259c6dc)
+
+1003.	[build]		fdupont
+	Updated Makefiles to ensure that all required dynamic libraries
+	are included in the link command line as some systems are unable
+	handle implied library dependencies.
+	(Trac #3911, git 4d13f5234da33df03c0989829a0e1c1056e53a4e)
+
+1002.	[func]		marcin
+	MySQL lease database backend has been extended with new
+	functions to obtain expired leases and to delete expired
+	reclaimed leases.
+	(Trac #3966, git 419832a6279c70b5db04b1cab10737e31f2c99f9)
+
+1001.	[build]		fdupont
+	Fixed critical C++ issues in the Kea code. This does not cover
+	auto_ptr warnings (just ignore them) or the gtest 1.7.0 bug with
+	EXPECT_TRUE() and ASSERT_TRUE() macros (we recommend to download
+	last subversion souces at http://googletest.googlecode.com/svn/trunk
+	and use the --with-gtest-source configuration argument when
+	you'd like to build unit tests).
+	(Trac #4024, git 55afd98fead0c16bb81107dfc1a5f49a5e295aa6)
+
+1000.	[func]		marcin
+	Implemented Timer Manager which holds the pool of interval
+	timers used by the DHCP servers.
+	(Trac #3970, git bc8503055338da36d07a2b67c64087f645c9a9e3)
+
+999.	[func]*		tmark
+	The DHCPv4 server will now honor DHCPRELEASEs for leased addresses
+	which cannot be matched to subnet.  This allows leases to be
+	released after configuration changes have eliminated their subnet.
+	Prior to this the server would reject the release and emit a
+	DHCP4_RELEASE_FAIL_NO_SUBNET log message.
+	(Trac #2615, git eeebf9f68cf5be6a0f7eefc78832d664361c4990)
+
+998.	[func]		tomek
+	'decline-probation-period' parameter has been added to DHCPv4
+	and DHCPv6 configuration. It can be configured, but is not yet
+	used, as the DECLINE message support is still pending implementation.
+	(Trac #3983, git 6b10d119c89685476335f268181c9982f6fa6161)
+
+997.	[build]		jreed
+	Removed obsolete Python coverage build options.
+	(Trac #3483, git a08cbbecbd3b11d0b73f68a40986a353b22ed3be)
+
+996.	[func]		marcin
+	Memfile lease database backend has been extended with new
+	functions to obtain expired leases and to delete expired
+	reclaimed leases.
+	(Trac #3965, git dd5b95453528416f22e961e6ebb3051bc2ae788c)
+
+995.	[build]		fdupont
+	Removed additional files left over from BIND 10 (headers,
+	src/lib/{asiodns,testutils,asiolink}).
+	(Trac #40{28,29,31}, git 78ff0fb0a97731a8b3c055b1cbb4faebcd115f7c)
+
+994.	[func]*		marcin
+	DHCPv6 server fully supports RFC 7550.
+	(Trac #3947, git c06ab97a4e068c4b4b11f4685c56dd402b2385dc)
+
+993.	[bug]		fdupont
+	The logging spec file was searched in the build tree when it
+	was in the source tree so distcheck (where they differ) failed.
+	(Trac #4026, git 5eb213647d7ac0a707530d57af2c6dbd725ac1b3)
+
+992.	[func]		fdupont
+	A 'flush' parameter has been added to logging configuration. It is
+	now possible to disable automatic immediate flushing to achieve
+	better logging performance.
+	(Trac #3752, git 16c4c2b6d95c45864ec3e2b27e0d320e386b2c0b)
+
+991.	[build]		fdupont
+	Removed partial function template ordering macros to allow Kea to
+	build with Boost 1.59 and later.  Also removed some
+	compiler-dependent code.
+	(Trac #4006, git e06934f211436eea37439128ff6f388709f01101)
+
+990.	[bug]		tomek
+	Improved child process signal handling. Improved number of
+	exception handling routines in DHCPv4 and DHCPv6.
+	(Trac #4000, git bf5e48f2cf80b5263cc89f445795bc8c5b8f011d)
+
 Kea 0.9.2 released on July 28, 2015
+
+989.	[bug]		tmark
+	Fixed a bug in both DHCPv4 and DHCPv6 servers that could cause
+	them to crash during sever shutdown when DNS updates are enabled.
+	(Trac #3997, git ce91bdd78f420f64324c573a952ec804bc25e0d8)
 
 988.	[bug]		fdupont
 	keactrl no longer returns an error when the "status" command is

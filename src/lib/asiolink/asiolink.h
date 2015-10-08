@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,12 +20,10 @@
 // See the description of the namespace below.
 
 #include <asiolink/io_service.h>
-#include <asiolink/simple_callback.h>
 #include <asiolink/interval_timer.h>
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_endpoint.h>
-#include <asiolink/io_message.h>
 #include <asiolink/io_socket.h>
 #include <asiolink/io_error.h>
 
@@ -35,7 +33,7 @@
 /// The \c asiolink namespace is used to define a set of wrapper interfaces
 /// for the ASIO library.
 ///
-/// Kea uses the non-Boost version of ASIO because it's header-only,
+/// Kea uses the Boost version of ASIO in its header-only mode,
 /// i.e., does not require a separate library object to be linked, and thus
 /// lowers the bar for introduction.
 ///

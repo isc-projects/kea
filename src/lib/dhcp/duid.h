@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,14 +16,17 @@
 #define DUID_H
 
 #include <asiolink/io_address.h>
-
+#include <boost/shared_ptr.hpp>
 #include <vector>
-
 #include <stdint.h>
 #include <unistd.h>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Shared pointer to a DUID
+class DUID;
+typedef boost::shared_ptr<DUID> DuidPtr;
 
 /// @brief Holds DUID (DHCPv6 Unique Identifier)
 ///
@@ -65,6 +68,18 @@ class DUID {
     ///
     /// @return A reference to a vector holding a DUID.
     const std::vector<uint8_t>& getDuid() const;
+
+
+    /// @brief Returns an instance of empty DUID
+    ///
+    /// In general, empty DUID is not allowed. The only case where it is really
+    /// valid is to designate declined IPv6 Leases. We have a broad assumption
+    /// that the Lease->duid_ must always be set. However, declined lease
+    /// doesn't have any DUID associated with it. Hence we need a way to
+    /// indicate that fact.
+    ///
+    /// @return a smart pointer to an empty DUID
+    static DuidPtr generateEmpty();
 
     /// @brief Returns the DUID type
     DUIDType getType() const;
@@ -110,9 +125,6 @@ class DUID {
     /// The actual content of the DUID
     std::vector<uint8_t> duid_;
 };
-
-/// @brief Shared pointer to a DUID
-typedef boost::shared_ptr<DUID> DuidPtr;
 
 /// @brief Forward declaration to the @c ClientId class.
 class ClientId;

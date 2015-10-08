@@ -102,6 +102,13 @@ Dhcp4Client::appendClientId() {
 }
 
 void
+Dhcp4Client::appendServerId() {
+    OptionPtr opt(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
+                                     config_.serverid_));
+    context_.query_->addOption(opt);
+}
+
+void
 Dhcp4Client::appendName() {
     if (!context_.query_) {
         isc_throw(Dhcp4ClientError, "pointer to the query must not be NULL"
@@ -194,7 +201,7 @@ void
 Dhcp4Client::createLease(const asiolink::IOAddress& addr,
                          const uint32_t valid_lft) {
     Lease4 lease(addr, hwaddr_, 0, 0, valid_lft, valid_lft / 2, valid_lft,
-                 time(NULL), false, false, "");
+                 time(NULL), 0, false, false, "");
     config_.lease_ = lease;
 }
 
@@ -263,7 +270,7 @@ Dhcp4Client::doInform(const bool set_ciaddr) {
 
 void
 Dhcp4Client::doRelease() {
-    if (config_.lease_.addr_ == IOAddress::IPV4_ZERO_ADDRESS()) {
+    if (config_.lease_.addr_.isV4Zero()) {
         isc_throw(Dhcp4ClientError, "failed to send the release"
                   " message because client doesn't have a lease");
     }
@@ -272,6 +279,34 @@ Dhcp4Client::doRelease() {
     context_.query_->setCiaddr(config_.lease_.addr_);
     // Include client identifier.
     appendClientId();
+
+    // Remove configuration.
+    config_.reset();
+
+    // Send the message to the server.
+    sendMsg(context_.query_);
+}
+
+void
+Dhcp4Client::doDecline() {
+    if (config_.lease_.addr_.isV4Zero()) {
+        isc_throw(Dhcp4ClientError, "failed to send the decline"
+                  " message because client doesn't have a lease");
+    }
+
+    context_.query_ = createMsg(DHCPDECLINE);
+
+    // Set ciaddr to 0.
+    context_.query_->setCiaddr(IOAddress("0.0.0.0"));
+
+    // Include Requested IP Address Option
+    addRequestedAddress(config_.lease_.addr_);
+
+    // Include client identifier.
+    appendClientId();
+
+    // Incluer server identifier.
+    appendServerId();
 
     // Remove configuration.
     config_.reset();

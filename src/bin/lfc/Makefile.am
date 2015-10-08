@@ -58,13 +58,29 @@ sbin_PROGRAMS = kea-lfc
 kea_lfc_SOURCES  = main.cc
 
 kea_lfc_LDADD  = liblfc.la
-kea_lfc_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-kea_lfc_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-kea_lfc_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-kea_lfc_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-kea_lfc_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-kea_lfc_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
-kea_lfc_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+kea_lfc_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
+
+kea_lfc_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
+if HAVE_MYSQL
+kea_lfc_LDFLAGS += $(MYSQL_LIBS)
+endif
+if HAVE_PGSQL
+kea_lfc_LDFLAGS += $(PGSQL_LIBS)
+endif
 
 kea_lfcdir = $(pkgdatadir)

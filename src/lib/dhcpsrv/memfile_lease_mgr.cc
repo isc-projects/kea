@@ -17,6 +17,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
 #include <util/pid_file.h>
 #include <util/process_spawn.h>
@@ -25,6 +26,7 @@
 #include <cstring>
 #include <errno.h>
 #include <iostream>
+#include <limits>
 #include <sstream>
 
 namespace {
@@ -72,9 +74,12 @@ public:
     /// @c Memfile_LeaseMgr class.
     ///
     /// @param callback A pointer to the callback function.
-    /// @param io_service An io service used to create the interval timer.
-    LFCSetup(asiolink::IntervalTimer::Callback callback,
-             asiolink::IOService& io_service);
+    LFCSetup(asiolink::IntervalTimer::Callback callback);
+
+    /// @brief Destructor.
+    ///
+    /// Unregisters LFC timer.
+    ~LFCSetup();
 
     /// @brief Sets the new configuration for the %Lease File Cleanup.
     ///
@@ -91,11 +96,6 @@ public:
     /// @brief Spawns a new process.
     void execute();
 
-    /// @brief Returns interval at which the cleanup is performed.
-    ///
-    /// @return Interval in milliseconds.
-    long getInterval() const;
-
     /// @brief Checks if the lease file cleanup is in progress.
     ///
     /// @return true if the lease file cleanup is being executed.
@@ -106,9 +106,6 @@ public:
 
 private:
 
-    /// @brief Interval timer for LFC.
-    asiolink::IntervalTimer timer_;
-
     /// @brief A pointer to the @c ProcessSpawn object used to execute
     /// the LFC.
     boost::scoped_ptr<util::ProcessSpawn> process_;
@@ -118,11 +115,40 @@ private:
 
     /// @brief A PID of the last executed LFC process.
     pid_t pid_;
+
+    /// @brief Pointer to the timer manager.
+    ///
+    /// We have to hold this pointer here to make sure that the timer
+    /// manager is not destroyed before the lease manager.
+    TimerMgrPtr timer_mgr_;
 };
 
-LFCSetup::LFCSetup(asiolink::IntervalTimer::Callback callback,
-                   asiolink::IOService& io_service)
-    : timer_(io_service), process_(), callback_(callback), pid_(0) {
+LFCSetup::LFCSetup(asiolink::IntervalTimer::Callback callback)
+    : process_(), callback_(callback), pid_(0),
+      timer_mgr_(TimerMgr::instance()) {
+}
+
+LFCSetup::~LFCSetup() {
+    try {
+        // If we're here it means that either the process is terminating
+        // or we're reconfiguring the server. In the latter case the
+        // thread has been stopped probably, but we need to handle the
+        // former case so we call stopThread explicitly here.
+        timer_mgr_->stopThread();
+        // This may throw exception if the timer hasn't been registered
+        // but if the LFC Setup instance exists it means that the timer
+        // must have been registered or such registration have been
+        // attempted. The registration may fail if the duplicate timer
+        // exists or if the TimerMgr's worker thread is running but if
+        // this happens it is a programming error. In any case, we
+        // don't want exceptions being thrown from the destructor so
+        // we just log an error here.
+        timer_mgr_->unregisterTimer("memfile-lfc");
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED)
+            .arg(ex.what());
+    }
 }
 
 void
@@ -141,13 +167,6 @@ LFCSetup::setup(const uint32_t lfc_interval,
         } else {
             executable = c_executable;
         }
-
-        // Set the timer to call callback function periodically.
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SETUP).arg(lfc_interval);
-        // Multiple the lfc_interval value by 1000 as this value specifies
-        // a timeout in seconds, whereas the setup() method expects the
-        // timeout in milliseconds.
-        timer_.setup(callback_, lfc_interval * 1000);
 
         // Start preparing the command line for kea-lfc.
 
@@ -186,12 +205,17 @@ LFCSetup::setup(const uint32_t lfc_interval,
 
         // Create the process (do not start it yet).
         process_.reset(new util::ProcessSpawn(executable, args));
-    }
-}
 
-long
-LFCSetup::getInterval() const {
-    return (timer_.getInterval());
+        // Set the timer to call callback function periodically.
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SETUP).arg(lfc_interval);
+
+        // Multiple the lfc_interval value by 1000 as this value specifies
+        // a timeout in seconds, whereas the setup() method expects the
+        // timeout in milliseconds.
+        timer_mgr_->registerTimer("memfile-lfc", callback_, lfc_interval * 1000,
+                                  asiolink::IntervalTimer::REPEATING);
+        timer_mgr_->setup("memfile-lfc");
+    }
 }
 
 void
@@ -220,11 +244,13 @@ LFCSetup::getExitStatus() const {
     return (process_->getExitStatus(pid_));
 }
 
+// Explicit definition of class static constants.  Values are given in the
+// declaration so they're not needed here.
+const int Memfile_LeaseMgr::MAJOR_VERSION;
+const int Memfile_LeaseMgr::MINOR_VERSION;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
-    : LeaseMgr(parameters),
-      lfc_setup_(new LFCSetup(boost::bind(&Memfile_LeaseMgr::lfcCallback, this),
-                              *getIOService()))
+    : LeaseMgr(parameters), lfc_setup_()
     {
     // Check the universe and use v4 file or v6 file.
     std::string universe = getParameter("universe");
@@ -250,7 +276,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
 
     } else  {
-        lfcSetup();
+       lfcSetup();
     }
 }
 
@@ -320,10 +346,9 @@ Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_ADDR4).arg(addr.toText());
 
-    typedef Lease4Storage::nth_index<0>::type SearchIndex;
-    const SearchIndex& idx = storage4_.get<0>();
-    Lease4Storage::iterator l = idx.find(addr);
-    if (l == storage4_.end()) {
+    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
+    Lease4StorageAddressIndex::iterator l = idx.find(addr);
+    if (l == idx.end()) {
         return (Lease4Ptr());
     } else {
         return (Lease4Ptr(new Lease4(**l)));
@@ -334,10 +359,9 @@ Lease4Collection
 Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_HWADDR).arg(hwaddr.toText());
-    typedef Lease4Storage::nth_index<0>::type SearchIndex;
     Lease4Collection collection;
-    const SearchIndex& idx = storage4_.get<0>();
-    for(SearchIndex::const_iterator lease = idx.begin();
+    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
+    for(Lease4StorageAddressIndex::const_iterator lease = idx.begin();
         lease != idx.end(); ++lease) {
 
         // Every Lease4 has a hardware address, so we can compare it
@@ -355,14 +379,11 @@ Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
               DHCPSRV_MEMFILE_GET_SUBID_HWADDR).arg(subnet_id)
         .arg(hwaddr.toText());
 
-    // We are going to use index #1 of the multi index container.
-    // We define SearchIndex locally in this function because
-    // currently only this function uses this index.
-    typedef Lease4Storage::nth_index<1>::type SearchIndex;
-    // Get the index.
-    const SearchIndex& idx = storage4_.get<1>();
+    // Get the index by HW Address and Subnet Identifier.
+    const Lease4StorageHWAddressSubnetIdIndex& idx =
+        storage4_.get<HWAddressSubnetIdIndexTag>();
     // Try to find the lease using HWAddr and subnet id.
-    SearchIndex::const_iterator lease =
+    Lease4StorageHWAddressSubnetIdIndex::const_iterator lease =
         idx.find(boost::make_tuple(hwaddr.hwaddr_, subnet_id));
     // Lease was not found. Return empty pointer to the caller.
     if (lease == idx.end()) {
@@ -377,10 +398,9 @@ Lease4Collection
 Memfile_LeaseMgr::getLease4(const ClientId& client_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_CLIENTID).arg(client_id.toText());
-    typedef Lease4Storage::nth_index<0>::type SearchIndex;
     Lease4Collection collection;
-    const SearchIndex& idx = storage4_.get<0>();
-    for(SearchIndex::const_iterator lease = idx.begin();
+    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
+    for(Lease4StorageAddressIndex::const_iterator lease = idx.begin();
         lease != idx.end(); ++ lease) {
 
         // client-id is not mandatory in DHCPv4. There can be a lease that does
@@ -402,14 +422,11 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id,
                                                         .arg(hwaddr.toText())
                                                         .arg(subnet_id);
 
-    // We are going to use index #3 of the multi index container.
-    // We define SearchIndex locally in this function because
-    // currently only this function uses this index.
-    typedef Lease4Storage::nth_index<3>::type SearchIndex;
-    // Get the index.
-    const SearchIndex& idx = storage4_.get<3>();
+    // Get the index by client id, HW address and subnet id.
+    const Lease4StorageClientIdHWAddressSubnetIdIndex& idx =
+        storage4_.get<ClientIdHWAddressSubnetIdIndexTag>();
     // Try to get the lease using client id, hardware address and subnet id.
-    SearchIndex::const_iterator lease =
+    Lease4StorageClientIdHWAddressSubnetIdIndex::const_iterator lease =
         idx.find(boost::make_tuple(client_id.getClientId(), hwaddr.hwaddr_,
                                    subnet_id));
 
@@ -429,14 +446,11 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id,
               DHCPSRV_MEMFILE_GET_SUBID_CLIENTID).arg(subnet_id)
               .arg(client_id.toText());
 
-    // We are going to use index #2 of the multi index container.
-    // We define SearchIndex locally in this function because
-    // currently only this function uses this index.
-    typedef Lease4Storage::nth_index<2>::type SearchIndex;
-    // Get the index.
-    const SearchIndex& idx = storage4_.get<2>();
+    // Get the index by client and subnet id.
+    const Lease4StorageClientIdSubnetIdIndex& idx =
+        storage4_.get<ClientIdSubnetIdIndexTag>();
     // Try to get the lease using client id and subnet id.
-    SearchIndex::const_iterator lease =
+    Lease4StorageClientIdSubnetIdIndex::const_iterator lease =
         idx.find(boost::make_tuple(client_id.getClientId(), subnet_id));
     // Lease was not found. Return empty pointer to the caller.
     if (lease == idx.end()) {
@@ -470,15 +484,15 @@ Memfile_LeaseMgr::getLeases6(Lease::Type type,
         .arg(duid.toText())
         .arg(Lease::typeToText(type));
 
-    // We are going to use index #1 of the multi index container.
-    typedef Lease6Storage::nth_index<1>::type SearchIndex;
-    // Get the index.
-    const SearchIndex& idx = storage6_.get<1>();
+    // Get the index by DUID, IAID, lease type.
+    const Lease6StorageDuidIaidTypeIndex& idx = storage6_.get<DuidIaidTypeIndexTag>();
     // Try to get the lease using the DUID, IAID and lease type.
-    std::pair<SearchIndex::iterator, SearchIndex::iterator> l =
+    std::pair<Lease6StorageDuidIaidTypeIndex::const_iterator,
+              Lease6StorageDuidIaidTypeIndex::const_iterator> l =
         idx.equal_range(boost::make_tuple(duid.getDuid(), iaid, type));
     Lease6Collection collection;
-    for(SearchIndex::iterator lease = l.first; lease != l.second; ++lease) {
+    for(Lease6StorageDuidIaidTypeIndex::const_iterator lease =
+            l.first; lease != l.second; ++lease) {
         collection.push_back(Lease6Ptr(new Lease6(**lease)));
     }
 
@@ -496,15 +510,15 @@ Memfile_LeaseMgr::getLeases6(Lease::Type type,
         .arg(duid.toText())
         .arg(Lease::typeToText(type));
 
-    // We are going to use index #1 of the multi index container.
-    typedef Lease6Storage::nth_index<1>::type SearchIndex;
-    // Get the index.
-    const SearchIndex& idx = storage6_.get<1>();
+    // Get the index by DUID, IAID, lease type.
+    const Lease6StorageDuidIaidTypeIndex& idx = storage6_.get<DuidIaidTypeIndexTag>();
     // Try to get the lease using the DUID, IAID and lease type.
-    std::pair<SearchIndex::iterator, SearchIndex::iterator> l =
+    std::pair<Lease6StorageDuidIaidTypeIndex::const_iterator,
+              Lease6StorageDuidIaidTypeIndex::const_iterator> l =
         idx.equal_range(boost::make_tuple(duid.getDuid(), iaid, type));
     Lease6Collection collection;
-    for(SearchIndex::iterator lease = l.first; lease != l.second; ++lease) {
+    for(Lease6StorageDuidIaidTypeIndex::const_iterator lease =
+            l.first; lease != l.second; ++lease) {
         // Filter out the leases which subnet id doesn't match.
         if((*lease)->subnet_id_ == subnet_id) {
             collection.push_back(Lease6Ptr(new Lease6(**lease)));
@@ -515,12 +529,66 @@ Memfile_LeaseMgr::getLeases6(Lease::Type type,
 }
 
 void
+Memfile_LeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
+                                    const size_t max_leases) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_EXPIRED4)
+        .arg(max_leases);
+
+    // Obtain the index which segragates leases by state and time.
+    const Lease6StorageExpirationIndex& index = storage6_.get<ExpirationIndexTag>();
+
+    // Retrieve leases which are not reclaimed and which haven't expired. The
+    // 'less-than' operator will be used for both components of the index. So,
+    // for the 'state' 'false' is less than 'true'. Also the leases with
+    // expiration time lower than current time will be returned.
+    Lease6StorageExpirationIndex::const_iterator ub =
+        index.upper_bound(boost::make_tuple(false, time(NULL)));
+
+    // Copy only the number of leases indicated by the max_leases parameter.
+    for (Lease6StorageExpirationIndex::const_iterator lease = index.begin();
+         (lease != ub) && ((max_leases == 0) || (std::distance(index.begin(), lease) <
+                                                 max_leases));
+         ++lease) {
+        expired_leases.push_back(Lease6Ptr(new Lease6(**lease)));
+    }
+}
+
+void
+Memfile_LeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
+                                    const size_t max_leases) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_EXPIRED6)
+        .arg(max_leases);
+
+    // Obtain the index which segragates leases by state and time.
+    const Lease4StorageExpirationIndex& index = storage4_.get<ExpirationIndexTag>();
+
+    // Retrieve leases which are not reclaimed and which haven't expired. The
+    // 'less-than' operator will be used for both components of the index. So,
+    // for the 'state' 'false' is less than 'true'. Also the leases with
+    // expiration time lower than current time will be returned.
+    Lease4StorageExpirationIndex::const_iterator ub =
+        index.upper_bound(boost::make_tuple(false, time(NULL)));
+
+    // Copy only the number of leases indicated by the max_leases parameter.
+    for (Lease4StorageExpirationIndex::const_iterator lease = index.begin();
+         (lease != ub) && ((max_leases == 0) || (std::distance(index.begin(), lease) <
+                                                 max_leases));
+         ++lease) {
+        expired_leases.push_back(Lease4Ptr(new Lease4(**lease)));
+    }
+}
+
+void
 Memfile_LeaseMgr::updateLease4(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_UPDATE_ADDR4).arg(lease->addr_.toText());
 
-    Lease4Storage::iterator lease_it = storage4_.find(lease->addr_);
-    if (lease_it == storage4_.end()) {
+    // Obtain 'by address' index.
+    Lease4StorageAddressIndex& index = storage4_.get<AddressIndexTag>();
+
+    // Lease must exist if it is to be updated.
+    Lease4StorageAddressIndex::const_iterator lease_it = index.find(lease->addr_);
+    if (lease_it == index.end()) {
         isc_throw(NoSuchLease, "failed to update the lease with address "
                   << lease->addr_ << " - no such lease");
     }
@@ -532,7 +600,8 @@ Memfile_LeaseMgr::updateLease4(const Lease4Ptr& lease) {
         lease_file4_->append(*lease);
     }
 
-    **lease_it = *lease;
+    // Use replace() to re-index leases.
+    index.replace(lease_it, Lease4Ptr(new Lease4(*lease)));
 }
 
 void
@@ -540,8 +609,12 @@ Memfile_LeaseMgr::updateLease6(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_UPDATE_ADDR6).arg(lease->addr_.toText());
 
-    Lease6Storage::iterator lease_it = storage6_.find(lease->addr_);
-    if (lease_it == storage6_.end()) {
+    // Obtain 'by address' index.
+    Lease6StorageAddressIndex& index = storage6_.get<AddressIndexTag>();
+
+    // Lease must exist if it is to be updated.
+    Lease6StorageAddressIndex::const_iterator lease_it = index.find(lease->addr_);
+    if (lease_it == index.end()) {
         isc_throw(NoSuchLease, "failed to update the lease with address "
                   << lease->addr_ << " - no such lease");
     }
@@ -553,7 +626,8 @@ Memfile_LeaseMgr::updateLease6(const Lease6Ptr& lease) {
         lease_file6_->append(*lease);
     }
 
-    **lease_it = *lease;
+    // Use replace() to re-index leases.
+    index.replace(lease_it, Lease6Ptr(new Lease6(*lease)));
 }
 
 bool
@@ -603,6 +677,89 @@ Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     }
 }
 
+uint64_t
+Memfile_LeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4)
+        .arg(secs);
+    return (deleteExpiredReclaimedLeases<
+            Lease4StorageExpirationIndex, Lease4
+            >(secs, V4, storage4_, lease_file4_));
+}
+
+uint64_t
+Memfile_LeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6)
+        .arg(secs);
+    return (deleteExpiredReclaimedLeases<
+            Lease6StorageExpirationIndex, Lease6
+            >(secs, V6, storage6_, lease_file6_));
+}
+
+template<typename IndexType, typename LeaseType, typename StorageType,
+         typename LeaseFileType>
+uint64_t
+Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
+                                               const Universe& universe,
+                                               StorageType& storage,
+                                               LeaseFileType& lease_file) const {
+    // Obtain the index which segragates leases by state and time.
+    IndexType& index = storage.template get<ExpirationIndexTag>();
+
+    // This returns the first element which is greater than the specified
+    // tuple (true, time(NULL) - secs). However, the range between the
+    // beginnng of the index and returned element also includes all the
+    // elements for which the first value is false (lease state is NOT
+    // reclaimed), because false < true. All elements between the
+    // beginning of the index and the element returned, for which the
+    // first value is true, represent the reclaimed leases which should
+    // be deleted, because their expiration time + secs has occured earlier
+    // than current time.
+    typename IndexType::const_iterator upper_limit =
+        index.upper_bound(boost::make_tuple(true, time(NULL) - secs));
+
+    // Now, we have to exclude all elements of the index which represent
+    // leases in the state other than reclaimed - with the first value
+    // in the index equal to false. Note that elements in the index are
+    // ordered from the lower to the higher ones. So, all elements with
+    // the first value of false are placed before the elements with the
+    // value of true. Hence, we have to find the first element which
+    // contains value of true. The time value is the lowest possible.
+    typename IndexType::const_iterator lower_limit =
+        index.upper_bound(boost::make_tuple(true, std::numeric_limits<int64_t>::min()));
+
+    // If there are some elements in this range, delete them.
+    uint64_t num_leases = static_cast<uint64_t>(std::distance(lower_limit, upper_limit));
+    if (num_leases > 0) {
+
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START)
+            .arg(num_leases);
+
+        // If lease persistence is enabled, we also have to mark leases
+        // as deleted in the lease file. We do this by setting the
+        // lifetime to 0.
+        if (persistLeases(universe)) {
+            for (typename IndexType::const_iterator lease = lower_limit;
+                 lease != upper_limit; ++lease) {
+                // Copy lease to not affect the lease in the container.
+                LeaseType lease_copy(**lease);
+                // Set the valid lifetime to 0 to indicate the removal
+                // of the lease.
+                lease_copy.valid_lft_ = 0;
+                lease_file->append(lease_copy);
+            }
+        }
+
+        // Erase leases from memory.
+        index.erase(lower_limit, upper_limit);
+    }
+    // Return number of leases deleted.
+    return (num_leases);
+}
+
+
 std::string
 Memfile_LeaseMgr::getDescription() const {
     return (std::string("This is a dummy memfile backend implementation.\n"
@@ -647,12 +804,6 @@ Memfile_LeaseMgr::appendSuffix(const std::string& file_name,
     }
 
     return (name);
-}
-
-
-uint32_t
-Memfile_LeaseMgr::getIOServiceExecInterval() const {
-    return (static_cast<uint32_t>(lfc_setup_->getInterval() / 1000));
 }
 
 std::string
@@ -807,6 +958,7 @@ Memfile_LeaseMgr::lfcSetup() {
     }
 
     if (lfc_interval > 0) {
+        lfc_setup_.reset(new LFCSetup(boost::bind(&Memfile_LeaseMgr::lfcCallback, this)));
         lfc_setup_->setup(lfc_interval, lease_file4_, lease_file6_);
     }
 }
@@ -870,7 +1022,6 @@ void Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) 
         lfc_setup_->execute();
     }
 }
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

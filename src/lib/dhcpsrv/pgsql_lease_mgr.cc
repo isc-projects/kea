@@ -1382,6 +1382,19 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
     return (result);
 }
 
+void
+PgSqlLeaseMgr::getExpiredLeases6(Lease6Collection&, const size_t) const {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::getExpiredLeases6 is currently"
+              " not implemented");
+}
+
+void
+PgSqlLeaseMgr::getExpiredLeases4(Lease4Collection&, const size_t) const {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::getExpiredLeases4 is currently"
+              " not implemented");
+}
+
+
 template <typename LeasePtr>
 void
 PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
@@ -1494,6 +1507,18 @@ PgSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     return (deleteLeaseCommon(DELETE_LEASE6, bind_array));
 }
 
+uint64_t
+PgSqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t) {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::deleteExpiredReclaimedLeases4"
+              " is not implemented");
+}
+
+uint64_t
+PgSqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t) {
+    isc_throw(NotImplemented, "PgSqlLeaseMgr::deleteExpiredReclaimedLeases6"
+              " is not implemented");
+}
+
 string
 PgSqlLeaseMgr::getName() const {
     string name = "";
@@ -1543,7 +1568,7 @@ PgSqlLeaseMgr::getVersion() const {
 
     PQclear(r);
 
-    return make_pair<uint32_t, uint32_t>(version, minor);
+    return pair<uint32_t, uint32_t>(version, minor);
 }
 
 void

@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,9 +41,9 @@
 
 #include <util/buffer.h>
 
-#include "fd_share.h"
-#include "socketsession.h"
-#include "sockaddr_util.h"
+#include <util/io/fd_share.h>
+#include <util/io/socketsession.h>
+#include <util/io/sockaddr_util.h>
 
 using namespace std;
 

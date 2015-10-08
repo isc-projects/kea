@@ -36,7 +36,7 @@ version() {
 }
 
 int
-load(isc::hooks::LibraryHandle& handle) {
+load(isc::hooks::LibraryHandle& /*handle*/) {
     throw std::exception();
 }
 

@@ -2,7 +2,6 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
-AM_CPPFLAGS += -I$(top_srcdir)/src/lib/log -I$(top_builddir)/src/lib/log
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -44,11 +43,19 @@ sbin_PROGRAMS = perfdhcp
 perfdhcp_SOURCES = main.cc
 libkea_perfdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
 
+perfdhcp_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
+
 perfdhcp_LDADD = libperfdhcp.la
-perfdhcp_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-perfdhcp_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+perfdhcp_LDADD += $(CRYPTO_LIBS)
+perfdhcp_LDADD += $(BOOST_LIBS)
+perfdhcp_LDADD += $(PTHREAD_LDFLAGS)
 
 # ... and the documentation
 EXTRA_DIST = perfdhcp_internals.dox

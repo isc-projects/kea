@@ -5,9 +5,14 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests\"
 AM_CPPFLAGS += -DDHCP_DATA_DIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests\"
 AM_CPPFLAGS += -DKEA_LFC_BUILD_DIR=\"$(abs_top_builddir)/src/bin/lfc\"
+AM_CPPFLAGS += -DLOGGING_SPEC_FILE=\"$(abs_top_srcdir)/src/lib/dhcpsrv/logging.spec\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
+
+if USE_STATIC_LINK
+AM_LDFLAGS = -static
+endif
 
 # Some versions of GCC warn about some versions of Boost regarding
 # missing initializer for members in its posix_time.
@@ -42,12 +47,12 @@ noinst_LTLIBRARIES = libco1.la libco2.la
 
 libco1_la_SOURCES  = callout_library.cc
 libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
-libco1_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libco1_la_CPPFLAGS = $(AM_CPPFLAGS)
 libco1_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 libco2_la_SOURCES  = callout_library.cc
 libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
-libco2_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libco2_la_CPPFLAGS = $(AM_CPPFLAGS)
 libco2_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 TESTS += libdhcpsrv_unittests
@@ -55,10 +60,12 @@ TESTS += libdhcpsrv_unittests
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
 libdhcpsrv_unittests_SOURCES += addr_utilities_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine_utils.cc alloc_engine_utils.h
+libdhcpsrv_unittests_SOURCES += alloc_engine_expiration_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine_hooks_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine4_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine6_unittest.cc
 libdhcpsrv_unittests_SOURCES += callout_handle_store_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfg_expiration_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_hosts_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_iface_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_mac_source_unittest.cc
@@ -74,6 +81,7 @@ libdhcpsrv_unittests_SOURCES += d2_client_unittest.cc
 libdhcpsrv_unittests_SOURCES += d2_udp_unittest.cc
 libdhcpsrv_unittests_SOURCES += daemon_unittest.cc
 libdhcpsrv_unittests_SOURCES += dbaccess_parser_unittest.cc
+libdhcpsrv_unittests_SOURCES += expiration_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_reservation_parser_unittest.cc
@@ -103,8 +111,9 @@ libdhcpsrv_unittests_SOURCES += subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_get_callout_handle.cc test_get_callout_handle.h
 libdhcpsrv_unittests_SOURCES += triplet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_utils.cc test_utils.h
+libdhcpsrv_unittests_SOURCES += timer_mgr_unittest.cc
 
-libdhcpsrv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
+libdhcpsrv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 if HAVE_MYSQL
 libdhcpsrv_unittests_CPPFLAGS += $(MYSQL_CPPFLAGS)
 endif
@@ -112,7 +121,7 @@ if HAVE_PGSQL
 libdhcpsrv_unittests_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
 
-libdhcpsrv_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
+libdhcpsrv_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 if HAVE_MYSQL
 libdhcpsrv_unittests_LDFLAGS  += $(MYSQL_LIBS)
 endif
@@ -128,20 +137,24 @@ if USE_CLANGPP
 libdhcpsrv_unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 endif
 
-libdhcpsrv_unittests_LDADD  = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libdhcpsrv_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libdhcpsrv_unittests_LDADD += $(GTEST_LDADD)
+libdhcpsrv_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
+libdhcpsrv_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)

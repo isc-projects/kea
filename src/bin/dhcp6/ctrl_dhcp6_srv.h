@@ -18,6 +18,7 @@
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <dhcp6/dhcp6_srv.h>
 
 namespace isc {
@@ -101,12 +102,7 @@ public:
         return (server_);
     }
 
-protected:
-    /// @brief Static pointer to the sole instance of the DHCP server.
-    ///
-    /// This is required for config and command handlers to gain access to
-    /// the server. Some of them need to be static methods.
-    static ControlledDhcpv6Srv* server_;
+private:
 
     /// @brief Callback that will be called from iface_mgr when data
     /// is received over control socket.
@@ -115,9 +111,6 @@ protected:
     /// when there is a new command or configuration sent over control socket
     /// (that was sent from some yet unspecified sender).
     static void sessionReader(void);
-
-    /// @brief IOService object, used for all ASIO operations.
-    isc::asiolink::IOService io_service_;
 
     /// @brief handler for processing 'shutdown' command
     ///
@@ -156,6 +149,22 @@ protected:
     isc::data::ConstElementPtr
     commandConfigReloadHandler(const std::string& command,
                                isc::data::ConstElementPtr args);
+
+    /// @brief Static pointer to the sole instance of the DHCP server.
+    ///
+    /// This is required for config and command handlers to gain access to
+    /// the server. Some of them need to be static methods.
+    static ControlledDhcpv6Srv* server_;
+
+    /// @brief IOService object, used for all ASIO operations.
+    isc::asiolink::IOService io_service_;
+
+    /// @brief Instance of the @c TimerMgr.
+    ///
+    /// Shared pointer to the instance of timer @c TimerMgr is held here to
+    /// make sure that the @c TimerMgr outlives instance of this class.
+    TimerMgrPtr timer_mgr_;
+
 };
 
 }; // namespace isc::dhcp

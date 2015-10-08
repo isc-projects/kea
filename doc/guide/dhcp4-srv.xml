@@ -1085,6 +1085,9 @@ It is merely echoed by the server
 <row><entry>client-last-transaction-time</entry><entry>91</entry><entry>uint32</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>associated-ip</entry><entry>92</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 -->
+<row><entry>client-system</entry><entry>93</entry><entry>uint16</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>client-ndi</entry><entry>94</entry><entry>record</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>uuid-guid</entry><entry>97</entry><entry>record</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>subnet-selection</entry><entry>118</entry><entry>ipv4-address</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>domain-search</entry><entry>119</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>vivco-suboptions</entry><entry>124</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
@@ -2715,6 +2718,27 @@ It is merely echoed by the server
 </screen>
       </para>
       </section>
+
+    </section>
+
+    <section id="dhcp4-decline">
+      <title>Duplicate Addresses (DHCPDECLINE support)</title>
+      <note>
+        <para>@todo: Full text will be added as part of #3990.</para>
+      </note>
+
+      <para>
+        The server does not decrease assigned-addresses statistics
+        when DHCPDECLINE is received and processed successfully. While
+        technically a declined address is no longer assigned, the primary usage
+        of the assigned-addresses statistic is to monitor pool utilization. Most
+        people would forget to include declined-addresses in the calculation,
+        and simply do assigned-addresses/total-addresses. This would have a bias
+        towards under-representing pool utilization. As this has a
+        potential for major issues, we decided not to decrease assigned
+        addresses immediately after receiving DHCPDECLINE, but to do
+        it later when we recover the address back to the available pool.
+      </para>
 
     </section>
 

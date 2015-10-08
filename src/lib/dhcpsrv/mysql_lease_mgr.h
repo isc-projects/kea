@@ -317,6 +317,33 @@ public:
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
                                         uint32_t iaid, SubnetID subnet_id) const;
 
+    /// @brief Returns a collection of expired DHCPv6 leases.
+    ///
+    /// This method returns at most @c max_leases expired leases. The leases
+    /// returned haven't been reclaimed, i.e. the database query must exclude
+    /// reclaimed leases from the results returned.
+    ///
+    /// @param [out] expired_leases A container to which expired leases returned
+    /// by the database backend are added.
+    /// @param max_leases A maximum number of leases to be returned. If this
+    /// value is set to 0, all expired (but not reclaimed) leases are returned.
+    virtual void getExpiredLeases6(Lease6Collection& expired_leases,
+                                   const size_t max_leases) const;
+
+
+    /// @brief Returns a collection of expired DHCPv4 leases.
+    ///
+    /// This method returns at most @c max_leases expired leases. The leases
+    /// returned haven't been reclaimed, i.e. the database query must exclude
+    /// reclaimed leases from the results returned.
+    ///
+    /// @param [out] expired_leases A container to which expired leases returned
+    /// by the database backend are added.
+    /// @param max_leases A maximum number of leases to be returned. If this
+    /// value is set to 0, all expired (but not reclaimed) leases are returned.
+    virtual void getExpiredLeases4(Lease4Collection& expired_leases,
+                                   const size_t max_leases) const;
+
     /// @brief Updates IPv4 lease.
     ///
     /// Updates the record of the lease in the database (as identified by the
@@ -353,6 +380,24 @@ public:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
+
+    /// @brief Deletes all expired-reclaimed DHCPv4 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    ///
+    /// @return Number of leases deleted.
+    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t secs);
+
+    /// @brief Deletes all expired-reclaimed DHCPv6 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    ///
+    /// @return Number of leases deleted.
+    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs);
 
     /// @brief Return backend type
     ///
@@ -410,6 +455,14 @@ public:
     /// the lease file - which may be read by the user - it is the expiry time
     /// of the lease.
 
+    /// @brief Convert time_t value to database time.
+    ///
+    /// @param input_time A time_t value representing time.
+    /// @param output_time Reference to MYSQL_TIME object where converted time
+    ///        will be put.
+    static
+    void convertToDatabaseTime(const time_t input_time, MYSQL_TIME& output_time);
+
     /// @brief Convert Lease Time to Database Times
     ///
     /// Within the DHCP servers, times are stored as client last transmit time
@@ -459,22 +512,26 @@ public:
     ///
     /// The contents of the enum are indexes into the list of SQL statements
     enum StatementIndex {
-        DELETE_LEASE4,              // Delete from lease4 by address
-        DELETE_LEASE6,              // Delete from lease6 by address
-        GET_LEASE4_ADDR,            // Get lease4 by address
-        GET_LEASE4_CLIENTID,        // Get lease4 by client ID
-        GET_LEASE4_CLIENTID_SUBID,  // Get lease4 by client ID & subnet ID
-        GET_LEASE4_HWADDR,          // Get lease4 by HW address
-        GET_LEASE4_HWADDR_SUBID,    // Get lease4 by HW address & subnet ID
-        GET_LEASE6_ADDR,            // Get lease6 by address
-        GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID
-        GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and subnet ID
-        GET_VERSION,                // Obtain version number
-        INSERT_LEASE4,              // Add entry to lease4 table
-        INSERT_LEASE6,              // Add entry to lease6 table
-        UPDATE_LEASE4,              // Update a Lease4 entry
-        UPDATE_LEASE6,              // Update a Lease6 entry
-        NUM_STATEMENTS              // Number of statements
+        DELETE_LEASE4,               // Delete from lease4 by address
+        DELETE_LEASE4_STATE_EXPIRED, // Delete expired lease4 in a given state
+        DELETE_LEASE6,               // Delete from lease6 by address
+        DELETE_LEASE6_STATE_EXPIRED, // Delete expired lease6 in a given state
+        GET_LEASE4_ADDR,             // Get lease4 by address
+        GET_LEASE4_CLIENTID,         // Get lease4 by client ID
+        GET_LEASE4_CLIENTID_SUBID,   // Get lease4 by client ID & subnet ID
+        GET_LEASE4_HWADDR,           // Get lease4 by HW address
+        GET_LEASE4_HWADDR_SUBID,     // Get lease4 by HW address & subnet ID
+        GET_LEASE4_EXPIRE,           // Get lease4 by expiration.
+        GET_LEASE6_ADDR,             // Get lease6 by address
+        GET_LEASE6_DUID_IAID,        // Get lease6 by DUID and IAID
+        GET_LEASE6_DUID_IAID_SUBID,  // Get lease6 by DUID, IAID and subnet ID
+        GET_LEASE6_EXPIRE,           // Get lease6 by expiration.
+        GET_VERSION,                 // Obtain version number
+        INSERT_LEASE4,               // Add entry to lease4 table
+        INSERT_LEASE6,               // Add entry to lease6 table
+        UPDATE_LEASE4,               // Update a Lease4 entry
+        UPDATE_LEASE6,               // Update a Lease6 entry
+        NUM_STATEMENTS               // Number of statements
     };
 
 private:
@@ -620,6 +677,26 @@ private:
     void getLease(StatementIndex stindex, MYSQL_BIND* bind,
                    Lease6Ptr& result) const;
 
+
+    /// @brief Get expired leases common code.
+    ///
+    /// This method retrieves expired and not reclaimed leases from the
+    /// lease database. The returned leases are ordered by the expiration
+    /// time. The maximum number of leases to be returned is specified
+    /// as an argument.
+    ///
+    /// @param [out] expired_leases Reference to the container where the
+    ///        retrieved leases are put.
+    /// @param max_leases Maximum number of leases to be returned.
+    /// @param statement_index One of the @c GET_LEASE4_EXPIRE or
+    ///        @c GET_LEASE6_EXPIRE.
+    ///
+    /// @tparam One of the @c Lease4Collection or @c Lease6Collection.
+    template<typename LeaseCollection>
+    void getExpiredLeasesCommon(LeaseCollection& expired_leases,
+                                const size_t max_leases,
+                                StatementIndex statement_index) const;
+
     /// @brief Update lease common code
     ///
     /// Holds the common code for updating a lease.  It binds the parameters
@@ -651,12 +728,24 @@ private:
     ///        (Note that the number is determined by the number of parameters
     ///        in the statement.)
     ///
-    /// @return true if one or more rows were deleted, false if none were
-    ///         deleted.
+    /// @return Number of deleted leases.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind);
+    uint64_t deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind);
+
+    /// @brief Delete expired-reclaimed leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    /// @param statement_index One of the @c DELETE_LEASE4_STATE_EXPIRED or
+    ///        @c DELETE_LEASE6_STATE_EXPIRED.
+    ///
+    /// @return Number of leases deleted.
+    uint64_t deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
+                                                StatementIndex statement_index);
+
 
     /// @brief Check Error and Throw Exception
     ///

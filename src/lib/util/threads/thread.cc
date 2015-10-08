@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,8 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "thread.h"
-#include "sync.h"
+#include <util/fork_detector.h>
+#include <util/threads/thread.h>
+#include <util/threads/sync.h>
 
 #include <memory>
 #include <string>
@@ -21,7 +22,9 @@
 #include <cerrno>
 
 #include <pthread.h>
+#include <signal.h>
 
+#include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
 using std::string;
@@ -32,6 +35,30 @@ using boost::scoped_ptr;
 namespace isc {
 namespace util {
 namespace thread {
+
+namespace {
+
+// Signal blocker class.
+class Blocker : boost::noncopyable {
+public:
+    // Constructor blocks all signals
+    Blocker() {
+        sigset_t new_mask;
+        sigfillset(&new_mask);
+        pthread_sigmask(SIG_BLOCK, &new_mask, &old_mask_);
+    }
+
+    // Destructor restores the previous signal mask
+    ~Blocker() {
+        pthread_sigmask(SIG_SETMASK, &old_mask_, 0);
+    }
+
+private:
+    // The previous signal mask
+    sigset_t old_mask_;
+};
+
+}
 
 // The implementation of the Thread class.
 //
@@ -48,7 +75,8 @@ public:
         // and the creating thread needs to release it.
         waiting_(2),
         main_(main),
-        exception_(false)
+        exception_(false),
+        fork_detector_()
     {}
     // Another of the waiting events is done. If there are no more, delete
     // impl.
@@ -99,12 +127,15 @@ public:
     Mutex mutex_;
     // Which thread are we talking about anyway?
     pthread_t tid_;
+    // Class to detect if we're in the child or parent process.
+    ForkDetector fork_detector_;
 };
 
 Thread::Thread(const boost::function<void ()>& main) :
     impl_(NULL)
 {
     auto_ptr<Impl> impl(new Impl(main));
+    Blocker blocker;
     const int result = pthread_create(&impl->tid_, NULL, &Impl::run,
                                       impl.get());
     // Any error here?
@@ -121,8 +152,15 @@ Thread::Thread(const boost::function<void ()>& main) :
 
 Thread::~Thread() {
     if (impl_ != NULL) {
-        // In case we didn't call wait yet
-        const int result = pthread_detach(impl_->tid_);
+
+        int result = pthread_detach(impl_->tid_);
+        // If the error indicates that thread doesn't exist but we're
+        // in child process (after fork) it is expected. We should
+        // not cause an assert.
+        if (result == ESRCH && !impl_->fork_detector_.isParent()) {
+            result = 0;
+        }
+
         Impl::done(impl_);
         impl_ = NULL;
         // If the detach ever fails, something is screwed rather badly.
@@ -137,13 +175,20 @@ Thread::wait() {
                   "Wait called and no thread to wait for");
     }
 
-    const int result = pthread_join(impl_->tid_, NULL);
-    if (result != 0) {
-        isc_throw(isc::InvalidOperation, std::strerror(result));
-    }
-
     // Was there an exception in the thread?
     scoped_ptr<UncaughtException> ex;
+
+    const int result = pthread_join(impl_->tid_, NULL);
+    if (result != 0) {
+        // We will not throw exception if the error indicates that the
+        // thread doesn't exist and we are in the child process (forked).
+        // For the child process it is expected that the thread is not
+        // re-created when we fork.
+        if (result != ESRCH || impl_->fork_detector_.isParent()) {
+            isc_throw(isc::InvalidOperation, std::strerror(result));
+        }
+    }
+
     // Something here could in theory throw. But we already terminated the thread, so
     // we need to make sure we are in consistent state even in such situation (like
     // releasing the mutex and impl_).

@@ -3,8 +3,6 @@ AUTOMAKE_OPTIONS = subdir-objects
 SUBDIRS = . io unittests tests python threads
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
-AM_CPPFLAGS += -I$(top_srcdir)/src/lib/exceptions -I$(top_builddir)/src/lib/exceptions
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -12,7 +10,7 @@ lib_LTLIBRARIES = libkea-util.la
 libkea_util_la_SOURCES  = boost_time_utils.h boost_time_utils.cc
 libkea_util_la_SOURCES += csv_file.h csv_file.cc
 libkea_util_la_SOURCES += filename.h filename.cc
-libkea_util_la_SOURCES += locks.h lru_list.h
+libkea_util_la_SOURCES += fork_detector.h
 libkea_util_la_SOURCES += strutil.h strutil.cc
 libkea_util_la_SOURCES += buffer.h io_utilities.h
 libkea_util_la_SOURCES += time_utilities.h time_utilities.cc
@@ -26,6 +24,7 @@ libkea_util_la_SOURCES += range_utilities.h
 libkea_util_la_SOURCES += signal_set.cc signal_set.h
 libkea_util_la_SOURCES += stopwatch.cc stopwatch.h
 libkea_util_la_SOURCES += stopwatch_impl.cc stopwatch_impl.h
+libkea_util_la_SOURCES += watch_socket.cc watch_socket.h
 libkea_util_la_SOURCES += encode/base16_from_binary.h
 libkea_util_la_SOURCES += encode/base32hex.h encode/base64.h
 libkea_util_la_SOURCES += encode/base32hex_from_binary.h

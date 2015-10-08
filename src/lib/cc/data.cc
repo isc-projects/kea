@@ -731,6 +731,9 @@ Element::fromJSON(const std::string& in, bool preproc) {
 ElementPtr
 Element::fromJSONFile(const std::string& file_name,
                       bool preproc) {
+    // zero out the errno to be safe
+    errno = 0;
+
     std::ifstream infile(file_name.c_str(), std::ios::in | std::ios::binary);
     if (!infile.is_open())
     {

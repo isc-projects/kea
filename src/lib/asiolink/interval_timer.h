@@ -1,4 +1,4 @@
-// Copyright (C) 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2014-2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,9 +26,9 @@ namespace asiolink {
 class IntervalTimerImpl;
 
 /// \brief The \c IntervalTimer class is a wrapper for the ASIO
-/// \c asio::deadline_timer class.
+/// \c boost::asio::deadline_timer class.
 ///
-/// This class is implemented to use \c asio::deadline_timer as interval
+/// This class is implemented to use \c boost::asio::deadline_timer as interval
 /// timer.
 ///
 /// \c setup() sets a timer to expire on (now + interval), a call back
@@ -85,7 +85,7 @@ public:
     ///
     /// This constructor may throw a standard exception if
     /// memory allocation fails inside the method.
-    /// This constructor may also throw \c asio::system_error.
+    /// This constructor may also throw \c boost::system::system_error.
     ///
     /// \param io_service A reference to an instance of IOService
     IntervalTimer(IOService& io_service);
@@ -95,7 +95,7 @@ public:
     /// This destructor never throws an exception.
     ///
     /// On the destruction of this class the timer will be canceled
-    /// inside \c asio::deadline_timer.
+    /// inside \c boost::asio::deadline_timer.
     ~IntervalTimer();
     //@}
 
@@ -111,7 +111,7 @@ public:
     /// each expiration (the default) or behave as a one-shot which will run
     /// for a single interval and not reschedule.
     ///
-    /// Note: IntervalTimer will not pass \c asio::error_code to
+    /// Note: IntervalTimer will not pass \c boost::system::error_code to
     /// call back function. In case the timer is canceled, the function
     /// will not be called.
     ///

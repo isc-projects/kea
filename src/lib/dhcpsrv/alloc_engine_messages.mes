@@ -14,6 +14,18 @@
 
 $NAMESPACE isc::dhcp
 
+% ALLOC_ENGINE_LEASE_RECLAIMED successfully reclaimed lease %1
+This debug message is logged when the allocation engine successfully
+reclaims a lease. The lease is now available for assignment.
+
+% ALLOC_ENGINE_REMOVAL_NCR_FAILED sending removal name change request failed for lease %1: %2
+This error message is logged when sending a removal name change request
+to DHCP DDNS failed. This name change request is usually generated when
+the lease reclamation routine acts upon expired leases. If a lease being
+reclaimed has a corresponding DNS entry it needs to be removed.
+This message indicates that removal of the DNS entry has failed.
+Nevertheless the lease will be reclaimed. 
+
 % ALLOC_ENGINE_V4_ALLOC_ERROR %1: error during attempt to allocate an IPv4 address: %2
 An error occurred during an attempt to allocate an IPv4 address, the
 reason for the failure being contained in the message.  The server will
@@ -36,6 +48,13 @@ consider reducing the lease lifetime.  In this way, addresses allocated
 to clients that are no longer active on the network will become available
 sooner.
 
+% ALLOC_ENGINE_V4_DECLINED_RECOVERED Address %1 was recovered after %2 seconds of probation-period
+This informational message indicates that the specified address was reported
+as duplicate (client sent DECLINE) and the server marked this address as
+unvailable for a period of time. This time now has elapsed and the address
+has been returned to the available pool. This step concludes decline recovery
+process.
+
 % ALLOC_ENGINE_V4_DISCOVER_ADDRESS_CONFLICT %1: conflicting reservation for address %2 with existing lease %3
 This warning message is issued when the DHCP server finds that the
 address reserved for the client can't be offered because this address
@@ -48,6 +67,35 @@ This message is issued when the allocation engine determines that the
 client sending the DHCPDISCOVER has a reservation for the specified
 address. The allocation engine will try to offer this address to
 the client.
+
+% ALLOC_ENGINE_V4_LEASE_RECLAMATION_FAILED failed to reclaim the lease %1: %2
+This error message is logged when the allocation engine fails to
+reclaim an expired lease. The reason for the failure is included in the
+message. The error may be triggered in the lease expiration hook or
+while performing the operation on the lease database.
+
+% ALLOC_ENGINE_V4_LEASES_RECLAMATION_COMPLETE reclaimed %1 leases in %2
+This debug message is logged when the allocation engine completes
+reclamation of a set of expired leases. The maximum number of leases
+to be reclaimed in a single pass of the lease reclamation routine
+is configurable using 'max-reclaim-leases' parameter. However,
+the number of reclaimed leases may also be limited by the timeout
+value, configured with 'max-reclaim-time'. The message includes the
+number of reclaimed leases and the total time.
+
+% ALLOC_ENGINE_V4_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 seconds)
+This debug message is issued when the allocation engine starts the
+reclamation of the expired leases. The maximum number of leases to
+be reclaimed and the timeout is included in the message. If any of
+these values is 0, it means "unlimited".
+
+% ALLOC_ENGINE_V4_LEASES_RECLAMATION_TIMEOUT timeout of %1 ms reached while reclaiming IPv4 leases
+This debug message is issued when the allocation engine hits the
+timeout for performing reclamation of the expired leases. The
+reclamation will now be interrupted and all leases which haven't
+been reclaimed, because of the timeout, will be reclaimed when the
+next scheduled reclamation is started. The argument is the timeout
+value expressed in milliseconds.
 
 % ALLOC_ENGINE_V4_OFFER_EXISTING_LEASE allocation engine will try to offer existing lease to the client %1
 This message is issued when the allocation engine determines that
@@ -245,6 +293,35 @@ reserved for it.
 % ALLOC_ENGINE_V6_HR_PREFIX_GRANTED reserved prefix %1/%2 was was assigned to client %3
 This informational message signals that the specified client was assigned the prefix
 reserved for it.
+
+% ALLOC_ENGINE_V6_LEASE_RECLAMATION_FAILED failed to reclaim the lease %1: %2
+This error message is logged when the allocation engine fails to
+reclaim an expired lease. The reason for the failure is included in the
+message. The error may be triggered in the lease expiration hook or
+while performing the operation on the lease database.
+
+% ALLOC_ENGINE_V6_LEASES_RECLAMATION_COMPLETE reclaimed %1 leases in %2
+This debug message is logged when the allocation engine completes
+reclamation of a set of expired leases. The maximum number of leases
+to be reclaimed in a single pass of the lease reclamation routine
+is configurable using 'max-reclaim-leases' parameter. However,
+the number of reclaimed leases may also be limited by the timeout
+value, configured with 'max-reclaim-time'. The message includes the
+number of reclaimed leases and the total time.
+
+% ALLOC_ENGINE_V6_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 seconds)
+This debug message is issued when the allocation engine starts the
+reclamation of the expired leases. The maximum number of leases to
+be reclaimed and the timeout is included in the message. If any of
+these values is 0, it means "unlimited".
+
+% ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT timeout of %1 ms reached while reclaiming IPv6 leases
+This debug message is issued when the allocation engine hits the
+timeout for performing reclamation of the expired leases. The
+reclamation will now be interrupted and all leases which haven't
+been reclaimed, because of the timeout, will be reclaimed when the
+next scheduled reclamation is started. The argument is the timeout
+value expressed in milliseconds.
 
 % ALLOC_ENGINE_V6_RENEW_HR allocating leases reserved for the client %1 as a result of Renew
 This debug message is issued when the allocation engine tries to

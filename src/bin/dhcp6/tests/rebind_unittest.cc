@@ -18,6 +18,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
+#include <dhcpsrv/utils.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -32,7 +33,7 @@ namespace {
 ///
 /// - Configuration 0:
 ///   - only addresses (no prefixes)
-///   - 2 subnets with 2001:db8:1::/64 and 2001:db8:2::64
+///   - 2 subnets with 2001:db8:1::/64 and 2001:db8:2::/64
 ///   - 1 subnet for eth0 and 1 subnet for eth1
 ///
 /// - Configuration 1:
@@ -57,11 +58,17 @@ namespace {
 ///   - this specific configuration is used by tests which don't use relays
 ///
 /// - Configuration 5:
-///   - similar to Configuration 5 but with different subnets
+///   - similar to Configuration 4 but with different subnets
 ///   - 2 subnets: 2001:db8:3::/40 and 2001:db8:4::/40
 ///   - 2 prefix pools: 2001:db8:3::/72 and 2001:db8:4::/72
 ///   - delegated length /80
 ///   - this specific configuration is used by tests which don't use relays
+///
+/// - Configuration 6:
+///   - addresses and prefixes
+///   - address pool: 2001:db8:1::/64
+///   - prefix pool: 3000::/72
+///
 const char* REBIND_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces-config\": {"
@@ -205,6 +212,25 @@ const char* REBIND_CONFIGS[] = {
         " } ],"
         "\"valid-lifetime\": 4000 }",
 
+// Configuration 6
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"3000::\", "
+        "          \"prefix-len\": 72, "
+        "          \"delegated-len\": 80"
+        "        } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
 };
 
 /// @brief Test fixture class for testing Rebind.
@@ -218,6 +244,24 @@ public:
         : Dhcpv6MessageTest() {
     }
 };
+
+// Test that client-id is mandatory and server-id forbidden for Rebind messages
+TEST_F(RebindTest, sanityCheck) {
+    NakedDhcpv6Srv srv(0);
+
+    // A message with no client-id should fail
+    Pkt6Ptr rebind = Pkt6Ptr(new Pkt6(DHCPV6_REBIND, 1234));
+    EXPECT_THROW(srv.processRebind(rebind), RFCViolation);
+
+    // A message with a single client-id should succeed
+    OptionPtr clientid = generateClientId();
+    rebind->addOption(clientid);
+    EXPECT_NO_THROW(srv.processRebind(rebind));
+
+    // A message with server-id present should fail
+    rebind->addOption(srv.getServerID());
+    EXPECT_THROW(srv.processRebind(rebind), RFCViolation);
+}
 
 // Test that directly connected client's Rebind message is processed and Reply
 // message is sent back.
@@ -246,8 +290,10 @@ TEST_F(RebindTest, directClient) {
     EXPECT_TRUE(lease_server2);
 }
 
-// Test that server doesn't extend the lease when the configuration has changed
-// such that the existing subnet is replaced with a different subnet.
+// Test that server allocates a lease from a new subnet when the server
+// is reconfigured such that the previous subnet is replaced with a
+// new subnet. The client should get the new lease and an old lease
+// with zero lifetimes in the Reply.
 TEST_F(RebindTest, directClientChangingSubnet) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
@@ -265,29 +311,26 @@ TEST_F(RebindTest, directClientChangingSubnet) {
 
     ASSERT_NO_THROW(client.doRebind());
 
-    // We are expecting that the server didn't extend the lease because
-    // the address that client is using doesn't match the new subnet.
-    // But, the client still has an old lease.
-    ASSERT_EQ(1, client.getLeaseNum());
-    Lease6 lease_client2 = client.getLease(0);
+    // We are expecting that the server has allocated a lease from the new
+    // subnet and sent zero lifetimes for a previous lease.
 
-    // The current lease should be exactly the same as old lease,
-    // because server shouldn't have extended.
-    EXPECT_TRUE(lease_client.addr_ == lease_client2.addr_);
-    EXPECT_EQ(0, lease_client2.preferred_lft_);
-    EXPECT_EQ(0, lease_client2.valid_lft_);
+    std::vector<Lease6> old_leases = client.getLeasesWithZeroLifetime();
+    ASSERT_EQ(1, old_leases.size());
+    EXPECT_EQ(lease_client.addr_, old_leases[0].addr_);
+
+    std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
+    ASSERT_EQ(1, new_leases.size());
 
     // Make sure, that the lease that client has, is matching the lease
     // in the lease database.
-    Lease6Ptr lease_server2 = checkLease(lease_client2);
+    Lease6Ptr lease_server2 = checkLease(new_leases[0]);
     EXPECT_TRUE(lease_server2);
-    // Client should have received NoBinding status code.
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
-
+    // Client should have received Success status code.
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
 }
 
-// Check that the server doesn't extend the lease for the client when the
-// client sends IAID which doesn't belong to the lease that client has.
+// Check that the server allocates a new lease when the client sends IA_NA
+// with a new IAID.
 TEST_F(RebindTest, directClientChangingIAID) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
@@ -298,23 +341,29 @@ TEST_F(RebindTest, directClientChangingIAID) {
     Lease6 lease_client = client.getLease(0);
     // Modify the IAID of the lease record that client stores. By adding
     // one to IAID we guarantee that the IAID will change.
-    ++client.config_.leases_[0].lease_.iaid_;
-    // Try to Rebind. Note that client will use a different IAID (which
-    // is not matching IAID that server retains for the client). Server
-    // should not find the lease that client is trying to extend and
-    // should return NoBinding.
-    ASSERT_NO_THROW(client.doRebind());
-    // The lease obtained in 4-way exchange should not change after the Rebind
-    // attempt.
-    Lease6Ptr lease_server2 = checkLease(lease_client);
-    EXPECT_TRUE(lease_server2);
-    // The Status code returned to the client, should be NoBinding.
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
+    client.config_.leases_[0].iaid_ = 1235;
+    client.useNA(true, 1235);
 
+    // Try to Rebind. The server should allocate new lease for this IAID.
+    ASSERT_NO_THROW(client.doRebind());
+
+    // The old lease should be returned with 0 lifetimes.
+    std::vector<Lease6> old_leases = client.getLeasesWithZeroLifetime();
+    ASSERT_EQ(1, old_leases.size());
+    EXPECT_EQ(lease_client.addr_, old_leases[0].addr_);
+
+    // The new lease should be allocated.
+    std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
+    ASSERT_EQ(1, new_leases.size());
+
+    Lease6Ptr lease_server2 = checkLease(new_leases[0]);
+    EXPECT_TRUE(lease_server2);
+    // The Status code returned to the client, should be Success.
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(1235));
 }
 
-// Check that server sends NoBinding when the lease has been lost from
-// the database and client is trying to Rebind it.
+// Check that the server allocates a requested lease for the client when
+// this lease has been lost from the database.
 TEST_F(RebindTest, directClientLostLease) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
@@ -326,11 +375,15 @@ TEST_F(RebindTest, directClientLostLease) {
     // The lease has been acquired. Now, let's explicitly remove it from the
     // lease database.
     LeaseMgrFactory::instance().deleteLease(lease_client.addr_);
-    // An attempt to Rebind should fail. The lease should not be found by
-    // the server and the server should return NoBinding status code.
+    // Send Rebind.
     ASSERT_NO_THROW(client.doRebind());
-    ASSERT_EQ(1, client.getLeaseNum());
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
+
+    // The server should re-allocate this lease to the client.
+    std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
+    ASSERT_EQ(1, new_leases.size());
+    EXPECT_EQ(lease_client.addr_, new_leases[0].addr_);
+    // Status code should be Success.
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
 }
 
 /// @todo Extend tests for direct client changing address.
@@ -392,18 +445,9 @@ TEST_F(RebindTest, relayedClientChangingSubnet) {
     ASSERT_NO_THROW(client.doRebind());
     // We are expecting that the server didn't extend the lease because
     // the address that client is using doesn't match the new subnet.
-    // But, the client still has an old lease.
-    ASSERT_EQ(1, client.getLeaseNum());
-    Lease6 lease_client2 = client.getLease(0);
-    // The current lease should be exactly the same as old lease,
-    // because server shouldn't have extended.
-    EXPECT_TRUE(lease_client == lease_client2);
-    // Make sure, that the lease that client has, is matching the lease
-    // in the lease database.
-    Lease6Ptr lease_server2 = checkLease(lease_client2);
-    EXPECT_TRUE(lease_server2);
+    ASSERT_EQ(0, client.getLeaseNum());
     // Client should have received NoBinding status code.
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
+    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(1234));
 
 }
 
@@ -421,25 +465,32 @@ TEST_F(RebindTest, relayedClientChangingIAID) {
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[2], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
+
     // Modify the IAID of the lease record that client stores. By adding
     // one to IAID we guarantee that the IAID will change.
-    ++client.config_.leases_[0].lease_.iaid_;
-    // Try to Rebind. Note that client will use a different IAID (which
-    // is not matching IAID that server retains for the client). Server
-    // should not find the lease that client is trying to extend and
-    // should return NoBinding.
-    ASSERT_NO_THROW(client.doRebind());
-    // The lease obtained in 4-way exchange should not change after the Rebind
-    // attempt.
-    Lease6Ptr lease_server2 = checkLease(lease_client);
-    EXPECT_TRUE(lease_server2);
-    // The Status code returned to the client, should be NoBinding.
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
+    client.config_.leases_[0].iaid_ = 1235;
+    client.useNA(true, 1235);
 
+    // Try to Rebind. The server should allocate new lease for this IAID.
+    ASSERT_NO_THROW(client.doRebind());
+
+    // The old lease should be returned with 0 lifetimes.
+    std::vector<Lease6> old_leases = client.getLeasesWithZeroLifetime();
+    ASSERT_EQ(1, old_leases.size());
+    EXPECT_EQ(lease_client.addr_, old_leases[0].addr_);
+
+    // The new lease should be allocated.
+    std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
+    ASSERT_EQ(1, new_leases.size());
+
+    Lease6Ptr lease_server2 = checkLease(new_leases[0]);
+    EXPECT_TRUE(lease_server2);
+    // The Status code returned to the client, should be Success.
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(1235));
 }
 
-// Check that the relayed client receives NoBinding when the lease that he
-// is Rebinding has been lost from the database.
+// Check that the server allocates a requested lease for the client when
+// this lease has been lost from the database.
 TEST_F(RebindTest, relayedClientLostLease) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
@@ -455,11 +506,16 @@ TEST_F(RebindTest, relayedClientLostLease) {
     // The lease has been acquired. Now, let's explicitly remove it from the
     // lease database.
     LeaseMgrFactory::instance().deleteLease(lease_client.addr_);
-    // An attempt to Rebind should fail. The lease should not be found by
-    // the server and the server should return NoBinding status code.
+
+    // Send Rebind.
     ASSERT_NO_THROW(client.doRebind());
-    ASSERT_EQ(1, client.getLeaseNum());
-    EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
+
+    // The server should re-allocate this lease to the client.
+    std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
+    ASSERT_EQ(1, new_leases.size());
+    EXPECT_EQ(lease_client.addr_, new_leases[0].addr_);
+    // Status code should be Success.
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
 }
 
 // Check that relayed client receives the IA with lifetimes of 0, when
@@ -475,7 +531,7 @@ TEST_F(RebindTest, relayedClientChangingAddress) {
     // Modify the address of the lease record that client stores. The server
     // should check that the address is invalid (hasn't been allocated for
     // the particular IAID).
-    client.config_.leases_[0].lease_.addr_ = IOAddress("3000::100");
+    client.config_.leases_[0].addr_ = IOAddress("3000::100");
     // Try to Rebind. The client will use correct IAID but will specify a
     // wrong address. The server will discover that the client has a binding
     // but the address will not match.
@@ -543,9 +599,10 @@ TEST_F(RebindTest, directClientPD) {
     EXPECT_TRUE(lease_server2);
 }
 
-// Check that the prefix lifetime is not extended for the client in case
-// the configuration has been changed such, that the subnet he is using
-// doesn't exist anymore.
+// Test that server allocates a lease from a new subnet when the server
+// is reconfigured such that the previous subnet is replaced with a
+// new subnet. The client should get the new lease and an old lease
+// with zero lifetimes in the Reply.
 TEST_F(RebindTest, directClientPDChangingSubnet) {
     Dhcp6Client client;
     // Configure client to request IA_PD.
@@ -558,31 +615,31 @@ TEST_F(RebindTest, directClientPDChangingSubnet) {
     // client's interface. Note that there will also be a new subnet
     // id assigned to the subnet on this interface.
     configure(REBIND_CONFIGS[5], *client.getServer());
-    // Try to rebind, using the address that the client had acquired using
+
+    // Try to rebind, using the prefix that the client had acquired using
     // previous server configuration.
-    ASSERT_NO_THROW(client.doRebind());
-    // Make sure that the server has discarded client's message. In such case,
-    // the message sent back to the client should be NULL.
-    EXPECT_FALSE(client.getContext().response_)
-        << "The server responded to the Rebind message, while it should have"
-        " discarded it because there is no binding for the client.";
-    // We are expecting that the server didn't extend the lease because
-    // the address that client is using doesn't match the new subnet.
-    // But, the client still has an old lease.
-    ASSERT_EQ(1, client.getLeaseNum());
-    Lease6 lease_client2 = client.getLease(0);
-    // The current lease should be exactly the same as old lease,
-    // because server shouldn't have extended.
-    EXPECT_TRUE(lease_client == lease_client2);
+    client.doRebind();
+
+    // We are expecting that the server has allocated a lease from the new
+    // subnet and sent zero lifetimes for a previous lease.
+
+    std::vector<Lease6> old_leases = client.getLeasesWithZeroLifetime();
+    ASSERT_EQ(1, old_leases.size());
+    EXPECT_EQ(lease_client.addr_, old_leases[0].addr_);
+
+    std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
+    ASSERT_EQ(1, new_leases.size());
+
     // Make sure, that the lease that client has, is matching the lease
     // in the lease database.
-    Lease6Ptr lease_server2 = checkLease(lease_client2);
+    Lease6Ptr lease_server2 = checkLease(new_leases[0]);
     EXPECT_TRUE(lease_server2);
+    // Client should have received Success status code.
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
 }
 
-// Check that the prefix lifetime is not extended for the client when the
-// IAID used in the Rebind is not matching the one recorded by the server
-// for the particular client.
+// Check that the server allocates a new lease when the client sends IA_PD
+// with a new IAID.
 TEST_F(RebindTest, directClientPDChangingIAID) {
     Dhcp6Client client;
     // Configure client to request IA_PD.
@@ -591,24 +648,28 @@ TEST_F(RebindTest, directClientPDChangingIAID) {
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[4], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
+
     // Modify the IAID of the lease record that client stores. By adding
     // one to IAID we guarantee that the IAID will change.
-    ++client.config_.leases_[0].lease_.iaid_;
-    // Try to Rebind. Note that client will use a different IAID (which
-    // is not matching IAID that server retains for the client). This is
-    // a condition described in RFC3633, section 12.2 as the server finds
-    // no binding for the client. It is an indication that some other
-    // server has probably allocated the lease for the client. Hence, our
-    // server should discard the message.
+    client.config_.leases_[0].iaid_ = 5679;
+    client.usePD(true, 5679);
+
+    // Try to Rebind. The server should allocate new lease for this IAID.
     ASSERT_NO_THROW(client.doRebind());
-    // Make sure that the server has discarded client's message. In such case,
-    // the message sent back to the client should be NULL.
-    EXPECT_FALSE(client.getContext().response_)
-        << "The server responded to the Rebind message, while it should have"
-        " discarded it because there is no binding for the client.";
-    // Check that server still has the same lease.
-    Lease6Ptr lease_server = checkLease(lease_client);
-    EXPECT_TRUE(lease_server);
+
+    // The old lease should be returned with 0 lifetimes.
+    std::vector<Lease6> old_leases = client.getLeasesWithZeroLifetime();
+    ASSERT_EQ(1, old_leases.size());
+    EXPECT_EQ(lease_client.addr_, old_leases[0].addr_);
+
+    // The new lease should be allocated.
+    std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
+    ASSERT_EQ(1, new_leases.size());
+
+    Lease6Ptr lease_server2 = checkLease(new_leases[0]);
+    EXPECT_TRUE(lease_server2);
+    // The Status code returned to the client, should be Success.
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(5679));
 }
 
 // Check that the prefix lifetime is not extended for the client when the
@@ -624,9 +685,9 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
     // Modify the Prefix of the lease record that client stores. The server
     // should check that the prefix is invalid (hasn't been allocated for
     // the particular IAID).
-    ASSERT_NE(client.config_.leases_[0].lease_.addr_,
+    ASSERT_NE(client.config_.leases_[0].addr_,
               IOAddress("2001:db8:1:10::"));
-    client.config_.leases_[0].lease_.addr_ = IOAddress("2001:db8:1:10::");
+    client.config_.leases_[0].addr_ = IOAddress("2001:db8:1:10::");
     // Try to Rebind. The client will use correct IAID but will specify a
     // wrong prefix. The server will discover that the client has a binding
     // but the prefix will not match. According to the RFC3633, section 12.2.
@@ -645,21 +706,19 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
     // Client should get two entries. One with the invalid address he requested
     // with zeroed lifetimes and a second one with the actual prefix he has
     // with non-zero lifetimes.
-    Lease6 lease_client1 = client.getLease(0);
-    Lease6 lease_client2 = client.getLease(1);
 
-    // The lifetimes should be set to 0, as an explicit notification to the
-    // client to stop using invalid prefix.
-    EXPECT_EQ(0, lease_client1.valid_lft_);
-    EXPECT_EQ(0, lease_client1.preferred_lft_);
+    // Get the lease with 0 lifetimes.
+    std::vector<Lease6> invalid_leases = client.getLeasesWithZeroLifetime();
+    ASSERT_EQ(1, invalid_leases.size());
+    EXPECT_EQ(0, invalid_leases[0].valid_lft_);
+    EXPECT_EQ(0, invalid_leases[0].preferred_lft_);
 
-    // The lifetimes should be set to 0, as an explicit notification to the
-    // client to stop using invalid prefix.
-    EXPECT_NE(0, lease_client2.valid_lft_);
-    EXPECT_NE(0, lease_client2.preferred_lft_);
+    // Get the valid lease with non-zero lifetime.
+    std::vector<Lease6> valid_leases = client.getLeasesWithNonZeroLifetime();
+    ASSERT_EQ(1, valid_leases.size());
 
     // Check that server still has the same lease.
-    Lease6Ptr lease_server = checkLease(lease_client);
+    Lease6Ptr lease_server = checkLease(valid_leases[0]);
     ASSERT_TRUE(lease_server);
     // Make sure that the lease in the data base hasn't been added.
     EXPECT_NE(0, lease_server->valid_lft_);
@@ -731,5 +790,116 @@ TEST_F(RebindTest, relayedUnicast) {
     Lease6Ptr lease_server2 = checkLease(lease_client2);
     EXPECT_TRUE(lease_server2);
 }
+
+// This test verifies that the client can request the prefix delegation
+// while it is rebinding an address lease.
+TEST_F(RebindTest, requestPrefixInRebind) {
+    Dhcp6Client client;
+
+    // Configure client to request IA_NA and IA_PD.
+    client.useNA();
+    client.usePD();
+
+    // Configure the server with NA pools only.
+    ASSERT_NO_THROW(configure(REBIND_CONFIGS[0], *client.getServer()));
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Simulate aging of leases.
+    client.fastFwdTime(1000);
+
+    // Make sure that the client has acquired NA lease.
+    std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases_client_na.size());
+
+    // The client should not acquire a PD lease.
+    std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_TRUE(leases_client_pd.empty());
+    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(5678));
+
+    // Send Rebind message to the server, including IA_NA and requesting IA_PD.
+    ASSERT_NO_THROW(client.doRebind());
+    ASSERT_TRUE(client.getContext().response_);
+    leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_TRUE(leases_client_pd.empty());
+    ASSERT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(5678));
+
+    // Reconfigure the server to use both NA and PD pools.
+    configure(REBIND_CONFIGS[6], *client.getServer());
+
+    // Send Rebind message to the server, including IA_NA and requesting IA_PD.
+    ASSERT_NO_THROW(client.doRebind());
+
+    // Make sure that the client has acquired NA lease.
+    std::vector<Lease6> leases_client_na_rebound =
+        client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases_client_na_rebound.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
+
+    // The lease should have been rebound.
+    EXPECT_EQ(1000, leases_client_na_rebound[0].cltt_ - leases_client_na[0].cltt_);
+
+    // The client should now also acquire a PD lease.
+    leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_EQ(1, leases_client_pd.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
+}
+
+// This test verifies that the client can request the prefix delegation
+// while it is rebinding an address lease.
+TEST_F(RebindTest, requestAddressInRebind) {
+    Dhcp6Client client;
+
+    // Configure client to request IA_NA and IA_PD.
+    client.useNA();
+    client.usePD();
+
+    // Configure the server with PD pools only.
+    ASSERT_NO_THROW(configure(REBIND_CONFIGS[4], *client.getServer()));
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Simulate aging of leases.
+    client.fastFwdTime(1000);
+
+    // Make sure that the client has acquired PD lease.
+    std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_EQ(1, leases_client_pd.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
+
+    // The client should not acquire a NA lease.
+    std::vector<Lease6> leases_client_na =
+        client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(0, leases_client_na.size());
+    ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(1234));
+
+    // Send Rebind message to the server, including IA_PD and requesting IA_NA.
+    // The server should return NoAddrsAvail status code in this case.
+    ASSERT_NO_THROW(client.doRebind());
+    leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(0, leases_client_na.size());
+    ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(1234));
+
+    // Reconfigure the server to use both NA and PD pools.
+    configure(REBIND_CONFIGS[6], *client.getServer());
+
+    // Send Rebind message to the server, including IA_PD and requesting IA_NA.
+    ASSERT_NO_THROW(client.doRebind());
+
+    // Make sure that the client has renewed PD lease.
+    std::vector<Lease6> leases_client_pd_renewed =
+        client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
+    EXPECT_GE(leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_, 1000);
+
+    // The client should now also acquire a NA lease.
+    leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases_client_na.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
+}
+
 
 } // end of anonymous namespace

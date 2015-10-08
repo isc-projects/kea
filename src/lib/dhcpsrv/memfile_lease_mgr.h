@@ -49,12 +49,7 @@ class LFCSetup;
 /// The backend installs an @c asiolink::IntervalTimer to periodically execute
 /// the @c Memfile_LeaseMgr::lfcCallback. This callback function controls
 /// the startup of the background process which removes redundant information
-/// from the lease file(s). Note that the @c asiolink::IntervalTimer uses
-/// @c asiolink::IOService to execute the callback. The @c LeaseMgr class
-/// creates this object, which can be obtained by the caller using the
-/// @c LeaseMgr::getIOService. The caller should later call an appropriate
-/// method, @c asio::io_service::poll_one to execute the callback when
-/// the timer is ready.
+/// from the lease file(s).
 ///
 /// When the backend is starting up, it reads leases from the lease file (one
 /// by one) and adds them to the in-memory container as follows:
@@ -259,6 +254,33 @@ public:
                                         uint32_t iaid,
                                         SubnetID subnet_id) const;
 
+    /// @brief Returns a collection of expired DHCPv6 leases.
+    ///
+    /// This method returns at most @c max_leases expired leases. The leases
+    /// returned haven't been reclaimed, i.e. the database query must exclude
+    /// reclaimed leases from the results returned.
+    ///
+    /// @param [out] expired_leases A container to which expired leases returned
+    /// by the database backend are added.
+    /// @param max_leases A maximum number of leases to be returned. If this
+    /// value is set to 0, all expired (but not reclaimed) leases are returned.
+    virtual void getExpiredLeases6(Lease6Collection& expired_leases,
+                                   const size_t max_leases) const;
+
+
+    /// @brief Returns a collection of expired DHCPv4 leases.
+    ///
+    /// This method returns at most @c max_leases expired leases. The leases
+    /// returned haven't been reclaimed, i.e. the database query must exclude
+    /// reclaimed leases from the results returned.
+    ///
+    /// @param [out] expired_leases A container to which expired leases returned
+    /// by the database backend are added.
+    /// @param max_leases A maximum number of leases to be returned. If this
+    /// value is set to 0, all expired (but not reclaimed) leases are returned.
+    virtual void getExpiredLeases4(Lease4Collection& expired_leases,
+                                   const size_t max_leases) const;
+
     /// @brief Updates IPv4 lease.
     ///
     /// @warning This function does not validate the pointer to the lease.
@@ -286,6 +308,61 @@ public:
     ///
     /// @return true if deletion was successful, false if no such lease exists
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
+
+    /// @brief Deletes all expired-reclaimed DHCPv4 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    ///
+    /// @return Number of leases deleted.
+    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t secs);
+
+    /// @brief Deletes all expired-reclaimed DHCPv6 leases.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    ///
+    /// @return Number of leases deleted.
+    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs);
+
+private:
+
+    /// @brief Deletes all expired-reclaimed leases.
+    ///
+    /// This private method is called by both of the public methods:
+    /// @c deleteExpiredReclaimedLeases4 and
+    /// @c deleteExpiredReclaimedLeases6 to remove all expired
+    /// reclaimed DHCPv4 or DHCPv6 leases respectively.
+    ///
+    /// @param secs Number of seconds since expiration of leases before
+    /// they can be removed. Leases which have expired later than this
+    /// time will not be deleted.
+    /// @param universe V4 or V6.
+    /// @param storage Reference to the container where leases are held.
+    /// Some expired-reclaimed leases will be removed from this container.
+    /// @param lease_file Reference to a DHCPv4 or DHCPv6 lease file
+    /// instance where leases should be marked as deleted.
+    ///
+    /// @return Number of leases deleted.
+    ///
+    /// @tparam IndexType Index type to be used to search for the
+    /// expired-reclaimed leases, i.e.
+    /// @c Lease4StorageExpirationIndex or @c Lease6StorageExpirationIndex.
+    /// @tparam LeaseType Lease type, i.e. @c Lease4 or @c Lease6.
+    /// @tparam StorageType Type of storage where leases are held, i.e.
+    /// @c Lease4Storage or @c Lease6Storage.
+    /// @tparam LeaseFileType Type of the lease file, i.e. DHCPv4 or
+    /// DHCPv6 lease file type.
+    template<typename IndexType, typename LeaseType, typename StorageType,
+             typename LeaseFileType>
+    uint64_t deleteExpiredReclaimedLeases(const uint32_t secs,
+                                          const Universe& universe,
+                                          StorageType& storage,
+                                          LeaseFileType& lease_file) const;
+
+public:
 
     /// @brief Return backend type
     ///
@@ -375,19 +452,6 @@ public:
     ///       The following methods allow for retrieving useful information
     ///       about the state of the backend.
     //@{
-
-    /// @brief Returns the interval at which the @c IOService events should
-    /// be released.
-    ///
-    /// The Memfile backend may install a timer to execute the %Lease File
-    /// Cleanup periodically. If this timer is installed, the method returns
-    /// the LFC interval in milliseconds.
-    ///
-    /// @return A maximum interval (in seconds) at which the @c IOService
-    /// should be executed. A value of 0 means that no timers are installed
-    /// and that there is no requirement for the @c IOService to be
-    /// executed at any specific interval.
-    virtual uint32_t getIOServiceExecInterval() const;
 
     /// @brief Returns default path to the lease file.
     ///

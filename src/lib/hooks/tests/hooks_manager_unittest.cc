@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -99,6 +99,17 @@ public:
         EXPECT_EQ(r3, result) << "hookpt_three" << COMMON_TEXT;
     }
 
+private:
+    /// To avoid unused variable errors
+    std::string dummy(int i) {
+        if (i == 0) {
+            return (MARKER_FILE);
+        } else if (i > 0) {
+            return (LOAD_CALLOUT_LIBRARY);
+        } else {
+            return (LOAD_ERROR_CALLOUT_LIBRARY);
+        }
+    }
 };
 
 // This is effectively the same test as for LibraryManager, but using the

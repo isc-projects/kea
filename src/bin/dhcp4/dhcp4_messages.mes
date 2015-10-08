@@ -177,6 +177,29 @@ This message is printed when DHCPv4 server disables an interface from being
 used to receive DHCPv4 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
+% DHCP4_DECLINE_LEASE Received DHCPDECLINE for addr %1 from client %2. The lease will be unavailable for %3 seconds.
+This informational message is printed when a client received an address, but
+discovered that it is being used by some other device and notified the server by
+sending a DHCPDECLINE message. The server checked that this address really was
+leased to the client and marked this address as unusable for a certain
+amount of time. This message may indicate a misconfiguration in a network,
+as there is either a buggy client or more likely a device that is using an
+address that it is not supposed to. The server will fully recover from this
+situation, but if the underlying problem of a misconfigured or rogue device
+is not solved, this address may be declined again in the future.
+
+% DHCP4_DECLINE_LEASE_NOT_FOUND Received DHCPDECLINE for addr %1 from client %2, but no such lease found.
+This warning message indicates that a client reported that his address was
+detected as a duplicate (i.e. another device in the network is using this address).
+However, the server does not have a record for this address. This may indicate
+a client's error or a server's purged database.
+
+% DHCP4_DECLINE_LEASE_MISMATCH Received DHCPDECLINE for addr %1 from client %2, but the data doesn't match: received hwaddr: %3, lease hwaddr: %4, received client-id: %5, lease client-id: %6
+This informational message means that a client attempted to report his address
+as declined (i.e. used by unknown entity). The server has information about
+a lease for that address, but the client's hardware address or client identifier
+does not match the server's stored information. The client's request will be ignored.
+
 % DHCP4_DHCID_COMPUTE_ERROR failed to compute the DHCID for lease: %1, reason: %2
 This error message is logged when the attempt to compute DHCID for a specified
 lease has failed. The lease details and reason for failure is logged in the
@@ -200,6 +223,10 @@ This debug message is issued when the server received an empty Hostname option
 from a client. Server does not process empty Hostname options and therefore
 option is skipped. The argument holds the client and transaction identification
 information.
+
+% DHCP4_HANDLE_SIGNAL_EXCEPTION An exception was thrown while handing signal: %1
+This error message is printed when an ISC or standard exception was raised during signal
+processing. This likely indicates a coding error and should be reported to ISC.
 
 % DHCP4_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
 A "libreload" command was issued to reload the hooks libraries but for
@@ -284,13 +311,6 @@ in response to client's DHCPREQUEST message. The lease information will
 be sent to the client in the DHCPACK message. The first argument
 contains the client and the transaction identification information. The
 second argument contains the allocated IPv4 address.
-
-% DHCP4_LEASE_DATABASE_TIMERS_EXEC_FAIL failed to execute timer-based functions for lease database: %1
-A warning message executed when a server process is unable to execute
-the periodic actions for the lease database. An example of the periodic
-action is a Lease File Cleanup. One of the reasons for the failure is
-a misconfiguration of the lease database, whereby the lease database
-hasn't been selected.
 
 % DHCP4_NAME_GEN_UPDATE_FAIL %1: failed to update the lease after generating name %2 for a client: %3
 This message indicates the failure when trying to update the lease and/or
@@ -541,12 +561,6 @@ the client and transaction identification information. The second
 argument contains the IPv4 address which the client is trying to
 release.
 
-% DHCP4_RELEASE_FAIL_NO_SUBNET %1: client is trying to release a lease %2 from a subnet which cannot be selected.
-This warning message indicates that client tried to release an address
-from an improper location.  The first argument contains the client and
-transaction identification information. The second argument contains
-the address which the client is trying to release.
-
 % DHCP4_RELEASE_FAIL_WRONG_CLIENT %1: client is trying to release the lease %2 which belongs to a different client
 This debug message is issued when a client is trying to release the
 lease for the address which is currently used by another client, i.e.
@@ -609,6 +623,12 @@ This error message indicates that during startup, the construction of a
 core component within the DHCPv4 server (the Dhcpv4 server object)
 has failed.  As a result, the server will exit.  The reason for the
 failure is given within the message.
+
+% DHCP4_SRV_D2STOP_ERROR error stopping IO with DHCP_DDNS during shutdown: %1
+This error message indicates that during shutdown, an erro occurred while
+stopping IO between the DHCPv4 server and the DHCP_DDNS server.  This is
+probably due to a programmatic error is not likely to impact either server
+upon restart.  The reason for the failure is given within the message.
 
 % DHCP4_STARTED Kea DHCPv4 server version %1 started
 This informational message indicates that the DHCPv4 server has

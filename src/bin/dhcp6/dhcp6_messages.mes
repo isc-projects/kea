@@ -216,6 +216,49 @@ This message is printed when DHCPv6 server disables an interface from being
 used to receive DHCPv6 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
+% DHCP6_DECLINE_PROCESS_IA Processing of IA (IAID: %1) from client %2 started.
+This debug message is printed when the server starts processing an IA_NA option
+received in Decline message. It's expected that the option will contain an
+address that is being declined. Specific information will be printed in a
+separate message.
+
+% DHCP6_DECLINE_FAIL_DUID_MISMATCH Client %1 sent DECLINE for address %2, but it belongs to client with DUID %3
+This informational message is printed when a client attempts to decline
+a lease, but that lease belongs to a different client. The decline request
+will be rejected.
+
+% DHCP6_DECLINE_FAIL_IAID_MISMATCH Client %1 sent DECLINE for address %2, but used a wrong IAID (%3), instead of expected %4
+This informational message is printed when a client attempts to decline
+a lease. The server has a lease for this address, it belongs to this client,
+but the recorded IAID does not match what client has sent. This means
+the server will reject this Decline.
+
+% DHCP6_DECLINE_FAIL_LEASE_WITHOUT_DUID Client %1 sent DECLINE for address %2, but the associated lease has no DUID
+This error condition likely indicates database corruption, as every IPv6
+lease is supposed to have a DUID, even if it is an empty one.
+
+% DHCP6_DECLINE_FAIL_NO_LEASE Client %1 sent DECLINE for address %2, but there's no lease for it
+This informational message is printed when a client tried to decline an address,
+but the server has no lease for said address. This means that the server's
+and client's perception of the leases are different. The likely causes
+of this could be: a confused (e.g. skewed clock) or broken client (e.g. client
+moved to a different location and didn't notice) or possibly an attack
+(a rogue client is trying to decline random addresses). The server will
+inform the client that his decline request was rejected and client should
+be able to recover from that.
+
+% DHCP6_DECLINE_LEASE Client %1 sent DECLINE for address %2 and the server marked it as declined. The lease will be recovered in %3 seconds.
+This informational message indicates that the client leased an address, but
+discovered that it is being used by some other devicea and reported this to the
+server by sending a Decline message. The server marked the lease as
+declined. This likely indicates a misconfiguration in the network. Either
+the server is configured with an incorrect pool or there are devices that have
+statically assigned addresses that are supposed to be assigned by the DHCP
+server. Both client (will request a different address) and server (will recover
+the lease after decline-probation-time elapses) will recover automatically.
+However, if the underlying problem is not solved, the conditions leading
+to this message may reappear.
+
 % DHCP6_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal
 This is the info message logged when the DHCPv6 server starts reconfiguration
 as a result of receiving SIGHUP signal.
@@ -224,23 +267,9 @@ as a result of receiving SIGHUP signal.
 This is an error message logged when the dynamic reconfiguration of the
 DHCP server failed.
 
-% DHCP6_EXTEND_NA_UNKNOWN %1: received unknown IA_NA with iaid=%2 in subnet %3
-This warning message is printed when client attempts to extend the lease
-for the address (in the IA_NA option) but no such lease is known by the server.
-It typically means that client has attempted to use its lease past its
-lifetime: causes of this include a adjustment of the client's date/time
-setting or poor support on the client for sleep/recovery. A properly
-implemented client will recover from such a situation by restarting the
-lease allocation process after receiving a negative reply from the server.
-The first argument includes the client and the transaction identification
-information. The second argument holds IAID. The third argument holds the
-subnet information.
-
-An alternative cause could be that the server has lost its database
-recently and does not recognize its well-behaving clients. This is more
-probable if you see many such messages. Clients will recover from this,
-but they will most likely get a different IP addresses and experience
-a brief service interruption.
+% DHCP6_HANDLE_SIGNAL_EXCEPTION An exception was thrown while handing signal: %1
+This error message is printed when an exception was raised during signal
+processing. This likely indicates a coding error and should be reported to ISC.
 
 % DHCP6_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
 A "libreload" command was issued to reload the hooks libraries but for
@@ -346,13 +375,6 @@ allocated lease or a lease which will be advertised to the client.
 The first argument holds the client and the transaction identification
 information. The second argument holds the IAID. The third argument
 holds the detailed lease information.
-
-% DHCP6_LEASE_DATABASE_TIMERS_EXEC_FAIL failed to execute timer-based functions for lease database: %1
-A warning message executed when a server process is unable to execute
-the periodic actions for the lease database. An example of the periodic
-action is a Lease File Cleanup. One of the reasons for the failure is
-a misconfiguration of the lease database, whereby the lease database
-hasn't been selected.
 
 % DHCP6_LEASE_NA_WITHOUT_DUID %1: address lease for address %2 does not have a DUID
 This error message indicates a database consistency problem. The lease
@@ -675,6 +697,12 @@ This error message indicates that during startup, the construction of a
 core component within the IPv6 DHCP server (the Dhcpv6 server object)
 has failed.  As a result, the server will exit.  The reason for the
 failure is given within the message.
+
+% DHCP6_SRV_D2STOP_ERROR error stopping IO with DHCP_DDNS during shutdown: %1
+This error message indicates that during shutdown, an erro occurred while
+stopping IO between the DHCPv6 server and the DHCP_DDNS server.  This is
+probably due to a programmatic error is not likely to impact either server
+upon restart.  The reason for the failure is given within the message.
 
 % DHCP6_STANDALONE skipping message queue, running standalone
 This is a debug message indicating that the IPv6 server is running in

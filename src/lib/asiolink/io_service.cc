@@ -18,7 +18,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <asiolink/io_service.h>
 
 namespace isc {
@@ -91,14 +91,14 @@ public:
     /// that share the same \c io_service with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
-    asio::io_service& get_io_service() { return io_service_; };
+    boost::asio::io_service& get_io_service() { return io_service_; };
     void post(const boost::function<void ()>& callback) {
         const CallbackWrapper wrapper(callback);
         io_service_.post(wrapper);
     }
 private:
-    asio::io_service io_service_;
-    asio::io_service::work work_;
+    boost::asio::io_service io_service_;
+    boost::asio::io_service::work work_;
 };
 
 IOService::IOService() {
@@ -129,7 +129,7 @@ IOService::stop() {
     io_impl_->stop();
 }
 
-asio::io_service&
+boost::asio::io_service&
 IOService::get_io_service() {
     return (io_impl_->get_io_service());
 }

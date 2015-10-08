@@ -17,8 +17,8 @@
 #include <dhcp_ddns/dhcp_ddns_log.h>
 #include <dhcp_ddns/ncr_udp.h>
 
-#include <asio/ip/udp.hpp>
-#include <asio/error_code.hpp>
+#include <boost/asio/ip/udp.hpp>
+#include <boost/system/error_code.hpp>
 #include <boost/bind.hpp>
 
 namespace isc {
@@ -39,7 +39,7 @@ UDPCallback::UDPCallback (RawBufferPtr& buffer, const size_t buf_size,
 }
 
 void
-UDPCallback::operator ()(const asio::error_code error_code,
+UDPCallback::operator ()(const boost::system::error_code error_code,
                          const size_t bytes_transferred) {
 
     // Save the result state and number of bytes transferred.
@@ -100,19 +100,19 @@ NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
 
     // Create the low level socket.
     try {
-        asio_socket_.reset(new asio::ip::udp::
+        asio_socket_.reset(new boost::asio::ip::udp::
                            socket(io_service.get_io_service(),
-                                  (ip_address_.isV4() ? asio::ip::udp::v4() :
-                                   asio::ip::udp::v6())));
+                                  (ip_address_.isV4() ? boost::asio::ip::udp::v4() :
+                                   boost::asio::ip::udp::v6())));
 
         // Set the socket option to reuse addresses if it is enabled.
         if (reuse_address_) {
-            asio_socket_->set_option(asio::socket_base::reuse_address(true));
+            asio_socket_->set_option(boost::asio::socket_base::reuse_address(true));
         }
 
         // Bind the low level socket to our endpoint.
         asio_socket_->bind(endpoint.getASIOEndpoint());
-    } catch (asio::system_error& ex) {
+    } catch (boost::system::system_error& ex) {
         asio_socket_.reset();
         isc_throw (NcrUDPError, ex.code().message());
     }
@@ -142,7 +142,7 @@ NameChangeUDPListener::close() {
         if (asio_socket_->is_open()) {
             try {
                 asio_socket_->close();
-            } catch (asio::system_error& ex) {
+            } catch (boost::system::system_error& ex) {
                 // It is really unlikely that this will occur.
                 // If we do reopen later it will be with a new socket
                 // instance. Repackage exception as one that is conformant
@@ -180,8 +180,8 @@ NameChangeUDPListener::receiveCompletionHandler(const bool successful,
             return;
         }
     } else {
-        asio::error_code error_code = callback->getErrorCode();
-        if (error_code.value() == asio::error::operation_aborted) {
+        boost::system::error_code error_code = callback->getErrorCode();
+        if (error_code.value() == boost::asio::error::operation_aborted) {
             // A shutdown cancels all outstanding reads.  For this reason,
             // it can be an expected event, so log it as a debug message.
             LOG_DEBUG(dhcp_ddns_logger, DBGLVL_TRACE_BASIC,
@@ -235,19 +235,19 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
 
     // Create the low level socket.
     try {
-        asio_socket_.reset(new asio::ip::udp::
+        asio_socket_.reset(new boost::asio::ip::udp::
                            socket(io_service.get_io_service(),
-                                  (ip_address_.isV4() ? asio::ip::udp::v4() :
-                                   asio::ip::udp::v6())));
+                                  (ip_address_.isV4() ? boost::asio::ip::udp::v4() :
+                                   boost::asio::ip::udp::v6())));
 
         // Set the socket option to reuse addresses if it is enabled.
         if (reuse_address_) {
-            asio_socket_->set_option(asio::socket_base::reuse_address(true));
+            asio_socket_->set_option(boost::asio::socket_base::reuse_address(true));
         }
 
         // Bind the low leve socket to our endpoint.
         asio_socket_->bind(endpoint.getASIOEndpoint());
-    } catch (asio::system_error& ex) {
+    } catch (boost::system::system_error& ex) {
         isc_throw (NcrUDPError, ex.code().message());
     }
 
@@ -260,7 +260,8 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
 
     send_callback_->setDataSource(server_endpoint_);
 
-    watch_socket_.reset(new WatchSocket());
+    closeWatchSocket();
+    watch_socket_.reset(new util::WatchSocket());
 }
 
 void
@@ -274,7 +275,7 @@ NameChangeUDPSender::close() {
         if (asio_socket_->is_open()) {
             try {
                 asio_socket_->close();
-            } catch (asio::system_error& ex) {
+            } catch (boost::system::system_error& ex) {
                 // It is really unlikely that this will occur.
                 // If we do reopen later it will be with a new socket
                 // instance. Repackage exception as one that is conformant
@@ -288,6 +289,7 @@ NameChangeUDPSender::close() {
 
     socket_.reset();
 
+    closeWatchSocket();
     watch_socket_.reset();
 }
 
@@ -337,8 +339,8 @@ NameChangeUDPSender::sendCompletionHandler(const bool successful,
     }
     else {
         // On a failure, log the error and set the result to ERROR.
-        asio::error_code error_code = send_callback->getErrorCode();
-        if (error_code.value() == asio::error::operation_aborted) {
+        boost::system::error_code error_code = send_callback->getErrorCode();
+        if (error_code.value() == boost::asio::error::operation_aborted) {
             LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_SEND_CANCELED)
                       .arg(error_code.message());
             result = STOPPED;
@@ -372,7 +374,17 @@ NameChangeUDPSender::ioReady() {
     return (false);
 }
 
-
+void
+NameChangeUDPSender::closeWatchSocket() {
+    if (watch_socket_) {
+        std::string error_string;
+        watch_socket_->closeSocket(error_string);
+        if (!error_string.empty()) {
+            LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_UDP_SENDER_WATCH_SOCKET_CLOSE_ERROR)
+                .arg(error_string);
+        }
+    }
+}
 
 }; // end of isc::dhcp_ddns namespace
 }; // end of isc namespace

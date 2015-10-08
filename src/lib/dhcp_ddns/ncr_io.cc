@@ -15,7 +15,7 @@
 #include <dhcp_ddns/dhcp_ddns_log.h>
 #include <dhcp_ddns/ncr_io.h>
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 namespace isc {

@@ -98,7 +98,11 @@ public:
     using Dhcpv6Srv::processSolicit;
     using Dhcpv6Srv::processRequest;
     using Dhcpv6Srv::processRenew;
+    using Dhcpv6Srv::processRebind;
+    using Dhcpv6Srv::processConfirm;
     using Dhcpv6Srv::processRelease;
+    using Dhcpv6Srv::processDecline;
+    using Dhcpv6Srv::processInfRequest;
     using Dhcpv6Srv::processClientFqdn;
     using Dhcpv6Srv::createNameChangeRequests;
     using Dhcpv6Srv::createRemovalNameChangeRequest;
@@ -467,19 +471,6 @@ public:
     void
     testRenewSomeoneElsesLease(isc::dhcp::Lease::Type type,
                                const asiolink::IOAddress& addr);
-
-    /// @brief Performs negative RENEW test
-    ///
-    /// See renewReject and pdRenewReject tests for detailed explanation.
-    /// In essence the test attempts to perform couple failed RENEW scenarios.
-    ///
-    /// This method does not throw, but uses gtest macros to signify failures.
-    ///
-    /// @param type type (TYPE_NA or TYPE_PD)
-    /// @param addr address being sent in RENEW
-    void
-    testRenewReject(isc::dhcp::Lease::Type type,
-                    const isc::asiolink::IOAddress& addr);
 
     /// @brief Performs basic (positive) RELEASE test
     ///

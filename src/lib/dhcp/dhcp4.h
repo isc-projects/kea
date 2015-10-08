@@ -36,6 +36,13 @@
 
 #include <stdint.h>
 
+/// @note Code points in comments are those assigned by IANA
+/// but not yet implemented in Kea.
+/// To implement a standard option, remove the comment characters,
+/// add an entry in std_option_defs.h, add a stdOptionDefs4 unit test
+/// in tests/libdhcp++_unittest.cc and update dhcp4-std-options-list-part2
+/// in the dhcp4-srv.xml source file of the user guide.
+
 namespace isc {
 namespace dhcp {
 
@@ -129,18 +136,91 @@ enum DHCPOptionType {
     DHO_DHCP_CLIENT_IDENTIFIER       = 61,
     DHO_NWIP_DOMAIN_NAME             = 62,
     DHO_NWIP_SUBOPTIONS              = 63,
+//  DHO_NIS_DOMAIN_NAME              = 64,
+//  DHO_NIS_SERVER_ADDR              = 65,
     DHO_TFTP_SERVER_NAME             = 66,
     DHO_BOOT_FILE_NAME               = 67,
+//  DHO_HOME_AGENT_ADDRS             = 68,
+//  DHO_SMTP_SERVER                  = 69,
+//  DHO_POP3_SERVER                  = 70,
+//  DHO_NNTP_SERVER                  = 71,
+//  DHO_WWW_SERVER                   = 72,
+//  DHO_FINGER_SERVER                = 73,
+//  DHO_IRC_SERVER                   = 74,
+//  DHO_STREETTALK_SERVER            = 75,
+//  DHO_STDASERVER                   = 76,
     DHO_USER_CLASS                   = 77,
+//  DHO_DIRECTORY_AGENT              = 78,
+//  DHO_SERVICE_SCOPE                = 79,
+//  DHO_RAPID_COMMIT                 = 80,,
     DHO_FQDN                         = 81,
     DHO_DHCP_AGENT_OPTIONS           = 82,
+//  DHO_ISNS                         = 83,
+    // 84 is removed/unassigned
+//  DHO_NDS_SERVERS                  = 85,
+//  DHO_NDS_TREE_NAME                = 86,
+//  DHO_NDS_CONTEXT                  = 87,
+//  DHO_BCMCS_DOMAIN_NAME_LIST       = 88,
+//  DHO_BCMCS_IPV4_ADDR              = 89,
     DHO_AUTHENTICATE                 = 90,  /* RFC3118, was 210 */
     DHO_CLIENT_LAST_TRANSACTION_TIME = 91,
     DHO_ASSOCIATED_IP                = 92,
+    DHO_SYSTEM                       = 93, /* RFC4578 */
+    DHO_NDI                          = 94, /* RFC4578 */
+//  DHO_LDAP                         = 95,
+    // 96 is removed/unassigned
+    DHO_UUID_GUID                    = 97, /* RFC4578 */
+//  DHO_USER_AUTH                    = 98,
+//  DHO_GEOCONF_CIVIC                = 99,
+//  DHO_PCODE                        = 100,
+//  DHO_TCODE                        = 101,
+    // 102-111 are removed/unassigned
+//  DHO_NETINFO_ADDR                 = 112,
+//  DHO_NETINFO_TAG                  = 113,
+//  DHO_URL                          = 114,
+    // 115 is removed/unassigned
+//  DHO_AUTO_CONFIG                  = 116,
+//  DHO_NAME_SERVICE_SEARCH          = 117,
     DHO_SUBNET_SELECTION             = 118, /* RFC3011! */
     DHO_DOMAIN_SEARCH                = 119, /* RFC3397 */
+//  DHO_SIP_SERVERS                  = 120,
+//  DHO_CLASSLESS_STATIC_ROUTE       = 121,
+//  DHO_CCC                          = 122,
+//  DHO_GEOCONF                      = 123,
     DHO_VIVCO_SUBOPTIONS             = 124,
     DHO_VIVSO_SUBOPTIONS             = 125,
+    // 126-127 are removed/unassigned
+    // 128-135 have multiple definitions including PXE
+//  DHO_PANA_AGENT                   = 136,
+//  DHO_V4_LOST                      = 137,
+//  DHO_CAPWAP_AC_V4                 = 138,
+//  DHO_IPV4_ADDR_MOS                = 139,
+//  DHO_IPV4_FQDN_MOS                = 140,
+//  DHO_SIP_UA_CONF_SERVICE_DOMAINS  = 141,
+//  DHO_IPV4_ADDR_ANDSF              = 142,
+    // 143 is removed/unassigned
+//  DHO_GEOLOC                       = 144,
+//  DHO_FORCERENEW_NONCE_CAPABLE     = 145,
+//  DHO_RDNSS_SELECT                 = 146,
+    // 147-149 are removed/unassigned
+    // 150 have multiple definitions
+//  DHO_STATUS_CODE                  = 151,
+//  DHO_BASE_TIME                    = 152,
+//  DHO_START_TIME_OF_STATE          = 153,
+//  DHO_QUERY_START_TIME             = 154,
+//  DHO_QUERY_END_TIME               = 155,
+//  DHO_DHCP_STATE                   = 156,
+//  DHO_DATA_SOURCE                  = 157,
+//  DHO_V4_PCP_SERVER                = 158,
+//  DHO_V4_PORTPARAMS                = 159,
+    // 160-211 are removed/unassigned
+//  DHO_6RD                          = 212,
+//  DHO_V4_ACCESS_DOMAIN             = 213,
+    // 214-219 are removed/unassigned
+//  DHO_SUBNET_ALLOC                 = 220,
+//  DHO_VSS                          = 221,
+    // 222-223 are removed/unassigned
+    // 224-254 are reserved for private use
 
     DHO_END                          = 255
 };
@@ -155,6 +235,7 @@ enum DHCPMessageType {
     DHCPNAK             =  6,
     DHCPRELEASE         =  7,
     DHCPINFORM          =  8,
+//  DHCPFORCERENEW      =  9,
     DHCPLEASEQUERY      =  10,
     DHCPLEASEUNASSIGNED =  11,
     DHCPLEASEUNKNOWN    =  12,

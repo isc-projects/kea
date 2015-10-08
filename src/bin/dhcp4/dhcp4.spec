@@ -43,6 +43,50 @@
         }
         ]
       },
+
+      { "item_name": "expired-leases-processing",
+        "item_type": "map",
+        "item_optional": false,
+        "item_default": {},
+        "map_item_spec": [
+        {
+            "item_name": "reclaim-timer-wait-time",
+            "item_type": "integer",
+            "item_optional": false,
+            "item_default": 10
+        },
+        {
+            "item_name": "flush-reclaimed-timer-wait-time",
+            "item_type": "integer",
+            "item_optional": false,
+            "item_default": 25
+        },
+        {
+            "item_name": "hold-reclaimed-time",
+            "item_type": "integer",
+            "item_optional": false,
+            "item_default": 3600
+        },
+        {
+            "item_name": "max-reclaim-leases",
+            "item_type": "integer",
+            "item_optional": false,
+            "item_default": 100
+        },
+        {
+            "item_name": "max-reclaim-time",
+            "item_type": "integer",
+            "item_optional": false,
+            "item_default": 250
+        },
+        {
+            "item_name": "unwarned-reclaim-cycles",
+            "item_type": "integer",
+            "item_optional": false,
+            "item_default": 5
+        }
+        ]
+      },
       
       { "item_name": "renew-timer",
         "item_type": "integer",

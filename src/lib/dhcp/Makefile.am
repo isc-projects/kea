@@ -41,6 +41,7 @@ libkea_dhcp___la_SOURCES += option.cc option.h
 libkea_dhcp___la_SOURCES += option_custom.cc option_custom.h
 libkea_dhcp___la_SOURCES += option_data_types.cc option_data_types.h
 libkea_dhcp___la_SOURCES += option_definition.cc option_definition.h
+libkea_dhcp___la_SOURCES += option_opaque_data_tuples.cc option_opaque_data_tuples.h
 libkea_dhcp___la_SOURCES += option_space.cc option_space.h
 libkea_dhcp___la_SOURCES += option_string.cc option_string.h
 libkea_dhcp___la_SOURCES += protocol_util.cc protocol_util.h
@@ -66,12 +67,15 @@ libkea_dhcp___la_SOURCES += std_option_defs.h
 libkea_dhcp___la_SOURCES += docsis3_option_defs.h
 
 libkea_dhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
-libkea_dhcp___la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libkea_dhcp___la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_dhcp___la_LIBADD   = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/dns/libkea-dns++.la
+libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_dhcp___la_LIBADD  += $(CRYPTO_LIBS)
 libkea_dhcp___la_LDFLAGS  = -no-undefined -version-info 3:0:0
+libkea_dhcp___la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = README libdhcp++.dox
 

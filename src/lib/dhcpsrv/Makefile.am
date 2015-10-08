@@ -80,6 +80,7 @@ libkea_dhcpsrv_la_SOURCES += base_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
 libkea_dhcpsrv_la_SOURCES += cfg_hosts.cc cfg_hosts.h
 libkea_dhcpsrv_la_SOURCES += cfg_iface.cc cfg_iface.h
+libkea_dhcpsrv_la_SOURCES += cfg_expiration.cc cfg_expiration.h
 libkea_dhcpsrv_la_SOURCES += cfg_option.cc cfg_option.h
 libkea_dhcpsrv_la_SOURCES += cfg_option_def.cc cfg_option_def.h
 libkea_dhcpsrv_la_SOURCES += cfg_rsoo.cc cfg_rsoo.h
@@ -120,6 +121,7 @@ libkea_dhcpsrv_la_SOURCES += srv_config.cc srv_config.h
 libkea_dhcpsrv_la_SOURCES += subnet.cc subnet.h
 libkea_dhcpsrv_la_SOURCES += subnet_id.h
 libkea_dhcpsrv_la_SOURCES += subnet_selector.h
+libkea_dhcpsrv_la_SOURCES += timer_mgr.cc timer_mgr.h
 libkea_dhcpsrv_la_SOURCES += triplet.h
 libkea_dhcpsrv_la_SOURCES += utils.h
 libkea_dhcpsrv_la_SOURCES += writable_host_data_source.h
@@ -130,6 +132,8 @@ libkea_dhcpsrv_la_SOURCES += parsers/dbaccess_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/dbaccess_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/dhcp_parsers.cc
 libkea_dhcpsrv_la_SOURCES += parsers/dhcp_parsers.h
+libkea_dhcpsrv_la_SOURCES += parsers/expiration_config_parser.cc
+libkea_dhcpsrv_la_SOURCES += parsers/expiration_config_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/host_reservation_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/host_reservation_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/host_reservations_list_parser.h
@@ -142,19 +146,24 @@ nodist_libkea_dhcpsrv_la_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
 nodist_libkea_dhcpsrv_la_SOURCES += hosts_messages.h hosts_messages.cc
 
 libkea_dhcpsrv_la_CXXFLAGS = $(AM_CXXFLAGS)
-libkea_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libkea_dhcpsrv_la_LIBADD   = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libkea_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS)
+libkea_dhcpsrv_la_LIBADD   = $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/stats/libkea-stats.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dns/libkea-dns++.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/stats/libkea-stats.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_dhcpsrv_la_LIBADD  += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 
 libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 4:0:0
+libkea_dhcpsrv_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 if HAVE_MYSQL
 libkea_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)
 endif
@@ -176,6 +185,9 @@ EXTRA_DIST += hosts_messages.mes
 # Distribute backend documentation
 # Database schema creation script moved to src/bin/admin
 EXTRA_DIST += database_backends.dox libdhcpsrv.dox
+
+# Specification file
+EXTRA_DIST += logging.spec
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(dhcp_data_dir)

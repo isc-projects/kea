@@ -62,7 +62,7 @@
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -229,6 +229,13 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
 }
 
 Dhcpv6Srv::~Dhcpv6Srv() {
+    try {
+        stopD2();
+    } catch(const std::exception& ex) {
+        // Highly unlikely, but lets Report it but go on
+        LOG_ERROR(dhcp6_logger, DHCP6_SRV_D2STOP_ERROR).arg(ex.what());
+    }
+
     IfaceMgr::instance().closeSockets();
 
     LeaseMgrFactory::destroy();
@@ -252,12 +259,7 @@ Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt) {
     /// @todo Currently we always check server identifier regardless if
     /// it is allowed in the received message or not (per RFC3315).
     /// If the server identifier is not allowed in the message, the
-    /// sanityCheck function should deal with it. We may rethink this
-    /// design if we decide that it is appropriate to check at this stage
-    /// of message processing that the server identifier must or must not
-    /// be present. In such case however, the logic checking server id
-    /// will have to be removed from sanityCheck and placed here instead,
-    /// to avoid duplicate checks.
+    /// sanityCheck function should deal with it.
     OptionPtr server_id = pkt->getOption(D6O_SERVERID);
     if (server_id){
         // Let us test received ServerID if it is same as ServerID
@@ -315,16 +317,7 @@ bool Dhcpv6Srv::run() {
         Pkt6Ptr rsp;
 
         try {
-            // The lease database backend may install some timers for which
-            // the handlers need to be executed periodically. Retrieve the
-            // maximum interval at which the handlers must be executed from
-            // the lease manager.
-            uint32_t timeout = LeaseMgrFactory::instance().getIOServiceExecInterval();
-            // If the returned value is zero it means that there are no
-            // timers installed, so use a default value.
-            if (timeout == 0) {
-                timeout = 1000;
-            }
+            uint32_t timeout = 1000;
             LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT).arg(timeout);
             query = receivePacket(timeout);
 
@@ -375,15 +368,12 @@ bool Dhcpv6Srv::run() {
         // is called. If the function was called before receivePacket the
         // process could wait up to the duration of timeout of select() to
         // terminate.
-        handleSignal();
-
-        // Execute ready timers for the lease database, e.g. Lease File Cleanup.
         try {
-            LeaseMgrFactory::instance().getIOService()->poll();
-
-        } catch (const std::exception& ex) {
-            LOG_WARN(dhcp6_logger, DHCP6_LEASE_DATABASE_TIMERS_EXEC_FAIL)
-                .arg(ex.what());
+            handleSignal();
+        } catch (const std::exception& e) {
+            // An (a standard or ISC) exception occurred.
+            LOG_ERROR(dhcp6_logger, DHCP6_HANDLE_SIGNAL_EXCEPTION)
+                .arg(e.what());
         }
 
         // Timeout may be reached or signal received, which breaks select()
@@ -484,7 +474,7 @@ bool Dhcpv6Srv::run() {
         LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_PACKET_RECEIVED)
             .arg(query->getLabel())
             .arg(query->getName())
-            .arg(query->getType())
+            .arg(static_cast<int>(query->getType()))
             .arg(query->getRemoteAddr())
             .arg(query->getLocalAddr())
             .arg(query->getIface());
@@ -578,11 +568,12 @@ bool Dhcpv6Srv::run() {
             // Increase the statistic of dropped packets.
             StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
 
-        } catch (const isc::Exception& e) {
+        } catch (const std::exception& e) {
 
             // Catch-all exception (at least for ones based on the isc Exception
             // class, which covers more or less all that are explicitly raised
-            // in the Kea code).  Just log the problem and ignore the packet.
+            // in the Kea code), but also the standard one, which may possibly be
+            // thrown from boost code.  Just log the problem and ignore the packet.
             // (The problem is logged as a debug message because debug is
             // disabled by default - it prevents a DDOS attack based on the
             // sending of problem packets.)
@@ -1740,19 +1731,6 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         ctx.hints_.push_back(make_pair(iaaddr->getAddress(), 128));
     }
 
-    // We need to remember it as we'll be removing hints from this list as
-    // we extend, cancel or otherwise deal with the leases.
-    bool hints_present = !ctx.hints_.empty();
-
-    /// @todo: This was clarified in draft-ietf-dhc-dhcpv6-stateful-issues that
-    /// the server is allowed to assign new leases in both Renew and Rebind. For
-    /// now, we only support it in Renew, because it breaks a lot of Rebind
-    /// unit-tests. Ultimately, whether we allow it or not, should be exposed
-    /// as configurable policy. See ticket #3717.
-    if (query->getType() == DHCPV6_RENEW) {
-        ctx.allow_new_leases_in_renewals_ = true;
-    }
-
     Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
 
     // Ok, now we have the leases extended. We have:
@@ -1811,26 +1789,13 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
     // All is left is to insert the status code.
     if (leases.empty()) {
-        // We did not assign anything. If client has sent something, then
-        // the status code is NoBinding, if he sent an empty IA_NA, then it's
-        // NoAddrsAvailable
-        if (hints_present) {
-            // Insert status code NoBinding to indicate that the lease does not
-            // exist for this client.
-            ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoBinding,
-                              "Sorry, no known leases for this duid/iaid/subnet."));
 
-            LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_EXTEND_NA_UNKNOWN)
-                .arg(query->getLabel())
-                .arg(ia->getIAID())
-                .arg(subnet->toText());
-        } else {
-            ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoAddrsAvail,
-                              "Sorry, no addresses could be assigned at this time."));
-        }
-    } else {
-        // Yay, the client still has something. For now, let's not insert
-        // status-code=success to conserve bandwidth.
+        // The server wasn't able allocate new lease and renew an exising
+        // lease. In that case, the server sends NoAddrsAvail per RFC7550.
+        ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
+                                           STATUS_NoAddrsAvail,
+                                           "Sorry, no addresses could be"
+                                           " assigned at this time."));
     }
 
     return (ia_rsp);
@@ -1917,15 +1882,6 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         // Put the client's prefix into the hints list.
         ctx.hints_.push_back(make_pair(prf->getAddress(), prf->getLength()));
     }
-    // We need to remember it as we'll be removing hints from this list as
-    // we extend, cancel or otherwise deal with the leases.
-    bool hints_present = !ctx.hints_.empty();
-
-    /// @todo: The draft-ietf-dhc-dhcpv6-stateful-issues added a new capability
-    /// of the server to to assign new PD leases in both Renew and Rebind.
-    /// There's allow_new_leases_in_renewals_ in the ClientContext6, but we
-    /// currently not use it in PD yet. This should be implemented as part
-    /// of the stateful-issues implementation effort. See ticket #3718.
 
     // Call Allocation Engine and attempt to renew leases. Number of things
     // may happen. Leases may be extended, revoked (if the lease is no longer
@@ -1959,44 +1915,25 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // already, inform the client that he can't have them.
     for (AllocEngine::HintContainer::const_iterator prefix = ctx.hints_.begin();
          prefix != ctx.hints_.end(); ++prefix) {
-        OptionPtr prefix_opt(new Option6IAPrefix(D6O_IAPREFIX, prefix->first,
-                                                 prefix->second, 0, 0));
-        ia_rsp->addOption(prefix_opt);
+        // Send the prefix with the zero lifetimes only if the prefix
+        // contains non-zero value. A zero value indicates that the hint was
+        // for the prefix length.
+        if (!prefix->first.isV6Zero()) {
+            OptionPtr prefix_opt(new Option6IAPrefix(D6O_IAPREFIX, prefix->first,
+                                                     prefix->second, 0, 0));
+            ia_rsp->addOption(prefix_opt);
+        }
     }
 
     // All is left is to insert the status code.
     if (leases.empty()) {
-        if (query->getType() == DHCPV6_RENEW) {
 
-            // We did not assign anything. If client has sent something, then
-            // the status code is NoBinding, if he sent an empty IA_NA, then it's
-            // NoAddrsAvailable
-            if (hints_present) {
-                // Insert status code NoBinding to indicate that the lease does not
-                // exist for this client.
-                ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
-                                                   STATUS_NoBinding,
-                                                   "Sorry, no known PD leases for"
-                                                   " this duid/iaid/subnet."));
-            } else {
-                ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
-                                                   STATUS_NoPrefixAvail,
-                                                   "Sorry, no prefixes could be"
-                                                   " assigned at this time."));
-            }
-        } else {
-            // Per RFC3633, section 12.2, if there is no binding and we are
-            // processing Rebind, the message has to be discarded (assuming that
-            // the server doesn't know if the prefix in the IA_PD option is
-            // appropriate for the client's link). The exception being thrown
-            // here should propagate to the main loop and cause the message to
-            // be discarded.
-            isc_throw(DHCPv6DiscardMessageError, "no binding found for the"
-                      " DUID=" << duid->toText() << ", IAID="
-                      << ia->getIAID() << ", subnet="
-                      << subnet->toText() << " when processing a Rebind"
-                      " message with IA_PD option");
-        }
+        // The server wasn't able allocate new lease and renew an exising
+        // lease. In that case, the server sends NoPrefixAvail per RFC7550.
+        ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
+                                           STATUS_NoPrefixAvail,
+                                           "Sorry, no prefixes could be"
+                                           " assigned at this time."));
     }
 
     return (ia_rsp);
@@ -2010,16 +1947,9 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
     // Renew or Rebind message.
     /// @todo add support for IA_TA
 
-    /// @todo - assignLeases() drops the packet as RFC violation, shouldn't
-    /// we do that here? Shouldn't sanityCheck defend against this? Maybe
-    /// this should treated as a code error instead. If we're this far with
-    /// no duid that seems wrong.
-    if (!ctx.duid_) {
-        // This should not happen. We have checked this before.
-        reply->addOption(createStatusCode(*query, STATUS_UnspecFail,
-                         "You did not include mandatory client-id"));
-        return;
-    }
+    // For the lease extension it is critical that the client has sent
+    // DUID. There is no need to check for the presence of the DUID here
+    // because we have already checked it in the sanityCheck().
 
     for (OptionCollection::iterator opt = query->options_.begin();
          opt != query->options_.end(); ++opt) {
@@ -2506,6 +2436,8 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 Pkt6Ptr
 Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
 
+    sanityCheck(rebind, MANDATORY, FORBIDDEN);
+
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx = createContext(rebind);
 
@@ -2525,6 +2457,8 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
 
 Pkt6Ptr
 Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
+
+    sanityCheck(confirm, MANDATORY, FORBIDDEN);
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx = createContext(confirm);
@@ -2631,13 +2565,220 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
 
 Pkt6Ptr
 Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
-    /// @todo: Implement this
+
+    // Do sanity check.
+    sanityCheck(decline, MANDATORY, MANDATORY);
+
+    // Create an empty Reply message.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, decline->getTransid()));
+
+    // Let's create a simplified client context here.
+    AllocEngine::ClientContext6 ctx = createContext(decline);
+
+    // Copy client options (client-id, also relay information if present)
+    copyClientOptions(decline, reply);
+
+    // Include server-id
+    appendDefaultOptions(decline, reply);
+
+    declineLeases(decline, reply, ctx);
+
     return (reply);
+}
+
+void
+Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
+                         AllocEngine::ClientContext6& ctx) {
+
+    // We need to decline addresses for all IA_NA options in the client's
+    // RELEASE message.
+
+    // Let's set the status to be success by default. We can override it with
+    // error status if needed. The important thing to understand here is that
+    // the global status code may be set to success only if all IA options were
+    // handled properly. Therefore the declineIA  options
+    // may turn the status code to some error, but can't turn it back to success.
+    int general_status = STATUS_Success;
+
+    for (OptionCollection::iterator opt = decline->options_.begin();
+         opt != decline->options_.end(); ++opt) {
+        switch (opt->second->getType()) {
+        case D6O_IA_NA: {
+            OptionPtr answer_opt = declineIA(decline, ctx.duid_, general_status,
+                                   boost::dynamic_pointer_cast<Option6IA>(opt->second));
+            if (answer_opt) {
+                reply->addOption(answer_opt);
+            }
+            break;
+        }
+        default:
+            // We don't care for the remaining options
+            ;
+        }
+    }
+}
+
+OptionPtr
+Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
+                     int& general_status, boost::shared_ptr<Option6IA> ia) {
+
+    LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_DECLINE_PROCESS_IA)
+        .arg(decline->getLabel())
+        .arg(ia->getIAID());
+
+    // Decline can be done in one of two ways:
+    // Approach 1: extract address from client's IA_NA and see if it belongs
+    // to this particular client.
+    // Approach 2: find a subnet for this client, get a lease for
+    // this subnet/duid/iaid and check if its content matches to what the
+    // client is asking us to decline.
+    //
+    // This method implements approach 1.
+
+    // That's our response
+    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
+
+    const OptionCollection& opts = ia->getOptions();
+    int total_addrs = 0; // Let's count the total number of addresses.
+    for (OptionCollection::const_iterator opt = opts.begin(); opt != opts.end();
+         ++opt) {
+
+        // Let's ignore nested options other than IAADDR (there shouldn't be anything
+        // else in IA_NA in Decline message, but let's be on the safe side).
+        if (opt->second->getType() != D6O_IAADDR) {
+            continue;
+        }
+        Option6IAAddrPtr decline_addr = boost::dynamic_pointer_cast<Option6IAAddr>
+            (opt->second);
+        if (!decline_addr) {
+            continue;
+        }
+
+        total_addrs++;
+
+        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                                decline_addr->getAddress());
+
+        if (!lease) {
+            // Client trying to decline a lease that we don't know about.
+            LOG_INFO(lease6_logger, DHCP6_DECLINE_FAIL_NO_LEASE)
+                .arg(decline->getLabel()).arg(decline_addr->getAddress().toText());
+
+            // RFC3315, section 18.2.7: "For each IA in the Decline message for
+            // which the server has no binding information, the server adds an
+            // IA option using the IAID from the Release message and includes
+            // a Status Code option with the value NoBinding in the IA option.
+            setStatusCode(ia_rsp, createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
+                                  "Server does not know about such an address."));
+
+            // RFC3315, section 18.2.7:  The server ignores addresses not
+            // assigned to the IA (though it may choose to log an error if it
+            // finds such an address).
+            continue; // There may be other addresses.
+        }
+
+        if (!lease->duid_) {
+            // Something is gravely wrong here. We do have a lease, but it does not
+            // have mandatory DUID information attached. Someone was messing with our
+            // database.
+
+            LOG_ERROR(lease6_logger, DHCP6_DECLINE_FAIL_LEASE_WITHOUT_DUID)
+                .arg(decline->getLabel())
+                .arg(decline_addr->getAddress().toText());
+
+            ia_rsp->addOption(createStatusCode(*decline, *ia_rsp, STATUS_UnspecFail,
+                    "Database consistency check failed when attempting Decline."));
+
+            continue;
+        }
+
+        // Ok, there's a sane lease with an address. Let's check if DUID matches first.
+        if (*duid != *(lease->duid_)) {
+
+            // Sorry, it's not your address. You can't release it.
+            LOG_INFO(lease6_logger, DHCP6_DECLINE_FAIL_DUID_MISMATCH)
+                .arg(decline->getLabel())
+                .arg(decline_addr->getAddress().toText())
+                .arg(lease->duid_->toText());
+
+            ia_rsp->addOption(createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
+                     "This address does not belong to you, you can't decline it"));
+
+            continue;
+        }
+
+        // Let's check if IAID matches.
+        if (ia->getIAID() != lease->iaid_) {
+            // This address belongs to this client, but to a different IA
+            LOG_INFO(lease6_logger, DHCP6_DECLINE_FAIL_IAID_MISMATCH)
+                .arg(decline->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(ia->getIAID())
+                .arg(lease->iaid_);
+            setStatusCode(ia_rsp, createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
+                              "This is your address, but you used wrong IAID"));
+
+            continue;
+        }
+
+        // Ok, all is good. Decline this lease.
+        declineLease(decline, lease, ia_rsp);
+    }
+
+    if (total_addrs == 0) {
+        setStatusCode(ia_rsp, createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
+                                               "No addresses sent in IA_NA"));
+        general_status = STATUS_NoBinding;
+    }
+
+    return (ia_rsp);
+}
+
+void
+Dhcpv6Srv::setStatusCode(boost::shared_ptr<isc::dhcp::Option6IA>& container,
+                         const OptionPtr& status) {
+    // Let's delete any old status code we may have.
+    container->delOption(D6O_STATUS_CODE);
+
+    container->addOption(status);
+}
+
+void
+Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
+                        boost::shared_ptr<Option6IA> ia_rsp) {
+
+    // Check if a lease has flags indicating that the FQDN update has
+    // been performed. If so, create NameChangeRequest which removes
+    // the entries. This method does all necessary checks.
+    createRemovalNameChangeRequest(decline, lease);
+
+    // Bump up the subnet-specific statistic.
+    StatsMgr::instance().addValue(
+        StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
+        static_cast<int64_t>(1));
+
+    // Global declined addresses counter.
+    StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
+
+    // @todo: Call hooks.
+
+    // We need to disassociate the lease from the client. Once we move a lease
+    // to declined state, it is no longer associated with the client in any
+    // way.
+    lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
+    LeaseMgrFactory::instance().updateLease6(lease);
+
+    LOG_INFO(dhcp6_logger, DHCP6_DECLINE_LEASE).arg(decline->getLabel())
+        .arg(lease->addr_.toText()).arg(lease->valid_lft_);
+
+    ia_rsp->addOption(createStatusCode(*decline, *ia_rsp, STATUS_Success,
+                      "Lease declined. Hopefully the next one will be better."));
 }
 
 Pkt6Ptr
 Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
+
+    sanityCheck(inf_request, OPTIONAL, OPTIONAL);
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx = createContext(inf_request);
@@ -2869,6 +3010,15 @@ Dhcpv6Srv::startD2() {
         // This may throw so wherever this is called needs to ready.
         d2_mgr.startSender(boost::bind(&Dhcpv6Srv::d2ClientErrorHandler,
                                        this, _1, _2));
+    }
+}
+
+void
+Dhcpv6Srv::stopD2() {
+    D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    if (d2_mgr.ddnsEnabled()) {
+        // Updates are enabled, so lets stop the sender
+        d2_mgr.stopSender();
     }
 }
 

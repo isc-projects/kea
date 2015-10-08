@@ -16,6 +16,10 @@
 CFG_FILE=@abs_top_builddir@/src/bin/dhcp4/tests/test_config.json
 # Path to the Kea log file.
 LOG_FILE=@abs_top_builddir@/src/bin/dhcp4/tests/test.log
+# Path to the Kea lease file.
+LEASE_FILE=@abs_top_builddir@/src/bin/dhcp4/tests/test_leases.csv
+# Path to the Kea LFC application
+export KEA_LFC_EXECUTABLE=@abs_top_builddir@/src/bin/lfc/kea-lfc
 # Expected version
 EXPECTED_VERSION="@PACKAGE_VERSION@"
 # Kea configuration to be stored in the configuration file.
@@ -31,13 +35,19 @@ CONFIG="{
         \"lease-database\":
         {
             \"type\": \"memfile\",
-            \"persist\": false
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": false,
+            \"lfc-interval\": 0
         },
         \"subnet4\": [
         {
             \"subnet\": \"10.0.0.0/8\",
             \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
-        } ]
+        } ],
+       \"dhcp-ddns\": {
+            \"enable-updates\": true,
+            \"qualifying-suffix\": \"\"
+        }
     },
 
     \"Logging\":
@@ -272,9 +282,109 @@ shutdown_test() {
     test_finish 0
 }
 
+# This test verifies that DHCPv4 can be configured to run lease file cleanup
+# periodially.
+lfc_timer_test() {
+    # Log the start of the test and print test name.
+    test_start "dhcpv4_srv.lfc_timer_test"
+    # Remove dangling Kea instances and remove log files.
+    cleanup
+    # Create a configuration with the LFC enabled, by replacing the section
+    # with the lfc-interval and persist parameters.
+    LFC_CONFIG=$(printf "${CONFIG}" | sed -e 's/\"lfc-interval\": 0/\"lfc-interval\": 1/g' \
+                        | sed -e 's/\"persist\": false/\"persist\": true/g')
+    # Create new configuration file.
+    create_config "${LFC_CONFIG}"
+    # Instruct Kea to log to the specific file.
+    set_logger
+    # Start Kea.
+    start_kea ${bin_path}/${bin}
+    # Wait up to 20s for Kea to start.
+    wait_for_kea 20
+    if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
+        printf "ERROR: timeout waiting for Kea to start.\n"
+        clean_exit 1
+    fi
+
+    # Check if it is still running. It could have terminated (e.g. as a result
+    # of configuration failure).
+    get_pids ${bin}
+    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+        printf "ERROR: expected one Kea process to be started. Found %d processes\
+ started.\n" ${_GET_PIDS_NUM}
+        clean_exit 1
+    fi
+
+    # Check if Kea emits the log message indicating that LFC is started.
+    wait_for_message 10 "DHCPSRV_MEMFILE_LFC_EXECUTE" 1
+    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+        printf "ERROR: Server did not execute LFC.\n"
+        clean_exit 1
+    fi
+
+    # Give it a short time to run.
+    sleep 1
+
+    # Modify the interval.
+    LFC_CONFIG=$(printf "${CONFIG}" | sed -e 's/\"lfc-interval\": 1/\"lfc-interval\": 2/g')
+    # Create new configuration file.
+    create_config "${LFC_CONFIG}"
+
+    # Reconfigure the server with SIGHUP.
+    send_signal 1 ${bin}
+
+    # There should be two occurrences of the DHCP4_CONFIG_COMPLETE messages.
+    # Wait for it up to 10s.
+    wait_for_message 10 "DHCP4_CONFIG_COMPLETE" 2
+
+    # After receiving SIGHUP the server should get reconfigured and the
+    # reconfiguration should be noted in the log file. We should now
+    # have two configurations logged in the log file.
+    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+        printf "ERROR: server hasn't been reconfigured.\n"
+        clean_exit 1
+    else
+        printf "Server successfully reconfigured.\n"
+    fi
+
+    # Make sure the server is still operational.
+    get_pids ${bin}
+    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+        printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
+        clean_exit 1
+    fi
+
+    # Wait for the LFC to run the second time.
+    wait_for_message 10 "DHCPSRV_MEMFILE_LFC_EXECUTE" 2
+    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+        printf "ERROR: Server did not execute LFC.\n"
+        clean_exit 1
+    fi
+
+    # Send signal to Kea SIGTERM
+    send_signal 15 ${bin}
+
+    # Wait up to 10s for the server's graceful shutdown. The graceful shut down
+    # should be recorded in the log file with the appropriate message.
+    wait_for_message 10 "DHCP4_SHUTDOWN" 1
+    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+        printf "ERROR: Server did not record shutdown in the log.\n"
+        clean_exit 1
+    fi
+
+    # Make sure the server is down.
+    wait_for_server_down 5 ${bin}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
+
+    # All ok. Shut down Kea and exit.
+    test_finish 0
+}
+
 server_pid_file_test "${CONFIG}" DHCP4_ALREADY_RUNNING
 dynamic_reconfiguration_test
 shutdown_test "dhcpv4.sigterm_test" 15
 shutdown_test "dhcpv4.sigint_test" 2
 version_test "dhcpv4.version"
 logger_vars_test "dhcpv4.variables"
+lfc_timer_test

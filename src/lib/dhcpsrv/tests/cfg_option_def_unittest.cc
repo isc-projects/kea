@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -231,9 +231,9 @@ TEST(CfgOptionDefTest, overrideStdOptionDef) {
     def.reset(new OptionDefinition("sntp-servers", D6O_SNTP_SERVERS,
                                    "ipv4-address"));
     EXPECT_THROW(cfg.add(def, DHCP6_OPTION_SPACE), isc::BadValue);
-    // There is no definition for option 59 in libdhcp++ yet, so it should
+    // There is no definition for option 63 in libdhcp++ yet, so it should
     // be possible provide a custom definition.
-    def.reset(new OptionDefinition("bootfile-url", 59, "uint32"));
+    def.reset(new OptionDefinition("geolocation", 63, "uint32"));
     EXPECT_NO_THROW(cfg.add(def, DHCP6_OPTION_SPACE));
 }
 

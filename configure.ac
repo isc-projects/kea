@@ -7,7 +7,7 @@ AC_PREREQ([2.59])
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
 # version that was used as a base + changes that were made later, but
 # are not released yet.
-AC_INIT(kea, 0.9.2-beta, kea-dev@lists.isc.org)
+AC_INIT(kea, 0.9.2-git, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -241,13 +241,11 @@ AM_COND_IF([USE_STATIC_LINK], [AC_DEFINE([USE_STATIC_LINK], [1], [Was Kea static
 if test $enable_static_link = yes -a $enable_static = no; then
 	AC_MSG_ERROR([--enable-static-link requires --enable-static])
 fi
-if test $enable_shared = no; then
-	AC_MSG_ERROR([Kea requires shared libraries to be built])
+if test $enable_static_link = no -a $enable_shared = no; then
+	AC_MSG_ERROR([--disable-static-link requires --enable-shared])
 fi
 
 # OS dependent configuration
-SET_ENV_LIBRARY_PATH=no
-ENV_LIBRARY_PATH=LD_LIBRARY_PATH
 kea_undefined_pthread_behavior=no
 
 case "$host" in
@@ -281,15 +279,6 @@ case "$host" in
 	[AC_MSG_RESULT([OS X < 10.9])],
 	[AC_MSG_RESULT([OS X >= 10.9])
 	 kea_undefined_pthread_behavior=yes])
-
-	# libtool doesn't work perfectly with Darwin: libtool embeds the
-	# final install path in dynamic libraries and our loadable python
-	# modules always refer to that path even if it's loaded within the
-	# source tree.  This prevents pre-install tests from working.
-	# To work around this problem we explicitly specify paths to dynamic
-	# libraries when we use them in the source tree.
-	SET_ENV_LIBRARY_PATH=yes
-	ENV_LIBRARY_PATH=DYLD_LIBRARY_PATH
 	;;
 *-freebsd*)
 	# On FreeBSD10.1 pthread_cond_destroy doesn't work as documented, which
@@ -302,19 +291,8 @@ case "$host" in
 	# didn't seem to have support for the death tests on FreeBSD. As a
 	# result, the test was not executed and the error didn't occur.
 	kea_undefined_pthread_behavior=yes
-
-	SET_ENV_LIBRARY_PATH=yes
-	;;
-*-netbsd*)
-	SET_ENV_LIBRARY_PATH=yes
-	;;
-*-openbsd*)
-	SET_ENV_LIBRARY_PATH=yes
 	;;
 esac
-AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
-AC_SUBST(SET_ENV_LIBRARY_PATH)
-AC_SUBST(ENV_LIBRARY_PATH)
 if [ test $kea_undefined_pthread_behavior = "yes" ]; then
    AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
 fi
@@ -1241,15 +1219,22 @@ AC_SUBST(GTEST_SOURCE)
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
-# Use local ASIO headers from ext
-#
-CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/asio"
-#
 # Use our 'coroutine' header from ext
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
 #
+# Doesn't seem to be required?
+CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
+#
 # Disable threads: Currently we don't use them.
-CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_THREADS=1"
+CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
+
+# We tried to stay header only
+if test "x${BOOST_LIBS}" = "x"; then
+   # Don't want boost system library
+   CPPFLAGS="$CPPFLAGS -DBOOST_ERROR_CODE_HEADER_ONLY"
+   # Avoid boost::system::throws multiple defines
+   CPPFLAGS="$CPPFLAGS -DBOOST_SYSTEM_NO_DEPRECATED"
+fi
 
 # Check for functions that are not available on all platforms
 AC_CHECK_FUNCS([pselect])
@@ -1266,7 +1251,7 @@ AC_CHECK_FUNCS([pselect])
 # code will be updated by the time we really need it.
 AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
 if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
-	CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_DEV_POLL=1"
+	CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_DEV_POLL=1"
 fi
 
 #
@@ -1380,8 +1365,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  doc/guide/Makefile
                  doc/Makefile
                  doc/version.ent
-                 ext/asio/asio/Makefile
-                 ext/asio/Makefile
+                 ext/coroutine/Makefile
                  ext/gtest/Makefile
                  ext/Makefile
                  m4macros/Makefile
@@ -1482,7 +1466,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/log/tests/tempdir.h
                  src/lib/testutils/Makefile
                  src/lib/testutils/dhcp_test_lib.sh
-                 src/lib/testutils/testdata/Makefile
                  src/lib/stats/Makefile
                  src/lib/stats/tests/Makefile
                  src/lib/util/Makefile
@@ -1571,6 +1554,7 @@ cat >> config.report << END
 Boost:
   BOOST_VERSION:   ${BOOST_VERSION}
   BOOST_INCLUDES:  ${BOOST_INCLUDES}
+  BOOST_LIBS:      ${BOOST_LIBS}
 
 ${CRYPTO_NAME}:
   CRYPTO_VERSION:  ${CRYPTO_VERSION}
@@ -1646,7 +1630,6 @@ Developer:
   Google Tests: $enable_gtest
   Valgrind: $found_valgrind
   C++ Code Coverage: $USE_LCOV
-  Python Code Coverage: $USE_PYCOVERAGE
   Logger checks: $enable_logger_checks
   Generate Documentation: $enable_generate_docs
 

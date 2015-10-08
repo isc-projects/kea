@@ -15,7 +15,7 @@
 #include <config.h>
 
 // This must be included before udp_endpoint.h
-#include <asio.hpp>
+#include <boost/asio.hpp>
 
 #include <asiolink/io_error.h>
 #include <asiolink/udp_endpoint.h>
@@ -29,6 +29,7 @@
 #include <util/io/pktinfo_utilities.h>
 
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <cstring>
 #include <errno.h>
@@ -50,7 +51,12 @@ namespace dhcp {
 
 IfaceMgr&
 IfaceMgr::instance() {
-    static IfaceMgr iface_mgr;
+    return (*instancePtr());
+}
+
+const IfaceMgrPtr&
+IfaceMgr::instancePtr() {
+    static IfaceMgrPtr iface_mgr(new IfaceMgr());
     return (iface_mgr);
 }
 
@@ -795,10 +801,10 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     }
 
     // Create socket that will be used to connect to remote endpoint.
-    asio::io_service io_service;
-    asio::ip::udp::socket sock(io_service);
+    boost::asio::io_service io_service;
+    boost::asio::ip::udp::socket sock(io_service);
 
-    asio::error_code err_code;
+    boost::system::error_code err_code;
     // If remote address is broadcast address we have to
     // allow this on the socket.
     if (remote_addr.isV4() &&
@@ -810,13 +816,17 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
         // @todo: We don't specify interface in any way here. 255.255.255.255
         // We can very easily end up with a socket working on a different
         // interface.
-        sock.open(asio::ip::udp::v4(), err_code);
+
+        // zero out the errno to be safe
+        errno = 0;
+
+        sock.open(boost::asio::ip::udp::v4(), err_code);
         if (err_code) {
             const char* errstr = strerror(errno);
             isc_throw(Unexpected, "failed to open UDPv4 socket, reason:"
                       << errstr);
         }
-        sock.set_option(asio::socket_base::broadcast(true), err_code);
+        sock.set_option(boost::asio::socket_base::broadcast(true), err_code);
         if (err_code) {
             sock.close();
             isc_throw(Unexpected, "failed to enable broadcast on the socket");
@@ -831,9 +841,9 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     }
 
     // Once we are connected socket object holds local endpoint.
-    asio::ip::udp::socket::endpoint_type local_endpoint =
+    boost::asio::ip::udp::socket::endpoint_type local_endpoint =
         sock.local_endpoint();
-    asio::ip::address local_address(local_endpoint.address());
+    boost::asio::ip::address local_address(local_endpoint.address());
 
     // Close the socket.
     sock.close();
@@ -926,6 +936,9 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     struct timeval select_timeout;
     select_timeout.tv_sec = timeout_sec;
     select_timeout.tv_usec = timeout_usec;
+
+    // zero out the errno to be safe
+    errno = 0;
 
     int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
 
@@ -1033,6 +1046,9 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     struct timeval select_timeout;
     select_timeout.tv_sec = timeout_sec;
     select_timeout.tv_usec = timeout_usec;
+
+    // zero out the errno to be safe
+    errno = 0;
 
     int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
 

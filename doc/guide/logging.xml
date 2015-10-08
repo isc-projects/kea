@@ -535,7 +535,6 @@ TODO; there's a ticket to determine these levels, see #1074
 
         </para>
 
-        <!-- configuration of flush is not supported yet.
         <section>
           <title>flush (true of false)</title>
 
@@ -543,10 +542,10 @@ TODO; there's a ticket to determine these levels, see #1074
             Flush buffers after each log message. Doing this will
             reduce performance but will ensure that if the program
             terminates abnormally, all messages up to the point of
-            termination are output.
+            termination are output. Default is true.
           </para>
 
-        </section> -->
+        </section>
 
         <section>
           <title>maxsize (integer)</title>
@@ -638,7 +637,7 @@ file be created.</para>
                     "output": "/var/log/kea-debug.log",
                     "maxver": 8,
                     "maxsize": 204800,
-                    "destination": "file"
+                    "flush": true
                 }
             ],
             "severity": "DEBUG",
