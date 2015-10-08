@@ -1690,7 +1690,7 @@ PgSqlLeaseMgr::getVersion() const {
 
     PQclear(r);
 
-    return make_pair<uint32_t, uint32_t>(version, minor);
+    return pair<uint32_t, uint32_t>(version, minor);
 }
 
 void
