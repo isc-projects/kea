@@ -428,10 +428,10 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query) const {
         }
     }
 
-    // Applying default DHCPv4 rules
+    // Applying default DHCPv4 rules (but not the IPv6 remote address)
     if (!subnet) {
         selector.ciaddr_ = query->getCiaddr();
-        selector.remote_address_ = query->getRemoteAddr();
+        // selector.remote_address_ = query->getRemoteAddr();
         selector.iface_name_ = query->getIface();
 
         subnet =
