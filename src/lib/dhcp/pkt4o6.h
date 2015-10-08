@@ -46,7 +46,7 @@ public:
     Pkt4o6(const Pkt4Ptr& pkt4, const Pkt6Ptr& pkt6);
 
     /// @brief Returns encapsulating DHCPv6 message
-    const Pkt6Ptr& getPkt6() const { return (pkt6_); }
+    Pkt6Ptr getPkt6() const { return (pkt6_); }
 
     /// @brief Prepares on-wire format of DHCPv4-over-DHCPv6 packet.
     ///
@@ -65,7 +65,7 @@ public:
 
 protected:
     /// Encapsulating DHCPv6 message
-    const Pkt6Ptr& pkt6_;
+    Pkt6Ptr pkt6_;
 
 }; // Pkt4o6 class
 
