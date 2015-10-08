@@ -220,8 +220,16 @@ LFCSetup::getExitStatus() const {
     return (process_->getExitStatus(pid_));
 }
 
-Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
-    : DatabaseConnection(parameters),
+std::string
+Memfile_LeaseMgr::getParameter(const std::string& name) const {
+    ParameterMap::const_iterator param = parameters_.find(name);
+    if (param == parameters_.end()) {
+        isc_throw(BadValue, "Parameter " << name << " not found");
+    }
+    return (param->second);
+}
+
+Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters): parameters_(parameters),
       lfc_setup_(new LFCSetup(boost::bind(&Memfile_LeaseMgr::lfcCallback, this),
                               *getIOService()))
     {

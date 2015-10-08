@@ -55,7 +55,7 @@ public:
     /// @brief Constructor.
     ///
     /// Sets the counter for callbacks to 0.
-    LFCMemfileLeaseMgr(const ParameterMap& parameters)
+    LFCMemfileLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
         : Memfile_LeaseMgr(parameters), lfc_cnt_(0) {
     }
 
@@ -89,7 +89,7 @@ public:
     /// @brief Constructor.
     ///
     /// Creates instance of the lease manager.
-    NakedMemfileLeaseMgr(const ParameterMap& parameters)
+    NakedMemfileLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
         : Memfile_LeaseMgr(parameters) {
     }
 

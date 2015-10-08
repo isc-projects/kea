@@ -86,8 +86,10 @@ class LFCSetup;
 /// is not specified, the default location in the installation
 /// directory is used: var/kea/kea-leases4.csv and
 /// var/kea/kea-leases6.csv.
-class Memfile_LeaseMgr : public LeaseMgr, public DatabaseConnection {
+class Memfile_LeaseMgr : public LeaseMgr {
 public:
+    /// @brief Database configuration parameter map
+    typedef std::map<std::string, std::string> ParameterMap;
 
     /// @defgroup versions Specified memfile backend version.
     ///
@@ -105,6 +107,12 @@ public:
 
     /// @}
 
+    /// @brief Returns value of a connection parameter.
+    ///
+    /// @param name Name of the parameter which value should be returned.
+    /// @return Value of one of the connection parameters.
+    /// @throw BadValue if parameter is not found
+    std::string getParameter(const std::string& name) const;
 
     /// @brief Specifies universe (V4, V6)
     ///
@@ -590,10 +598,18 @@ private:
     template<typename LeaseFileType>
     void lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file);
 
+    /// @brief List of parameters passed in dbconfig
+    ///
+    /// That will be mostly used for storing database name, username,
+    /// password and other parameters required for DB access. It is not
+    /// intended to keep any DHCP-related parameters.
+    ParameterMap parameters_;
+
     /// @brief A pointer to the Lease File Cleanup configuration.
     boost::scoped_ptr<LFCSetup> lfc_setup_;
-    //@}
 
+
+    //@}
 };
 
 }; // end of isc::dhcp namespace
