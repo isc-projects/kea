@@ -292,16 +292,24 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
     selector.client_classes_ = query->classes_;
     selector.iface_name_ = query->getIface();
 
+    // If the link-selection sub-option is present, extract its value.
+    // "The link-selection sub-option is used by any DHCP relay agent
+    // that desires to specify a subnet/link for a DHCP client request
+    // that it is relaying but needs the subnet/link specification to
+    // be different from the IP address the DHCP server should use
+    // when communicating with the relay agent." (RFC 3257)
     OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
     if (rai) {
-        OptionCustomPtr oc = boost::dynamic_pointer_cast<OptionCustom>(rai);
-        if (oc) {
-            OptionPtr ols = oc->getOption(RAI_OPTION_LINK_SELECTION);
-            if (ols) {
-                OptionBuffer lsb = ols->getData();
-                if (lsb.size() == sizeof(uint32_t)) {
+        OptionCustomPtr rai_custom =
+            boost::dynamic_pointer_cast<OptionCustom>(rai);
+        if (rai_custom) {
+            OptionPtr link_select =
+                rai_custom->getOption(RAI_OPTION_LINK_SELECTION);
+            if (link_select) {
+                OptionBuffer link_select_buf = link_select->getData();
+                if (link_select_buf.size() == sizeof(uint32_t)) {
                     selector.option_select_ =
-                        IOAddress::fromBytes(AF_INET, &lsb[0]);
+                        IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
                 }
             }
         }
