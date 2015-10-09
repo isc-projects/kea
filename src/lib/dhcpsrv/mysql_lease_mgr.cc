@@ -19,6 +19,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
+#include <dhcpsrv/mysql_connection.h>
 
 #include <boost/static_assert.hpp>
 #include <mysqld_error.h>
@@ -77,51 +78,17 @@ using namespace std;
 ///   lease object.
 
 namespace {
-///@{
-
-/// @brief Maximum size of database fields
-///
-/// The following constants define buffer sizes for variable length database
-/// fields.  The values should be greater than or equal to the length set in
-/// the schema definition.
-///
-/// The exception is the length of any VARCHAR fields: buffers for these should
-/// be set greater than or equal to the length of the field plus 1: this allows
-/// for the insertion of a trailing null whatever data is returned.
-
-/// @brief Maximum size of an IPv6 address represented as a text string.
-///
-/// This is 32 hexadecimal characters written in 8 groups of four, plus seven
-/// colon separators.
-const size_t ADDRESS6_TEXT_MAX_LEN = 39;
-
-/// @brief MySQL True/False constants
-///
-/// Declare typed values so as to avoid problems of data conversion.  These
-/// are local to the file but are given the prefix MLM (MySql Lease Manager) to
-/// avoid any likely conflicts with variables in header files named TRUE or
-/// FALSE.
-
-const my_bool MLM_FALSE = 0;                ///< False value
-const my_bool MLM_TRUE = 1;                 ///< True value
-
 /// @brief Maximum length of the hostname stored in DNS.
 ///
 /// This length is restricted by the length of the domain-name carried
 /// in the Client FQDN %Option (see RFC4702 and RFC4704).
 const size_t HOSTNAME_MAX_LEN = 255;
 
-///@}
-
-/// @brief MySQL Selection Statements
+/// @brief Maximum size of an IPv6 address represented as a text string.
 ///
-/// Each statement is associated with an index, which is used to reference the
-/// associated prepared statement.
-
-struct TaggedStatement {
-    MySqlLeaseMgr::StatementIndex index;
-    const char*                   text;
-};
+/// This is 32 hexadecimal characters written in 8 groups of four, plus seven
+/// colon separators.
+const size_t ADDRESS6_TEXT_MAX_LEN = 39;
 
 TaggedStatement tagged_statements[] = {
     {MySqlLeaseMgr::DELETE_LEASE4,
@@ -250,9 +217,7 @@ TaggedStatement tagged_statements[] = {
     {MySqlLeaseMgr::NUM_STATEMENTS, NULL}
 };
 
-};  // Anonymous namespace
-
-
+};
 
 namespace isc {
 namespace dhcp {
@@ -1258,67 +1223,28 @@ private:
 };
 
 
-/// @brief Fetch and Release MySQL Results
-///
-/// When a MySQL statement is expected, to fetch the results the function
-/// mysql_stmt_fetch() must be called.  As well as getting data, this
-/// allocates internal state.  Subsequent calls to mysql_stmt_fetch can be
-/// made, but when all the data is retrieved, mysql_stmt_free_result must be
-/// called to free up the resources allocated.
-///
-/// Created prior to the first fetch, this class's destructor calls
-/// mysql_stmt_free_result, so eliminating the need for an explicit release
-/// in the method calling mysql_stmt_free_result.  In this way, it guarantees
-/// that the resources are released even if the MySqlLeaseMgr method concerned
-/// exits via an exception.
 
-class MySqlFreeResult {
-public:
-
-    /// @brief Constructor
-    ///
-    /// Store the pointer to the statement for which data is being fetched.
-    ///
-    /// Note that according to the MySQL documentation, mysql_stmt_free_result
-    /// only releases resources if a cursor has been allocated for the
-    /// statement.  This implies that it is a no-op if none have been.  Either
-    /// way, any error from mysql_stmt_free_result is ignored. (Generating
-    /// an exception is not much help, as it will only confuse things if the
-    /// method calling mysql_stmt_fetch is exiting via an exception.)
-    MySqlFreeResult(MYSQL_STMT* statement) : statement_(statement)
-    {}
-
-    /// @brief Destructor
-    ///
-    /// Frees up fetch context if a fetch has been successfully executed.
-    ~MySqlFreeResult() {
-        (void) mysql_stmt_free_result(statement_);
-    }
-
-private:
-    MYSQL_STMT*     statement_;     ///< Statement for which results are freed
-};
 
 // MySqlLeaseMgr Constructor and Destructor
 
-MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
-    : LeaseMgr(parameters) {
+MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
+    : conn_(parameters) {
 
     // Open the database.
-    openDatabase();
+    conn_.openDatabase();
 
     // Enable autocommit.  To avoid a flush to disk on every commit, the global
     // parameter innodb_flush_log_at_trx_commit should be set to 2.  This will
     // cause the changes to be written to the log, but flushed to disk in the
     // background every second.  Setting the parameter to that value will speed
     // up the system, but at the risk of losing data if the system crashes.
-    my_bool result = mysql_autocommit(mysql_, 1);
+    my_bool result = mysql_autocommit(conn_.mysql_, 1);
     if (result != 0) {
-        isc_throw(DbOperationError, mysql_error(mysql_));
+        isc_throw(DbOperationError, mysql_error(conn_.mysql_));
     }
 
     // Prepare all statements likely to be used.
-    prepareStatements();
+    conn_.prepareStatements(tagged_statements, MySqlLeaseMgr::NUM_STATEMENTS);
 
     // Create the exchange objects for use in exchanging data between the
     // program and the database.
@@ -1328,16 +1254,6 @@ MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
 
 
 MySqlLeaseMgr::~MySqlLeaseMgr() {
-    // Free up the prepared statements, ignoring errors. (What would we do
-    // about them? We're destroying this object and are not really concerned
-    // with errors on a database connection that is about to go away.)
-    for (int i = 0; i < statements_.size(); ++i) {
-        if (statements_[i] != NULL) {
-            (void) mysql_stmt_close(statements_[i]);
-            statements_[i] = NULL;
-        }
-    }
-
     // There is no need to close the database in this destructor: it is
     // closed in the destructor of the mysql_ member variable.
 }
@@ -1422,139 +1338,6 @@ MySqlLeaseMgr::convertFromDatabaseTime(const MYSQL_TIME& expire,
 }
 
 
-
-// Open the database using the parameters passed to the constructor.
-
-void
-MySqlLeaseMgr::openDatabase() {
-
-    // Set up the values of the parameters
-    const char* host = "localhost";
-    string shost;
-    try {
-        shost = getParameter("host");
-        host = shost.c_str();
-    } catch (...) {
-        // No host.  Fine, we'll use "localhost"
-    }
-
-    const char* user = NULL;
-    string suser;
-    try {
-        suser = getParameter("user");
-        user = suser.c_str();
-    } catch (...) {
-        // No user.  Fine, we'll use NULL
-    }
-
-    const char* password = NULL;
-    string spassword;
-    try {
-        spassword = getParameter("password");
-        password = spassword.c_str();
-    } catch (...) {
-        // No password.  Fine, we'll use NULL
-    }
-
-    const char* name = NULL;
-    string sname;
-    try {
-        sname = getParameter("name");
-        name = sname.c_str();
-    } catch (...) {
-        // No database name.  Throw a "NoName" exception
-        isc_throw(NoDatabaseName, "must specified a name for the database");
-    }
-
-    // Set options for the connection:
-    //
-    // Automatic reconnection: after a period of inactivity, the client will
-    // disconnect from the database.  This option causes it to automatically
-    // reconnect when another operation is about to be done.
-    my_bool auto_reconnect = MLM_TRUE;
-    int result = mysql_options(mysql_, MYSQL_OPT_RECONNECT, &auto_reconnect);
-    if (result != 0) {
-        isc_throw(DbOpenError, "unable to set auto-reconnect option: " <<
-                  mysql_error(mysql_));
-    }
-
-    // Set SQL mode options for the connection:  SQL mode governs how what
-    // constitutes insertable data for a given column, and how to handle
-    // invalid data.  We want to ensure we get the strictest behavior and
-    // to reject invalid data with an error.
-    const char *sql_mode = "SET SESSION sql_mode ='STRICT_ALL_TABLES'";
-    result = mysql_options(mysql_, MYSQL_INIT_COMMAND, sql_mode);
-    if (result != 0) {
-        isc_throw(DbOpenError, "unable to set SQL mode options: " <<
-                  mysql_error(mysql_));
-    }
-
-    // Open the database.
-    //
-    // The option CLIENT_FOUND_ROWS is specified so that in an UPDATE,
-    // the affected rows are the number of rows found that match the
-    // WHERE clause of the SQL statement, not the rows changed.  The reason
-    // here is that MySQL apparently does not update a row if data has not
-    // changed and so the "affected rows" (retrievable from MySQL) is zero.
-    // This makes it hard to distinguish whether the UPDATE changed no rows
-    // because no row matching the WHERE clause was found, or because a
-    // row was found but no data was altered.
-    MYSQL* status = mysql_real_connect(mysql_, host, user, password, name,
-                                       0, NULL, CLIENT_FOUND_ROWS);
-    if (status != mysql_) {
-        isc_throw(DbOpenError, mysql_error(mysql_));
-    }
-}
-
-// Prepared statement setup.  The textual form of an SQL statement is stored
-// in a vector of strings (text_statements_) and is used in the output of
-// error messages.  The SQL statement is also compiled into a "prepared
-// statement" (stored in statements_), which avoids the overhead of compilation
-// during use.  As prepared statements have resources allocated to them, the
-// class destructor explicitly destroys them.
-
-void
-MySqlLeaseMgr::prepareStatement(StatementIndex index, const char* text) {
-    // Validate that there is space for the statement in the statements array
-    // and that nothing has been placed there before.
-    if ((index >= statements_.size()) || (statements_[index] != NULL)) {
-        isc_throw(InvalidParameter, "invalid prepared statement index (" <<
-                  static_cast<int>(index) << ") or indexed prepared " <<
-                  "statement is not null");
-    }
-
-    // All OK, so prepare the statement
-    text_statements_[index] = std::string(text);
-    statements_[index] = mysql_stmt_init(mysql_);
-    if (statements_[index] == NULL) {
-        isc_throw(DbOperationError, "unable to allocate MySQL prepared "
-                  "statement structure, reason: " << mysql_error(mysql_));
-    }
-
-    int status = mysql_stmt_prepare(statements_[index], text, strlen(text));
-    if (status != 0) {
-        isc_throw(DbOperationError, "unable to prepare MySQL statement <" <<
-                  text << ">, reason: " << mysql_error(mysql_));
-    }
-}
-
-
-void
-MySqlLeaseMgr::prepareStatements() {
-    // Allocate space for all statements
-    statements_.clear();
-    statements_.resize(NUM_STATEMENTS, NULL);
-
-    text_statements_.clear();
-    text_statements_.resize(NUM_STATEMENTS, std::string(""));
-
-    // Created the MySQL prepared statements for each DML statement.
-    for (int i = 0; tagged_statements[i].text != NULL; ++i) {
-        prepareStatement(tagged_statements[i].index,
-                         tagged_statements[i].text);
-    }
-}
-
 // Add leases to the database.  The two public methods accept a lease object
 // (either V4 of V6), bind the contents to the appropriate prepared
 // statement, then call common code to execute the statement.
@@ -1564,17 +1347,17 @@ MySqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
                               std::vector<MYSQL_BIND>& bind) {
 
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[stindex], &bind[0]);
+    int status = mysql_stmt_bind_param(conn_.statements_[stindex], &bind[0]);
     checkError(status, stindex, "unable to bind parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(statements_[stindex]);
+    status = mysql_stmt_execute(conn_.statements_[stindex]);
     if (status != 0) {
 
         // Failure: check for the special case of duplicate entry.  If this is
         // the case, we return false to indicate that the row was not added.
         // Otherwise we throw an exception.
-        if (mysql_errno(mysql_) == ER_DUP_ENTRY) {
+        if (mysql_errno(conn_.mysql_) == ER_DUP_ENTRY) {
             return (false);
         }
         checkError(status, stindex, "unable to execute");
@@ -1642,43 +1425,43 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
                                        bool single) const {
 
     // Bind the selection parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[stindex], bind);
+    int status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
     checkError(status, stindex, "unable to bind WHERE clause parameter");
 
     // Set up the MYSQL_BIND array for the data being returned and bind it to
     // the statement.
     std::vector<MYSQL_BIND> outbind = exchange->createBindForReceive();
-    status = mysql_stmt_bind_result(statements_[stindex], &outbind[0]);
+    status = mysql_stmt_bind_result(conn_.statements_[stindex], &outbind[0]);
     checkError(status, stindex, "unable to bind SELECT clause parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(statements_[stindex]);
+    status = mysql_stmt_execute(conn_.statements_[stindex]);
     checkError(status, stindex, "unable to execute");
 
     // Ensure that all the lease information is retrieved in one go to avoid
     // overhead of going back and forth between client and server.
-    status = mysql_stmt_store_result(statements_[stindex]);
+    status = mysql_stmt_store_result(conn_.statements_[stindex]);
     checkError(status, stindex, "unable to set up for storing all results");
 
     // Set up the fetch "release" object to release resources associated
     // with the call to mysql_stmt_fetch when this method exits, then
     // retrieve the data.
-    MySqlFreeResult fetch_release(statements_[stindex]);
+    MySqlFreeResult fetch_release(conn_.statements_[stindex]);
     int count = 0;
-    while ((status = mysql_stmt_fetch(statements_[stindex])) == 0) {
+    while ((status = mysql_stmt_fetch(conn_.statements_[stindex])) == 0) {
         try {
             result.push_back(exchange->getLeaseData());
 
         } catch (const isc::BadValue& ex) {
             // Rethrow the exception with a bit more data.
             isc_throw(BadValue, ex.what() << ". Statement is <" <<
-                      text_statements_[stindex] << ">");
+                      conn_.text_statements_[stindex] << ">");
         }
 
         if (single && (++count > 1)) {
             isc_throw(MultipleRecords, "multiple records were found in the "
                       "database where only one was expected for query "
-                      << text_statements_[stindex]);
+                      << conn_.text_statements_[stindex]);
         }
     }
 
@@ -1688,7 +1471,7 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
         checkError(status, stindex, "unable to fetch results");
     } else if (status == MYSQL_DATA_TRUNCATED) {
         // Data truncated - throw an exception indicating what was at fault
-        isc_throw(DataTruncated, text_statements_[stindex]
+        isc_throw(DataTruncated, conn_.text_statements_[stindex]
                   << " returned truncated data: columns affected are "
                   << exchange->getErrorColumns());
     }
@@ -2073,16 +1856,16 @@ MySqlLeaseMgr::updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
                                  const LeasePtr& lease) {
 
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[stindex], bind);
+    int status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
     checkError(status, stindex, "unable to bind parameters");
 
     // Execute
-    status = mysql_stmt_execute(statements_[stindex]);
+    status = mysql_stmt_execute(conn_.statements_[stindex]);
     checkError(status, stindex, "unable to execute");
 
     // See how many rows were affected.  The statement should only update a
     // single row.
-    int affected_rows = mysql_stmt_affected_rows(statements_[stindex]);
+    int affected_rows = mysql_stmt_affected_rows(conn_.statements_[stindex]);
     if (affected_rows == 0) {
         isc_throw(NoSuchLease, "unable to update lease for address " <<
                   lease->addr_ << " as it does not exist");
@@ -2159,18 +1942,17 @@ uint64_t
 MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind) {
 
     // Bind the input parameters to the statement
-    int status = mysql_stmt_bind_param(statements_[stindex], bind);
+    int status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
     checkError(status, stindex, "unable to bind WHERE clause parameter");
 
     // Execute
-    status = mysql_stmt_execute(statements_[stindex]);
+    status = mysql_stmt_execute(conn_.statements_[stindex]);
     checkError(status, stindex, "unable to execute");
 
     // See how many rows were affected.  Note that the statement may delete
     // multiple rows.
-    return (static_cast<uint64_t>(mysql_stmt_affected_rows(statements_[stindex])));
+    return (static_cast<uint64_t>(mysql_stmt_affected_rows(conn_.statements_[stindex])));
 }
-
 
 bool
 MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
@@ -2258,7 +2040,7 @@ std::string
 MySqlLeaseMgr::getName() const {
     std::string name = "";
     try {
-        name = getParameter("name");
+        name = conn_.getParameter("name");
     } catch (...) {
         // Return an empty name
     }
@@ -2283,11 +2065,11 @@ MySqlLeaseMgr::getVersion() const {
     uint32_t    minor;      // Minor version number
 
     // Execute the prepared statement
-    int status = mysql_stmt_execute(statements_[stindex]);
+    int status = mysql_stmt_execute(conn_.statements_[stindex]);
     if (status != 0) {
         isc_throw(DbOperationError, "unable to execute <"
-                  << text_statements_[stindex] << "> - reason: " <<
-                  mysql_error(mysql_));
+                  << conn_.text_statements_[stindex] << "> - reason: " <<
+                  mysql_error(conn_.mysql_));
     }
 
     // Bind the output of the statement to the appropriate variables.
@@ -2304,19 +2086,19 @@ MySqlLeaseMgr::getVersion() const {
     bind[1].buffer = &minor;
     bind[1].buffer_length = sizeof(minor);
 
-    status = mysql_stmt_bind_result(statements_[stindex], bind);
+    status = mysql_stmt_bind_result(conn_.statements_[stindex], bind);
     if (status != 0) {
         isc_throw(DbOperationError, "unable to bind result set: " <<
-                  mysql_error(mysql_));
+                  mysql_error(conn_.mysql_));
     }
 
     // Fetch the data and set up the "release" object to release associated
     // resources when this method exits then retrieve the data.
-    MySqlFreeResult fetch_release(statements_[stindex]);
-    status = mysql_stmt_fetch(statements_[stindex]);
+    MySqlFreeResult fetch_release(conn_.statements_[stindex]);
+    status = mysql_stmt_fetch(conn_.statements_[stindex]);
     if (status != 0) {
         isc_throw(DbOperationError, "unable to obtain result set: " <<
-                  mysql_error(mysql_));
+                  mysql_error(conn_.mysql_));
     }
 
     return (std::make_pair(major, minor));
@@ -2326,8 +2108,8 @@ MySqlLeaseMgr::getVersion() const {
 void
 MySqlLeaseMgr::commit() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_COMMIT);
-    if (mysql_commit(mysql_) != 0) {
-        isc_throw(DbOperationError, "commit failed: " << mysql_error(mysql_));
+    if (mysql_commit(conn_.mysql_) != 0) {
+        isc_throw(DbOperationError, "commit failed: " << mysql_error(conn_.mysql_));
     }
 }
 
@@ -2335,8 +2117,8 @@ MySqlLeaseMgr::commit() {
 void
 MySqlLeaseMgr::rollback() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_ROLLBACK);
-    if (mysql_rollback(mysql_) != 0) {
-        isc_throw(DbOperationError, "rollback failed: " << mysql_error(mysql_));
+    if (mysql_rollback(conn_.mysql_) != 0) {
+        isc_throw(DbOperationError, "rollback failed: " << mysql_error(conn_.mysql_));
     }
 }
 

@@ -942,9 +942,9 @@ private:
     //@}
 };
 
-PgSqlLeaseMgr::PgSqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
-    : LeaseMgr(parameters), exchange4_(new PgSqlLease4Exchange()),
-    exchange6_(new PgSqlLease6Exchange()), conn_(NULL) {
+PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
+    : LeaseMgr(), exchange4_(new PgSqlLease4Exchange()),
+    exchange6_(new PgSqlLease6Exchange()), dbconn_(parameters), conn_(NULL) {
     openDatabase();
     prepareStatements();
 }
@@ -1000,7 +1000,7 @@ PgSqlLeaseMgr::openDatabase() {
     string dbconnparameters;
     string shost = "localhost";
     try {
-        shost = getParameter("host");
+        shost = dbconn_.getParameter("host");
     } catch(...) {
         // No host. Fine, we'll use "localhost"
     }
@@ -1009,7 +1009,7 @@ PgSqlLeaseMgr::openDatabase() {
 
     string suser;
     try {
-        suser = getParameter("user");
+        suser = dbconn_.getParameter("user");
         dbconnparameters += " user = '" + suser + "'";
     } catch(...) {
         // No user. Fine, we'll use NULL
@@ -1017,7 +1017,7 @@ PgSqlLeaseMgr::openDatabase() {
 
     string spassword;
     try {
-        spassword = getParameter("password");
+        spassword = dbconn_.getParameter("password");
         dbconnparameters += " password = '" + spassword + "'";
     } catch(...) {
         // No password. Fine, we'll use NULL
@@ -1025,7 +1025,7 @@ PgSqlLeaseMgr::openDatabase() {
 
     string sname;
     try {
-        sname= getParameter("name");
+        sname= dbconn_.getParameter("name");
         dbconnparameters += " dbname = '" + sname + "'";
     } catch(...) {
         // No database name.  Throw a "NoDatabaseName" exception
@@ -1523,7 +1523,7 @@ string
 PgSqlLeaseMgr::getName() const {
     string name = "";
     try {
-        name = getParameter("name");
+        name = dbconn_.getParameter("name");
     } catch (...) {
         // Return an empty name
     }

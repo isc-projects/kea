@@ -17,6 +17,7 @@
 
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/mysql_connection.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
@@ -27,57 +28,9 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief MySQL Handle Holder
-///
-/// Small RAII object for safer initialization, will close the database
-/// connection upon destruction.  This means that if an exception is thrown
-/// during database initialization, resources allocated to the database are
-/// guaranteed to be freed.
-///
-/// It makes no sense to copy an object of this class.  After the copy, both
-/// objects would contain pointers to the same MySql context object.  The
-/// destruction of one would invalidate the context in the remaining object.
-/// For this reason, the class is declared noncopyable.
-class MySqlHolder : public boost::noncopyable {
-public:
-
-    /// @brief Constructor
-    ///
-    /// Initialize MySql and store the associated context object.
-    ///
-    /// @throw DbOpenError Unable to initialize MySql handle.
-    MySqlHolder() : mysql_(mysql_init(NULL)) {
-        if (mysql_ == NULL) {
-            isc_throw(DbOpenError, "unable to initialize MySQL");
-        }
-    }
-
-    /// @brief Destructor
-    ///
-    /// Frees up resources allocated by the initialization of MySql.
-    ~MySqlHolder() {
-        if (mysql_ != NULL) {
-            mysql_close(mysql_);
-        }
-        // The library itself shouldn't be needed anymore
-        mysql_library_end();
-    }
-
-    /// @brief Conversion Operator
-    ///
-    /// Allows the MySqlHolder object to be passed as the context argument to
-    /// mysql_xxx functions.
-    operator MYSQL*() const {
-        return (mysql_);
-    }
-
-private:
-    MYSQL* mysql_;      ///< Initialization context
-};
-
 // Define the current database schema values
 
-const uint32_t CURRENT_VERSION_VERSION = 2;
+const uint32_t CURRENT_VERSION_VERSION = 3;
 const uint32_t CURRENT_VERSION_MINOR = 0;
 
 
@@ -95,6 +48,7 @@ class MySqlLease6Exchange;
 
 class MySqlLeaseMgr : public LeaseMgr {
 public:
+
     /// @brief Constructor
     ///
     /// Uses the following keywords in the parameters passed to it to
@@ -117,7 +71,7 @@ public:
     /// @throw isc::dhcp::DbOpenError Error opening the database
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    MySqlLeaseMgr(const ParameterMap& parameters);
+    MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
     virtual ~MySqlLeaseMgr();
@@ -535,41 +489,6 @@ public:
     };
 
 private:
-    /// @brief Prepare Single Statement
-    ///
-    /// Creates a prepared statement from the text given and adds it to the
-    /// statements_ vector at the given index.
-    ///
-    /// @param index Index into the statements_ vector into which the text
-    ///        should be placed.  The vector must be big enough for the index
-    ///        to be valid, else an exception will be thrown.
-    /// @param text Text of the SQL statement to be prepared.
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    /// @throw isc::InvalidParameter 'index' is not valid for the vector.
-    void prepareStatement(StatementIndex index, const char* text);
-
-    /// @brief Prepare statements
-    ///
-    /// Creates the prepared statements for all of the SQL statements used
-    /// by the MySQL backend.
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    /// @throw isc::InvalidParameter 'index' is not valid for the vector.  This
-    ///        represents an internal error within the code.
-    void prepareStatements();
-
-    /// @brief Open Database
-    ///
-    /// Opens the database using the information supplied in the parameters
-    /// passed to the constructor.
-    ///
-    /// @throw NoDatabaseName Mandatory database name not given
-    /// @throw DbOpenError Error opening the database
-    void openDatabase();
-
     /// @brief Add Lease Common Code
     ///
     /// This method performs the common actions for both flavours (V4 and V6)
@@ -763,9 +682,9 @@ private:
                            const char* what) const {
         if (status != 0) {
             isc_throw(DbOperationError, what << " for <" <<
-                      text_statements_[index] << ">, reason: " <<
-                      mysql_error(mysql_) << " (error code " <<
-                      mysql_errno(mysql_) << ")");
+                      conn_.text_statements_[index] << ">, reason: " <<
+                      mysql_error(conn_.mysql_) << " (error code " <<
+                      mysql_errno(conn_.mysql_) << ")");
         }
     }
 
@@ -777,9 +696,9 @@ private:
     /// declare them as "mutable".)
     boost::scoped_ptr<MySqlLease4Exchange> exchange4_; ///< Exchange object
     boost::scoped_ptr<MySqlLease6Exchange> exchange6_; ///< Exchange object
-    MySqlHolder mysql_;
-    std::vector<MYSQL_STMT*> statements_;       ///< Prepared statements
-    std::vector<std::string> text_statements_;  ///< Raw text of statements
+
+    /// @brief MySQL connection
+    MySqlConnection conn_;
 };
 
 }; // end of isc::dhcp namespace

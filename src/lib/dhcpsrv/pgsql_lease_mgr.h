@@ -17,7 +17,7 @@
 
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
-
+#include <dhcpsrv/database_connection.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
 #include <libpq-fe.h>
@@ -146,7 +146,7 @@ public:
     /// @throw isc::dhcp::DbOpenError Error opening the database
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    PgSqlLeaseMgr(const ParameterMap& parameters);
+    PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
     virtual ~PgSqlLeaseMgr();
@@ -663,6 +663,12 @@ private:
     /// declare them as "mutable".)
     boost::scoped_ptr<PgSqlLease4Exchange> exchange4_; ///< Exchange object
     boost::scoped_ptr<PgSqlLease6Exchange> exchange6_; ///< Exchange object
+
+    /// Database connection object
+    ///
+    /// @todo: Implement PgSQLConnection object and collapse
+    /// dbconn_ and conn_ into a single object.
+    DatabaseConnection dbconn_;
 
     /// PostgreSQL connection handle
     PGconn* conn_;

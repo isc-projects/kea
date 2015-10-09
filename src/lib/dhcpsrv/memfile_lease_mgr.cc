@@ -18,6 +18,7 @@
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <dhcpsrv/database_connection.h>
 #include <exceptions/exceptions.h>
 #include <util/pid_file.h>
 #include <util/process_spawn.h>
@@ -249,11 +250,11 @@ LFCSetup::getExitStatus() const {
 const int Memfile_LeaseMgr::MAJOR_VERSION;
 const int Memfile_LeaseMgr::MINOR_VERSION;
 
-Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
-    : LeaseMgr(parameters), lfc_setup_()
+Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& parameters)
+    : LeaseMgr(), lfc_setup_(), conn_(parameters)
     {
     // Check the universe and use v4 file or v6 file.
-    std::string universe = getParameter("universe");
+    std::string universe = conn_.getParameter("universe");
     if (universe == "4") {
         std::string file4 = initLeaseFilePath(V4);
         if (!file4.empty()) {
@@ -840,7 +841,7 @@ std::string
 Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
     std::string persist_val;
     try {
-        persist_val = getParameter("persist");
+        persist_val = conn_.getParameter("persist");
     } catch (const Exception&) {
         // If parameter persist hasn't been specified, we use a default value
         // 'yes'.
@@ -858,7 +859,7 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
 
     std::string lease_file;
     try {
-        lease_file = getParameter("name");
+        lease_file = conn_.getParameter("name");
     } catch (const Exception&) {
         lease_file = getDefaultLeaseFilePath(u);
     }
@@ -944,7 +945,7 @@ void
 Memfile_LeaseMgr::lfcSetup() {
     std::string lfc_interval_str = "0";
     try {
-        lfc_interval_str = getParameter("lfc-interval");
+        lfc_interval_str = conn_.getParameter("lfc-interval");
     } catch (const std::exception&) {
         // Ignore and default to 0.
     }
