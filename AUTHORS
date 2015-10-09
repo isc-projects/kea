@@ -80,6 +80,7 @@ We have received the following contributions:
    2014-12: Extract MAC address from DUID-LL and DUID-LLT types
    2015-01: Extract MAC address from remote-id
    2015-05: MySQL schema extended to cover host reservation
+   2015-04: Common MySQL Connector Pool 
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
