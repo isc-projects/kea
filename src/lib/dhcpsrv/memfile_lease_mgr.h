@@ -20,6 +20,7 @@
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/csv_lease_file6.h>
 #include <dhcpsrv/memfile_lease_storage.h>
+#include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <util/process_spawn.h>
 
@@ -99,7 +100,6 @@ public:
 
     /// @}
 
-
     /// @brief Specifies universe (V4, V6)
     ///
     /// This enumeration is used by various functions in Memfile %Lease Manager,
@@ -124,7 +124,7 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
-    Memfile_LeaseMgr(const ParameterMap& parameters);
+    Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes file)
     virtual ~Memfile_LeaseMgr();
@@ -655,8 +655,14 @@ private:
 
     /// @brief A pointer to the Lease File Cleanup configuration.
     boost::scoped_ptr<LFCSetup> lfc_setup_;
-    //@}
 
+    /// @brief Parameters storage
+    ///
+    /// DatabaseConnection object is used only for storing, accessing and
+    /// printing parameter map.
+    DatabaseConnection conn_;
+
+    //@}
 };
 
 }; // end of isc::dhcp namespace

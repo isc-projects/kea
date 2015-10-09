@@ -1,4 +1,4 @@
-// Copyright (C) 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013,2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #define LEASE_MGR_FACTORY_H
 
 #include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/database_connection.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -100,26 +101,7 @@ public:
     ///        create() to create one before calling this method.
     static LeaseMgr& instance();
 
-    /// @brief Parse database access string
-    ///
-    /// Parses the string of "keyword=value" pairs and separates them
-    /// out into the map.
-    ///
-    /// @param dbaccess Database access string.
-    ///
-    /// @return std::map<std::string, std::string> Map of keyword/value pairs.
-    static LeaseMgr::ParameterMap parse(const std::string& dbaccess);
 
-    /// @brief Redact database access string
-    ///
-    /// Takes the database parameters and returns a database access string
-    /// passwords replaced by asterisks. This string is used in log messages.
-    ///
-    /// @param parameters Database access parameters (output of "parse").
-    ///
-    /// @return Redacted database access string.
-    static std::string redactedAccessString(
-            const LeaseMgr::ParameterMap& parameters);
 
 private:
     /// @brief Hold pointer to lease manager
