@@ -1,3 +1,8 @@
+1020.	[func]		kalmus
+	A general purpose base class for MySQL connection has been
+	implemented.
+	(Trac #3681, git tbd)
+
 1019.	[func]		marcin
 	Added new configuration parameters controlling processing of the
 	expired leases in the DHCPv4 and DHCPv6 server.
