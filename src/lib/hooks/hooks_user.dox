@@ -377,7 +377,7 @@ value in the @c CalloutHandle object.
 @subsubsection hooksdgNextStep The Next step status
 
 Note: This functionality used to be provided in Kea 0.9.2 and earlier using
-boolean skip flag. See @ref hooksdgSkipFlag for explantion and tips how
+boolean skip flag. See @ref hooksdgSkipFlag for explanation and tips how
 to migrate your hooks code to this new API.
 
 When a to callouts attached to a hook returns, the server will usually continue
