@@ -29,6 +29,7 @@
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <cc/command_interpreter.h>
 #include <boost/scoped_ptr.hpp>
@@ -1493,6 +1494,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
 // This test checks that the basic decline hook (lease6_decline) is
 // triggered properly.
 TEST_F(HooksDhcpv6SrvTest, declineBasic) {
+    IfaceMgrTestConfig test_config(true);
 
     // Install lease6_decline callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -1536,6 +1538,8 @@ TEST_F(HooksDhcpv6SrvTest, declineBasic) {
 
 // Test that the lease6_decline hook point can handle SKIP status.
 TEST_F(HooksDhcpv6SrvTest, declineSkip) {
+    IfaceMgrTestConfig test_config(true);
+
     // Install lease6_decline callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_decline", lease6_decline_skip_callout));
@@ -1578,6 +1582,8 @@ TEST_F(HooksDhcpv6SrvTest, declineSkip) {
 
 // Test that the lease6_decline hook point can handle DROP status.
 TEST_F(HooksDhcpv6SrvTest, declineDrop) {
+    IfaceMgrTestConfig test_config(true);
+
     // Install lease6_decline callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_decline", lease6_decline_drop_callout));
