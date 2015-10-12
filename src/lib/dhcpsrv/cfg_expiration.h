@@ -227,7 +227,7 @@ public:
     /// are implemented.
     template<typename Instance>
     void setupTimers(void (Instance::*reclaim_fun)(const size_t, const uint16_t,
-                                                   const bool),
+                                                   const bool, const uint16_t),
                      void (Instance::*delete_fun)(const uint32_t),
                      Instance* instance_ptr) const;
 
@@ -284,8 +284,9 @@ typedef boost::shared_ptr<const CfgExpiration> ConstCfgExpirationPtr;
 template<typename Instance>
 void
 CfgExpiration::setupTimers(void (Instance::*reclaim_fun)(const size_t,
-                                                        const uint16_t,
-                                                        const bool),
+                                                         const uint16_t,
+                                                         const bool,
+                                                         const uint16_t),
                            void (Instance::*delete_fun)(const uint32_t),
                            Instance* instance_ptr) const {
     // One of the parameters passed to the leases' reclamation routine
@@ -307,7 +308,8 @@ CfgExpiration::setupTimers(void (Instance::*reclaim_fun)(const size_t,
                                   boost::bind(reclaim_fun, instance_ptr,
                                               getMaxReclaimLeases(),
                                               getMaxReclaimTime(),
-                                              flush_timer_disabled),
+                                              flush_timer_disabled,
+                                              getUnwarnedReclaimCycles()),
                                   reclaim_interval,
                                   asiolink::IntervalTimer::ONE_SHOT);
         timer_mgr_->setup(RECLAIM_EXPIRED_TIMER_NAME);
