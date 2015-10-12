@@ -1406,6 +1406,29 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
 }
 
 void
+AllocEngine::deleteExpiredReclaimedLeases6(const uint32_t secs) {
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE)
+        .arg(secs);
+
+    uint64_t deleted_leases = 0;
+    try {
+        // Try to delete leases from the lease database.
+        LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+        deleted_leases = lease_mgr.deleteExpiredReclaimedLeases6(secs);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_FAILED)
+            .arg(ex.what());
+    }
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_COMPLETE)
+        .arg(deleted_leases);
+}
+
+
+void
 AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
                                    const bool remove_lease) {
 
@@ -1532,6 +1555,28 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
               ALLOC_ENGINE_V4_LEASES_RECLAMATION_COMPLETE)
         .arg(leases_processed)
         .arg(stopwatch.logFormatTotalDuration());
+}
+
+void
+AllocEngine::deleteExpiredReclaimedLeases4(const uint32_t secs) {
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE)
+        .arg(secs);
+
+    uint64_t deleted_leases = 0;
+    try {
+        // Try to delete leases from the lease database.
+        LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+        deleted_leases = lease_mgr.deleteExpiredReclaimedLeases4(secs);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_FAILED)
+            .arg(ex.what());
+    }
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_COMPLETE)
+        .arg(deleted_leases);
 }
 
 void

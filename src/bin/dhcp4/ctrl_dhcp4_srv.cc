@@ -135,20 +135,6 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
     ConstElementPtr answer = configureDhcp4Server(*srv, config);
 
-    // Start worker thread if there are any timers installed. Note that
-    // we also start worker thread when the reconfiguration failed, because
-    // in that case we continue using an old configuration and the server
-    // should still run installed timers.
-    if (TimerMgr::instance()->timersCount() > 0) {
-        try {
-            TimerMgr::instance()->startThread();
-        } catch (const std::exception& ex) {
-            err << "Unable to start worker thread running timers: "
-                << ex.what() << ".";
-            return (isc::config::createAnswer(1, err.str()));
-        }
-    }
-
     // Check that configuration was successful. If not, do not reopen sockets
     // and don't bother with DDNS stuff.
     try {
@@ -180,6 +166,32 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     // of the interfaces.
     CfgMgr::instance().getStagingCfg()->getCfgIface()->
         openSockets(AF_INET, srv->getPort(), getInstance()->useBroadcast());
+
+    // Install the timers for handling leases reclamation.
+    try {
+        CfgMgr::instance().getStagingCfg()->getCfgExpiration()->
+            setupTimers(&ControlledDhcpv4Srv::reclaimExpiredLeases,
+                        &ControlledDhcpv4Srv::deleteExpiredReclaimedLeases,
+                        server_);
+
+    } catch (const std::exception& ex) {
+        err << "unable to setup timers for periodically running the"
+            " reclamation of the expired leases: "
+            << ex.what() << ".";
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
+    // Start worker thread if there are any timers installed.
+    if (TimerMgr::instance()->timersCount() > 0) {
+        try {
+            TimerMgr::instance()->startThread();
+        } catch (const std::exception& ex) {
+            err << "Unable to start worker thread running timers: "
+                << ex.what() << ".";
+            return (isc::config::createAnswer(1, err.str()));
+        }
+    }
+
 
 
     return (answer);
@@ -230,7 +242,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         cleanup();
 
         // Stop worker thread running timers, if it is running.
-        timer_mgr_->stopThread();
+        TimerMgr::instance()->stopThread();
 
         // Close the command socket (if it exists).
         CommandMgr::instance().closeCommandSocket();
@@ -260,6 +272,23 @@ void ControlledDhcpv4Srv::sessionReader(void) {
     if (getInstance()) {
         getInstance()->io_service_.run_one();
     }
+}
+
+void
+ControlledDhcpv4Srv::reclaimExpiredLeases(const size_t max_leases,
+                                          const uint16_t timeout,
+                                          const bool remove_lease) {
+    server_->alloc_engine_->reclaimExpiredLeases4(max_leases, timeout,
+                                                  remove_lease);
+    // We're using the ONE_SHOT timer so there is a need to re-schedule it.
+    TimerMgr::instance()->setup(CfgExpiration::RECLAIM_EXPIRED_TIMER_NAME);
+}
+
+void
+ControlledDhcpv4Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
+    server_->alloc_engine_->deleteExpiredReclaimedLeases4(secs);
+    // We're using the ONE_SHOT timer so there is a need to re-schedule it.
+    TimerMgr::instance()->setup(CfgExpiration::FLUSH_RECLAIMED_TIMER_NAME);
 }
 
 }; // end of isc::dhcp namespace

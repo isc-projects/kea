@@ -514,6 +514,13 @@ public:
     void reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeout,
                                const bool remove_lease);
 
+    /// @brief Deletes reclaimed leases expired more than specified amount
+    /// of time ago.
+    ///
+    /// @param secs Minimum number of seconds after which the lease can be
+    /// deleted.
+    void deleteExpiredReclaimedLeases6(const uint32_t secs);
+
     /// @brief Reclaims expired IPv4 leases.
     ///
     /// This method retrieves a collection of expired leases and reclaims them.
@@ -559,6 +566,14 @@ public:
     /// database in the "expired-reclaimed" state (if false).
     void reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
                                const bool remove_lease);
+
+    /// @brief Deletes reclaimed leases expired more than specified amount
+    /// of time ago.
+    ///
+    /// @param secs Minimum number of seconds after which the lease can be
+    /// deleted.
+    void deleteExpiredReclaimedLeases4(const uint32_t secs);
+
 
     /// @brief Attempts to find appropriate host reservation.
     ///

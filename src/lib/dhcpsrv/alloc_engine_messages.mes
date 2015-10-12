@@ -68,6 +68,25 @@ client sending the DHCPDISCOVER has a reservation for the specified
 address. The allocation engine will try to offer this address to
 the client.
 
+% ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE begin deletion of reclaimed leases expired more than %1 seconds ago
+This debug message is issued when the allocation engine begins
+deletion of the reclaimed leases which have expired more than
+a specified number of seconds ago. This operation is triggered
+periodically according to the "flush-reclaimed-timer-wait-time"
+parameter. The "hold-reclaimed-time" parameter defines a number
+of seconds for which the leases are stored before they are
+removed.
+
+% ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_COMPLETE successfully deleted %1 expired-reclaimed leases
+This debug message is issued when the server successfully deletes
+"expired-reclaimed" leases from the lease database. The number of
+deleted leases is included in the log message.
+
+% ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_FAILED deletion of expired-reclaimed leases failed: %1
+This error message is issued when the deletion of "expired-reclaimed"
+leases from the database failed. The error message is appended to
+the log message.
+
 % ALLOC_ENGINE_V4_LEASE_RECLAMATION_FAILED failed to reclaim the lease %1: %2
 This error message is logged when the allocation engine fails to
 reclaim an expired lease. The reason for the failure is included in the
@@ -322,6 +341,25 @@ reclamation will now be interrupted and all leases which haven't
 been reclaimed, because of the timeout, will be reclaimed when the
 next scheduled reclamation is started. The argument is the timeout
 value expressed in milliseconds.
+
+% ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE begin deletion of reclaimed leases expired more than %1 seconds ago
+This debug message is issued when the allocation engine begins
+deletion of the reclaimed leases which have expired more than
+a specified number of seconds ago. This operation is triggered
+periodically according to the "flush-reclaimed-timer-wait-time"
+parameter. The "hold-reclaimed-time" parameter defines a number
+of seconds for which the leases are stored before they are
+removed.
+
+% ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_COMPLETE successfully deleted %1 expired-reclaimed leases
+This debug message is issued when the server successfully deletes
+"expired-reclaimed" leases from the lease database. The number of
+deleted leases is included in the log message.
+
+% ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_FAILED deletion of expired-reclaimed leases failed: %1
+This error message is issued when the deletion of "expired-reclaimed"
+leases from the database failed. The error message is appended to
+the log message.
 
 % ALLOC_ENGINE_V6_RENEW_HR allocating leases reserved for the client %1 as a result of Renew
 This debug message is issued when the allocation engine tries to
