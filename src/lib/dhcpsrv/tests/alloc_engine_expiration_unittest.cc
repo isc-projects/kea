@@ -250,6 +250,20 @@ public:
         ASSERT_NO_THROW(updateLease(lease_index));
     }
 
+    /// @brief Marks lease as expired-reclaimed.
+    ///
+    /// @param lease_index Lease index. Must be between 0 and
+    /// @c TEST_LEASES_NUM.
+    /// @param secs Offset of the expiration time since now. For example
+    /// a value of 2 would set the lease expiration time to 2 seconds ago.
+    void reclaim(const uint16_t lease_index, const time_t secs) {
+        ASSERT_GT(leases_.size(), lease_index);
+        leases_[lease_index]->cltt_ = time(NULL) - secs -
+            leases_[lease_index]->valid_lft_;
+        leases_[lease_index]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+        ASSERT_NO_THROW(updateLease(lease_index));
+    }
+
     /// @brief Declines specified lease
     ///
     /// Sets specified lease to declined state and sets its probation-period.
@@ -290,6 +304,13 @@ public:
     virtual void reclaimExpiredLeases(const size_t max_leases,
                                       const uint16_t timeout,
                                       const bool remove_lease) = 0;
+
+    /// @brief Wrapper method for removing expired-reclaimed leases.
+    ///
+    /// @param secs The minimum amount of time, expressed in seconds,
+    /// for the lease to be left in the "expired-reclaimed" state
+    /// before it can be removed.
+    virtual void deleteExpiredReclaimedLeases(const uint32_t secs) = 0;
 
     /// @brief Test selected leases using the specified algorithms.
     ///
@@ -905,6 +926,27 @@ public:
                                UpperBound(TEST_LEASES_NUM)));
     }
 
+    /// @brief This test verifies that expired-reclaimed leases are removed
+    /// from the lease database.
+    void testDeleteExpiredReclaimedLeases() {
+        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+            // Mark leases with even indexes as expired.
+            if (evenLeaseIndex(i)) {
+                // The higher the index, the more expired the lease.
+                reclaim(i, 10 + i);
+            }
+        }
+
+        // Run leases reclamation routine on all leases. This should result
+        // in removal of all leases with even indexes.
+        ASSERT_NO_THROW(deleteExpiredReclaimedLeases(10));
+
+        // Leases with odd indexes shouldn't be removed from the database.
+        EXPECT_TRUE(testLeases(&leaseExists, &oddLeaseIndex));
+        // Leases with even indexes should have been removed.
+        EXPECT_TRUE(testLeases(&leaseDoesntExist, &evenLeaseIndex));
+    }
+
     /// @brief Test that declined expired leases can be removed.
     ///
     /// This method allows controlling remove_leases parameter when calling
@@ -1084,6 +1126,15 @@ public:
                                       const uint16_t timeout,
                                       const bool remove_lease) {
         engine_->reclaimExpiredLeases6(max_leases, timeout, remove_lease);
+    }
+
+    /// @brief Wrapper method for removing expired-reclaimed leases.
+    ///
+    /// @param secs The minimum amount of time, expressed in seconds,
+    /// for the lease to be left in the "expired-reclaimed" state
+    /// before it can be removed.
+    virtual void deleteExpiredReclaimedLeases(const uint32_t secs) {
+        engine_->deleteExpiredReclaimedLeases6(secs);
     }
 
     /// @brief Test that statistics is updated when leases are reclaimed.
@@ -1283,6 +1334,13 @@ TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesShortTimeout) {
     testReclaimExpiredLeasesTimeout(1);
 }
 
+// This test verifies that expired-reclaimed leases are removed from the
+// lease database.
+TEST_F(ExpirationAllocEngine6Test, deleteExpiredReclaimedLeases) {
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 10);
+    testDeleteExpiredReclaimedLeases();
+}
+
 // *******************************************************
 //
 // DHCPv4 lease reclamation routine tests start here!
@@ -1344,6 +1402,15 @@ public:
                                       const uint16_t timeout,
                                       const bool remove_lease) {
         engine_->reclaimExpiredLeases4(max_leases, timeout, remove_lease);
+    }
+
+    /// @brief Wrapper method for removing expired-reclaimed leases.
+    ///
+    /// @param secs The minimum amount of time, expressed in seconds,
+    /// for the lease to be left in the "expired-reclaimed" state
+    /// before it can be removed.
+    virtual void deleteExpiredReclaimedLeases(const uint32_t secs) {
+        engine_->deleteExpiredReclaimedLeases4(secs);
     }
 
     /// @brief Lease algorithm checking if NCR has been generated from client
@@ -1645,6 +1712,13 @@ TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesShortTimeout) {
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 5);
     // Reclaim leases with the 1ms timeout.
     testReclaimExpiredLeasesTimeout(1);
+}
+
+// This test verifies that expired-reclaimed leases are removed from the
+// lease database.
+TEST_F(ExpirationAllocEngine4Test, deleteExpiredReclaimedLeases) {
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 10);
+    testDeleteExpiredReclaimedLeases();
 }
 
 /// This test verifies that @ref AllocEngine::reclaimExpiredLeases4 properly

@@ -13,14 +13,19 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfg_expiration.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
+#include <util/stopwatch.h>
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <stdint.h>
 
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::util;
 
 namespace {
 
@@ -156,6 +161,245 @@ TEST(CfgExpirationTest, getUnwarnedReclaimCycles) {
     testAccessModifyUint16(CfgExpiration::LIMIT_UNWARNED_RECLAIM_CYCLES,
                            &CfgExpiration::setUnwarnedReclaimCycles,
                            &CfgExpiration::getUnwarnedReclaimCycles);
+}
+
+/// @brief Implements test routines for leases reclamation.
+///
+/// This class implements two routines called by the @c CfgExpiration object
+/// instead of the typical routines for leases' reclamation in the
+/// @c AllocEngine. These methods do not perform the actual reclamation,
+/// but instead they record the number of calls to them and the parameters
+/// with which they were executed. This allows for checking if the
+/// @c CfgExpiration object calls the leases reclamation routine with the
+/// appropriate parameteres.
+class LeaseReclamationStub {
+public:
+
+    /// @brief Collection of parameters with which the @c reclaimExpiredLeases
+    /// method is called.
+    ///
+    /// Examination of these values allows for assesment if the @c CfgExpiration
+    /// calls the routine with the appropriate values.
+    struct RecordedParams {
+        /// @brief Maximum number of leases to be processed.
+        size_t max_leases;
+
+        /// @brief Timeout for processing leases in milliseconds.
+        uint16_t timeout;
+
+        /// @brief Boolean flag which indicates if the leases should be removed
+        /// when reclaimed.
+        bool remove_lease;
+    };
+
+    /// @brief Constructor.
+    ///
+    /// Resets recorded parameters and obtains the instance of the @c TimerMgr.
+    LeaseReclamationStub()
+        : reclaim_calls_count_(0), delete_calls_count_(0), reclaim_params_(),
+          secs_param_(0), timer_mgr_(TimerMgr::instance()) {
+    }
+
+    /// @brief Stub implementation of the leases' reclamation routine.
+    ///
+    /// @param max_leases Maximum number of leases to be processed.
+    /// @param timeout Timeout for processing leases in milliseconds.
+    /// @remove_lease Boolean flag which indicates if the leases should be
+    /// removed when it is reclaimed.
+    void
+    reclaimExpiredLeases(const size_t max_leases, const uint16_t timeout,
+                         const bool remove_lease) {
+        // Increase calls counter for this method.
+        ++reclaim_calls_count_;
+        // Record all parameters with which this method has been called.
+        reclaim_params_.max_leases = max_leases;
+        reclaim_params_.timeout = timeout;
+        reclaim_params_.remove_lease = remove_lease;
+
+        // Leases' reclamation routine is responsible for re-scheduling
+        // the timer.
+        timer_mgr_->setup(CfgExpiration::RECLAIM_EXPIRED_TIMER_NAME);
+    }
+
+    /// @brief Stub implementation of the routine which flushes
+    /// expired-reclaimed leases.
+    ///
+    /// @param secs Specifies the minimum amount of time, expressed in
+    /// seconds, that must elapse before the expired-reclaime lease is
+    /// deleted from the database.
+    void
+    deleteReclaimedLeases(const uint32_t secs) {
+        // Increase calls counter for this method.
+        ++delete_calls_count_;
+        // Record the value of the parameter.
+        secs_param_ = secs;
+
+        // Routine which flushes the reclaimed leases is responsible for
+        // re-scheduling the timer.
+        timer_mgr_->setup(CfgExpiration::FLUSH_RECLAIMED_TIMER_NAME);
+    }
+
+    /// @brief Counter holding the number of calls to @c reclaimExpiredLeases.
+    long reclaim_calls_count_;
+
+    /// @brief Counter holding the number of calls to @c deleteReclaimedLeases.
+    long delete_calls_count_;
+
+    /// @brief Structure holding values of parameters with which the
+    /// @c reclaimExpiredLeases was called.
+    ///
+    /// These values are overriden on subsequent calls to this method.
+    RecordedParams reclaim_params_;
+
+    /// @brief Value of the parameter with which the @c deleteReclaimedLeases
+    /// was called.
+    uint32_t secs_param_;
+
+private:
+
+    /// @brief Pointer to the @c TimerMgr.
+    TimerMgrPtr timer_mgr_;
+
+};
+
+/// @brief Pointer to the @c LeaseReclamationStub.
+typedef boost::shared_ptr<LeaseReclamationStub> LeaseReclamationStubPtr;
+
+/// @brief Test fixture class for the @c CfgExpiration.
+class CfgExpirationTimersTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Creates instance of the test fixture class. Besides initialization
+    /// of the class members, it also stops the @c TimerMgr worker thread
+    /// and removes any registered timers.
+    CfgExpirationTimersTest()
+        : timer_mgr_(TimerMgr::instance()),
+          stub_(new LeaseReclamationStub()),
+          cfg_(true) {
+        cleanupTimerMgr();
+    }
+
+    /// @brief Destructor.
+    ///
+    /// It stops the @c TimerMgr worker thread and removes any registered
+    /// timers.
+    virtual ~CfgExpirationTimersTest() {
+        cleanupTimerMgr();
+    }
+
+    /// @brief Stop @c TimerMgr worker thread and remove the timers.
+    void cleanupTimerMgr() const {
+        timer_mgr_->stopThread();
+        timer_mgr_->unregisterTimers();
+    }
+
+    /// @brief Runs timers for specified time.
+    ///
+    /// Internally, this method calls @c IfaceMgr::receive6 to run the
+    /// callbacks for the installed timers.
+    ///
+    /// @param timeout_ms Amount of time after which the method returns.
+    void runTimersWithTimeout(const long timeout_ms) {
+        Stopwatch stopwatch;
+        while (stopwatch.getTotalMilliseconds() < timeout_ms) {
+            // Block for up to one millisecond waiting for the timers'
+            // callbacks to be executed.
+            IfaceMgr::instancePtr()->receive6(0, 1000);
+        }
+    }
+
+    /// @brief Setup timers according to the configuration and run them
+    /// for the specified amount of time.
+    ///
+    /// @param timeout_ms Timeout in milliseconds.
+    void setupAndRun(const long timeout_ms) {
+        cfg_.setupTimers(&LeaseReclamationStub::reclaimExpiredLeases,
+                         &LeaseReclamationStub::deleteReclaimedLeases,
+                         stub_.get());
+        // Run timers.
+        ASSERT_NO_THROW({
+            timer_mgr_->startThread();
+            runTimersWithTimeout(timeout_ms);
+            timer_mgr_->stopThread();
+        });
+    }
+
+    /// @brief Pointer to the @c TimerMgr.
+    TimerMgrPtr timer_mgr_;
+
+    /// @brief Pointer to the @c LeaseReclamationStub instance.
+    LeaseReclamationStubPtr stub_;
+
+    /// @brief Instance of the @c CfgExpiration class used by the tests.
+    CfgExpiration cfg_;
+};
+
+// Test that the reclamation routines are called with the appropriate parameters.
+TEST_F(CfgExpirationTimersTest, reclamationParameters) {
+    // Set parameters to some non-default values.
+    cfg_.setMaxReclaimLeases(1000);
+    cfg_.setMaxReclaimTime(1500);
+    cfg_.setHoldReclaimedTime(1800);
+
+    // Run timers for 500ms.
+    ASSERT_NO_FATAL_FAILURE(setupAndRun(500));
+
+    // Make sure we had more than one call to the reclamation routine.
+    ASSERT_GT(stub_->reclaim_calls_count_, 1);
+    // Make sure it was called with appropriate arguments.
+    EXPECT_EQ(1000, stub_->reclaim_params_.max_leases);
+    EXPECT_EQ(1500, stub_->reclaim_params_.timeout);
+    EXPECT_FALSE(stub_->reclaim_params_.remove_lease);
+
+    // Make sure we had more than one call to the routine which flushes
+    // expired reclaimed leases.
+    ASSERT_GT(stub_->delete_calls_count_, 1);
+    // Make sure that the argument was correct.
+    EXPECT_EQ(1800, stub_->secs_param_);
+}
+
+// This test verifies that if the value of "flush-reclaimed-timer-wait-time"
+// configuration parameter is set to 0, the lease reclamation routine would
+// delete reclaimed leases from a lease database.
+TEST_F(CfgExpirationTimersTest, noLeaseAffinity) {
+    // Set the timer for flushing leases to 0. This effectively disables
+    // the timer.
+    cfg_.setFlushReclaimedTimerWaitTime(0);
+
+    // Run the lease reclamation timer for a while.
+    ASSERT_NO_FATAL_FAILURE(setupAndRun(500));
+
+    // Make sure that the lease reclamation routine has been executed a
+    // couple of times.
+    ASSERT_GT(stub_->reclaim_calls_count_, 1);
+    EXPECT_EQ(CfgExpiration::DEFAULT_MAX_RECLAIM_LEASES,
+              stub_->reclaim_params_.max_leases);
+    EXPECT_EQ(CfgExpiration::DEFAULT_MAX_RECLAIM_TIME,
+              stub_->reclaim_params_.timeout);
+    // When the "flush" timer is disabled, the lease reclamation routine is
+    // responsible for removal of reclaimed leases. This is controlled using
+    // the "remove_lease" parameter which should be set to true in this case.
+    EXPECT_TRUE(stub_->reclaim_params_.remove_lease);
+
+    // The routine flushing reclaimed leases should not be run at all.
+    EXPECT_EQ(0, stub_->delete_calls_count_);
+}
+
+// This test verfies that lease reclamation may be disabled.
+TEST_F(CfgExpirationTimersTest, noLeaseReclamation) {
+    // Disable both timers.
+    cfg_.setReclaimTimerWaitTime(0);
+    cfg_.setFlushReclaimedTimerWaitTime(0);
+
+    // Wait for 500ms.
+    ASSERT_NO_FATAL_FAILURE(setupAndRun(500));
+
+    // Make sure that neither leases' reclamation routine nor the routine
+    // flushing expired-reclaimed leases was run.
+    EXPECT_EQ(0, stub_->reclaim_calls_count_);
+    EXPECT_EQ(0, stub_->delete_calls_count_);
 }
 
 } // end of anonymous namespace
