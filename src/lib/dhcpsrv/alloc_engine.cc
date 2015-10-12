@@ -247,7 +247,8 @@ AllocEngine::RandomAllocator::pickAddress(const SubnetPtr&,
 
 AllocEngine::AllocEngine(AllocType engine_type, uint64_t attempts,
                          bool ipv6)
-    : attempts_(attempts) {
+    : attempts_(attempts), incomplete_v4_reclamations_(0),
+      incomplete_v6_reclamations_(0) {
 
     // Choose the basic (normal address) lease type
     Lease::Type basic_type = ipv6 ? Lease::TYPE_NA : Lease::TYPE_V4;
@@ -1288,7 +1289,8 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
 
 void
 AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeout,
-                                   const bool remove_lease) {
+                                   const bool remove_lease,
+                                   const uint16_t max_unwarned_cycles) {
 
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
               ALLOC_ENGINE_V6_LEASES_RECLAMATION_START)
@@ -1301,8 +1303,31 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
 
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
 
+    // This value indicates if we have been able to deal with all expired
+    // leases in this pass.
+    bool incomplete_reclamation = false;
     Lease6Collection leases;
-    lease_mgr.getExpiredLeases6(leases, max_leases);
+    // The value of 0 has a special meaning - reclaim all.
+    if (max_leases > 0) {
+        // If the value is non-zero, the caller has limited the number of
+        // leases to reclaim. We obtain one lease more to see if there will
+        // be still leases left after this pass.
+        lease_mgr.getExpiredLeases6(leases, max_leases + 1);
+        // There are more leases expired leases than we will process in this
+        // pass, so we should mark it as an incomplete reclamation. We also
+        // remove this extra lease (which we don't want to process anyway)
+        // from the collection.
+        if (leases.size() > max_leases) {
+            leases.pop_back();
+            incomplete_reclamation = true;
+        }
+
+    } else {
+        // If there is no limitation on the number of leases to reclaim,
+        // we will try to process all. Hence, we don't mark it as incomplete
+        // reclamation just yet.
+        lease_mgr.getExpiredLeases6(leases, max_leases);
+    }
 
     // Do not initialize the callout handle until we know if there are any
     // lease6_expire callouts installed.
@@ -1388,6 +1413,15 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
         // return if we have. We're checking it here, because we always want to
         // allow reclaiming at least one lease.
         if ((timeout > 0) && (stopwatch.getTotalMilliseconds() >= timeout)) {
+            // Timeout. This will likely mean that we haven't been able to process
+            // all leases we wanted to process. The reclamation pass will be
+            // probably marked as incomplete.
+            if (!incomplete_reclamation) {
+                if (leases_processed < leases.size()) {
+                    incomplete_reclamation = true;
+                }
+            }
+
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT)
                 .arg(timeout);
@@ -1403,6 +1437,28 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
               ALLOC_ENGINE_V6_LEASES_RECLAMATION_COMPLETE)
         .arg(leases_processed)
         .arg(stopwatch.logFormatTotalDuration());
+
+    // Check if this was an incomplete reclamation and increase the number of
+    // consecutive incomplete reclamations.
+    if (incomplete_reclamation) {
+        ++incomplete_v6_reclamations_;
+        // If the number of incomplete reclamations is beyond the threshold, we
+        // need to issue a warning.
+        if ((max_unwarned_cycles > 0) &&
+            (incomplete_v6_reclamations_ > max_unwarned_cycles)) {
+            LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V6_LEASES_RECLAMATION_SLOW)
+                .arg(max_unwarned_cycles);
+            // We issued a warning, so let's now reset the counter.
+            incomplete_v6_reclamations_ = 0;
+        }
+
+    } else {
+        // This was a complete reclamation, so let's reset the counter.
+        incomplete_v6_reclamations_ = 0;
+
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V6_NO_MORE_EXPIRED_LEASES);
+    }
 }
 
 void
@@ -1430,7 +1486,8 @@ AllocEngine::deleteExpiredReclaimedLeases6(const uint32_t secs) {
 
 void
 AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
-                                   const bool remove_lease) {
+                                   const bool remove_lease,
+                                   const uint16_t max_unwarned_cycles) {
 
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
               ALLOC_ENGINE_V4_LEASES_RECLAMATION_START)
@@ -1443,8 +1500,32 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
 
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
 
+    // This value indicates if we have been able to deal with all expired
+    // leases in this pass.
+    bool incomplete_reclamation = false;
     Lease4Collection leases;
-    lease_mgr.getExpiredLeases4(leases, max_leases);
+    // The value of 0 has a special meaning - reclaim all.
+    if (max_leases > 0) {
+        // If the value is non-zero, the caller has limited the number of
+        // leases to reclaim. We obtain one lease more to see if there will
+        // be still leases left after this pass.
+        lease_mgr.getExpiredLeases4(leases, max_leases + 1);
+        // There are more leases expired leases than we will process in this
+        // pass, so we should mark it as an incomplete reclamation. We also
+        // remove this extra lease (which we don't want to process anyway)
+        // from the collection.
+        if (leases.size() > max_leases) {
+            leases.pop_back();
+            incomplete_reclamation = true;
+        }
+
+    } else {
+        // If there is no limitation on the number of leases to reclaim,
+        // we will try to process all. Hence, we don't mark it as incomplete
+        // reclamation just yet.
+        lease_mgr.getExpiredLeases4(leases, max_leases);
+    }
+
 
     // Do not initialize the callout handle until we know if there are any
     // lease4_expire callouts installed.
@@ -1540,6 +1621,15 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
         // return if we have. We're checking it here, because we always want to
         // allow reclaiming at least one lease.
         if ((timeout > 0) && (stopwatch.getTotalMilliseconds() >= timeout)) {
+            // Timeout. This will likely mean that we haven't been able to process
+            // all leases we wanted to process. The reclamation pass will be
+            // probably marked as incomplete.
+            if (!incomplete_reclamation) {
+                if (leases_processed < leases.size()) {
+                    incomplete_reclamation = true;
+                }
+            }
+
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT)
                 .arg(timeout);
@@ -1555,6 +1645,28 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
               ALLOC_ENGINE_V4_LEASES_RECLAMATION_COMPLETE)
         .arg(leases_processed)
         .arg(stopwatch.logFormatTotalDuration());
+
+    // Check if this was an incomplete reclamation and increase the number of
+    // consecutive incomplete reclamations.
+    if (incomplete_reclamation) {
+        ++incomplete_v4_reclamations_;
+        // If the number of incomplete reclamations is beyond the threshold, we
+        // need to issue a warning.
+        if ((max_unwarned_cycles > 0) &&
+            (incomplete_v4_reclamations_ > max_unwarned_cycles)) {
+            LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_LEASES_RECLAMATION_SLOW)
+                .arg(max_unwarned_cycles);
+            // We issued a warning, so let's now reset the counter.
+            incomplete_v4_reclamations_ = 0;
+        }
+
+    } else {
+        // This was a complete reclamation, so let's reset the counter.
+        incomplete_v4_reclamations_ = 0;
+
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V4_NO_MORE_EXPIRED_LEASES);
+    }
 }
 
 void

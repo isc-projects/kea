@@ -277,9 +277,11 @@ void ControlledDhcpv4Srv::sessionReader(void) {
 void
 ControlledDhcpv4Srv::reclaimExpiredLeases(const size_t max_leases,
                                           const uint16_t timeout,
-                                          const bool remove_lease) {
+                                          const bool remove_lease,
+                                          const uint16_t max_unwarned_cycles) {
     server_->alloc_engine_->reclaimExpiredLeases4(max_leases, timeout,
-                                                  remove_lease);
+                                                  remove_lease,
+                                                  max_unwarned_cycles);
     // We're using the ONE_SHOT timer so there is a need to re-schedule it.
     TimerMgr::instance()->setup(CfgExpiration::RECLAIM_EXPIRED_TIMER_NAME);
 }
