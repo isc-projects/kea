@@ -149,7 +149,7 @@ This message is issued when the client is requesting or has a
 reservation for an address which is in use. The first argument
 includes the client identification information.
 
-% ALLOC_ENGINE_V4_REQUEST_OUT_OF_POOL client %1, which doesn't have reservation, requested address out of the dynamic pool
+% ALLOC_ENGINE_V4_REQUEST_OUT_OF_POOL client %1, which doesn't have a reservation, requested address %2 out of the dynamic pool
 This message is issued when the client has requested allocation
 of the address which doesn't belong to any address pool from
 which addresses are dynamically allocated. The client also
