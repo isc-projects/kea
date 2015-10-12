@@ -823,12 +823,6 @@ private:
     /// @param query packet transmitted
     static void processStatsSent(const Pkt6Ptr& response);
 
-    /// @brief Allocation Engine.
-    /// Pointer to the allocation engine that we are currently using
-    /// It must be a pointer, because we will support changing engines
-    /// during normal operation (e.g. to use different allocators)
-    boost::shared_ptr<AllocEngine> alloc_engine_;
-
     /// Server DUID (to be sent in server-identifier option)
     OptionPtr serverid_;
 
@@ -840,6 +834,12 @@ protected:
     /// Indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
+
+    /// @brief Allocation Engine.
+    /// Pointer to the allocation engine that we are currently using
+    /// It must be a pointer, because we will support changing engines
+    /// during normal operation (e.g. to use different allocators)
+    boost::shared_ptr<AllocEngine> alloc_engine_;
 
     /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects, which
     /// are waiting for sending to kea-dhcp-ddns module.

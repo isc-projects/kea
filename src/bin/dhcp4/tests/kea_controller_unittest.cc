@@ -14,11 +14,17 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/hwaddr.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <log/logger_support.h>
+#include <util/stopwatch.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -58,6 +64,7 @@ public:
     }
 
     ~JSONFileBackendTest() {
+        LeaseMgrFactory::destroy();
         isc::log::setDefaultLoggingOutput();
         static_cast<void>(remove(TEST_FILE));
     };
@@ -75,6 +82,21 @@ public:
         EXPECT_TRUE(out.is_open());
         out << content;
         out.close();
+    }
+
+    /// @brief Runs timers for specified time.
+    ///
+    /// Internally, this method calls @c IfaceMgr::receive6 to run the
+    /// callbacks for the installed timers.
+    ///
+    /// @param timeout_ms Amount of time after which the method returns.
+    void runTimersWithTimeout(const long timeout_ms) {
+        isc::util::Stopwatch stopwatch;
+        while (stopwatch.getTotalMilliseconds() < timeout_ms) {
+            // Block for up to one millisecond waiting for the timers'
+            // callbacks to be executed.
+            IfaceMgr::instancePtr()->receive4(0, 1000);
+        }
     }
 
     /// Name of a config file used during tests
@@ -301,6 +323,81 @@ TEST_F(JSONFileBackendTest, DISABLED_loadAllConfigs) {
             ADD_FAILURE() << "Exception thrown" << ex.what() << endl;
         }
     }
+}
+
+// This test verifies that the DHCP server installs the timers for reclaiming
+// and flushing expired leases.
+TEST_F(JSONFileBackendTest, timers) {
+    // This is a basic configuration which enables timers for reclaiming
+    // expired leases and flushing them after 500 seconds since they expire.
+    // Both timers run at 1 second intervals.
+    string config =
+        "{ \"Dhcp4\": {"
+        "\"interfaces-config\": {"
+        "    \"interfaces\": [ ]"
+        "},"
+        "\"lease-database\": {"
+        "     \"type\": \"memfile\","
+        "     \"persist\": false"
+        "},"
+        "\"expired-leases-processing\": {"
+        "     \"reclaim-timer-wait-time\": 1,"
+        "     \"hold-reclaimed-time\": 500,"
+        "     \"flush-reclaimed-timer-wait-time\": 1"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "\"subnet4\": [ ],"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+    writeFile(config);
+
+    // Create an instance of the server and intialize it.
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new ControlledDhcpv4Srv(0)));
+    ASSERT_NO_THROW(srv->init(TEST_FILE));
+
+    // Create an expired lease. The lease is expired by 40 seconds ago
+    // (valid lifetime = 60, cltt = now - 100). The lease will be reclaimed
+    // but shouldn't be flushed in the database because the reclaimed are
+    // held in the database 500 seconds after reclamation, according to the
+    // current configuration.
+    HWAddrPtr hwaddr_expired(new HWAddr(HWAddr::fromText("00:01:02:03:04:05")));
+    Lease4Ptr lease_expired(new Lease4(IOAddress("10.0.0.1"), hwaddr_expired,
+                                       ClientIdPtr(), 60, 10, 20,
+                                       time(NULL) - 100, SubnetID(1)));
+
+    // Create expired-reclaimed lease. The lease has expired 1000 - 60 seconds
+    // ago. It should be removed from the lease database when the "flush" timer
+    // goes off.
+    HWAddrPtr hwaddr_reclaimed(new HWAddr(HWAddr::fromText("01:02:03:04:05:06")));
+    Lease4Ptr lease_reclaimed(new Lease4(IOAddress("10.0.0.2"), hwaddr_reclaimed,
+                                         ClientIdPtr(), 60, 10, 20,
+                                         time(NULL) - 1000, SubnetID(1)));
+    lease_reclaimed->state_ = Lease4::STATE_EXPIRED_RECLAIMED;
+
+    // Add leases to the database.
+    LeaseMgr& lease_mgr = LeaseMgrFactory().instance();
+    ASSERT_NO_THROW(lease_mgr.addLease(lease_expired));
+    ASSERT_NO_THROW(lease_mgr.addLease(lease_reclaimed));
+
+    // Make sure they have been added.
+    ASSERT_TRUE(lease_mgr.getLease4(IOAddress("10.0.0.1")));
+    ASSERT_TRUE(lease_mgr.getLease4(IOAddress("10.0.0.2")));
+
+    // Poll the timers for a while to make sure that each of them is executed
+    // at least once.
+    ASSERT_NO_THROW(runTimersWithTimeout(5000));
+
+    // Verify that the leases in the database have been processed as expected.
+
+    // First lease should be reclaimed, but not removed.
+    ASSERT_NO_THROW(lease_expired = lease_mgr.getLease4(IOAddress("10.0.0.1")));
+    ASSERT_TRUE(lease_expired);
+    EXPECT_TRUE(lease_expired->stateExpiredReclaimed());
+
+    // Second lease should have been removed.
+    EXPECT_FALSE(lease_mgr.getLease4(IOAddress("10.0.0.2")));
 }
 
 } // End of anonymous namespace
