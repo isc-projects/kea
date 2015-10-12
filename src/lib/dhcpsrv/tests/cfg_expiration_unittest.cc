@@ -190,6 +190,10 @@ public:
         /// @brief Boolean flag which indicates if the leases should be removed
         /// when reclaimed.
         bool remove_lease;
+
+        /// @brief Maximum number of reclamation attempts after which all leases
+        /// should be reclaimed.
+        uint16_t max_unwarned_cycles;
     };
 
     /// @brief Constructor.
@@ -206,15 +210,19 @@ public:
     /// @param timeout Timeout for processing leases in milliseconds.
     /// @remove_lease Boolean flag which indicates if the leases should be
     /// removed when it is reclaimed.
+    /// @param Maximum number of reclamation attempts after which all leases
+    /// should be reclaimed.
     void
     reclaimExpiredLeases(const size_t max_leases, const uint16_t timeout,
-                         const bool remove_lease) {
+                         const bool remove_lease,
+                         const uint16_t max_unwarned_cycles) {
         // Increase calls counter for this method.
         ++reclaim_calls_count_;
         // Record all parameters with which this method has been called.
         reclaim_params_.max_leases = max_leases;
         reclaim_params_.timeout = timeout;
         reclaim_params_.remove_lease = remove_lease;
+        reclaim_params_.max_unwarned_cycles = max_unwarned_cycles;
 
         // Leases' reclamation routine is responsible for re-scheduling
         // the timer.
@@ -342,6 +350,7 @@ TEST_F(CfgExpirationTimersTest, reclamationParameters) {
     cfg_.setMaxReclaimLeases(1000);
     cfg_.setMaxReclaimTime(1500);
     cfg_.setHoldReclaimedTime(1800);
+    cfg_.setUnwarnedReclaimCycles(13);
 
     // Run timers for 500ms.
     ASSERT_NO_FATAL_FAILURE(setupAndRun(500));
@@ -352,6 +361,7 @@ TEST_F(CfgExpirationTimersTest, reclamationParameters) {
     EXPECT_EQ(1000, stub_->reclaim_params_.max_leases);
     EXPECT_EQ(1500, stub_->reclaim_params_.timeout);
     EXPECT_FALSE(stub_->reclaim_params_.remove_lease);
+    EXPECT_EQ(13, stub_->reclaim_params_.max_unwarned_cycles);
 
     // Make sure we had more than one call to the routine which flushes
     // expired reclaimed leases.

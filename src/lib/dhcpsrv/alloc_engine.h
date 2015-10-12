@@ -511,8 +511,13 @@ public:
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the
     /// database in the "expired-reclaimed" state (if false).
+    /// @param max_unwarned_cycles A number of consecutive processing cycles
+    /// of expired leases, after which the system issues a warning if there
+    /// are still expired leases in the database. If this value is 0, the
+    /// warning is never issued.
     void reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeout,
-                               const bool remove_lease);
+                               const bool remove_lease,
+                               const uint16_t max_unwarned_cycles = 0);
 
     /// @brief Deletes reclaimed leases expired more than specified amount
     /// of time ago.
@@ -564,8 +569,13 @@ public:
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the
     /// database in the "expired-reclaimed" state (if false).
+    /// @param max_unwarned_cycles A number of consecutive processing cycles
+    /// of expired leases, after which the system issues a warning if there
+    /// are still expired leases in the database. If this value is 0, the
+    /// warning is never issued.
     void reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
-                               const bool remove_lease);
+                               const bool remove_lease,
+                               const uint16_t max_unwarned_cycles = 0);
 
     /// @brief Deletes reclaimed leases expired more than specified amount
     /// of time ago.
@@ -1234,6 +1244,16 @@ private:
     /// @return true if the lease lifetime has been extended, false
     /// otherwise.
     bool conditionalExtendLifetime(Lease& lease) const;
+
+private:
+
+    /// @brief Number of consecutive DHCPv4 leases' reclamations after
+    /// which there are still expired leases in the database.
+    uint16_t incomplete_v4_reclamations_;
+
+    /// @brief Number of consecutive DHCPv6 leases' reclamations after
+    /// which there are still expired leases in the database.
+    uint16_t incomplete_v6_reclamations_;
 
 };
 
