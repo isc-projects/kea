@@ -393,6 +393,22 @@ TEST_F(PgSqlLeaseMgrTest, lease4InvalidHostname) {
     testLease4InvalidHostname();
 }
 
+/// @brief Check that the expired DHCPv4 leases can be retrieved.
+///
+/// This test adds a number of leases to the lease database and marks
+/// some of them as expired. Then it queries for expired leases and checks
+/// whether only expired leases are returned, and that they are returned in
+/// the order from most to least expired. It also checks that the lease
+/// which is marked as 'reclaimed' is not returned.
+TEST_F(PgSqlLeaseMgrTest, getExpiredLeases4) {
+    testGetExpiredLeases4();
+}
+
+/// @brief Check that expired reclaimed DHCPv4 leases are removed.
+TEST_F(PgSqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
+    testDeleteExpiredReclaimedLeases4();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /// LEASE6 /////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -469,6 +485,22 @@ TEST_F(PgSqlLeaseMgrTest, updateLease6) {
 
 TEST_F(PgSqlLeaseMgrTest, nullDuid) {
     testNullDuid();
+}
+
+/// @brief Check that the expired DHCPv6 leases can be retrieved.
+///
+/// This test adds a number of leases to the lease database and marks
+/// some of them as expired. Then it queries for expired leases and checks
+/// whether only expired leases are returned, and that they are returned in
+/// the order from most to least expired. It also checks that the lease
+/// which is marked as 'reclaimed' is not returned.
+TEST_F(PgSqlLeaseMgrTest, getExpiredLeases6) {
+    testGetExpiredLeases6();
+}
+
+/// @brief Check that expired reclaimed DHCPv6 leases are removed.
+TEST_F(PgSqlLeaseMgrTest, deleteExpiredReclaimedLeases6) {
+    testDeleteExpiredReclaimedLeases6();
 }
 
 };

@@ -546,6 +546,28 @@ A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the PostgreSQL database for a client with the specified
 client identification.
 
+% DHCPSRV_PGSQL_GET_EXPIRED4 obtaining maximum %1 of expired IPv4 leases
+A debug message issued when the server is attempting to obtain expired
+IPv4 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+% DHCPSRV_PGSQL_GET_EXPIRED6 obtaining maximum %1 of expired IPv6 leases
+A debug message issued when the server is attempting to obtain expired
+IPv6 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+% DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED4 deleting reclaimed IPv4 leases that expired more than %1 seconds ago
+A debug message issued when the server is removing reclaimed DHCPv4
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+% DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED6 deleting reclaimed IPv6 leases that expired more than %1 seconds ago
+A debug message issued when the server is removing reclaimed DHCPv6
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
 % DHCPSRV_PGSQL_GET_HWADDR obtaining IPv4 leases for hardware address %1
 A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the PostgreSQL database for a client with the specified
