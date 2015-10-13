@@ -978,10 +978,12 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (ctx.callout_handle_->getSkip()) {
+        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE6_SELECT_SKIP);
             return (Lease6Ptr());
         }
+
+        /// @todo: Add support for DROP status
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handed to it.
@@ -1040,7 +1042,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (ctx.callout_handle_->getSkip()) {
+        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE6_SELECT_SKIP);
             return (Lease6Ptr());
         }
@@ -1245,12 +1247,14 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         // Callouts decided to skip the next processing step. The next
         // processing step would actually renew the lease, so skip at this
         // stage means "keep the old lease as it is".
-        if (callout_handle->getSkip()) {
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             skip = true;
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
                       DHCPSRV_HOOK_LEASE6_EXTEND_SKIP)
                 .arg(ctx.query_->getName());
         }
+
+        /// @todo: Add support for DROP status
     }
 
     if (!skip) {
@@ -1329,8 +1333,11 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
                 HooksManager::callCallouts(Hooks.hook_index_lease6_expire_,
                                            *callout_handle);
 
-                skipped = callout_handle->getSkip();
+                skipped = callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP;
             }
+
+            /// @todo: Maybe add support for DROP stauts?
+            /// Not sure if we need to support every possible status everywhere.
 
             if (!skipped) {
                 // Generate removal name change request for D2, if required.
@@ -1448,8 +1455,11 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
                 HooksManager::callCallouts(Hooks.hook_index_lease4_expire_,
                                            *callout_handle);
 
-                skipped = callout_handle->getSkip();
+                skipped = callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP;
             }
+
+            /// @todo: Maybe add support for DROP stauts?
+            /// Not sure if we need to support every possible status everywhere.
 
             if (!skipped) {
                 // Generate removal name change request for D2, if required.
@@ -2146,7 +2156,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (ctx.callout_handle_->getSkip()) {
+        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
             return (Lease4Ptr());
         }
@@ -2234,11 +2244,13 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         // Callouts decided to skip the next processing step. The next
         // processing step would actually renew the lease, so skip at this
         // stage means "keep the old lease as it is".
-        if (ctx.callout_handle_->getSkip()) {
+        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             skip = true;
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
                       DHCPSRV_HOOK_LEASE4_RENEW_SKIP);
         }
+
+        /// @todo: Add support for DROP status
     }
 
     if (!ctx.fake_allocation_ && !skip) {
@@ -2312,11 +2324,13 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (ctx.callout_handle_->getSkip()) {
+        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
                       DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
             return (Lease4Ptr());
         }
+
+        /// @todo: add support for DROP
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handed to it.

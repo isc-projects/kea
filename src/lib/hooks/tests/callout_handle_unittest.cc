@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -307,19 +307,21 @@ TEST_F(CalloutHandleTest, DeleteAllArguments) {
     EXPECT_THROW(handle.getArgument("four", value), NoSuchArgument);
 }
 
-// Test the "skip" flag.
-
-TEST_F(CalloutHandleTest, SkipFlag) {
+// Test the "status" field.
+TEST_F(CalloutHandleTest, StatusField) {
     CalloutHandle handle(getCalloutManager());
 
     // Should be false on construction.
-    EXPECT_FALSE(handle.getSkip());
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle.getStatus());
 
-    handle.setSkip(true);
-    EXPECT_TRUE(handle.getSkip());
+    handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, handle.getStatus());
 
-    handle.setSkip(false);
-    EXPECT_FALSE(handle.getSkip());
+    handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, handle.getStatus());
+
+    handle.setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle.getStatus());
 }
 
 // Further tests of the "skip" flag and tests of getting the name of the

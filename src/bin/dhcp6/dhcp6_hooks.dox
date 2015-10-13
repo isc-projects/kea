@@ -40,8 +40,10 @@
  - Description of the hook. This explains where in the processing the hook
    is located, the possible actions a callout attached to this hook could take,
    and a description of the data passed to the callouts.
- - Skip flag action: the action taken by the server if a callout chooses to set
-    the "skip" flag.
+ - Next step status: the action taken by the server when a callout chooses to set
+    status to specified value. Actions not listed explicitly are not supported.
+   If a callout sets status to unsupported value, this specific value will be
+   ignored and treated as if the status was CONTINUE.
 
 @section dhcpv6HooksHookPoints Hooks in the DHCPv6 Server
 
@@ -67,7 +69,7 @@ packet processing. Hook points that are not specific to packet processing
    in their raw form. Unless you need to access to the raw data, it is
    usually better to install your callout on the "pkt6_receive" hook point.
 
- - <b>Skip flag action</b>: If any callout sets the skip flag, the
+ - <b>Next step status</b>: If any callout sets the status to SKIP, the
    server will assume that the callout parsed the buffer and added the
    necessary option objects to the @c options_ field; the server will not
    do any parsing. If the callout sets the skip flag but does not parse
@@ -92,7 +94,7 @@ packet processing. Hook points that are not specific to packet processing
    other fields in the Pkt6 object.  For this reason, modification of the
    @c data_ field would have no effect.)
 
- - <b>Skip flag action</b>: If any callout sets the skip flag, the server will
+ - <b>Next step status</b>: If any callout sets the status to SKIP, the server will
    drop the packet and start processing the next one.  The reason for the drop
    will be logged if logging is set to the appropriate debug level.
 
@@ -110,8 +112,8 @@ packet processing. Hook points that are not specific to packet processing
    configured being provided as "subnet6collection". The list itself must
    not be modified.
 
- - <b>Skip flag action</b>: If any callout installed on "subnet6_select"
-   sets the skip flag, the server will not select any subnet. Packet processing
+ - <b>Next step status</b>: If any callout installed on "subnet6_select"
+   sets the status to SKIP, the server will not select any subnet. Packet processing
    will continue, but will be severely limited.
 
 @subsection dhcpv6HooksLease6Select lease6_select
@@ -135,8 +137,8 @@ packet processing. Hook points that are not specific to packet processing
    of true means that the lease won't be inserted into the database
    (SOLICIT case), a value of false means that it will (REQUEST).
 
- - <b>Skip flag action</b>: If any callout installed on "lease6_select"
-   sets the skip flag, the server will not assign that particular lease.
+ - <b>Next step status</b>: If any callout installed on "lease6_select"
+   sets the status to SKIP, the server will not assign that particular lease.
    Packet processing will continue and the client may get other addresses
    or prefixes if it requested more than one address and/or prefix.
 
@@ -166,8 +168,8 @@ packet processing. Hook points that are not specific to packet processing
    when the update is valid, i.e. conditions such as an invalid addresses
    or invalid iaid renewal attempts will not trigger this hook point.
 
- - <b>Skip flag action</b>: If any callout installed on "lease6_renew"
-   sets the skip flag, the server will not renew the lease. Under these
+ - <b>Next step status</b>: If any callout installed on "lease6_renew"
+   sets the status to SKIP, the server will not renew the lease. Under these
    circumstances, the callout should modify the "ia_na" argument to reflect
    this fact; otherwise the client will think the lease was renewed and continue
    to operate under this assumption.
@@ -185,8 +187,8 @@ packet processing. Hook points that are not specific to packet processing
    make sense to do so as it will be destroyed immediately the callouts
    finish execution.
 
- - <b>Skip flag action</b>: If any callout installed on "lease6_release"
-   sets the skip flag, the server will not delete the lease, which will
+ - <b>Next step status</b>: If any callout installed on "lease6_release"
+   sets the status to SKIP, the server will not delete the lease, which will
    remain in the database until it expires. However, the server will send out
    the response back to the client as if it did.
 
@@ -205,7 +207,7 @@ packet processing. Hook points that are not specific to packet processing
    placed in the @c buffer_out_ field will be overwritten when the callout
    returns. (buffer_out_ is scratch space used for constructing the packet.)
 
- - <b>Skip flag action</b>: If any callout sets the skip flag, the server
+ - <b>Next step status</b>: If any callout sets the status to SKIP, the server
    will assume that the callout did pack the "transaction-id", "message type"
    and option objects into the @c buffer_out_ field and will skip packing part.
    Note that if the callout sets skip flag, but did not prepare the
@@ -229,7 +231,7 @@ packet processing. Hook points that are not specific to packet processing
    to modify that data, it will probably be found easier to modify the
    option objects in a callout attached to the "pkt6_send" hook).
 
- - <b>Skip flag action</b>: If any callout sets the skip flag, the server
+ - <b>Next step status</b>: If any callout sets the status to SKIP, the server
    will drop this response packet. However, the original request packet
    from a client has been processed, so server's state has most likely changed
    (e.g. lease was allocated). Setting this flag merely stops the change
@@ -255,7 +257,7 @@ packet processing. Hook points that are not specific to packet processing
   argument is set to "true" if the "flush-reclaimed-timer-wait-time" is
   set to 0 in the server configuration file.
 
-- <b>Skip flag action</b>: if the callout sets the skip flag, the server
+- <b>Next step status</b>: if the callout sets the status to SKIP, the server
   will assume that the callout has fully reclaimed the lease, i.e.
   performed the DNS update and updated the lease in the database. The
   server will not perform any further actions on the lease for which the

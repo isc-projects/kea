@@ -339,12 +339,14 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
         // Callouts decided to skip this step. This means that no subnet
         // will be selected. Packet processing will continue, but it will
         // be severely limited (i.e. only global options will be assigned)
-        if (callout_handle->getSkip()) {
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_HOOK_SUBNET4_SELECT_SKIP)
                 .arg(query->getLabel());
             return (Subnet4Ptr());
         }
+
+        /// @todo: Add support for DROP status
 
         // Use whatever subnet was specified by the callout
         callout_handle->getArgument("subnet4", subnet);
@@ -487,7 +489,7 @@ Dhcpv4Srv::run() {
             // processing step would to parse the packet, so skip at this
             // stage means that callouts did the parsing already, so server
             // should skip parsing.
-            if (callout_handle->getSkip()) {
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_DETAIL, DHCP4_HOOK_BUFFER_RCVD_SKIP)
                     .arg(query->getRemoteAddr().toText())
                     .arg(query->getLocalAddr().toText())
@@ -496,6 +498,8 @@ Dhcpv4Srv::run() {
             }
 
             callout_handle->getArgument("query4", query);
+
+            /// @todo: add support for DROP status
         }
 
         // Unpack the packet information unless the buffer4_receive callouts
@@ -573,11 +577,13 @@ Dhcpv4Srv::run() {
             // Callouts decided to skip the next processing step. The next
             // processing step would to process the packet, so skip at this
             // stage means drop.
-            if (callout_handle->getSkip()) {
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_RCVD_SKIP)
                     .arg(query->getLabel());
                 continue;
             }
+
+            /// @todo: Add support for DROP status
 
             callout_handle->getArgument("query4", query);
         }
@@ -648,7 +654,7 @@ Dhcpv4Srv::run() {
             callout_handle->deleteAllArguments();
 
             // Clear skip flag if it was set in previous callouts
-            callout_handle->setSkip(false);
+            callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
 
             // Set our response
             callout_handle->setArgument("response4", rsp);
@@ -660,11 +666,13 @@ Dhcpv4Srv::run() {
             // Callouts decided to skip the next processing step. The next
             // processing step would to send the packet, so skip at this
             // stage means "drop response".
-            if (callout_handle->getSkip()) {
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_SEND_SKIP)
                     .arg(query->getLabel());
                 skip_pack = true;
             }
+
+            /// @todo: Add support for DROP status
         }
 
         if (!skip_pack) {
@@ -700,12 +708,14 @@ Dhcpv4Srv::run() {
                 // Callouts decided to skip the next processing step. The next
                 // processing step would to parse the packet, so skip at this
                 // stage means drop.
-                if (callout_handle->getSkip()) {
+                if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                     LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                               DHCP4_HOOK_BUFFER_SEND_SKIP)
                         .arg(rsp->getLabel());
                     continue;
                 }
+
+                /// @todo: Add support for DROP status.
 
                 callout_handle->getArgument("response4", rsp);
             }
@@ -1792,12 +1802,14 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             // Callouts decided to skip the next processing step. The next
             // processing step would to send the packet, so skip at this
             // stage means "drop response".
-            if (callout_handle->getSkip()) {
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                 skip = true;
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                           DHCP4_HOOK_LEASE4_RELEASE_SKIP)
                     .arg(release->getLabel());
             }
+
+            /// @todo add support for DROP status
         }
 
         // Callout didn't indicate to skip the release process. Let's release
