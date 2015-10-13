@@ -511,6 +511,12 @@ public:
     /// the approximate time that the reclamation of all leases would take and
     /// test that the timeouts for the leases' reclamation work as expected.
     ///
+    /// The value of 40ms is relatively high, but it has been selected to
+    /// mitigate the problems with usleep on some virtual machines. On those
+    /// machines the wakeup from usleep may take significant amount of time,
+    /// i.e. usually around 10ms. Thus, the sleep time should be considerably
+    /// higher than this delay.
+    ///
     /// @param callout_handle Callout handle.
     /// @return Zero.
     static int leaseExpireWithDelayCallout(CalloutHandle& callout_handle) {
