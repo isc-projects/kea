@@ -1,3 +1,10 @@
+1023.	[func]		tmark
+	kea-admin now supports upgrading from MySQL schema version 3.0
+	to 4.0.  In addition, the lease6 data dump now contains the 
+	text label for lease_hwaddr_source column rather than its
+	numeric value.
+	(Trac #3967, git 2e13ac3b0b278faabe338b00ffee8259c13f5342)
+
 1022.	[func]		fdupont
 	Added support for the V4 link selection sub-option (RFC 3527).  If
 	present in an incoming packet, the server will allocate an address
