@@ -189,7 +189,7 @@ public:
         Pkt6Ptr pkt;
         callout_handle.getArgument("query6", pkt);
 
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         // Carry on as usual
         return pkt6_receive_callout(callout_handle);
@@ -261,7 +261,7 @@ public:
     /// @return always 0
     static int
     buffer6_receive_skip(CalloutHandle& callout_handle) {
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         // Carry on as usual
         return buffer6_receive_callout(callout_handle);
@@ -324,7 +324,7 @@ public:
         Pkt6Ptr pkt;
         callout_handle.getArgument("response6", pkt);
 
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         // carry on as usual
         return pkt6_send_callout(callout_handle);
@@ -426,7 +426,7 @@ public:
     lease6_renew_skip_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease6_renew");
 
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         return (0);
     }
@@ -452,7 +452,7 @@ public:
     lease6_release_skip_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease6_release");
 
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         return (0);
     }
