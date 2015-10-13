@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -315,23 +315,33 @@ public:
     {
         // We use malloc and free instead of C++ new[] and delete[].
         // This way we can use realloc, which may in fact do it without a copy.
-        buffer_ = static_cast<uint8_t*>(malloc(allocated_));
-        if (buffer_ == NULL && len != 0) {
-            throw std::bad_alloc();
+        if (allocated_ != 0) {
+            buffer_ = static_cast<uint8_t*>(malloc(allocated_));
+            if (buffer_ == NULL && len != 0) {
+                throw std::bad_alloc();
+            }
         }
     }
 
     /// \brief Copy constructor
+    ///
+    /// \param other Source object from which to make a copy.
+    ///
+    /// \note It is assumed that the source object is consistent, i.e.
+    /// size_ <= allocated_, and that if allocated_ is greater than zero,
+    /// buffer_ points to valid memory.
     OutputBuffer(const OutputBuffer& other) :
         buffer_(NULL),
         size_(other.size_),
         allocated_(other.allocated_)
     {
-        buffer_ = static_cast<uint8_t*>(malloc(allocated_));
-        if (buffer_ == NULL && allocated_ != 0) {
-            throw std::bad_alloc();
+        if (allocated_ != 0) {
+            buffer_ = static_cast<uint8_t*>(malloc(allocated_));
+            if (buffer_ == NULL && allocated_ != 0) {
+                throw std::bad_alloc();
+            }
+            std::memcpy(buffer_, other.buffer_, size_);
         }
-        std::memcpy(buffer_, other.buffer_, size_);
     }
 
     /// \brief Destructor
@@ -341,17 +351,44 @@ public:
     //@}
 
     /// \brief Assignment operator
+    ///
+    /// \param other Object to copy into "this".
+    ///
+    /// \note It is assumed that the source object is consistent, i.e.
+    /// size_ <= allocated_, and that if allocated_ is greater than zero,
+    /// buffer_ points to valid memory.
     OutputBuffer& operator =(const OutputBuffer& other) {
         if (this != &other) {
-            uint8_t* newbuff(static_cast<uint8_t*>(malloc(other.allocated_)));
-            if (newbuff == NULL && other.allocated_ != 0) {
-                throw std::bad_alloc();
+            // Not self-assignment.
+            if (other.allocated_ != 0) {
+
+                // There is something in the source object, so allocate memory
+                // and copy it.  The pointer to the allocated memory is placed
+                // in a temporary variable so that if the allocation fails and
+                // an exception is thrown, the destination object ("this") is
+                // unchanged.
+                uint8_t* newbuff(static_cast<uint8_t*>(malloc(other.allocated_)));
+                if (newbuff == NULL) {
+                    throw std::bad_alloc();
+                }
+
+                // Memory allocated, update the source object and copy data
+                // across.
+                free(buffer_);
+                buffer_ = newbuff;
+                static_cast<void>(std::memcpy(buffer_, other.buffer_, other.size_));
+
+            } else {
+
+                // Nothing allocated in the source object, so zero the buffer
+                // in the destination.
+                free(buffer_);
+                buffer_ = NULL;
             }
-            free(buffer_);
-            buffer_ = newbuff;
+
+            // Update the other member variables.
             size_ = other.size_;
             allocated_ = other.allocated_;
-            std::memcpy(buffer_, other.buffer_, size_);
         }
         return (*this);
     }
@@ -423,7 +460,9 @@ public:
     ///
     /// This method is the destructive alternative to clear().
     void wipe() {
-        memset(buffer_, 0, allocated_);
+        if (buffer_ != NULL) {
+            memset(buffer_, 0, allocated_);
+        }
         size_ = 0;
     }
     /// \brief Write an unsigned 8-bit integer into the buffer.
@@ -520,7 +559,8 @@ private:
             while (new_size < needed_size) {
                 new_size *= 2;
             }
-            // Allocate bigger space
+            // Allocate bigger space.  Note that buffer_ may be NULL,
+            // in which case realloc acts as malloc.
             uint8_t* new_buffer_(static_cast<uint8_t*>(realloc(buffer_,
                 new_size)));
             if (new_buffer_ == NULL) {

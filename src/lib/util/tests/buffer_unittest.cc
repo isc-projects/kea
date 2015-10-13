@@ -226,6 +226,11 @@ TEST_F(BufferTest, outputBufferWipe) {
     EXPECT_EQ(*cp, 0);
 }
 
+TEST_F(BufferTest, emptyOutputBufferWipe) {
+    ASSERT_NO_THROW(obuffer.wipe());
+    EXPECT_EQ(0, obuffer.getLength());
+}
+
 TEST_F(BufferTest, outputBufferCopy) {
     obuffer.writeData(testdata, sizeof(testdata));
 
