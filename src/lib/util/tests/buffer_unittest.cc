@@ -237,6 +237,7 @@ TEST_F(BufferTest, outputBufferCopy) {
     EXPECT_NO_THROW({
         OutputBuffer copy(obuffer);
         ASSERT_EQ(sizeof(testdata), copy.getLength());
+        ASSERT_NE(obuffer.getData(), copy.getData());
         for (int i = 0; i < sizeof(testdata); i ++) {
             EXPECT_EQ(testdata[i], copy[i]);
             if (i + 1 < sizeof(testdata)) {
@@ -249,6 +250,13 @@ TEST_F(BufferTest, outputBufferCopy) {
     });
 }
 
+TEST_F(BufferTest, outputEmptyBufferCopy) {
+    EXPECT_NO_THROW({
+        OutputBuffer copy(obuffer);
+        ASSERT_EQ(0, copy.getLength());
+    });
+}
+
 TEST_F(BufferTest, outputBufferAssign) {
     OutputBuffer another(0);
     another.clear();
@@ -257,6 +265,7 @@ TEST_F(BufferTest, outputBufferAssign) {
     EXPECT_NO_THROW({
         another = obuffer;
         ASSERT_EQ(sizeof(testdata), another.getLength());
+        ASSERT_NE(obuffer.getData(), another.getData());
         for (int i = 0; i < sizeof(testdata); i ++) {
             EXPECT_EQ(testdata[i], another[i]);
             if (i + 1 < sizeof(testdata)) {
@@ -266,6 +275,14 @@ TEST_F(BufferTest, outputBufferAssign) {
         }
         obuffer.clear();
         ASSERT_EQ(sizeof(testdata), another.getLength());
+    });
+}
+
+TEST_F(BufferTest, outputEmptyBufferAssign) {
+    EXPECT_NO_THROW({
+        OutputBuffer copy(0);
+        copy = obuffer;
+        ASSERT_EQ(0, copy.getLength());
     });
 }
 
