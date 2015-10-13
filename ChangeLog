@@ -3,7 +3,7 @@
 	present in an incoming packet, the server will allocate an address
 	in the subnet identified in the option. If this is impossible, no
 	address will be allocated and the request refused.
-	(Trac #4057, git xxx)
+	(Trac #4057, git 8c02cec5ec8e311a9d23fd582d8e9e8647667abb)
 
 1021.	[bug]		stephen
 	Added missing address parameter to ALLOC_ENGINE_V4_REQUEST_OUT_OF_POOL
