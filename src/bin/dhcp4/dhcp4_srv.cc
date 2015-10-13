@@ -164,6 +164,7 @@ Dhcpv4Exchange::initResponse() {
     if (resp_type > 0) {
         resp_.reset(new Pkt4(resp_type, getQuery()->getTransid()));
         copyDefaultFields();
+        copyDefaultOptionss();
     }
 }
 
@@ -208,11 +209,27 @@ Dhcpv4Exchange::copyDefaultFields() {
     if (dst_hw_addr) {
         resp_->setRemoteHWAddr(dst_hw_addr);
     }
+}
 
+void
+Dhcpv4Exchange::copyDefaultOptions() {
     // If this packet is relayed, we want to copy Relay Agent Info option
     OptionPtr rai = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     if (rai) {
         resp_->addOption(rai);
+    }
+
+    // RFC 3011 states about the Subnet Selection Option
+
+    // "Servers configured to support this option MUST return an
+    //  identical copy of the option to any client that sends it,
+    //  regardless of whether or not the client requests the option in
+    //  a parameter request list. Clients using this option MUST
+    //  discard DHCPOFFER or DHCPACK packets that do not contain this
+    //  option."
+    OptionPtr subnet_sel = query_->getOption(DHO_SUBNET_SELECTION);
+    if (subnet_sel) {
+        resp_->addOption(subnet_sel);
     }
 }
 
