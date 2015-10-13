@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -751,28 +751,37 @@ TEST_F(HandlesTest, DynamicDeregistrationSameHook) {
 
 // Testing the operation of the "skip" flag.  Callouts print the value
 // they see in the flag and either leave it unchanged, set it or clear it.
-
 int
 calloutPrintSkip(CalloutHandle& handle) {
     static const std::string YES("Y");
     static const std::string NO("N");
+    static const std::string DROP("D");
 
-    HandlesTest::common_string_ = HandlesTest::common_string_ +
-        (handle.getSkip() ? YES : NO);
+    switch (handle.getStatus()) {
+    case CalloutHandle::NEXT_STEP_CONTINUE:
+        HandlesTest::common_string_ += NO; // skip = no
+        break;
+    case CalloutHandle::NEXT_STEP_SKIP:
+        HandlesTest::common_string_ += YES; // skip = yes
+        break;
+    case CalloutHandle::NEXT_STEP_DROP:
+        HandlesTest::common_string_ += DROP; // drop
+        break;
+    }
     return (0);
 }
 
 int
 calloutSetSkip(CalloutHandle& handle) {
     static_cast<void>(calloutPrintSkip(handle));
-    handle.setSkip(true);
+    handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
     return (0);
 }
 
 int
 calloutClearSkip(CalloutHandle& handle) {
     static_cast<void>(calloutPrintSkip(handle));
-    handle.setSkip(false);
+    handle.setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
     return (0);
 }
 
@@ -806,7 +815,7 @@ TEST_F(HandlesTest, ReturnSkipSet) {
     EXPECT_EQ(std::string("NNYY" "NNYYN" "NNYN"), common_string_);
 
     // ... and check that the skip flag on exit from callCallouts is set.
-    EXPECT_TRUE(callout_handle.getSkip());
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, callout_handle.getStatus());
 }
 
 // Repeat the test, returning with the skip flag clear.
@@ -838,7 +847,7 @@ TEST_F(HandlesTest, ReturnSkipClear) {
     EXPECT_EQ(std::string("NYY" "NNYNYN" "NNNY"), common_string_);
 
     // ... and check that the skip flag on exit from callCallouts is set.
-    EXPECT_FALSE(callout_handle.getSkip());
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle.getStatus());
 }
 
 // Check that the skip flag is cleared when callouts are called - even if
@@ -849,14 +858,14 @@ TEST_F(HandlesTest, NoCalloutsSkipTest) {
     CalloutHandle callout_handle(getCalloutManager());
 
     // Clear the skip flag and call a hook with no callouts.
-    callout_handle.setSkip(false);
+    callout_handle.setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
     getCalloutManager()->callCallouts(alpha_index_, callout_handle);
-    EXPECT_FALSE(callout_handle.getSkip());
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle.getStatus());
 
     // Set the skip flag and call a hook with no callouts.
-    callout_handle.setSkip(true);
+    callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
     getCalloutManager()->callCallouts(alpha_index_, callout_handle);
-    EXPECT_FALSE(callout_handle.getSkip());
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle.getStatus());
 }
 
 // The next set of callouts do a similar thing to the above "skip" tests,
@@ -876,13 +885,18 @@ calloutSetArgumentCommon(CalloutHandle& handle, const char* what) {
 }
 
 int
-calloutSetArgumentYes(CalloutHandle& handle) {
-    return (calloutSetArgumentCommon(handle, "Y"));
+calloutSetArgumentSkip(CalloutHandle& handle) {
+    return (calloutSetArgumentCommon(handle, "S"));
 }
 
 int
-calloutSetArgumentNo(CalloutHandle& handle) {
-    return (calloutSetArgumentCommon(handle, "N"));
+calloutSetArgumentContinue(CalloutHandle& handle) {
+    return (calloutSetArgumentCommon(handle, "C"));
+}
+
+int
+calloutSetArgumentDrop(CalloutHandle& handle) {
+    return (calloutSetArgumentCommon(handle, "D"));
 }
 
 // ... and a callout to just copy the argument to the "common_string_" variable
@@ -894,23 +908,25 @@ calloutPrintArgument(CalloutHandle& handle) {
     return (0);
 }
 
+// This test verifies that the next step status is processed appropriately.
+// The test checks the following next step statuses: CONTINUE, SKIP, DROP.
 TEST_F(HandlesTest, CheckModifiedArgument) {
     getCalloutManager()->setLibraryIndex(0);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentContinue);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentContinue);
 
     getCalloutManager()->setLibraryIndex(1);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentDrop);
     getCalloutManager()->registerCallout("alpha", calloutPrintArgument);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentDrop);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentContinue);
 
     getCalloutManager()->setLibraryIndex(2);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentContinue);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentSkip);
 
     // Create the argument with an initial empty string value.  Then call the
     // sequence of callouts above.
@@ -922,10 +938,10 @@ TEST_F(HandlesTest, CheckModifiedArgument) {
     // Check the intermediate and results.  For visual checking, the expected
     // string is divided into sections corresponding to the blocks of callouts
     // above.
-    EXPECT_EQ(std::string("YNN" "YY"), common_string_);
+    EXPECT_EQ(std::string("SCC" "SD"), common_string_);
 
     callout_handle.getArgument(MODIFIED_ARG, modified_arg);
-    EXPECT_EQ(std::string("YNN" "YYNN" "YNY"), modified_arg);
+    EXPECT_EQ(std::string("SCC" "SDDC" "SCS"), modified_arg);
 }
 
 // Test that the CalloutHandle provides the name of the hook to which the
