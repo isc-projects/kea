@@ -1,7 +1,12 @@
+1021.	[bug]		stephen
+	Added missing address parameter to ALLOC_ENGINE_V4_REQUEST_OUT_OF_POOL
+	message.
+	(Trac #3996, git 680233550747209a1707e8f920179479b980aa2a)
+
 1020.	[func]		kalmus
 	A general purpose base class for MySQL connection has been
 	implemented.
-	(Trac #3681, git tbd)
+	(Trac #3681, git 884d8bb4a55d3d7b1b8f3f01efb312bd8dec399b)
 
 1019.	[func]		marcin
 	Added new configuration parameters controlling processing of the
