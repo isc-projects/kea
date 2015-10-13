@@ -39,6 +39,12 @@ CfgSubnets4::add(const Subnet4Ptr& subnet) {
 
 Subnet4Ptr
 CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
+    // First use RAI link select sub-option or subnet select option
+    if (!selector.option_select_.isV4Zero()) {
+        return (selectSubnet(selector.option_select_,
+                             selector.client_classes_));
+    }
+
     // If relayed message has been received, try to match the giaddr with the
     // relay address specified for a subnet. It is also possible that the relay
     // address will not match with any of the relay addresses accross all

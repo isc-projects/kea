@@ -61,6 +61,9 @@ public:
     /// parameters extracted from the client's message using the following
     /// logic.
     ///
+    /// First when link select suboption of relay agent information option
+    /// or subnet select option in this order exists the address is used
+    ///
     /// If the giaddr value is set in the selector it means that the client's
     /// message was relayed. The subnet configuration allows for setting the
     /// relay address for each subnet to indicate that the subnet must be
