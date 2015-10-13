@@ -1,4 +1,4 @@
--- Copyright (C) 2012-2013  Internet Systems Consortium.
+-- Copyright (C) 2012-2015  Internet Systems Consortium.
 
 -- Permission to use, copy, modify, and distribute this software for any
 -- purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
 -- NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 -- WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
--- This is the BIND 10 DHCP schema specification for PostgreSQL.
+-- This is the Kea DHCP schema specification for PostgreSQL.
 
 -- The schema is reasonably portable (with the exception of some field types
 -- specification, which are PostgreSQL-specific).  Minor changes might be needed
@@ -49,41 +49,6 @@ CREATE INDEX lease4_by_hwaddr_subnet_id ON lease4 (hwaddr, subnet_id);
 
 -- index by client_id and subnet_id
 CREATE INDEX lease4_by_client_id_subnet_id ON lease4 (client_id, subnet_id);
-
---
---  FUNCTION that returns a result set containing the column names for lease4 dumps
-DROP FUNCTION IF EXISTS lease4DumpHeader();
-CREATE FUNCTION lease4DumpHeader() RETURNS text AS  $$
-    select cast('address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname' as text) as result;
-$$ LANGUAGE SQL;
---
-
---
---  FUNCTION that returns a result set containing the data for lease4 dumps
-DROP FUNCTION IF EXISTS lease4DumpData();
-CREATE FUNCTION lease4DumpData() RETURNS 
-    table (address inet, 
-           hwaddr text, 
-           client_id text,
-           valid_lifetime bigint,
-           expire timestamp with time zone,
-           subnet_id bigint, 
-           fqdn_fwd int,
-           fqdn_rev int,
-           hostname text
-    ) as $$
-    SELECT ('0.0.0.0'::inet + address), 
-            encode(hwaddr,'hex'), 
-            encode(client_id,'hex'),
-            valid_lifetime,
-            expire,
-            subnet_id,
-            fqdn_fwd::int,
-            fqdn_rev::int,
-            hostname
-    from lease4;
-$$ LANGUAGE SQL;
---
 
 -- Holds the IPv6 leases.
 -- N.B. The use of a VARCHAR for the address is temporary for development:
@@ -139,6 +104,74 @@ INSERT INTO schema_version VALUES (1, 0);
 COMMIT;
 
 --
+-- Schema 2.0 specification starts here.
+--
+
+-- Add state column to the lease4 table.
+ALTER TABLE lease4
+    ADD COLUMN state INT8 DEFAULT 0;
+
+-- Add state column to the lease6 table.
+ALTER TABLE lease6
+    ADD COLUMN state INT8 DEFAULT 0;
+
+-- Create indexes for querying leases in a given state and segregated
+-- by the expiration time. One of the applications is to retrieve all
+-- expired leases. However, these indexes can be also used to retrieve
+-- leases in a given state regardless of the expiration time.
+CREATE INDEX lease4_by_state_expire ON lease4 (state, expire);
+CREATE INDEX lease6_by_state_expire ON lease6 (state, expire);
+
+-- Create table holding mapping of the lease states to their names.
+-- This is not used in queries from the DHCP server but rather in
+-- direct queries from the lease database management tools.
+CREATE TABLE lease_state (
+    state INT8 PRIMARY KEY NOT NULL,
+    name VARCHAR(64) NOT NULL);
+
+-- Insert currently defined state names.
+START TRANSACTION;
+INSERT INTO lease_state VALUES (0, 'default');
+INSERT INTO lease_state VALUES (1, 'declined');
+INSERT INTO lease_state VALUES (2, 'expired-reclaimed');
+COMMIT;
+
+--
+--  FUNCTION that returns a result set containing the column names for lease4 dumps
+DROP FUNCTION IF EXISTS lease4DumpHeader();
+CREATE FUNCTION lease4DumpHeader() RETURNS text AS  $$
+    select cast('address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname' as text) as result;
+$$ LANGUAGE SQL;
+--
+
+--
+--  FUNCTION that returns a result set containing the data for lease4 dumps
+DROP FUNCTION IF EXISTS lease4DumpData();
+CREATE FUNCTION lease4DumpData() RETURNS
+    table (address inet,
+           hwaddr text,
+           client_id text,
+           valid_lifetime bigint,
+           expire timestamp with time zone,
+           subnet_id bigint,
+           fqdn_fwd int,
+           fqdn_rev int,
+           hostname text
+    ) as $$
+    SELECT ('0.0.0.0'::inet + address),
+            encode(hwaddr,'hex'),
+            encode(client_id,'hex'),
+            valid_lifetime,
+            expire,
+            subnet_id,
+            fqdn_fwd::int,
+            fqdn_rev::int,
+            hostname
+    from lease4;
+$$ LANGUAGE SQL;
+--
+
+--
 --  FUNCTION that returns a result set containing the column names for lease6 dumps
 DROP FUNCTION IF EXISTS lease6DumpHeader();
 CREATE FUNCTION lease6DumpHeader() RETURNS text AS  $$
@@ -180,6 +213,14 @@ CREATE FUNCTION lease6DumpData() RETURNS
 $$ LANGUAGE SQL;
 --
 
+-- Set 2.0 schema version.
+START TRANSACTION;
+UPDATE schema_version
+    SET version = '2', minor = '0';
+COMMIT;
+
+-- Schema 2.0 specification ends here.
+
 -- Notes:
 
 -- Indexes
@@ -192,9 +233,6 @@ $$ LANGUAGE SQL;
 
 -- The most likely additional indexes will cover the following columns:
 
--- expire
--- To speed up the deletion of expired leases from the database.
-
 -- hwaddr and client_id
 -- For lease stability: if a client requests a new lease, try to find an
 -- existing or recently expired lease for it so that it can keep using the
@@ -202,8 +240,8 @@ $$ LANGUAGE SQL;
 
 -- Field Sizes
 -- ===========
--- If any of the VARxxx field sizes are altered, the lengths in the MySQL
--- backend source file (mysql_lease_mgr.cc) must be correspondingly changed.
+-- If any of the VARxxx field sizes are altered, the lengths in the PgSQL
+-- backend source file (pgsql_lease_mgr.cc) must be correspondingly changed.
 
 -- Portability
 -- ===========
