@@ -3236,6 +3236,106 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
     EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis));
 }
 
+// Checks if a RAI link selection sub-option works as expected
+TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
+
+    // We have 3 subnets defined.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.2 - 192.0.2.100\" } ],"
+        "    \"relay\": { "
+        "        \"ip-address\": \"192.0.5.1\""
+        "    },"
+        "    \"subnet\": \"192.0.2.0/24\" }, "
+        "{   \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
+        "    \"subnet\": \"192.0.3.0/24\" }, "
+        "{   \"pools\": [ { \"pool\": \"192.0.4.1 - 192.0.4.100\" } ],"
+        "    \"client-class\": \"foo\", "
+        "    \"subnet\": \"192.0.4.0/24\" } "
+        "],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Use this config to set up the server
+    ASSERT_NO_THROW(configure(config));
+
+    // Let's get the subnet configuration objects
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    ASSERT_EQ(3, subnets->size());
+
+    // Let's get them for easy reference
+    Subnet4Ptr subnet1 = (*subnets)[0];
+    Subnet4Ptr subnet2 = (*subnets)[1];
+    Subnet4Ptr subnet3 = (*subnets)[2];
+    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet2);
+    ASSERT_TRUE(subnet3);
+
+    // Let's create a packet.
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    dis->setIface("eth0");
+    dis->setHops(1);
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Let's create a Relay Agent Information option
+    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(Option::V4,
+                                                        DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_def);
+    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    ASSERT_TRUE(rai);
+    IOAddress addr("192.0.3.2");
+    OptionPtr ols(new Option(Option::V4,
+                             RAI_OPTION_LINK_SELECTION,
+                             addr.toBytes()));
+    ASSERT_TRUE(ols);
+    rai->addOption(ols);
+
+    // This is just a sanity check, we're using regular method: ciaddr 192.0.3.1
+    // belongs to the second subnet, so it is selected
+    dis->setGiaddr(IOAddress("192.0.3.1"));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+
+    // Setup a relay override for the first subnet as it has a high precedence
+    dis->setGiaddr(IOAddress("192.0.5.1"));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis));
+
+    // Put a RAI to select back the second subnet as it has
+    // the highest precedence
+    dis->addOption(rai);
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+
+    // Check client-classification still applies
+    IOAddress addr_foo("192.0.4.2");
+    ols.reset(new Option(Option::V4, RAI_OPTION_LINK_SELECTION,
+                         addr_foo.toBytes()));
+    rai->delOption(RAI_OPTION_LINK_SELECTION);
+    dis->delOption(DHO_DHCP_AGENT_OPTIONS);
+    rai->addOption(ols);
+    dis->addOption(rai);
+    // Note it shall fail (vs. try the next criterion).
+    EXPECT_FALSE(srv_.selectSubnet(dis));
+    // Add the packet to the class and check again: now it shall succeed
+    dis->addClass("foo");
+    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis));
+
+    // Check it fails with a bad address in the sub-option
+    IOAddress addr_bad("10.0.0.1");
+    ols.reset(new Option(Option::V4, RAI_OPTION_LINK_SELECTION,
+                         addr_bad.toBytes()));
+    rai->delOption(RAI_OPTION_LINK_SELECTION);
+    dis->delOption(DHO_DHCP_AGENT_OPTIONS);
+    rai->addOption(ols);
+    dis->addOption(rai);
+    EXPECT_FALSE(srv_.selectSubnet(dis));
+
+}
+
 // This test verifies that the direct message is dropped when it has been
 // received by the server via an interface for which there is no subnet
 // configured. It also checks that the message is not dropped (is processed)
