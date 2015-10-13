@@ -99,13 +99,14 @@ information can be passed to a callout and/or the callout can affect
 the processing of the component. The latter is achieved in either or both
 of the following ways:
 
-- Setting the "skip" flag.  This is a boolean flag that the callout can set
+- Setting the nest step status.  This is an enum that the callout can set
   and is a quick way of passing information back to the component.  It is used
-  to indicate that the component should skip the processing step associated with
-  the hook.  The exact action is up to the component, but is likely to be one
-  of skipping the processing step (probably because the callout has
-  done its own processing for the action) or dropping the current packet
-  and starting on a new request.
+  to indicate that the component should perform certain actions. Currently
+  there are three statuses defined: CONTINUE (this is the default, the server
+  is expected to continue as usual), SKIP (the server is expected to skip the
+  next processing step, but otherwise continue as usual) and DROP (the server
+  is expected to drop the packet or request completely. The exact action is up
+  to the component.
 
 - Modifying data passed to it.  The component should be prepared to continue
   processing with the data returned by the callout.  It is up to the component
@@ -282,7 +283,11 @@ underlying object is altered through that pointer, the change will be
 reflected in the component even if the callout makes no call to setArgument.
 This can be avoided by passing a pointer to a "const" object.
 
-@subsection hooksComponentSkipFlag The Skip Flag
+@subsection hooksComponentSkipFlag The Skip Flag (obsolete)
+
+
+
+@subsection hooksComponentNextStep The next step status
 
 Although information is passed back to the component from callouts through
 @c CalloutHandle arguments, a common action for callouts is to inform the component
@@ -290,24 +295,25 @@ that its flow of control should be altered.  For example:
 
 - In the DHCP servers, there is a hook at the point at which a lease is
   about to be assigned.  Callouts attached to this hooks may handle the
-  lease assignment in special cases, in which case they set the skip flag
-  to indicate that the server should not perform lease assignment in this
-  case.
+  lease assignment in special cases, in which case they set the next step
+  status to SKIP to indicate that the server should not perform lease assignment
+  in this case.
 - A server may define a hook just after a packet is received.  A callout
   attached to the hook might inspect the source address and compare it
   against a blacklist.  If the address is on the list, the callout could set
-  the skip flag to indicate to the server that the packet should be dropped.
+  the DROP flag to indicate to the server that the packet should be dropped.
 
 For ease of processing, the @c CalloutHandle contains
-two methods, @c isc::hooks::CalloutHandle::getSkip() and
-@c isc::hooks::CalloutHandle::setSkip().  It is only meaningful for the
-component to use the "get" method.  The skip flag is cleared by the hooks
-framework when the component requests that callouts be executed, so any
-value set by the component is lost.  Callouts can both inspect the flag (it
+two methods, @c isc::hooks::CalloutHandle::getStatus() and
+@c isc::hooks::CalloutHandle::setStatus().  It is only meaningful for the
+component to use the "get" method.  The next step status is cleared (set to
+the default value of CONTINUE) by the hooks framework when the component
+requests that callouts be executed, so any
+value set by the component is lost.  Callouts can both inspect the status (it
 might have been set by callouts earlier in the callout list for the hook)
-and set it.  Note that the setting of the flag by a callout does not
-prevent callouts later in the list from being called: the skip flag is
-just a boolean flag - the only significance comes from its interpretation
+and set it.  Note that the setting of the status by a callout does not
+prevent callouts later in the list from being called: the next step status is
+just an enum value - the only significance comes from its interpretation
 by the component.
 
 An example of use could be:
@@ -316,7 +322,7 @@ An example of use could be:
 handle->setArgument("query", query);
 handle->setArgument("response", response);
 HooksManager::callCallouts(lease_hook_index, *handle_ptr);
-if (! handle_ptr->getSkip()) {
+if (! handle_ptr->getStatus() != CalloutHandle::NEXT_STEP_SKIP) {
     // Skip flag not set, do the address allocation
     :
 }
@@ -359,7 +365,7 @@ the hook can be executed by:
 ... where "*handle_ptr" is a reference (note: not a pointer) to the
 @c isc::hooks::CalloutHandle object holding the arguments.  No status code
 is returned.  If a component needs to get data returned (other than that
-provided by the "skip" flag), it should define an argument through which
+provided by the next step status), it should define an argument through which
 the callout can do so.
 
 @subsubsection hooksComponentConditionalCallout Conditionally Calling Hook Callouts
@@ -379,8 +385,8 @@ if (HooksManager::calloutsPresent(lease_hook_index)) {
     handle->setArgument("query", query);
     handle->setArgument("response", response);
     HooksManager::callCallouts(lease_hook_index, *handle);
-    if (! handle->getSkip()) {
-        // Skip flag not set, do the address allocation
+    if ( handle->getStatus() != CalloutHandle::NEXT_STEP_DROP ) {
+        // Next step allows us to continue, do the address allocation
         :
     }
 }

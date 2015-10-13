@@ -885,13 +885,18 @@ calloutSetArgumentCommon(CalloutHandle& handle, const char* what) {
 }
 
 int
-calloutSetArgumentYes(CalloutHandle& handle) {
-    return (calloutSetArgumentCommon(handle, "Y"));
+calloutSetArgumentSkip(CalloutHandle& handle) {
+    return (calloutSetArgumentCommon(handle, "S"));
 }
 
 int
-calloutSetArgumentNo(CalloutHandle& handle) {
-    return (calloutSetArgumentCommon(handle, "N"));
+calloutSetArgumentContinue(CalloutHandle& handle) {
+    return (calloutSetArgumentCommon(handle, "C"));
+}
+
+int
+calloutSetArgumentDrop(CalloutHandle& handle) {
+    return (calloutSetArgumentCommon(handle, "D"));
 }
 
 // ... and a callout to just copy the argument to the "common_string_" variable
@@ -903,23 +908,25 @@ calloutPrintArgument(CalloutHandle& handle) {
     return (0);
 }
 
+// This test verifies that the next step status is processed appropriately.
+// The test checks the following next step statuses: CONTINUE, SKIP, DROP.
 TEST_F(HandlesTest, CheckModifiedArgument) {
     getCalloutManager()->setLibraryIndex(0);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentContinue);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentContinue);
 
     getCalloutManager()->setLibraryIndex(1);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentDrop);
     getCalloutManager()->registerCallout("alpha", calloutPrintArgument);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentDrop);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentContinue);
 
     getCalloutManager()->setLibraryIndex(2);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
-    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentContinue);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentSkip);
 
     // Create the argument with an initial empty string value.  Then call the
     // sequence of callouts above.
@@ -931,10 +938,10 @@ TEST_F(HandlesTest, CheckModifiedArgument) {
     // Check the intermediate and results.  For visual checking, the expected
     // string is divided into sections corresponding to the blocks of callouts
     // above.
-    EXPECT_EQ(std::string("YNN" "YY"), common_string_);
+    EXPECT_EQ(std::string("SCC" "SD"), common_string_);
 
     callout_handle.getArgument(MODIFIED_ARG, modified_arg);
-    EXPECT_EQ(std::string("YNN" "YYNN" "YNY"), modified_arg);
+    EXPECT_EQ(std::string("SCC" "SDDC" "SCS"), modified_arg);
 }
 
 // Test that the CalloutHandle provides the name of the hook to which the
