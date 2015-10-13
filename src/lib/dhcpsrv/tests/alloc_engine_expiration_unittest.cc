@@ -503,11 +503,11 @@ public:
     }
 
     /// @brief Implements "lease{4,6}_expire callout, which lasts at least
-    /// 2ms.
+    /// 40ms.
     ///
     /// This callout is useful to test scenarios where the reclamation of the
     /// lease needs to take a known amount of time. If the callout is installed
-    /// it will take at least 2ms for each lease. It is then possible to calculate
+    /// it will take at least 40ms for each lease. It is then possible to calculate
     /// the approximate time that the reclamation of all leases would take and
     /// test that the timeouts for the leases' reclamation work as expected.
     ///
@@ -515,8 +515,8 @@ public:
     /// @return Zero.
     static int leaseExpireWithDelayCallout(CalloutHandle& callout_handle) {
         leaseExpireCallout(callout_handle);
-        // Delay the return from the callout by 2ms.
-        usleep(2000);
+        // Delay the return from the callout by 40ms.
+        usleep(40000);
 
         return (0);
     }
@@ -874,7 +874,7 @@ public:
         HooksManager::loadLibraries(libraries);
 
         // Install a callout: lease4_expire or lease6_expire. Each callout
-        // takes at least 2ms to run (it uses usleep).
+        // takes at least 40ms to run (it uses usleep).
         std::ostringstream callout_name;
         callout_name << callout_argument_name << "_expire";
         EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -883,8 +883,8 @@ public:
         // Reclaim leases with timeout.
         ASSERT_NO_THROW(reclaimExpiredLeases(0, timeout, false));
 
-        // We reclaimed at most (timeout / 2ms) leases.
-        const uint16_t theoretical_reclaimed = static_cast<uint16_t>(timeout / 2);
+        // We reclaimed at most (timeout / 40ms) leases.
+        const uint16_t theoretical_reclaimed = static_cast<uint16_t>(timeout / 40);
 
         // The actual number of leases reclaimed is likely to be lower than
         // the theoretical number. For low theoretical number the adjusted
@@ -1267,8 +1267,8 @@ TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesHooksWithSkip) {
 TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesTimeout) {
     // This test needs at least 40 leases to make sense.
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 40);
-    // Run with timeout of 60ms.
-    testReclaimExpiredLeasesTimeout(60);
+    // Run with timeout of 1.2s.
+    testReclaimExpiredLeasesTimeout(1200);
 }
 
 // This test verifies that at least one lease is reclaimed if the timeout
@@ -1631,8 +1631,8 @@ TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesHooksWithSkip) {
 TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesTimeout) {
     // This test needs at least 40 leases to make sense.
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 40);
-    // Run with timeout of 60ms.
-    testReclaimExpiredLeasesTimeout(60);
+    // Run with timeout of 1.2s.
+    testReclaimExpiredLeasesTimeout(1200);
 }
 
 // This test verifies that at least one lease is reclaimed if the timeout
