@@ -1,3 +1,10 @@
+1022.	[func]		fdupont
+	Added support for the V4 link selection sub-option (RFC 3527).  If
+	present in an incoming packet, the server will allocate an address
+	in the subnet identified in the option. If this is impossible, no
+	address will be allocated and the request refused.
+	(Trac #4057, git xxx)
+
 1021.	[bug]		stephen
 	Added missing address parameter to ALLOC_ENGINE_V4_REQUEST_OUT_OF_POOL
 	message.
