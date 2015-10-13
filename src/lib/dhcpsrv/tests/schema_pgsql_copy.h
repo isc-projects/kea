@@ -87,6 +87,36 @@ const char* create_statement[] = {
     "INSERT INTO schema_version VALUES (1, 0)",
     "COMMIT",
 
+    // This line concludes creation of database version 1.0.
+
+    // Schema upgrade to 2.0 starts here.
+
+    "ALTER TABLE lease4 "
+        "ADD COLUMN state INT8 DEFAULT 0",
+
+    "ALTER TABLE lease6 "
+        "ADD COLUMN state INT8 DEFAULT 0",
+
+    "CREATE INDEX lease4_by_state_expire ON lease4 (state, expire)",
+    "CREATE INDEX lease6_by_state_expire ON lease6 (state, expire)",
+
+    // Production schema includes the lease_state table which maps
+    // the lease states to their names. This is not used in the unit tests
+    // so it is commented out.
+
+    /*"CREATE TABLE lease_state (",
+        "state INT8 PRIMARY KEY NOT NULL,"
+        "name VARCHAR(64) NOT NULL);",
+
+    "INSERT INTO lease_state VALUES (0, \"default\");",
+    "INSERT INTO lease_state VALUES (1, \"declined\");",
+    "INSERT INTO lease_state VALUES (2, \"expired-reclaimed\");",*/
+
+    "UPDATE schema_version SET version = '2', minor = '0';",
+    "COMMIT",
+
+    // Schema upgrade to 2.0 ends here.
+
     NULL
 };
 

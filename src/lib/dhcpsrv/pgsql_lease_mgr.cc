@@ -24,6 +24,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <time.h>
@@ -49,7 +50,7 @@ using namespace std;
 namespace {
 
 // Maximum number of parameters used in any single query
-const size_t MAX_PARAMETERS_IN_QUERY = 13;
+const size_t MAX_PARAMETERS_IN_QUERY = 14;
 
 /// @brief  Defines a single query
 struct TaggedStatement {
@@ -91,17 +92,29 @@ TaggedStatement tagged_statements[] = {
       "delete_lease4",
       "DELETE FROM lease4 WHERE address = $1"},
 
+    // DELETE_LEASE4_STATE_EXPIRED
+    { 2, { OID_INT8, OID_TIMESTAMP },
+      "delete_lease4_state_expired",
+      "DELETE FROM lease4 "
+          "WHERE state = $1 AND expire < $2"},
+
     // DELETE_LEASE6
     { 1, { OID_VARCHAR },
       "delete_lease6",
       "DELETE FROM lease6 WHERE address = $1"},
+
+    // DELETE_LEASE6_STATE_EXPIRED
+    { 2, { OID_INT8, OID_TIMESTAMP },
+      "delete_lease6_state_expired",
+      "DELETE FROM lease6 "
+          "WHERE state = $1 AND expire < $2"},
 
     // GET_LEASE4_ADDR
     { 1, { OID_INT8 },
       "get_lease4_addr",
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-        "fqdn_fwd, fqdn_rev, hostname "
+        "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
       "WHERE address = $1"},
 
@@ -110,7 +123,7 @@ TaggedStatement tagged_statements[] = {
       "get_lease4_clientid",
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-        "fqdn_fwd, fqdn_rev, hostname "
+        "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
       "WHERE client_id = $1"},
 
@@ -119,7 +132,7 @@ TaggedStatement tagged_statements[] = {
       "get_lease4_clientid_subid",
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-        "fqdn_fwd, fqdn_rev, hostname "
+        "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
       "WHERE client_id = $1 AND subnet_id = $2"},
 
@@ -128,7 +141,7 @@ TaggedStatement tagged_statements[] = {
       "get_lease4_hwaddr",
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-        "fqdn_fwd, fqdn_rev, hostname "
+        "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
       "WHERE hwaddr = $1"},
 
@@ -137,16 +150,28 @@ TaggedStatement tagged_statements[] = {
       "get_lease4_hwaddr_subid",
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-        "fqdn_fwd, fqdn_rev, hostname "
+        "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
       "WHERE hwaddr = $1 AND subnet_id = $2"},
+
+    // GET_LEASE4_EXPIRE
+    { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
+      "get_lease4_expire",
+      "SELECT address, hwaddr, client_id, "
+          "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+          "fqdn_fwd, fqdn_rev, hostname, state "
+              "FROM lease4 "
+              "WHERE state != $1 AND expire < $2 "
+              "ORDER BY expire "
+              "LIMIT $3"},
 
     // GET_LEASE6_ADDR
     { 2, { OID_VARCHAR, OID_INT2 },
       "get_lease6_addr",
       "SELECT address, duid, valid_lifetime, "
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "state "
       "FROM lease6 "
       "WHERE address = $1 AND lease_type = $2"},
 
@@ -155,7 +180,8 @@ TaggedStatement tagged_statements[] = {
        "get_lease6_duid_iaid",
        "SELECT address, duid, valid_lifetime, "
          "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+         "state "
        "FROM lease6 "
        "WHERE duid = $1 AND iaid = $2 AND lease_type = $3"},
 
@@ -164,10 +190,24 @@ TaggedStatement tagged_statements[] = {
       "get_lease6_duid_iaid_subid",
       "SELECT address, duid, valid_lifetime, "
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "state "
       "FROM lease6 "
       "WHERE lease_type = $1 "
         "AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
+
+    // GET_LEASE6_EXPIRE
+    { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
+      "get_lease6_expire",
+      "SELECT address, duid, valid_lifetime, "
+          "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+          "lease_type, iaid, prefix_len, "
+          "fqdn_fwd, fqdn_rev, hostname, state "
+          "state "
+              "FROM lease6 "
+              "WHERE state != $1 AND expire < $2 "
+              "ORDER BY expire "
+              "LIMIT $3"},
 
     // GET_VERSION
     { 0, { OID_NONE },
@@ -175,42 +215,45 @@ TaggedStatement tagged_statements[] = {
       "SELECT version, minor FROM schema_version"},
 
     // INSERT_LEASE4
-    { 9, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
-           OID_BOOL, OID_BOOL, OID_VARCHAR },
+    { 10, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_INT8 },
       "insert_lease4",
       "INSERT INTO lease4(address, hwaddr, client_id, "
-        "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname) "
-      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"},
+        "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, "
+        "state) "
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"},
 
     // INSERT_LEASE6
-    { 12, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+    { 13, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
             OID_INT8, OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL,
-            OID_VARCHAR },
+            OID_VARCHAR, OID_INT8 },
       "insert_lease6",
       "INSERT INTO lease6(address, duid, valid_lifetime, "
         "expire, subnet_id, pref_lifetime, "
-        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname) "
-      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"},
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, state) "
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)"},
 
     // UPDATE_LEASE4
-    { 10, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
-            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8 },
+    { 11, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_INT8 },
       "update_lease4",
       "UPDATE lease4 SET address = $1, hwaddr = $2, "
         "client_id = $3, valid_lifetime = $4, expire = $5, "
-        "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9 "
-      "WHERE address = $10"},
+        "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9, "
+        "state = $10"
+      "WHERE address = $11"},
 
     // UPDATE_LEASE6
-    { 13, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
+    { 14, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
             OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL, OID_VARCHAR,
-            OID_VARCHAR },
+            OID_INT8, OID_VARCHAR },
       "update_lease6",
       "UPDATE lease6 SET address = $1, duid = $2, "
         "valid_lifetime = $3, expire = $4, subnet_id = $5, "
         "pref_lifetime = $6, lease_type = $7, iaid = $8, "
-        "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12 "
-      "WHERE address = $13"},
+        "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12, "
+        "state = $13 "
+      "WHERE address = $14"},
 
     // End of list sentinel
     { 0,  { 0 }, NULL, NULL}
@@ -283,11 +326,25 @@ public:
 
     PgSqlLeaseExchange()
         : addr_str_(""), valid_lifetime_(0), valid_lft_str_(""),
-         expire_(0), expire_str_(""), subnet_id_(0), subnet_id_str_(""),
-         cltt_(0), fqdn_fwd_(false), fqdn_rev_(false), hostname_("") {
+          expire_(0), expire_str_(""), subnet_id_(0), subnet_id_str_(""),
+          cltt_(0), fqdn_fwd_(false), fqdn_rev_(false), hostname_(""),
+          state_str_("") {
     }
 
     virtual ~PgSqlLeaseExchange(){}
+
+    /// @brief Converts time_t value to a text representation in local time.
+    ///
+    /// @param input_time A time_t value representing time.
+    /// @return std::string containing stringified time.
+    static std::string
+    convertToDatabaseTime(const time_t input_time) {
+        struct tm tinfo;
+        char buffer[20];
+        localtime_r(&input_time, &tinfo);
+        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tinfo);
+        return (std::string(buffer));
+    }
 
     /// @brief Converts lease expiration time to a text representation in
     /// local time.
@@ -324,12 +381,7 @@ public:
             isc_throw(isc::BadValue, "Time value is too large: " << expire_time_64);
         }
 
-        struct tm tinfo;
-        char buffer[20];
-        const time_t time_val = static_cast<time_t>(expire_time_64);
-        localtime_r(&time_val, &tinfo);
-        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tinfo);
-        return (std::string(buffer));
+        return (convertToDatabaseTime(static_cast<time_t>(expire_time_64)));
     }
 
     /// @brief Converts time stamp from the database to a time_t
@@ -549,6 +601,7 @@ protected:
     bool fqdn_fwd_;
     bool fqdn_rev_;
     std::string hostname_;
+    std::string state_str_;
     //@}
 
 };
@@ -571,8 +624,9 @@ private:
     static const size_t FQDN_FWD_COL = 6;
     static const size_t FQDN_REV_COL = 7;
     static const size_t HOSTNAME_COL = 8;
+    static const size_t STATE_COL = 9;
     /// @brief Number of columns in the table holding DHCPv4 leases.
-    static const size_t LEASE_COLUMNS = 9;
+    static const size_t LEASE_COLUMNS = 10;
 
 public:
 
@@ -581,7 +635,7 @@ public:
         : lease_(), addr4_(0), hwaddr_length_(0), hwaddr_(hwaddr_length_),
         client_id_length_(0) {
 
-        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(9 < LEASE_COLUMNS);
 
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
@@ -596,6 +650,7 @@ public:
         column_labels_.push_back("fqdn_fwd");
         column_labels_.push_back("fqdn_rev");
         column_labels_.push_back("hostname");
+        column_labels_.push_back("state");
     }
 
     /// @brief Creates the bind array for sending Lease4 data to the database.
@@ -659,6 +714,9 @@ public:
             bind_array.add(lease->fqdn_rev_);
 
             bind_array.add(lease->hostname_);
+
+            state_str_ = boost::lexical_cast<std::string>(lease->state_);
+            bind_array.add(state_str_);
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -750,17 +808,18 @@ private:
     static const int FQDN_FWD_COL = 9;
     static const int FQDN_REV_COL = 10;
     static const int HOSTNAME_COL = 11;
+    static const int STATE_COL = 12;
     //@}
-    /// @brief Number of columns in the table holding DHCPv4 leases.
-    static const size_t LEASE_COLUMNS = 12;
+    /// @brief Number of columns in the table holding DHCPv6 leases.
+    static const size_t LEASE_COLUMNS = 13;
 
 public:
     PgSqlLease6Exchange()
         : lease_(), duid_length_(0), duid_(), iaid_(0), iaid_str_(""),
-         lease_type_(Lease6::TYPE_NA), lease_type_str_(""), prefix_len_(0),
-         prefix_len_str_(""), pref_lifetime_(0), preferred_lft_str_("") {
+          lease_type_(Lease6::TYPE_NA), lease_type_str_(""), prefix_len_(0),
+          prefix_len_str_(""), pref_lifetime_(0), preferred_lft_str_("") {
 
-        BOOST_STATIC_ASSERT(11 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(12 < LEASE_COLUMNS);
 
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
 
@@ -777,6 +836,7 @@ public:
         column_labels_.push_back("fqdn_fwd");
         column_labels_.push_back("fqdn_rev");
         column_labels_.push_back("hostname");
+        column_labels_.push_back("state");
     }
 
     /// @brief Creates the bind array for sending Lease6 data to the database.
@@ -838,6 +898,10 @@ public:
             bind_array.add(lease->fqdn_rev_);
 
             bind_array.add(lease->hostname_);
+
+            state_str_ = boost::lexical_cast<std::string>(lease->state_);
+            bind_array.add(state_str_);
+
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Lease6: "
@@ -1383,19 +1447,46 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
 }
 
 void
-PgSqlLeaseMgr::getExpiredLeases6(Lease6Collection&, const size_t) const {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::getExpiredLeases6 is currently"
-              " not implemented");
+PgSqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
+                                 const size_t max_leases) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_EXPIRED6)
+        .arg(max_leases);
+    getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE6_EXPIRE);
 }
 
 void
-PgSqlLeaseMgr::getExpiredLeases4(Lease4Collection&, const size_t) const {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::getExpiredLeases4 is currently"
-              " not implemented");
+PgSqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
+                                 const size_t max_leases) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_EXPIRED4)
+        .arg(max_leases);
+    getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE4_EXPIRE);
+}
+
+template<typename LeaseCollection>
+void
+PgSqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
+                                       const size_t max_leases,
+                                       StatementIndex statement_index) const {
+    PsqlBindArray bind_array;
+
+    // Exclude reclaimed leases.
+    bind_array.add(boost::lexical_cast<std::string>(Lease::STATE_EXPIRED_RECLAIMED));
+
+    // Expiration timestamp.
+    bind_array.add(PgSqlLeaseExchange::convertToDatabaseTime(time(NULL)));
+
+    // If the number of leases is 0, we will return all leases. This is
+    // achieved by setting the limit to a very high value.
+    uint32_t limit = max_leases > 0 ? static_cast<uint32_t>(max_leases) :
+        std::numeric_limits<uint32_t>::max();
+    bind_array.add(boost::lexical_cast<std::string>(limit));
+
+    // Retrieve leases from the database.
+    getLeaseCollection(statement_index, bind_array, expired_leases);
 }
 
 
-template <typename LeasePtr>
+template<typename LeasePtr>
 void
 PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
                                  PsqlBindArray& bind_array,
@@ -1471,7 +1562,7 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     updateLeaseCommon(stindex, bind_array, lease);
 }
 
-bool
+uint64_t
 PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
                                  PsqlBindArray& bind_array) {
     PGresult* r = PQexecPrepared(conn_, tagged_statements[stindex].name,
@@ -1484,7 +1575,7 @@ PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
     int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
     PQclear(r);
 
-    return (affected_rows > 0);
+    return (affected_rows);
 }
 
 bool
@@ -1499,24 +1590,45 @@ PgSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
         std::string addr4_str = boost::lexical_cast<std::string>
                                  (static_cast<uint32_t>(addr));
         bind_array.add(addr4_str);
-        return (deleteLeaseCommon(DELETE_LEASE4, bind_array));
+        return (deleteLeaseCommon(DELETE_LEASE4, bind_array) > 0);
     }
 
     std::string addr6_str = addr.toText();
     bind_array.add(addr6_str);
-    return (deleteLeaseCommon(DELETE_LEASE6, bind_array));
+    return (deleteLeaseCommon(DELETE_LEASE6, bind_array) > 0);
 }
 
 uint64_t
-PgSqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t) {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::deleteExpiredReclaimedLeases4"
-              " is not implemented");
+PgSqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED4)
+        .arg(secs);
+    return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE4_STATE_EXPIRED));
 }
 
 uint64_t
-PgSqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t) {
-    isc_throw(NotImplemented, "PgSqlLeaseMgr::deleteExpiredReclaimedLeases6"
-              " is not implemented");
+PgSqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED6)
+        .arg(secs);
+    return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE6_STATE_EXPIRED));
+}
+
+uint64_t
+PgSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
+                                                  StatementIndex statement_index) {
+    PsqlBindArray bind_array;
+
+    // State is reclaimed.
+    bind_array.add(boost::lexical_cast<std::string>(Lease::STATE_EXPIRED_RECLAIMED));
+
+    // Expiration timestamp.
+    std::string expiration_str =
+        PgSqlLeaseExchange::convertToDatabaseTime(time(NULL) - static_cast<time_t>(secs));
+    bind_array.add(expiration_str);
+
+    // Delete leases.
+    return (deleteLeaseCommon(statement_index, bind_array));
 }
 
 string
