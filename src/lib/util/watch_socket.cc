@@ -42,6 +42,18 @@ WatchSocket::WatchSocket()
     source_ = fds[1];
     sink_ = fds[0];
 
+    if (fcntl(source_, F_SETFD, FD_CLOEXEC)) {
+        const char* errstr = strerror(errno);
+        isc_throw(WatchSocketError, "Cannot set source to close-on-exec: "
+                                     << errstr);
+    }
+
+    if (fcntl(sink_, F_SETFD, FD_CLOEXEC)) {
+        const char* errstr = strerror(errno);
+        isc_throw(WatchSocketError, "Cannot set sink to close-on-exec: "
+                                     << errstr);
+    }
+
     if (fcntl(sink_, F_SETFL, O_NONBLOCK)) {
         const char* errstr = strerror(errno);
         isc_throw(WatchSocketError, "Cannot set sink to non-blocking: "

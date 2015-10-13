@@ -18,6 +18,7 @@
 #include <dhcp/pkt_filter_inet.h>
 #include <errno.h>
 #include <cstring>
+#include <fcntl.h>
 
 using namespace isc::asiolink;
 
@@ -53,6 +54,13 @@ PktFilterInet::openSocket(Iface& iface,
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
         isc_throw(SocketConfigError, "Failed to create UDP6 socket.");
+    }
+
+    // Set the close-on-exec flag.
+    if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
+        close(sock);
+        isc_throw(SocketConfigError, "Failed to set close-on-exec flag"
+                  << " on socket " << sock);
     }
 
 #ifdef SO_BINDTODEVICE
