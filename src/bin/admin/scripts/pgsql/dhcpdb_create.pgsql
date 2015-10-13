@@ -140,7 +140,7 @@ COMMIT;
 --  FUNCTION that returns a result set containing the column names for lease4 dumps
 DROP FUNCTION IF EXISTS lease4DumpHeader();
 CREATE FUNCTION lease4DumpHeader() RETURNS text AS  $$
-    select cast('address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname' as text) as result;
+    select cast('address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state' as text) as result;
 $$ LANGUAGE SQL;
 --
 
@@ -156,18 +156,21 @@ CREATE FUNCTION lease4DumpData() RETURNS
            subnet_id bigint,
            fqdn_fwd int,
            fqdn_rev int,
-           hostname text
+           hostname text,
+           state text
     ) as $$
-    SELECT ('0.0.0.0'::inet + address),
-            encode(hwaddr,'hex'),
-            encode(client_id,'hex'),
-            valid_lifetime,
-            expire,
-            subnet_id,
-            fqdn_fwd::int,
-            fqdn_rev::int,
-            hostname
-    from lease4;
+    SELECT ('0.0.0.0'::inet + l.address),
+            encode(l.hwaddr,'hex'),
+            encode(l.client_id,'hex'),
+            l.valid_lifetime,
+            l.expire,
+            l.subnet_id,
+            l.fqdn_fwd::int,
+            l.fqdn_rev::int,
+            l.hostname,
+            s.name
+    FROM lease4 l
+         left outer join lease_state s on (l.state = s.state);
 $$ LANGUAGE SQL;
 --
 
@@ -175,7 +178,7 @@ $$ LANGUAGE SQL;
 --  FUNCTION that returns a result set containing the column names for lease6 dumps
 DROP FUNCTION IF EXISTS lease6DumpHeader();
 CREATE FUNCTION lease6DumpHeader() RETURNS text AS  $$
-    select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname' as text) as result;
+    select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,state' as text) as result;
 $$ LANGUAGE SQL;
 --
 
@@ -195,7 +198,8 @@ CREATE FUNCTION lease6DumpData() RETURNS
            prefix_len smallint,
            fqdn_fwd int,
            fqdn_rev int,
-           hostname text
+           hostname text,
+           state text
     ) AS $$
     SELECT (l.address,
             encode(l.duid,'hex'),
@@ -208,8 +212,11 @@ CREATE FUNCTION lease6DumpData() RETURNS
             l.prefix_len,
             l.fqdn_fwd::int,
             l.fqdn_rev::int,
-            l.hostname)
-     FROM lease6 l left outer join lease6_types t on (l.lease_type = t.lease_type);
+            l.hostname,
+            s.name)
+     FROM lease6 l
+         left outer join lease6_types t on (l.lease_type = t.lease_type)
+         left outer join lease_state s on (l.state = s.state);
 $$ LANGUAGE SQL;
 --
 
