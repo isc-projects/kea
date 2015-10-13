@@ -83,7 +83,7 @@ the number of reclaimed leases may also be limited by the timeout
 value, configured with 'max-reclaim-time'. The message includes the
 number of reclaimed leases and the total time.
 
-% ALLOC_ENGINE_V4_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 seconds)
+% ALLOC_ENGINE_V4_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 milliseconds)
 This debug message is issued when the allocation engine starts the
 reclamation of the expired leases. The maximum number of leases to
 be reclaimed and the timeout is included in the message. If any of
@@ -309,7 +309,7 @@ the number of reclaimed leases may also be limited by the timeout
 value, configured with 'max-reclaim-time'. The message includes the
 number of reclaimed leases and the total time.
 
-% ALLOC_ENGINE_V6_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 seconds)
+% ALLOC_ENGINE_V6_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 milliseconds)
 This debug message is issued when the allocation engine starts the
 reclamation of the expired leases. The maximum number of leases to
 be reclaimed and the timeout is included in the message. If any of
