@@ -164,7 +164,7 @@ Dhcpv4Exchange::initResponse() {
     if (resp_type > 0) {
         resp_.reset(new Pkt4(resp_type, getQuery()->getTransid()));
         copyDefaultFields();
-        copyDefaultOptionss();
+        copyDefaultOptions();
     }
 }
 
