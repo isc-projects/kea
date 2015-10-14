@@ -943,10 +943,12 @@ public:
     ///        declined expired leases are processed by AllocEngine.
     ///
     /// This method works for both v4 and v6. Just make sure the correct
-    /// statistic name is passed.
+    /// statistic name is passed. This is the name of the assigned addresses,
+    /// that is expected to be decreased once the reclaimation procedure
+    /// is complete.
     ///
-    /// @param stat_name name of the statistic for declined addresses statistic
-    ///        ("declined-addresses" for v4 and "declined-nas" for v6)
+    /// @param stat_name name of the statistic for assigned addresses statistic
+    ///        ("assgined-addresses" for both v4 and "assigned-nas" for v6)
     void testReclaimDeclinedStats(const std::string& stat_name) {
 
         // Leases by default all belong to subnet_id_ = 1. Let's count the
@@ -973,6 +975,7 @@ public:
         }
 
         StatsMgr& stats_mgr = StatsMgr::instance();
+
         // Let's set the global statistic. Values are arbitrary and can
         // be used to easily detect whether a given stat was decreased or
         // increased. They are sufficiently high compared to number of leases
@@ -1012,11 +1015,13 @@ public:
         testStatistics("reclaimed-declined-addresses", 2000 + subnet1_cnt + subnet2_cnt);
 
         // subnet[X].assigned-addresses should go down. Between the time
-        // of DHCPDECLINE reception and declined expired lease reclaimation,
-        // we count this address as assigned-addresses. We decrease assigned-
-        // addresses when we reclaim the lease, not when the packet is received.
-        // For explanation, see Duplicate Addresses (DHCPDECLINE support)
-        // section in the User's Guide or a comment in Dhcpv4Srv::declineLease.
+        // of DHCPDECLINE(v4)/DECLINE(v6) reception and declined expired lease
+        // reclaimation, we count this address as assigned-addresses. We decrease
+        // assigned-addresses(v4)/assgined-nas(v6) when we reclaim the lease,
+        // not when the packet is received. For explanation, see Duplicate
+        // Addresses (DHCPDECLINE support) (v4) or Duplicate Addresses (DECLINE
+        // support) sections in the User's Guide or a comment in
+        // Dhcpv4Srv::declineLease or Dhcpv6Srv::declineLease.
         testStatistics("subnet[1]." + stat_name, 1000 - subnet1_cnt);
         testStatistics("subnet[2]." + stat_name, 2000 - subnet2_cnt);
 
@@ -1293,14 +1298,14 @@ TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesShortTimeout) {
     testReclaimExpiredLeasesTimeout(1);
 }
 
-/// This test verifies that @ref AllocEngine::reclaimExpiredLeases4 properly
+/// This test verifies that @ref AllocEngine::reclaimExpiredLeases6 properly
 /// handles declined leases that have expired in case when it is told to
 /// remove leases.
 TEST_F(ExpirationAllocEngine6Test, reclaimDeclined1) {
     testReclaimDeclined(true);
 }
 
-/// This test verifies that @ref AllocEngine::reclaimExpiredLeases4 properly
+/// This test verifies that @ref AllocEngine::reclaimExpiredLeases6 properly
 /// handles declined leases that have expired in case when it is told to
 /// not remove leases. This flag should not matter and declined expired
 /// leases should always be removed.
