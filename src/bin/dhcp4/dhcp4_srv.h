@@ -546,12 +546,12 @@ private:
     /// - disassociate the client information
     /// - update lease in the database (switch to DECLINED state)
     /// - increase necessary statistics
-    /// - call appropriate hook (@todo)
+    /// - call lease4_decline hook
     ///
     /// @param lease lease to be declined
-    /// @param descr textual description of the client (will be used for logging)
+    /// @param decline client's message
     void
-    declineLease(const Lease4Ptr& lease, const std::string& descr);
+    declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline);
 
 protected:
 
