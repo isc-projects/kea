@@ -1,3 +1,8 @@
+1027.	[func]		tomek
+	Expired declined IPv6 leases can now be reclaimed (returned to the
+	available pool) after probation	period elapses.
+	(Trac #3985, git 9aadfa902d898ce1f52b773152a5b34519a9a9fe)
+
 1026.	[doc]		stephen
 	Added documentation for the kea-dhcp4.commands and
 	kea-dhcp6.commands loggers.
