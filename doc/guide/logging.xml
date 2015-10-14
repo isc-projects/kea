@@ -200,6 +200,12 @@
             </simpara>
           </listitem>
           <listitem>
+            <simpara><command>kea-dhcp4.commands</command> - this logger is used
+            to log messages relating to the handling of commands received by the
+            the DHCPv4 server over the command channel.
+            </simpara>
+          </listitem>
+          <listitem>
             <simpara><command>kea-dhcp4.ddns</command> - this logger is used by
             the DHCPv4 server to log messages related to the Client FQDN and
             Hostname option processing. It also includes log messages
@@ -259,6 +265,13 @@
             provided.</simpara>
           </listitem>
           <listitem>
+            <simpara><command>kea-dhcp6.alloc-engine</command> - this is the
+            logger used by the lease allocation engine, which is responsible
+            for managing leases in the lease database, i.e. create, modify
+            and remove DHCPv6 leases as a result of processing messages from
+            the clients.</simpara>
+          </listitem>
+          <listitem>
             <simpara><command>kea-dhcp6.bad-packets</command> - this is the
             logger used by the DHCPv6 server deamon for logging inbound client
             packets that were dropped.</simpara>
@@ -270,6 +283,12 @@
             </simpara>
           </listitem>
           <listitem>
+            <simpara><command>kea-dhcp6.commands</command> - this logger is used
+            to log messages relating to the handling of commands received by the
+            the DHCPv6 server over the command channel.
+            </simpara>
+          </listitem>
+          <listitem>
             <simpara><command>kea-dhcp6.ddns</command> - this logger is used by
             the DHCPv6 server to log messages related to the Client FQDN option
             processing. It also includes log messages related to the relevant
@@ -278,13 +297,6 @@
           <listitem>
             <simpara><command>kea-dhcp6.dhcp6</command> - this is the logger
             used DHCPv6 server deamon to log basic operations.</simpara>
-          </listitem>
-          <listitem>
-            <simpara><command>kea-dhcp6.alloc-engine</command> - this is the
-            logger used by the lease allocation engine, which is responsible
-            for managing leases in the lease database, i.e. create, modify
-            and remove DHCPv6 leases as a result of processing messages from
-            the clients.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp6.dhcpsrv</command> - this is a base
