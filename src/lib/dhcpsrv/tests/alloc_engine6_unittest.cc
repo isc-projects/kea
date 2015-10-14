@@ -1767,10 +1767,10 @@ TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6Stats) {
 }
 
 // This test checks if statistics are not updated when expired declined lease
-// is reused when responding to REQUEST (fake allocation)
+// is reused when responding to REQUEST (actual allocation)
 TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
 
-    // Now prepare for SOLICIT processing
+    // Prepare for REQUEST processing.
     AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
                                           100, true));
     ASSERT_TRUE(engine);
