@@ -86,7 +86,7 @@ public:
 
     /// @brief Runs timers for specified time.
     ///
-    /// Internally, this method calls @c IfaceMgr::receive6 to run the
+    /// Internally, this method calls @c IfaceMgr::receive4 to run the
     /// callbacks for the installed timers.
     ///
     /// @param timeout_ms Amount of time after which the method returns.
@@ -397,7 +397,10 @@ TEST_F(JSONFileBackendTest, timers) {
     EXPECT_TRUE(lease_expired->stateExpiredReclaimed());
 
     // Second lease should have been removed.
-    EXPECT_FALSE(lease_mgr.getLease4(IOAddress("10.0.0.2")));
+    ASSERT_NO_THROW(
+        lease_reclaimed = lease_mgr.getLease4(IOAddress("10.0.0.2"));
+    );
+    EXPECT_FALSE(lease_reclaimed);
 }
 
 } // End of anonymous namespace
