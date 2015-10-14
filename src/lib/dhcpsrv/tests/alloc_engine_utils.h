@@ -88,6 +88,12 @@ public:
 class AllocEngine6Test : public ::testing::Test {
 public:
 
+    /// @brief Specified expected result of a given operation
+    enum ExpectedResult {
+        SHOULD_PASS,
+        SHOULD_FAIL
+    };
+
     /// @brief Default constructor
     ///
     /// Sets duid_, iaid_, subnet_, pool_ fields to example values used
@@ -279,6 +285,41 @@ public:
                                asiolink::IOAddress requested,
                                uint8_t expected_pd_len);
 
+    /// @brief Generic test used for IPv6 lease allocation and reuse
+    ///
+    /// This test inserts existing_lease (if specified, may be null) into the
+    /// LeaseMgr, then conducts lease allocation (pretends that client
+    /// sent either Solicit or Request, depending on fake_allocation).
+    /// Allocated lease is then returned (using result) for further inspection.
+    ///
+    /// @param alloc_engine allocation engine
+    /// @param existing_lease optional lease to be inserted in the database
+    /// @param addr address to be requested by client
+    /// @param fake_allocation true = SOLICIT, false = REQUEST
+    /// @param exp_result expected result
+    /// @param result [out] allocated lease
+    void testReuseLease6(const AllocEnginePtr& alloc_engine,
+                         Lease6Ptr& existing_lease,
+                         const std::string& addr,
+                         const bool fake_allocation,
+                         ExpectedResult exp_result,
+                         Lease6Ptr& result);
+
+    /// @brief Creates a declined IPv6 lease with specified expiration time
+    ///
+    /// expired parameter controls probation period. Positive value
+    /// means that the lease will expire in X seconds. Negative means
+    /// that the lease expired X seconds ago. 0 means it expires now.
+    /// Probation period is a parameter that specifies for how long
+    /// a lease will stay unavailable after decline.
+    ///
+    /// @param addr address of the lease
+    /// @param probation_period expressed in seconds
+    /// @param expired number of seconds when the lease will expire
+    Lease6Ptr generateDeclinedLease(const std::string& addr,
+                                    time_t probation_period,
+                                    int32_t expired);
+
     /// @brief checks if bogus hint can be ignored and the allocation succeeds
     ///
     /// This test checks if the allocation with a hing that is out of the blue
@@ -387,7 +428,7 @@ public:
         /// @todo: check cltt
     }
 
-    /// @brief Generic test used for lease allocation and reuse
+    /// @brief Generic test used for IPv4 lease allocation and reuse
     ///
     /// This test inserts existing_lease (if specified, may be null) into the
     /// LeaseMgr, then conducts lease allocation (pretends that client
@@ -407,7 +448,7 @@ public:
                          ExpectedResult exp_result,
                          Lease4Ptr& result);
 
-    /// @brief Creates a declined lease with specified expiration time
+    /// @brief Creates a declined IPv4 lease with specified expiration time
     ///
     /// expired parameter controls probation period. Positive value
     /// means that the lease will expire in X seconds. Negative means
@@ -417,7 +458,7 @@ public:
     ///
     /// @param addr address of the lease
     /// @param probation_period expressed in seconds
-    /// @param expired number of seconds where it will expire
+    /// @param expired number of seconds when the lease will expire
     Lease4Ptr generateDeclinedLease(const std::string& addr,
                                     time_t probation_period,
                                     int32_t expired);
