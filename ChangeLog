@@ -1,3 +1,9 @@
+1025.	[func]		tomek
+	A new hook point lease4_decline has been added. It is called when
+	the DHCPv4 server is about to decline a lease as a result of
+	processing incoming DHCPDECLINE message.
+	(Trac #3986, git 39bde93fe25e4aff52623d4df7fd55c64e0a9c21)
+
 1024.	[func]*		tomek
 	Boolean Skip flag in Hooks API has been replaced by enum status.
 	This is backward incompatible change if you developed hook
