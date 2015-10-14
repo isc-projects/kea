@@ -295,7 +295,7 @@ public:
     /// @param alloc_engine allocation engine
     /// @param existing_lease optional lease to be inserted in the database
     /// @param addr address to be requested by client
-    /// @param fake_allocation true = DISCOVER, false = REQUEST
+    /// @param fake_allocation true = SOLICIT, false = REQUEST
     /// @param exp_result expected result
     /// @param result [out] allocated lease
     void testReuseLease6(const AllocEnginePtr& alloc_engine,
@@ -428,7 +428,7 @@ public:
         /// @todo: check cltt
     }
 
-    /// @brief Generic test used for lease allocation and reuse
+    /// @brief Generic test used for IPv4 lease allocation and reuse
     ///
     /// This test inserts existing_lease (if specified, may be null) into the
     /// LeaseMgr, then conducts lease allocation (pretends that client
