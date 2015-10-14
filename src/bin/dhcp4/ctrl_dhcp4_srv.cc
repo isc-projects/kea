@@ -241,8 +241,10 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
     try {
         cleanup();
 
-        // Stop worker thread running timers, if it is running.
-        TimerMgr::instance()->stopThread();
+        // Stop worker thread running timers, if it is running. Then
+        // unregister any timers.
+        timer_mgr_->stopThread();
+        timer_mgr_->unregisterTimers();
 
         // Close the command socket (if it exists).
         CommandMgr::instance().closeCommandSocket();

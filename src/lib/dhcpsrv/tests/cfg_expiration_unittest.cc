@@ -194,6 +194,14 @@ public:
         /// @brief Maximum number of reclamation attempts after which all leases
         /// should be reclaimed.
         uint16_t max_unwarned_cycles;
+
+        /// @brief Constructor
+        ///
+        /// Sets all numeric values to 0xFFFF and the boolean values to false.
+        RecordedParams()
+            : max_leases(0xFFFF), timeout(0xFFFF), remove_lease(false),
+              max_unwarned_cycles(0xFFFF) {
+        }
     };
 
     /// @brief Constructor.
@@ -346,6 +354,10 @@ public:
 
 // Test that the reclamation routines are called with the appropriate parameters.
 TEST_F(CfgExpirationTimersTest, reclamationParameters) {
+    // Set this value to true, to make sure that the timer callback would
+    // modify this value to false.
+    stub_->reclaim_params_.remove_lease = true;
+
     // Set parameters to some non-default values.
     cfg_.setMaxReclaimLeases(1000);
     cfg_.setMaxReclaimTime(1500);
