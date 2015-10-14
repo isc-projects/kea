@@ -48,7 +48,14 @@ consider reducing the lease lifetime.  In this way, addresses allocated
 to clients that are no longer active on the network will become available
 sooner.
 
-% ALLOC_ENGINE_V4_DECLINED_RECOVERED Address %1 was recovered after %2 seconds of probation-period
+% ALLOC_ENGINE_V4_DECLINED_RECOVERED IPv4 address %1 was recovered after %2 seconds of probation-period
+This informational message indicates that the specified address was reported
+as duplicate (client sent DECLINE) and the server marked this address as
+unvailable for a period of time. This time now has elapsed and the address
+has been returned to the available pool. This step concludes decline recovery
+process.
+
+% ALLOC_ENGINE_V6_DECLINED_RECOVERED IPv6 address %1 was recovered after %2 seconds of probation-period
 This informational message indicates that the specified address was reported
 as duplicate (client sent DECLINE) and the server marked this address as
 unvailable for a period of time. This time now has elapsed and the address
