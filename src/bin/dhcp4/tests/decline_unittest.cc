@@ -34,7 +34,6 @@ using namespace isc::dhcp::test;
 using namespace isc::stats;
 
 namespace {
-
 /// @brief Set of JSON configurations used throughout the Decline tests.
 ///
 /// - Configuration 0:
@@ -63,56 +62,14 @@ const char* DECLINE_CONFIGS[] = {
     "}"
 };
 
-/// @brief Test fixture class for testing DHCPDECLINE message handling.
-///
-/// @todo This class is very similar to ReleaseTest. Maybe we could
-/// merge those two classes one day and use derived classes?
-class DeclineTest : public Dhcpv4SrvTest {
-public:
-
-    enum ExpectedResult {
-        SHOULD_PASS, // pass = accept decline, move lease to declined state.
-        SHOULD_FAIL  // fail = reject the decline
-    };
-
-    /// @brief Constructor.
-    ///
-    /// Sets up fake interfaces.
-    DeclineTest()
-        : Dhcpv4SrvTest(),
-          iface_mgr_test_config_(true) {
-        IfaceMgr::instance().openSockets4();
-    }
-
-    /// @brief Performs 4-way exchange to obtain new lease.
-    ///
-    /// This is used as a preparatory step for Decline operation.
-    ///
-    /// @param client Client to be used to obtain a lease.
-    void acquireLease(Dhcp4Client& client);
-
-    /// @brief Tests if the acquired lease is or is not declined.
-    ///
-    /// @param hw_address_1 HW Address to be used to acquire the lease.
-    /// @param client_id_1 Client id to be used to acquire the lease.
-    /// @param hw_address_2 HW Address to be used to decline the lease.
-    /// @param client_id_2 Client id to be used to decline the lease.
-    /// @param expected_result SHOULD_PASS if the lease is expected to
-    /// be successfully declined, or SHOULD_FAIL if the lease is expected
-    /// to not be declined.
-    void acquireAndDecline(const std::string& hw_address_1,
-                           const std::string& client_id_1,
-                           const std::string& hw_address_2,
-                           const std::string& client_id_2,
-                           ExpectedResult expected_result);
-
-    /// @brief Interface Manager's fake configuration control.
-    IfaceMgrTestConfig iface_mgr_test_config_;
-
 };
 
+namespace isc {
+namespace dhcp {
+namespace test {
+
 void
-DeclineTest::acquireLease(Dhcp4Client& client) {
+Dhcpv4SrvTest::acquireLease(Dhcp4Client& client) {
     // Perform 4-way exchange with the server but to not request any
     // specific address in the DHCPDISCOVER message.
     ASSERT_NO_THROW(client.doDORA());
@@ -132,11 +89,11 @@ DeclineTest::acquireLease(Dhcp4Client& client) {
 }
 
 void
-DeclineTest::acquireAndDecline(const std::string& hw_address_1,
-                               const std::string& client_id_1,
-                               const std::string& hw_address_2,
-                               const std::string& client_id_2,
-                               ExpectedResult expected_result) {
+Dhcpv4SrvTest::acquireAndDecline(const std::string& hw_address_1,
+                                 const std::string& client_id_1,
+                                 const std::string& hw_address_2,
+                                 const std::string& client_id_2,
+                                 ExpectedResult expected_result) {
 
     // Set this global statistic explicitly to zero.
     isc::stats::StatsMgr::instance().setValue("declined-addresses",
@@ -217,6 +174,33 @@ DeclineTest::acquireAndDecline(const std::string& hw_address_1,
         EXPECT_EQ(before_global, after_global);
     }
 }
+
+}; // end of isc::dhcp::test namespace
+}; // end of isc::dhcp namespace
+}; // end of isc namespace
+
+namespace {
+
+/// @brief Test fixture class for testing DHCPDECLINE message handling.
+///
+/// @todo This class is very similar to ReleaseTest. Maybe we could
+/// merge those two classes one day and use derived classes?
+class DeclineTest : public Dhcpv4SrvTest {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Sets up fake interfaces.
+    DeclineTest()
+        : Dhcpv4SrvTest(),
+          iface_mgr_test_config_(true) {
+        IfaceMgr::instance().openSockets4();
+    }
+
+    /// @brief Interface Manager's fake configuration control.
+    IfaceMgrTestConfig iface_mgr_test_config_;
+
+};
 
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, declineNoIdentifierChange) {
@@ -310,4 +294,4 @@ TEST_F(DeclineTest, declineNonMatchingIPAddress) {
     EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
 }
 
-} // end of anonymous namespace
+}; // end of anonymous namespace
