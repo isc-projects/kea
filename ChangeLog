@@ -1,3 +1,8 @@
+1026.	[doc]		stephen
+	Added documentation for the kea-dhcp4.commands and
+	kea-dhcp6.commands loggers.
+	(Trac #3952, git 3eb5d3185683e05494c1d84ed7195627fce4b6c1)
+
 1025.	[func]		tomek
 	A new hook point lease4_decline has been added. It is called when
 	the DHCPv4 server is about to decline a lease as a result of
