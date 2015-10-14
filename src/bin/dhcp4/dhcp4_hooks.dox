@@ -196,7 +196,7 @@ packet processing. Hook points that are not specific to packet processing
  - <b>Next step status</b>: If any callout installed on the "lease4_release" hook
    sets the next step action to DROP, the server will not decline the lease.
    Care should be taken when setting this status.  The lease will be kept in
-   the database as is and the client will incorrectly assume that the server
+   the database as it is and the client will incorrectly assume that the server
    marked this lease as unavailable. If the client restarts its configuration,
    it will get the same (not declined) lease as a result.
 

@@ -1475,7 +1475,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     EXPECT_EQ(leases.size(), 1);
 }
 
-// Checks that decline4 hooks are triggered properly.
+// Checks that decline4 hooks (lease4_decline) are triggered properly.
 TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
@@ -1506,7 +1506,7 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
     ASSERT_TRUE(opt_declined_addr);
     IOAddress addr(opt_declined_addr->readAddress());
 
-    // And try to get a matching lease from the lease mgr
+    // And try to get a matching lease from the lease manager.
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
     ASSERT_TRUE(from_mgr);
     EXPECT_EQ(Lease::STATE_DECLINED, from_mgr->state_);
@@ -1517,7 +1517,7 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
     EXPECT_EQ(addr, callback_lease4_->addr_);
 }
 
-// Checks that decline4 hooks are triggered properly.
+// Checks that decline4 hook is able to drop the packet.
 TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
@@ -1549,7 +1549,7 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     ASSERT_TRUE(opt_declined_addr);
     IOAddress addr(opt_declined_addr->readAddress());
 
-    // And try to get a matching lease from the lease mgr. The lease should
+    // And try to get a matching lease from the lease manager. The lease should
     // still be there in default state, not in declined state.
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
     ASSERT_TRUE(from_mgr);
