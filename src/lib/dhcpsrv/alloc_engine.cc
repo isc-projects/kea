@@ -1631,7 +1631,7 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
             }
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                      ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT)
+                      ALLOC_ENGINE_V4_LEASES_RECLAMATION_TIMEOUT)
                 .arg(timeout);
             break;
         }

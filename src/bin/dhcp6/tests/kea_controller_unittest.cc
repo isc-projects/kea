@@ -343,7 +343,10 @@ TEST_F(JSONFileBackendTest, timers) {
     EXPECT_TRUE(lease_expired->stateExpiredReclaimed());
 
     // Second lease should have been removed.
-    EXPECT_FALSE(lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::2")));
+    ASSERT_NO_THROW(
+        lease_reclaimed = lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::2"))
+    );
+    EXPECT_FALSE(lease_reclaimed);
 }
 
 } // End of anonymous namespace
