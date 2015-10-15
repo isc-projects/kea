@@ -131,21 +131,6 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     ConstElementPtr answer = configureDhcp6Server(*srv, config);
 
-    // Start worker thread if there are any timers installed. Note that
-    // we also start worker thread when the reconfiguration failed, because
-    // in that case we continue using an old configuration and the server
-    // should still run installed timers.
-    if (TimerMgr::instance()->timersCount() > 0) {
-        try {
-            TimerMgr::instance()->startThread();
-        } catch (const std::exception& ex) {
-            std::ostringstream err;
-            err << "Unable to start worker thread running timers: "
-                << ex.what() << ".";
-            return (isc::config::createAnswer(1, err.str()));
-        }
-    }
-
     // Check that configuration was successful. If not, do not reopen sockets
     // and don't bother with DDNS stuff.
     try {
@@ -177,6 +162,33 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     // is no need to rollback configuration if socket fails to open on any
     // of the interfaces.
     CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET6, srv->getPort());
+
+    // Install the timers for handling leases reclamation.
+    try {
+        CfgMgr::instance().getStagingCfg()->getCfgExpiration()->
+            setupTimers(&ControlledDhcpv6Srv::reclaimExpiredLeases,
+                        &ControlledDhcpv6Srv::deleteExpiredReclaimedLeases,
+                        server_);
+
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "unable to setup timers for periodically running the"
+            " reclamation of the expired leases: "
+            << ex.what() << ".";
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
+    // Start worker thread if there are any timers installed.
+    if (TimerMgr::instance()->timersCount() > 0) {
+        try {
+            TimerMgr::instance()->startThread();
+        } catch (const std::exception& ex) {
+            std::ostringstream err;
+            err << "Unable to start worker thread running timers: "
+                << ex.what() << ".";
+            return (isc::config::createAnswer(1, err.str()));
+        }
+    }
 
     return (answer);
 }
@@ -225,8 +237,10 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
     try {
         cleanup();
 
-        // Stop worker thread running timers, if it is running.
+        // Stop worker thread running timers, if it is running. Then
+        // unregister any timers.
         timer_mgr_->stopThread();
+        timer_mgr_->unregisterTimers();
 
         // Close the command socket (if it exists).
         CommandMgr::instance().closeCommandSocket();
@@ -257,6 +271,26 @@ void ControlledDhcpv6Srv::sessionReader(void) {
         server_->io_service_.run_one();
     }
 }
+
+void
+ControlledDhcpv6Srv::reclaimExpiredLeases(const size_t max_leases,
+                                          const uint16_t timeout,
+                                          const bool remove_lease,
+                                          const uint16_t max_unwarned_cycles) {
+    server_->alloc_engine_->reclaimExpiredLeases6(max_leases, timeout,
+                                                  remove_lease,
+                                                  max_unwarned_cycles);
+    // We're using the ONE_SHOT timer so there is a need to re-schedule it.
+    TimerMgr::instance()->setup(CfgExpiration::RECLAIM_EXPIRED_TIMER_NAME);
+}
+
+void
+ControlledDhcpv6Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
+    server_->alloc_engine_->deleteExpiredReclaimedLeases6(secs);
+    // We're using the ONE_SHOT timer so there is a need to re-schedule it.
+    TimerMgr::instance()->setup(CfgExpiration::FLUSH_RECLAIMED_TIMER_NAME);
+}
+
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

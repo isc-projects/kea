@@ -26,6 +26,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <dhcpsrv/triplet.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
@@ -744,6 +745,9 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     // Before starting any subnet operations, let's reset the subnet-id counter,
     // so newly recreated configuration starts with first subnet-id equal 1.
     Subnet::resetSubnetID();
+
+    // Remove any existing timers.
+    TimerMgr::instance()->unregisterTimers();
 
     // Some of the values specified in the configuration depend on
     // other values. Typically, the values in the subnet6 structure
