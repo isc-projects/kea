@@ -292,12 +292,13 @@ or released leases), but the response will not be send to the client.
 The argument includes the client and transaction identification
 information.
 
-% DHCP6_HOOK_DECLINE_SKIP During Decline processing (client=%1, interface=%2, addr=%3) hook callout set status to DROP, ignoring packet.
+% DHCP6_HOOK_DECLINE_SKIP During Decline processing (client=%1, interface=%2, addr=%3) hook callout set status to SKIP, skipping decline.
 This message indicates that the server received DECLINE message, it was verified
 to be correct and matching server's lease information. The server called hooks
 for the lease6_decline hook point and one of the callouts set next step status to SKIP.
 The server will skip the operation of moving the lease to the declined state and
-will continue processing.
+will continue processing the packet. In particular, it will send a REPLY message
+as if the decline actually took place.
 
 % DHCP6_HOOK_DECLINE_DROP During Decline processing (client=%1, interface=%2, addr=%3) hook callout set status to DROP, dropping packet.
 This message indicates that the server received DECLINE message, it was verified

@@ -2807,7 +2807,7 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
         }
 
         // Callouts decided to DROP the packet. Let's simply log it and
-        // return false, so upper layers will act accordingly.
+        // return false, so callers will act accordingly.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_DETAIL, DHCP6_HOOK_DECLINE_DROP)
                 .arg(decline->getLabel())
