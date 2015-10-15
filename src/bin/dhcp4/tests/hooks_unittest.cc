@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp4/json_config_parser.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
@@ -1485,7 +1486,8 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
                         "lease4_decline", lease4_decline_callout));
 
     // Conduct the actual DORA + Decline.
-    acquireAndDecline("01:02:03:04:05:06", "12:14",
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS);
 
@@ -1528,7 +1530,8 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
 
     // Conduct the actual DORA + Decline. The DECLINE should fail, as the
     // hook will set the status to DROP.
-    acquireAndDecline("01:02:03:04:05:06", "12:14",
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_FAIL);
 

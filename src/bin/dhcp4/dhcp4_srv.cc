@@ -274,6 +274,8 @@ Dhcpv4Srv::~Dhcpv4Srv() {
 
     IfaceMgr::instance().closeSockets();
 
+    // The lease manager was instantiated during DHCPv4Srv configuration,
+    // so we should clean up after ourselves.
     LeaseMgrFactory::destroy();
 }
 
