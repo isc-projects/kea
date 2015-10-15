@@ -89,7 +89,8 @@ Dhcpv4SrvTest::acquireLease(Dhcp4Client& client) {
 }
 
 void
-Dhcpv4SrvTest::acquireAndDecline(const std::string& hw_address_1,
+Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
+                                 const std::string& hw_address_1,
                                  const std::string& client_id_1,
                                  const std::string& hw_address_2,
                                  const std::string& client_id_2,
@@ -101,7 +102,7 @@ Dhcpv4SrvTest::acquireAndDecline(const std::string& hw_address_1,
 
     // Ok, do the normal lease aquisition.
     CfgMgr::instance().clear();
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+
     // Configure DHCP server.
     configure(DECLINE_CONFIGS[0], *client.getServer());
     // Explicitly set the client id.
@@ -204,7 +205,8 @@ public:
 
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, declineNoIdentifierChange) {
-    acquireAndDecline("01:02:03:04:05:06", "12:14",
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS);
 }
@@ -215,7 +217,8 @@ TEST_F(DeclineTest, declineNoIdentifierChange) {
 //   client identifier.
 // - The server successfully declines the lease.
 TEST_F(DeclineTest, declineHWAddressOnly) {
-    acquireAndDecline("01:02:03:04:05:06", "",
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    acquireAndDecline(client, "01:02:03:04:05:06", "",
                       "01:02:03:04:05:06", "",
                       SHOULD_PASS);
 }
@@ -226,7 +229,8 @@ TEST_F(DeclineTest, declineHWAddressOnly) {
 //   client identifier.
 // - The server successfully declines the lease.
 TEST_F(DeclineTest, declineNoClientId) {
-    acquireAndDecline("01:02:03:04:05:06", "12:14",
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "",
                       SHOULD_PASS);
 }
@@ -238,7 +242,8 @@ TEST_F(DeclineTest, declineNoClientId) {
 // - The server identifies the lease using HW address and declines
 //   this lease.
 TEST_F(DeclineTest, declineNoClientId2) {
-    acquireAndDecline("01:02:03:04:05:06", "",
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    acquireAndDecline(client, "01:02:03:04:05:06", "",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS);
 }
@@ -249,7 +254,8 @@ TEST_F(DeclineTest, declineNoClientId2) {
 //   client identifier.
 // - The server should not remove the lease.
 TEST_F(DeclineTest, declineNonMatchingClientId) {
-    acquireAndDecline("01:02:03:04:05:06", "12:14",
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:15:16",
                       SHOULD_FAIL);
 }
@@ -261,7 +267,8 @@ TEST_F(DeclineTest, declineNonMatchingClientId) {
 // - The server uses client identifier to find the client's lease and
 //   declines it.
 TEST_F(DeclineTest, declineNonMatchingHWAddress) {
-    acquireAndDecline("01:02:03:04:05:06", "12:14",
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "06:06:06:06:06:06", "12:14",
                       SHOULD_PASS);
 }
