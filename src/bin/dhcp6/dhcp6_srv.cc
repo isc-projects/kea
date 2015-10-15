@@ -180,7 +180,7 @@ const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 static const char* SERVER_DUID_FILE = "kea-dhcp6-serverid";
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
-:alloc_engine_(), serverid_(), port_(port), shutdown_(true)
+    : serverid_(), port_(port), shutdown_(true), alloc_engine_()
 {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
