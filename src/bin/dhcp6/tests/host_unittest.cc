@@ -20,7 +20,6 @@
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
-using namespace isc::test;
 
 namespace {
 
