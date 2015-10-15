@@ -213,6 +213,11 @@ public:
     using Dhcpv4Srv::alloc_engine_;
 };
 
+// We need to pass one reference to the Dhcp4Client, which is defined in
+// dhcp4_client.h. That header includes this file. To avoid circular
+// dependencies, we use forward declaration here.
+class Dhcp4Client;
+
 class Dhcpv4SrvTest : public ::testing::Test {
 public:
 
@@ -427,6 +432,7 @@ public:
 
     /// @brief Tests if the acquired lease is or is not declined.
     ///
+    /// @param client Dhcp4Client instance
     /// @param hw_address_1 HW Address to be used to acquire the lease.
     /// @param client_id_1 Client id to be used to acquire the lease.
     /// @param hw_address_2 HW Address to be used to decline the lease.
@@ -434,7 +440,8 @@ public:
     /// @param expected_result SHOULD_PASS if the lease is expected to
     /// be successfully declined, or SHOULD_FAIL if the lease is expected
     /// to not be declined.
-    void acquireAndDecline(const std::string& hw_address_1,
+    void acquireAndDecline(Dhcp4Client& client,
+                           const std::string& hw_address_1,
                            const std::string& client_id_1,
                            const std::string& hw_address_2,
                            const std::string& client_id_2,
