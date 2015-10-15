@@ -186,14 +186,6 @@ Dhcpv4Exchange::copyDefaultFields() {
     // relay address
     resp_->setGiaddr(query_->getGiaddr());
 
-    // Let's copy client-id to response. See RFC6842.
-    // It is possible to disable RFC6842 to keep backward compatibility
-    bool echo = CfgMgr::instance().echoClientId();
-    OptionPtr client_id = query_->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    if (client_id && echo) {
-        resp_->addOption(client_id);
-    }
-
     // If src/dest HW addresses are used by the packet filtering class
     // we need to copy them as well. There is a need to check that the
     // address being set is not-NULL because an attempt to set the NULL
@@ -213,6 +205,14 @@ Dhcpv4Exchange::copyDefaultFields() {
 
 void
 Dhcpv4Exchange::copyDefaultOptions() {
+    // Let's copy client-id to response. See RFC6842.
+    // It is possible to disable RFC6842 to keep backward compatibility
+    bool echo = CfgMgr::instance().echoClientId();
+    OptionPtr client_id = query_->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    if (client_id && echo) {
+        resp_->addOption(client_id);
+    }
+
     // If this packet is relayed, we want to copy Relay Agent Info option
     OptionPtr rai = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     if (rai) {
