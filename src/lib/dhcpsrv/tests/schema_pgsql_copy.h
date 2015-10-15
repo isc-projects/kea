@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -97,8 +97,8 @@ const char* create_statement[] = {
     "ALTER TABLE lease6 "
         "ADD COLUMN state INT8 DEFAULT 0",
 
-    "CREATE INDEX lease4_by_state_expire ON lease4 (state, expire)",
-    "CREATE INDEX lease6_by_state_expire ON lease6 (state, expire)",
+    "CREATE INDEX lease4_by_state_expire ON lease4 (state ASC, expire ASC)",
+    "CREATE INDEX lease6_by_state_expire ON lease6 (state ASC, expire ASC)",
 
     // Production schema includes the lease_state table which maps
     // the lease states to their names. This is not used in the unit tests
@@ -107,6 +107,18 @@ const char* create_statement[] = {
     /*"CREATE TABLE lease_state (",
         "state INT8 PRIMARY KEY NOT NULL,"
         "name VARCHAR(64) NOT NULL);",
+
+    "ALTER TABLE lease4 "
+        "ADD CONSTRAINT fk_lease4_state FOREIGN KEY (state) "
+        "REFERENCES lease_state (state)",
+
+    "ALTER TABLE lease6 "
+        "ADD CONSTRAINT fk_lease6_state FOREIGN KEY (state) "
+        "REFERENCES lease_state (state)",
+
+    "ALTER TABLE lease6 "
+        "ADD CONSTRAINT fk_lease6_type FOREIGN KEY (lease_type) "
+        "REFERENCES lease6_types (lease_type)",
 
     "INSERT INTO lease_state VALUES (0, \"default\");",
     "INSERT INTO lease_state VALUES (1, \"declined\");",
