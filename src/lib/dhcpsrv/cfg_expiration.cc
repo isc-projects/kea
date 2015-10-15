@@ -40,13 +40,22 @@ const uint16_t CfgExpiration::LIMIT_MAX_RECLAIM_TIME = 10000;
 const uint16_t CfgExpiration::LIMIT_UNWARNED_RECLAIM_CYCLES =
     std::numeric_limits<uint16_t>::max();
 
-CfgExpiration::CfgExpiration()
+// Timers' names
+const std::string CfgExpiration::RECLAIM_EXPIRED_TIMER_NAME =
+    "reclaim-expired-leases";
+
+const std::string CfgExpiration::FLUSH_RECLAIMED_TIMER_NAME =
+    "flush-reclaimed-leases";
+
+CfgExpiration::CfgExpiration(const bool test_mode)
     : reclaim_timer_wait_time_(DEFAULT_RECLAIM_TIMER_WAIT_TIME),
-    flush_reclaimed_timer_wait_time_(DEFAULT_FLUSH_RECLAIMED_TIMER_WAIT_TIME),
-    hold_reclaimed_time_(DEFAULT_HOLD_RECLAIMED_TIME),
-    max_reclaim_leases_(DEFAULT_MAX_RECLAIM_LEASES),
-    max_reclaim_time_(DEFAULT_MAX_RECLAIM_TIME),
-    unwarned_reclaim_cycles_(DEFAULT_UNWARNED_RECLAIM_CYCLES) {
+      flush_reclaimed_timer_wait_time_(DEFAULT_FLUSH_RECLAIMED_TIMER_WAIT_TIME),
+      hold_reclaimed_time_(DEFAULT_HOLD_RECLAIMED_TIME),
+      max_reclaim_leases_(DEFAULT_MAX_RECLAIM_LEASES),
+      max_reclaim_time_(DEFAULT_MAX_RECLAIM_TIME),
+      unwarned_reclaim_cycles_(DEFAULT_UNWARNED_RECLAIM_CYCLES),
+      timer_mgr_(TimerMgr::instance()),
+      test_mode_(test_mode) {
 }
 
 void
@@ -101,8 +110,6 @@ CfgExpiration::rangeCheck(const int64_t value, const uint64_t max_value,
                   " value of '" << max_value << "'");
     }
 }
-
-
 
 }
 }

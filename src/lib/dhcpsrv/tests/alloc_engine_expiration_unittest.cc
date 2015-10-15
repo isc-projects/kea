@@ -250,6 +250,20 @@ public:
         ASSERT_NO_THROW(updateLease(lease_index));
     }
 
+    /// @brief Marks lease as expired-reclaimed.
+    ///
+    /// @param lease_index Lease index. Must be between 0 and
+    /// @c TEST_LEASES_NUM.
+    /// @param secs Offset of the expiration time since now. For example
+    /// a value of 2 would set the lease expiration time to 2 seconds ago.
+    void reclaim(const uint16_t lease_index, const time_t secs) {
+        ASSERT_GT(leases_.size(), lease_index);
+        leases_[lease_index]->cltt_ = time(NULL) - secs -
+            leases_[lease_index]->valid_lft_;
+        leases_[lease_index]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+        ASSERT_NO_THROW(updateLease(lease_index));
+    }
+
     /// @brief Declines specified lease
     ///
     /// Sets specified lease to declined state and sets its probation-period.
@@ -290,6 +304,13 @@ public:
     virtual void reclaimExpiredLeases(const size_t max_leases,
                                       const uint16_t timeout,
                                       const bool remove_lease) = 0;
+
+    /// @brief Wrapper method for removing expired-reclaimed leases.
+    ///
+    /// @param secs The minimum amount of time, expressed in seconds,
+    /// for the lease to be left in the "expired-reclaimed" state
+    /// before it can be removed.
+    virtual void deleteExpiredReclaimedLeases(const uint32_t secs) = 0;
 
     /// @brief Test selected leases using the specified algorithms.
     ///
@@ -575,7 +596,7 @@ public:
 
     /// @brief Test that leases can be reclaimed without being removed.
     void testReclaimExpiredLeasesUpdateState() {
-        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
             // Mark leases with even indexes as expired.
             if (evenLeaseIndex(i)) {
                 // The higher the index, the more expired the lease.
@@ -596,7 +617,7 @@ public:
 
     /// @brief Test that the leases may be reclaimed by being deleted.
     void testReclaimExpiredLeasesDelete() {
-        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
             // Mark leases with even indexes as expired.
             if (evenLeaseIndex(i)) {
                 // The higher the index, the more expired the lease.
@@ -618,7 +639,7 @@ public:
     /// @brief Test that it is possible to specify the limit for the number
     /// of reclaimed leases.
     void testReclaimExpiredLeasesLimit() {
-        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
             // Mark all leaes as expired. The higher the index the less
             // expired the lease.
             expire(i, 1000 - i);
@@ -631,7 +652,7 @@ public:
         BOOST_STATIC_ASSERT(TEST_LEASES_NUM % reclamation_group_size == 0);
 
         // Leases will be reclaimed in groups of 10.
-        for (int i = reclamation_group_size; i < TEST_LEASES_NUM;
+        for (unsigned int i = reclamation_group_size; i < TEST_LEASES_NUM;
              i += reclamation_group_size) {
 
             // Reclaim 10 most expired leases out of TEST_LEASES_NUM. Since
@@ -659,7 +680,7 @@ public:
         // DNS must be started for the D2 client to accept NCRs.
         ASSERT_NO_THROW(enableDDNS());
 
-        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
             // Expire all leases with even indexes.
             if (evenLeaseIndex(i)) {
                 // The higher the index, the more expired the lease.
@@ -688,7 +709,7 @@ public:
         // DNS must be started for the D2 client to accept NCRs.
         ASSERT_NO_THROW(enableDDNS());
 
-        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
             // Expire only leases with even indexes.
             if (evenLeaseIndex(i)) {
                 // The higher the index, the more expired the lease.
@@ -700,7 +721,7 @@ public:
         BOOST_STATIC_ASSERT(TEST_LEASES_NUM % reclamation_group_size == 0);
 
         // Leases will be reclaimed in groups of 10
-        for (int i = 10; i < TEST_LEASES_NUM;  i += reclamation_group_size) {
+        for (unsigned int i = 10; i < TEST_LEASES_NUM;  i += reclamation_group_size) {
             // Reclaim 10 most expired leases. Note that the leases with the
             // higher index are more expired. For example, if the
             // TEST_LEASES_NUM is equal to 100, the most expired lease will
@@ -806,7 +827,7 @@ public:
     /// @brief This test verfies that callouts are executed for each expired
     /// lease when installed.
     void testReclaimExpiredLeasesHooks() {
-        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
             if (evenLeaseIndex(i)) {
                 expire(i, 1000 - i);
             }
@@ -836,7 +857,7 @@ public:
     /// @brief This test verfies that callouts are executed for each expired
     /// lease and that the lease is not reclaimed when skip flag is set.
     void testReclaimExpiredLeasesHooksWithSkip() {
-        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
             if (evenLeaseIndex(i)) {
                 expire(i, 1000 - i);
             }
@@ -866,7 +887,7 @@ public:
     /// the execution of the lease reclamation routine.
     void testReclaimExpiredLeasesTimeout(const uint16_t timeout) {
         // Leases are segregated from the most expired to the least expired.
-        for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
             expire(i, 2000 - i);
         }
 
@@ -903,6 +924,27 @@ public:
         EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes,
                                LowerBound(theoretical_reclaimed + 1),
                                UpperBound(TEST_LEASES_NUM)));
+    }
+
+    /// @brief This test verifies that expired-reclaimed leases are removed
+    /// from the lease database.
+    void testDeleteExpiredReclaimedLeases() {
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
+            // Mark leases with even indexes as expired.
+            if (evenLeaseIndex(i)) {
+                // The higher the index, the more expired the lease.
+                reclaim(i, 10 + i);
+            }
+        }
+
+        // Run leases reclamation routine on all leases. This should result
+        // in removal of all leases with even indexes.
+        ASSERT_NO_THROW(deleteExpiredReclaimedLeases(10));
+
+        // Leases with odd indexes shouldn't be removed from the database.
+        EXPECT_TRUE(testLeases(&leaseExists, &oddLeaseIndex));
+        // Leases with even indexes should have been removed.
+        EXPECT_TRUE(testLeases(&leaseDoesntExist, &evenLeaseIndex));
     }
 
     /// @brief Test that declined expired leases can be removed.
@@ -1101,6 +1143,15 @@ public:
         engine_->reclaimExpiredLeases6(max_leases, timeout, remove_lease);
     }
 
+    /// @brief Wrapper method for removing expired-reclaimed leases.
+    ///
+    /// @param secs The minimum amount of time, expressed in seconds,
+    /// for the lease to be left in the "expired-reclaimed" state
+    /// before it can be removed.
+    virtual void deleteExpiredReclaimedLeases(const uint32_t secs) {
+        engine_->deleteExpiredReclaimedLeases6(secs);
+    }
+
     /// @brief Test that statistics is updated when leases are reclaimed.
     void testReclaimExpiredLeasesStats();
 
@@ -1189,7 +1240,7 @@ ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
     // This test requires that the number of leases is an even number.
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
 
-    for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+    for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
         // Mark all leaes as expired. The higher the index the less
         // expired the lease.
         expire(i, 1000 - i);
@@ -1202,7 +1253,7 @@ ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
 
     // Leases will be reclaimed in groups of 8.
     const size_t reclamation_group_size = 8;
-    for (int i = reclamation_group_size; i < TEST_LEASES_NUM;
+    for (unsigned int i = reclamation_group_size; i < TEST_LEASES_NUM;
          i += reclamation_group_size) {
 
         // Reclaim 8 most expired leases out of TEST_LEASES_NUM.
@@ -1298,9 +1349,16 @@ TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesShortTimeout) {
     testReclaimExpiredLeasesTimeout(1);
 }
 
+// This test verifies that expired-reclaimed leases are removed from the
+// lease database.
+TEST_F(ExpirationAllocEngine6Test, deleteExpiredReclaimedLeases) {
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 10);
+    testDeleteExpiredReclaimedLeases();
+}
+
 /// This test verifies that @ref AllocEngine::reclaimExpiredLeases6 properly
 /// handles declined leases that have expired in case when it is told to
-/// remove leases.
+/// remove leases.}
 TEST_F(ExpirationAllocEngine6Test, reclaimDeclined1) {
     testReclaimDeclined(true);
 }
@@ -1380,6 +1438,15 @@ public:
                                       const uint16_t timeout,
                                       const bool remove_lease) {
         engine_->reclaimExpiredLeases4(max_leases, timeout, remove_lease);
+    }
+
+    /// @brief Wrapper method for removing expired-reclaimed leases.
+    ///
+    /// @param secs The minimum amount of time, expressed in seconds,
+    /// for the lease to be left in the "expired-reclaimed" state
+    /// before it can be removed.
+    virtual void deleteExpiredReclaimedLeases(const uint32_t secs) {
+        engine_->deleteExpiredReclaimedLeases4(secs);
     }
 
     /// @brief Lease algorithm checking if NCR has been generated from client
@@ -1539,7 +1606,7 @@ ExpirationAllocEngine4Test::testReclaimExpiredLeasesWithDDNSAndClientId() {
     // DNS must be started for the D2 client to accept NCRs.
     ASSERT_NO_THROW(enableDDNS());
 
-    for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+    for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
         // Set client identifiers for leases with even indexes only.
         if (evenLeaseIndex(i)) {
             setUniqueClientId(i);
@@ -1568,7 +1635,7 @@ ExpirationAllocEngine4Test::testReclaimExpiredLeasesStats() {
     // This test requires that the number of leases is an even number.
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
 
-    for (int i = 0; i < TEST_LEASES_NUM; ++i) {
+    for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
         // Mark all leaes as expired. The higher the index the less
         // expired the lease.
         expire(i, 1000 - i);
@@ -1580,7 +1647,7 @@ ExpirationAllocEngine4Test::testReclaimExpiredLeasesStats() {
 
     // Leases will be reclaimed in groups of 8.
     const size_t reclamation_group_size = 8;
-    for (int i = reclamation_group_size; i < TEST_LEASES_NUM;
+    for (unsigned int i = reclamation_group_size; i < TEST_LEASES_NUM;
          i += reclamation_group_size) {
 
         // Reclaim 8 most expired leases out of TEST_LEASES_NUM.
@@ -1681,6 +1748,13 @@ TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesShortTimeout) {
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 5);
     // Reclaim leases with the 1ms timeout.
     testReclaimExpiredLeasesTimeout(1);
+}
+
+// This test verifies that expired-reclaimed leases are removed from the
+// lease database.
+TEST_F(ExpirationAllocEngine4Test, deleteExpiredReclaimedLeases) {
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 10);
+    testDeleteExpiredReclaimedLeases();
 }
 
 /// This test verifies that @ref AllocEngine::reclaimExpiredLeases4 properly
