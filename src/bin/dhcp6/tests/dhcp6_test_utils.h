@@ -39,6 +39,7 @@
 #include <list>
 
 namespace isc {
+namespace dhcp {
 namespace test {
 
 /// @brief "naked" Dhcpv6Srv class that exposes internal members
@@ -290,11 +291,28 @@ public:
     std::string valid_iface_;
 };
 
+// We need to pass one reference to the Dhcp6Client, which is defined in
+// dhcp6_client.h. That header includes this file. To avoid circular
+// dependencies, we use forward declaration here.
+class Dhcp6Client;
+
 // Provides suport for tests against a preconfigured subnet6
 // extends upon NakedDhcp6SrvTest
 class Dhcpv6SrvTest : public NakedDhcpv6SrvTest {
 public:
-    /// Name of the server-id file (used in server-id tests)
+    /// @brief Specifies expected outcome
+    enum ExpectedResult {
+        SHOULD_PASS, // pass = accept decline, move lease to declined state.
+        SHOULD_FAIL  // fail = reject the decline
+    };
+
+    /// @brief Specifies what address should the client include in its Decline
+    enum AddressInclusion {
+        VALID_ADDR, // Client will include its own, valid address
+        BOGUS_ADDR, // Client will include an address it doesn't own
+        NO_ADDR,    // Client will send empty IA_NA (without address)
+        NO_IA       // Client will not send IA_NA at all
+    };
 
     /// @brief Constructor that initializes a simple default configuration
     ///
@@ -437,6 +455,26 @@ public:
     bool compareOptions(const isc::dhcp::OptionPtr& option1,
                         const isc::dhcp::OptionPtr& option2);
 
+    /// @brief Tests if the acquired lease is or is not declined.
+    ///
+    /// @param client Dhcp6Client instance
+    /// @param duid1 DUID used during lease acquisition
+    /// @param iaid1 IAID used during lease acquisition
+    /// @param duid2 DUID used during Decline exchange
+    /// @param iaid2 IAID used during Decline exchange
+    /// @param addr_type specify what sort of address the client should
+    ///        include (its own, a bogus one or no address at all)
+    /// @param expected_result SHOULD_PASS if the lease is expected to
+    /// be successfully declined, or SHOULD_FAIL if the lease is expected
+    /// to not be declined.
+    void acquireAndDecline(Dhcp6Client& client,
+                           const std::string& duid1,
+                           const uint32_t iaid1,
+                           const std::string& duid2,
+                           const uint32_t iaid2,
+                           AddressInclusion addr_type,
+                           ExpectedResult expected_result);
+
     /// @brief Performs basic (positive) RENEW test
     ///
     /// See renewBasic and pdRenewBasic tests for detailed explanation.
@@ -520,7 +558,8 @@ public:
     NakedDhcpv6Srv srv_;
 };
 
-}; // end of isc::test namespace
+}; // end of isc::dhcp::test namespace
+}; // end of isc::dhcp namespace
 }; // end of isc namespace
 
 #endif // DHCP6_TEST_UTILS_H

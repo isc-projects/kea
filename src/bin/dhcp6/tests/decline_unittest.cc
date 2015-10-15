@@ -18,6 +18,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
+#include <dhcpsrv/lease.h>
 #include <stats/stats_mgr.h>
 
 using namespace isc;
@@ -25,7 +26,6 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
-using namespace isc::test;
 using namespace isc::stats;
 
 namespace {
@@ -56,38 +56,6 @@ const char* DECLINE_CONFIGS[] = {
 class DeclineTest : public Dhcpv6MessageTest {
 public:
 
-    /// @brief Specifies expected outcome
-    enum ExpectedResult {
-        SHOULD_PASS, // pass = accept decline, move lease to declined state.
-        SHOULD_FAIL  // fail = reject the decline
-    };
-
-    /// @brief Specifies what address should the client include in its Decline
-    enum AddressInclusion {
-        VALID_ADDR, // Client will include its own, valid address
-        BOGUS_ADDR, // Client will include an address it doesn't own
-        NO_ADDR,    // Client will send empty IA_NA (without address)
-        NO_IA       // Client will not send IA_NA at all
-    };
-
-    /// @brief Tests if the acquired lease is or is not declined.
-    ///
-    /// @param duid1 DUID used during lease acquisition
-    /// @param iaid1 IAID used during lease acquisition
-    /// @param duid2 DUID used during Decline exchange
-    /// @param iaid2 IAID used during Decline exchange
-    /// @param addr_type specify what sort of address the client should
-    ///        include (its own, a bogus one or no address at all)
-    /// @param expected_result SHOULD_PASS if the lease is expected to
-    /// be successfully declined, or SHOULD_FAIL if the lease is expected
-    /// to not be declined.
-    void acquireAndDecline(const std::string& duid1,
-                           const uint32_t iaid1,
-                           const std::string& duid2,
-                           const uint32_t iaid2,
-                           AddressInclusion addr_type,
-                           ExpectedResult expected_result);
-
     /// @brief Constructor.
     ///
     /// Sets up fake interfaces.
@@ -100,17 +68,23 @@ public:
 
 };
 
+};
+
+namespace isc {
+namespace dhcp {
+namespace test {
+
 void
-DeclineTest::acquireAndDecline(const std::string& duid1,
-                               const uint32_t iaid1,
-                               const std::string& duid2,
-                               const uint32_t iaid2,
-                               AddressInclusion addr_type,
-                               ExpectedResult expected_result) {
+Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
+                                 const std::string& duid1,
+                                 const uint32_t iaid1,
+                                 const std::string& duid2,
+                                 const uint32_t iaid2,
+                                 AddressInclusion addr_type,
+                                 ExpectedResult expected_result) {
     // Set this global statistic explicitly to zero.
     StatsMgr::instance().setValue("declined-addresses", static_cast<int64_t>(0));
 
-    Dhcp6Client client;
     client.setDUID(duid1);
     client.useNA(iaid1);
 
@@ -135,7 +109,7 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
     // Make sure that the client has acquired NA lease.
     std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(1, leases_client_na.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(iaid1));
 
     // Remember the acquired address.
     IOAddress acquired_address = leases_client_na[0].addr_;
@@ -214,19 +188,25 @@ DeclineTest::acquireAndDecline(const std::string& duid1,
 
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, basic) {
-    acquireAndDecline("01:02:03:04:05:06", 1234,
-                      "01:02:03:04:05:06", 1234,
-                      VALID_ADDR, SHOULD_PASS);
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
+                      1234, VALID_ADDR, SHOULD_PASS);
 }
+
+};
+};
+};
+
+namespace {
 
 // This test verifies the decline is rejected in the following case:
 // - Client acquires new lease using duid, iaid
 // - Client sends the DECLINE with duid, iaid, but uses wrong address.
 // - The server rejects Decline due to address mismatch
 TEST_F(DeclineTest, addressMismatch) {
-    acquireAndDecline("01:02:03:04:05:06", 1234,
-                      "01:02:03:04:05:06", 1234,
-                      BOGUS_ADDR, SHOULD_FAIL);
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
+                      1234, BOGUS_ADDR, SHOULD_FAIL);
 }
 
 // This test verifies the decline is rejected in the following case:
@@ -234,9 +214,9 @@ TEST_F(DeclineTest, addressMismatch) {
 // - Client sends the DECLINE with duid, iaid2
 // - The server rejects Decline due to IAID mismatch
 TEST_F(DeclineTest, iaidMismatch) {
-    acquireAndDecline("01:02:03:04:05:06", 1234,
-                      "01:02:03:04:05:06", 1235,
-                      VALID_ADDR, SHOULD_FAIL);
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
+                      1235, VALID_ADDR, SHOULD_FAIL);
 }
 
 // This test verifies the decline correctness in the following case:
@@ -244,7 +224,8 @@ TEST_F(DeclineTest, iaidMismatch) {
 // - Client sends the DECLINE using duid2, iaid
 // - The server rejects the Decline due to DUID mismatch
 TEST_F(DeclineTest, duidMismatch) {
-    acquireAndDecline("01:02:03:04:05:06", 1234,
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:07", 1234,
                       VALID_ADDR, SHOULD_FAIL);
 }
@@ -255,7 +236,8 @@ TEST_F(DeclineTest, duidMismatch) {
 //   include the address in it
 // - The server rejects the Decline due to missing address
 TEST_F(DeclineTest, noAddrsSent) {
-    acquireAndDecline("01:02:03:04:05:06", 1234,
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:06", 1234,
                       NO_ADDR, SHOULD_FAIL);
 }
@@ -266,7 +248,8 @@ TEST_F(DeclineTest, noAddrsSent) {
 //   include IA_NA at all
 // - The server rejects the Decline due to missing IA_NA
 TEST_F(DeclineTest, noIAs) {
-    acquireAndDecline("01:02:03:04:05:06", 1234,
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:06", 1234,
                       NO_IA, SHOULD_FAIL);
 }
