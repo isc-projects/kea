@@ -1,3 +1,8 @@
+1028.	[func]		marcin
+	Expired leases are processed periodically according to the
+	server configuration.
+	(Trac #3975, git 3bd8891c0b9cb7dc504fa69251610996775cefbf)
+
 1027.	[func]		tomek
 	Expired declined IPv6 leases can now be reclaimed (returned to the
 	available pool) after probation	period elapses.
