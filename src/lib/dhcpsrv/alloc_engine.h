@@ -505,31 +505,8 @@ public:
     ///   "expired-reclaimed" or removing it from the lease databse,
     /// - updating statistics of assigned and reclaimed leases
     ///
-    /// @param max_leases Maximum number of leases to be reclaimed.
-    /// @param timeout Maximum amount of time that the reclaimation routine
-    /// may be processing expired leases, expressed in milliseconds.
-    /// @param remove_lease A boolean value indicating if the lease should
-    /// be removed when it is reclaimed (if true) or it should be left in the
-    /// database in the "expired-reclaimed" state (if false).
-    void reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeout,
-                               const bool remove_lease);
-
-    /// @brief Reclaims expired IPv4 leases.
-    ///
-    /// This method retrieves a collection of expired leases and reclaims them.
-    /// See http://kea.isc.org/wiki/LeaseExpirationDesign#LeasesReclamationRoutine
-    /// for the details.
-    ///
-    /// This method is executed periodically to act upon expired leases. This
-    /// includes for each lease:
-    /// - executing "lease_expire4" hook,
-    /// - removing DNS record for a lease,
-    /// - reclaiming a lease in the database, i.e. setting its state to
-    ///   "expired-reclaimed" or removing it from the lease databse,
-    /// - updating statistics of assigned and reclaimed leases
-    ///
     /// Note: declined leases fall under the same expiration/reclaimation
-    /// processing as normal leases. In principle, it would more elegant
+    /// processing as normal leases. In principle, it would be more elegant
     /// to have a separate processing for declined leases reclaimation. However,
     /// due to performance reasons we decided to use them together. Several
     /// aspects were taken into consideration. First, normal leases are expected
@@ -547,7 +524,7 @@ public:
     /// declined state). Therefore remove_leases parameter is ignored for
     /// declined leases. They are always removed.
     ///
-    /// Also, for delined leases @ref reclaimDeclined is called. It conducts
+    /// Also, for declined leases @ref reclaimDeclined is called. It conducts
     /// several declined specific operation (extra log entry, stats dump,
     /// hooks).
     ///
@@ -557,8 +534,79 @@ public:
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the
     /// database in the "expired-reclaimed" state (if false).
+    /// @param max_unwarned_cycles A number of consecutive processing cycles
+    /// of expired leases, after which the system issues a warning if there
+    /// are still expired leases in the database. If this value is 0, the
+    /// warning is never issued.
+    void reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeout,
+                               const bool remove_lease,
+                               const uint16_t max_unwarned_cycles = 0);
+
+    /// @brief Deletes reclaimed leases expired more than specified amount
+    /// of time ago.
+    ///
+    /// @param secs Minimum number of seconds after which the lease can be
+    /// deleted.
+    void deleteExpiredReclaimedLeases6(const uint32_t secs);
+
+    /// @brief Reclaims expired IPv4 leases.
+    ///
+    /// This method retrieves a collection of expired leases and reclaims them.
+    /// See http://kea.isc.org/wiki/LeaseExpirationDesign#LeasesReclamationRoutine
+    /// for the details.
+    ///
+    /// This method is executed periodically to act upon expired leases. This
+    /// includes for each lease:
+    /// - executing "lease_expire4" hook,
+    /// - removing DNS record for a lease,
+    /// - reclaiming a lease in the database, i.e. setting its state to
+    ///   "expired-reclaimed" or removing it from the lease databse,
+    /// - updating statistics of assigned and reclaimed leases
+    ///
+    /// Note: declined leases fall under the same expiration/reclaimation
+    /// processing as normal leases. In principle, it would be more elegant
+    /// to have a separate processing for declined leases reclaimation. However,
+    /// due to performance reasons we decided to use them together. Several
+    /// aspects were taken into consideration. First, normal leases are expected
+    /// to expire frequently, so in a typical deployment this method will have
+    /// some leases to process. Second, declined leases are expected to be very
+    /// rare event, so in most cases there won't be any declined expired leases.
+    /// Third, the calls to LeaseMgr to obtain all leases of specific expiration
+    /// criteria are expensive, so it is better to have one call rather than
+    /// two, especially if one of those calls is expected to usually return no
+    /// leases.
+    ///
+    /// It doesn't make sense to retain declined leases that are reclaimed,
+    /// because those leases don't contain any useful information (all client
+    /// identifying information was stripped when the leave was moved to the
+    /// declined state). Therefore remove_leases parameter is ignored for
+    /// declined leases. They are always removed.
+    ///
+    /// Also, for declined leases @ref reclaimDeclined is called. It conducts
+    /// several declined specific operation (extra log entry, stats dump,
+    /// hooks).
+    ///
+    /// @param max_leases Maximum number of leases to be reclaimed.
+    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// may be processing expired leases, expressed in milliseconds.
+    /// @param remove_lease A boolean value indicating if the lease should
+    /// be removed when it is reclaimed (if true) or it should be left in the
+    /// database in the "expired-reclaimed" state (if false).
+    /// @param max_unwarned_cycles A number of consecutive processing cycles
+    /// of expired leases, after which the system issues a warning if there
+    /// are still expired leases in the database. If this value is 0, the
+    /// warning is never issued.
     void reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
-                               const bool remove_lease);
+                               const bool remove_lease,
+                               const uint16_t max_unwarned_cycles = 0);
+
+    /// @brief Deletes reclaimed leases expired more than specified amount
+    /// of time ago.
+    ///
+    /// @param secs Minimum number of seconds after which the lease can be
+    /// deleted.
+    void deleteExpiredReclaimedLeases4(const uint32_t secs);
+
 
     /// @brief Attempts to find appropriate host reservation.
     ///
@@ -772,7 +820,7 @@ private:
                                 const boost::function<void (const LeasePtrType&)>&
                                 lease_update_fun) const;
 
-    /// @brief Conducts steps necessary for reclaiming declined lease.
+    /// @brief Conducts steps necessary for reclaiming declined IPv4 lease.
     ///
     /// These are the additional steps required when recoving a declined lease:
     /// - bump decline recovered stat
@@ -781,6 +829,16 @@ private:
     ///
     /// @param lease Lease to be reclaimed from Declined state
     void reclaimDeclined(const Lease4Ptr& lease);
+
+    /// @brief Conducts steps necessary for reclaiming declined IPv6 lease.
+    ///
+    /// These are the additional steps required when recoving a declined lease:
+    /// - bump decline recovered stat
+    /// - log lease recovery
+    /// - call hook (@todo)
+    ///
+    /// @param lease Lease to be reclaimed from Declined state
+    void reclaimDeclined(const Lease6Ptr& lease);
 
 public:
 
@@ -1219,6 +1277,16 @@ private:
     /// @return true if the lease lifetime has been extended, false
     /// otherwise.
     bool conditionalExtendLifetime(Lease& lease) const;
+
+private:
+
+    /// @brief Number of consecutive DHCPv4 leases' reclamations after
+    /// which there are still expired leases in the database.
+    uint16_t incomplete_v4_reclamations_;
+
+    /// @brief Number of consecutive DHCPv6 leases' reclamations after
+    /// which there are still expired leases in the database.
+    uint16_t incomplete_v6_reclamations_;
 
 };
 

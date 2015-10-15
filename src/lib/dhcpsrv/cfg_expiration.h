@@ -15,6 +15,9 @@
 #ifndef CFG_EXPIRATION_H
 #define CFG_EXPIRATION_H
 
+#include <asiolink/interval_timer.h>
+#include <dhcpsrv/timer_mgr.h>
+#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <stdint.h>
 #include <string>
@@ -111,10 +114,26 @@ public:
 
     //@}
 
+    /// @name Timers' names
+    //@{
+
+    /// @brief Name of the timer for reclaiming expired leases.
+    static const std::string RECLAIM_EXPIRED_TIMER_NAME;
+
+    /// @brief Name of the timer for flushing relclaimed leases.
+    static const std::string FLUSH_RECLAIMED_TIMER_NAME;
+
+    //@}
+
     /// @brief Constructor.
     ///
     /// Sets all parameters to their defaults.
-    CfgExpiration();
+    ///
+    /// @param test_mode Indicates if the instance should be created in the
+    /// test mode. In this mode the intervals for the timers are considered to
+    /// be specified in milliseconds, rather than seconds. This facilitates
+    /// testing execution of timers without the delays.
+    CfgExpiration(const bool test_mode = false);
 
     /// @brief Returns reclaim-timer-wait-time
     uint16_t getReclaimTimerWaitTime() const {
@@ -176,6 +195,42 @@ public:
     /// @param unwarned_reclaim_cycles New value.
     void setUnwarnedReclaimCycles(const int64_t unwarned_reclaim_cycles);
 
+    /// @brief Setup timers for the reclamation of expired leases according
+    /// to the configuration parameters.
+    ///
+    /// This method includes the logic for setting the interval timers
+    /// performing the reclamation of the expired leases and the removal
+    /// of expired-reclaimed leases.
+    ///
+    /// The following is the sample code illustrating how to call this function
+    /// to setup the leases reclamation for the DHCPv4 server.
+    /// @code
+    ///     CfgExpiration cfg;
+    ///
+    ///     (set some cfg values here)
+    ///
+    ///     AllocEnginePtr alloc_engine(new AllocEngine(...));
+    ///     cfg.setupTimers(&AllocEngine::reclaimExpiredLeases4,
+    ///                     &AllocEngine::deleteExpiredReclaimedLeases4,
+    ///                     alloc_engine.get());
+    /// @endcode
+    ///
+    /// @param reclaim_fun Pointer to the leases reclamation routine.
+    /// @param delete_fun Pointer to the function which removes the
+    /// expired-reclaimed leases from the lease database.
+    /// @param instance_ptr Pointer to the instance of the object which
+    /// implements the lease reclamation routine. Typically it will be
+    /// the pointer to the @c AllocEngine. In case of unit tests it
+    /// will be a pointer to some test class which provides stub
+    /// implementation of the leases reclamation routines.
+    /// @tparam Instance Instance of the object in which both functions
+    /// are implemented.
+    template<typename Instance>
+    void setupTimers(void (Instance::*reclaim_fun)(const size_t, const uint16_t,
+                                                   const bool, const uint16_t),
+                     void (Instance::*delete_fun)(const uint32_t),
+                     Instance* instance_ptr) const;
+
 private:
 
     /// @brief Checks if the value being set by one of the modifiers is
@@ -209,6 +264,11 @@ private:
     /// @brief unwarned-reclaim-cycles.
     uint16_t unwarned_reclaim_cycles_;
 
+    /// @brief Pointer to the instance of the Timer Manager.
+    TimerMgrPtr timer_mgr_;
+
+    /// @brief Indicates if the instance is in the test mode.
+    bool test_mode_;
 };
 
 /// @name Pointers to the @c CfgExpiration objects.
@@ -220,6 +280,59 @@ typedef boost::shared_ptr<CfgExpiration> CfgExpirationPtr;
 typedef boost::shared_ptr<const CfgExpiration> ConstCfgExpirationPtr;
 
 //@}
+
+template<typename Instance>
+void
+CfgExpiration::setupTimers(void (Instance::*reclaim_fun)(const size_t,
+                                                         const uint16_t,
+                                                         const bool,
+                                                         const uint16_t),
+                           void (Instance::*delete_fun)(const uint32_t),
+                           Instance* instance_ptr) const {
+    // One of the parameters passed to the leases' reclamation routine
+    // is a boolean value which indicates if reclaimed leases should
+    // be removed by the leases' reclamation routine. This is the case
+    // when the timer for flushing reclaimed leases is set to 0
+    // (disabled).
+    const bool flush_timer_disabled = (getFlushReclaimedTimerWaitTime() == 0);
+
+    // If the timer interval for the leases reclamation is non-zero
+    // the timer will be scheduled.
+    if (getReclaimTimerWaitTime() > 0) {
+        // In the test mode the interval is expressed in milliseconds.
+        // If this is not the test mode, the interval is in seconds.
+        const long reclaim_interval = test_mode_ ? getReclaimTimerWaitTime() :
+            1000 * getReclaimTimerWaitTime();
+        // Register timer for leases' reclamation routine.
+        timer_mgr_->registerTimer(RECLAIM_EXPIRED_TIMER_NAME,
+                                  boost::bind(reclaim_fun, instance_ptr,
+                                              getMaxReclaimLeases(),
+                                              getMaxReclaimTime(),
+                                              flush_timer_disabled,
+                                              getUnwarnedReclaimCycles()),
+                                  reclaim_interval,
+                                  asiolink::IntervalTimer::ONE_SHOT);
+        timer_mgr_->setup(RECLAIM_EXPIRED_TIMER_NAME);
+    }
+
+    // If the interval for the timer flusing expired-reclaimed leases
+    // is set we will schedule the timer.
+    if (!flush_timer_disabled) {
+        // The interval is specified in milliseconds if we're in the test mode.
+        // It is specified in seconds otherwise.
+        const long flush_interval = test_mode_ ?
+            getFlushReclaimedTimerWaitTime() :
+            1000 * getFlushReclaimedTimerWaitTime();
+        // Register and setup the timer.
+        timer_mgr_->registerTimer(FLUSH_RECLAIMED_TIMER_NAME,
+                                  boost::bind(delete_fun, instance_ptr,
+                                              getHoldReclaimedTime()),
+                                  flush_interval,
+                                  asiolink::IntervalTimer::ONE_SHOT);
+        timer_mgr_->setup(FLUSH_RECLAIMED_TIMER_NAME);
+    }
+}
+
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

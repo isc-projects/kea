@@ -12,7 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/fork_detector.h>
 #include <util/threads/thread.h>
 #include <util/threads/sync.h>
 
@@ -75,8 +74,7 @@ public:
         // and the creating thread needs to release it.
         waiting_(2),
         main_(main),
-        exception_(false),
-        fork_detector_()
+        exception_(false)
     {}
     // Another of the waiting events is done. If there are no more, delete
     // impl.
@@ -127,8 +125,6 @@ public:
     Mutex mutex_;
     // Which thread are we talking about anyway?
     pthread_t tid_;
-    // Class to detect if we're in the child or parent process.
-    ForkDetector fork_detector_;
 };
 
 Thread::Thread(const boost::function<void ()>& main) :
@@ -152,15 +148,8 @@ Thread::Thread(const boost::function<void ()>& main) :
 
 Thread::~Thread() {
     if (impl_ != NULL) {
-
-        int result = pthread_detach(impl_->tid_);
-        // If the error indicates that thread doesn't exist but we're
-        // in child process (after fork) it is expected. We should
-        // not cause an assert.
-        if (result == ESRCH && !impl_->fork_detector_.isParent()) {
-            result = 0;
-        }
-
+        // In case we didn't call wait yet
+        const int result = pthread_detach(impl_->tid_);
         Impl::done(impl_);
         impl_ = NULL;
         // If the detach ever fails, something is screwed rather badly.
@@ -175,20 +164,13 @@ Thread::wait() {
                   "Wait called and no thread to wait for");
     }
 
-    // Was there an exception in the thread?
-    scoped_ptr<UncaughtException> ex;
-
     const int result = pthread_join(impl_->tid_, NULL);
     if (result != 0) {
-        // We will not throw exception if the error indicates that the
-        // thread doesn't exist and we are in the child process (forked).
-        // For the child process it is expected that the thread is not
-        // re-created when we fork.
-        if (result != ESRCH || impl_->fork_detector_.isParent()) {
-            isc_throw(isc::InvalidOperation, std::strerror(result));
-        }
+        isc_throw(isc::InvalidOperation, std::strerror(result));
     }
 
+    // Was there an exception in the thread?
+    scoped_ptr<UncaughtException> ex;
     // Something here could in theory throw. But we already terminated the thread, so
     // we need to make sure we are in consistent state even in such situation (like
     // releasing the mutex and impl_).

@@ -48,7 +48,14 @@ consider reducing the lease lifetime.  In this way, addresses allocated
 to clients that are no longer active on the network will become available
 sooner.
 
-% ALLOC_ENGINE_V4_DECLINED_RECOVERED Address %1 was recovered after %2 seconds of probation-period
+% ALLOC_ENGINE_V4_DECLINED_RECOVERED IPv4 address %1 was recovered after %2 seconds of probation-period
+This informational message indicates that the specified address was reported
+as duplicate (client sent DECLINE) and the server marked this address as
+unvailable for a period of time. This time now has elapsed and the address
+has been returned to the available pool. This step concludes decline recovery
+process.
+
+% ALLOC_ENGINE_V6_DECLINED_RECOVERED IPv6 address %1 was recovered after %2 seconds of probation-period
 This informational message indicates that the specified address was reported
 as duplicate (client sent DECLINE) and the server marked this address as
 unvailable for a period of time. This time now has elapsed and the address
@@ -83,7 +90,23 @@ the number of reclaimed leases may also be limited by the timeout
 value, configured with 'max-reclaim-time'. The message includes the
 number of reclaimed leases and the total time.
 
-% ALLOC_ENGINE_V4_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 seconds)
+% ALLOC_ENGINE_V4_LEASES_RECLAMATION_SLOW expired leases still exist after %1 reclamations
+This warning message is issued when the server has been unable to
+reclaim all expired leases in a specified number of consecutive
+attempts. This indicates that the value of "reclaim-timer-wait-time"
+may be too high. However, if this is just a short burst of leases'
+expirations the value does not have to be modified and the server
+should deal with this in subsequent reclamation attempts. If this
+is a result of a permanent increase of the server load, the value
+of "reclaim-timer-wait-time" should be decreased, or the
+values of "max-reclaim-leases" and "max-reclaim-time" should be
+increased to allow processing more leases in a single cycle.
+Alternatively, these values may be set to 0 to remove the
+limitations on the number of leases and duration. However, this
+may result in longer periods of server's unresponsiveness to
+DHCP packets, while it processes the expired leases.
+
+% ALLOC_ENGINE_V4_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 milliseconds)
 This debug message is issued when the allocation engine starts the
 reclamation of the expired leases. The maximum number of leases to
 be reclaimed and the timeout is included in the message. If any of
@@ -96,6 +119,10 @@ reclamation will now be interrupted and all leases which haven't
 been reclaimed, because of the timeout, will be reclaimed when the
 next scheduled reclamation is started. The argument is the timeout
 value expressed in milliseconds.
+
+% ALLOC_ENGINE_V4_NO_MORE_EXPIRED_LEASES all expired leases have been reclaimed
+This debug message is issued when the server reclaims all expired
+DHCPv4 leases in the database.
 
 % ALLOC_ENGINE_V4_OFFER_EXISTING_LEASE allocation engine will try to offer existing lease to the client %1
 This message is issued when the allocation engine determines that
@@ -117,6 +144,25 @@ This message is issued when the allocation engine will try to
 offer the lease specified in the hint. This situation may occur
 when: (a) client doesn't have any reservations, (b) client has
 reservation but the reserved address is leased to another client.
+
+% ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE begin deletion of reclaimed leases expired more than %1 seconds ago
+This debug message is issued when the allocation engine begins
+deletion of the reclaimed leases which have expired more than
+a specified number of seconds ago. This operation is triggered
+periodically according to the "flush-reclaimed-timer-wait-time"
+parameter. The "hold-reclaimed-time" parameter defines a number
+of seconds for which the leases are stored before they are
+removed.
+
+% ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_COMPLETE successfully deleted %1 expired-reclaimed leases
+This debug message is issued when the server successfully deletes
+"expired-reclaimed" leases from the lease database. The number of
+deleted leases is included in the log message.
+
+% ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_FAILED deletion of expired-reclaimed leases failed: %1
+This error message is issued when the deletion of "expired-reclaimed"
+leases from the database failed. The error message is appended to
+the log message.
 
 % ALLOC_ENGINE_V4_REQUEST_ADDRESS_RESERVED %1: requested address %2 is reserved
 This message is issued when the allocation engine refused to
@@ -149,7 +195,7 @@ This message is issued when the client is requesting or has a
 reservation for an address which is in use. The first argument
 includes the client identification information.
 
-% ALLOC_ENGINE_V4_REQUEST_OUT_OF_POOL client %1, which doesn't have reservation, requested address out of the dynamic pool
+% ALLOC_ENGINE_V4_REQUEST_OUT_OF_POOL client %1, which doesn't have a reservation, requested address %2 out of the dynamic pool
 This message is issued when the client has requested allocation
 of the address which doesn't belong to any address pool from
 which addresses are dynamically allocated. The client also
@@ -309,7 +355,23 @@ the number of reclaimed leases may also be limited by the timeout
 value, configured with 'max-reclaim-time'. The message includes the
 number of reclaimed leases and the total time.
 
-% ALLOC_ENGINE_V6_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 seconds)
+% ALLOC_ENGINE_V6_LEASES_RECLAMATION_SLOW expired leases still exist after %1 reclamations
+This warning message is issued when the server has been unable to
+reclaim all expired leases in a specified number of consecutive
+attempts. This indicates that the value of "reclaim-timer-wait-time"
+may be too high. However, if this is just a short burst of leases'
+expirations the value does not have to be modified and the server
+should deal with this in subsequent reclamation attempts. If this
+is a result of a permanent increase of the server load, the value
+of "reclaim-timer-wait-time" should be decreased, or the
+values of "max-reclaim-leases" and "max-reclaim-time" should be
+increased to allow processing more leases in a single cycle.
+Alternatively, these values may be set to 0 to remove the
+limitations on the number of leases and duration. However, this
+may result in longer periods of server's unresponsiveness to
+DHCP packets, while it processes the expired leases.
+
+% ALLOC_ENGINE_V6_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 milliseconds)
 This debug message is issued when the allocation engine starts the
 reclamation of the expired leases. The maximum number of leases to
 be reclaimed and the timeout is included in the message. If any of
@@ -322,6 +384,29 @@ reclamation will now be interrupted and all leases which haven't
 been reclaimed, because of the timeout, will be reclaimed when the
 next scheduled reclamation is started. The argument is the timeout
 value expressed in milliseconds.
+
+% ALLOC_ENGINE_V6_NO_MORE_EXPIRED_LEASES all expired leases have been reclaimed
+This debug message is issued when the server reclaims all expired
+DHCPv6 leases in the database.
+
+% ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE begin deletion of reclaimed leases expired more than %1 seconds ago
+This debug message is issued when the allocation engine begins
+deletion of the reclaimed leases which have expired more than
+a specified number of seconds ago. This operation is triggered
+periodically according to the "flush-reclaimed-timer-wait-time"
+parameter. The "hold-reclaimed-time" parameter defines a number
+of seconds for which the leases are stored before they are
+removed.
+
+% ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_COMPLETE successfully deleted %1 expired-reclaimed leases
+This debug message is issued when the server successfully deletes
+"expired-reclaimed" leases from the lease database. The number of
+deleted leases is included in the log message.
+
+% ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_FAILED deletion of expired-reclaimed leases failed: %1
+This error message is issued when the deletion of "expired-reclaimed"
+leases from the database failed. The error message is appended to
+the log message.
 
 % ALLOC_ENGINE_V6_RENEW_HR allocating leases reserved for the client %1 as a result of Renew
 This debug message is issued when the allocation engine tries to

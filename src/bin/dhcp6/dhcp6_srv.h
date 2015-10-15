@@ -709,9 +709,10 @@ protected:
     /// @param decline Decline messege sent by a client
     /// @param reply Server's response (IA_NA with status will be added here)
     /// @param client context
-    void
-    declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
-                  AllocEngine::ClientContext6& ctx);
+    /// @return true when expected to continue, false when hooks told us to drop
+    ///         the packet
+    bool declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
+                       AllocEngine::ClientContext6& ctx);
 
     /// @brief Declines leases in a single IA_NA option
     ///
@@ -743,9 +744,10 @@ protected:
     /// @param decline used for generating removal Name Change Request.
     /// @param lease lease to be declined
     /// @param ia_rsp response IA_NA.
-    void
-    declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
-                 boost::shared_ptr<Option6IA> ia_rsp);
+    /// @return true when expected to continue, false when hooks told us to drop
+    ///         the packet
+    bool declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
+                      boost::shared_ptr<Option6IA> ia_rsp);
 
     /// @brief A simple utility method that sets the status code
     ///
@@ -823,12 +825,6 @@ private:
     /// @param query packet transmitted
     static void processStatsSent(const Pkt6Ptr& response);
 
-    /// @brief Allocation Engine.
-    /// Pointer to the allocation engine that we are currently using
-    /// It must be a pointer, because we will support changing engines
-    /// during normal operation (e.g. to use different allocators)
-    boost::shared_ptr<AllocEngine> alloc_engine_;
-
     /// Server DUID (to be sent in server-identifier option)
     OptionPtr serverid_;
 
@@ -840,6 +836,12 @@ protected:
     /// Indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
+
+    /// @brief Allocation Engine.
+    /// Pointer to the allocation engine that we are currently using
+    /// It must be a pointer, because we will support changing engines
+    /// during normal operation (e.g. to use different allocators)
+    boost::shared_ptr<AllocEngine> alloc_engine_;
 
     /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects, which
     /// are waiting for sending to kea-dhcp-ddns module.

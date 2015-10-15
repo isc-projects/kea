@@ -88,6 +88,11 @@ public:
 
 typedef boost::shared_ptr<PktFilterTest> PktFilterTestPtr;
 
+/// Forward definition for Dhcp4Client defined in dhcp4_client.h
+/// dhcp4_client.h includes dhcp_test_utils.h (this file), so to avoid
+/// circular dependencies, we need a forward class declaration.
+class Dhcp4Client;
+
 /// @brief "Naked" DHCPv4 server, exposes internal fields
 class NakedDhcpv4Srv: public Dhcpv4Srv {
 public:
@@ -208,8 +213,18 @@ public:
     using Dhcpv4Srv::alloc_engine_;
 };
 
+// We need to pass one reference to the Dhcp4Client, which is defined in
+// dhcp4_client.h. That header includes this file. To avoid circular
+// dependencies, we use forward declaration here.
+class Dhcp4Client;
+
 class Dhcpv4SrvTest : public ::testing::Test {
 public:
+
+    enum ExpectedResult {
+        SHOULD_PASS, // pass = accept decline, move lease to declined state.
+        SHOULD_FAIL  // fail = reject the decline
+    };
 
     /// @brief Constructor
     ///
@@ -407,6 +422,30 @@ public:
 
     /// @brief Create @c Dhcpv4Exchange from client's query.
     Dhcpv4Exchange createExchange(const Pkt4Ptr& query);
+
+    /// @brief Performs 4-way exchange to obtain new lease.
+    ///
+    /// This is used as a preparatory step for Decline operation.
+    ///
+    /// @param client Client to be used to obtain a lease.
+    void acquireLease(Dhcp4Client& client);
+
+    /// @brief Tests if the acquired lease is or is not declined.
+    ///
+    /// @param client Dhcp4Client instance
+    /// @param hw_address_1 HW Address to be used to acquire the lease.
+    /// @param client_id_1 Client id to be used to acquire the lease.
+    /// @param hw_address_2 HW Address to be used to decline the lease.
+    /// @param client_id_2 Client id to be used to decline the lease.
+    /// @param expected_result SHOULD_PASS if the lease is expected to
+    /// be successfully declined, or SHOULD_FAIL if the lease is expected
+    /// to not be declined.
+    void acquireAndDecline(Dhcp4Client& client,
+                           const std::string& hw_address_1,
+                           const std::string& client_id_1,
+                           const std::string& hw_address_2,
+                           const std::string& client_id_2,
+                           ExpectedResult expected_result);
 
     /// @brief This function cleans up after the test.
     virtual void TearDown();

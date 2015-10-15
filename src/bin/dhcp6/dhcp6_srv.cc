@@ -96,6 +96,7 @@ struct Dhcp6Hooks {
     int hook_index_lease6_release_; ///< index for "lease6_release" hook point
     int hook_index_pkt6_send_;      ///< index for "pkt6_send" hook point
     int hook_index_buffer6_send_;   ///< index for "buffer6_send" hook point
+    int hook_index_lease6_decline_; ///< index for "lease6_decline" hook point
 
     /// Constructor that registers hook points for DHCPv6 engine
     Dhcp6Hooks() {
@@ -105,6 +106,7 @@ struct Dhcp6Hooks {
         hook_index_lease6_release_ = HooksManager::registerHook("lease6_release");
         hook_index_pkt6_send_      = HooksManager::registerHook("pkt6_send");
         hook_index_buffer6_send_   = HooksManager::registerHook("buffer6_send");
+        hook_index_lease6_decline_ = HooksManager::registerHook("lease6_decline");
     }
 };
 
@@ -180,7 +182,7 @@ const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 static const char* SERVER_DUID_FILE = "kea-dhcp6-serverid";
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
-:alloc_engine_(), serverid_(), port_(port), shutdown_(true)
+    : serverid_(), port_(port), shutdown_(true), alloc_engine_()
 {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
@@ -411,13 +413,15 @@ bool Dhcpv6Srv::run() {
             // processing step would to parse the packet, so skip at this
             // stage means that callouts did the parsing already, so server
             // should skip parsing.
-            if (callout_handle->getSkip()) {
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP6_DETAIL, DHCP6_HOOK_BUFFER_RCVD_SKIP)
                     .arg(query->getRemoteAddr().toText())
                     .arg(query->getLocalAddr().toText())
                     .arg(query->getIface());
                 skip_unpack = true;
             }
+
+            /// @todo: Add support for DROP status.
 
             callout_handle->getArgument("query6", query);
         }
@@ -500,11 +504,13 @@ bool Dhcpv6Srv::run() {
             // Callouts decided to skip the next processing step. The next
             // processing step would to process the packet, so skip at this
             // stage means drop.
-            if (callout_handle->getSkip()) {
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_RCVD_SKIP)
                     .arg(query->getLabel());
                 continue;
             }
+
+            /// @todo: Add support for DROP status.
 
             callout_handle->getArgument("query6", query);
         }
@@ -639,11 +645,13 @@ bool Dhcpv6Srv::run() {
                 // That step will be skipped if any callout sets skip flag.
                 // It essentially means that the callout already did packing,
                 // so the server does not have to do it again.
-                if (callout_handle->getSkip()) {
+                if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                     LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_SEND_SKIP)
                         .arg(rsp->getLabel());
                     skip_pack = true;
                 }
+
+                /// @todo: Add support for DROP status
             }
 
             if (!skip_pack) {
@@ -678,11 +686,13 @@ bool Dhcpv6Srv::run() {
                     // Callouts decided to skip the next processing step. The next
                     // processing step would to parse the packet, so skip at this
                     // stage means drop.
-                    if (callout_handle->getSkip()) {
+                    if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                         LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP)
                             .arg(rsp->getLabel());
                         continue;
                     }
+
+                    /// @todo: Add support for DROP status
 
                     callout_handle->getArgument("response6", rsp);
                 }
@@ -1068,11 +1078,13 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
         // subnet will be selected. Packet processing will continue,
         // but it will be severely limited (i.e. only global options
         // will be assigned)
-        if (callout_handle->getSkip()) {
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_SUBNET6_SELECT_SKIP)
                 .arg(question->getLabel());
             return (Subnet6Ptr());
         }
+
+        /// @todo: Add support for DROP status.
 
         // Use whatever subnet was specified by the callout
         callout_handle->getArgument("subnet6", subnet);
@@ -2142,11 +2154,13 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         // Callouts decided to skip the next processing step. The next
         // processing step would to send the packet, so skip at this
         // stage means "drop response".
-        if (callout_handle->getSkip()) {
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             skip = true;
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP)
                 .arg(query->getLabel());
         }
+
+        /// @todo: Add support for DROP status
     }
 
     // Ok, we've passed all checks. Let's release this address.
@@ -2295,7 +2309,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
         // Call all installed callouts
         HooksManager::callCallouts(Hooks.hook_index_lease6_release_, *callout_handle);
 
-        skip = callout_handle->getSkip();
+        skip = callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP;
     }
 
     // Ok, we've passed all checks. Let's release this prefix.
@@ -2581,12 +2595,17 @@ Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
     // Include server-id
     appendDefaultOptions(decline, reply);
 
-    declineLeases(decline, reply, ctx);
+    if (declineLeases(decline, reply, ctx)) {
+        return (reply);
+    } else {
 
-    return (reply);
+        // declineLeases returns false only if the hooks set the next step
+        // status to DROP. We'll just doing as requested.
+        return (Pkt6Ptr());
+    }
 }
 
-void
+bool
 Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
                          AllocEngine::ClientContext6& ctx) {
 
@@ -2607,7 +2626,15 @@ Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
             OptionPtr answer_opt = declineIA(decline, ctx.duid_, general_status,
                                    boost::dynamic_pointer_cast<Option6IA>(opt->second));
             if (answer_opt) {
+
+                // We have an answer, let's use it.
                 reply->addOption(answer_opt);
+            } else {
+
+                // The only case when declineIA could return NULL is if one of the
+                // hook callouts set next step status to DROP. We just need to drop
+                // this packet.
+                return (false);
             }
             break;
         }
@@ -2616,6 +2643,8 @@ Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
             ;
         }
     }
+
+    return (true);
 }
 
 OptionPtr
@@ -2722,7 +2751,11 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
         }
 
         // Ok, all is good. Decline this lease.
-        declineLease(decline, lease, ia_rsp);
+        if (!declineLease(decline, lease, ia_rsp)) {
+            // declineLease returns false only when hook callouts set the next
+            // step status to drop. We just propagate the bad news here.
+            return (OptionPtr());
+        }
     }
 
     if (total_addrs == 0) {
@@ -2743,9 +2776,54 @@ Dhcpv6Srv::setStatusCode(boost::shared_ptr<isc::dhcp::Option6IA>& container,
     container->addOption(status);
 }
 
-void
+bool
 Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
                         boost::shared_ptr<Option6IA> ia_rsp) {
+    // We do not want to decrease the assigned-nas at this time. While
+    // technically a declined address is no longer allocated, the primary usage
+    // of the assigned-addresses statistic is to monitor pool utilization. Most
+    // people would forget to include declined-addresses in the calculation,
+    // and simply do assigned-addresses/total-addresses. This would have a bias
+    // towards under-representing pool utilization, if we decreased allocated
+    // immediately after receiving DHCPDECLINE, rather than later when we recover
+    // the address.
+
+    // Let's call lease6_decline hooks if necessary.
+    if (HooksManager::calloutsPresent(Hooks.hook_index_lease6_decline_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(decline);
+
+        // Delete previously set arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass incoming packet as argument
+        callout_handle->setArgument("query6", decline);
+        callout_handle->setArgument("lease6", lease);
+
+        // Call callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease6_decline_,
+                                   *callout_handle);
+
+        // Callouts decided to SKIP the next processing step. The next
+        // processing step would to actually decline the lease, so we'll
+        // keep the lease as is.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_DETAIL, DHCP6_HOOK_DECLINE_SKIP)
+                .arg(decline->getLabel())
+                .arg(decline->getIface())
+                .arg(lease->addr_.toText());
+            return (true);
+        }
+
+        // Callouts decided to DROP the packet. Let's simply log it and
+        // return false, so callers will act accordingly.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_DETAIL, DHCP6_HOOK_DECLINE_DROP)
+                .arg(decline->getLabel())
+                .arg(decline->getIface())
+                .arg(lease->addr_.toText());
+            return (false);
+        }
+    }
 
     // Check if a lease has flags indicating that the FQDN update has
     // been performed. If so, create NameChangeRequest which removes
@@ -2760,8 +2838,6 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     // Global declined addresses counter.
     StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
 
-    // @todo: Call hooks.
-
     // We need to disassociate the lease from the client. Once we move a lease
     // to declined state, it is no longer associated with the client in any
     // way.
@@ -2773,6 +2849,8 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
 
     ia_rsp->addOption(createStatusCode(*decline, *ia_rsp, STATUS_Success,
                       "Lease declined. Hopefully the next one will be better."));
+
+    return (true);
 }
 
 Pkt6Ptr
