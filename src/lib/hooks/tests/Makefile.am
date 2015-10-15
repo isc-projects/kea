@@ -1,7 +1,7 @@
 SUBDIRS = .
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(MULTITHREADING_FLAG)
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 # Some versions of GCC warn about some versions of Boost regarding
