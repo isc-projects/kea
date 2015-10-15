@@ -181,7 +181,7 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b lease6, type: isc::dhcp::Lease6Ptr, direction: <b>in/out</b>
 
  - @b Description: This callout is executed when the server engine is
-   about to decline an existing lease. The client's request is provided as
+   about to decline an existing lease. The client's DECLINE is provided as
    the "query6" argument and the existing lease with the appropriate fields
    already modified is given in the "lease6" argument. The lease contains
    the lease before it is being declined.
