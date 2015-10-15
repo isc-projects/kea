@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -31,7 +31,7 @@ CalloutHandle::CalloutHandle(const boost::shared_ptr<CalloutManager>& manager,
                     const boost::shared_ptr<LibraryManagerCollection>& lmcoll)
     : lm_collection_(lmcoll), arguments_(), context_collection_(),
       manager_(manager), server_hooks_(ServerHooks::getServerHooks()),
-      skip_(false) {
+      next_step_(NEXT_STEP_CONTINUE) {
 
     // Call the "context_create" hook.  We should be OK doing this - although
     // the constructor has not finished running, all the member variables

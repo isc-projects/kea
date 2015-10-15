@@ -42,6 +42,7 @@
 #include <boost/array.hpp>
 #include <boost/static_assert.hpp>
 
+#include <fcntl.h>
 #include <stdint.h>
 #include <net/if.h>
 #include <linux/rtnetlink.h>
@@ -133,6 +134,10 @@ void Netlink::rtnl_open_socket() {
     fd_ = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (fd_ < 0) {
         isc_throw(Unexpected, "Failed to create NETLINK socket.");
+    }
+
+    if (fcntl(fd_, F_SETFD, FD_CLOEXEC) < 0) {
+        isc_throw(Unexpected, "Failed to set close-on-exec in NETLINK socket.");
     }
 
     if (setsockopt(fd_, SOL_SOCKET, SO_SNDBUF, &SNDBUF_SIZE, sizeof(SNDBUF_SIZE)) < 0) {

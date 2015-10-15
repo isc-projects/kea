@@ -59,6 +59,9 @@ bool testStatistics(const std::string& stat_name, const int64_t exp_value) {
                     <<  "doesn't match expected value (" << exp_value << ")";
             }
             return (observation->getInteger().first == exp_value);
+        } else {
+            ADD_FAILURE() << "Expected statistic " << stat_name
+                          << " not found.";
         }
 
     } catch (...) {
@@ -427,6 +430,62 @@ AllocEngine6Test::allocBogusHint6(Lease::Type type, asiolink::IOAddress hint,
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
+}
+
+void
+AllocEngine6Test::testReuseLease6(const AllocEnginePtr& engine,
+                                  Lease6Ptr& existing_lease,
+                                  const std::string& addr,
+                                  const bool fake_allocation,
+                                  ExpectedResult exp_result,
+                                  Lease6Ptr& result) {
+    ASSERT_TRUE(engine);
+
+    if (existing_lease) {
+        // If an existing lease was specified, we need to add it to the
+        // database. Let's wipe any leases for that address (if any). We
+        // ignore any errors (previous lease may not exist)
+        LeaseMgrFactory::instance().deleteLease(existing_lease->addr_);
+
+        // Let's add it.
+        ASSERT_TRUE(LeaseMgrFactory::instance().addLease(existing_lease));
+    }
+
+    // A client comes along, asking specifically for a given address
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress(addr),
+                                    Lease::TYPE_NA, false, false, "", fake_allocation);
+    ctx.query_.reset(new Pkt6(fake_allocation ? DHCPV6_SOLICIT : DHCPV6_REQUEST, 1234));
+
+    Lease6Collection leases;
+
+    leases = engine->allocateLeases6(ctx);
+
+    switch (exp_result) {
+    case SHOULD_PASS:
+        ASSERT_FALSE(leases.empty());
+        ASSERT_EQ(1, leases.size());
+        result = leases[0];
+
+        checkLease6(result, Lease::TYPE_NA, 128);
+        break;
+
+    case SHOULD_FAIL:
+        ASSERT_TRUE(leases.empty());
+        break;
+    }
+}
+
+Lease6Ptr
+AllocEngine6Test::generateDeclinedLease(const std::string& addr,
+                                        time_t probation_period,
+                                        int32_t expired) {
+    Lease6Ptr declined(new Lease6(Lease::TYPE_NA, IOAddress(addr),
+                       duid_, iaid_, 100, 100, 100, 100, subnet_->getID()));
+
+    time_t now = time(NULL);
+    declined->decline(probation_period);
+    declined->cltt_ = now - probation_period + expired;
+    return (declined);
 }
 
 void

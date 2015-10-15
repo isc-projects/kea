@@ -1,7 +1,65 @@
+1030.	[bug]		marcin
+	Fixed failing 'reclaimExpiredLeasesTimeout' unit tests on
+	some virtual machines.
+	(trac #4075, git c3a2487f53ecf69edc0a38f574fce17c4332162c)
+
+1029.	[func]		tomek
+	A new hook point lease6_decline has been added. It is called when
+	the DHCPv6 server is about to decline a lease as a result of
+	processing incoming DECLINE message.
+	(Trac #3986, git b6e3f1bbe3595aeba769d627d571e2eeee38a397)
+
+1028.	[func]		marcin
+	Expired leases are processed periodically according to the
+	server configuration.
+	(Trac #3975, git 3bd8891c0b9cb7dc504fa69251610996775cefbf)
+
+1027.	[func]		tomek
+	Expired declined IPv6 leases can now be reclaimed (returned to the
+	available pool) after probation	period elapses.
+	(Trac #3985, git 9aadfa902d898ce1f52b773152a5b34519a9a9fe)
+
+1026.	[doc]		stephen
+	Added documentation for the kea-dhcp4.commands and
+	kea-dhcp6.commands loggers.
+	(Trac #3952, git 3eb5d3185683e05494c1d84ed7195627fce4b6c1)
+
+1025.	[func]		tomek
+	A new hook point lease4_decline has been added. It is called when
+	the DHCPv4 server is about to decline a lease as a result of
+	processing incoming DHCPDECLINE message.
+	(Trac #3986, git 39bde93fe25e4aff52623d4df7fd55c64e0a9c21)
+
+1024.	[func]*		tomek
+	Boolean Skip flag in Hooks API has been replaced by enum status.
+	This is backward incompatible change if you developed hook
+	library that takes advantage of the skip flag. See Hooks
+	Developer Guide for easy steps necessary for migration.
+	(Trac #3499, git 99ca398d4d042a098b5c491368733220db8cdd08)
+
+1023.	[func]		tmark
+	kea-admin now supports upgrading from MySQL schema version 3.0
+	to 4.0.  In addition, the lease6 data dump now contains the
+	text label for lease_hwaddr_source column rather than its
+	numeric value.
+	(Trac #3967, git 2e13ac3b0b278faabe338b00ffee8259c13f5342)
+
+1022.	[func]		fdupont
+	Added support for the V4 link selection sub-option (RFC 3527).  If
+	present in an incoming packet, the server will allocate an address
+	in the subnet identified in the option. If this is impossible, no
+	address will be allocated and the request refused.
+	(Trac #4057, git 8c02cec5ec8e311a9d23fd582d8e9e8647667abb)
+
+1021.	[bug]		stephen
+	Added missing address parameter to ALLOC_ENGINE_V4_REQUEST_OUT_OF_POOL
+	message.
+	(Trac #3996, git 680233550747209a1707e8f920179479b980aa2a)
+
 1020.	[func]		kalmus
 	A general purpose base class for MySQL connection has been
 	implemented.
-	(Trac #3681, git tbd)
+	(Trac #3681, git 884d8bb4a55d3d7b1b8f3f01efb312bd8dec399b)
 
 1019.	[func]		marcin
 	Added new configuration parameters controlling processing of the

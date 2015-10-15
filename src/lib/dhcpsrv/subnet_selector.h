@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,6 +35,8 @@ struct SubnetSelector {
     asiolink::IOAddress ciaddr_;
     /// @brief giaddr from the client's message.
     asiolink::IOAddress giaddr_;
+    /// @brief RAI link select or subnet select option
+    asiolink::IOAddress option_select_;
     //@}
 
     /// @name DHCPv6 specific parameters.
@@ -60,6 +62,7 @@ struct SubnetSelector {
     SubnetSelector()
         : ciaddr_(asiolink::IOAddress("0.0.0.0")),
           giaddr_(asiolink::IOAddress("0.0.0.0")),
+          option_select_(asiolink::IOAddress("0.0.0.0")),
           interface_id_(),
           first_relay_linkaddr_(asiolink::IOAddress("::")),
           local_address_(asiolink::IOAddress("0.0.0.0")),
