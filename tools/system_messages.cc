@@ -524,27 +524,33 @@ void processFile(const std::string& filename)
     LinesType lines1;
     for (LinesType::iterator l = lines0.begin(); l != lines0.end(); ++l) {
         std::string line = *l;
+	// Empty lines have no spaces so are processed
         if (line.empty()) {
             lines1.push_back(line);
             continue;
         }
+	// Trim leading spaces
         size_t start = line.find_first_not_of(" \t\r\n\t\v");
         if (start != 0) {
             line.erase(0, start);
         }
+	// Done?
         if (line.empty()) {
             lines1.push_back(line);
             continue;
         }
+	// Trim trailing spaces
         size_t finish = line.find_last_not_of(" \t\r\n\t\v");
         if ((finish != std::string::npos) &&
             (finish + 1 != line.size())) {
             line.erase(finish + 1);
         }
+	// Done
         if (line.empty()) {
             lines1.push_back(line);
             continue;
         }
+	// Skip comments
         if (line[0] != '#') {
             lines1.push_back(line);
         }
