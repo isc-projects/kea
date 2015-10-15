@@ -119,8 +119,8 @@ ALTER TABLE lease6
 -- by the expiration time. One of the applications is to retrieve all
 -- expired leases. However, these indexes can be also used to retrieve
 -- leases in a given state regardless of the expiration time.
-CREATE INDEX lease4_by_state_expire ON lease4 (state, expire);
-CREATE INDEX lease6_by_state_expire ON lease6 (state, expire);
+CREATE INDEX lease4_by_state_expire ON lease4 (state ASC, expire ASC);
+CREATE INDEX lease6_by_state_expire ON lease6 (state ASC, expire ASC);
 
 -- Create table holding mapping of the lease states to their names.
 -- This is not used in queries from the DHCP server but rather in
@@ -135,6 +135,24 @@ INSERT INTO lease_state VALUES (0, 'default');
 INSERT INTO lease_state VALUES (1, 'declined');
 INSERT INTO lease_state VALUES (2, 'expired-reclaimed');
 COMMIT;
+
+-- Add a constraint that any state value added to the lease4 must
+-- map to a value in the lease_state table.
+ALTER TABLE lease4
+    ADD CONSTRAINT fk_lease4_state FOREIGN KEY (state)
+    REFERENCES lease_state (state);
+
+-- Add a constraint that any state value added to the lease6 must
+-- map to a value in the lease_state table.
+ALTER TABLE lease6
+    ADD CONSTRAINT fk_lease6_state FOREIGN KEY (state)
+    REFERENCES lease_state (state);
+
+-- Add a constraint that lease type in the lease6 table must map
+-- to a lease type defined in the lease6_types table.
+ALTER TABLE lease6
+    ADD CONSTRAINT fk_lease6_type FOREIGN KEY (lease_type)
+    REFERENCES lease6_types (lease_type);
 
 --
 --  FUNCTION that returns a result set containing the column names for lease4 dumps
