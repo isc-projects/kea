@@ -51,8 +51,8 @@ struct Details {
 /// @brief Main dictionary holding all the messages.
 /// The messages are accumulated here before being printed in
 /// alphabetical order.
-typedef std::map<const std::string, Details> dictionaryType;
-dictionaryType dictionary;
+typedef std::map<const std::string, Details> DictionaryType;
+DictionaryType dictionary;
 
 /// @brief The structure of the output page
 //
@@ -610,7 +610,7 @@ int main(int argc, char* argv[])
     bool first = true;
     std::string sname;
     printHeader();
-    for (dictionaryType::iterator it = dictionary.begin();
+    for (DictionaryType::iterator it = dictionary.begin();
          it != dictionary.end();
          ++it) {
         if (sname.compare(it->second.sname) != 0) {
