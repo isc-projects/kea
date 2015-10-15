@@ -220,8 +220,8 @@ const char* create_statement[] = {
     "ALTER TABLE lease6 "
         "ADD COLUMN state INT UNSIGNED DEFAULT 0",
 
-    "CREATE INDEX lease4_by_state_expire ON lease4 (state, expire)",
-    "CREATE INDEX lease6_by_state_expire ON lease6 (state, expire)",
+    "CREATE INDEX lease4_by_state_expire ON lease4 (state ASC, expire ASC)",
+    "CREATE INDEX lease6_by_state_expire ON lease6 (state ASC, expire ASC)",
 
     // Production schema includes the lease_state table and
     // lease_hwaddr_source tables which map to the values in lease4
