@@ -106,7 +106,7 @@ limitations on the number of leases and duration. However, this
 may result in longer periods of server's unresponsiveness to
 DHCP packets, while it processes the expired leases.
 
-% ALLOC_ENGINE_V4_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 seconds)
+% ALLOC_ENGINE_V4_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 milliseconds)
 This debug message is issued when the allocation engine starts the
 reclamation of the expired leases. The maximum number of leases to
 be reclaimed and the timeout is included in the message. If any of
@@ -371,7 +371,7 @@ limitations on the number of leases and duration. However, this
 may result in longer periods of server's unresponsiveness to
 DHCP packets, while it processes the expired leases.
 
-% ALLOC_ENGINE_V6_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 seconds)
+% ALLOC_ENGINE_V6_LEASES_RECLAMATION_START starting reclamation of expired leases (limit = %1 leases or %2 milliseconds)
 This debug message is issued when the allocation engine starts the
 reclamation of the expired leases. The maximum number of leases to
 be reclaimed and the timeout is included in the message. If any of
