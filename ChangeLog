@@ -1,3 +1,8 @@
+1030.	[bug]		marcin
+	Fixed failing 'reclaimExpiredLeasesTimeout' unit tests on
+	some virtual machines.
+	(trac #4075, git c3a2487f53ecf69edc0a38f574fce17c4332162c)
+
 1029.	[func]		tomek
 	A new hook point lease6_decline has been added. It is called when
 	the DHCPv6 server is about to decline a lease as a result of
