@@ -1,3 +1,9 @@
+1029.	[func]		tomek
+	A new hook point lease6_decline has been added. It is called when
+	the DHCPv6 server is about to decline a lease as a result of
+	processing incoming DECLINE message.
+	(Trac #3986, git b6e3f1bbe3595aeba769d627d571e2eeee38a397)
+
 1028.	[func]		marcin
 	Expired leases are processed periodically according to the
 	server configuration.
@@ -24,7 +30,7 @@
 	This is backward incompatible change if you developed hook
 	library that takes advantage of the skip flag. See Hooks
 	Developer Guide for easy steps necessary for migration.
-	(trac #3499, git 99ca398d4d042a098b5c491368733220db8cdd08)
+	(Trac #3499, git 99ca398d4d042a098b5c491368733220db8cdd08)
 
 1023.	[func]		tmark
 	kea-admin now supports upgrading from MySQL schema version 3.0
