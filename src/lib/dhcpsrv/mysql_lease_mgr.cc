@@ -143,7 +143,7 @@ TaggedStatement tagged_statements[] = {
                         "state "
                             "FROM lease4 "
                             "WHERE state != ? AND expire < ? "
-                            "ORDER BY expire "
+                            "ORDER BY expire ASC "
                             "LIMIT ?"},
     {MySqlLeaseMgr::GET_LEASE6_ADDR,
                     "SELECT address, duid, valid_lifetime, "
@@ -182,7 +182,7 @@ TaggedStatement tagged_statements[] = {
                         "state "
                             "FROM lease6 "
                             "WHERE state != ? AND expire < ? "
-                            "ORDER BY expire "
+                            "ORDER BY expire ASC "
                             "LIMIT ?"},
     {MySqlLeaseMgr::GET_VERSION,
                     "SELECT version, minor FROM schema_version"},
