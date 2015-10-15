@@ -45,6 +45,7 @@ using namespace isc::dhcp;
 using namespace isc::asiolink;
 
 namespace isc {
+namespace dhcp {
 namespace test {
 
 Pkt4Ptr PktCaptures::packetFromCapture(const std::string& hex_string) {
@@ -185,5 +186,6 @@ Bootstrap Protocol
     return (packetFromCapture(hex_string));
 }
 
-}; // end of isc::test namespace
+}; // end of isc::dhcp::test namespace
+}; // end of isc::dhcp namespace
 }; // end of isc namespace

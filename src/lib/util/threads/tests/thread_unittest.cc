@@ -242,26 +242,13 @@ TEST_F(ThreadTest, sigmask) {
 }
 
 
-/// The @c ProcessSpawn class spawns new processes using the fork/exec
-/// scheme. If the call to exec fails, child process exits with the
-/// EXIT_FAILURE status code. The call to exit triggers destruction of
-/// all static objects, i.e. destructors of statically declared
-/// @c Thread objects are called in the child process. The call to
-/// fork doesn't clone threads existing in the main process. So, the
-/// @c Thread objects in the child process have invalid state, because
-/// they point to non-existing threads. As a result any attempts to
-/// detach or join the thread may result in errors or asserts.
-///
-/// This test verifies that the @c Thread class protects against such
-/// errors. It is supposed to detect that the @c Thread object is in
-/// the child process and not assert when the destruction fails.
+/// This test verifies using threads and spawning child processes
+/// work together.
 TEST_F(ThreadTest, spawnProcessWithThread) {
     // Initialize and run the stoppable thread. Note that the 'thread'
     // is a static variable, which will be 'cloned' into the child
-    // process. Its destructor will be called when the child process
-    // terminates with EXIT_FAILURE status. So in fact the destructor
-    // of the @c StoppableThread will be called twice: in the main
-    // process and in the child process.
+    // process. Its destructor must not be called when the child process
+    // terminates with EXIT_FAILURE status.
     thread.reset(new StoppableThread());
     thread->run();
 
@@ -273,14 +260,11 @@ TEST_F(ThreadTest, spawnProcessWithThread) {
     while (process_spawn.isRunning(pid)) {
         usleep(100);
     }
-    // When the child process terminates it will call destructors of
-    // static objects. This means that it will call the destructor of
-    // the 'thread' object too. The 'thread' object in the child
-    // process points to non-existing thread, but we expect the
-    // graceful destruction, i.e. the destructor should not assert.
-    // If the destructor asserts the exit code returned here will
-    // be 0 - same as if we aborted.
+    // When the child process terminates it will call _exit() so
+    // nothing bad should happen from the child.
     EXPECT_EQ(EXIT_FAILURE, process_spawn.getExitStatus(pid));
+    // The thread is still there.
+    EXPECT_TRUE(thread);
 }
 
 }

@@ -247,7 +247,8 @@ AllocEngine::RandomAllocator::pickAddress(const SubnetPtr&,
 
 AllocEngine::AllocEngine(AllocType engine_type, uint64_t attempts,
                          bool ipv6)
-    : attempts_(attempts) {
+    : attempts_(attempts), incomplete_v4_reclamations_(0),
+      incomplete_v6_reclamations_(0) {
 
     // Choose the basic (normal address) lease type
     Lease::Type basic_type = ipv6 ? Lease::TYPE_NA : Lease::TYPE_V4;
@@ -936,6 +937,17 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         prefix_len = 128; // non-PD lease types must be always /128
     }
 
+    if ( (expired->state_ == Lease::STATE_DECLINED) &&
+         (ctx.fake_allocation_ == false)) {
+        // If this is a declined lease that expired, we need to conduct
+        // extra steps for it. However, we do want to conduct those steps
+        // only once. In particular, if we have an expired declined lease
+        // and client sent DHCPDISCOVER and will later send DHCPREQUEST,
+        // we only want to call this method once when responding to
+        // DHCPREQUEST (when the actual reclaimation takes place).
+        reclaimDeclined(expired);
+    }
+
     // address, lease type and prefixlen (0) stay the same
     expired->iaid_ = ctx.iaid_;
     expired->duid_ = ctx.duid_;
@@ -978,10 +990,12 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (ctx.callout_handle_->getSkip()) {
+        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE6_SELECT_SKIP);
             return (Lease6Ptr());
         }
+
+        /// @todo: Add support for DROP status
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handed to it.
@@ -1040,7 +1054,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (ctx.callout_handle_->getSkip()) {
+        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE6_SELECT_SKIP);
             return (Lease6Ptr());
         }
@@ -1245,12 +1259,14 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         // Callouts decided to skip the next processing step. The next
         // processing step would actually renew the lease, so skip at this
         // stage means "keep the old lease as it is".
-        if (callout_handle->getSkip()) {
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             skip = true;
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
                       DHCPSRV_HOOK_LEASE6_EXTEND_SKIP)
                 .arg(ctx.query_->getName());
         }
+
+        /// @todo: Add support for DROP status
     }
 
     if (!skip) {
@@ -1288,7 +1304,8 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
 
 void
 AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeout,
-                                   const bool remove_lease) {
+                                   const bool remove_lease,
+                                   const uint16_t max_unwarned_cycles) {
 
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
               ALLOC_ENGINE_V6_LEASES_RECLAMATION_START)
@@ -1301,8 +1318,31 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
 
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
 
+    // This value indicates if we have been able to deal with all expired
+    // leases in this pass.
+    bool incomplete_reclamation = false;
     Lease6Collection leases;
-    lease_mgr.getExpiredLeases6(leases, max_leases);
+    // The value of 0 has a special meaning - reclaim all.
+    if (max_leases > 0) {
+        // If the value is non-zero, the caller has limited the number of
+        // leases to reclaim. We obtain one lease more to see if there will
+        // be still leases left after this pass.
+        lease_mgr.getExpiredLeases6(leases, max_leases + 1);
+        // There are more leases expired leases than we will process in this
+        // pass, so we should mark it as an incomplete reclamation. We also
+        // remove this extra lease (which we don't want to process anyway)
+        // from the collection.
+        if (leases.size() > max_leases) {
+            leases.pop_back();
+            incomplete_reclamation = true;
+        }
+
+    } else {
+        // If there is no limitation on the number of leases to reclaim,
+        // we will try to process all. Hence, we don't mark it as incomplete
+        // reclamation just yet.
+        lease_mgr.getExpiredLeases6(leases, max_leases);
+    }
 
     // Do not initialize the callout handle until we know if there are any
     // lease6_expire callouts installed.
@@ -1329,8 +1369,11 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
                 HooksManager::callCallouts(Hooks.hook_index_lease6_expire_,
                                            *callout_handle);
 
-                skipped = callout_handle->getSkip();
+                skipped = callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP;
             }
+
+            /// @todo: Maybe add support for DROP stauts?
+            /// Not sure if we need to support every possible status everywhere.
 
             if (!skipped) {
                 // Generate removal name change request for D2, if required.
@@ -1340,9 +1383,25 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
                     queueRemovalNameChangeRequest(lease, *(lease->duid_));
                 }
 
+                // Let's check if the lease that just expired is in DECLINED state.
+                // If it is, we need to conduct couple extra steps and also force
+                // its removal.
+                bool remove_tmp = remove_lease;
+                if (lease->state_ == Lease::STATE_DECLINED) {
+                    // There's no point in keeping declined lease after its
+                    // reclaimation. Declined lease doesn't have any client
+                    // identifying information anymore.
+                    remove_tmp = true;
+
+                    // Do extra steps required for declined lease reclaimation:
+                    // - bump decline-related stats
+                    // - log separate message
+                    reclaimDeclined(lease);
+                }
+
                 // Reclaim the lease - depending on the configuration, set the
                 // expired-reclaimed state or simply remove it.
-                reclaimLeaseInDatabase<Lease6Ptr>(lease, remove_lease,
+                reclaimLeaseInDatabase<Lease6Ptr>(lease, remove_tmp,
                                                   boost::bind(&LeaseMgr::updateLease6,
                                                               &lease_mgr, _1));
             }
@@ -1388,6 +1447,15 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
         // return if we have. We're checking it here, because we always want to
         // allow reclaiming at least one lease.
         if ((timeout > 0) && (stopwatch.getTotalMilliseconds() >= timeout)) {
+            // Timeout. This will likely mean that we haven't been able to process
+            // all leases we wanted to process. The reclamation pass will be
+            // probably marked as incomplete.
+            if (!incomplete_reclamation) {
+                if (leases_processed < leases.size()) {
+                    incomplete_reclamation = true;
+                }
+            }
+
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT)
                 .arg(timeout);
@@ -1403,11 +1471,57 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
               ALLOC_ENGINE_V6_LEASES_RECLAMATION_COMPLETE)
         .arg(leases_processed)
         .arg(stopwatch.logFormatTotalDuration());
+
+    // Check if this was an incomplete reclamation and increase the number of
+    // consecutive incomplete reclamations.
+    if (incomplete_reclamation) {
+        ++incomplete_v6_reclamations_;
+        // If the number of incomplete reclamations is beyond the threshold, we
+        // need to issue a warning.
+        if ((max_unwarned_cycles > 0) &&
+            (incomplete_v6_reclamations_ > max_unwarned_cycles)) {
+            LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V6_LEASES_RECLAMATION_SLOW)
+                .arg(max_unwarned_cycles);
+            // We issued a warning, so let's now reset the counter.
+            incomplete_v6_reclamations_ = 0;
+        }
+
+    } else {
+        // This was a complete reclamation, so let's reset the counter.
+        incomplete_v6_reclamations_ = 0;
+
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V6_NO_MORE_EXPIRED_LEASES);
+    }
 }
 
 void
+AllocEngine::deleteExpiredReclaimedLeases6(const uint32_t secs) {
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE)
+        .arg(secs);
+
+    uint64_t deleted_leases = 0;
+    try {
+        // Try to delete leases from the lease database.
+        LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+        deleted_leases = lease_mgr.deleteExpiredReclaimedLeases6(secs);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_FAILED)
+            .arg(ex.what());
+    }
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_COMPLETE)
+        .arg(deleted_leases);
+}
+
+
+void
 AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
-                                   const bool remove_lease) {
+                                   const bool remove_lease,
+                                   const uint16_t max_unwarned_cycles) {
 
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
               ALLOC_ENGINE_V4_LEASES_RECLAMATION_START)
@@ -1420,8 +1534,32 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
 
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
 
+    // This value indicates if we have been able to deal with all expired
+    // leases in this pass.
+    bool incomplete_reclamation = false;
     Lease4Collection leases;
-    lease_mgr.getExpiredLeases4(leases, max_leases);
+    // The value of 0 has a special meaning - reclaim all.
+    if (max_leases > 0) {
+        // If the value is non-zero, the caller has limited the number of
+        // leases to reclaim. We obtain one lease more to see if there will
+        // be still leases left after this pass.
+        lease_mgr.getExpiredLeases4(leases, max_leases + 1);
+        // There are more leases expired leases than we will process in this
+        // pass, so we should mark it as an incomplete reclamation. We also
+        // remove this extra lease (which we don't want to process anyway)
+        // from the collection.
+        if (leases.size() > max_leases) {
+            leases.pop_back();
+            incomplete_reclamation = true;
+        }
+
+    } else {
+        // If there is no limitation on the number of leases to reclaim,
+        // we will try to process all. Hence, we don't mark it as incomplete
+        // reclamation just yet.
+        lease_mgr.getExpiredLeases4(leases, max_leases);
+    }
+
 
     // Do not initialize the callout handle until we know if there are any
     // lease4_expire callouts installed.
@@ -1448,8 +1586,11 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
                 HooksManager::callCallouts(Hooks.hook_index_lease4_expire_,
                                            *callout_handle);
 
-                skipped = callout_handle->getSkip();
+                skipped = callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP;
             }
+
+            /// @todo: Maybe add support for DROP stauts?
+            /// Not sure if we need to support every possible status everywhere.
 
             if (!skipped) {
                 // Generate removal name change request for D2, if required.
@@ -1517,8 +1658,17 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
         // return if we have. We're checking it here, because we always want to
         // allow reclaiming at least one lease.
         if ((timeout > 0) && (stopwatch.getTotalMilliseconds() >= timeout)) {
+            // Timeout. This will likely mean that we haven't been able to process
+            // all leases we wanted to process. The reclamation pass will be
+            // probably marked as incomplete.
+            if (!incomplete_reclamation) {
+                if (leases_processed < leases.size()) {
+                    incomplete_reclamation = true;
+                }
+            }
+
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                      ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT)
+                      ALLOC_ENGINE_V4_LEASES_RECLAMATION_TIMEOUT)
                 .arg(timeout);
             break;
         }
@@ -1532,6 +1682,50 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
               ALLOC_ENGINE_V4_LEASES_RECLAMATION_COMPLETE)
         .arg(leases_processed)
         .arg(stopwatch.logFormatTotalDuration());
+
+    // Check if this was an incomplete reclamation and increase the number of
+    // consecutive incomplete reclamations.
+    if (incomplete_reclamation) {
+        ++incomplete_v4_reclamations_;
+        // If the number of incomplete reclamations is beyond the threshold, we
+        // need to issue a warning.
+        if ((max_unwarned_cycles > 0) &&
+            (incomplete_v4_reclamations_ > max_unwarned_cycles)) {
+            LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_LEASES_RECLAMATION_SLOW)
+                .arg(max_unwarned_cycles);
+            // We issued a warning, so let's now reset the counter.
+            incomplete_v4_reclamations_ = 0;
+        }
+
+    } else {
+        // This was a complete reclamation, so let's reset the counter.
+        incomplete_v4_reclamations_ = 0;
+
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V4_NO_MORE_EXPIRED_LEASES);
+    }
+}
+
+void
+AllocEngine::deleteExpiredReclaimedLeases4(const uint32_t secs) {
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE)
+        .arg(secs);
+
+    uint64_t deleted_leases = 0;
+    try {
+        // Try to delete leases from the lease database.
+        LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+        deleted_leases = lease_mgr.deleteExpiredReclaimedLeases4(secs);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_FAILED)
+            .arg(ex.what());
+    }
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_COMPLETE)
+        .arg(deleted_leases);
 }
 
 void
@@ -1563,6 +1757,37 @@ AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
     // modified in whatever code calls this method.
 
     /// @todo: call lease4_decline_recycle hook here.
+}
+
+void
+AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
+
+    if (!lease || (lease->state_ != Lease::STATE_DECLINED) ) {
+        return;
+    }
+
+    LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_DECLINED_RECOVERED)
+        .arg(lease->addr_.toText())
+        .arg(lease->valid_lft_);
+
+    StatsMgr& stats_mgr = StatsMgr::instance();
+
+    // Decrease subnet specific counter for currently declined addresses
+    stats_mgr.addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
+        "declined-addresses"), static_cast<int64_t>(-1));
+
+    // Decrease global counter for declined addresses
+    stats_mgr.addValue("declined-addresses", static_cast<int64_t>(-1));
+
+    stats_mgr.addValue("reclaimed-declined-addresses", static_cast<int64_t>(1));
+
+    stats_mgr.addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
+        "reclaimed-declined-addresses"), static_cast<int64_t>(1));
+
+    // Note that we do not touch assigned-addresses counters. Those are
+    // modified in whatever code calls this method.
+
+    /// @todo: call lease6_decline_recycle hook here.
 }
 
 template<typename LeasePtrType, typename IdentifierType>
@@ -2146,7 +2371,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (ctx.callout_handle_->getSkip()) {
+        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
             return (Lease4Ptr());
         }
@@ -2234,11 +2459,13 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         // Callouts decided to skip the next processing step. The next
         // processing step would actually renew the lease, so skip at this
         // stage means "keep the old lease as it is".
-        if (ctx.callout_handle_->getSkip()) {
+        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             skip = true;
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
                       DHCPSRV_HOOK_LEASE4_RENEW_SKIP);
         }
+
+        /// @todo: Add support for DROP status
     }
 
     if (!ctx.fake_allocation_ && !skip) {
@@ -2269,7 +2496,7 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
          (ctx.fake_allocation_ == false)) {
         // If this is a declined lease that expired, we need to conduct
         // extra steps for it. However, we do want to conduct those steps
-        // only once. In paricular, if we have an expired declined lease
+        // only once. In particular, if we have an expired declined lease
         // and client sent DHCPDISCOVER and will later send DHCPREQUEST,
         // we only want to call this method once when responding to
         // DHCPREQUEST (when the actual reclaimation takes place).
@@ -2312,11 +2539,13 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (ctx.callout_handle_->getSkip()) {
+        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
                       DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
             return (Lease4Ptr());
         }
+
+        /// @todo: add support for DROP
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handed to it.

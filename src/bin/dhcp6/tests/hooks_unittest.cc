@@ -28,6 +28,8 @@
 #include <hooks/server_hooks.h>
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp6/tests/dhcp6_client.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <cc/command_interpreter.h>
 #include <boost/scoped_ptr.hpp>
@@ -39,7 +41,7 @@
 
 using namespace isc;
 using namespace isc::data;
-using namespace isc::test;
+using namespace isc::dhcp::test;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
@@ -189,7 +191,7 @@ public:
         Pkt6Ptr pkt;
         callout_handle.getArgument("query6", pkt);
 
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         // Carry on as usual
         return pkt6_receive_callout(callout_handle);
@@ -261,7 +263,7 @@ public:
     /// @return always 0
     static int
     buffer6_receive_skip(CalloutHandle& callout_handle) {
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         // Carry on as usual
         return buffer6_receive_callout(callout_handle);
@@ -324,7 +326,7 @@ public:
         Pkt6Ptr pkt;
         callout_handle.getArgument("response6", pkt);
 
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         // carry on as usual
         return pkt6_send_callout(callout_handle);
@@ -426,7 +428,7 @@ public:
     lease6_renew_skip_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease6_renew");
 
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         return (0);
     }
@@ -452,9 +454,46 @@ public:
     lease6_release_skip_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease6_release");
 
-        callout_handle.setSkip(true);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
 
         return (0);
+    }
+
+    /// Lease6_decline test callback
+    ///
+    /// Stores all parameters in callback_* fields.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease6_decline_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease6_decline");
+        callout_handle.getArgument("query6", callback_pkt6_);
+        callout_handle.getArgument("lease6", callback_lease6_);
+
+        return (0);
+    }
+
+    /// Lease6_decline callout that sets status to SKIP
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease6_decline_skip_callout(CalloutHandle& callout_handle) {
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+        return (lease6_decline_callout(callout_handle));
+    }
+
+    /// Lease6_decline callout that sets status to DROP
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease6_decline_drop_callout(CalloutHandle& callout_handle) {
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+
+        return (lease6_decline_callout(callout_handle));
     }
 
     /// Resets buffers used to store data received by callouts
@@ -518,7 +557,7 @@ boost::shared_ptr<Option6IA> HooksDhcpv6SrvTest::callback_ia_na_;
 //
 // Note that the test name does not follow test naming convention,
 // but the proper hook name is "buffer6_receive".
-TEST_F(HooksDhcpv6SrvTest, simple_buffer6_receive) {
+TEST_F(HooksDhcpv6SrvTest, simpleBuffer6Receive) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -551,7 +590,7 @@ TEST_F(HooksDhcpv6SrvTest, simple_buffer6_receive) {
 
 // Checks if callouts installed on buffer6_receive is able to change
 // the values and the parameters are indeed used by the server.
-TEST_F(HooksDhcpv6SrvTest, valueChange_buffer6_receive) {
+TEST_F(HooksDhcpv6SrvTest, valueChangeBuffer6Receive) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -588,7 +627,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_buffer6_receive) {
 // Checks if callouts installed on buffer6_receive is able to delete
 // existing options and that change impacts server processing (mandatory
 // client-id option is deleted, so the packet is expected to be dropped)
-TEST_F(HooksDhcpv6SrvTest, deleteClientId_buffer6_receive) {
+TEST_F(HooksDhcpv6SrvTest, deleteClientIdBuffer6Receive) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -612,7 +651,7 @@ TEST_F(HooksDhcpv6SrvTest, deleteClientId_buffer6_receive) {
 
 // Checks if callouts installed on buffer6_received is able to set skip flag that
 // will cause the server to not process the packet (drop), even though it is valid.
-TEST_F(HooksDhcpv6SrvTest, skip_buffer6_receive) {
+TEST_F(HooksDhcpv6SrvTest, skipBuffer6Receive) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -639,7 +678,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_buffer6_receive) {
 //
 // Note that the test name does not follow test naming convention,
 // but the proper hook name is "pkt6_receive".
-TEST_F(HooksDhcpv6SrvTest, simple_pkt6_receive) {
+TEST_F(HooksDhcpv6SrvTest, simplePkt6Receive) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -672,7 +711,7 @@ TEST_F(HooksDhcpv6SrvTest, simple_pkt6_receive) {
 
 // Checks if callouts installed on pkt6_received is able to change
 // the values and the parameters are indeed used by the server.
-TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_receive) {
+TEST_F(HooksDhcpv6SrvTest, valueChangePkt6Receive) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -708,7 +747,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_receive) {
 // Checks if callouts installed on pkt6_received is able to delete
 // existing options and that change impacts server processing (mandatory
 // client-id option is deleted, so the packet is expected to be dropped)
-TEST_F(HooksDhcpv6SrvTest, deleteClientId_pkt6_receive) {
+TEST_F(HooksDhcpv6SrvTest, deleteClientIdPkt6Receive) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -732,7 +771,7 @@ TEST_F(HooksDhcpv6SrvTest, deleteClientId_pkt6_receive) {
 
 // Checks if callouts installed on pkt6_received is able to set skip flag that
 // will cause the server to not process the packet (drop), even though it is valid.
-TEST_F(HooksDhcpv6SrvTest, skip_pkt6_receive) {
+TEST_F(HooksDhcpv6SrvTest, skipPkt6Receive) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -757,7 +796,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_pkt6_receive) {
 
 // Checks if callouts installed on pkt6_send are indeed called and the
 // all necessary parameters are passed.
-TEST_F(HooksDhcpv6SrvTest, simple_pkt6_send) {
+TEST_F(HooksDhcpv6SrvTest, simplePkt6Send) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -793,7 +832,7 @@ TEST_F(HooksDhcpv6SrvTest, simple_pkt6_send) {
 
 // Checks if callouts installed on pkt6_send is able to change
 // the values and the packet sent contains those changes
-TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_send) {
+TEST_F(HooksDhcpv6SrvTest, valueChangePkt6Send) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -830,7 +869,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_send) {
 // existing options and that server applies those changes. In particular,
 // we are trying to send a packet without server-id. The packet should
 // be sent
-TEST_F(HooksDhcpv6SrvTest, deleteServerId_pkt6_send) {
+TEST_F(HooksDhcpv6SrvTest, deleteServerIdPkt6Send) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -861,7 +900,7 @@ TEST_F(HooksDhcpv6SrvTest, deleteServerId_pkt6_send) {
 
 // Checks if callouts installed on pkt6_skip is able to set skip flag that
 // will cause the server to not process the packet (drop), even though it is valid.
-TEST_F(HooksDhcpv6SrvTest, skip_pkt6_send) {
+TEST_F(HooksDhcpv6SrvTest, skipPkt6Send) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -892,7 +931,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_pkt6_send) {
 
 // This test checks if subnet6_select callout is triggered and reports
 // valid parameters
-TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
+TEST_F(HooksDhcpv6SrvTest, subnet6Select) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -965,7 +1004,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
 
 // This test checks if callout installed on subnet6_select hook point can pick
 // a different subnet.
-TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
+TEST_F(HooksDhcpv6SrvTest, subnet6SselectChange) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -1038,7 +1077,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
 
 // This test verifies that incoming (positive) RENEW can be handled properly,
 // and the lease6_renew callouts are triggered.
-TEST_F(HooksDhcpv6SrvTest, basic_lease6_renew) {
+TEST_F(HooksDhcpv6SrvTest, basicLease6Renew) {
     NakedDhcpv6Srv srv(0);
 
     // Install pkt6_receive_callout
@@ -1137,7 +1176,7 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_renew) {
 
 // This test verifies that incoming (positive) RENEW can be handled properly,
 // and the lease6_renew callouts are able to change the lease being updated.
-TEST_F(HooksDhcpv6SrvTest, leaseUpdate_lease6_renew) {
+TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Renew) {
     NakedDhcpv6Srv srv(0);
 
     // Install pkt6_receive_callout
@@ -1230,7 +1269,7 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdate_lease6_renew) {
 // This test verifies that incoming (positive) RENEW can be handled properly,
 // and the lease6_renew callouts are able to set the skip flag that will
 // reject the renewal
-TEST_F(HooksDhcpv6SrvTest, skip_lease6_renew) {
+TEST_F(HooksDhcpv6SrvTest, skipLease6Renew) {
     NakedDhcpv6Srv srv(0);
 
     // Install pkt6_receive_callout
@@ -1308,7 +1347,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_renew) {
 // - returned REPLY message has server-id
 // - returned REPLY message has IA that does not include an IAADDR
 // - lease is actually removed from LeaseMgr
-TEST_F(HooksDhcpv6SrvTest, basic_lease6_release) {
+TEST_F(HooksDhcpv6SrvTest, basicLease6Release) {
     NakedDhcpv6Srv srv(0);
 
     // Install pkt6_receive_callout
@@ -1390,7 +1429,7 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_release) {
 // - returned REPLY message has server-id
 // - returned REPLY message has IA that does not include an IAADDR
 // - lease is actually removed from LeaseMgr
-TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
+TEST_F(HooksDhcpv6SrvTest, skipLease6Release) {
     NakedDhcpv6Srv srv(0);
 
     // Install pkt6_receive_callout
@@ -1450,6 +1489,137 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, *duid_, iaid,
                                               subnet_->getID());
     ASSERT_TRUE(l);
+}
+
+// This test checks that the basic decline hook (lease6_decline) is
+// triggered properly.
+TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
+    IfaceMgrTestConfig test_config(true);
+
+    // Install lease6_decline callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_decline", lease6_decline_callout));
+
+    // Get an address and decline it. DUIDs, IAID match and we send valid
+    // address, so the decline procedure should be successful.
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
+                      1234, VALID_ADDR, SHOULD_PASS);
+
+    // Check that the proper callback was called.
+    EXPECT_EQ("lease6_decline", callback_name_);
+
+    // And valid parameters were passed.
+    ASSERT_TRUE(callback_pkt6_);
+    ASSERT_TRUE(callback_lease6_);
+
+    // Test sanity check - it was a decline, right?
+    EXPECT_EQ(DHCPV6_DECLINE, callback_pkt6_->getType());
+
+    // Get the address from this decline.
+    OptionPtr ia = callback_pkt6_->getOption(D6O_IA_NA);
+    ASSERT_TRUE(ia);
+    boost::shared_ptr<Option6IAAddr> addr_opt =
+        boost::dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
+    ASSERT_TRUE(addr_opt);
+    IOAddress addr(addr_opt->getAddress());
+
+    // Now get a lease from the database.
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                               addr);
+    ASSERT_TRUE(from_mgr);
+    // Now check that it's indeed declined.
+    EXPECT_EQ(Lease::STATE_DECLINED, from_mgr->state_);
+
+    // And that the parameters passed to callout are consistent with the database
+    EXPECT_EQ(addr, from_mgr->addr_);
+    EXPECT_EQ(addr, callback_lease6_->addr_);
+}
+
+// Test that the lease6_decline hook point can handle SKIP status.
+TEST_F(HooksDhcpv6SrvTest, lease6DeclineSkip) {
+    IfaceMgrTestConfig test_config(true);
+
+    // Install lease6_decline callout. It will set the status to skip
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_decline", lease6_decline_skip_callout));
+
+    // Get an address and decline it. DUIDs, IAID match and we send valid
+    // address, so the decline procedure should be successful.
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
+                      1234, VALID_ADDR, SHOULD_FAIL);
+
+    // Check that the proper callback was called.
+    EXPECT_EQ("lease6_decline", callback_name_);
+
+    // And valid parameters were passed.
+    ASSERT_TRUE(callback_pkt6_);
+    ASSERT_TRUE(callback_lease6_);
+
+    // Test sanity check - it was a decline, right?
+    EXPECT_EQ(DHCPV6_DECLINE, callback_pkt6_->getType());
+
+    // Get the address from this decline.
+    OptionPtr ia = callback_pkt6_->getOption(D6O_IA_NA);
+    ASSERT_TRUE(ia);
+    boost::shared_ptr<Option6IAAddr> addr_opt =
+        boost::dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
+    ASSERT_TRUE(addr_opt);
+    IOAddress addr(addr_opt->getAddress());
+
+    // Now get a lease from the database.
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                               addr);
+    ASSERT_TRUE(from_mgr);
+    // Now check that it's NOT declined.
+    EXPECT_EQ(Lease::STATE_DEFAULT, from_mgr->state_);
+
+    // And that the parameters passed to callout are consistent with the database
+    EXPECT_EQ(addr, from_mgr->addr_);
+    EXPECT_EQ(addr, callback_lease6_->addr_);
+}
+
+// Test that the lease6_decline hook point can handle DROP status.
+TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
+    IfaceMgrTestConfig test_config(true);
+
+    // Install lease6_decline callout. It will set the status to skip
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_decline", lease6_decline_drop_callout));
+
+    // Get an address and decline it. DUIDs, IAID match and we send valid
+    // address, so it would work, but the callout sets status to DROP, so
+    // the server should not update the lease and should not send back any
+    // packets.
+    Dhcp6Client client;
+    acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
+                      1234, VALID_ADDR, SHOULD_FAIL);
+
+    // Check that the proper callback was called.
+    EXPECT_EQ("lease6_decline", callback_name_);
+
+    // And valid parameters were passed.
+    ASSERT_TRUE(callback_pkt6_);
+    ASSERT_TRUE(callback_lease6_);
+
+    // Test sanity check - it was a decline, right?
+    EXPECT_EQ(DHCPV6_DECLINE, callback_pkt6_->getType());
+
+    // Get the address from this decline.
+    OptionPtr ia = callback_pkt6_->getOption(D6O_IA_NA);
+    ASSERT_TRUE(ia);
+    boost::shared_ptr<Option6IAAddr> addr_opt =
+        boost::dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
+    ASSERT_TRUE(addr_opt);
+    IOAddress addr(addr_opt->getAddress());
+
+    // Now get a lease from the database.
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                               addr);
+    ASSERT_TRUE(from_mgr);
+    // Now check that it's NOT declined.
+    EXPECT_EQ(Lease::STATE_DEFAULT, from_mgr->state_);
 }
 
 }   // end of anonymous namespace

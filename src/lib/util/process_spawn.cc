@@ -217,10 +217,10 @@ ProcessSpawnImpl::spawn() {
         if (execvp(executable_.c_str(), args_) != 0) {
             // We may end up here if the execvp failed, e.g. as a result
             // of issue with permissions or invalid executable name.
-            exit(EXIT_FAILURE);
+            _exit(EXIT_FAILURE);
         }
         // Process finished, exit the child process.
-        exit(EXIT_SUCCESS);
+        _exit(EXIT_SUCCESS);
     }
 
     // We're in the parent process.

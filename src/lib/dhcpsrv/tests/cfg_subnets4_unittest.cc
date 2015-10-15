@@ -143,9 +143,46 @@ TEST(CfgSubnets4Test, selectSubnetByClasses) {
     EXPECT_FALSE(cfg.selectSubnet(selector));
 }
 
+// This test verifies the option selection can be used and is only
+// used when present.
+TEST(CfgSubnets4Test, selectSubnetByOptionSelect) {
+    CfgSubnets4 cfg;
+
+    // Create 3 subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+
+    // Add them to the configuration.
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    SubnetSelector selector;
+
+    // Check that without option selection something else is used
+    selector.ciaddr_ = IOAddress("192.0.2.5");
+    EXPECT_EQ(subnet1, cfg.selectSubnet(selector));
+
+    // The option selection has precedence
+    selector.option_select_ = IOAddress("192.0.2.130");
+    EXPECT_EQ(subnet3, cfg.selectSubnet(selector));
+
+    // Over relay-info too
+    selector.giaddr_ = IOAddress("10.0.0.1");
+    subnet2->setRelayInfo(IOAddress("10.0.0.1"));
+    EXPECT_EQ(subnet3, cfg.selectSubnet(selector));
+    selector.option_select_ = IOAddress("0.0.0.0");
+    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+
+    // Check that a not matching option selection it shall fail
+    selector.option_select_ = IOAddress("10.0.0.1");
+    EXPECT_FALSE(cfg.selectSubnet(selector));
+}
+
 // This test verifies that the relay information can be used to retrieve the
 // subnet.
-TEST(CfgSubnetsTest, selectSubnetByRelayAddress) {
+TEST(CfgSubnets4Test, selectSubnetByRelayAddress) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
@@ -184,7 +221,7 @@ TEST(CfgSubnetsTest, selectSubnetByRelayAddress) {
 
 // This test verifies that the subnet can be selected for the client
 // using a source address if the client hasn't set the ciaddr.
-TEST(CfgSubnetsTest, selectSubnetNoCiaddr) {
+TEST(CfgSubnets4Test, selectSubnetNoCiaddr) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
@@ -224,7 +261,7 @@ TEST(CfgSubnetsTest, selectSubnetNoCiaddr) {
 
 // This test verifies that the subnet can be selected using an address
 // set on the local interface.
-TEST(CfgSubnetsTest, selectSubnetInterface) {
+TEST(CfgSubnets4Test, selectSubnetInterface) {
     // The IfaceMgrTestConfig object initializes fake interfaces:
     // eth0, eth1 and lo on the configuration manager. The CfgSubnets4
     // object uses addresses assigned to these fake interfaces to
@@ -276,7 +313,7 @@ TEST(CfgSubnetsTest, selectSubnetInterface) {
 
 // Checks that detection of duplicated subnet IDs works as expected. It should
 // not be possible to add two IPv4 subnets holding the same ID.
-TEST(CfgSubnets4, duplication) {
+TEST(CfgSubnets4Test, duplication) {
     CfgSubnets4 cfg;
 
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 123));

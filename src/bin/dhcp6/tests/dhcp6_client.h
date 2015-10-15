@@ -178,7 +178,7 @@ public:
     /// - not relayed
     ///
     /// @param srv Object representing server under test.
-    Dhcp6Client(boost::shared_ptr<isc::test::NakedDhcpv6Srv>& srv);
+    Dhcp6Client(boost::shared_ptr<isc::dhcp::test::NakedDhcpv6Srv>& srv);
 
     /// @brief Create lease for the client.
     ///
@@ -365,7 +365,7 @@ public:
     }
 
     /// @brief Returns the server that the client is communicating with.
-    boost::shared_ptr<isc::test::NakedDhcpv6Srv> getServer() const {
+    boost::shared_ptr<isc::dhcp::test::NakedDhcpv6Srv> getServer() const {
         return (srv_);
     }
 
@@ -727,7 +727,7 @@ private:
     std::string iface_name_;
 
     /// @brief Pointer to the server that the client is communicating with.
-    boost::shared_ptr<isc::test::NakedDhcpv6Srv> srv_;
+    boost::shared_ptr<isc::dhcp::test::NakedDhcpv6Srv> srv_;
 
     bool use_na_;    ///< Enable address assignment.
     bool use_pd_;    ///< Enable prefix delegation.

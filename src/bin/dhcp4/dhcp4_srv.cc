@@ -80,6 +80,7 @@ struct Dhcp4Hooks {
     int hook_index_lease4_release_; ///< index for "lease4_release" hook point
     int hook_index_pkt4_send_;      ///< index for "pkt4_send" hook point
     int hook_index_buffer4_send_;   ///< index for "buffer4_send" hook point
+    int hook_index_lease4_decline_; ///< index for "lease4_decline" hook point
 
     /// Constructor that registers hook points for DHCPv4 engine
     Dhcp4Hooks() {
@@ -89,6 +90,7 @@ struct Dhcp4Hooks {
         hook_index_pkt4_send_      = HooksManager::registerHook("pkt4_send");
         hook_index_lease4_release_ = HooksManager::registerHook("lease4_release");
         hook_index_buffer4_send_   = HooksManager::registerHook("buffer4_send");
+        hook_index_lease4_decline_ = HooksManager::registerHook("lease4_decline");
     }
 };
 
@@ -271,6 +273,10 @@ Dhcpv4Srv::~Dhcpv4Srv() {
     }
 
     IfaceMgr::instance().closeSockets();
+
+    // The lease manager was instantiated during DHCPv4Srv configuration,
+    // so we should clean up after ourselves.
+    LeaseMgrFactory::destroy();
 }
 
 void
@@ -291,6 +297,29 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
     selector.remote_address_ = query->getRemoteAddr();
     selector.client_classes_ = query->classes_;
     selector.iface_name_ = query->getIface();
+
+    // If the link-selection sub-option is present, extract its value.
+    // "The link-selection sub-option is used by any DHCP relay agent
+    // that desires to specify a subnet/link for a DHCP client request
+    // that it is relaying but needs the subnet/link specification to
+    // be different from the IP address the DHCP server should use
+    // when communicating with the relay agent." (RFC 3257)
+    OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (rai) {
+        OptionCustomPtr rai_custom =
+            boost::dynamic_pointer_cast<OptionCustom>(rai);
+        if (rai_custom) {
+            OptionPtr link_select =
+                rai_custom->getOption(RAI_OPTION_LINK_SELECTION);
+            if (link_select) {
+                OptionBuffer link_select_buf = link_select->getData();
+                if (link_select_buf.size() == sizeof(uint32_t)) {
+                    selector.option_select_ =
+                        IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
+                }
+            }
+        }
+    }
 
     CfgMgr& cfgmgr = CfgMgr::instance();
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
@@ -316,12 +345,14 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
         // Callouts decided to skip this step. This means that no subnet
         // will be selected. Packet processing will continue, but it will
         // be severely limited (i.e. only global options will be assigned)
-        if (callout_handle->getSkip()) {
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_HOOK_SUBNET4_SELECT_SKIP)
                 .arg(query->getLabel());
             return (Subnet4Ptr());
         }
+
+        /// @todo: Add support for DROP status
 
         // Use whatever subnet was specified by the callout
         callout_handle->getArgument("subnet4", subnet);
@@ -464,7 +495,7 @@ Dhcpv4Srv::run() {
             // processing step would to parse the packet, so skip at this
             // stage means that callouts did the parsing already, so server
             // should skip parsing.
-            if (callout_handle->getSkip()) {
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_DETAIL, DHCP4_HOOK_BUFFER_RCVD_SKIP)
                     .arg(query->getRemoteAddr().toText())
                     .arg(query->getLocalAddr().toText())
@@ -473,6 +504,8 @@ Dhcpv4Srv::run() {
             }
 
             callout_handle->getArgument("query4", query);
+
+            /// @todo: add support for DROP status
         }
 
         // Unpack the packet information unless the buffer4_receive callouts
@@ -550,11 +583,13 @@ Dhcpv4Srv::run() {
             // Callouts decided to skip the next processing step. The next
             // processing step would to process the packet, so skip at this
             // stage means drop.
-            if (callout_handle->getSkip()) {
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_RCVD_SKIP)
                     .arg(query->getLabel());
                 continue;
             }
+
+            /// @todo: Add support for DROP status
 
             callout_handle->getArgument("query4", query);
         }
@@ -625,7 +660,7 @@ Dhcpv4Srv::run() {
             callout_handle->deleteAllArguments();
 
             // Clear skip flag if it was set in previous callouts
-            callout_handle->setSkip(false);
+            callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
 
             // Set our response
             callout_handle->setArgument("response4", rsp);
@@ -637,11 +672,13 @@ Dhcpv4Srv::run() {
             // Callouts decided to skip the next processing step. The next
             // processing step would to send the packet, so skip at this
             // stage means "drop response".
-            if (callout_handle->getSkip()) {
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_SEND_SKIP)
                     .arg(query->getLabel());
                 skip_pack = true;
             }
+
+            /// @todo: Add support for DROP status
         }
 
         if (!skip_pack) {
@@ -677,12 +714,14 @@ Dhcpv4Srv::run() {
                 // Callouts decided to skip the next processing step. The next
                 // processing step would to parse the packet, so skip at this
                 // stage means drop.
-                if (callout_handle->getSkip()) {
+                if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                     LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                               DHCP4_HOOK_BUFFER_SEND_SKIP)
                         .arg(rsp->getLabel());
                     continue;
                 }
+
+                /// @todo: Add support for DROP status.
 
                 callout_handle->getArgument("response4", rsp);
             }
@@ -1769,12 +1808,14 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             // Callouts decided to skip the next processing step. The next
             // processing step would to send the packet, so skip at this
             // stage means "drop response".
-            if (callout_handle->getSkip()) {
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                 skip = true;
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                           DHCP4_HOOK_LEASE4_RELEASE_SKIP)
                     .arg(release->getLabel());
             }
+
+            /// @todo add support for DROP status
         }
 
         // Callout didn't indicate to skip the release process. Let's release
@@ -1883,11 +1924,37 @@ Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
 
     // Ok, all is good. The client is reporting its own address. Let's
     // process it.
-    declineLease(lease, decline->getLabel());
+    declineLease(lease, decline);
 }
 
 void
-Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const std::string& descr) {
+Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline) {
+
+    // Let's check if there are hooks installed for decline4 hook point.
+    // If they are, let's pass the lease and client's packet. If the hook
+    // sets status to drop, we reject this Decline.
+    if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_decline_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(decline);
+
+        // Delete previously set arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass incoming Decline and the lease to be declined.
+        callout_handle->setArgument("lease4", lease);
+        callout_handle->setArgument("query4", decline);
+
+        // Call callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease4_decline_,
+                                   *callout_handle);
+
+        // Check if callouts decided to drop the packet. If any of them did,
+        // we will drop the packet.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_DECLINE_SKIP)
+                .arg(decline->getLabel()).arg(lease->addr_.toText());
+            return;
+        }
+    }
 
     // Clean up DDNS, if needed.
     if (CfgMgr::instance().ddnsEnabled()) {
@@ -1926,7 +1993,7 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const std::string& descr) {
     LeaseMgrFactory::instance().updateLease4(lease);
 
     LOG_INFO(dhcp4_logger, DHCP4_DECLINE_LEASE).arg(lease->addr_.toText())
-        .arg(descr).arg(lease->valid_lft_);
+        .arg(decline->getLabel()).arg(lease->valid_lft_);
 }
 
 Pkt4Ptr

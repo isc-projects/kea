@@ -12,10 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef PKT_CAPTURES_H
+#define PKT_CAPTURES_H
+
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 
 namespace isc {
+namespace dhcp {
 namespace test {
 
 class PktCaptures {
@@ -69,5 +73,8 @@ protected:
     static void captureSetDefaultFields(const isc::dhcp::Pkt4Ptr& pkt);
 };
 
-};
-};
+}; // end of namespace isc::dhcp::test
+}; // end of namespace isc::dhcp
+}; // end of namespace isc
+
+#endif
