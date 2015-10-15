@@ -364,6 +364,65 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
 
 }
 
+// This test verifies that the mandatory to copy fields and options
+// are really copied into the response.
+TEST_F(Dhcpv4SrvTest, initResponse) {
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Set fields which must be copied
+    query->setIface("foo");
+    query->setIndex(111);
+    query->setHops(5);
+    const HWAddr& hw = HWAddr::fromText("11:22:33:44:55:66:77:88", 10);
+    HWAddrPtr hw_addr(new HWAddr(hw));
+    query->setHWAddr(hw_addr);
+    query->setGiaddr(IOAddress("10.10.10.10"));
+    const HWAddr& src_hw = HWAddr::fromText("e4:ce:8f:12:34:56");
+    HWAddrPtr src_hw_addr(new HWAddr(src_hw));
+    query->setLocalHWAddr(src_hw_addr);
+    const HWAddr& dst_hw = HWAddr::fromText("e8:ab:cd:78:9a:bc");
+    HWAddrPtr dst_hw_addr(new HWAddr(dst_hw));
+    query->setRemoteHWAddr(dst_hw_addr);
+
+    // Add options which must be copied
+    // client-id echo is optional
+    // rai echo is done in relayAgentInfoEcho
+    // Do subnet selection option
+    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(Option::V4,
+                                                           DHO_SUBNET_SELECTION);
+    ASSERT_TRUE(sbnsel_def);
+    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    ASSERT_TRUE(sbnsel);
+    sbnsel->writeAddress(IOAddress("192.0.2.3"));
+    query->addOption(sbnsel);
+
+    // Create exchange and get Response
+    Dhcpv4Exchange ex = createExchange(query);
+    Pkt4Ptr response = ex.getResponse();
+    ASSERT_TRUE(response);
+
+    // Check fields
+    EXPECT_EQ("foo", response->getIface());
+    EXPECT_EQ(111, response->getIndex());
+    EXPECT_TRUE(response->getSiaddr().isV4Zero());
+    EXPECT_TRUE(response->getCiaddr().isV4Zero());
+    EXPECT_EQ(5, response->getHops());
+    EXPECT_EQ(hw, *response->getHWAddr());
+    EXPECT_EQ(IOAddress("10.10.10.10"), response->getGiaddr());
+    EXPECT_EQ(src_hw, *response->getLocalHWAddr());
+    EXPECT_EQ(dst_hw, *response->getRemoteHWAddr());
+
+    // Check options (i.e., subnet selection option)
+    OptionPtr resp_sbnsel = response->getOption(DHO_SUBNET_SELECTION);
+    ASSERT_TRUE(resp_sbnsel);
+    OptionCustomPtr resp_custom =
+	boost::dynamic_pointer_cast<OptionCustom>(resp_sbnsel);
+    ASSERT_TRUE(resp_custom);
+    IOAddress subnet_addr("0.0.0.0");
+    ASSERT_NO_THROW(subnet_addr = resp_custom->readAddress());
+    EXPECT_EQ(IOAddress("192.0.2.3"), subnet_addr);
+}
+
 // This test verifies that the server identifier option is appended to
 // a specified DHCPv4 message and the server identifier is correct.
 TEST_F(Dhcpv4SrvTest, appendServerID) {
