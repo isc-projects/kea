@@ -1,7 +1,7 @@
 SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(MULTITHREADING_FLAG)
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 # XXX: we'll pollute the top builddir for creating a temporary test file
 # # used to bind a UNIX domain socket so we can minimize the risk of exceeding
 # # the limit of file name path size.
@@ -26,7 +26,7 @@ run_unittests_SOURCES += lock_unittest.cc
 run_unittests_SOURCES += condvar_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) $(PTHREAD_LDFLAGS)
+run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
 run_unittests_LDADD = $(top_builddir)/src/lib/util/threads/libkea-threads.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
