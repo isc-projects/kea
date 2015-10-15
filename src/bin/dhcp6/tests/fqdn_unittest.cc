@@ -32,7 +32,7 @@
 #include <gtest/gtest.h>
 
 using namespace isc;
-using namespace isc::test;
+using namespace isc::dhcp::test;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;

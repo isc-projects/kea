@@ -45,6 +45,7 @@ using namespace isc::asiolink;
 using namespace std;
 
 namespace isc {
+namespace dhcp {
 namespace test {
 
 void PktCaptures::captureSetDefaultFields(const Pkt6Ptr& pkt) {
@@ -107,7 +108,7 @@ Pkt6Ptr PktCaptures::captureRelayedSolicit() {
 }
 
 /// returns a buffer with relayed SOLICIT (from DOCSIS3.0 cable modem)
-Pkt6Ptr isc::test::PktCaptures::captureDocsisRelayedSolicit() {
+Pkt6Ptr PktCaptures::captureDocsisRelayedSolicit() {
 
     // This is an actual DOCSIS packet
     // RELAY-FORW (12)
@@ -169,7 +170,7 @@ Pkt6Ptr isc::test::PktCaptures::captureDocsisRelayedSolicit() {
 }
 
 /// returns a buffer with relayed SOLICIT (from DOCSIS3.0 eRouter)
-Pkt6Ptr isc::test::PktCaptures::captureeRouterRelayedSolicit() {
+Pkt6Ptr PktCaptures::captureeRouterRelayedSolicit() {
 
 /* Packet description exported from wireshark:
 DHCPv6
@@ -304,7 +305,7 @@ DHCPv6
     return (pkt);
 }
 
-Pkt6Ptr isc::test::PktCaptures::captureCableLabsShortVendorClass() {
+Pkt6Ptr PktCaptures::captureCableLabsShortVendorClass() {
     // This is a simple non-relayed Solicit:
     // - client-identifier
     // - IA_NA
@@ -364,7 +365,7 @@ Pkt6Ptr isc::test::PktCaptures::captureCableLabsShortVendorClass() {
 /// The original capture was posted to dibbler users mailing list.
 ///
 /// @return created double relayed SOLICIT message
-isc::dhcp::Pkt6Ptr isc::test::PktCaptures::captureRelayed2xRSOO() {
+isc::dhcp::Pkt6Ptr PktCaptures::captureRelayed2xRSOO() {
 
     // string exported from Wireshark
     string hex_string =
@@ -399,6 +400,6 @@ isc::dhcp::Pkt6Ptr isc::test::PktCaptures::captureRelayed2xRSOO() {
     return (pkt);
 }
 
-
-}; // end of isc::test namespace
+}; // end of isc::dhcp::test namespace
+}; // end of isc::dhcp namespace
 }; // end of isc namespace
