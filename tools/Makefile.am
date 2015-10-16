@@ -13,4 +13,7 @@ if GENERATE_DOCS
 noinst_PROGRAMS = system_messages
 system_messages_SOURCES = system_messages.cc
 
+# For bare distcheck
+EXTRA_DIST = system_messages
+
 endif
