@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,8 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/hooks_manager.h>
 #include <testutils/unix_control_client.h>
 
@@ -93,6 +95,11 @@ public:
             "{"
             "    \"interfaces-config\": {"
             "        \"interfaces\": [ \"*\" ]"
+            "    },"
+            "    \"expired-leases-processing\": {"
+            "         \"reclaim-timer-wait-time\": 60,"
+            "         \"hold-reclaimed-time\": 500,"
+            "         \"flush-reclaimed-timer-wait-time\": 60"
             "    },"
             "    \"rebind-timer\": 2000, "
             "    \"renew-timer\": 1000, "
@@ -379,5 +386,35 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
               response);
 }
 
+
+// Thist test verifies that the DHCP server immediately reclaims expired
+// leases on leases-reclaim command
+// @todo currently must be last as it changes statistics.
+TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaim) {
+    createUnixChannelServer();
+
+    // Create an expired lease. The lease is expired by 40 seconds ago
+    // (valid lifetime = 60, cltt = now - 100).
+    HWAddrPtr hwaddr_expired(new HWAddr(HWAddr::fromText("00:01:02:03:04:05")));
+    Lease4Ptr lease_expired(new Lease4(IOAddress("10.0.0.1"), hwaddr_expired,
+                                       ClientIdPtr(), 60, 10, 20,
+                                       time(NULL) - 100, SubnetID(1)));
+
+    // Add lease to the database.
+    LeaseMgr& lease_mgr = LeaseMgrFactory().instance();
+    ASSERT_NO_THROW(lease_mgr.addLease(lease_expired));
+
+    // Make sure it has been added.
+    ASSERT_TRUE(lease_mgr.getLease4(IOAddress("10.0.0.1")));
+
+    // Send the command.
+    std::string response;
+    sendUnixCommand("{ \"command\": \"leases-reclaim\" }", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Leases successfully reclaimed.\" }", response);
+
+    // Verify that the lease in the database has been processed as expected.
+    ASSERT_NO_THROW(lease_expired = lease_mgr.getLease4(IOAddress("10.0.0.1")));
+    EXPECT_FALSE(lease_expired);
+}
 
 } // End of anonymous namespace
