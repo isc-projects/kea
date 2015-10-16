@@ -220,11 +220,12 @@ const char* create_statement[] = {
     "ALTER TABLE lease6 "
         "ADD COLUMN state INT UNSIGNED DEFAULT 0",
 
-    "CREATE INDEX lease4_by_state_expire ON lease4 (state, expire)",
-    "CREATE INDEX lease6_by_state_expire ON lease6 (state, expire)",
+    "CREATE INDEX lease4_by_state_expire ON lease4 (state ASC, expire ASC)",
+    "CREATE INDEX lease6_by_state_expire ON lease6 (state ASC, expire ASC)",
 
-    // Production schema includes the lease_state table which maps
-    // the lease states to their names. This is not used in the unit tests
+    // Production schema includes the lease_state table and
+    // lease_hwaddr_source tables which map to the values in lease4
+    // and lease6 tables. This is not used in the unit tests
     // so it is commented out.
 
     /*"CREATE TABLE IF NOT EXISTS lease_state (",
@@ -233,8 +234,32 @@ const char* create_statement[] = {
 
     "INSERT INTO lease_state VALUES (0, \"default\");",
     "INSERT INTO lease_state VALUES (1, \"declined\");",
-    "INSERT INTO lease_state VALUES (2, \"expired-reclaimed\");",*/
+    "INSERT INTO lease_state VALUES (2, \"expired-reclaimed\");",
 
+    "ALTER TABLE lease4 "
+        "ADD CONSTRAINT fk_lease4_state FOREIGN KEY (state) "
+        "REFERENCES lease_state (state)",
+
+    "ALTER TABLE lease6 "
+        "ADD CONSTRAINT fk_lease6_state FOREIGN KEY (state) "
+        "REFERENCES lease_state (state)",
+
+    "ALTER TABLE lease6 "
+        "ADD CONSTRAINT fk_lease6_type FOREIGN KEY (lease_type) "
+        "REFERENCES lease6_types (lease_type)",
+
+    "UPDATE lease_hwaddr_source "
+        "SET name = 'HWADDR_SOURCE_DOCSIS_CMTS' "
+        "WHERE hwaddr_source = 64",
+
+    "INSERT INTO lease_hwaddr_source VALUES (128, 'HWADDR_SOURCE_DOCSIS_MODEM')",
+
+    "ALTER TABLE lease_hwaddr_source "
+        "MODIFY COLUMN hwaddr_source INT UNSIGNED NOT NULL DEFAULT 0",
+
+    "ALTER TABLE lease6 "
+        "ADD CONSTRAINT fk_lease6_hwaddr_source FOREIGN KEY (hwaddr_source) "
+        "REFERENCES lease_hwaddr_source (hwaddr_source)",*/
 
     // Schema upgrade to 4.0 ends here.
 
