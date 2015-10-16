@@ -508,7 +508,7 @@ void processFileContent(const std::string& filename,
 void processFile(const std::string& filename)
 {
     std::ifstream cin;
-    cin.open(filename, std::ios::in);
+    cin.open(filename.c_str(), std::ios::in);
     if (!cin.is_open()) {
         reportError(filename, "open for read failure");
     }
