@@ -3665,7 +3665,7 @@ TEST_F(Dhcp4ParserTest, declineTimerDefault) {
     // returned value should be 0 (success)
     checkResult(status, 0);
 
-    // The value of decline-probation-perion must be equal to the
+    // The value of decline-probation-period must be equal to the
     // default value.
     EXPECT_EQ(DEFAULT_DECLINE_PROBATION_PERIOD,
               CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
@@ -3687,7 +3687,7 @@ TEST_F(Dhcp4ParserTest, declineTimer) {
     // returned value should be 0 (success)
     checkResult(status, 0);
 
-    // The value of decline-probation-perion must be equal to the
+    // The value of decline-probation-period must be equal to the
     // value specified.
     EXPECT_EQ(12345,
               CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
@@ -3738,7 +3738,7 @@ TEST_F(Dhcp4ParserTest, expiredLeasesProcessing) {
     // Returned value should be 0 (success)
     checkResult(status, 0);
 
-    // The value of decline-probation-perion must be equal to the
+    // The value of decline-probation-period must be equal to the
     // value specified.
     CfgExpirationPtr cfg = CfgMgr::instance().getStagingCfg()->getCfgExpiration();
     ASSERT_TRUE(cfg);
