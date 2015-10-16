@@ -70,7 +70,7 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&, ConstElementPtr a
 }
 
 ConstElementPtr
-ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&, ConstElementPtr args) {
+ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&, ConstElementPtr) {
 
 
     server_->alloc_engine_->reclaimExpiredLeases6(0, 0, true);

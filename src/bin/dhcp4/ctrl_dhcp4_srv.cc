@@ -72,6 +72,16 @@ ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&, ConstElementPtr) {
+
+
+    server_->alloc_engine_->reclaimExpiredLeases4(0, 0, true);
+    ConstElementPtr answer = isc::config::createAnswer(0,
+                             "Leases successfully reclaimed.");
+    return (answer);
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::processCommand(const string& command,
                                     ConstElementPtr args) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_COMMAND_RECEIVED)
@@ -105,16 +115,6 @@ ControlledDhcpv4Srv::processCommand(const string& command,
                                           + command + "':" + ex.what() +
                                           ", params: '" + args->str() + "'"));
     }
-}
-
-ConstElementPtr
-ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&, ConstElementPtr args) {
-
-
-    server_->alloc_engine_->reclaimExpiredLeases4(0, 0, true);
-    ConstElementPtr answer = isc::config::createAnswer(0,
-                             "Leases successfully reclaimed.");
-    return (answer);
 }
 
 isc::data::ConstElementPtr
