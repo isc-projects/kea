@@ -110,7 +110,6 @@ install-exec-hook:
 
 ### include tool to generate documentation from log message specifications
 ### in the distributed tarball:
-EXTRA_DIST = tools/system_messages.py
 EXTRA_DIST += tools/path_replacer.sh
 EXTRA_DIST += tools/mk_cfgrpt.sh
 
