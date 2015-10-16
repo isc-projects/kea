@@ -75,7 +75,7 @@ ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&, ConstElementPtr 
 
     server_->alloc_engine_->reclaimExpiredLeases6(0, 0, true);
     ConstElementPtr answer = isc::config::createAnswer(0,
-                             "Leases successfully reclaimed/");
+                             "Leases successfully reclaimed.");
     return (answer);
 }
 
