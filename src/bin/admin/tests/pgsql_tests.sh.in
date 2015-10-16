@@ -68,16 +68,20 @@ pgsql_lease_init_test() {
     assert_eq 0 $? "schema_version table check failed, expected exit code: %d, actual: %d"
 
     # Check lease4 table
-    RESULT=`pgsql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname FROM lease4;"`
+    RESULT=`pgsql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, state FROM lease4;"`
     assert_eq 0 $? "lease4 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6 table
-    RESULT=`pgsql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname FROM lease6;"`
+    RESULT=`pgsql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, state FROM lease6;"`
     assert_eq 0 $? "lease6 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6_types table
     RESULT=`pgsql_execute "SELECT lease_type, name FROM lease6_types;"`
     assert_eq 0 $? "lease6_types table check failed, expected exit code: %d, actual: %d"
+
+    # Check lease_state table
+    RESULT=`pgsql_execute "SELECT state, name FROM lease_state;"`
+    assert_eq 0 $? "lease_state table check failed, expected exit code: %d, actual: %d"
 
     # Trying to create it again should fail.  This verifies the db present
     # check
@@ -104,7 +108,7 @@ pgsql_lease_version_test() {
 
     # Verfiy that kea-admin lease-version returns the correct version
     version=$(${keaadmin} lease-version pgsql -u $db_user -p $db_password -n $db_name)
-    assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "2.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -195,9 +199,9 @@ pgsql_lease4_dump_test() {
 
     # Insert the reference records
     insert_sql="\
-insert into lease4 values(10,E'\\x20',E'\\x30',40,'$timestamp1',50,'t','t','one.example.com');\
-insert into lease4 values(11,'',E'\\x0123',40,'$timestamp2',50,'t','t','');\
-insert into lease4 values(12,E'\\x22','',40,'$timestamp3',50,'t','t','three.example.com');"
+insert into lease4 values(10,E'\\x20',E'\\x30',40,'$timestamp1',50,'t','t','one.example.com', 0);\
+insert into lease4 values(11,'',E'\\x0123',40,'$timestamp2',50,'t','t','', 1);\
+insert into lease4 values(12,E'\\x22','',40,'$timestamp3',50,'t','t','three.example.com', 2);"
 
     pgsql_execute "$insert_sql"
     ERRCODE=$?
@@ -290,9 +294,9 @@ pgsql_lease6_dump_test() {
 
     # Insert the reference records
     insert_sql="\
-insert into lease6 values(10,E'\\x20',30,'$timestamp1',40,50,1,60,70,'t','t','one.example.com');\
-insert into lease6 values(11,'',30,'$timestamp2',40,50,1,60,70,'t','t','');\
-insert into lease6 values(12,E'\\x21',30,'$timestamp3',40,50,1,60,70,'t','t','three.example.com');"
+insert into lease6 values(10,E'\\x20',30,'$timestamp1',40,50,1,60,70,'t','t','one.example.com', 0);\
+insert into lease6 values(11,'',30,'$timestamp2',40,50,1,60,70,'t','t','', 1);\
+insert into lease6 values(12,E'\\x21',30,'$timestamp3',40,50,1,60,70,'t','t','three.example.com', 2);"
 
     pgsql_execute "$insert_sql"
     ERRCODE=$?

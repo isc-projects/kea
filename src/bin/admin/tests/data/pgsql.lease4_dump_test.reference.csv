@@ -1,4 +1,4 @@
-address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname
-0.0.0.10,20,30,40,<timestamp1>,50,1,1,one.example.com
-0.0.0.11,,013233,40,<timestamp2>,50,1,1,
-0.0.0.12,22,,40,<timestamp3>,50,1,1,three.example.com
+address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state
+0.0.0.10,20,30,40,<timestamp1>,50,1,1,one.example.com,default
+0.0.0.11,,013233,40,<timestamp2>,50,1,1,,declined
+0.0.0.12,22,,40,<timestamp3>,50,1,1,three.example.com,expired-reclaimed

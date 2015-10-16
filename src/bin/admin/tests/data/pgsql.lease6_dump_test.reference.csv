@@ -1,4 +1,4 @@
-address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname
-12,21,30,<timestamp3>,40,50,IA_TA,60,70,1,1,three.example.com
-11,,30,<timestamp2>,40,50,IA_TA,60,70,1,1,
-10,20,30,<timestamp1>,40,50,IA_TA,60,70,1,1,one.example.com
+address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,state
+12,21,30,<timestamp3>,40,50,IA_TA,60,70,1,1,three.example.com,expired-reclaimed
+11,,30,<timestamp2>,40,50,IA_TA,60,70,1,1,,declined
+10,20,30,<timestamp1>,40,50,IA_TA,60,70,1,1,one.example.com,default
