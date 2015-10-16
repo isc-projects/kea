@@ -1,3 +1,7 @@
+1031.	[build]		fdupont
+	Rewrote the system_messages tool from Python to C++.
+	(trac #3516, git xxx)
+
 1030.	[bug]		marcin
 	Fixed failing 'reclaimExpiredLeasesTimeout' unit tests on
 	some virtual machines.
