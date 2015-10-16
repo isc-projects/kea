@@ -1478,6 +1478,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
+                 tools/Makefile
                  tools/path_replacer.sh
 ])
 
