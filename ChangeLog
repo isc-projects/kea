@@ -1,3 +1,9 @@
+1032.	[func]		marcin
+	PostgreSQL lease database backend has been extended with new
+	functions to obtain expired leases and to delete expired
+	reclaimed leases.
+	(Trac #3968, git 0bc02588d8553ba9a4fc749115a3e370407d7287)
+
 1031.	[build]		fdupont
 	Rewrote the system_messages tool from Python to C++.
 	(trac #3516, git a8195310c641027d1822344cafad64e6f695d614)
