@@ -13,7 +13,8 @@ EXTRA_DIST = $(DOCBOOK)
 DISTCLEANFILES = $(HTMLDOCS) $(DOCS) kea-messages.xml
 
 kea-messages.xml:
-	$(PYTHON) $(top_srcdir)/tools/system_messages.py -o $@ $(top_srcdir)
+	$(top_srcdir)/tools/system_messages -o $@ \
+	`find $(top_srcdir) -name "*.mes" -print`
 
 # This is not a "man" manual, but reuse this for now for docbook.
 if GENERATE_DOCS
@@ -35,6 +36,7 @@ kea-messages.html: kea-messages.xml
 	@XSLTPROC@ --novalid --xinclude --nonet \
 		--path $(top_builddir)/doc \
 		-o $@ \
+		--stringparam generate.toc "book toc" \
 		--stringparam html.stylesheet kea-guide.css \
 		http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl \
 		kea-messages.xml
