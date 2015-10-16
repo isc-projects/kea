@@ -69,6 +69,16 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&, ConstElementPtr a
     return (processConfig(args));
 }
 
+ConstElementPtr
+ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&, ConstElementPtr args) {
+
+
+    server_->alloc_engine_->reclaimExpiredLeases6(0, 0, true);
+    ConstElementPtr answer = isc::config::createAnswer(0,
+                             "Leases successfully reclaimed/");
+    return (answer);
+}
+
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processCommand(const std::string& command,
                                     isc::data::ConstElementPtr args) {
@@ -208,6 +218,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
     /// @todo: register config-reload (see CtrlDhcpv4Srv::commandConfigReloadHandler)
     /// @todo: register libreload (see CtrlDhcpv4Srv::commandLibReloadHandler)
 
+    CommandMgr::instance().registerCommand("leases-reclaim",
+        boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
+
     // Register statistic related commands
     CommandMgr::instance().registerCommand("statistic-get",
         boost::bind(&StatsMgr::statisticGetHandler, _1, _2));
@@ -247,6 +260,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
 
         // Deregister any registered commands
         CommandMgr::instance().deregisterCommand("shutdown");
+        CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-reset");
         CommandMgr::instance().deregisterCommand("statistic-remove");

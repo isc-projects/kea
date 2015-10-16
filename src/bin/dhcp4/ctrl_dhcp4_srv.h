@@ -151,6 +151,19 @@ private:
                                isc::data::ConstElementPtr args);
 
 
+    /// @brief handler for processing 'leases-reclaim' command
+    ///
+    /// This handler processes leases-reclaim command, which triggers
+    /// the leases reclamation immediately
+    ///
+    /// @param command (parameter ignored)
+    /// @param args (parameter ignored)
+    ///
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    commandLeasesReclaimHandler(const std::string& command,
+                                isc::data::ConstElementPtr args);
+
     /// @brief Reclaims expired IPv4 leases and reschedules timer.
     ///
     /// This is a wrapper method for @c AllocEngine::reclaimExpiredLeases4.
