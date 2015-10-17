@@ -106,6 +106,8 @@ ControlledDhcpv4Srv::processCommand(const string& command,
         } else if (command == "config-reload") {
             return (srv->commandConfigReloadHandler(command, args));
 
+        } else if (command == "leases-reclaim") {
+            return (srv->commandLeasesReclaimHandler(command, args));
         }
         ConstElementPtr answer = isc::config::createAnswer(1,
                                  "Unrecognized command:" + command);

@@ -103,6 +103,9 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
 
         } else if (command == "config-reload") {
             return (srv->commandConfigReloadHandler(command, args));
+
+        } else if (command == "leases-reclaim") {
+            return (srv->commandLeasesReclaimHandler(command, args));
         }
 
         return (isc::config::createAnswer(1, "Unrecognized command:"
