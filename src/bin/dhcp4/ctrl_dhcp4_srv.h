@@ -70,6 +70,7 @@ public:
     /// - shutdown
     /// - libreload
     /// - config-reload
+    /// - leases-reclaim
     ///
     /// @note It never throws.
     ///

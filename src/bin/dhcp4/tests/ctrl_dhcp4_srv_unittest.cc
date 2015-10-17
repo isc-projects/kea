@@ -22,6 +22,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 #include <testutils/unix_control_client.h>
 
 #include "marker_file.h"
@@ -45,6 +46,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
+using namespace isc::stats;
 
 namespace {
 
@@ -82,6 +84,8 @@ public:
 
     /// @brief Destructor
     ~CtrlChannelDhcpv4SrvTest() {
+        LeaseMgrFactory::destroy();
+        StatsMgr::instance().removeAll();
         server_.reset();
         reset();
     };
