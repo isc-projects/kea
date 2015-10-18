@@ -43,25 +43,65 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Host Data Source Factory
+///
+/// This class comprises nothing but static methods used to create a host data source object.
+/// It analyzes the database information passed to the creation function and instantiates
+/// an appropriate host data source object based on the type requested.
+///
+/// Strictly speaking these functions could be stand-alone functions.  However,
+/// it is convenient to encapsulate them in a class for naming purposes.
+
 class HostDataSourceFactory {
 public:
-    /// @brief todo
-	///
+    /// @brief Create an instance of a host data source.
+    ///
+    /// Each database backend has its own host data source type. This static
+    /// method sets the "current" host data source to be an object of the
+    /// appropriate type.  The actual host data source is returned by the
+    /// "instance" method.
+    ///
+    /// @note When called, the current host data source is <b>always</b> destroyed
+    ///       and a new one created - even if the parameters are the same.
+    ///
+    /// dbaccess is a generic way of passing parameters. Parameters are passed
+    /// in the "name=value" format, separated by spaces.  The data MUST include
+    /// a keyword/value pair of the form "type=dbtype" giving the database
+    /// type, e.q. "mysql" or "sqlite3".
+    ///
+    /// @param dbaccess Database access parameters.  These are in the form of
+    ///        "keyword=value" pairs, separated by spaces. They are backend-
+    ///        -end specific, although must include the "type" keyword which
+    ///        gives the backend in use.
+    ///
+    /// @throw isc::InvalidParameter dbaccess string does not contain the "type"
+    ///        keyword.
+    /// @throw isc::dhcp::InvalidType The "type" keyword in dbaccess does not
+    ///        identify a supported backend.
     static void create(const std::string& dbaccess);
 
-    /// @brief Destroy host data source instance
-	///
-	/// todo
-	static void destroy();
+    /// @brief Destroy host data source
+    ///
+    /// Destroys the current host data source object. This should have the effect
+    /// of closing the database connection.  The method is a no-op if no
+    /// host data source is available.
+    static void destroy();
 
-	/// @brief Return current host data source instance
-	/// todo
-	static BaseHostDataSource& instance();
+    /// @brief Return current host data source
+    ///
+    /// @returns An instance of the "current" host data source.  An exception
+    /// will be thrown if none is available.
+    ///
+    /// @throw NoHostDataSourceManager No host data source is available: use
+    ///        create() to create one before calling this method.
+    static BaseHostDataSource& instance();
 
 private:
     /// @brief Hold pointer to host data source instance
     ///
-    /// todo
+    /// Holds a pointer to the singleton host data source.  The singleton
+    /// is encapsulated in this method to avoid a "static initialization
+    /// fiasco" if defined in an external static variable.
     static boost::scoped_ptr<BaseHostDataSource>& getHostDataSourcePtr();
 
 };

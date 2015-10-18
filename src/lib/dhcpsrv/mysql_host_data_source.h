@@ -23,22 +23,20 @@
 #include <boost/utility.hpp>
 #include <mysql.h>
 
-
 namespace isc {
 namespace dhcp {
-
-// Define the current database schema values
-
-const uint32_t CURRENT_VERSION_VERSION = 3;
-const uint32_t CURRENT_VERSION_MINOR = 0;
-
 
 // Forward declaration of the Host exchange objects.  These classes are defined
 // in the .cc file.
 class MySqlHostReservationExchange;
 
+/// @brief MySQL Host Data Source
+///
+/// This class provides the \ref isc::dhcp::BaseHostDataSource interface to the MySQL
+/// database.  Use of this backend presupposes that a MySQL database is
+/// available and that the Kea schema has been created within it.
 
-class MySqlHostDataSource : public BaseHostDataSource, public MySqlConnection {
+class MySqlHostDataSource: public BaseHostDataSource {
 public:
 
     /// @brief Constructor
@@ -63,7 +61,7 @@ public:
     /// @throw isc::dhcp::DbOpenError Error opening the database
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-	MySqlHostDataSource(const ParameterMap& parameters);
+    MySqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
     virtual ~MySqlHostDataSource();
@@ -93,221 +91,210 @@ public:
     getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
 
     /// @brief Returns a collection of hosts using the specified IPv4 address.
-	///
-	/// This method may return multiple @c Host objects if they are connected
-	/// to different subnets.
-	///
-	/// @param address IPv4 address for which the @c Host object is searched.
-	///
-	/// @return Collection of const @c Host objects.
-	virtual ConstHostCollection
-	getAll4(const asiolink::IOAddress& address) const;
+    ///
+    /// This method may return multiple @c Host objects if they are connected
+    /// to different subnets.
+    ///
+    /// @param address IPv4 address for which the @c Host object is searched.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll4(const asiolink::IOAddress& address) const;
 
-	/// @brief Returns a host connected to the IPv4 subnet.
-	///
-	/// Implementations of this method should guard against the case when
-	/// mutliple instances of the @c Host are present, e.g. when two
-	/// @c Host objects are found, one for the DUID, another one for the
-	/// HW address. In such case, an implementation of this method
-	/// should throw an exception.
-	///
-	/// @param subnet_id Subnet identifier.
-	/// @param hwaddr HW address of the client or NULL if no HW address
-	/// available.
-	/// @param duid client id or NULL if not available.
-	///
-	/// @return Const @c Host object using a specified HW address or DUID.
-	virtual ConstHostPtr
-	get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-			const DuidPtr& duid = DuidPtr()) const;
+    /// @brief Returns a host connected to the IPv4 subnet.
+    ///
+    /// Implementations of this method should guard against the case when
+    /// mutliple instances of the @c Host are present, e.g. when two
+    /// @c Host objects are found, one for the DUID, another one for the
+    /// HW address. In such case, an implementation of this method
+    /// should throw an MultipleRecords exception.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param hwaddr HW address of the client or NULL if no HW address
+    /// available.
+    /// @param duid client id or NULL if not available.
+    ///
+    /// @return Const @c Host object using a specified HW address or DUID.
+    virtual ConstHostPtr
+    get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
+            const DuidPtr& duid = DuidPtr()) const;
 
-	/// @brief Returns a host connected to the IPv4 subnet and having
-	/// a reservation for a specified IPv4 address.
-	///
-	/// One of the use cases for this method is to detect collisions between
-	/// dynamically allocated addresses and reserved addresses. When the new
-	/// address is assigned to a client, the allocation mechanism should check
-	/// if this address is not reserved for some other host and do not allocate
-	/// this address if reservation is present.
-	///
-	/// Implementations of this method should guard against invalid addresses,
-	/// such as IPv6 address.
-	///
-	/// @param subnet_id Subnet identifier.
-	/// @param address reserved IPv4 address.
-	///
-	/// @return Const @c Host object using a specified IPv4 address.
-	virtual ConstHostPtr
-	get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
+    /// @brief Returns a host connected to the IPv4 subnet and having
+    /// a reservation for a specified IPv4 address.
+    ///
+    /// One of the use cases for this method is to detect collisions between
+    /// dynamically allocated addresses and reserved addresses. When the new
+    /// address is assigned to a client, the allocation mechanism should check
+    /// if this address is not reserved for some other host and do not allocate
+    /// this address if reservation is present.
+    ///
+    /// Implementations of this method should guard against invalid addresses,
+    /// such as IPv6 address.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address reserved IPv4 address.
+    ///
+    /// @return Const @c Host object using a specified IPv4 address.
+    virtual ConstHostPtr
+    get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
 
-	/// @brief Returns a host connected to the IPv6 subnet.
-	///
-	/// Implementations of this method should guard against the case when
-	/// mutliple instances of the @c Host are present, e.g. when two
-	/// @c Host objects are found, one for the DUID, another one for the
-	/// HW address. In such case, an implementation of this method
-	/// should throw an exception.
-	///
-	/// @param subnet_id Subnet identifier.
-	/// @param hwaddr HW address of the client or NULL if no HW address
-	/// available.
-	/// @param duid DUID or NULL if not available.
-	///
-	/// @return Const @c Host object using a specified HW address or DUID.
-	virtual ConstHostPtr
-	get6(const SubnetID& subnet_id, const DuidPtr& duid,
-			const HWAddrPtr& hwaddr = HWAddrPtr()) const;
+    /// @brief Returns a host connected to the IPv6 subnet.
+    ///
+    /// Implementations of this method should guard against the case when
+    /// mutliple instances of the @c Host are present, e.g. when two
+    /// @c Host objects are found, one for the DUID, another one for the
+    /// HW address. In such case, an implementation of this method
+    /// should throw an MultipleRecords exception.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param hwaddr HW address of the client or NULL if no HW address
+    /// available.
+    /// @param duid DUID or NULL if not available.
+    ///
+    /// @return Const @c Host object using a specified HW address or DUID.
+    virtual ConstHostPtr
+    get6(const SubnetID& subnet_id, const DuidPtr& duid,
+            const HWAddrPtr& hwaddr = HWAddrPtr()) const;
 
-	/// @brief Returns a host using the specified IPv6 prefix.
-	///
-	/// @param prefix IPv6 prefix for which the @c Host object is searched.
-	/// @param prefix_len IPv6 prefix length.
-	///
-	/// @return Const @c Host object using a specified HW address or DUID.
-	virtual ConstHostPtr
-	get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
+    /// @brief Returns a host using the specified IPv6 prefix.
+    ///
+    /// @param prefix IPv6 prefix for which the @c Host object is searched.
+    /// @param prefix_len IPv6 prefix length.
+    ///
+    /// @return Const @c Host object using a specified HW address or DUID.
+    virtual ConstHostPtr
+    get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
 
-	/// @brief Returns a host from specific subnet and reserved address.
-	///
-	/// @param subnet_id subnet identfier.
-	/// @param address specified address.
-	///
-	/// @return Const @c host object that has a reservation for specified address.
-	virtual ConstHostPtr
-	get6(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
+    /// @brief Returns a host from specific subnet and reserved address.
+    ///
+    /// @param subnet_id subnet identfier.
+    /// @param address specified address.
+    ///
+    /// @return Const @c host object that has a reservation for specified address.
+    virtual ConstHostPtr
+    get6(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
 
     /// @brief Adds a new host to the collection.
     ///
     /// The implementations of this method should guard against duplicate
     /// reservations for the same host, where possible. For example, when the
     /// reservation for the same HW address and subnet id is added twice, the
-    /// implementation should throw an exception. Note, that usually it is
-    /// impossible to guard against adding duplicated host, where one instance
-    /// is identified by HW address, another one by DUID.
+    /// addHost method should throw an DuplicateEntry exception. Note, that
+    /// usually it is impossible to guard against adding duplicated host, where
+    /// one instance is identified by HW address, another one by DUID.
     ///
     /// @param host Pointer to the new @c Host object being added.
     virtual void add(const HostPtr& host);
 
     /// @brief Return backend type
-	///
-	/// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
-	///
-	/// @return Type of the backend.
-	virtual std::string getType() const {
-		return (std::string("mysql"));
-	}
+    ///
+    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
+    ///
+    /// @return Type of the backend.
+    virtual std::string getType() const {
+        return (std::string("mysql"));
+    }
 
-	/// @brief Returns backend name.
-	///
-	/// Each backend have specific name, e.g. "mysql" or "sqlite".
-	///
-	/// @return Name of the backend.
-	virtual std::string getName() const;
+    /// @brief Returns backend name.
+    ///
+    /// Each backend have specific name, e.g. "mysql" or "sqlite".
+    ///
+    /// @return Name of the backend.
+    virtual std::string getName() const;
 
-	/// @brief Returns description of the backend.
-	///
-	/// This description may be multiline text that describes the backend.
-	///
-	/// @return Description of the backend.
-	virtual std::string getDescription() const;
+    /// @brief Returns description of the backend.
+    ///
+    /// This description may be multiline text that describes the backend.
+    ///
+    /// @return Description of the backend.
+    virtual std::string getDescription() const;
 
-	/// @brief Returns backend version.
-	///
-	/// @return Version number as a pair of unsigned integers.  "first" is the
-	///         major version number, "second" the minor number.
-	///
-	/// @throw isc::dhcp::DbOperationError An operation on the open database has
-	///        failed.
-	virtual std::pair<uint32_t, uint32_t> getVersion() const;
+    /// @brief Returns backend version.
+    ///
+    /// @return Version number stored in the database, as a pair of unsigned
+    ///         integers. "first" is the major version number, "second" the
+    ///         minor number.
+    ///
+    /// @throw isc::dhcp::DbOperationError An operation on the open database
+    ///        has failed.
+    virtual std::pair<uint32_t, uint32_t> getVersion() const;
 
-	/// @brief Commit Transactions
-	///
-	/// Commits all pending database operations. On databases that don't
-	/// support transactions, this is a no-op.
-	///
-	/// @throw DbOperationError If the commit failed.
-	virtual void commit();
-
-	/// @brief Rollback Transactions
-	///
-	/// Rolls back all pending database operations. On databases that don't
-	/// support transactions, this is a no-op.
-	///
-	/// @throw DbOperationError If the rollback failed.
-	virtual void rollback();
+    MySqlConnection* getDatabaseConnection() {
+        return &conn_;
+    }
 
     /// @brief Statement Tags
     ///
     /// The contents of the enum are indexes into the list of SQL statements
-	enum StatementIndex {
-		INSERT_HOST,				// Insert new host to collection
-		GET_HOST_HWADDR_DUID,		// Get hosts identified by DUID and/or HW address
-		GET_HOST_ADDR,				// Get hosts with specified IPv4 address
-		GET_HOST_SUBID4_DHCPID,		// Get host with specified IPv4 SubnetID and HW address and/or DUID
-		GET_HOST_SUBID6_DHCPID,		// Get host with specified IPv6 SubnetID and HW address and/or DUID
-		GET_HOST_SUBID_ADDR,		// Get host with specified IPv4 SubnetID and IPv4 address
-		GET_HOST_PREFIX,			// Get host with specified IPv6 prefix
-		GET_VERSION,                // Obtain version number
-		NUM_STATEMENTS              // Number of statements
-	};
+    enum StatementIndex {
+        INSERT_HOST,		// Insert new host to collection
+        GET_HOST_HWADDR_DUID,   // Gets hosts by DUID and/or HW address
+        GET_HOST_ADDR,		// Gets hosts by IPv4 address
+        GET_HOST_SUBID4_DHCPID,	// Gets host by IPv4 SubnetID, HW address/DUID
+        GET_HOST_SUBID6_DHCPID,	// Gets host by IPv6 SubnetID, HW address/DUID
+        GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
+        GET_HOST_PREFIX,	// Gets host by IPv6 prefix
+        GET_VERSION,            // Obtain version number
+        NUM_STATEMENTS          // Number of statements
+    };
 
 private:
-	/// @brief Add Host Code
-	///
-	/// This method performs adding a host operation.
-	///	It binds the contents of the host object to
-	/// the prepared statement and adds it to the database.
-	///
-	/// @param stindex Index of statemnent being executed
-	/// @param bind MYSQL_BIND array that has been created for the host
-	///
-	/// @return true if the host was added, false if it was not.
-	bool addHost(StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
+    /// @brief Add Host Code
+    ///
+    /// This method performs adding a host operation.
+    ///	It binds the contents of the host object to
+    /// the prepared statement and adds it to the database.
+    ///
+    /// @param stindex Index of statemnent being executed
+    /// @param bind MYSQL_BIND array that has been created for the host
+    ///
+    /// @htrow isc::dhcp::DuplicateEntry Database throws duplicate entry error
+    void addHost(StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
 
-	/// @brief Get Host Collection Code
-	///
-	/// This method obtains multiple hosts from the database.
-	///
-	/// @param stindex Index of statement being executed
-	/// @param bind MYSQL_BIND array for input parameters
-	/// @param exchange Exchange object to use
-	/// @param result ConstHostCollection object returned.  Note that any hosts in
-	///        the collection when this method is called are not erased: the
-	///        new data is appended to the end.
-	/// @param single If true, only a single data item is to be retrieved.
-	///        If more than one is present, a MultipleRecords exception will
-	///        be thrown.
-	///
-	/// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
-	/// @throw isc::dhcp::DbOperationError An operation on the open database has
-	///        failed.
-	/// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
-	///        from the database where only one was expected.
-	void getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
-			boost::shared_ptr<MySqlHostReservationExchange> exchange,
-			ConstHostCollection& result, bool single = false) const;
+    /// @brief Get Host Collection Code
+    ///
+    /// This method obtains multiple hosts from the database.
+    ///
+    /// @param stindex Index of statement being executed
+    /// @param bind MYSQL_BIND array for input parameters
+    /// @param exchange Exchange object to use
+    /// @param result ConstHostCollection object returned.  Note that any hosts
+    ///        in the collection when this method is called are not erased: the
+    ///        new data is appended to the end.
+    /// @param single If true, only a single data item is to be retrieved.
+    ///        If more than one is present, a MultipleRecords exception will
+    ///        be thrown.
+    ///
+    /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
+    ///        from the database where only one was expected.
+    void getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
+            boost::shared_ptr<MySqlHostReservationExchange> exchange,
+            ConstHostCollection& result, bool single = false) const;
 
-	/// @brief Check Error and Throw Exception
-	///
-	/// Virtually all MySQL functions return a status which, if non-zero,
-	/// indicates an error.  This inline function conceals a lot of error
-	/// checking/exception-throwing code.
-	///
-	/// @param status Status code: non-zero implies an error
-	/// @param index Index of statement that caused the error
-	/// @param what High-level description of the error
-	///
-	/// @throw isc::dhcp::DbOperationError An operation on the open database has
-	///        failed.
-	inline void checkError(int status, StatementIndex index,
-			const char* what) const {
-		if (status != 0) {
-			isc_throw(DbOperationError,
-					what << " for <" << text_statements_[index] << ">, reason: "
-					<< mysql_error(mysql_) << " (error code " << mysql_errno(mysql_) << ")");
-		}
-	}
-
+    /// @brief Check Error and Throw Exception
+    ///
+    /// Virtually all MySQL functions return a status which, if non-zero,
+    /// indicates an error.  This inline function conceals a lot of error
+    /// checking/exception-throwing code.
+    ///
+    /// @param status Status code: non-zero implies an error
+    /// @param index Index of statement that caused the error
+    /// @param what High-level description of the error
+    ///
+    /// @throw isc::dhcp::DbOperationError An operation on the open database
+    ///        has failed.
+    inline void checkError(int status, StatementIndex index,
+            const char* what) const {
+        if (status != 0) {
+            isc_throw(DbOperationError, what << " for <"
+                    << conn_.text_statements_[index] << ">, reason: "
+                    << mysql_error(conn_.mysql_) << " (error code "
+                    << mysql_errno(conn_.mysql_) << ")");
+        }
+    }
 
     // Members
 
@@ -315,7 +302,12 @@ private:
     /// They are pointed-to objects as the contents may change in "const" calls,
     /// while the rest of this object does not.  (At alternative would be to
     /// declare them as "mutable".)
-    boost::shared_ptr<MySqlHostReservationExchange> hostExchange_; ///< Exchange object
+
+    /// @brief MySQL Host Reservation Exchange object
+    boost::shared_ptr<MySqlHostReservationExchange> hostExchange_;
+
+    /// @brief MySQL connection
+    MySqlConnection conn_;
 
 };
 

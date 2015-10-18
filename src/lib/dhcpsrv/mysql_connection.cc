@@ -258,5 +258,22 @@ MySqlConnection::convertFromDatabaseTime(const MYSQL_TIME& expire,
     cltt = mktime(&expire_tm) - valid_lifetime;
 }
 
+void MySqlConnection::commit() {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_COMMIT);
+        if (mysql_commit(mysql_) != 0) {
+                isc_throw(DbOperationError, "commit failed: "
+                        << mysql_error(mysql_));
+        }
+}
+
+void MySqlConnection::rollback() {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_ROLLBACK);
+        if (mysql_rollback(mysql_) != 0) {
+                isc_throw(DbOperationError, "rollback failed: "
+                        << mysql_error(mysql_));
+        }
+}
+
+
 } // namespace isc::dhcp
 } // namespace isc

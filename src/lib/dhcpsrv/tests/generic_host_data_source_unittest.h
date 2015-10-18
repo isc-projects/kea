@@ -23,6 +23,10 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
+/// @brief Test Fixture class with utility functions for HostDataSource backends
+///
+/// It contains utility functions for test purposes.
+/// All concrete HostDataSource test classes should be derived from it.
 class GenericHostDataSourceTest : public ::testing::Test {
 public:
 

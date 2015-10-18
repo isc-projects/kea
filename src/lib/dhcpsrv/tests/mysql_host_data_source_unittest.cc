@@ -58,6 +58,8 @@ const char* INVALID_USER = "user=invaliduser";
 const char* VALID_PASSWORD = "password=keatest";
 const char* INVALID_PASSWORD = "password=invalid";
 
+MySqlHostDataSource* myhdsptr_;
+
 // Given a combination of strings above, produce a connection string.
 string connectionString(const char* type, const char* name, const char* host,
                         const char* user, const char* password) {
@@ -166,15 +168,15 @@ public:
                          "*** accompanying exception output.\n";
             throw;
         }
-        hdsptr_ = &(HostDataSourceFactory::instance());
+        myhdsptr_ = (MySqlHostDataSource *) &(HostDataSourceFactory::instance());
     }
 
     /// @brief Destructor
     ///
-    /// Rolls back all pending transactions.  The deletion of hdsptr_ will close
+    /// Rolls back all pending transactions.  The deletion of myhdsptr_ will close
     /// the database.  Then reopen it and delete everything created by the test.
     virtual ~MySqlHostDataSourceTest() {
-        //hdsptr_->rollback();				// need to decide where to implement rollback method (HostMgr or BaseHostDataSource maybe?)
+        myhdsptr_->getDatabaseConnection()->rollback();
         HostDataSourceFactory::destroy();
         destroySchema();
     }
@@ -189,7 +191,7 @@ public:
     void reopen(Universe) {
     	HostDataSourceFactory::destroy();
     	HostDataSourceFactory::create(validConnectionString());
-        hdsptr_ = &(HostDataSourceFactory::instance());
+    	myhdsptr_ = (MySqlHostDataSource *) &(HostDataSourceFactory::instance());
     }
 
 };

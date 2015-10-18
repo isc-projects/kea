@@ -320,7 +320,7 @@ public:
         // beginning of the epoch (around year 2038). The value is often
         // stored in the database but it is invalid when read back (overflow?).
         // Hence, the maximum timestamp value is restricted here.
-        if (expire_time_64 > DataSource::MAX_DB_TIME) {
+        if (expire_time_64 > DatabaseConnection::MAX_DB_TIME) {
             isc_throw(isc::BadValue, "Time value is too large: " << expire_time_64);
         }
 

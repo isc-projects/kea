@@ -41,6 +41,13 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Database duplicate entry error
+class DuplicateEntry : public Exception {
+public:
+    DuplicateEntry(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 };
 };
 

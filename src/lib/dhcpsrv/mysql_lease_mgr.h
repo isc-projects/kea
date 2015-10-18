@@ -21,18 +21,12 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
-#include <mysql.h>
+#include <mysql/mysql.h>
 
 #include <time.h>
 
 namespace isc {
 namespace dhcp {
-
-// Define the current database schema values
-
-const uint32_t CURRENT_VERSION_VERSION = 3;
-const uint32_t CURRENT_VERSION_MINOR = 0;
-
 
 // Forward declaration of the Lease exchange objects.  These classes are defined
 // in the .cc file.

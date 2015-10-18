@@ -46,8 +46,10 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
     const std::string type = "type";
 
     // Parse the access string and create a redacted string for logging.
-    DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(dbaccess);
-    std::string redacted = DatabaseConnection::redactedAccessString(parameters);
+    DatabaseConnection::ParameterMap parameters =
+            DatabaseConnection::parse(dbaccess);
+    std::string redacted =
+            DatabaseConnection::redactedAccessString(parameters);
 
     // Is "type" present?
     if (parameters.find(type) == parameters.end()) {
@@ -84,7 +86,9 @@ HostDataSourceFactory::destroy() {
     // Destroy current host data source instance.  This is a no-op if no host
     // data source is available.
     if (getHostDataSourcePtr()) {
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CLOSE_DB);
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                DHCPSRV_CLOSE_HOST_DATA_SOURCE)
+                        .arg(getHostDataSourcePtr()->getType());
     }
     getHostDataSourcePtr().reset();
 }
@@ -93,7 +97,8 @@ BaseHostDataSource&
 HostDataSourceFactory::instance() {
 	BaseHostDataSource* hdsptr = getHostDataSourcePtr().get();
     if (hdsptr == NULL) {
-        isc_throw(NoHostDataSourceManager, "no current host data source instance is available");
+        isc_throw(NoHostDataSourceManager,
+                "no current host data source instance is available");
     }
     return (*hdsptr);
 }

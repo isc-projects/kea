@@ -17,7 +17,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/hosts_log.h>
-#include <dhcpsrv/mysql_host_data_source.h>
+#include <dhcpsrv/host_data_source_factory.h>
 
 namespace {
 
@@ -45,10 +45,19 @@ HostMgr::getHostMgrPtr() {
 }
 
 void
-HostMgr::create(const std::string&) {
+HostMgr::create(const std::string& /*access*/) {
     getHostMgrPtr().reset(new HostMgr());
+/*
+    try {
+        HostDataSourceFactory::create(access);
+    } catch (...) {
+        std::cerr << "Unable to open database.";
+        throw;
+    }
+*/
+    //alternate_source = &(HostDataSourceFactory::instance());
+    //alternate_source.reset(&(HostDataSourceFactory::instance()));
 
-    //alternate_source.reset(new MySqlHostDataSource());
     /// @todo Initialize alternate_source here, using the parameter.
     /// For example: alternate_source.reset(new MysqlHostDataSource(access)).
 }
