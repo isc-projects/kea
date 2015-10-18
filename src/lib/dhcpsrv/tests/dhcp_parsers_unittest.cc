@@ -530,7 +530,7 @@ TEST_F(ParseConfigTest, minimalOptionDefTest) {
     EXPECT_TRUE(def->getEncapsulatedSpace().empty());
 }
 
-/// @brief Check Basic parsing of options.
+/// @brief Check basic parsing of options.
 ///
 /// Note that this tests basic operation of the OptionDataListParser and
 /// OptionDataParser.  It uses a simple configuration consisting of one
@@ -552,6 +552,40 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
         "    \"code\": 100,"
         "    \"data\": \"192.0.2.0\","
         "    \"csv-format\": True"
+        " } ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_TRUE(rcode == 0);
+
+    // Verify that the option can be retrieved.
+    OptionPtr opt_ptr = getOptionPtr("isc", 100);
+    ASSERT_TRUE(opt_ptr);
+
+    // Verify that the option definition is correct.
+    std::string val = "type=00100, len=00004: 192.0.2.0 (ipv4-address)";
+
+    EXPECT_EQ(val, opt_ptr->toText());
+}
+
+/// @brief Check minimal parsing of options.
+///
+/// Same than basic but without optional parameters set to their default.
+TEST_F(ParseConfigTest, minimalOptionDataTest) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"ipv4-address\","
+        "      \"space\": \"isc\""
+        " } ], "
+        " \"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"data\": \"192.0.2.0\""
         " } ]"
         "}";
 
@@ -720,7 +754,6 @@ TEST_F(ParseConfigTest, optionDataNoName) {
         "{ \"option-data\": [ {"
         "    \"space\": \"dhcp6\","
         "    \"code\": 23,"
-        "    \"csv-format\": True,"
         "    \"data\": \"2001:db8:1::1\""
         " } ]"
         "}";
@@ -741,7 +774,6 @@ TEST_F(ParseConfigTest, optionDataNoCode) {
         "{ \"option-data\": [ {"
         "    \"space\": \"dhcp6\","
         "    \"name\": \"dns-servers\","
-        "    \"csv-format\": True,"
         "    \"data\": \"2001:db8:1::1\""
         " } ]"
         "}";
