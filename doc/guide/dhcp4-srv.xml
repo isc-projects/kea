@@ -1160,14 +1160,14 @@ It is merely echoed by the server
       should be left blank.  Note that the above set of comments define the
       format of the new option and do not set its values.
       </para>
-      <note>
-        <para>
-          In the current release the default values are not propagated to the
-          parser when the new configuration is being set. Therefore, all
-          parameters must be specified at all times, even if their values are
-          left blank.
-        </para>
-      </note>
+
+      <para>The <command>name</command>, <command>code</command> and
+      <command>type</command> parameters are required, all others are
+      optional. The <command>array</command> default value is
+      <command>false</command>. The <command>record-types</command>
+      and <command>encapsulate</command> default values are blank
+      (i.e. ""). The default <command>space</command> is "dhcp4".
+      </para>
 
       <para>Once the new option format is defined, its value is set
       in the same way as for a standard option. For example the following

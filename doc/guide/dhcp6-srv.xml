@@ -1022,6 +1022,15 @@ temporarily override a list of interface names and listen on all interfaces.
       set of comments define the format of the new option and do not set its
       values.
       </para>
+
+      <para>The <command>name</command>, <command>code</command> and
+      <command>type</command> parameters are required, all others are
+      optional. The <command>array</command> default value is
+      <command>false</command>. The <command>record-types</command>
+      and <command>encapsulate</command> default values are blank
+      (i.e. ""). The default <command>space</command> is "dhcp4".
+      </para>
+
       <para>Once the new option format is defined, its value is set
       in the same way as for a standard option. For example the following
       commands set a global value that applies to all subnets.
