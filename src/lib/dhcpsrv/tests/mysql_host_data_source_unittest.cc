@@ -298,4 +298,132 @@ TEST_F(MySqlHostDataSourceTest, checkTimeConversion) {
     EXPECT_EQ(cltt, converted_cltt);
 }
 
+// Test verifies if a host reservation can be added and later retrieved by IPv4
+// address.
+TEST_F(MySqlHostDataSourceTest, basic4) {
+    /// @todo: basic - add host reserveration, retrieve it by address and
+    /// confirm that all fields have correct value.
+}
+
+// Test verifies if a host reservation can be added and later retrieved by
+// hardware address.
+TEST_F(MySqlHostDataSourceTest, hwaddr) {
+    /// @todo: add host reservation with hardware address, retrieve it by
+    /// hardware address and make sure the values are correct.
+}
+
+// Test verifies if a host reservation can be added and later retrieved by
+// client identifier.
+TEST_F(MySqlHostDataSourceTest, clientId) {
+    /// @todo: add host reservation with hardware address, retrieve it by
+    /// hardware address and make sure the values are correct.
+}
+
+// Test verifies if hardware address and client identifier are not confused.
+TEST_F(MySqlHostDataSourceTest, hwaddrNotClientId1) {
+    /// @todo: add host reservation with hardware address X, try to retrieve
+    /// host by client-identifier X, verify that the reservation is not returned.
+}
+
+// Test verifies if hardware address and client identifier are not confused.
+TEST_F(MySqlHostDataSourceTest, hwaddrNotClientId2) {
+    /// @todo: add host reservation with client identifier X, try to retrieve host
+    /// by hardware address X, verify that the reservation is not returned.
+}
+
+// Test verifies if the hardware or client-id query can match hardware address.
+TEST_F(MySqlHostDataSourceTest, hwaddrOrClientId1) {
+    /// @todo: Add host reservation with hardware address X, try to retrieve
+    /// host for hardware address X or client identifier Y, verify that the
+    /// reservation is returned.
+}
+
+// Test verifies if the hardware or client-id query can match client-id.
+TEST_F(MySqlHostDataSourceTest, hwaddrOrClientId2) {
+    /// @todo: Add host reservation with client identifier Y, try to retrieve
+    /// host for hardware address X or client identifier Y, verify that the
+    /// reservation is returned.
+}
+
+// Test verifies if a host reservation can be added and later retrieved by IPv6
+// address.
+TEST_F(MySqlHostDataSourceTest, basic6) {
+    /// @todo: basic - add host reserveration, retrieve it by address and
+    /// confirm that all fields (including IPv6 address) have correct values.
+}
+
+// Test verifies if a host reservation can be stored with both IPv6 address and
+// prefix.
+TEST_F(MySqlHostDataSourceTest, addr6AndPrefix) {
+    /// @todo: Add host reservation with an IPv6 address and IPv6 prefix,
+    /// retrieve it and verify that both v6 address and prefix are retrieved
+    /// correctly.
+}
+
+// Test verifies if multiple client classes for IPv4 can be stored.
+TEST_F(MySqlHostDataSourceTest, DISABLED_multipleClientClasses4) {
+    /// @todo: Implement this test later.
+
+    /// Add host reservation with a multiple v4 client-classes, retrieve it and
+    /// make sure that all client classes are retrieved properly.
+}
+
+// Test verifies if multiple client classes for IPv6 can be stored.
+TEST_F(MySqlHostDataSourceTest, DISABLED_multipleClientClasses6) {
+    /// @todo: Implement this test later.
+
+    /// Add host reservation with a multiple v6 client-classes, retrieve it and
+    /// make sure that all client classes are retrieved properly.
+}
+
+// Test verifies if multiple client classes for both IPv4 and IPv6 can be stored.
+TEST_F(MySqlHostDataSourceTest, DISABLED_multipleClientClassesBoth) {
+    /// @todo: Implement this test later.
+
+    /// Add host reservation with a multiple v4 and v6 client-classes, retrieve
+    /// it and make sure that all client classes are retrieved properly. Also,
+    /// check that the classes are not confused.
+}
+
+// Test if retrieving hosts by hardware addresses is working correctly.
+TEST_F(MySqlHostDataSourceTest, uniqueHW) {
+    /// @todo: Insert 100 host reservations, each with unique hardware address,
+    /// try to retrieve each and make sure that the correct host is returned.
+}
+
+// Test if the same host can have reservations in different subnets (with the
+// same hardware address)
+TEST_F(MySqlHostDataSourceTest, MultipleSubnetsHWAddr) {
+    /// @todo: Insert 10 host reservations for a given physical host (the same
+    /// hardware address), but for different subnets (different subnet-ids).
+    /// Make sure that getAll() returns them all correctly.
+}
+
+// Test if the same host can have reservations in different subnets (with the
+// same client identifier)
+TEST_F(MySqlHostDataSourceTest, MultipleSubnetsClientId) {
+    /// @todo: Insert 10 host reservations for a given physical host (the same
+    /// client-identifier), but for different subnets (different subnet-ids).
+    /// Make sure that getAll() returns them correctly.
+}
+
+// Test if host reservations made for different IPv4 subnets are handled correctly.
+TEST_F(MySqlHostDataSourceTest, subnetId4) {
+    /// @todo: Insert 10 host reservations for different subnets. Make sure that
+    /// get4(subnet-id, ...) calls return correct reservation.
+}
+
+// Test if host reservations made for different IPv6 subnets are handled correctly.
+TEST_F(MySqlHostDataSourceTest, subnetId6) {
+    /// @todo: Insert 10 host reservations for different subnets. Make sure that
+    /// get6(subnet-id, ...) calls return correct reservation.
+}
+
+// Test if the duplicate host instances can't be inserted.
+TEST_F(MySqlHostDataSourceTest, addDuplicate) {
+    /// @todo: Test for errors, e.g. try to add multiple instances of the same
+    /// host reservation and verify that the second and following attempts will
+    /// throw exceptions.
+}
+
 }; // Of anonymous namespace
