@@ -27,11 +27,12 @@ namespace dhcp {
 namespace test {
 
 GenericHostDataSourceTest::GenericHostDataSourceTest()
-	:hdsptr_(NULL){
+    :hdsptr_(NULL) {
 
 }
 
-GenericHostDataSourceTest::~GenericHostDataSourceTest(){}
+GenericHostDataSourceTest::~GenericHostDataSourceTest() {
+}
 
 
 

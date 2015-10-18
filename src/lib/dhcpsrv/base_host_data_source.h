@@ -187,6 +187,17 @@ public:
     /// @return Type of the backend.
     virtual std::string getType() const = 0;
 
+    /// @brief Commit Transactions
+    ///
+    /// Commits all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    virtual void commit() {};
+
+    /// @brief Rollback Transactions
+    ///
+    /// Rolls back all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    virtual void rollback() {};
 };
 
 }

@@ -21,7 +21,7 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
-#include <mysql.h>
+#include <mysql/mysql.h>
 
 namespace isc {
 namespace dhcp {
@@ -32,10 +32,9 @@ class MySqlHostReservationExchange;
 
 /// @brief MySQL Host Data Source
 ///
-/// This class provides the \ref isc::dhcp::BaseHostDataSource interface to the MySQL
+/// This class provides the @ref isc::dhcp::BaseHostDataSource interface to the MySQL
 /// database.  Use of this backend presupposes that a MySQL database is
 /// available and that the Kea schema has been created within it.
-
 class MySqlHostDataSource: public BaseHostDataSource {
 public:
 
@@ -218,6 +217,18 @@ public:
     /// @throw isc::dhcp::DbOperationError An operation on the open database
     ///        has failed.
     virtual std::pair<uint32_t, uint32_t> getVersion() const;
+
+    /// @brief Commit Transactions
+    ///
+    /// Commits all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    virtual void commit();
+
+    /// @brief Rollback Transactions
+    ///
+    /// Rolls back all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    virtual void rollback();
 
     MySqlConnection* getDatabaseConnection() {
         return &conn_;

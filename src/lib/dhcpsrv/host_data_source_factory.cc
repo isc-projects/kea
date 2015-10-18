@@ -16,7 +16,11 @@
 
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/hosts_log.h>
+
+#ifdef HAVE_MYSQL
 #include <dhcpsrv/mysql_host_data_source.h>
+#endif
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
@@ -67,15 +71,18 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
         return;
     }
 #endif
+
 #ifdef HAVE_PGSQL
     if (parameters[type] == string("postgresql")) {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_DB).arg(redacted);
-        // set pgsql data source here, when it will be featured
+        isc_throw(NotImplemented, "Sorry, Postgres backend for host reservations "
+                  "is not implemented yet.");
+        // Set pgsql data source here, when it will be implemented.
         return;
     }
 #endif
 
-    // Get here on no match
+    // Get here on no match.
     LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(parameters[type]);
     isc_throw(InvalidType, "Database access parameter 'type' does "
               "not specify a supported database backend");
@@ -86,16 +93,15 @@ HostDataSourceFactory::destroy() {
     // Destroy current host data source instance.  This is a no-op if no host
     // data source is available.
     if (getHostDataSourcePtr()) {
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                DHCPSRV_CLOSE_HOST_DATA_SOURCE)
-                        .arg(getHostDataSourcePtr()->getType());
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, HOSTS_CFG_CLOSE_HOST_DATA_SOURCE)
+            .arg(getHostDataSourcePtr()->getType());
     }
     getHostDataSourcePtr().reset();
 }
 
 BaseHostDataSource&
 HostDataSourceFactory::instance() {
-	BaseHostDataSource* hdsptr = getHostDataSourcePtr().get();
+    BaseHostDataSource* hdsptr = getHostDataSourcePtr().get();
     if (hdsptr == NULL) {
         isc_throw(NoHostDataSourceManager,
                 "no current host data source instance is available");

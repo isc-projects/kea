@@ -216,7 +216,7 @@ private:
     /// @brief Pointer to an alternate host data source.
     ///
     /// If this pointer is NULL, the source is not in use.
-    boost::shared_ptr<BaseHostDataSource> alternate_source;
+    static boost::shared_ptr<BaseHostDataSource> alternate_source;
 
     /// @brief Returns a pointer to the currently used instance of the
     /// @c HostMgr.

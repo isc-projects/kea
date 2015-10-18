@@ -970,6 +970,17 @@ std::pair<uint32_t, uint32_t> MySqlHostDataSource::getVersion() const {
 	return (std::make_pair(major, minor));
 }
 
+void
+MySqlHostDataSource::commit() {
+    conn_.commit();
+}
+
+
+void
+MySqlHostDataSource::rollback() {
+    conn_.rollback();
+}
+
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

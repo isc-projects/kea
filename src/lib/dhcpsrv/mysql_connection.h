@@ -17,7 +17,7 @@
 
 #include <dhcpsrv/database_connection.h>
 #include <boost/scoped_ptr.hpp>
-#include <mysql.h>
+#include <mysql/mysql.h>
 #include <vector>
 
 namespace isc {

@@ -22,7 +22,6 @@
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
 #include <dhcpsrv/host_data_source_factory.h>
 
-
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -57,8 +56,6 @@ const char* VALID_USER = "user=keatest";
 const char* INVALID_USER = "user=invaliduser";
 const char* VALID_PASSWORD = "password=keatest";
 const char* INVALID_PASSWORD = "password=invalid";
-
-MySqlHostDataSource* myhdsptr_;
 
 // Given a combination of strings above, produce a connection string.
 string connectionString(const char* type, const char* name, const char* host,
@@ -151,7 +148,7 @@ public:
     /// @brief Constructor
     ///
     /// Deletes everything from the database and opens it.
-	MySqlHostDataSourceTest() {
+    MySqlHostDataSourceTest() {
 
         // Ensure schema is the correct one.
         destroySchema();
@@ -168,7 +165,8 @@ public:
                          "*** accompanying exception output.\n";
             throw;
         }
-        myhdsptr_ = (MySqlHostDataSource *) &(HostDataSourceFactory::instance());
+
+        hdsptr_ = &(HostDataSourceFactory::instance());
     }
 
     /// @brief Destructor
@@ -176,7 +174,7 @@ public:
     /// Rolls back all pending transactions.  The deletion of myhdsptr_ will close
     /// the database.  Then reopen it and delete everything created by the test.
     virtual ~MySqlHostDataSourceTest() {
-        myhdsptr_->getDatabaseConnection()->rollback();
+        hdsptr_->rollback();
         HostDataSourceFactory::destroy();
         destroySchema();
     }
@@ -189,21 +187,21 @@ public:
     /// Parameter is ignored for MySQL backend as the v4 and v6 leases share
     /// the same database.
     void reopen(Universe) {
-    	HostDataSourceFactory::destroy();
-    	HostDataSourceFactory::create(validConnectionString());
-    	myhdsptr_ = (MySqlHostDataSource *) &(HostDataSourceFactory::instance());
+        HostDataSourceFactory::destroy();
+        HostDataSourceFactory::create(validConnectionString());
+        hdsptr_ = &(HostDataSourceFactory::instance());
     }
 
 };
 
 /// @brief Check that database can be opened
 ///
-/// This test checks if the MySqlLeaseMgr can be instantiated.  This happens
+/// This test checks if the MySqlHostDataSource can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
 /// MySqlLeaseMgr test fixure set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 
-TEST(MySqlOpenTest, OpenDatabase) {
+TEST(MySqlHostDataSource, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
     destroySchema();
@@ -212,7 +210,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
     // Check that lease manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
     try {
-    	HostDataSourceFactory::create(validConnectionString());
+        HostDataSourceFactory::create(validConnectionString());
         EXPECT_NO_THROW((void) HostDataSourceFactory::instance());
         HostDataSourceFactory::destroy();
     } catch (const isc::Exception& ex) {

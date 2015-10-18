@@ -38,6 +38,8 @@ namespace dhcp {
 
 using namespace isc::asiolink;
 
+boost::shared_ptr<BaseHostDataSource> HostMgr::alternate_source;
+
 boost::scoped_ptr<HostMgr>&
 HostMgr::getHostMgrPtr() {
     static boost::scoped_ptr<HostMgr> host_mgr_ptr;
@@ -45,21 +47,15 @@ HostMgr::getHostMgrPtr() {
 }
 
 void
-HostMgr::create(const std::string& /*access*/) {
+HostMgr::create(const std::string& access) {
     getHostMgrPtr().reset(new HostMgr());
-/*
-    try {
-        HostDataSourceFactory::create(access);
-    } catch (...) {
-        std::cerr << "Unable to open database.";
-        throw;
-    }
-*/
-    //alternate_source = &(HostDataSourceFactory::instance());
-    //alternate_source.reset(&(HostDataSourceFactory::instance()));
 
-    /// @todo Initialize alternate_source here, using the parameter.
-    /// For example: alternate_source.reset(new MysqlHostDataSource(access)).
+    if (!access.empty()) {
+        HostDataSourceFactory::create(access);
+
+        /// @todo Initialize alternate_source here.
+        //alternate_source = HostDataSourceFactory::getHostDataSourcePtr();
+    }
 }
 
 HostMgr&

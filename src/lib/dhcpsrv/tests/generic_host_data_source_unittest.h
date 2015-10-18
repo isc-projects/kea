@@ -42,10 +42,8 @@ public:
     /// @brief Virtual destructor.
     virtual ~GenericHostDataSourceTest();
 
-
     /// @brief Pointer to the host data source
     BaseHostDataSource* hdsptr_;
-
 };
 
 }; // namespace test
