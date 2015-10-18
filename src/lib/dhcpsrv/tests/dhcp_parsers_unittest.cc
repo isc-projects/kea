@@ -458,10 +458,10 @@ public:
     std::string error_text_;
 };
 
-/// @brief Check Basic parsing of option definitions.
+/// @brief Check basic parsing of option definitions.
 ///
 /// Note that this tests basic operation of the OptionDefinitionListParser and
-/// OptionDefinitionParser.  It uses a simple configuration consisting of one
+/// OptionDefinitionParser.  It uses a simple configuration consisting of
 /// one definition and verifies that it is parsed and committed to storage
 /// correctly.
 TEST_F(ParseConfigTest, basicOptionDefTest) {
@@ -497,6 +497,39 @@ TEST_F(ParseConfigTest, basicOptionDefTest) {
     EXPECT_TRUE(def->getEncapsulatedSpace().empty());
 }
 
+/// @brief Check minimal parsing of option definitions.
+///
+/// Same than basic but without optional parameters set to their default.
+TEST_F(ParseConfigTest, minimalOptionDefTest) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"ipv4-address\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_TRUE(rcode == 0);
+
+
+    // Verify that the option definition can be retrieved.
+    OptionDefinitionPtr def =
+        CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
+    ASSERT_TRUE(def);
+
+    // Verify that the option definition is correct.
+    EXPECT_EQ("foo", def->getName());
+    EXPECT_EQ(100, def->getCode());
+    EXPECT_FALSE(def->getArrayType());
+    EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def->getType());
+    EXPECT_TRUE(def->getEncapsulatedSpace().empty());
+}
+
 /// @brief Check Basic parsing of options.
 ///
 /// Note that this tests basic operation of the OptionDataListParser and
@@ -511,10 +544,7 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"ipv4-address\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"isc\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"isc\""
         " } ], "
         " \"option-data\": [ {"
         "    \"name\": \"foo\","
@@ -772,9 +802,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
         "      \"code\": 2345,"
         "      \"type\": \"ipv6-address\","
         "      \"array\": True,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"dhcp6\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"dhcp6\""
         "  } ],"
         "  \"option-data\": [ {"
         "    \"name\": \"foo-name\","
@@ -800,9 +828,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
         "      \"code\": 2345,"
         "      \"type\": \"ipv6-address\","
         "      \"array\": True,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"dhcp6\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"dhcp6\""
         "  } ],"
         "  \"option-data\": [ {"
         "    \"code\": 2345,"
