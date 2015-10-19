@@ -279,11 +279,12 @@ TEST_F(BufferTest, outputBufferAssign) {
 }
 
 TEST_F(BufferTest, outputEmptyBufferAssign) {
-    EXPECT_NO_THROW({
-        OutputBuffer copy(0);
+    OutputBuffer copy(0);
+    ASSERT_NO_THROW({
         copy = obuffer;
-        ASSERT_EQ(0, copy.getLength());
     });
+    ASSERT_EQ(0, copy.getLength());
+    EXPECT_EQ(NULL, copy.getData());
 }
 
 // Check assign to self doesn't break stuff
