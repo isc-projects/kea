@@ -1623,7 +1623,8 @@ PgSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
     PsqlBindArray bind_array;
 
     // State is reclaimed.
-    bind_array.add(boost::lexical_cast<std::string>(Lease::STATE_EXPIRED_RECLAIMED));
+    std::string state_str = boost::lexical_cast<std::string>(Lease::STATE_EXPIRED_RECLAIMED);
+    bind_array.add(state_str);
 
     // Expiration timestamp.
     std::string expiration_str =
