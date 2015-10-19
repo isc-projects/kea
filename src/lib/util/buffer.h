@@ -196,7 +196,7 @@ public:
             throwError("read beyond end of buffer");
         }
 
-        std::memcpy(data, &data_[position_], len);
+        static_cast<void>(std::memmove(data, &data_[position_], len));
         position_ += len;
     }
     //@}
@@ -340,7 +340,7 @@ public:
             if (buffer_ == NULL) {
                 throw std::bad_alloc();
             }
-            std::memcpy(buffer_, other.buffer_, other.size_);
+            static_cast<void>(std::memmove(buffer_, other.buffer_, other.size_));
         }
     }
 
@@ -376,7 +376,7 @@ public:
                 // across.
                 free(buffer_);
                 buffer_ = newbuff;
-                static_cast<void>(std::memcpy(buffer_, other.buffer_, other.size_));
+                static_cast<void>(std::memmove(buffer_, other.buffer_, other.size_));
 
             } else {
 
@@ -460,7 +460,7 @@ public:
     /// This method is the destructive alternative to clear().
     void wipe() {
         if (buffer_ != NULL) {
-            memset(buffer_, 0, allocated_);
+            static_cast<void>(std::memset(buffer_, 0, allocated_));
         }
         size_ = 0;
     }
@@ -538,7 +538,7 @@ public:
     /// \param len The length of the data in bytes.
     void writeData(const void *data, size_t len) {
         ensureAllocated(size_ + len);
-        std::memcpy(buffer_ + size_, data, len);
+        static_cast<void>(std::memmove(buffer_ + size_, data, len));
         size_ += len;
     }
     //@}
@@ -553,7 +553,7 @@ private:
 
     /// \brief Ensure buffer is appropriate size
     ///
-    /// Checks that the buffer is at least equal to the size passed in as the
+    /// Checks that the buffer equal to or larger than the size given as
     /// argument and extends it to at least that size if not.
     ///
     /// \param needed_size The number of bytes required in the buffer
