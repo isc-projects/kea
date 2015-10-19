@@ -42,8 +42,48 @@ public:
     /// @brief Virtual destructor.
     virtual ~GenericHostDataSourceTest();
 
+    /// @brief Creates a host reservation for specified IPv4 address.
+    ///
+    /// @param address IPv4 address to be set
+    /// @param hwaddr type of identifier (true = hwaddr, false = client-id)
+    ///
+    /// @return generated Host object
+    HostPtr initializeHost4(std::string address, bool hwaddr);
+
+    /// @brief Creates a host reservation for specified IPv4 address.
+    ///
+    /// @param address IPv6 address to be reserved
+    /// @param hwaddr type of identifier (true = hwaddr, false = client-id)
+    /// @param prefix reservation type (true = prefix, false = address)
+    ///
+    /// @return generated Host object
+    HostPtr initializeHost6(std::string address, bool hwaddr, bool prefix);
+
+    /// @brief Generates a hardware address in text version.
+    ///
+    /// @return HW address in textual form acceptable by Host constructor
+    std::string generateHWAddr();
+
+    /// @brief Generates a hardware address in text version.
+    /// @return DUID in textual form acceptable by Host constructor
+    std::string generateDuid();
+
+    /// @brief Compares two hosts
+    ///
+    /// This method uses gtest macros to signal errors.
+    ///
+    /// @param host1 first host to compare
+    /// @param host2 second host to compare
+    void compareHosts(const ConstHostPtr& host1, const ConstHostPtr& host2);
+
     /// @brief Pointer to the host data source
     BaseHostDataSource* hdsptr_;
+
+    /// @brief Test that checks that simple host with IPv4 reservation
+    ///        can be inserted and later retrieved.
+    ///
+    /// Uses gtest macros to report failures.
+    void testBasic4();
 };
 
 }; // namespace test

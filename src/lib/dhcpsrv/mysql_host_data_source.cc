@@ -294,21 +294,19 @@ public:
                                               // reasons, see memset() above
 
             // dhcp4_client_classes : VARCHAR(255) NULL
-            // TODO this should probably be converted in some way... Don't know how yet,
-            // also size method might be wrong
             bind_[7].buffer_type = MYSQL_TYPE_STRING;
-            //bind_[7].buffer = reinterpret_cast<char*>(host_->getClientClasses4());
-            bind_[7].buffer_length = sizeof(host_->getClientClasses4());
-            // bind_[7].is_null = &MLM_FALSE; // commented out for performance
-                                              // reasons, see memset() above
+            string classes4_txt = classesToString(host_->getClientClasses4());
+            strncpy(dhcp4_client_classes_, classes4_txt.c_str(), CLIENT_CLASSES_MAX_LEN - 1);
+            bind_[7].buffer = dhcp4_client_classes_;
+            bind_[7].buffer_length = classes4_txt.length();
 
             // dhcp6_client_classes : VARCHAR(255) NULL
             bind_[8].buffer_type = MYSQL_TYPE_STRING;
-            //bind_[8].buffer = reinterpret_cast<char*>(host_->getClientClasses6());
+            string classes6_txt = classesToString(host->getClientClasses6());
+            strncpy(dhcp6_client_classes_, classes6_txt.c_str(), CLIENT_CLASSES_MAX_LEN - 1);
+            bind_[8].buffer = dhcp6_client_classes_;
+            bind_[8].buffer_length = classes6_txt.length();
             bind_[8].buffer_length = sizeof(host_->getClientClasses6());
-            // bind_[8].is_null = &MLM_FALSE; // commented out for performance
-                                              // reasons, see memset() above
-
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -498,6 +496,22 @@ public:
         return (getColumnsInError(error_, columns_, HOST_COLUMNS));
     }
 
+    std::string classesToString(const ClientClasses& classes) {
+        string txt;
+        bool first = true;
+        for (ClientClasses::const_iterator it = classes.begin();
+             it != classes.end(); ++it) {
+            if (!first) {
+                txt += ",";
+            }
+            txt += (*it);
+
+            first = false;
+        }
+
+        return (txt);
+    }
+
 private:
     uint32_t	host_id_;			/// Host unique identifier
     std::vector<uint8_t> dhcp_identifier_;      /// HW address (0) / DUID (1)
@@ -587,7 +601,7 @@ MySqlHostDataSource::add(const HostPtr& host) {
 
 void
 MySqlHostDataSource::addHost(StatementIndex stindex,
-		std::vector<MYSQL_BIND>& bind) {
+                             std::vector<MYSQL_BIND>& bind) {
 
 	// Bind the parameters to the statement
 	int status = mysql_stmt_bind_param(conn_.statements_[stindex],

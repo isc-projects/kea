@@ -301,8 +301,7 @@ TEST_F(MySqlHostDataSourceTest, checkTimeConversion) {
 // Test verifies if a host reservation can be added and later retrieved by IPv4
 // address.
 TEST_F(MySqlHostDataSourceTest, basic4) {
-    /// @todo: basic - add host reserveration, retrieve it by address and
-    /// confirm that all fields have correct value.
+    testBasic4();
 }
 
 // Test verifies if a host reservation can be added and later retrieved by

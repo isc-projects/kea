@@ -45,6 +45,8 @@ const char* destroy_statement[] = {
     "DROP TABLE hosts",
     "DROP TABLE dhcp4_options",
     "DROP TABLE dhcp6_options",
+
+    "DROP TRIGGER host_BDEL",
     NULL
 };
 
