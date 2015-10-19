@@ -185,12 +185,18 @@ public:
         // Remove all statistics.
         StatsMgr::instance().resetAll();
 
+        // Set the 'reclaimed-leases' statistics to '0'. This statistics
+        // is used by some tests to verify that the leases reclamation
+        // routine has been called.
+        StatsMgr::instance().setValue("reclaimed-leases",
+                                      static_cast<int64_t>(0));
+
         // Create lease manager.
         LeaseMgrFactory::create(lease_mgr_params);
 
         // Create allocation engine instance.
         engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                      100, false));
+                                      100, true));
     }
 
     /// @brief Destructor
@@ -249,6 +255,16 @@ public:
             leases_[lease_index]->valid_lft_;
         ASSERT_NO_THROW(updateLease(lease_index));
     }
+
+    /// @brief Changes the owner of a lease.
+    ///
+    /// This method changes the owner of the lease. It must be implemented in
+    /// the derived classes to update the unique identifier(s) in the lease to
+    /// point to a different client.
+    ///
+    /// @param lease_index Lease index. Must be between 0 and
+    /// @c TEST_LEASES_NUM.
+    virtual void transferOwnership(const uint16_t lease_index) = 0;
 
     /// @brief Marks lease as expired-reclaimed.
     ///
@@ -1105,6 +1121,14 @@ public:
         LeaseMgrFactory::instance().updateLease6(leases_[lease_index]);
     }
 
+    /// @brief Changes the owner of a lease.
+    ///
+    /// This method changes the owner of the lease by modifying the DUID.
+    ///
+    /// @param lease_index Lease index. Must be between 0 and
+    /// @c TEST_LEASES_NUM.
+    virtual void transferOwnership(const uint16_t lease_index);
+
     /// @brief Sets subnet id for a lease.
     ///
     /// It also updates statistics of assigned leases in the stats manager.
@@ -1155,6 +1179,16 @@ public:
     /// @brief Test that statistics is updated when leases are reclaimed.
     void testReclaimExpiredLeasesStats();
 
+    /// @brief Test that expired leases are reclaimed before they are allocated.
+    ///
+    /// @param msg_type DHCPv6 message type.
+    /// @param use_reclaimed Boolean parameter indicating if the leases
+    /// stored in the lease database should be marked as 'expired-reclaimed'
+    /// or 'expired'. This allows to test whether the allocation engine can
+    /// determine that the lease has been reclaimed already and not reclaim
+    /// it the second time.
+    void testReclaimReusedLeases(const uint16_t msg_type, const bool use_reclaimed);
+
 };
 
 ExpirationAllocEngine6Test::ExpirationAllocEngine6Test()
@@ -1191,6 +1225,19 @@ ExpirationAllocEngine6Test::createLeases() {
         stats_mgr.addValue(stats_mgr.generateName("subnet", lease->subnet_id_, stat_name),
                            int64_t(1));
     }
+}
+
+void
+ExpirationAllocEngine6Test::transferOwnership(const uint16_t lease_index) {
+    ASSERT_GT(leases_.size(), lease_index);
+    std::vector<uint8_t> bytes = leases_[lease_index]->duid_->getDuid();
+    if (bytes.size() > 1) {
+        if (++bytes[0] == 0) {
+            ++bytes[1];
+        }
+    }
+
+    leases_[lease_index]->duid_.reset(new DUID(bytes));
 }
 
 void
@@ -1272,6 +1319,73 @@ ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
         EXPECT_TRUE(testStatistics("subnet[2].assigned-pds",
                                    (TEST_LEASES_NUM - i) / 2));
     }
+}
+
+void
+ExpirationAllocEngine6Test::testReclaimReusedLeases(const uint16_t msg_type,
+                                                    const bool use_reclaimed) {
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM < 0xFFFF);
+
+    for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
+        // Depending on the parameter, mark leases 'expired-reclaimed' or
+        // simply 'expired'.
+        if (use_reclaimed) {
+            reclaim(i, 1000 - i);
+
+        } else {
+            // Mark all leases as expired.
+            expire(i, 1000 - i);
+        }
+
+        // For the Renew case, we don't change the ownership of leases. We
+        // will let the lease owners renew them. For other cases, we modify
+        // the DUIDs to simulate reuse of expired leases.
+        if (msg_type != DHCPV6_RENEW) {
+            transferOwnership(i);
+        }
+    }
+
+    // Create subnet and the pool. This is required by the allocation process.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 50, 60,
+                                  SubnetID(1)));
+    ASSERT_NO_THROW(subnet->addPool(Pool6Ptr(new Pool6(Lease::TYPE_NA,
+                                                       IOAddress("2001:db8:1::"),
+                                                       IOAddress("2001:db8:1::FFFF")))));
+
+    for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
+        // Build the context.
+        AllocEngine::ClientContext6 ctx(subnet, leases_[i]->duid_, 1,
+                                        leases_[i]->addr_,
+                                        Lease::TYPE_NA,
+                                        false, false,
+                                        leases_[i]->hostname_,
+                                        msg_type == DHCPV6_SOLICIT);
+        // Query is needed for logging purposes.
+        ctx.query_.reset(new Pkt6(msg_type, 0x1234));
+
+        // Depending on the message type, we will call a different function.
+        if (msg_type == DHCPV6_RENEW) {
+            ASSERT_NO_THROW(engine_->renewLeases6(ctx));
+
+        } else {
+            ASSERT_NO_THROW(engine_->renewLeases6(ctx));
+        }
+    }
+
+    // The Solicit should not trigger leases reclamation. The Renew and
+    // Request must trigger leases reclamation unless the lease is
+    // initially reclaimed.
+    if (use_reclaimed || (msg_type == DHCPV6_SOLICIT)) {
+        EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
+
+    } else {
+        EXPECT_TRUE(testStatistics("reclaimed-leases", TEST_LEASES_NUM));
+        // Leases should have been updated in the lease database and their
+        // state should not be 'expired-reclaimed' anymore.
+        EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes));
+
+    }
+
 }
 
 // This test verifies that the leases can be reclaimed without being removed
@@ -1377,6 +1491,42 @@ TEST_F(ExpirationAllocEngine6Test, reclaimDeclinedStats) {
     testReclaimDeclinedStats("assigned-nas");
 }
 
+// This test verifies that expired leases are reclaimed before they are
+// allocated to another client sending a Request message.
+TEST_F(ExpirationAllocEngine6Test, reclaimReusedLeases) {
+    testReclaimReusedLeases(DHCPV6_REQUEST, false);
+}
+
+// This test verifies that allocation engine detects that the expired
+// lease has been reclaimed already when it reuses this lease.
+TEST_F(ExpirationAllocEngine6Test, reclaimReusedLeasesAlreadyReclaimed) {
+    testReclaimReusedLeases(DHCPV6_REQUEST, true);
+}
+
+// This test verifies that expired leases are reclaimed before they
+// are renewed.
+TEST_F(ExpirationAllocEngine6Test, reclaimRenewedLeases) {
+    testReclaimReusedLeases(DHCPV6_RENEW, false);
+}
+
+// This test verifies that allocation engine detects that the expired
+// lease has been reclaimed already when it renews the lease.
+TEST_F(ExpirationAllocEngine6Test, reclaimRenewedLeasesAlreadyReclaimed) {
+    testReclaimReusedLeases(DHCPV6_RENEW, true);
+}
+
+// This test verifies that the expired leases are not reclaimed when the
+// Solicit message is being processed.
+TEST_F(ExpirationAllocEngine6Test, reclaimReusedLeasesSolicit) {
+    testReclaimReusedLeases(DHCPV6_SOLICIT, false);
+}
+
+// This test verifies that the 'expired-reclaimed' leases are not reclaimed
+// again when the Solicit message is being processed.
+TEST_F(ExpirationAllocEngine6Test, reclaimReusedLeasesSolicitAlreadyReclaimed) {
+    testReclaimReusedLeases(DHCPV6_SOLICIT, true);
+}
+
 // *******************************************************
 //
 // DHCPv4 lease reclamation routine tests start here!
@@ -1410,6 +1560,15 @@ public:
     virtual void updateLease(const unsigned int lease_index) {
         LeaseMgrFactory::instance().updateLease4(leases_[lease_index]);
     }
+
+    /// @brief Changes the owner of a lease.
+    ///
+    /// This method changes the owner of the lease by updating the client
+    /// identifier (if present) or HW address.
+    ///
+    /// @param lease_index Lease index. Must be between 0 and
+    /// @c TEST_LEASES_NUM.
+    virtual void transferOwnership(const uint16_t lease_index);
 
     /// @brief Retrieves lease from the database.
     ///
@@ -1465,6 +1624,17 @@ public:
 
     /// @brief Test that statistics is updated when leases are reclaimed..
     void testReclaimExpiredLeasesStats();
+
+    /// @brief Test that the lease is reclaimed before it is renewed or
+    /// reused.
+    ///
+    /// @param msg_type DHCPv4 message type, i.e. DHCPDISCOVER or DHCPREQUEST.
+    /// @param client_renews A boolean value which indicates if the test should
+    /// simulate renewals of leases (if true) or reusing expired leases which
+    /// belong to different clients (if false).
+    /// @param use_reclaimed Boolean parameter indicating if the leases
+    void testReclaimReusedLeases(const uint8_t msg_type, const bool client_renews,
+                                 const bool use_reclaimed);
 
 };
 
@@ -1530,6 +1700,29 @@ ExpirationAllocEngine4Test::setSubnetId(const uint16_t lease_index, const Subnet
                            int64_t(-1));
         leases_[lease_index]->subnet_id_ = id;
         ASSERT_NO_THROW(updateLease(lease_index));
+    }
+}
+
+void
+ExpirationAllocEngine4Test::transferOwnership(const uint16_t lease_index) {
+    ASSERT_GT(leases_.size(), lease_index);
+    std::vector<uint8_t> bytes;
+    if (leases_[lease_index]->client_id_) {
+        bytes = leases_[lease_index]->client_id_->getClientId();
+    } else {
+        bytes = leases_[lease_index]->hwaddr_->hwaddr_;
+    }
+
+    if (!bytes.empty()) {
+        if (++bytes[0] == 0) {
+            ++bytes[1];
+        }
+    }
+
+    if (leases_[lease_index]->client_id_) {
+        leases_[lease_index]->client_id_.reset(new ClientId(bytes));
+    } else {
+        leases_[lease_index]->hwaddr_.reset(new HWAddr(bytes, HTYPE_ETHER));
     }
 }
 
@@ -1668,6 +1861,77 @@ ExpirationAllocEngine4Test::testReclaimExpiredLeasesStats() {
     }
 }
 
+void
+ExpirationAllocEngine4Test::testReclaimReusedLeases(const uint8_t msg_type,
+                                                    const bool client_renews,
+                                                    const bool use_reclaimed) {
+    // Let's restrict the number of leases to /16.
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM < 0xFFFF);
+
+    for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
+        // Depending on the parameter, mark leases 'expired-reclaimed' or
+        // simply 'expired'.
+        if (use_reclaimed) {
+            reclaim(i, 1000 - i);
+
+        } else {
+            // Mark all leases as expired.
+            expire(i, 1000 - i);
+        }
+
+        // Check if we're simulating renewals or reusing leases. If this is
+        // about reusing leases, we should be using different MAC addresses
+        // or client identifiers for the leases than those stored presently
+        // in the database.
+        if (!client_renews) {
+            // This function modifies the MAC address or the client identifier
+            // of the test lease to make sure it doesn't match the one we
+            // have in the database.
+            transferOwnership(i);
+        }
+    }
+
+    // The call to AllocEngine::allocateLease4 requires the subnet selection.
+    // The pool must be present within a subnet for the allocation engine to
+    // hand out address from.
+    Subnet4Ptr subnet(new Subnet4(IOAddress("10.0.0.0"), 16, 10, 20, 60, SubnetID(1)));
+    ASSERT_NO_THROW(subnet->addPool(Pool4Ptr(new Pool4(IOAddress("10.0.0.0"),
+                                                       IOAddress("10.0.255.255")))));
+
+    // Re-allocate leases (reuse or renew).
+    for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
+        // Build the context.
+        AllocEngine::ClientContext4 ctx(subnet, leases_[i]->client_id_,
+                                        leases_[i]->hwaddr_,
+                                        leases_[i]->addr_, false, false,
+                                        leases_[i]->hostname_,
+                                        msg_type == DHCPDISCOVER);
+        // Query is needed for logging purposes.
+        ctx.query_.reset(new Pkt4(msg_type, 0x1234));
+
+        // Re-allocate a lease. Note that the iterative will pick addresses
+        // starting from the beginning of the pool. This matches exactly
+        // the set of addresses we have allocated and stored in the database.
+        // Since all leases are marked expired the allocation engine will
+        // reuse them or renew them as appropriate.
+        ASSERT_NO_THROW(engine_->allocateLease4(ctx));
+    }
+
+    // If DHCPDISCOVER is being processed, the leases should not be reclaimed.
+    // Also, the leases should not be reclaimed if they are already in the
+    // 'expired-reclaimed' state.
+    if (use_reclaimed || (msg_type == DHCPDISCOVER)) {
+        EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
+
+    } else if (msg_type == DHCPREQUEST) {
+        // Re-allocation of expired leases should result in reclamations.
+        EXPECT_TRUE(testStatistics("reclaimed-leases", TEST_LEASES_NUM));
+        // Leases should have been updated in the lease database and their
+        // state should not be 'expired-reclaimed' anymore.
+        EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes));
+    }
+}
+
 
 // This test verifies that the leases can be reclaimed without being removed
 // from the database. In such case, the leases' state is set to
@@ -1777,5 +2041,53 @@ TEST_F(ExpirationAllocEngine4Test, reclaimDeclined2) {
 TEST_F(ExpirationAllocEngine4Test, reclaimDeclinedStats) {
     testReclaimDeclinedStats("assigned-addresses");
 }
+
+// This test verifies that the lease is reclaimed before it is reused.
+TEST_F(ExpirationAllocEngine4Test, reclaimReusedLeases) {
+    // First false value indicates that the leases will be reused.
+    // Second false value indicates that the lease will not be
+    // initially reclaimed.
+    testReclaimReusedLeases(DHCPREQUEST, false, false);
+}
+
+// This test verifies that the lease is not reclaimed when it is
+// reused and  if its state indicates that it has been already reclaimed.
+TEST_F(ExpirationAllocEngine4Test, reclaimReusedLeasesAlreadyReclaimed) {
+    // false value indicates that the leases will be reused
+    // true value indicates that the lease will be initially reclaimed.
+    testReclaimReusedLeases(DHCPREQUEST, false, true);
+}
+
+// This test verifies that the expired lease is reclaimed before it
+// is renewed.
+TEST_F(ExpirationAllocEngine4Test, reclaimRenewedLeases) {
+    // true value indicates that the leases will be renewed.
+    // false value indicates that the lease will not be initially
+    // reclaimed.
+    testReclaimReusedLeases(DHCPREQUEST, true, false);
+}
+
+// This test verifies that the lease is not reclaimed upon renewal
+// if its state indicates that it has been already reclaimed.
+TEST_F(ExpirationAllocEngine4Test, reclaimRenewedLeasesAlreadyReclaimed) {
+    // First true value indicates that the leases will be renewed.
+    // Second true value indicates that the lease will be initially
+    // reclaimed.
+    testReclaimReusedLeases(DHCPREQUEST, true, true);
+}
+
+// This test verifies that the reused lease is not reclaimed when the
+// processed message is a DHCPDISCOVER.
+TEST_F(ExpirationAllocEngine4Test, reclaimReusedLeasesDiscover) {
+    testReclaimReusedLeases(DHCPDISCOVER, false, false);
+}
+
+// This test verifies that the lease being in the 'expired-reclaimed'
+// state is not reclaimed again when processing the DHCPDISCOVER
+// message.
+TEST_F(ExpirationAllocEngine4Test, reclaimRenewedLeasesDiscoverAlreadyReclaimed) {
+    testReclaimReusedLeases(DHCPDISCOVER, false, true);
+}
+
 
 }; // end of anonymous namespace
