@@ -1470,16 +1470,19 @@ PgSqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
     PsqlBindArray bind_array;
 
     // Exclude reclaimed leases.
-    bind_array.add(boost::lexical_cast<std::string>(Lease::STATE_EXPIRED_RECLAIMED));
+    std::string state_str = boost::lexical_cast<std::string>(Lease::STATE_EXPIRED_RECLAIMED);
+    bind_array.add(state_str);
 
     // Expiration timestamp.
-    bind_array.add(PgSqlLeaseExchange::convertToDatabaseTime(time(NULL)));
+    std::string timestamp_str = PgSqlLeaseExchange::convertToDatabaseTime(time(NULL));
+    bind_array.add(timestamp_str);
 
     // If the number of leases is 0, we will return all leases. This is
     // achieved by setting the limit to a very high value.
     uint32_t limit = max_leases > 0 ? static_cast<uint32_t>(max_leases) :
         std::numeric_limits<uint32_t>::max();
-    bind_array.add(boost::lexical_cast<std::string>(limit));
+    std::string limit_str = boost::lexical_cast<std::string>(limit);
+    bind_array.add(limit_str);
 
     // Retrieve leases from the database.
     getLeaseCollection(statement_index, bind_array, expired_leases);
