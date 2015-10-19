@@ -268,7 +268,7 @@ TEST(MySqlHostDataSource, OpenDatabase) {
 /// This test checks that the conversion is correct.  It does not check that the
 /// data is entered into the database correctly, only that the MYSQL_TIME
 /// structure used for the entry is correctly set up.
-TEST_F(MySqlHostDataSourceTest, checkTimeConversion) {
+TEST(MySqlConnection, checkTimeConversion) {
     const time_t cltt = time(NULL);
     const uint32_t valid_lft = 86400;       // 1 day
     struct tm tm_expire;
