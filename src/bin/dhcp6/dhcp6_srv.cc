@@ -38,6 +38,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/ncr_generator.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/utils.h>
@@ -1306,64 +1307,6 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
     }
 }
 
-void
-Dhcpv6Srv::createRemovalNameChangeRequest(const Pkt6Ptr& query, const Lease6Ptr& lease) {
-    // Don't create NameChangeRequests if DNS updates are disabled
-    // or DNS update hasn't been performed.
-    if (!CfgMgr::instance().ddnsEnabled() || (!lease->fqdn_fwd_ && !lease->fqdn_rev_)) {
-        LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL_DATA,
-                  DHCP6_DDNS_SKIP_REMOVE_NAME_CHANGE_REQUEST)
-            .arg(query->getLabel())
-            .arg(lease->toText());
-        return;
-    }
-
-    // If hostname is non-empty, try to convert it to wire format so as
-    // DHCID can be computed from it. This may throw an exception if hostname
-    // has invalid format or is empty. Again, this should be only possible
-    // in case of manual intervention in the database. Note that the last
-    // parameter passed to the writeFqdn function forces conversion of the FQDN
-    // to lower case. This is required by the RFC4701, section 3.5.
-    // The DHCID computation is further in this function.
-    std::vector<uint8_t> hostname_wire;
-    try {
-        OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
-
-    } catch (const Exception& ex) {
-        LOG_ERROR(ddns6_logger, DHCP6_DDNS_REMOVE_INVALID_HOSTNAME)
-            .arg(query->getLabel())
-            .arg(lease->hostname_.empty() ? "(empty)" : lease->hostname_)
-            .arg(lease->addr_.toText());
-        return;
-    }
-
-    // DUID must have been checked already  by the caller of this function.
-    // Let's be on the safe side and make sure it is non-NULL and throw
-    // an exception if it is NULL.
-    if (!lease->duid_) {
-        isc_throw(isc::Unexpected, "DUID must be set when creating"
-                  << " NameChangeRequest for DNS records removal for "
-                  << lease->addr_);
-
-    }
-    isc::dhcp_ddns::D2Dhcid dhcid(*lease->duid_, hostname_wire);
-    // Create a NameChangeRequest to remove the entry.
-    NameChangeRequestPtr ncr;
-    ncr.reset(new NameChangeRequest(isc::dhcp_ddns::CHG_REMOVE,
-                                    lease->fqdn_fwd_, lease->fqdn_rev_,
-                                    lease->hostname_,
-                                    lease->addr_.toText(),
-                                    dhcid, 0, lease->valid_lft_));
-
-    LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL,
-              DHCP6_DDNS_CREATE_REMOVE_NAME_CHANGE_REQUEST)
-        .arg(query->getLabel())
-        .arg(ncr->toText());
-
-    // Post the NCR to the D2ClientMgr.
-    CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
-}
-
 HWAddrPtr
 Dhcpv6Srv::getMAC(const Pkt6Ptr& pkt) {
     CfgMACSources mac_sources = CfgMgr::instance().getCurrentCfg()->
@@ -1504,17 +1447,17 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                 // have to check that the FQDN settings we provided are the same
                 // that were set. If they aren't, we will have to remove existing
                 // DNS records and update the lease with the new settings.
-                conditionalNCRRemoval(query, old_lease, lease, ctx.hostname_,
-                                      do_fwd, do_rev);
+//                conditionalNCRRemoval(query, old_lease, lease, ctx.hostname_,
+ //                                     do_fwd, do_rev);
             }
 
             // We need to repeat that check for leases that used to be used, but
             // are no longer valid.
-            if (!ctx.old_leases_.empty()) {
+/*            if (!ctx.old_leases_.empty()) {
                 old_lease = *ctx.old_leases_.begin();
                 conditionalNCRRemoval(query, old_lease, lease, ctx.hostname_,
                                       do_fwd, do_rev);
-            }
+            } */
         }
     } else {
         // Allocation engine did not allocate a lease. The engine logged
@@ -1547,7 +1490,7 @@ Dhcpv6Srv::conditionalNCRRemoval(const Pkt6Ptr& query, Lease6Ptr& old_lease,
             .arg(do_fwd ? "true" : "false");
 
         // Schedule removal of the existing lease.
-        createRemovalNameChangeRequest(query, old_lease);
+        queueNCR(CHG_REMOVE, old_lease);
     }
 }
 
@@ -1784,7 +1727,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                 .arg(do_rev ? "true" : "false")
                 .arg(do_fwd ? "true" : "false");
 
-            createRemovalNameChangeRequest(query, *l);
+            queueNCR(CHG_REMOVE, *l);
         }
     }
 
@@ -2199,7 +2142,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         // Check if a lease has flags indicating that the FQDN update has
         // been performed. If so, create NameChangeRequest which removes
         // the entries.
-        createRemovalNameChangeRequest(query, lease);
+        queueNCR(CHG_REMOVE, lease);
 
         return (ia_rsp);
     }
@@ -2770,7 +2713,7 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     // Check if a lease has flags indicating that the FQDN update has
     // been performed. If so, create NameChangeRequest which removes
     // the entries. This method does all necessary checks.
-    createRemovalNameChangeRequest(decline, lease);
+    queueNCR(CHG_REMOVE, lease);
 
     // Bump up the subnet-specific statistic.
     StatsMgr::instance().addValue(

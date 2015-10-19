@@ -572,20 +572,6 @@ protected:
     void createNameChangeRequests(const Lease4Ptr& lease,
                                   const Lease4Ptr& old_lease);
 
-    /// @brief Creates the NameChangeRequest and adds to the queue for
-    /// processing.
-    ///
-    /// This creates the @c isc::dhcp_ddns::NameChangeRequest; emits a
-    /// the debug message which indicates whether the request being added is
-    /// to remove DNS entry or add a new entry; and then sends the request
-    /// to the D2ClientMgr for transmission to kea-dhcp-ddns.
-    ///
-    /// @param chg_type A type of the NameChangeRequest (ADD or REMOVE).
-    /// @param lease A lease for which the NameChangeRequest is created and
-    /// queued.
-    void queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
-                                const Lease4Ptr& lease);
-
     /// @brief Attempts to renew received addresses
     ///
     /// Attempts to renew existing lease. This typically includes finding a lease that

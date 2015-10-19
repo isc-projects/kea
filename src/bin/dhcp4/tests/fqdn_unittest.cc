@@ -745,58 +745,6 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsRenewNoChange) {
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
 }
 
-// Test that no NameChangeRequest is generated when forward and reverse
-// DNS update flags are not set in the lease.
-TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsNoUpdate) {
-    Lease4Ptr lease1 = createLease(IOAddress("192.0.2.3"),
-                                   "lease1.example.com.",
-                                   true, true);
-    Lease4Ptr lease2 = createLease(IOAddress("192.0.2.3"),
-                                   "lease2.example.com.",
-                                   false, false);
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease2, lease1));
-    EXPECT_EQ(1, d2_mgr_.getQueueSize());
-
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                            "192.0.2.3", "lease1.example.com.",
-                            "0001013A5B311F5B9FB10DDF8E53689B874F25D"
-                            "62CC147C2FF237A64C90E5A597C9B7A",
-                            lease1->cltt_, 100);
-
-    lease2->hostname_ = "";
-    lease2->fqdn_rev_ = true;
-    lease2->fqdn_fwd_ = true;
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease2, lease1));
-    EXPECT_EQ(1, d2_mgr_.getQueueSize());
-
-}
-
-// Test that two NameChangeRequests are generated when the lease is being
-// renewed and the new lease has updated FQDN data.
-TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsRenew) {
-    Lease4Ptr lease1 = createLease(IOAddress("192.0.2.3"),
-                                   "lease1.example.com.",
-                                   true, true);
-    Lease4Ptr lease2 = createLease(IOAddress("192.0.2.3"),
-                                   "lease2.example.com.",
-                                   true, true);
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease2, lease1));
-    ASSERT_EQ(2, d2_mgr_.getQueueSize());
-
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                            "192.0.2.3", "lease1.example.com.",
-                            "0001013A5B311F5B9FB10DDF8E53689B874F25D"
-                            "62CC147C2FF237A64C90E5A597C9B7A",
-                            lease1->cltt_, 100);
-
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            "192.0.2.3", "lease2.example.com.",
-                            "000101F906D2BB752E1B2EECC5FF2BF434C0B2D"
-                            "D6D7F7BD873F4F280165DB8C9DBA7CB",
-                            lease2->cltt_, 100);
-
-}
-
 // Test that the OFFER message generated as a result of the DISCOVER message
 // processing will not result in generation of the NameChangeRequests.
 TEST_F(NameDhcpv4SrvTest, processDiscover) {

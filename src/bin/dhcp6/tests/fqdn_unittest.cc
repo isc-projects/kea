@@ -24,8 +24,10 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_int_array.h>
-#include <dhcpsrv/lease.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcpsrv/lease.h>
+#include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/ncr_generator.h>
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <boost/pointer_cast.hpp>
@@ -485,7 +487,7 @@ public:
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
                                  const std::string& dhcid,
-                                 const uint16_t expires,
+                                 const uint64_t expires,
                                  const uint16_t len,
                                  const std::string& fqdn="") {
         NameChangeRequestPtr ncr;
@@ -725,15 +727,14 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
     // as if we typed domain-name in lower case.
     lease_->hostname_ = "MYHOST.example.com.";
 
-    Pkt6Ptr pkt(new Pkt6(DHCPREQUEST, 1234));
-    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(pkt, lease_));
+    ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 502);
+                            lease_->cltt_ + lease_->valid_lft_, 502);
 
 }
 
@@ -751,8 +752,7 @@ TEST_F(FqdnDhcpv6SrvTest, noRemovalsWhenDisabled) {
     lease_->hostname_ = "MYHOST.example.com.";
 
     // When DDNS is disabled an attempt to send a request will throw.
-    Pkt6Ptr pkt(new Pkt6(DHCPREQUEST, 1234));
-    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(pkt, lease_));
+    ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 }
 
 
@@ -763,8 +763,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestRev) {
     lease_->fqdn_rev_ = true;
     lease_->hostname_ = "myhost.example.com.";
 
-    Pkt6Ptr pkt(new Pkt6(DHCPREQUEST, 1234));
-    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(pkt, lease_));
+    ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
@@ -772,7 +771,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestRev) {
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 502);
+                            lease_->cltt_ + lease_->valid_lft_, 502);
 
 }
 
@@ -782,8 +781,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestNoUpdate) {
     lease_->fqdn_fwd_ = false;
     lease_->fqdn_rev_ = false;
 
-    Pkt6Ptr pkt(new Pkt6(DHCPREQUEST, 1234));
-    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(pkt, lease_));
+    ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
 
@@ -797,7 +795,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestNoHostname) {
     lease_->hostname_ = "";
 
     Pkt6Ptr pkt(new Pkt6(DHCPREQUEST, 1234));
-    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(pkt, lease_));
+    ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
 
@@ -811,8 +809,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestWrongHostname) {
     lease_->fqdn_rev_ = true;
     lease_->hostname_ = "myhost..example.com.";
 
-    Pkt6Ptr pkt(new Pkt6(DHCPREQUEST, 1234));
-    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(pkt, lease_));
+    ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
 
@@ -845,7 +842,7 @@ TEST_F(FqdnDhcpv6SrvTest, DISABLED_processTwoRequests) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4000);
+                            lease_->cltt_ + lease_->valid_lft_, 4000);
 
     // Client may send another request message with a new domain-name. In this
     // case the same lease will be returned. The existing DNS entry needs to
@@ -950,6 +947,12 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
     // to add both reverse and forward mapping to DNS.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
                        "myhost.example.com.");
+
+    // The lease should have been recorded in the database.
+    lease_ = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                   IOAddress("2001:db8:1:1::dead:beef"));
+    ASSERT_TRUE(lease_);
+
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
@@ -968,7 +971,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4000);
+                            lease_->cltt_ + lease_->valid_lft_, 4000);
 
 }
 
@@ -1028,15 +1031,16 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
                        "myhost.example.com.");
     // Test that the appropriate NameChangeRequest has been generated.
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            "2001:db8:1:1::dead:beef",
-                            "000201415AA33D1187D148275136FA30300478"
-                            "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4);
-    // Get the lease acquired and modify it. In particular, expire it.
+
+    // Get the lease acquired.
     Lease6Ptr lease =
         LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
     ASSERT_TRUE(lease);
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52", 0, 4);
     // One of the following: IAID, DUID or subnet identifier has to be changed
     // because otherwise the allocation engine will treat the lease as
     // being renewed by the same client. If we at least change subnet identifier
@@ -1066,14 +1070,13 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
                             "2001:db8:1:1::dead:beef",
                             "000201D422AA463306223D269B6CB7AFE7AAD2"
                             "65FCEA97F93623019B2E0D14E5323D5A",
-                            0, 5);
+                            lease->cltt_ + lease->valid_lft_, 5);
     // The second name change request should add a DNS mapping for
     // a new lease.
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
-                            "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4);
+                            "FAAAA3EBD29826B5C907B2C9268A6F52", 0, 4);
 
 }
 
