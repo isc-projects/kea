@@ -496,6 +496,10 @@ public:
         return (getColumnsInError(error_, columns_, HOST_COLUMNS));
     }
 
+    /// @brief Converts ClientClasses to a signgle string with coma separated values
+    ///
+    /// @param classes classes structure that contains zero or more classes
+    /// @return a single string with coma separated values
     std::string classesToString(const ClientClasses& classes) {
         string txt;
         bool first = true;
