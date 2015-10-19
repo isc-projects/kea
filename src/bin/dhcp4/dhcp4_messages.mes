@@ -200,11 +200,6 @@ as declined (i.e. used by unknown entity). The server has information about
 a lease for that address, but the client's hardware address or client identifier
 does not match the server's stored information. The client's request will be ignored.
 
-% DHCP4_DHCID_COMPUTE_ERROR failed to compute the DHCID for lease: %1, reason: %2
-This error message is logged when the attempt to compute DHCID for a specified
-lease has failed. The lease details and reason for failure is logged in the
-message.
-
 % DHCP4_DISCOVER_CLASS_PROCESSING_FAILED %1: client class specific processing failed for DHCPDISCOVER
 This debug message means that the server processing that is unique for each
 client class has reported a failure. The response packet will not be sent.
@@ -528,11 +523,6 @@ A debug message printing the details of the received packet. The first
 argument includes the client and the transaction identification
 information.
 
-% DHCP4_QUEUE_NCR name change request to %1 DNS entry queued: %2
-A debug message which is logged when the NameChangeRequest to add or remove
-a DNS entries for a particular lease has been queued. The first parameter of
-this log message indicates whether the DNS entry is to be added or removed.
-The second parameter carries the details of the NameChangeRequest.
 
 % DHCP4_RELEASE %1: address %2 was released properly.
 This debug message indicates that an address was released properly. It

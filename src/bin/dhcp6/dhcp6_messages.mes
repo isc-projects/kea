@@ -135,12 +135,6 @@ lease and other information.
 This debug message is logged when the new Name Change Request has been created
 to perform the DNS Update, which adds new RRs.
 
-% DHCP6_DDNS_CREATE_REMOVE_NAME_CHANGE_REQUEST %1: created name change request: %2
-This debug message is logged when the new Name Change Request has been created
-to perform the DNS Update, which removes RRs from the DNS. The first argument
-includes the client and transaction identification information. The second
-argument specifies the details of the generated name change request.
-
 % DHCP6_DDNS_FQDN_GENERATED %1: generated FQDN for the client: %2
 This debug message is logged when the server generated FQDN (name)
 for the client which message is processed. The names may be
@@ -179,13 +173,6 @@ sent by a client and started processing it. The first argument includes the
 client and transaction identification information. The second argument
 includes the received FQDN.
 
-% DHCP6_DDNS_REMOVE_INVALID_HOSTNAME %1: invalid FQDN %2 for the lease: %3 when removing DNS bindings
-This error message is issued when a lease being deleted contains an indication
-that the DNS Update has been performed for it, but the FQDN held in the lease
-database has invalid format and can't be transformed to the canonical on-wire
-format. The first argument includes the client and transaction identification
-information.
-
 % DHCP6_DDNS_REQUEST_SEND_FAILED failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2
 This error message indicates that IPv6 DHCP server failed to send a DDNS
 update request to the DHCP-DDNS server. This is most likely a configuration or
@@ -202,14 +189,6 @@ the lease is acquired for the client.
 % DHCP6_DDNS_SEND_FQDN sending DHCPv6 Client FQDN Option to the client: %1
 This debug message is logged when server includes an DHCPv6 Client FQDN Option
 in its response to the client.
-
-% DHCP6_DDNS_SKIP_REMOVE_NAME_CHANGE_REQUEST %1: name change request creation skipped for lease: %2
-This debug message is logged when the server determines that removal
-name change request should not be sent to the DNS, because the DNS
-updates are disabled on the DHCP server, or no DNS update has been
-performed for the processed lease. The first argument includes the
-client and the transaction identification information. The second
-argument provides the details of the lease.
 
 % DHCP6_DEACTIVATE_INTERFACE deactivate interface %1
 This message is printed when DHCPv6 server disables an interface from being
