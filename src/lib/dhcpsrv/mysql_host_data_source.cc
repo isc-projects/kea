@@ -249,29 +249,37 @@ public:
             // dhcp_identifier_type : TINYINT NOT NULL
             // Check which of the identifier types is used and set values accordingly
             if (host_->getHWAddress()) {
+                dhcp_identifier_type_ = 0; // 0 = IDENT_HWADDR
                 bind_[2].buffer_type = MYSQL_TYPE_TINY;
-                bind_[2].buffer = reinterpret_cast<char*>(0);// 0 = IDENT_HWADDR
+                bind_[2].buffer = reinterpret_cast<char*>(&dhcp_identifier_type_);
                 bind_[2].is_unsigned = MLM_TRUE;
                 // bind_[2].is_null = &MLM_FALSE; // commented out for performance
                 // reasons, see memset() above
             } else if (host_->getDuid()) {
+                dhcp_identifier_type_ = 1; // 1 = IDENT_DUID
                 bind_[2].buffer_type = MYSQL_TYPE_TINY;
-                bind_[2].buffer = reinterpret_cast<char*>(1);// 1 = IDENT_DUID
+                bind_[2].buffer = reinterpret_cast<char*>(&dhcp_identifier_type_);
                 bind_[2].is_unsigned = MLM_TRUE;
                 // bind_[2].is_null = &MLM_FALSE; // commented out for performance
                 // reasons, see memset() above
             }
 
             // dhcp4_subnet_id : INT UNSIGNED NULL
+            // Can't take an address of intermediate object, so let's store it
+            // in dhcp4_subnet_id_
+            dhcp4_subnet_id_ = host_->getIPv4SubnetID();
             bind_[3].buffer_type = MYSQL_TYPE_LONG;
-            bind_[3].buffer = reinterpret_cast<char*>(host_->getIPv4SubnetID());
+            bind_[3].buffer = reinterpret_cast<char*>(&dhcp4_subnet_id_);
             bind_[3].is_unsigned = MLM_TRUE;
             // bind_[3].is_null = &MLM_FALSE; // commented out for performance
                                               // reasons, see memset() above
 
             // dhcp6_subnet_id : INT UNSIGNED NULL
+            // Can't take an address of intermediate object, so let's store it
+            // in dhcp6_subnet_id_
+            dhcp6_subnet_id_ = host_->getIPv6SubnetID();
             bind_[4].buffer_type = MYSQL_TYPE_LONG;
-            bind_[4].buffer = reinterpret_cast<char*>(host_->getIPv6SubnetID());
+            bind_[4].buffer = reinterpret_cast<char*>(&dhcp6_subnet_id_);
             bind_[4].is_unsigned = MLM_TRUE;
             // bind_[4].is_null = &MLM_FALSE; // commented out for performance
                                               // reasons, see memset() above
@@ -287,9 +295,11 @@ public:
                                               // reasons, see memset() above
 
             // hostname : VARCHAR(255) NULL
+            strncpy(hostname_, host_->getHostname().c_str(), HOSTNAME_MAX_LEN - 1);
+            hostname_length_ = host_->getHostname().length();
             bind_[6].buffer_type = MYSQL_TYPE_STRING;
-            bind_[6].buffer = reinterpret_cast<char*>(host_->getHostname()[0]);
-            bind_[6].buffer_length = host_->getHostname().length();
+            bind_[6].buffer = reinterpret_cast<char*>(hostname_);
+            bind_[6].buffer_length = hostname_length_;
             // bind_[6].is_null = &MLM_FALSE; // commented out for performance
                                               // reasons, see memset() above
 
