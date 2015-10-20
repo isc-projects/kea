@@ -16,6 +16,7 @@
 #define GENERIC_HOST_DATA_SOURCE_UNITTEST_H
 
 #include <dhcpsrv/base_host_data_source.h>
+#include <dhcp/classify.h>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -75,6 +76,23 @@ public:
     /// @param host1 first host to compare
     /// @param host2 second host to compare
     void compareHosts(const ConstHostPtr& host1, const ConstHostPtr& host2);
+
+    /// @brief Compares two IPv6 reservation lists.
+    ///
+    /// This method uses gtest macros to signal errors.
+    ///
+    /// @param resv1 first IPv6 reservations list
+    /// @param resv2 second IPv6 reservations list
+    void compareReservations6(IPv6ResrvRange resv1, IPv6ResrvRange resv2);
+
+    /// @brief Compares two client classes
+    ///
+    /// This method uses gtest macros to signal errors.
+    ///
+    /// @param classes1 first list of client classes
+    /// @param classes2 second list of client classes
+    void compareClientClasses(const ClientClasses& classes1,
+                              const ClientClasses& classes2);
 
     /// @brief Pointer to the host data source
     BaseHostDataSource* hdsptr_;

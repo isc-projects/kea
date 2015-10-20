@@ -796,9 +796,10 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
 
 	// Set up the WHERE clause value
 	MYSQL_BIND inbind[2];
+        uint32_t subnet = subnet_id;
 	memset(inbind, 0, sizeof(inbind));
 	inbind[0].buffer_type = MYSQL_TYPE_LONG;
-	inbind[0].buffer = reinterpret_cast<char*>(subnet_id);
+	inbind[0].buffer = reinterpret_cast<char*>(&subnet);
 	inbind[0].is_unsigned = MLM_TRUE;
 
 	uint32_t addr4 = static_cast<uint32_t>(address);

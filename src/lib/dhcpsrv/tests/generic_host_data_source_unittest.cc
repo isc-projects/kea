@@ -114,13 +114,70 @@ void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
     ASSERT_TRUE(host2);
 
     // Compare if both have or have not HWaddress set.
-    ASSERT_EQ(host1->getHWAddress(), host2->getHWAddress());
+    if ((host1->getHWAddress() && !host2->getHWAddress()) ||
+        (!host1->getHWAddress() && host2->getHWAddress())) {
+        ADD_FAILURE() << "Host comparison failed: host1 hwaddress="
+                      << host1->getHWAddress() << ", host2 hwaddress="
+                      << host2->getHWAddress();
+        return;
+    }
     if (host1->getHWAddress()) {
         // Compare the actual address if they match.
-        EXPECT_EQ(*host1->getHWAddress(), *host2->getHWAddress());
+        EXPECT_TRUE(*host1->getHWAddress() == *host2->getHWAddress());
+        if (*host1->getHWAddress() != *host2->getHWAddress()) {
+            cout << host1->getHWAddress()->toText(true) << endl;
+            cout << host2->getHWAddress()->toText(true) << endl;
+        }
     }
 
-    /// @todo: Compare other fields
+    // comapre if both have or have not DUID set
+    if ((host1->getDuid() && !host2->getDuid()) ||
+        (!host1->getDuid() && host2->getDuid())) {
+        ADD_FAILURE() << "DUID comparison failed: host1 duid="
+                      << host1->getDuid() << ", host2 duid="
+                      << host2->getDuid();
+        return;
+    }
+    if (host1->getDuid()) {
+        EXPECT_TRUE(*host1->getDuid() == *host1->getDuid());
+        if (*host1->getHWAddress() != *host2->getHWAddress()) {
+            cout << host1->getDuid()->toText() << endl;
+            cout << host2->getDuid()->toText() << endl;
+        }
+    }
+
+    // Now check that the identifiers returned as vectors are the same
+    EXPECT_EQ(host1->getIdentifierType(), host2->getIdentifierType());
+    EXPECT_EQ(host1->getIdentifier(), host2->getIdentifier());
+
+    // Check host parameters
+    EXPECT_EQ(host1->getIPv4SubnetID(), host2->getIPv4SubnetID());
+    EXPECT_EQ(host1->getIPv6SubnetID(), host2->getIPv6SubnetID());
+    EXPECT_EQ(host1->getIPv4Reservation(), host2->getIPv4Reservation());
+    EXPECT_EQ(host1->getHostname(), host2->getHostname());
+
+    // Compare IPv6 reservations
+    compareReservations6(host1->getIPv6Reservations(),
+                         host2->getIPv6Reservations());
+
+    // And compare client classification details
+    compareClientClasses(host1->getClientClasses4(),
+                         host2->getClientClasses4());
+
+    compareClientClasses(host1->getClientClasses6(),
+                         host2->getClientClasses6());
+}
+
+void
+GenericHostDataSourceTest::compareReservations6(IPv6ResrvRange /*a*/,
+                                                IPv6ResrvRange /*b*/) {
+    /// @todo: Implement client classes comparison
+}
+
+void
+GenericHostDataSourceTest::compareClientClasses(const ClientClasses& /*classes1*/,
+                                                const ClientClasses& /*classes2*/) {
+    /// @todo: Implement client classes comparison
 }
 
 void GenericHostDataSourceTest::testBasic4() {
