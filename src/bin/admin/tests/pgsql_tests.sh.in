@@ -122,12 +122,35 @@ pgsql_upgrade_test() {
     # Wipe the whole database
     pgsql_wipe
 
-    # Create the database
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $scripts_dir
+    # Initialize database to scheme 1.0.
+    pgsql_execute_script @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql
     assert_eq 0 $? "cannot initialize the database, expected exit code: %d, actual: %d"
 
     ${keaadmin} lease-upgrade pgsql -u $db_user -p $db_password -n $db_name -d $scripts_dir
-    assert_eq 1 $? "lease-upgrade should have failed, expected exit code: %d, actual: %d"
+    assert_eq 0 $? "lease-upgrade failed, expected exit code: %d, actual: %d"
+
+    #table: state column added to lease4 (upgrade 1.0 -> 2.0)
+    output=`pgsql_execute "SELECT state from lease4;"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease4 is missing state column. (returned status code %d, expected %d)"
+
+    #table: state column added to lease6 (upgrade 1.0 -> 2.0)
+    output=`pgsql_execute "SELECT state from lease6;"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease6 is missing state column. (returned status code %d, expected %d)"
+
+    #table: stored procedures for lease dumps added (upgrade 1.0 -> 2.0)
+    output=`pgsql_execute "select lease4DumpHeader from lease4DumpHeader();"`
+    assert_eq 0 $ERRCODE "function lease4DumpHeader() broken or missing. (returned status code %d, expected %d)"
+
+    output=`pgsql_execute "select address from lease4DumpData();"`
+    assert_eq 0 $ERRCODE "function lease4DumpData() broken or missing. (returned status code %d, expected %d)"
+
+    output=`pgsql_execute "select lease6DumpHeader from lease6DumpHeader();"`
+    assert_eq 0 $ERRCODE "function lease6DumpHeader() broken or missing. (returned status code %d, expected %d)"
+
+    output=`pgsql_execute "select address from lease6DumpData();"`
+    assert_eq 0 $ERRCODE "function lease6DumpData() broken or missing. (returned status code %d, expected %d)"
 
     # Let's wipe the whole database
     pgsql_wipe
