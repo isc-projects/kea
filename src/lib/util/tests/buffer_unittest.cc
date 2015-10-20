@@ -226,12 +226,18 @@ TEST_F(BufferTest, outputBufferWipe) {
     EXPECT_EQ(*cp, 0);
 }
 
+TEST_F(BufferTest, emptyOutputBufferWipe) {
+    ASSERT_NO_THROW(obuffer.wipe());
+    EXPECT_EQ(0, obuffer.getLength());
+}
+
 TEST_F(BufferTest, outputBufferCopy) {
     obuffer.writeData(testdata, sizeof(testdata));
 
     EXPECT_NO_THROW({
         OutputBuffer copy(obuffer);
         ASSERT_EQ(sizeof(testdata), copy.getLength());
+        ASSERT_NE(obuffer.getData(), copy.getData());
         for (int i = 0; i < sizeof(testdata); i ++) {
             EXPECT_EQ(testdata[i], copy[i]);
             if (i + 1 < sizeof(testdata)) {
@@ -244,6 +250,13 @@ TEST_F(BufferTest, outputBufferCopy) {
     });
 }
 
+TEST_F(BufferTest, outputEmptyBufferCopy) {
+    EXPECT_NO_THROW({
+        OutputBuffer copy(obuffer);
+        ASSERT_EQ(0, copy.getLength());
+    });
+}
+
 TEST_F(BufferTest, outputBufferAssign) {
     OutputBuffer another(0);
     another.clear();
@@ -252,6 +265,7 @@ TEST_F(BufferTest, outputBufferAssign) {
     EXPECT_NO_THROW({
         another = obuffer;
         ASSERT_EQ(sizeof(testdata), another.getLength());
+        ASSERT_NE(obuffer.getData(), another.getData());
         for (int i = 0; i < sizeof(testdata); i ++) {
             EXPECT_EQ(testdata[i], another[i]);
             if (i + 1 < sizeof(testdata)) {
@@ -262,6 +276,15 @@ TEST_F(BufferTest, outputBufferAssign) {
         obuffer.clear();
         ASSERT_EQ(sizeof(testdata), another.getLength());
     });
+}
+
+TEST_F(BufferTest, outputEmptyBufferAssign) {
+    OutputBuffer copy(0);
+    ASSERT_NO_THROW({
+        copy = obuffer;
+    });
+    ASSERT_EQ(0, copy.getLength());
+    EXPECT_EQ(NULL, copy.getData());
 }
 
 // Check assign to self doesn't break stuff
