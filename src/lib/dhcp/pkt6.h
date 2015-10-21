@@ -173,6 +173,17 @@ public:
     static std::string makeLabel(const DuidPtr duid, const uint32_t transid,
                                  const HWAddrPtr& hwaddr);
 
+    /// @brief Returns text representation of the given packet identifiers.
+    ///
+    /// This variant of the method does not include transaction id.
+    ///
+    /// @param duid Pointer to the client identifier or NULL.
+    /// @param transid Numeric transaction id to include in the string.
+    /// @param hwaddr Hardware address to include in the string or NULL.
+    ///
+    /// @return String with text representation of the packet identifiers.
+    static std::string makeLabel(const DuidPtr duid, const HWAddrPtr& hwaddr);
+
     /// @brief Returns text representation of the primary packet identifiers
     ///
     /// This method is intended to be used to provide a consistent way to

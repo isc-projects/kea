@@ -1024,6 +1024,23 @@ TEST_F(Pkt4Test, getLabel) {
 
 }
 
+// Tests that the variant of makeLabel which doesn't include transaction
+// id produces expected output.
+TEST_F(Pkt4Test, makeLabelWithoutTransactionId) {
+    EXPECT_EQ("[no hwaddr info], cid=[no info]",
+              Pkt4::makeLabel(HWAddrPtr(), ClientIdPtr()));
+
+    // Test non-null hardware address.
+    HWAddrPtr hwaddr(new HWAddr(HWAddr::fromText("01:02:03:04:05:06", 123)));
+    EXPECT_EQ("[hwtype=123 01:02:03:04:05:06], cid=[no info]",
+              Pkt4::makeLabel(hwaddr, ClientIdPtr()));
+
+    // Test non-null client identifier.
+    ClientIdPtr cid = ClientId::fromText("01:02:03:04");
+    EXPECT_EQ("[hwtype=123 01:02:03:04:05:06], cid=[01:02:03:04]",
+              Pkt4::makeLabel(hwaddr, cid));
+}
+
 // Tests that the correct DHCPv4 message name is returned for various
 // message types.
 TEST_F(Pkt4Test, getName) {
