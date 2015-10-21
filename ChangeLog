@@ -1,3 +1,9 @@
+1036.	[func]		tmark
+	kea-admin now supports upgrading from Postgres schema version
+	1.0 to 2.0.  Schema 2.0 includes support for lease expiration
+	and reclaimation.
+	(Trac #3969, git 8fde70c1b63b5a2646688290b1d0cf53f4c964ad)
+
 1035.	[doc]		fdupont
 	Modified documentation of DHCP options to show internal format
 	of records.

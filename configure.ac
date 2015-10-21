@@ -1414,6 +1414,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/admin/scripts/mysql/upgrade_2.0_to_3.0.sh
                  src/bin/admin/scripts/mysql/upgrade_3.0_to_4.0.sh
                  src/bin/admin/scripts/pgsql/Makefile
+                 src/bin/admin/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile
