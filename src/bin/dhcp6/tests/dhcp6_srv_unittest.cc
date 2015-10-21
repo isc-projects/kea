@@ -1297,29 +1297,79 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
     Subnet6Ptr selected = srv.selectSubnet(pkt);
     EXPECT_FALSE(selected);
 
-    // CASE 2: We have three subnets defined and we received relayed traffic.
-    // Nothing should be selected.
-    CfgMgr::instance().clear();
-    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1);
-    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2);
-    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
-    CfgMgr::instance().commit();
-    selected = srv.selectSubnet(pkt);
-    EXPECT_EQ(selected, subnet2);
-
-    // CASE 3: We have three subnets defined and we received relayed traffic
+    // CASE 2: We have three subnets defined and we received relayed traffic
     // that came out of subnet 2. We should select subnet2 then
     CfgMgr::instance().clear();
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1);
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2);
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
     CfgMgr::instance().commit();
+    selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet2);
 
     // Source of the packet should have no meaning. Selection is based
     // on linkaddr field in the relay
     pkt->setRemoteAddr(IOAddress("2001:db8:1::baca"));
     selected = srv.selectSubnet(pkt);
     EXPECT_EQ(selected, subnet2);
+
+    // But not when this linkaddr field is not usable.
+    Pkt6::RelayInfo relay2;
+    relay2.peeraddr_ = IOAddress("fe80::1");
+    pkt->relay_info_.clear();
+    pkt->relay_info_.push_back(relay2);
+    selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet1);
+
+    // CASE 3: We have three subnets defined and we received relayed traffic
+    // that came out a layer 2 relay on subnet 2. We should select subnet2 then
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
+    CfgMgr::instance().commit();
+    pkt->relay_info_.clear();
+    pkt->relay_info_.push_back(relay);
+    relay2.hop_count_ = 1;
+    pkt->relay_info_.push_back(relay2);
+    selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet2);
+
+    // The number of level 2 relay doesn't matter
+    pkt->relay_info_.clear();
+    Pkt6::RelayInfo relay20;
+    relay20.peeraddr_ = IOAddress("fe80::1");
+    pkt->relay_info_.push_back(relay20);
+    Pkt6::RelayInfo relay21;
+    relay21.peeraddr_ = IOAddress("fe80::1");
+    relay21.hop_count_ = 1;
+    pkt->relay_info_.push_back(relay21);
+    relay.hop_count_ = 2;
+    pkt->relay_info_.push_back(relay);
+    Pkt6::RelayInfo relay22;
+    relay22.peeraddr_ = IOAddress("fe80::1");
+    relay22.hop_count_ = 3;
+    pkt->relay_info_.push_back(relay22);
+    Pkt6::RelayInfo relay23;
+    relay23.peeraddr_ = IOAddress("fe80::1");
+    relay23.hop_count_ = 4;
+    pkt->relay_info_.push_back(relay23);
+    selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet2);
+
+    // Only the inner/last relay with a usable address matters
+    pkt->relay_info_.clear();
+    pkt->relay_info_.push_back(relay20);
+    pkt->relay_info_.push_back(relay21);
+    pkt->relay_info_.push_back(relay);
+    pkt->relay_info_.push_back(relay22);
+    Pkt6::RelayInfo relay3;
+    relay3.linkaddr_ = IOAddress("2001:db8:3::1234");
+    relay3.peeraddr_ = IOAddress("fe80::1");
+    relay3.hop_count_ = 4;
+    pkt->relay_info_.push_back(relay3);
+    selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet3);
 
     // CASE 4: We have three subnets defined and we received relayed traffic
     // that came out of undefined subnet. We should select nothing
@@ -1329,6 +1379,7 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
     CfgMgr::instance().commit();
     pkt->relay_info_.clear();
+    relay.hop_count_ = 0;
     relay.linkaddr_ = IOAddress("2001:db8:4::1234");
     pkt->relay_info_.push_back(relay);
     selected = srv.selectSubnet(pkt);
