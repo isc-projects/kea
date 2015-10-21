@@ -779,22 +779,6 @@ private:
     /// as a programmatic error.
     void generateFqdn(const Pkt6Ptr& answer);
 
-
-    /// @brief Triggers removal Name Change Request if FQDN data changes in leases
-    ///
-    /// If there are any differences (different fwd or rev flags, or different
-    /// hostname) a DNS update for removing entry will be generated.
-    ///
-    /// @param query a pointer to the client's message
-    /// @param old_lease old version of the lease
-    /// @param new_lease new version of the lease (may be NULL)
-    /// @param hostname specifies hostname (for printing purposes)
-    /// @param do_fwd specifies if reverse updates are enabled (for printing purposes)
-    /// @param do_rev specifies if reverse updates are enabled (for printing purposes)
-    void conditionalNCRRemoval(const Pkt6Ptr& query, Lease6Ptr& old_lease,
-                               Lease6Ptr& new_lease, const std::string& hostname,
-                               bool do_fwd, bool do_rev);
-
     /// @brief Updates statistics for received packets
     /// @param query packet received
     static void processStatsReceived(const Pkt6Ptr& query);
