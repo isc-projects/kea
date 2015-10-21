@@ -27,6 +27,7 @@
 #include <dhcp/dhcp6.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
+#include <dhcpsrv/callout_handle_store.h>
 #include <stats/stats_mgr.h>
 #include <util/stopwatch.h>
 #include <hooks/server_hooks.h>
@@ -54,20 +55,24 @@ struct AllocEngineHooks {
     int hook_index_lease4_select_; ///< index for "lease4_receive" hook point
     int hook_index_lease4_renew_;  ///< index for "lease4_renew" hook point
     int hook_index_lease4_expire_; ///< index for "lease4_expire" hook point
+    int hook_index_lease4_recover_;///< index for "lease4_recover" hook point
     int hook_index_lease6_select_; ///< index for "lease6_receive" hook point
     int hook_index_lease6_renew_;  ///< index for "lease6_renew" hook point
     int hook_index_lease6_rebind_; ///< index for "lease6_rebind" hook point
     int hook_index_lease6_expire_; ///< index for "lease6_expire" hook point
+    int hook_index_lease6_recover_;///< index for "lease6_recover" hook point
 
     /// Constructor that registers hook points for AllocationEngine
     AllocEngineHooks() {
         hook_index_lease4_select_ = HooksManager::registerHook("lease4_select");
         hook_index_lease4_renew_  = HooksManager::registerHook("lease4_renew");
         hook_index_lease4_expire_ = HooksManager::registerHook("lease4_expire");
+        hook_index_lease4_recover_= HooksManager::registerHook("lease4_recover");
         hook_index_lease6_select_ = HooksManager::registerHook("lease6_select");
         hook_index_lease6_renew_  = HooksManager::registerHook("lease6_renew");
         hook_index_lease6_rebind_ = HooksManager::registerHook("lease6_rebind");
         hook_index_lease6_expire_ = HooksManager::registerHook("lease6_expire");
+        hook_index_lease6_recover_= HooksManager::registerHook("lease6_recover");
     }
 };
 
@@ -1396,7 +1401,9 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
                     // Do extra steps required for declined lease reclaimation:
                     // - bump decline-related stats
                     // - log separate message
-                    reclaimDeclined(lease);
+                    // - call lease6_recover hooks
+                    // (hooks can override the removal decision and keep the lease)
+                    remove_tmp = reclaimDeclined(lease) && remove_lease;
                 }
 
                 // Reclaim the lease - depending on the configuration, set the
@@ -1619,7 +1626,7 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
                     // Do extra steps required for declined lease reclaimation:
                     // - bump decline-related stats
                     // - log separate message
-                    reclaimDeclined(lease);
+                    remove_tmp = reclaimDeclined(lease) && remove_tmp;
                 }
 
                 // Reclaim the lease - depending on the configuration, set the
@@ -1728,11 +1735,39 @@ AllocEngine::deleteExpiredReclaimedLeases4(const uint32_t secs) {
         .arg(deleted_leases);
 }
 
-void
+bool
 AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
 
     if (!lease || (lease->state_ != Lease::STATE_DECLINED) ) {
-        return;
+        return (true);
+    }
+
+    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease4_recover_)) {
+
+        // Let's use a static callout handle. It will be initialized the first
+        // time lease6_recover is called and will keep to that value.
+        static CalloutHandlePtr callout_handle;
+        if (!callout_handle) {
+            callout_handle = HooksManager::createCalloutHandle();
+        }
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass necessary arguments
+        callout_handle->setArgument("lease4", lease);
+
+        // Call the callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease4_recover_, *callout_handle);
+
+        // Callouts decided to skip the action. This means that the lease is not
+        // assigned, so the client will get NoAddrAvail as a result. The lease
+        // won't be inserted into the database.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE4_RECOVER_SKIP)
+                .arg(lease->addr_.toText());
+            return (false);
+        }
     }
 
     LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V4_DECLINED_RECOVERED)
@@ -1755,15 +1790,42 @@ AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
 
     // Note that we do not touch assigned-addresses counters. Those are
     // modified in whatever code calls this method.
-
-    /// @todo: call lease4_decline_recycle hook here.
+    return (true);
 }
 
-void
+bool
 AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
 
     if (!lease || (lease->state_ != Lease::STATE_DECLINED) ) {
-        return;
+        return (true);
+    }
+
+    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_recover_)) {
+
+        // Let's use a static callout handle. It will be initialized the first
+        // time lease6_recover is called and will keep to that value.
+        static CalloutHandlePtr callout_handle;
+        if (!callout_handle) {
+            callout_handle = HooksManager::createCalloutHandle();
+        }
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass necessary arguments
+        callout_handle->setArgument("lease6", lease);
+
+        // Call the callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease6_recover_, *callout_handle);
+
+        // Callouts decided to skip the action. This means that the lease is not
+        // assigned, so the client will get NoAddrAvail as a result. The lease
+        // won't be inserted into the database.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE6_RECOVER_SKIP)
+                .arg(lease->addr_.toText());
+            return (false);
+        }
     }
 
     LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_DECLINED_RECOVERED)
@@ -1787,7 +1849,7 @@ AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
     // Note that we do not touch assigned-addresses counters. Those are
     // modified in whatever code calls this method.
 
-    /// @todo: call lease6_decline_recycle hook here.
+    return (true);
 }
 
 template<typename LeasePtrType, typename IdentifierType>

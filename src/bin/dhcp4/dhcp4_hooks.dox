@@ -274,4 +274,22 @@ packet processing. Hook points that are not specific to packet processing
   skip flag is only set when the lease has been actually reclaimed in the
   database by the callout.
 
+@subsection dhcpv4HooksLease4Recover lease4_recover
+
+- @b Arguments:
+  - name: @b lease4, type: isc::dhcp::Lease4Ptr, direction: <b>in</b>
+
+- @b Description: this callout is executed for each declined lease that
+  has expired and is being recovered. The lease has already been stripped
+  from any client identifying information when it was put into declined
+  state. In principle the callouts can modify the lease in this hook,
+  but it makes little sense. There's no useful data in the lease, except
+  the IPv4 address (which must not be modified).
+
+- <b>Next step status</b>: if the callout sets the next step action to SKIP,
+  the server will skip the lease recovery. In other words, it will keep
+  the lease as is. This is not recommended in general, as the declined
+  expired leases will remain in the database and their recovery will
+  be attempted during the next reclaim cycle.
+
 */
