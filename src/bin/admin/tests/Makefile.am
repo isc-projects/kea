@@ -13,6 +13,7 @@ endif
 noinst_SCRIPTS = $(SHTESTS)
 
 EXTRA_DIST = dhcpdb_create_1.0.mysql
+EXTRA_DIST += dhcpdb_create_1.0.pgsql
 
 CLEANFILES = *.log
 DISTCLEANFILES = memfile_tests.sh mysql_tests.sh pgsql_tests.sh
