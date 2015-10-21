@@ -1,6 +1,6 @@
 1034.	[func]		fdupont
 	Add support for DHCPv4 subnet selection option.
-	(Trac #4058, git xxx)
+	(Trac #4058, git b7072884e8ce74dc64cd74e101d81e5c0763f492)
 
 1033.	[bug]		stephen
 	Updated OutputBuffer class to address warnings from Coverity.
