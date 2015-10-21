@@ -1,7 +1,7 @@
 1035.	[doc]		fdupont
 	Modified documentation of DHCP options to show internal format
 	of records.
-	(Trac #4071, git xxx)
+	(Trac #4071, git c5cffe74ac1bd38e4870ff1c22c36febb46e8c27))
 
 1034.	[func]		fdupont
 	Add support for DHCPv4 subnet selection option.
