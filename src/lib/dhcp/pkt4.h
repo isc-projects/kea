@@ -119,6 +119,15 @@ public:
                                  const ClientIdPtr& client_id,
                                  const uint32_t transid);
 
+    /// @brief Returns text representation of the given packet identifers.
+    ///
+    /// This variant of the method does not include transaction id.
+    ///
+    /// @param hwaddr hardware address to include in the string, it may be
+    /// NULL.
+    /// @param client_id client id to include in the string, it may be NULL.
+    static std::string makeLabel(const HWAddrPtr& hwaddr, const ClientIdPtr& client_id);
+
     /// @brief Returns text representation of the packet.
     ///
     /// This function is useful mainly for debugging.
