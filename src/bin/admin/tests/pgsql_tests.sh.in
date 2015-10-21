@@ -122,7 +122,7 @@ pgsql_upgrade_test() {
     # Wipe the whole database
     pgsql_wipe
 
-    # Initialize database to scheme 1.0.
+    # Initialize database to schema 1.0.
     pgsql_execute_script @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql
     assert_eq 0 $? "cannot initialize the database, expected exit code: %d, actual: %d"
 
