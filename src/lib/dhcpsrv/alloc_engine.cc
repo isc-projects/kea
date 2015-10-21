@@ -14,6 +14,9 @@
 
 #include <config.h>
 
+#include <dhcp/dhcp6.h>
+#include <dhcp/pkt4.h>
+#include <dhcp/pkt6.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/alloc_engine_log.h>
@@ -22,7 +25,6 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
-#include <dhcp/dhcp6.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
@@ -1600,6 +1602,13 @@ void
 AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
                                  const DbReclaimMode& reclaim_mode,
                                  const CalloutHandlePtr& callout_handle) {
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V6_LEASE_RECLAIM)
+        .arg(Pkt6::makeLabel(lease->duid_, lease->hwaddr_))
+        .arg(lease->addr_.toText())
+        .arg(static_cast<int>(lease->prefixlen_));
+
     // The skip flag indicates if the callouts have taken responsibility
     // for reclaiming the lease. The callout will set this to true if
     // it reclaims the lease itself. In this case the reclamation routine
@@ -1687,6 +1696,11 @@ void
 AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
                                  const DbReclaimMode& reclaim_mode,
                                  const CalloutHandlePtr& callout_handle) {
+
+    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+              ALLOC_ENGINE_V4_LEASE_RECLAIM)
+        .arg(Pkt4::makeLabel(lease->hwaddr_, lease->client_id_))
+        .arg(lease->addr_.toText());
 
     // The skip flag indicates if the callouts have taken responsibility
     // for reclaiming the lease. The callout will set this to true if
