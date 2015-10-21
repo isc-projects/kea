@@ -401,10 +401,10 @@ TEST_F(Dhcpv4SrvTest, initResponse) {
     EXPECT_TRUE(response->getSiaddr().isV4Zero());
     EXPECT_TRUE(response->getCiaddr().isV4Zero());
     EXPECT_EQ(5, response->getHops());
-    EXPECT_EQ(hw, *response->getHWAddr());
+    EXPECT_TRUE(hw == *response->getHWAddr());
     EXPECT_EQ(IOAddress("10.10.10.10"), response->getGiaddr());
-    EXPECT_EQ(src_hw, *response->getLocalHWAddr());
-    EXPECT_EQ(dst_hw, *response->getRemoteHWAddr());
+    EXPECT_TRUE(src_hw == *response->getLocalHWAddr());
+    EXPECT_TRUE(dst_hw == *response->getRemoteHWAddr());
 
     // Check options (i.e., subnet selection option)
     OptionPtr resp_sbnsel = response->getOption(DHO_SUBNET_SELECTION);
