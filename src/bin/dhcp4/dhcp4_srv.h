@@ -130,6 +130,17 @@ private:
     /// not NULL.
     void copyDefaultFields();
 
+    /// @brief Copies default options from client's to server's message
+    ///
+    /// Some options are copied from client's message into server's response,
+    /// e.g. Relay Agent Info option, Subnet Selection option etc.
+    ///
+    /// @warning This message is called internally by @c initResponse and
+    /// thus it doesn't check if the resp_ value has been initialized. The
+    /// calling method is responsible for making sure that @c resp_ is
+    /// not NULL.
+    void copyDefaultOptions();
+
     /// @brief Pointer to the allocation engine used by the server.
     AllocEnginePtr alloc_engine_;
     /// @brief Pointer to the DHCPv4 message sent by the client.

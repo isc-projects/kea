@@ -358,6 +358,65 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
 
 }
 
+// This test verifies that the mandatory to copy fields and options
+// are really copied into the response.
+TEST_F(Dhcpv4SrvTest, initResponse) {
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Set fields which must be copied
+    query->setIface("foo");
+    query->setIndex(111);
+    query->setHops(5);
+    const HWAddr& hw = HWAddr::fromText("11:22:33:44:55:66:77:88", 10);
+    HWAddrPtr hw_addr(new HWAddr(hw));
+    query->setHWAddr(hw_addr);
+    query->setGiaddr(IOAddress("10.10.10.10"));
+    const HWAddr& src_hw = HWAddr::fromText("e4:ce:8f:12:34:56");
+    HWAddrPtr src_hw_addr(new HWAddr(src_hw));
+    query->setLocalHWAddr(src_hw_addr);
+    const HWAddr& dst_hw = HWAddr::fromText("e8:ab:cd:78:9a:bc");
+    HWAddrPtr dst_hw_addr(new HWAddr(dst_hw));
+    query->setRemoteHWAddr(dst_hw_addr);
+
+    // Add options which must be copied
+    // client-id echo is optional
+    // rai echo is done in relayAgentInfoEcho
+    // Do subnet selection option
+    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(Option::V4,
+                                                           DHO_SUBNET_SELECTION);
+    ASSERT_TRUE(sbnsel_def);
+    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    ASSERT_TRUE(sbnsel);
+    sbnsel->writeAddress(IOAddress("192.0.2.3"));
+    query->addOption(sbnsel);
+
+    // Create exchange and get Response
+    Dhcpv4Exchange ex = createExchange(query);
+    Pkt4Ptr response = ex.getResponse();
+    ASSERT_TRUE(response);
+
+    // Check fields
+    EXPECT_EQ("foo", response->getIface());
+    EXPECT_EQ(111, response->getIndex());
+    EXPECT_TRUE(response->getSiaddr().isV4Zero());
+    EXPECT_TRUE(response->getCiaddr().isV4Zero());
+    EXPECT_EQ(5, response->getHops());
+    EXPECT_EQ(hw, *response->getHWAddr());
+    EXPECT_EQ(IOAddress("10.10.10.10"), response->getGiaddr());
+    EXPECT_EQ(src_hw, *response->getLocalHWAddr());
+    EXPECT_EQ(dst_hw, *response->getRemoteHWAddr());
+
+    // Check options (i.e., subnet selection option)
+    OptionPtr resp_sbnsel = response->getOption(DHO_SUBNET_SELECTION);
+    ASSERT_TRUE(resp_sbnsel);
+    OptionCustomPtr resp_custom =
+	boost::dynamic_pointer_cast<OptionCustom>(resp_sbnsel);
+    ASSERT_TRUE(resp_custom);
+    IOAddress subnet_addr("0.0.0.0");
+    ASSERT_NO_THROW(subnet_addr = resp_custom->readAddress());
+    EXPECT_EQ(IOAddress("192.0.2.3"), subnet_addr);
+}
+
 // This test verifies that the server identifier option is appended to
 // a specified DHCPv4 message and the server identifier is correct.
 TEST_F(Dhcpv4SrvTest, appendServerID) {
@@ -1885,6 +1944,17 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     dis->addOption(rai);
     EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
 
+    // Subnet select option has a lower precedence
+    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(Option::V4,
+                                                           DHO_SUBNET_SELECTION);
+    ASSERT_TRUE(sbnsel_def);
+    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    ASSERT_TRUE(sbnsel);
+    sbnsel->writeAddress(IOAddress("192.0.2.3"));
+    dis->addOption(sbnsel);
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+    dis->delOption(DHO_SUBNET_SELECTION);
+
     // Check client-classification still applies
     IOAddress addr_foo("192.0.4.2");
     ols.reset(new Option(Option::V4, RAI_OPTION_LINK_SELECTION,
@@ -1908,7 +1978,88 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     rai->addOption(ols);
     dis->addOption(rai);
     EXPECT_FALSE(srv_.selectSubnet(dis));
+}
 
+// Checks if a subnet selection option works as expected
+TEST_F(Dhcpv4SrvTest, subnetSelect) {
+
+    // We have 3 subnets defined.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.2 - 192.0.2.100\" } ],"
+        "    \"relay\": { "
+        "        \"ip-address\": \"192.0.5.1\""
+        "    },"
+        "    \"subnet\": \"192.0.2.0/24\" }, "
+        "{   \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
+        "    \"subnet\": \"192.0.3.0/24\" }, "
+        "{   \"pools\": [ { \"pool\": \"192.0.4.1 - 192.0.4.100\" } ],"
+        "    \"client-class\": \"foo\", "
+        "    \"subnet\": \"192.0.4.0/24\" } "
+        "],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Use this config to set up the server
+    ASSERT_NO_THROW(configure(config));
+
+    // Let's get the subnet configuration objects
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    ASSERT_EQ(3, subnets->size());
+
+    // Let's get them for easy reference
+    Subnet4Ptr subnet1 = (*subnets)[0];
+    Subnet4Ptr subnet2 = (*subnets)[1];
+    Subnet4Ptr subnet3 = (*subnets)[2];
+    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet2);
+    ASSERT_TRUE(subnet3);
+
+    // Let's create a packet.
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    dis->setIface("eth0");
+    dis->setHops(1);
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Let's create a Subnet Selection option
+    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(Option::V4,
+                                                           DHO_SUBNET_SELECTION);
+    ASSERT_TRUE(sbnsel_def);
+    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    ASSERT_TRUE(sbnsel);
+    sbnsel->writeAddress(IOAddress("192.0.3.2"));
+
+    // This is just a sanity check, we're using regular method: ciaddr 192.0.3.1
+    // belongs to the second subnet, so it is selected
+    dis->setGiaddr(IOAddress("192.0.3.1"));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+
+    // Setup a relay override for the first subnet as it has a high precedence
+    dis->setGiaddr(IOAddress("192.0.5.1"));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis));
+
+    // Put a subnet select option to select back the second subnet as
+    // it has the second highest precedence
+    dis->addOption(sbnsel);
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+
+    // Check client-classification still applies
+    sbnsel->writeAddress(IOAddress("192.0.4.2"));
+    // Note it shall fail (vs. try the next criterion).
+    EXPECT_FALSE(srv_.selectSubnet(dis));
+    // Add the packet to the class and check again: now it shall succeed
+    dis->addClass("foo");
+    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis));
+
+    // Check it fails with a bad address in the sub-option
+    sbnsel->writeAddress(IOAddress("10.0.0.1"));
+    EXPECT_FALSE(srv_.selectSubnet(dis));
 }
 
 // This test verifies that the direct message is dropped when it has been

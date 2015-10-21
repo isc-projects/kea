@@ -166,6 +166,7 @@ Dhcpv4Exchange::initResponse() {
     if (resp_type > 0) {
         resp_.reset(new Pkt4(resp_type, getQuery()->getTransid()));
         copyDefaultFields();
+        copyDefaultOptions();
     }
 }
 
@@ -187,14 +188,6 @@ Dhcpv4Exchange::copyDefaultFields() {
     // relay address
     resp_->setGiaddr(query_->getGiaddr());
 
-    // Let's copy client-id to response. See RFC6842.
-    // It is possible to disable RFC6842 to keep backward compatibility
-    bool echo = CfgMgr::instance().echoClientId();
-    OptionPtr client_id = query_->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    if (client_id && echo) {
-        resp_->addOption(client_id);
-    }
-
     // If src/dest HW addresses are used by the packet filtering class
     // we need to copy them as well. There is a need to check that the
     // address being set is not-NULL because an attempt to set the NULL
@@ -210,11 +203,35 @@ Dhcpv4Exchange::copyDefaultFields() {
     if (dst_hw_addr) {
         resp_->setRemoteHWAddr(dst_hw_addr);
     }
+}
+
+void
+Dhcpv4Exchange::copyDefaultOptions() {
+    // Let's copy client-id to response. See RFC6842.
+    // It is possible to disable RFC6842 to keep backward compatibility
+    bool echo = CfgMgr::instance().echoClientId();
+    OptionPtr client_id = query_->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    if (client_id && echo) {
+        resp_->addOption(client_id);
+    }
 
     // If this packet is relayed, we want to copy Relay Agent Info option
     OptionPtr rai = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     if (rai) {
         resp_->addOption(rai);
+    }
+
+    // RFC 3011 states about the Subnet Selection Option
+
+    // "Servers configured to support this option MUST return an
+    //  identical copy of the option to any client that sends it,
+    //  regardless of whether or not the client requests the option in
+    //  a parameter request list. Clients using this option MUST
+    //  discard DHCPOFFER or DHCPACK packets that do not contain this
+    //  option."
+    OptionPtr subnet_sel = query_->getOption(DHO_SUBNET_SELECTION);
+    if (subnet_sel) {
+        resp_->addOption(subnet_sel);
     }
 }
 
@@ -304,6 +321,8 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
     // that it is relaying but needs the subnet/link specification to
     // be different from the IP address the DHCP server should use
     // when communicating with the relay agent." (RFC 3257)
+    //
+    // Try first Relay Agent Link Selection sub-option
     OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
     if (rai) {
         OptionCustomPtr rai_custom =
@@ -317,6 +336,16 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
                     selector.option_select_ =
                         IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
                 }
+            }
+        }
+    } else {
+        // Or Subnet Selection option
+        OptionPtr sbnsel = query->getOption(DHO_SUBNET_SELECTION);
+        if (sbnsel) {
+            OptionCustomPtr oc =
+                boost::dynamic_pointer_cast<OptionCustom>(sbnsel);
+            if (oc) {
+                selector.option_select_ = oc->readAddress();
             }
         }
     }
