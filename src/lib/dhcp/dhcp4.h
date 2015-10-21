@@ -181,7 +181,7 @@ enum DHCPOptionType {
     // 115 is removed/unassigned
 //  DHO_AUTO_CONFIG                  = 116,
 //  DHO_NAME_SERVICE_SEARCH          = 117,
-    DHO_SUBNET_SELECTION             = 118, /* RFC3011! */
+    DHO_SUBNET_SELECTION             = 118, /* RFC3011 */
     DHO_DOMAIN_SEARCH                = 119, /* RFC3397 */
 //  DHO_SIP_SERVERS                  = 120,
 //  DHO_CLASSLESS_STATIC_ROUTE       = 121,
