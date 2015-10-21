@@ -13,7 +13,9 @@
 -- NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 -- WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
--- This is the Kea DHCP schema specification for PostgreSQL.
+-- This is the Kea DHCP schema specification for PostgreSQL schema 1.0.
+-- It is used to create a 1.0 schema database for testing kea-admin's
+-- ability to upgrade Postgres databases.
 
 -- The schema is reasonably portable (with the exception of some field types
 -- specification, which are PostgreSQL-specific).  Minor changes might be needed
@@ -86,7 +88,7 @@ INSERT INTO lease6_types VALUES (1, 'IA_TA');   -- Temporary v6 addresses
 INSERT INTO lease6_types VALUES (2, 'IA_PD');   -- Prefix delegations
 COMMIT;
 
--- Finally, the version of the schema.  We start at 0.1 during development.
+-- Finally, the version of the schema.  We start at 1.0 during development.
 -- This table is only modified during schema upgrades.  For historical reasons
 -- (related to the names of the columns in the BIND 10 DNS database file), the
 -- first column is called "version" and not "major".
