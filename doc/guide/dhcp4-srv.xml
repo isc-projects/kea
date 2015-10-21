@@ -1020,9 +1020,9 @@ This rather belong to the DDNS configuration
           <title>List of standard DHCPv4 options (continued)</title>
           <tgroup cols='5'>
           <colspec colname='name'/>
-          <colspec colname='code'/>
-          <colspec colname='type'/>
-          <colspec colname='array'/>
+          <colspec colname='code' align='center'/>
+          <colspec colname='type' align='center'/>
+          <colspec colname='array' align='center'/>
           <colspec colname='always-returned' align='center'/>
           <thead>
             <row>
@@ -1086,8 +1086,8 @@ It is merely echoed by the server
 <row><entry>associated-ip</entry><entry>92</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 -->
 <row><entry>client-system</entry><entry>93</entry><entry>uint16</entry><entry>true</entry><entry>false</entry></row>
-<row><entry>client-ndi</entry><entry>94</entry><entry>record</entry><entry>false</entry><entry>false</entry></row>
-<row><entry>uuid-guid</entry><entry>97</entry><entry>record</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>client-ndi</entry><entry>94</entry><entry>record (uint8, uint8, uint8)</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>uuid-guid</entry><entry>97</entry><entry>record (uint8, binary)</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>subnet-selection</entry><entry>118</entry><entry>ipv4-address</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>domain-search</entry><entry>119</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>vivco-suboptions</entry><entry>124</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
