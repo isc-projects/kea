@@ -941,23 +941,23 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>information-refresh-time</entry><entry>32</entry><entry>uint32</entry><entry>false</entry></row>
 <row><entry>bcmcs-server-dns</entry><entry>33</entry><entry>fqdn</entry><entry>true</entry></row>
 <row><entry>bcmcs-server-addr</entry><entry>34</entry><entry>ipv6-address</entry><entry>true</entry></row>
-<row><entry>geoconf-civic</entry><entry>36</entry><entry>record</entry><entry>false</entry></row>
-<row><entry>remote-id</entry><entry>37</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>geoconf-civic</entry><entry>36</entry><entry>record (uint8, uint16, binary)</entry><entry>false</entry></row>
+<row><entry>remote-id</entry><entry>37</entry><entry>record (uint32, binary)</entry><entry>false</entry></row>
 <row><entry>subscriber-id</entry><entry>38</entry><entry>binary</entry><entry>false</entry></row>
-<row><entry>client-fqdn</entry><entry>39</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>client-fqdn</entry><entry>39</entry><entry>record (uint8, fqdn)</entry><entry>false</entry></row>
 <row><entry>pana-agent</entry><entry>40</entry><entry>ipv6-address</entry><entry>true</entry></row>
 <row><entry>new-posix-timezone</entry><entry>41</entry><entry>string</entry><entry>false</entry></row>
 <row><entry>new-tzdb-timezone</entry><entry>42</entry><entry>string</entry><entry>false</entry></row>
 <row><entry>ero</entry><entry>43</entry><entry>uint16</entry><entry>true</entry></row>
-<row><entry>lq-query</entry><entry>44</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>lq-query</entry><entry>44</entry><entry>record (uint8, ipv6-address)</entry><entry>false</entry></row>
 <row><entry>client-data</entry><entry>45</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>clt-time</entry><entry>46</entry><entry>uint32</entry><entry>false</entry></row>
-<row><entry>lq-relay-data</entry><entry>47</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>lq-relay-data</entry><entry>47</entry><entry>record (ipv6-address, binary)</entry><entry>false</entry></row>
 <row><entry>lq-client-link</entry><entry>48</entry><entry>ipv6-address</entry><entry>true</entry></row>
 <row><entry>bootfile-url</entry><entry>59</entry><entry>string</entry><entry>false</entry></row>
 <row><entry>bootfile-param</entry><entry>60</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>client-arch-type</entry><entry>61</entry><entry>uint16</entry><entry>true</entry></row>
-<row><entry>nii</entry><entry>62</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>nii</entry><entry>62</entry><entry>record (uint8, uint8, uint8)</entry><entry>false</entry></row>
 <row><entry>erp-local-domain-name</entry><entry>65</entry><entry>fqdn</entry><entry>false</entry></row>
 <row><entry>rsoo</entry><entry>66</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>client-linklayer-addr</entry><entry>79</entry><entry>binary</entry><entry>false</entry></row>
@@ -980,7 +980,7 @@ temporarily override a list of interface names and listen on all interfaces.
         <tbody>
 <row><entry>public-key</entry><entry>701</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>certificate</entry><entry>702</entry><entry>binary</entry><entry>false</entry></row>
-<row><entry>signature</entry><entry>703</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>signature</entry><entry>703</entry><entry>record (uint8, uint8, binary)</entry><entry>false</entry></row>
 <row><entry>timestamp</entry><entry>704</entry><entry>binary</entry><entry>false</entry></row>
         </tbody>
         </tgroup>
