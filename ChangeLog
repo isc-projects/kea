@@ -1,3 +1,8 @@
+1035.	[doc]		fdupont
+	Modified documentation of DHCP options to show internal format
+	of records.
+	(Trac #4071, git xxx)
+
 1034.	[func]		fdupont
 	Add support for DHCPv4 subnet selection option.
 	(Trac #4058, git b7072884e8ce74dc64cd74e101d81e5c0763f492)
@@ -14,12 +19,12 @@
 
 1031.	[build]		fdupont
 	Rewrote the system_messages tool from Python to C++.
-	(trac #3516, git a8195310c641027d1822344cafad64e6f695d614)
+	(Trac #3516, git a8195310c641027d1822344cafad64e6f695d614)
 
 1030.	[bug]		marcin
 	Fixed failing 'reclaimExpiredLeasesTimeout' unit tests on
 	some virtual machines.
-	(trac #4075, git c3a2487f53ecf69edc0a38f574fce17c4332162c)
+	(Trac #4075, git c3a2487f53ecf69edc0a38f574fce17c4332162c)
 
 1029.	[func]		tomek
 	A new hook point lease6_decline has been added. It is called when
@@ -90,7 +95,7 @@
 	94 - client-ndi, 97 - uuid-guid.
 	From RFC5970 (for DHCPv6) these are: 59 - bootfile-url,
 	60 - bootfile-param, 61 - client-arch-type, 62 - nii.
-	(trac #3576, git fdcc73afe7e26bd427817fd771567b1c44713b06)
+	(Trac #3576, git fdcc73afe7e26bd427817fd771567b1c44713b06)
 
 1017.	[func]		tmark
 	Lease dump SQL logic, used by kea-admin, is now supplied via stored
