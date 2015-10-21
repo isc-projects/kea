@@ -275,10 +275,14 @@ pgsql_upgrade() {
         exit 1
     fi
 
+    # Postgres psql does not accept pw on command line, but can do it
+    # thru an env
+    export PGPASSWORD=$db_password
+
     for script in ${scripts_dir}/pgsql/upgrade*.sh
     do
         echo "Processing $script file..."
-        sh ${script} --user=${db_user} --password=${db_password} ${db_name}
+        sh ${script} -U ${db_user} -d ${db_name}
     done
 
     version=`pgsql_version`
