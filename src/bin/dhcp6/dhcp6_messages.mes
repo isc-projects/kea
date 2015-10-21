@@ -151,14 +151,6 @@ from the acquired address. The first argument includes the client and the
 transaction identification information. The second argument is a leased
 address. The third argument includes the reason for the failure.
 
-% DHCP6_DDNS_LEASE_ASSIGN_FQDN_CHANGE FQDN %1: FQDN for the allocated lease: %2 has changed. New values: hostname = %3, reverse mapping = %4, forward mapping = %5
-This debug message is logged when FQDN mapping for a particular lease has
-been changed by the recent Request message. This mapping will be changed in DNS.
-The first argument includes the client and the transaction identification
-information. The second argument holds the details about the lease for which
-the FQDN information and/or mappings have changed. The remaining arguments
-hold the new FQDN information and flags for mappings.
-
 % DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE FQDN %1: FQDN for the renewed lease: %2 has changed. New values: hostname = %3, reverse mapping = %4, forward mapping = %5
 This debug message is logged when FQDN mapping for a particular lease has been
 changed by the recent Renew message. This mapping will be changed in DNS.
