@@ -348,6 +348,22 @@ TEST_F(NCRGenerator6Test, wrongHostname) {
     }
 }
 
+// Test that NameChangeRequest is not generated if the lease is not an
+// address lease, i.e. is a prefix.
+TEST_F(NCRGenerator6Test, wrongLeaseType) {
+    // Change lease type to delegated prefix.
+    lease_->type_ = Lease::TYPE_PD;
+
+    {
+        SCOPED_TRACE("case CHG_REMOVE");
+        testNoUpdate(CHG_REMOVE, true, true, "myhost.example.org.");
+    }
+    {
+        SCOPED_TRACE("case CHG_ADD");
+        testNoUpdate(CHG_ADD, true, true, "myhost.example.org.");
+    }
+}
+
 /// @brief Test fixture class implementation for DHCPv4.
 class NCRGenerator4Test : public NCRGeneratorTest<Lease4Ptr> {
 public:
