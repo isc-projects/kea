@@ -1372,7 +1372,7 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
                 skipped = callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP;
             }
 
-            /// @todo: Maybe add support for DROP stauts?
+            /// @todo: Maybe add support for DROP status?
             /// Not sure if we need to support every possible status everywhere.
 
             if (!skipped) {
@@ -1589,7 +1589,7 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
                 skipped = callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP;
             }
 
-            /// @todo: Maybe add support for DROP stauts?
+            /// @todo: Maybe add support for DROP status?
             /// Not sure if we need to support every possible status everywhere.
 
             if (!skipped) {
