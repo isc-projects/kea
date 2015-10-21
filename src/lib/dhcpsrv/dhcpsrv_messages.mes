@@ -176,6 +176,14 @@ have been experienced.  Any such errors should have preceding entries in the
 log with details.  No further attempts to communicate with kea-dhcp-ddns will
 be made without intervention.
 
+% DHCPSRV_HOOK_LEASE4_RECOVER_SKIP DHCPv4 lease %1 was not recoverd from the declined state because a callout set the skip status.
+This debug message is printed when a callout installed on lease4_recover
+hook point set the next step status to SKIP. For this particular hook point, this
+indicates that the server should not recover the lease from declined state.
+The server will leave the lease as it is, in the declined state. The
+server will attempt to recover it the next time decline recovery procedure
+takes place.
+
 % DHCPSRV_HOOK_LEASE4_RENEW_SKIP DHCPv4 lease was not renewed because a callout set the skip flag.
 This debug message is printed when a callout installed on lease4_renew
 hook point set the skip flag. For this particular hook point, the setting
@@ -195,6 +203,14 @@ point, the setting of the flag by a callout instructs the server to not
 extend the lifetime for a lease. If the client requested renewal of multiple
 leases (by sending multiple IA options), the server will skip the renewal
 of the one in question and will proceed with other renewals as usual.
+
+% DHCPSRV_HOOK_LEASE6_RECOVER_SKIP DHCPv6 lease %1 was not recovered from declined state because a callout set the skip status.
+This debug message is printed when a callout installed on lease6_recover
+hook point set the next step status to SKIP. For this particular hook point, this
+indicates that the server should not recover the lease from declined state.
+The server will leave the lease as it is, in the declined state. The
+server will attempt to recover it the next time decline recovery procedure
+takes place.
 
 % DHCPSRV_HOOK_LEASE6_SELECT_SKIP Lease6 (non-temporary) creation was skipped, because of callout skip flag.
 This debug message is printed when a callout installed on lease6_select
