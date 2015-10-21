@@ -234,7 +234,7 @@ public:
     /// This variable is interrogated by the server to see if the remaining
     /// callouts associated with the current hook should be bypassed.
     ///
-    /// @param skip New value of the "skip" flag.
+    /// @param next New value of the next step status.
     void setStatus(const CalloutNextStep next) {
         next_step_ = next;
     }
