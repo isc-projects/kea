@@ -1088,6 +1088,8 @@ public:
     AllocEnginePtr engine_;
 };
 
+
+
 /// @brief Specialization of the @c ExpirationAllocEngineTest class to test
 /// reclamation of the IPv6 leases.
 class ExpirationAllocEngine6Test : public ExpirationAllocEngineTest<Lease6Ptr> {
@@ -1098,6 +1100,14 @@ public:
     /// This constructor initializes @c TEST_LEASES_NUM leases and
     /// stores them in the lease manager.
     ExpirationAllocEngine6Test();
+
+    /// @brief Virtual destructor.
+    ///
+    /// Clears up static fields that may be modified by hooks.
+    virtual ~ExpirationAllocEngine6Test() {
+        callout_lease_.reset();
+        callout_name_ = string("");
+    }
 
     /// @brief Creates collection of leases for a test.
     ///
@@ -1161,12 +1171,62 @@ public:
     /// @brief Test that statistics is updated when leases are reclaimed.
     void testReclaimExpiredLeasesStats();
 
+    /// @brief Callout for lease6_recover
+    ///
+    /// This callout stores passed parameter into static fields.
+    ///
+    /// @param callout_handle will be provided by hooks framework
+    /// @return always 0
+    static int lease6RecoverCallout(CalloutHandle& callout_handle) {
+        callout_name_ = "lease6_recover";
+
+        callout_handle.getArgument("lease6", callout_lease_);
+
+        return (0);
+    }
+
+    /// @brief Callout for lease6_recover that sets status to SKIP
+    ///
+    /// This callout stores passed parameter into static fields.
+    ///
+    /// @param callout_handle will be provided by hooks framework
+    /// @return always 0
+    static int lease6RecoverSkipCallout(CalloutHandle& callout_handle) {
+        // Set the next step status to SKIP
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+        return (lease6RecoverCallout(callout_handle));
+    }
+
+    /// @brief Test install a hook callout, recovers declined leases
+    ///
+    /// This test: declines, then expires half of the leases, then
+    /// installs a callout on lease6_recover hook, then reclaims
+    /// expired leases and checks that:
+    /// - the callout was indeed called
+    /// - the parameter (lease6) was indeed passed as expected
+    /// - checks that the leases are removed (skip=false) or
+    /// - checks that the leases are still there (skip=true)
+    /// @param skip should the callout set the next step status to skip?
+    void
+    testReclaimDeclinedHook(bool skip);
+
+    /// The following parameters will be written by a callout
+    static std::string callout_name_; ///< Stores callout name
+    static Lease6Ptr callout_lease_;  ///< Stores callout parameter
 };
+
+std::string ExpirationAllocEngine6Test::callout_name_;
+Lease6Ptr ExpirationAllocEngine6Test::callout_lease_;
 
 ExpirationAllocEngine6Test::ExpirationAllocEngine6Test()
     : ExpirationAllocEngineTest<Lease6Ptr>("type=memfile universe=6 persist=false") {
     createLeases();
     callout_argument_name = "lease6";
+
+    // Let's clear any garbage previous test may have left in static fields.
+    callout_name_ = string("");
+    callout_lease_.reset();
 }
 
 void
@@ -1280,6 +1340,44 @@ ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
     }
 }
 
+void
+ExpirationAllocEngine6Test::testReclaimDeclinedHook(bool skip) {
+    for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
+
+        // Mark leases with even indexes as expired.
+        if (evenLeaseIndex(i)) {
+
+            // Mark lease as declined with 100 seconds of probation-period
+            // (i.e. lease is supposed to be off limits for 100 seconds)
+            decline(i, 100);
+
+            // The higher the index, the more expired the lease.
+            expire(i, 10 + i);
+        }
+    }
+
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_recover",
+                        skip ? lease6RecoverSkipCallout : lease6RecoverCallout));
+
+    // Run leases reclamation routine on all leases.
+    ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, true));
+
+    // Make sure that the callout really was called. It was supposed to modify
+    // the callout_name_ and store the lease in callout_lease_
+    EXPECT_EQ("lease6_recover", callout_name_);
+    EXPECT_TRUE(callout_lease_);
+
+    // Leases with even indexes should not exist in the DB
+    if (skip) {
+        // Skip status should have prevented removing the lease.
+        EXPECT_TRUE(testLeases(&leaseExists, &evenLeaseIndex));
+    } else {
+        // The hook hasn't modified next step status. The lease should be gone.
+        EXPECT_TRUE(testLeases(&leaseDoesntExist, &evenLeaseIndex));
+    }
+};
+
 // This test verifies that the leases can be reclaimed without being removed
 // from the database. In such case, the leases' state is set to
 // "expired-reclaimed".
@@ -1383,6 +1481,19 @@ TEST_F(ExpirationAllocEngine6Test, reclaimDeclinedStats) {
     testReclaimDeclinedStats("assigned-nas");
 }
 
+// This test verifies if the hooks installed on lease6_recover are called
+// when the lease expires.
+TEST_F(ExpirationAllocEngine6Test, reclaimDeclinedHook1) {
+    testReclaimDeclinedHook(false); // false = don't use skip callout
+}
+
+// This test verifies if the hooks installed on lease6_recover are called
+// when the lease expires and that the next step status set to SKIP
+// causes the recovery to not be conducted.
+TEST_F(ExpirationAllocEngine6Test, reclaimDeclinedHook2) {
+    testReclaimDeclinedHook(true); // true = use skip callout
+}
+
 // *******************************************************
 //
 // DHCPv4 lease reclamation routine tests start here!
@@ -1399,6 +1510,14 @@ public:
     /// This constructor initializes @c TEST_LEASES_NUM leases and
     /// stores them in the lease manager.
     ExpirationAllocEngine4Test();
+
+    /// @brief Virtual destructor.
+    ///
+    /// Clears up static fields that may be modified by hooks.
+    virtual ~ExpirationAllocEngine4Test() {
+        callout_lease_.reset();
+        callout_name_ = string("");
+    }
 
     /// @brief Creates collection of leases for a test.
     ///
@@ -1472,7 +1591,54 @@ public:
     /// @brief Test that statistics is updated when leases are reclaimed..
     void testReclaimExpiredLeasesStats();
 
+    /// @brief Callout for lease4_recover
+    ///
+    /// This callout stores passed parameter into static fields.
+    ///
+    /// @param callout_handle will be provided by hooks framework
+    /// @return always 0
+    static int lease4RecoverCallout(CalloutHandle& callout_handle) {
+        callout_name_ = "lease4_recover";
+
+        callout_handle.getArgument("lease4", callout_lease_);
+
+        return (0);
+    }
+
+    /// @brief Callout for lease4_recover that sets status to SKIP
+    ///
+    /// This callout stores passed parameter into static fields.
+    ///
+    /// @param callout_handle will be provided by hooks framework
+    /// @return always 0
+    static int lease4RecoverSkipCallout(CalloutHandle& callout_handle) {
+        // Set the next step status to SKIP
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+        return (lease4RecoverCallout(callout_handle));
+    }
+
+    /// @brief Test install a hook callout, recovers declined leases
+    ///
+    /// This test: declines, then expires half of the leases, then
+    /// installs a callout on lease4_recover hook, then reclaims
+    /// expired leases and checks that:
+    /// - the callout was indeed called
+    /// - the parameter (lease4) was indeed passed as expected
+    /// - checks that the leases are removed (skip=false) or
+    /// - checks that the leases are still there (skip=true)
+    /// @param skip should the callout set the next step status to skip?
+    void
+    testReclaimDeclinedHook(bool skip);
+
+
+    /// The following parameters will be written by a callout
+    static std::string callout_name_; ///< Stores callout name
+    static Lease4Ptr callout_lease_;  ///< Stores callout parameter
 };
+
+std::string ExpirationAllocEngine4Test::callout_name_;
+Lease4Ptr ExpirationAllocEngine4Test::callout_lease_;
 
 ExpirationAllocEngine4Test::ExpirationAllocEngine4Test()
     : ExpirationAllocEngineTest<Lease4Ptr>("type=memfile universe=4 persist=false") {
@@ -1674,6 +1840,43 @@ ExpirationAllocEngine4Test::testReclaimExpiredLeasesStats() {
     }
 }
 
+void
+ExpirationAllocEngine4Test::testReclaimDeclinedHook(bool skip) {
+    for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
+
+        // Mark leases with even indexes as expired.
+        if (evenLeaseIndex(i)) {
+
+            // Mark lease as declined with 100 seconds of probation-period
+            // (i.e. lease is supposed to be off limits for 100 seconds)
+            decline(i, 100);
+
+            // The higher the index, the more expired the lease.
+            expire(i, 10 + i);
+        }
+    }
+
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_recover",
+                        skip ? lease4RecoverSkipCallout : lease4RecoverCallout));
+
+    // Run leases reclamation routine on all leases.
+    ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, true));
+
+    // Make sure that the callout really was called. It was supposed to modify
+    // the callout_name_ and store the lease in callout_lease_
+    EXPECT_EQ("lease4_recover", callout_name_);
+    EXPECT_TRUE(callout_lease_);
+
+    // Leases with even indexes should not exist in the DB
+    if (skip) {
+        // Skip status should have prevented removing the lease.
+        EXPECT_TRUE(testLeases(&leaseExists, &evenLeaseIndex));
+    } else {
+        // The hook hasn't modified next step status. The lease should be gone.
+        EXPECT_TRUE(testLeases(&leaseDoesntExist, &evenLeaseIndex));
+    }
+};
 
 // This test verifies that the leases can be reclaimed without being removed
 // from the database. In such case, the leases' state is set to
@@ -1782,6 +1985,19 @@ TEST_F(ExpirationAllocEngine4Test, reclaimDeclined2) {
 /// reclaim expired leases is called.
 TEST_F(ExpirationAllocEngine4Test, reclaimDeclinedStats) {
     testReclaimDeclinedStats("assigned-addresses");
+}
+
+// This test verifies if the hooks installed on lease6_recover are called
+// when the lease expires.
+TEST_F(ExpirationAllocEngine4Test, reclaimDeclinedHook1) {
+    testReclaimDeclinedHook(false); // false = don't use skip callout
+}
+
+// This test verifies if the hooks installed on lease6_recover are called
+// when the lease expires and that the next step status set to SKIP
+// causes the recovery to not be conducted.
+TEST_F(ExpirationAllocEngine4Test, reclaimDeclinedHook2) {
+    testReclaimDeclinedHook(true); // true = use skip callout
 }
 
 }; // end of anonymous namespace
