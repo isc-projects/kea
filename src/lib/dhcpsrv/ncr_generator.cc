@@ -101,7 +101,7 @@ void queueNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
 
 void queueNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
     // DUID is required to generate NCR.
-    if (lease && lease->duid_) {
+    if (lease && (lease->type_ != Lease::TYPE_PD) && lease->duid_) {
         queueNCRCommon(chg_type, lease, *(lease->duid_),
                        Pkt6::makeLabel(lease->duid_, lease->hwaddr_));
     }
