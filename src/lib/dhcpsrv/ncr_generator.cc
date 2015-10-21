@@ -34,12 +34,14 @@ namespace {
 /// @param identifier Identifier to be used to generate DHCID for
 /// the DNS update. For DHCPv4 it will be hardware address or client
 /// identifier. For DHCPv6 it will be a DUID.
+/// @param label Client identification information in the textual format.
+/// This is used for logging purposes.
 ///
 /// @tparam LeasePtrType Pointer to a lease.
 /// @tparam IdentifierType HW Address, Client Identifier or DUID.
 template<typename LeasePtrType, typename IdentifierType>
 void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
-                           const IdentifierType& identifier) {
+                    const IdentifierType& identifier, const std::string& label) {
 
     // Check if there is a need for update.
     if (!lease || lease->hostname_.empty() || (!lease->fqdn_fwd_ && !lease->fqdn_rev_)
@@ -61,6 +63,7 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
                                    lease->valid_lft_));
 
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA, DHCPSRV_QUEUE_NCR)
+            .arg(label)
             .arg(chg_type == CHG_ADD ? "add" : "remove")
             .arg(ncr->toText());
 
@@ -84,12 +87,14 @@ void queueNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
     if (lease) {
         // Client id takes precedence over HW address.
         if (lease->client_id_) {
-            queueNCRCommon(chg_type, lease, lease->client_id_->getClientId());
+            queueNCRCommon(chg_type, lease, lease->client_id_->getClientId(),
+                           Pkt4::makeLabel(lease->hwaddr_, lease->client_id_));
 
         } else {
             // Client id is not specified for the lease. Use HW address
             // instead.
-            queueNCRCommon(chg_type, lease, lease->hwaddr_);
+            queueNCRCommon(chg_type, lease, lease->hwaddr_,
+                           Pkt4::makeLabel(lease->hwaddr_, lease->client_id_));
         }
     }
 }
@@ -97,7 +102,8 @@ void queueNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
 void queueNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
     // DUID is required to generate NCR.
     if (lease && lease->duid_) {
-        queueNCRCommon(chg_type, lease, *(lease->duid_));
+        queueNCRCommon(chg_type, lease, *(lease->duid_),
+                       Pkt6::makeLabel(lease->duid_, lease->hwaddr_));
     }
 }
 
