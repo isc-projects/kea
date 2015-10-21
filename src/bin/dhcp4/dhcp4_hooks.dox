@@ -280,7 +280,8 @@ packet processing. Hook points that are not specific to packet processing
   - name: @b lease4, type: isc::dhcp::Lease4Ptr, direction: <b>in</b>
 
 - @b Description: this callout is executed for each declined lease that
-  has expired and is being recovered. The lease has already been stripped
+  has expired (was put aside for the duration of decline-probation-period)
+  and is being recovered. The lease has already been stripped
   from any client identifying information when it was put into declined
   state. In principle the callouts can modify the lease in this hook,
   but it makes little sense. There's no useful data in the lease, except
