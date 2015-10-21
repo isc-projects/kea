@@ -40,6 +40,9 @@ void queueNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease4Ptr& lease)
 /// in the DHCPv6 lease. The DUID is used to compute the DHCID for the name
 /// change request.
 ///
+/// This function will skip sending the NCR if the lease type is a delegated
+/// prefix.
+///
 /// This function is exception safe. On failure, it logs an error.
 ///
 /// @param chg_type Type of the name change request
