@@ -1438,27 +1438,6 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         // but this is considered waste of bandwidth as absence of status
         // code is considered a success.
 
-        if (!fake_allocation) {
-            Lease6Ptr old_lease;
-            if (!ctx.changed_leases_.empty()) {
-                old_lease = *ctx.changed_leases_.begin();
-
-                // Allocation engine has returned an existing lease. If so, we
-                // have to check that the FQDN settings we provided are the same
-                // that were set. If they aren't, we will have to remove existing
-                // DNS records and update the lease with the new settings.
-//                conditionalNCRRemoval(query, old_lease, lease, ctx.hostname_,
- //                                     do_fwd, do_rev);
-            }
-
-            // We need to repeat that check for leases that used to be used, but
-            // are no longer valid.
-/*            if (!ctx.old_leases_.empty()) {
-                old_lease = *ctx.old_leases_.begin();
-                conditionalNCRRemoval(query, old_lease, lease, ctx.hostname_,
-                                      do_fwd, do_rev);
-            } */
-        }
     } else {
         // Allocation engine did not allocate a lease. The engine logged
         // cause of that failure. The only thing left is to insert
@@ -1475,23 +1454,6 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                                            " allocated."));
     }
     return (ia_rsp);
-}
-
-void
-Dhcpv6Srv::conditionalNCRRemoval(const Pkt6Ptr& query, Lease6Ptr& old_lease,
-                                 Lease6Ptr& new_lease, const std::string& hostname,
-                                 bool do_fwd, bool do_rev) {
-    if (old_lease && !new_lease->hasIdenticalFqdn(*old_lease)) {
-        LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_LEASE_ASSIGN_FQDN_CHANGE)
-            .arg(query->getLabel())
-            .arg(old_lease->toText())
-            .arg(hostname)
-            .arg(do_rev ? "true" : "false")
-            .arg(do_fwd ? "true" : "false");
-
-        // Schedule removal of the existing lease.
-        queueNCR(CHG_REMOVE, old_lease);
-    }
 }
 
 OptionPtr
