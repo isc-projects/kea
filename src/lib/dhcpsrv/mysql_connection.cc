@@ -50,7 +50,6 @@ const my_bool MLM_TRUE = 1;                 ///< True value
 
 void
 MySqlConnection::openDatabase() {
-
     // Set up the values of the parameters
     const char* host = "localhost";
     string shost;
@@ -89,6 +88,31 @@ MySqlConnection::openDatabase() {
         isc_throw(NoDatabaseName, "must specified a name for the database");
     }
 
+    setupConnectionOptions();
+    setupSSL();
+    MYSQL* status;
+    status = realConnect(host, user, password, name);
+    if (status != mysql_) {
+        isc_throw(DbOpenError, mysql_error(mysql_));
+    }
+}
+
+MYSQL* MySqlConnection::realConnect(const char* host, const char* user,
+        const char* password, const char* name) {
+    // Open the database.
+    //
+    // The option CLIENT_FOUND_ROWS is specified so that in an UPDATE,
+    // the affected rows are the number of rows found that match the
+    // WHERE clause of the SQL statement, not the rows changed.  The reason
+    // here is that MySQL apparently does not update a row if data has not
+    // changed and so the "affected rows" (retrievable from MySQL) is zero.
+    // This makes it hard to distinguish whether the UPDATE changed no rows
+    // because no row matching the WHERE clause was found, or because a
+    // row was found but no data was altered.
+    return mysql_real_connect(mysql_, host, user, password, name,
+                                           0, NULL, CLIENT_FOUND_ROWS);
+}
+void MySqlConnection::setupConnectionOptions() {
     // Set options for the connection:
     //
     // Automatic reconnection: after a period of inactivity, the client will
@@ -111,24 +135,43 @@ MySqlConnection::openDatabase() {
         isc_throw(DbOpenError, "unable to set SQL mode options: " <<
                   mysql_error(mysql_));
     }
-
-    // Open the database.
-    //
-    // The option CLIENT_FOUND_ROWS is specified so that in an UPDATE,
-    // the affected rows are the number of rows found that match the
-    // WHERE clause of the SQL statement, not the rows changed.  The reason
-    // here is that MySQL apparently does not update a row if data has not
-    // changed and so the "affected rows" (retrievable from MySQL) is zero.
-    // This makes it hard to distinguish whether the UPDATE changed no rows
-    // because no row matching the WHERE clause was found, or because a
-    // row was found but no data was altered.
-    MYSQL* status = mysql_real_connect(mysql_, host, user, password, name,
-                                       0, NULL, CLIENT_FOUND_ROWS);
-    if (status != mysql_) {
-        isc_throw(DbOpenError, mysql_error(mysql_));
-    }
 }
 
+void
+MySqlConnection::setupSSL() {
+    const char* ssl_key = NULL;
+    const char* ssl_cert = NULL;
+    const char* ssl_ca = NULL;
+    const char* ssl_capath = NULL;
+    const char* ssl_cipher = NULL;
+
+    try {
+        ssl_key = getParameter("ssl_key").c_str();
+    } catch (...) {
+        // This SSL option might not be set.
+    }
+    try {
+        ssl_cert = getParameter("ssl_cert").c_str();
+    } catch (...) {
+        // This SSL option might not be set.
+    }
+    try {
+        ssl_ca = getParameter("ssl_ca").c_str();
+    } catch (...) {
+        // This SSL option might not be set.
+    }
+    try {
+        ssl_capath = getParameter("ssl_capath").c_str();
+    } catch (...) {
+        // This SSL option might not be set.
+    }
+    try {
+        ssl_cipher = getParameter("ssl_cipher").c_str();
+    } catch (...) {
+        // This SSL option might not be set.
+    }
+    mysql_ssl_set(mysql_,ssl_key,ssl_cert,ssl_ca,ssl_capath,ssl_cipher);
+}
 
 // Prepared statement setup.  The textual form of an SQL statement is stored
 // in a vector of strings (text_statements_) and is used in the output of

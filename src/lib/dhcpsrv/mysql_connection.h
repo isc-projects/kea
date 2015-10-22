@@ -102,21 +102,22 @@ public:
     /// Initialize MySql and store the associated context object.
     ///
     /// @throw DbOpenError Unable to initialize MySql handle.
-    MySqlHolder() : mysql_(mysql_init(NULL)) {
-        if (mysql_ == NULL) {
-            isc_throw(DbOpenError, "unable to initialize MySQL");
-        }
+    MySqlHolder() {
+        setup();
     }
 
     /// @brief Destructor
     ///
     /// Frees up resources allocated by the initialization of MySql.
     ~MySqlHolder() {
-        if (mysql_ != NULL) {
-            mysql_close(mysql_);
-        }
+        clean();
         // The library itself shouldn't be needed anymore
         mysql_library_end();
+    }
+
+    void reset() {
+        clean();
+        setup();
     }
 
     /// @brief Conversion Operator
@@ -128,6 +129,18 @@ public:
     }
 
 private:
+    void clean() {
+        if (mysql_ != NULL) {
+            mysql_close(mysql_);
+        }
+    }
+    void setup() {
+        mysql_ = mysql_init(NULL);
+        if (mysql_ == NULL) {
+            isc_throw(DbOpenError, "unable to initialize MySQL");
+        }
+    }
+
     MYSQL* mysql_;      ///< Initialization context
 };
 
@@ -206,6 +219,20 @@ public:
     /// This field is public, because it is used heavily from MySqlConnection
     /// and will be from MySqlHostDataSource.
     MySqlHolder mysql_;
+
+    private:
+    /// @brief opens the actual connection using the a mysql function.
+    MYSQL* realConnect(const char* host, const char* user,
+            const char* password, const char* name);
+
+    /// @brief Setup options on the MySQL connection.
+    void setupConnectionOptions();
+
+    /// @brief Setup SSL for the database connection
+    ///
+    /// When sufficient options are given in the objects parameterMap,
+    /// the connection is setup with SSL.
+    void setupSSL();
 };
 
 
