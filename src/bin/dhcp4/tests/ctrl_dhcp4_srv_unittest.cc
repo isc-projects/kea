@@ -344,33 +344,101 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelShutdown) {
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutting down.\" }",response);
 }
 
-// Thist test verifies that the DHCP server immediately reclaims expired
+// This test verifies that the DHCP server immediately reclaims expired
 // leases on leases-reclaim command
 TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaim) {
     createUnixChannelServer();
 
-    // Create an expired lease. The lease is expired by 40 seconds ago
+    // Create expired leases. Leases are expired by 40 seconds ago
     // (valid lifetime = 60, cltt = now - 100).
-    HWAddrPtr hwaddr_expired(new HWAddr(HWAddr::fromText("00:01:02:03:04:05")));
-    Lease4Ptr lease_expired(new Lease4(IOAddress("10.0.0.1"), hwaddr_expired,
-                                       ClientIdPtr(), 60, 10, 20,
-                                       time(NULL) - 100, SubnetID(1)));
+    HWAddrPtr hwaddr0(new HWAddr(HWAddr::fromText("00:01:02:03:04:05")));
+    Lease4Ptr lease0(new Lease4(IOAddress("10.0.0.1"), hwaddr0,
+                                ClientIdPtr(), 60, 10, 20,
+                                time(NULL) - 100, SubnetID(1)));
+    HWAddrPtr hwaddr1(new HWAddr(HWAddr::fromText("01:02:03:04:05:06")));
+    Lease4Ptr lease1(new Lease4(IOAddress("10.0.0.2"), hwaddr1,
+                                ClientIdPtr(), 60, 10, 20,
+                                time(NULL) - 100, SubnetID(1)));
 
-    // Add lease to the database.
+    // Add leases to the database.
     LeaseMgr& lease_mgr = LeaseMgrFactory().instance();
-    ASSERT_NO_THROW(lease_mgr.addLease(lease_expired));
+    ASSERT_NO_THROW(lease_mgr.addLease(lease0));
+    ASSERT_NO_THROW(lease_mgr.addLease(lease1));
 
-    // Make sure it has been added.
+    // Make sure they have been added.
     ASSERT_TRUE(lease_mgr.getLease4(IOAddress("10.0.0.1")));
+    ASSERT_TRUE(lease_mgr.getLease4(IOAddress("10.0.0.2")));
 
-    // Send the command.
+    // No arguments
     std::string response;
     sendUnixCommand("{ \"command\": \"leases-reclaim\" }", response);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Leases successfully reclaimed.\" }", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": "
+              "\"Missing mandatory 'remove' parameter.\" }", response);
 
-    // Verify that the lease in the database has been processed as expected.
-    ASSERT_NO_THROW(lease_expired = lease_mgr.getLease4(IOAddress("10.0.0.1")));
-    EXPECT_FALSE(lease_expired);
+    // Bad argument name
+    sendUnixCommand("{ \"command\": \"leases-reclaim\", "
+                    "\"arguments\": { \"reclaim\": true } }", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": "
+              "\"Missing mandatory 'remove' parameter.\" }", response);
+
+    // Bad remove argument type
+    sendUnixCommand("{ \"command\": \"leases-reclaim\", "
+                    "\"arguments\": { \"remove\": \"bogus\" } }", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": "
+              "\"'remove' parameter expected to be a boolean.\" }", response);
+
+    // Send the command
+    sendUnixCommand("{ \"command\": \"leases-reclaim\", "
+                    "\"arguments\": { \"remove\": false } }", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": "
+              "\"Reclamation of expired leases is complete.\" }", response);
+
+    // Leases should be reclaimed, but not removed
+    ASSERT_NO_THROW(lease0 = lease_mgr.getLease4(IOAddress("10.0.0.1")));
+    ASSERT_NO_THROW(lease1 = lease_mgr.getLease4(IOAddress("10.0.0.2")));
+    ASSERT_TRUE(lease0);
+    ASSERT_TRUE(lease1);
+    EXPECT_TRUE(lease0->stateExpiredReclaimed());
+    EXPECT_TRUE(lease1->stateExpiredReclaimed());
+}
+
+// Thist test verifies that the DHCP server immediately removed expired
+// leases on leases-reclaim command with remove = true
+TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaimRemove) {
+    createUnixChannelServer();
+
+    // Create expired leases. Leases are expired by 40 seconds ago
+    // (valid lifetime = 60, cltt = now - 100).
+    HWAddrPtr hwaddr0(new HWAddr(HWAddr::fromText("00:01:02:03:04:05")));
+    Lease4Ptr lease0(new Lease4(IOAddress("10.0.0.1"), hwaddr0,
+                                ClientIdPtr(), 60, 10, 20,
+                                time(NULL) - 100, SubnetID(1)));
+    HWAddrPtr hwaddr1(new HWAddr(HWAddr::fromText("01:02:03:04:05:06")));
+    Lease4Ptr lease1(new Lease4(IOAddress("10.0.0.2"), hwaddr1,
+                                ClientIdPtr(), 60, 10, 20,
+                                time(NULL) - 100, SubnetID(1)));
+
+    // Add leases to the database.
+    LeaseMgr& lease_mgr = LeaseMgrFactory().instance();
+    ASSERT_NO_THROW(lease_mgr.addLease(lease0));
+    ASSERT_NO_THROW(lease_mgr.addLease(lease1));
+
+    // Make sure they have been added.
+    ASSERT_TRUE(lease_mgr.getLease4(IOAddress("10.0.0.1")));
+    ASSERT_TRUE(lease_mgr.getLease4(IOAddress("10.0.0.2")));
+
+    // Send the command
+    std::string response;
+    sendUnixCommand("{ \"command\": \"leases-reclaim\", "
+                    "\"arguments\": { \"remove\": true } }", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": "
+              "\"Reclamation of expired leases is complete.\" }", response);
+
+    // Leases should have been removed.
+    ASSERT_NO_THROW(lease0 = lease_mgr.getLease4(IOAddress("10.0.0.1")));
+    ASSERT_NO_THROW(lease1 = lease_mgr.getLease4(IOAddress("10.0.0.2")));
+    EXPECT_FALSE(lease0);
+    EXPECT_FALSE(lease1);
 }
 
 // Tests that the server properly responds to statistics commands.  Note this

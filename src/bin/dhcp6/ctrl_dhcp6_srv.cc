@@ -70,12 +70,28 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&, ConstElementPtr a
 }
 
 ConstElementPtr
-ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&, ConstElementPtr) {
+ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string& command,
+                                                 ConstElementPtr args) {
+    int status_code = 1;
+    string message;
 
-
-    server_->alloc_engine_->reclaimExpiredLeases6(0, 0, true);
-    ConstElementPtr answer = isc::config::createAnswer(0,
-                             "Leases successfully reclaimed.");
+    // args must be { "remove": <bool> }
+    if (!args) {
+        message = "Missing mandatory 'remove' parameter.";
+    } else {
+        ConstElementPtr remove_name = args->get("remove");
+        if (!remove_name) {
+            message = "Missing mandatory 'remove' parameter.";
+        } else if (remove_name->getType() != Element::boolean) {
+            message = "'remove' parameter expected to be a boolean.";
+        } else {
+            bool remove_lease = remove_name->boolValue();
+            server_->alloc_engine_->reclaimExpiredLeases6(0, 0, remove_lease);
+            status_code = 0;
+            message = "Reclamation of expired leases is complete.";
+        }
+    }
+    ConstElementPtr answer = isc::config::createAnswer(status_code, message);
     return (answer);
 }
 
