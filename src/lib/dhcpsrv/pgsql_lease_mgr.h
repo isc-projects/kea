@@ -591,8 +591,19 @@ private:
 
     /// @brief Checks result of the r object
     ///
-    /// Checks status of the operation passed as first argument and throws
-    /// DbOperationError with details if it is non-success.
+    /// This function is used to determine whether or not the SQL statement
+    /// execution succeeded, and in the event of failures, decide whether or
+    /// not the failures are recoverable.
+    ///
+    /// If the error is recoverable, the method will throw a DbOperationError.
+    /// In the error is deemed unrecoverable, such as a loss of connectivity
+    /// with the server, this method will log the error and call exit(-1);
+    ///
+    /// @todo Calling exit() is viewed as a short term solution for Kea 1.0.
+    /// Two tickets are likely to alter this behavior, first is #3639, which
+    /// calls for the ability to attempt to reconnect to the database. The
+    /// second ticket, #4087 which calls for the implementation of a generic,
+    /// FatalException class which will propagate outward.
     ///
     /// @param r result of the last PostgreSQL operation
     /// @param index will be used to print out compiled statement name
