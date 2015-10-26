@@ -1,7 +1,7 @@
 1037.	[func]		fdupont
 	Added a new 'leases-reclaim' command which reclaims expired leases
 	immediately.
-	(Trac #3978, git xxx)
+	(Trac #3978, git 9d5716e5bd6b151d90591f8497bae689321875c2)
 
 1036.	[func]		tmark
 	kea-admin now supports upgrading from Postgres schema version
