@@ -336,4 +336,12 @@
 
   </section>
 
+  <section id="leases-reclamation-using-command">
+    <title>Reclaiming Expired Leases with Command</title>
+    <para>The <emphasis>leases-reclaim</emphasis> command can be used to trigger
+    leases reclamation at any time. Please consult the
+    <xref linkend="command-leases-reclaim"/> for the details about using this
+    command.</para>
+  </section>
+
 </chapter>
