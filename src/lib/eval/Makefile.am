@@ -18,9 +18,18 @@ libkea_eval_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 EXTRA_DIST  = eval.dox
 
 # Define rule to build logging source files from message file
-expr_messages.h expr_messages.cc: s-messages
+eval_messages.h eval_messages.cc: s-messages
 
-s-messages: expr_messages.mes
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/expr/expr_messages.mes
+s-messages: eval_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/eval/eval_messages.mes
+
+# Tell Automake that the eval_messages.{cc,h} source files are created in the
+# build process, so it must create these before doing anything else. Although
+# they are a dependency of the library (so will be created from the
+# message file anyway), there is no guarantee as to exactly _when_ in the build
+# they will be created.  As the .h file is included in other sources file (so
+# must be present when they are compiled), the safest option is to create it
+# first.
+BUILT_SOURCES = eval_messages.h eval_messages.cc
 
 CLEANFILES = expr_messages.h expr_messages.cc
