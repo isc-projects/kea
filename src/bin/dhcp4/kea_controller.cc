@@ -69,11 +69,11 @@ void configure(const std::string& file_name) {
         // works only for map.
         if (json->getType() != isc::data::Element::map) {
             isc_throw(isc::BadValue, "Configuration file is expected to be "
-		      "a map, i.e., start with { and end with } and contain "
-		      "at least an entry called 'Dhcp4' that itself is a map. "
-		      << file_name
+                      "a map, i.e., start with { and end with } and contain "
+                      "at least an entry called 'Dhcp4' that itself is a map. "
+                      << file_name
                       << " is a valid JSON, but its top element is not a map."
-		      " Did you forget to add { } around your configuration?");
+                      " Did you forget to add { } around your configuration?");
         }
 
         // If there's no logging element, we'll just pass NULL pointer,

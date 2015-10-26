@@ -69,6 +69,32 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&, ConstElementPtr a
     return (processConfig(args));
 }
 
+ConstElementPtr
+ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string& command,
+                                                 ConstElementPtr args) {
+    int status_code = 1;
+    string message;
+
+    // args must be { "remove": <bool> }
+    if (!args) {
+        message = "Missing mandatory 'remove' parameter.";
+    } else {
+        ConstElementPtr remove_name = args->get("remove");
+        if (!remove_name) {
+            message = "Missing mandatory 'remove' parameter.";
+        } else if (remove_name->getType() != Element::boolean) {
+            message = "'remove' parameter expected to be a boolean.";
+        } else {
+            bool remove_lease = remove_name->boolValue();
+            server_->alloc_engine_->reclaimExpiredLeases6(0, 0, remove_lease);
+            status_code = 0;
+            message = "Reclamation of expired leases is complete.";
+        }
+    }
+    ConstElementPtr answer = isc::config::createAnswer(status_code, message);
+    return (answer);
+}
+
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processCommand(const std::string& command,
                                     isc::data::ConstElementPtr args) {
@@ -93,6 +119,9 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
 
         } else if (command == "config-reload") {
             return (srv->commandConfigReloadHandler(command, args));
+
+        } else if (command == "leases-reclaim") {
+            return (srv->commandLeasesReclaimHandler(command, args));
         }
 
         return (isc::config::createAnswer(1, "Unrecognized command:"
@@ -208,6 +237,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
     /// @todo: register config-reload (see CtrlDhcpv4Srv::commandConfigReloadHandler)
     /// @todo: register libreload (see CtrlDhcpv4Srv::commandLibReloadHandler)
 
+    CommandMgr::instance().registerCommand("leases-reclaim",
+        boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
+
     // Register statistic related commands
     CommandMgr::instance().registerCommand("statistic-get",
         boost::bind(&StatsMgr::statisticGetHandler, _1, _2));
@@ -247,6 +279,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
 
         // Deregister any registered commands
         CommandMgr::instance().deregisterCommand("shutdown");
+        CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-reset");
         CommandMgr::instance().deregisterCommand("statistic-remove");

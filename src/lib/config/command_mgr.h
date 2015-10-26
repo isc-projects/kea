@@ -65,7 +65,7 @@ public:
 ///     }
 /// }
 ///
-/// CommandsMgr does not implement the commands (except one, "commands-list")
+/// CommandsMgr does not implement the commands (except one, "list-commands")
 /// itself, but rather provides an interface (see @ref registerCommand,
 /// @ref deregisterCommand, @ref processCommand) for other components to use
 /// it. The @ref CommandHandler type is specified in a way to easily use
