@@ -72,7 +72,7 @@ ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
 }
 
 ConstElementPtr
-ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string& command,
+ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
                                                  ConstElementPtr args) {
     int status_code = 1;
     string message;
