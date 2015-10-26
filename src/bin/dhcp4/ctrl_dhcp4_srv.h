@@ -70,6 +70,7 @@ public:
     /// - shutdown
     /// - libreload
     /// - config-reload
+    /// - leases-reclaim
     ///
     /// @note It never throws.
     ///
@@ -150,6 +151,23 @@ private:
     commandConfigReloadHandler(const std::string& command,
                                isc::data::ConstElementPtr args);
 
+
+    /// @brief Handler for processing 'leases-reclaim' command
+    ///
+    /// This handler processes leases-reclaim command, which triggers
+    /// the leases reclamation immediately.
+    /// No limit for processing time or number of processed leases applies.
+    ///
+    /// @param command (parameter ignored)
+    /// @param args arguments map { "remove": <bool> }
+    ///        if true a lease is removed when it is reclaimed,
+    ///        if false its state is changed to "expired-reclaimed".
+    ///
+    /// @return status of the command (should be success unless args
+    ///         was not a Bool Element).
+    isc::data::ConstElementPtr
+    commandLeasesReclaimHandler(const std::string& command,
+                                isc::data::ConstElementPtr args);
 
     /// @brief Reclaims expired IPv4 leases and reschedules timer.
     ///
