@@ -3,3 +3,4 @@
 
 ../../../../doc/examples/kea4/single-subnet.json
 ../../../../doc/examples/kea4/several-subnets.json
+../../../../doc/examples/kea4/leases-expiration.json
