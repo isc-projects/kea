@@ -1477,7 +1477,7 @@ TEST_F(Pkt6Test, makeLabel) {
 // Tests that the variant of makeLabel which doesn't include transaction
 // id produces expected output.
 TEST_F(Pkt6Test, makeLabelWithoutTransactionId) {
-   DuidPtr duid(new DUID(DUID::fromText("0102020202030303030303")));
+    DuidPtr duid(new DUID(DUID::fromText("0102020202030303030303")));
     HWAddrPtr hwaddr(new HWAddr(HWAddr::fromText("01:02:03:04:05:06",
                                                  HTYPE_ETHER)));
 

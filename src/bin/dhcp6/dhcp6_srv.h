@@ -525,10 +525,10 @@ protected:
     /// The @c isc::dhcp_ddns::NameChangeRequest class encapsulates the request
     /// from the DHCPv6 server to the DHCP-DDNS module to perform DNS Update.
     /// The FQDN option carries response to the client about DNS updates that
-    /// server intents to perform for the DNS client. Based on this, the
+    /// server intends to perform for the DNS client. Based on this, the
     /// function will create zero or more @c isc::dhcp_ddns::NameChangeRequest
     /// objects and store them in the internal queue. Requests created by this
-    /// function are only adding or updating DNS records. If DNS updates are
+    /// function are only for adding or updating DNS records. If DNS updates are
     /// disabled, this method returns immediately.
     ///
     /// @todo Add support for multiple IAADDR options in the IA_NA.
