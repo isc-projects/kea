@@ -110,6 +110,12 @@ public:
     ///
     /// @return Option information in the textual format.
     virtual std::string toText(int indent = 0);
+
+    /// @brief Returns actual value of the option in string format.
+    ///
+    /// This method is used in client classification.
+    /// @return Content of the option.
+    virtual std::string toString();
 };
 
 /// Pointer to the OptionString object.
