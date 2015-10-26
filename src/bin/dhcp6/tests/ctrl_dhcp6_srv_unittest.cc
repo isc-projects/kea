@@ -14,11 +14,15 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 #include <testutils/unix_control_client.h>
 
 #include "marker_file.h"
@@ -32,11 +36,13 @@
 #include <cstdlib>
 
 using namespace std;
+using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
+using namespace isc::stats;
 
 namespace {
 
@@ -59,6 +65,8 @@ public:
     }
 
     virtual ~CtrlDhcpv6SrvTest() {
+        LeaseMgrFactory::destroy();
+        StatsMgr::instance().removeAll();
         reset();
     };
 
@@ -117,6 +125,11 @@ public:
             "{"
             "    \"interfaces-config\": {"
             "        \"interfaces\": [ \"*\" ]"
+            "    },"
+            "    \"expired-leases-processing\": {"
+            "         \"reclaim-timer-wait-time\": 60,"
+            "         \"hold-reclaimed-time\": 500,"
+            "         \"flush-reclaimed-timer-wait-time\": 60"
             "    },"
             "    \"rebind-timer\": 2000, "
             "    \"renew-timer\": 1000, "
@@ -404,6 +417,111 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelShutdown) {
 
     sendUnixCommand("{ \"command\": \"shutdown\" }", response);
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutting down.\" }",response);
+}
+
+// This test verifies that the DHCP server immediately reclaims expired
+// leases on leases-reclaim command
+TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaim) {
+    createUnixChannelServer();
+
+    // Create expired leases. Leases are expired by 40 seconds ago
+    // (valid lifetime = 60, cltt = now - 100).
+    DuidPtr duid0(new DUID(DUID::fromText("00:01:02:03:04:05:06").getDuid()));
+    Lease6Ptr lease0(new Lease6(Lease::TYPE_NA, IOAddress("3000::1"),
+                                duid0, 1, 50, 60, 10, 20, SubnetID(1)));
+    lease0->cltt_ = time(NULL) - 100;
+    DuidPtr duid1(new DUID(DUID::fromText("01:02:03:04:05:06:07").getDuid()));
+    Lease6Ptr lease1(new Lease6(Lease::TYPE_NA, IOAddress("3000::2"),
+                                duid1, 1, 50, 60, 10, 20, SubnetID(1)));
+    lease1->cltt_ = time(NULL) - 100;
+
+    // Add leases to the database.
+    LeaseMgr& lease_mgr = LeaseMgrFactory().instance();
+    ASSERT_NO_THROW(lease_mgr.addLease(lease0));
+    ASSERT_NO_THROW(lease_mgr.addLease(lease1));
+
+    // Make sure they have been added.
+    ASSERT_TRUE(lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::1")));
+    ASSERT_TRUE(lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::2")));
+
+    // No arguments
+    std::string response;
+    sendUnixCommand("{ \"command\": \"leases-reclaim\" }", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": "
+              "\"Missing mandatory 'remove' parameter.\" }", response);
+
+    // Bad argument name
+    sendUnixCommand("{ \"command\": \"leases-reclaim\", "
+                    "\"arguments\": { \"reclaim\": true } }", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": "
+              "\"Missing mandatory 'remove' parameter.\" }", response);
+
+    // Bad remove argument type
+    sendUnixCommand("{ \"command\": \"leases-reclaim\", "
+                    "\"arguments\": { \"remove\": \"bogus\" } }", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": "
+              "\"'remove' parameter expected to be a boolean.\" }", response);
+
+    // Send the command
+    sendUnixCommand("{ \"command\": \"leases-reclaim\", "
+                    "\"arguments\": { \"remove\": false } }", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": "
+              "\"Reclamation of expired leases is complete.\" }", response);
+
+    // Leases should be reclaimed, but not removed
+    ASSERT_NO_THROW(
+        lease0 = lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::1"))
+    );
+    ASSERT_NO_THROW(
+        lease1 = lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::2"))
+    );
+    ASSERT_TRUE(lease0);
+    ASSERT_TRUE(lease1);
+    EXPECT_TRUE(lease0->stateExpiredReclaimed());
+    EXPECT_TRUE(lease1->stateExpiredReclaimed());
+}
+
+// This test verifies that the DHCP server immediately reclaims expired
+// leases on leases-reclaim command with remove = true
+TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaimRemove) {
+    createUnixChannelServer();
+
+    // Create expired leases. Leases are expired by 40 seconds ago
+    // (valid lifetime = 60, cltt = now - 100).
+    DuidPtr duid0(new DUID(DUID::fromText("00:01:02:03:04:05:06").getDuid()));
+    Lease6Ptr lease0(new Lease6(Lease::TYPE_NA, IOAddress("3000::1"),
+                                duid0, 1, 50, 60, 10, 20, SubnetID(1)));
+    lease0->cltt_ = time(NULL) - 100;
+    DuidPtr duid1(new DUID(DUID::fromText("01:02:03:04:05:06:07").getDuid()));
+    Lease6Ptr lease1(new Lease6(Lease::TYPE_NA, IOAddress("3000::2"),
+                                duid1, 1, 50, 60, 10, 20, SubnetID(1)));
+    lease1->cltt_ = time(NULL) - 100;
+
+    // Add leases to the database.
+    LeaseMgr& lease_mgr = LeaseMgrFactory().instance();
+    ASSERT_NO_THROW(lease_mgr.addLease(lease0));
+    ASSERT_NO_THROW(lease_mgr.addLease(lease1));
+
+    // Make sure they have been added.
+    ASSERT_TRUE(lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::1")));
+    ASSERT_TRUE(lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::2")));
+
+    // Send the command
+    std::string response;
+    sendUnixCommand("{ \"command\": \"leases-reclaim\", "
+                    "\"arguments\": { \"remove\": true } }", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": "
+              "\"Reclamation of expired leases is complete.\" }", response);
+
+    // Leases should have been removed.
+    ASSERT_NO_THROW(
+        lease0 = lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::1"))
+    );
+    ASSERT_NO_THROW(
+        lease1 = lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::2"))
+    );
+    ASSERT_FALSE(lease0);
+    ASSERT_FALSE(lease1);
 }
 
 // Tests that the server properly responds to statistics commands.  Note this
