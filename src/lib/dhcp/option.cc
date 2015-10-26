@@ -214,6 +214,13 @@ std::string Option::toText(int indent) {
 }
 
 std::string
+Option::toString() {
+    /// @todo: Implement actual conversion in derived classes.
+    return (toText(0));
+}
+
+
+std::string
 Option::headerToText(const int indent, const std::string& type_name) {
     std::stringstream output;
     for (int i = 0; i < indent; i++)
