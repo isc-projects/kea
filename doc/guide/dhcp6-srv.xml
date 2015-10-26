@@ -3115,14 +3115,6 @@ should include options from the isc option space:
             not yet supported.
           </simpara>
         </listitem>
-
-        <listitem>
-          <simpara>
-            The server doesn't act upon expired leases. In particular,
-            when a lease expires, the server doesn't request removal of
-            the DNS records associated with it.
-          </simpara>
-        </listitem>
       </itemizedlist>
     </section>
 
