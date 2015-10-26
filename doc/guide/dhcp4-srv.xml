@@ -3115,14 +3115,6 @@ It is merely echoed by the server
           <listitem>
             <simpara>Address duplication report (DECLINE) is not supported yet.</simpara>
           </listitem>
-          <listitem>
-            <simpara>
-              The server doesn't act upon expired leases. In particular,
-              when a lease expires, the server doesn't request the removal
-              of the DNS records associated with it. Expired leases can be
-              recycled.
-            </simpara>
-          </listitem>
       </itemizedlist>
     </section>
 
