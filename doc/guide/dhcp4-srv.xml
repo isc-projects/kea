@@ -2968,11 +2968,10 @@ It is merely echoed by the server
               given subnet.  This statistic increases every time a new lease is
               allocated (as a result of receiving a DHCPREQUEST message) and is
               decreased every time a lease is released (a DHCPRELEASE message is
-              received). When lease expiration is implemented (planned for Kea
-              1.0), it will also decrease when a lease is expired. The
-              <emphasis>id</emphasis> is the subnet-id of a given subnet. This
-              statistic is exposed for each subnet separately. This statistic is
-              reset during reconfiguration event.</entry>
+              received) or expires. The <emphasis>id</emphasis> is the subnet-id
+              of a given subnet. This statistic is exposed for each subnet
+              separately. This statistic is reset during reconfiguration event.
+              </entry>
             </row>
         </tbody>
         </tgroup>
