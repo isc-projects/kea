@@ -738,8 +738,8 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
 
 }
 
-// Checks that NameChangeRequests to remove entries are not created
-// when ddns updates are disabled.
+// Checks that calling queueNCR would not result in error if DDNS updates are
+// disabled. 
 TEST_F(FqdnDhcpv6SrvTest, noRemovalsWhenDisabled) {
     // Disable DDNS updates.
     disableD2();
@@ -751,7 +751,10 @@ TEST_F(FqdnDhcpv6SrvTest, noRemovalsWhenDisabled) {
     // as if we typed domain-name in lower case.
     lease_->hostname_ = "MYHOST.example.com.";
 
-    // When DDNS is disabled an attempt to send a request will throw.
+    // When DDNS is disabled an attempt to send a request should not throw, but
+    // nothing is generated. Unfortunately, we can't see if anything get
+    // generated because getting anything from the queue when DDNS is disabled
+    // would result in exception.
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 }
 

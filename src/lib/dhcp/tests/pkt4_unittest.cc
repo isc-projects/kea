@@ -1035,10 +1035,14 @@ TEST_F(Pkt4Test, makeLabelWithoutTransactionId) {
     EXPECT_EQ("[hwtype=123 01:02:03:04:05:06], cid=[no info]",
               Pkt4::makeLabel(hwaddr, ClientIdPtr()));
 
-    // Test non-null client identifier.
+    // Test non-null client identifier and non-null hardware address.
     ClientIdPtr cid = ClientId::fromText("01:02:03:04");
     EXPECT_EQ("[hwtype=123 01:02:03:04:05:06], cid=[01:02:03:04]",
               Pkt4::makeLabel(hwaddr, cid));
+
+    // Test non-nnull client identifier and null hardware address.
+    EXPECT_EQ("[no hwaddr info], cid=[01:02:03:04]",
+              Pkt4::makeLabel(HWAddrPtr(), cid));
 }
 
 // Tests that the correct DHCPv4 message name is returned for various

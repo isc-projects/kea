@@ -489,63 +489,6 @@ public:
     }
 };
 
-// Test that the exception is thrown if lease pointer specified as the argument
-// of computeDhcid function is NULL.
-TEST_F(NameDhcpv4SrvTest, dhcidNullLease) {
-    Lease4Ptr lease;
-    EXPECT_THROW(srv_->computeDhcid(lease), isc::dhcp::DhcidComputeError);
-
-}
-
-// Test that the appropriate exception is thrown if the lease object used
-// to compute DHCID comprises wrong hostname.
-TEST_F(NameDhcpv4SrvTest, dhcidWrongHostname) {
-    // First, make sure that the lease with the correct hostname is accepted.
-    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"),
-                                  "myhost.example.com.", true, true);
-    ASSERT_NO_THROW(srv_->computeDhcid(lease));
-
-    // Now, use the wrong hostname. It should result in the exception.
-    lease->hostname_ = "myhost...example.com.";
-    EXPECT_THROW(srv_->computeDhcid(lease), isc::dhcp::DhcidComputeError);
-
-    // Also, empty hostname is wrong.
-    lease->hostname_ = "";
-    EXPECT_THROW(srv_->computeDhcid(lease), isc::dhcp::DhcidComputeError);
-}
-
-// Test that the DHCID is computed correctly, when the lease holds
-// correct hostname and non-NULL client id.
-TEST_F(NameDhcpv4SrvTest, dhcidComputeFromClientId) {
-    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"),
-                                  "myhost.example.com.",
-                                  true, true);
-    isc::dhcp_ddns::D2Dhcid dhcid;
-    ASSERT_NO_THROW(dhcid = srv_->computeDhcid(lease));
-
-    // Make sure that the computed DHCID is valid.
-    std::string dhcid_ref = "00010132E91AA355CFBB753C0F0497A5A9404"
-        "36965B68B6D438D98E680BF10B09F3BCF";
-    EXPECT_EQ(dhcid_ref, dhcid.toStr());
-}
-
-// Test that the DHCID is computed correctly, when the lease holds correct
-// hostname and NULL client id.
-TEST_F(NameDhcpv4SrvTest, dhcidComputeFromHWAddr) {
-    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"),
-                                  "myhost.example.com.",
-                                  true, true);
-    lease->client_id_.reset();
-
-    isc::dhcp_ddns::D2Dhcid dhcid;
-    ASSERT_NO_THROW(dhcid = srv_->computeDhcid(lease));
-
-    // Make sure that the computed DHCID is valid.
-    std::string dhcid_ref = "0000012247F6DC4423C3E8627434A9D6868609"
-        "D88948F78018B215EDCAA30C0C135035";
-    EXPECT_EQ(dhcid_ref, dhcid.toStr());
-}
-
 // Tests the following scenario:
 //  - Updates are enabled
 //  - All overrides are off
