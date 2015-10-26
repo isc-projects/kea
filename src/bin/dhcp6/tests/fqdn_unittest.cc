@@ -655,7 +655,7 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAddr) {
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer));
 
-    // We didn't add any IAs, so there should be no NameChangeRequests in th
+    // We didn't add any IAs, so there should be no NameChangeRequests in the
     // queue.
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
 }
@@ -961,8 +961,8 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
                             0, 4000);
 
     // Client may send Release message. In this case the lease should be
-    // removed and all existing DNS entries for this lease should be
-    // also removed. Therefore, we expect that single NameChangeRequest to
+    // removed and all existing DNS entries for this lease should also
+    // be removed. Therefore, we expect that single NameChangeRequest to
     // remove DNS entries is generated.
     testProcessMessage(DHCPV6_RELEASE, "otherhost.example.com",
                        "otherhost.example.com.");
