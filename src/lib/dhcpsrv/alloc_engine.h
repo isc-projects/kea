@@ -802,7 +802,7 @@ private:
     ///
     /// @param lease Pointer to the DHCPv4 or DHCPv6 lease.
     /// @param remove_lease A boolean flag indicating if the lease should be
-    /// remove from the lease database (if true) upon reclamation.
+    /// removed from the lease database (if true) upon reclamation.
     /// @param callout_handle Pointer to the callout handle.
     /// @tparam LeasePtrPtr Lease type, i.e. @c Lease4Ptr or @c Lease6Ptr.
     template<typename LeasePtrType>

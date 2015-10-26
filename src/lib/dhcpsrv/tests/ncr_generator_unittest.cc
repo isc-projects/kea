@@ -83,7 +83,7 @@ public:
     /// @brief Enables DHCP-DDNS updates.
     ///
     /// Replaces the current D2ClientConfiguration with a configuration
-    /// which as updates enabled and the control options set based upon
+    /// which has updates enabled and the control options set based upon
     /// the bit mask of options.
     void enableD2() {
         D2ClientConfigPtr cfg(new D2ClientConfig());
@@ -334,7 +334,7 @@ TEST_F(NCRGenerator6Test, noHostname) {
     }
 }
 
-// Test that NameChangeRequest is not generated if the invalid hostname has
+// Test that NameChangeRequest is not generated if an invalid hostname has
 // been specified for a lease for which forward and reverse mapping has been
 // set.
 TEST_F(NCRGenerator6Test, wrongHostname) {
