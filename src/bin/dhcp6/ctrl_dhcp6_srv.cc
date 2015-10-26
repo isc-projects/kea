@@ -70,7 +70,7 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&, ConstElementPtr a
 }
 
 ConstElementPtr
-ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string& command,
+ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
                                                  ConstElementPtr args) {
     int status_code = 1;
     string message;
