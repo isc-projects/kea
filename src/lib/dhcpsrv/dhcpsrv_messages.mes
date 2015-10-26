@@ -589,16 +589,24 @@ lease from the PostgreSQL database for the specified address.
 
 % DHCPSRV_QUEUE_NCR %1: name change request to %2 DNS entry queued: %3
 A debug message which is logged when the NameChangeRequest to add or remove
-a DNS entries for a particular lease has been queued. The first parameter
-includes the client identification information. The second parameter of
-indicates whether the DNS entry is to be added or removed. The second
-parameter carries the details of the NameChangeRequest.
+a DNS entries for a particular lease has been queued. The first argument
+includes the client identification information. The second argument
+indicates whether the DNS entry is to be added or removed. The third
+argument carries the details of the NameChangeRequest.
 
-% DHCPSRV_QUEUE_NCR_FAILED queueing %1 name change request failed for lease %2: %3
+% DHCPSRV_QUEUE_NCR_FAILED %1: queueing %2 name change request failed for lease %3: %4
 This error message is logged when sending a name change request
-to DHCP DDNS failed. The type of the name change request is specified
-as first argument. The remaining arguments provide the details of the
-lease and the reson for failure.
+to DHCP DDNS failed. The first argument includes the client identification
+information. The second argument indicates whether the DNS entry is to be
+added or removed. The third argument specifies the leased address. The
+last argument provides the reason for failure.
+
+% DHCPSRV_QUEUE_NCR_SKIP %1: skip queueing name change request for lease: %2
+This debug message is issued when the server decides to not queue the name
+change request because the lease doesn't include the FQDN, the forward and
+reverse update is disabled for this lease or the DNS updates are disabled
+in the configuration. The first argument includes the client identification
+information. The second argument includes the leased address.
 
 % DHCPSRV_TIMERMGR_CALLBACK_FAILED running handler for timer %1 caused exception: %2
 This error message is emitted when the timer elapsed and the

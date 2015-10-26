@@ -232,6 +232,16 @@ public:
                                 lease_->cltt_ + lease_->valid_lft_,
                                 lease_->valid_lft_);
     }
+
+    /// @brief Test that calling queueNCR for NULL lease doesn't cause
+    /// an exception.
+    ///
+    /// @param chg_type Name change type.
+    void testNullLease(const NameChangeType chg_type) {
+        lease_.reset();
+        ASSERT_NO_FATAL_FAILURE(queueNCR(chg_type, lease_));
+        EXPECT_EQ(0, d2_mgr_.getQueueSize());
+    }
 };
 
 /// @brief Test fixture class implementation for DHCPv6.
@@ -270,12 +280,29 @@ TEST_F(NCRGenerator6Test, fwdRev) {
                 "000201BE0D7A66F8AB6C4082E7F8B81E2656667A102E3"
                 "D0ECCEA5E0DD71730F392119A");
     }
+
+    // Now try the same test with all lower case.
+    {
+        SCOPED_TRACE("case CHG_REMOVE");
+        testNCR(CHG_REMOVE, true, true, "myhost.example.com.",
+                "000201BE0D7A66F8AB6C4082E7F8B81E2656667A102E3"
+                "D0ECCEA5E0DD71730F392119A");
+    }
+
     {
         SCOPED_TRACE("case CHG_ADD");
         testNCR(CHG_ADD, true, true, "MYHOST.example.com.",
                 "000201BE0D7A66F8AB6C4082E7F8B81E2656667A102E3"
                 "D0ECCEA5E0DD71730F392119A");
     }
+
+    {
+        SCOPED_TRACE("case CHG_ADD");
+        testNCR(CHG_ADD, true, true, "myhost.example.com.",
+                "000201BE0D7A66F8AB6C4082E7F8B81E2656667A102E3"
+                "D0ECCEA5E0DD71730F392119A");
+    }
+
 }
 
 // Checks that NameChangeRequests are not created when ddns updates are disabled.
@@ -292,7 +319,7 @@ TEST_F(NCRGenerator6Test, d2Disabled) {
 
 // Test creation of the NameChangeRequest for reverse mapping in the
 // given lease.
-TEST_F(NCRGenerator6Test, removeRev) {
+TEST_F(NCRGenerator6Test, revOnly) {
     {
         SCOPED_TRACE("case CHG_REMOVE");
         testNCR(CHG_REMOVE, false, true, "myhost.example.com.",
@@ -307,6 +334,25 @@ TEST_F(NCRGenerator6Test, removeRev) {
                 "D0ECCEA5E0DD71730F392119A");
     }
 }
+
+// Test creation of the NameChangeRequest for forward mapping in the
+// given lease.
+TEST_F(NCRGenerator6Test, fwdOnly) {
+    {
+        SCOPED_TRACE("case CHG_REMOVE");
+        testNCR(CHG_REMOVE, true, false, "myhost.example.com.",
+                "000201BE0D7A66F8AB6C4082E7F8B81E2656667A102E3"
+                "D0ECCEA5E0DD71730F392119A");
+    }
+
+    {
+        SCOPED_TRACE("case CHG_ADD");
+        testNCR(CHG_ADD, true, false, "myhost.example.com.",
+                "000201BE0D7A66F8AB6C4082E7F8B81E2656667A102E3"
+                "D0ECCEA5E0DD71730F392119A");
+    }
+}
+
 
 // Test that NameChangeRequest is not generated when neither forward
 // nor reverse DNS update has been performed for a lease.
@@ -340,11 +386,11 @@ TEST_F(NCRGenerator6Test, noHostname) {
 TEST_F(NCRGenerator6Test, wrongHostname) {
     {
         SCOPED_TRACE("case CHG_REMOVE");
-        testNoUpdate(CHG_REMOVE, false, false, "");
+        testNoUpdate(CHG_REMOVE, false, false, "myhost...example.com.");
     }
     {
         SCOPED_TRACE("case CHG_ADD");
-        testNoUpdate(CHG_ADD, false, false, "");
+        testNoUpdate(CHG_ADD, false, false, "myhost...example.com.");
     }
 }
 
@@ -364,6 +410,20 @@ TEST_F(NCRGenerator6Test, wrongLeaseType) {
     }
 }
 
+// Test that NameChangeRequest is not generated if the lease is NULL,
+// and that the call to queueNCR doesn't cause an exception or
+// assertion.
+TEST_F(NCRGenerator6Test, nullLease) {
+    {
+        SCOPED_TRACE("case CHG_REMOVE");
+        testNullLease(CHG_REMOVE);
+    }
+    {
+        SCOPED_TRACE("case CHG_ADD");
+        testNullLease(CHG_ADD);
+    }
+}
+
 /// @brief Test fixture class implementation for DHCPv4.
 class NCRGenerator4Test : public NCRGeneratorTest<Lease4Ptr> {
 public:
@@ -380,7 +440,7 @@ public:
 
     /// @brief Implementation of the method creating DHCPv6 lease instance.
     virtual void initLease() {
-        lease_.reset(new Lease4(IOAddress("2001:db8:1::1"), hwaddr_, ClientIdPtr(),
+        lease_.reset(new Lease4(IOAddress("192.0.2.1"), hwaddr_, ClientIdPtr(),
                                 100, 30, 60, time(NULL), 1));
     }
 };
@@ -397,9 +457,25 @@ TEST_F(NCRGenerator4Test, fwdRev) {
                 "000001E356D43E5F0A496D65BCA24D982D646140813E3"
                 "B03AB370BFF46BFA309AE7BFD");
     }
+
+    // Now try the same with all lower case.
+    {
+        SCOPED_TRACE("case CHG_REMOVE");
+        testNCR(CHG_REMOVE, true, true, "myhost.example.com.",
+                "000001E356D43E5F0A496D65BCA24D982D646140813E3"
+                "B03AB370BFF46BFA309AE7BFD");
+    }
+
     {
         SCOPED_TRACE("case CHG_ADD");
         testNCR(CHG_ADD, true, true, "MYHOST.example.com.",
+                "000001E356D43E5F0A496D65BCA24D982D646140813E3"
+                "B03AB370BFF46BFA309AE7BFD");
+    }
+
+    {
+        SCOPED_TRACE("case CHG_ADD");
+        testNCR(CHG_ADD, true, true, "myhost.example.com.",
                 "000001E356D43E5F0A496D65BCA24D982D646140813E3"
                 "B03AB370BFF46BFA309AE7BFD");
     }
@@ -419,7 +495,7 @@ TEST_F(NCRGenerator4Test, d2Disabled) {
 
 // Test creation of the NameChangeRequest for reverse mapping in the
 // given lease.
-TEST_F(NCRGenerator4Test, removeRev) {
+TEST_F(NCRGenerator4Test, revOnly) {
     {
         SCOPED_TRACE("case CHG_REMOVE");
         testNCR(CHG_REMOVE, false, true, "myhost.example.com.",
@@ -429,6 +505,23 @@ TEST_F(NCRGenerator4Test, removeRev) {
     {
         SCOPED_TRACE("case CHG_ADD");
         testNCR(CHG_ADD, false, true, "myhost.example.com.",
+                "000001E356D43E5F0A496D65BCA24D982D646140813E3B"
+                "03AB370BFF46BFA309AE7BFD");
+    }
+}
+
+// Test creation of the NameChangeRequest for forward mapping in the
+// given lease.
+TEST_F(NCRGenerator4Test, fwdOnly) {
+    {
+        SCOPED_TRACE("case CHG_REMOVE");
+        testNCR(CHG_REMOVE, true, false, "myhost.example.com.",
+                "000001E356D43E5F0A496D65BCA24D982D646140813E3B"
+                "03AB370BFF46BFA309AE7BFD");
+    }
+    {
+        SCOPED_TRACE("case CHG_ADD");
+        testNCR(CHG_ADD, true, false, "myhost.example.com.",
                 "000001E356D43E5F0A496D65BCA24D982D646140813E3B"
                 "03AB370BFF46BFA309AE7BFD");
     }
@@ -466,11 +559,11 @@ TEST_F(NCRGenerator4Test, noHostname) {
 TEST_F(NCRGenerator4Test, wrongHostname) {
     {
         SCOPED_TRACE("case CHG_REMOVE");
-        testNoUpdate(CHG_REMOVE, false, false, "");
+        testNoUpdate(CHG_REMOVE, false, false, "myhost...example.org.");
     }
     {
         SCOPED_TRACE("case CHG_ADD");
-        testNoUpdate(CHG_ADD, false, false, "");
+        testNoUpdate(CHG_ADD, false, false, "myhost...example.org.");
     }
 }
 
@@ -483,7 +576,7 @@ TEST_F(NCRGenerator4Test, useClientId) {
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                            "2001:db8:1::1",
+                            "192.0.2.1",
                             "000101C7AA5420483BDA99C437636EA7DA2FE18"
                             "31C9679FEB031C360CA571298F3D1FA",
                             lease_->cltt_ + lease_->valid_lft_, 100);
@@ -499,7 +592,20 @@ TEST_F(NCRGenerator4Test, useClientId) {
                 "000101C7AA5420483BDA99C437636EA7DA2FE1831C9679"
                 "FEB031C360CA571298F3D1FA");
     }
+}
 
+// Test that NameChangeRequest is not generated if the lease is NULL,
+// and that the call to queueNCR doesn't cause an exception or
+// assertion.
+TEST_F(NCRGenerator4Test, nullLease) {
+    {
+        SCOPED_TRACE("case CHG_REMOVE");
+        testNullLease(CHG_REMOVE);
+    }
+    {
+        SCOPED_TRACE("case CHG_ADD");
+        testNullLease(CHG_ADD);
+    }
 }
 
 } // end of anonymous namespace

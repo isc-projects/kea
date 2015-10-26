@@ -44,13 +44,6 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Exception thrown when DHCID computation failed.
-class DhcidComputeError : public isc::Exception {
-public:
-    DhcidComputeError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
-};
-
 /// @brief DHCPv4 message exchange.
 ///
 /// This class represents the DHCPv4 message exchange. The message exchange
@@ -665,28 +658,6 @@ protected:
     /// @param opt option that contains server-id
     /// @return string representation
     static std::string srvidToString(const OptionPtr& opt);
-
-    /// @brief Computes DHCID from a lease.
-    ///
-    /// This method creates an object which represents DHCID. The DHCID value
-    /// is computed as described in RFC4701. The section 3.3. of RFC4701
-    /// specifies the DHCID RR Identifier Type codes:
-    /// - 0x0000 The 1 octet htype followed by glen octets of chaddr
-    /// - 0x0001 The data octets from the DHCPv4 client's Client Identifier
-    /// option.
-    /// - 0x0002 The client's DUID.
-    ///
-    /// Currently this function supports first two of these identifiers.
-    /// The 0x0001 is preferred over the 0x0000 - if the client identifier
-    /// option is present, the former is used. If the client identifier
-    /// is absent, the latter is used.
-    ///
-    /// @todo Implement support for 0x0002 DHCID identifier type.
-    ///
-    /// @param lease A pointer to the structure describing a lease.
-    /// @return An object encapsulating DHCID to be used for DNS updates.
-    /// @throw DhcidComputeError If the computation of the DHCID failed.
-    static isc::dhcp_ddns::D2Dhcid computeDhcid(const Lease4Ptr& lease);
 
     /// @brief Selects a subnet for a given client's packet.
     ///
