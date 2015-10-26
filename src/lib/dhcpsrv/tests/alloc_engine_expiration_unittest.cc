@@ -1216,7 +1216,10 @@ ExpirationAllocEngine6Test::createLeases() {
                                    20, SubnetID(1), true, true,
                                    generateHostnameForLeaseIndex(i)));
         leases_.push_back(lease);
-        LeaseMgrFactory::instance().addLease(lease);
+        // Copy the lease before adding it to the lease manager. We want to
+        // make sure that modifications to the leases held in the leases_
+        // container doesn't affect the leases in the lease manager.
+        LeaseMgrFactory::instance().addLease(Lease6Ptr(new Lease6(*lease)));
 
         // Note in the statistics that this lease has been added.
         StatsMgr& stats_mgr = StatsMgr::instance();
@@ -1324,7 +1327,7 @@ ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
 void
 ExpirationAllocEngine6Test::testReclaimReusedLeases(const uint16_t msg_type,
                                                     const bool use_reclaimed) {
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM < 0xFFFF);
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM < 1000);
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
         // Depending on the parameter, mark leases 'expired-reclaimed' or
@@ -1368,7 +1371,7 @@ ExpirationAllocEngine6Test::testReclaimReusedLeases(const uint16_t msg_type,
             ASSERT_NO_THROW(engine_->renewLeases6(ctx));
 
         } else {
-            ASSERT_NO_THROW(engine_->renewLeases6(ctx));
+            ASSERT_NO_THROW(engine_->allocateLeases6(ctx));
         }
     }
 
@@ -1632,7 +1635,8 @@ public:
     /// @param client_renews A boolean value which indicates if the test should
     /// simulate renewals of leases (if true) or reusing expired leases which
     /// belong to different clients (if false).
-    /// @param use_reclaimed Boolean parameter indicating if the leases
+    /// @param use_reclaimed Boolean parameter indicating if the leases being
+    /// reused should initially be reclaimed.
     void testReclaimReusedLeases(const uint8_t msg_type, const bool client_renews,
                                  const bool use_reclaimed);
 
@@ -1666,7 +1670,10 @@ ExpirationAllocEngine4Test::createLeases() {
                                    time(NULL), SubnetID(1), true, true,
                                    generateHostnameForLeaseIndex(i)));
         leases_.push_back(lease);
-        LeaseMgrFactory::instance().addLease(lease);
+        // Copy the lease before adding it to the lease manager. We want to
+        // make sure that modifications to the leases held in the leases_
+        // container doesn't affect the leases in the lease manager.
+        LeaseMgrFactory::instance().addLease(Lease4Ptr(new Lease4(*lease)));
 
         // Note in the statistics that this lease has been added.
         StatsMgr& stats_mgr = StatsMgr::instance();
@@ -1865,8 +1872,8 @@ void
 ExpirationAllocEngine4Test::testReclaimReusedLeases(const uint8_t msg_type,
                                                     const bool client_renews,
                                                     const bool use_reclaimed) {
-    // Let's restrict the number of leases to /16.
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM < 0xFFFF);
+    // Let's restrict the number of leases.
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM < 1000);
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
         // Depending on the parameter, mark leases 'expired-reclaimed' or

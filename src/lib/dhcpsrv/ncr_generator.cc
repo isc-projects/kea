@@ -44,8 +44,13 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
                     const IdentifierType& identifier, const std::string& label) {
 
     // Check if there is a need for update.
-    if (!lease || lease->hostname_.empty() || (!lease->fqdn_fwd_ && !lease->fqdn_rev_)
+    if (lease->hostname_.empty() || (!lease->fqdn_fwd_ && !lease->fqdn_rev_)
         || !CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_QUEUE_NCR_SKIP)
+            .arg(label)
+            .arg(lease->addr_.toText());
+            
         return;
     }
 
@@ -72,6 +77,7 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
 
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_QUEUE_NCR_FAILED)
+            .arg(label)
             .arg(chg_type == CHG_ADD ? "add" : "remove")
             .arg(lease->addr_.toText())
             .arg(ex.what());

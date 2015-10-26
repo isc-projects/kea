@@ -178,7 +178,6 @@ public:
     /// This variant of the method does not include transaction id.
     ///
     /// @param duid Pointer to the client identifier or NULL.
-    /// @param transid Numeric transaction id to include in the string.
     /// @param hwaddr Hardware address to include in the string or NULL.
     ///
     /// @return String with text representation of the packet identifiers.

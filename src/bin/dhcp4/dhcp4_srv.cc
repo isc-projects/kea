@@ -774,51 +774,6 @@ Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
     return (addrs[0].toText());
 }
 
-isc::dhcp_ddns::D2Dhcid
-Dhcpv4Srv::computeDhcid(const Lease4Ptr& lease) {
-    if (!lease) {
-        isc_throw(DhcidComputeError, "a pointer to the lease must be not"
-                  " NULL to compute DHCID");
-
-    } else if (lease->hostname_.empty()) {
-        isc_throw(DhcidComputeError, "unable to compute the DHCID for the"
-                  " lease which has empty hostname set");
-
-    }
-
-    // In order to compute DHCID the client's hostname must be encoded in
-    // canonical wire format. It is unlikely that the FQDN is malformed
-    // because it is validated by the classes which encapsulate options
-    // carrying client FQDN. However, if the client name was carried in the
-    // Hostname option it is more likely as it carries the hostname as a
-    // regular string.
-    std::vector<uint8_t> fqdn_wire;
-    try {
-        OptionDataTypeUtil::writeFqdn(lease->hostname_, fqdn_wire, true);
-
-    } catch (const Exception& ex) {
-        isc_throw(DhcidComputeError, "unable to compute DHCID because the"
-                  " hostname: " << lease->hostname_ << " is invalid");
-
-    }
-
-    // Prefer client id to HW address to compute DHCID. If Client Id is
-    // NULL, use HW address.
-    try {
-        if (lease->client_id_) {
-            return (D2Dhcid(lease->client_id_->getClientId(), fqdn_wire));
-
-        } else {
-            return (D2Dhcid(lease->hwaddr_, fqdn_wire));
-        }
-    } catch (const Exception& ex) {
-        isc_throw(DhcidComputeError, "unable to compute DHCID: "
-                  << ex.what());
-
-    }
-
-}
-
 void
 Dhcpv4Srv::appendServerID(Dhcpv4Exchange& ex) {
     // The source address for the outbound message should have been set already.

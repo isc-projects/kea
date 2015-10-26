@@ -350,7 +350,7 @@ This debug message is issued when the server begins reclamation of the
 expired DHCPv6 lease. The reclaimed lease may either be an address lease
 or delegated prefix. The first argument provides the client identification
 information. The other arguments specify the prefix and the prefix length
-for the lease. The prefix length for address lease is equal to.
+for the lease. The prefix length for address lease is equal to 128.
 
 % ALLOC_ENGINE_V6_LEASE_RECLAMATION_FAILED failed to reclaim the lease %1: %2
 This error message is logged when the allocation engine fails to
