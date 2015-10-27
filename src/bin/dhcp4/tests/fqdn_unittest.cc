@@ -489,63 +489,6 @@ public:
     }
 };
 
-// Test that the exception is thrown if lease pointer specified as the argument
-// of computeDhcid function is NULL.
-TEST_F(NameDhcpv4SrvTest, dhcidNullLease) {
-    Lease4Ptr lease;
-    EXPECT_THROW(srv_->computeDhcid(lease), isc::dhcp::DhcidComputeError);
-
-}
-
-// Test that the appropriate exception is thrown if the lease object used
-// to compute DHCID comprises wrong hostname.
-TEST_F(NameDhcpv4SrvTest, dhcidWrongHostname) {
-    // First, make sure that the lease with the correct hostname is accepted.
-    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"),
-                                  "myhost.example.com.", true, true);
-    ASSERT_NO_THROW(srv_->computeDhcid(lease));
-
-    // Now, use the wrong hostname. It should result in the exception.
-    lease->hostname_ = "myhost...example.com.";
-    EXPECT_THROW(srv_->computeDhcid(lease), isc::dhcp::DhcidComputeError);
-
-    // Also, empty hostname is wrong.
-    lease->hostname_ = "";
-    EXPECT_THROW(srv_->computeDhcid(lease), isc::dhcp::DhcidComputeError);
-}
-
-// Test that the DHCID is computed correctly, when the lease holds
-// correct hostname and non-NULL client id.
-TEST_F(NameDhcpv4SrvTest, dhcidComputeFromClientId) {
-    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"),
-                                  "myhost.example.com.",
-                                  true, true);
-    isc::dhcp_ddns::D2Dhcid dhcid;
-    ASSERT_NO_THROW(dhcid = srv_->computeDhcid(lease));
-
-    // Make sure that the computed DHCID is valid.
-    std::string dhcid_ref = "00010132E91AA355CFBB753C0F0497A5A9404"
-        "36965B68B6D438D98E680BF10B09F3BCF";
-    EXPECT_EQ(dhcid_ref, dhcid.toStr());
-}
-
-// Test that the DHCID is computed correctly, when the lease holds correct
-// hostname and NULL client id.
-TEST_F(NameDhcpv4SrvTest, dhcidComputeFromHWAddr) {
-    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"),
-                                  "myhost.example.com.",
-                                  true, true);
-    lease->client_id_.reset();
-
-    isc::dhcp_ddns::D2Dhcid dhcid;
-    ASSERT_NO_THROW(dhcid = srv_->computeDhcid(lease));
-
-    // Make sure that the computed DHCID is valid.
-    std::string dhcid_ref = "0000012247F6DC4423C3E8627434A9D6868609"
-        "D88948F78018B215EDCAA30C0C135035";
-    EXPECT_EQ(dhcid_ref, dhcid.toStr());
-}
-
 // Tests the following scenario:
 //  - Updates are enabled
 //  - All overrides are off
@@ -743,58 +686,6 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsRenewNoChange) {
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease));
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
-}
-
-// Test that no NameChangeRequest is generated when forward and reverse
-// DNS update flags are not set in the lease.
-TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsNoUpdate) {
-    Lease4Ptr lease1 = createLease(IOAddress("192.0.2.3"),
-                                   "lease1.example.com.",
-                                   true, true);
-    Lease4Ptr lease2 = createLease(IOAddress("192.0.2.3"),
-                                   "lease2.example.com.",
-                                   false, false);
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease2, lease1));
-    EXPECT_EQ(1, d2_mgr_.getQueueSize());
-
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                            "192.0.2.3", "lease1.example.com.",
-                            "0001013A5B311F5B9FB10DDF8E53689B874F25D"
-                            "62CC147C2FF237A64C90E5A597C9B7A",
-                            lease1->cltt_, 100);
-
-    lease2->hostname_ = "";
-    lease2->fqdn_rev_ = true;
-    lease2->fqdn_fwd_ = true;
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease2, lease1));
-    EXPECT_EQ(1, d2_mgr_.getQueueSize());
-
-}
-
-// Test that two NameChangeRequests are generated when the lease is being
-// renewed and the new lease has updated FQDN data.
-TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsRenew) {
-    Lease4Ptr lease1 = createLease(IOAddress("192.0.2.3"),
-                                   "lease1.example.com.",
-                                   true, true);
-    Lease4Ptr lease2 = createLease(IOAddress("192.0.2.3"),
-                                   "lease2.example.com.",
-                                   true, true);
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease2, lease1));
-    ASSERT_EQ(2, d2_mgr_.getQueueSize());
-
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                            "192.0.2.3", "lease1.example.com.",
-                            "0001013A5B311F5B9FB10DDF8E53689B874F25D"
-                            "62CC147C2FF237A64C90E5A597C9B7A",
-                            lease1->cltt_, 100);
-
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            "192.0.2.3", "lease2.example.com.",
-                            "000101F906D2BB752E1B2EECC5FF2BF434C0B2D"
-                            "D6D7F7BD873F4F280165DB8C9DBA7CB",
-                            lease2->cltt_, 100);
-
 }
 
 // Test that the OFFER message generated as a result of the DISCOVER message

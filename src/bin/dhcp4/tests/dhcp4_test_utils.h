@@ -198,7 +198,6 @@ public:
     using Dhcpv4Srv::processDecline;
     using Dhcpv4Srv::processInform;
     using Dhcpv4Srv::processClientName;
-    using Dhcpv4Srv::computeDhcid;
     using Dhcpv4Srv::createNameChangeRequests;
     using Dhcpv4Srv::acceptServerId;
     using Dhcpv4Srv::sanityCheck;

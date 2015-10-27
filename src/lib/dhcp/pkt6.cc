@@ -498,21 +498,30 @@ Pkt6::getMACFromDUID() {
 std::string
 Pkt6::makeLabel(const DuidPtr duid, const uint32_t transid,
                 const HWAddrPtr& hwaddr) {
+    // Create label with DUID and HW address.
+    std::stringstream label;
+    label << makeLabel(duid, hwaddr);
+
+    // Append transaction id.
+    label << ", tid=0x" << std::hex << transid << std::dec;
+
+    return (label.str());
+}
+
+std::string
+Pkt6::makeLabel(const DuidPtr duid, const HWAddrPtr& hwaddr) {
     std::stringstream label;
     // DUID should be present at all times, so explicitly inform when
     // it is no present (no info).
     label << "duid=[" << (duid ? duid->toText() : "no info")
-          << "],";
+          << "]";
 
     // HW address is typically not carried in the DHCPv6 mmessages
     // and can be extracted using various, but not fully reliable,
     // techniques. If it is not present, don't print anything.
     if (hwaddr) {
-        label << " [" << hwaddr->toText() << "],";
+        label << ", [" << hwaddr->toText() << "]";
     }
-
-    // Transaction id is always there.
-    label << " tid=0x" << std::hex << transid << std::dec;
 
     return (label.str());
 }

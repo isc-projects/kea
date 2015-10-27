@@ -357,14 +357,25 @@ Pkt4::getLabel() const {
 std::string
 Pkt4::makeLabel(const HWAddrPtr& hwaddr, const ClientIdPtr& client_id,
                 const uint32_t transid) {
+    // Create label with HW address and client identifier.
     stringstream label;
-    label << "[" << (hwaddr ? hwaddr->toText() : "no hwaddr info")
-          << "], cid=[" << (client_id ? client_id->toText() : "no info")
-          << "], tid=0x" << hex << transid << dec;
+    label << makeLabel(hwaddr, client_id);
+
+    // Append transaction id.
+    label << ", tid=0x" << hex << transid << dec;
 
     return label.str();
 }
 
+std::string
+Pkt4::makeLabel(const HWAddrPtr& hwaddr, const ClientIdPtr& client_id) {
+    stringstream label;
+    label << "[" << (hwaddr ? hwaddr->toText() : "no hwaddr info")
+          << "], cid=[" << (client_id ? client_id->toText() : "no info")
+          << "]";
+
+    return label.str();
+}
 
 std::string
 Pkt4::toText() const {

@@ -75,6 +75,11 @@ client sending the DHCPDISCOVER has a reservation for the specified
 address. The allocation engine will try to offer this address to
 the client.
 
+% ALLOC_ENGINE_V4_LEASE_RECLAIM %1: reclaiming expired lease for address %2
+This debug message is issued when the server begins reclamation of the
+expired DHCPv4 lease. The first argument specifies the client identification
+information. The second argument holds the leased IPv4 address.
+
 % ALLOC_ENGINE_V4_LEASE_RECLAMATION_FAILED failed to reclaim the lease %1: %2
 This error message is logged when the allocation engine fails to
 reclaim an expired lease. The reason for the failure is included in the
@@ -339,6 +344,13 @@ reserved for it.
 % ALLOC_ENGINE_V6_HR_PREFIX_GRANTED reserved prefix %1/%2 was was assigned to client %3
 This informational message signals that the specified client was assigned the prefix
 reserved for it.
+
+% ALLOC_ENGINE_V6_LEASE_RECLAIM %1: reclaiming expired lease for prefix %2/%3
+This debug message is issued when the server begins reclamation of the
+expired DHCPv6 lease. The reclaimed lease may either be an address lease
+or delegated prefix. The first argument provides the client identification
+information. The other arguments specify the prefix and the prefix length
+for the lease. The prefix length for address lease is equal to 128.
 
 % ALLOC_ENGINE_V6_LEASE_RECLAMATION_FAILED failed to reclaim the lease %1: %2
 This error message is logged when the allocation engine fails to
