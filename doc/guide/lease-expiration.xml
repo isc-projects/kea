@@ -294,7 +294,7 @@
     is recommended that hold-reclaim-time be set to a value significantly
     higher than the <command>reclaim-timer-wait-time</command>, as timely
     removal of expired-reclaimed leases is less critical while the removal
-    process may impact server responsiveness.
+    process may impact server responsiveness.</para>
   </section>
 
   <section id="lease-reclamation-defaults">
