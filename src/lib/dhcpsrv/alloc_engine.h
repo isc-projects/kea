@@ -781,20 +781,76 @@ private:
     /// @param lease IPv6 lease to be extended.
     void extendLease6(ClientContext6& ctx, Lease6Ptr lease);
 
-    /// @brief Sends removal name change reuqest to D2.
+    /// @brief Reclamation mode used by the variants of @c reclaimExpiredLease
+    /// methods.
     ///
-    /// This method is exception safe.
+    /// The following operations are supported:
+    /// - remove lease upon reclamation,
+    /// - update lease's state upon reclamation to 'expired-reclaimed',
+    /// - leave the lease in the database unchanged.
+    enum DbReclaimMode {
+        DB_RECLAIM_REMOVE,
+        DB_RECLAIM_UPDATE,
+        DB_RECLAIM_LEAVE_UNCHANGED
+    };
+
+    /// @brief Reclaim DHCPv4 or DHCPv6 lease with updating lease database.
     ///
-    /// @param lease Pointer to a lease for which NCR should be sent.
-    /// @param identifier Identifier to be used to generate DHCID for
-    /// the DNS update. For DHCPv4 it will be hardware address or client
-    /// identifier. For DHCPv6 it will be a DUID.
+    /// This method is called by the lease reclamation routine to reclaim the
+    /// lease and update the lease database according to the value of the
+    /// @c remove_lease parameter.
     ///
-    /// @tparam LeasePtrType Pointer to a lease.
-    /// @tparam IdentifierType HW Address, Client Identifier or DUID.
-    template<typename LeasePtrType, typename IdentifierType>
-    void queueRemovalNameChangeRequest(const LeasePtrType& lease,
-                                       const IdentifierType& identifier) const;
+    /// @param lease Pointer to the DHCPv4 or DHCPv6 lease.
+    /// @param remove_lease A boolean flag indicating if the lease should be
+    /// removed from the lease database (if true) upon reclamation.
+    /// @param callout_handle Pointer to the callout handle.
+    /// @tparam LeasePtrPtr Lease type, i.e. @c Lease4Ptr or @c Lease6Ptr.
+    template<typename LeasePtrType>
+    void reclaimExpiredLease(const LeasePtrType& lease,
+                             const bool remove_lease,
+                             const hooks::CalloutHandlePtr& callout_handle);
+
+    /// @brief Reclaim DHCPv4 or DHCPv6 lease without updating lease database.
+    ///
+    /// This method is called by the methods allocating leases, when the lease
+    /// being allocated needs to be first reclaimed. These methods update the
+    /// lease database on their own, so this reclamation method doesn't update
+    /// the database on reclamation.
+    ///
+    /// @param lease Pointer to the DHCPv4 or DHCPv6 lease.
+    /// @param callout_handle Pointer to the callout handle.
+    /// @tparam LeasePtrType Lease type, i.e. @c Lease4Ptr or @c Lease6Ptr.
+    template<typename LeasePtrType>
+    void reclaimExpiredLease(const LeasePtrType& lease,
+                             const hooks::CalloutHandlePtr& callout_handle);
+
+    /// @brief Reclaim DHCPv6 lease.
+    ///
+    /// This method variant accepts the @c reclaim_mode parameter which
+    /// controls if the reclaimed lease should be left in the database with
+    /// no change or if it should be removed or updated.
+    ///
+    /// @param lease Pointer to the DHCPv6 lease.
+    /// @param reclaim_mode Indicates what the method should do with the reclaimed
+    /// lease in the lease database.
+    /// @param callout_handle Pointer to the callout handle.
+    void reclaimExpiredLease(const Lease6Ptr& lease,
+                             const DbReclaimMode& reclaim_mode,
+                             const hooks::CalloutHandlePtr& callout_handle);
+
+    /// @brief Reclaim DHCPv4 lease.
+    ///
+    /// This method variant accepts the @c reclaim_mode parameter which
+    /// controls if the reclaimed lease should be left in the database with
+    /// no change or if it should be removed or updated.
+    ///
+    /// @param lease Pointer to the DHCPv4 lease.
+    /// @param reclaim_mode Indicates what the method should do with the reclaimed
+    /// lease in the lease database.
+    /// @param callout_handle Pointer to the callout handle.
+    void reclaimExpiredLease(const Lease4Ptr& lease,
+                             const DbReclaimMode& reclaim_mode,
+                             const hooks::CalloutHandlePtr& callout_handle);
 
     /// @brief Marks lease as reclaimed in the database.
     ///

@@ -114,6 +114,9 @@ if HAVE_MYSQL
 libkea_dhcpsrv_la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
 libkea_dhcpsrv_la_SOURCES += mysql_connection.cc mysql_connection.h
 endif
+
+libkea_dhcpsrv_la_SOURCES += ncr_generator.cc ncr_generator.h
+
 if HAVE_PGSQL
 libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
 endif

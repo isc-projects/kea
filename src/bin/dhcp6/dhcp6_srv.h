@@ -525,37 +525,17 @@ protected:
     /// The @c isc::dhcp_ddns::NameChangeRequest class encapsulates the request
     /// from the DHCPv6 server to the DHCP-DDNS module to perform DNS Update.
     /// The FQDN option carries response to the client about DNS updates that
-    /// server intents to perform for the DNS client. Based on this, the
+    /// server intends to perform for the DNS client. Based on this, the
     /// function will create zero or more @c isc::dhcp_ddns::NameChangeRequest
     /// objects and store them in the internal queue. Requests created by this
-    /// function are only adding or updating DNS records. In order to generate
-    /// requests for DNS records removal, use @c createRemovalNameChangeRequest.
-    /// If ddns updates are disabled, this method returns immediately.
+    /// function are only for adding or updating DNS records. If DNS updates are
+    /// disabled, this method returns immediately.
     ///
     /// @todo Add support for multiple IAADDR options in the IA_NA.
     ///
     /// @param answer A message begins sent to the Client. If it holds the
     /// Client FQDN option, this option is used to create NameChangeRequests.
     void createNameChangeRequests(const Pkt6Ptr& answer);
-
-    /// @brief Creates a @c isc::dhcp_ddns::NameChangeRequest which requests
-    /// removal of DNS entries for a particular lease.
-    ///
-    /// This function should be called upon removal of the lease from the lease
-    /// database, i.e, when client sent Release or Decline message. It will
-    /// create a single @c isc::dhcp_ddns::NameChangeRequest which removes the
-    /// existing DNS records for the lease, which server is responsible for.
-    /// Note that this function will not remove the entries which server hadn't
-    /// added. This is the case, when client performs forward DNS update on its
-    /// own.
-    /// If ddns updates are disabled, this method returns immediately.
-    ///
-    /// @param query A pointer to the packet sent by the client for which the
-    /// name change request should be sent.
-    /// @param lease A lease for which the the removal of corresponding DNS
-    /// records will be performed.
-    void createRemovalNameChangeRequest(const Pkt6Ptr& query,
-                                        const Lease6Ptr& lease);
 
     /// @brief Attempts to extend the lifetime of IAs.
     ///
@@ -800,22 +780,6 @@ private:
     /// @throw isc::Unexpected if specified message is NULL. This is treated
     /// as a programmatic error.
     void generateFqdn(const Pkt6Ptr& answer);
-
-
-    /// @brief Triggers removal Name Change Request if FQDN data changes in leases
-    ///
-    /// If there are any differences (different fwd or rev flags, or different
-    /// hostname) a DNS update for removing entry will be generated.
-    ///
-    /// @param query a pointer to the client's message
-    /// @param old_lease old version of the lease
-    /// @param new_lease new version of the lease (may be NULL)
-    /// @param hostname specifies hostname (for printing purposes)
-    /// @param do_fwd specifies if reverse updates are enabled (for printing purposes)
-    /// @param do_rev specifies if reverse updates are enabled (for printing purposes)
-    void conditionalNCRRemoval(const Pkt6Ptr& query, Lease6Ptr& old_lease,
-                               Lease6Ptr& new_lease, const std::string& hostname,
-                               bool do_fwd, bool do_rev);
 
     /// @brief Updates statistics for received packets
     /// @param query packet received
