@@ -1131,11 +1131,7 @@ PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
             return (false);
         }
 
-        const char* errorMsg = PQerrorMessage(conn_);
-        PQclear(r);
-        isc_throw(DbOperationError, "unable to INSERT for " <<
-                  tagged_statements[stindex].name << ", reason: " <<
-                  errorMsg);
+        checkStatementError(r, stindex);
     }
 
     PQclear(r);
@@ -1650,6 +1646,24 @@ void
 PgSqlLeaseMgr::checkStatementError(PGresult*& r, StatementIndex index) const {
     int s = PQresultStatus(r);
     if (s != PGRES_COMMAND_OK && s != PGRES_TUPLES_OK) {
+        // We're testing the first two chars of SQLSTATE, as this is the
+        // error class. Note, there is a severity field, but it can be
+        // misleadingly returned as fatal.
+        const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
+        if ((sqlstate != NULL) &&
+            ((memcmp(sqlstate, "08", 2) == 0) ||  // Connection Exception
+             (memcmp(sqlstate, "53", 2) == 0) ||  // Insufficient resources
+             (memcmp(sqlstate, "54", 2) == 0) ||  // Program Limit exceeded
+             (memcmp(sqlstate, "57", 2) == 0) ||  // Operator intervention
+             (memcmp(sqlstate, "58", 2) == 0))) { // System error
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_FATAL_ERROR)
+                         .arg(tagged_statements[index].name)
+                         .arg(PQerrorMessage(conn_))
+                         .arg(sqlstate);
+            PQclear(r);
+            exit (-1);
+        }
+
         const char* error_message = PQerrorMessage(conn_);
         PQclear(r);
         isc_throw(DbOperationError, "Statement exec faild:" << " for: "
