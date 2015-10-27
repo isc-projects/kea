@@ -1,3 +1,8 @@
+1039.	[doc]		marcin
+	Configuration parameters pertaining to processing expired
+	leases by the DHCPv4 and DHCPv6 server have been documented.
+	(Trac #3979, git a2ee99ba313e54a9dcf8a09ed118dbfe612e3d55)
+
 1038.	[func]*		marcin
 	DHCPv4 and DHCPv6 servers reclaim expired leases before they
 	are re-assigned.
