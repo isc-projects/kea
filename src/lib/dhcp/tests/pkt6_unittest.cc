@@ -1475,6 +1475,30 @@ TEST_F(Pkt6Test, makeLabel) {
               Pkt6::makeLabel(DuidPtr(), 0x0, HWAddrPtr()));
 }
 
+// Tests that the variant of makeLabel which doesn't include transaction
+// id produces expected output.
+TEST_F(Pkt6Test, makeLabelWithoutTransactionId) {
+    DuidPtr duid(new DUID(DUID::fromText("0102020202030303030303")));
+    HWAddrPtr hwaddr(new HWAddr(HWAddr::fromText("01:02:03:04:05:06",
+                                                 HTYPE_ETHER)));
+
+    // Specify DUID and no HW Address.
+    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03]",
+              Pkt6::makeLabel(duid, HWAddrPtr()));
+
+    // Specify HW Address and no DUID.
+    EXPECT_EQ("duid=[no info], [hwtype=1 01:02:03:04:05:06]",
+              Pkt6::makeLabel(DuidPtr(), hwaddr));
+
+    // Specify both DUID and HW Address.
+    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], "
+              "[hwtype=1 01:02:03:04:05:06]",
+              Pkt6::makeLabel(duid, hwaddr));
+
+    // Specify neither DUID nor HW Address.
+    EXPECT_EQ("duid=[no info]", Pkt6::makeLabel(DuidPtr(), HWAddrPtr()));
+}
+
 // This test verifies that it is possible to obtain the packet
 // identifiers in the textual format from the packet instance.
 TEST_F(Pkt6Test, getLabel) {

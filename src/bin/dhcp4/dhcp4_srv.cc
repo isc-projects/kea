@@ -33,6 +33,7 @@
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/ncr_generator.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/utils.h>
@@ -806,51 +807,6 @@ Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
     return (addrs[0].toText());
 }
 
-isc::dhcp_ddns::D2Dhcid
-Dhcpv4Srv::computeDhcid(const Lease4Ptr& lease) {
-    if (!lease) {
-        isc_throw(DhcidComputeError, "a pointer to the lease must be not"
-                  " NULL to compute DHCID");
-
-    } else if (lease->hostname_.empty()) {
-        isc_throw(DhcidComputeError, "unable to compute the DHCID for the"
-                  " lease which has empty hostname set");
-
-    }
-
-    // In order to compute DHCID the client's hostname must be encoded in
-    // canonical wire format. It is unlikely that the FQDN is malformed
-    // because it is validated by the classes which encapsulate options
-    // carrying client FQDN. However, if the client name was carried in the
-    // Hostname option it is more likely as it carries the hostname as a
-    // regular string.
-    std::vector<uint8_t> fqdn_wire;
-    try {
-        OptionDataTypeUtil::writeFqdn(lease->hostname_, fqdn_wire, true);
-
-    } catch (const Exception& ex) {
-        isc_throw(DhcidComputeError, "unable to compute DHCID because the"
-                  " hostname: " << lease->hostname_ << " is invalid");
-
-    }
-
-    // Prefer client id to HW address to compute DHCID. If Client Id is
-    // NULL, use HW address.
-    try {
-        if (lease->client_id_) {
-            return (D2Dhcid(lease->client_id_->getClientId(), fqdn_wire));
-
-        } else {
-            return (D2Dhcid(lease->hwaddr_, fqdn_wire));
-        }
-    } catch (const Exception& ex) {
-        isc_throw(DhcidComputeError, "unable to compute DHCID: "
-                  << ex.what());
-
-    }
-
-}
-
 void
 Dhcpv4Srv::appendServerID(Dhcpv4Exchange& ex) {
     // The source address for the outbound message should have been set already.
@@ -1169,76 +1125,13 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
     if (!lease) {
         isc_throw(isc::Unexpected,
                   "NULL lease specified when creating NameChangeRequest");
+
+    } else if (!old_lease || (old_lease && !lease->hasIdenticalFqdn(*old_lease))) {
+        // We may need to generate the NameChangeRequest for the new lease. It
+        // will be generated only if hostname is set and if forward or reverse
+        // update has been requested.
+        queueNCR(CHG_ADD, lease);
     }
-
-    // If old lease is not NULL, it is an indication that the lease has
-    // just been renewed. In such case we may need to generate the
-    // additional NameChangeRequest to remove an existing entry before
-    // we create a NameChangeRequest to add the entry for an updated lease.
-    // We may also decide not to generate any requests at all. This is when
-    // we discover that nothing has changed in the client's FQDN data.
-    if (old_lease) {
-        // There will be a NameChangeRequest generated to remove existing
-        // DNS entries if the following conditions are met:
-        // - The hostname is set for the existing lease, we can't generate
-        //   removal request for non-existent hostname.
-        // - A server has performed reverse, forward or both updates.
-        // - FQDN data between the new and old lease do not match.
-        if (!lease->hasIdenticalFqdn(*old_lease)) {
-            queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, old_lease);
-
-            // If FQDN data from both leases match, there is no need to update.
-        } else if (lease->hasIdenticalFqdn(*old_lease)) {
-            return;
-
-        }
-
-    }
-
-    // We may need to generate the NameChangeRequest for the new lease. It
-    // will be generated only if hostname is set and if forward or reverse
-    // update has been requested.
-    queueNameChangeRequest(isc::dhcp_ddns::CHG_ADD, lease);
-}
-
-void
-Dhcpv4Srv::
-queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
-                       const Lease4Ptr& lease) {
-    // The hostname must not be empty, and at least one type of update
-    // should be requested.
-    if (!lease || lease->hostname_.empty() ||
-        (!lease->fqdn_rev_ && !lease->fqdn_fwd_)) {
-        return;
-    }
-
-    // Create the DHCID for the NameChangeRequest.
-    D2Dhcid dhcid;
-    try {
-        dhcid  = computeDhcid(lease);
-    } catch (const DhcidComputeError& ex) {
-        LOG_ERROR(ddns4_logger, DHCP4_DHCID_COMPUTE_ERROR)
-            .arg(lease->toText())
-            .arg(ex.what());
-        return;
-    }
-
-    // Create NameChangeRequest
-    NameChangeRequestPtr ncr(new NameChangeRequest(chg_type, lease->fqdn_fwd_,
-                                                   lease->fqdn_rev_,
-                                                   lease->hostname_,
-                                                   lease->addr_.toText(),
-                                                   dhcid,
-                                                   (lease->cltt_ +
-                                                    lease->valid_lft_),
-                                                   lease->valid_lft_));
-
-    LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUEUE_NCR)
-        .arg(chg_type == CHG_ADD ? "add" : "remove")
-        .arg(ncr->toText());
-
-    // And pass it to the the manager.
-    CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
 }
 
 void
@@ -1863,10 +1756,9 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
                     StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-addresses"),
                     static_cast<int64_t>(-1));
 
-                if (CfgMgr::instance().ddnsEnabled()) {
-                    // Remove existing DNS entries for the lease, if any.
-                    queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, lease);
-                }
+                // Remove existing DNS entries for the lease, if any.
+                queueNCR(CHG_REMOVE, lease);
+
             } else {
                 // Release failed
                 LOG_ERROR(lease4_logger, DHCP4_RELEASE_FAIL)
@@ -1985,13 +1877,9 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline) {
         }
     }
 
-    // Clean up DDNS, if needed.
-    if (CfgMgr::instance().ddnsEnabled()) {
-        // Remove existing DNS entries for the lease, if any.
-        // queueNameChangeRequest will do the necessary checks and will
-        // skip the update, if not needed.
-        queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, lease);
-    }
+    // Remove existing DNS entries for the lease, if any.
+    // queueNCR will do the necessary checks and will skip the update, if not needed.
+    queueNCR(CHG_REMOVE, lease);
 
     // Bump up the statistics.
 

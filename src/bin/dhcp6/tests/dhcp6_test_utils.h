@@ -106,7 +106,6 @@ public:
     using Dhcpv6Srv::processInfRequest;
     using Dhcpv6Srv::processClientFqdn;
     using Dhcpv6Srv::createNameChangeRequests;
-    using Dhcpv6Srv::createRemovalNameChangeRequest;
     using Dhcpv6Srv::selectSubnet;
     using Dhcpv6Srv::testServerID;
     using Dhcpv6Srv::testUnicast;
