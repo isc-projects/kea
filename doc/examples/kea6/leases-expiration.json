@@ -27,10 +27,10 @@
 # some unreclaimed leases after 10 attempts, a warning message is issued.
   "expired-leases-processing": {
     "reclaim-timer-wait-time": 5,
+    "hold-reclaimed-time": 1800,
     "flush-reclaimed-timer-wait-time": 10,
     "max-reclaim-leases": 500,
     "max-reclaim-time": 100,
-    "hold-reclaimed-time": 1800,
     "unwarned-reclaim-cycles": 10
   },
 
