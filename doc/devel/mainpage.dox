@@ -100,6 +100,8 @@
  *   - @subpage hostmgr
  *   - @subpage optionsConfig
  *   - @subpage allocengine
+ *   - @subpage timerManager
+ *   - @subpage leaseReclamationRoutine
  * - @subpage libdhcp_ddns
  * - @subpage dhcpDatabaseBackends
  * - @subpage configBackend

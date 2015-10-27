@@ -1,0 +1,71 @@
+# This is an example configuration file for the DHCPv4 server in Kea.
+# It provides parameters controlling processing of expired leases,
+# a.k.a. leases reclamation.
+
+{ "Dhcp4":
+
+{
+# Kea is told to listen on ethX interface only.
+  "interfaces-config": {
+    "interfaces": [ "ethX" ]
+  },
+
+# We need to specify lease type. As of May 2014, three backends are supported:
+# memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
+# any prior set up.
+  "lease-database": {
+    "type": "memfile"
+  },
+
+# The following parameters control processing expired leases. Expired leases
+# will be reclaimed periodically according to the "reclaim-timer-wait-time"
+# parameter. Reclaimed leases will be held in the database for 1800s to
+# facilitate lease affinity. After this period the leases will be removed.
+# The frequency of removal is controlled by the "flush-reclaimed-timer-wait-time"
+# parameter. The lease reclamation routine will process at most 500 leases
+# or will last for at most 100ms, during a single run. If there are still
+# some unreclaimed leases after 10 attempts, a warning message is issued.
+  "expired-leases-processing": {
+    "reclaim-timer-wait-time": 5,
+    "hold-reclaimed-time": 1800,
+    "flush-reclaimed-timer-wait-time": 10,
+    "max-reclaim-leases": 500,
+    "max-reclaim-time": 100,
+    "unwarned-reclaim-cycles": 10
+  },
+
+# Addresses will be assigned with valid lifetimes being 4000. Client
+# is told to start renewing after 1000 seconds. If the server does not respond
+# after 2000 seconds since the lease was granted, client is supposed
+# to start REBIND procedure (emergency renewal that allows switching
+# to a different server).
+  "valid-lifetime": 4000,
+
+# The following list defines subnets. We have only one subnet
+# here. We tell Kea that it is directly available over local interface.
+  "subnet4": [
+    {
+       "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+       "subnet": "192.0.2.0/24",
+       "interface": "ethX"
+    }
+  ]
+},
+
+# The following configures logging. It assumes that messages with at least
+# informational level (info, warn, error) will will be logged to stdout.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp4",
+            "output_options": [
+                {
+                    "output": "stdout"
+                }
+            ],
+            "severity": "INFO"
+        }
+    ]
+}
+
+}
