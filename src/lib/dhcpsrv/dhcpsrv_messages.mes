@@ -538,7 +538,7 @@ unlikely to occur or negatively impact server operation.
 A debug message issued when the server is attempting to delete a lease for
 the specified address from the PostgreSQL database for the specified address.
 
-% DHCPSRV_PGSQL_FATAL_ERROR Unrecoverable Postgres error occurred: Statement: <%1>, reason: %2 (error code: %3). Server exiting now!
+% DHCPSRV_PGSQL_FATAL_ERROR Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3). Server exiting now!
 An error message indicating that communication with the MySQL database server
 has been lost.  When this occurs the server exits immediately with a non-zero
 exit code.  This is most likely due to a network issue.
