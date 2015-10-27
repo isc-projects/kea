@@ -1,3 +1,8 @@
+1038.	[func]*		marcin
+	DHCPv4 and DHCPv6 servers reclaim expired leases before they
+	are re-assigned.
+	(Trac #3977, git 5880e706cb27c19b1b70296ccd8d96e38e82027b)
+
 1037.	[func]		fdupont
 	Added a new 'leases-reclaim' command which reclaims expired leases
 	immediately.
