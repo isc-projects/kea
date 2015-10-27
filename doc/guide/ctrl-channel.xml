@@ -133,8 +133,8 @@ configuration file.</para>
         the lease database (if true), or they should be left in the
         <emphasis>expired-reclaimed</emphasis> state (if false). The latter
         facilitates lease affinity, i.e. ability to re-assign expired lease to
-        the same client which used this lease before. See the
-        <xref linkend="lease-affinity"/> for the details. Also, see the
+        the same client which used this lease before. See
+        <xref linkend="lease-affinity"/> for the details. Also, see
         <xref linkend="lease-reclamation"/> for the general information
         about the processing of expired leases (leases reclamation).</para>
       </section>
