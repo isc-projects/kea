@@ -438,7 +438,7 @@ public:
         : hwaddr_(new HWAddr(HWAddr::fromText("01:02:03:04:05:06"))) {
     }
 
-    /// @brief Implementation of the method creating DHCPv6 lease instance.
+    /// @brief Implementation of the method creating DHCPv4 lease instance.
     virtual void initLease() {
         lease_.reset(new Lease4(IOAddress("192.0.2.1"), hwaddr_, ClientIdPtr(),
                                 100, 30, 60, time(NULL), 1));
