@@ -16,6 +16,7 @@ libkea_eval_la_LDFLAGS  = -no-undefined -version-info 3:0:0
 libkea_eval_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = eval.dox
+EXTRA_DIST += eval_messages.mes
 
 # Define rule to build logging source files from message file
 eval_messages.h eval_messages.cc: s-messages
@@ -32,4 +33,4 @@ s-messages: eval_messages.mes
 # first.
 BUILT_SOURCES = eval_messages.h eval_messages.cc
 
-CLEANFILES = expr_messages.h expr_messages.cc
+CLEANFILES = eval_messages.h eval_messages.cc
