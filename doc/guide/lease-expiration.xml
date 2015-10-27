@@ -20,8 +20,7 @@
   elapses, the lease is considered expired. There are many situations
   when the client may cease lease renewals.  A common scenario is when
   the machine running the client shuts down for an extended period of
-  time.
-  .</para>
+  time.</para>
 
   <para> The process through which the DHCP server makes expired leases
   available for reassignment is referred to as "lease reclamation" and expired
@@ -50,7 +49,7 @@
 
   <section id="lease-reclamation">
     <title>Lease Reclamation</title>
-    <para>lease reclamation is the process through which an expired lease
+    <para>Lease reclamation is the process through which an expired lease
     becomes available for assignment to the same or a different client.
     This process involves the following steps for each reclaimed lease:
     </para>
