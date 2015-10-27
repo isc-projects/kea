@@ -112,6 +112,33 @@ configuration file.</para>
     <section id="commands-common">
       <title>Commands supported by both DHCPv4 and DHCPv6 servers</title>
 
+      <section id="command-leases-reclaim">
+        <title>leases-reclaim command</title>
+        <para>
+          <emphasis>leases-reclaim</emphasis> command instructs the server to
+          reclaim all expired leases immediately. The command has the following
+          JSON syntax:
+<screen>
+{
+    "command": "leases-reclaim",
+    "arguments": {
+        "remove": true
+    }
+}
+</screen>
+        </para>
+
+        <para>The <emphasis>remove</emphasis> boolean parameter is mandatory
+        and it indicates whether the reclaimed leases should be removed from
+        the lease database (if true), or they should be left in the
+        <emphasis>expired-reclaimed</emphasis> state (if false). The latter
+        facilitates lease affinity, i.e. ability to re-assign expired lease to
+        the same client which used this lease before. See
+        <xref linkend="lease-affinity"/> for the details. Also, see
+        <xref linkend="lease-reclamation"/> for the general information
+        about the processing of expired leases (leases reclamation).</para>
+      </section>
+
       <section id="command-list-commands">
       <title>list-commands command</title>
 

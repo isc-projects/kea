@@ -2921,11 +2921,10 @@ should include options from the isc option space:
             This statistic shows the number of NA addresses in a given subnet that
             are assigned. This statistic increases every time a new lease is allocated
             (as a result of receiving a REQUEST message) and is decreased every time a
-            lease is released (a RELEASE message is received). When lease expiration
-            is implemented (planned for Kea 1.0), it will also decrease when a lease
-            is expired. The <emphasis>id</emphasis> is the subnet-id of a given
-            subnet. This statistic is exposed for each subnet separately. This
-            statistic is reset during a reconfiguration event.
+            lease is released (a RELEASE message is received) or expires. The
+            <emphasis>id</emphasis> is the subnet-id of a given subnet. This
+            statistic is exposed for each subnet separately. This statistic is
+            reset during a reconfiguration event.
             </entry>
             </row>
 
@@ -2951,11 +2950,10 @@ should include options from the isc option space:
             This statistic shows the number of PD prefixes in a given subnet that
             are assigned. This statistic increases every time a new lease is allocated
             (as a result of receiving a REQUEST message) and is decreased every time a
-            lease is released (a RELEASE message is received). When lease expiration
-            is implemented (planned for Kea 1.0), it will also decrease when a lease
-            is expired. The <emphasis>id</emphasis> is the subnet-id of a given
-            subnet. This statistic is exposed for each subnet separately. This
-            statistic is reset during a reconfiguration event.
+            lease is released (a RELEASE message is received) or expires. The
+            <emphasis>id</emphasis> is the subnet-id of a given subnet. This statistic
+            is exposed for each subnet separately. This statistic is reset during a
+            reconfiguration event.
             </entry>
             </row>
 
@@ -3115,14 +3113,6 @@ should include options from the isc option space:
           <simpara>
             Duplication report (DECLINE) and client reconfiguration (RECONFIGURE) are
             not yet supported.
-          </simpara>
-        </listitem>
-
-        <listitem>
-          <simpara>
-            The server doesn't act upon expired leases. In particular,
-            when a lease expires, the server doesn't request removal of
-            the DNS records associated with it.
           </simpara>
         </listitem>
       </itemizedlist>
