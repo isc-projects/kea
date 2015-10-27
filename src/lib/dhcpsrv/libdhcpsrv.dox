@@ -258,4 +258,120 @@ was made. The client will be offered/allocated a reserved address
 the next time it retries sending a DHCPDISCOVER/DHCPREQUEST message to
 the server.
 
+@section timerManager Timer Manager
+
+The fundamental role of the DHCP server is to receive and process DHCP
+messages received over the sockets opened on network interfaces. The
+servers' include the main loops in which the servers passively wait
+for the messages. This is done by calling the
+@c isc::dhcp::IfaceMgr::receive4 and/or @c isc::dhcp::IfaceMgr::receive6
+methods for DHCPv4 and DHCPv6 server respectively. Internally, these
+methods call @c select() on open sockets, which blocks for a
+specified amount of time.
+
+The implication of using the @c select() is that the server has no
+means to process any "events" while it is waiting for the @c select()
+to return. An example of such an event is the expiration of the timer
+which controls when the server should detect and process expired
+leases.
+
+The @c isc::dhcp::TimerMgr has been created to address the issue of
+processing expired leases according to the the dedicated timer.
+Nevertheless, this concept is univeral and should be used for
+all timers which need to be triggered asynchronously, i.e. independently
+from processing the DHCP messages.
+
+The @c TimerMgr allows for registering timers and associating them with
+user callback functions, which are executed without waiting for the
+call to the @c select() function to return as a result of the timeout.
+When the particular timer elapses, the blocking call to select is
+interrupted by sending data over a dedicated (for a timer)
+@c isc::util::WatchSocket. Each timer has an instance of
+@c isc::util::WatchSocket associated with it, and each such socket
+is registered with the @c IfaceMgr using the @c IfaceMgr::addExternalSocket.
+When the transmission of the data over the watch socket interrupts the
+@c select() call, the user callback is executed by
+@c isc::dhcp::IfaceMgr and the watch socket is cleared to accept
+subsequent events for that particular timer.
+
+The timers are implemented using the @c isc::asiolink::IntervalTimer class.
+They are run in a dedicated thread which is owned (created and destroyed)
+by @c isc::dhcp::TimerMgr. This worker thread runs an instance
+of @c isc::asiolink::IOService object which is associated with all
+registered timers. The thread uses a common callback function which
+is executed when a timer elapses. This callback function receives
+a name of the elapsed timer as an argument and, based on that, selects the
+appropriate @c isc::util::WatchSocket to be marked as ready. In order to
+overcome the race conditions with the main thread, the worker thread blocks
+right after it marks the watch socket as ready, and waits for this
+socket to be cleared by the main thread. This is the indication
+that the timer specific callback function has been invoked and the
+worker thread may continue monitoring registered timers and signal
+their readiness when they elapse.
+
+@section leaseReclamationRoutine Leases Reclamation Routine
+
+Lease reclamation is the process in which the expired lease becomes
+available for re-assignment to the same or another client. When the
+server reclaims the lease it executes the callouts registered for the
+"lease4_expire" and "lease6_expire" hook points, performs the DNS update
+to remove any DNS records associated with the expired lease, and finally
+marks a lease as reclaimed in the lease database. The lease may be
+marked as reclaimed by setting its state to @c Lease::STATE_EXPIRED_RECLAIMED
+or by being removed from the database.
+
+Reclamation is performed periodically for a bulk of expired
+leases in the lease reclamation routine. The lease reclamation routines
+for both DHCP servers are implemented in the @c isc::dhcp::AllocEngine:
+- @c isc::dhcp::AllocEngine::reclaimExpiredLeases4 (DHCPv4)
+- @c isc::dhcp::AllocEngine::reclaimExpiredLeases6 (DHCPv6)
+
+Note that besides the reclamation of the leases, these methods also
+update the relevant statistics, i.e. decrease the number of assigned
+leases and increase the number of reclaimed leases.
+
+The reclamation routines are executed periodically according to
+the server configuration (see the documentation for the
+"expired-leases-processing" configuration map). Internally, they are
+registered as callback functions in the @c isc::dhcp::TimerMgr
+(see @ref timerManager for the details), during the servers' startup
+or reconfiguration.
+
+Execution of the reclamation routine may take a relatively
+long period of time. It depends on the complexity of the callouts,
+whether the DNS update is required for leases, and the type of the
+lease database used. While the reclamation routine is
+executed, the server will not process any DHCP messages to avoid
+race conditions being a result of concurrent access to the lease
+database to allocate and reclaim leases. To make sure that the
+server remains responsive, it is possible to limit the number of
+leases being processed by the leases reclamation routine and/or
+limit the time for the reclamation routine to process
+leases. Both limits are specified in the respective arguments
+passed to the lease reclamation routines.
+
+As mentioned above, reclaimed leases may be marked as such, by
+updating their state to @c Lease::STATE_EXPIRED_RECLAIMED or by
+being removed. This behavior is controlled by the boolean parameter
+passed to the reclamation routine. The first approach is desired
+when the server should provide "lease affinity", i.e. ability to
+re-assign the same lease to the returning client. By only
+updating the lease state, the server preserves association of the
+lease with a particular client. When that client returns the
+server may assign the same lease to the client, assuming that this
+lease is still available. The lease is removed during the
+reclamation when the lease affinity is not required and it is
+preferred to not keep redundant information (about expired
+leases) in the lease database.
+
+If the reclaimed leases are not removed, they are held in the
+database for a specified amount of time after their expiration.
+Each reclaimed lease is removed when this time elapses for it.
+The @c isc::dhcp::LeaseMgr::deleteExpiredReclaimedLeases4 and
+@c isc::dhcp::LeaseMgr::deleteExpiredReclaimedLeases6 are used
+to remove those leases for which the specified amount of time
+since expiration elapsed. These methods are executed periodically
+by the DHCP servers using the dedicated timers registered in the
+@c isc::dhcp::TimerMgr.
+
 */
