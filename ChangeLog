@@ -1,3 +1,8 @@
+1040.	[func]		tmark
+	When kea servers lose connectivity with MySQL or PostgreSQL backends
+	they will log an error message and exit with an exit value of 255.
+	(Trac #3780, git cf94e99698e1d8a1613026bda5e4fc9bb4a68d74)
+
 1039.	[doc]		marcin
 	Configuration parameters pertaining to processing expired
 	leases by the DHCPv4 and DHCPv6 server have been documented.
