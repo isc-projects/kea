@@ -6,38 +6,41 @@
 <chapter id="lease-expiration">
   <title>Lease Expiration in DHCPv4 and DHCPv6</title>
 
-  <para>The major role of the DHCP server is to assign addresses or/and
-  delegate prefixes to the DHCP clients. These addresses and delegated
-  prefixes are often referred to as 'leases'. The leases are typically
-  assigned to the clients for a finite amount of time, known as
-  'valid lifetime'. The DHCP client willing to continue using the assigned
-  leases, will periodically renew them by sending appropriate message
-  to the DHCP server. The DHCP server records the time when the lease
-  is renewed and calculates a new expiration time for it.
+  <para>The primary role of the DHCP server is to assign addresses and/or
+  delegate prefixes to DHCP clients. These addresses and prefixes are
+  often referred to as 'leases'. Leases are typically assigned to clients
+  for a finite amount of time, known as 'valid lifetime'. DHCP clients who
+  wish to continue using their assigned leases, will periodically renew them
+  by sending the appropriate message to the DHCP server. The DHCP server records
+  the time when these leases are renewed and calculates new expiration times
+  for them.
   </para>
 
-  <para>If the client does not renew a lease and its valid lifetime
+  <para>If the client does not renew a lease before its valid lifetime
   elapses, the lease is considered expired. There are many situations
-  when the client may cease lease renewals.
-  The most obvious one is the shutdown of the machine running the
-  client.</para>
+  when the client may cease lease renewals.  A common scenario is when
+  the machine running the client shuts down for an extended period of
+  time.
+  .</para>
 
-  <para>The DHCP server makes expired leases available for assignment.
-  This process is referred to as 'lease reclamation', and consequently
-  each expired lease made available for assignment is called 'reclaimed'.
+  <para> The process through which the DHCP server makes expired leases
+  available for reassignment is referred to as "lease reclamation" and expired
+  leases returned to availability through this process are referred to as
+  "reclaimed".
+
   The DHCP server should reclaim an expired lease as soon as it detects
-  that it has expired. One possible way in which the server may detect
-  expiration is when it is trying to allocate a lease to a client and
-  it finds this lease is already present in the database. If this lease
-  is expired, it may be allocated to the same or another client, but it
-  must be first reclaimed. Another way the server detects
-  expired leases is by periodically quering the lease database. The
-  further sections of this chapter explain how to configure the server
-  to periodically query for the expired leases and how to minimize the
-  impact of the periodic leases reclamation process on the server's
-  responsiveness. Finally, the 'lease affinity' is explained, which
-  provides means to assign the same lease to the returning client
-  after its lease has expired.
+  that it has expired. One way in which the server may detect expiration
+  is when it is trying to allocate a lease to a client and finds this
+  lease already present in the database but expired.  Another way the
+  server detects expired leases is by periodically querying the lease
+  database for them.  Regardless of how an expired lease is detected, before
+  it my assigned to a client, it must be reclaimed.
+
+  This chapter explains how to configure the server to periodically query
+  for the expired leases and how to minimize the impact of the periodic leases
+  reclamation process on the server's responsiveness. Finally, 'lease affinity',
+  which provides the means to assign the same lease to the returning client
+  after its lease has expired, is explained.
   </para>
 
   <para>Although, all configuration examples in this section are provided
@@ -47,7 +50,7 @@
 
   <section id="lease-reclamation">
     <title>Lease Reclamation</title>
-    <para>The lease reclamation is a process in which an expired lease
+    <para>lease reclamation is the process through which an expired lease
     becomes available for assignment to the same or a different client.
     This process involves the following steps for each reclaimed lease:
     </para>
@@ -73,30 +76,29 @@
       </listitem>
     </itemizedlist>
 
-    <para>Please refer to the <xref linkend="dhcp-ddns-server"/> to see
-    how to configure the DNS updates in Kea, and to the
+    <para>Please refer to <xref linkend="dhcp-ddns-server"/> to see
+    how to configure DNS updates in Kea, and to
     <xref linkend="hooks-libraries"/> for information about using
     hooks libraries.</para>
   </section>
 
   <section id="lease-reclaim-config">
     <title>Configuring Leases Reclamation</title>
-    <para>Kea can be configured to periodically detect and process expired
+    <para>Kea can be configured to periodically detect and reclaim expired
     leases. During this process the lease entries in the database are
-    modified or removed, therefore the server will not process incoming DHCP
+    modified or removed. Therefore the server will not process incoming DHCP
     messages to avoid issues with concurrent access to database information.
-    As a result, the server will be unresponsive when the leases reclamation
-    is performed, the DHCP queries will accumulate and responses will be
+    As a result, the server will be unresponsive while lease reclamation
+    is performed. DHCP queries will accumulate and responses will be
     sent once the leases reclamation cycle is complete.</para>
 
-    <para>In the deployments where the response time is critical, the
-    administrators want to minimize the interruptions in the service
-    caused by the processing of expired leases. Kea provides a set of
-    configuration parameters to control the frequency of leases reclamation,
-    the maximum number of leases processed in a single cycle and the
-    timeout after which the reclamation should be interrupted. The
-    following configuration examples demonstrate how these parameters
-    can be used:
+    <para>In deployments where response time is critical, administrators may
+    wish to minimize the interruptions in service caused by lease reclamation.
+    Toward this end, Kea provides configuration parameters to control: the
+    frequency of lease reclamation cycles, the maximum number of leases
+    processed in a single reclamation cycle, and the maximum amount of time a
+    single reclamation cycle is allowed to run before being interrupted. The
+    following examples demonstrate how these parameters can be used:
 
 <screen>
 "Dhcp4": {
@@ -120,7 +122,7 @@
 
 <screen>
 
-|  c1  |            | c2 |            |c3|            | c4 |                         
+|  c1  |            | c2 |            |c3|            | c4 |
 |&#x3c;----&#x3e;|&#x3c;----------&#x3e;|&#x3c;--&#x3e;|&#x3c;----------&#x3e;|&#x3c;&#x3e;|&#x3c;----------&#x3e;|&#x3c;--&#x3e;|
 ---------------------------------------------------------------->
 |      |     5s     |    |     5s     |  |     5s     |    | time
@@ -142,18 +144,17 @@
     queries and does not perform leases reclamation. The
     <command>max-reclaim-leases</command> and
     <command>max-reclaim-time</command> are set to 0, which implies that
-    there is no restriction on the maximum number of reclaimed leases
-    in the particular cycle, and the maximum duration of each cycle.
+    there is no restriction on the maximum number of leases reclaimed
+    in the particular cycle, or the maximum duration of each cycle.
     </para>
 
-    <para>In the deployments with high lease pool utilization, relatively
-    short valid lifetimes and clients often disconnecting allowing the
-    leases to expire, the number of expired leases requiring reclamation
-    at the given time may rise significantly. In this case it is often
-    desired to apply restrictions on the maximum duration of the leases
-    reclamation cycle or the number of leases that can be reclaimed in
-    this cycle. The following configuration demonstrates how this
-    can be done:
+    <para>In deployments with high lease pool utilization, relatively
+    short valid lifetimes, and frequently disconnecting clients which
+    allow leases to expire; the number of expired leases requiring reclamation
+    at any given time may rise significantly. In this case it is often
+    desirable to apply restrictions on the maximum duration of a reclamation
+    cycle or the maximum number of leases reclaimed in a cycle. The following
+    configuration demonstrates how this can be done:
 
 <screen>
 "Dhcp4": {
@@ -175,10 +176,10 @@
     </para>
 
     <para>The <command>max-reclaim-leases</command> parameter limits the number
-    of leases reclaimed in the single cycle to 100. The
+    of leases reclaimed in a single cycle to 100. The
     <command>max-reclaim-time</command> limits the maximum duration of each
-    cycle to 50ms. The lease reclamation cycle will be interrupted when
-    first of these limitations is hit. The reclamation of all unreclaimed
+    cycle to 50ms. The lease reclamation cycle will be interrupted if either
+    of these limitations is reached. The reclamation of all unreclaimed
     leases will be attempted in subsequent cycles.</para>
 
     <para>The following diagram illustrates the behavior of the system in the
@@ -200,50 +201,47 @@
     more than 50ms, and thus is interrupted according to the value of the
     <command>max-reclaim-time</command>. This results in equal durations of
     all reclamation cycles over time. Note that in this example the limitation
-    of maximum 100 leases is not hit. This may be the case when the database
-    transactions are slow or the callouts in the hook libraries attached to
-    the server are slow. In any case, the choice between the selecting the
-    specific number of leases or the maximum time for the lease reclamation
-    strongly depends on the particular deployment, used lease database
-    backend, hooks libraries etc.</para>
+    of maximum 100 leases is not reached. This may be the case when database
+    transactions are slow or callouts in the hook libraries attached to
+    the server are slow.  Regardless, the choosing values for either the
+    maximum number of leases or a maximum cycle time strongly depends on the
+    particular deployment, lease database backend being used, and any hooks
+    libraries etc.  Administrators may need to experiment to tune the system
+    to suit the dynamics of their deployment.</para>
 
-    <para>If the limits are applied on the maximum number of reclaimed leases
-    or the maximum time for a single reclamation cycle, there is a risk
-    that the server will not be able to catch up the number of expired
-    leases to reclaim. This should not be the problem if the server is
-    dealing with a temporary burst of expirations, because it should be
-    able to eventually deal with them over time. However, if leases
-    expire at the high rate for a longer period of time, the unreclaimed
-    leases will pile up in the database. In order to notify the administrator
-    that the current configuration does not satisfy the needs for
-    reclamation of expired leases, the server issues a warning message
-    in the log, if it was unable to reclaim all leases within the last
-    couple of reclamation cycles. The number of cycles after which such
-    warning is issued is specified with the
+    <para>It is important to realize that with the use of these limits, there
+    is a risk that expired leases will accumulate faster than the server can
+    reclaim them.  This should not be the problem if the server is dealing
+    with a temporary burst of expirations, because it should be able to
+    eventually deal with them over time. However, if leases expire at the high
+    rate for a longer period of time, the unreclaimed leases will pile up in
+    the database. In order to notify the administrator that the current
+    configuration does not satisfy the needs for reclamation of expired
+    leases, the server issues a warning message in the log, if it was unable
+    to reclaim all leases within the last couple of reclamation cycles. The
+    number of cycles after which such warning is issued is specified with the
     <command>unwarned-reclaim-cycles</command> configuration parameter.
     </para>
 
     <para>Setting the <command>reclaim-timer-wait-time</command> to 0 disables
     periodic reclamation of the expired leases.</para>
-
   </section>
 
   <section id="lease-affinity">
     <title>Configuring Lease Affinity</title>
-    <para>Suppose that the laptop goes to a sleep mode after a period of user's
-    inactivity. While the laptop is in the sleep mode, the DHCP client
-    running on it will not renew leases obtained from the server and the
-    leases will eventually expire. When the laptop wakes up from the
-    sleep mode, it is often desired that it can continue using previous
-    IP addresses. In order to facilitate it, the server needs to correlate
-    returning clients with the expired leases they were using in the past.
-    When the client returns, the server will first check for those
-    leases and re-assign them if they are still available (not assigned
-    to another client). The ability of the server to re-assign the same
-    lease to the returning client is referred to as 'lease affinity'.
+    <para>Suppose that a laptop goes to a sleep mode after a period of user
+    inactivity.  While the laptop is in sleep mode, its DHCP client will not
+    renew leases obtained from the server and these leases will eventually
+    expire.  When the laptop wakes up, it is often desired that it continue
+    using its previous assigned IP addresses. In order to facilitate this,
+    the server needs to correlate returning clients with their expired leases
+    When the client returns, the server will first check for those leases and
+    re-assign them if they have not assigned to another client.  The ability
+    of the server to re-assign the same lease to a returning client is
+    referred to as 'lease affinity'.
     </para>
 
-    <para>When the lease affinity is enabled, the server would still
+    <para>When lease affinity is enabled, the server will still
     reclaim leases according to the parameters described in
     <xref linkend="lease-reclaim-config"/>, but the reclaimed leases
     will be held in the database (rather than removed) for the specified
@@ -251,12 +249,12 @@
     if there are any reclaimed leases associated with this client and
     re-assign them if possible. However, it is important to note that
     any reclaimed lease may be assigned to another client if that client
-    asks for it. Therefore, the lease affinity provides no guarantee that
-    the reclaimed lease will be available for the client who used it
-    before. It merely increases the chances for the client to be assigned
-    the same lease. If the lease pool is small (mostly applies to DHCPv4
-    for which address space is small), there is an increased likelihood
-    that the expired lease will be hijacked by another client.
+    specifically asks for it. Therefore, the lease affinity does not
+    guarantee that the reclaimed lease will be available for the client
+    who used it before. It merely increases the chances for the client to
+    be assigned the same lease. If the lease pool is small (mostly applies
+    to DHCPv4 for which address space is small), there is an increased
+    likelihood that the expired lease will be hijacked by another client.
     </para>
 
     <para>Consider the following configuration:
@@ -279,27 +277,24 @@
 
     <para>The <command>hold-reclaim-time</command> specifies how many seconds
     after an expiration a reclaimed lease should be held in the database
-    for re-assignment to the same client. In the example given above, the
+    for re-assignment to the same client. In the example given above,
     reclaimed leases will be held for 30 minutes (1800s) after their
     expiration. During this time, the server will likely be able to
     re-assign the same lease to the returning client, unless another client
     requests this lease and the server assigns it.</para>
 
-    <para>The server must occasionally remove reclaimed leases for which the
-    time indicated by <command>hold-reclaim-time</command> elapsed. The
+    <para>The server must periodically remove reclaimed leases for which the
+    time indicated by <command>hold-reclaim-time</command> has elapsed. The
     <command>flush-reclaimed-timer-wait-time</command> controls how
     often the server removes such leases. In the example provided
-    above, the server will initiate removal of leases 5 seconds after
+    above, the server will initiate removal of such leases 5 seconds after
     the previous removal attempt was completed. Setting this value to 0
     disables lease affinity, in which case leases will be removed from the
-    lease database when they are reclaimed. If the lease affinity is
-    enabled, it is recommended that this parameter is set to significantly
-    higher value than the <command>reclaim-timer-wait-time</command>
-    because timely removal of expired-reclaimed leases is not critical,
-    while this removal impacts the server's responsiveness, because the
-    server doesn't process DHCP messages while it removes leases from
-    the database.</para>
-
+    lease database when they are reclaimed.  If lease affinity is enabled, it
+    is recommended that hold-reclaim-time be set to a value significantly
+    higher than the <command>reclaim-timer-wait-time</command>, as timely
+    removal of expired-reclaimed leases is less critical while the removal
+    process may impact server responsiveness.
   </section>
 
   <section id="lease-reclamation-defaults">

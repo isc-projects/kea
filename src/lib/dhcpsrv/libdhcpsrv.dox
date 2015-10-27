@@ -285,24 +285,24 @@ The @c TimerMgr allows for registering timers and associating them with
 user callback functions, which are executed without waiting for the
 call to the @c select() function to return as a result of the timeout.
 When the particular timer elapses, the blocking call to select is
-interrupted by sending data over the dedicated (for a timer)
-@c isc::util::WatchSocket. Each timer has an instance of the
+interrupted by sending data over a dedicated (for a timer)
+@c isc::util::WatchSocket. Each timer has an instance of
 @c isc::util::WatchSocket associated with it, and each such socket
-is registered in the @c IfaceMgr using the @c IfaceMgr::addExternalSocket.
+is registered with the @c IfaceMgr using the @c IfaceMgr::addExternalSocket.
 When the transmission of the data over the watch socket interrupts the
-@c select() call, the user callback is executed by the
+@c select() call, the user callback is executed by
 @c isc::dhcp::IfaceMgr and the watch socket is cleared to accept
-subsequent events for the particular timer.
+subsequent events for that particular timer.
 
 The timers are implemented using the @c isc::asiolink::IntervalTimer class.
 They are run in a dedicated thread which is owned (created and destroyed)
-in the @c isc::dhcp::TimerMgr. This worker thread runs an instance
-of the @c isc::asiolink::IOService object, associated with all
+by @c isc::dhcp::TimerMgr. This worker thread runs an instance
+of @c isc::asiolink::IOService object which is associated with all
 registered timers. The thread uses a common callback function which
-is executed when the timer elapses. This callback function receives
+is executed when a timer elapses. This callback function receives
 a name of the elapsed timer as an argument and, based on that, selects the
 appropriate @c isc::util::WatchSocket to be marked as ready. In order to
-overcome the race conditions with a main thread, the worker thread blocks
+overcome the race conditions with the main thread, the worker thread blocks
 right after it marks the watch socket as ready, and waits for this
 socket to be cleared by the main thread. This is the indication
 that the timer specific callback function has been invoked and the
@@ -311,7 +311,7 @@ their readiness when they elapse.
 
 @section leaseReclamationRoutine Leases Reclamation Routine
 
-The lease reclamation is the process in which the expired lease becomes
+Lease reclamation is the process in which the expired lease becomes
 available for re-assignment to the same or another client. When the
 server reclaims the lease it executes the callouts registered for the
 "lease4_expire" and "lease6_expire" hook points, performs the DNS update
@@ -320,7 +320,7 @@ marks a lease as reclaimed in the lease database. The lease may be
 marked as reclaimed by setting its state to @c Lease::STATE_EXPIRED_RECLAIMED
 or by being removed from the database.
 
-The leases reclamation is performed periodically for a bulk of expired
+Reclamation is performed periodically for a bulk of expired
 leases in the lease reclamation routine. The lease reclamation routines
 for both DHCP servers are implemented in the @c isc::dhcp::AllocEngine:
 - @c isc::dhcp::AllocEngine::reclaimExpiredLeases4 (DHCPv4)
@@ -330,23 +330,23 @@ Note that besides the reclamation of the leases, these methods also
 update the relevant statistics, i.e. decrease the number of assigned
 leases and increase the number of reclaimed leases.
 
-The leases reclamation routines are executed periodically according to
+The reclamation routines are executed periodically according to
 the server configuration (see the documentation for the
 "expired-leases-processing" configuration map). Internally, they are
 registered as callback functions in the @c isc::dhcp::TimerMgr
 (see @ref timerManager for the details), during the servers' startup
 or reconfiguration.
 
-Execution of the leases reclamation routine may take relatively
+Execution of the reclamation routine may take a relatively
 long period of time. It depends on the complexity of the callouts,
 whether the DNS update is required for leases, and the type of the
-lease database used. While the leases reclamation routine is
-executed, the server is not processing any DHCP messages to avoid
+lease database used. While the reclamation routine is
+executed, the server will not process any DHCP messages to avoid
 race conditions being a result of concurrent access to the lease
 database to allocate and reclaim leases. To make sure that the
 server remains responsive, it is possible to limit the number of
 leases being processed by the leases reclamation routine and/or
-limit the time for the lease reclamation routine to process
+limit the time for the reclamation routine to process
 leases. Both limits are specified in the respective arguments
 passed to the lease reclamation routines.
 
@@ -357,7 +357,7 @@ passed to the reclamation routine. The first approach is desired
 when the server should provide "lease affinity", i.e. ability to
 re-assign the same lease to the returning client. By only
 updating the lease state, the server preserves association of the
-lease with the particular client. When the client returns the
+lease with a particular client. When that client returns the
 server may assign the same lease to the client, assuming that this
 lease is still available. The lease is removed during the
 reclamation when the lease affinity is not required and it is
