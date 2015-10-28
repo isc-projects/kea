@@ -34,7 +34,7 @@
 #include <vector>
 
 #include <stdlib.h>
-#include <string.h>
+#include <cstring>
 
 #include <boost/lexical_cast.hpp>
 
