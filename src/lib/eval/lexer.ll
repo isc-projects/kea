@@ -17,7 +17,6 @@
 static isc::eval::location loc;
 %}
 %option noyywrap nounput batch debug noinput
-id    [a-zA-Z][a-zA-Z_0-9]*
 int   [0-9]+
 blank [ \t]
 
@@ -33,26 +32,36 @@ blank [ \t]
     loc.step();
 %}
 
-{blank}+   loc.step ();
-[\n]+      loc.lines (yyleng); loc.step ();
-"-"      return isc::eval::EvalParser::make_MINUS(loc);
-"+"      return isc::eval::EvalParser::make_PLUS(loc);
-"*"      return isc::eval::EvalParser::make_STAR(loc);
-"/"      return isc::eval::EvalParser::make_SLASH(loc);
-"("      return isc::eval::EvalParser::make_LPAREN(loc);
-")"      return isc::eval::EvalParser::make_RPAREN(loc);
-":="     return isc::eval::EvalParser::make_ASSIGN(loc);
+{blank}+   loc.step();
+[\n]+      loc.lines(yyleng); loc.step();
 
-
-{int}      {
-  errno = 0;
-  long n = strtol (yytext, NULL, 10);
-  if (! (INT_MIN <= n && n <= INT_MAX && errno != ERANGE))
-    driver.error (loc, "integer is out of range");
-  return isc::eval::EvalParser::make_NUMBER(n, loc);
+\"[a-zA-Z_0-9]*\" {
+    // This is a string, no need to do any conversions here.
+    return isc::eval::EvalParser::make_STRING(yytext, loc);
 }
 
-{id}       return isc::eval::EvalParser::make_IDENTIFIER(yytext, loc);
+option\[{int}\] {
+    long n = strtol(yytext, NULL, 10);
+    /// @todo: Sanity check n
+    if (n<0 || n>65535) {
+        driver.error(loc, "Option code has invalid values. Allowed range: 0..65535");
+    }
+
+    return isc::eval::EvalParser::make_OPTION(n, loc);
+}
+
+"==" {
+    return isc::eval::EvalParser::make_EQUAL(loc);
+}
+
+"substring" {
+    return isc::eval::EvalParser::make_SUBSTRING(loc);
+}
+
+"("      return isc::eval::EvalParser::make_LPAREN(loc);
+")"      return isc::eval::EvalParser::make_RPAREN(loc);
+","      return isc::eval::EvalParser::make_COMA(loc);
+
 .          driver.error (loc, "invalid character");
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);
 %%
@@ -60,19 +69,18 @@ blank [ \t]
 void
 EvalContext::scan_begin()
 {
-  yy_flex_debug = trace_scanning;
-  if (file.empty () || file == "-")
-    yyin = stdin;
-  else if (!(yyin = fopen(file.c_str (), "r")))
-    {
-      error ("cannot open " + file + ": " + strerror(errno));
-      exit (EXIT_FAILURE);
+    yy_flex_debug = trace_scanning;
+    if (file.empty () || file == "-") {
+        yyin = stdin;
+    }
+    else if (!(yyin = fopen(file.c_str (), "r"))) {
+        error ("cannot open " + file + ": " + strerror(errno));
+        exit (EXIT_FAILURE);
     }
 }
 
 void
 EvalContext::scan_end()
 {
-  fclose (yyin);
+    fclose (yyin);
 }
-

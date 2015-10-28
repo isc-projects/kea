@@ -8,16 +8,17 @@
 %define parse.assert
 %code requires
 {
-# include <string>
+#include <string>
+#include <eval/token.h>
 class EvalContext;
 }
 // The parsing context.
-%param { EvalContext& driver }
+%param { EvalContext& ctx }
 %locations
 %initial-action
 {
   // Initialize the initial location.
-  @$.begin.filename = @$.end.filename = &driver.file;
+  @$.begin.filename = @$.end.filename = &ctx.file;
 };
 %define parse.trace
 %define parse.error verbose
@@ -28,43 +29,36 @@ class EvalContext;
 %define api.token.prefix {TOKEN_}
 %token
   END  0  "end of file"
-  ASSIGN  ":="
-  MINUS   "-"
-  PLUS    "+"
-  STAR    "*"
-  SLASH   "/"
+  EQUAL "=="
+  SUBSTRING "substring"
+  COMA ","
   LPAREN  "("
   RPAREN  ")"
 ;
-%token <std::string> IDENTIFIER "identifier"
-%token <int> NUMBER "number"
-%type  <int> exp
+%token <std::string> STRING "constant string"
+%token <int> OPTION "option code"
 %printer { yyoutput << $$; } <*>;
 %%
-%start unit;
-unit: assignments exp  { driver.result = $2; };
 
-assignments:
-  %empty                 {}
-| assignments assignment {};
+// The whole grammar starts with an expression.
+%start expression;
 
-assignment:
-  "identifier" ":=" exp { driver.variables[$1] = $3; };
+// Expression can either be a single token or a (something == something) expression
+expression:
+token EQUAL token
+| token;
 
-%left "+" "-";
-%left "*" "/";
-exp:
-  exp "+" exp   { $$ = $1 + $3; }
-| exp "-" exp   { $$ = $1 - $3; }
-| exp "*" exp   { $$ = $1 * $3; }
-| exp "/" exp   { $$ = $1 / $3; }
-| "(" exp ")"   { std::swap ($$, $2); }
-| "identifier"  { $$ = driver.variables[$1]; }
-| "number"      { std::swap ($$, $1); };
+token:
+STRING { /* push back TokenString */ }
+| OPTION { /* push back TokenOption */ }
+| SUBSTRING "(" token "," token "," token ")" {
+    /* push back TokenSubstring */
+  }
+
 %%
 void
 isc::eval::EvalParser::error(const location_type& l,
                              const std::string& m)
 {
-  driver.error (l, m);
+    ctx.error(l, m);
 }
