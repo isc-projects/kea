@@ -336,13 +336,15 @@ HooksLibrariesParser::build(ConstElementPtr value) {
             if (! lib_found) {
                 isc_throw(DhcpConfigError, "hooks library configuration error:"
                     " one or more hooks-libraries elements are missing the "
-                    " name of the library");
+                    " name of the library"  <<
+                    " (" << library_entry->getPosition() << ")");
             }
         }
     } else {
         isc_throw(DhcpConfigError, "hooks library configuration error:"
             " list of hooks libraries is not a list of maps, each map"
-            " containing a 'library' element");
+            " containing a 'library' element" <<
+            " (" << value->getPosition() << ")");
     }
 
     // Check if the list of libraries has changed.  If not, nothing is done
