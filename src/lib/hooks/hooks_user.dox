@@ -795,11 +795,9 @@ DHCPv4 module, it must be listed in the "hooks-libraries" element of the
     "hooks-libraries": [
         {
             "library": "/usr/local/lib/example.so"
-        },
-        {
-            :
         }
-       :
+    ]
+        :
 }
 @endcode
 (Note that "hooks" is plural.)
@@ -808,18 +806,18 @@ Each entry in the "hooks-libraries" list is a structure (a "map" in JSON
 parlance) that holds the following element:
 - library - the name of the library to load.  This must be a string.
 
-The DHCPv4 server will load the library and execute the callouts each time a
-request is received.
-
 @note The syntax of the hooks-libraries configuration element has changed
 since kea 0.9.2 (in that version, "hooks-libraries" was just a list of
 libraries).  This change is in preparation for the introduction of
-library-=specific parameters, which will be added to Kea in a version after 1.0.
+library-specific parameters, which will be added to Kea in a version after 1.0.
 
-@note The above assumes that the hooks library will be used with a version of
-Kea that is dynamically-linked.  For information regarding running
-hooks libraries against a statically-linked Kea, see
-@ref hooksdgStaticallyLinkedKea.
+The DHCPv4 server will load the library and execute the callouts each time a
+request is received.
+
+@note All the above assumes that the hooks library will be used with a
+version of Kea that is dynamically-linked.  For information regarding
+running hooks libraries against a statically-linked Kea, see @ref
+hooksdgStaticallyLinkedKea.
 
 @section hooksdgAdvancedTopics Advanced Topics
 
