@@ -6,7 +6,7 @@
 
 // Tell Flex the lexer's prototype ...
 # define YY_DECL \
-  yy::EvalParser::symbol_type yylex (EvalContext& driver)
+    isc::eval::EvalParser::symbol_type yylex (EvalContext& driver)
 
 // ... and declare it for the parser's sake.
 YY_DECL;
@@ -41,7 +41,7 @@ public:
   bool trace_parsing;
 
   // Error handling.
-  void error (const yy::location& l, const std::string& m);
+  void error (const isc::eval::location& l, const std::string& m);
   void error (const std::string& m);
 };
 #endif // ! EVALCONTEXT_HH
