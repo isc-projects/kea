@@ -1,17 +1,17 @@
 %skeleton "lalr1.cc" /* -*- C++ -*- */
 %require "3.0.2"
 %defines
-%define parser_class_name {calcxx_parser}
+%define parser_class_name {EvalParser}
 %define api.token.constructor
 %define api.value.type variant
 %define parse.assert
 %code requires
 {
 # include <string>
-class calcxx_driver;
+class EvalContext;
 }
 // The parsing context.
-%param { calcxx_driver& driver }
+%param { EvalContext& driver }
 %locations
 %initial-action
 {
@@ -62,8 +62,8 @@ exp:
 | "number"      { std::swap ($$, $1); };
 %%
 void
-yy::calcxx_parser::error (const location_type& l,
-                          const std::string& m)
+yy::EvalParser::error(const location_type& l,
+                      const std::string& m)
 {
   driver.error (l, m);
 }
