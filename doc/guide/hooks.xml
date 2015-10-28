@@ -70,12 +70,6 @@
         a library.  The change has been made in Kea 1.0 to facilitate the
         specification of library-specific parameters, a feature that will be
         added to a future version of Kea.
-      </para>
-      <para>
-        To ease the transtion, the old syntax is still accepted, although a
-        warning message is issued when it is encountered.  Users are urged
-        to switch to the new syntax as soon as pssible: the old syntax will
-        be withdrawn when parameters are finally added to Kea.
       </para></note>
       <para>
       Notes:
