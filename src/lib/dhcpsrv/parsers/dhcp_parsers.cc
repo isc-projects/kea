@@ -18,7 +18,6 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_option.h>
-#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <hooks/hooks_manager.h>
@@ -274,77 +273,35 @@ HooksLibrariesParser::HooksLibrariesParser(const std::string& param_name)
 //
 // Kea 1.0 has not yet implemented parameters, so additional elements in the
 // map are ignored.
-//
-// The following code eases the transition between the two syntaxes as both
-// are allowed, although the old syntax gives a warning message.
 void
 HooksLibrariesParser::build(ConstElementPtr value) {
     // Initialize.
     libraries_.clear();
     changed_ = false;
 
-    // Iterate through the list of values to see what is there.  This list
-    // should be all strings (old syntax) or all maps (new syntax).
-    bool all_string = true;
-    bool all_map = true;
+    // This is the new syntax.  Iterate through it and get each map.
     BOOST_FOREACH(ConstElementPtr library_entry, value->listValue()) {
-        if (library_entry->getType() == Element::string) {
-            all_map = false;
-        } else if  (library_entry->getType() == Element::map) {
-            all_string = false;
-        } else {
-            all_map = false;
-            all_string = false;
-        }
-    }
+        // Iterate iterate through each element in the map.  We check
+        // whether we have found a library element.
+        bool lib_found = false;
+        BOOST_FOREACH(ConfigPair entry_item, library_entry->mapValue()) {
+            if (entry_item.first == "library") {
+                // Name of the library. Add it to the list after trimming
+                // quotes.
+                string libname = (entry_item.second)->stringValue();
+                boost::erase_all(libname, "\"");
+                libraries_.push_back(libname);
 
-    if (all_string && all_map) {
-        // The list must be empty.  This is valid in both syntaxes: do nothing
-        // as this is taken care of below.
-
-    } else if (all_string) {
-        // This is the old (pre Kea-1.0 syntax).  Warn about it, but
-        // otherwise accept it.
-        LOG_WARN(dhcpsrv_logger, DHCPSRV_HOOK_DEPRECATED_SYNTAX);
-
-        // Iterate through each entry in the list - this is just the library
-        // name.  Just remove quotes and add to the library list.
-        BOOST_FOREACH(ConstElementPtr library_entry, value->listValue()) {
-            string libname = library_entry->stringValue();
-            boost::erase_all(libname, "\"");
-            libraries_.push_back(libname);
-        }
-
-    } else if (all_map) {
-        // This is the new syntax.  Iterate through it and get each map.
-        BOOST_FOREACH(ConstElementPtr library_entry, value->listValue()) {
-            // Iterate iterate through each element in the map.  We check
-            // whether we have found a library element.
-            bool lib_found = false;
-            BOOST_FOREACH(ConfigPair entry_item, library_entry->mapValue()) {
-                if (entry_item.first == "library") {
-                    // Name of the library. Add it to the list after trimming
-                    // quotes.
-                    string libname = (entry_item.second)->stringValue();
-                    boost::erase_all(libname, "\"");
-                    libraries_.push_back(libname);
-
-                    // ... and we have found the library name.
-                    lib_found = true;
-                }
-            }
-            if (! lib_found) {
-                isc_throw(DhcpConfigError, "hooks library configuration error:"
-                    " one or more hooks-libraries elements are missing the "
-                    " name of the library"  <<
-                    " (" << library_entry->getPosition() << ")");
+                // ... and we have found the library name.
+                lib_found = true;
             }
         }
-    } else {
-        isc_throw(DhcpConfigError, "hooks library configuration error:"
-            " list of hooks libraries is not a list of maps, each map"
-            " containing a 'library' element" <<
-            " (" << value->getPosition() << ")");
+        if (! lib_found) {
+            isc_throw(DhcpConfigError, "hooks library configuration error:"
+                " one or more hooks-libraries elements are missing the"
+                " name of the library"  <<
+                " (" << library_entry->getPosition() << ")");
+        }
     }
 
     // Check if the list of libraries has changed.  If not, nothing is done

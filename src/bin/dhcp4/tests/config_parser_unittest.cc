@@ -2900,7 +2900,9 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
         if (i > 0) {
             config += string(", ");
         }
-        config += (quote + libraries[i] + quote);
+        config += (string("{ \"library\": ") +
+                      quote + libraries[i] + quote) +
+                   string("}");
     }
 
     // Append the remainder of the configuration.
