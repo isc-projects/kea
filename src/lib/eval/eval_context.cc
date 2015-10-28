@@ -19,7 +19,7 @@ EvalContext::parseFile(const std::string &filename)
 {
     file = filename;
     scan_begin();
-    yy::EvalParser parser (*this);
+    isc::eval::EvalParser parser (*this);
     parser.set_debug_level(trace_parsing);
     int res = parser.parse();
     scan_end();
@@ -42,7 +42,7 @@ EvalContext::parseString(const std::string& str)
 }
 
 void
-EvalContext::error (const yy::location& l, const std::string& m)
+EvalContext::error (const isc::eval::location& l, const std::string& m)
 {
   std::cerr << l << ": " << m << std::endl;
 }

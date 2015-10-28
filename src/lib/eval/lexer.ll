@@ -14,7 +14,7 @@
 # define yywrap() 1
 
 // The location of the current token.
-static yy::location loc;
+static isc::eval::location loc;
 %}
 %option noyywrap nounput batch debug noinput
 id    [a-zA-Z][a-zA-Z_0-9]*
@@ -35,13 +35,13 @@ blank [ \t]
 
 {blank}+   loc.step ();
 [\n]+      loc.lines (yyleng); loc.step ();
-"-"      return yy::EvalParser::make_MINUS(loc);
-"+"      return yy::EvalParser::make_PLUS(loc);
-"*"      return yy::EvalParser::make_STAR(loc);
-"/"      return yy::EvalParser::make_SLASH(loc);
-"("      return yy::EvalParser::make_LPAREN(loc);
-")"      return yy::EvalParser::make_RPAREN(loc);
-":="     return yy::EvalParser::make_ASSIGN(loc);
+"-"      return isc::eval::EvalParser::make_MINUS(loc);
+"+"      return isc::eval::EvalParser::make_PLUS(loc);
+"*"      return isc::eval::EvalParser::make_STAR(loc);
+"/"      return isc::eval::EvalParser::make_SLASH(loc);
+"("      return isc::eval::EvalParser::make_LPAREN(loc);
+")"      return isc::eval::EvalParser::make_RPAREN(loc);
+":="     return isc::eval::EvalParser::make_ASSIGN(loc);
 
 
 {int}      {
@@ -49,12 +49,12 @@ blank [ \t]
   long n = strtol (yytext, NULL, 10);
   if (! (INT_MIN <= n && n <= INT_MAX && errno != ERANGE))
     driver.error (loc, "integer is out of range");
-  return yy::EvalParser::make_NUMBER(n, loc);
+  return isc::eval::EvalParser::make_NUMBER(n, loc);
 }
 
-{id}       return yy::EvalParser::make_IDENTIFIER(yytext, loc);
+{id}       return isc::eval::EvalParser::make_IDENTIFIER(yytext, loc);
 .          driver.error (loc, "invalid character");
-<<EOF>>    return yy::EvalParser::make_END(loc);
+<<EOF>>    return isc::eval::EvalParser::make_END(loc);
 %%
 
 void
