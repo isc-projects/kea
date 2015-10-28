@@ -1,16 +1,16 @@
-#include "eval_context.h"
-#include "parser.h"
-
+#include <eval/eval_context.h>
+#include <eval/parser.h>
+#include <exceptions/exceptions.h>
 #include <fstream>
 
-EvalContext::EvalContext ()
+EvalContext::EvalContext()
   : trace_scanning (false), trace_parsing (false)
 {
   variables["one"] = 1;
   variables["two"] = 2;
 }
 
-EvalContext::~EvalContext ()
+EvalContext::~EvalContext()
 {
 }
 
@@ -30,8 +30,11 @@ int
 EvalContext::parseString(const std::string& str)
 {
     remove("/tmp/eval");
-    std::fstream f("/tmp/eval", std::ios::trunc);
+    std::fstream f("/tmp/eval", std::ios::out);
 
+    if (!f.good()) {
+        isc_throw(isc::Unexpected, "Can't write /tmp/eval file");
+    }
     f << str;
     f.close();
 
