@@ -1,22 +1,22 @@
-#ifndef CALCXX_DRIVER_HH
-# define CALCXX_DRIVER_HH
+#ifndef EVAL_CONTEXT_H
+#define EVAL_CONTEXT_H
 # include <string>
 # include <map>
 # include "parser.h"
 
 // Tell Flex the lexer's prototype ...
 # define YY_DECL \
-  yy::calcxx_parser::symbol_type yylex (calcxx_driver& driver)
+  yy::EvalParser::symbol_type yylex (EvalContext& driver)
 
 // ... and declare it for the parser's sake.
 YY_DECL;
 
 // Conducting the whole scanning and parsing of Calc++.
-class calcxx_driver
+class EvalContext
 {
 public:
-  calcxx_driver ();
-  virtual ~calcxx_driver ();
+  EvalContext ();
+  virtual ~EvalContext ();
 
   std::map<std::string, int> variables;
 
@@ -29,7 +29,9 @@ public:
 
   // Run the parser on file F.
   // Return 0 on success.
-  int parse (const std::string& f);
+  int parseFile(const std::string& filename);
+
+  int parseString(const std::string& str);
 
   // The name of the file being parsed.
   // Used later to pass the file name to the location tracker.
@@ -42,4 +44,4 @@ public:
   void error (const yy::location& l, const std::string& m);
   void error (const std::string& m);
 };
-#endif // ! CALCXX_DRIVER_HH
+#endif // ! EVALCONTEXT_HH

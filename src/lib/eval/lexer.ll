@@ -22,26 +22,26 @@ int   [0-9]+
 blank [ \t]
 
 %{
-  // Code run each time a pattern is matched.
-  # define YY_USER_ACTION  loc.columns (yyleng);
+    // Code run each time a pattern is matched.
+#define YY_USER_ACTION  loc.columns(yyleng);
 %}
 
 %%
 
 %{
-  // Code run each time yylex is called.
-  loc.step ();
+    // Code run each time yylex is called.
+    loc.step();
 %}
 
 {blank}+   loc.step ();
 [\n]+      loc.lines (yyleng); loc.step ();
-"-"      return yy::calcxx_parser::make_MINUS(loc);
-"+"      return yy::calcxx_parser::make_PLUS(loc);
-"*"      return yy::calcxx_parser::make_STAR(loc);
-"/"      return yy::calcxx_parser::make_SLASH(loc);
-"("      return yy::calcxx_parser::make_LPAREN(loc);
-")"      return yy::calcxx_parser::make_RPAREN(loc);
-":="     return yy::calcxx_parser::make_ASSIGN(loc);
+"-"      return yy::EvalParser::make_MINUS(loc);
+"+"      return yy::EvalParser::make_PLUS(loc);
+"*"      return yy::EvalParser::make_STAR(loc);
+"/"      return yy::EvalParser::make_SLASH(loc);
+"("      return yy::EvalParser::make_LPAREN(loc);
+")"      return yy::EvalParser::make_RPAREN(loc);
+":="     return yy::EvalParser::make_ASSIGN(loc);
 
 
 {int}      {
@@ -49,31 +49,29 @@ blank [ \t]
   long n = strtol (yytext, NULL, 10);
   if (! (INT_MIN <= n && n <= INT_MAX && errno != ERANGE))
     driver.error (loc, "integer is out of range");
-  return yy::calcxx_parser::make_NUMBER(n, loc);
+  return yy::EvalParser::make_NUMBER(n, loc);
 }
 
-{id}       return yy::calcxx_parser::make_IDENTIFIER(yytext, loc);
+{id}       return yy::EvalParser::make_IDENTIFIER(yytext, loc);
 .          driver.error (loc, "invalid character");
-<<EOF>>    return yy::calcxx_parser::make_END(loc);
+<<EOF>>    return yy::EvalParser::make_END(loc);
 %%
 
 void
-calcxx_driver::scan_begin ()
+EvalContext::scan_begin()
 {
   yy_flex_debug = trace_scanning;
   if (file.empty () || file == "-")
     yyin = stdin;
-  else if (!(yyin = fopen (file.c_str (), "r")))
+  else if (!(yyin = fopen(file.c_str (), "r")))
     {
       error ("cannot open " + file + ": " + strerror(errno));
       exit (EXIT_FAILURE);
     }
 }
 
-
-
 void
-calcxx_driver::scan_end ()
+EvalContext::scan_end()
 {
   fclose (yyin);
 }
