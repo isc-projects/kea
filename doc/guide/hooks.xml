@@ -46,9 +46,9 @@
       <command>hooks-libraries</command> keyword in the
       configuration for that process. (Note that
       the word "hooks" is plural).  The value of the keyword
-      is an array of strings, each string corresponding to a hooks library.
-      For example, to set up two hooks libraries for the DHCPv4 server, the
-      configuration would be:
+      is an array of map structures, each structure corresponding to a hooks
+      library.  For example, to set up two hooks libraries for the DHCPv4
+      server, the configuration would be:
 <screen>
 <userinput>"Dhcp4": {
     :
@@ -74,8 +74,8 @@
       <para>
         To ease the transtion, the old syntax is still accepted, although a
         warning message is issued when it is encountered.  Users are urged
-        to switch to the new syntax as the old syntax will be withdrawn when
-        parameters are finally added to Kea.
+        to switch to the new syntax as soon as pssible: the old syntax will
+        be withdrawn when parameters are finally added to Kea.
       </para></note>
       <para>
       Notes:
