@@ -14,6 +14,10 @@ lib_LTLIBRARIES = libkea-eval.la
 libkea_eval_la_SOURCES  =
 libkea_eval_la_SOURCES += token.cc token.h
 
+libkea_eval_la_SOURCES += parser.cc parser.h
+libkea_eval_la_SOURCES += lexer.cc
+libkea_eval_la_SOURCES += eval_context.cc
+
 libkea_eval_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_eval_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_eval_la_LIBADD   = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
@@ -40,3 +44,13 @@ s-messages: eval_messages.mes
 BUILT_SOURCES = eval_messages.h eval_messages.cc
 
 CLEANFILES = eval_messages.h eval_messages.cc
+
+
+# --- Flex/Bison stuff below --------------------------------------------------
+parser.cc parser.h: parser.yy
+	bison --defines=parser.h -oparser.cc parser.yy
+
+lexer.cc: lexer.ll
+	flex -olexer.cc lexer.ll
+
+driver.o: driver.cc
