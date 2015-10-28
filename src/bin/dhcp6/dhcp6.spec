@@ -13,11 +13,13 @@
           "item_name": "hooks-library-spec",
           "item_type": "map",
           "item_optional": false,
+          "item_default": {},
           "map_item_spec": [
              {
                 "item_name": "library",
-                "item_type": "string"
-                "item_optional": false
+                "item_type": "string",
+                "item_optional": false,
+                "item_default": ""
              }
           ]
         }
