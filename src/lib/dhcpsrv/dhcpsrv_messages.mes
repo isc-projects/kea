@@ -176,16 +176,6 @@ have been experienced.  Any such errors should have preceding entries in the
 log with details.  No further attempts to communicate with kea-dhcp-ddns will
 be made without intervention.
 
-% DHCPSRV_HOOK_DEPRECATED_SYNTAX hook libraries specified using deprecated syntax, please update your configuration
-This warning message is issued when a configuration file is loaded and Kea notices
-that the hooks libraries have been specified as a simple list of libraries (the
-syntax used in Kea 0.9.2 and earlier).  In Kea 1.0 the syntax was changed to allow the
-specification of library-specific parameters.
-
-To ease the transition, the old syntax is accepted for now, but a future version of
-Kea will no longer accept it.  Please update your configuration files to use the new
-syntax (described in the Kea Administrator Reference Manual).
-
 % DHCPSRV_HOOK_LEASE4_RENEW_SKIP DHCPv4 lease was not renewed because a callout set the skip flag.
 This debug message is printed when a callout installed on lease4_renew
 hook point set the skip flag. For this particular hook point, the setting
