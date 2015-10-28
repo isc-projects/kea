@@ -62,16 +62,16 @@ public:
 
     /// @brief This is a generic method for evaluating a packet.
     ///
-    /// We need to pass the packet being evaluated and possibly previous
+    /// We need to pass the packet being evaluated and possibly previously
     /// evaluated values. Specific implementations may ignore the packet altogether
-    /// and just put its own value on the stack (constant tokens), look at the
+    /// and just put theirr own value on the stack (constant tokens), look at the
     /// packet and put some data extracted from it on the stack (option tokens),
     /// or pop arguments from the stack and put back the result (operators).
     ///
     /// The parameters passed will be:
     ///
     /// @param pkt - packet being classified
-    /// @param value - stack of values with previously evaluated tokens
+    /// @param values - stack of values with previously evaluated tokens
     virtual void evaluate(const Pkt& pkt, ValueStack& values) = 0;
 
     /// @brief Virtual destructor
@@ -106,11 +106,11 @@ protected:
 /// This represents a reference to a given option, e.g. in the expression
 /// option[vendor-class] == "MSFT", it represents option[vendor-class]
 ///
-/// During the evaluation it tries to extract the the value of specified
+/// During the evaluation it tries to extract the value of the specified
 /// option. If the option is not found, an empty string ("") is returned.
 class TokenOption : public Token {
 public:
-    /// @brief Constructor that takes option code as parameter
+    /// @brief Constructor that takes an option code as a parameter
     /// @param option_code code of the option
     ///
     /// Note: There is no constructor that takes option_name, as it would
@@ -146,7 +146,7 @@ public:
     /// @brief Compare two values.
     ///
     /// Evaluation does not use packet information, but rather consumes the last
-    /// two parameters. It does simple string comparison and sets value to
+    /// two parameters. It does a simple string comparison and sets the value to
     /// either "true" or "false". It requires at least two parameters to be
     /// present on stack.
     ///
