@@ -827,12 +827,13 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
 // Utility function for setting up the "hooks-libraries" configuration.
 //
 // Returns a hooks-libraries configuration element that contains zero to
-// four libraries, depending on what arguments are supplied.
+// four libraries, depending on what arguments are supplied.  The first
+/// three libraries have valid syntax, the last does not.
 //
 // This function uses the old syntax (Kea 0.9.1 and 0.9.2)
 std::string
 setHooksLibrariesConfig(const char* lib1 = NULL, const char* lib2 = NULL,
-                        const char* lib3 = NULL) {
+                        const char* lib3 = NULL, const char* lib4 = NULL) {
     const string quote("\"");
     const string comma_space(", ");
 
@@ -843,6 +844,10 @@ setHooksLibrariesConfig(const char* lib1 = NULL, const char* lib2 = NULL,
             config += (comma_space + quote + string(lib2) + quote);
             if (lib3 != NULL) {
                 config += (comma_space + quote + string(lib3) + quote);
+                if (lib4 != NULL) {
+                    config += comma_space + string("{ \"library\": ") + 
+                              quote + string(lib4) + quote + string(" }");
+                }
             }
         }
     }
@@ -858,9 +863,10 @@ setHooksLibrariesConfig(const char* lib1 = NULL, const char* lib2 = NULL,
 // lib1 - No parameters
 // lib2 - Empty parameters statement
 // lib3 - Valid parameters
+// lib4 - Invalid (old syntax)
 std::string
 setHooksLibrariesNewConfig(const char* lib1 = NULL, const char* lib2 = NULL,
-                           const char* lib3 = NULL) {
+                           const char* lib3 = NULL, const char* lib4 = NULL) {
     const string lbrace("{");
     const string rbrace("}");
     const string quote("\"");
@@ -892,6 +898,11 @@ setHooksLibrariesNewConfig(const char* lib1 = NULL, const char* lib2 = NULL,
                 config += string("    \"bvalue\": true");     // Boolean value
                 config += string("}");
                 config += rbrace;
+
+                if (lib4 != NULL) {
+                    // Library 4 is invalidly specified (as a plain string)
+                    config += comma_space + quote + string(lib4) + quote;
+                }
             }
         }
     }
@@ -915,7 +926,7 @@ setHooksLibrariesNewConfig(const char* lib1 = NULL, const char* lib2 = NULL,
 
 class HooksParseConfigTest : public ParseConfigTest,
     public ::testing::WithParamInterface<
-        std::string (*)(const char*, const char*, const char*)
+        std::string (*)(const char*, const char*, const char*, const char*)
     > {
 
 public:
@@ -936,13 +947,13 @@ public:
     // based on the number of libraries requested.
     std::string
     createConfig(const char* lib1 = NULL, const char* lib2 = NULL,
-		         const char* lib3 = NULL) {
-       return ((*generator_)(lib1, lib2, lib3));
+		         const char* lib3 = NULL, const char* lib4 = NULL) {
+       return ((*generator_)(lib1, lib2, lib3, lib4));
     }
 
     // Pointer to the configuration string generator function.
     std::string (*generator_)(const char* lib1, const char* lib2,
-                              const char* lib3);
+                              const char* lib3, const char* lib4);
 };
 
 };  // Anonymous namespace
@@ -1227,6 +1238,24 @@ TEST_P(HooksParseConfigTest, reconfigureInvalidHooksLibraries) {
     ASSERT_EQ(1, hooks_libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[0]);
 }
+
+// Check that if the syntax is not valid (mixture of old and new syntaxes),
+// the parse will fail.
+TEST_P(HooksParseConfigTest, invalidHooksLibrarySyntax) {
+    // Create string with multiple valid libraries.  This should fail to
+    // parse.
+    string config = createConfig(CALLOUT_LIBRARY_1, CALLOUT_LIBRARY_2,
+                                 CALLOUT_LIBRARY_1, CALLOUT_LIBRARY_2);
+    int rcode = parseConfiguration(config);
+    ASSERT_NE(0, rcode);
+
+    // Check that it found that the error was down to the string not
+    // beiong a list of maps.
+    EXPECT_FALSE(error_text_.find("not a list of maps") == string::npos) <<
+        "Error text returned from parse failure is " << error_text_;
+    
+}
+
 
 INSTANTIATE_TEST_CASE_P(OldSyntax, HooksParseConfigTest,
                          ::testing::Values(setHooksLibrariesConfig));
