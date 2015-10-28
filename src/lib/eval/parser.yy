@@ -4,6 +4,7 @@
 %define parser_class_name {EvalParser}
 %define api.token.constructor
 %define api.value.type variant
+%define api.namespace {isc::eval}
 %define parse.assert
 %code requires
 {
@@ -24,7 +25,7 @@ class EvalContext;
 {
 # include "eval_context.h"
 }
-%define api.token.prefix {TOK_}
+%define api.token.prefix {TOKEN_}
 %token
   END  0  "end of file"
   ASSIGN  ":="
@@ -62,8 +63,8 @@ exp:
 | "number"      { std::swap ($$, $1); };
 %%
 void
-yy::EvalParser::error(const location_type& l,
-                      const std::string& m)
+isc::eval::EvalParser::error(const location_type& l,
+                             const std::string& m)
 {
   driver.error (l, m);
 }
