@@ -2886,7 +2886,6 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
 // of hooks libraries.
 std::string
 buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
-    const string quote("\"");
 
     // Create the first part of the configuration string.
     string config =
@@ -2900,9 +2899,7 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
         if (i > 0) {
             config += string(", ");
         }
-        config += (string("{ \"library\": ") +
-                      quote + libraries[i] + quote) +
-                   string("}");
+        config += (string("{ \"library\": \"") + libraries[i] + string("\" }"));
     }
 
     // Append the remainder of the configuration.
