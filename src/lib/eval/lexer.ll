@@ -19,6 +19,7 @@ static isc::eval::location loc;
 %option noyywrap nounput batch debug noinput
 int   [0-9]+
 blank [ \t]
+str [a-zA-Z_0-9]*
 
 %{
     // Code run each time a pattern is matched.
@@ -35,9 +36,13 @@ blank [ \t]
 {blank}+   loc.step();
 [\n]+      loc.lines(yyleng); loc.step();
 
-\'[a-zA-Z_0-9]*\' {
-    // This is a string, no need to do any conversions here.
-    return isc::eval::EvalParser::make_STRING(yytext, loc);
+\'{str}\' {
+    // This is a string. It contains the actual string and single quotes.
+    // We need to get those quotes out of the way.
+    std::string tmp(yytext+1);
+    tmp.resize(tmp.size() - 1);
+
+    return isc::eval::EvalParser::make_STRING(tmp, loc);
 }
 
 option\[{int}\] {
