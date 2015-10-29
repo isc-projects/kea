@@ -94,8 +94,8 @@ TEST_F(TokenTest, string6) {
 }
 
 // This test checks if a token representing an option value is able to extract
-// the option from a packet and properly store the option's value.
-TEST_F(TokenTest, optionString) {
+// the option from an IPv4 packet and properly store the option's value.
+TEST_F(TokenTest, optionString4) {
     TokenPtr found;
     TokenPtr not_found;
 
@@ -119,6 +119,34 @@ TEST_F(TokenTest, optionString) {
 
     // Then the content of the option 100.
     EXPECT_EQ("hundred4", values_.top());
+}
+
+// This test checks if a token representing an option value is able to extract
+// the option from an IPv6 packet and properly store the option's value.
+TEST_F(TokenTest, optionString6) {
+    TokenPtr found;
+    TokenPtr not_found;
+
+    // The packets we use have option 100 with a string in them.
+    ASSERT_NO_THROW(found.reset(new TokenOption(100)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(101)));
+
+    // This should evaluate to the content of the option 100 (i.e. "hundred6")
+    ASSERT_NO_THROW(found->evaluate(*pkt6_, values_));
+
+    // This should evaluate to "" as there is no option 101.
+    ASSERT_NO_THROW(not_found->evaluate(*pkt6_, values_));
+
+    // There should be 2 values evaluated.
+    ASSERT_EQ(2, values_.size());
+
+    // This is a stack, so the pop order is inversed. We should get the empty
+    // string first.
+    EXPECT_EQ("", values_.top());
+    values_.pop();
+
+    // Then the content of the option 100.
+    EXPECT_EQ("hundred6", values_.top());
 }
 
 // This test checks if a token representing an == operator is able to

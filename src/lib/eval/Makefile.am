@@ -4,6 +4,12 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
+# Some versions of GCC warn about some versions of Boost regarding
+# missing initializer for members in its posix_time.
+# https://svn.boost.org/trac/boost/ticket/3477
+# But older GCC compilers don't have the flag.
+AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
+
 lib_LTLIBRARIES = libkea-eval.la
 libkea_eval_la_SOURCES  =
 libkea_eval_la_SOURCES += token.cc token.h
@@ -13,7 +19,7 @@ libkea_eval_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_eval_la_LIBADD   = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_eval_la_LDFLAGS  = -no-undefined -version-info 3:0:0
-libkea_eval_la_LDFLAGS += $(CRYPTO_LDFLAGS)
+libkea_eval_la_LDFLAGS += $(LOG4CPLUS_LIBS) $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = eval.dox
 EXTRA_DIST += eval_messages.mes
