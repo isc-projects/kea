@@ -1,0 +1,43 @@
+# This is an example configuration file for the DHCPv4 server in Kea
+# illustrating the configuration of hooks libraries.  It uses a basic scenario
+# of one IPv6 subnet configured with the default values for all parameters.
+
+{"Dhcp4":
+
+{
+# Kea is told to listen on the ethX interface only.
+  "interfaces-config": {
+    "interfaces": [ "ethX" ]
+  },
+
+# Set up the storage for leases.
+  "lease-database": {
+    "type": "memfile"
+  },
+
+# Define a single subnet.
+  "subnet4": [
+    {
+      "pools": [ { "pool": "192.0.2.1 - 19.2.0.2.200" } ],
+      "subnet": "192.0.2.0/24",
+      "interface": "ethX"
+    }
+  ],
+
+# Set up the hooks libraries.  For this example, we assume that two libraries
+# are loaded, called "security" and "charging".  Note that order is important:
+# "security" is specified first so if both libraries supply a hook function
+# for a given hook, the function in "security" will be called before that in
+# "charging".
+
+  "hooks-libraries": [
+     {
+        "library": "/opt/lib/security.so"
+     },
+     {
+        "library": "/opt/lib/charging.so"
+     }
+  ]
+}
+
+}
