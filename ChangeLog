@@ -1,3 +1,9 @@
+1041.	[func]		tomek
+	A new library, libkea-eval has been edded. It is not functional
+	yet, but its purpose is to provide a generic expression
+	evaluations that will be used in the upcoming client classification.
+	(Trac #4081, git 28d818a26a5d128e8a51d62b68c0cc817e6e2415)
+
 1040.	[func]		tmark
 	When kea servers lose connectivity with MySQL or PostgreSQL backends
 	they will log an error message and exit with an exit value of 255.
