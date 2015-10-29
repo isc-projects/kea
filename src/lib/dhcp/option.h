@@ -206,6 +206,14 @@ public:
     /// @return string with text representation.
     virtual std::string toText(int indent = 0);
 
+    /// @brief Returns string representation of the value
+    ///
+    /// This is terse repesentation used in cases where client classification
+    /// refers to a specific option.
+    ///
+    /// @return string that represents the value of the option.
+    virtual std::string toString();
+
     /// Returns option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
     ///
     /// @return option type

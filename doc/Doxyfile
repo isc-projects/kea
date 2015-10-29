@@ -661,6 +661,7 @@ INPUT                  = ../src/bin/d2 \
                          ../src/lib/dhcpsrv \
                          ../src/lib/dhcpsrv/parsers \
                          ../src/lib/dns \
+                         ../src/lib/eval \
                          ../src/lib/exceptions \
                          ../src/lib/hooks \
                          ../src/lib/log \
