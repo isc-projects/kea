@@ -104,6 +104,7 @@
  *   - @subpage leaseReclamationRoutine
  * - @subpage libdhcp_ddns
  * - @subpage dhcpDatabaseBackends
+ * - @subpage dhcpEval
  * - @subpage configBackend
  *   - @subpage configBackendMotivation
  *   - @subpage configBackendJSONDesign
