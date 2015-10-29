@@ -11,6 +11,8 @@
 #include <string>
 #include <eval/token.h>
 class EvalContext;
+
+using namespace isc::dhcp;
 }
 // The parsing context.
 %param { EvalContext& ctx }
@@ -45,12 +47,21 @@ class EvalContext;
 
 // Expression can either be a single token or a (something == something) expression
 expression:
-token EQUAL token
+token EQUAL token {
+    TokenPtr eq(new TokenEqual());
+    ctx.expression.push_back(eq);
+}
 | token;
 
 token:
-STRING { /* push back TokenString */ }
-| OPTION { /* push back TokenOption */ }
+STRING {
+    TokenPtr str(new TokenString($1));
+    ctx.expression.push_back(str);
+}
+| OPTION {
+    TokenPtr opt(new TokenOption($1));
+    ctx.expression.push_back(opt);
+}
 | SUBSTRING "(" token "," token "," token ")" {
     /* push back TokenSubstring */
   }

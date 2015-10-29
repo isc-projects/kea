@@ -18,7 +18,7 @@ public:
   EvalContext ();
   virtual ~EvalContext ();
 
-  std::map<std::string, int> variables;
+  isc::dhcp::Expression expression;
 
   int result;
 
