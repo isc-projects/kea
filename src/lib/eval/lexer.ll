@@ -35,7 +35,7 @@ blank [ \t]
 {blank}+   loc.step();
 [\n]+      loc.lines(yyleng); loc.step();
 
-\"[a-zA-Z_0-9]*\" {
+\'[a-zA-Z_0-9]*\' {
     // This is a string, no need to do any conversions here.
     return isc::eval::EvalParser::make_STRING(yytext, loc);
 }
