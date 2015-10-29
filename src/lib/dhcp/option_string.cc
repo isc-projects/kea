@@ -92,5 +92,10 @@ OptionString::toText(int indent) {
     return (output.str());
 }
 
+std::string
+OptionString::toString() {
+    return (getValue());
+}
+
 } // end of isc::dhcp namespace
 } // end of isc namespace
