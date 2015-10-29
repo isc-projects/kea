@@ -15,6 +15,8 @@
 #include <config.h>
 #include <eval/token.h>
 #include <eval/eval_context.h>
+#include <eval/token.h>
+#include <dhcp/pkt4.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -25,12 +27,64 @@ using namespace isc::dhcp;
 
 namespace {
 
-TEST(EvalContextTest, basic) {
+class EvalContextTest : public ::testing::Test {
+public:
+    void checkStringToken(const TokenPtr& token, const std::string& expected) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenString> str = boost::dynamic_pointer_cast<TokenString>(token);
+        ASSERT_TRUE(str);
+
+        Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
+        ValueStack values;
+
+        EXPECT_NO_THROW(token->evaluate(*pkt4, values));
+
+        ASSERT_EQ(1, values.size());
+
+        EXPECT_EQ(expected, values.top());
+    }
+
+    void checkEqToken(const TokenPtr& token) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenEqual> eq = boost::dynamic_pointer_cast<TokenEqual>(token);
+        EXPECT_TRUE(eq);
+    }
+
+};
+
+TEST_F(EvalContextTest, basic) {
 
     EvalContext tmp;
 
-    EXPECT_NO_THROW(tmp.parseString("option[123] == \"MSFT\""));
+    EXPECT_NO_THROW(tmp.parseString("option[123] == 'MSFT'"));
 }
 
+TEST_F(EvalContextTest, string) {
+    EvalContext eval;
+
+    EXPECT_NO_THROW(eval.parseString("'foo'"));
+
+    ASSERT_EQ(1, eval.expression.size());
+
+    TokenPtr tmp = eval.expression.at(0);
+
+    checkStringToken(tmp, "foo");
+}
+
+TEST_F(EvalContextTest, equal) {
+    EvalContext eval;
+
+    EXPECT_NO_THROW(eval.parseString("'foo' == 'bar'"));
+
+    ASSERT_EQ(3, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+
+    checkStringToken(tmp1, "foo");
+    checkStringToken(tmp2, "bar");
+    checkEqToken(tmp3);
+}
 
 };
