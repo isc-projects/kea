@@ -830,10 +830,9 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
 // lib1 - No parameters
 // lib2 - Empty parameters statement
 // lib3 - Valid parameters
-// lib4 - No "library" in the map
 std::string
 setHooksLibrariesConfig(const char* lib1 = NULL, const char* lib2 = NULL,
-                        const char* lib3 = NULL, const char* lib4 = NULL) {
+                        const char* lib3 = NULL) {
     const string lbrace("{");
     const string rbrace("}");
     const string quote("\"");
@@ -865,15 +864,6 @@ setHooksLibrariesConfig(const char* lib1 = NULL, const char* lib2 = NULL,
                 config += string("    \"bvalue\": true");     // Boolean value
                 config += string("}");
                 config += rbrace;
-
-                if (lib4 != NULL) {
-                    // Library 4 omits the "library" in the map statement
-                    config += comma_space + lbrace;
-                    config += string("\"parameters\": {");
-                    config += string("    \"dummy\": \"string value\"");
-                    config += string("}");
-                    config += rbrace;
-                }
             }
         }
     }
@@ -1165,25 +1155,49 @@ TEST_F(ParseConfigTest, reconfigureInvalidHooksLibraries) {
     EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[0]);
 }
 
-// Check that trying to reconfigure with a map element missing the "library"
-// element fails.
-TEST_F(ParseConfigTest, missingLibraryHooksLibraries) {
-    // Set up the invalid configuration (the error occcurs in the configuration
-    // of the fourth library).  Multiple specifications of the same library
-    // are used for conveniencr: this is OK, as the failure should occur in the
-    // parsing, not the loading, of the libraries.
-    std::string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1,
-                                                 CALLOUT_LIBRARY_2,
-                                                 CALLOUT_LIBRARY_1,
-                                                 CALLOUT_LIBRARY_2);
+// Check that if hooks-libraries contains invalid syntax, it is detected.
+TEST_F(ParseConfigTest, invalidSyntaxHooksLibraries) {
 
-    // The parse should fail...
-    int rcode = parseConfiguration(config);
+    // Element holds a mixture of (valid) maps and non-maps.
+    string config1 = "{ \"hooks-libraries\": [ "
+        "{ \"library\": \"/opt/lib/lib1\" }, "
+        "\"/opt/lib/lib2\" "
+        "] }";
+    string error1 = "one or more entries in the hooks-libraries list is not"
+                    " a map";
+
+    int rcode = parseConfiguration(config1);
     ASSERT_NE(0, rcode);
+    EXPECT_TRUE(error_text_.find(error1) != string::npos) <<
+        "Error text returned from parse failure is " << error_text_;
 
-    // ... and the error indicate that it an element was found that was
-    // missing the name of the library.
-    EXPECT_FALSE(error_text_.find("missing the name") == string::npos) <<
+    // Element holds valid maps, except one where the library element is not
+    // a string.
+    string config2 = "{ \"hooks-libraries\": [ "
+        "{ \"library\": \"/opt/lib/lib1\" }, "
+        "{ \"library\": 123 } "
+        "] }";
+    string error2 = "value of 'library' element is not a valid"
+                    " path to a hooks library";
+
+    rcode = parseConfiguration(config2);
+    ASSERT_NE(0, rcode);
+    EXPECT_TRUE(error_text_.find(error2) != string::npos) <<
+        "Error text returned from parse failure is " << error_text_;
+
+    // Element holds valid maps, except one that does not contain a
+    // 'library' element.
+    string config3 = "{ \"hooks-libraries\": [ "
+        "{ \"library\": \"/opt/lib/lib1\" }, "
+        "{ \"parameters\": { \"alpha\": 123 } }, "
+        "{ \"library\": \"/opt/lib/lib2\" } "
+        "] }";
+    string error3 = "one or more hooks-libraries elements are missing the"
+                    " name of the library";
+
+    rcode = parseConfiguration(config3);
+    ASSERT_NE(0, rcode);
+    EXPECT_TRUE(error_text_.find(error3) != string::npos) <<
         "Error text returned from parse failure is " << error_text_;
 }
 
