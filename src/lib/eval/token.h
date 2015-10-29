@@ -64,7 +64,7 @@ public:
     ///
     /// We need to pass the packet being evaluated and possibly previously
     /// evaluated values. Specific implementations may ignore the packet altogether
-    /// and just put theirr own value on the stack (constant tokens), look at the
+    /// and just put their own value on the stack (constant tokens), look at the
     /// packet and put some data extracted from it on the stack (option tokens),
     /// or pop arguments from the stack and put back the result (operators).
     ///
@@ -87,7 +87,7 @@ public:
     /// Value is set during token construction.
     ///
     /// @param str constant string to be represented.
-    TokenString(std::string str)
+    TokenString(const std::string& str)
         :value_(str){
     }
 
@@ -126,7 +126,7 @@ public:
     /// to extract the option from the packet and put its value on the stack.
     /// If the option is not there, an empty string ("") is put on the stack.
     ///
-    /// @param pkt not used
+    /// @param pkt specified option will be extracted from this packet (if present)
     /// @param values value of the option will be pushed here (or "")
     void evaluate(const Pkt& pkt, ValueStack& values);
 

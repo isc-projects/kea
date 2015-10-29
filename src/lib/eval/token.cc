@@ -40,7 +40,7 @@ TokenEqual::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
-                  "2 values, got " << values.size());
+                  "2 values for == operator, got " << values.size());
     }
 
     string op1 = values.top();
