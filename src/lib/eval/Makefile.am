@@ -45,9 +45,29 @@ BUILT_SOURCES = eval_messages.h eval_messages.cc
 
 CLEANFILES = eval_messages.h eval_messages.cc
 
+# If we want to get rid of all flex/bison generated files, we need to use
+# make maintainer-clean. The proper way to introduce custom commands for
+# that operation is to define maintainer-clean-local target. However,
+# make maintainer-clean also removes Makefile, so running configure script
+# is required. To make it easy to rebuild flex/bison without going through
+# reconfigure, a new target parser-clean has been added.
+maintainer-clean-local:
+	rm -f location.hh lexer.cc parser.cc parser.h position.hh stack.hh
+
+# To regenerate flex/bison files, one can do:
+#
+# make parser-clean
+# make parser
+#
+# This is needed only when the lexer.ll or parser.yy files are modified.
+# Make sure you have both flex and bison installed.
+parser-clean: maintainer-clean-local
+
+parser: lexer.cc location.hh position.hh stack.hh parser.cc parser.h
+	@echo "Flex/bison files regenerated"
 
 # --- Flex/Bison stuff below --------------------------------------------------
-parser.cc parser.h: parser.yy
+location.hh position.hh stack.hh parser.cc parser.h: parser.yy
 	bison --defines=parser.h -oparser.cc parser.yy
 
 lexer.cc: lexer.ll
