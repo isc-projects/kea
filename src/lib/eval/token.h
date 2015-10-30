@@ -130,6 +130,16 @@ public:
     /// @param values value of the option will be pushed here (or "")
     void evaluate(const Pkt& pkt, ValueStack& values);
 
+    /// @brief Returns option-code
+    ///
+    /// This method is used in testing to determine if the parser had
+    /// instantiated TokenOption with correct parameters.
+    ///
+    /// @return option-code of the option this token expects to extract.
+    uint16_t getCode() const {
+        return (option_code_);
+    }
+
 private:
     uint16_t option_code_; ///< code of the option to be extracted
 };
