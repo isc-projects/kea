@@ -29,9 +29,10 @@ namespace {
 
 class EvalContextTest : public ::testing::Test {
 public:
-    void checkStringToken(const TokenPtr& token, const std::string& expected) {
+    void checkTokenString(const TokenPtr& token, const std::string& expected) {
         ASSERT_TRUE(token);
-        boost::shared_ptr<TokenString> str = boost::dynamic_pointer_cast<TokenString>(token);
+        boost::shared_ptr<TokenString> str =
+            boost::dynamic_pointer_cast<TokenString>(token);
         ASSERT_TRUE(str);
 
         Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
@@ -44,12 +45,21 @@ public:
         EXPECT_EQ(expected, values.top());
     }
 
-    void checkEqToken(const TokenPtr& token) {
+    void checkTokenEq(const TokenPtr& token) {
         ASSERT_TRUE(token);
-        boost::shared_ptr<TokenEqual> eq = boost::dynamic_pointer_cast<TokenEqual>(token);
+        boost::shared_ptr<TokenEqual> eq =
+            boost::dynamic_pointer_cast<TokenEqual>(token);
         EXPECT_TRUE(eq);
     }
 
+    void checkTokenOption(const TokenPtr& token, uint16_t expected_option) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenOption> opt =
+            boost::dynamic_pointer_cast<TokenOption>(token);
+        ASSERT_TRUE(opt);
+
+        EXPECT_EQ(expected_option, opt->getCode());
+    }
 };
 
 TEST_F(EvalContextTest, basic) {
@@ -68,7 +78,7 @@ TEST_F(EvalContextTest, string) {
 
     TokenPtr tmp = eval.expression.at(0);
 
-    checkStringToken(tmp, "foo");
+    checkTokenString(tmp, "foo");
 }
 
 TEST_F(EvalContextTest, equal) {
@@ -82,9 +92,17 @@ TEST_F(EvalContextTest, equal) {
     TokenPtr tmp2 = eval.expression.at(1);
     TokenPtr tmp3 = eval.expression.at(2);
 
-    checkStringToken(tmp1, "foo");
-    checkStringToken(tmp2, "bar");
-    checkEqToken(tmp3);
+    checkTokenString(tmp1, "foo");
+    checkTokenString(tmp2, "bar");
+    checkTokenEq(tmp3);
+}
+
+TEST_F(EvalContextTest, option) {
+    EvalContext eval;
+
+    EXPECT_NO_THROW(eval.parseString("option[123]"));
+    ASSERT_EQ(1, eval.expression.size());
+    checkTokenOption(eval.expression.at(0), 123);
 }
 
 };
