@@ -56,7 +56,7 @@ public:
 /// - option[123] (a token that extracts value of option 123)
 /// - == (an operator that compares two other tokens)
 /// - substring(a,b,c) (an operator that takes three arguments: a string,
-///   first and last character)
+///   first character and length)
 class Token {
 public:
 
@@ -154,6 +154,52 @@ public:
     ///
     /// @brief pkt (unused)
     /// @brief values - stack of values (2 arguments will be poped, 1 result
+    ///        will be pushed)
+    void evaluate(const Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token that represents the substring operator (returns a portion
+/// of the supplied string)
+///
+/// This token represents substring(str, start, len)  An operator that takes three
+/// arguments: a string, the first character and the length.
+class TokenSubstring : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenSubstring() {}
+
+    /// @brief Extract a substring from a string
+    ///
+    /// Evaluation does not use packet information, but rather consumes the last
+    /// three parameters and requires at least three parameters to be present on
+    /// stack.  From the top it expects the values on the stack as:
+    ///  len
+    ///  start
+    ///  str
+    ///
+    /// str is the string to extract a substring from.  If it is empty an empty
+    /// string is pushed onto the value stack.
+    ///
+    /// start is the postion from which the code starts extracting the substring.
+    /// 0 is before the first character and a negative number starts from the end,
+    /// with -1 being before the last character.  If the starting point is
+    /// outside of the original string an empty string is pushed onto the value
+    /// stack.
+    ///
+    /// length is the number of characters from the string to extract.
+    /// "all" means all remaining characters from start to the end of string.
+    /// A negative number means to go from start towards the beginning of
+    /// string, but doesn't include start.
+    /// If length is longer than the remaining portion of string
+    /// then the entire remaining portion is placed on the value stack.
+    /// Note: a negative value of length only indicates which characters to
+    /// extract, it does NOT indicate any attempt to reverse the string.
+    /// For example substring("foobar", 4, -2) will result in "ob".
+    ///
+    /// @throw EvalBadStack if there's less than 3 values on stack
+    ///
+    /// @brief pkt (unused)
+    /// @brief values - stack of values (3 arguments will be poped, 1 result
     ///        will be pushed)
     void evaluate(const Pkt& pkt, ValueStack& values);
 };
