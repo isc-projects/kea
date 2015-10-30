@@ -122,6 +122,7 @@ option\[{int}\] {
     // Let's get rid of all the text before [, including [.
     tmp = tmp.substr(pos + 1);
 
+    // And finally remove the trailing ].
     pos = tmp.find("]");
     if (pos == std::string::npos) {
         driver.error(loc, "The string matched (" + tmp + ") is invalid,"
@@ -143,7 +144,7 @@ option\[{int}\] {
     /// @todo: Maybe add a flag somewhere in EvalContext to indicate if we're
     /// running in v4 (allowed max 255) or v6 (allowed max 65535).
     if (n<0 || n>65535) {
-        driver.error(loc, "Option code has invalid values:[" +
+        driver.error(loc, "Option code has invalid value in " +
                      std::string(yytext) + ". Allowed range: 0..65535");
     }
 
@@ -156,7 +157,7 @@ option\[{int}\] {
 ")"         return isc::eval::EvalParser::make_RPAREN(loc);
 ","         return isc::eval::EvalParser::make_COMA(loc);
 
-.          driver.error (loc, "invalid character");
+.          driver.error (loc, "Invalid character: " + std::string(yytext));
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);
 %%
 
