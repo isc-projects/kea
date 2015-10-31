@@ -223,6 +223,10 @@ extern const int dhcpv6_type_name_max;
 // Taken from http://www.iana.org/assignments/enterprise-numbers
 #define ENTERPRISE_ID_ISC 2495
 
+/* DHCPv4-over-DHCPv6 (RFC 7341) inter-process communication */
+#define ISC_V6_4O6_INTERFACE                 60000
+#define ISC_V6_4O6_SRC_ADDRESS               60001
+
 /* Offsets into IA_*'s where Option spaces commence.  */
 #define IA_NA_OFFSET 12 /* IAID, T1, T2, all 4 octets each */
 #define IA_TA_OFFSET  4 /* IAID only, 4 octets */
