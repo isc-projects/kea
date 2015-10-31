@@ -204,6 +204,8 @@ protected:
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("4o6-interface") == 0) {
             parser = new StringParser(config_id, string_values_);
+        } else if (config_id.compare("4o6-interface-id") == 0) {
+            parser = new StringParser(config_id, string_values_);
         } else {
             isc_throw(NotImplemented, "unsupported parameter: " << config_id);
         }
@@ -340,6 +342,17 @@ protected:
             subnet4->get4o6().enabled_ = true;
         } catch (const DhcpConfigError&) {
             // Don't care. 4o6-subnet is optional.
+        }
+
+        // Try 4o6 specific paramter: 4o6-interface-id
+        try {
+            std::string ifaceid = string_values_->getParam("4o6-interface-id");
+            OptionBuffer tmp(ifaceid.begin(), ifaceid.end());
+            OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
+            subnet4->get4o6().interface_id_ = opt;
+            subnet4->get4o6().enabled_ = true;
+        } catch (const DhcpConfigError&) {
+
         }
 
         // Try setting up client class (if specified)

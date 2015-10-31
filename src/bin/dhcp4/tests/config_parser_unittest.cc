@@ -3909,16 +3909,61 @@ TEST_F(Dhcp4ParserTest, 4o6subnetIface) {
     checkResult(status, 0);
 
     // Now check if the configuration was indeed handled and we have
-    // expected pool configured.
+    // expected subnet configured...
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
 
+    // ... and that subnet has 4o6 network interface specified.
     Cfg4o6& dhcp4o6 = subnet->get4o6();
     EXPECT_TRUE(dhcp4o6.enabled_);
     EXPECT_EQ(IOAddress("2001:db8::543"), dhcp4o6.subnet4o6_.first);
     EXPECT_EQ(21, dhcp4o6.subnet4o6_.second);
     EXPECT_EQ("ethX", dhcp4o6.iface4o6_);
 }
+
+// Checks if the DHCPv4 is able to parse the configuration with 4o6 network
+// interface-id.
+TEST_F(Dhcp4ParserTest, 4o6subnetInterfaceId) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-interface-id\": \"vlan123\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected 4o6-interface-id configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+
+    Cfg4o6& dhcp4o6 = subnet->get4o6();
+    EXPECT_TRUE(dhcp4o6.enabled_);
+    OptionPtr ifaceid = dhcp4o6.interface_id_;
+    ASSERT_TRUE(ifaceid);
+
+    vector<uint8_t> data = ifaceid->getData();
+    const char *exp_data = "vlan123";
+    // Let's convert vlan123 to vector<uint8_t> format.
+    // We need to skip the last \0 byte, thuse sizeof() - 1.
+    vector<uint8_t> exp(exp_data, exp_data + sizeof(exp_data) - 1);
+
+    EXPECT_TRUE(exp == data);
+}
+
 
 }

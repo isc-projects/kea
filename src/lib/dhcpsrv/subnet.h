@@ -523,11 +523,14 @@ struct Cfg4o6 {
     /// Specifies if 4o6 is enabled on this subnet.
     bool enabled_;
 
-    /// Specifies the network interface used as subnet selector
+    /// Specifies the network interface used as v4 subnet selector.
     std::string iface4o6_;
 
-    /// Specifies the IPv6 subnet used for subnet selection
+    /// Specifies the IPv6 subnet used for v4 subnet selection.
     std::pair<asiolink::IOAddress, uint8_t> subnet4o6_;
+
+    /// Specifies the v6 interface-id used for v4 subnet selection.
+    OptionPtr interface_id_;
 };
 
 /// @brief A configuration holder for IPv4 subnet.
