@@ -200,6 +200,10 @@ protected:
             parser = new OptionDataListParser(config_id, options_, AF_INET);
         } else if (config_id.compare("match-client-id") == 0) {
             parser = new BooleanParser(config_id, boolean_values_);
+        } else if (config_id.compare("4o6-subnet") == 0) {
+            parser = new StringParser(config_id, string_values_);
+        } else if (config_id.compare("4o6-interface") == 0) {
+            parser = new StringParser(config_id, string_values_);
         } else {
             isc_throw(NotImplemented, "unsupported parameter: " << config_id);
         }
@@ -305,6 +309,38 @@ protected:
                       << ")");
         }
 
+        // Try 4o6 specific parameter: 4o6-interface
+        try {
+            string iface4o6 = string_values_->getParam("4o6-interface");
+            subnet4->get4o6().iface4o6_ = iface4o6;
+            subnet4->get4o6().enabled_ = true;
+        } catch (const DhcpConfigError&) {
+            // Don't care. 4o6-subnet is optional.
+        }
+
+        // Try 4o6 specific parameter: 4o6-subnet
+        try {
+            string subnet4o6 = string_values_->getParam("4o6-subnet");
+            size_t slash = subnet4o6.find("/");
+            if (slash == std::string::npos) {
+                isc_throw(DhcpConfigError, "Missing / in the 4o6-subnet parameter:"
+                          + subnet4o6 +", expected format: prefix6/length");
+            }
+            string prefix = subnet4o6.substr(0, slash);
+            string lenstr = subnet4o6.substr(slash + 1);
+
+            uint8_t len = 128;
+            try {
+                len = boost::lexical_cast<unsigned int>(lenstr.c_str());
+            } catch (const boost::bad_lexical_cast &) {
+                isc_throw(DhcpConfigError, "Invalid prefix length specified in "
+                          "4o6-subnet parameter: " + subnet4o6 + ", expected 0..128 value");
+            }
+            subnet4->get4o6().subnet4o6_ = make_pair(IOAddress(prefix), len);
+            subnet4->get4o6().enabled_ = true;
+        } catch (const DhcpConfigError&) {
+            // Don't care. 4o6-subnet is optional.
+        }
 
         // Try setting up client class (if specified)
         try {
