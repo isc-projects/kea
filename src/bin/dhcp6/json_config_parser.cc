@@ -667,7 +667,8 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         (config_id.compare("valid-lifetime") == 0)  ||
         (config_id.compare("renew-timer") == 0)  ||
         (config_id.compare("rebind-timer") == 0) ||
-        (config_id.compare("decline-probation-period") == 0) )  {
+        (config_id.compare("decline-probation-period") == 0) ||
+        (config_id.compare("dhcp4o6-port") == 0) )  {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
     } else if (config_id.compare("interfaces-config") == 0) {
@@ -718,6 +719,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
 /// Currently this method sets the following global parameters:
 ///
 /// - decline-probation-period
+/// - dhcp4o6-port
 void setGlobalParameters6() {
 
     // Set the probation period for decline handling.
@@ -728,6 +730,15 @@ void setGlobalParameters6() {
         CfgMgr::instance().getStagingCfg()->setDeclinePeriod(probation_period);
     } catch (...) {
         // That's not really needed.
+    }
+
+    // Set the DHCPv4-over-DHCPv6 interserver port.
+    try {
+        uint32_t dhcp4o6_port = globalContext()->uint32_values_
+            ->getOptionalParam("dhcp4o6-port", 0);
+        CfgMgr::instance().getStagingCfg()->setDhcp4o6Port(dhcp4o6_port);
+    } catch (...) {
+        // Ignore errors. This flag is optional
     }
 }
 

@@ -63,6 +63,7 @@ libdhcp6_la_SOURCES += dhcp6_log.cc dhcp6_log.h
 libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 libdhcp6_la_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
+libdhcp6_la_SOURCES += dhcp6_dhcp4o6_ipc.cc dhcp6_dhcp4o6_ipc.h
 
 libdhcp6_la_SOURCES += kea_controller.cc
 
