@@ -222,7 +222,8 @@ extern const int dhcpv6_type_name_max;
 // Taken from http://www.iana.org/assignments/enterprise-numbers
 #define ENTERPRISE_ID_ISC 2495
 
-/* DHCPv4-over-DHCPv6 (RFC 7341) inter-process communication */
+/* DHCPv4-over-DHCPv6 (RFC 7341) inter-process communication. These are option
+   codes for the ISC vendor specific options used in 4o6 */
 #define ISC_V6_4O6_INTERFACE                 60000
 #define ISC_V6_4O6_SRC_ADDRESS               60001
 
@@ -301,8 +302,7 @@ extern const int dhcpv6_type_name_max;
 #define IRT_DEFAULT     86400
 #define IRT_MINIMUM     600
 
-/* DHCPv4-query message flags */
-
+/* DHCPv4-query message flags (see RFC7341) */
 #define DHCPV4_QUERY_FLAGS_UNICAST (1 << 23)
 
 #endif /* DHCP6_H */
