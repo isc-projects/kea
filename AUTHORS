@@ -76,11 +76,14 @@ We have received the following contributions:
  - David Gutierrez Rueda, CERN
    2014-12: Support for client link-address option in DHCPv6 (RFC6939)
 
- - Adam Kalmus, Gdank University of Technology
+ - Adam Kalmus, Gdansk University of Technology
    2014-12: Extract MAC address from DUID-LL and DUID-LLT types
    2015-01: Extract MAC address from remote-id
    2015-05: MySQL schema extended to cover host reservation
    2015-10: Common MySQL Connector Pool
+
+ - Jinmei Tatuya
+   2015-10: Pkt4o6 class improvements
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
