@@ -314,8 +314,8 @@ protected:
         // Try 4o6 specific parameter: 4o6-interface
         try {
             string iface4o6 = string_values_->getParam("4o6-interface");
-            subnet4->get4o6().iface4o6_ = iface4o6;
-            subnet4->get4o6().enabled_ = true;
+            subnet4->get4o6().setIface4o6(iface4o6);
+            subnet4->get4o6().enabled(true);
         } catch (const DhcpConfigError&) {
             // Don't care. 4o6-subnet is optional.
         }
@@ -338,8 +338,8 @@ protected:
                 isc_throw(DhcpConfigError, "Invalid prefix length specified in "
                           "4o6-subnet parameter: " + subnet4o6 + ", expected 0..128 value");
             }
-            subnet4->get4o6().subnet4o6_ = make_pair(IOAddress(prefix), len);
-            subnet4->get4o6().enabled_ = true;
+            subnet4->get4o6().setSubnet4o6(IOAddress(prefix), len);
+            subnet4->get4o6().enabled(true);
         } catch (const DhcpConfigError&) {
             // Don't care. 4o6-subnet is optional.
         }
@@ -349,8 +349,8 @@ protected:
             std::string ifaceid = string_values_->getParam("4o6-interface-id");
             OptionBuffer tmp(ifaceid.begin(), ifaceid.end());
             OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
-            subnet4->get4o6().interface_id_ = opt;
-            subnet4->get4o6().enabled_ = true;
+            subnet4->get4o6().setInterfaceId(opt);
+            subnet4->get4o6().enabled(true);
         } catch (const DhcpConfigError&) {
 
         }
