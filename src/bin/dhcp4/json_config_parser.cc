@@ -312,17 +312,15 @@ protected:
         }
 
         // Try 4o6 specific parameter: 4o6-interface
-        try {
-            string iface4o6 = string_values_->getParam("4o6-interface");
+        string iface4o6 = string_values_->getOptionalParam("4o6-interface", "");
+        if (!iface4o6.empty()) {
             subnet4->get4o6().setIface4o6(iface4o6);
             subnet4->get4o6().enabled(true);
-        } catch (const DhcpConfigError&) {
-            // Don't care. 4o6-subnet is optional.
         }
 
         // Try 4o6 specific parameter: 4o6-subnet
-        try {
-            string subnet4o6 = string_values_->getParam("4o6-subnet");
+        string subnet4o6 = string_values_->getOptionalParam("4o6-subnet", "");
+        if (!subnet4o6.empty()) {
             size_t slash = subnet4o6.find("/");
             if (slash == std::string::npos) {
                 isc_throw(DhcpConfigError, "Missing / in the 4o6-subnet parameter:"
@@ -340,19 +338,15 @@ protected:
             }
             subnet4->get4o6().setSubnet4o6(IOAddress(prefix), len);
             subnet4->get4o6().enabled(true);
-        } catch (const DhcpConfigError&) {
-            // Don't care. 4o6-subnet is optional.
         }
 
         // Try 4o6 specific paramter: 4o6-interface-id
-        try {
-            std::string ifaceid = string_values_->getParam("4o6-interface-id");
+        std::string ifaceid = string_values_->getOptionalParam("4o6-interface-id", "");
+        if (!ifaceid.empty()) {
             OptionBuffer tmp(ifaceid.begin(), ifaceid.end());
             OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
             subnet4->get4o6().setInterfaceId(opt);
             subnet4->get4o6().enabled(true);
-        } catch (const DhcpConfigError&) {
-
         }
 
         // Try setting up client class (if specified)

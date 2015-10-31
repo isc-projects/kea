@@ -3850,6 +3850,63 @@ TEST_F(Dhcp4ParserTest, 4o6subnet) {
     EXPECT_EQ(45, dhcp4o6.getSubnet4o6().second);
 }
 
+// Checks if the DHCPv4 is able to parse the configuration with 4o6 subnet
+// defined.
+TEST_F(Dhcp4ParserTest, 4o6subnetBogus) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config[] = {
+        // Bogus configuration 1: missing / in subnet
+        "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-subnet\": \"2001:db8::123\" } ],"
+        "\"valid-lifetime\": 4000 }",
+
+        // Bogus configuration 2: incorrect address
+                "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-subnet\": \"2001:db8:bogus/45\" } ],"
+        "\"valid-lifetime\": 4000 }",
+
+        // Bogus configuration 3: incorrect prefix lenght
+        "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-subnet\": \"2001:db8::123/200\" } ],"
+        "\"valid-lifetime\": 4000 }"
+    };
+
+    ElementPtr json1 = Element::fromJSON(config[0]);
+    ElementPtr json2 = Element::fromJSON(config[0]);
+    ElementPtr json3 = Element::fromJSON(config[0]);
+
+    // Check that the first config is rejected.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json1));
+    checkResult(status, 1);
+
+    // Check that the second config is rejected.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json2));
+    checkResult(status, 1);
+
+    // Check that the third config is rejected.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json3));
+    checkResult(status, 1);
+}
+
+
 // Checks if the DHCPv4 is able to parse the configuration with 4o6 network
 // interface defined.
 TEST_F(Dhcp4ParserTest, 4o6iface) {
