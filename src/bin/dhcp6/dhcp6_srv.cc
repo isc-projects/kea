@@ -555,6 +555,10 @@ bool Dhcpv6Srv::run() {
                 rsp = processInfRequest(query);
                 break;
 
+            case DHCPV6_DHCPV4_QUERY:
+                rsp = processDhcp4Query(query);
+                break;
+
             default:
                 // We received a packet type that we do not recognize.
                 LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_UNKNOWN_MSG_RECEIVED)
@@ -2787,6 +2791,26 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     appendRequestedOptions(inf_request, reply, ctx);
 
     return (reply);
+}
+
+Pkt6Ptr
+Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
+
+    sanityCheck(dhcp4_query, OPTIONAL, OPTIONAL);
+
+    // flags are in transid
+    // uint32_t flags = dhcp4_query->getTransid();
+    // do nothing with DHCPV4_QUERY_FLAGS_UNICAST
+
+    // Get the DHCPv4 message option
+    OptionPtr dhcp4_msg = dhcp4_query->getOption(D6O_DHCPV4_MSG);
+    if (dhcp4_msg) {
+        // Forward the whole message to the DHCPv4 server via IPC
+        Dhcp4o6Ipc::instance().send(dhcp4_query);
+    }
+
+    // Our job is finished
+    return (Pkt6Ptr());
 }
 
 size_t
