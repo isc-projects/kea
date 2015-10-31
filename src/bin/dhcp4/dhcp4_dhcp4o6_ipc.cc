@@ -55,7 +55,6 @@ void Dhcp4o6Ipc::handler() {
         return;
     }
 
-    pkt->unpack();
     OptionCollection msgs = pkt->getOptions(D6O_DHCPV4_MSG);
     if (msgs.size() != 1) {
         return;
