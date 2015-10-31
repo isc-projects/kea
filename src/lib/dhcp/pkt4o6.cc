@@ -25,12 +25,6 @@ using namespace isc::dhcp;
 using namespace isc::util;
 using namespace std;
 
-namespace {
-
-/// @brief Default address used in Pkt4 constructor
-const IOAddress DEFAULT_ADDRESS("0.0.0.0");
-}
-
 namespace isc {
 namespace dhcp {
 
