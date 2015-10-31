@@ -410,7 +410,7 @@ TEST_F(Dhcpv4SrvTest, initResponse) {
     OptionPtr resp_sbnsel = response->getOption(DHO_SUBNET_SELECTION);
     ASSERT_TRUE(resp_sbnsel);
     OptionCustomPtr resp_custom =
-	boost::dynamic_pointer_cast<OptionCustom>(resp_sbnsel);
+        boost::dynamic_pointer_cast<OptionCustom>(resp_sbnsel);
     ASSERT_TRUE(resp_custom);
     IOAddress subnet_addr("0.0.0.0");
     ASSERT_NO_THROW(subnet_addr = resp_custom->readAddress());
