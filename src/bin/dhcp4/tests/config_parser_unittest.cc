@@ -3812,7 +3812,7 @@ TEST_F(Dhcp4ParserTest, 4o6default) {
     ASSERT_TRUE(subnet);
 
     Cfg4o6& dhcp4o6 = subnet->get4o6();
-    EXPECT_FALSE(dhcp4o6.enabled_);
+    EXPECT_FALSE(dhcp4o6.enabled());
 }
 
 // Checks if the DHCPv4 is able to parse the configuration with 4o6 subnet
@@ -3845,9 +3845,9 @@ TEST_F(Dhcp4ParserTest, 4o6subnet) {
     ASSERT_TRUE(subnet);
 
     Cfg4o6& dhcp4o6 = subnet->get4o6();
-    EXPECT_TRUE(dhcp4o6.enabled_);
-    EXPECT_EQ(IOAddress("2001:db8::123"), dhcp4o6.subnet4o6_.first);
-    EXPECT_EQ(45, dhcp4o6.subnet4o6_.second);
+    EXPECT_TRUE(dhcp4o6.enabled());
+    EXPECT_EQ(IOAddress("2001:db8::123"), dhcp4o6.getSubnet4o6().first);
+    EXPECT_EQ(45, dhcp4o6.getSubnet4o6().second);
 }
 
 // Checks if the DHCPv4 is able to parse the configuration with 4o6 network
@@ -3880,8 +3880,8 @@ TEST_F(Dhcp4ParserTest, 4o6iface) {
     ASSERT_TRUE(subnet);
 
     Cfg4o6& dhcp4o6 = subnet->get4o6();
-    EXPECT_TRUE(dhcp4o6.enabled_);
-    EXPECT_EQ("ethX", dhcp4o6.iface4o6_);
+    EXPECT_TRUE(dhcp4o6.enabled());
+    EXPECT_EQ("ethX", dhcp4o6.getIface4o6());
 }
 
 // Checks if the DHCPv4 is able to parse the configuration with both 4o6 network
@@ -3916,10 +3916,10 @@ TEST_F(Dhcp4ParserTest, 4o6subnetIface) {
 
     // ... and that subnet has 4o6 network interface specified.
     Cfg4o6& dhcp4o6 = subnet->get4o6();
-    EXPECT_TRUE(dhcp4o6.enabled_);
-    EXPECT_EQ(IOAddress("2001:db8::543"), dhcp4o6.subnet4o6_.first);
-    EXPECT_EQ(21, dhcp4o6.subnet4o6_.second);
-    EXPECT_EQ("ethX", dhcp4o6.iface4o6_);
+    EXPECT_TRUE(dhcp4o6.enabled());
+    EXPECT_EQ(IOAddress("2001:db8::543"), dhcp4o6.getSubnet4o6().first);
+    EXPECT_EQ(21, dhcp4o6.getSubnet4o6().second);
+    EXPECT_EQ("ethX", dhcp4o6.getIface4o6());
 }
 
 // Checks if the DHCPv4 is able to parse the configuration with 4o6 network
@@ -3952,8 +3952,8 @@ TEST_F(Dhcp4ParserTest, 4o6subnetInterfaceId) {
     ASSERT_TRUE(subnet);
 
     Cfg4o6& dhcp4o6 = subnet->get4o6();
-    EXPECT_TRUE(dhcp4o6.enabled_);
-    OptionPtr ifaceid = dhcp4o6.interface_id_;
+    EXPECT_TRUE(dhcp4o6.enabled());
+    OptionPtr ifaceid = dhcp4o6.getInterfaceId();
     ASSERT_TRUE(ifaceid);
 
     vector<uint8_t> data = ifaceid->getData();
