@@ -344,6 +344,9 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
       RECORD_DEF(LQ_RELAY_DATA_RECORDS), "" },
     { "lq-client-link", D6O_LQ_CLIENT_LINK, OPT_IPV6_ADDRESS_TYPE, true,
       NO_RECORD_DEF, "" },
+    { "dhcpv4-message", D6O_DHCPV4_MSG, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "dhcp4o6-server-addr", D6O_DHCPV4_O_DHCPV6_SERVER, OPT_IPV6_ADDRESS_TYPE, true,
+      NO_RECORD_DEF, "" }
     { "bootfile-url", D6O_BOOTFILE_URL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "bootfile-param", D6O_BOOTFILE_PARAM, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "client-arch-type", D6O_CLIENT_ARCH_TYPE, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
