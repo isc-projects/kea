@@ -110,8 +110,8 @@
 //#define D6O_ADDRSEL                             84 /* RFC7078 */
 //#define D6O_ADDRSEL_TABLE                       85 /* RFC7078 */
 //#define D6O_V6_PCP_SERVER                       86 /* RFC7291 */
-//#define D6O_DHCPV4_MSG                          87 /* RFC7341 */
-//#define D6O_DHCPV4_O_DHCPV6_SERVER              88 /* RFC7341 */
+#define D6O_DHCPV4_MSG                          87 /* RFC7341 */
+#define D6O_DHCPV4_O_DHCPV6_SERVER              88 /* RFC7341 */
 //#define D6O_S46_RULE                            89 /* RFC7598 */
 //#define D6O_S46_BR                              90 /* RFC7598 */
 //#define D6O_S46_DMR                             91 /* RFC7598 */
@@ -195,8 +195,8 @@
 //#define DHCPV6_RECONFIGURE_REQUEST 18
 //#define DHCPV6_RECONFIGURE_REPLY   19
 /* RFC 7341 */
-//#define DHCPV6_DHCPV4_QUERY        20
-//#define DHCPV6_DHCPV4_RESPONSE     21
+#define DHCPV6_DHCPV4_QUERY        20
+#define DHCPV6_DHCPV4_RESPONSE     21
 /* draft-ietf-dhc-dhcpv6-active-leasequery-04 */
 //#define DHCPV6_ACTIVELEASEQUERY    22
 //#define DHCPV6_STARTTLS            23
@@ -297,5 +297,9 @@ extern const int dhcpv6_type_name_max;
 
 #define IRT_DEFAULT     86400
 #define IRT_MINIMUM     600
+
+/* DHCPv4-query message flags */
+
+#define DHCPV4_QUERY_FLAGS_UNICAST (1 << 23)
 
 #endif /* DHCP6_H */
