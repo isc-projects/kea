@@ -110,6 +110,11 @@ LibDHCP::getVendorOption6Defs(const uint32_t vendor_id) {
         initVendorOptsDocsis6();
     }
 
+    if (vendor_id == ENTERPRISE_ID_ISC &&
+        vendor6_defs_.find(ENTERPRISE_ID_ISC) == vendor6_defs_.end()) {
+        initVendorOptsIsc6();
+    }
+
     VendorOptionDefContainers::const_iterator def = vendor6_defs_.find(vendor_id);
     if (def == vendor6_defs_.end()) {
         // No such vendor-id space
@@ -735,6 +740,12 @@ void
 LibDHCP::initVendorOptsDocsis6() {
     vendor6_defs_[VENDOR_ID_CABLE_LABS] = OptionDefContainer();
     initOptionSpace(vendor6_defs_[VENDOR_ID_CABLE_LABS], DOCSIS3_V6_DEFS, DOCSIS3_V6_DEFS_SIZE);
+}
+
+void
+LibDHCP::initVendorOptsIsc6() {
+    vendor6_defs_[ENTERPRISE_ID_ISC] = OptionDefContainer();
+    initOptionSpace(vendor6_defs_[ENTERPRISE_ID_ISC], ISC_V6_DEFS, ISC_V6_DEFS_SIZE);
 }
 
 void initOptionSpace(OptionDefContainer& defs,
