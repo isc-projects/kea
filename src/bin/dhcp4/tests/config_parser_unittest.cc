@@ -3784,7 +3784,7 @@ TEST_F(Dhcp4ParserTest, expiredLeasesProcessingError) {
 
 
 // Checks if the DHCPv4 is able to parse the configuration without 4o6 parameters
-// and do not set 4o6 fields at all.
+// and does not set 4o6 fields at all.
 TEST_F(Dhcp4ParserTest, 4o6default) {
 
     ConstElementPtr status;
