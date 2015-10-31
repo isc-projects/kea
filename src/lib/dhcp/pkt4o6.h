@@ -63,7 +63,7 @@ public:
         return (true);
     }
 
-protected:
+private:
     /// Encapsulating DHCPv6 message
     Pkt6Ptr pkt6_;
 
