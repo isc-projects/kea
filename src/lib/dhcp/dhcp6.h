@@ -110,8 +110,8 @@
 //#define D6O_ADDRSEL                             84 /* RFC7078 */
 //#define D6O_ADDRSEL_TABLE                       85 /* RFC7078 */
 //#define D6O_V6_PCP_SERVER                       86 /* RFC7291 */
-//#define D6O_DHCPV4_MSG                          87 /* RFC7341 */
-//#define D6O_DHCPV4_O_DHCPV6_SERVER              88 /* RFC7341 */
+#define D6O_DHCPV4_MSG                          87 /* RFC7341 */
+#define D6O_DHCPV4_O_DHCPV6_SERVER              88 /* RFC7341 */
 //#define D6O_S46_RULE                            89 /* RFC7598 */
 //#define D6O_S46_BR                              90 /* RFC7598 */
 //#define D6O_S46_DMR                             91 /* RFC7598 */
