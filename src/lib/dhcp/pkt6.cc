@@ -289,6 +289,8 @@ Pkt6::unpackUDP() {
     case DHCPV6_DECLINE:
     case DHCPV6_RECONFIGURE:
     case DHCPV6_INFORMATION_REQUEST:
+    case DHCPV6_DHCPV4_QUERY:
+    case DHCPV6_DHCPV4_RESPONSE:
     default: // assume that uknown messages are not using relay format
         {
             return (unpackMsg(data_.begin(), data_.end()));
@@ -586,6 +588,8 @@ Pkt6::getName(const uint8_t type) {
     static const char* REPLY = "REPLY";
     static const char* REQUEST = "REQUEST";
     static const char* SOLICIT = "SOLICIT";
+    static const char* DHCPV4_QUERY = "DHCPV4_QUERY";
+    static const char* DHCPV4_RESPONSE = "DHCPV4_RESPONSE";
     static const char* UNKNOWN = "UNKNOWN";
 
     switch (type) {
@@ -633,6 +637,12 @@ Pkt6::getName(const uint8_t type) {
 
     case DHCPV6_SOLICIT:
         return (SOLICIT);
+
+    case DHCPV6_DHCPV4_QUERY:
+        return (DHCPV4_QUERY);
+
+    case DHCPV6_DHCPV4_RESPONSE:
+        return (DHCPV4_RESPONSE);
 
     default:
         ;

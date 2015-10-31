@@ -353,6 +353,9 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
     { "rsoo", D6O_RSOO, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "rsoo-opts" },
     { "client-linklayer-addr", D6O_CLIENT_LINKLAYER_ADDR, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
+    { "dhcpv4-message", D6O_DHCPV4_MSG, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "dhcp4o6-server-addr", D6O_DHCPV4_O_DHCPV6_SERVER, OPT_IPV6_ADDRESS_TYPE, true,
+      NO_RECORD_DEF, "" },
     { "public-key", D6O_PUBLIC_KEY, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
     { "certificate", D6O_CERTIFICATE, OPT_BINARY_TYPE, false,
@@ -370,6 +373,19 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
 /// Number of option definitions defined.
 const int OPTION_DEF_PARAMS_SIZE6  =
     sizeof(OPTION_DEF_PARAMS6) / sizeof(OPTION_DEF_PARAMS6[0]);
+
+/// @brief Definitions of vendor-specific DHCPv6 options, defined by ISC.
+/// 4o6-* options are used for inter-process communication. For details, see
+/// http://kea.isc.org/wiki/Dhcp4o6Design
+///
+/// @todo: As those options are defined by ISC, they do not belong in std_option_defs.h.
+///        We need to move them to a separate file, e.g. isc_option_defs.h
+const OptionDefParams ISC_V6_DEFS[] = {
+    { "4o6-interface", ISC_V6_4O6_INTERFACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "4o6-source-address", ISC_V6_4O6_SRC_ADDRESS, OPT_IPV6_ADDRESS_TYPE, false, NO_RECORD_DEF, "" }
+};
+
+const int ISC_V6_DEFS_SIZE = sizeof(ISC_V6_DEFS) / sizeof(OptionDefParams);
 
 } // unnamed namespace
 
