@@ -14,8 +14,11 @@
 
 #include <config.h>
 
-#include <dhcp/dhcp4o6.h>
+#include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/option6_addrlst.h>
+#include <dhcp/option_string.h>
+#include <dhcp/option_vendor.h>
 #include <dhcpsrv/dhcp4o6_ipc.h>
 
 #include <netinet/in.h>
@@ -132,25 +135,38 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     if (cc < 0) {
         isc_throw(Unexpected, "Failed to receive on DHCP4o6 socket.");
     }
-    if (cc < DHCP4O6_DHCP6_OFFSET + Pkt6::DHCPV6_PKT_HDR_LEN) {
-        // Ignore too short messages
-        return (Pkt6Ptr());
-    }
-    char name[DHCP4O6_IFNAME_SIZE + 1];
-    memcpy(name, buf, DHCP4O6_IFNAME_SIZE);
-    IfacePtr iface = IfaceMgr::instance().getIface(string(name));
-    if (!iface) {
-        // Can't get the interface: ignore
-        return (Pkt6Ptr());
-    }
-    uint8_t raddr[DHCP4O6_RADDR_SIZE];
-    memcpy(raddr, buf + DHCP4O6_RADDR_OFFSET, DHCP4O6_RADDR_SIZE);
-    IOAddress from = IOAddress::fromBytes(AF_INET6, raddr);
-    Pkt6Ptr pkt;
-    pkt = Pkt6Ptr(new Pkt6(buf + DHCP4O6_DHCP6_OFFSET,
-                           cc - DHCP4O6_DHCP6_OFFSET));
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(buf, cc));
     pkt->updateTimestamp();
-    pkt->setRemoteAddr(from);
+
+    // Get interface name and remote address
+    pkt->unpack();
+    OptionVendorPtr vendor =
+        boost::dynamic_pointer_cast<OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
+    if (!vendor || vendor->getVendorId() != ENTERPRISE_ID_ISC) {
+        return (Pkt6Ptr());
+    }
+    OptionStringPtr ifname =
+        boost::dynamic_pointer_cast<OptionString>(vendor->getOption(ISC_V6_4O6_INTERFACE));
+    if (!ifname) {
+        return (Pkt6Ptr());
+    }
+    IfacePtr iface = IfaceMgr::instance().getIface(ifname->getValue());
+    if (!iface) {
+        return (Pkt6Ptr());
+    }
+    Option6AddrLstPtr srcs =
+        boost::dynamic_pointer_cast<Option6AddrLst>(vendor->getOption(ISC_V6_4O6_SRC_ADDRESS));
+    if (!srcs) {
+        return (Pkt6Ptr());
+    }
+    Option6AddrLst::AddressContainer addrs = srcs->getAddresses();
+    if (addrs.size() != 1) {
+        return (Pkt6Ptr());
+    }
+
+    // Update the packet and return it
+    static_cast<void>(pkt->delOption(D6O_VENDOR_OPTS));
+    pkt->setRemoteAddr(addrs[0]);
     pkt->setIface(iface->getName());
     pkt->setIndex(iface->getIndex());
     return (pkt);
@@ -167,37 +183,24 @@ void Dhcp4o6IpcBase::send(Pkt6Ptr pkt) {
         return;
     }
 
-    // Get interface name
-    string name = pkt->getIface();
-    if (name.empty() || name.size() > DHCP4O6_IFNAME_SIZE) {
-        // Bad interface name: ignore
-        return;
-    }
-    name.resize(DHCP4O6_IFNAME_SIZE);
+    // Get a vendor option
+    OptionVendorPtr vendor(new OptionVendor(Option::V6, ENTERPRISE_ID_ISC));
 
-    // Get remote address
-    IOAddress from = pkt->getRemoteAddr();
-    vector<uint8_t> raddr = from.toBytes();
-    if (raddr.size() != DHCP4O6_RADDR_SIZE) {
-        // Bad remote address: ignore
-        return;
-    }
+    // Push interface name and source address in it
+    vendor->addOption(OptionPtr(new OptionString(Option::V6,
+                                                 ISC_V6_4O6_INTERFACE,
+                                                 pkt->getIface())));
+    vendor->addOption(OptionPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
+                                                   pkt->getRemoteAddr())));
+    pkt->addOption(vendor);
 
     // Get packet content
-    OutputBuffer& pbuf = pkt->getBuffer();
-    if (!pbuf.getLength()) {
-        // Empty buffer: content is not (yet) here, get it
-        pkt->repack();
-    }
-
-    // Fill buffer
-    vector<uint8_t> buf(DHCP4O6_DHCP6_OFFSET + pbuf.getLength());
-    memcpy(&buf[0], name.c_str(), DHCP4O6_IFNAME_SIZE);
-    memcpy(&buf[0] + DHCP4O6_RADDR_OFFSET, &raddr[0], DHCP4O6_RADDR_SIZE);
-    memcpy(&buf[0] + DHCP4O6_DHCP6_OFFSET, pbuf.getData(), pbuf.getLength());
+    OutputBuffer& buf = pkt->getBuffer();
+    buf.clear();
+    pkt->pack();
 
     // Send
-    static_cast<void>(::send(socket_fd_, &buf[0], buf.size(), 0));
+    static_cast<void>(::send(socket_fd_, buf.getData(), buf.getLength(), 0));
     return;
 }
 

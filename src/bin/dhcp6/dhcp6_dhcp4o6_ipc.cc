@@ -54,14 +54,18 @@ void Dhcp4o6Ipc::handler() {
     if (!pkt) {
         return;
     }
+
     isc::util::OutputBuffer& buf = pkt->getBuffer();
-    pkt->repack();
+    buf.clear();
+    pkt->pack();
+
     uint8_t msg_type = buf[0];
     if ((msg_type == DHCPV6_RELAY_FORW) || (msg_type == DHCPV6_RELAY_REPL)) {
         pkt->setRemotePort(DHCP6_SERVER_PORT);
     } else {
         pkt->setRemotePort(DHCP6_CLIENT_PORT);
     }
+
     IfaceMgr::instance().send(pkt);
     // processStatsSent(pkt);
 }
