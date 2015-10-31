@@ -34,13 +34,34 @@ public:
 
     /// @brief Constructor, used in message reception.
     ///
-    /// @param data pointer to received data
-    /// @param len size of buffer to be allocated for this packet
-    /// @param pkt6 encapsulating DHCPv6 message.
-    Pkt4o6(const uint8_t* data, size_t len, const Pkt6Ptr& pkt6);
+    /// @param pkt4 DHCPv4 message
+    /// @param pkt6 encapsulating unpacked DHCPv6 message
+    /// the DHCPv4 message option will be removed
+    Pkt4o6(const OptionBuffer& pkt4, const Pkt6Ptr& pkt6);
+
+    /// @brief Constructor, used in replying to a message
+    ///
+    /// @param pkt4 DHCPv4 message
+    /// @param pkt6 DHCPv6 message
+    Pkt4o6(const Pkt4Ptr& pkt4, const Pkt6Ptr& pkt6);
 
     /// @brief Returns encapsulating DHCPv6 message
-    const Pkt6Ptr& getPkt6() { return (pkt6_); }
+    const Pkt6Ptr& getPkt6() const { return (pkt6_); }
+
+    /// @brief Prepares on-wire format of DHCPv4-over-DHCPv6 packet.
+    ///
+    /// Calls pack() on both DHCPv4 and DHCPv6 parts
+    /// Inserts the DHCPv4-message option
+    /// @ref pkt4::pack and @ref pkt6::pack
+    virtual void pack();
+
+    /// @brief Checks if a DHCPv4 message has beeb transported over DHCPv6
+    ///
+    /// @return Boolean value which indicates whether the message is
+    /// transported over DHCPv6 (true) or native DHCPv4 (false)
+    virtual bool isDhcp4o6() const {
+        return (true);
+    }
 
 protected:
     /// Encapsulating DHCPv6 message
