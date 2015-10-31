@@ -29,6 +29,10 @@ namespace dhcp {
 /// This class derives from @c Pkt4 in order to be handled by
 /// the DHCPv4 server code. It includes a shared pointer to the
 /// DHCPv6 message too.
+///
+/// This is an implementation of the DHCPv4-query/response DHCPv6 messages
+/// defined in RFC 7341 (http://ietf.org/rfc/rfc7341.txt).
+/// See also http://kea.isc.org/wiki/Dhcp4o6Design for design discussions.
 class Pkt4o6 : public Pkt4 {
 public:
 
