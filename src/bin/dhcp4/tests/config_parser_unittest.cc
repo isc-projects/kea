@@ -3782,4 +3782,245 @@ TEST_F(Dhcp4ParserTest, expiredLeasesProcessingError) {
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
+
+// Checks if the DHCPv4 is able to parse the configuration without 4o6 parameters
+// and does not set 4o6 fields at all.
+TEST_F(Dhcp4ParserTest, 4o6default) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected pool configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+
+    Cfg4o6& dhcp4o6 = subnet->get4o6();
+    EXPECT_FALSE(dhcp4o6.enabled());
+}
+
+// Checks if the DHCPv4 is able to parse the configuration with 4o6 subnet
+// defined.
+TEST_F(Dhcp4ParserTest, 4o6subnet) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-subnet\": \"2001:db8::123/45\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected pool configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+
+    Cfg4o6& dhcp4o6 = subnet->get4o6();
+    EXPECT_TRUE(dhcp4o6.enabled());
+    EXPECT_EQ(IOAddress("2001:db8::123"), dhcp4o6.getSubnet4o6().first);
+    EXPECT_EQ(45, dhcp4o6.getSubnet4o6().second);
+}
+
+// Checks if the DHCPv4 is able to parse the configuration with 4o6 subnet
+// defined.
+TEST_F(Dhcp4ParserTest, 4o6subnetBogus) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config[] = {
+        // Bogus configuration 1: missing / in subnet
+        "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-subnet\": \"2001:db8::123\" } ],"
+        "\"valid-lifetime\": 4000 }",
+
+        // Bogus configuration 2: incorrect address
+                "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-subnet\": \"2001:db8:bogus/45\" } ],"
+        "\"valid-lifetime\": 4000 }",
+
+        // Bogus configuration 3: incorrect prefix lenght
+        "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-subnet\": \"2001:db8::123/200\" } ],"
+        "\"valid-lifetime\": 4000 }"
+    };
+
+    ElementPtr json1 = Element::fromJSON(config[0]);
+    ElementPtr json2 = Element::fromJSON(config[0]);
+    ElementPtr json3 = Element::fromJSON(config[0]);
+
+    // Check that the first config is rejected.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json1));
+    checkResult(status, 1);
+
+    // Check that the second config is rejected.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json2));
+    checkResult(status, 1);
+
+    // Check that the third config is rejected.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json3));
+    checkResult(status, 1);
+}
+
+
+// Checks if the DHCPv4 is able to parse the configuration with 4o6 network
+// interface defined.
+TEST_F(Dhcp4ParserTest, 4o6iface) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-interface\": \"ethX\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected pool configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+
+    Cfg4o6& dhcp4o6 = subnet->get4o6();
+    EXPECT_TRUE(dhcp4o6.enabled());
+    EXPECT_EQ("ethX", dhcp4o6.getIface4o6());
+}
+
+// Checks if the DHCPv4 is able to parse the configuration with both 4o6 network
+// interface and v6 subnet defined.
+TEST_F(Dhcp4ParserTest, 4o6subnetIface) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-subnet\": \"2001:db8::543/21\","
+        "    \"4o6-interface\": \"ethX\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected subnet configured...
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+
+    // ... and that subnet has 4o6 network interface specified.
+    Cfg4o6& dhcp4o6 = subnet->get4o6();
+    EXPECT_TRUE(dhcp4o6.enabled());
+    EXPECT_EQ(IOAddress("2001:db8::543"), dhcp4o6.getSubnet4o6().first);
+    EXPECT_EQ(21, dhcp4o6.getSubnet4o6().second);
+    EXPECT_EQ("ethX", dhcp4o6.getIface4o6());
+}
+
+// Checks if the DHCPv4 is able to parse the configuration with 4o6 network
+// interface-id.
+TEST_F(Dhcp4ParserTest, 4o6subnetInterfaceId) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-interface-id\": \"vlan123\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected 4o6-interface-id configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+
+    Cfg4o6& dhcp4o6 = subnet->get4o6();
+    EXPECT_TRUE(dhcp4o6.enabled());
+    OptionPtr ifaceid = dhcp4o6.getInterfaceId();
+    ASSERT_TRUE(ifaceid);
+
+    vector<uint8_t> data = ifaceid->getData();
+    const char *exp_data = "vlan123";
+    // Let's convert vlan123 to vector<uint8_t> format.
+    // We need to skip the last \0 byte, thuse sizeof() - 1.
+    vector<uint8_t> exp(exp_data, exp_data + sizeof(exp_data) - 1);
+
+    EXPECT_TRUE(exp == data);
+}
+
+
 }
