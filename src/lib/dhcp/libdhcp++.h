@@ -281,6 +281,9 @@ private:
 
     static void initVendorOptsDocsis6();
 
+    /// Initialize private DHCPv6 option definitions.
+    static void initVendorOptsIsc6();
+
     /// pointers to factories that produce DHCPv6 options
     static FactoryMap v4factories_;
 
