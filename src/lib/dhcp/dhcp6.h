@@ -123,10 +123,9 @@
 //#define D6O_4RD                                 97 /* RFC7600 */
 //#define D6O_4RD_MAP_RULE                        98 /* RFC7600 */
 //#define D6O_4RD_NON_MAP_RULE                    99 /* RFC7600 */
-/* draft-ietf-dhc-dhcpv6-active-leasequery-04 */
-//#define D6O_LQ_BASE_TIME                       100
-//#define D6O_LQ_START_TIME                      101
-//#define D6O_LQ_END_TIME                        102
+//#define D6O_LQ_BASE_TIME                       100 /* RFC7653 */
+//#define D6O_LQ_START_TIME                      101 /* RFC7653 */
+//#define D6O_LQ_END_TIME                        102 /* RFC7653 */
 /* 103-142 unassigned */
 //#define D6O_IPV6_ADDRESS_ANDSF                 143 /* RFC6153 */
 
