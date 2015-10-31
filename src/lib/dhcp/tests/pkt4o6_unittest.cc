@@ -41,11 +41,11 @@ protected:
     }
 
 protected:
-    const std::vector<uint8_t> data6_;
     // commonly used test data
-    Pkt6Ptr pkt6_;
-    Pkt4Ptr pkt4_;
-    OptionBuffer buffer4_;
+    const std::vector<uint8_t> data6_; // data for Pkt6 (content unimportant)
+    Pkt6Ptr pkt6_;                     // DHCPv6 message for 4o6
+    Pkt4Ptr pkt4_;                     // DHCPv4 message for 4o6
+    OptionBuffer buffer4_;             // wire-format data buffer of pkt4_
 };
 
 TEST_F(Pkt4o6Test, construct) {
