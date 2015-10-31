@@ -374,7 +374,12 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
 const int OPTION_DEF_PARAMS_SIZE6  =
     sizeof(OPTION_DEF_PARAMS6) / sizeof(OPTION_DEF_PARAMS6[0]);
 
-/// @brief Definitions of private DHCPv6 options
+/// @brief Definitions of vendor-specific DHCPv6 options, defined by ISC.
+/// 4o6-* options are used for inter-process communication. For details, see
+/// http://kea.isc.org/wiki/Dhcp4o6Design
+///
+/// @todo: As those options are defined by ISC, they do not belong in std_option_defs.h.
+///        We need to move them to a separate file, e.g. isc_option_defs.h
 const OptionDefParams ISC_V6_DEFS[] = {
     { "4o6-interface", ISC_V6_4O6_INTERFACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "4o6-source-address", ISC_V6_4O6_SRC_ADDRESS, OPT_IPV6_ADDRESS_TYPE, false, NO_RECORD_DEF, "" }
