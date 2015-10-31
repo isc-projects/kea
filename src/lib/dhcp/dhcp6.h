@@ -110,8 +110,8 @@
 //#define D6O_ADDRSEL                             84 /* RFC7078 */
 //#define D6O_ADDRSEL_TABLE                       85 /* RFC7078 */
 //#define D6O_V6_PCP_SERVER                       86 /* RFC7291 */
-//#define D6O_DHCPV4_MSG                          87 /* RFC7341 */
-//#define D6O_DHCPV4_O_DHCPV6_SERVER              88 /* RFC7341 */
+#define D6O_DHCPV4_MSG                          87 /* RFC7341 */
+#define D6O_DHCPV4_O_DHCPV6_SERVER              88 /* RFC7341 */
 //#define D6O_S46_RULE                            89 /* RFC7598 */
 //#define D6O_S46_BR                              90 /* RFC7598 */
 //#define D6O_S46_DMR                             91 /* RFC7598 */
@@ -123,10 +123,9 @@
 //#define D6O_4RD                                 97 /* RFC7600 */
 //#define D6O_4RD_MAP_RULE                        98 /* RFC7600 */
 //#define D6O_4RD_NON_MAP_RULE                    99 /* RFC7600 */
-/* draft-ietf-dhc-dhcpv6-active-leasequery-04 */
-//#define D6O_LQ_BASE_TIME                       100
-//#define D6O_LQ_START_TIME                      101
-//#define D6O_LQ_END_TIME                        102
+//#define D6O_LQ_BASE_TIME                       100 /* RFC7653 */
+//#define D6O_LQ_START_TIME                      101 /* RFC7653 */
+//#define D6O_LQ_END_TIME                        102 /* RFC7653 */
 /* 103-142 unassigned */
 //#define D6O_IPV6_ADDRESS_ANDSF                 143 /* RFC6153 */
 
@@ -195,8 +194,8 @@
 //#define DHCPV6_RECONFIGURE_REQUEST 18
 //#define DHCPV6_RECONFIGURE_REPLY   19
 /* RFC 7341 */
-//#define DHCPV6_DHCPV4_QUERY        20
-//#define DHCPV6_DHCPV4_RESPONSE     21
+#define DHCPV6_DHCPV4_QUERY        20
+#define DHCPV6_DHCPV4_RESPONSE     21
 /* draft-ietf-dhc-dhcpv6-active-leasequery-04 */
 //#define DHCPV6_ACTIVELEASEQUERY    22
 //#define DHCPV6_STARTTLS            23
@@ -222,6 +221,11 @@ extern const int dhcpv6_type_name_max;
 
 // Taken from http://www.iana.org/assignments/enterprise-numbers
 #define ENTERPRISE_ID_ISC 2495
+
+/* DHCPv4-over-DHCPv6 (RFC 7341) inter-process communication. These are option
+   codes for the ISC vendor specific options used in 4o6 */
+#define ISC_V6_4O6_INTERFACE                 60000
+#define ISC_V6_4O6_SRC_ADDRESS               60001
 
 /* Offsets into IA_*'s where Option spaces commence.  */
 #define IA_NA_OFFSET 12 /* IAID, T1, T2, all 4 octets each */
@@ -297,5 +301,8 @@ extern const int dhcpv6_type_name_max;
 
 #define IRT_DEFAULT     86400
 #define IRT_MINIMUM     600
+
+/* DHCPv4-query message flags (see RFC7341) */
+#define DHCPV4_QUERY_FLAGS_UNICAST (1 << 23)
 
 #endif /* DHCP6_H */
