@@ -507,6 +507,29 @@ private:
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
 typedef boost::shared_ptr<Subnet> SubnetPtr;
 
+/// @brief This structure contains information about DHCP4o6 (RFC7341)
+///
+/// DHCP4o6 is completely optional. If it is not enabled, this structure
+/// does not contain any information.
+struct Cfg4o6 {
+
+    /// the default constructor.
+    ///
+    /// Initializes fields to their default value.
+    Cfg4o6()
+    :enabled_(false), subnet4o6_(std::make_pair(asiolink::IOAddress("::"), 128u)) {
+    }
+
+    /// Specifies if 4o6 is enabled on this subnet.
+    bool enabled_;
+
+    /// Specifies the network interface used as subnet selector
+    std::string iface4o6_;
+
+    /// Specifies the IPv6 subnet used for subnet selection
+    std::pair<asiolink::IOAddress, uint8_t> subnet4o6_;
+};
+
 /// @brief A configuration holder for IPv4 subnet.
 ///
 /// This class represents an IPv4 subnet.
@@ -559,6 +582,14 @@ public:
         return (match_client_id_);
     }
 
+    /// @brief Returns DHCP4o6 configuration parameters.
+    ///
+    /// This structure is always available. If the 4o6 is not enabled, its
+    /// enabled_ field will be set to false.
+    Cfg4o6& get4o6() {
+        return (dhcp4o6_);
+    }
+
 private:
 
     /// @brief Returns default address for pool selection
@@ -581,6 +612,10 @@ private:
     /// @brief Should server use client identifiers for client lease
     /// lookup.
     bool match_client_id_;
+
+
+    /// @brief All the information related to DHCP4o6
+    Cfg4o6 dhcp4o6_;
 };
 
 /// @brief A pointer to a @c Subnet4 object
