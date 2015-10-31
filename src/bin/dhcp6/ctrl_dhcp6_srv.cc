@@ -17,6 +17,7 @@
 #include <config/command_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
+#include <dhcp6/dhcp6_dhcp4o6_ipc.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/json_config_parser.h>
 #include <hooks/hooks_manager.h>
@@ -180,6 +181,16 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         std::ostringstream err;
         err << "error starting DHCP_DDNS client "
                 " after server reconfiguration: " << ex.what();
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
+    // Setup DHCPv4-over-DHCPv6 IPC
+    try {
+        Dhcp4o6Ipc::instance().open();
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "error starting DHCPv4-over-DHCPv6 IPC "
+               " after server reconfiguration: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
     }
 
