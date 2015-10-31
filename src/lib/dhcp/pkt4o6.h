@@ -34,7 +34,7 @@ public:
 
     /// @brief Constructor, used in message reception.
     ///
-    /// @param pkt4 DHCPv4 message
+    /// @param pkt4 Content of the DHCPv4-message option
     /// @param pkt6 encapsulating unpacked DHCPv6 message
     /// the DHCPv4 message option will be removed
     Pkt4o6(const OptionBuffer& pkt4, const Pkt6Ptr& pkt6);
@@ -52,10 +52,10 @@ public:
     ///
     /// Calls pack() on both DHCPv4 and DHCPv6 parts
     /// Inserts the DHCPv4-message option
-    /// @ref pkt4::pack and @ref pkt6::pack
+    /// @ref Pkt4::pack and @ref Pkt6::pack
     virtual void pack();
 
-    /// @brief Checks if a DHCPv4 message has beeb transported over DHCPv6
+    /// @brief Checks if a DHCPv4 message has been transported over DHCPv6
     ///
     /// @return Boolean value which indicates whether the message is
     /// transported over DHCPv6 (true) or native DHCPv4 (false)
