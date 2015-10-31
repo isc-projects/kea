@@ -86,7 +86,7 @@ TEST_F(Pkt4o6Test, pack) {
 
     // Check the DHCPv4 message option content (Pkt4o6 class is not responsible
     // for making it valid, so we won't examine it)
-    const u_int8_t* cp = static_cast<const u_int8_t*>(
+    const uint8_t* cp = static_cast<const uint8_t*>(
         pkt4o6.getPkt6()->getBuffer().getData());
     EXPECT_EQ(0, cp[4]);
     EXPECT_EQ(D6O_DHCPV4_MSG, cp[5]);
