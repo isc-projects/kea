@@ -74,6 +74,7 @@ libdhcp___unittests_SOURCES += option_vendor_class_unittest.cc
 libdhcp___unittests_SOURCES  += pkt_captures4.cc pkt_captures6.cc pkt_captures.h
 libdhcp___unittests_SOURCES += pkt4_unittest.cc
 libdhcp___unittests_SOURCES += pkt6_unittest.cc
+libdhcp___unittests_SOURCES += pkt4o6_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_inet_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_inet6_unittest.cc
