@@ -255,15 +255,17 @@ TEST_F(Option6AddrLstTest, toText) {
 // Option6AddrLst.  It assumes the option type is D6O_DHCPV4_O_DHCPV6_SERVER.
 void
 checkEmpty(Option6AddrLst& addrs) {
+    uint8_t expected[] = {
+        D6O_DHCPV4_O_DHCPV6_SERVER/256, D6O_DHCPV4_O_DHCPV6_SERVER%256,
+        0, 0
+    };
     EXPECT_EQ(4, addrs.len());  // just 2-byte type and 2-byte len fields
     EXPECT_EQ("type=00088, len=00000:", addrs.toText());
 
     OutputBuffer out_buf(255);
     addrs.pack(out_buf);
     EXPECT_EQ(4, out_buf.getLength());
-    const uint8_t *cp = static_cast<const uint8_t *>(out_buf.getData());
-    EXPECT_EQ(D6O_DHCPV4_O_DHCPV6_SERVER, cp[0] * 256 + cp[1]);
-    EXPECT_EQ(0, cp[2] * 256 + cp[3]);
+    EXPECT_EQ(0, memcmp(expected, out_buf.getData(), 4));
 }
 
 // Confirms no disruption happens for an empty set of addresses.
