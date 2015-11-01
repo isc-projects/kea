@@ -447,60 +447,118 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
     return (subnet);
 }
 
+
 isc::dhcp::Subnet4Ptr
 Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query) const {
-#ifdef notyet
-    CfgMgr& cfgmgr = CfgMgr::instance();
+    // Here begin by the same thing than selectSubnet, i.e., the DHCPv4 part
+
     Subnet4Ptr subnet;
-    Subnet6Ptr subnet6;
+
     SubnetSelector selector;
-    selector.client_classes_ = query->classes_;
-
-    // DHCPv4 relay or option
+    selector.ciaddr_ = query->getCiaddr();
     selector.giaddr_ = query->getGiaddr();
-    if (!selector.giaddr_.isV4Zero()) {
-        subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
-    }
+    selector.local_address_ = query->getLocalAddr();
+    selector.client_classes_ = query->classes_;
+    selector.iface_name_ = query->getIface();
 
-    // DHCPv6 relay
-    if (!subnet) {
-        Pkt4o6Ptr query4o6 = boost::dynamic_pointer_cast<Pkt4o6>(query);
-        if (!query4o6) {
-            isc_throw(Unexpected, "Can't get DHCP4o6 message");
-        }
-        const Pkt6Ptr& query6 = query4o6->getPkt6();
-        if (query6 && !query6->relay_info_.empty()) {
-            selector.first_relay_linkaddr_ = query6->relay_info_.back().linkaddr_;
-            selector.interface_id_ =
-                query6->getAnyRelayOption(D6O_INTERFACE_ID, Pkt6::RELAY_GET_FIRST);
-            subnet6 =
-                cfgmgr.getCurrentCfg()->getCfgSubnets6()->selectSubnet(selector);
-        }
-        if (subnet6) {
-            // Rely on matching IDs
-            const Subnet4Collection* subnets =
-                cfgmgr.getCurrentCfg()->getCfgSubnets4()->getAll();
-            for (Subnet4Collection::const_iterator it = subnets->begin();
-                 it != subnets->end(); ++it) {
-                if ((*it)->getID() == subnet6->getID()) {
-                    subnet = *it;
+    // If the link-selection sub-option is present, extract its value.
+    // "The link-selection sub-option is used by any DHCP relay agent
+    // that desires to specify a subnet/link for a DHCP client request
+    // that it is relaying but needs the subnet/link specification to
+    // be different from the IP address the DHCP server should use
+    // when communicating with the relay agent." (RFC 3257)
+    //
+    // Try first Relay Agent Link Selection sub-option
+    OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (rai) {
+        OptionCustomPtr rai_custom =
+            boost::dynamic_pointer_cast<OptionCustom>(rai);
+        if (rai_custom) {
+            OptionPtr link_select =
+                rai_custom->getOption(RAI_OPTION_LINK_SELECTION);
+            if (link_select) {
+                OptionBuffer link_select_buf = link_select->getData();
+                if (link_select_buf.size() == sizeof(uint32_t)) {
+                    selector.option_select_ =
+                        IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
                 }
+            }
+        }
+    } else {
+        // Or Subnet Selection option
+        OptionPtr sbnsel = query->getOption(DHO_SUBNET_SELECTION);
+        if (sbnsel) {
+            OptionCustomPtr oc =
+                boost::dynamic_pointer_cast<OptionCustom>(sbnsel);
+            if (oc) {
+                selector.option_select_ = oc->readAddress();
             }
         }
     }
 
-    // Applying default DHCPv4 rules (but not the IPv6 remote address)
-    if (!subnet) {
-        selector.ciaddr_ = query->getCiaddr();
-        // selector.remote_address_ = query->getRemoteAddr();
-        selector.iface_name_ = query->getIface();
+    // Mark it as DHCPv4-over-DHCPv6
+    selector.dhcp4o6_ = true;
 
-        subnet =
-            cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
+    // Now the DHCPv6 part
+    selector.remote_address_ = query->getRemoteAddr();
+    selector.first_relay_linkaddr_ = IOAddress("::");
+
+    // Handle a DHCPv6 relayed query
+    Pkt4o6Ptr query4o6 = boost::dynamic_pointer_cast<Pkt4o6>(query);
+    if (!query4o6) {
+	isc_throw(Unexpected, "Can't get DHCP4o6 message");
+    }
+    const Pkt6Ptr& query6 = query4o6->getPkt6();
+
+    if (query6 && !query6->relay_info_.empty()) {
+        BOOST_REVERSE_FOREACH(Pkt6::RelayInfo relay, query6->relay_info_) {
+            if (!relay.linkaddr_.isV6Zero() &&
+                !relay.linkaddr_.isV6LinkLocal()) {
+                selector.first_relay_linkaddr_ = relay.linkaddr_;
+                break;
+            }
+        }
+        selector.interface_id_ =
+            query6->getAnyRelayOption(D6O_INTERFACE_ID,
+				      Pkt6::RELAY_GET_FIRST);
     }
 
+    CfgMgr& cfgmgr = CfgMgr::instance();
+    subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
+
     // Let's execute all callouts registered for subnet4_select
-    // TODO
+    if (HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // We're reusing callout_handle from previous calls
+        callout_handle->deleteAllArguments();
+
+        // Set new arguments
+        callout_handle->setArgument("query4", query);
+        callout_handle->setArgument("subnet4", subnet);
+        callout_handle->setArgument("subnet4collection",
+                                    cfgmgr.getCurrentCfg()->
+                                    getCfgSubnets4()->getAll());
+
+        // Call user (and server-side) callouts
+        HooksManager::callCallouts(hook_index_subnet4_select_,
+                                   *callout_handle);
+
+        // Callouts decided to skip this step. This means that no subnet
+        // will be selected. Packet processing will continue, but it will
+        // be severely limited (i.e. only global options will be assigned)
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                      DHCP4_HOOK_SUBNET4_SELECT_SKIP)
+                .arg(query->getLabel());
+            return (Subnet4Ptr());
+        }
+
+        /// @todo: Add support for DROP status
+
+        // Use whatever subnet was specified by the callout
+        callout_handle->getArgument("subnet4", subnet);
+    }
 
     if (subnet) {
         // Log at higher debug level that subnet has been found.
@@ -520,9 +578,6 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query) const {
     }
 
     return (subnet);
-#else
-    return (Subnet4Ptr());
-#endif
 }
 
 Pkt4Ptr
