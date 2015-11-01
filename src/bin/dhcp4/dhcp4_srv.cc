@@ -448,13 +448,14 @@ Dhcpv4Srv::run() {
                     .arg(timeout);
             }
 
-        } catch (const SignalInterruptOnSelect) {
+        } catch (const SignalInterruptOnSelect&) {
             // Packet reception interrupted because a signal has been received.
             // This is not an error because we might have received a SIGTERM,
             // SIGINT, SIGHUP or SIGCHILD which are handled by the server. For
             // signals that are not handled by the server we rely on the default
             // behavior of the system.
-            LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
+            LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_BUFFER_WAIT_SIGNAL)
                 .arg(signal_set_->getNext());
         } catch (const std::exception& e) {
             // Log all other errors.
