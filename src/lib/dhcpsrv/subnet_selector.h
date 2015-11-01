@@ -47,6 +47,9 @@ struct SubnetSelector {
     asiolink::IOAddress first_relay_linkaddr_;
     //@}
 
+    /// @name DHCPv4-over-DHCPv6 flag
+    bool dhcp4o6_;
+
     /// @brief Address on which the message was received.
     asiolink::IOAddress local_address_;
     /// @brief Source address of the message.
@@ -65,6 +68,7 @@ struct SubnetSelector {
           option_select_(asiolink::IOAddress("0.0.0.0")),
           interface_id_(),
           first_relay_linkaddr_(asiolink::IOAddress("::")),
+          dhcp4o6_(false),
           local_address_(asiolink::IOAddress("0.0.0.0")),
           remote_address_(asiolink::IOAddress("0.0.0.0")),
           client_classes_(), iface_name_(std::string()) {
