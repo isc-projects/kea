@@ -35,7 +35,13 @@
     {
       "pools": [ { "pool": "2001:db8:1::/80" } ],
       "subnet": "2001:db8:1::/64",
-      "interface": "ethX"
+      "interface": "ethX",
+
+# Here's the option to point to the IPv6 address of the DHCP4o6 server
+      "option-data": [
+	  "name": "dhcp4o6-server-addr",
+	  "data": "2001:db8::1"
+      ];
     }
   ]
 },
