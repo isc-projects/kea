@@ -28,6 +28,13 @@
 
   "dhcp4o6-port": 6767,
 
+  "option-data": [
+   {  "name": "dhcp4o6-server-addr",
+      "code": 88,
+      "space": "dhcp6",
+      "csv-format": true,
+      "data": "2001:db8:1::1" }
+   ],
 
 # The following list defines subnets. Each subnet consists of at
 # least subnet and pool entries.
