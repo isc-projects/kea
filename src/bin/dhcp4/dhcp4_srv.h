@@ -216,6 +216,8 @@ public:
     ///         critical error.
     bool run();
 
+    void processPacket(Pkt4Ptr& packet);
+
     /// @brief Instructs the server to shut down.
     void shutdown();
 
