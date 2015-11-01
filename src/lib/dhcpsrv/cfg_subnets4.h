@@ -155,6 +155,27 @@ private:
     /// @return true if the duplicate subnet exists.
     bool isDuplicate(const Subnet4& subnet) const;
 
+    /// @brief Attempts to do subnet selection based on DHCP4o6 information
+    ///
+    /// The algorithm implemented is as follows:
+    ///
+    /// - First: try to match IPv6 subnet (4o6-subnet parameter) with the
+    ///   remote IPv6 address of the incoming packet
+    /// - Second: try to match interface-id (4o6-interface-id parameter)
+    ///   with the interface-id option in the incoming 4o6 packet
+    /// - Third: try to match interface-name (4o6-interface parameter)
+    ///   with the name of the interface the incoming 4o6 packet was
+    ///   received over.
+    ///
+    /// @todo: Add additional selection criteria. See
+    ///  http://kea.isc.org/wiki/ISC-DHCP4o6-Design for details.
+    ///
+    /// @param selector
+    /// @return selected IPv4 subnet
+    Subnet4Ptr
+    selectSubnet4o6(const SubnetSelector& selector) const;
+
+
     /// @brief A container for IPv4 subnets.
     Subnet4Collection subnets_;
 

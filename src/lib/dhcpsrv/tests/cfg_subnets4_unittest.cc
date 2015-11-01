@@ -326,5 +326,28 @@ TEST(CfgSubnets4Test, duplication) {
     EXPECT_THROW(cfg.add(subnet3), isc::dhcp::DuplicateSubnetID);
 }
 
+// This test checks if the IPv4 subnet can be selected based on the IPv6 address.
+TEST(CfgSubnets4Test, 4o6subnet) {
+    CfgSubnets4 cfg;
+
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 123));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3, 124));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 125));
+
+    subnet2->get4o6().setSubnet4o6(IOAddress("2001:db8:1::"), 48);
+    subnet3->get4o6().setSubnet4o6(IOAddress("2001:db8:2::"), 48);
+
+
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    SubnetSelector selector;
+    selector.dhcp4o6_ = true;
+    selector.remote_address_ = IOAddress("2001:db8:1::dead:beef");
+
+    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+}
+
 
 } // end of anonymous namespace
