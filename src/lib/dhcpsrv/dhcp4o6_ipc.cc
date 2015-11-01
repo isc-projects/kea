@@ -199,6 +199,7 @@ void Dhcp4o6IpcBase::send(Pkt6Ptr pkt) {
 
     // Send
     static_cast<void>(::send(socket_fd_, buf.getData(), buf.getLength(), 0));
+
     return;
 }
 
