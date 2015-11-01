@@ -38,7 +38,7 @@
        "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
        "subnet": "192.0.2.0/24",
        "4o6-subnet": "2001:db8::/64",
-       "interface": "ethX"
+       "4o6-interface": "ethX"
     }
   ]
 },
