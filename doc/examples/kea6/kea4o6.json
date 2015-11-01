@@ -1,0 +1,61 @@
+# This is an example configuration file for the v6 part of the DHCPv4-over-DHCPv6 server in Kea.
+
+{ "Dhcp6":
+
+{ 
+# Kea is told to listen on ethX interface only.
+  "interfaces-config": {
+    "interfaces": [ "ethX" ]
+  },
+
+# We need to specify lease type. As of May 2014, three backends are supported:
+# memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
+# any prior set up.
+  "lease-database": {
+    "type": "memfile"
+  },
+
+# Addresses will be assigned with preferred and valid lifetimes
+# being 3000 and 4000, respectively. Client is told to start
+# renewing after 1000 seconds. If the server does not respond
+# after 2000 seconds since the lease was granted, client is supposed
+# to start REBIND procedure (emergency renewal that allows switching
+# to a different server).
+  "preferred-lifetime": 3000,
+  "valid-lifetime": 4000,
+  "renew-timer": 1000,
+  "rebind-timer": 2000,
+
+  "dhcp4o6-port": 6767,
+
+
+# The following list defines subnets. Each subnet consists of at
+# least subnet and pool entries.
+  "subnet6": [ 
+    {
+      "pools": [ { "pool": "2001:db8:1::/80" } ],
+      "subnet": "2001:db8:1::/64",
+      "interface": "ethX"
+    }
+  ]
+},
+
+# The following configures logging. Kea will log all debug messages
+# to /var/log/kea-debug.log file.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp6",
+            "output_options": [
+                {
+                    "output": "/var/log/kea-debug.log"
+                }
+            ], 
+            "debuglevel": 99,
+            "severity": "DEBUG"
+        }
+    ]
+}
+
+}
+

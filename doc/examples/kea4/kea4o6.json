@@ -1,0 +1,62 @@
+# This is an example configuration file for the v4 part of the DHCPv4-over-DHCPv6 server in Kea.
+
+{ "Dhcp4":
+
+{
+# Kea is told to listen on ethX interface only.
+  "interfaces-config": {
+    "interfaces": [ "ethX" ]
+  },
+
+# We need to specify lease type. As of May 2014, three backends are supported:
+# memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
+# any prior set up.
+  "lease-database": {
+    "type": "memfile"
+  },
+
+# Addresses will be assigned with valid lifetimes being 4000. Client
+# is told to start renewing after 1000 seconds. If the server does not respond
+# after 2000 seconds since the lease was granted, client is supposed
+# to start REBIND procedure (emergency renewal that allows switching
+# to a different server).
+  "valid-lifetime": 4000,
+
+# Renew and rebind timers are commented out. This implies that options
+# 58 and 59 will not be sent to the client. In this case it is up to
+# the client to pick the timer values according to RFC2131. Uncomment the
+# timers to send these options to the client.
+#  "renew-timer": 1000,
+#  "rebind-timer": 2000,
+
+  "dhcp4o6-port": 6767,
+
+# The following list defines subnets. We have only one subnet
+# here. We tell Kea that it is directly available over local interface.
+  "subnet4": [
+    {
+       "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+       "subnet": "192.0.2.0/24",
+       "4o6-subnet": "2001:db8::/64",
+       "interface": "ethX"
+    }
+  ]
+},
+
+# The following configures logging. It assumes that messages with at least
+# informational level (info, warn, error) will will be logged to stdout.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp4",
+            "output_options": [
+                {
+                    "output": "stdout"
+                }
+            ],
+            "severity": "INFO"
+        }
+    ]
+}
+
+}
