@@ -423,7 +423,6 @@ Dhcpv4Srv::run() {
     while (!shutdown_) {
         // client's message and server's response
         Pkt4Ptr query;
-        Pkt4Ptr rsp;
 
         try {
             uint32_t timeout = 1000;
@@ -487,6 +486,16 @@ Dhcpv4Srv::run() {
         if (!query) {
             continue;
         }
+
+        processPacket(query);
+    }
+
+    return (true);
+}
+
+void
+Dhcpv4Srv::processPacket(Pkt4Ptr& query) {
+        Pkt4Ptr rsp;
 
         // Log reception of the packet. We need to increase it early, as any
         // failures in unpacking will cause the packet to be dropped. We
@@ -561,7 +570,7 @@ Dhcpv4Srv::run() {
                                                           static_cast<int64_t>(1));
                 isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                           static_cast<int64_t>(1));
-                continue;
+                return;
             }
         }
 
@@ -579,7 +588,7 @@ Dhcpv4Srv::run() {
             // Increase the statistic of dropped packets.
             isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                       static_cast<int64_t>(1));
-            continue;
+            return;
         }
 
         // We have sanity checked (in accept() that the Message Type option
@@ -616,7 +625,7 @@ Dhcpv4Srv::run() {
             if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_RCVD_SKIP)
                     .arg(query->getLabel());
-                continue;
+                return;
             }
 
             /// @todo: Add support for DROP status
@@ -675,7 +684,7 @@ Dhcpv4Srv::run() {
         }
 
         if (!rsp) {
-            continue;
+            return;
         }
 
 
@@ -748,7 +757,7 @@ Dhcpv4Srv::run() {
                     LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                               DHCP4_HOOK_BUFFER_SEND_SKIP)
                         .arg(rsp->getLabel());
-                    continue;
+                    return;
                 }
 
                 /// @todo: Add support for DROP status.
@@ -782,9 +791,6 @@ Dhcpv4Srv::run() {
                 .arg(rsp->getLabel())
                 .arg(e.what());
         }
-    }
-
-    return (true);
 }
 
 string
