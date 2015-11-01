@@ -530,6 +530,39 @@ TEST_F(ParseConfigTest, minimalOptionDefTest) {
     EXPECT_TRUE(def->getEncapsulatedSpace().empty());
 }
 
+/// @brief Check parsing of option definitions using default dhcp6 space.
+///
+/// Same than minimal but using the fact the default universe is V6
+/// so the default space is dhcp6
+TEST_F(ParseConfigTest, defaultSpaceOptionDefTest) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 10000,"
+        "      \"type\": \"ipv6-address\""
+        "  } ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_TRUE(rcode == 0);
+
+
+    // Verify that the option definition can be retrieved.
+    OptionDefinitionPtr def =
+        CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("dhcp6", 10000);
+    ASSERT_TRUE(def);
+
+    // Verify that the option definition is correct.
+    EXPECT_EQ("foo", def->getName());
+    EXPECT_EQ(10000, def->getCode());
+    EXPECT_FALSE(def->getArrayType());
+    EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, def->getType());
+    EXPECT_TRUE(def->getEncapsulatedSpace().empty());
+}
+
 /// @brief Check basic parsing of options.
 ///
 /// Note that this tests basic operation of the OptionDataListParser and
