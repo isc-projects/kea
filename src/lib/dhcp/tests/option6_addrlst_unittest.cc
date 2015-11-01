@@ -38,13 +38,13 @@ using boost::scoped_ptr;
 namespace {
 class Option6AddrLstTest : public ::testing::Test {
 public:
-    Option6AddrLstTest(): buf_(255), outBuf_(255) {
+    Option6AddrLstTest(): buf_(255), out_buf_(255) {
         for (unsigned i = 0; i < 255; i++) {
             buf_[i] = 255 - i;
         }
     }
     OptionBuffer buf_;
-    OutputBuffer outBuf_;
+    OutputBuffer out_buf_;
 };
 
 TEST_F(Option6AddrLstTest, basic) {
@@ -129,10 +129,10 @@ TEST_F(Option6AddrLstTest, basic) {
     EXPECT_EQ("2001:db8:1::dead:beef", addr.toText());
 
     // Pack this option
-    opt1->pack(outBuf_);
+    opt1->pack(out_buf_);
 
-    EXPECT_EQ(20, outBuf_.getLength());
-    EXPECT_EQ(0, memcmp(expected1, outBuf_.getData(), 20));
+    EXPECT_EQ(20, out_buf_.getLength());
+    EXPECT_EQ(0, memcmp(expected1, out_buf_.getData(), 20));
 
     // Two addresses
     scoped_ptr<Option6AddrLst> opt2;
@@ -148,11 +148,11 @@ TEST_F(Option6AddrLstTest, basic) {
     EXPECT_EQ("ff02::face:b00c", addrs[1].toText());
 
     // Pack this option
-    outBuf_.clear();
-    opt2->pack(outBuf_);
+    out_buf_.clear();
+    opt2->pack(out_buf_);
 
-    EXPECT_EQ(36, outBuf_.getLength() );
-    EXPECT_EQ(0, memcmp(expected2, outBuf_.getData(), 36));
+    EXPECT_EQ(36, out_buf_.getLength() );
+    EXPECT_EQ(0, memcmp(expected2, out_buf_.getData(), 36));
 
     // Three addresses
     scoped_ptr<Option6AddrLst> opt3;
@@ -170,11 +170,11 @@ TEST_F(Option6AddrLstTest, basic) {
     EXPECT_EQ("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", addrs[2].toText());
 
     // Pack this option
-    outBuf_.clear();
-    opt3->pack(outBuf_);
+    out_buf_.clear();
+    opt3->pack(out_buf_);
 
-    EXPECT_EQ(52, outBuf_.getLength());
-    EXPECT_EQ(0, memcmp(expected3, outBuf_.getData(), 52));
+    EXPECT_EQ(52, out_buf_.getLength());
+    EXPECT_EQ(0, memcmp(expected3, out_buf_.getData(), 52));
 
     EXPECT_NO_THROW(opt1.reset());
     EXPECT_NO_THROW(opt2.reset());
@@ -249,6 +249,36 @@ TEST_F(Option6AddrLstTest, toText) {
 
     EXPECT_EQ("type=01234, len=00064: 2001:db8:1::2 2001:db8:1::3 "
               "2001:db8:1::4 2001:db8:1::5", opt.toText());
+}
+
+// A helper for the 'empty' test.  Exercise public interfaces of an empty
+// Option6AddrLst.  It assumes the option type is D6O_DHCPV4_O_DHCPV6_SERVER.
+void
+checkEmpty(Option6AddrLst& addrs) {
+    const uint8_t expected[] = {
+        D6O_DHCPV4_O_DHCPV6_SERVER/256, D6O_DHCPV4_O_DHCPV6_SERVER%256,
+        0, 0
+    };
+    EXPECT_EQ(4, addrs.len());  // just 2-byte type and 2-byte len fields
+    EXPECT_EQ("type=00088, len=00000:", addrs.toText());
+
+    OutputBuffer out_buf(255);
+    addrs.pack(out_buf);
+    EXPECT_EQ(4, out_buf.getLength());
+    EXPECT_EQ(0, memcmp(expected, out_buf.getData(), 4));
+}
+
+// Confirms no disruption happens for an empty set of addresses.
+TEST_F(Option6AddrLstTest, empty) {
+    boost::scoped_ptr<Option6AddrLst> addrs(
+        new Option6AddrLst(D6O_DHCPV4_O_DHCPV6_SERVER,
+                           Option6AddrLst::AddressContainer()));
+    checkEmpty(*addrs);
+
+    const OptionBuffer empty_buf;
+    addrs.reset(new Option6AddrLst(D6O_DHCPV4_O_DHCPV6_SERVER,
+                                   empty_buf.begin(), empty_buf.end()));
+    checkEmpty(*addrs);
 }
 
 } // namespace
