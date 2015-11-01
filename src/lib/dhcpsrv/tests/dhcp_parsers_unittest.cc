@@ -825,7 +825,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
 // This test verifies an empty option data configuration is supported.
 TEST_F(ParseConfigTest, emptyOptionData) {
     // Configuration string.
-    std::string config =
+    const std::string config =
         "{ \"option-data\": [ {"
         "    \"name\": \"dhcp4o6-server-addr\""
         " } ]"
@@ -833,7 +833,7 @@ TEST_F(ParseConfigTest, emptyOptionData) {
 
     int rcode = 0;
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
-    Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
+    const Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr("dhcp6", D6O_DHCPV4_O_DHCPV6_SERVER));
     ASSERT_TRUE(opt);
     ASSERT_EQ(0, opt->getAddresses().size());
