@@ -17,6 +17,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option6_addrlst.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcpsrv/dhcp4o6_ipc.h>
@@ -140,6 +141,7 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
 
     // Get interface name and remote address
     pkt->unpack();
+
     OptionVendorPtr vendor =
         boost::dynamic_pointer_cast<OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
     if (!vendor || vendor->getVendorId() != ENTERPRISE_ID_ISC) {
@@ -154,19 +156,15 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     if (!iface) {
         return (Pkt6Ptr());
     }
-    Option6AddrLstPtr srcs =
-        boost::dynamic_pointer_cast<Option6AddrLst>(vendor->getOption(ISC_V6_4O6_SRC_ADDRESS));
+    OptionCustomPtr srcs =
+        boost::dynamic_pointer_cast<OptionCustom>(vendor->getOption(ISC_V6_4O6_SRC_ADDRESS));
     if (!srcs) {
-        return (Pkt6Ptr());
-    }
-    Option6AddrLst::AddressContainer addrs = srcs->getAddresses();
-    if (addrs.size() != 1) {
         return (Pkt6Ptr());
     }
 
     // Update the packet and return it
     static_cast<void>(pkt->delOption(D6O_VENDOR_OPTS));
-    pkt->setRemoteAddr(addrs[0]);
+    pkt->setRemoteAddr(srcs->readAddress());
     pkt->setIface(iface->getName());
     pkt->setIndex(iface->getIndex());
     return (pkt);
