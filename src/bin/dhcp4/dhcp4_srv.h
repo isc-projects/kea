@@ -208,15 +208,21 @@ public:
  
     /// @brief Main server processing loop.
     ///
-    /// Main server processing loop. Receives incoming packets, verifies
-    /// their correctness, generates appropriate answer (if needed) and
-    /// transmits responses.
+    /// Main server processing loop. Receives incoming packets, and calls
+    /// processPakcet for each of them.
     ///
     /// @return true, if being shut down gracefully, fail if experienced
     ///         critical error.
     bool run();
 
-    void processPacket(Pkt4Ptr& packet);
+    /// @brief Process a single incoming DHCPv4 packet.
+    ///
+    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// methods, generates appropriate answer (if needed) and (if necessary)
+    /// transmits a response.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    void processPacket(Pkt4Ptr& query);
 
     /// @brief Instructs the server to shut down.
     void shutdown();
