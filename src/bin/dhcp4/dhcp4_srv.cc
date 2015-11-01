@@ -24,7 +24,10 @@
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_string.h>
 #include <dhcp/pkt4.h>
+#include <dhcp/pkt4o6.h>
+#include <dhcp/pkt6.h>
 #include <dhcp/docsis3_option_defs.h>
+#include <dhcp4/dhcp4_dhcp4o6_ipc.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcpsrv/addr_utilities.h>
@@ -168,7 +171,31 @@ Dhcpv4Exchange::initResponse() {
         resp_.reset(new Pkt4(resp_type, getQuery()->getTransid()));
         copyDefaultFields();
         copyDefaultOptions();
+
+        if (getQuery()->isDhcp4o6()) {
+            initResponse4o6();
+        }
     }
+}
+
+void
+Dhcpv4Exchange::initResponse4o6() {
+    Pkt4o6Ptr query = boost::dynamic_pointer_cast<Pkt4o6>(getQuery());
+    if (!query) {
+        return;
+    }
+    const Pkt6Ptr& query6 = query->getPkt6();
+    Pkt6Ptr resp6(new Pkt6(DHCPV6_DHCPV4_RESPONSE, query6->getTransid()));
+    // Don't add client-id or server-id
+    // But copy relay info
+    if (!query6->relay_info_.empty()) {
+        resp6->copyRelayInfo(query6);
+    }
+    // Copy interface and remote address
+    resp6->setIface(query6->getIface());
+    resp6->setIndex(query6->getIndex());
+    resp6->setRemoteAddr(query6->getRemoteAddr());
+    resp_.reset(new Pkt4o6(resp_, resp6));
 }
 
 void
@@ -290,6 +317,13 @@ Dhcpv4Srv::~Dhcpv4Srv() {
         LOG_ERROR(dhcp4_logger, DHCP4_SRV_D2STOP_ERROR).arg(ex.what());
     }
 
+    try {
+        Dhcp4o6Ipc::instance().close();
+    } catch(const std::exception& ex) {
+        // Highly unlikely, but lets Report it but go on
+        // LOG_ERROR(dhcp4_logger, DHCP4_SRV_DHCP4O6_ERROR).arg(ex.what());
+    }
+
     IfaceMgr::instance().closeSockets();
 
     // The lease manager was instantiated during DHCPv4Srv configuration,
@@ -305,6 +339,11 @@ Dhcpv4Srv::shutdown() {
 
 isc::dhcp::Subnet4Ptr
 Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
+
+    // DHCPv4-over-DHCPv6 is a special (and complex) case
+    if (query->isDhcp4o6()) {
+        return (selectSubnet4o6(query));
+    }
 
     Subnet4Ptr subnet;
 
@@ -408,14 +447,164 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
     return (subnet);
 }
 
+
+isc::dhcp::Subnet4Ptr
+Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query) const {
+    // Here begin by the same thing than selectSubnet, i.e., the DHCPv4 part
+
+    Subnet4Ptr subnet;
+
+    SubnetSelector selector;
+    selector.ciaddr_ = query->getCiaddr();
+    selector.giaddr_ = query->getGiaddr();
+    selector.local_address_ = query->getLocalAddr();
+    selector.client_classes_ = query->classes_;
+    selector.iface_name_ = query->getIface();
+
+    // If the link-selection sub-option is present, extract its value.
+    // "The link-selection sub-option is used by any DHCP relay agent
+    // that desires to specify a subnet/link for a DHCP client request
+    // that it is relaying but needs the subnet/link specification to
+    // be different from the IP address the DHCP server should use
+    // when communicating with the relay agent." (RFC 3257)
+    //
+    // Try first Relay Agent Link Selection sub-option
+    OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (rai) {
+        OptionCustomPtr rai_custom =
+            boost::dynamic_pointer_cast<OptionCustom>(rai);
+        if (rai_custom) {
+            OptionPtr link_select =
+                rai_custom->getOption(RAI_OPTION_LINK_SELECTION);
+            if (link_select) {
+                OptionBuffer link_select_buf = link_select->getData();
+                if (link_select_buf.size() == sizeof(uint32_t)) {
+                    selector.option_select_ =
+                        IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
+                }
+            }
+        }
+    } else {
+        // Or Subnet Selection option
+        OptionPtr sbnsel = query->getOption(DHO_SUBNET_SELECTION);
+        if (sbnsel) {
+            OptionCustomPtr oc =
+                boost::dynamic_pointer_cast<OptionCustom>(sbnsel);
+            if (oc) {
+                selector.option_select_ = oc->readAddress();
+            }
+        }
+    }
+
+    // Mark it as DHCPv4-over-DHCPv6
+    selector.dhcp4o6_ = true;
+
+    // Now the DHCPv6 part
+    selector.remote_address_ = query->getRemoteAddr();
+    selector.first_relay_linkaddr_ = IOAddress("::");
+
+    // Handle a DHCPv6 relayed query
+    Pkt4o6Ptr query4o6 = boost::dynamic_pointer_cast<Pkt4o6>(query);
+    if (!query4o6) {
+	isc_throw(Unexpected, "Can't get DHCP4o6 message");
+    }
+    const Pkt6Ptr& query6 = query4o6->getPkt6();
+
+    if (query6 && !query6->relay_info_.empty()) {
+        BOOST_REVERSE_FOREACH(Pkt6::RelayInfo relay, query6->relay_info_) {
+            if (!relay.linkaddr_.isV6Zero() &&
+                !relay.linkaddr_.isV6LinkLocal()) {
+                selector.first_relay_linkaddr_ = relay.linkaddr_;
+                break;
+            }
+        }
+        selector.interface_id_ =
+            query6->getAnyRelayOption(D6O_INTERFACE_ID,
+				      Pkt6::RELAY_GET_FIRST);
+    }
+
+    CfgMgr& cfgmgr = CfgMgr::instance();
+    subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
+
+    // Let's execute all callouts registered for subnet4_select
+    if (HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // We're reusing callout_handle from previous calls
+        callout_handle->deleteAllArguments();
+
+        // Set new arguments
+        callout_handle->setArgument("query4", query);
+        callout_handle->setArgument("subnet4", subnet);
+        callout_handle->setArgument("subnet4collection",
+                                    cfgmgr.getCurrentCfg()->
+                                    getCfgSubnets4()->getAll());
+
+        // Call user (and server-side) callouts
+        HooksManager::callCallouts(hook_index_subnet4_select_,
+                                   *callout_handle);
+
+        // Callouts decided to skip this step. This means that no subnet
+        // will be selected. Packet processing will continue, but it will
+        // be severely limited (i.e. only global options will be assigned)
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                      DHCP4_HOOK_SUBNET4_SELECT_SKIP)
+                .arg(query->getLabel());
+            return (Subnet4Ptr());
+        }
+
+        /// @todo: Add support for DROP status
+
+        // Use whatever subnet was specified by the callout
+        callout_handle->getArgument("subnet4", subnet);
+    }
+
+    if (subnet) {
+        // Log at higher debug level that subnet has been found.
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_SUBNET_SELECTED)
+            .arg(query->getLabel())
+            .arg(subnet->getID());
+        // Log detailed information about the selected subnet at the
+        // lower debug level.
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_DATA)
+            .arg(query->getLabel())
+            .arg(subnet->toText());
+
+    } else {
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL,
+                  DHCP4_SUBNET_SELECTION_FAILED)
+            .arg(query->getLabel());
+    }
+
+    return (subnet);
+}
+
 Pkt4Ptr
 Dhcpv4Srv::receivePacket(int timeout) {
-    return (IfaceMgr::instance().receive4(timeout));
+    Pkt4Ptr pkt = IfaceMgr::instance().receive4(timeout);
+    if (!pkt) {
+        Pkt4o6Ptr& pkt4o6 = Dhcp4o6Ipc::instance().getReceived();
+        if (pkt4o6) {
+            pkt = pkt4o6;
+            pkt4o6.reset();
+        }
+    }
+    return (pkt);
 }
 
 void
 Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
-    IfaceMgr::instance().send(packet);
+    if (!packet->isDhcp4o6()) {
+        IfaceMgr::instance().send(packet);
+    } else {
+        Pkt4o6Ptr pkt4o6 = boost::dynamic_pointer_cast<Pkt4o6>(packet);
+        // Should not happen
+        if (!pkt4o6) {
+            isc_throw(Unexpected, "Dhcp4o6 packet cast fail");
+        }
+        Dhcp4o6Ipc::instance().send(pkt4o6->getPkt6());
+    }
 }
 
 bool
@@ -1440,7 +1629,8 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     // Instead we will need to use the address assigned to the interface
     // on which the query has been received. In other cases, we will just
     // use this address as a source address for the response.
-    if (local_addr.isV4Bcast()) {
+    // Do the same for DHCPv4-over-DHCPv6 exchanges.
+    if (local_addr.isV4Bcast() || query->isDhcp4o6()) {
         SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
         local_addr = sock_info.addr_;
     }
@@ -1471,6 +1661,12 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
     // response.
     Pkt4Ptr query = ex.getQuery();
     Pkt4Ptr response = ex.getResponse();
+
+    // DHCPv4-over-DHCPv6 is simple
+    if (query->isDhcp4o6()) {
+        response->setRemoteAddr(query->getRemoteAddr());
+        return;
+    }
 
     // The DHCPINFORM is slightly different than other messages in a sense
     // that the server should always unicast the response to the ciaddr.
@@ -1990,6 +2186,12 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
     if (pkt->isRelayed()) {
         return (true);
     }
+
+    // Accept all DHCPv4-over-DHCPv6 messages.
+    if (pkt->isDhcp4o6()) {
+        return (true);
+    }
+
     // The source address must not be zero for the DHCPINFORM message from
     // the directly connected client because the server will not know where
     // to respond if the ciaddr was not present.
