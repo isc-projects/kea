@@ -255,7 +255,7 @@ TEST_F(Option6AddrLstTest, toText) {
 // Option6AddrLst.  It assumes the option type is D6O_DHCPV4_O_DHCPV6_SERVER.
 void
 checkEmpty(Option6AddrLst& addrs) {
-    uint8_t expected[] = {
+    const uint8_t expected[] = {
         D6O_DHCPV4_O_DHCPV6_SERVER/256, D6O_DHCPV4_O_DHCPV6_SERVER%256,
         0, 0
     };
