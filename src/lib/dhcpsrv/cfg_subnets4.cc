@@ -9,6 +9,8 @@
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/subnet_id.h>
+#include <dhcpsrv/addr_utilities.h>
+#include <asiolink/io_address.h>
 #include <stats/stats_mgr.h>
 
 using namespace isc::asiolink;
@@ -30,7 +32,54 @@ CfgSubnets4::add(const Subnet4Ptr& subnet) {
 }
 
 Subnet4Ptr
+CfgSubnets4::selectSubnet4o6(const SubnetSelector& selector) const {
+
+    for (Subnet4Collection::const_iterator subnet = subnets_.begin();
+         subnet != subnets_.end(); ++subnet) {
+        Cfg4o6& cfg4o6 = (*subnet)->get4o6();
+
+        // Is this an 4o6 subnet at all?
+        if (!cfg4o6.enabled()) {
+            continue; // No? Let's try the next one.
+        }
+
+        // First match criteria: check if we have a prefix/len defined.
+        std::pair<asiolink::IOAddress, uint8_t> pref = cfg4o6.getSubnet4o6();
+        if (pref.first != IOAddress::IPV6_ZERO_ADDRESS()) {
+
+            // Let's check if the IPv6 address is in range
+            IOAddress first = firstAddrInPrefix(pref.first, pref.second);
+            IOAddress last = lastAddrInPrefix(pref.first, pref.second);
+            if ((first <= selector.remote_address_) &&
+                (selector.remote_address_ <= last)) {
+                return (*subnet);
+            }
+        }
+
+        // Second match criteria: check if the interface-id matches
+        if (cfg4o6.getInterfaceId() && selector.interface_id_ &&
+            cfg4o6.getInterfaceId()->equals(selector.interface_id_)) {
+            return (*subnet);
+        }
+
+        // Third match criteria: check if the interface name matches
+        if (!cfg4o6.getIface4o6().empty() && !selector.iface_name_.empty()
+            && cfg4o6.getIface4o6() == selector.iface_name_) {
+            return (*subnet);
+        }
+    }
+
+    // Ok, wasn't able to find any matching subnet.
+    return (Subnet4Ptr());
+}
+
+Subnet4Ptr
 CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
+
+    if (selector.dhcp4o6_) {
+        return selectSubnet4o6(selector);
+    }
+
     // First use RAI link select sub-option or subnet select option
     if (!selector.option_select_.isV4Zero()) {
         return (selectSubnet(selector.option_select_,
