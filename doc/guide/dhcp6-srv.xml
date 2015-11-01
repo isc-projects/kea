@@ -1028,7 +1028,7 @@ temporarily override a list of interface names and listen on all interfaces.
       optional. The <command>array</command> default value is
       <command>false</command>. The <command>record-types</command>
       and <command>encapsulate</command> default values are blank
-      (i.e. ""). The default <command>space</command> is "dhcp4".
+      (i.e. ""). The default <command>space</command> is "dhcp6".
       </para>
 
       <para>Once the new option format is defined, its value is set
@@ -1068,7 +1068,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "space": "dhcp6",
             "type": "record",
             "array": false,
-            "record-types": "ipv4-address, uint16, boolean, string",
+            "record-types": "ipv6-address, uint16, boolean, string",
             "encapsulate": ""</userinput>
         }, ...
     ],
