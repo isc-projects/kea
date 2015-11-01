@@ -56,6 +56,9 @@ struct SubnetSelector {
     /// @brief Name of the interface on which the message was received.
     std::string iface_name_;
 
+    /// @brief Specifies if the packet is DHCP4o6
+    bool dhcp4o6_;
+
     /// @brief Default constructor.
     ///
     /// Sets the default values for the @c Selector.
@@ -67,7 +70,8 @@ struct SubnetSelector {
           first_relay_linkaddr_(asiolink::IOAddress("::")),
           local_address_(asiolink::IOAddress("0.0.0.0")),
           remote_address_(asiolink::IOAddress("0.0.0.0")),
-          client_classes_(), iface_name_(std::string()) {
+          client_classes_(), iface_name_(std::string()),
+          dhcp4o6_(false) {
     }
 };
 
