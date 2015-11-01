@@ -4014,13 +4014,9 @@ TEST_F(Dhcp4ParserTest, 4o6subnetInterfaceId) {
     ASSERT_TRUE(ifaceid);
 
     vector<uint8_t> data = ifaceid->getData();
-    const char *exp_data = "vlan123";
-    // Let's convert vlan123 to vector<uint8_t> format.
-    // We need to skip the last \0 byte, thuse sizeof() - 1.
-    vector<uint8_t> exp(exp_data, exp_data + sizeof(*exp_data) - 1);
-
-    EXPECT_TRUE(exp == data);
+    EXPECT_EQ(7, data.size());
+    const char *exp = "vlan123";
+    EXPECT_EQ(0, memcmp(&data[0], exp, data.size()));
 }
-
 
 }
