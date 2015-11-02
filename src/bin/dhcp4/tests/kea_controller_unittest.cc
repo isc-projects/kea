@@ -377,7 +377,7 @@ TEST_F(JSONFileBackendTest, timers) {
     lease_reclaimed->state_ = Lease4::STATE_EXPIRED_RECLAIMED;
 
     // Add leases to the database.
-    LeaseMgr& lease_mgr = LeaseMgrFactory().instance();
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
     ASSERT_NO_THROW(lease_mgr.addLease(lease_expired));
     ASSERT_NO_THROW(lease_mgr.addLease(lease_reclaimed));
 
