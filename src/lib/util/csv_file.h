@@ -469,8 +469,6 @@ protected:
     /// This function is called internally by @ref CSVFile::open. Derived classes
     /// may add extra validation steps.
     ///
-    /// @todo There should be a support for optional columns (see ticket #3626).
-    ///
     /// @param header A row holding a header.
     /// @return true if header matches the columns; false otherwise.
     virtual bool validateHeader(const CSVRow& header);

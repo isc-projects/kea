@@ -296,9 +296,9 @@ CSVFile::open(const bool seek_to_end) {
 
             // Check the header against the columns specified for the CSV file.
             if (!validateHeader(header)) {
-
                 isc_throw(CSVFileError, "invalid header '" << header
-                          << "' in CSV file '" << filename_ << "'");
+                          << "' in CSV file '" << filename_ << "': "
+                          << getReadMsg());
             }
 
             // Everything is good, so if we haven't added any columns yet,

@@ -23,6 +23,7 @@ libkea_util_la_SOURCES += range_utilities.h
 libkea_util_la_SOURCES += signal_set.cc signal_set.h
 libkea_util_la_SOURCES += stopwatch.cc stopwatch.h
 libkea_util_la_SOURCES += stopwatch_impl.cc stopwatch_impl.h
+libkea_util_la_SOURCES += versioned_csv_file.h versioned_csv_file.cc
 libkea_util_la_SOURCES += watch_socket.cc watch_socket.h
 libkea_util_la_SOURCES += encode/base16_from_binary.h
 libkea_util_la_SOURCES += encode/base32hex.h encode/base64.h
