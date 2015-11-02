@@ -288,6 +288,143 @@ TEST_F(CSVLeaseFile6Test, recreate) {
               io_.readFile());
 }
 
+// Verifies that a 1.0 schema file with records from
+// schema 1.0, 2.0, and 3.0 loads correctly.
+TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
+    // Create a mixed schema file
+    io_.writeFile(
+             // schema 1.0 header
+              "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+              "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname\n"
+              // schema 1.0 record
+              "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:01,"
+              "200,200,8,100,0,7,0,1,1,one.example.com\n"
+
+              // schema 2.0 record - has hwaddr
+              "2001:db8:1::2,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:02,"
+              "200,200,8,100,0,7,0,1,1,two.example.com,01:02:03:04:05\n"
+
+              // schema 3.0 record - has hwaddr and state
+              "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03,"
+              "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1\n");
+
+    // Open the lease file.
+    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
+    ASSERT_NO_THROW(lf->open());
+
+    Lease6Ptr lease;
+    {
+    SCOPED_TRACE("First lease valid");
+    EXPECT_TRUE(lf->next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the lease attributes are correct.
+    EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:01", lease->duid_->toText());
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(Lease::TYPE_NA, lease->type_);
+    EXPECT_EQ(7, lease->iaid_);
+    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("one.example.com", lease->hostname_);
+    // Verify that added HWaddr is empty
+    EXPECT_FALSE(lease->hwaddr_);
+    // Verify that added state is STATE_DEFAULT
+    EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+    }
+
+    {
+    SCOPED_TRACE("Second lease valid");
+    EXPECT_TRUE(lf->next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the lease attributes are correct.
+    EXPECT_EQ("2001:db8:1::2", lease->addr_.toText());
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:02", lease->duid_->toText());
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(Lease::TYPE_NA, lease->type_);
+    EXPECT_EQ(7, lease->iaid_);
+    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("two.example.com", lease->hostname_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_EQ("01:02:03:04:05", lease->hwaddr_->toText(false));
+    // Verify that added state is STATE_DEFAULT
+    EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+    }
+
+    {
+    SCOPED_TRACE("Third lease valid");
+    EXPECT_TRUE(lf->next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the lease attributes are correct.
+    EXPECT_EQ("2001:db8:1::3", lease->addr_.toText());
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03", lease->duid_->toText());
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(Lease::TYPE_NA, lease->type_);
+    EXPECT_EQ(7, lease->iaid_);
+    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("three.example.com", lease->hostname_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_EQ("0a:0b:0c:0d:0e", lease->hwaddr_->toText(false));
+    EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    }
+
+}
+
+// Verifies that a lease file with fewer header columns than the
+// minimum allowed will not open.
+TEST_F(CSVLeaseFile6Test, tooFewHeaderColumns) {
+    io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+              "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev\n");
+
+    // Open should fail.
+    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
+    ASSERT_THROW(lf->open(), CSVFileError);
+}
+
+// Verifies that a lease file with an unrecognized column header
+// will not open.
+TEST_F(CSVLeaseFile6Test, invalidHeaderColumn) {
+    io_.writeFile("address,BOGUS,valid_lifetime,expire,subnet_id,pref_lifetime,"
+              "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+              "hwaddr,state\n");
+
+    // Open should fail.
+    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
+    ASSERT_THROW(lf->open(), CSVFileError);
+}
+
+// Verifies that a lease file with more header columns than defined
+// columns will not open.
+TEST_F(CSVLeaseFile6Test, tooManyHeaderColumns) {
+    io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+              "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+              "hwaddr,state,FUTURE_COL\n");
+
+    // Open should fail.
+    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
+    ASSERT_THROW(lf->open(), CSVFileError);
+}
+
+
 /// @todo Currently we don't check invalid lease attributes, such as invalid
 /// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6
 /// should be extended with the function that validates lease attributes. Once
