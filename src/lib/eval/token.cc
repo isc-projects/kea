@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <eval/token.h>
+#include <eval/eval_log.h>
 #include <boost/lexical_cast.hpp>
 #include <string>
 
@@ -90,13 +91,11 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
             length = boost::lexical_cast<int>(len_str);
         }
     } catch (const boost::bad_lexical_cast&) {
-#if 0
-        // Logging not yet built
         LOG_DEBUG(eval_logger, EVAL_DBG_TRACE,
                   EVAL_SUBSTRING_BAD_PARAM_CONVERSION)
             .arg(start_str)
             .arg(len_str);
-#endif
+
         values.push("");
         return;
     }
