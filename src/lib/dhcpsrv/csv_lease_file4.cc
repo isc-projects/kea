@@ -22,14 +22,14 @@ namespace isc {
 namespace dhcp {
 
 CSVLeaseFile4::CSVLeaseFile4(const std::string& filename)
-    : CSVFile(filename) {
+    : VersionedCSVFile(filename) {
     initColumns();
 }
 
 void
 CSVLeaseFile4::open(const bool seek_to_end) {
     // Call the base class to open the file
-    CSVFile::open(seek_to_end);
+    VersionedCSVFile::open(seek_to_end);
 
     // and clear any statistics we may have
     clearStatistics();
@@ -62,7 +62,7 @@ CSVLeaseFile4::append(const Lease4& lease) {
     row.writeAt(getColumnIndex("state"), lease.state_);
 
     try {
-        CSVFile::append(row);
+        VersionedCSVFile::append(row);
     } catch (const std::exception&) {
         // Catch any errors so we can bump the error counter than rethrow it
         ++write_errs_;
@@ -85,7 +85,7 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
     try {
         // Get the row of CSV values.
         CSVRow row;
-        CSVFile::next(row);
+        VersionedCSVFile::next(row);
         // The empty row signals EOF.
         if (row == CSVFile::EMPTY_ROW()) {
             lease.reset();
@@ -137,16 +137,18 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
 
 void
 CSVLeaseFile4::initColumns() {
-    addColumn("address");
-    addColumn("hwaddr");
-    addColumn("client_id");
-    addColumn("valid_lifetime");
-    addColumn("expire");
-    addColumn("subnet_id");
-    addColumn("fqdn_fwd");
-    addColumn("fqdn_rev");
-    addColumn("hostname");
-    addColumn("state");
+    addColumn("address", "1.0");
+    addColumn("hwaddr", "1.0");
+    addColumn("client_id", "1.0");
+    addColumn("valid_lifetime", "1.0");
+    addColumn("expire", "1.0");
+    addColumn("subnet_id", "1.0");
+    addColumn("fqdn_fwd", "1.0");
+    addColumn("fqdn_rev", "1.0");
+    addColumn("hostname", "1.0");
+    addColumn("state", "2.0", "0");
+    // Any file with less than hostname is invalid
+    setMinimumValidColumns("hostname");
 }
 
 IOAddress

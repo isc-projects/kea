@@ -20,7 +20,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_file_stats.h>
-#include <util/csv_file.h>
+#include <util/versioned_csv_file.h>
 #include <stdint.h>
 #include <string>
 
@@ -38,7 +38,7 @@ namespace dhcp {
 /// validation (see http://kea.isc.org/ticket/2405). However, when #2405
 /// is implemented, the @c next function may need to be updated to use the
 /// validation capablity of @c Lease6.
-class CSVLeaseFile6 : public isc::util::CSVFile, public LeaseFileStats {
+class CSVLeaseFile6 : public isc::util::VersionedCSVFile, public LeaseFileStats {
 public:
 
     /// @brief Constructor.
