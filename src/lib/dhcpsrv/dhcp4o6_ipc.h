@@ -46,7 +46,7 @@ protected:
     /// @param side side of the server (4 or 6)
     ///
     /// @return new socket descriptor
-    int open(uint16_t port, int side);
+    int open(const uint16_t port, const int side);
 
 public:
     /// @brief Open communication socket (for derived classes)
@@ -65,7 +65,7 @@ public:
     ///
     /// @param a pointer to a DHCPv6 message with interface and remote
     /// address set for the IPC message
-    void send(Pkt6Ptr pkt);
+    void send(const Pkt6Ptr& pkt);
 
 protected:
     /// @brief Port number
