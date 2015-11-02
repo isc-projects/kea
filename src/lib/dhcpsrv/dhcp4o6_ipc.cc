@@ -38,20 +38,9 @@ Dhcp4o6IpcBase::~Dhcp4o6IpcBase() {
     close();
 }
 
-int Dhcp4o6IpcBase::open(uint16_t port, int side) {
+int Dhcp4o6IpcBase::open(const uint16_t port, const int side) {
     if (port == port_) {
         // No change: nothing to do
-        return (socket_fd_);
-    }
-
-    // Port 0: closing
-    if (port == 0) {
-        port_ = 0;
-        if (socket_fd_ != -1) {
-            IfaceMgr::instance().deleteExternalSocket(socket_fd_);
-            ::close(socket_fd_);
-            socket_fd_ = -1;
-        }
         return (socket_fd_);
     }
 
@@ -63,8 +52,8 @@ int Dhcp4o6IpcBase::open(uint16_t port, int side) {
 
     // Set reuse address
     int flag = 1;
-    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
-                   (char *)&flag, sizeof(flag)) < 0) {
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, static_cast<const void*>(&flag),
+                   sizeof(flag)) < 0) {
         ::close(sock);
         isc_throw(Unexpected, "Failed to set SO_REUSEADDR on DHCP4o6 socket.");
     }
@@ -104,7 +93,8 @@ int Dhcp4o6IpcBase::open(uint16_t port, int side) {
     } else {
         remote6.sin6_port = htons(port);
     }
-    if (connect(sock, (struct sockaddr *)&remote6, sizeof(remote6)) < 0) {
+    if (connect(sock, reinterpret_cast<const struct sockaddr*>(&remote6),
+                sizeof(remote6)) < 0) {
         ::close(sock);
         isc_throw(Unexpected, "Failed to connect DHCP4o6 socket.");
     }
@@ -127,7 +117,12 @@ int Dhcp4o6IpcBase::open(uint16_t port, int side) {
 }
 
 void Dhcp4o6IpcBase::close() {
-    static_cast<void>(open(0, 0));
+    port_ = 0;
+    if (socket_fd_ != -1) {
+        IfaceMgr::instance().deleteExternalSocket(socket_fd_);
+        ::close(socket_fd_);
+        socket_fd_ = -1;
+    }
 }
 
 Pkt6Ptr Dhcp4o6IpcBase::receive() {
@@ -170,7 +165,7 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     return (pkt);
 }
 
-void Dhcp4o6IpcBase::send(Pkt6Ptr pkt) {
+void Dhcp4o6IpcBase::send(const Pkt6Ptr& pkt) {
     // No packet: nothing to send
     if (!pkt) {
         return;
