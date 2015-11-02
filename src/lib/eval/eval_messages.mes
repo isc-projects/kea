@@ -21,4 +21,5 @@ client classification expressions.
 
 % EVAL_SUBSTRING_BAD_PARAM_CONVERSION starting %1, length %2
 This debug message indicates that the parameter for the starting postion
-or length of the substring couldn't be converted to an integer.
+or length of the substring couldn't be converted to an integer.  In this
+case the substring routine returns an empty string.

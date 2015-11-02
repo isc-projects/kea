@@ -150,10 +150,10 @@ public:
     /// either "true" or "false". It requires at least two parameters to be
     /// present on stack.
     ///
-    /// @throw EvalBadStack if there's less than 2 values on stack
+    /// @throw EvalBadStack if there are less than 2 values on stack
     ///
-    /// @brief pkt (unused)
-    /// @brief values - stack of values (2 arguments will be poped, 1 result
+    /// @param pkt (unused)
+    /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
     void evaluate(const Pkt& pkt, ValueStack& values);
 };
@@ -170,36 +170,45 @@ public:
 
     /// @brief Extract a substring from a string
     ///
-    /// Evaluation does not use packet information, but rather consumes the last
-    /// three parameters and requires at least three parameters to be present on
-    /// stack.  From the top it expects the values on the stack as:
-    ///  len
-    ///  start
-    ///  str
+    /// Evaluation does not use packet information.  It requires at least
+    /// three values to be present on the stack.  It will consume the top
+    /// three values on the stack as parameters and push the resulting substring
+    /// onto the stack.  From the top it expects the values on the stack as:
+    /// -  len
+    /// -  start
+    /// -  str
     ///
-    /// str is the string to extract a substring from.  If it is empty an empty
+    /// str is the string to extract a substring from.  If it is empty, an empty
     /// string is pushed onto the value stack.
     ///
     /// start is the postion from which the code starts extracting the substring.
-    /// 0 is before the first character and a negative number starts from the end,
-    /// with -1 being before the last character.  If the starting point is
-    /// outside of the original string an empty string is pushed onto the value
-    /// stack.
+    /// 0 is the first character and a negative number starts from the end, with
+    /// -1 being the last character.  If the starting point is outside of the
+    /// original string an empty string is pushed onto the value stack.
     ///
     /// length is the number of characters from the string to extract.
     /// "all" means all remaining characters from start to the end of string.
     /// A negative number means to go from start towards the beginning of
-    /// string, but doesn't include start.
+    /// the string, but doesn't include start.
     /// If length is longer than the remaining portion of string
     /// then the entire remaining portion is placed on the value stack.
-    /// Note: a negative value of length only indicates which characters to
-    /// extract, it does NOT indicate any attempt to reverse the string.
-    /// For example substring("foobar", 4, -2) will result in "ob".
     ///
-    /// @throw EvalBadStack if there's less than 3 values on stack
+    /// The following examples all use the base string "foobar", the first number
+    /// is the starting position and the second is the length.  Note that
+    /// a negative length only selects which characters to extract it does not
+    /// indicate an attempt to reverse the string.
+    /// -  0, all => "foobar"
+    /// -  0,  6  => "foobar"
+    /// -  0,  4  => "foob"
+    /// -  2, all => "obar"
+    /// -  2,  6  => "obar"
+    /// - -1, all => "r"
+    /// - -1, -4  => "ooba"
     ///
-    /// @brief pkt (unused)
-    /// @brief values - stack of values (3 arguments will be poped, 1 result
+    /// @throw EvalBadStack if there are less than 3 values on stack
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (3 arguments will be popped, 1 result
     ///        will be pushed)
     void evaluate(const Pkt& pkt, ValueStack& values);
 };

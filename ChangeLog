@@ -1,3 +1,7 @@
+XXXX.	[func]		sar
+	Added client classification substring token.
+	(Trac #4090, git <tbd>
+
 1041.	[func]		tomek
 	A new library, libkea-eval has been edded. It is not functional
 	yet, but its purpose is to provide a generic expression

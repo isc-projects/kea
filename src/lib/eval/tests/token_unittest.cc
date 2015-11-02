@@ -233,7 +233,7 @@ TEST_F(TokenTest, optionEqualTrue) {
 };
 
 // This test checks if an a token representing a substring request
-// throws an excpetion if there aren't enough values on the stack.
+// throws an exception if there aren't enough values on the stack.
 // The stack from the top is: length, start, string.
 // The actual packet is not used.
 TEST_F(TokenTest, substringNotEnoughValues) {
@@ -340,8 +340,9 @@ TEST_F(TokenTest, substringBadParams) {
     verifySubstringEval("foobar", "0", "allaboard", "");
 }
 
-// lastly check that we don't get anything if the string is empty
-TEST_F(TokenTest, substringStartingEmpty) {
+// lastly check that we don't get anything if the string is empty or
+// we don't ask for any characters from it.
+TEST_F(TokenTest, substringReturnEmpty) {
     verifySubstringEval("", "0", "all", "");
     verifySubstringEval("foobar", "0", "0", "");
 }
@@ -352,7 +353,7 @@ TEST_F(TokenTest, substringStartingEmpty) {
 // result on the bottom with the substring result on next.
 // Evaulating the equals should produce true for the first
 // and false for the second.
-// throws an excpetion if there aren't enough values on the stack.
+// throws an exception if there aren't enough values on the stack.
 // The stack from the top is: length, start, string.
 // The actual packet is not used.
 TEST_F(TokenTest, substringEquals) {
