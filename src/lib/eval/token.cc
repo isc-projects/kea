@@ -76,14 +76,15 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
         return;
     }
 
-    // Convert the starting position and legnth from strings to numbers
+    // Convert the starting position and length from strings to numbers
     // the length may also be "all" in which case simply make it the
-    // legnth of the string.
+    // length of the string.
     // If we have a problem push an empty string and leave
-    int start_pos, length;
+    int start_pos;
+    int length;
     try {
         start_pos = boost::lexical_cast<int>(start_str);
-        if ("all" == len_str) {
+        if (len_str == "all") {
             length = string_str.length();
         } else {
             length = boost::lexical_cast<int>(len_str);
@@ -100,19 +101,19 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
         return;
     }
 
+    const int string_length = string_str.length();
     // If the starting postion is outside of the string push an
     // empty string and leave
-    if (((start_pos >= 0) && (start_pos >= string_str.length())) |
-        ((start_pos < 0) && (-start_pos > string_str.length()))) {
+    if ((start_pos < -string_length) || (start_pos >= string_length)) {
         values.push("");
         return;
     }
 
     // Adjust the values to be something for substr.  We first figure out
-    // the staring postion, then update it and the length to get the
-    // characters before or after it depnding on the sign of length
+    // the starting postion, then update it and the length to get the
+    // characters before or after it depending on the sign of length
     if (start_pos < 0) {
-        start_pos = string_str.length() + start_pos;
+        start_pos = string_length + start_pos;
     }
 
     if (length < 0) {
