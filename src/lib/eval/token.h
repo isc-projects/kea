@@ -101,6 +101,32 @@ protected:
     std::string value_; ///< Constant value
 };
 
+/// @brief Token representing a constant string in hexadecimal format
+///
+/// This token holds value of a constant string giving in an hexadecimal
+/// format, for instance 0x666f6f is "foo"
+class TokenHexString : public Token {
+public:
+    /// Value is set during token construction.
+    ///
+    /// @param str constant string to be represented
+    /// (must be a string of hexadecimal digits or decoding will fail)
+    TokenHexString(const std::string& str)
+        :repr_(str){
+    }
+
+    /// @brief Token evaluation (puts value of the constant string on
+    /// the stack after decoding or an empty string if decoding fails
+    /// (note it should not if the parser is correct)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented string will be pushed here)
+    void evaluate(const Pkt& pkt, ValueStack& values);
+
+protected:
+    std::string repr_; ///< Constant value
+};
+
 /// @brief Token that represents a value of an option
 ///
 /// This represents a reference to a given option, e.g. in the expression
