@@ -90,9 +90,13 @@ public:
     /// or NULL. If this is NULL, the @c lease_file6 must be non-null.
     /// @param lease_file6 A pointer to the DHCPv6 lease file to be cleaned up
     /// or NULL. If this is NULL, the @c lease_file4 must be non-null.
+    /// @param run_once_now A flag that causes LFC to be invoked immediately,
+    /// regardless of the value of lfc_interval.  This is primarily used to
+    /// cause lease file schema upgrades upon startup.
     void setup(const uint32_t lfc_interval,
                const boost::shared_ptr<CSVLeaseFile4>& lease_file4,
-               const boost::shared_ptr<CSVLeaseFile6>& lease_file6);
+               const boost::shared_ptr<CSVLeaseFile6>& lease_file6,
+               bool run_once_now = false);
 
     /// @brief Spawns a new process.
     void execute();
@@ -155,58 +159,67 @@ LFCSetup::~LFCSetup() {
 void
 LFCSetup::setup(const uint32_t lfc_interval,
                 const boost::shared_ptr<CSVLeaseFile4>& lease_file4,
-                const boost::shared_ptr<CSVLeaseFile6>& lease_file6) {
+                const boost::shared_ptr<CSVLeaseFile6>& lease_file6,
+                bool run_once_now) {
 
-    // If LFC is enabled, we have to setup the interval timer and prepare for
-    // executing the kea-lfc process.
+    // If to nothing to do, punt
+    if (lfc_interval == 0 && run_once_now == false) {
+        return;
+    }
+
+    // Start preparing the command line for kea-lfc.
+    std::string executable;
+    char* c_executable = getenv(KEA_LFC_EXECUTABLE_ENV_NAME);
+    if (c_executable == NULL) {
+        executable = KEA_LFC_EXECUTABLE;
+    } else {
+        executable = c_executable;
+    }
+
+    // Gather the base file name.
+    std::string lease_file = lease_file4 ? lease_file4->getFilename() :
+                                           lease_file6->getFilename();
+
+    // Create the other names by appending suffixes to the base name.
+    util::ProcessArgs args;
+    // Universe: v4 or v6.
+    args.push_back(lease_file4 ? "-4" : "-6");
+
+    // Previous file.
+    args.push_back("-x");
+    args.push_back(Memfile_LeaseMgr::appendSuffix(lease_file,
+                                                  Memfile_LeaseMgr::FILE_PREVIOUS));
+    // Input file.
+    args.push_back("-i");
+    args.push_back(Memfile_LeaseMgr::appendSuffix(lease_file,
+                                                  Memfile_LeaseMgr::FILE_INPUT));
+    // Output file.
+    args.push_back("-o");
+    args.push_back(Memfile_LeaseMgr::appendSuffix(lease_file,
+                                                  Memfile_LeaseMgr::FILE_OUTPUT));
+    // Finish file.
+    args.push_back("-f");
+    args.push_back(Memfile_LeaseMgr::appendSuffix(lease_file,
+                                                  Memfile_LeaseMgr::FILE_FINISH));
+    // PID file.
+    args.push_back("-p");
+    args.push_back(Memfile_LeaseMgr::appendSuffix(lease_file,
+                                                  Memfile_LeaseMgr::FILE_PID));
+
+    // The configuration file is currently unused.
+    args.push_back("-c");
+    args.push_back("ignored-path");
+
+    // Create the process (do not start it yet).
+    process_.reset(new util::ProcessSpawn(executable, args));
+
+    // If we've been told to run it once now, invoke the callback directly.
+    if (run_once_now) {
+        callback_();
+    }
+
+    // If it's suposed to run periodically, setup that now.
     if (lfc_interval > 0) {
-        std::string executable;
-        char* c_executable = getenv(KEA_LFC_EXECUTABLE_ENV_NAME);
-        if (c_executable == NULL) {
-            executable = KEA_LFC_EXECUTABLE;
-
-        } else {
-            executable = c_executable;
-        }
-
-        // Start preparing the command line for kea-lfc.
-
-        // Gather the base file name.
-        std::string lease_file = lease_file4 ? lease_file4->getFilename() :
-            lease_file6->getFilename();
-
-        // Create the other names by appending suffixes to the base name.
-        util::ProcessArgs args;
-        // Universe: v4 or v6.
-        args.push_back(lease_file4 ? "-4" : "-6");
-        // Previous file.
-        args.push_back("-x");
-        args.push_back(Memfile_LeaseMgr::appendSuffix(lease_file,
-                                                      Memfile_LeaseMgr::FILE_PREVIOUS));
-        // Input file.
-        args.push_back("-i");
-        args.push_back(Memfile_LeaseMgr::appendSuffix(lease_file,
-                                                      Memfile_LeaseMgr::FILE_INPUT));
-        // Output file.
-        args.push_back("-o");
-        args.push_back(Memfile_LeaseMgr::appendSuffix(lease_file,
-                                                      Memfile_LeaseMgr::FILE_OUTPUT));
-        // Finish file.
-        args.push_back("-f");
-        args.push_back(Memfile_LeaseMgr::appendSuffix(lease_file,
-                                                      Memfile_LeaseMgr::FILE_FINISH));
-        // PID file.
-        args.push_back("-p");
-        args.push_back(Memfile_LeaseMgr::appendSuffix(lease_file,
-                                                      Memfile_LeaseMgr::FILE_PID));
-
-        // The configuration file is currently unused.
-        args.push_back("-c");
-        args.push_back("ignored-path");
-
-        // Create the process (do not start it yet).
-        process_.reset(new util::ProcessSpawn(executable, args));
-
         // Set the timer to call callback function periodically.
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SETUP).arg(lfc_interval);
 
@@ -253,19 +266,25 @@ const int Memfile_LeaseMgr::MINOR_VERSION;
 Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : LeaseMgr(), lfc_setup_(), conn_(parameters)
     {
+    bool upgrade_needed = false;
+
     // Check the universe and use v4 file or v6 file.
     std::string universe = conn_.getParameter("universe");
     if (universe == "4") {
         std::string file4 = initLeaseFilePath(V4);
         if (!file4.empty()) {
-            loadLeasesFromFiles<Lease4, CSVLeaseFile4>(file4, lease_file4_,
-                                                       storage4_);
+            upgrade_needed = loadLeasesFromFiles<Lease4,
+                                                 CSVLeaseFile4>(file4,
+                                                                lease_file4_,
+                                                                storage4_);
         }
     } else {
         std::string file6 = initLeaseFilePath(V6);
         if (!file6.empty()) {
-            loadLeasesFromFiles<Lease6, CSVLeaseFile6>(file6, lease_file6_,
-                                                       storage6_);
+            upgrade_needed = loadLeasesFromFiles<Lease6,
+                                                 CSVLeaseFile6>(file6,
+                                                                lease_file6_,
+                                                                storage6_);
         }
     }
 
@@ -275,9 +294,12 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
     // operation.
    if (!persistLeases(V4) && !persistLeases(V6)) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
-
     } else  {
-       lfcSetup();
+        if (upgrade_needed) {
+            LOG_WARN(dhcpsrv_logger, DHCPRSV_MEMFILE_UPGRADING_LEASE_FILES)
+                    .arg(MAJOR_VERSION).arg(MINOR_VERSION);
+        }
+        lfcSetup(upgrade_needed);
     }
 }
 
@@ -867,7 +889,7 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
 }
 
 template<typename LeaseObjectType, typename LeaseFileType, typename StorageType>
-void Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
+bool Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
                                            boost::shared_ptr<LeaseFileType>& lease_file,
                                            StorageType& storage) {
     // Check if the instance of the LFC is running right now. If it is
@@ -885,11 +907,12 @@ void Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
     storage.clear();
 
     // Load the leasefile.completed, if exists.
+    bool upgrade_needed = false;
     lease_file.reset(new LeaseFileType(std::string(filename + ".completed")));
     if (lease_file->exists()) {
         LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                                MAX_LEASE_ERRORS);
-
+        upgrade_needed |= lease_file->needsUpgrading();
     } else {
         // If the leasefile.completed doesn't exist, let's load the leases
         // from leasefile.2 and leasefile.1, if they exist.
@@ -897,12 +920,14 @@ void Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
         if (lease_file->exists()) {
             LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                                    MAX_LEASE_ERRORS);
+            upgrade_needed |= lease_file->needsUpgrading();
         }
 
         lease_file.reset(new LeaseFileType(appendSuffix(filename, FILE_INPUT)));
         if (lease_file->exists()) {
             LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                                    MAX_LEASE_ERRORS);
+            upgrade_needed |= lease_file->needsUpgrading();
         }
     }
 
@@ -915,6 +940,9 @@ void Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
     lease_file.reset(new LeaseFileType(filename));
     LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                            MAX_LEASE_ERRORS, false);
+    upgrade_needed |= lease_file->needsUpgrading();
+
+    return (upgrade_needed);
 }
 
 
@@ -942,7 +970,7 @@ Memfile_LeaseMgr::lfcCallback() {
 }
 
 void
-Memfile_LeaseMgr::lfcSetup() {
+Memfile_LeaseMgr::lfcSetup(bool upgrade_needed) {
     std::string lfc_interval_str = "0";
     try {
         lfc_interval_str = conn_.getParameter("lfc-interval");
@@ -958,9 +986,9 @@ Memfile_LeaseMgr::lfcSetup() {
                   << lfc_interval_str << " specified");
     }
 
-    if (lfc_interval > 0) {
+    if (lfc_interval > 0 || upgrade_needed) {
         lfc_setup_.reset(new LFCSetup(boost::bind(&Memfile_LeaseMgr::lfcCallback, this)));
-        lfc_setup_->setup(lfc_interval, lease_file4_, lease_file6_);
+        lfc_setup_->setup(lfc_interval, lease_file4_, lease_file6_, upgrade_needed);
     }
 }
 
