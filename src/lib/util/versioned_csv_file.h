@@ -153,7 +153,16 @@ public:
 
     /// @brief Returns the minimum number of columns which must be present
     /// for the file to be considered valid.
-    size_t getMinimumValidColumns();
+    size_t getMinimumValidColumns() const;
+
+    /// @brief Returns the number of valid columns found in the header
+    /// For newly created files this will always match the number of defined
+    /// columns (i.e. getColumnCount()).  For existing files, this will be
+    /// the number of columns in the header that match the defined columnns.
+    /// When this number is less than getColumnCount() it means the input file
+    /// is from an earlier schema.  This value is zero until the file has
+    /// been opened.
+    size_t getValidColumnCount() const;
 
     /// @brief Opens existing file or creates a new one.
     ///
@@ -173,6 +182,17 @@ public:
     /// @throw VersionedCSVFileError if schema has not been defined,
     /// CSVFileError when IO operation fails, or header fails to validate.
     virtual void open(const bool seek_to_end = false);
+
+    /// @brief Creates a new CSV file.
+    ///
+    /// The file creation will fail if there are no columns specified.
+    /// Otherwise, this function will write the header to the file.
+    /// In order to write rows to opened file, the @c append function
+    /// should be called.
+    ///
+    /// @throw VersionedCSVFileError if schema has not been defined
+    /// CSVFileError if an IO operation fails
+    virtual void recreate();
 
     /// @brief Reads next row from the file file.
     ///
@@ -196,6 +216,32 @@ public:
     /// @return true if row has been read and validated; false if validation
     /// failed.
     bool next(CSVRow& row);
+
+    /// @brief Returns the schema version of the physical file
+    ///
+    /// @return text version of the schema found or string "undefined" if the
+    /// file has not been opened
+    std::string getInputSchemaVersion() const;
+
+    /// @brief text version of current schema supported by the file's metadata
+    ///
+    /// @return text version info assigned to the last column in the list of
+    /// defined column, or the string "undefined" if no columns have been
+    /// defined.
+    std::string getSchemaVersion() const;
+
+    /// @brief Fetch the column descriptor for a given index
+    ///
+    /// @param index index within the list of columns of the desired column
+    /// @return a pointer to the VersionedColumn at the given index
+    /// @trow OutOfRange exception if the index is invalid
+    const VersionedColumnPtr& getVersionedColumn(const size_t index) const;
+
+    /// @brief Returns true if the opened file is needs to be upgraded
+    ///
+    /// @return true if the file's valid column count is greater than 0 and
+    /// is less than the defined number of columns
+    bool needsUpgrading() const;
 
 protected:
 

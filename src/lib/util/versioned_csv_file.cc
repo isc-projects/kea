@@ -46,23 +46,77 @@ VersionedCSVFile::setMinimumValidColumns(const std::string& column_name) {
 }
 
 size_t
-VersionedCSVFile::getMinimumValidColumns() {
+VersionedCSVFile::getMinimumValidColumns() const {
     return (minimum_valid_columns_);
+}
+
+size_t
+VersionedCSVFile::getValidColumnCount() const {
+    return (valid_column_count_);
 }
 
 void
 VersionedCSVFile::open(const bool seek_to_end) {
     if (getColumnCount() == 0) {
         isc_throw(VersionedCSVFileError,
-                  "no schema has been defined, cannot open file :"
+                  "no schema has been defined, cannot open CSV file :"
                   << getFilename());
     }
 
     CSVFile::open(seek_to_end);
 }
 
+void
+VersionedCSVFile::recreate() {
+    if (getColumnCount() == 0) {
+        isc_throw(VersionedCSVFileError,
+                  "no schema has been defined, cannot create CSV file :"
+                  << getFilename());
+    }
+
+    CSVFile::recreate();
+    // For new files they always match. 
+    valid_column_count_ = getColumnCount();
+}
+
+bool
+VersionedCSVFile::needsUpgrading() const {
+    return (getValidColumnCount() < getColumnCount());
+}
+
+std::string
+VersionedCSVFile::getInputSchemaVersion() const {
+    if (getValidColumnCount() > 0) {
+        return (getVersionedColumn(getValidColumnCount() - 1)->version_);
+    }
+
+    return ("undefined");
+}
+
+std::string
+VersionedCSVFile::getSchemaVersion() const {
+    if (getColumnCount() > 0) {
+        return (getVersionedColumn(getColumnCount() - 1)->version_);
+    }
+
+    return ("undefined");
+}
+
+const VersionedColumnPtr&
+VersionedCSVFile::getVersionedColumn(const size_t index) const {
+    if (index >= getColumnCount()) {
+        isc_throw(isc::OutOfRange, "versioned column index " << index 
+                  << " out of range;  CSV file : " << getFilename()
+                  << " only has " << getColumnCount() << " columns ");
+    }
+
+    return (columns_[index]);
+}
+
 bool
 VersionedCSVFile::next(CSVRow& row) {
+    // Use base class to physicall read the row, but skip its row
+    // validation
     CSVFile::next(row, true);
     if (row == CSVFile::EMPTY_ROW()) {
         return(true);
@@ -72,10 +126,10 @@ VersionedCSVFile::next(CSVRow& row) {
     // defined column count.  If not they're the equal.  Either way
     // each data row must have valid_column_count_ values or its
     // an invalid row.
-    if (row.getValuesCount() < valid_column_count_) {
+    if (row.getValuesCount() < getValidColumnCount()) {
         std::ostringstream s;
         s << "the size of the row '" << row << "' has too few valid columns "
-          << valid_column_count_ << "' of the CSV file '"
+          << getValidColumnCount() << "' of the CSV file '"
           << getFilename() << "'";
         setReadMsg(s.str());
         return (false);
