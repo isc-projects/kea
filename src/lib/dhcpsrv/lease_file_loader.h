@@ -154,6 +154,13 @@ public:
             }
         }
 
+        if (lease_file.needsUpgrading()) {
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NEEDS_UPGRADING)
+                     .arg(lease_file.getFilename())
+                     .arg(lease_file.getInputSchemaVersion())
+                     .arg(lease_file.getSchemaVersion());
+        }
+
         if (close_file_on_exit) {
             lease_file.close();
         }

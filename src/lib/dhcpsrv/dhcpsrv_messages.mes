@@ -352,6 +352,13 @@ timer used for lease file cleanup scheduling. This is highly unlikely
 and indicates programming error. The message include the reason for this
 error.
 
+% DHCPSRV_MEMFILE_NEEDS_UPGRADING Lease file: %1 is schema version %2, it needs to be upgraded to current schema version, %3.
+A warning message issued when the schema of the lease file loaded by the server
+is pre-dates the current Memfile schema.  Note that the server converts the lease
+data from older schemas to the current schema as it is read, therefore the lease
+information in use by the server will be correct.  What remains is for the file
+itself to be rewritten using the current schema.
+
 % DHCPSRV_MEMFILE_NO_STORAGE running in non-persistent mode, leases will be lost after restart
 A warning message issued when writes of leases to disk have been disabled
 in the configuration. This mode is useful for some kinds of performance
@@ -376,6 +383,12 @@ lease from the memory file database for the specified address.
 % DHCPSRV_MEMFILE_UPDATE_ADDR6 updating IPv6 lease for address %1
 A debug message issued when the server is attempting to update IPv6
 lease from the memory file database for the specified address.
+
+% DHCPRSV_MEMFILE_UPGRADING_LEASE_FILES Running LFC now, to upgrade lease files to current schema: %1.%2
+A warning message when the server has detected lease files that need to be upgraded,
+and is automatically running the LFC process to perform the upgrade.  This should
+only occur the first time the server is launched following a Kea upgrade in which
+the Memfile schema was updated.
 
 % DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE current configuration will result in opening multiple brodcast capable sockets on some interfaces and some DHCP messages may be duplicated
 A warning message issued when the current configuration indicates that multiple
