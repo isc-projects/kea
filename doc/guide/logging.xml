@@ -221,8 +221,8 @@
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp4.eval</command> - this logger is used
-            to log messages relating to the evaluation code, primarily used
-            by the client classification routines.</simpara>
+            to log messages relating to the client classification expression
+            evaluation code.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp4.hooks</command> - this logger is used
@@ -309,8 +309,8 @@
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp6.eval</command> - this logger is used
-            to log messages relating to the evaluation code, primarily used
-            by the client classification routines.</simpara>
+            to log messages relating to the client classification expression
+            evaluation code.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp6.hooks</command> - this logger is used
