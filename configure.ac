@@ -184,7 +184,6 @@ CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
 KEA_CXXFLAGS="$KEA_CXXFLAGS -Wall -Wextra -Wnon-virtual-dtor -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 case "$host" in
 *-solaris*)
-	KEA_CXXFLAGS="$KEA_CXXFLAGS -pthreads"
 	MULTITHREADING_FLAG=-pthreads
 	# In Solaris, IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT need -Wno-missing-braces
 	KEA_CXXFLAGS="$KEA_CXXFLAGS -Wno-missing-braces"
@@ -193,10 +192,10 @@ case "$host" in
 	MULTITHREADING_FLAG=
 	;;
 *)
-	KEA_CXXFLAGS="$KEA_CXXFLAGS -pthread"
 	MULTITHREADING_FLAG=-pthread
 	;;
 esac
+KEA_CXXFLAGS="$KEA_CXXFLAGS $MULTITHREADING_FLAG"
 
 # Don't use -Werror if configured not to
 AC_ARG_WITH(werror,
