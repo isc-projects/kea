@@ -553,7 +553,7 @@ private:
     /// @throw DbOpenError when it is found that the LFC is in progress.
     template<typename LeaseObjectType, typename LeaseFileType,
              typename StorageType>
-    void loadLeasesFromFiles(const std::string& filename,
+    bool loadLeasesFromFiles(const std::string& filename,
                              boost::shared_ptr<LeaseFileType>& lease_file,
                              StorageType& storage);
 
@@ -626,7 +626,10 @@ private:
     /// Kea build directory, the @c KEA_LFC_EXECUTABLE environmental
     /// variable should be set to hold an absolute path to the kea-lfc
     /// excutable.
-    void lfcSetup();
+    /// @param upgrade_needed flag that indicates input lease file(s) are
+    /// from an earlier schema version and need conversion.  This value is
+    /// passed through to LFCSetup::setup() via its run_once_now parameter.
+    void lfcSetup(bool upgrade_needed = false);
 
     /// @brief Performs a lease file cleanup for DHCPv4 or DHCPv6.
     ///
