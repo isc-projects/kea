@@ -60,6 +60,40 @@ public:
     OptionPtr option_str4_; ///< A string option for DHCPv4
     OptionPtr option_str6_; ///< A string option for DHCPv6
 
+
+    /// @brief Verify that the substring eval works properly
+    ///
+    /// This function takes the parameters and sets up the value
+    /// stack then executes the eval and checks the results.
+    ///
+    /// @param test_string The string to operate on
+    /// @param test_start The postion to start when getting a substring
+    /// @param test_length The length of the substring to get
+    /// @param result_string The expected result of the eval
+    void verifySubstringEval(const std::string& test_string,
+                             const std::string& test_start,
+                             const std::string& test_length,
+                             const std::string& result_string) {
+
+        // create the token
+        ASSERT_NO_THROW(t_.reset(new TokenSubstring()));
+
+        // push values on stack
+        values_.push(test_string);
+        values_.push(test_start);
+        values_.push(test_length);
+
+        // evaluate the token
+        EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+        // verify results
+        ASSERT_EQ(1, values_.size());
+        EXPECT_EQ(result_string, values_.top());
+
+        // remove result
+        values_.pop();
+    }
+
     /// @todo: Add more option types here
 };
 
@@ -197,3 +231,177 @@ TEST_F(TokenTest, optionEqualTrue) {
 }
 
 };
+
+// This test checks if an a token representing a substring request
+// throws an exception if there aren't enough values on the stack.
+// The stack from the top is: length, start, string.
+// The actual packet is not used.
+TEST_F(TokenTest, substringNotEnoughValues) {
+    ASSERT_NO_THROW(t_.reset(new TokenSubstring()));
+
+    // Subsring requires three values on the stack, try
+    // with 0, 1 and 2 all should thorw an exception
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    values_.push("");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    values_.push("0");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // Three should work
+    values_.push("0");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // As we had an empty string to start with we should have an empty
+    // one after the evaluate
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("", values_.top());
+}
+
+// Test getting the whole string in different ways
+TEST_F(TokenTest, substringWholeString) {
+    // Get the whole string
+    verifySubstringEval("foobar", "0", "6", "foobar");
+
+    // Get the whole string with "all"
+    verifySubstringEval("foobar", "0", "all", "foobar");
+
+    // Get the whole string with an extra long number
+    verifySubstringEval("foobar", "0", "123456", "foobar");
+
+    // Get the whole string counting from the back
+    verifySubstringEval("foobar", "-6", "all", "foobar");
+}
+
+// Test getting a suffix, in this case the last 3 characters
+TEST_F(TokenTest, substringTrailer) {
+    verifySubstringEval("foobar", "3", "3", "bar");
+    verifySubstringEval("foobar", "3", "all", "bar");
+    verifySubstringEval("foobar", "-3", "all", "bar");
+    verifySubstringEval("foobar", "-3", "123", "bar");
+}
+
+// Test getting the middle of the string in different ways
+TEST_F(TokenTest, substringMiddle) {
+    verifySubstringEval("foobar", "1", "4", "ooba");
+    verifySubstringEval("foobar", "-5", "4", "ooba");
+    verifySubstringEval("foobar", "-1", "-4", "ooba");
+    verifySubstringEval("foobar", "5", "-4", "ooba");
+}
+
+// Test getting the last letter in different ways
+TEST_F(TokenTest, substringLastLetter) {
+    verifySubstringEval("foobar", "5", "all", "r");
+    verifySubstringEval("foobar", "5", "1", "r");
+    verifySubstringEval("foobar", "5", "5", "r");
+    verifySubstringEval("foobar", "-1", "all", "r");
+    verifySubstringEval("foobar", "-1", "1", "r");
+    verifySubstringEval("foobar", "-1", "5", "r");
+}
+
+// Test we get only what is available if we ask for a longer string
+TEST_F(TokenTest, substringLength) {
+    // Test off the front
+    verifySubstringEval("foobar", "0", "-4", "");
+    verifySubstringEval("foobar", "1", "-4", "f");
+    verifySubstringEval("foobar", "2", "-4", "fo");
+    verifySubstringEval("foobar", "3", "-4", "foo");
+
+    // and the back
+    verifySubstringEval("foobar", "3", "4", "bar");
+    verifySubstringEval("foobar", "4", "4", "ar");
+    verifySubstringEval("foobar", "5", "4", "r");
+    verifySubstringEval("foobar", "6", "4", "");
+}
+
+// Test that we get nothing if the starting postion is out of the string
+TEST_F(TokenTest, substringStartingPosition) {
+    // Off the front
+    verifySubstringEval("foobar", "-7", "1", "");
+    verifySubstringEval("foobar", "-7", "-11", "");
+    verifySubstringEval("foobar", "-7", "all", "");
+
+    // and the back
+    verifySubstringEval("foobar", "6", "1", "");
+    verifySubstringEval("foobar", "6", "-11", "");
+    verifySubstringEval("foobar", "6", "all", "");
+}
+
+// Check what happens if we use strings that aren't numbers for start or length
+// We should return the empty string
+TEST_F(TokenTest, substringBadParams) {
+    verifySubstringEval("foobar", "0ick", "all", "");
+    verifySubstringEval("foobar", "ick0", "all", "");
+    verifySubstringEval("foobar", "ick", "all", "");
+    verifySubstringEval("foobar", "0", "ick", "");
+    verifySubstringEval("foobar", "0", "0ick", "");
+    verifySubstringEval("foobar", "0", "ick0", "");
+    verifySubstringEval("foobar", "0", "allaboard", "");
+}
+
+// lastly check that we don't get anything if the string is empty or
+// we don't ask for any characters from it.
+TEST_F(TokenTest, substringReturnEmpty) {
+    verifySubstringEval("", "0", "all", "");
+    verifySubstringEval("foobar", "0", "0", "");
+}
+
+// Check if we can use the substring and equal tokens together
+// We put the result on the stack first then the substring values
+// then evaluate the substring which should leave the original
+// result on the bottom with the substring result on next.
+// Evaulating the equals should produce true for the first
+// and false for the second.
+// throws an exception if there aren't enough values on the stack.
+// The stack from the top is: length, start, string.
+// The actual packet is not used.
+TEST_F(TokenTest, substringEquals) {
+    TokenPtr tequal;
+
+    ASSERT_NO_THROW(t_.reset(new TokenSubstring()));
+    ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
+
+    // The final expected value
+    values_.push("ooba");
+
+    // The substring values
+    // Subsring requires three values on the stack, try
+    // with 0, 1 and 2 all should thorw an exception
+    values_.push("foobar");
+    values_.push("1");
+    values_.push("4");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have two values on the stack
+    ASSERT_EQ(2, values_.size());
+
+    // next the equals eval
+    EXPECT_NO_THROW(tequal->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // get rid of the result
+    values_.pop();
+
+    // and try it again but with a bad final value
+    // The final expected value
+    values_.push("foob");
+
+    // The substring values
+    // Subsring requires three values on the stack, try
+    // with 0, 1 and 2 all should thorw an exception
+    values_.push("foobar");
+    values_.push("1");
+    values_.push("4");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have two values on the stack
+    ASSERT_EQ(2, values_.size());
+
+    // next the equals eval
+    EXPECT_NO_THROW(tequal->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+}

@@ -12,14 +12,21 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 lib_LTLIBRARIES = libkea-eval.la
 libkea_eval_la_SOURCES  =
+libkea_eval_la_SOURCES += eval_log.cc eval_log.h
 libkea_eval_la_SOURCES += token.cc token.h
+
+nodist_libkea_eval_la_SOURCES = eval_messages.h eval_messages.cc
 
 libkea_eval_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_eval_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_eval_la_LIBADD   = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
+libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
+libkea_eval_la_LIBADD  += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
+
 libkea_eval_la_LDFLAGS  = -no-undefined -version-info 3:0:0
-libkea_eval_la_LDFLAGS += $(LOG4CPLUS_LIBS) $(CRYPTO_LDFLAGS)
+libkea_eval_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = eval.dox
 EXTRA_DIST += eval_messages.mes
@@ -29,6 +36,7 @@ eval_messages.h eval_messages.cc: s-messages
 
 s-messages: eval_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/eval/eval_messages.mes
+	touch $@
 
 # Tell Automake that the eval_messages.{cc,h} source files are created in the
 # build process, so it must create these before doing anything else. Although
@@ -39,4 +47,4 @@ s-messages: eval_messages.mes
 # first.
 BUILT_SOURCES = eval_messages.h eval_messages.cc
 
-CLEANFILES = eval_messages.h eval_messages.cc
+CLEANFILES = eval_messages.h eval_messages.cc s-messages
