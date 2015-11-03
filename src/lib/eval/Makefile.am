@@ -22,6 +22,7 @@ libkea_eval_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_eval_la_LIBADD   = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
+libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_eval_la_LIBADD  += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 
 libkea_eval_la_LDFLAGS  = -no-undefined -version-info 3:0:0
