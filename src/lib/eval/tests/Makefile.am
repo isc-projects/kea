@@ -2,6 +2,8 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += -DLOGGING_SPEC_FILE=\"$(abs_top_srcdir)/src/lib/dhcpsrv/logging.spec\"
+
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 # Some versions of GCC warn about some versions of Boost regarding
