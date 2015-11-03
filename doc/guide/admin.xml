@@ -150,6 +150,21 @@
         will create an empty lease file if one is not
         present. Necessary disk write permission is required.
       </para>
+      <section id="memfile-upgrade">
+        <title>Upgrading Memfile Lease Files from an Earlier Version of Kea</title>
+        <para>
+        There are no special steps required to upgrade memfile lease files
+        from  earlier version of Kea to a new version of Kea.  During startup,
+        Kea's DHCP servers will automatically detect memfile lease files that
+        need upgrading and will launch an invocation of the LFC process to 
+        convert them.  This should only occur the first time the files are 
+        encountered.
+
+        If you wish to convert the files manually, prior to starting the 
+        servers you may do so by running the LFC process yourself, 
+        see <xref linkend="kea-lfc"/> for more information.
+        </para>
+      </section>
       <!-- @todo: document lease file upgrades once they are implemented in kea-admin -->
     </section>
 
