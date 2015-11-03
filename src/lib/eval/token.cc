@@ -14,6 +14,7 @@
 
 #include <eval/token.h>
 #include <eval/eval_log.h>
+#include <util/encode/hex.h>
 #include <boost/lexical_cast.hpp>
 #include <string>
 
@@ -24,6 +25,29 @@ void
 TokenString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
+}
+
+void
+TokenString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+    // Transform string of hexadecimal digits into binary format
+    std::vector<uint8_t> binary;
+    try {
+        // The decodeHex function expects that the string contains an
+        // even number of digits. If we don't meet this requirement,
+        // we have to insert a leading 0.
+        if (!repr_.empty() && repr_.length() % 2) {
+            repr_ = repr_.insert(0, "0");
+        }
+        util::encode::decodeHex(repr_, binary);
+    } catch (...) {
+        values.push("");
+        return;
+    }
+    // Convert to a string
+    std::string chars(binary.size(), '\0');
+    std::memmove(&chars[0], &binary[0], binary.size());
+    // Literals only push, nothing to pop
+    values.push(chars_);
 }
 
 void
