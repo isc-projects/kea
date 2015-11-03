@@ -404,7 +404,7 @@ public:
     /// Otherwise, this function will write the header to the file.
     /// In order to write rows to opened file, the @c append function
     /// should be called.
-    void recreate();
+    virtual void recreate();
 
     /// @brief Sets error message after row validation.
     ///

@@ -153,6 +153,22 @@ TEST_F(VersionedCSVFileTest, addColumn) {
     ASSERT_NO_THROW(csv->recreate());
     ASSERT_TRUE(exists());
 
+    // We should have 3 defined columns
+    EXPECT_EQ(3, csv->getColumnCount());
+
+    // Number valid columns should match defined columns
+    EXPECT_EQ(3, csv->getValidColumnCount());
+
+    // Minium valid columns wasn't set. (Remember it's optional)
+    EXPECT_EQ(0, csv->getMinimumValidColumns());
+
+    // Upgrade flag should be false
+    EXPECT_EQ(false, csv->needsUpgrading());
+
+    // Schema versions for new files should always match
+    EXPECT_EQ("3.0", csv->getInputSchemaVersion());
+    EXPECT_EQ("3.0", csv->getSchemaVersion());
+
     // Make sure we can't add columns (even unique) when the file is open.
     ASSERT_THROW(csv->addColumn("zoo", "3.0", ""), CSVFileError);
 
@@ -181,6 +197,22 @@ TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
 
     // Header should pass validation and allow the open to succeed.
     ASSERT_NO_THROW(csv->open());
+
+    // We should have 2 defined columns
+    EXPECT_EQ(2, csv->getColumnCount());
+
+    // We should have found 1 valid column in the header
+    EXPECT_EQ(1, csv->getValidColumnCount());
+
+    // Minium valid columns wasn't set. (Remember it's optional)
+    EXPECT_EQ(0, csv->getMinimumValidColumns());
+
+    // Upgrade flag should be true
+    EXPECT_EQ(true, csv->needsUpgrading());
+
+    // Input schema should be 1.0, while our current schema should be 2.0
+    EXPECT_EQ("1.0", csv->getInputSchemaVersion());
+    EXPECT_EQ("2.0", csv->getSchemaVersion());
 
     // First row is correct.
     CSVRow row;
@@ -223,7 +255,22 @@ TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
 
     // Header should pass validation and allow the open to succeed
     ASSERT_NO_THROW(csv->open());
-    ASSERT_EQ(3, csv->getColumnCount());
+
+    // We should have 2 defined columns
+    EXPECT_EQ(3, csv->getColumnCount());
+
+    // We should have found 1 valid column in the header
+    EXPECT_EQ(1, csv->getValidColumnCount());
+
+    // Minium valid columns wasn't set. (Remember it's optional)
+    EXPECT_EQ(0, csv->getMinimumValidColumns());
+
+    // Upgrade flag should be true
+    EXPECT_EQ(true, csv->needsUpgrading());
+
+    // Make sure schema versions are accurate
+    EXPECT_EQ("1.0", csv->getInputSchemaVersion());
+    EXPECT_EQ("3.0", csv->getSchemaVersion());
 
     // First row is correct.
     ASSERT_TRUE(csv->next(row));
@@ -243,15 +290,8 @@ TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
     EXPECT_EQ("blue", row.readAt(1));
     EXPECT_EQ("21", row.readAt(2));
 
-    ASSERT_EQ(3, csv->getColumnCount());
-
     // Fourth row is correct.
-    if (!csv->next(row)) {
-        std::cout << "row error is : " << 
-           csv->getReadMsg() << std::endl; 
-    
-    }
-
+    ASSERT_TRUE(csv->next(row));
     EXPECT_EQ("bird", row.readAt(0));
     EXPECT_EQ("yellow", row.readAt(1));
     EXPECT_EQ("21", row.readAt(2));
