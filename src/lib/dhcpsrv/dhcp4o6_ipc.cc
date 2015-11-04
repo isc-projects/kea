@@ -139,22 +139,48 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
 
     OptionVendorPtr vendor =
         boost::dynamic_pointer_cast<OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
-    if (!vendor || vendor->getVendorId() != ENTERPRISE_ID_ISC) {
-        return (Pkt6Ptr());
+
+    // Vendor option must exist.
+    if (!vendor) {
+        isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
+                  << " not present in the DHCP4o6 message sent between the "
+                  " servers");
     }
-    OptionStringPtr ifname =
-        boost::dynamic_pointer_cast<OptionString>(vendor->getOption(ISC_V6_4O6_INTERFACE));
+
+    // The vendor option must require appropriate enterprise-id.
+    if (vendor->getVendorId() != ENTERPRISE_ID_ISC) {
+        isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
+                  << " in the DHCP4o6 message contains invalid enterprise-id '"
+                  << vendor->getVendorId() << "'. Expected enterprise-id '"
+                  << ENTERPRISE_ID_ISC << "'");
+    }
+
+    // The option carrying interface name is required.
+    OptionStringPtr ifname = boost::dynamic_pointer_cast<
+        OptionString>(vendor->getOption(ISC_V6_4O6_INTERFACE));
     if (!ifname) {
-        return (Pkt6Ptr());
+        isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
+                  << " doesn't contain the " << ISC_V6_4O6_INTERFACE
+                  << " option required in the DHCP4o6 message sent"
+                  " between Kea servers");
     }
+
+    // Check if this interface is present in the system.
     IfacePtr iface = IfaceMgr::instance().getIface(ifname->getValue());
     if (!iface) {
-        return (Pkt6Ptr());
+        isc_throw(Dhcp4o6IpcError, "option " << ISC_V6_4O6_INTERFACE
+                  << " sent in the DHCP4o6 message contains non-existing"
+                  " interface name '" << ifname->getValue() << "'");
     }
+
+    // Get the option holding source IPv6 address.
     OptionCustomPtr srcs =
         boost::dynamic_pointer_cast<OptionCustom>(vendor->getOption(ISC_V6_4O6_SRC_ADDRESS));
     if (!srcs) {
-        return (Pkt6Ptr());
+        isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
+                  << " doesn't contain the " << ISC_V6_4O6_SRC_ADDRESS
+                  << " option required in the DHCP4o6 message sent"
+                  " between Kea servers");
     }
 
     // Update the packet and return it
@@ -180,11 +206,11 @@ void Dhcp4o6IpcBase::send(const Pkt6Ptr& pkt) {
     OptionVendorPtr vendor(new OptionVendor(Option::V6, ENTERPRISE_ID_ISC));
 
     // Push interface name and source address in it
-    vendor->addOption(OptionPtr(new OptionString(Option::V6,
-                                                 ISC_V6_4O6_INTERFACE,
-                                                 pkt->getIface())));
-    vendor->addOption(OptionPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
-                                                   pkt->getRemoteAddr())));
+    vendor->addOption(OptionStringPtr(new OptionString(Option::V6,
+                                                       ISC_V6_4O6_INTERFACE,
+                                                       pkt->getIface())));
+    vendor->addOption(Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
+                                                           pkt->getRemoteAddr())));
     pkt->addOption(vendor);
 
     // Get packet content
