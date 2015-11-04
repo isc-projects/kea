@@ -547,7 +547,7 @@ TEST_F(ParseConfigTest, defaultSpaceOptionDefTest) {
 
     // Verify that the configuration string parses.
     int rcode = parseConfiguration(config);
-    ASSERT_TRUE(0, rcode);
+    ASSERT_EQ(0, rcode);
 
 
     // Verify that the option definition can be retrieved.
@@ -590,7 +590,7 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
 
     // Verify that the configuration string parses.
     int rcode = parseConfiguration(config);
-    ASSERT_TRUE(0, rcode);
+    ASSERT_EQ(0, rcode);
 
     // Verify that the option can be retrieved.
     OptionPtr opt_ptr = getOptionPtr("isc", 100);
@@ -624,7 +624,7 @@ TEST_F(ParseConfigTest, minimalOptionDataTest) {
 
     // Verify that the configuration string parses.
     int rcode = parseConfiguration(config);
-    ASSERT_TRUE(0, rcode);
+    ASSERT_EQ(0, rcode);
 
     // Verify that the option can be retrieved.
     OptionPtr opt_ptr = getOptionPtr("isc", 100);
