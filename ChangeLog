@@ -1,7 +1,7 @@
 1042.	[doc]		fdupont
 	User Guide: parameters having default values may be omitted in the
 	option definitions.
-	(Trac #3927, git xxx)
+	(Trac #3927, git c7460e849258ec77cf1215a2baf840d98f1ab77b)
 
 1041.	[func]		tomek
 	A new library, libkea-eval has been edded. It is not functional
