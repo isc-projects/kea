@@ -16,6 +16,7 @@
 #include <eval/eval_log.h>
 #include <util/encode/hex.h>
 #include <boost/lexical_cast.hpp>
+#include <cstring>
 #include <string>
 
 using namespace isc::dhcp;
@@ -28,14 +29,19 @@ TokenString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 }
 
 void
-TokenString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+    // Eliminate the empty string case first
+    if (repr_.empty()) {
+        values.push("");
+        return;
+    }
     // Transform string of hexadecimal digits into binary format
     std::vector<uint8_t> binary;
     try {
         // The decodeHex function expects that the string contains an
         // even number of digits. If we don't meet this requirement,
         // we have to insert a leading 0.
-        if (!repr_.empty() && repr_.length() % 2) {
+        if (repr_.length() % 2) {
             repr_ = repr_.insert(0, "0");
         }
         util::encode::decodeHex(repr_, binary);
@@ -45,9 +51,10 @@ TokenString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     }
     // Convert to a string
     std::string chars(binary.size(), '\0');
+    // Note that binary.size() cannot be 0
     std::memmove(&chars[0], &binary[0], binary.size());
     // Literals only push, nothing to pop
-    values.push(chars_);
+    values.push(chars);
 }
 
 void
