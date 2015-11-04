@@ -17,12 +17,21 @@
 #include <string>
 #include <map>
 #include <eval/parser.h>
+#include <exceptions/exceptions.h>
 
 // Tell Flex the lexer's prototype ...
 #define YY_DECL isc::eval::EvalParser::symbol_type yylex (EvalContext& driver)
 
 // ... and declare it for the parser's sake.
 YY_DECL;
+
+/// @brief Evaluation error exception raised when trying to parse an axceptions.
+class EvalError : public isc::exceptions::Exception {
+public:
+    EvalError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 
 /// @brief Evaluation context, an interface to the expression evaluation.
 class EvalContext
