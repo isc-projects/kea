@@ -1262,6 +1262,48 @@ AC_SUBST(PERL)
 AC_PATH_PROGS(AWK, gawk awk)
 AC_SUBST(AWK)
 
+AC_ARG_ENABLE(generate_parser, [AC_HELP_STRING([--enable-generate-parser],
+  [indicates that the parsers will be regenerated. This implies that the
+   bison and flex are required [default=no]])],
+   enable_generate_parser=$enableval, enable_generate_parser=no)
+
+# Check if flex is avaible. Flex is not needed for building Kea sources,
+# unless you want to regenerate grammar in src/lib/eval
+AC_PROG_LEX
+
+# Check if bison is available. Bison is not needed for building Kea sources,
+# unless you want to regenerate grammar in src/lib/eval
+AC_PROG_YACC
+
+if test "x$enable_generate_parser" != xno; then
+
+    if test "x$LEX" == "x"; then
+       AC_MSG_ERROR("Flex is required for enable-generate-parser, but was not found")
+    fi
+
+    if test "x$YACC" == "x"; then
+       AC_MSG_ERROR("Bison it required for enable-generate-parser, but was not found")
+    fi
+
+# Ok, let's check if we have at least 3.0.0 version of the bison. The code used
+# to generate src/lib/eval parser is roughly based on bison 3.0 examples.
+   cat > bisontest.y << EOF
+%require "3.0.0"
+%token X
+%%
+%start Y;
+Y: X;
+EOF
+# Try to compile.
+    $YACC bisontest.y -o bisontest.cc
+
+    if test $? -ne 0 ; then
+        $YACC -V
+        AC_MSG_ERROR("Error with $YACC. Possibly incorrect version? Required at least 3.0.0.")
+    fi
+    rm -f bisontest.y bisontest.cc
+fi
+
 AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
   [regenerate documentation using Docbook [default=no]])],
   enable_generate_docs=$enableval, enable_generate_docs=no)
@@ -1577,6 +1619,10 @@ Log4cplus:
 
 Kea config backend:
   CONFIG_BACKEND:  ${CONFIG_BACKEND}
+
+Flex/bison:
+  FLEX:  ${LEX}
+  BISON: ${YACC}
 END
 
 # Avoid confusion on DNS/DHCP and only mention MySQL if it
@@ -1637,6 +1683,7 @@ Developer:
   C++ Code Coverage: $USE_LCOV
   Logger checks: $enable_logger_checks
   Generate Documentation: $enable_generate_docs
+  Parser Generation: $enable_generate_parser
 
 END
 

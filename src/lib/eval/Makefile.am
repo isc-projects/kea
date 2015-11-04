@@ -68,9 +68,9 @@ parser: lexer.cc location.hh position.hh stack.hh parser.cc parser.h
 
 # --- Flex/Bison stuff below --------------------------------------------------
 location.hh position.hh stack.hh parser.cc parser.h: parser.yy
-	bison --defines=parser.h -oparser.cc parser.yy
+	$(YACC) --defines=parser.h -oparser.cc parser.yy
 
 lexer.cc: lexer.ll
-	flex -olexer.cc lexer.ll
+	$(LEX) -olexer.cc lexer.ll
 
 driver.o: driver.cc
