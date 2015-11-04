@@ -136,7 +136,7 @@ TEST_F(EvaluateTest, bad6) {
     ASSERT_THROW(evaluate(e_, *pkt6_), EvalNotBoolError);
 }
 
-// This check the evaluation must leave only one value on the stack
+// This checks the evaluation must leave only one value on the stack
 // with a Pkt4. (The actual packet is not used)
 TEST_F(EvaluateTest, two4) {
     TokenPtr ttrue;
@@ -146,7 +146,7 @@ TEST_F(EvaluateTest, two4) {
     ASSERT_THROW(evaluate(e_, *pkt4_), EvalBadStack);
 }
 
-// This check the evaluation must leave only one value on the stack
+// This checks the evaluation must leave only one value on the stack
 // with a Pkt6. (The actual packet is not used)
 TEST_F(EvaluateTest, two6) {
     TokenPtr ttrue;
