@@ -162,20 +162,20 @@ option\[{int}\] {
 %%
 
 void
-EvalContext::scan_begin()
+EvalContext::scanBegin()
 {
-    yy_flex_debug = trace_scanning;
+    yy_flex_debug = trace_scanning_;
     if (file.empty () || file == "-") {
         yyin = stdin;
     }
     else if (!(yyin = fopen(file.c_str (), "r"))) {
-        error ("cannot open " + file + ": " + strerror(errno));
-        exit (EXIT_FAILURE);
+        error("cannot open " + file + ": " + strerror(errno));
+        exit(EXIT_FAILURE);
     }
 }
 
 void
-EvalContext::scan_end()
+EvalContext::scanEnd()
 {
-    fclose (yyin);
+    fclose(yyin);
 }

@@ -40,7 +40,7 @@
 #ifndef YY_YY_PARSER_H_INCLUDED
 # define YY_YY_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 10 "parser.yy" // lalr1.cc:392
+#line 24 "parser.yy" // lalr1.cc:392
 
 #include <string>
 #include <eval/token.h>
@@ -123,7 +123,7 @@ using namespace isc::dhcp;
 # define YYDEBUG 1
 #endif
 
-#line 7 "parser.yy" // lalr1.cc:392
+#line 21 "parser.yy" // lalr1.cc:392
 namespace isc { namespace eval {
 #line 129 "parser.h" // lalr1.cc:392
 
@@ -991,7 +991,7 @@ namespace isc { namespace eval {
   }
 
 
-#line 7 "parser.yy" // lalr1.cc:392
+#line 21 "parser.yy" // lalr1.cc:392
 } } // isc::eval
 #line 997 "parser.h" // lalr1.cc:392
 
