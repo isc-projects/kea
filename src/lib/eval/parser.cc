@@ -49,7 +49,7 @@
 
 #line 51 "parser.cc" // lalr1.cc:412
 // Unqualified %code blocks.
-#line 28 "parser.yy" // lalr1.cc:413
+#line 42 "parser.yy" // lalr1.cc:413
 
 # include "eval_context.h"
 
@@ -137,7 +137,7 @@
 #define YYERROR         goto yyerrorlab
 #define YYRECOVERING()  (!!yyerrstatus_)
 
-#line 7 "parser.yy" // lalr1.cc:479
+#line 21 "parser.yy" // lalr1.cc:479
 namespace isc { namespace eval {
 #line 143 "parser.cc" // lalr1.cc:479
 
@@ -320,14 +320,14 @@ namespace isc { namespace eval {
     {
             case 8: // "constant string"
 
-#line 42 "parser.yy" // lalr1.cc:636
+#line 56 "parser.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 326 "parser.cc" // lalr1.cc:636
         break;
 
       case 9: // "option code"
 
-#line 42 "parser.yy" // lalr1.cc:636
+#line 56 "parser.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< int > (); }
 #line 333 "parser.cc" // lalr1.cc:636
         break;
@@ -442,7 +442,7 @@ namespace isc { namespace eval {
 
 
     // User initialization code.
-    #line 21 "parser.yy" // lalr1.cc:745
+    #line 35 "parser.yy" // lalr1.cc:745
 {
   // Initialize the initial location.
   yyla.location.begin.filename = yyla.location.end.filename = &ctx.file;
@@ -564,7 +564,7 @@ namespace isc { namespace eval {
           switch (yyn)
             {
   case 2:
-#line 50 "parser.yy" // lalr1.cc:859
+#line 64 "parser.yy" // lalr1.cc:859
     {
     TokenPtr eq(new TokenEqual());
     ctx.expression.push_back(eq);
@@ -573,7 +573,7 @@ namespace isc { namespace eval {
     break;
 
   case 4:
-#line 57 "parser.yy" // lalr1.cc:859
+#line 71 "parser.yy" // lalr1.cc:859
     {
     TokenPtr str(new TokenString(yystack_[0].value.as< std::string > ()));
     ctx.expression.push_back(str);
@@ -582,7 +582,7 @@ namespace isc { namespace eval {
     break;
 
   case 5:
-#line 61 "parser.yy" // lalr1.cc:859
+#line 75 "parser.yy" // lalr1.cc:859
     {
     TokenPtr opt(new TokenOption(yystack_[0].value.as< int > ()));
     ctx.expression.push_back(opt);
@@ -591,7 +591,7 @@ namespace isc { namespace eval {
     break;
 
   case 6:
-#line 65 "parser.yy" // lalr1.cc:859
+#line 79 "parser.yy" // lalr1.cc:859
     {
     /* push back TokenSubstring */
   }
@@ -933,7 +933,7 @@ namespace isc { namespace eval {
   const unsigned char
   EvalParser::yyrline_[] =
   {
-       0,    50,    50,    54,    57,    61,    65
+       0,    64,    64,    68,    71,    75,    79
   };
 
   // Print the state stack on the debug stream.
@@ -966,10 +966,10 @@ namespace isc { namespace eval {
 #endif // YYDEBUG
 
 
-#line 7 "parser.yy" // lalr1.cc:1167
+#line 21 "parser.yy" // lalr1.cc:1167
 } } // isc::eval
 #line 972 "parser.cc" // lalr1.cc:1167
-#line 69 "parser.yy" // lalr1.cc:1168
+#line 83 "parser.yy" // lalr1.cc:1168
 
 void
 isc::eval::EvalParser::error(const location_type& l,
