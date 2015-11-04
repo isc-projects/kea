@@ -72,5 +72,3 @@ location.hh position.hh stack.hh parser.cc parser.h: parser.yy
 
 lexer.cc: lexer.ll
 	$(LEX) -olexer.cc lexer.ll
-
-driver.o: driver.cc
