@@ -61,11 +61,11 @@ EvalContext::parseString(const std::string& str)
 void
 EvalContext::error(const isc::eval::location& l, const std::string& m)
 {
-    std::cerr << l << ": " << m << std::endl;
+    isc_throw(EvalError, l << ": " << m);
 }
 
 void
 EvalContext::error (const std::string& m)
 {
-  std::cerr << m << std::endl;
+    isc_throw(EvalError, m);
 }
