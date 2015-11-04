@@ -47,7 +47,7 @@ int Dhcp4o6IpcBase::open(const uint16_t port, const int side) {
     // Open socket
     int sock = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     if (sock < 0) {
-        isc_throw(Unexpected, "Failed to create DHCP4o6 socket.");
+        isc_throw(Dhcp4o6IpcError, "Failed to create DHCP4o6 socket.");
     }
 
     // Set reuse address
@@ -55,13 +55,13 @@ int Dhcp4o6IpcBase::open(const uint16_t port, const int side) {
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, static_cast<const void*>(&flag),
                    sizeof(flag)) < 0) {
         ::close(sock);
-        isc_throw(Unexpected, "Failed to set SO_REUSEADDR on DHCP4o6 socket.");
+        isc_throw(Dhcp4o6IpcError, "Failed to set SO_REUSEADDR on DHCP4o6 socket.");
     }
 
     // Set no blocking
     if (fcntl(sock, F_SETFL, O_NONBLOCK) < 0) {
         ::close(sock);
-        isc_throw(Unexpected, "Failed to set O_NONBLOCK on DHCP4o6 socket.");
+        isc_throw(Dhcp4o6IpcError, "Failed to set O_NONBLOCK on DHCP4o6 socket.");
     }
 
     // Bind to the local address
@@ -78,7 +78,7 @@ int Dhcp4o6IpcBase::open(const uint16_t port, const int side) {
     }
     if (bind(sock, (struct sockaddr *)&local6, sizeof(local6)) < 0) {
         ::close(sock);
-        isc_throw(Unexpected, "Failed to bind DHCP4o6 socket.");
+        isc_throw(Dhcp4o6IpcError, "Failed to bind DHCP4o6 socket.");
     }
 
     // Connect to the remote address
@@ -96,13 +96,13 @@ int Dhcp4o6IpcBase::open(const uint16_t port, const int side) {
     if (connect(sock, reinterpret_cast<const struct sockaddr*>(&remote6),
                 sizeof(remote6)) < 0) {
         ::close(sock);
-        isc_throw(Unexpected, "Failed to connect DHCP4o6 socket.");
+        isc_throw(Dhcp4o6IpcError, "Failed to connect DHCP4o6 socket.");
     }
 
     if (socket_fd_ != -1) {
         if (dup2(sock, socket_fd_) == -1) {
             ::close(sock);
-            isc_throw(Unexpected, "Failed to duplicate DHCP4o6 socket.");
+            isc_throw(Dhcp4o6IpcError, "Failed to duplicate DHCP4o6 socket.");
         }
         if (sock != socket_fd_) {
             ::close(sock);
@@ -129,7 +129,7 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     uint8_t buf[65536];
     ssize_t cc = recv(socket_fd_, buf, sizeof(buf), 0);
     if (cc < 0) {
-        isc_throw(Unexpected, "Failed to receive on DHCP4o6 socket.");
+        isc_throw(Dhcp4o6IpcError, "Failed to receive on DHCP4o6 socket.");
     }
     Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(buf, cc));
     pkt->updateTimestamp();
