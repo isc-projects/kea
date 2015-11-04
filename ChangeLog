@@ -1,3 +1,8 @@
+1042.	[doc]		fdupont
+	User Guide: parameters having default values may be omitted in the
+	option definitions.
+	(Trac #3927, git xxx)
+
 1041.	[func]		tomek
 	A new library, libkea-eval has been edded. It is not functional
 	yet, but its purpose is to provide a generic expression
