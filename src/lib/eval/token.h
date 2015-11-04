@@ -46,6 +46,14 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief EvalNotBoolError is thrown when a boolean (i.e., "false" or
+///        "true") was required but is not.
+class EvalNotBoolError : public Exception {
+    EvalNotBoolError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+
 /// @brief Base class for all tokens
 ///
 /// It provides an interface for all tokens and storage for string representation
