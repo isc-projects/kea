@@ -327,7 +327,7 @@ TEST_F(Dhcp4o6IpcBaseTest, openError) {
     ASSERT_NE(-1, ipc_bound.getSocketFd());
 
     ipc.setDesiredPort(TEST_PORT + 10);
-    ASSERT_THROW(ipc.open(), isc::Unexpected);
+    ASSERT_THROW(ipc.open(), isc::dhcp::Dhcp4o6IpcError);
 
     EXPECT_EQ(sock_fd, ipc.getSocketFd());
     EXPECT_EQ(TEST_PORT, ipc.getPort());
