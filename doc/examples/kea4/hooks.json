@@ -1,6 +1,6 @@
 # This is an example configuration file for the DHCPv4 server in Kea
 # illustrating the configuration of hooks libraries.  It uses a basic scenario
-# of one IPv6 subnet configured with the default values for all parameters.
+# of one IPv4 subnet configured with the default values for all parameters.
 
 {"Dhcp4":
 
