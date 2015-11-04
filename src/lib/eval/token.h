@@ -49,6 +49,7 @@ public:
 /// @brief EvalNotBoolError is thrown when a boolean (i.e., "false" or
 ///        "true") was required but is not.
 class EvalNotBoolError : public Exception {
+public:
     EvalNotBoolError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
