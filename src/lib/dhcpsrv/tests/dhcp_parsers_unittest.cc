@@ -481,7 +481,7 @@ TEST_F(ParseConfigTest, basicOptionDefTest) {
 
     // Verify that the configuration string parses.
     int rcode = parseConfiguration(config);
-    ASSERT_TRUE(rcode == 0);
+    ASSERT_EQ(0, rcode);
 
 
     // Verify that the option definition can be retrieved.
@@ -514,7 +514,7 @@ TEST_F(ParseConfigTest, minimalOptionDefTest) {
 
     // Verify that the configuration string parses.
     int rcode = parseConfiguration(config);
-    ASSERT_TRUE(rcode == 0);
+    ASSERT_EQ(0, rcode);
 
 
     // Verify that the option definition can be retrieved.
@@ -547,7 +547,7 @@ TEST_F(ParseConfigTest, defaultSpaceOptionDefTest) {
 
     // Verify that the configuration string parses.
     int rcode = parseConfiguration(config);
-    ASSERT_TRUE(rcode == 0);
+    ASSERT_TRUE(0, rcode);
 
 
     // Verify that the option definition can be retrieved.
@@ -590,13 +590,13 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
 
     // Verify that the configuration string parses.
     int rcode = parseConfiguration(config);
-    ASSERT_TRUE(rcode == 0);
+    ASSERT_TRUE(0, rcode);
 
     // Verify that the option can be retrieved.
     OptionPtr opt_ptr = getOptionPtr("isc", 100);
     ASSERT_TRUE(opt_ptr);
 
-    // Verify that the option definition is correct.
+    // Verify that the option data is correct.
     std::string val = "type=00100, len=00004: 192.0.2.0 (ipv4-address)";
 
     EXPECT_EQ(val, opt_ptr->toText());
@@ -624,13 +624,13 @@ TEST_F(ParseConfigTest, minimalOptionDataTest) {
 
     // Verify that the configuration string parses.
     int rcode = parseConfiguration(config);
-    ASSERT_TRUE(rcode == 0);
+    ASSERT_TRUE(0, rcode);
 
     // Verify that the option can be retrieved.
     OptionPtr opt_ptr = getOptionPtr("isc", 100);
     ASSERT_TRUE(opt_ptr);
 
-    // Verify that the option definition is correct.
+    // Verify that the option data is correct.
     std::string val = "type=00100, len=00004: 192.0.2.0 (ipv4-address)";
 
     EXPECT_EQ(val, opt_ptr->toText());
