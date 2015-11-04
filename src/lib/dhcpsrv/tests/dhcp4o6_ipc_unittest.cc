@@ -48,9 +48,16 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param port Port.
+    /// @param port Desired port.
     /// @param endpoint_type Type of the IPC endpoint. It should be 4 or 6.
     TestIpc(const uint16_t port, const int endpoint_type);
+
+    /// @brief Sets new port to be used with @c open.
+    ///
+    /// @param desired_port New desired port.
+    void setDesiredPort(const uint16_t desired_port) {
+        desired_port_ = desired_port;
+    }
 
     /// @brief Opens the IPC socket and registers it in @c IfaceMgr.
     ///
@@ -59,6 +66,16 @@ public:
     /// callback to be called by the @c IfaceMgr when the data is received
     /// over the socket.
     virtual void open();
+
+    /// @brief Retrieve port which socket is bound to.
+    uint16_t getPort() const {
+        return (port_);
+    }
+
+    /// @brief Retrieve socket descriptor.
+    int getSocketFd() const {
+        return (socket_fd_);
+    }
 
     /// @brief Pops and returns a received message.
     ///
@@ -81,7 +98,7 @@ private:
     void receiveHandler();
 
     /// @brief Port number.
-    uint16_t port_;
+    uint16_t desired_port_;
 
     /// @brief Endpoint type, i.e. 4 or 6.
     int endpoint_type_;
@@ -91,13 +108,13 @@ private:
 };
 
 TestIpc::TestIpc(const uint16_t port, const int endpoint_type)
-    : port_(port), endpoint_type_(endpoint_type), pkt_received_() {
+    : desired_port_(port), endpoint_type_(endpoint_type), pkt_received_() {
 }
 
 void
 TestIpc::open() {
     // Use the base IPC to open the socket.
-    socket_fd_ = Dhcp4o6IpcBase::open(port_, endpoint_type_);
+    socket_fd_ = Dhcp4o6IpcBase::open(desired_port_, endpoint_type_);
     // If the socket has been opened correctly, register it in the @c IfaceMgr.
     if (socket_fd_ != -1) {
         IfaceMgr& iface_mgr = IfaceMgr::instance();
@@ -263,5 +280,63 @@ TEST_F(Dhcp4o6IpcBaseTest, send4To6) {
 TEST_F(Dhcp4o6IpcBaseTest, send6To4) {
     testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V6, ENDPOINT_TYPE_V4);
 }
+
+// This test checks that the values of the socket descriptor are correct
+// when the socket is opened and then closed.
+TEST_F(Dhcp4o6IpcBaseTest, openClose) {
+    TestIpc ipc(TEST_PORT, ENDPOINT_TYPE_V4);
+    EXPECT_EQ(-1, ipc.getSocketFd());
+
+    ASSERT_NO_THROW(ipc.open());
+    EXPECT_NE(-1, ipc.getSocketFd());
+
+    ASSERT_NO_THROW(ipc.close());
+    EXPECT_EQ(-1, ipc.getSocketFd());
+}
+
+// This test verifies that it is call open() while the socket is already
+// opened. If the port changes, the new socket should be opened.
+TEST_F(Dhcp4o6IpcBaseTest, openMultipleTimes) {
+   TestIpc ipc(TEST_PORT, ENDPOINT_TYPE_V6);
+   ASSERT_NO_THROW(ipc.open());
+   int sock_fd = ipc.getSocketFd();
+   ASSERT_NE(-1, sock_fd);
+   ASSERT_EQ(TEST_PORT, ipc.getPort());
+
+   ASSERT_NO_THROW(ipc.open());
+   ASSERT_EQ(sock_fd, ipc.getSocketFd());
+   ASSERT_EQ(TEST_PORT, ipc.getPort());
+
+   ipc.setDesiredPort(TEST_PORT + 10);
+   ASSERT_NO_THROW(ipc.open());
+   ASSERT_NE(-1, ipc.getSocketFd());
+
+   EXPECT_EQ(TEST_PORT + 10, ipc.getPort());
+}
+
+// This test verifies that the socket remains open if there is a failure
+// to open a new socket.
+TEST_F(Dhcp4o6IpcBaseTest, openError) {
+    TestIpc ipc(TEST_PORT, ENDPOINT_TYPE_V4);
+    ASSERT_NO_THROW(ipc.open());
+    int sock_fd = ipc.getSocketFd();
+    ASSERT_NE(-1, sock_fd);
+
+    TestIpc ipc_bound(TEST_PORT + 10, ENDPOINT_TYPE_V4);
+    ASSERT_NO_THROW(ipc_bound.open());
+    ASSERT_NE(-1, ipc_bound.getSocketFd());
+
+    ipc.setDesiredPort(TEST_PORT + 10);
+    ASSERT_THROW(ipc.open(), isc::Unexpected);
+
+    EXPECT_EQ(sock_fd, ipc.getSocketFd());
+    EXPECT_EQ(TEST_PORT, ipc.getPort());
+
+    ASSERT_NO_THROW(ipc_bound.close());
+    ASSERT_NO_THROW(ipc.open());
+    EXPECT_NE(-1, ipc.getSocketFd());
+    EXPECT_EQ(TEST_PORT + 10, ipc.getPort());
+}
+
 
 } // end of anonymous namespace
