@@ -19,14 +19,21 @@
 /// This file defines the class Kea uses as a base for
 /// DHCPv4-over-DHCPv6 communication between servers.
 ///
+
+#include <exceptions/exceptions.h>
 #include <dhcp/pkt6.h>
-
 #include <boost/noncopyable.hpp>
-
 #include <stdint.h>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Exception thrown when error occurs as a result of use of IPC.
+class Dhcp4o6IpcError : public Exception {
+public:
+    Dhcp4o6IpcError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 /// @brief 
 ///
