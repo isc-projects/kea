@@ -40,7 +40,7 @@
 
 # include "position.hh"
 
-#line 7 "parser.yy" // location.cc:337
+#line 21 "parser.yy" // location.cc:337
 namespace isc { namespace eval {
 #line 46 "location.hh" // location.cc:337
   /// Abstract a location.
@@ -186,7 +186,7 @@ namespace isc { namespace eval {
     return ostr;
   }
 
-#line 7 "parser.yy" // location.cc:337
+#line 21 "parser.yy" // location.cc:337
 } } // isc::eval
 #line 192 "location.hh" // location.cc:337
 #endif // !YY_YY_LOCATION_HH_INCLUDED

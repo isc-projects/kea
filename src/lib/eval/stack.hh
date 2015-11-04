@@ -40,7 +40,7 @@
 
 # include <vector>
 
-#line 7 "parser.yy" // stack.hh:151
+#line 21 "parser.yy" // stack.hh:151
 namespace isc { namespace eval {
 #line 46 "stack.hh" // stack.hh:151
   template <class T, class S = std::vector<T> >
@@ -150,7 +150,7 @@ namespace isc { namespace eval {
     unsigned int range_;
   };
 
-#line 7 "parser.yy" // stack.hh:151
+#line 21 "parser.yy" // stack.hh:151
 } } // isc::eval
 #line 156 "stack.hh" // stack.hh:151
 

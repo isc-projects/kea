@@ -50,7 +50,7 @@
 #  endif
 # endif
 
-#line 7 "parser.yy" // location.cc:337
+#line 21 "parser.yy" // location.cc:337
 namespace isc { namespace eval {
 #line 56 "position.hh" // location.cc:337
   /// Abstract a position.
@@ -174,7 +174,7 @@ namespace isc { namespace eval {
     return ostr << pos.line << '.' << pos.column;
   }
 
-#line 7 "parser.yy" // location.cc:337
+#line 21 "parser.yy" // location.cc:337
 } } // isc::eval
 #line 180 "position.hh" // location.cc:337
 #endif // !YY_YY_POSITION_HH_INCLUDED
