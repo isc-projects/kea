@@ -40,7 +40,7 @@ public:
     /// @brief Initializes Pkt4,Pkt6 and options that can be useful for
     ///        evaluation tests.
     EvaluateTest() {
-	e_.clear();
+        e_.clear();
 
         pkt4_.reset(new Pkt4(DHCPDISCOVER, 12345));
         pkt6_.reset(new Pkt6(DHCPV6_SOLICIT, 12345));
@@ -207,6 +207,40 @@ TEST_F(EvaluateTest, packet) {
     EXPECT_TRUE(result_);
     ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
     EXPECT_FALSE(result_);
+}
+
+// A test using substring on an option.
+TEST_F(EvaluateTest, complex) {
+    TokenPtr toption;
+    TokenPtr tstart;
+    TokenPtr tlength;
+    TokenPtr tsubstring;
+    TokenPtr tstring;
+    TokenPtr tequal;
+
+    // Get the option, i.e., "hundred[46]"
+    ASSERT_NO_THROW(toption.reset(new TokenOption(100)));
+    e_.push_back(toption);
+
+    // Get substring("hundred[46]", 0, 7), i.e., "hundred"
+    ASSERT_NO_THROW(tstart.reset(new TokenString("0")));
+    e_.push_back(tstart);
+    ASSERT_NO_THROW(tlength.reset(new TokenString("7")));
+    e_.push_back(tlength);
+    ASSERT_NO_THROW(tsubstring.reset(new TokenSubstring()));
+    e_.push_back(tsubstring);
+
+    // Compare with "hundred"
+    ASSERT_NO_THROW(tstring.reset(new TokenString("hundred")));
+    e_.push_back(tstring);
+    ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
+    e_.push_back(tequal);
+
+    // Should return true for v4 and v6 packets
+    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    EXPECT_TRUE(result_);
+    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    EXPECT_TRUE(result_);
 }
 
 };
