@@ -14,7 +14,9 @@
 
 #include <eval/token.h>
 #include <eval/eval_log.h>
+#include <util/encode/hex.h>
 #include <boost/lexical_cast.hpp>
+#include <cstring>
 #include <string>
 
 using namespace isc::dhcp;
@@ -22,6 +24,40 @@ using namespace std;
 
 void
 TokenString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+    // Literals only push, nothing to pop
+    values.push(value_);
+}
+
+TokenHexString::TokenHexString(const string& str) : value_("") {
+    // Check string starts "0x" or "0x" and has at least one additional character.
+    if ((str.size() < 3) ||
+        (str[0] != '0') ||
+        ((str[1] != 'x') && (str[1] != 'X'))) {
+        return;
+    }
+    string digits = str.substr(2);
+
+    // Transform string of hexadecimal digits into binary format
+    vector<uint8_t> binary;
+    try {
+        // The decodeHex function expects that the string contains an
+        // even number of digits. If we don't meet this requirement,
+        // we have to insert a leading 0.
+        if ((digits.length() % 2) != 0) {
+            digits = digits.insert(0, "0");
+        }
+        util::encode::decodeHex(digits, binary);
+    } catch (...) {
+        return;
+    }
+
+    // Convert to a string (note that binary.size() cannot be 0)
+    value_.resize(binary.size());
+    memmove(&value_[0], &binary[0], binary.size());
+}
+
+void
+TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
 }

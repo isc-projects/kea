@@ -593,7 +593,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
             // The decodeHex function expects that the string contains an
             // even number of digits. If we don't meet this requirement,
             // we have to insert a leading 0.
-            if (!data_param.empty() && data_param.length() % 2) {
+            if (!data_param.empty() && ((data_param.length() % 2) != 0)) {
                 data_param = data_param.insert(0, "0");
             }
             util::encode::decodeHex(data_param, binary);
