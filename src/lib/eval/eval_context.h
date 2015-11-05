@@ -26,7 +26,7 @@
 YY_DECL;
 
 /// @brief Evaluation error exception raised when trying to parse an axceptions.
-class EvalError : public isc::exceptions::Exception {
+class EvalError : public isc::Exception {
 public:
     EvalError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
