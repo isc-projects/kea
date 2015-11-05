@@ -1,3 +1,7 @@
+1043.	[func]		fdupont
+	Implemented support for hex strings in client classification.
+	(Trac #4091, git xxx)
+
 1042.	[doc]		fdupont
 	User Guide: parameters having default values may be omitted in the
 	option definitions.
