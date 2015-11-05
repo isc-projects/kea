@@ -135,37 +135,49 @@ TEST_F(TokenTest, string6) {
 TEST_F(TokenTest, hexstring4) {
     TokenPtr empty;
     TokenPtr bad;
+    TokenPtr nodigit;
+    TokenPtr baddigit;
     TokenPtr bell;
     TokenPtr foo;
     TokenPtr cookie;
 
     // Store constant empty hexstring "" ("") in the TokenHexString object.
     ASSERT_NO_THROW(empty.reset(new TokenHexString("")));
-    // Store bad encoded hexstring "xabc" ("") in the TokenHexString object.
-    ASSERT_NO_THROW(bad.reset(new TokenHexString("xabc")));
-    // Store hexstring with an odd number of hexdigits "7" ("\a")
-    ASSERT_NO_THROW(bell.reset(new TokenHexString("7")));
-    // Store constant hexstring "666f6f" ("foo") in the TokenHexString object.
-    ASSERT_NO_THROW(foo.reset(new TokenHexString("666f6f")));
-    // Store constant hexstring "63825363" (DHCP_OPTIONS_COOKIE)
-    ASSERT_NO_THROW(cookie.reset(new TokenHexString("63825363")));
+    // Store bad encoded hexstring "0abc" ("").
+    ASSERT_NO_THROW(bad.reset(new TokenHexString("0abc")));
+    // Store hexstring with no digits "0x" ("").
+    ASSERT_NO_THROW(nodigit.reset(new TokenHexString("0x")));
+    // Store hexstring with a bad hexdigit "0xxabc" ("").
+    ASSERT_NO_THROW(baddigit.reset(new TokenHexString("0xxabc")));
+    // Store hexstring with an odd number of hexdigits "0x7" ("\a").
+    ASSERT_NO_THROW(bell.reset(new TokenHexString("0x7")));
+    // Store constant hexstring "0x666f6f" ("foo").
+    ASSERT_NO_THROW(foo.reset(new TokenHexString("0x666f6f")));
+    // Store constant hexstring "0x63825363" (DHCP_OPTIONS_COOKIE).
+    ASSERT_NO_THROW(cookie.reset(new TokenHexString("0x63825363")));
 
     // Make sure that tokens can be evaluated without exceptions.
     ASSERT_NO_THROW(empty->evaluate(*pkt4_, values_));
     ASSERT_NO_THROW(bad->evaluate(*pkt4_, values_));
+    ASSERT_NO_THROW(nodigit->evaluate(*pkt4_, values_));
+    ASSERT_NO_THROW(baddigit->evaluate(*pkt4_, values_));
     ASSERT_NO_THROW(bell->evaluate(*pkt4_, values_));
     ASSERT_NO_THROW(foo->evaluate(*pkt4_, values_));
     ASSERT_NO_THROW(cookie->evaluate(*pkt4_, values_));
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(5, values_.size());
+    ASSERT_EQ(7, values_.size());
     uint32_t expected = htonl(DHCP_OPTIONS_COOKIE);
     EXPECT_EQ(4, values_.top().size());
-    EXPECT_EQ(0, std::memcmp(&expected, &values_.top()[0], 4));
+    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
     values_.pop();
     EXPECT_EQ("foo", values_.top());
     values_.pop();
     EXPECT_EQ("\a", values_.top());
+    values_.pop();
+    EXPECT_EQ("", values_.top());
+    values_.pop();
+    EXPECT_EQ("", values_.top());
     values_.pop();
     EXPECT_EQ("", values_.top());
     values_.pop();
@@ -178,37 +190,49 @@ TEST_F(TokenTest, hexstring4) {
 TEST_F(TokenTest, hexstring6) {
     TokenPtr empty;
     TokenPtr bad;
+    TokenPtr nodigit;
+    TokenPtr baddigit;
     TokenPtr bell;
     TokenPtr foo;
     TokenPtr cookie;
 
     // Store constant empty hexstring "" ("") in the TokenHexString object.
     ASSERT_NO_THROW(empty.reset(new TokenHexString("")));
-    // Store bad encoded hexstring "xabc" ("") in the TokenHexString object.
-    ASSERT_NO_THROW(bad.reset(new TokenHexString("xabc")));
-    // Store hexstring with an odd number of hexdigits "7" ("\a")
-    ASSERT_NO_THROW(bell.reset(new TokenHexString("7")));
-    // Store constant hexstring "666f6f" ("foo") in the TokenHexString object.
-    ASSERT_NO_THROW(foo.reset(new TokenHexString("666f6f")));
-    // Store constant hexstring "63825363" (DHCP_OPTIONS_COOKIE)
-    ASSERT_NO_THROW(cookie.reset(new TokenHexString("63825363")));
+    // Store bad encoded hexstring "0abc" ("").
+    ASSERT_NO_THROW(bad.reset(new TokenHexString("0abc")));
+    // Store hexstring with no digits "0x" ("").
+    ASSERT_NO_THROW(nodigit.reset(new TokenHexString("0x")));
+    // Store hexstring with a bad hexdigit "0xxabc" ("").
+    ASSERT_NO_THROW(baddigit.reset(new TokenHexString("0xxabc")));
+    // Store hexstring with an odd number of hexdigits "0x7" ("\a").
+    ASSERT_NO_THROW(bell.reset(new TokenHexString("0x7")));
+    // Store constant hexstring "0x666f6f" ("foo").
+    ASSERT_NO_THROW(foo.reset(new TokenHexString("0x666f6f")));
+    // Store constant hexstring "0x63825363" (DHCP_OPTIONS_COOKIE).
+    ASSERT_NO_THROW(cookie.reset(new TokenHexString("0x63825363")));
 
     // Make sure that tokens can be evaluated without exceptions.
     ASSERT_NO_THROW(empty->evaluate(*pkt6_, values_));
     ASSERT_NO_THROW(bad->evaluate(*pkt6_, values_));
+    ASSERT_NO_THROW(nodigit->evaluate(*pkt6_, values_));
+    ASSERT_NO_THROW(baddigit->evaluate(*pkt6_, values_));
     ASSERT_NO_THROW(bell->evaluate(*pkt6_, values_));
     ASSERT_NO_THROW(foo->evaluate(*pkt6_, values_));
     ASSERT_NO_THROW(cookie->evaluate(*pkt6_, values_));
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(5, values_.size());
+    ASSERT_EQ(7, values_.size());
     uint32_t expected = htonl(DHCP_OPTIONS_COOKIE);
     EXPECT_EQ(4, values_.top().size());
-    EXPECT_EQ(0, std::memcmp(&expected, &values_.top()[0], 4));
+    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
     values_.pop();
     EXPECT_EQ("foo", values_.top());
     values_.pop();
     EXPECT_EQ("\a", values_.top());
+    values_.pop();
+    EXPECT_EQ("", values_.top());
+    values_.pop();
+    EXPECT_EQ("", values_.top());
     values_.pop();
     EXPECT_EQ("", values_.top());
     values_.pop();
