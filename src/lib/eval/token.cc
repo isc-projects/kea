@@ -29,18 +29,13 @@ TokenString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 }
 
 TokenHexString::TokenHexString(const string& str) : value_("") {
-    // Check "0x" or "0x" in front
-    if ((str.size() < 2) ||
+    // Check string starts "0x" or "0x" and has at least one additional character.
+    if ((str.size() < 3) ||
         (str[0] != '0') ||
         ((str[1] != 'x') && (str[1] != 'X'))) {
         return;
     }
     string digits = str.substr(2);
-
-    // Eliminate the no digit case first
-    if (digits.empty()) {
-        return;
-    }
 
     // Transform string of hexadecimal digits into binary format
     vector<uint8_t> binary;
