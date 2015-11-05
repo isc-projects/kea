@@ -87,4 +87,4 @@ public:
     bool trace_parsing_;
   
 };
-#endif // ! EVALCONTEXT_HH
+#endif // ! EVALCONTEXT_H
