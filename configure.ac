@@ -1299,9 +1299,10 @@ EOF
 
     if test $? -ne 0 ; then
         $YACC -V
+        $RM -f bisontest.y bisontest.cc
         AC_MSG_ERROR("Error with $YACC. Possibly incorrect version? Required at least 3.0.0.")
     fi
-    rm -f bisontest.y bisontest.cc
+    $RM -f bisontest.y bisontest.cc
 fi
 
 AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
