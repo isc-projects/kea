@@ -110,10 +110,9 @@ public:
     /// Value is set during token construction.
     ///
     /// @param str constant string to be represented
-    /// (must be a string of hexadecimal digits or decoding will fail)
-    TokenHexString(const std::string& str)
-        :repr_(str){
-    }
+    /// (must be "0x" or "0X" followed by a string of hexadecimal digits
+    /// or decoding will fail)
+    TokenHexString(const std::string& str);
 
     /// @brief Token evaluation (puts value of the constant string on
     /// the stack after decoding or an empty string if decoding fails
@@ -124,7 +123,7 @@ public:
     void evaluate(const Pkt& pkt, ValueStack& values);
 
 protected:
-    std::string repr_; ///< Constant value
+    std::string value_; ///< Constant value
 };
 
 /// @brief Token that represents a value of an option

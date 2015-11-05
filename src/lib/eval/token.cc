@@ -28,33 +28,43 @@ TokenString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     values.push(value_);
 }
 
-void
-TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
-    // Eliminate the empty string case first
-    if (repr_.empty()) {
-        values.push("");
+TokenHexString::TokenHexString(const string& str) : value_("") {
+    // Check "0x" or "0x" in front
+    if ((str.size() < 2) ||
+        (str[0] != '0') ||
+        ((str[1] != 'x') && (str[1] != 'X'))) {
         return;
     }
+    string digits = str.substr(2);
+
+    // Eliminate the no digit case first
+    if (digits.empty()) {
+        return;
+    }
+
     // Transform string of hexadecimal digits into binary format
-    std::vector<uint8_t> binary;
+    vector<uint8_t> binary;
     try {
         // The decodeHex function expects that the string contains an
         // even number of digits. If we don't meet this requirement,
         // we have to insert a leading 0.
-        if ((repr_.length() % 2) != 0) {
-            repr_ = repr_.insert(0, "0");
+        if ((digits.length() % 2) != 0) {
+            digits = digits.insert(0, "0");
         }
-        util::encode::decodeHex(repr_, binary);
+        util::encode::decodeHex(digits, binary);
     } catch (...) {
-        values.push("");
         return;
     }
-    // Convert to a string
-    std::string chars(binary.size(), '\0');
-    // Note that binary.size() cannot be 0
-    std::memmove(&chars[0], &binary[0], binary.size());
+
+    // Convert to a string (note that binary.size() cannot be 0)
+    value_.resize(binary.size());
+    memmove(&value_[0], &binary[0], binary.size());
+}
+
+void
+TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     // Literals only push, nothing to pop
-    values.push(chars);
+    values.push(value_);
 }
 
 void
