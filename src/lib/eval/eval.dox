@@ -23,7 +23,7 @@
 
   The external interface to the library is the @ref isc::eval::EvalContext
   class.  Once instantiated, it offers two major methods:
-  @ref isc::eval::EvalContext::parseFile whch parses the content of a file
+  @ref isc::eval::EvalContext::parseFile which parses the content of a file
   and @ref isc::eval::EvalContext::parseString, which parses the specified
   string.  Once the expression is parsed, it is converted to a collection of
   tokens that are stored in Reverse Polish Notation in
