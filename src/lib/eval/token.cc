@@ -41,7 +41,7 @@ TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
         // The decodeHex function expects that the string contains an
         // even number of digits. If we don't meet this requirement,
         // we have to insert a leading 0.
-        if (repr_.length() % 2) {
+        if ((repr_.length() % 2) != 0) {
             repr_ = repr_.insert(0, "0");
         }
         util::encode::decodeHex(repr_, binary);
