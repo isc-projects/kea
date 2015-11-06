@@ -49,7 +49,7 @@
 
 #line 51 "parser.cc" // lalr1.cc:412
 // Unqualified %code blocks.
-#line 43 "parser.yy" // lalr1.cc:413
+#line 38 "parser.yy" // lalr1.cc:413
 
 # include "eval_context.h"
 
@@ -322,21 +322,21 @@ namespace isc { namespace eval {
     {
             case 11: // "constant string"
 
-#line 61 "parser.yy" // lalr1.cc:636
+#line 56 "parser.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 328 "parser.cc" // lalr1.cc:636
         break;
 
       case 12: // "constant hexstring"
 
-#line 61 "parser.yy" // lalr1.cc:636
+#line 56 "parser.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 335 "parser.cc" // lalr1.cc:636
         break;
 
       case 13: // "option code"
 
-#line 61 "parser.yy" // lalr1.cc:636
+#line 56 "parser.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< uint16_t > (); }
 #line 342 "parser.cc" // lalr1.cc:636
         break;
@@ -449,15 +449,6 @@ namespace isc { namespace eval {
       {
     YYCDEBUG << "Starting parse" << std::endl;
 
-
-    // User initialization code.
-    #line 36 "parser.yy" // lalr1.cc:745
-{
-  // Initialize the initial location.
-  yyla.location.begin.filename = yyla.location.end.filename = &ctx.file_;
-}
-
-#line 461 "parser.cc" // lalr1.cc:745
 
     /* Initialize the stack.  The initial state will be set in
        yynewstate, since the latter expects the semantical and the
@@ -574,52 +565,52 @@ namespace isc { namespace eval {
           switch (yyn)
             {
   case 2:
-#line 70 "parser.yy" // lalr1.cc:859
+#line 65 "parser.yy" // lalr1.cc:859
     {
     TokenPtr eq(new TokenEqual());
     ctx.expression.push_back(eq);
   }
-#line 583 "parser.cc" // lalr1.cc:859
+#line 574 "parser.cc" // lalr1.cc:859
     break;
 
   case 4:
-#line 78 "parser.yy" // lalr1.cc:859
+#line 73 "parser.yy" // lalr1.cc:859
     {
     TokenPtr str(new TokenString(yystack_[0].value.as< std::string > ()));
     ctx.expression.push_back(str);
   }
-#line 592 "parser.cc" // lalr1.cc:859
+#line 583 "parser.cc" // lalr1.cc:859
     break;
 
   case 5:
-#line 82 "parser.yy" // lalr1.cc:859
+#line 77 "parser.yy" // lalr1.cc:859
     {
     TokenPtr hex(new TokenHexString(yystack_[0].value.as< std::string > ()));
     ctx.expression.push_back(hex);
   }
-#line 601 "parser.cc" // lalr1.cc:859
+#line 592 "parser.cc" // lalr1.cc:859
     break;
 
   case 6:
-#line 86 "parser.yy" // lalr1.cc:859
+#line 81 "parser.yy" // lalr1.cc:859
     {
     TokenPtr opt(new TokenOption(yystack_[1].value.as< uint16_t > ()));
     ctx.expression.push_back(opt);
   }
-#line 610 "parser.cc" // lalr1.cc:859
+#line 601 "parser.cc" // lalr1.cc:859
     break;
 
   case 7:
-#line 90 "parser.yy" // lalr1.cc:859
+#line 85 "parser.yy" // lalr1.cc:859
     {
     TokenPtr sub(new TokenSubstring());
     ctx.expression.push_back(sub);
   }
-#line 619 "parser.cc" // lalr1.cc:859
+#line 610 "parser.cc" // lalr1.cc:859
     break;
 
 
-#line 623 "parser.cc" // lalr1.cc:859
+#line 614 "parser.cc" // lalr1.cc:859
             default:
               break;
             }
@@ -954,7 +945,7 @@ namespace isc { namespace eval {
   const unsigned char
   EvalParser::yyrline_[] =
   {
-       0,    70,    70,    74,    78,    82,    86,    90
+       0,    65,    65,    69,    73,    77,    81,    85
   };
 
   // Print the state stack on the debug stream.
@@ -989,8 +980,8 @@ namespace isc { namespace eval {
 
 #line 21 "parser.yy" // lalr1.cc:1167
 } } // isc::eval
-#line 993 "parser.cc" // lalr1.cc:1167
-#line 96 "parser.yy" // lalr1.cc:1168
+#line 984 "parser.cc" // lalr1.cc:1167
+#line 91 "parser.yy" // lalr1.cc:1168
 
 void
 isc::eval::EvalParser::error(const location_type& loc,
