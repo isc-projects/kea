@@ -53,6 +53,7 @@ using namespace isc::eval;
   RPAREN  ")"
 ;
 %token <std::string> STRING "constant string"
+%token <std::string> HEXSTRING "constant hexstring"
 %token <int> OPTION "option code"
 %printer { yyoutput << $$; } <*>;
 %%
@@ -61,25 +62,32 @@ using namespace isc::eval;
 %start expression;
 
 // Expression can either be a single token or a (something == something) expression
+
 expression:
 token EQUAL token {
     TokenPtr eq(new TokenEqual());
     ctx.expression.push_back(eq);
-}
-| token;
+  }
+| token
+;
 
 token:
 STRING {
     TokenPtr str(new TokenString($1));
     ctx.expression.push_back(str);
-}
+  }
+| HEXSTRING {
+    TokenPtr hex(new TokenHexString($1));
+    ctx.expression.push_back(hex);
+  }
 | OPTION {
     TokenPtr opt(new TokenOption($1));
     ctx.expression.push_back(opt);
-}
+  }
 | SUBSTRING "(" token "," token "," token ")" {
     /* push back TokenSubstring */
   }
+;
 
 %%
 void
