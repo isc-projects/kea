@@ -2230,6 +2230,8 @@ void yyfree (void * ptr )
 
 
 
+using namespace isc::eval;
+
 void
 EvalContext::scanBegin()
 {

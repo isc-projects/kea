@@ -44,11 +44,12 @@
 
 #include <string>
 #include <eval/token.h>
-class EvalContext;
+#include <eval/eval_context_decl.h>
 
 using namespace isc::dhcp;
+using namespace isc::eval;
 
-#line 52 "parser.h" // lalr1.cc:392
+#line 53 "parser.h" // lalr1.cc:392
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -125,7 +126,7 @@ using namespace isc::dhcp;
 
 #line 21 "parser.yy" // lalr1.cc:392
 namespace isc { namespace eval {
-#line 129 "parser.h" // lalr1.cc:392
+#line 130 "parser.h" // lalr1.cc:392
 
 
 
@@ -993,7 +994,7 @@ namespace isc { namespace eval {
 
 #line 21 "parser.yy" // lalr1.cc:392
 } } // isc::eval
-#line 997 "parser.h" // lalr1.cc:392
+#line 998 "parser.h" // lalr1.cc:392
 
 
 
