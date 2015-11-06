@@ -45,6 +45,23 @@ public:
         EXPECT_EQ(expected, values.top());
     }
 
+    void checkTokenHexString(const TokenPtr& token,
+			     const std::string& expected) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenHexString> hex =
+            boost::dynamic_pointer_cast<TokenHexString>(token);
+        ASSERT_TRUE(hex);
+
+        Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
+        ValueStack values;
+
+        EXPECT_NO_THROW(token->evaluate(*pkt4, values));
+
+        ASSERT_EQ(1, values.size());
+
+        EXPECT_EQ(expected, values.top());
+    }
+
     void checkTokenEq(const TokenPtr& token) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenEqual> eq =
@@ -79,6 +96,18 @@ TEST_F(EvalContextTest, string) {
     TokenPtr tmp = eval.expression.at(0);
 
     checkTokenString(tmp, "foo");
+}
+
+TEST_F(EvalContextTest, hexstring) {
+    EvalContext eval;
+
+    EXPECT_NO_THROW(eval.parseString("0x666f6f"));
+
+    ASSERT_EQ(1, eval.expression.size());
+
+    TokenPtr tmp = eval.expression.at(0);
+
+    checkTokenHexString(tmp, "foo");
 }
 
 TEST_F(EvalContextTest, equal) {
