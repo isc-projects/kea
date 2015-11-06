@@ -612,13 +612,14 @@ namespace isc { namespace eval {
   case 7:
 #line 90 "parser.yy" // lalr1.cc:859
     {
-    /* push back TokenSubstring */
+    TokenPtr sub(new TokenSubstring());
+    ctx.expression.push_back(sub);
   }
-#line 618 "parser.cc" // lalr1.cc:859
+#line 619 "parser.cc" // lalr1.cc:859
     break;
 
 
-#line 622 "parser.cc" // lalr1.cc:859
+#line 623 "parser.cc" // lalr1.cc:859
             default:
               break;
             }
@@ -988,12 +989,12 @@ namespace isc { namespace eval {
 
 #line 21 "parser.yy" // lalr1.cc:1167
 } } // isc::eval
-#line 992 "parser.cc" // lalr1.cc:1167
-#line 95 "parser.yy" // lalr1.cc:1168
+#line 993 "parser.cc" // lalr1.cc:1167
+#line 96 "parser.yy" // lalr1.cc:1168
 
 void
-isc::eval::EvalParser::error(const location_type& l,
-                             const std::string& m)
+isc::eval::EvalParser::error(const location_type& loc,
+                             const std::string& what)
 {
-    ctx.error(l, m);
+    ctx.error(loc, what);
 }
