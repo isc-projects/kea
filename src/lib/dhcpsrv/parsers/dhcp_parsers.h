@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -745,6 +745,7 @@ private:
 
     /// Instance of option definition being created by this parser.
     OptionDefinitionPtr option_definition_;
+
     /// Name of the space the option definition belongs to.
     std::string option_space_name_;
 

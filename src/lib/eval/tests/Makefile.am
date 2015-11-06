@@ -2,6 +2,8 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += -DLOGGING_SPEC_FILE=\"$(abs_top_srcdir)/src/lib/dhcpsrv/logging.spec\"
+
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 # Some versions of GCC warn about some versions of Boost regarding
@@ -24,8 +26,9 @@ if HAVE_GTEST
 
 TESTS += libeval_unittests
 
-libeval_unittests_SOURCES  = token_unittest.cc main.cc
-libeval_unittests_SOURCES += context_unittest.cc
+libeval_unittests_SOURCES  = context_unittest.cc
+libeval_unittests_SOURCES += token_unittest.cc
+libeval_unittests_SOURCES += run_unittests.cc
 libeval_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 libeval_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libeval_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)

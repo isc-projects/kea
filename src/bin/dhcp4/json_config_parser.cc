@@ -200,6 +200,12 @@ protected:
             parser = new OptionDataListParser(config_id, options_, AF_INET);
         } else if (config_id.compare("match-client-id") == 0) {
             parser = new BooleanParser(config_id, boolean_values_);
+        } else if (config_id.compare("4o6-subnet") == 0) {
+            parser = new StringParser(config_id, string_values_);
+        } else if (config_id.compare("4o6-interface") == 0) {
+            parser = new StringParser(config_id, string_values_);
+        } else if (config_id.compare("4o6-interface-id") == 0) {
+            parser = new StringParser(config_id, string_values_);
         } else {
             isc_throw(NotImplemented, "unsupported parameter: " << config_id);
         }
@@ -305,6 +311,43 @@ protected:
                       << ")");
         }
 
+        // Try 4o6 specific parameter: 4o6-interface
+        string iface4o6 = string_values_->getOptionalParam("4o6-interface", "");
+        if (!iface4o6.empty()) {
+            subnet4->get4o6().setIface4o6(iface4o6);
+            subnet4->get4o6().enabled(true);
+        }
+
+        // Try 4o6 specific parameter: 4o6-subnet
+        string subnet4o6 = string_values_->getOptionalParam("4o6-subnet", "");
+        if (!subnet4o6.empty()) {
+            size_t slash = subnet4o6.find("/");
+            if (slash == std::string::npos) {
+                isc_throw(DhcpConfigError, "Missing / in the 4o6-subnet parameter:"
+                          + subnet4o6 +", expected format: prefix6/length");
+            }
+            string prefix = subnet4o6.substr(0, slash);
+            string lenstr = subnet4o6.substr(slash + 1);
+
+            uint8_t len = 128;
+            try {
+                len = boost::lexical_cast<unsigned int>(lenstr.c_str());
+            } catch (const boost::bad_lexical_cast &) {
+                isc_throw(DhcpConfigError, "Invalid prefix length specified in "
+                          "4o6-subnet parameter: " + subnet4o6 + ", expected 0..128 value");
+            }
+            subnet4->get4o6().setSubnet4o6(IOAddress(prefix), len);
+            subnet4->get4o6().enabled(true);
+        }
+
+        // Try 4o6 specific paramter: 4o6-interface-id
+        std::string ifaceid = string_values_->getOptionalParam("4o6-interface-id", "");
+        if (!ifaceid.empty()) {
+            OptionBuffer tmp(ifaceid.begin(), ifaceid.end());
+            OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
+            subnet4->get4o6().setInterfaceId(opt);
+            subnet4->get4o6().enabled(true);
+        }
 
         // Try setting up client class (if specified)
         try {
@@ -373,8 +416,8 @@ namespace dhcp {
 /// @return parser for specified global DHCPv4 parameter
 /// @throw NotImplemented if trying to create a parser for unknown
 /// config element
-    DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
-                                                    ConstElementPtr element) {
+DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
+                                                ConstElementPtr element) {
     DhcpConfigParser* parser = NULL;
     if ((config_id.compare("valid-lifetime") == 0)  ||
         (config_id.compare("renew-timer") == 0)  ||
