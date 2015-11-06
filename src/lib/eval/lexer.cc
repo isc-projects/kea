@@ -2234,7 +2234,7 @@ void yyfree (void * ptr )
 using namespace isc::eval;
 
 void
-EvalContext::scanBegin()
+EvalContext::scanFileBegin()
 {
     yy_flex_debug = trace_scanning_;
     if (file_.empty () || file_ == "-") {
@@ -2247,8 +2247,26 @@ EvalContext::scanBegin()
 }
 
 void
-EvalContext::scanEnd()
+EvalContext::scanFileEnd()
 {
     fclose(yyin);
+}
+
+void
+EvalContext::scanStringBegin()
+{
+    YY_BUFFER_STATE buffer;
+    yy_flex_debug = trace_scanning_;
+    buffer = yy_scan_bytes(string_.c_str(),string_.size());
+    if (!buffer) {
+        error("cannot scan string");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void
+EvalContext::scanStringEnd()
+{
+    yy_delete_buffer(YY_CURRENT_BUFFER);
 }
 

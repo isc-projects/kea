@@ -77,19 +77,23 @@ public:
 
         EXPECT_EQ(expected_option, opt->getCode());
     }
+
+    bool parsed_; ///< Parsing status
 };
 
 TEST_F(EvalContextTest, basic) {
 
     EvalContext tmp;
 
-    EXPECT_NO_THROW(tmp.parseString("option[123] == 'MSFT'"));
+    EXPECT_NO_THROW(parsed_ = tmp.parseString("option[123] == 'MSFT'"));
+    EXPECT_TRUE(parsed_);
 }
 
 TEST_F(EvalContextTest, string) {
     EvalContext eval;
 
-    EXPECT_NO_THROW(eval.parseString("'foo'"));
+    EXPECT_NO_THROW(parsed_ = eval.parseString("'foo'"));
+    EXPECT_TRUE(parsed_);
 
     ASSERT_EQ(1, eval.expression.size());
 
@@ -101,7 +105,8 @@ TEST_F(EvalContextTest, string) {
 TEST_F(EvalContextTest, hexstring) {
     EvalContext eval;
 
-    EXPECT_NO_THROW(eval.parseString("0x666f6f"));
+    EXPECT_NO_THROW(parsed_ = eval.parseString("0x666f6f"));
+    EXPECT_TRUE(parsed_);
 
     ASSERT_EQ(1, eval.expression.size());
 
@@ -113,7 +118,8 @@ TEST_F(EvalContextTest, hexstring) {
 TEST_F(EvalContextTest, equal) {
     EvalContext eval;
 
-    EXPECT_NO_THROW(eval.parseString("'foo' == 'bar'"));
+    EXPECT_NO_THROW(parsed_ = eval.parseString("'foo' == 'bar'"));
+    EXPECT_TRUE(parsed_);
 
     ASSERT_EQ(3, eval.expression.size());
 
@@ -129,7 +135,8 @@ TEST_F(EvalContextTest, equal) {
 TEST_F(EvalContextTest, option) {
     EvalContext eval;
 
-    EXPECT_NO_THROW(eval.parseString("option[123]"));
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[123]"));
+    EXPECT_TRUE(parsed_);
     ASSERT_EQ(1, eval.expression.size());
     checkTokenOption(eval.expression.at(0), 123);
 }

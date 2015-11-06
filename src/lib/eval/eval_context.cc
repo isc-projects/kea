@@ -26,46 +26,39 @@ EvalContext::~EvalContext()
 {
 }
 
-int
+bool
 EvalContext::parseFile(const std::string &filename)
 {
     file_ = filename;
-    scanBegin();
+    scanFileBegin();
     isc::eval::EvalParser parser(*this);
     parser.set_debug_level(trace_parsing_);
     int res = parser.parse();
-    scanEnd();
-    return res;
+    scanFileEnd();
+    return (res == 0);
 }
 
-int
+bool
 EvalContext::parseString(const std::string& str)
 {
-    /// @todo: Is there any way for the parser to read from a stream,
-    /// rather than a file? It would be better to use stringstream,
-    /// but it seems that the lexer operates on FILE* interface.
-
-    // Put the content into a file and then open that file for reading.
-    remove("/tmp/eval");
-    std::fstream f("/tmp/eval", std::ios::out);
-
-    if (!f.good()) {
-        isc_throw(isc::Unexpected, "Can't write /tmp/eval file");
-    }
-    f << str;
-    f.close();
-
-    return (parseFile("/tmp/eval"));
+    file_ = "<string>";
+    string_ = str;
+    scanStringBegin();
+    isc::eval::EvalParser parser(*this);
+    parser.set_debug_level(trace_parsing_);
+    int res = parser.parse();
+    scanStringEnd();
+    return (res == 0);
 }
 
 void
-EvalContext::error(const isc::eval::location& l, const std::string& m)
+EvalContext::error(const isc::eval::location& loc, const std::string& what)
 {
-    isc_throw(EvalError, l << ": " << m);
+    isc_throw(EvalParseError, loc << ": " << what);
 }
 
 void
-EvalContext::error (const std::string& m)
+EvalContext::error (const std::string& what)
 {
-    isc_throw(EvalError, m);
+    isc_throw(EvalParseError, what);
 }
