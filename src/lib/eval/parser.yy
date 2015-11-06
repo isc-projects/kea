@@ -44,12 +44,15 @@ using namespace isc::eval;
   EQUAL "=="
   OPTION "option"
   SUBSTRING "substring"
+  UNTYPED "untyped:"
   COMA ","
   LPAREN  "("
   RPAREN  ")"
   LBRACKET "["
   RBRACKET "]"
 ;
+%token <std::string> NUMBER "a number in a constant string"
+%token <std::string> ALL "the all constant string"
 %token <std::string> STRING "constant string"
 %token <std::string> HEXSTRING "constant hexstring"
 %token <uint16_t> CODE "option code"
@@ -62,6 +65,11 @@ using namespace isc::eval;
 // Expression can either be a single token or a (something == something) expression
 
 expression:
+UNTYPED untyped_expr
+| bool_expr
+;
+
+untyped_expr:
 token EQUAL token {
     TokenPtr eq(new TokenEqual());
     ctx.expression.push_back(eq);
@@ -72,6 +80,14 @@ token EQUAL token {
 token:
 STRING {
     TokenPtr str(new TokenString($1));
+    ctx.expression.push_back(str);
+  }
+| NUMBER {
+    TokenPtr str(new TokenString($1));
+    ctx.expression.push_back(str);
+  }
+| ALL {
+    TokenPtr str(new TokenString("all"));
     ctx.expression.push_back(str);
   }
 | HEXSTRING {
@@ -85,6 +101,58 @@ STRING {
 | SUBSTRING "(" token "," token "," token ")" {
     TokenPtr sub(new TokenSubstring());
     ctx.expression.push_back(sub);
+  }
+;
+
+bool_expr:
+string_expr EQUAL string_expr {
+    TokenPtr eq(new TokenEqual());
+    ctx.expression.push_back(eq);
+  }
+;
+
+string_expr:
+STRING {
+    TokenPtr str(new TokenString($1));
+    ctx.expression.push_back(str);
+  }
+| NUMBER {
+    TokenPtr str(new TokenString($1));
+    ctx.expression.push_back(str);
+  }
+| ALL {
+    TokenPtr str(new TokenString("all"));
+    ctx.expression.push_back(str);
+  }
+| HEXSTRING {
+    TokenPtr hex(new TokenHexString($1));
+    ctx.expression.push_back(hex);
+  }
+| OPTION "[" CODE "]" {
+    TokenPtr opt(new TokenOption($3));
+    ctx.expression.push_back(opt);
+  }
+| SUBSTRING "(" string_expr "," start_expr "," length_expr ")" {
+    TokenPtr sub(new TokenSubstring());
+    ctx.expression.push_back(sub);
+  }
+;
+
+start_expr:
+NUMBER {
+    TokenPtr str(new TokenString($1));
+    ctx.expression.push_back(str);
+  }
+;
+
+length_expr:
+NUMBER {
+    TokenPtr str(new TokenString($1));
+    ctx.expression.push_back(str);
+  }
+| ALL {
+    TokenPtr str(new TokenString("all"));
+    ctx.expression.push_back(str);
   }
 ;
 
