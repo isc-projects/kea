@@ -161,6 +161,8 @@ option\[{int}\] {
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);
 %%
 
+using namespace isc::eval;
+
 void
 EvalContext::scanBegin()
 {

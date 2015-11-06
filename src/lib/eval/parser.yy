@@ -24,9 +24,10 @@
 {
 #include <string>
 #include <eval/token.h>
-class EvalContext;
+#include <eval/eval_context_decl.h>
 
 using namespace isc::dhcp;
+using namespace isc::eval;
 }
 // The parsing context.
 %param { EvalContext& ctx }

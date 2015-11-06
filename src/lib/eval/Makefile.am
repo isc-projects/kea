@@ -17,7 +17,7 @@ libkea_eval_la_SOURCES += token.cc token.h
 
 libkea_eval_la_SOURCES += parser.cc parser.h
 libkea_eval_la_SOURCES += lexer.cc
-libkea_eval_la_SOURCES += eval_context.cc
+libkea_eval_la_SOURCES += eval_context.cc eval_context.h eval_context_decl.h
 
 nodist_libkea_eval_la_SOURCES = eval_messages.h eval_messages.cc
 
