@@ -147,6 +147,7 @@ using namespace isc::eval;
 void
 EvalContext::scanFileBegin()
 {
+    loc.initialize(&file_);
     yy_flex_debug = trace_scanning_;
     if (file_.empty () || file_ == "-") {
         yyin = stdin;
@@ -166,8 +167,9 @@ EvalContext::scanFileEnd()
 void
 EvalContext::scanStringBegin()
 {
-    YY_BUFFER_STATE buffer;
+    loc.initialize(&file_);
     yy_flex_debug = trace_scanning_;
+    YY_BUFFER_STATE buffer;
     buffer = yy_scan_bytes(string_.c_str(), string_.size());
     if (!buffer) {
         error("cannot scan string");

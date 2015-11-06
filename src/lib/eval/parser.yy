@@ -32,11 +32,6 @@ using namespace isc::eval;
 // The parsing context.
 %param { EvalContext& ctx }
 %locations
-%initial-action
-{
-  // Initialize the initial location.
-  @$.begin.filename = @$.end.filename = &ctx.file_;
-};
 %define parse.trace
 %define parse.error verbose
 %code
