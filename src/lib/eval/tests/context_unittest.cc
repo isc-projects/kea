@@ -46,7 +46,7 @@ public:
     }
 
     void checkTokenHexString(const TokenPtr& token,
-			     const std::string& expected) {
+                             const std::string& expected) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenHexString> hex =
             boost::dynamic_pointer_cast<TokenHexString>(token);

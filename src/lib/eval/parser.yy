@@ -47,14 +47,17 @@ using namespace isc::eval;
 %token
   END  0  "end of file"
   EQUAL "=="
+  OPTION "option"
   SUBSTRING "substring"
   COMA ","
   LPAREN  "("
   RPAREN  ")"
+  LBRACKET "["
+  RBRACKET "]"
 ;
 %token <std::string> STRING "constant string"
 %token <std::string> HEXSTRING "constant hexstring"
-%token <int> OPTION "option code"
+%token <uint16_t> CODE "option code"
 %printer { yyoutput << $$; } <*>;
 %%
 
@@ -80,8 +83,8 @@ STRING {
     TokenPtr hex(new TokenHexString($1));
     ctx.expression.push_back(hex);
   }
-| OPTION {
-    TokenPtr opt(new TokenOption($1));
+| OPTION "[" CODE "]" {
+    TokenPtr opt(new TokenOption($3));
     ctx.expression.push_back(opt);
   }
 | SUBSTRING "(" token "," token "," token ")" {

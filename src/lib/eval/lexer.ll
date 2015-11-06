@@ -107,61 +107,36 @@ str   [a-zA-Z_0-9]*
     return isc::eval::EvalParser::make_HEXSTRING(yytext, loc);
 }
 
-option\[{int}\] {
-    // option[123] token found. Let's see if the numeric value can be
-    // converted to integer and if it has a reasonable value.
-    // yytext contains the whole expression (.e.g. option[123]). We need
-    // to trim it down to just the code, which will be transformed to
-    // integer.
+{int} {
+    // A code (16 bit unsigned integer) was found.
     std::string tmp(yytext);
 
-    // Sanity check if the token is at least 9 (strlen("option[X]")) long.
-    // This should never happen as it would indicate bison bug.
-    if (tmp.length() < 9) {
-        driver.error(loc, "The string matched (" + tmp + ") is too short,"
-                     " expected at least 9 (option[X]) characters");
-    }
-    size_t pos = tmp.find("[");
-    if (pos == std::string::npos) {
-        driver.error(loc, "The string matched (" + tmp + ") is invalid,"
-                     " as it does not contain opening bracket.");
-    }
-    // Let's get rid of all the text before [, including [.
-    tmp = tmp.substr(pos + 1);
-
-    // And finally remove the trailing ].
-    pos = tmp.find("]");
-    if (pos == std::string::npos) {
-        driver.error(loc, "The string matched (" + tmp + ") is invalid,"
-                     " as it does not contain closing bracket.");
-    }
-    tmp = tmp.substr(0, pos);
-
-    uint16_t n = 0;
+    int n;
     try {
         n = boost::lexical_cast<int>(tmp);
     } catch (const boost::bad_lexical_cast &) {
         driver.error(loc, "Failed to convert specified option code to "
-                     "number ('" + tmp + "' in expression " + std::string(yytext));
+                     "number in " + tmp + ".");
     }
 
     // 65535 is the maximum value of the option code in DHCPv6. We want the
     // code to be the same for v4 and v6, so let's ignore for a moment that
     // max. option code in DHCPv4 is 255.
-    /// @todo: Maybe add a flag somewhere in EvalContext to indicate if we're
-    /// running in v4 (allowed max 255) or v6 (allowed max 65535).
-    if (n<0 || n>65535) {
+    if (n < 0 || n > 65535) {
         driver.error(loc, "Option code has invalid value in " +
                      std::string(yytext) + ". Allowed range: 0..65535");
     }
 
-    return isc::eval::EvalParser::make_OPTION(n, loc);
+    return isc::eval::EvalParser::make_CODE(static_cast<uint16_t>(n), loc);
 }
 
 "=="        return isc::eval::EvalParser::make_EQUAL(loc);
+"option"    return isc::eval::EvalParser::make_OPTION(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
 "("         return isc::eval::EvalParser::make_LPAREN(loc);
 ")"         return isc::eval::EvalParser::make_RPAREN(loc);
+"["         return isc::eval::EvalParser::make_LBRACKET(loc);
+"]"         return isc::eval::EvalParser::make_RBRACKET(loc);
 ","         return isc::eval::EvalParser::make_COMA(loc);
 
 .          driver.error (loc, "Invalid character: " + std::string(yytext));
