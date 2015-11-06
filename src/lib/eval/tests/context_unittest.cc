@@ -224,4 +224,34 @@ TEST_F(EvalContextTest, scanParseErrors) {
                       "or constant hexstring");
 }
 
+// Tests some parser error cases
+TEST_F(EvalContextTest, parseErrors) {
+    checkError("'foo''bar'", "<string>:1.6-10: syntax error, unexpected "
+                             "constant string, expecting end of file");
+    checkError("== 'ab'", "<string>:1.1-2: syntax error, unexpected ==, "
+                          "expecting option or substring or constant string "
+                          "or constant hexstring");
+    checkError("'foo' ==", "<string>:1.9: syntax error, unexpected end "
+                           "of file, expecting option or substring or "
+                           "constant string or constant hexstring");
+    checkError("option 'ab'", "<string>:1.8-11: syntax error, unexpected "
+                              "constant string, expecting [");
+    checkError("option(10) == 'ab'", "<string>:1.7: syntax error, "
+                                     "unexpected (, expecting [");
+    checkError("option['ab'] == 'foo'", "<string>:1.8-11: syntax error, "
+                                        "unexpected constant string, "
+                                        "expecting option code");
+    checkError("option[0xa] == 'ab'", "<string>:1.8-10: syntax error, "
+                                      "unexpected constant hexstring, "
+                                      "expecting option code");
+    checkError("substring('foobar') == 'f'", "<string>:1.19: syntax error, "
+                                             "unexpected ), expecting \",\"");
+    checkError("substring('foobar','3') == 'bar'",
+               "<string>:1.23: syntax error, unexpected ), expecting \",\"");
+    checkError("substring('foobar',3,3) == 'bar'",
+               "<string>:1.20: syntax error, unexpected option code, "
+               "expecting option or substring or constant string or "
+               "constant hexstring");
+}
+
 };
