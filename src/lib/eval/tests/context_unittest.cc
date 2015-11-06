@@ -27,8 +27,10 @@ using namespace isc::dhcp;
 
 namespace {
 
+/// @brief Test class for testing EvalContext aka class test parsing
 class EvalContextTest : public ::testing::Test {
 public:
+    /// @brief checks if the given token is a string with the expected value
     void checkTokenString(const TokenPtr& token, const std::string& expected) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenString> str =
@@ -45,6 +47,7 @@ public:
         EXPECT_EQ(expected, values.top());
     }
 
+    /// @brief checks if the given token is a hex string with the expected value
     void checkTokenHexString(const TokenPtr& token,
                              const std::string& expected) {
         ASSERT_TRUE(token);
@@ -62,6 +65,7 @@ public:
         EXPECT_EQ(expected, values.top());
     }
 
+    /// @brief checks if the given token is an equal operator
     void checkTokenEq(const TokenPtr& token) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenEqual> eq =
@@ -69,15 +73,17 @@ public:
         EXPECT_TRUE(eq);
     }
 
-    void checkTokenOption(const TokenPtr& token, uint16_t expected_option) {
+    /// @brief checks if the given token is an option with the expected code
+    void checkTokenOption(const TokenPtr& token, uint16_t expected_code) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenOption> opt =
             boost::dynamic_pointer_cast<TokenOption>(token);
         ASSERT_TRUE(opt);
 
-        EXPECT_EQ(expected_option, opt->getCode());
+        EXPECT_EQ(expected_code, opt->getCode());
     }
 
+    /// @brief checks if the given token is a substring operator
     void checkTokenSubstring(const TokenPtr& token) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenSubstring> sub =
@@ -85,9 +91,28 @@ public:
         EXPECT_TRUE(sub);
     }
 
+    /// @brief checks if the given expression raises the expected message
+    /// when it is parsed.
+    void checkError(const string& expr, const string& msg) {
+        EvalContext eval;
+        parsed_ = false;
+        try {
+            parsed_ = eval.parseString(expr);
+            FAIL() << "Expected EvalParseError but nothing was raised";
+        }
+        catch (const EvalParseError& ex) {
+            EXPECT_EQ(msg, ex.what());
+            EXPECT_FALSE(parsed_);
+        }
+        catch (...) {
+            FAIL() << "Expected EvalParseError but something else was raised";
+        }
+    }
+
     bool parsed_; ///< Parsing status
 };
 
+// Test the parsing of a basic expression
 TEST_F(EvalContextTest, basic) {
 
     EvalContext tmp;
@@ -96,6 +121,7 @@ TEST_F(EvalContextTest, basic) {
     EXPECT_TRUE(parsed_);
 }
 
+// Test the parsing of a string terminal
 TEST_F(EvalContextTest, string) {
     EvalContext eval;
 
@@ -109,6 +135,7 @@ TEST_F(EvalContextTest, string) {
     checkTokenString(tmp, "foo");
 }
 
+// Test the parsing of a hexstring terminal
 TEST_F(EvalContextTest, hexstring) {
     EvalContext eval;
 
@@ -122,6 +149,7 @@ TEST_F(EvalContextTest, hexstring) {
     checkTokenHexString(tmp, "foo");
 }
 
+// Test the parsing of an equal expression
 TEST_F(EvalContextTest, equal) {
     EvalContext eval;
 
@@ -139,6 +167,7 @@ TEST_F(EvalContextTest, equal) {
     checkTokenEq(tmp3);
 }
 
+// Test the parsing of an option terminal
 TEST_F(EvalContextTest, option) {
     EvalContext eval;
 
@@ -148,6 +177,7 @@ TEST_F(EvalContextTest, option) {
     checkTokenOption(eval.expression.at(0), 123);
 }
 
+// Test the parsing of a substring expression
 TEST_F(EvalContextTest, substring) {
     EvalContext eval;
 
@@ -165,6 +195,33 @@ TEST_F(EvalContextTest, substring) {
     checkTokenString(tmp2, "2");
     checkTokenString(tmp3, "3");
     checkTokenSubstring(tmp4);
+}
+
+// Test some scanner error cases
+TEST_F(EvalContextTest, scanErrors) {
+    checkError("'", "<string>:1.1: Invalid character: '");
+    checkError("'\''", "<string>:1.3: Invalid character: '");
+    checkError("'\n'", "<string>:1.1: Invalid character: '");
+    checkError("0x123h", "<string>:1.6: Invalid character: h");
+    checkError("=", "<string>:1.1: Invalid character: =");
+    checkError("option[65536]", "<string>:1.8-12: Option code has invalid "
+                                "value in 65536. Allowed range: 0..65535");
+    checkError("subtring", "<string>:1.1: Invalid character: s");
+    checkError("foo", "<string>:1.1: Invalid character: f");
+    checkError(" bar", "<string>:1.2: Invalid character: b");
+}
+
+// Tests some scanner/parser error cases
+TEST_F(EvalContextTest, scanParseErrors) {
+    checkError("", "<string>:1.1: syntax error, unexpected end of file, "
+                   "expecting option or substring or constant string or "
+                   "constant hexstring");
+    checkError("0x", "<string>:1.1: syntax error, unexpected option code, "
+                     "expecting option or substring or constant string or "
+                     "constant hexstring");
+    checkError("===", "<string>:1.1-2: syntax error, unexpected ==, "
+                      "expecting option or substring or constant string "
+                      "or constant hexstring");
 }
 
 };
