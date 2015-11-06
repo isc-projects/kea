@@ -961,6 +961,8 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>erp-local-domain-name</entry><entry>65</entry><entry>fqdn</entry><entry>false</entry></row>
 <row><entry>rsoo</entry><entry>66</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>client-linklayer-addr</entry><entry>79</entry><entry>binary</entry><entry>false</entry></row>
+<!-- <row><entry>dhcpv4-message</entry><entry>87</entry><entry>binary</entry><entry>false</entry></row> -->
+<row><entry>dhcp4o6-server-addr</entry><entry>88</entry><entry>ipv6-address</entry><entry>true</entry></row>
         </tbody>
         </tgroup>
       </table>
@@ -1022,6 +1024,15 @@ temporarily override a list of interface names and listen on all interfaces.
       set of comments define the format of the new option and do not set its
       values.
       </para>
+
+      <para>The <command>name</command>, <command>code</command> and
+      <command>type</command> parameters are required, all others are
+      optional. The <command>array</command> default value is
+      <command>false</command>. The <command>record-types</command>
+      and <command>encapsulate</command> default values are blank
+      (i.e. ""). The default <command>space</command> is "dhcp6".
+      </para>
+
       <para>Once the new option format is defined, its value is set
       in the same way as for a standard option. For example the following
       commands set a global value that applies to all subnets.
@@ -1059,7 +1070,7 @@ temporarily override a list of interface names and listen on all interfaces.
             "space": "dhcp6",
             "type": "record",
             "array": false,
-            "record-types": "ipv4-address, uint16, boolean, string",
+            "record-types": "ipv6-address, uint16, boolean, string",
             "encapsulate": ""</userinput>
         }, ...
     ],

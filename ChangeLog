@@ -1,3 +1,12 @@
+1043.	[func]		fdupont
+	Implemented support for hex strings in client classification.
+	(Trac #4091, git 406153af95404adb96296df09ec6033b484586e3)
+
+1042.	[doc]		fdupont
+	User Guide: parameters having default values may be omitted in the
+	option definitions.
+	(Trac #3927, git c7460e849258ec77cf1215a2baf840d98f1ab77b)
+
 1041.	[func]		tomek
 	A new library, libkea-eval has been edded. It is not functional
 	yet, but its purpose is to provide a generic expression

@@ -436,7 +436,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaim) {
     lease1->cltt_ = time(NULL) - 100;
 
     // Add leases to the database.
-    LeaseMgr& lease_mgr = LeaseMgrFactory().instance();
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
     ASSERT_NO_THROW(lease_mgr.addLease(lease0));
     ASSERT_NO_THROW(lease_mgr.addLease(lease1));
 
@@ -498,7 +498,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaimRemove) {
     lease1->cltt_ = time(NULL) - 100;
 
     // Add leases to the database.
-    LeaseMgr& lease_mgr = LeaseMgrFactory().instance();
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
     ASSERT_NO_THROW(lease_mgr.addLease(lease0));
     ASSERT_NO_THROW(lease_mgr.addLease(lease1));
 

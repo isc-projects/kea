@@ -361,7 +361,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaim) {
                                 time(NULL) - 100, SubnetID(1)));
 
     // Add leases to the database.
-    LeaseMgr& lease_mgr = LeaseMgrFactory().instance();
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
     ASSERT_NO_THROW(lease_mgr.addLease(lease0));
     ASSERT_NO_THROW(lease_mgr.addLease(lease1));
 
@@ -419,7 +419,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaimRemove) {
                                 time(NULL) - 100, SubnetID(1)));
 
     // Add leases to the database.
-    LeaseMgr& lease_mgr = LeaseMgrFactory().instance();
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
     ASSERT_NO_THROW(lease_mgr.addLease(lease0));
     ASSERT_NO_THROW(lease_mgr.addLease(lease1));
 

@@ -48,6 +48,7 @@ libkea_dhcp___la_SOURCES += protocol_util.cc protocol_util.h
 libkea_dhcp___la_SOURCES += pkt.cc pkt.h
 libkea_dhcp___la_SOURCES += pkt6.cc pkt6.h
 libkea_dhcp___la_SOURCES += pkt4.cc pkt4.h
+libkea_dhcp___la_SOURCES += pkt4o6.cc pkt4o6.h
 libkea_dhcp___la_SOURCES += pkt_filter.h pkt_filter.cc
 libkea_dhcp___la_SOURCES += pkt_filter6.h pkt_filter6.cc
 libkea_dhcp___la_SOURCES += pkt_filter_inet.cc pkt_filter_inet.h
