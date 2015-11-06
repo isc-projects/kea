@@ -469,8 +469,8 @@ static void yy_fatal_error (yyconst char msg[]  );
 	(yy_c_buf_p) = yy_cp;
 
 /* %% [4.0] data tables for the DFA and the user's section 1 definitions go here */
-#define YY_NUM_RULES 12
-#define YY_END_OF_BUFFER 13
+#define YY_NUM_RULES 15
+#define YY_END_OF_BUFFER 16
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -478,12 +478,12 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[39] =
+static yyconst flex_int16_t yy_accept[40] =
     {   0,
-        0,    0,   13,   11,    1,    2,   11,    8,    9,   10,
-       11,   11,   11,   11,    1,    2,    3,    0,    0,    6,
-        0,    0,    4,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    5,    7,    0
+        0,    0,   16,   14,    1,    2,   14,    9,   10,   13,
+        5,    5,   14,   11,   12,   14,   14,    1,    2,    3,
+        0,    5,    0,    6,    0,    0,    4,    0,    0,    0,
+        0,    0,    0,    7,    0,    0,    0,    8,    0
     } ;
 
 static yyconst flex_int32_t yy_ec[256] =
@@ -527,52 +527,52 @@ static yyconst flex_int32_t yy_meta[26] =
 
 static yyconst flex_int16_t yy_base[42] =
     {   0,
-        0,   22,   58,   59,   55,   53,   51,   59,   59,   59,
-       41,   43,   31,   26,   42,   40,   59,   37,    0,   59,
-       16,   23,    0,   20,   14,   16,   11,   15,   11,   17,
-        4,    3,    0,    6,    0,   59,   59,   59,   45,   47,
-        6
+        0,    0,   56,   57,   53,   51,   49,   57,   57,   57,
+       18,   20,   42,   57,   57,   30,   25,   47,   45,   57,
+       43,   24,    0,   57,   22,   29,    0,   26,   20,   22,
+       17,   21,   17,   57,   20,   18,   19,   57,   57,   32,
+       27
     } ;
 
 static yyconst flex_int16_t yy_def[42] =
     {   0,
-       39,   39,   38,   38,   38,   38,   40,   38,   38,   38,
-       38,   38,   38,   38,   38,   38,   38,   40,   41,   38,
-       38,   38,   41,   38,   38,   38,   38,   38,   38,   38,
-       38,   38,   38,   38,   38,   38,   38,    0,   38,   38,
-       38
+       39,    1,   39,   39,   39,   39,   40,   39,   39,   39,
+       39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
+       40,   39,   41,   39,   39,   39,   41,   39,   39,   39,
+       39,   39,   39,   39,   39,   39,   39,   39,    0,   39,
+       39
     } ;
 
-static yyconst flex_int16_t yy_nxt[85] =
+static yyconst flex_int16_t yy_nxt[83] =
     {   0,
-       38,    5,    6,    7,    8,    9,   10,   11,   23,   12,
-       34,   34,   38,   34,   34,   38,   37,   38,   35,   13,
-       36,   33,   14,    5,    6,    7,    8,    9,   10,   11,
-       32,   12,   31,   30,   29,   28,   27,   26,   25,   24,
-       17,   13,   16,   15,   14,    4,    4,    4,   18,   18,
-       22,   21,   20,   19,   17,   16,   15,   38,    3,   38,
-       38,   38,   38,   38,   38,   38,   38,   38,   38,   38,
-       38,   38,   38,   38,   38,   38,   38,   38,   38,   38,
-       38,   38,   38,   38
+        4,    5,    6,    7,    8,    9,   10,   11,   12,   13,
+        4,    4,    4,   14,   15,    4,    4,    4,    4,   16,
+        4,    4,   17,    4,    4,   22,   22,   22,   22,   27,
+       23,   22,   22,   21,   21,   38,   37,   36,   35,   34,
+       33,   32,   31,   30,   29,   28,   20,   19,   18,   26,
+       25,   24,   20,   19,   18,   39,    3,   39,   39,   39,
+       39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
+       39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
+       39,   39
     } ;
 
-static yyconst flex_int16_t yy_chk[85] =
+static yyconst flex_int16_t yy_chk[83] =
     {   0,
-        0,    1,    1,    1,    1,    1,    1,    1,   41,    1,
-       32,   32,    0,   34,   34,    0,   35,    0,   33,    1,
-       34,   31,    1,    2,    2,    2,    2,    2,    2,    2,
-       30,    2,   29,   28,   27,   26,   25,   24,   22,   21,
-       18,    2,   16,   15,    2,   39,   39,   39,   40,   40,
-       14,   13,   12,   11,    7,    6,    5,    3,   38,   38,
-       38,   38,   38,   38,   38,   38,   38,   38,   38,   38,
-       38,   38,   38,   38,   38,   38,   38,   38,   38,   38,
-       38,   38,   38,   38
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1,    1,   11,   11,   12,   12,   41,
+       11,   22,   22,   40,   40,   37,   36,   35,   33,   32,
+       31,   30,   29,   28,   26,   25,   21,   19,   18,   17,
+       16,   13,    7,    6,    5,    3,   39,   39,   39,   39,
+       39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
+       39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
+       39,   39
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static yyconst flex_int32_t yy_rule_can_match_eol[13] =
+static yyconst flex_int32_t yy_rule_can_match_eol[16] =
     {   0,
-0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,     };
+0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,     };
 
 static yy_state_type yy_last_accepting_state;
 static char *yy_last_accepting_cpos;
@@ -580,10 +580,10 @@ static char *yy_last_accepting_cpos;
 extern int yy_flex_debug;
 int yy_flex_debug = 1;
 
-static yyconst flex_int16_t yy_rule_linenum[12] =
+static yyconst flex_int16_t yy_rule_linenum[15] =
     {   0,
-       84,   88,   94,  104,  110,  161,  162,  163,  164,  165,
-      167
+       84,   88,   94,  104,  110,  133,  134,  135,  136,  137,
+      138,  139,  140,  142
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -962,13 +962,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 39 )
+				if ( yy_current_state >= 40 )
 					yy_c = yy_meta[(unsigned int) yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 			++yy_cp;
 			}
-		while ( yy_current_state != 38 );
+		while ( yy_current_state != 39 );
 		yy_cp = (yy_last_accepting_cpos);
 		yy_current_state = (yy_last_accepting_state);
 
@@ -997,13 +997,13 @@ do_action:	/* This label is used only to access EOF actions. */
 			{
 			if ( yy_act == 0 )
 				fprintf( stderr, "--scanner backing up\n" );
-			else if ( yy_act < 12 )
+			else if ( yy_act < 15 )
 				fprintf( stderr, "--accepting rule at line %ld (\"%s\")\n",
 				         (long)yy_rule_linenum[yy_act], yytext );
-			else if ( yy_act == 12 )
+			else if ( yy_act == 15 )
 				fprintf( stderr, "--accepting default rule (\"%s\")\n",
 				         yytext );
-			else if ( yy_act == 13 )
+			else if ( yy_act == 16 )
 				fprintf( stderr, "--(end of buffer or a NUL)\n" );
 			else
 				fprintf( stderr, "--EOF (start condition %d)\n", YY_START );
@@ -1063,96 +1063,83 @@ case 5:
 YY_RULE_SETUP
 #line 110 "lexer.ll"
 {
-    // option[123] token found. Let's see if the numeric value can be
-    // converted to integer and if it has a reasonable value.
-    // yytext contains the whole expression (.e.g. option[123]). We need
-    // to trim it down to just the code, which will be transformed to
-    // integer.
+    // A code (16 bit unsigned integer) was found.
     std::string tmp(yytext);
 
-    // Sanity check if the token is at least 9 (strlen("option[X]")) long.
-    // This should never happen as it would indicate bison bug.
-    if (tmp.length() < 9) {
-        driver.error(loc, "The string matched (" + tmp + ") is too short,"
-                     " expected at least 9 (option[X]) characters");
-    }
-    size_t pos = tmp.find("[");
-    if (pos == std::string::npos) {
-        driver.error(loc, "The string matched (" + tmp + ") is invalid,"
-                     " as it does not contain opening bracket.");
-    }
-    // Let's get rid of all the text before [, including [.
-    tmp = tmp.substr(pos + 1);
-
-    // And finally remove the trailing ].
-    pos = tmp.find("]");
-    if (pos == std::string::npos) {
-        driver.error(loc, "The string matched (" + tmp + ") is invalid,"
-                     " as it does not contain closing bracket.");
-    }
-    tmp = tmp.substr(0, pos);
-
-    uint16_t n = 0;
+    int n;
     try {
         n = boost::lexical_cast<int>(tmp);
     } catch (const boost::bad_lexical_cast &) {
         driver.error(loc, "Failed to convert specified option code to "
-                     "number ('" + tmp + "' in expression " + std::string(yytext));
+                     "number in " + tmp + ".");
     }
 
     // 65535 is the maximum value of the option code in DHCPv6. We want the
     // code to be the same for v4 and v6, so let's ignore for a moment that
     // max. option code in DHCPv4 is 255.
-    /// @todo: Maybe add a flag somewhere in EvalContext to indicate if we're
-    /// running in v4 (allowed max 255) or v6 (allowed max 65535).
-    if (n<0 || n>65535) {
+    if (n < 0 || n > 65535) {
         driver.error(loc, "Option code has invalid value in " +
                      std::string(yytext) + ". Allowed range: 0..65535");
     }
 
-    return isc::eval::EvalParser::make_OPTION(n, loc);
+    return isc::eval::EvalParser::make_CODE(static_cast<uint16_t>(n), loc);
 }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 161 "lexer.ll"
+#line 133 "lexer.ll"
 return isc::eval::EvalParser::make_EQUAL(loc);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 162 "lexer.ll"
-return isc::eval::EvalParser::make_SUBSTRING(loc);
+#line 134 "lexer.ll"
+return isc::eval::EvalParser::make_OPTION(loc);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 163 "lexer.ll"
-return isc::eval::EvalParser::make_LPAREN(loc);
+#line 135 "lexer.ll"
+return isc::eval::EvalParser::make_SUBSTRING(loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 164 "lexer.ll"
-return isc::eval::EvalParser::make_RPAREN(loc);
+#line 136 "lexer.ll"
+return isc::eval::EvalParser::make_LPAREN(loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 165 "lexer.ll"
-return isc::eval::EvalParser::make_COMA(loc);
+#line 137 "lexer.ll"
+return isc::eval::EvalParser::make_RPAREN(loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 167 "lexer.ll"
-driver.error (loc, "Invalid character: " + std::string(yytext));
-	YY_BREAK
-case YY_STATE_EOF(INITIAL):
-#line 168 "lexer.ll"
-return isc::eval::EvalParser::make_END(loc);
+#line 138 "lexer.ll"
+return isc::eval::EvalParser::make_LBRACKET(loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 169 "lexer.ll"
+#line 139 "lexer.ll"
+return isc::eval::EvalParser::make_RBRACKET(loc);
+	YY_BREAK
+case 13:
+YY_RULE_SETUP
+#line 140 "lexer.ll"
+return isc::eval::EvalParser::make_COMA(loc);
+	YY_BREAK
+case 14:
+YY_RULE_SETUP
+#line 142 "lexer.ll"
+driver.error (loc, "Invalid character: " + std::string(yytext));
+	YY_BREAK
+case YY_STATE_EOF(INITIAL):
+#line 143 "lexer.ll"
+return isc::eval::EvalParser::make_END(loc);
+	YY_BREAK
+case 15:
+YY_RULE_SETUP
+#line 144 "lexer.ll"
 ECHO;
 	YY_BREAK
-#line 1156 "lexer.cc"
+#line 1143 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1465,7 +1452,7 @@ static int yy_get_next_buffer (void)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 39 )
+			if ( yy_current_state >= 40 )
 				yy_c = yy_meta[(unsigned int) yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
@@ -1498,11 +1485,11 @@ static int yy_get_next_buffer (void)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 39 )
+		if ( yy_current_state >= 40 )
 			yy_c = yy_meta[(unsigned int) yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-	yy_is_jam = (yy_current_state == 38);
+	yy_is_jam = (yy_current_state == 39);
 
 		return yy_is_jam ? 0 : yy_current_state;
 }
@@ -2240,7 +2227,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 169 "lexer.ll"
+#line 144 "lexer.ll"
 
 
 
