@@ -17,6 +17,7 @@
 #include <string>
 #include <map>
 #include <eval/parser.h>
+#include <eval/eval_context_decl.h>
 #include <exceptions/exceptions.h>
 
 // Tell Flex the lexer's prototype ...
@@ -24,6 +25,9 @@
 
 // ... and declare it for the parser's sake.
 YY_DECL;
+
+namespace isc {
+namespace eval {
 
 /// @brief Evaluation error exception raised when trying to parse an axceptions.
 class EvalError : public isc::Exception {
@@ -87,4 +91,8 @@ public:
     bool trace_parsing_;
   
 };
-#endif // ! EVALCONTEXT_H
+
+}; // end of isc::eval namespace
+}; // end of isc namespace
+
+#endif
