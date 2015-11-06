@@ -69,7 +69,7 @@ public:
 
     /// @brief The name of the file being parsed.
     /// Used later to pass the file name to the location tracker.
-    std::string file;
+    std::string file_;
 
     /// @brief Error handler
     ///

@@ -29,7 +29,7 @@ EvalContext::~EvalContext()
 int
 EvalContext::parseFile(const std::string &filename)
 {
-    file = filename;
+    file_ = filename;
     scanBegin();
     isc::eval::EvalParser parser(*this);
     parser.set_debug_level(trace_parsing_);
