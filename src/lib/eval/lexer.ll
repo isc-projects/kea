@@ -90,6 +90,20 @@ blank [ \t]
     loc.step();
 }
 
+\'\-?{int}\' {
+    // A string containing a number. Quotes should be removed, see below.
+    std::string tmp(yytext+1);
+    tmp.resize(tmp.size() - 1);
+
+    return isc::eval::EvalParser::make_NUMBER(tmp, loc);
+}
+
+"'all'" {
+     // A string containing the "all" keyword.
+
+     return isc::eval::EvalParser::make_ALL("all", loc);
+}
+
 \'[^\'\n]*\' {
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
@@ -132,6 +146,7 @@ blank [ \t]
 "=="        return isc::eval::EvalParser::make_EQUAL(loc);
 "option"    return isc::eval::EvalParser::make_OPTION(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
+"untyped:"  return isc::eval::EvalParser::make_UNTYPED(loc);
 "("         return isc::eval::EvalParser::make_LPAREN(loc);
 ")"         return isc::eval::EvalParser::make_RPAREN(loc);
 "["         return isc::eval::EvalParser::make_LBRACKET(loc);
