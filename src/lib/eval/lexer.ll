@@ -65,7 +65,6 @@ static isc::eval::location loc;
 int   [0-9]+
 hex   [0-9a-fA-F]+
 blank [ \t]
-str   [a-zA-Z_0-9]*
 
 %{
 // This code run each time a pattern is matched. It updates the location
@@ -91,7 +90,7 @@ str   [a-zA-Z_0-9]*
     loc.step();
 }
 
-\'{str}\' {
+\'[^\'\n]*\' {
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
     // for 'foo' we should get foo

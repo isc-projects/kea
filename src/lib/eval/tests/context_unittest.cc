@@ -78,6 +78,13 @@ public:
         EXPECT_EQ(expected_option, opt->getCode());
     }
 
+    void checkTokenSubstring(const TokenPtr& token) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenSubstring> sub =
+            boost::dynamic_pointer_cast<TokenSubstring>(token);
+        EXPECT_TRUE(sub);
+    }
+
     bool parsed_; ///< Parsing status
 };
 
@@ -139,6 +146,25 @@ TEST_F(EvalContextTest, option) {
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(1, eval.expression.size());
     checkTokenOption(eval.expression.at(0), 123);
+}
+
+TEST_F(EvalContextTest, substring) {
+    EvalContext eval;
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("substring('foobar','2','3')"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(4, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+
+    checkTokenString(tmp1, "foobar");
+    checkTokenString(tmp2, "2");
+    checkTokenString(tmp3, "3");
+    checkTokenSubstring(tmp4);
 }
 
 };

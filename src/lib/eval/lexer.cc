@@ -481,8 +481,8 @@ struct yy_trans_info
 static yyconst flex_int16_t yy_accept[40] =
     {   0,
         0,    0,   16,   14,    1,    2,   14,    9,   10,   13,
-        5,    5,   14,   11,   12,   14,   14,    1,    2,    3,
-        0,    5,    0,    6,    0,    0,    4,    0,    0,    0,
+        5,    5,   14,   11,   12,   14,   14,    1,    2,    0,
+        3,    5,    0,    6,    0,    0,    4,    0,    0,    0,
         0,    0,    0,    7,    0,    0,    0,    8,    0
     } ;
 
@@ -495,13 +495,13 @@ static yyconst flex_int32_t yy_ec[256] =
         6,    1,    1,    7,    1,    1,    1,    8,    9,    9,
         9,    9,    9,    9,    9,    9,    9,    1,    1,    1,
        10,    1,    1,    1,   11,   11,   11,   11,   11,   11,
-       12,   12,   12,   12,   12,   12,   12,   12,   12,   12,
-       12,   12,   12,   12,   12,   12,   12,   13,   12,   12,
-       14,    1,   15,    1,   12,    1,   11,   16,   11,   11,
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1,    1,    1,    1,   12,    1,    1,
+       13,    1,   14,    1,    1,    1,   11,   15,   11,   11,
 
-       11,   11,   17,   12,   18,   12,   12,   12,   12,   19,
-       20,   21,   12,   22,   23,   24,   25,   12,   12,   13,
-       12,   12,    1,    1,    1,    1,    1,    1,    1,    1,
+       11,   11,   16,    1,   17,    1,    1,    1,    1,   18,
+       19,   20,    1,   21,   22,   23,   24,    1,    1,   12,
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -518,55 +518,53 @@ static yyconst flex_int32_t yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static yyconst flex_int32_t yy_meta[26] =
+static yyconst flex_int32_t yy_meta[25] =
     {   0,
-        1,    1,    1,    2,    1,    1,    1,    3,    3,    1,
-        3,    2,    2,    1,    1,    3,    2,    2,    2,    2,
-        2,    2,    2,    2,    2
+        1,    1,    2,    1,    1,    1,    1,    3,    3,    1,
+        3,    1,    1,    1,    3,    1,    1,    1,    1,    1,
+        1,    1,    1,    1
     } ;
 
 static yyconst flex_int16_t yy_base[42] =
     {   0,
-        0,    0,   56,   57,   53,   51,   49,   57,   57,   57,
-       18,   20,   42,   57,   57,   30,   25,   47,   45,   57,
-       43,   24,    0,   57,   22,   29,    0,   26,   20,   22,
-       17,   21,   17,   57,   20,   18,   19,   57,   57,   32,
-       27
+        0,    0,   55,   56,   52,   50,   48,   56,   56,   56,
+       17,   19,   41,   56,   56,   30,   25,   46,   44,   42,
+       56,   22,    0,   56,   22,   29,    0,   26,   20,   22,
+       17,   21,   17,   56,   20,   18,   19,   56,   56,   31,
+       30
     } ;
 
 static yyconst flex_int16_t yy_def[42] =
     {   0,
        39,    1,   39,   39,   39,   39,   40,   39,   39,   39,
-       39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
-       40,   39,   41,   39,   39,   39,   41,   39,   39,   39,
+       39,   39,   39,   39,   39,   39,   39,   39,   39,   40,
+       39,   39,   41,   39,   39,   39,   41,   39,   39,   39,
        39,   39,   39,   39,   39,   39,   39,   39,    0,   39,
        39
     } ;
 
-static yyconst flex_int16_t yy_nxt[83] =
+static yyconst flex_int16_t yy_nxt[81] =
     {   0,
         4,    5,    6,    7,    8,    9,   10,   11,   12,   13,
-        4,    4,    4,   14,   15,    4,    4,    4,    4,   16,
-        4,    4,   17,    4,    4,   22,   22,   22,   22,   27,
-       23,   22,   22,   21,   21,   38,   37,   36,   35,   34,
-       33,   32,   31,   30,   29,   28,   20,   19,   18,   26,
-       25,   24,   20,   19,   18,   39,    3,   39,   39,   39,
+        4,    4,   14,   15,    4,    4,    4,    4,   16,    4,
+        4,   17,    4,    4,   22,   22,   22,   22,   23,   22,
+       22,   20,   27,   20,   38,   37,   36,   35,   34,   33,
+       32,   31,   30,   29,   28,   21,   19,   18,   26,   25,
+       24,   21,   19,   18,   39,    3,   39,   39,   39,   39,
        39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
-       39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
-       39,   39
+       39,   39,   39,   39,   39,   39,   39,   39,   39,   39
     } ;
 
-static yyconst flex_int16_t yy_chk[83] =
+static yyconst flex_int16_t yy_chk[81] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,   11,   11,   12,   12,   41,
-       11,   22,   22,   40,   40,   37,   36,   35,   33,   32,
-       31,   30,   29,   28,   26,   25,   21,   19,   18,   17,
-       16,   13,    7,    6,    5,    3,   39,   39,   39,   39,
+        1,    1,    1,    1,   11,   11,   12,   12,   11,   22,
+       22,   40,   41,   40,   37,   36,   35,   33,   32,   31,
+       30,   29,   28,   26,   25,   20,   19,   18,   17,   16,
+       13,    7,    6,    5,    3,   39,   39,   39,   39,   39,
        39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
-       39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
-       39,   39
+       39,   39,   39,   39,   39,   39,   39,   39,   39,   39
     } ;
 
 /* Table of booleans, true if rule could match eol. */
@@ -582,8 +580,8 @@ int yy_flex_debug = 1;
 
 static yyconst flex_int16_t yy_rule_linenum[15] =
     {   0,
-       84,   88,   94,  104,  110,  133,  134,  135,  136,  137,
-      138,  139,  140,  142
+       83,   87,   93,  103,  109,  132,  133,  134,  135,  136,
+      137,  138,  139,  141
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -645,12 +643,12 @@ static isc::eval::location loc;
    useful in more complex cases. */
 /* These are not token expressions yet, just convenience expressions that
    can be used during actual token definitions. */
-#line 71 "lexer.ll"
+#line 70 "lexer.ll"
 // This code run each time a pattern is matched. It updates the location
 // by moving it ahead by yyleng bytes. yyleng specifies the length of the
 // currently matched token.
 #define YY_USER_ACTION  loc.columns(yyleng);
-#line 654 "lexer.cc"
+#line 652 "lexer.cc"
 
 #define INITIAL 0
 
@@ -925,7 +923,7 @@ YY_DECL
 
 	{
 /* %% [7.0] user's declarations go here */
-#line 77 "lexer.ll"
+#line 76 "lexer.ll"
 
 
 
@@ -933,7 +931,7 @@ YY_DECL
     loc.step();
 
 
-#line 937 "lexer.cc"
+#line 935 "lexer.cc"
 
 	while ( 1 )		/* loops until end-of-file is reached */
 		{
@@ -1021,7 +1019,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 84 "lexer.ll"
+#line 83 "lexer.ll"
 {
     // Ok, we found a with space. Let's ignore it and update loc variable.
     loc.step();
@@ -1030,7 +1028,7 @@ YY_RULE_SETUP
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 88 "lexer.ll"
+#line 87 "lexer.ll"
 {
     // Newline found. Let's update the location and continue.
     loc.lines(yyleng);
@@ -1039,7 +1037,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 94 "lexer.ll"
+#line 93 "lexer.ll"
 {
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
@@ -1052,7 +1050,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 104 "lexer.ll"
+#line 103 "lexer.ll"
 {
     // A hex string has been matched. It contains the '0x' or '0X' header
     // followed by at least one hexadecimal digit.
@@ -1061,7 +1059,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 110 "lexer.ll"
+#line 109 "lexer.ll"
 {
     // A code (16 bit unsigned integer) was found.
     std::string tmp(yytext);
@@ -1087,59 +1085,59 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 133 "lexer.ll"
+#line 132 "lexer.ll"
 return isc::eval::EvalParser::make_EQUAL(loc);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 134 "lexer.ll"
+#line 133 "lexer.ll"
 return isc::eval::EvalParser::make_OPTION(loc);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 135 "lexer.ll"
+#line 134 "lexer.ll"
 return isc::eval::EvalParser::make_SUBSTRING(loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 136 "lexer.ll"
+#line 135 "lexer.ll"
 return isc::eval::EvalParser::make_LPAREN(loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 137 "lexer.ll"
+#line 136 "lexer.ll"
 return isc::eval::EvalParser::make_RPAREN(loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 138 "lexer.ll"
+#line 137 "lexer.ll"
 return isc::eval::EvalParser::make_LBRACKET(loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 139 "lexer.ll"
+#line 138 "lexer.ll"
 return isc::eval::EvalParser::make_RBRACKET(loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 140 "lexer.ll"
+#line 139 "lexer.ll"
 return isc::eval::EvalParser::make_COMA(loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 142 "lexer.ll"
+#line 141 "lexer.ll"
 driver.error (loc, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 143 "lexer.ll"
+#line 142 "lexer.ll"
 return isc::eval::EvalParser::make_END(loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 144 "lexer.ll"
+#line 143 "lexer.ll"
 ECHO;
 	YY_BREAK
-#line 1143 "lexer.cc"
+#line 1141 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2227,7 +2225,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 144 "lexer.ll"
+#line 143 "lexer.ll"
 
 
 
