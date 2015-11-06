@@ -63,8 +63,9 @@ static isc::eval::location loc;
 /* These are not token expressions yet, just convenience expressions that
    can be used during actual token definitions. */
 int   [0-9]+
+hex   [0-9a-fA-F]+
 blank [ \t]
-str [a-zA-Z_0-9]*
+str   [a-zA-Z_0-9]*
 
 %{
 // This code run each time a pattern is matched. It updates the location
@@ -98,6 +99,12 @@ str [a-zA-Z_0-9]*
     tmp.resize(tmp.size() - 1);
 
     return isc::eval::EvalParser::make_STRING(tmp, loc);
+}
+
+0[xX]{hex} {
+    // A hex string has been matched. It contains the '0x' or '0X' header
+    // followed by at least one hexadecimal digit.
+    return isc::eval::EvalParser::make_HEXSTRING(yytext, loc);
 }
 
 option\[{int}\] {

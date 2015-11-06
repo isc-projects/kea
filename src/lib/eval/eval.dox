@@ -75,18 +75,24 @@
 09.    TokenPtr str(new TokenString($1));
 10.    ctx.expression.push_back(str);
 11.}
-12.| OPTION {
-13.    TokenPtr opt(new TokenOption($1));
-14.    ctx.expression.push_back(opt);
-15.};
+12. HEXSTRING {
+13.    TokenPtr hex(new TokenHexString($1));
+14.    ctx.expression.push_back(hex);
+15.}
+16.| OPTION {
+17.    TokenPtr opt(new TokenOption($1));
+18.    ctx.expression.push_back(opt);
+19.}
+20.;
 @endcode
 
 This code determines that the grammar starts from expression (line 1).
 The actual definition of expression (lines 3-5) may either be a
 single token or an expression "token == token" (EQUAL has been defined as
 "==" elsewhere). Token is further
-defined in lines 7-15: it may either be a string (lines 8-11) or option
-(lines 12-15). When the actual case is determined, the respective C++ action
+defined in lines 7-15: it may either be a string (lines 8-11),
+a hex string (lines 12-15) or option (lines 16-19).
+When the actual case is determined, the respective C++ action
 is executed. For example, if the token is a string, the TokenString class is
 instantiated with the appropriate value and put onto the expression vector.
 
