@@ -2237,11 +2237,11 @@ void
 EvalContext::scanBegin()
 {
     yy_flex_debug = trace_scanning_;
-    if (file.empty () || file == "-") {
+    if (file_.empty () || file_ == "-") {
         yyin = stdin;
     }
-    else if (!(yyin = fopen(file.c_str (), "r"))) {
-        error("cannot open " + file + ": " + strerror(errno));
+    else if (!(yyin = fopen(file_.c_str (), "r"))) {
+        error("cannot open " + file_ + ": " + strerror(errno));
         exit(EXIT_FAILURE);
     }
 }

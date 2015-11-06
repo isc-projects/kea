@@ -35,7 +35,7 @@ using namespace isc::eval;
 %initial-action
 {
   // Initialize the initial location.
-  @$.begin.filename = @$.end.filename = &ctx.file;
+  @$.begin.filename = @$.end.filename = &ctx.file_;
 };
 %define parse.trace
 %define parse.error verbose

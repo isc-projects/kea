@@ -454,7 +454,7 @@ namespace isc { namespace eval {
     #line 36 "parser.yy" // lalr1.cc:745
 {
   // Initialize the initial location.
-  yyla.location.begin.filename = yyla.location.end.filename = &ctx.file;
+  yyla.location.begin.filename = yyla.location.end.filename = &ctx.file_;
 }
 
 #line 461 "parser.cc" // lalr1.cc:745
