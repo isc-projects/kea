@@ -30,9 +30,9 @@ namespace isc {
 namespace eval {
 
 /// @brief Evaluation error exception raised when trying to parse an axceptions.
-class EvalError : public isc::Exception {
+class EvalParseError : public isc::Exception {
 public:
-    EvalError(const char* file, size_t line, const char* what) :
+    EvalParseError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
@@ -50,32 +50,42 @@ public:
     /// @brief Parsed expression (output tokens are stored here)
     isc::dhcp::Expression expression;
 
-    /// @brief Method called before scanning starts.
-    void scanBegin();
+    /// @brief Method called before scanning starts on a file.
+    void scanFileBegin();
 
-    /// @brief Method called after the last tokens are scanned.
-    void scanEnd();
+    /// @brief Method called after the last tokens are scanned from a file.
+    void scanFileEnd();
+    
+    /// @brief Method called before scanning starts on a string.
+    void scanStringBegin();
+
+    /// @brief Method called after the last tokens are scanned from a string.
+    void scanStringEnd();
     
     /// @brief Runs the parser on specified file.
     ///
     /// @param filename
-    /// Return 0 on success.
-    int parseFile(const std::string& filename);
+    /// @return true on success.
+    bool parseFile(const std::string& filename);
 
     /// @brief Run the parser on the string specified.
     ///
     /// @param str string to be written
-    int parseString(const std::string& str);
+    /// @return true on success.
+    bool parseString(const std::string& str);
 
     /// @brief The name of the file being parsed.
     /// Used later to pass the file name to the location tracker.
     std::string file_;
 
+    /// @brief The string being parsed.
+    std::string string_;
+
     /// @brief Error handler
     ///
-    /// @param l location within the parsed file when experienced a problem.
+    /// @param loc location within the parsed file when experienced a problem.
     /// @param what string explaining the nature of the error.
-    void error(const isc::eval::location& l, const std::string& what);
+    void error(const isc::eval::location& loc, const std::string& what);
 
     /// @brief Error handler
     ///
