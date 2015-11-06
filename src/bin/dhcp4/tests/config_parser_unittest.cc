@@ -1330,10 +1330,7 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"ipv4-address\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"isc\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"isc\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -1372,10 +1369,8 @@ TEST_F(Dhcp4ParserTest, optionDefRecord) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"record\","
-        "      \"array\": False,"
         "      \"record-types\": \"uint16, ipv4-address, ipv6-address, string\","
-        "      \"space\": \"isc\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"isc\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -1422,19 +1417,13 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"uint32\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"isc\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"isc\""
         "  },"
         "  {"
         "      \"name\": \"foo-2\","
         "      \"code\": 101,"
         "      \"type\": \"ipv4-address\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"isc\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"isc\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -1488,19 +1477,13 @@ TEST_F(Dhcp4ParserTest, optionDefDuplicate) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"uint32\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"isc\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"isc\""
         "  },"
         "  {"
         "      \"name\": \"foo-2\","
         "      \"code\": 100,"
         "      \"type\": \"ipv4-address\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"isc\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"isc\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -1529,9 +1512,7 @@ TEST_F(Dhcp4ParserTest, optionDefArray) {
         "      \"code\": 100,"
         "      \"type\": \"uint32\","
         "      \"array\": True,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"isc\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"isc\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -1571,8 +1552,6 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulate) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"uint32\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
         "      \"space\": \"isc\","
         "      \"encapsulate\": \"sub-opts-space\""
         "  } ]"
@@ -1613,10 +1592,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidName) {
         "      \"name\": \"invalid%name\","
         "      \"code\": 100,"
         "      \"type\": \"string\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"isc\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"isc\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -1640,10 +1616,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidType) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"sting\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"isc\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"isc\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -1667,10 +1640,8 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidRecordType) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"record\","
-        "      \"array\": False,"
         "      \"record-types\": \"uint32,uint8,sting\","
-        "      \"space\": \"isc\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"isc\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -1694,8 +1665,6 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidEncapsulatedSpace) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"uint32\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
         "      \"space\": \"isc\","
         "      \"encapsulate\": \"invalid%space%name\""
         "  } ]"
@@ -1724,7 +1693,6 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulatedSpaceAndArray) {
         "      \"code\": 100,"
         "      \"type\": \"uint32\","
         "      \"array\": True,"
-        "      \"record-types\": \"\","
         "      \"space\": \"isc\","
         "      \"encapsulate\": \"valid-space-name\""
         "  } ]"
@@ -1750,8 +1718,6 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulateOwnSpace) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"uint32\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
         "      \"space\": \"isc\","
         "      \"encapsulate\": \"isc\""
         "  } ]"
@@ -1781,10 +1747,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
         "      \"name\": \"foo\","
         "      \"code\": 109,"
         "      \"type\": \"string\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"dhcp4\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"dhcp4\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -1818,10 +1781,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
         "      \"name\": \"routers\","
         "      \"code\": 3,"
         "      \"type\": \"ipv4-address\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"dhcp4\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"dhcp4\""
         "  } ]"
         "}";
     json = Element::fromJSON(config);
@@ -1843,10 +1803,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
         "      \"name\": \"nis-server-addr\","
         "      \"code\": 65,"
         "      \"type\": \"ipv4-address\","
-        "      \"array\": False,"
-        "      \"record-types\": \"\","
-        "      \"space\": \"dhcp4\","
-        "      \"encapsulate\": \"\""
+        "      \"space\": \"dhcp4\""
         "  } ]"
         "}";
     json = Element::fromJSON(config);
@@ -1879,15 +1836,11 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
         "    \"name\": \"dhcp-message\","
-        "    \"space\": \"dhcp4\","
-        "    \"code\": 56,"
         "    \"data\": \"ABCDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
         "    \"name\": \"default-ip-ttl\","
-        "    \"space\": \"dhcp4\","
-        "    \"code\": 23,"
         "    \"data\": \"01\","
         "    \"csv-format\": False"
         " } ],"
@@ -1952,26 +1905,19 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
         "    \"name\": \"dhcp-message\","
-        "    \"space\": \"dhcp4\","
-        "    \"code\": 56,"
         "    \"data\": \"ABCDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
         "    \"name\": \"foo\","
         "    \"space\": \"isc\","
-        "    \"code\": 56,"
-        "    \"data\": \"1234\","
-        "    \"csv-format\": True"
+        "    \"data\": \"1234\""
         " } ],"
         "\"option-def\": [ {"
         "    \"name\": \"foo\","
         "    \"code\": 56,"
         "    \"type\": \"uint32\","
-        "    \"array\": False,"
-        "    \"record-types\": \"\","
-        "    \"space\": \"isc\","
-        "    \"encapsulate\": \"\""
+        "    \"space\": \"isc\""
         " } ],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -2033,34 +1979,24 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
         "\"option-data\": [ {"
         "    \"name\": \"foo\","
         "    \"space\": \"isc\","
-        "    \"code\": 1,"
-        "    \"data\": \"1234\","
-        "    \"csv-format\": True"
+        "    \"data\": \"1234\""
         " },"
         " {"
         "    \"name\": \"foo2\","
         "    \"space\": \"isc\","
-        "    \"code\": 2,"
-        "    \"data\": \"192.168.2.1\","
-        "    \"csv-format\": True"
+        "    \"data\": \"192.168.2.1\""
         " } ],"
         "\"option-def\": [ {"
         "    \"name\": \"foo\","
         "    \"code\": 1,"
         "    \"type\": \"uint32\","
-        "    \"array\": False,"
-        "    \"record-types\": \"\","
-        "    \"space\": \"isc\","
-        "    \"encapsulate\": \"\""
+        "    \"space\": \"isc\""
         " },"
         " {"
         "    \"name\": \"foo2\","
         "    \"code\": 2,"
         "    \"type\": \"ipv4-address\","
-        "    \"array\": False,"
-        "    \"record-types\": \"\","
-        "    \"space\": \"isc\","
-        "    \"encapsulate\": \"\""
+        "    \"space\": \"isc\""
         " } ]"
         "}";
 
@@ -2084,31 +2020,22 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
         "    \"name\": \"base-option\","
-        "    \"space\": \"dhcp4\","
-        "    \"code\": 222,"
-        "    \"data\": \"11\","
-        "    \"csv-format\": True"
+        "    \"data\": \"11\""
         " },"
         " {"
         "    \"name\": \"foo\","
         "    \"space\": \"isc\","
-        "    \"code\": 1,"
-        "    \"data\": \"1234\","
-        "    \"csv-format\": True"
+        "    \"data\": \"1234\""
         " },"
         " {"
         "    \"name\": \"foo2\","
         "    \"space\": \"isc\","
-        "    \"code\": 2,"
-        "    \"data\": \"192.168.2.1\","
-        "    \"csv-format\": True"
+        "    \"data\": \"192.168.2.1\""
         " } ],"
         "\"option-def\": [ {"
         "    \"name\": \"base-option\","
         "    \"code\": 222,"
         "    \"type\": \"uint8\","
-        "    \"array\": False,"
-        "    \"record-types\": \"\","
         "    \"space\": \"dhcp4\","
         "    \"encapsulate\": \"isc\""
         "},"
@@ -2116,19 +2043,13 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
         "    \"name\": \"foo\","
         "    \"code\": 1,"
         "    \"type\": \"uint32\","
-        "    \"array\": False,"
-        "    \"record-types\": \"\","
-        "    \"space\": \"isc\","
-        "    \"encapsulate\": \"\""
+        "    \"space\": \"isc\""
         " },"
         " {"
         "    \"name\": \"foo2\","
         "    \"code\": 2,"
         "    \"type\": \"ipv4-address\","
-        "    \"array\": False,"
-        "    \"record-types\": \"\","
-        "    \"space\": \"isc\","
-        "    \"encapsulate\": \"\""
+        "    \"space\": \"isc\""
         " } ],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -2180,8 +2101,6 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "\"renew-timer\": 1000, "
         "\"option-data\": [ {"
         "      \"name\": \"dhcp-message\","
-        "      \"space\": \"dhcp4\","
-        "      \"code\": 56,"
         "      \"data\": \"AB\","
         "      \"csv-format\": False"
         " } ],"
@@ -2190,15 +2109,11 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"option-data\": [ {"
         "          \"name\": \"dhcp-message\","
-        "          \"space\": \"dhcp4\","
-        "          \"code\": 56,"
         "          \"data\": \"ABCDEF0105\","
         "          \"csv-format\": False"
         "        },"
         "        {"
         "          \"name\": \"default-ip-ttl\","
-        "          \"space\": \"dhcp4\","
-        "          \"code\": 23,"
         "          \"data\": \"01\","
         "          \"csv-format\": False"
         "        } ]"
@@ -2337,8 +2252,6 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"option-data\": [ {"
         "          \"name\": \"dhcp-message\","
-        "          \"space\": \"dhcp4\","
-        "          \"code\": 56,"
         "          \"data\": \"0102030405060708090A\","
         "          \"csv-format\": False"
         "        } ]"
@@ -2348,8 +2261,6 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "    \"subnet\": \"192.0.3.0/24\", "
         "    \"option-data\": [ {"
         "          \"name\": \"default-ip-ttl\","
-        "          \"space\": \"dhcp4\","
-        "          \"code\": 23,"
         "          \"data\": \"FF\","
         "          \"csv-format\": False"
         "        } ]"
@@ -2610,34 +2521,24 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
         "\"option-data\": [ {"
         "    \"name\": \"foo\","
         "    \"space\": \"vendor-encapsulated-options-space\","
-        "    \"code\": 1,"
-        "    \"data\": \"1234\","
-        "    \"csv-format\": True"
+        "    \"data\": \"1234\""
         " },"
         " {"
         "    \"name\": \"foo2\","
         "    \"space\": \"vendor-encapsulated-options-space\","
-        "    \"code\": 2,"
-        "    \"data\": \"192.168.2.1\","
-        "    \"csv-format\": True"
+        "    \"data\": \"192.168.2.1\""
         " } ],"
         "\"option-def\": [ {"
         "    \"name\": \"foo\","
         "    \"code\": 1,"
         "    \"type\": \"uint32\","
-        "    \"array\": False,"
-        "    \"record-types\": \"\","
-        "    \"space\": \"vendor-encapsulated-options-space\","
-        "    \"encapsulate\": \"\""
+        "    \"space\": \"vendor-encapsulated-options-space\""
         " },"
         " {"
         "    \"name\": \"foo2\","
         "    \"code\": 2,"
         "    \"type\": \"ipv4-address\","
-        "    \"array\": False,"
-        "    \"record-types\": \"\","
-        "    \"space\": \"vendor-encapsulated-options-space\","
-        "    \"encapsulate\": \"\""
+        "    \"space\": \"vendor-encapsulated-options-space\""
         " } ]"
         "}";
 
@@ -2665,17 +2566,12 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
         "    \"name\": \"vendor-encapsulated-options\","
-        "    \"space\": \"dhcp4\","
-        "    \"code\": 43,"
-        "    \"data\": \"\","
         "    \"csv-format\": False"
         " },"
         " {"
         "    \"name\": \"foo\","
         "    \"space\": \"vendor-encapsulated-options-space\","
-        "    \"code\": 1,"
-        "    \"data\": \"1234\","
-        "    \"csv-format\": True"
+        "    \"data\": \"1234\""
         " },"
         " {"
         "    \"name\": \"foo2\","
@@ -2688,19 +2584,13 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
         "    \"name\": \"foo\","
         "    \"code\": 1,"
         "    \"type\": \"uint32\","
-        "    \"array\": False,"
-        "    \"record-types\": \"\","
-        "    \"space\": \"vendor-encapsulated-options-space\","
-        "    \"encapsulate\": \"\""
+        "    \"space\": \"vendor-encapsulated-options-space\""
         " },"
         " {"
         "    \"name\": \"foo2\","
         "    \"code\": 2,"
         "    \"type\": \"ipv4-address\","
-        "    \"array\": False,"
-        "    \"record-types\": \"\","
-        "    \"space\": \"vendor-encapsulated-options-space\","
-        "    \"encapsulate\": \"\""
+        "    \"space\": \"vendor-encapsulated-options-space\""
         " } ],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -2834,17 +2724,13 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
         "    \"name\": \"foo\","
         "    \"space\": \"vendor-4491\","
         "    \"code\": 100,"
-        "    \"data\": \"this is a string vendor-opt\","
-        "    \"csv-format\": True"
+        "    \"data\": \"this is a string vendor-opt\""
         " } ],"
         "\"option-def\": [ {"
         "    \"name\": \"foo\","
         "    \"code\": 100,"
         "    \"type\": \"string\","
-        "    \"array\": False,"
-        "    \"record-types\": \"\","
-        "    \"space\": \"vendor-4491\","
-        "    \"encapsulate\": \"\""
+        "    \"space\": \"vendor-4491\""
         " } ],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -2911,26 +2797,19 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
         "    \"name\": \"dhcp-message\","
-        "    \"space\": \"dhcp4\","
-        "    \"code\": 56,"
         "    \"data\": \"ABCDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
         "    \"name\": \"foo\","
         "    \"space\": \"isc\","
-        "    \"code\": 56,"
-        "    \"data\": \"1234\","
-        "    \"csv-format\": True"
+        "    \"data\": \"1234\""
         " } ],"
         "\"option-def\": [ {"
         "    \"name\": \"foo\","
         "    \"code\": 56,"
         "    \"type\": \"uint32\","
-        "    \"array\": False,"
-        "    \"record-types\": \"\","
-        "    \"space\": \"isc\","
-        "    \"encapsulate\": \"\""
+        "    \"space\": \"isc\""
         " } ],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -3780,6 +3659,243 @@ TEST_F(Dhcp4ParserTest, expiredLeasesProcessingError) {
 
     // Check that the error contains error position.
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
+
+
+// Checks if the DHCPv4 is able to parse the configuration without 4o6 parameters
+// and does not set 4o6 fields at all.
+TEST_F(Dhcp4ParserTest, 4o6default) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected pool configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+
+    Cfg4o6& dhcp4o6 = subnet->get4o6();
+    EXPECT_FALSE(dhcp4o6.enabled());
+}
+
+// Checks if the DHCPv4 is able to parse the configuration with 4o6 subnet
+// defined.
+TEST_F(Dhcp4ParserTest, 4o6subnet) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-subnet\": \"2001:db8::123/45\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected pool configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+
+    Cfg4o6& dhcp4o6 = subnet->get4o6();
+    EXPECT_TRUE(dhcp4o6.enabled());
+    EXPECT_EQ(IOAddress("2001:db8::123"), dhcp4o6.getSubnet4o6().first);
+    EXPECT_EQ(45, dhcp4o6.getSubnet4o6().second);
+}
+
+// Checks if the DHCPv4 is able to parse the configuration with 4o6 subnet
+// defined.
+TEST_F(Dhcp4ParserTest, 4o6subnetBogus) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config[] = {
+        // Bogus configuration 1: missing / in subnet
+        "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-subnet\": \"2001:db8::123\" } ],"
+        "\"valid-lifetime\": 4000 }",
+
+        // Bogus configuration 2: incorrect address
+                "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-subnet\": \"2001:db8:bogus/45\" } ],"
+        "\"valid-lifetime\": 4000 }",
+
+        // Bogus configuration 3: incorrect prefix lenght
+        "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-subnet\": \"2001:db8::123/200\" } ],"
+        "\"valid-lifetime\": 4000 }"
+    };
+
+    ElementPtr json1 = Element::fromJSON(config[0]);
+    ElementPtr json2 = Element::fromJSON(config[0]);
+    ElementPtr json3 = Element::fromJSON(config[0]);
+
+    // Check that the first config is rejected.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json1));
+    checkResult(status, 1);
+
+    // Check that the second config is rejected.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json2));
+    checkResult(status, 1);
+
+    // Check that the third config is rejected.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json3));
+    checkResult(status, 1);
+}
+
+
+// Checks if the DHCPv4 is able to parse the configuration with 4o6 network
+// interface defined.
+TEST_F(Dhcp4ParserTest, 4o6iface) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-interface\": \"ethX\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected pool configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+
+    Cfg4o6& dhcp4o6 = subnet->get4o6();
+    EXPECT_TRUE(dhcp4o6.enabled());
+    EXPECT_EQ("ethX", dhcp4o6.getIface4o6());
+}
+
+// Checks if the DHCPv4 is able to parse the configuration with both 4o6 network
+// interface and v6 subnet defined.
+TEST_F(Dhcp4ParserTest, 4o6subnetIface) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-subnet\": \"2001:db8::543/21\","
+        "    \"4o6-interface\": \"ethX\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected subnet configured...
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+
+    // ... and that subnet has 4o6 network interface specified.
+    Cfg4o6& dhcp4o6 = subnet->get4o6();
+    EXPECT_TRUE(dhcp4o6.enabled());
+    EXPECT_EQ(IOAddress("2001:db8::543"), dhcp4o6.getSubnet4o6().first);
+    EXPECT_EQ(21, dhcp4o6.getSubnet4o6().second);
+    EXPECT_EQ("ethX", dhcp4o6.getIface4o6());
+}
+
+// Checks if the DHCPv4 is able to parse the configuration with 4o6 network
+// interface-id.
+TEST_F(Dhcp4ParserTest, 4o6subnetInterfaceId) {
+
+    ConstElementPtr status;
+
+    // Just a plain v4 config (no 4o6 parameters)
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"4o6-interface-id\": \"vlan123\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected 4o6-interface-id configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+
+    Cfg4o6& dhcp4o6 = subnet->get4o6();
+    EXPECT_TRUE(dhcp4o6.enabled());
+    OptionPtr ifaceid = dhcp4o6.getInterfaceId();
+    ASSERT_TRUE(ifaceid);
+
+    vector<uint8_t> data = ifaceid->getData();
+    EXPECT_EQ(7, data.size());
+    const char *exp = "vlan123";
+    EXPECT_EQ(0, memcmp(&data[0], exp, data.size()));
 }
 
 }

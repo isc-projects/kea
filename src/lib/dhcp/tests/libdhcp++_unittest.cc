@@ -1200,6 +1200,12 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     fqdn_buf.begin(), fqdn_buf.end(),
                                     typeid(OptionCustom));
 
+    LibDhcpTest::testStdOptionDefs6(D6O_DHCPV4_MSG, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_DHCPV4_O_DHCPV6_SERVER, begin, end,
+                                    typeid(Option6AddrLst));
+
     LibDhcpTest::testStdOptionDefs6(D6O_PUBLIC_KEY, begin, end,
                                     typeid(Option));
 

@@ -50,10 +50,10 @@ Pkt::Pkt(const uint8_t* buf, uint32_t len, const isc::asiolink::IOAddress& local
 {
 
     if (len != 0) {
-	if (buf == NULL) {
-	    isc_throw(InvalidParameter, "data buffer passed to Pkt is NULL");
-	}
-	data_.resize(len);
+        if (buf == NULL) {
+            isc_throw(InvalidParameter, "data buffer passed to Pkt is NULL");
+        }
+        data_.resize(len);
         memcpy(&data_[0], buf, len);
     }
 }

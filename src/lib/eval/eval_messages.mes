@@ -18,3 +18,8 @@ $NAMESPACE isc::dhcp
 This debug message indicates that the expression has been evaluated
 to said value. This message is mostly useful during debugging of the
 client classification expressions.
+
+% EVAL_SUBSTRING_BAD_PARAM_CONVERSION starting %1, length %2
+This debug message indicates that the parameter for the starting postion
+or length of the substring couldn't be converted to an integer.  In this
+case the substring routine returns an empty string.
