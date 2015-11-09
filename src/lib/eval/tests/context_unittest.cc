@@ -259,7 +259,10 @@ TEST_F(EvalContextTest, scanParseErrors) {
     checkError("untyped:",
                "<string>:1.9: syntax error, unexpected end of file");
     checkError("0x", "<string>:1.1: syntax error, unexpected option code");
+    checkError("0abc",
+               "<string>:1.1: syntax error, unexpected option code");
     checkError("===", "<string>:1.1-2: syntax error, unexpected ==");
+    checkError("option[123] < 'foo'", "<string>:1.13: Invalid character: <");
 }
 
 // Tests some parser error cases
@@ -270,10 +273,6 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("'foo''bar'",
                "<string>:1.6-10: syntax error, unexpected constant string, "
                "expecting ==");
-    checkError("0x",
-               "<string>:1.1: syntax error, unexpected option code");
-    checkError("0abc",
-               "<string>:1.1: syntax error, unexpected option code");
     checkError("== 'ab'", "<string>:1.1-2: syntax error, unexpected ==");
     checkError("'foo' ==",
                "<string>:1.9: syntax error, unexpected end of file");
