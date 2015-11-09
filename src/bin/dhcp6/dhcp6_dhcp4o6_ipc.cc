@@ -37,9 +37,6 @@ void Dhcp4o6Ipc::open() {
         Dhcp4o6IpcBase::close();
         return;
     }
-    if (port > 65534) {
-        isc_throw(OutOfRange, "DHCP4o6 port " << port);
-    }
 
     int old_fd = socket_fd_;
     socket_fd_ = Dhcp4o6IpcBase::open(static_cast<uint16_t>(port), ENDPOINT_TYPE_V6);
