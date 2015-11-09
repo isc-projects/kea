@@ -479,6 +479,29 @@ public:
     /// checks each of the libraries in the list for validity (they exist and
     /// have a "version" function that returns the correct value).
     ///
+    /// The syntax for specifying hooks libraries allow for library-specific
+    /// parameters to be specified along with the library, e.g.
+    ///
+    /// @code
+    ///      "hooks-libraries": [
+    ///          {
+    ///              "library": "hook-lib-1.so",
+    ///              "parameters": {
+    ///                  "alpha": "a string",
+    ///                  "beta": 42
+    ///              }
+    ///          },
+    ///          :
+    ///      ]
+    /// @endcode
+    ///
+    /// As Kea has not yet implemented parameters, the parsing code only checks
+    /// that:
+    ///
+    /// -# Each element in the hooks-libraries list is a map
+    /// -# The map contains an element "library" whose value is a string: all
+    ///    other elements in the map are ignored.
+    ///
     /// @param value pointer to the content of parsed values
     virtual void build(isc::data::ConstElementPtr value);
 
