@@ -24,7 +24,8 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-Dhcp4o6Ipc::Dhcp4o6Ipc() : Dhcp4o6IpcBase() {}
+Dhcp4o6Ipc::Dhcp4o6Ipc() : Dhcp4o6IpcBase() {
+}
 
 Dhcp4o6Ipc& Dhcp4o6Ipc::instance() {
     static Dhcp4o6Ipc dhcp4o6_ipc;
