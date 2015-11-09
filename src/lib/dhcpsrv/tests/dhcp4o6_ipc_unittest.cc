@@ -22,6 +22,7 @@
 #include <dhcp/option_vendor.h>
 #include <dhcpsrv/dhcp4o6_ipc.h>
 #include <boost/bind.hpp>
+#include <boost/function.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
 #include <string>
@@ -44,6 +45,9 @@ const int ENDPOINT_TYPE_V4 = 4;
 
 /// @brief Defines the DHCPv6 endpoint of IPC.
 const int ENDPOINT_TYPE_V6 = 6;
+
+/// @brief Type definition for the function creating DHCP message.
+typedef boost::function<Pkt6Ptr(const uint16_t, const uint16_t)> CreateMsgFun;
 
 /// @brief Implements a simple IPC for the test.
 class TestIpc : public  Dhcp4o6IpcBase {
@@ -150,14 +154,42 @@ protected:
     /// @param prefix Prefix.
     /// @param postfix Postfix.
     /// @return String representing concatenated prefix and postfix.
-    std::string concatenate(const std::string& prefix,
-                            const uint16_t postfix) const;
+    static std::string concatenate(const std::string& prefix, const uint16_t postfix);
+
+    /// @brief Creates an instance of the DHCPv4o6 message.
+    ////
+    /// @param msg_type Message type.
+    /// @param postfix Postfix to be appended to the remote address. For example,
+    /// for postfix = 5 the resulting remote address will be 2001:db8:1::5.
+    /// The postifx value is also used to generate the postfix for the interface.
+    /// The possible interface names are "eth0" and "eth1". For even postfix values
+    /// the "eth0" will be used, for odd postfix values "eth1" will be used.
+    ///
+    /// @return Pointer to the created message.
+    static Pkt6Ptr createDHCPv4o6Message(const uint16_t msg_type,
+                                         const uint16_t postfix = 0);
+
+    /// @brief Creates an instance of the DHCPv4o6 message with vendor option.
+    ///
+    /// The vendor option appended to the message has ISC entprise id and
+    /// comprises option @c ISC_V6_4O6_INTERFACE and @c ISC_V6_4O6_SRC_ADDRESS.
+    /// This is useful to test scenarios when the IPC is forwarding messages
+    /// that contain options also inserted by IPC. The duplicate options are
+    /// allowed and IPC should deal with this with no error.
+    ///
+    /// @param msg_type Message type.
+    /// @param postfix Postfix to be appended to the remote address. See the
+    /// documentation of @c createDHCPv4o6Message for details.
+    ///
+    /// @return Pointer to the created message.
+    static Pkt6Ptr createDHCPv4o6MsgWithVendorOption(const uint16_t msg_type,
+                                                     const uint16_t postfix);
 
     /// @brief Creates an instance of the DHCPv4-query Message option.
     ///
     /// @param src Type of the source endpoint. It can be 4 or 6.
     /// @return Pointer to the instance of the DHCPv4-query Message option.
-    OptionPtr createDHCPv4MsgOption(const int src) const;
+    static OptionPtr createDHCPv4MsgOption(const int src);
 
     /// @brief Tests sending and receiving packets over the IPC.
     ///
@@ -165,7 +197,7 @@ protected:
     /// @param src Type of the source IPC endpoint. It can be 4 or 6.
     /// @param dest Type of the destination IPC endpoint. It can be 4 or 6.
     void testSendReceive(const uint16_t iterations_num, const int src,
-                         const int dest);
+                         const int dest, const CreateMsgFun& create_msg_fun);
 
     /// @brief Tests that error is reported when invalid message is received.
     ///
@@ -185,14 +217,68 @@ Dhcp4o6IpcBaseTest::Dhcp4o6IpcBaseTest()
 
 std::string
 Dhcp4o6IpcBaseTest::concatenate(const std::string& prefix,
-                                const uint16_t postfix) const {
+                                const uint16_t postfix) {
     std::ostringstream s;
     s << prefix << postfix;
     return (s.str());
 }
 
+Pkt6Ptr
+Dhcp4o6IpcBaseTest::createDHCPv4o6Message(const uint16_t msg_type,
+                                          const uint16_t postfix) {
+    // Create the DHCPv4o6 message.
+    Pkt6Ptr pkt(new Pkt6(msg_type, 0));
+
+    // The interface name is carried in the dedicated option between
+    // the servers. The receiving server will check that such interface
+    // is present in the system. The fake configuration we're using for
+    // this test includes two interfaces: "eth0" and "eth1". Therefore,
+    // we pick one or another, depending on the index of the interation.
+    pkt->setIface(concatenate("eth", postfix % 2));
+
+    // The remote address of the sender of the DHCPv6 packet is carried
+    // between the servers in the dedicated option. We use different
+    // address for each iteration to make sure that the IPC delivers the
+    // right address.
+    pkt->setRemoteAddr(IOAddress(concatenate("2001:db8:1::", postfix)));
+
+    // Determine the endpoint type using the message type.
+    const int src = (msg_type ==  DHCPV6_DHCPV4_QUERY) ?
+        ENDPOINT_TYPE_V6 : ENDPOINT_TYPE_V4;
+
+    // Add DHCPv4 Message option to make sure it is conveyed by the IPC.
+    pkt->addOption(createDHCPv4MsgOption(src));
+
+    return (pkt);
+}
+
+Pkt6Ptr
+Dhcp4o6IpcBaseTest::createDHCPv4o6MsgWithVendorOption(const uint16_t msg_type,
+                                                      const uint16_t postfix) {
+    Pkt6Ptr pkt = createDHCPv4o6Message(msg_type, postfix);
+
+    // Create vendor option with ISC enterprise id.
+    OptionVendorPtr option_vendor(new OptionVendor(Option::V6, ENTERPRISE_ID_ISC));
+
+    // Add interface. Such interface doesn't have to exist in the system because
+    // IPC should not use this option when it is received. It should rather use
+    // the option that the sender side is appending to the message.
+    option_vendor->addOption(OptionStringPtr(new OptionString(Option::V6,
+                                                              ISC_V6_4O6_INTERFACE,
+                                                              "non-existing")));
+    // Add some remote address.
+    option_vendor->addOption(Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
+                                                                  IOAddress("3000::10"))));
+    // Add vendor option to the message.
+    pkt->addOption(option_vendor);
+
+    return (pkt);
+}
+
+
+
 OptionPtr
-Dhcp4o6IpcBaseTest::createDHCPv4MsgOption(const int src) const {
+Dhcp4o6IpcBaseTest::createDHCPv4MsgOption(const int src) {
     // Create the DHCPv4 message.
     Pkt4Ptr pkt(new Pkt4(src == ENDPOINT_TYPE_V4 ? DHCPACK : DHCPREQUEST,
                          1234));
@@ -207,11 +293,10 @@ Dhcp4o6IpcBaseTest::createDHCPv4MsgOption(const int src) const {
     return (opt_msg);
 }
 
-
 void
 Dhcp4o6IpcBaseTest::testSendReceive(const uint16_t iterations_num,
-                                    const int src,
-                                    const int dest) {
+                                    const int src, const int dest,
+                                    const CreateMsgFun& create_msg_fun) {
     // Create IPC instances representing the source and destination endpoints.
     TestIpc ipc_src(TEST_PORT, src);
     TestIpc ipc_dest(TEST_PORT, dest);
@@ -229,23 +314,7 @@ Dhcp4o6IpcBaseTest::testSendReceive(const uint16_t iterations_num,
     // Send the number of messages configured for the test.
     for (uint16_t i = 1; i <= iterations_num; ++i) {
         // Create the DHCPv4o6 message.
-        Pkt6Ptr pkt(new Pkt6(msg_type, 0));
-
-        // The interface name is carried in the dedicated option between
-        // the servers. The receiving server will check that such interface
-        // is present in the system. The fake configuration we're using for
-        // this test includes two interfaces: "eth0" and "eth1". Therefore,
-        // we pick one or another, depending on the index of the interation.
-        pkt->setIface(concatenate("eth", i % 2));
-
-        // The remote address of the sender of the DHCPv6 packet is carried
-        // between the servers in the dedicated option. We use different
-        // address for each iteration to make sure that the IPC delivers the
-        // right address.
-        pkt->setRemoteAddr(IOAddress(concatenate("2001:db8:1::", i)));
-
-        // Add DHCPv4 Message option to make sure it is conveyed by the IPC.
-        pkt->addOption(createDHCPv4MsgOption(src));
+        Pkt6Ptr pkt = create_msg_fun(msg_type, i);
 
         // Actaully send the message through the IPC.
         ASSERT_NO_THROW(ipc_src.send(pkt))
@@ -254,6 +323,7 @@ Dhcp4o6IpcBaseTest::testSendReceive(const uint16_t iterations_num,
 
     // Try to receive all messages.
     for (uint16_t i = 1; i <= iterations_num; ++i) {
+
         // Call receive with a timeout. The data should appear on the socket
         // within this time.
         ASSERT_NO_THROW(IfaceMgr::instance().receive6(1, 0));
@@ -306,13 +376,20 @@ Dhcp4o6IpcBaseTest::testReceiveError(const Pkt6Ptr& pkt) {
 // This test verifies that the IPC can transmit messages between the
 // DHCPv6 and DHCPv4 server.
 TEST_F(Dhcp4o6IpcBaseTest, send4To6) {
-    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V4, ENDPOINT_TYPE_V6);
+    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V4, ENDPOINT_TYPE_V6,
+                    &createDHCPv4o6Message);
 }
 
 // This test verifies taht the IPC can transmit messages between the
 // DHCPv4 and DHCPv6 server.
 TEST_F(Dhcp4o6IpcBaseTest, send6To4) {
-    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V6, ENDPOINT_TYPE_V4);
+    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V6, ENDPOINT_TYPE_V4,
+                    &createDHCPv4o6Message);
+}
+
+TEST_F(Dhcp4o6IpcBaseTest, send6To4WithVendorOption) {
+    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V6, ENDPOINT_TYPE_V4,
+                    &createDHCPv4o6MsgWithVendorOption);
 }
 
 // This test checks that the values of the socket descriptor are correct
@@ -397,7 +474,7 @@ TEST_F(Dhcp4o6IpcBaseTest, receiveInvalidEnterpriseId) {
     testReceiveError(pkt);
 }
 
-// This test verifies that receiving pakcet over the IPC fails when the
+// This test verifies that receiving packet over the IPC fails when the
 // interface option is not present.
 TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutInterfaceOption) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 0));
@@ -446,5 +523,43 @@ TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutSourceAddressOption) {
     testReceiveError(pkt);
 }
 
+// This test verifies that send method throws exception when the packet
+// is NULL.
+TEST_F(Dhcp4o6IpcBaseTest, sendNullMessage) {
+    TestIpc ipc(TEST_PORT, ENDPOINT_TYPE_V4);
+    ASSERT_NO_THROW(ipc.open());
+
+    // NULL message.
+    EXPECT_THROW(ipc.send(Pkt6Ptr()), Dhcp4o6IpcError);
+}
+
+// This test verifies that send method throws exception when the IPC
+// socket is not opened.
+TEST_F(Dhcp4o6IpcBaseTest, sendOverClosedSocket) {
+    TestIpc ipc(TEST_PORT, ENDPOINT_TYPE_V4);
+
+    // Create a message.
+    Pkt6Ptr pkt(createDHCPv4o6Message(DHCPV6_DHCPV4_QUERY));
+
+    // Sending over the closed socket should fail.
+    EXPECT_THROW(ipc.send(pkt), Dhcp4o6IpcError);
+}
+
+// This test verifies that send method throws exception when the IPC
+// socket has been unexpectedly closed.
+TEST_F(Dhcp4o6IpcBaseTest, sendOverUnexpectedlyClosedSocket) {
+    TestIpc ipc(TEST_PORT, ENDPOINT_TYPE_V4);
+    ASSERT_NO_THROW(ipc.open());
+
+    // Close the socket behind the scenes. The IPC doesn't know that the
+    // socket has been closed and it still holds the descriptor.
+    ::close(ipc.getSocketFd());
+
+    // Create a message.
+    Pkt6Ptr pkt(createDHCPv4o6Message(DHCPV6_DHCPV4_QUERY));
+
+    // Sending over the closed socket should fail.
+    EXPECT_THROW(ipc.send(pkt), Dhcp4o6IpcError);
+}
 
 } // end of anonymous namespace
