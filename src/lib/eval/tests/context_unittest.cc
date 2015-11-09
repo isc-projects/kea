@@ -158,6 +158,22 @@ TEST_F(EvalContextTest, string) {
     checkTokenString(tmp, "foo");
 }
 
+// Test the parsing of a basic expression with a constant string holding
+// a number.
+TEST_F(EvalContextTest, number) {
+
+    EvalContext eval;
+
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("substring(option[123], '0', '2') == '42'"));
+    EXPECT_TRUE(parsed_);
+    parsed_ = false;
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("untyped: substring(option[123], '0', '2') == '42'"));
+    EXPECT_TRUE(parsed_);
+
+}
+
 // Test the parsing of a hexstring terminal
 TEST_F(EvalContextTest, hexstring) {
     EvalContext eval;
