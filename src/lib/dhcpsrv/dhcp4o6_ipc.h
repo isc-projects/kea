@@ -66,6 +66,14 @@ public:
 /// enterprise id. These options are added by the IPC sender and removed
 /// by the IPC receiver.
 class Dhcp4o6IpcBase : public boost::noncopyable {
+public:
+
+    /// @brief Endpoint type: DHCPv4 or DHCPv6 server.
+    enum EndpointType {
+        ENDPOINT_TYPE_V4,
+        ENDPOINT_TYPE_V6
+    };
+
 protected:
     /// @brief Constructor
     ///
@@ -80,10 +88,10 @@ protected:
     /// @param port Port number to use. The socket is bound to this port
     /// if the endpoint type is DHCPv6 server, otherwise the port + 1
     /// value is used.
-    /// @param side Endpoint type (DHCPv4 or DHCPv6 server).
+    /// @param endpoint_type Endpoint type (DHCPv4 or DHCPv6 server).
     ///
     /// @return New socket descriptor.
-    int open(const uint16_t port, const int side);
+    int open(const uint16_t port, const EndpointType& endpoint_type);
 
 public:
 
