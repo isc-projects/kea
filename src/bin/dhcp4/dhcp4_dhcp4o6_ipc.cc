@@ -42,7 +42,7 @@ void Dhcp4o6Ipc::open() {
     }
 
     int old_fd = socket_fd_;
-    socket_fd_ = Dhcp4o6IpcBase::open(static_cast<uint16_t>(port), 4);
+    socket_fd_ = Dhcp4o6IpcBase::open(static_cast<uint16_t>(port), ENDPOINT_TYPE_V4);
     if ((old_fd == -1) && (socket_fd_ != old_fd)) {
         IfaceMgr::instance().addExternalSocket(socket_fd_, Dhcp4o6Ipc::handler);
     }

@@ -40,12 +40,6 @@ const uint16_t TEST_PORT = 12345;
 /// @brief Number of iterations used by the tests.
 const uint16_t TEST_ITERATIONS = 10;
 
-/// @brief Defines the DHCPv4 endpoint of IPC.
-const int ENDPOINT_TYPE_V4 = 4;
-
-/// @brief Defines the DHCPv6 endpoint of IPC.
-const int ENDPOINT_TYPE_V6 = 6;
-
 /// @brief Type definition for the function creating DHCP message.
 typedef boost::function<Pkt6Ptr(const uint16_t, const uint16_t)> CreateMsgFun;
 
@@ -57,7 +51,7 @@ public:
     ///
     /// @param port Desired port.
     /// @param endpoint_type Type of the IPC endpoint. It should be 4 or 6.
-    TestIpc(const uint16_t port, const int endpoint_type);
+    TestIpc(const uint16_t port, const EndpointType& endpoint_type);
 
     /// @brief Sets new port to be used with @c open.
     ///
@@ -108,13 +102,13 @@ private:
     uint16_t desired_port_;
 
     /// @brief Endpoint type, i.e. 4 or 6.
-    int endpoint_type_;
+    EndpointType endpoint_type_;
 
     /// @brief Pointer to the last received message.
     Pkt6Ptr pkt_received_;
 };
 
-TestIpc::TestIpc(const uint16_t port, const int endpoint_type)
+TestIpc::TestIpc(const uint16_t port, const EndpointType& endpoint_type)
     : desired_port_(port), endpoint_type_(endpoint_type), pkt_received_() {
 }
 
@@ -213,15 +207,17 @@ protected:
     ///
     /// @param src Type of the source endpoint. It can be 4 or 6.
     /// @return Pointer to the instance of the DHCPv4-query Message option.
-    static OptionPtr createDHCPv4MsgOption(const int src);
+    static OptionPtr createDHCPv4MsgOption(const TestIpc::EndpointType& src);
 
     /// @brief Tests sending and receiving packets over the IPC.
     ///
     /// @param iterations_num Number of packets to be sent over the IPC.
     /// @param src Type of the source IPC endpoint. It can be 4 or 6.
     /// @param dest Type of the destination IPC endpoint. It can be 4 or 6.
-    void testSendReceive(const uint16_t iterations_num, const int src,
-                         const int dest, const CreateMsgFun& create_msg_fun);
+    void testSendReceive(const uint16_t iterations_num,
+                         const TestIpc::EndpointType& src,
+                         const TestIpc::EndpointType& dest,
+                         const CreateMsgFun& create_msg_fun);
 
     /// @brief Tests that error is reported when invalid message is received.
     ///
@@ -267,8 +263,8 @@ Dhcp4o6IpcBaseTest::createDHCPv4o6Message(const uint16_t msg_type,
     pkt->setRemoteAddr(IOAddress(concatenate("2001:db8:1::", postfix)));
 
     // Determine the endpoint type using the message type.
-    const int src = (msg_type ==  DHCPV6_DHCPV4_QUERY) ?
-        ENDPOINT_TYPE_V6 : ENDPOINT_TYPE_V4;
+    const TestIpc::EndpointType src = (msg_type ==  DHCPV6_DHCPV4_QUERY) ?
+        TestIpc::ENDPOINT_TYPE_V6 : TestIpc::ENDPOINT_TYPE_V4;
 
     // Add DHCPv4 Message option to make sure it is conveyed by the IPC.
     pkt->addOption(createDHCPv4MsgOption(src));
@@ -307,9 +303,9 @@ Dhcp4o6IpcBaseTest::createDHCPv4o6MsgWithAnyVendorOption(const uint16_t msg_type
 }
 
 OptionPtr
-Dhcp4o6IpcBaseTest::createDHCPv4MsgOption(const int src) {
+Dhcp4o6IpcBaseTest::createDHCPv4MsgOption(const TestIpc::EndpointType& src) {
     // Create the DHCPv4 message.
-    Pkt4Ptr pkt(new Pkt4(src == ENDPOINT_TYPE_V4 ? DHCPACK : DHCPREQUEST,
+    Pkt4Ptr pkt(new Pkt4(src == TestIpc::ENDPOINT_TYPE_V4 ? DHCPACK : DHCPREQUEST,
                          1234));
     // Make a wire representation of the DHCPv4 message.
     pkt->pack();
@@ -324,7 +320,8 @@ Dhcp4o6IpcBaseTest::createDHCPv4MsgOption(const int src) {
 
 void
 Dhcp4o6IpcBaseTest::testSendReceive(const uint16_t iterations_num,
-                                    const int src, const int dest,
+                                    const TestIpc::EndpointType& src,
+                                    const TestIpc::EndpointType& dest,
                                     const CreateMsgFun& create_msg_fun) {
     // Create IPC instances representing the source and destination endpoints.
     TestIpc ipc_src(TEST_PORT, src);
@@ -337,7 +334,7 @@ Dhcp4o6IpcBaseTest::testSendReceive(const uint16_t iterations_num,
     // Depnding if we're sending from DHCPv6 to DHCPv4 or the opposite
     // direction we use different message type. This is not really required
     // for testing IPC, but it better simulates the real use case.
-    uint16_t msg_type = (src == 6 ? DHCPV6_DHCPV4_QUERY :
+    uint16_t msg_type = (src == TestIpc::ENDPOINT_TYPE_V6 ? DHCPV6_DHCPV4_QUERY :
                          DHCPV6_DHCPV4_RESPONSE);
 
     std::vector<bool> has_vendor_option;
@@ -403,8 +400,8 @@ Dhcp4o6IpcBaseTest::testSendReceive(const uint16_t iterations_num,
 
 void
 Dhcp4o6IpcBaseTest::testReceiveError(const Pkt6Ptr& pkt) {
-    TestIpc ipc_src(TEST_PORT, ENDPOINT_TYPE_V6);
-    TestIpc ipc_dest(TEST_PORT, ENDPOINT_TYPE_V4);
+    TestIpc ipc_src(TEST_PORT, TestIpc::ENDPOINT_TYPE_V6);
+    TestIpc ipc_dest(TEST_PORT, TestIpc::ENDPOINT_TYPE_V4);
 
     // Open the IPC on both ends.
     ASSERT_NO_THROW(ipc_src.open());
@@ -412,7 +409,7 @@ Dhcp4o6IpcBaseTest::testReceiveError(const Pkt6Ptr& pkt) {
 
     pkt->setIface("eth0");
     pkt->setRemoteAddr(IOAddress("2001:db8:1::1"));
-    pkt->addOption(createDHCPv4MsgOption(ENDPOINT_TYPE_V6));
+    pkt->addOption(createDHCPv4MsgOption(TestIpc::ENDPOINT_TYPE_V6));
 
     OutputBuffer& buf = pkt->getBuffer();
     buf.clear();
@@ -430,22 +427,23 @@ Dhcp4o6IpcBaseTest::testReceiveError(const Pkt6Ptr& pkt) {
 // This test verifies that the IPC can transmit messages between the
 // DHCPv4 and DHCPv6 server.
 TEST_F(Dhcp4o6IpcBaseTest, send4To6) {
-    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V4, ENDPOINT_TYPE_V6,
-                    &createDHCPv4o6Message);
+    testSendReceive(TEST_ITERATIONS, TestIpc::ENDPOINT_TYPE_V4,
+                    TestIpc::ENDPOINT_TYPE_V6, &createDHCPv4o6Message);
 }
 
 // This test verifies that the IPC can transmit messages between the
 // DHCPv6 and DHCPv4 server.
 TEST_F(Dhcp4o6IpcBaseTest, send6To4) {
-    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V6, ENDPOINT_TYPE_V4,
-                    &createDHCPv4o6Message);
+    testSendReceive(TEST_ITERATIONS, TestIpc::ENDPOINT_TYPE_V6,
+                    TestIpc::ENDPOINT_TYPE_V4, &createDHCPv4o6Message);
 }
 
 // This test verifies that the IPC will transmit message already containing
 // vendor option with ISC enterprise ID, between the DHCPv6 and DHCPv4
 // server.
 TEST_F(Dhcp4o6IpcBaseTest, send6To4WithISCVendorOption) {
-    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V6, ENDPOINT_TYPE_V4,
+    testSendReceive(TEST_ITERATIONS, TestIpc::ENDPOINT_TYPE_V6,
+                    TestIpc::ENDPOINT_TYPE_V4,
                     &createDHCPv4o6MsgWithISCVendorOption);
 }
 
@@ -453,7 +451,8 @@ TEST_F(Dhcp4o6IpcBaseTest, send6To4WithISCVendorOption) {
 // vendor option with ISC enterprise ID, between the DHCPv6 and DHCPv4
 // server.
 TEST_F(Dhcp4o6IpcBaseTest, send4To6WithISCVendorOption) {
-    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V4, ENDPOINT_TYPE_V6,
+    testSendReceive(TEST_ITERATIONS, TestIpc::ENDPOINT_TYPE_V4,
+                    TestIpc::ENDPOINT_TYPE_V6,
                     &createDHCPv4o6MsgWithISCVendorOption);
 }
 
@@ -461,7 +460,8 @@ TEST_F(Dhcp4o6IpcBaseTest, send4To6WithISCVendorOption) {
 // vendor option with enterprise id different than ISC, between the DHCPv6
 // and DHCPv4 server.
 TEST_F(Dhcp4o6IpcBaseTest, send6To4WithAnyVendorOption) {
-    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V6, ENDPOINT_TYPE_V4,
+    testSendReceive(TEST_ITERATIONS, TestIpc::ENDPOINT_TYPE_V6,
+                    TestIpc::ENDPOINT_TYPE_V4,
                     &createDHCPv4o6MsgWithAnyVendorOption);
 }
 
@@ -469,14 +469,15 @@ TEST_F(Dhcp4o6IpcBaseTest, send6To4WithAnyVendorOption) {
 // vendor option with enterprise id different than ISC, between the DHCPv4
 // and DHCPv6 server.
 TEST_F(Dhcp4o6IpcBaseTest, send4To6WithAnyVendorOption) {
-    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V4, ENDPOINT_TYPE_V6,
+    testSendReceive(TEST_ITERATIONS, TestIpc::ENDPOINT_TYPE_V4,
+                    TestIpc::ENDPOINT_TYPE_V6,
                     &createDHCPv4o6MsgWithAnyVendorOption);
 }
 
 // This test checks that the values of the socket descriptor are correct
 // when the socket is opened and then closed.
 TEST_F(Dhcp4o6IpcBaseTest, openClose) {
-    TestIpc ipc(TEST_PORT, ENDPOINT_TYPE_V4);
+    TestIpc ipc(TEST_PORT, TestIpc::ENDPOINT_TYPE_V4);
     EXPECT_EQ(-1, ipc.getSocketFd());
 
     ASSERT_NO_THROW(ipc.open());
@@ -489,7 +490,7 @@ TEST_F(Dhcp4o6IpcBaseTest, openClose) {
 // This test verifies that it is call open() while the socket is already
 // opened. If the port changes, the new socket should be opened.
 TEST_F(Dhcp4o6IpcBaseTest, openMultipleTimes) {
-   TestIpc ipc(TEST_PORT, ENDPOINT_TYPE_V6);
+   TestIpc ipc(TEST_PORT, TestIpc::ENDPOINT_TYPE_V6);
    ASSERT_NO_THROW(ipc.open());
    int sock_fd = ipc.getSocketFd();
    ASSERT_NE(-1, sock_fd);
@@ -509,12 +510,12 @@ TEST_F(Dhcp4o6IpcBaseTest, openMultipleTimes) {
 // This test verifies that the socket remains open if there is a failure
 // to open a new socket.
 TEST_F(Dhcp4o6IpcBaseTest, openError) {
-    TestIpc ipc(TEST_PORT, ENDPOINT_TYPE_V4);
+    TestIpc ipc(TEST_PORT, TestIpc::ENDPOINT_TYPE_V4);
     ASSERT_NO_THROW(ipc.open());
     int sock_fd = ipc.getSocketFd();
     ASSERT_NE(-1, sock_fd);
 
-    TestIpc ipc_bound(TEST_PORT + 10, ENDPOINT_TYPE_V4);
+    TestIpc ipc_bound(TEST_PORT + 10, TestIpc::ENDPOINT_TYPE_V4);
     ASSERT_NO_THROW(ipc_bound.open());
     ASSERT_NE(-1, ipc_bound.getSocketFd());
 
@@ -607,7 +608,7 @@ TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutSourceAddressOption) {
 // This test verifies that send method throws exception when the packet
 // is NULL.
 TEST_F(Dhcp4o6IpcBaseTest, sendNullMessage) {
-    TestIpc ipc(TEST_PORT, ENDPOINT_TYPE_V4);
+    TestIpc ipc(TEST_PORT, TestIpc::ENDPOINT_TYPE_V4);
     ASSERT_NO_THROW(ipc.open());
 
     // NULL message.
@@ -617,7 +618,7 @@ TEST_F(Dhcp4o6IpcBaseTest, sendNullMessage) {
 // This test verifies that send method throws exception when the IPC
 // socket is not opened.
 TEST_F(Dhcp4o6IpcBaseTest, sendOverClosedSocket) {
-    TestIpc ipc(TEST_PORT, ENDPOINT_TYPE_V4);
+    TestIpc ipc(TEST_PORT, TestIpc::ENDPOINT_TYPE_V4);
 
     // Create a message.
     Pkt6Ptr pkt(createDHCPv4o6Message(DHCPV6_DHCPV4_QUERY));
@@ -629,7 +630,7 @@ TEST_F(Dhcp4o6IpcBaseTest, sendOverClosedSocket) {
 // This test verifies that send method throws exception when the IPC
 // socket has been unexpectedly closed.
 TEST_F(Dhcp4o6IpcBaseTest, sendOverUnexpectedlyClosedSocket) {
-    TestIpc ipc(TEST_PORT, ENDPOINT_TYPE_V4);
+    TestIpc ipc(TEST_PORT, TestIpc::ENDPOINT_TYPE_V4);
     ASSERT_NO_THROW(ipc.open());
 
     // Close the socket behind the scenes. The IPC doesn't know that the
