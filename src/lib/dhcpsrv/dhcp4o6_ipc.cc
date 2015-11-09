@@ -21,7 +21,7 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcpsrv/dhcp4o6_ipc.h>
-
+#include <boost/pointer_cast.hpp>
 #include <errno.h>
 #include <netinet/in.h>
 #include <string>
@@ -138,27 +138,35 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     // Get interface name and remote address
     pkt->unpack();
 
-    OptionVendorPtr vendor =
-        boost::dynamic_pointer_cast<OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
+    // Vendor option is initially NULL. If we find the instance of the vendor
+    // option with the ISC enterprise id this pointer will point to it.
+    OptionVendorPtr option_vendor;
 
-    // Vendor option must exist.
-    if (!vendor) {
-        isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
-                  << " not present in the DHCP4o6 message sent between the "
-                  " servers");
+    // Get all vendor option and look for the one with the ISC enterprise id.
+    OptionCollection vendor_options = pkt->getOptions(D6O_VENDOR_OPTS);
+    for (OptionCollection::const_iterator opt = vendor_options.begin();
+         opt != vendor_options.end(); ++opt) {
+        option_vendor = boost::dynamic_pointer_cast<OptionVendor>(opt->second);
+        if (option_vendor) {
+            if (option_vendor->getVendorId() == ENTERPRISE_ID_ISC) {
+                break;
+            }
+
+        } else {
+            option_vendor.reset();
+        }
     }
-
-    // The vendor option must require appropriate enterprise-id.
-    if (vendor->getVendorId() != ENTERPRISE_ID_ISC) {
+         
+    // Vendor option must exist.
+    if (!option_vendor) {
         isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
-                  << " in the DHCP4o6 message contains invalid enterprise-id '"
-                  << vendor->getVendorId() << "'. Expected enterprise-id '"
-                  << ENTERPRISE_ID_ISC << "'");
+                  << " with ISC enterprise id is not present in the DHCP4o6"
+                  " message sent between the servers");
     }
 
     // The option carrying interface name is required.
     OptionStringPtr ifname = boost::dynamic_pointer_cast<
-        OptionString>(vendor->getOption(ISC_V6_4O6_INTERFACE));
+        OptionString>(option_vendor->getOption(ISC_V6_4O6_INTERFACE));
     if (!ifname) {
         isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
                   << " doesn't contain the " << ISC_V6_4O6_INTERFACE
@@ -175,8 +183,8 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     }
 
     // Get the option holding source IPv6 address.
-    OptionCustomPtr srcs =
-        boost::dynamic_pointer_cast<OptionCustom>(vendor->getOption(ISC_V6_4O6_SRC_ADDRESS));
+    OptionCustomPtr srcs = boost::dynamic_pointer_cast<
+        OptionCustom>(option_vendor->getOption(ISC_V6_4O6_SRC_ADDRESS));
     if (!srcs) {
         isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
                   << " doesn't contain the " << ISC_V6_4O6_SRC_ADDRESS
@@ -184,11 +192,21 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
                   " between Kea servers");
     }
 
-    // Update the packet and return it
-    static_cast<void>(pkt->delOption(D6O_VENDOR_OPTS));
+    // Update the packet.
     pkt->setRemoteAddr(srcs->readAddress());
     pkt->setIface(iface->getName());
     pkt->setIndex(iface->getIndex());
+
+    // Remove options that have been added by the IPC sender.
+    static_cast<void>(option_vendor->delOption(ISC_V6_4O6_INTERFACE));
+    static_cast<void>(option_vendor->delOption(ISC_V6_4O6_SRC_ADDRESS));
+
+    // If there are no more options, the IPC sender has probably created the
+    // vendor option, in which case we should remove it here.
+    if (option_vendor->getOptions().empty()) {
+        static_cast<void>(pkt->delOption(D6O_VENDOR_OPTS));
+    }
+
     return (pkt);
 }
 
@@ -206,17 +224,24 @@ void Dhcp4o6IpcBase::send(const Pkt6Ptr& pkt) {
                   " IPC socket is closed");
     }
 
-    // Get a vendor option
-    OptionVendorPtr vendor(new OptionVendor(Option::V6, ENTERPRISE_ID_ISC));
+    // Check if vendor option exists.
+    OptionVendorPtr option_vendor = dynamic_pointer_cast<
+        OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
+
+    // If vendor option doesn't exist or its enterprise id is not ISC's
+    // enterprise id, let's create it.
+    if (!option_vendor || (option_vendor->getVendorId() != ENTERPRISE_ID_ISC)) {
+        option_vendor.reset(new OptionVendor(Option::V6, ENTERPRISE_ID_ISC));
+        pkt->addOption(option_vendor);
+
+    }
 
     // Push interface name and source address in it
-    vendor->addOption(OptionStringPtr(new OptionString(Option::V6,
+    option_vendor->addOption(OptionStringPtr(new OptionString(Option::V6,
                                                        ISC_V6_4O6_INTERFACE,
                                                        pkt->getIface())));
-    vendor->addOption(Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
-                                                           pkt->getRemoteAddr())));
-    pkt->addOption(vendor);
-
+    option_vendor->addOption(Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
+                                                                  pkt->getRemoteAddr())));
     // Get packet content
     OutputBuffer& buf = pkt->getBuffer();
     buf.clear();
