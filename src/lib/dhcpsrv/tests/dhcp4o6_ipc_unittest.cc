@@ -531,6 +531,19 @@ TEST_F(Dhcp4o6IpcBaseTest, openError) {
     EXPECT_EQ(TEST_PORT + 10, ipc.getPort());
 }
 
+// This test verifies that the IPC returns an error when trying to bind
+// to the out of range port.
+TEST_F(Dhcp4o6IpcBaseTest, invalidPortError4) {
+    TestIpc ipc(65535, TestIpc::ENDPOINT_TYPE_V4);
+    EXPECT_THROW(ipc.open(), Dhcp4o6IpcError);
+}
+
+// This test verifies that the IPC returns an error when trying to bind
+// to the out of range port.
+TEST_F(Dhcp4o6IpcBaseTest, invalidPortError6) {
+    TestIpc ipc(65535, TestIpc::ENDPOINT_TYPE_V6);
+    EXPECT_THROW(ipc.open(), Dhcp4o6IpcError);
+}
 
 // This test verifies that receiving packet over the IPC fails when there
 // is no vendor option present.

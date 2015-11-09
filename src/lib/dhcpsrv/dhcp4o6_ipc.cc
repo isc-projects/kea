@@ -40,6 +40,12 @@ Dhcp4o6IpcBase::~Dhcp4o6IpcBase() {
 }
 
 int Dhcp4o6IpcBase::open(const uint16_t port, const EndpointType& endpoint_type) {
+    // Check if the port value is correct.
+    if (port > 65534) {
+        isc_throw(Dhcp4o6IpcError, "specified port " << port << " is out of"
+                  " range. The port value must not be greater than 65534 ");
+    }
+
     if (port == port_) {
         // No change: nothing to do
         return (socket_fd_);
