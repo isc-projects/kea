@@ -39,7 +39,7 @@ Dhcp4o6IpcBase::~Dhcp4o6IpcBase() {
     close();
 }
 
-int Dhcp4o6IpcBase::open(const uint16_t port, const int side) {
+int Dhcp4o6IpcBase::open(const uint16_t port, const EndpointType& endpoint_type) {
     if (port == port_) {
         // No change: nothing to do
         return (socket_fd_);
@@ -72,7 +72,7 @@ int Dhcp4o6IpcBase::open(const uint16_t port, const int side) {
 #ifdef HAVE_SA_LEN
     local6.sin6_len = sizeof(local6);
 #endif
-    if (side == 6) {
+    if (endpoint_type == ENDPOINT_TYPE_V6) {
         local6.sin6_port = htons(port);
     } else {
         local6.sin6_port = htons(port + 1);
@@ -89,7 +89,7 @@ int Dhcp4o6IpcBase::open(const uint16_t port, const int side) {
 #ifdef HAVE_SA_LEN
     remote6.sin6_len = sizeof(remote6);
 #endif
-    if (side == 6) {
+    if (endpoint_type == ENDPOINT_TYPE_V6) {
         remote6.sin6_port = htons(port + 1);
     } else {
         remote6.sin6_port = htons(port);
