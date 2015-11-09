@@ -120,10 +120,10 @@ protected:
     static Pkt6Ptr createDHCPv4o6MsgWithAnyVendorOption(const uint16_t msg_type,
                                                         const uint16_t postfix);
 
-    /// @brief Creates an instance of the DHCPv4-query Message option.
+    /// @brief Creates an instance of the DHCPv4o6 Message option.
     ///
     /// @param src Type of the source endpoint. It can be 4 or 6.
-    /// @return Pointer to the instance of the DHCPv4-query Message option.
+    /// @return Pointer to the instance of the option.
     static OptionPtr createDHCPv4MsgOption(const TestIpc::EndpointType& src);
 
     /// @brief Tests sending and receiving packets over the IPC.

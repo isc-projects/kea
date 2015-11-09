@@ -92,6 +92,7 @@ dhcp4_unittests_SOURCES += release_unittest.cc
 dhcp4_unittests_SOURCES += out_of_range_unittest.cc
 dhcp4_unittests_SOURCES += decline_unittest.cc
 dhcp4_unittests_SOURCES += kea_controller_unittest.cc
+dhcp4_unittests_SOURCES += dhcp4_dhcp4o6_ipc_unittest.cc
 
 nodist_dhcp4_unittests_SOURCES = marker_file.h test_libraries.h
 
