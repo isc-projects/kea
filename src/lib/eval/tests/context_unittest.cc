@@ -172,6 +172,21 @@ TEST_F(EvalContextTest, hexstring) {
     checkTokenHexString(tmp, "foo");
 }
 
+// Test the parsing of a hexstring terminal with an odd number of
+// hexadecimal digits
+TEST_F(EvalContextTest, oddHexstring) {
+    EvalContext eval;
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("untyped: 0X7"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(1, eval.expression.size());
+
+    TokenPtr tmp = eval.expression.at(0);
+
+    checkTokenHexString(tmp, "\a");
+}
+
 // Test the parsing of an equal expression
 TEST_F(EvalContextTest, equal) {
     EvalContext eval;
@@ -255,6 +270,10 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("'foo''bar'",
                "<string>:1.6-10: syntax error, unexpected constant string, "
                "expecting ==");
+    checkError("0x",
+               "<string>:1.1: syntax error, unexpected option code");
+    checkError("0abc",
+               "<string>:1.1: syntax error, unexpected option code");
     checkError("== 'ab'", "<string>:1.1-2: syntax error, unexpected ==");
     checkError("'foo' ==",
                "<string>:1.9: syntax error, unexpected end of file");
