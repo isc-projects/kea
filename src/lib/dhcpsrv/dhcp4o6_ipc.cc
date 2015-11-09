@@ -22,6 +22,7 @@
 #include <dhcp/option_vendor.h>
 #include <dhcpsrv/dhcp4o6_ipc.h>
 
+#include <errno.h>
 #include <netinet/in.h>
 #include <string>
 
@@ -192,14 +193,17 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
 }
 
 void Dhcp4o6IpcBase::send(const Pkt6Ptr& pkt) {
-    // No packet: nothing to send
+    // This shouldn't happen, i.e. send() shouldn't be called if there is
+    // no message.
     if (!pkt) {
-        return;
+        isc_throw(Dhcp4o6IpcError, "DHCP4o6 message must not be NULL while"
+                  " trying to send it over the IPC");
     }
 
     // Disabled: nowhere to send
     if (socket_fd_ == -1) {
-        return;
+        isc_throw(Dhcp4o6IpcError, "unable to send DHCP4o6 message because"
+                  " IPC socket is closed");
     }
 
     // Get a vendor option
@@ -218,10 +222,12 @@ void Dhcp4o6IpcBase::send(const Pkt6Ptr& pkt) {
     buf.clear();
     pkt->pack();
 
-    // Send
-    static_cast<void>(::send(socket_fd_, buf.getData(), buf.getLength(), 0));
+    // Try to send the message.
+   if (::send(socket_fd_, buf.getData(), buf.getLength(), 0) < 0) {
+       isc_throw(Dhcp4o6IpcError, "failed to send DHCP4o6 message over the IPC: "
+                 << strerror(errno));
+   }
 
-    return;
 }
 
 };  // namespace dhcp
