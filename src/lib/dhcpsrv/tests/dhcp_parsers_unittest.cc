@@ -1177,27 +1177,53 @@ TEST_F(ParseConfigTest, invalidSyntaxHooksLibraries) {
         "{ \"library\": \"/opt/lib/lib1\" }, "
         "{ \"library\": 123 } "
         "] }";
-    string error2 = "value of 'library' element is not a valid"
-                    " path to a hooks library";
+    string error2 = "value of 'library' element is not a string giving"
+                    " the path to a hooks library";
 
     rcode = parseConfiguration(config2);
     ASSERT_NE(0, rcode);
     EXPECT_TRUE(error_text_.find(error2) != string::npos) <<
         "Error text returned from parse failure is " << error_text_;
 
-    // Element holds valid maps, except one that does not contain a
-    // 'library' element.
+    // Element holds valid maps, except one where the library element is the
+    // empty string.
     string config3 = "{ \"hooks-libraries\": [ "
         "{ \"library\": \"/opt/lib/lib1\" }, "
-        "{ \"parameters\": { \"alpha\": 123 } }, "
-        "{ \"library\": \"/opt/lib/lib2\" } "
+        "{ \"library\": \"\" } "
         "] }";
-    string error3 = "one or more hooks-libraries elements are missing the"
-                    " name of the library";
+    string error3 = "value of 'library' element must not be blank";
 
     rcode = parseConfiguration(config3);
     ASSERT_NE(0, rcode);
     EXPECT_TRUE(error_text_.find(error3) != string::npos) <<
+        "Error text returned from parse failure is " << error_text_;
+
+    // Element holds valid maps, except one where the library element is all
+    // spaces.
+    string config4 = "{ \"hooks-libraries\": [ "
+        "{ \"library\": \"/opt/lib/lib1\" }, "
+        "{ \"library\": \"      \" } "
+        "] }";
+    string error4 = "value of 'library' element must not be blank";
+
+    rcode = parseConfiguration(config4);
+    ASSERT_NE(0, rcode);
+    EXPECT_TRUE(error_text_.find(error3) != string::npos) <<
+        "Error text returned from parse failure is " << error_text_;
+
+    // Element holds valid maps, except one that does not contain a
+    // 'library' element.
+    string config5 = "{ \"hooks-libraries\": [ "
+        "{ \"library\": \"/opt/lib/lib1\" }, "
+        "{ \"parameters\": { \"alpha\": 123 } }, "
+        "{ \"library\": \"/opt/lib/lib2\" } "
+        "] }";
+    string error5 = "one or more hooks-libraries elements are missing the"
+                    " name of the library";
+
+    rcode = parseConfiguration(config5);
+    ASSERT_NE(0, rcode);
+    EXPECT_TRUE(error_text_.find(error5) != string::npos) <<
         "Error text returned from parse failure is " << error_text_;
 }
 
