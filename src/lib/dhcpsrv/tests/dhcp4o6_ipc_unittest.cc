@@ -171,19 +171,43 @@ protected:
 
     /// @brief Creates an instance of the DHCPv4o6 message with vendor option.
     ///
-    /// The vendor option appended to the message has ISC entprise id and
-    /// comprises option @c ISC_V6_4O6_INTERFACE and @c ISC_V6_4O6_SRC_ADDRESS.
-    /// This is useful to test scenarios when the IPC is forwarding messages
-    /// that contain options also inserted by IPC. The duplicate options are
-    /// allowed and IPC should deal with this with no error.
-    ///
     /// @param msg_type Message type.
     /// @param postfix Postfix to be appended to the remote address. See the
     /// documentation of @c createDHCPv4o6Message for details.
     ///
     /// @return Pointer to the created message.
     static Pkt6Ptr createDHCPv4o6MsgWithVendorOption(const uint16_t msg_type,
-                                                     const uint16_t postfix);
+                                                     const uint16_t postfix,
+                                                     const uint32_t enterprise_id);
+
+    /// @brief Creates an instance of the DHCPv4o6 message with ISC
+    /// vendor option.
+    ///
+    /// This is useful to test scenarios when the IPC is forwarding messages
+    /// that contain vendor option with ISC enterprise ID.
+    ///
+    /// @param msg_type Message type.
+    /// @param postfix Postfix to be appended to the remote address. See the
+    /// documentation of @c createDHCPv4o6Message for details.
+    ///
+    /// @return Pointer to the created message.
+    static Pkt6Ptr createDHCPv4o6MsgWithISCVendorOption(const uint16_t msg_type,
+                                                        const uint16_t postfix);
+
+    /// @brief Creates an instance of the DHCPv4o6 message with vendor
+    /// option holding enterprise id of 32000.
+    ///
+    /// This is useful to test scenarios when the IPC is forwarding messages
+    /// that contain some vendor option and when IPC also appends the ISC
+    /// vendor option to carry some DHCPv4o6 specific information.
+    ///
+    /// @param msg_type Message type.
+    /// @param postfix Postfix to be appended to the remote address. See the
+    /// documentation of @c createDHCPv4o6Message for details.
+    ///
+    /// @return Pointer to the created message.
+    static Pkt6Ptr createDHCPv4o6MsgWithAnyVendorOption(const uint16_t msg_type,
+                                                        const uint16_t postfix);
 
     /// @brief Creates an instance of the DHCPv4-query Message option.
     ///
@@ -254,28 +278,33 @@ Dhcp4o6IpcBaseTest::createDHCPv4o6Message(const uint16_t msg_type,
 
 Pkt6Ptr
 Dhcp4o6IpcBaseTest::createDHCPv4o6MsgWithVendorOption(const uint16_t msg_type,
-                                                      const uint16_t postfix) {
+                                                      const uint16_t postfix,
+                                                      const uint32_t enterprise_id) {
     Pkt6Ptr pkt = createDHCPv4o6Message(msg_type, postfix);
 
     // Create vendor option with ISC enterprise id.
-    OptionVendorPtr option_vendor(new OptionVendor(Option::V6, ENTERPRISE_ID_ISC));
+    OptionVendorPtr option_vendor(new OptionVendor(Option::V6, enterprise_id));
 
-    // Add interface. Such interface doesn't have to exist in the system because
-    // IPC should not use this option when it is received. It should rather use
-    // the option that the sender side is appending to the message.
-    option_vendor->addOption(OptionStringPtr(new OptionString(Option::V6,
-                                                              ISC_V6_4O6_INTERFACE,
-                                                              "non-existing")));
-    // Add some remote address.
-    option_vendor->addOption(Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
-                                                                  IOAddress("3000::10"))));
+    // Add some option to the vendor option.
+    option_vendor->addOption(OptionPtr(new Option(Option::V6, 100)));
+
     // Add vendor option to the message.
     pkt->addOption(option_vendor);
 
     return (pkt);
 }
 
+Pkt6Ptr
+Dhcp4o6IpcBaseTest::createDHCPv4o6MsgWithISCVendorOption(const uint16_t msg_type,
+                                                         const uint16_t postfix) {
+    return (createDHCPv4o6MsgWithVendorOption(msg_type, postfix, ENTERPRISE_ID_ISC));
+}
 
+Pkt6Ptr
+Dhcp4o6IpcBaseTest::createDHCPv4o6MsgWithAnyVendorOption(const uint16_t msg_type,
+                                                         const uint16_t postfix) {
+    return (createDHCPv4o6MsgWithVendorOption(msg_type, postfix, 32000));
+}
 
 OptionPtr
 Dhcp4o6IpcBaseTest::createDHCPv4MsgOption(const int src) {
@@ -311,10 +340,17 @@ Dhcp4o6IpcBaseTest::testSendReceive(const uint16_t iterations_num,
     uint16_t msg_type = (src == 6 ? DHCPV6_DHCPV4_QUERY :
                          DHCPV6_DHCPV4_RESPONSE);
 
+    std::vector<bool> has_vendor_option;
+
     // Send the number of messages configured for the test.
     for (uint16_t i = 1; i <= iterations_num; ++i) {
         // Create the DHCPv4o6 message.
         Pkt6Ptr pkt = create_msg_fun(msg_type, i);
+
+        // Remember if the vendor option exists in the source packet. The
+        // received packet should also contain this option if it exists
+        // in the source packet.
+        has_vendor_option.push_back(static_cast<bool>(pkt->getOption(D6O_VENDOR_OPTS)));
 
         // Actaully send the message through the IPC.
         ASSERT_NO_THROW(ipc_src.send(pkt))
@@ -344,6 +380,24 @@ Dhcp4o6IpcBaseTest::testSendReceive(const uint16_t iterations_num,
 
         // Check that encapsulated DHCPv4 message has been received.
         EXPECT_TRUE(pkt_received->getOption(D6O_DHCPV4_MSG));
+
+        if (has_vendor_option[i - 1]) {
+            // Make sure that the vendor option wasn't deleted when the packet was
+            // received.
+            OptionPtr option_vendor = pkt_received->getOption(D6O_VENDOR_OPTS);
+            ASSERT_TRUE(option_vendor)
+                << "vendor option deleted in the received DHCPv4o6 packet for"
+                " iteration " << i;
+
+            // ISC_V6_4O6_INTERFACE shouldn't be present.
+            EXPECT_FALSE(option_vendor->getOption(ISC_V6_4O6_INTERFACE));
+
+            // ISC_V6_4O6_SRC_ADDRESS shouldn't be present.
+            EXPECT_FALSE(option_vendor->getOption(ISC_V6_4O6_SRC_ADDRESS));
+
+        } else {
+            EXPECT_FALSE(pkt_received->getOption(D6O_VENDOR_OPTS));
+        }
     }
 }
 
@@ -374,22 +428,49 @@ Dhcp4o6IpcBaseTest::testReceiveError(const Pkt6Ptr& pkt) {
 
 
 // This test verifies that the IPC can transmit messages between the
-// DHCPv6 and DHCPv4 server.
+// DHCPv4 and DHCPv6 server.
 TEST_F(Dhcp4o6IpcBaseTest, send4To6) {
     testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V4, ENDPOINT_TYPE_V6,
                     &createDHCPv4o6Message);
 }
 
-// This test verifies taht the IPC can transmit messages between the
-// DHCPv4 and DHCPv6 server.
+// This test verifies that the IPC can transmit messages between the
+// DHCPv6 and DHCPv4 server.
 TEST_F(Dhcp4o6IpcBaseTest, send6To4) {
     testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V6, ENDPOINT_TYPE_V4,
                     &createDHCPv4o6Message);
 }
 
-TEST_F(Dhcp4o6IpcBaseTest, send6To4WithVendorOption) {
+// This test verifies that the IPC will transmit message already containing
+// vendor option with ISC enterprise ID, between the DHCPv6 and DHCPv4
+// server.
+TEST_F(Dhcp4o6IpcBaseTest, send6To4WithISCVendorOption) {
     testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V6, ENDPOINT_TYPE_V4,
-                    &createDHCPv4o6MsgWithVendorOption);
+                    &createDHCPv4o6MsgWithISCVendorOption);
+}
+
+// This test verifies that the IPC will transmit message already containing
+// vendor option with ISC enterprise ID, between the DHCPv6 and DHCPv4
+// server.
+TEST_F(Dhcp4o6IpcBaseTest, send4To6WithISCVendorOption) {
+    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V4, ENDPOINT_TYPE_V6,
+                    &createDHCPv4o6MsgWithISCVendorOption);
+}
+
+// This test verifies that the IPC will transmit message already containing
+// vendor option with enterprise id different than ISC, between the DHCPv6
+// and DHCPv4 server.
+TEST_F(Dhcp4o6IpcBaseTest, send6To4WithAnyVendorOption) {
+    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V6, ENDPOINT_TYPE_V4,
+                    &createDHCPv4o6MsgWithAnyVendorOption);
+}
+
+// This test verifies that the IPC will transmit message already containing
+// vendor option with enterprise id different than ISC, between the DHCPv4
+// and DHCPv6 server.
+TEST_F(Dhcp4o6IpcBaseTest, send4To6WithAnyVendorOption) {
+    testSendReceive(TEST_ITERATIONS, ENDPOINT_TYPE_V4, ENDPOINT_TYPE_V6,
+                    &createDHCPv4o6MsgWithAnyVendorOption);
 }
 
 // This test checks that the values of the socket descriptor are correct
