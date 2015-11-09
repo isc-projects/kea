@@ -248,25 +248,8 @@ HooksLibrariesParser::HooksLibrariesParser(const std::string& param_name)
     }
 }
 
-// The syntax for specifying hooks libraries allow for library-specific
-// parameters to be specified along with the library, e.g.
-//
-//      "hooks-libraries": [
-//          {
-//              "library": "hook-lib-1.so",
-//              "parameters": {
-//                  "alpha": "a string",
-//                  "beta": 42
-//              }
-//          },
-//          {
-//              "library": "hook-lib-2.so",
-//                  :
-//          }
-//      ]
-//
-// Kea has not yet implemented parameters, so the parsing code only checks
-// that:
+// Parse the configuration.  As Kea has not yet implemented parameters, the
+// parsing code only checks that:
 //
 // 1. Each element in the hooks-libraries list is a map
 // 2. The map contains an element "library" whose value is a string: all
@@ -293,15 +276,25 @@ HooksLibrariesParser::build(ConstElementPtr value) {
             if (entry_item.first == "library") {
                 if (entry_item.second->getType() != Element::string) {
                     isc_throw(DhcpConfigError, "hooks library configuration"
-                        " error: value of 'library' element is not a valid"
-                        " path to a hooks library (" <<
+                        " error: value of 'library' element is not a string"
+                        " giving the path to a hooks library (" <<
                         entry_item.second->getPosition() << ")");
                 }
 
                 // Get the name of the library and add it to the list after
                 // removing quotes.
                 string libname = (entry_item.second)->stringValue();
+
+                // Remove leading/trailing quotes and any leading/trailing
+                // spaces.
                 boost::erase_all(libname, "\"");
+                libname = isc::util::str::trim(libname);
+                if (libname.empty()) {
+                    isc_throw(DhcpConfigError, "hooks library configuration"
+                        " error: value of 'library' element must not be"
+                        " blank (" <<
+                        entry_item.second->getPosition() << ")");
+                }
                 libraries_.push_back(libname);
 
                 // Note we have found the library name.

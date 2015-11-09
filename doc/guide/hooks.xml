@@ -84,7 +84,18 @@
           <listitem><para>
           An empty list has the same effect as omitting the
           <command>hooks-libraries</command> configuration element all together.
-          </para></listitem>
+          </para>
+          <note><para>
+          There is one case where this is not true: if Kea
+          is running with a configuration that contains a
+          <command>hooks-libraries</command> item, and that item is
+          removed and the configuration reloaded, the removal will be
+          ignored and the libraries remain loaded.  As a workaround,
+          instead of removing the <command>hooks-libraries</command>
+          item, change it to an empty list.  This will be fixed in a
+          future version of Kea.
+          </para></note>
+          </listitem>
         </itemizedlist>
       </para>
       <para>
