@@ -359,15 +359,41 @@ TEST_F(CSVLeaseFile4Test, invalidHeaderColumn) {
 }
 
 // Verifies that a lease file with more header columns than defined
-// columns will not open.
-TEST_F(CSVLeaseFile4Test, tooManyHeaderColumns) {
-    // Create 1.0 file
+// columns will downgrade.
+TEST_F(CSVLeaseFile4Test, downGrade) {
+    // Create 2.0 PLUS a column file
     io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,state,FUTRE_COL\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state,FUTURE_COL\n"
 
-    // Open the lease file.
+                  "192.0.2.3,06:07:08:09:3a:bc,,200,200,8,1,1,"
+                  "three.example.com,2,BOGUS\n");
+
+    // Lease file should open and report as needing downgrade.
     boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
-    ASSERT_THROW(lf->open(), CSVFileError);
+    ASSERT_NO_THROW(lf->open());
+    EXPECT_TRUE(lf->needsConversion());
+    EXPECT_EQ(util::VersionedCSVFile::NEEDS_DOWNGRADE,
+              lf->getInputSchemaState());
+    Lease4Ptr lease;
+
+    {
+    SCOPED_TRACE("First lease valid");
+    EXPECT_TRUE(lf->next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the third lease is correct.
+    EXPECT_EQ("192.0.2.3", lease->addr_.toText());
+    HWAddr hwaddr1(*lease->hwaddr_);
+    EXPECT_EQ("06:07:08:09:3a:bc", hwaddr1.toText(false));
+    EXPECT_FALSE(lease->client_id_);
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("three.example.com", lease->hostname_);
+    EXPECT_EQ(Lease::STATE_EXPIRED_RECLAIMED, lease->state_);
+    }
 }
 
 

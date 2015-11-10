@@ -163,7 +163,7 @@ LFCSetup::setup(const uint32_t lfc_interval,
                 bool run_once_now) {
 
     // If to nothing to do, punt
-    if (lfc_interval == 0 && run_once_now == false) {
+    if (lfc_interval == 0 && !run_once_now) {
         return;
     }
 
@@ -266,14 +266,14 @@ const int Memfile_LeaseMgr::MINOR_VERSION;
 Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : LeaseMgr(), lfc_setup_(), conn_(parameters)
     {
-    bool upgrade_needed = false;
+    bool conversion_needed = false;
 
     // Check the universe and use v4 file or v6 file.
     std::string universe = conn_.getParameter("universe");
     if (universe == "4") {
         std::string file4 = initLeaseFilePath(V4);
         if (!file4.empty()) {
-            upgrade_needed = loadLeasesFromFiles<Lease4,
+            conversion_needed = loadLeasesFromFiles<Lease4,
                                                  CSVLeaseFile4>(file4,
                                                                 lease_file4_,
                                                                 storage4_);
@@ -281,7 +281,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
     } else {
         std::string file6 = initLeaseFilePath(V6);
         if (!file6.empty()) {
-            upgrade_needed = loadLeasesFromFiles<Lease6,
+            conversion_needed = loadLeasesFromFiles<Lease6,
                                                  CSVLeaseFile6>(file6,
                                                                 lease_file6_,
                                                                 storage6_);
@@ -295,11 +295,11 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
    if (!persistLeases(V4) && !persistLeases(V6)) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
     } else  {
-        if (upgrade_needed) {
-            LOG_WARN(dhcpsrv_logger, DHCPRSV_MEMFILE_UPGRADING_LEASE_FILES)
+        if (conversion_needed) {
+            LOG_WARN(dhcpsrv_logger, DHCPRSV_MEMFILE_CONVERTING_LEASE_FILES)
                     .arg(MAJOR_VERSION).arg(MINOR_VERSION);
         }
-        lfcSetup(upgrade_needed);
+        lfcSetup(conversion_needed);
     }
 }
 
@@ -907,12 +907,12 @@ bool Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
     storage.clear();
 
     // Load the leasefile.completed, if exists.
-    bool upgrade_needed = false;
+    bool conversion_needed = false;
     lease_file.reset(new LeaseFileType(std::string(filename + ".completed")));
     if (lease_file->exists()) {
         LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                                MAX_LEASE_ERRORS);
-        upgrade_needed |= lease_file->needsUpgrading();
+        conversion_needed = conversion_needed || lease_file->needsConversion();
     } else {
         // If the leasefile.completed doesn't exist, let's load the leases
         // from leasefile.2 and leasefile.1, if they exist.
@@ -920,14 +920,14 @@ bool Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
         if (lease_file->exists()) {
             LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                                    MAX_LEASE_ERRORS);
-            upgrade_needed |= lease_file->needsUpgrading();
+            conversion_needed =  conversion_needed || lease_file->needsConversion();
         }
 
         lease_file.reset(new LeaseFileType(appendSuffix(filename, FILE_INPUT)));
         if (lease_file->exists()) {
             LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                                    MAX_LEASE_ERRORS);
-            upgrade_needed |= lease_file->needsUpgrading();
+            conversion_needed =  conversion_needed || lease_file->needsConversion();
         }
     }
 
@@ -940,9 +940,9 @@ bool Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
     lease_file.reset(new LeaseFileType(filename));
     LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                            MAX_LEASE_ERRORS, false);
-    upgrade_needed |= lease_file->needsUpgrading();
+    conversion_needed =  conversion_needed || lease_file->needsConversion();
 
-    return (upgrade_needed);
+    return (conversion_needed);
 }
 
 
@@ -970,7 +970,7 @@ Memfile_LeaseMgr::lfcCallback() {
 }
 
 void
-Memfile_LeaseMgr::lfcSetup(bool upgrade_needed) {
+Memfile_LeaseMgr::lfcSetup(bool conversion_needed) {
     std::string lfc_interval_str = "0";
     try {
         lfc_interval_str = conn_.getParameter("lfc-interval");
@@ -986,9 +986,9 @@ Memfile_LeaseMgr::lfcSetup(bool upgrade_needed) {
                   << lfc_interval_str << " specified");
     }
 
-    if (lfc_interval > 0 || upgrade_needed) {
+    if (lfc_interval > 0 || conversion_needed) {
         lfc_setup_.reset(new LFCSetup(boost::bind(&Memfile_LeaseMgr::lfcCallback, this)));
-        lfc_setup_->setup(lfc_interval, lease_file4_, lease_file6_, upgrade_needed);
+        lfc_setup_->setup(lfc_interval, lease_file4_, lease_file6_, conversion_needed);
     }
 }
 

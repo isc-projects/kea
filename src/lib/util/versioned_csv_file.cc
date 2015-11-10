@@ -19,7 +19,8 @@ namespace util {
 
 VersionedCSVFile::VersionedCSVFile(const std::string& filename)
     : CSVFile(filename), columns_(0), valid_column_count_(0),
-      minimum_valid_columns_(0) {
+      minimum_valid_columns_(0), input_header_count_(0),
+      input_schema_state_(CURRENT) {
 }
 
 VersionedCSVFile::~VersionedCSVFile() {
@@ -55,6 +56,11 @@ VersionedCSVFile::getValidColumnCount() const {
     return (valid_column_count_);
 }
 
+size_t
+VersionedCSVFile::getInputHeaderCount() const {
+    return (input_header_count_);
+}
+
 void
 VersionedCSVFile::open(const bool seek_to_end) {
     if (getColumnCount() == 0) {
@@ -75,13 +81,19 @@ VersionedCSVFile::recreate() {
     }
 
     CSVFile::recreate();
-    // For new files they always match. 
+    // For new files they always match.
     valid_column_count_ = getColumnCount();
+    input_header_count_ = getColumnCount();
+}
+
+VersionedCSVFile::InputSchemaState
+VersionedCSVFile::getInputSchemaState() const {
+    return (input_schema_state_);
 }
 
 bool
-VersionedCSVFile::needsUpgrading() const {
-    return (getValidColumnCount() < getColumnCount());
+VersionedCSVFile::needsConversion() const {
+    return (input_schema_state_ != CURRENT);
 }
 
 std::string
@@ -105,7 +117,7 @@ VersionedCSVFile::getSchemaVersion() const {
 const VersionedColumnPtr&
 VersionedCSVFile::getVersionedColumn(const size_t index) const {
     if (index >= getColumnCount()) {
-        isc_throw(isc::OutOfRange, "versioned column index " << index 
+        isc_throw(isc::OutOfRange, "versioned column index " << index
                   << " out of range;  CSV file : " << getFilename()
                   << " only has " << getColumnCount() << " columns ");
     }
@@ -115,7 +127,7 @@ VersionedCSVFile::getVersionedColumn(const size_t index) const {
 
 bool
 VersionedCSVFile::next(CSVRow& row) {
-    // Use base class to physicall read the row, but skip its row
+    // Use base class to physical read the row, but skip its row
     // validation
     CSVFile::next(row, true);
     if (row == CSVFile::EMPTY_ROW()) {
@@ -128,48 +140,54 @@ VersionedCSVFile::next(CSVRow& row) {
     // an invalid row.
     if (row.getValuesCount() < getValidColumnCount()) {
         std::ostringstream s;
-        s << "the size of the row '" << row << "' has too few valid columns "
+        s << " The row '" << row << "' has too few valid columns "
           << getValidColumnCount() << "' of the CSV file '"
           << getFilename() << "'";
         setReadMsg(s.str());
         return (false);
     }
 
-    // If we're upgrading, we need to add in any missing values
-    for (size_t index = row.getValuesCount(); index < getColumnCount();
-         ++index) {
-        row.append(columns_[index]->default_value_);
+    // If we have more values than columns defined, we need to
+    // check if we should "downgrade" the row. We will if the
+    // number of values we have matches the number of columns in
+    // input header.  If now we'll toss the row.
+    if (row.getValuesCount() > getColumnCount()) {
+        if (row.getValuesCount() != getInputHeaderCount()) {
+            std::ostringstream s;
+            s << " The row '" << row << "' has too many columns "
+              << getValidColumnCount() << "' of the CSV file '"
+              << getFilename() << "'";
+              setReadMsg(s.str());
+            return (false);
+        }
+
+        // We're downgrading a row, so toss the extra columns
+        row.trim(row.getValuesCount() - getColumnCount());
+    } else {
+        // If we're upgrading, we need to add in any missing values
+        for (size_t index = row.getValuesCount(); index < getColumnCount();
+            ++index) {
+            row.append(columns_[index]->default_value_);
+        }
     }
 
-    return (CSVFile::validate(row));
+    return (true);
 }
 
 bool
 VersionedCSVFile::validateHeader(const CSVRow& header) {
-    // @todo does this ever make sense? What would be the point of a versioned
-    // file that has no defined columns?
     if (getColumnCount() == 0) {
-        return (true);
+        isc_throw(VersionedCSVFileError,
+                  "cannot validate header, no schema has been defined");
     }
 
-    // If there are more values in the header than defined columns
-    // then the lease file must be from a newer version, so bail out.
-    // @todo - we may wish to remove this constraint as it prohibits one
-    // from usig a newer schema file with older schema code.
-    if (header.getValuesCount() > getColumnCount()) {
-        std::ostringstream s;
-        s << " - header has " << header.getValuesCount()  << " column(s), "
-          << "it should not have more than " << getColumnCount();
-
-        setReadMsg(s.str());
-        return (false);
-    }
+    input_header_count_ = header.getValuesCount();
 
     // Iterate over the number of columns in the header, testing
     // each against the defined column in the same position.
     // If there is a mismatch, bail.
     size_t i = 0;
-    for (  ; i < header.getValuesCount(); ++i) {
+    for (  ; i < getInputHeaderCount() && i < getColumnCount(); ++i) {
         if (getColumnName(i) != header.readAt(i)) {
             std::ostringstream s;
             s << " - header contains an invalid column: '"
@@ -181,10 +199,10 @@ VersionedCSVFile::validateHeader(const CSVRow& header) {
 
     // If we found too few valid columns, then we cannot convert this
     // file.  It's too old, too corrupt, or not a Kea file.
-    if (i < minimum_valid_columns_) {
+    if (i < getMinimumValidColumns()) {
         std::ostringstream s;
         s << " - header has only " << i << " valid column(s), "
-          << "it must have at least " << minimum_valid_columns_;
+          << "it must have at least " << getMinimumValidColumns();
         setReadMsg(s.str());
         return (false);
     }
@@ -194,6 +212,19 @@ VersionedCSVFile::validateHeader(const CSVRow& header) {
     // version of the lease file.  We'll need this value to validate
     // and upgrade data rows.
     valid_column_count_ = i;
+
+    if (getValidColumnCount() < getColumnCount()) {
+        input_schema_state_ = NEEDS_UPGRADE;
+    } else if (getInputHeaderCount() > getColumnCount()) {
+        // If there are more values in the header than defined columns
+        // then, we'll drop the extra.  This allows someone to attempt to
+        // downgrade if need be.
+        input_schema_state_ = NEEDS_DOWNGRADE;
+        std::ostringstream s;
+        s << " - header has " << getInputHeaderCount() - getColumnCount()
+          << " extra column(s), these will be ignored";
+        setReadMsg(s.str());
+    }
 
     return (true);
 }
