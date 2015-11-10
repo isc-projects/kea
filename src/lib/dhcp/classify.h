@@ -20,11 +20,14 @@
 
 /// @file   classify.h
 ///
-/// @brief Defines basic elements of client classification.
+/// @brief Defines elements for storing the names of client classes
 ///
-/// This file defines common elements used for client classification.
-/// It is simple for now, but the complexity involved in client
-/// classification is expected to grow significantly.
+/// This file defines common elements used to track the client classes
+/// that may be associated with a given packet.  In order to minimize the
+/// exposure of the DHCP library to server side concepts such as client
+/// classification the classes herein provide a mechanism to maintain lists
+/// of class names, rather than the classes they represent.  It is the
+/// upper layers' perogative to use these names as they see fit.
 ///
 /// @todo This file should be moved to dhcpsrv eventually as the classification
 /// is server side concept. Client has no notion of classifying incoming server
@@ -36,10 +39,10 @@ namespace isc {
 
 namespace dhcp {
 
-    /// Definition of a single class.
+    /// @brief Defines a single class name.
     typedef std::string ClientClass;
 
-    /// @brief Container for storing client classes
+    /// @brief Container for storing client class names
     ///
     /// Depending on how you look at it, this is either a little more than just
     /// a set of strings or a client classifier that performs access control.
