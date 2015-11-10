@@ -117,6 +117,14 @@ public:
     /// @c CSVRow::getValuesCount.
     std::string readAt(const size_t at) const;
 
+    /// @brief Trims a given number of elements from the end of a row
+    ///
+    /// @param number of elements to trim
+    ///
+    /// @throw CSVFileError if the number to trim is larger than
+    /// then the number of elements
+    void trim(const size_t count);
+
     /// @brief Retrieves a value from the internal container.
     ///
     /// This method is reads a value from the internal container and converts

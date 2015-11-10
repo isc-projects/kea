@@ -118,6 +118,18 @@ public:
 
     /// @brief The sole lease manager constructor
     ///
+    /// This method:
+    /// - Initializes the new instance based on the parameters given
+    /// - Loads (or creates) the appropriate lease file(s)
+    /// - Initiates the periodic scheduling of the LFC (if enabled)
+    ///
+    /// If any of the files loaded require conversion to the current schema
+    /// (upgrade or downgrade), @c lfcSetup() will be invoked with its
+    /// @c run_once_now parameter set to true.  This causes lfcSetup() to
+    /// invoke the LFC process immediately regardless of whether LFC is
+    /// enabled. This ensures that any files which need conversion are
+    /// converted automatically.
+    ///
     /// dbconfig is a generic way of passing parameters. Parameters
     /// are passed in the "name=value" format, separated by spaces.
     /// Values may be enclosed in double quotes, if needed.
@@ -549,6 +561,9 @@ private:
     /// @tparam LeaseFileType @c CSVLeaseFile4 or @c CSVLeaseFile6.
     /// @tparam StorageType @c Lease4Storage or @c Lease6Storage.
     ///
+    /// @return Returns true if any of the files loaded need conversion from
+    /// an older or newer schema.
+    ///
     /// @throw CSVFileError when parsing any of the lease files fails.
     /// @throw DbOpenError when it is found that the LFC is in progress.
     template<typename LeaseObjectType, typename LeaseFileType,
@@ -626,10 +641,11 @@ private:
     /// Kea build directory, the @c KEA_LFC_EXECUTABLE environmental
     /// variable should be set to hold an absolute path to the kea-lfc
     /// excutable.
-    /// @param upgrade_needed flag that indicates input lease file(s) are
-    /// from an earlier schema version and need conversion.  This value is
-    /// passed through to LFCSetup::setup() via its run_once_now parameter.
-    void lfcSetup(bool upgrade_needed = false);
+    /// @param conversion_needed flag that indicates input lease file(s) are
+    /// schema do not match the current schema (older or newer), and need
+    /// conversion. This value is passed through to LFCSetup::setup() via its
+    /// run_once_now parameter.
+    void lfcSetup(bool conversion_needed = false);
 
     /// @brief Performs a lease file cleanup for DHCPv4 or DHCPv6.
     ///
