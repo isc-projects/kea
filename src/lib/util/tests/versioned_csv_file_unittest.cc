@@ -154,20 +154,21 @@ TEST_F(VersionedCSVFileTest, addColumn) {
     ASSERT_TRUE(exists());
 
     // We should have 3 defined columns
-    EXPECT_EQ(3, csv->getColumnCount());
-
-    // Number valid columns should match defined columns
-    EXPECT_EQ(3, csv->getValidColumnCount());
-
+    // Input Header should match defined columns on new files
+    // Valid columns should match defined columns on new files
     // Minium valid columns wasn't set. (Remember it's optional)
+    EXPECT_EQ(3, csv->getColumnCount());
+    EXPECT_EQ(3, csv->getInputHeaderCount());
+    EXPECT_EQ(3, csv->getValidColumnCount());
     EXPECT_EQ(0, csv->getMinimumValidColumns());
-
-    // Upgrade flag should be false
-    EXPECT_EQ(false, csv->needsUpgrading());
 
     // Schema versions for new files should always match
     EXPECT_EQ("3.0", csv->getInputSchemaVersion());
     EXPECT_EQ("3.0", csv->getSchemaVersion());
+
+    // Input Schema State should be current for new files
+    EXPECT_EQ(VersionedCSVFile::CURRENT, csv->getInputSchemaState());
+    EXPECT_FALSE(csv->needsConversion());
 
     // Make sure we can't add columns (even unique) when the file is open.
     ASSERT_THROW(csv->addColumn("zoo", "3.0", ""), CSVFileError);
@@ -178,12 +179,69 @@ TEST_F(VersionedCSVFileTest, addColumn) {
     EXPECT_NO_THROW(csv->addColumn("zoo", "3.0", ""));
 }
 
-// Verifies the basic ability to upgrade valid files. 
+// Verifies that a current schema version file loads correctly.
+TEST_F(VersionedCSVFileTest, currentSchemaTest) {
+
+    // Create our versioned file, with three columns
+    boost::scoped_ptr<VersionedCSVFile> csv(new VersionedCSVFile(testfile_));
+    ASSERT_NO_THROW(csv->addColumn("animal", "2.0", ""));
+    ASSERT_NO_THROW(csv->addColumn("color", "2.0", "grey"));
+    ASSERT_NO_THROW(csv->addColumn("age", "2.0", "0"));
+
+    // Write a file compliant with the current schema version.
+    writeFile("animal,color,age\n"
+              "cat,black,2\n"
+              "lion,yellow,17\n"
+              "dog,brown,5\n");
+
+    // Header should pass validation and allow the open to succeed.
+    ASSERT_NO_THROW(csv->open());
+
+    // For schema current file We should have:
+    // 3 defined columns
+    // 3 columns total found in the header
+    // 3 valid columns found in the header
+    // Minium valid columns wasn't set. (Remember it's optional)
+    EXPECT_EQ(3, csv->getColumnCount());
+    EXPECT_EQ(3, csv->getInputHeaderCount());
+    EXPECT_EQ(3, csv->getValidColumnCount());
+    EXPECT_EQ(0, csv->getMinimumValidColumns());
+
+    // Input schema and current schema should both be  2.0
+    EXPECT_EQ("2.0", csv->getInputSchemaVersion());
+    EXPECT_EQ("2.0", csv->getSchemaVersion());
+
+    // Input Schema State should be CURRENT
+    EXPECT_EQ(VersionedCSVFile::CURRENT, csv->getInputSchemaState());
+    EXPECT_FALSE(csv->needsConversion());
+
+    // First row is correct.
+    CSVRow row;
+    ASSERT_TRUE(csv->next(row));
+    EXPECT_EQ("cat", row.readAt(0));
+    EXPECT_EQ("black", row.readAt(1));
+    EXPECT_EQ("2", row.readAt(2));
+
+    // Second row is correct.
+    ASSERT_TRUE(csv->next(row));
+    EXPECT_EQ("lion", row.readAt(0));
+    EXPECT_EQ("yellow", row.readAt(1));
+    EXPECT_EQ("17", row.readAt(2));
+
+    // Third row is correct.
+    ASSERT_TRUE(csv->next(row));
+    EXPECT_EQ("dog", row.readAt(0));
+    EXPECT_EQ("brown", row.readAt(1));
+    EXPECT_EQ("5", row.readAt(2));
+}
+
+
+// Verifies the basic ability to upgrade valid files.
 // It starts with a version 1.0 file and updates
 // it through two schema evolutions.
 TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
 
-    // Create version 1.0 schema  CSV file 
+    // Create version 1.0 schema  CSV file
     writeFile("animal\n"
               "cat\n"
               "lion\n"
@@ -198,21 +256,23 @@ TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
     // Header should pass validation and allow the open to succeed.
     ASSERT_NO_THROW(csv->open());
 
-    // We should have 2 defined columns
-    EXPECT_EQ(2, csv->getColumnCount());
-
-    // We should have found 1 valid column in the header
-    EXPECT_EQ(1, csv->getValidColumnCount());
-
+    // We should have:
+    // 2 defined columns
+    // 1 column found in the header
+    // 1 valid column in the header
     // Minium valid columns wasn't set. (Remember it's optional)
+    EXPECT_EQ(2, csv->getColumnCount());
+    EXPECT_EQ(1, csv->getInputHeaderCount());
+    EXPECT_EQ(1, csv->getValidColumnCount());
     EXPECT_EQ(0, csv->getMinimumValidColumns());
-
-    // Upgrade flag should be true
-    EXPECT_EQ(true, csv->needsUpgrading());
 
     // Input schema should be 1.0, while our current schema should be 2.0
     EXPECT_EQ("1.0", csv->getInputSchemaVersion());
     EXPECT_EQ("2.0", csv->getSchemaVersion());
+
+    // Input Schema State should be NEEDS_UPGRADE
+    EXPECT_EQ(VersionedCSVFile::NEEDS_UPGRADE, csv->getInputSchemaState());
+    EXPECT_TRUE(csv->needsConversion());
 
     // First row is correct.
     CSVRow row;
@@ -256,21 +316,23 @@ TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
     // Header should pass validation and allow the open to succeed
     ASSERT_NO_THROW(csv->open());
 
-    // We should have 2 defined columns
-    EXPECT_EQ(3, csv->getColumnCount());
-
-    // We should have found 1 valid column in the header
-    EXPECT_EQ(1, csv->getValidColumnCount());
-
+    // We should have:
+    // 3 defined columns
+    // 1 column found in the header
+    // 1 valid column in the header
     // Minium valid columns wasn't set. (Remember it's optional)
+    EXPECT_EQ(3, csv->getColumnCount());
+    EXPECT_EQ(1, csv->getInputHeaderCount());
+    EXPECT_EQ(1, csv->getValidColumnCount());
     EXPECT_EQ(0, csv->getMinimumValidColumns());
-
-    // Upgrade flag should be true
-    EXPECT_EQ(true, csv->needsUpgrading());
 
     // Make sure schema versions are accurate
     EXPECT_EQ("1.0", csv->getInputSchemaVersion());
     EXPECT_EQ("3.0", csv->getSchemaVersion());
+
+    // Input Schema State should be NEEDS_UPGRADE
+    EXPECT_EQ(VersionedCSVFile::NEEDS_UPGRADE, csv->getInputSchemaState());
+    EXPECT_TRUE(csv->needsConversion());
 
     // First row is correct.
     ASSERT_TRUE(csv->next(row));
@@ -298,7 +360,7 @@ TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
 }
 
 TEST_F(VersionedCSVFileTest, minimumValidColumn) {
-    // Create version 1.0 schema  CSV file 
+    // Create version 1.0 schema  CSV file
     writeFile("animal\n"
               "cat\n"
               "lion\n"
@@ -311,7 +373,7 @@ TEST_F(VersionedCSVFileTest, minimumValidColumn) {
     ASSERT_NO_THROW(csv->addColumn("color", "2.0", "blue"));
     ASSERT_NO_THROW(csv->addColumn("age", "3.0", "21"));
 
-    // Verify we can't set minimum columns with a non-existant column
+    // Verify we can't set minimum columns with a non-existent column
     EXPECT_THROW(csv->setMinimumValidColumns("bogus"), VersionedCSVFileError);
 
     // Set the minimum number of columns to "color"
@@ -346,42 +408,74 @@ TEST_F(VersionedCSVFileTest, minimumValidColumn) {
 
 TEST_F(VersionedCSVFileTest, invalidHeaderColumn) {
 
-    // Create version 2.0 schema  CSV file 
-    writeFile("animal,colour\n"
-              "cat,red\n"
-              "lion,green\n");
-
-    // Create our versioned file, with three columns, one for each
-    // schema version
+    // Create our version 2.0 schema file
     boost::scoped_ptr<VersionedCSVFile> csv(new VersionedCSVFile(testfile_));
     ASSERT_NO_THROW(csv->addColumn("animal", "1.0", ""));
     ASSERT_NO_THROW(csv->addColumn("color", "2.0", "blue"));
+
+    // Create a file with the correct number of columns but a wrong column name
+    writeFile("animal,colour\n"
+              "cat,red\n"
+              "lion,green\n");
 
     // Header validation should fail, we have an invalid column
     ASSERT_THROW(csv->open(), CSVFileError);
 }
 
-TEST_F(VersionedCSVFileTest, tooManyHeaderColumns) {
-
-    // Create version 2.0 schema  CSV file 
-    writeFile("animal,color,age\n,"
-              "cat,red\n"
-              "lion,green\n");
-
-    // Create our versioned file, with three columns, one for each
-    // schema version
+TEST_F(VersionedCSVFileTest, downGrading) {
+    // Create our version 2.0 schema file
     boost::scoped_ptr<VersionedCSVFile> csv(new VersionedCSVFile(testfile_));
     ASSERT_NO_THROW(csv->addColumn("animal", "1.0", ""));
     ASSERT_NO_THROW(csv->addColumn("color", "2.0", "blue"));
 
-    // Header validation should fail, we have too many columns 
-    ASSERT_THROW(csv->open(), CSVFileError);
+    // Create schema 2.0 file PLUS an extra column
+    writeFile("animal,color,age\n"
+              "cat,red,5\n"
+              "lion,green,8\n");
+
+    // Header should validate and file should open.
+    ASSERT_NO_THROW(csv->open());
+
+    // We should have:
+    // 2 defined columns
+    // 3 columns found in the header
+    // 2 valid columns in the header
+    // Minium valid columns wasn't set. (Remember it's optional)
+    EXPECT_EQ(2, csv->getColumnCount());
+    EXPECT_EQ(3, csv->getInputHeaderCount());
+    EXPECT_EQ(2, csv->getValidColumnCount());
+    EXPECT_EQ(0, csv->getMinimumValidColumns());
+
+    // Input schema and current schema should both be 2.0
+    EXPECT_EQ("2.0", csv->getInputSchemaVersion());
+    EXPECT_EQ("2.0", csv->getSchemaVersion());
+
+    // Input Schema State should be NEEDS_DOWNGRADE
+    EXPECT_EQ(VersionedCSVFile::NEEDS_DOWNGRADE, csv->getInputSchemaState());
+    EXPECT_TRUE(csv->needsConversion());
+
+    // First row is correct.
+    CSVRow row;
+    EXPECT_TRUE(csv->next(row));
+    EXPECT_EQ("cat", row.readAt(0));
+    EXPECT_EQ("red", row.readAt(1));
+
+    // No data beyond the second column
+    EXPECT_THROW(row.readAt(2), CSVFileError);
+
+    // Second row is correct.
+    ASSERT_TRUE(csv->next(row));
+    EXPECT_EQ("lion", row.readAt(0));
+    EXPECT_EQ("green", row.readAt(1));
+
+    // No data beyond the second column
+    EXPECT_THROW(row.readAt(2), CSVFileError);
 }
 
 
 TEST_F(VersionedCSVFileTest, rowChecking) {
     // Create version 2.0 schema CSV file with a
-    // - valid header 
+    // - valid header
     // - row 0 has too many values
     // - row 1 is valid
     // - row 3 is too few values

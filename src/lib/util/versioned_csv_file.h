@@ -85,39 +85,56 @@ typedef boost::shared_ptr<VersionedColumn> VersionedColumnPtr;
 /// the column found in the header to the columns defined in the schema. The
 /// columns must match both by name and the order in which they occur.
 ///
-/// 1. If there are fewer columns in the header than in the schema, the file
+/// -# If there are fewer columns in the header than in the schema, the file
 /// is presumed to be an earlier schema version and will be upgraded as it is
 /// read.  There is an ability to mark a specific column as being the minimum
 /// column which must be present, see @ref VersionedCSVFile::
 /// setMinimumValidColumns().  If the header does contain match up to this
 /// minimum column, the file is presumed to be too old to upgrade and the
-/// open will fail.
+/// open will fail.  A valid, upgradable file will have an input schema
+/// state of VersionedCSVFile::NEEDS_UPGRADE.
 ///
-/// 2. If there is a mismatch between a found column name and the column name
+/// -# If there is a mismatch between a found column name and the column name
 /// defined for that position in the row, the file is presumed to be invalid
 /// and the open will fail.
+///
+/// -# If the content of the header matches exactly the columns defined in
+/// the schema, the file is considered to match the schema exactly and the
+/// input schema state will VersionedCSVFile::CURRENT.
+///
+/// -# If there columns in the header beyond all of the columns defined in
+/// the schema (i.e the schema is a subset of the header), then the file
+/// is presumed to be from a newer version of Kea and can be downgraded. The
+/// input schema state fo the file will be set to
+/// VersionedCSVFile::NEEDS_DOWNGRADE.
 ///
 /// After successfully opening a file,  rows are read one at a time via
 /// @ref VersionedCSVFile::next().  Each data row is expected to have at least
 /// the same number of columns as were found in the header. Any row which as
 /// fewer values is discarded as invalid.  Similarly, any row which is found
-/// to have more values than are defined in the schema is discarded as invalid
-/// (@todo, consider removing this constraint as it would prohibit reading a
-/// newer schema file with an older server).
+/// to have more values than were found in the header is discarded as invalid.
 ///
-/// When a row is found to have fewer than the defined number of columns,
-/// the values for each missing column is filled in with the default value
-/// specified by that column's descriptor.  In this manner rows from earlier
-/// schemas are upgraded to the current schema.
+/// When upgrading a row, the values for each missing column is filled in
+/// with the default value specified by that column's descriptor.  When
+/// downgrading a row, extraneous values are dropped from the row.
 ///
-/// It is important to note that upgrading a file does NOT alter the physical
-/// file itself.  Rather the conversion occurs after the raw data has been read
-/// but before it is passed to caller.
+/// It is important to note that upgrading or downgrading a file does NOT
+/// alter the physical file itself.  Rather the conversion occurs after the
+/// raw data has been read but before it is passed to caller.
 ///
 /// Also note that there is currently no support for writing out a file in
 /// anything other than the current schema.
 class VersionedCSVFile : public CSVFile {
 public:
+
+    /// @brief Possible input file schema states.
+    /// Used to categorize the input file's schema, relative to the defined
+    /// schema.
+    enum InputSchemaState {
+        CURRENT,
+        NEEDS_UPGRADE,
+        NEEDS_DOWNGRADE
+    };
 
     /// @brief Constructor.
     ///
@@ -163,6 +180,8 @@ public:
     /// is from an earlier schema.  This value is zero until the file has
     /// been opened.
     size_t getValidColumnCount() const;
+
+    size_t getInputHeaderCount() const;
 
     /// @brief Opens existing file or creates a new one.
     ///
@@ -237,11 +256,18 @@ public:
     /// @trow OutOfRange exception if the index is invalid
     const VersionedColumnPtr& getVersionedColumn(const size_t index) const;
 
-    /// @brief Returns true if the opened file is needs to be upgraded
+    /// @brief Fetches the state of the input file's schema
     ///
-    /// @return true if the file's valid column count is greater than 0 and
-    /// is less than the defined number of columns
-    bool needsUpgrading() const;
+    /// Reflects that state of the input file's schema relative to the
+    /// defined schema as a enum, InputSchemaState.
+    ///
+    /// @return VersionedCSVFile::CURRENT if the input file schema matches
+    /// the defined schema, NEEDS_UPGRADE if the input file schema is older,
+    /// and NEEDS_DOWNGRADE if it is newer
+    enum InputSchemaState getInputSchemaState() const;
+
+    /// @brief Returns true if the input file schema state is not CURRENT
+    bool needsConversion() const;
 
 protected:
 
@@ -272,6 +298,14 @@ private:
     /// @brief Minimum number of valid columns an input file must contain.
     /// If an input file does not meet this number it cannot be upgraded.
     size_t minimum_valid_columns_;
+
+    /// @brief The number of columns found in the input header row
+    /// This value represent the number of columns present, in the header
+    /// valid or otherwise.
+    size_t input_header_count_;
+
+    /// @brief The state of the input schema in relation to the current schema
+    enum InputSchemaState input_schema_state_;
 };
 
 

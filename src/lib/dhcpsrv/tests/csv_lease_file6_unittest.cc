@@ -413,15 +413,52 @@ TEST_F(CSVLeaseFile6Test, invalidHeaderColumn) {
 }
 
 // Verifies that a lease file with more header columns than defined
-// columns will not open.
-TEST_F(CSVLeaseFile6Test, tooManyHeaderColumns) {
-    io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+// columns will open as needing a downgrade.
+TEST_F(CSVLeaseFile6Test, downGrade) {
+    // Create a mixed schema file
+    io_.writeFile(
+             // schema 1.0 header
+              "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-              "hwaddr,state,FUTURE_COL\n");
+              "hwaddr,state,FUTURE_COL\n"
 
-    // Open should fail.
+              // schema 3.0 record - has hwaddr and state
+              "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03,"
+              "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1,"
+              "BOGUS\n");
+
+    // Open should succeed in the event someone is downgrading.
     boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
-    ASSERT_THROW(lf->open(), CSVFileError);
+    ASSERT_NO_THROW(lf->open());
+    EXPECT_TRUE(lf->needsConversion());
+    EXPECT_EQ(util::VersionedCSVFile::NEEDS_DOWNGRADE,
+              lf->getInputSchemaState());
+
+
+    Lease6Ptr lease;
+    {
+    SCOPED_TRACE("First lease valid");
+    EXPECT_TRUE(lf->next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the lease attributes are correct.
+    EXPECT_EQ("2001:db8:1::3", lease->addr_.toText());
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03", lease->duid_->toText());
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(Lease::TYPE_NA, lease->type_);
+    EXPECT_EQ(7, lease->iaid_);
+    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("three.example.com", lease->hostname_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_EQ("0a:0b:0c:0d:0e", lease->hwaddr_->toText(false));
+    EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    }
 }
 
 
