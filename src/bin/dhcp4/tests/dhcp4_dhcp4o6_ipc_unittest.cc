@@ -119,4 +119,55 @@ TEST_F(Dhcp4o6IpcTest, receive) {
     EXPECT_EQ("2001:db8:1::123", pkt6_received->getRemoteAddr().toText());
 }
 
+// This test verifies that message with multiple DHCPv4 query options
+// is rejected.
+TEST_F(Dhcp4o6IpcTest, receiveMultipleQueries) {
+    // Create instance of the IPC endpoint under test.
+    Dhcp4o6Ipc& ipc = Dhcp4o6Ipc::instance();
+    // Create instance of the IPC endpoint being used as a source of messages.
+    TestIpc src_ipc(TEST_PORT, TestIpc::ENDPOINT_TYPE_V6);
+
+    // Open both endpoints.
+    ASSERT_NO_THROW(ipc.open());
+    ASSERT_NO_THROW(src_ipc.open());
+
+    // Create message to be sent over IPC.
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 1234));
+    // Add two DHCPv4 query options.
+    pkt->addOption(createDHCPv4MsgOption());
+    pkt->addOption(createDHCPv4MsgOption());
+    pkt->setIface("eth0");
+    pkt->setRemoteAddr(IOAddress("2001:db8:1::123"));
+    ASSERT_NO_THROW(pkt->pack());
+
+    // Send message.
+    ASSERT_NO_THROW(src_ipc.send(pkt));
+    // Reception handler should throw exception.
+    EXPECT_THROW(IfaceMgr::instance().receive6(1, 0), Dhcp4o6IpcError);
+}
+
+// This test verifies that message with no DHCPv4 query options is rejected.
+TEST_F(Dhcp4o6IpcTest, receiveNoQueries) {
+    // Create instance of the IPC endpoint under test.
+    Dhcp4o6Ipc& ipc = Dhcp4o6Ipc::instance();
+    // Create instance of the IPC endpoint being used as a source of messages.
+    TestIpc src_ipc(TEST_PORT, TestIpc::ENDPOINT_TYPE_V6);
+
+    // Open both endpoints.
+    ASSERT_NO_THROW(ipc.open());
+    ASSERT_NO_THROW(src_ipc.open());
+
+    // Create message to be sent over IPC without DHCPv4 query option.
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 1234));
+    pkt->setIface("eth0");
+    pkt->setRemoteAddr(IOAddress("2001:db8:1::123"));
+    ASSERT_NO_THROW(pkt->pack());
+
+    // Send message.
+    ASSERT_NO_THROW(src_ipc.send(pkt));
+    // Reception handler should throw exception.
+    EXPECT_THROW(IfaceMgr::instance().receive6(1, 0), Dhcp4o6IpcError);
+}
+
+
 } // end of anonymous namespace
