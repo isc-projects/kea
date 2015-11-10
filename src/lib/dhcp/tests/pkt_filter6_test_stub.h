@@ -36,11 +36,10 @@ public:
     /// @brief Constructor.
     PktFilter6TestStub();
 
-    /// @brief Simulate opening of the socket.
+    /// @brief Open a socket.
     ///
-    /// This function simulates opening a primary socket. In reality, it doesn't
-    /// open a socket but the socket descriptor returned in the SocketInfo
-    /// structure is always set to 0.
+    /// This function opens a socket. This socket is bound to any address
+    /// and port. The select() function may be called on this socket.
     ///
     /// @param iface An interface descriptor.
     /// @param addr Address on the interface to be used to send packets.
@@ -50,8 +49,7 @@ public:
     ///
     /// @note All parameters are ignored.
     ///
-    /// @return A SocketInfo structure with the socket descriptor set to 0. The
-    /// fallback socket descriptor is set to a negative value.
+    /// @return A SocketInfo structure with the socket descriptor.
     virtual SocketInfo openSocket(const Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
                                   const uint16_t port,

@@ -111,6 +111,7 @@ TEST_F(Dhcp4o6IpcTest, receive) {
     ASSERT_NO_THROW(src_ipc.send(pkt));
     ASSERT_NO_THROW(IfaceMgr::instance().receive6(1, 0));
 
+
     // The stub packet filter exposes static function to retrieve messages
     // sent over the fake sockets/interfaces. This is the message that the
     // IPC endpoint should forward to the client after receiving it
