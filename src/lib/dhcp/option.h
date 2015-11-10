@@ -47,6 +47,8 @@ typedef boost::shared_ptr<Option> OptionPtr;
 
 /// A collection of DHCP (v4 or v6) options
 typedef std::multimap<unsigned int, OptionPtr> OptionCollection;
+/// A poitner to an OptionCollection
+typedef boost::shared_ptr<OptionCollection> OptionCollectionPtr;
 
 /// @brief This type describes a callback function to parse options from buffer.
 ///

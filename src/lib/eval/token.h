@@ -35,6 +35,8 @@ typedef boost::shared_ptr<Token> TokenPtr;
 /// [2] = == operator (TokenEqual object)
 typedef std::vector<TokenPtr> Expression;
 
+typedef boost::shared_ptr<Expression> ExpressionPtr;
+
 /// Evaluated values are stored as a stack of strings
 typedef std::stack<std::string> ValueStack;
 
