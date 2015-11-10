@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+#include <asiolink/io_address.h>
 #include <dhcp/pkt4o6.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
@@ -23,6 +24,7 @@
 #include <stdint.h>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
@@ -101,6 +103,7 @@ TEST_F(Dhcp4o6IpcTest, receive) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 1234));
     pkt->addOption(createDHCPv4MsgOption());
     pkt->setIface("eth0");
+    pkt->setRemoteAddr(IOAddress("2001:db8:1::123"));
     ASSERT_NO_THROW(pkt->pack());
 
     // Send and wait up to 1 second to receive it.
@@ -110,6 +113,10 @@ TEST_F(Dhcp4o6IpcTest, receive) {
     // Make sure that the message has been received.
     Pkt4o6Ptr pkt_received = ipc.getReceived();
     ASSERT_TRUE(pkt_received);
+    Pkt6Ptr pkt6_received = pkt_received->getPkt6();
+    ASSERT_TRUE(pkt6_received);
+    EXPECT_EQ("eth0", pkt6_received->getIface());
+    EXPECT_EQ("2001:db8:1::123", pkt6_received->getRemoteAddr().toText());
 }
 
 } // end of anonymous namespace
