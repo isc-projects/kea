@@ -90,6 +90,13 @@ public:
     /// @return true if multicast join was successful
     static bool joinMulticast(int sock, const std::string& ifname,
                               const std::string & mcast);
+
+    /// @brief Retrieve next sent message.
+    ///
+    /// @return Pointer to the next sent message or NULL if there are no
+    /// more messages.
+    static Pkt6Ptr popSent();
+
 };
 
 } // namespace isc::dhcp::test

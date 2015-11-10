@@ -13,14 +13,25 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-
 #include <dhcp/tests/pkt_filter6_test_stub.h>
+#include <list>
+
+namespace {
+
+/// @brief Retrieves a queue of sent messages.
+std::list<isc::dhcp::Pkt6Ptr>& getSent() {
+    static std::list<isc::dhcp::Pkt6Ptr> sent;
+    return (sent);
+}
+
+}
 
 namespace isc {
 namespace dhcp {
 namespace test {
 
 PktFilter6TestStub::PktFilter6TestStub() {
+    getSent().clear();
 }
 
 SocketInfo
@@ -42,8 +53,20 @@ PktFilter6TestStub::joinMulticast(int, const std::string&,
 }
 
 int
-PktFilter6TestStub::send(const Iface&, uint16_t, const Pkt6Ptr&) {
+PktFilter6TestStub::send(const Iface&, uint16_t, const Pkt6Ptr& pkt) {
+    getSent().push_back(pkt);
     return (0);
+}
+
+Pkt6Ptr
+PktFilter6TestStub::popSent() {
+    std::list<Pkt6Ptr>& sent = getSent();
+    if (sent.empty()) {
+        return (Pkt6Ptr());
+    }
+    Pkt6Ptr pkt = sent.front();
+    sent.pop_front();
+    return (pkt);
 }
 
 }
