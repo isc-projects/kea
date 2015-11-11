@@ -20,9 +20,10 @@ namespace dhcp {
 //********** ClientClassDef ******************//
 
 ClientClassDef::ClientClassDef(const std::string& name,
-                         const ExpressionPtr& match_expr,
-                         const OptionCollectionPtr& options)
+                               const ExpressionPtr& match_expr,
+                               const OptionCollectionPtr& options)
     : name_(name), match_expr_(match_expr), options_(options) {
+
     // Name can't be blank
     if (name_.empty()) {
         isc_throw(BadValue, "ClientClassDef name cannot be empty");
@@ -45,7 +46,7 @@ ClientClassDef::getName() const {
 
 void
 ClientClassDef::setName(const std::string& name) {
-  name_ = name;
+    name_ = name;
 }
 
 const ExpressionPtr&
@@ -55,7 +56,7 @@ ClientClassDef::getMatchExpr() const {
 
 void
 ClientClassDef::setMatchExpr(const ExpressionPtr& match_expr) {
-  match_expr_ = match_expr;
+    match_expr_ = match_expr;
 }
 
 const OptionCollectionPtr&
@@ -96,8 +97,8 @@ ClientClassDictionary::~ClientClassDictionary() {
 
 void
 ClientClassDictionary::addClass(const std::string& name,
-                          const ExpressionPtr& match_expr,
-                          const OptionCollectionPtr& options) {
+                                const ExpressionPtr& match_expr,
+                                const OptionCollectionPtr& options) {
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, options));
     addClass(cclass);
 }
@@ -114,7 +115,7 @@ ClientClassDictionary::addClass(ClientClassDefPtr& class_def) {
                   << class_def->getName() << " has already been defined");
     }
 
-   (*classes_)[class_def->getName()] = class_def;
+    (*classes_)[class_def->getName()] = class_def;
 }
 
 ClientClassDefPtr
