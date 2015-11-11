@@ -68,7 +68,7 @@ CSVRow::writeAt(const size_t at, const char* value) {
 void
 CSVRow::trim(const size_t count) {
     checkIndex(count);
-    values_.erase(values_.end() - count, values_.end());
+    values_.resize(values_.size() - count);
 }
 
 std::ostream& operator<<(std::ostream& os, const CSVRow& row) {

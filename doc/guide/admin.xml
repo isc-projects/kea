@@ -159,7 +159,7 @@
         During startup the servers will check the schema version of the lease
         files against their own.  If there is a mismatch, the servers will
         automatically launch the LFC process to convert the files to the
-        server's schema vesion.  While this mechanism is primarily meant to
+        server's schema version.  While this mechanism is primarily meant to
         ease the process of upgrading to newer versions of Kea, it can also
         be used for downgrading should the need arise.  When upgrading, any
         values not present in the original lease files will be assigned
