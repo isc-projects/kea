@@ -27,18 +27,6 @@ EvalContext::~EvalContext()
 }
 
 bool
-EvalContext::parseFile(const std::string &filename)
-{
-    file_ = filename;
-    scanFileBegin();
-    isc::eval::EvalParser parser(*this);
-    parser.set_debug_level(trace_parsing_);
-    int res = parser.parse();
-    scanFileEnd();
-    return (res == 0);
-}
-
-bool
 EvalContext::parseString(const std::string& str)
 {
     file_ = "<string>";

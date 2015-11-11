@@ -50,24 +50,12 @@ public:
     /// @brief Parsed expression (output tokens are stored here)
     isc::dhcp::Expression expression;
 
-    /// @brief Method called before scanning starts on a file.
-    void scanFileBegin();
-
-    /// @brief Method called after the last tokens are scanned from a file.
-    void scanFileEnd();
-    
     /// @brief Method called before scanning starts on a string.
     void scanStringBegin();
 
     /// @brief Method called after the last tokens are scanned from a string.
     void scanStringEnd();
     
-    /// @brief Runs the parser on specified file.
-    ///
-    /// @param filename
-    /// @return true on success.
-    bool parseFile(const std::string& filename);
-
     /// @brief Run the parser on the string specified.
     ///
     /// @param str string to be written
