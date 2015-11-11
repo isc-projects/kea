@@ -62,7 +62,7 @@ static isc::eval::location loc;
 
 /* These are not token expressions yet, just convenience expressions that
    can be used during actual token definitions. */
-int   [0-9]+
+int   \-?[0-9]+
 hex   [0-9a-fA-F]+
 blank [ \t]
 
@@ -90,7 +90,7 @@ blank [ \t]
     loc.step();
 }
 
-\'\-?{int}\' {
+\'{int}\' {
     // A string containing a number. Quotes should be removed, see below.
     std::string tmp(yytext+1);
     tmp.resize(tmp.size() - 1);
@@ -121,26 +121,17 @@ blank [ \t]
 }
 
 {int} {
-    // A code (16 bit unsigned integer) was found.
+    // An integer was found.
     std::string tmp(yytext);
 
     int n;
     try {
         n = boost::lexical_cast<int>(tmp);
     } catch (const boost::bad_lexical_cast &) {
-        driver.error(loc, "Failed to convert specified option code to "
-                     "number in " + tmp + ".");
+        driver.error(loc, "Failed to convert " + tmp + " to an integer.");
     }
 
-    // 65535 is the maximum value of the option code in DHCPv6. We want the
-    // code to be the same for v4 and v6, so let's ignore for a moment that
-    // max. option code in DHCPv4 is 255.
-    if (n < 0 || n > 65535) {
-        driver.error(loc, "Option code has invalid value in " +
-                     std::string(yytext) + ". Allowed range: 0..65535");
-    }
-
-    return isc::eval::EvalParser::make_CODE(static_cast<uint16_t>(n), loc);
+    return isc::eval::EvalParser::make_INTEGER(n, loc);
 }
 
 "=="        return isc::eval::EvalParser::make_EQUAL(loc);

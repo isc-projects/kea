@@ -55,7 +55,7 @@ using namespace isc::eval;
 %token <std::string> ALL "the all constant string"
 %token <std::string> STRING "constant string"
 %token <std::string> HEXSTRING "constant hexstring"
-%token <uint16_t> CODE "option code"
+%token <int> INTEGER "integer"
 %printer { yyoutput << $$; } <*>;
 %%
 
@@ -94,8 +94,15 @@ STRING {
     TokenPtr hex(new TokenHexString($1));
     ctx.expression.push_back(hex);
   }
-| OPTION "[" CODE "]" {
-    TokenPtr opt(new TokenOption($3));
+| OPTION "[" INTEGER "]" {
+    int n = $3;
+    if (n < 0 || n > 65535) {
+        std::ostringstream oss;
+        oss << "Option code has invalid value in " << n
+            << ". Allowed range: 0..65535";
+        ctx.error(@3, oss.str());
+    }
+    TokenPtr opt(new TokenOption(static_cast<uint16_t>(n)));
     ctx.expression.push_back(opt);
   }
 | SUBSTRING "(" token "," token "," token ")" {
@@ -128,8 +135,15 @@ STRING {
     TokenPtr hex(new TokenHexString($1));
     ctx.expression.push_back(hex);
   }
-| OPTION "[" CODE "]" {
-    TokenPtr opt(new TokenOption($3));
+| OPTION "[" INTEGER "]" {
+    int n = $3;
+    if (n < 0 || n > 65535) {
+        std::ostringstream oss;
+        oss << "Option code has invalid value in " << n
+            << ". Allowed range: 0..65535";
+        ctx.error(@3, oss.str());
+    }
+    TokenPtr opt(new TokenOption(static_cast<uint16_t>(n)));
     ctx.expression.push_back(opt);
   }
 | SUBSTRING "(" string_expr "," start_expr "," length_expr ")" {

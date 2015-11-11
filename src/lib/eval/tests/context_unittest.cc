@@ -259,9 +259,6 @@ TEST_F(EvalContextTest, scanErrors) {
     checkError("'\n'", "<string>:1.1: Invalid character: '");
     checkError("0x123h", "<string>:1.6: Invalid character: h");
     checkError("=", "<string>:1.1: Invalid character: =");
-    checkError("option[65536]",
-               "<string>:1.8-12: Option code has invalid "
-               "value in 65536. Allowed range: 0..65535");
     checkError("subtring", "<string>:1.1: Invalid character: s");
     checkError("untype: 'abc'", "<string>:1.1: Invalid character: u");
     checkError("untyped 'abc'", "<string>:1.1: Invalid character: u");
@@ -274,10 +271,16 @@ TEST_F(EvalContextTest, scanParseErrors) {
     checkError("", "<string>:1.1: syntax error, unexpected end of file");
     checkError("untyped:",
                "<string>:1.9: syntax error, unexpected end of file");
-    checkError("0x", "<string>:1.1: syntax error, unexpected option code");
+    checkError("0x", "<string>:1.1: syntax error, unexpected integer");
     checkError("0abc",
-               "<string>:1.1: syntax error, unexpected option code");
+               "<string>:1.1: syntax error, unexpected integer");
     checkError("===", "<string>:1.1-2: syntax error, unexpected ==");
+    checkError("option[-1]",
+               "<string>:1.8-9: Option code has invalid "
+               "value in -1. Allowed range: 0..65535");
+    checkError("option[65536]",
+               "<string>:1.8-12: Option code has invalid "
+               "value in 65536. Allowed range: 0..65535");
     checkError("option[123] < 'foo'", "<string>:1.13: Invalid character: <");
 }
 
@@ -301,18 +304,18 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("option['ab'] == 'foo'",
                "<string>:1.8-11: syntax error, "
                "unexpected constant string, "
-               "expecting option code");
+               "expecting integer");
     checkError("option[0xa] == 'ab'",
                "<string>:1.8-10: syntax error, "
                "unexpected constant hexstring, "
-               "expecting option code");
+               "expecting integer");
     checkError("substring('foobar') == 'f'",
                "<string>:1.19: syntax error, "
                "unexpected ), expecting \",\"");
     checkError("substring('foobar','3') == 'bar'",
                "<string>:1.23: syntax error, unexpected ), expecting \",\"");
     checkError("substring('foobar',3,3) == 'bar'",
-               "<string>:1.20: syntax error, unexpected option code, "
+               "<string>:1.20: syntax error, unexpected integer, "
                "expecting a number in a constant string");
 }
 
