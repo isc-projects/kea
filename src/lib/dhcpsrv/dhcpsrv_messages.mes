@@ -359,7 +359,7 @@ timer used for lease file cleanup scheduling. This is highly unlikely
 and indicates programming error. The message include the reason for this
 error.
 
-% DHCPSRV_MEMFILE_NEEDS_DOWNGRADING lease file: %1 is beyond version %2, it needs to be downgraded to current schema version, %3.
+% DHCPSRV_MEMFILE_NEEDS_DOWNGRADING schema of lease file: %1 is later than version %2.
 A warning message issued when the schema of the lease file loaded by the server
 is newer than the memfile schema of the server.  The server converts the lease
 data from newer schemas to its schema as it is read, therefore the lease
@@ -367,7 +367,7 @@ information in use by the server will be correct. Note though, that any data
 data stored in newer schema fields will be dropped.  What remains is for the
 file itself to be rewritten using the current schema.
 
-% DHCPSRV_MEMFILE_NEEDS_UPGRADING lease file: %1 is schema version %2, it needs to be upgraded to current schema version, %3.
+% DHCPSRV_MEMFILE_NEEDS_UPGRADING schema of lease file: %1 is at version %2.
 A warning message issued when the schema of the lease file loaded by the server
 pre-dates the memfile schema of the server.  Note that the server converts the
 lease data from older schemas to the current schema as it is read, therefore

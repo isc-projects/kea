@@ -18,8 +18,6 @@
 #include <dhcpsrv/csv_lease_file6.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/tests/lease_file_io.h>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -126,22 +124,22 @@ TEST_F(CSVLeaseFile6Test, parse) {
     writeSampleFile();
 
     // Open the lease file.
-    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
-    ASSERT_NO_THROW(lf->open());
+    CSVLeaseFile6 lf(filename_);
+    ASSERT_NO_THROW(lf.open());
 
     // Verify the counters are cleared
     {
     SCOPED_TRACE("Check stats are empty");
-    checkStats(*lf, 0, 0, 0, 0, 0, 0);
+    checkStats(lf, 0, 0, 0, 0, 0, 0);
     }
 
     Lease6Ptr lease;
     // Reading first read should be successful.
     {
     SCOPED_TRACE("First lease valid");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     ASSERT_TRUE(lease);
-    checkStats(*lf, 1, 1, 0, 0, 0, 0);
+    checkStats(lf, 1, 1, 0, 0, 0, 0);
 
     // Verify that the lease attributes are correct.
     EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
@@ -162,17 +160,17 @@ TEST_F(CSVLeaseFile6Test, parse) {
     // Second lease is malformed - DUID is empty.
     {
     SCOPED_TRACE("Second lease malformed");
-    EXPECT_FALSE(lf->next(lease));
-    checkStats(*lf, 2, 1, 1, 0, 0, 0);
+    EXPECT_FALSE(lf.next(lease));
+    checkStats(lf, 2, 1, 1, 0, 0, 0);
     }
 
     // Even, parsing previous lease failed, reading the next lease should be
     // successful.
     {
     SCOPED_TRACE("Third lease valid");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     ASSERT_TRUE(lease);
-    checkStats(*lf, 3, 2, 1, 0, 0, 0);
+    checkStats(lf, 3, 2, 1, 0, 0, 0);
 
     // Verify that the third lease is correct.
     EXPECT_EQ("2001:db8:2::10", lease->addr_.toText());
@@ -193,9 +191,9 @@ TEST_F(CSVLeaseFile6Test, parse) {
     // Reading the fourth lease should be successful.
     {
     SCOPED_TRACE("Fourth lease valid");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     ASSERT_TRUE(lease);
-    checkStats(*lf, 4, 3, 1, 0, 0, 0);
+    checkStats(lf, 4, 3, 1, 0, 0, 0);
 
     // Verify that the lease is correct.
     EXPECT_EQ("3000:1::", lease->addr_.toText());
@@ -217,30 +215,30 @@ TEST_F(CSVLeaseFile6Test, parse) {
     // lease pointer should be NULL.
     {
     SCOPED_TRACE("Fifth read empty");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     EXPECT_FALSE(lease);
-    checkStats(*lf, 5, 3, 1, 0, 0, 0);
+    checkStats(lf, 5, 3, 1, 0, 0, 0);
     }
 
     // We should be able to do it again.
     {
     SCOPED_TRACE("Sixth read empty");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     EXPECT_FALSE(lease);
-    checkStats(*lf, 6, 3, 1, 0, 0, 0);
+    checkStats(lf, 6, 3, 1, 0, 0, 0);
     }
 }
 
 // This test checks creation of the lease file and writing leases.
 TEST_F(CSVLeaseFile6Test, recreate) {
-    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
-    ASSERT_NO_THROW(lf->recreate());
+    CSVLeaseFile6 lf(filename_);
+    ASSERT_NO_THROW(lf.recreate());
     ASSERT_TRUE(io_.exists());
 
     // Verify the counters are cleared
     {
     SCOPED_TRACE("Check stats are empty");
-    checkStats(*lf, 0, 0, 0, 0, 0, 0);
+    checkStats(lf, 0, 0, 0, 0, 0, 0);
     }
 
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
@@ -250,8 +248,8 @@ TEST_F(CSVLeaseFile6Test, recreate) {
     lease->cltt_ = 0;
     {
     SCOPED_TRACE("First write");
-    ASSERT_NO_THROW(lf->append(*lease));
-    checkStats(*lf, 0, 0, 0, 1, 1, 0);
+    ASSERT_NO_THROW(lf.append(*lease));
+    checkStats(lf, 0, 0, 0, 1, 1, 0);
     }
 
     lease.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:2::10"),
@@ -261,8 +259,8 @@ TEST_F(CSVLeaseFile6Test, recreate) {
     lease->cltt_ = 0;
     {
     SCOPED_TRACE("Second write");
-    ASSERT_NO_THROW(lf->append(*lease));
-    checkStats(*lf, 0, 0, 0, 2, 2, 0);
+    ASSERT_NO_THROW(lf.append(*lease));
+    checkStats(lf, 0, 0, 0, 2, 2, 0);
     }
 
     lease.reset(new Lease6(Lease::TYPE_PD, IOAddress("3000:1:1::"),
@@ -272,8 +270,8 @@ TEST_F(CSVLeaseFile6Test, recreate) {
     lease->cltt_ = 0;
     {
     SCOPED_TRACE("Third write");
-    ASSERT_NO_THROW(lf->append(*lease));
-    checkStats(*lf, 0, 0, 0, 3, 3, 0);
+    ASSERT_NO_THROW(lf.append(*lease));
+    checkStats(lf, 0, 0, 0, 3, 3, 0);
     }
 
     EXPECT_EQ("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
@@ -309,13 +307,13 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
               "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1\n");
 
     // Open the lease file.
-    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
-    ASSERT_NO_THROW(lf->open());
+    CSVLeaseFile6 lf(filename_);
+    ASSERT_NO_THROW(lf.open());
 
     Lease6Ptr lease;
     {
     SCOPED_TRACE("First lease valid");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     ASSERT_TRUE(lease);
 
     // Verify that the lease attributes are correct.
@@ -340,7 +338,7 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
 
     {
     SCOPED_TRACE("Second lease valid");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     ASSERT_TRUE(lease);
 
     // Verify that the lease attributes are correct.
@@ -365,7 +363,7 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
 
     {
     SCOPED_TRACE("Third lease valid");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     ASSERT_TRUE(lease);
 
     // Verify that the lease attributes are correct.
@@ -396,8 +394,8 @@ TEST_F(CSVLeaseFile6Test, tooFewHeaderColumns) {
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev\n");
 
     // Open should fail.
-    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
-    ASSERT_THROW(lf->open(), CSVFileError);
+    CSVLeaseFile6 lf(filename_);
+    ASSERT_THROW(lf.open(), CSVFileError);
 }
 
 // Verifies that a lease file with an unrecognized column header
@@ -408,8 +406,8 @@ TEST_F(CSVLeaseFile6Test, invalidHeaderColumn) {
               "hwaddr,state\n");
 
     // Open should fail.
-    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
-    ASSERT_THROW(lf->open(), CSVFileError);
+    CSVLeaseFile6 lf(filename_);
+    ASSERT_THROW(lf.open(), CSVFileError);
 }
 
 // Verifies that a lease file with more header columns than defined
@@ -428,17 +426,17 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
               "BOGUS\n");
 
     // Open should succeed in the event someone is downgrading.
-    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
-    ASSERT_NO_THROW(lf->open());
-    EXPECT_TRUE(lf->needsConversion());
+    CSVLeaseFile6 lf(filename_);
+    ASSERT_NO_THROW(lf.open());
+    EXPECT_TRUE(lf.needsConversion());
     EXPECT_EQ(util::VersionedCSVFile::NEEDS_DOWNGRADE,
-              lf->getInputSchemaState());
+              lf.getInputSchemaState());
 
 
     Lease6Ptr lease;
     {
     SCOPED_TRACE("First lease valid");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     ASSERT_TRUE(lease);
 
     // Verify that the lease attributes are correct.
