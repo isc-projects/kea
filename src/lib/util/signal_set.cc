@@ -270,7 +270,7 @@ SignalSet::maskSignals(const int mask) const {
          it != registered_signals_->end(); ++it) {
         sigaddset(&new_set, *it);
     }
-    sigprocmask(mask, &new_set, 0);
+    pthread_sigmask(mask, &new_set, 0);
 }
 
 void

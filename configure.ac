@@ -158,6 +158,7 @@ CXX_VERSION="unknown"
 if test "$SUNCXX" = "yes"; then
 CXX_VERSION=`$CXX -V 2> /dev/null | head -1`
 CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
+KEA_CXXFLAGS="$KEA_CXXFLAGS -mt"
 MULTITHREADING_FLAG="-mt"
 fi
 
@@ -194,6 +195,7 @@ case "$host" in
 	MULTITHREADING_FLAG=-pthread
 	;;
 esac
+KEA_CXXFLAGS="$KEA_CXXFLAGS $MULTITHREADING_FLAG"
 
 # Don't use -Werror if configured not to
 AC_ARG_WITH(werror,
@@ -1008,7 +1010,7 @@ else
 	done
 fi
 
-LOG4CPLUS_LIBS="$LOG4CPLUS_LIBS -llog4cplus $MULTITHREADING_FLAG"
+LOG4CPLUS_LIBS="$LOG4CPLUS_LIBS -llog4cplus"
 
 AC_SUBST(LOG4CPLUS_LIBS)
 AC_SUBST(LOG4CPLUS_INCLUDES)
@@ -1016,7 +1018,7 @@ AC_SUBST(LOG4CPLUS_INCLUDES)
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$LOG4CPLUS_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"
-LIBS="$LOG4CPLUS_LIBS $LIBS"
+LIBS="$LOG4CPLUS_LIBS $MULTITHREADING_FLAG $LIBS"
 
 AC_CHECK_HEADERS([log4cplus/logger.h],,AC_MSG_ERROR([Missing required header files.]))
 AC_LINK_IFELSE(
@@ -1072,10 +1074,7 @@ fi
 CPPFLAGS="$CPPFLAGS $CPPFLAGS_BOOST_THREADCONF"
 
 # Can be required by gtest, boost and perhaps still asio
-PTHREAD_LDFLAGS=
-AC_CHECK_LIB(pthread, pthread_create,[ PTHREAD_LDFLAGS=-lpthread ], [])
-AC_SUBST(PTHREAD_LDFLAGS)
-AC_SUBST(MULTITHREADING_FLAG)
+AC_CHECK_LIB(pthread, pthread_create,[ LDFLAGS="$LDFLAGS -lpthread" ], [])
 
 #
 # Check availability of gtest, which will be used for unit tests.
@@ -1116,13 +1115,6 @@ if test "x$enable_gtest" = "xyes" ; then
         GTEST_LDFLAGS="\$(top_builddir)/ext/gtest/libgtest.a"
         DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
         GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
-        # See $GTEST_SOURCE/include/gtest/internal/gtest-port.h
-        # about GTEST_HAS_PTHREAD.
-        case "$host" in
-            *-solaris*|*-linux*|*-hpux*)
-                GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
-                ;;
-        esac
     fi
 
     if test "$gtest_path" != "no" ; then
@@ -1156,48 +1148,6 @@ if test "x$enable_gtest" = "xyes" ; then
                     GTEST_LDFLAGS="-L$dir/lib"
                     GTEST_LDADD="-lgtest"
                     GTEST_FOUND="true"
-                    # There is no gtest-config script on this
-                    # system, which is supposed to inform us
-                    # whether we need pthreads as well (a
-                    # gtest compile-time option). So we still
-                    # need to test that manually.
-                    CPPFLAGS_SAVED="$CPPFLAGS"
-                    CPPFLAGS="$CPPFLAGS $GTEST_INCLUDES"
-                    LDFLAGS_SAVED="$LDFLAGS"
-                    LDFLAGS="$LDFLAGS $GTEST_LDFLAGS"
-                    LIBS_SAVED=$LIBS
-                    LIBS="$LIBS $GTEST_LDADD"
-                    AC_MSG_CHECKING([Checking whether gtest tests need pthreads])
-                    # First try to compile without pthreads
-                    AC_TRY_LINK([
-                        #include <gtest/gtest.h>
-                        ],[
-                            int i = 0;
-                            char* c = NULL;
-                            ::testing::InitGoogleTest(&i, &c);
-                            return (0);
-                        ],
-                        [ AC_MSG_RESULT(no) ],
-                        [
-                            LIBS="$SAVED_LIBS $GTEST_LDADD $PTHREAD_LDFLAGS"
-                            # Now try to compile with pthreads
-                            AC_TRY_LINK([
-                                #include <gtest/gtest.h>
-                                ],[
-                                    int i = 0;
-                                    char* c = NULL;
-                                    ::testing::InitGoogleTest(&i, &c);
-                                    return (0);
-                                ],
-                                [ AC_MSG_RESULT(yes)
-                                  GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
-                                ],
-                                # Apparently we can't compile it at all
-                                [ AC_MSG_ERROR(unable to compile with gtest) ])
-                    ])
-                    CPPFLAGS=$CPPFLAGS_SAVED
-                    LDFLAGS=$LDFLAGS_SAVED
-                    LIBS=$LIBS_SAVED
                     break
                 fi
             done
@@ -1225,7 +1175,7 @@ CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
 # Doesn't seem to be required?
 CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
 #
-# Disable threads: Currently we don't use them.
+# Disable threads: they seems to break things on some systems
 CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
 
 # We tried to stay header only
