@@ -21,6 +21,7 @@
 #include <boost/shared_ptr.hpp>
 #include <set>
 #include <list>
+#include <pthread.h>
 #include <signal.h>
 
 namespace isc {
