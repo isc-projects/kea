@@ -202,9 +202,15 @@ pid_t
 ProcessSpawnImpl::spawn() {
     // Protect us against SIGCHLD signals
     sigset_t sset;
+    sigset_t osset;
     sigemptyset(&sset);
     sigaddset(&sset, SIGCHLD);
-    sigprocmask(SIG_BLOCK, &sset, 0);
+    pthread_sigmask(SIG_BLOCK, &sset, &osset);
+    if (sigismember(&osset, SIGCHLD)) {
+        isc_throw(ProcessSpawnError,
+                  "spawn() called from a thread where SIGCHLD is blocked");
+    }
+
     // Create the child
     pid_t pid = fork();
     if (pid < 0) {
@@ -212,7 +218,7 @@ ProcessSpawnImpl::spawn() {
 
     } else if (pid == 0) {
         // We're in the child process.
-        sigprocmask(SIG_UNBLOCK, &sset, 0);
+        sigprocmask(SIG_SETMASK, &osset, 0);
         // Run the executable.
         if (execvp(executable_.c_str(), args_) != 0) {
             // We may end up here if the execvp failed, e.g. as a result
@@ -224,8 +230,14 @@ ProcessSpawnImpl::spawn() {
     }
 
     // We're in the parent process.
-    process_state_.insert(std::pair<pid_t, ProcessState>(pid, ProcessState()));
-    sigprocmask(SIG_UNBLOCK, &sset, 0);
+    try {
+        process_state_.insert(
+            std::pair<pid_t, ProcessState>(pid, ProcessState()));
+    } catch(...) {
+        pthread_sigmask(SIG_SETMASK, &osset, 0);
+        throw;
+    }
+    pthread_sigmask(SIG_SETMASK, &osset, 0);
     return (pid);
 }
 
