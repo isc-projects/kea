@@ -924,6 +924,7 @@ TEST_F(ParseConfigTest, emptyOptionData) {
 
     int rcode = 0;
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    EXPECT_EQ(0, rcode);
     const Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr("dhcp6", D6O_DHCPV4_O_DHCPV6_SERVER));
     ASSERT_TRUE(opt);
