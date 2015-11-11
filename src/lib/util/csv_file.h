@@ -117,6 +117,14 @@ public:
     /// @c CSVRow::getValuesCount.
     std::string readAt(const size_t at) const;
 
+    /// @brief Trims a given number of elements from the end of a row
+    ///
+    /// @param number of elements to trim
+    ///
+    /// @throw CSVFileError if the number to trim is larger than
+    /// then the number of elements
+    void trim(const size_t count);
+
     /// @brief Retrieves a value from the internal container.
     ///
     /// This method is reads a value from the internal container and converts
@@ -404,7 +412,7 @@ public:
     /// Otherwise, this function will write the header to the file.
     /// In order to write rows to opened file, the @c append function
     /// should be called.
-    void recreate();
+    virtual void recreate();
 
     /// @brief Sets error message after row validation.
     ///
@@ -468,8 +476,6 @@ protected:
     ///
     /// This function is called internally by @ref CSVFile::open. Derived classes
     /// may add extra validation steps.
-    ///
-    /// @todo There should be a support for optional columns (see ticket #3626).
     ///
     /// @param header A row holding a header.
     /// @return true if header matches the columns; false otherwise.

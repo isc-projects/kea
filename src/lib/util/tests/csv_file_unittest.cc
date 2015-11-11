@@ -109,6 +109,35 @@ TEST(CSVRow, append) {
     EXPECT_EQ("alpha,beta,gamma,delta,epsilon", text);
 }
 
+// This test checks that a row can be trimmed of
+// a given number of elements
+TEST(CSVRow, trim) {
+    CSVRow row("zero,one,two,three,four");
+    ASSERT_EQ(5, row.getValuesCount());
+    EXPECT_EQ("zero", row.readAt(0));
+    EXPECT_EQ("one", row.readAt(1));
+    EXPECT_EQ("two", row.readAt(2));
+    EXPECT_EQ("three", row.readAt(3));
+    EXPECT_EQ("four", row.readAt(4));
+
+    ASSERT_THROW(row.trim(10), CSVFileError);
+
+    // Verify that we can erase just one
+    ASSERT_NO_THROW(row.trim(1));
+    ASSERT_EQ(4, row.getValuesCount());
+    EXPECT_EQ("zero", row.readAt(0));
+    EXPECT_EQ("one", row.readAt(1));
+    EXPECT_EQ("two", row.readAt(2));
+    EXPECT_EQ("three", row.readAt(3));
+
+    // Verfiy we can trim more than one
+    ASSERT_NO_THROW(row.trim(2));
+    ASSERT_EQ(2, row.getValuesCount());
+    EXPECT_EQ("zero", row.readAt(0));
+    EXPECT_EQ("one", row.readAt(1));
+}
+
+
 /// @brief Test fixture class for testing operations on CSV file.
 ///
 /// It implements basic operations on files, such as reading writing
