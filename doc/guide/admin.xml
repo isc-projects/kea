@@ -150,6 +150,27 @@
         will create an empty lease file if one is not
         present. Necessary disk write permission is required.
       </para>
+      <section id="memfile-upgrade">
+        <title>Upgrading Memfile Lease Files from an Earlier Version of Kea</title>
+        <para>
+        There are no special steps required to upgrade memfile lease files
+        from an earlier version of Kea to a new version of Kea.
+
+        During startup the servers will check the schema version of the lease
+        files against their own.  If there is a mismatch, the servers will
+        automatically launch the LFC process to convert the files to the
+        server's schema version.  While this mechanism is primarily meant to
+        ease the process of upgrading to newer versions of Kea, it can also
+        be used for downgrading should the need arise.  When upgrading, any
+        values not present in the original lease files will be assigned
+        appropriate default values.  When downgrading, any data present in
+        the files but not in the server's schema will be dropped.
+
+        If you wish to convert the files manually, prior to starting the
+        servers you may do so by running the LFC process yourself.
+        See <xref linkend="kea-lfc"/> for more information.
+        </para>
+      </section>
       <!-- @todo: document lease file upgrades once they are implemented in kea-admin -->
     </section>
 

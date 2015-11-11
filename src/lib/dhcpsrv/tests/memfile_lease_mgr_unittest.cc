@@ -1388,4 +1388,137 @@ TEST_F(MemfileLeaseMgrTest, load6LFCInProgress) {
     ASSERT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
 }
 
+// Verifies that LFC is automatically run during MemfileLeasemMgr construction
+// when the lease file(s) being loaded need to be upgraded.
+TEST_F(MemfileLeaseMgrTest, leaseUpgrade4) {
+    // Create header strings for each schema
+    std::string header_1_0 =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname\n";
+
+    std::string header_2_0 =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state\n";
+
+    // Create 1.0 Schema current lease file with two entries for
+    // the same lease
+    std::string current_file_contents = header_1_0 +
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,\n"
+        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,\n";
+    LeaseFileIO current_file(getLeaseFilePath("leasefile4_0.csv"));
+    current_file.writeFile(current_file_contents);
+
+    // Create 1.0 Schema previous lease file, with two entries for
+    // a another lease
+    std::string previous_file_contents = header_1_0 +
+        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,\n"
+        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,\n";
+    LeaseFileIO previous_file(getLeaseFilePath("leasefile4_0.csv.2"));
+    previous_file.writeFile(previous_file_contents);
+
+    // Create the backend.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    pmap["lfc-interval"] = "0";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
+
+    // Since lease files are loaded during lease manager
+    // constructor, LFC should get launched automatically.
+    // The new lease file should be 2.0 schema and have no entries
+    ASSERT_TRUE(current_file.exists());
+    EXPECT_EQ(header_2_0, current_file.readFile());
+
+    // Wait for the LFC process to complete and
+    // make sure it has returned an exit status of 0.
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+    ASSERT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "Executing the LFC process failed: make sure that"
+        " the kea-lfc program has been compiled.";
+
+    // The LFC should have created a 2.0 schema completion file with the
+    // one entry for each lease and moved it to leasefile4_0.csv.2
+    LeaseFileIO input_file(getLeaseFilePath("leasefile4_0.csv.2"), false);
+    ASSERT_TRUE(input_file.exists());
+
+    // Verify cleaned, converted contents
+    std::string result_file_contents = header_2_0 +
+        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,,0\n"
+        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,0\n";
+    EXPECT_EQ(result_file_contents, input_file.readFile());
+}
+
+TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
+    // Create header strings for all three schemas
+    std::string header_1_0 =
+        "address,duid,valid_lifetime,expire,subnet_id,"
+        "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+        "fqdn_rev,hostname\n";
+
+    std::string header_2_0 =
+        "address,duid,valid_lifetime,expire,subnet_id,"
+        "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+        "fqdn_rev,hostname,hwaddr\n";
+
+    std::string header_3_0 =
+        "address,duid,valid_lifetime,expire,subnet_id,"
+        "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+        "fqdn_rev,hostname,hwaddr,state\n";
+
+    // The current lease file is schema 1.0 and has two entries for
+    // the same lease
+    std::string current_file_contents = header_1_0 +
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
+        "8,100,0,7,0,1,1,,\n"
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
+        "8,100,0,7,0,1,1,,\n";
+    LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
+    current_file.writeFile(current_file_contents);
+
+    // The previous lease file is schema 2.0 and has two entries for
+    // a different lease
+    std::string previous_file_contents = header_2_0 +
+        "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,200,"
+        "8,100,0,7,0,1,1,,11:22:33:44:55\n"
+        "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
+        "8,100,0,7,0,1,1,,11:22:33:44:55\n";
+    LeaseFileIO previous_file(getLeaseFilePath("leasefile6_0.csv.2"));
+    previous_file.writeFile(previous_file_contents);
+
+    // Create the backend.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    pmap["lfc-interval"] = "0";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
+
+    // Since lease files are loaded during lease manager
+    // constructor, LFC should get launched automatically.
+    // The new lease file should been 3.0 and contain no leases.
+    ASSERT_TRUE(current_file.exists());
+    EXPECT_EQ(header_3_0, current_file.readFile());
+
+    // Wait for the LFC process to complete and
+    // make sure it has returned an exit status of 0.
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+    ASSERT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "Executing the LFC process failed: make sure that"
+        " the kea-lfc program has been compiled.";
+
+    // The LFC should have created a 3.0 schema cleaned file with one entry
+    // for each lease as leasefile6_0.csv.2
+    LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.2"), false);
+    ASSERT_TRUE(input_file.exists());
+
+    // Verify cleaned, converted contents
+    std::string result_file_contents = header_3_0 +
+        "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
+        "8,100,0,7,0,1,1,,,0\n"
+        "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
+        "8,100,0,7,0,1,1,,11:22:33:44:55,0\n";
+    EXPECT_EQ(result_file_contents, input_file.readFile());
+}
+
 }; // end of anonymous namespace
