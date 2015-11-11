@@ -17,7 +17,7 @@
 
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/memfile_lease_storage.h>
-#include <util/csv_file.h>
+#include <util/versioned_csv_file.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -152,6 +152,16 @@ public:
                 break;
 
             }
+        }
+
+        if (lease_file.needsConversion()) {
+            LOG_WARN(dhcpsrv_logger,
+                     (lease_file.getInputSchemaState()
+                      == util::VersionedCSVFile::NEEDS_UPGRADE
+                      ?  DHCPSRV_MEMFILE_NEEDS_UPGRADING
+                      : DHCPSRV_MEMFILE_NEEDS_DOWNGRADING))
+                     .arg(lease_file.getFilename())
+                     .arg(lease_file.getSchemaVersion());
         }
 
         if (close_file_on_exit) {
