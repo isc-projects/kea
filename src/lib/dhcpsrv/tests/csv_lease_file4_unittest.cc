@@ -18,8 +18,6 @@
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/tests/lease_file_io.h>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -125,22 +123,22 @@ TEST_F(CSVLeaseFile4Test, parse) {
     writeSampleFile();
 
     // Open the lease file.
-    boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
-    ASSERT_NO_THROW(lf->open());
+    CSVLeaseFile4 lf(filename_);
+    ASSERT_NO_THROW(lf.open());
 
     // Verify the counters are cleared
     {
     SCOPED_TRACE("Check stats are empty");
-    checkStats(*lf, 0, 0, 0, 0, 0, 0);
+    checkStats(lf, 0, 0, 0, 0, 0, 0);
     }
 
     Lease4Ptr lease;
     // Reading first read should be successful.
     {
     SCOPED_TRACE("First lease valid");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     ASSERT_TRUE(lease);
-    checkStats(*lf, 1, 1, 0, 0, 0, 0);
+    checkStats(lf, 1, 1, 0, 0, 0, 0);
 
     // Verify that the lease attributes are correct.
     EXPECT_EQ("192.0.2.1", lease->addr_.toText());
@@ -159,17 +157,17 @@ TEST_F(CSVLeaseFile4Test, parse) {
     // Second lease is malformed - HW address is empty.
     {
     SCOPED_TRACE("Second lease malformed");
-    EXPECT_FALSE(lf->next(lease));
-    checkStats(*lf, 2, 1, 1, 0, 0, 0);
+    EXPECT_FALSE(lf.next(lease));
+    checkStats(lf, 2, 1, 1, 0, 0, 0);
     }
 
     // Even though parsing previous lease failed, reading the next lease should be
     // successful.
     {
     SCOPED_TRACE("Third lease valid");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     ASSERT_TRUE(lease);
-    checkStats(*lf, 3, 2, 1, 0, 0, 0);
+    checkStats(lf, 3, 2, 1, 0, 0, 0);
 
     // Verify that the third lease is correct.
     EXPECT_EQ("192.0.3.15", lease->addr_.toText());
@@ -190,28 +188,28 @@ TEST_F(CSVLeaseFile4Test, parse) {
     // lease pointer should be NULL.
     {
     SCOPED_TRACE("Fifth read empty");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     EXPECT_FALSE(lease);
-    checkStats(*lf, 4, 2, 1, 0, 0, 0);
+    checkStats(lf, 4, 2, 1, 0, 0, 0);
     }
 
     // We should be able to do it again.
     {
     SCOPED_TRACE("Sixth read empty");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     EXPECT_FALSE(lease);
-    checkStats(*lf, 5, 2, 1, 0, 0, 0);
+    checkStats(lf, 5, 2, 1, 0, 0, 0);
     }
 }
 
 // This test checks creation of the lease file and writing leases.
 TEST_F(CSVLeaseFile4Test, recreate) {
-    boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
-    ASSERT_NO_THROW(lf->recreate());
+    CSVLeaseFile4 lf(filename_);
+    ASSERT_NO_THROW(lf.recreate());
     ASSERT_TRUE(io_.exists());
 
     // Verify the counters are cleared
-    checkStats(*lf, 0, 0, 0, 0, 0, 0);
+    checkStats(lf, 0, 0, 0, 0, 0, 0);
 
     // Create first lease, with NULL client id.
     Lease4Ptr lease(new Lease4(IOAddress("192.0.3.2"),
@@ -222,8 +220,8 @@ TEST_F(CSVLeaseFile4Test, recreate) {
     lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
     {
     SCOPED_TRACE("First write");
-    ASSERT_NO_THROW(lf->append(*lease));
-    checkStats(*lf, 0, 0, 0, 1, 1, 0);
+    ASSERT_NO_THROW(lf.append(*lease));
+    checkStats(lf, 0, 0, 0, 1, 1, 0);
     }
 
     // Create second lease, with non-NULL client id.
@@ -233,12 +231,12 @@ TEST_F(CSVLeaseFile4Test, recreate) {
                            100, 60, 90, 0, 7));
     {
     SCOPED_TRACE("Second write");
-    ASSERT_NO_THROW(lf->append(*lease));
-    checkStats(*lf, 0, 0, 0, 2, 2, 0);
+    ASSERT_NO_THROW(lf.append(*lease));
+    checkStats(lf, 0, 0, 0, 2, 2, 0);
     }
 
     // Close the lease file.
-    lf->close();
+    lf.close();
     // Check that the contents of the csv file are correct.
     EXPECT_EQ("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
               "fqdn_fwd,fqdn_rev,hostname,state\n"
@@ -247,6 +245,155 @@ TEST_F(CSVLeaseFile4Test, recreate) {
               "0,,0\n",
               io_.readFile());
 }
+
+// Verifies that a schema 1.0 file with records from
+// schema 1.0 and 2.0 loads correctly.
+TEST_F(CSVLeaseFile4Test, mixedSchemaload) {
+    // Create mixed schema file
+    io_.writeFile(
+                  // schema 1.0 header
+                  "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  // schema 1.0 record
+                  "192.0.2.1,06:07:08:09:1a:bc,,200,200,8,1,1,"
+                  "one.example.com\n"
+                  // schema 2.0 record - has state
+                  "192.0.2.2,06:07:08:09:2a:bc,,200,200,8,1,1,"
+                  "two.example.com,1\n"
+                  // schema 2.0 record - has state
+                  "192.0.2.3,06:07:08:09:3a:bc,,200,200,8,1,1,"
+                  "three.example.com,2\n"
+                   );
+
+    // Open the lease file.
+    CSVLeaseFile4 lf(filename_);
+    ASSERT_NO_THROW(lf.open());
+
+    Lease4Ptr lease;
+
+    // Reading first read should be successful.
+    {
+    SCOPED_TRACE("First lease valid");
+    EXPECT_TRUE(lf.next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the lease attributes are correct.
+    EXPECT_EQ("192.0.2.1", lease->addr_.toText());
+    HWAddr hwaddr1(*lease->hwaddr_);
+    EXPECT_EQ("06:07:08:09:1a:bc", hwaddr1.toText(false));
+    EXPECT_FALSE(lease->client_id_);
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("one.example.com", lease->hostname_);
+    // Verify that added state is DEFAULT
+    EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+    }
+
+    {
+    SCOPED_TRACE("Second lease valid");
+    EXPECT_TRUE(lf.next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the lease attributes are correct.
+    EXPECT_EQ("192.0.2.2", lease->addr_.toText());
+    HWAddr hwaddr1(*lease->hwaddr_);
+    EXPECT_EQ("06:07:08:09:2a:bc", hwaddr1.toText(false));
+    EXPECT_FALSE(lease->client_id_);
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("two.example.com", lease->hostname_);
+    EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    }
+
+    {
+    SCOPED_TRACE("Third lease valid");
+    EXPECT_TRUE(lf.next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the third lease is correct.
+    EXPECT_EQ("192.0.2.3", lease->addr_.toText());
+    HWAddr hwaddr1(*lease->hwaddr_);
+    EXPECT_EQ("06:07:08:09:3a:bc", hwaddr1.toText(false));
+    EXPECT_FALSE(lease->client_id_);
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("three.example.com", lease->hostname_);
+    EXPECT_EQ(Lease::STATE_EXPIRED_RECLAIMED, lease->state_);
+    }
+}
+
+
+// Verifies that a lease file with fewer header columns than the
+// minimum allowed will not open.
+TEST_F(CSVLeaseFile4Test, tooFewHeaderColumns) {
+    // Create 1.0 file
+    io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev\n");
+
+    // Open the lease file.
+    CSVLeaseFile4 lf(filename_);
+    ASSERT_THROW(lf.open(), CSVFileError);
+}
+
+// Verifies that a lease file with an unrecognized column header
+// will not open.
+TEST_F(CSVLeaseFile4Test, invalidHeaderColumn) {
+    // Create 1.0 file
+    io_.writeFile("address,hwaddr,BOGUS,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname,state\n");
+
+    // Open the lease file.
+    CSVLeaseFile4 lf(filename_);
+    ASSERT_THROW(lf.open(), CSVFileError);
+}
+
+// Verifies that a lease file with more header columns than defined
+// columns will downgrade.
+TEST_F(CSVLeaseFile4Test, downGrade) {
+    // Create 2.0 PLUS a column file
+    io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname,state,FUTURE_COL\n"
+
+                  "192.0.2.3,06:07:08:09:3a:bc,,200,200,8,1,1,"
+                  "three.example.com,2,BOGUS\n");
+
+    // Lease file should open and report as needing downgrade.
+    CSVLeaseFile4 lf(filename_);
+    ASSERT_NO_THROW(lf.open());
+    EXPECT_TRUE(lf.needsConversion());
+    EXPECT_EQ(util::VersionedCSVFile::NEEDS_DOWNGRADE,
+              lf.getInputSchemaState());
+    Lease4Ptr lease;
+
+    {
+    SCOPED_TRACE("First lease valid");
+    EXPECT_TRUE(lf.next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the third lease is correct.
+    EXPECT_EQ("192.0.2.3", lease->addr_.toText());
+    HWAddr hwaddr1(*lease->hwaddr_);
+    EXPECT_EQ("06:07:08:09:3a:bc", hwaddr1.toText(false));
+    EXPECT_FALSE(lease->client_id_);
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("three.example.com", lease->hostname_);
+    EXPECT_EQ(Lease::STATE_EXPIRED_RECLAIMED, lease->state_);
+    }
+}
+
 
 /// @todo Currently we don't check invalid lease attributes, such as invalid
 /// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6
