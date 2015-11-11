@@ -161,7 +161,7 @@ public:
                       ?  DHCPSRV_MEMFILE_NEEDS_UPGRADING
                       : DHCPSRV_MEMFILE_NEEDS_DOWNGRADING))
                      .arg(lease_file.getFilename())
-                     .arg(lease_file.getInputSchemaState());
+                     .arg(lease_file.getSchemaVersion());
         }
 
         if (close_file_on_exit) {
