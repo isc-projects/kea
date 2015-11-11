@@ -37,35 +37,39 @@ void Dhcp4o6Ipc::open() {
         Dhcp4o6IpcBase::close();
         return;
     }
-    if (port > 65534) {
-        isc_throw(OutOfRange, "DHCP4o6 port " << port);
-    }
 
     int old_fd = socket_fd_;
-    socket_fd_ = Dhcp4o6IpcBase::open(static_cast<uint16_t>(port), 6);
+    socket_fd_ = Dhcp4o6IpcBase::open(static_cast<uint16_t>(port), ENDPOINT_TYPE_V6);
     if ((old_fd == -1) && (socket_fd_ != old_fd)) {
         IfaceMgr::instance().addExternalSocket(socket_fd_, Dhcp4o6Ipc::handler);
     }
 }
 
 void Dhcp4o6Ipc::handler() {
+    std::cout << "handler" << std::endl;
     Dhcp4o6Ipc& ipc = Dhcp4o6Ipc::instance();
+
+    // Receive message from IPC.
     Pkt6Ptr pkt = ipc.receive();
     if (!pkt) {
         return;
     }
 
+    // The received message has been unpacked by the receive() function. This
+    // method could have modified the message so it's better to pack() it
+    // again because we'll be forwarding it to a client.
     isc::util::OutputBuffer& buf = pkt->getBuffer();
     buf.clear();
     pkt->pack();
 
-    uint8_t msg_type = buf[0];
+    uint8_t msg_type = pkt->getType();
     if ((msg_type == DHCPV6_RELAY_FORW) || (msg_type == DHCPV6_RELAY_REPL)) {
         pkt->setRemotePort(DHCP6_SERVER_PORT);
     } else {
         pkt->setRemotePort(DHCP6_CLIENT_PORT);
     }
 
+    // Forward packet to the client.
     IfaceMgr::instance().send(pkt);
     // processStatsSent(pkt);
 }

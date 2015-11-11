@@ -24,7 +24,8 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-Dhcp4o6Ipc::Dhcp4o6Ipc() : Dhcp4o6IpcBase() {}
+Dhcp4o6Ipc::Dhcp4o6Ipc() : Dhcp4o6IpcBase() {
+}
 
 Dhcp4o6Ipc& Dhcp4o6Ipc::instance() {
     static Dhcp4o6Ipc dhcp4o6_ipc;
@@ -37,12 +38,9 @@ void Dhcp4o6Ipc::open() {
         Dhcp4o6IpcBase::close();
         return;
     }
-    if (port > 65534) {
-        isc_throw(OutOfRange, "DHCP4o6 port " << port);
-    }
 
     int old_fd = socket_fd_;
-    socket_fd_ = Dhcp4o6IpcBase::open(static_cast<uint16_t>(port), 4);
+    socket_fd_ = Dhcp4o6IpcBase::open(static_cast<uint16_t>(port), ENDPOINT_TYPE_V4);
     if ((old_fd == -1) && (socket_fd_ != old_fd)) {
         IfaceMgr::instance().addExternalSocket(socket_fd_, Dhcp4o6Ipc::handler);
     }
@@ -50,20 +48,36 @@ void Dhcp4o6Ipc::open() {
 
 void Dhcp4o6Ipc::handler() {
     Dhcp4o6Ipc& ipc = Dhcp4o6Ipc::instance();
+
+    // Reset received message in case we return from this method before the
+    // received message pointer is updated.
+    ipc.received_.reset();
+
+    // Receive message from the IPC socket.
     Pkt6Ptr pkt = ipc.receive();
     if (!pkt) {
         return;
     }
 
+    // Each message must contain option holding DHCPv4 message.
     OptionCollection msgs = pkt->getOptions(D6O_DHCPV4_MSG);
-    if (msgs.size() != 1) {
-        return;
+    if (msgs.empty()) {
+        isc_throw(Dhcp4o6IpcError, "DHCPv4 message option not present in the"
+                  " DHCPv4o6 message received by the DHCPv4 server");
+
+    } else if (msgs.size() > 1) {
+        isc_throw(Dhcp4o6IpcError, "expected exactly one DHCPv4 message within"
+                  " DHCPv4 message option received by the DHCPv4 server");
     }
-    OptionPtr msg = pkt->getOption(D6O_DHCPV4_MSG);
+
+    OptionPtr msg = msgs.begin()->second;
     if (!msg) {
-        isc_throw(Unexpected, "Can't get DHCPv4 message option");
+        isc_throw(Dhcp4o6IpcError, "null DHCPv4 message option in the"
+                  " DHCPv4o6 message received by the DHCPv4 server");
     }
-    instance().received_.reset(new Pkt4o6(msg->getData(), pkt));
+
+    // Record this message.
+    ipc.received_.reset(new Pkt4o6(msg->getData(), pkt));
 }
 
 Pkt4o6Ptr& Dhcp4o6Ipc::getReceived() {
