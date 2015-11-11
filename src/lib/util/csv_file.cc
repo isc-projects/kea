@@ -65,6 +65,12 @@ CSVRow::writeAt(const size_t at, const char* value) {
     values_[at] = value;
 }
 
+void
+CSVRow::trim(const size_t count) {
+    checkIndex(count);
+    values_.resize(values_.size() - count);
+}
+
 std::ostream& operator<<(std::ostream& os, const CSVRow& row) {
     os << row.render();
     return (os);
@@ -296,9 +302,9 @@ CSVFile::open(const bool seek_to_end) {
 
             // Check the header against the columns specified for the CSV file.
             if (!validateHeader(header)) {
-
                 isc_throw(CSVFileError, "invalid header '" << header
-                          << "' in CSV file '" << filename_ << "'");
+                          << "' in CSV file '" << filename_ << "': "
+                          << getReadMsg());
             }
 
             // Everything is good, so if we haven't added any columns yet,
