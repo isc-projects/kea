@@ -145,8 +145,10 @@ VersionedCSVFile::next(CSVRow& row) {
             break;
 
         case NEEDS_UPGRADE:
-            // Rows must be at least as long as header but not longer
-            // than the current schema
+            // The input header met the minimum column count but
+            // is less than the current schema so:
+            // Rows must not be shorter than the valid column count
+            // and not longer than the current schema
             if (row.getValuesCount() < getValidColumnCount()) {
                 columnCountError(row, "too few columns to upgrade");
                 row_valid = false;
@@ -163,7 +165,8 @@ VersionedCSVFile::next(CSVRow& row) {
             break;
 
         case NEEDS_DOWNGRADE:
-            // Rows may be as long as header but not shorter than
+            // The input header exceeded current schema so:
+            // Rows may be as long as input header but not shorter than
             // the the current schema
             if (row.getValuesCount() < getColumnCount()) {
                 columnCountError(row, "too few columns to downgrade");
