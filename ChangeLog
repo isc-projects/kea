@@ -1,3 +1,9 @@
+1046.	[func]		tmark
+	Upon startup Kea servers will now detect memfile lease files
+	that need upgrading, and will launch in instance of the LFC
+	to convert them to the most current memfile schema version.
+	(Trac #3601, git ce4b0e42e8a01bbf3b58fdb1f505bbd6e2fad134)
+
 1045.	[func]		tmark
 	Added classes for storing client class definitions to libdhcpsrv.
 	(Trac #4095, git 1039a942450e2a45a1e1aa9924cae4fdbd1541fe)
