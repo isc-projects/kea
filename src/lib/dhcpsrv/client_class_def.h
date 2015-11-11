@@ -30,7 +30,7 @@
 /// logical expression used to identify members of the class, and options
 /// that may be attributed to class members.
 ///
-/// In addition it defines a continer class, ClientClassDictionary, which
+/// In addition it defines a container class, ClientClassDictionary, which
 /// is houses class definitions keyed by class name.
 ///
 namespace isc {
@@ -90,7 +90,7 @@ class ClientClassDef {
     OptionPtr findOption(uint16_t option_code) const;
 
     /// @brief Provides a convenient text representation of the class
-    friend  std::ostream& operator<<(std::ostream& os, const ClientClassDef& x);
+    friend std::ostream& operator<<(std::ostream& os, const ClientClassDef& x);
 
   private:
     /// @brief Unique text identifier by which this class is known.
@@ -108,13 +108,13 @@ class ClientClassDef {
 /// @brief a pointer to an ClientClassDef
 typedef boost::shared_ptr<ClientClassDef> ClientClassDefPtr;
 
-/// @brief Defines a map of ClientClassDefes, keyed by the class name.
+/// @brief Defines a map of ClientClassDef's, keyed by the class name.
 typedef std::map<std::string,ClientClassDefPtr> ClientClassDefMap;
 
 /// @brief Defines a pointer to a ClientClassDictionary
 typedef boost::shared_ptr<ClientClassDefMap> ClientClassDefMapPtr;
 
-/// @brief Maintains a list of ClientClassDefes
+/// @brief Maintains a list of ClientClassDef's
 class ClientClassDictionary {
 
   public:
