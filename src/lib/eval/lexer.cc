@@ -2263,26 +2263,6 @@ void yyfree (void * ptr )
 using namespace isc::eval;
 
 void
-EvalContext::scanFileBegin()
-{
-    loc.initialize(&file_);
-    yy_flex_debug = trace_scanning_;
-    if (file_.empty () || file_ == "-") {
-        yyin = stdin;
-    }
-    else if (!(yyin = fopen(file_.c_str (), "r"))) {
-        error("cannot open " + file_ + ": " + strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-}
-
-void
-EvalContext::scanFileEnd()
-{
-    fclose(yyin);
-}
-
-void
 EvalContext::scanStringBegin()
 {
     loc.initialize(&file_);
