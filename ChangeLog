@@ -1,7 +1,7 @@
 1044.	[build]		fdupont
 	With the addition of a background thread for timeouts, ensure that
 	the configuration and process spawning code are thread safe.
-	(Trac #4060, git xxx)
+	(Trac #4060, git 4c130bd7c8d0eb97966e9821bab491bca5321b6c)
 
 1043.	[func]		fdupont
 	Implemented support for hex strings in client classification.
