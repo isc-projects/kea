@@ -1,3 +1,7 @@
+1045.	[func]		tmark
+	Added classes for storing client class definitions to libdhcpsrv.
+	(Trac #4095, git 1039a942450e2a45a1e1aa9924cae4fdbd1541fe)
+
 1044.	[build]		fdupont
 	With the addition of a background thread for timeouts, ensure that
 	the configuration and process spawning code are thread safe.
