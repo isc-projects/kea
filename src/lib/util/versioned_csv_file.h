@@ -89,7 +89,7 @@ typedef boost::shared_ptr<VersionedColumn> VersionedColumnPtr;
 /// is presumed to be an earlier schema version and will be upgraded as it is
 /// read.  There is an ability to mark a specific column as being the minimum
 /// column which must be present, see @ref VersionedCSVFile::
-/// setMinimumValidColumns().  If the header does contain match up to this
+/// setMinimumValidColumns().  If the header columns do not match up to this
 /// minimum column, the file is presumed to be too old to upgrade and the
 /// open will fail.  A valid, upgradable file will have an input schema
 /// state of VersionedCSVFile::NEEDS_UPGRADE.
@@ -109,10 +109,11 @@ typedef boost::shared_ptr<VersionedColumn> VersionedColumnPtr;
 /// VersionedCSVFile::NEEDS_DOWNGRADE.
 ///
 /// After successfully opening a file,  rows are read one at a time via
-/// @ref VersionedCSVFile::next().  Each data row is expected to have at least
-/// the same number of columns as were found in the header. Any row which as
-/// fewer values is discarded as invalid.  Similarly, any row which is found
-/// to have more values than were found in the header is discarded as invalid.
+/// @ref VersionedCSVFile::next() and handled according to the input schema
+/// state.   Each data row is expected to have at least the same number of
+/// columns as were found in the header. Any row which as fewer values is
+/// discarded as invalid.  Similarly, any row which is found to have more
+/// values than were found in the header is discarded as invalid.
 ///
 /// When upgrading a row, the values for each missing column is filled in
 /// with the default value specified by that column's descriptor.  When
@@ -172,6 +173,9 @@ public:
     /// for the file to be considered valid.
     size_t getMinimumValidColumns() const;
 
+    /// @brief Returns the number of columns found in the input header
+    size_t getInputHeaderCount() const;
+
     /// @brief Returns the number of valid columns found in the header
     /// For newly created files this will always match the number of defined
     /// columns (i.e. getColumnCount()).  For existing files, this will be
@@ -180,8 +184,6 @@ public:
     /// is from an earlier schema.  This value is zero until the file has
     /// been opened.
     size_t getValidColumnCount() const;
-
-    size_t getInputHeaderCount() const;
 
     /// @brief Opens existing file or creates a new one.
     ///
@@ -285,6 +287,15 @@ protected:
     /// @param header A row holding a header.
     /// @return true if header matches the columns; false otherwise.
     virtual bool validateHeader(const CSVRow& header);
+
+    /// @brief Convenience method for adding an error message
+    ///
+    /// Constructs an error message indicating that the number of columns
+    /// in a given row are wrong and why, then adds it readMsg.
+    ///
+    /// @param row The row in error
+    /// @param reason An explanation as to why the row column count is wrong
+    void columnCountError(const CSVRow& row, const std::string& reason);
 
 private:
     /// @brief Holds the collection of column descriptors

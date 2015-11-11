@@ -82,8 +82,7 @@ VersionedCSVFile::recreate() {
 
     CSVFile::recreate();
     // For new files they always match.
-    valid_column_count_ = getColumnCount();
-    input_header_count_ = getColumnCount();
+    input_header_count_ = valid_column_count_ = getColumnCount();
 }
 
 VersionedCSVFile::InputSchemaState
@@ -127,6 +126,7 @@ VersionedCSVFile::getVersionedColumn(const size_t index) const {
 
 bool
 VersionedCSVFile::next(CSVRow& row) {
+    setReadMsg("success");
     // Use base class to physical read the row, but skip its row
     // validation
     CSVFile::next(row, true);
@@ -134,44 +134,59 @@ VersionedCSVFile::next(CSVRow& row) {
         return(true);
     }
 
-    // If we're upgrading, valid_column_count_ will be less than
-    // defined column count.  If not they're the equal.  Either way
-    // each data row must have valid_column_count_ values or its
-    // an invalid row.
-    if (row.getValuesCount() < getValidColumnCount()) {
-        std::ostringstream s;
-        s << " The row '" << row << "' has too few valid columns "
-          << getValidColumnCount() << "' of the CSV file '"
-          << getFilename() << "'";
-        setReadMsg(s.str());
-        return (false);
+    bool row_valid = true;
+    switch(getInputSchemaState()) {
+        case CURRENT:
+            // All rows must match than the current schema
+            if (row.getValuesCount() != getColumnCount()) {
+                columnCountError(row, "must match current schema");
+                row_valid = false;
+            }
+            break;
+
+        case NEEDS_UPGRADE:
+            // Rows must be at least as long as header but not longer
+            // than the current schema
+            if (row.getValuesCount() < getValidColumnCount()) {
+                columnCountError(row, "too few columns to upgrade");
+                row_valid = false;
+            } else if (row.getValuesCount() > getColumnCount()) {
+                columnCountError(row, "too many columns to upgrade");
+                row_valid = false;
+            } else {
+                // Add any missing values
+                for (size_t index = row.getValuesCount();
+                     index < getColumnCount(); ++index) {
+                    row.append(columns_[index]->default_value_);
+                }
+            }
+            break;
+
+        case NEEDS_DOWNGRADE:
+            // Rows may be as long as header but not shorter than
+            // the the current schema
+            if (row.getValuesCount() < getColumnCount()) {
+                columnCountError(row, "too few columns to downgrade");
+            } else if (row.getValuesCount() > getInputHeaderCount()) {
+                columnCountError(row, "too many columns to downgrade");
+            } else {
+                // Toss any the extra columns
+                row.trim(row.getValuesCount() - getColumnCount());
+            }
+            break;
     }
 
-    // If we have more values than columns defined, we need to
-    // check if we should "downgrade" the row. We will if the
-    // number of values we have matches the number of columns in
-    // input header.  If now we'll toss the row.
-    if (row.getValuesCount() > getColumnCount()) {
-        if (row.getValuesCount() != getInputHeaderCount()) {
-            std::ostringstream s;
-            s << " The row '" << row << "' has too many columns "
-              << getValidColumnCount() << "' of the CSV file '"
-              << getFilename() << "'";
-              setReadMsg(s.str());
-            return (false);
-        }
+    return (row_valid);
+}
 
-        // We're downgrading a row, so toss the extra columns
-        row.trim(row.getValuesCount() - getColumnCount());
-    } else {
-        // If we're upgrading, we need to add in any missing values
-        for (size_t index = row.getValuesCount(); index < getColumnCount();
-            ++index) {
-            row.append(columns_[index]->default_value_);
-        }
-    }
-
-    return (true);
+void
+VersionedCSVFile::columnCountError(const CSVRow& row,
+                                  const std::string& reason) {
+    std::ostringstream s;
+    s <<  "Invalid number of columns: "
+      << row.getValuesCount()  << " in row: '" << row
+      << "', file: '" << getFilename() << "' : " << reason;
+      setReadMsg(s.str());
 }
 
 bool
