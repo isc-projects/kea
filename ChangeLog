@@ -1,3 +1,9 @@
+1047.	[func]*		stephen
+	Change the way that hooks libraries are defined in the configuration
+	file in preparation for allowing the specification of library-specific
+	parameters in a future version of Kea.
+	(Trac #3259, git b2986b0b0299e691b13123922129bdbf8575afdb)
+
 1046.	[func]		tmark
 	Upon startup Kea servers will now detect memfile lease files
 	that need upgrading, and will launch in instance of the LFC
