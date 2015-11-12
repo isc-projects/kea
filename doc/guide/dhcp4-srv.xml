@@ -1769,18 +1769,15 @@ It is merely echoed by the server
       continue lease operations without running the risk that its memory usage
       grows without limit.  The default value is 1024.
       </simpara></listitem>
-
       <listitem><simpara>
-      <command>ncr-format</command> - socket protocol use when sending requests to D2.  Currently
+      <command>ncr-protocol</command> - socket protocol use when sending requests to D2.  Currently
       only UDP is supported.  TCP may be available in an upcoming release.
       </simpara></listitem>
-
       <listitem><simpara>
-      <command>ncr-protocol</command> - packet format to use when sending requests to D2.
+      <command>ncr-format</command> - packet format to use when sending requests to D2.
       Currently only JSON format is supported.  Other formats may be available
       in future releases.
       </simpara></listitem>
-
       </itemizedlist>
       By default, kea-dhcp-ddns is assumed to be running on the same machine as kea-dhcp4, and
       all of the default values mentioned above should be sufficient.
