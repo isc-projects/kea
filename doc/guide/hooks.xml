@@ -46,25 +46,30 @@
       <command>hooks-libraries</command> keyword in the
       configuration for that process. (Note that
       the word "hooks" is plural).  The value of the keyword
-      is an array of strings, each string corresponding to a hooks library.
-      For example, to set up two hooks libraries for the DHCPv4 server, the
-      configuration would be:
+      is an array of map structures, each structure corresponding to a hooks
+      library.  For example, to set up two hooks libraries for the DHCPv4
+      server, the configuration would be:
 <screen>
 <userinput>"Dhcp4": {
     :
     "hooks-libraries": [
-       "/opt/charging.so",
-       "/opt/local/notification.so"
+        {
+            "library": "/opt/charging.so"
+        },
+        {
+            "library": "/opt/local/notification.so"
+        }
     ]
     :
 }</userinput>
 </screen>
       </para>
       <note><para>
-      At present, the libraries are specified as a simple list.  A future
-      version of Kea will support the capability of specifying a set of
-      parameters for each library. When that is added, it is likely
-      that the syntax for specifying hooks libraries will change.
+        This is a change to the syntax used in Kea 0.9.2 and earlier, where
+        hooks-libraries was a list of strings, each string being the name of
+        a library.  The change has been made in Kea 1.0 to facilitate the
+        specification of library-specific parameters, a feature that will be
+        added to a future version of Kea.
       </para></note>
       <para>
       Notes:
@@ -79,7 +84,18 @@
           <listitem><para>
           An empty list has the same effect as omitting the
           <command>hooks-libraries</command> configuration element all together.
-          </para></listitem>
+          </para>
+          <note><para>
+          There is one case where this is not true: if Kea
+          is running with a configuration that contains a
+          <command>hooks-libraries</command> item, and that item is
+          removed and the configuration reloaded, the removal will be
+          ignored and the libraries remain loaded.  As a workaround,
+          instead of removing the <command>hooks-libraries</command>
+          item, change it to an empty list.  This will be fixed in a
+          future version of Kea.
+          </para></note>
+          </listitem>
         </itemizedlist>
       </para>
       <para>
