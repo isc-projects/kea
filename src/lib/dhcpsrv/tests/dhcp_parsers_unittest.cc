@@ -931,28 +931,48 @@ TEST_F(ParseConfigTest, emptyOptionData) {
     ASSERT_EQ(0, opt->getAddresses().size());
 }
 
-};  // Anonymous namespace
-
 /// The next set of tests check basic operation of the HooksLibrariesParser.
-
-
-// Utility function for setting up the "hooks-libraries" configuration.
 //
-// Returns a hooks-libraries configuration element that contains zero to
-// three libraries, depending on what arguments are supplied.
+// Convenience function to set a configuration of zero or more hooks
+// libraries:
+//
+// lib1 - No parameters
+// lib2 - Empty parameters statement
+// lib3 - Valid parameters
 std::string
 setHooksLibrariesConfig(const char* lib1 = NULL, const char* lib2 = NULL,
                         const char* lib3 = NULL) {
-    const std::string quote("\"");
-    const std::string comma_space(", ");
+    const string lbrace("{");
+    const string rbrace("}");
+    const string quote("\"");
+    const string comma_space(", ");
+    const string library("\"library\": ");
+    const string parameters("\"parameters\": ");
 
-    std::string config = std::string("{ \"hooks-libraries\": [");
+    string config = string("{ \"hooks-libraries\": [");
     if (lib1 != NULL) {
-        config += (quote + std::string(lib1) + quote);
+        // Library 1 has no parameters
+        config += lbrace;
+        config += library + quote + std::string(lib1) + quote;
+        config += rbrace;
+
         if (lib2 != NULL) {
-            config += (comma_space + quote + std::string(lib2) + quote);
+            // Library 2 has an empty parameters statement
+            config += comma_space + lbrace;
+            config += library + quote + std::string(lib2) + quote + comma_space;
+            config += string("\"parameters\": {}");
+            config += rbrace;
+
             if (lib3 != NULL) {
-                config += (comma_space + quote + std::string(lib3) + quote);
+                // Library 3 has valid parameters
+                config += comma_space + lbrace;
+                config += library + quote + std::string(lib3) + quote + comma_space;
+                config += string("\"parameters\": {");
+                config += string("    \"svalue\": \"string value\", ");
+                config += string("    \"ivalue\": 42, ");     // Integer value
+                config += string("    \"bvalue\": true");     // Boolean value
+                config += string("}");
+                config += rbrace;
             }
         }
     }
@@ -1240,6 +1260,78 @@ TEST_F(ParseConfigTest, reconfigureInvalidHooksLibraries) {
     hooks_libraries = HooksManager::getLibraryNames();
     ASSERT_EQ(1, hooks_libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[0]);
+}
+
+// Check that if hooks-libraries contains invalid syntax, it is detected.
+TEST_F(ParseConfigTest, invalidSyntaxHooksLibraries) {
+
+    // Element holds a mixture of (valid) maps and non-maps.
+    string config1 = "{ \"hooks-libraries\": [ "
+        "{ \"library\": \"/opt/lib/lib1\" }, "
+        "\"/opt/lib/lib2\" "
+        "] }";
+    string error1 = "one or more entries in the hooks-libraries list is not"
+                    " a map";
+
+    int rcode = parseConfiguration(config1);
+    ASSERT_NE(0, rcode);
+    EXPECT_TRUE(error_text_.find(error1) != string::npos) <<
+        "Error text returned from parse failure is " << error_text_;
+
+    // Element holds valid maps, except one where the library element is not
+    // a string.
+    string config2 = "{ \"hooks-libraries\": [ "
+        "{ \"library\": \"/opt/lib/lib1\" }, "
+        "{ \"library\": 123 } "
+        "] }";
+    string error2 = "value of 'library' element is not a string giving"
+                    " the path to a hooks library";
+
+    rcode = parseConfiguration(config2);
+    ASSERT_NE(0, rcode);
+    EXPECT_TRUE(error_text_.find(error2) != string::npos) <<
+        "Error text returned from parse failure is " << error_text_;
+
+    // Element holds valid maps, except one where the library element is the
+    // empty string.
+    string config3 = "{ \"hooks-libraries\": [ "
+        "{ \"library\": \"/opt/lib/lib1\" }, "
+        "{ \"library\": \"\" } "
+        "] }";
+    string error3 = "value of 'library' element must not be blank";
+
+    rcode = parseConfiguration(config3);
+    ASSERT_NE(0, rcode);
+    EXPECT_TRUE(error_text_.find(error3) != string::npos) <<
+        "Error text returned from parse failure is " << error_text_;
+
+    // Element holds valid maps, except one where the library element is all
+    // spaces.
+    string config4 = "{ \"hooks-libraries\": [ "
+        "{ \"library\": \"/opt/lib/lib1\" }, "
+        "{ \"library\": \"      \" } "
+        "] }";
+    string error4 = "value of 'library' element must not be blank";
+
+    rcode = parseConfiguration(config4);
+    ASSERT_NE(0, rcode);
+    EXPECT_TRUE(error_text_.find(error3) != string::npos) <<
+        "Error text returned from parse failure is " << error_text_;
+
+    // Element holds valid maps, except one that does not contain a
+    // 'library' element.
+    string config5 = "{ \"hooks-libraries\": [ "
+        "{ \"library\": \"/opt/lib/lib1\" }, "
+        "{ \"parameters\": { \"alpha\": 123 } }, "
+        "{ \"library\": \"/opt/lib/lib2\" } "
+        "] }";
+    string error5 = "one or more hooks-libraries elements are missing the"
+                    " name of the library";
+
+    rcode = parseConfiguration(config5);
+    ASSERT_NE(0, rcode);
+    EXPECT_TRUE(error_text_.find(error5) != string::npos) <<
+        "Error text returned from parse failure is " << error_text_;
 }
 
 /// @brief Checks that a valid, enabled D2 client configuration works correctly.
@@ -2065,3 +2157,5 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code
 // (see CtrlDhcpv4SrvTest.commandSocketBasic in
 // src/bin/dhcp4/tests/ctrl_dhcp4_srv_unittest.cc).
+
+};  // Anonymous namespace
