@@ -1751,11 +1751,11 @@ should include options from the isc option space:
       continue lease operations.  The default value is 1024.
       </simpara></listitem>
       <listitem><simpara>
-      <command>ncr-format</command> - Socket protocol use when sending requests to D2.  Currently
+      <command>ncr-protocol</command> - Socket protocol use when sending requests to D2.  Currently
       only UDP is supported.  TCP may be available in an upcoming release.
       </simpara></listitem>
       <listitem><simpara>
-      <command>ncr-protocol</command> - Packet format to use when sending requests to D2.
+      <command>ncr-format</command> - Packet format to use when sending requests to D2.
       Currently only JSON format is supported.  Other formats may be available
       in future releases.
       </simpara></listitem>
