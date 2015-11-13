@@ -21,8 +21,8 @@ namespace dhcp {
 
 ClientClassDef::ClientClassDef(const std::string& name,
                                const ExpressionPtr& match_expr,
-                               const OptionCollectionPtr& options)
-    : name_(name), match_expr_(match_expr), options_(options) {
+                               const CfgOptionPtr& cfg_option)
+    : name_(name), match_expr_(match_expr), cfg_option_(cfg_option) {
 
     // Name can't be blank
     if (name_.empty()) {
@@ -31,8 +31,8 @@ ClientClassDef::ClientClassDef(const std::string& name,
     // @todo Does it make sense for a class to NOT have match expression?
 
     // For classes without options, make sure we have an empty collection
-    if (!options_) {
-        options_.reset(new OptionCollection());
+    if (!cfg_option_) {
+        cfg_option_.reset(new CfgOption());
     }
 }
 
@@ -59,26 +59,14 @@ ClientClassDef::setMatchExpr(const ExpressionPtr& match_expr) {
     match_expr_ = match_expr;
 }
 
-const OptionCollectionPtr&
-ClientClassDef::getOptions() const {
-    return (options_);
+const CfgOptionPtr&
+ClientClassDef::getCfgOption() const {
+    return (cfg_option_);
 }
 
 void
-ClientClassDef::setOptions(const OptionCollectionPtr& options) {
-    options_ = options;
-}
-
-OptionPtr
-ClientClassDef::findOption(uint16_t option_code) const {
-    if (options_) {
-        isc::dhcp::OptionCollection::iterator it = options_->find(option_code);
-        if (it != options_->end()) {
-            return ((*it).second);
-        }
-    }
-
-    return (OptionPtr());
+ClientClassDef::setCfgOption(const CfgOptionPtr& cfg_option) {
+    cfg_option_ = cfg_option;
 }
 
 std::ostream& operator<<(std::ostream& os, const ClientClassDef& x) {
@@ -98,8 +86,8 @@ ClientClassDictionary::~ClientClassDictionary() {
 void
 ClientClassDictionary::addClass(const std::string& name,
                                 const ExpressionPtr& match_expr,
-                                const OptionCollectionPtr& options) {
-    ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, options));
+                                const CfgOptionPtr& cfg_option) {
+    ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
     addClass(cclass);
 }
 

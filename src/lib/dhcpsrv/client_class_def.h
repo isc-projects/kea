@@ -15,7 +15,7 @@
 #ifndef CLIENT_CLASS_DEF_H
 #define CLIENT_CLASS_DEF_H
 
-#include <dhcp/option.h>
+#include <dhcpsrv/cfg_option.h>
 #include <eval/token.h>
 #include <exceptions/exceptions.h>
 
@@ -53,7 +53,7 @@ class ClientClassDef {
     /// @param match_expr Expression the class will use to determine membership
     /// @param options Collection of options members should be given
     ClientClassDef(const std::string& name, const ExpressionPtr& match_expr,
-                const OptionCollectionPtr& options = OptionCollectionPtr());
+                const CfgOptionPtr& options = CfgOptionPtr());
 
     /// @brief Destructor
     virtual ~ClientClassDef();
@@ -75,19 +75,12 @@ class ClientClassDef {
     void setMatchExpr(const ExpressionPtr& match_expr);
 
     /// @brief Fetches the class's option collection
-    const OptionCollectionPtr& getOptions() const;
+    const CfgOptionPtr& getCfgOption() const;
 
     /// @brief Sets the class's option collection
     ///
     /// @param options the option collection to assign the class
-    void setOptions(const OptionCollectionPtr& options);
-
-    /// @brief Fetches an option from the class's collection by code
-    ///
-    /// @param option_code Option code value of the desired option
-    /// @return A pointer to the option if found, otherwise an
-    /// empty pointer
-    OptionPtr findOption(uint16_t option_code) const;
+    void setCfgOption(const CfgOptionPtr& cfg_option);
 
     /// @brief Provides a convenient text representation of the class
     friend std::ostream& operator<<(std::ostream& os, const ClientClassDef& x);
@@ -100,9 +93,8 @@ class ClientClassDef {
     /// this class.
     ExpressionPtr match_expr_;
 
-    /// @brief The collection of options members should be given
-    /// Currently this is a multimap, not sure we need/want that complexity
-    OptionCollectionPtr options_;
+    /// @brief The option data configuration for this class
+    CfgOptionPtr cfg_option_;
 };
 
 /// @brief a pointer to an ClientClassDef
@@ -134,7 +126,7 @@ class ClientClassDictionary {
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for
     /// others.
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
-                  const OptionCollectionPtr& options);
+                  const CfgOptionPtr& options);
 
     /// @brief Adds a new class to the list
     ///
