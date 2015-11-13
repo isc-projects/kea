@@ -299,13 +299,27 @@ TEST(MySqlConnection, checkTimeConversion) {
 }
 
 // Test verifies if a host reservation can be added and later retrieved by IPv4
-// address.
-TEST_F(MySqlHostDataSourceTest, basic4) {
-    testBasic4();
+// address. Host uses hw address as identifier.
+TEST_F(MySqlHostDataSourceTest, basic4HWAddr) {
+    testBasic4(true);
 }
 
-TEST_F(MySqlHostDataSourceTest, getByIPv4) {
-    testGetByIPv4();
+// Test verifies if a host reservation can be added and later retrieved by IPv4
+// address. Host uses client-id (DUID) as identifier.
+TEST_F(MySqlHostDataSourceTest, basic4ClientId) {
+    testBasic4(false);
+}
+
+// Test verifies that multiple hosts can be added and later retrived by their
+// reserved IPv4 address. This test uses HW addresses as identifiers.
+TEST_F(MySqlHostDataSourceTest, getByIPv4HWaddr) {
+    testGetByIPv4(true);
+}
+
+// Test verifies that multiple hosts can be added and later retrived by their
+// reserved IPv4 address. This test uses client-id (DUID) as identifiers.
+TEST_F(MySqlHostDataSourceTest, getByIPv4ClientId) {
+    testGetByIPv4(false);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by
@@ -316,9 +330,8 @@ TEST_F(MySqlHostDataSourceTest, getByHWaddr) {
 
 // Test verifies if a host reservation can be added and later retrieved by
 // client identifier.
-TEST_F(MySqlHostDataSourceTest, clientId) {
-    /// @todo: add host reservation with hardware address, retrieve it by
-    /// hardware address and make sure the values are correct.
+TEST_F(MySqlHostDataSourceTest, getByClientId) {
+    testGetByClientId();
 }
 
 // Test verifies if hardware address and client identifier are not confused.

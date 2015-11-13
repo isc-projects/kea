@@ -74,10 +74,29 @@ public:
     /// This method compares two hwardware address and uses gtest
     /// macros to signal unexpected (mismatch if expect_match is true;
     /// match if expect_match is false) values.
+    ///
+    /// @param host1 first host to be compared
+    /// @param host2 second host to be compared
+    /// @param expect_match true = HW addresses expected to be the same,
+    ///                     false = HW addresses expected to be different
     void
-    compareHwaddrs(const ConstHostPtr& host1,
-                   const ConstHostPtr& host2,
+    compareHwaddrs(const ConstHostPtr& host1, const ConstHostPtr& host2,
                    bool expect_match);
+
+    /// @brief Compares DUIDs of the two hosts.
+    ///
+    /// This method compares two DUIDs (client-ids) and uses gtest
+    /// macros to signal unexpected (mismatch if expect_match is true;
+    /// match if expect_match is false) values.
+    ///
+    /// @param host1 first host to be compared
+    /// @param host2 second host to be compared
+    /// @param expect_match true = DUIDs expected to be the same,
+    ///                     false = DUIDs expected to be different
+    void
+    compareDuids(const ConstHostPtr& host1, const ConstHostPtr& host2,
+                 bool expect_match);
+
 
     /// @brief Compares two hosts
     ///
@@ -111,18 +130,25 @@ public:
     ///        can be inserted and later retrieved.
     ///
     /// Uses gtest macros to report failures.
-    void testBasic4();
+    /// @param hwaddr true = use HW address as identifier, false = use client-id(DUID)
+    void testBasic4(bool hwaddr);
 
     /// @brief Test inserts several hosts with unique IPv4 address and
     ///        checks that they can be retrieved properly.
     ///
     /// Uses gtest macros to report failures.
-    void testGetByIPv4();
+    /// @param hwaddr true = use HW address as identifier, false = use client-id(DUID)
+    void testGetByIPv4(bool hwaddr);
 
     /// @brief Test that hosts can be retrieved by hardware address.
     ///
     /// Uses gtest macros to report failures.
     void testGetByHWaddr();
+
+    /// @brief Test that hosts can be retrieved by client-id
+    ///
+    /// Uses gtest macros to report failures.
+    void testGetByClientId();
 };
 
 }; // namespace test

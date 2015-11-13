@@ -37,8 +37,9 @@ GenericHostDataSourceTest::~GenericHostDataSourceTest() {
 std::string
 GenericHostDataSourceTest::generateHWAddr() {
 
+    // Let's use something that is easily printable. That's convenient
+    // if you need to enter MySQL queries by hand.
     static uint8_t hwaddr[] = {65, 66, 67, 68, 69, 70};
-
 
     stringstream tmp;
     for (int i = 0; i < sizeof(hwaddr); ++i) {
@@ -52,17 +53,33 @@ GenericHostDataSourceTest::generateHWAddr() {
     // Increase the address for the next time we use it.
     // This is primitive, but will work for 65k unique
     // addresses.
-    hwaddr[0]++;
-    if (hwaddr[0] == 0) {
-        hwaddr[1]++;
+    hwaddr[sizeof(hwaddr) - 1]++;
+    if (hwaddr[sizeof(hwaddr) - 1] == 0) {
+        hwaddr[sizeof(hwaddr) - 2]++;
     }
     return (tmp.str());
 }
 
 std::string
 GenericHostDataSourceTest::generateDuid() {
-    /// @todo: Make this code return different duid every time.
-    return ("010203040506abcd");
+    // Let's use something that is easily printable. That's convenient
+    // if you need to enter MySQL queries by hand.
+    static uint8_t duid[] = { 65, 66, 67, 68, 69, 70, 71, 72, 73, 74 };
+
+    stringstream tmp;
+    for (int i = 0; i < sizeof(duid); ++i) {
+        tmp << std::setw(2) << std::hex << std::setfill('0')
+            << static_cast<unsigned int>(duid[i]);
+    }
+
+    // Increase the DUID for the next time we use it.
+    // This is primitive, but will work for 65k unique
+    // DUIDs.
+    duid[sizeof(duid) - 1]++;
+    if (duid[sizeof(duid) - 1] == 0) {
+        duid[sizeof(duid) - 2]++;
+    }
+    return (tmp.str());
 }
 
 HostPtr GenericHostDataSourceTest::initializeHost4(std::string address,
@@ -165,27 +182,51 @@ GenericHostDataSourceTest::compareHwaddrs(const ConstHostPtr& host1,
     }
 }
 
+void
+GenericHostDataSourceTest::compareDuids(const ConstHostPtr& host1,
+                                        const ConstHostPtr& host2,
+                                        bool expect_match) {
+    ASSERT_TRUE(host1);
+    ASSERT_TRUE(host2);
+
+    // comapre if both have or have not DUID set
+    if ((host1->getDuid() && !host2->getDuid()) ||
+        (!host1->getDuid() && host2->getDuid())) {
+
+        // One host has a DUID and the other doesn't.
+        // Let's see if it's a problem.
+        if (expect_match) {
+            ADD_FAILURE() << "DUID comparison failed: host1 duid="
+                          << host1->getDuid() << ", host2 duid="
+                          << host2->getDuid();
+        }
+        return;
+    }
+
+    // Now we know that either both or neither have hw address set.
+    // If host1 has it, we can proceed to value comparison.
+    if (host1->getDuid()) {
+
+        if (expect_match) {
+            EXPECT_TRUE(*host1->getDuid() == *host1->getDuid());
+        } else {
+            EXPECT_FALSE(*host1->getDuid() == *host1->getDuid());
+        }
+        if (*host1->getDuid() != *host2->getDuid()) {
+            cout << host1->getDuid()->toText() << endl;
+            cout << host2->getDuid()->toText() << endl;
+        }
+    }
+}
+
 void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
                                              const ConstHostPtr& host2) {
 
     // Let's compare HW addresses and expect match.
     compareHwaddrs(host1, host2, true);
 
-    // comapre if both have or have not DUID set
-    if ((host1->getDuid() && !host2->getDuid()) ||
-        (!host1->getDuid() && host2->getDuid())) {
-        ADD_FAILURE() << "DUID comparison failed: host1 duid="
-                      << host1->getDuid() << ", host2 duid="
-                      << host2->getDuid();
-        return;
-    }
-    if (host1->getDuid()) {
-        EXPECT_TRUE(*host1->getDuid() == *host1->getDuid());
-        if (*host1->getHWAddress() != *host2->getHWAddress()) {
-            cout << host1->getDuid()->toText() << endl;
-            cout << host2->getDuid()->toText() << endl;
-        }
-    }
+    // Now compare DUIDs
+    compareDuids(host1, host2, true);
 
     // Now check that the identifiers returned as vectors are the same
     EXPECT_EQ(host1->getIdentifierType(), host2->getIdentifierType());
@@ -221,12 +262,12 @@ GenericHostDataSourceTest::compareClientClasses(const ClientClasses& /*classes1*
     /// @todo: Implement client classes comparison
 }
 
-void GenericHostDataSourceTest::testBasic4() {
+void GenericHostDataSourceTest::testBasic4(bool hwaddr) {
     // Make sure we have the pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservation.
-    HostPtr host = initializeHost4("192.0.2.1", true);
+    HostPtr host = initializeHost4("192.0.2.1", hwaddr);
     ASSERT_TRUE(host); // Make sure the host is generate properly.
     SubnetID subnet = host->getIPv4SubnetID();
 
@@ -243,15 +284,16 @@ void GenericHostDataSourceTest::testBasic4() {
     compareHosts(host, from_hds);
 }
 
-void GenericHostDataSourceTest::testGetByIPv4() {
+
+void GenericHostDataSourceTest::testGetByIPv4(bool hwaddr) {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a couple of hosts...
-    HostPtr host1 = initializeHost4("192.0.2.1", true);
-    HostPtr host2 = initializeHost4("192.0.2.2", true);
-    HostPtr host3 = initializeHost4("192.0.2.3", true);
-    HostPtr host4 = initializeHost4("192.0.2.4", true);
+    HostPtr host1 = initializeHost4("192.0.2.1", hwaddr);
+    HostPtr host2 = initializeHost4("192.0.2.2", hwaddr);
+    HostPtr host3 = initializeHost4("192.0.2.3", hwaddr);
+    HostPtr host4 = initializeHost4("192.0.2.4", hwaddr);
 
     // ... and add them to the data source.
     ASSERT_NO_THROW(hdsptr_->add(host1));
@@ -308,6 +350,35 @@ void GenericHostDataSourceTest::testGetByHWaddr() {
 
     ConstHostPtr from_hds1 = hdsptr_->get4(subnet1, host1->getHWAddress());
     ConstHostPtr from_hds2 = hdsptr_->get4(subnet2, host2->getHWAddress());
+
+    // Now let's check if we got what we expected.
+    ASSERT_TRUE(from_hds1);
+    ASSERT_TRUE(from_hds2);
+    compareHosts(host1, from_hds1);
+    compareHosts(host2, from_hds2);
+}
+
+void GenericHostDataSourceTest::testGetByClientId() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    HostPtr host1 = initializeHost4("192.0.2.1", false);
+    HostPtr host2 = initializeHost4("192.0.2.2", false);
+
+    // Sanity check: make sure the hosts have different client-ids.
+    ASSERT_TRUE(host1->getDuid());
+    ASSERT_TRUE(host2->getDuid());
+    compareDuids(host1, host2, false);
+
+    // Try to add both of the to the host data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+    ASSERT_NO_THROW(hdsptr_->add(host2));
+
+    SubnetID subnet1 = host1->getIPv4SubnetID();
+    SubnetID subnet2 = host2->getIPv4SubnetID();
+
+    ConstHostPtr from_hds1 = hdsptr_->get4(subnet1, HWAddrPtr(), host1->getDuid());
+    ConstHostPtr from_hds2 = hdsptr_->get4(subnet2, HWAddrPtr(), host2->getDuid());
 
     // Now let's check if we got what we expected.
     ASSERT_TRUE(from_hds1);
