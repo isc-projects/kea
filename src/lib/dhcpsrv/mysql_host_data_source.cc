@@ -230,7 +230,7 @@ public:
             	dhcp_identifier_length_ = host_->getDuid()->getDuid().size();
             	bind_[1].buffer_type = MYSQL_TYPE_BLOB;
                 bind_[1].buffer = reinterpret_cast<char*>
-                                    (host_->getDuid()->getDuid()[0]);
+                    (const_cast<uint8_t*>(&(host_->getDuid()->getDuid()[0])));
                 bind_[1].buffer_length = dhcp_identifier_length_;
                 bind_[1].length = &dhcp_identifier_length_;
                 // bind_[1].is_null = &MLM_FALSE; // commented out for performance
