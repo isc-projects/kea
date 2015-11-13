@@ -99,6 +99,7 @@ IfaceMgrTestConfig::createIface(const std::string &name, const int ifindex) {
     // Set MAC address to 01:01:01:01:01:01.
     std::vector<uint8_t> mac_vec(6, 1);
     iface->setMac(&mac_vec[0], mac_vec.size());
+    iface->setHWType(HTYPE_ETHER);
 
     return (iface);
 }
