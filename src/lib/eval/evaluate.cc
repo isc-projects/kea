@@ -32,7 +32,7 @@ bool evaluate(const Expression& expr, const Pkt& pkt) {
     } else if (values.top() == "true") {
         return (true);
     } else {
-        isc_throw(EvalNotBoolError, "Incorrect evaluation type. Expected "
+        isc_throw(EvalTypeError, "Incorrect evaluation type. Expected "
                   "\"false\" or \"true\", got \"" << values.top() << "\"");
     }
 }
