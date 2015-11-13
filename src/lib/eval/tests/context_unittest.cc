@@ -252,7 +252,13 @@ TEST_F(EvalContextTest, scanParseErrors) {
     checkError("option[65536]",
                "<string>:1.8-12: Option code has invalid "
                "value in 65536. Allowed range: 0..65535");
+    checkError("option[12345678901234567890]",
+               "<string>:1.8-27: Failed to convert 12345678901234567890 "
+               "to an integer.");
     checkError("option[123] < 'foo'", "<string>:1.13: Invalid character: <");
+    checkError("substring('foo','12345678901234567890','1')",
+               "<string>:1.17-38: syntax error, unexpected constant string, "
+               "expecting a number in a constant string");
 }
 
 // Tests some parser error cases

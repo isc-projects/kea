@@ -589,8 +589,8 @@ int yy_flex_debug = 1;
 
 static yyconst flex_int16_t yy_rule_linenum[17] =
     {   0,
-       83,   87,   93,  101,  107,  117,  123,  137,  138,  139,
-      140,  141,  142,  143,  144,  146
+       83,   87,   93,  108,  114,  124,  130,  144,  145,  146,
+      147,  148,  149,  150,  151,  153
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -1052,12 +1052,19 @@ YY_RULE_SETUP
     std::string tmp(yytext+1);
     tmp.resize(tmp.size() - 1);
 
+    try {
+        static_cast<void>(boost::lexical_cast<int>(tmp));
+    } catch (const boost::bad_lexical_cast &) {
+        // In fact it is not a valid number
+        return isc::eval::EvalParser::make_STRING(tmp, loc);
+    }
+
     return isc::eval::EvalParser::make_NUMBER(tmp, loc);
 }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 101 "lexer.ll"
+#line 108 "lexer.ll"
 {
      // A string containing the "all" keyword.
 
@@ -1066,7 +1073,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 107 "lexer.ll"
+#line 114 "lexer.ll"
 {
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
@@ -1079,7 +1086,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 117 "lexer.ll"
+#line 124 "lexer.ll"
 {
     // A hex string has been matched. It contains the '0x' or '0X' header
     // followed by at least one hexadecimal digit.
@@ -1088,7 +1095,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 123 "lexer.ll"
+#line 130 "lexer.ll"
 {
     // An integer was found.
     std::string tmp(yytext);
@@ -1105,59 +1112,59 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 137 "lexer.ll"
+#line 144 "lexer.ll"
 return isc::eval::EvalParser::make_EQUAL(loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 138 "lexer.ll"
+#line 145 "lexer.ll"
 return isc::eval::EvalParser::make_OPTION(loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 139 "lexer.ll"
+#line 146 "lexer.ll"
 return isc::eval::EvalParser::make_SUBSTRING(loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 140 "lexer.ll"
+#line 147 "lexer.ll"
 return isc::eval::EvalParser::make_LPAREN(loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 141 "lexer.ll"
+#line 148 "lexer.ll"
 return isc::eval::EvalParser::make_RPAREN(loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 142 "lexer.ll"
+#line 149 "lexer.ll"
 return isc::eval::EvalParser::make_LBRACKET(loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 143 "lexer.ll"
+#line 150 "lexer.ll"
 return isc::eval::EvalParser::make_RBRACKET(loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 144 "lexer.ll"
+#line 151 "lexer.ll"
 return isc::eval::EvalParser::make_COMA(loc);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 146 "lexer.ll"
+#line 153 "lexer.ll"
 driver.error (loc, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 147 "lexer.ll"
+#line 154 "lexer.ll"
 return isc::eval::EvalParser::make_END(loc);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 148 "lexer.ll"
+#line 155 "lexer.ll"
 ECHO;
 	YY_BREAK
-#line 1161 "lexer.cc"
+#line 1168 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2245,7 +2252,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 148 "lexer.ll"
+#line 155 "lexer.ll"
 
 
 
