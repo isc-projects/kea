@@ -44,7 +44,6 @@ using namespace isc::eval;
   EQUAL "=="
   OPTION "option"
   SUBSTRING "substring"
-  UNTYPED "untyped:"
   COMA ","
   LPAREN  "("
   RPAREN  ")"
@@ -64,111 +63,73 @@ using namespace isc::eval;
 
 // Expression can either be a single token or a (something == something) expression
 
-expression:
-UNTYPED untyped_expr
-| bool_expr
-;
+expression : bool_expr
+           ;
 
-untyped_expr:
-token EQUAL token {
-    TokenPtr eq(new TokenEqual());
-    ctx.expression.push_back(eq);
-  }
-| token
-;
+bool_expr : string_expr EQUAL string_expr
+                {
+                    TokenPtr eq(new TokenEqual());
+                    ctx.expression.push_back(eq);
+                }
+          ;
 
-token:
-STRING {
-    TokenPtr str(new TokenString($1));
-    ctx.expression.push_back(str);
-  }
-| NUMBER {
-    TokenPtr str(new TokenString($1));
-    ctx.expression.push_back(str);
-  }
-| ALL {
-    TokenPtr str(new TokenString("all"));
-    ctx.expression.push_back(str);
-  }
-| HEXSTRING {
-    TokenPtr hex(new TokenHexString($1));
-    ctx.expression.push_back(hex);
-  }
-| OPTION "[" INTEGER "]" {
-    int n = $3;
-    if (n < 0 || n > 65535) {
-        std::ostringstream oss;
-        oss << "Option code has invalid value in " << n
-            << ". Allowed range: 0..65535";
-        ctx.error(@3, oss.str());
-    }
-    TokenPtr opt(new TokenOption(static_cast<uint16_t>(n)));
-    ctx.expression.push_back(opt);
-  }
-| SUBSTRING "(" token "," token "," token ")" {
-    TokenPtr sub(new TokenSubstring());
-    ctx.expression.push_back(sub);
-  }
-;
+string_expr : STRING
+                  {
+                      TokenPtr str(new TokenString($1));
+                      ctx.expression.push_back(str);
+                  }
+            | NUMBER
+                  {
+                      TokenPtr str(new TokenString($1));
+                      ctx.expression.push_back(str);
+                  }
+            | ALL
+                  {
+                      TokenPtr str(new TokenString("all"));
+                      ctx.expression.push_back(str);
+                  }
+            | HEXSTRING
+                  {
+                      TokenPtr hex(new TokenHexString($1));
+                      ctx.expression.push_back(hex);
+                  }
+            | OPTION "[" INTEGER "]"
+                  {
+                      int n = $3;
+                      if (n < 0 || n > 65535) {
+                          std::ostringstream oss;
+                          oss << "Option code has invalid value in " << n
+                              << ". Allowed range: 0..65535";
+                          ctx.error(@3, oss.str());
+                      }
+                      TokenPtr opt(new TokenOption(static_cast<uint16_t>(n)));
+                      ctx.expression.push_back(opt);
+                  }
+            | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
+                  {
+                      TokenPtr sub(new TokenSubstring());
+                      ctx.expression.push_back(sub);
+                  }
+            ;
 
-bool_expr:
-string_expr EQUAL string_expr {
-    TokenPtr eq(new TokenEqual());
-    ctx.expression.push_back(eq);
-  }
-;
+start_expr : NUMBER
+                 {
+                     TokenPtr str(new TokenString($1));
+                     ctx.expression.push_back(str);
+                 }
+           ;
 
-string_expr:
-STRING {
-    TokenPtr str(new TokenString($1));
-    ctx.expression.push_back(str);
-  }
-| NUMBER {
-    TokenPtr str(new TokenString($1));
-    ctx.expression.push_back(str);
-  }
-| ALL {
-    TokenPtr str(new TokenString("all"));
-    ctx.expression.push_back(str);
-  }
-| HEXSTRING {
-    TokenPtr hex(new TokenHexString($1));
-    ctx.expression.push_back(hex);
-  }
-| OPTION "[" INTEGER "]" {
-    int n = $3;
-    if (n < 0 || n > 65535) {
-        std::ostringstream oss;
-        oss << "Option code has invalid value in " << n
-            << ". Allowed range: 0..65535";
-        ctx.error(@3, oss.str());
-    }
-    TokenPtr opt(new TokenOption(static_cast<uint16_t>(n)));
-    ctx.expression.push_back(opt);
-  }
-| SUBSTRING "(" string_expr "," start_expr "," length_expr ")" {
-    TokenPtr sub(new TokenSubstring());
-    ctx.expression.push_back(sub);
-  }
-;
-
-start_expr:
-NUMBER {
-    TokenPtr str(new TokenString($1));
-    ctx.expression.push_back(str);
-  }
-;
-
-length_expr:
-NUMBER {
-    TokenPtr str(new TokenString($1));
-    ctx.expression.push_back(str);
-  }
-| ALL {
-    TokenPtr str(new TokenString("all"));
-    ctx.expression.push_back(str);
-  }
-;
+length_expr : NUMBER
+                  {
+                      TokenPtr str(new TokenString($1));
+                      ctx.expression.push_back(str);
+                  }
+            | ALL
+                 {
+                     TokenPtr str(new TokenString("all"));
+                     ctx.expression.push_back(str);
+                 }
+            ;
 
 %%
 void

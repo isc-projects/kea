@@ -137,7 +137,6 @@ blank [ \t]
 "=="        return isc::eval::EvalParser::make_EQUAL(loc);
 "option"    return isc::eval::EvalParser::make_OPTION(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
-"untyped:"  return isc::eval::EvalParser::make_UNTYPED(loc);
 "("         return isc::eval::EvalParser::make_LPAREN(loc);
 ")"         return isc::eval::EvalParser::make_RPAREN(loc);
 "["         return isc::eval::EvalParser::make_LBRACKET(loc);
