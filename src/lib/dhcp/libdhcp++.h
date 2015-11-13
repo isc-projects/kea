@@ -134,8 +134,18 @@ public:
     ///
     /// @param buf output buffer (assembled options will be stored here)
     /// @param options collection of options to store to
+
+    /// Generic version: to be used when there is no specific order
     static void packOptions(isc::util::OutputBuffer& buf,
                             const isc::dhcp::OptionCollection& options);
+
+    /// DHCPv4 version: put some options last
+    static void packOptions4(isc::util::OutputBuffer& buf,
+                             const isc::dhcp::OptionCollection& options);
+
+    /// DHCPv6 version (currently same than the generic one)
+    static void packOptions6(isc::util::OutputBuffer& buf,
+                             const isc::dhcp::OptionCollection& options);
 
     /// @brief Parses provided buffer as DHCPv6 options and creates
     /// Option objects.
