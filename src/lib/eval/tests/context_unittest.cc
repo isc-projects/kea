@@ -137,14 +137,13 @@ TEST_F(EvalContextTest, string) {
     checkTokenString(tmp2, "bar");
 }
 
-// Test the parsing of a basic expression with a constant string holding
-// a number.
-TEST_F(EvalContextTest, number) {
+// Test the parsing of a basic expression using integers
+TEST_F(EvalContextTest, integer) {
 
     EvalContext eval;
 
     EXPECT_NO_THROW(parsed_ =
-        eval.parseString("substring(option[123], '0', '2') == '42'"));
+        eval.parseString("substring(option[123], 0, 2) == '42'"));
     EXPECT_TRUE(parsed_);
 }
 
@@ -210,7 +209,7 @@ TEST_F(EvalContextTest, substring) {
     EvalContext eval;
 
     EXPECT_NO_THROW(parsed_ =
-        eval.parseString("substring('foobar','2','3') == 'oba'"));
+        eval.parseString("substring('foobar',2,all) == 'obar'"));
     EXPECT_TRUE(parsed_);
 
     ASSERT_EQ(6, eval.expression.size());
@@ -222,7 +221,7 @@ TEST_F(EvalContextTest, substring) {
 
     checkTokenString(tmp1, "foobar");
     checkTokenString(tmp2, "2");
-    checkTokenString(tmp3, "3");
+    checkTokenString(tmp3, "all");
     checkTokenSubstring(tmp4);
 }
 
@@ -256,9 +255,9 @@ TEST_F(EvalContextTest, scanParseErrors) {
                "<string>:1.8-27: Failed to convert 12345678901234567890 "
                "to an integer.");
     checkError("option[123] < 'foo'", "<string>:1.13: Invalid character: <");
-    checkError("substring('foo','12345678901234567890','1')",
-               "<string>:1.17-38: syntax error, unexpected constant string, "
-               "expecting a number in a constant string");
+    checkError("substring('foo',12345678901234567890,1)",
+               "<string>:1.17-36: Failed to convert 12345678901234567890 "
+               "to an integer.");
 }
 
 // Tests some parser error cases
@@ -286,11 +285,13 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("substring('foobar') == 'f'",
                "<string>:1.19: syntax error, "
                "unexpected ), expecting \",\"");
-    checkError("substring('foobar','3') == 'bar'",
-               "<string>:1.23: syntax error, unexpected ), expecting \",\"");
-    checkError("substring('foobar',3,3) == 'bar'",
-               "<string>:1.20: syntax error, unexpected integer, "
-               "expecting a number in a constant string");
+    checkError("substring('foobar',3) == 'bar'",
+               "<string>:1.21: syntax error, unexpected ), expecting \",\"");
+    checkError("substring('foobar','3',3) == 'bar'",
+               "<string>:1.20-22: syntax error, unexpected constant string, "
+               "expecting integer");
+    checkError("substring('foobar',1,a) == 'foo'",
+               "<string>:1.22: Invalid character: a");
 }
 
 // Tests some type error cases (caught only by the strongly typed parser)
@@ -298,16 +299,12 @@ TEST_F(EvalContextTest, typeErrors) {
     checkError("'foobar'",
                "<string>:1.9: syntax error, unexpected end of file, "
                "expecting ==");
-    checkError("substring('foobar','a','1') == 'foo'",
-               "<string>:1.20-22: syntax error, unexpected constant string, "
-               "expecting a number in a constant string");
-    checkError("substring('foobar','1','a') == 'foo'",
-               "<string>:1.24-26: syntax error, unexpected constant string, "
-               "expecting a number in a constant string or the all constant "
-               "string");
-    checkError("substring('foobar',0x32,'1') == 'foo'",
+    checkError("substring('foobar',all,1) == 'foo'",
+               "<string>:1.20-22: syntax error, unexpected all, "
+               "expecting integer");
+    checkError("substring('foobar',0x32,1) == 'foo'",
                "<string>:1.20-23: syntax error, unexpected constant "
-               "hexstring, expecting a number in a constant string");
+               "hexstring, expecting integer");
 }
 
 };

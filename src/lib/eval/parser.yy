@@ -25,6 +25,7 @@
 #include <string>
 #include <eval/token.h>
 #include <eval/eval_context_decl.h>
+#include <boost/lexical_cast.hpp>
 
 using namespace isc::dhcp;
 using namespace isc::eval;
@@ -44,17 +45,19 @@ using namespace isc::eval;
   EQUAL "=="
   OPTION "option"
   SUBSTRING "substring"
+  ALL "all"
   COMA ","
   LPAREN  "("
   RPAREN  ")"
   LBRACKET "["
   RBRACKET "]"
 ;
-%token <std::string> NUMBER "a number in a constant string"
-%token <std::string> ALL "the all constant string"
+
 %token <std::string> STRING "constant string"
+%token <std::string> INTEGER "integer"
 %token <std::string> HEXSTRING "constant hexstring"
-%token <int> INTEGER "integer"
+%token <std::string> TOKEN
+
 %printer { yyoutput << $$; } <*>;
 %%
 
@@ -78,16 +81,6 @@ string_expr : STRING
                       TokenPtr str(new TokenString($1));
                       ctx.expression.push_back(str);
                   }
-            | NUMBER
-                  {
-                      TokenPtr str(new TokenString($1));
-                      ctx.expression.push_back(str);
-                  }
-            | ALL
-                  {
-                      TokenPtr str(new TokenString("all"));
-                      ctx.expression.push_back(str);
-                  }
             | HEXSTRING
                   {
                       TokenPtr hex(new TokenHexString($1));
@@ -95,12 +88,18 @@ string_expr : STRING
                   }
             | OPTION "[" INTEGER "]"
                   {
-                      int n = $3;
+                      int n;
+                      try {
+                          n  = boost::lexical_cast<int>($3);
+                      } catch (const boost::bad_lexical_cast &) {
+                          // This can't happen...
+                          ctx.error(@3,
+                                    "Option code has invalid value in " + $3);
+                      }
                       if (n < 0 || n > 65535) {
-                          std::ostringstream oss;
-                          oss << "Option code has invalid value in " << n
-                              << ". Allowed range: 0..65535";
-                          ctx.error(@3, oss.str());
+                          ctx.error(@3,
+                                    "Option code has invalid value in "
+                                    + $3 + ". Allowed range: 0..65535");
                       }
                       TokenPtr opt(new TokenOption(static_cast<uint16_t>(n)));
                       ctx.expression.push_back(opt);
@@ -110,16 +109,18 @@ string_expr : STRING
                       TokenPtr sub(new TokenSubstring());
                       ctx.expression.push_back(sub);
                   }
+            | TOKEN
+                // Temporary unused token to avoid explict but long errors
             ;
 
-start_expr : NUMBER
+start_expr : INTEGER
                  {
                      TokenPtr str(new TokenString($1));
                      ctx.expression.push_back(str);
                  }
            ;
 
-length_expr : NUMBER
+length_expr : INTEGER
                   {
                       TokenPtr str(new TokenString($1));
                       ctx.expression.push_back(str);

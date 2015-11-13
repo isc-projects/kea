@@ -90,27 +90,6 @@ blank [ \t]
     loc.step();
 }
 
-\'{int}\' {
-    // A string containing a number. Quotes should be removed, see below.
-    std::string tmp(yytext+1);
-    tmp.resize(tmp.size() - 1);
-
-    try {
-        static_cast<void>(boost::lexical_cast<int>(tmp));
-    } catch (const boost::bad_lexical_cast &) {
-        // In fact it is not a valid number
-        return isc::eval::EvalParser::make_STRING(tmp, loc);
-    }
-
-    return isc::eval::EvalParser::make_NUMBER(tmp, loc);
-}
-
-"'all'" {
-     // A string containing the "all" keyword.
-
-     return isc::eval::EvalParser::make_ALL("all", loc);
-}
-
 \'[^\'\n]*\' {
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
@@ -131,19 +110,20 @@ blank [ \t]
     // An integer was found.
     std::string tmp(yytext);
 
-    int n;
     try {
-        n = boost::lexical_cast<int>(tmp);
+        static_cast<void>(boost::lexical_cast<int>(tmp));
     } catch (const boost::bad_lexical_cast &) {
         driver.error(loc, "Failed to convert " + tmp + " to an integer.");
     }
 
-    return isc::eval::EvalParser::make_INTEGER(n, loc);
+    // The parser needs the string form as double conversion is no lossless
+    return isc::eval::EvalParser::make_INTEGER(tmp, loc);
 }
 
 "=="        return isc::eval::EvalParser::make_EQUAL(loc);
 "option"    return isc::eval::EvalParser::make_OPTION(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
+"all"       return isc::eval::EvalParser::make_ALL(loc);
 "("         return isc::eval::EvalParser::make_LPAREN(loc);
 ")"         return isc::eval::EvalParser::make_RPAREN(loc);
 "["         return isc::eval::EvalParser::make_LBRACKET(loc);
