@@ -95,6 +95,13 @@ blank [ \t]
     std::string tmp(yytext+1);
     tmp.resize(tmp.size() - 1);
 
+    try {
+        static_cast<void>(boost::lexical_cast<int>(tmp));
+    } catch (const boost::bad_lexical_cast &) {
+        // In fact it is not a valid number
+        return isc::eval::EvalParser::make_STRING(tmp, loc);
+    }
+
     return isc::eval::EvalParser::make_NUMBER(tmp, loc);
 }
 
