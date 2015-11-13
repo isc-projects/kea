@@ -250,6 +250,24 @@ void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
                          host2->getClientClasses6());
 }
 
+DuidPtr
+GenericHostDataSourceTest::HWAddrToDuid(const HWAddrPtr& hwaddr) {
+    if (!hwaddr) {
+        return (DuidPtr());
+    }
+
+    return (DuidPtr(new DUID(hwaddr->hwaddr_)));
+}
+
+HWAddrPtr
+GenericHostDataSourceTest::DuidToHWAddr(const DuidPtr& duid) {
+    if (!duid) {
+        return (HWAddrPtr());
+    }
+
+    return (HWAddrPtr(new HWAddr(duid->getDuid(), HTYPE_ETHER)));
+}
+
 void
 GenericHostDataSourceTest::compareReservations6(IPv6ResrvRange /*a*/,
                                                 IPv6ResrvRange /*b*/) {
@@ -329,7 +347,7 @@ void GenericHostDataSourceTest::testGetByIPv4(bool hwaddr) {
     EXPECT_FALSE(hdsptr_->get4(subnet1, IOAddress("192.0.1.5")));
 }
 
-void GenericHostDataSourceTest::testGetByHWaddr() {
+void GenericHostDataSourceTest::testGetByHWAddr() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -386,6 +404,61 @@ void GenericHostDataSourceTest::testGetByClientId() {
     compareHosts(host1, from_hds1);
     compareHosts(host2, from_hds2);
 }
+
+void GenericHostDataSourceTest::testHWAddrNotClientId() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create a host with HW address
+    HostPtr host = initializeHost4("192.0.2.1", true);
+    ASSERT_TRUE(host->getHWAddress());
+    ASSERT_FALSE(host->getDuid());
+
+    // Try to add both of the to the host data source.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    SubnetID subnet = host->getIPv4SubnetID();
+
+    DuidPtr duid = HWAddrToDuid(host->getHWAddress());
+
+    // Get the host by HW address (should succeed)
+    ConstHostPtr by_hwaddr = hdsptr_->get4(subnet, host->getHWAddress(), DuidPtr());
+
+    // Get the host by DUID (should fail)
+    ConstHostPtr by_duid   = hdsptr_->get4(subnet, HWAddrPtr(), duid);
+
+    // Now let's check if we got what we expected.
+    EXPECT_TRUE(by_hwaddr);
+    EXPECT_FALSE(by_duid);
+}
+
+void GenericHostDataSourceTest::testClientIdNotHWAddr() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create a host with client-id
+    HostPtr host = initializeHost4("192.0.2.1", false);
+    ASSERT_FALSE(host->getHWAddress());
+    ASSERT_TRUE(host->getDuid());
+
+    // Try to add both of the to the host data source.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    SubnetID subnet = host->getIPv4SubnetID();
+
+    HWAddrPtr hwaddr = DuidToHWAddr(host->getDuid());
+
+    // Get the host by DUID (should succeed)
+    ConstHostPtr by_duid   = hdsptr_->get4(subnet, HWAddrPtr(), host->getDuid());
+
+    // Get the host by HW address (should fail)
+    ConstHostPtr by_hwaddr = hdsptr_->get4(subnet, hwaddr, DuidPtr());
+
+    // Now let's check if we got what we expected.
+    EXPECT_TRUE(by_duid);
+    EXPECT_FALSE(by_hwaddr);
+}
+
 
 }; // namespace test
 }; // namespace dhcp

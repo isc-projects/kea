@@ -325,7 +325,7 @@ TEST_F(MySqlHostDataSourceTest, getByIPv4ClientId) {
 // Test verifies if a host reservation can be added and later retrieved by
 // hardware address.
 TEST_F(MySqlHostDataSourceTest, getByHWaddr) {
-    testGetByHWaddr();
+    testGetByHWAddr();
 }
 
 // Test verifies if a host reservation can be added and later retrieved by
@@ -336,12 +336,14 @@ TEST_F(MySqlHostDataSourceTest, getByClientId) {
 
 // Test verifies if hardware address and client identifier are not confused.
 TEST_F(MySqlHostDataSourceTest, hwaddrNotClientId1) {
+    testHWAddrNotClientId();
     /// @todo: add host reservation with hardware address X, try to retrieve
     /// host by client-identifier X, verify that the reservation is not returned.
 }
 
 // Test verifies if hardware address and client identifier are not confused.
 TEST_F(MySqlHostDataSourceTest, hwaddrNotClientId2) {
+    testClientIdNotHWAddr();
     /// @todo: add host reservation with client identifier X, try to retrieve host
     /// by hardware address X, verify that the reservation is not returned.
 }

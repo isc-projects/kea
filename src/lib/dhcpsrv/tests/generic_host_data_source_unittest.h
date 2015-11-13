@@ -143,12 +143,44 @@ public:
     /// @brief Test that hosts can be retrieved by hardware address.
     ///
     /// Uses gtest macros to report failures.
-    void testGetByHWaddr();
+    void testGetByHWAddr();
 
     /// @brief Test that hosts can be retrieved by client-id
     ///
     /// Uses gtest macros to report failures.
     void testGetByClientId();
+
+    /// @brief Test that clients with stored HW address can't be retrieved
+    ///        by DUID with the same value.
+    ///
+    /// Uses gtest macros to report failures.
+    void testHWAddrNotClientId();
+
+    /// @brief Test that clients with stored DUID can't be retrieved
+    ///        by HW address of the same value.
+    ///
+    /// Uses gtest macros to report failures.
+    void testClientIdNotHWAddr();
+
+    /// @brief Returns DUID with identical content as specified HW address
+    ///
+    /// This method does not have any sense in real life and is only useful
+    /// in testing corner cases in the database backends (e.g. whether the DB
+    /// is able to tell the difference between hwaddr and duid)
+    ///
+    /// @param hwaddr hardware address to be copied
+    /// @return duid with the same value as specified HW address
+    DuidPtr HWAddrToDuid(const HWAddrPtr& hwaddr);
+
+    /// @brief Returns HW address with identical content as specified DUID
+    ///
+    /// This method does not have any sense in real life and is only useful
+    /// in testing corner cases in the database backends (e.g. whether the DB
+    /// is able to tell the difference between hwaddr and duid)
+    ///
+    /// @param duid DUID to be copied
+    /// @return HW address with the same value as specified DUID
+    HWAddrPtr DuidToHWAddr(const DuidPtr& duid);
 };
 
 }; // namespace test
