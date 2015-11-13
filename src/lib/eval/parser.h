@@ -327,17 +327,16 @@ namespace isc { namespace eval {
         TOKEN_EQUAL = 258,
         TOKEN_OPTION = 259,
         TOKEN_SUBSTRING = 260,
-        TOKEN_UNTYPED = 261,
-        TOKEN_COMA = 262,
-        TOKEN_LPAREN = 263,
-        TOKEN_RPAREN = 264,
-        TOKEN_LBRACKET = 265,
-        TOKEN_RBRACKET = 266,
-        TOKEN_NUMBER = 267,
-        TOKEN_ALL = 268,
-        TOKEN_STRING = 269,
-        TOKEN_HEXSTRING = 270,
-        TOKEN_INTEGER = 271
+        TOKEN_COMA = 261,
+        TOKEN_LPAREN = 262,
+        TOKEN_RPAREN = 263,
+        TOKEN_LBRACKET = 264,
+        TOKEN_RBRACKET = 265,
+        TOKEN_NUMBER = 266,
+        TOKEN_ALL = 267,
+        TOKEN_STRING = 268,
+        TOKEN_HEXSTRING = 269,
+        TOKEN_INTEGER = 270
       };
     };
 
@@ -461,10 +460,6 @@ namespace isc { namespace eval {
     static inline
     symbol_type
     make_SUBSTRING (const location_type& l);
-
-    static inline
-    symbol_type
-    make_UNTYPED (const location_type& l);
 
     static inline
     symbol_type
@@ -711,12 +706,12 @@ namespace isc { namespace eval {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 46,     ///< Last index in yytable_.
-      yynnts_ = 8,  ///< Number of nonterminal symbols.
-      yyfinal_ = 21, ///< Termination state number.
+      yylast_ = 20,     ///< Last index in yytable_.
+      yynnts_ = 6,  ///< Number of nonterminal symbols.
+      yyfinal_ = 12, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 17  ///< Number of tokens.
+      yyntokens_ = 16  ///< Number of tokens.
     };
 
 
@@ -760,9 +755,9 @@ namespace isc { namespace eval {
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16
+      15
     };
-    const unsigned int user_token_number_max_ = 271;
+    const unsigned int user_token_number_max_ = 270;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -795,14 +790,14 @@ namespace isc { namespace eval {
   {
       switch (other.type_get ())
     {
-      case 16: // "integer"
+      case 15: // "integer"
         value.copy< int > (other.value);
         break;
 
-      case 12: // "a number in a constant string"
-      case 13: // "the all constant string"
-      case 14: // "constant string"
-      case 15: // "constant hexstring"
+      case 11: // "a number in a constant string"
+      case 12: // "the all constant string"
+      case 13: // "constant string"
+      case 14: // "constant hexstring"
         value.copy< std::string > (other.value);
         break;
 
@@ -823,14 +818,14 @@ namespace isc { namespace eval {
     (void) v;
       switch (this->type_get ())
     {
-      case 16: // "integer"
+      case 15: // "integer"
         value.copy< int > (v);
         break;
 
-      case 12: // "a number in a constant string"
-      case 13: // "the all constant string"
-      case 14: // "constant string"
-      case 15: // "constant hexstring"
+      case 11: // "a number in a constant string"
+      case 12: // "the all constant string"
+      case 13: // "constant string"
+      case 14: // "constant hexstring"
         value.copy< std::string > (v);
         break;
 
@@ -889,14 +884,14 @@ namespace isc { namespace eval {
     // Type destructor.
     switch (yytype)
     {
-      case 16: // "integer"
+      case 15: // "integer"
         value.template destroy< int > ();
         break;
 
-      case 12: // "a number in a constant string"
-      case 13: // "the all constant string"
-      case 14: // "constant string"
-      case 15: // "constant hexstring"
+      case 11: // "a number in a constant string"
+      case 12: // "the all constant string"
+      case 13: // "constant string"
+      case 14: // "constant hexstring"
         value.template destroy< std::string > ();
         break;
 
@@ -923,14 +918,14 @@ namespace isc { namespace eval {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 16: // "integer"
+      case 15: // "integer"
         value.move< int > (s.value);
         break;
 
-      case 12: // "a number in a constant string"
-      case 13: // "the all constant string"
-      case 14: // "constant string"
-      case 15: // "constant hexstring"
+      case 11: // "a number in a constant string"
+      case 12: // "the all constant string"
+      case 13: // "constant string"
+      case 14: // "constant hexstring"
         value.move< std::string > (s.value);
         break;
 
@@ -990,7 +985,7 @@ namespace isc { namespace eval {
     yytoken_number_[] =
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,   270,   271
+     265,   266,   267,   268,   269,   270
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1017,12 +1012,6 @@ namespace isc { namespace eval {
   EvalParser::make_SUBSTRING (const location_type& l)
   {
     return symbol_type (token::TOKEN_SUBSTRING, l);
-  }
-
-  EvalParser::symbol_type
-  EvalParser::make_UNTYPED (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_UNTYPED, l);
   }
 
   EvalParser::symbol_type
@@ -1088,7 +1077,7 @@ namespace isc { namespace eval {
 
 #line 21 "parser.yy" // lalr1.cc:392
 } } // isc::eval
-#line 1092 "parser.h" // lalr1.cc:392
+#line 1081 "parser.h" // lalr1.cc:392
 
 
 

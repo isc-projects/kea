@@ -109,29 +109,6 @@ public:
         }
     }
 
-    /// @brief checks if the given expression raises the expected message
-    /// when it is parsed by the strongly typed parser but is accepted
-    /// by the untyped one.
-    void checkTyped(const string& expr, const string& msg) {
-        EvalContext eval;
-        parsed_ = false;
-        EXPECT_NO_THROW(parsed_ = eval.parseString("untyped:" + expr));
-        EXPECT_TRUE(parsed_);
-        parsed_ = false;
-        try {
-            parsed_ = eval.parseString(expr);
-            FAIL() << "Expected EvalParseError but nothing was raised";
-        }
-        catch (const EvalParseError& ex) {
-            EXPECT_EQ(msg, ex.what());
-            EXPECT_FALSE(parsed_);
-        }
-        catch (...) {
-            FAIL() << "Expected EvalParseError but something else was raised";
-        }
-    }
-  
-
     bool parsed_; ///< Parsing status
 };
 
@@ -148,14 +125,16 @@ TEST_F(EvalContextTest, basic) {
 TEST_F(EvalContextTest, string) {
     EvalContext eval;
 
-    EXPECT_NO_THROW(parsed_ = eval.parseString("untyped: 'foo'"));
+    EXPECT_NO_THROW(parsed_ = eval.parseString("'foo' == 'bar'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(1, eval.expression.size());
+    ASSERT_EQ(3, eval.expression.size());
 
-    TokenPtr tmp = eval.expression.at(0);
+    TokenPtr tmp1  = eval.expression.at(0);
+    TokenPtr tmp2  = eval.expression.at(1);
 
-    checkTokenString(tmp, "foo");
+    checkTokenString(tmp1, "foo");
+    checkTokenString(tmp2, "bar");
 }
 
 // Test the parsing of a basic expression with a constant string holding
@@ -167,21 +146,16 @@ TEST_F(EvalContextTest, number) {
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("substring(option[123], '0', '2') == '42'"));
     EXPECT_TRUE(parsed_);
-    parsed_ = false;
-    EXPECT_NO_THROW(parsed_ =
-        eval.parseString("untyped: substring(option[123], '0', '2') == '42'"));
-    EXPECT_TRUE(parsed_);
-
 }
 
 // Test the parsing of a hexstring terminal
 TEST_F(EvalContextTest, hexstring) {
     EvalContext eval;
 
-    EXPECT_NO_THROW(parsed_ = eval.parseString("untyped: 0x666f6f"));
+    EXPECT_NO_THROW(parsed_ = eval.parseString("0x666f6f == 'foo'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(1, eval.expression.size());
+    ASSERT_EQ(3, eval.expression.size());
 
     TokenPtr tmp = eval.expression.at(0);
 
@@ -193,10 +167,10 @@ TEST_F(EvalContextTest, hexstring) {
 TEST_F(EvalContextTest, oddHexstring) {
     EvalContext eval;
 
-    EXPECT_NO_THROW(parsed_ = eval.parseString("untyped: 0X7"));
+    EXPECT_NO_THROW(parsed_ = eval.parseString("0X7 == 'foo'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(1, eval.expression.size());
+    ASSERT_EQ(3, eval.expression.size());
 
     TokenPtr tmp = eval.expression.at(0);
 
@@ -225,9 +199,9 @@ TEST_F(EvalContextTest, equal) {
 TEST_F(EvalContextTest, option) {
     EvalContext eval;
 
-    EXPECT_NO_THROW(parsed_ = eval.parseString("untyped: option[123]"));
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[123] == 'foo'"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(1, eval.expression.size());
+    ASSERT_EQ(3, eval.expression.size());
     checkTokenOption(eval.expression.at(0), 123);
 }
 
@@ -236,10 +210,10 @@ TEST_F(EvalContextTest, substring) {
     EvalContext eval;
 
     EXPECT_NO_THROW(parsed_ =
-        eval.parseString("untyped: substring('foobar','2','3')"));
+        eval.parseString("substring('foobar','2','3') == 'oba'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(4, eval.expression.size());
+    ASSERT_EQ(6, eval.expression.size());
 
     TokenPtr tmp1 = eval.expression.at(0);
     TokenPtr tmp2 = eval.expression.at(1);
@@ -260,8 +234,6 @@ TEST_F(EvalContextTest, scanErrors) {
     checkError("0x123h", "<string>:1.6: Invalid character: h");
     checkError("=", "<string>:1.1: Invalid character: =");
     checkError("subtring", "<string>:1.1: Invalid character: s");
-    checkError("untype: 'abc'", "<string>:1.1: Invalid character: u");
-    checkError("untyped 'abc'", "<string>:1.1: Invalid character: u");
     checkError("foo", "<string>:1.1: Invalid character: f");
     checkError(" bar", "<string>:1.2: Invalid character: b");
 }
@@ -269,8 +241,7 @@ TEST_F(EvalContextTest, scanErrors) {
 // Tests some scanner/parser error cases
 TEST_F(EvalContextTest, scanParseErrors) {
     checkError("", "<string>:1.1: syntax error, unexpected end of file");
-    checkError("untyped:",
-               "<string>:1.9: syntax error, unexpected end of file");
+    checkError(" ", "<string>:1.2: syntax error, unexpected end of file");
     checkError("0x", "<string>:1.1: syntax error, unexpected integer");
     checkError("0abc",
                "<string>:1.1: syntax error, unexpected integer");
@@ -286,9 +257,6 @@ TEST_F(EvalContextTest, scanParseErrors) {
 
 // Tests some parser error cases
 TEST_F(EvalContextTest, parseErrors) {
-    checkError("untyped:'foo''bar'",
-               "<string>:1.14-18: syntax error, unexpected "
-               "constant string, expecting end of file");
     checkError("'foo''bar'",
                "<string>:1.6-10: syntax error, unexpected constant string, "
                "expecting ==");
@@ -321,17 +289,17 @@ TEST_F(EvalContextTest, parseErrors) {
 
 // Tests some type error cases (caught only by the strongly typed parser)
 TEST_F(EvalContextTest, typeErrors) {
-    checkTyped("'foobar'",
+    checkError("'foobar'",
                "<string>:1.9: syntax error, unexpected end of file, "
                "expecting ==");
-    checkTyped("substring('foobar','a','1') == 'foo'",
+    checkError("substring('foobar','a','1') == 'foo'",
                "<string>:1.20-22: syntax error, unexpected constant string, "
                "expecting a number in a constant string");
-    checkTyped("substring('foobar','1','a') == 'foo'",
+    checkError("substring('foobar','1','a') == 'foo'",
                "<string>:1.24-26: syntax error, unexpected constant string, "
                "expecting a number in a constant string or the all constant "
                "string");
-    checkTyped("substring('foobar',0x32,'1') == 'foo'",
+    checkError("substring('foobar',0x32,'1') == 'foo'",
                "<string>:1.20-23: syntax error, unexpected constant "
                "hexstring, expecting a number in a constant string");
 }
