@@ -14,11 +14,14 @@
 
 #include <dhcp/duid_factory.h>
 #include <dhcp/iface_mgr.h>
+#include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
 #include <util/strutil.h>
 #include <boost/foreach.hpp>
 #include <ctime>
+#include <fstream>
+#include <stdlib.h>
 #include <string>
 #include <vector>
 
@@ -27,7 +30,17 @@ using namespace isc::util::str;
 
 namespace {
 
+/// @brief Length of the DUID type field.
+const size_t DUID_TYPE_LEN = 2;
+
+/// @brief Minimal length of the MAC address.
 const size_t MIN_MAC_LEN = 6;
+
+/// @brief Length of the enterprise if field.
+const size_t ENTERPRISE_ID_LEN = 4;
+
+/// @brief Default length of the variable length identifier in the DUID-EN.
+const size_t DUID_EN_IDENTIFIER_LEN = 6;
 
 }
 
@@ -47,41 +60,107 @@ void
 DUIDFactory::createLLT(const uint16_t htype, const uint32_t time_in,
                        const std::vector<uint8_t>& ll_identifier) {
     uint32_t time_out = time_in;
+    // If time unspecified, use current time.
     if (time_out == 0) {
         time_out = static_cast<uint32_t>(time(NULL) - DUID_TIME_EPOCH);
     }
 
-    uint16_t htype_out = htype;
-    if (htype_out == 0) {
-        htype_out = HTYPE_ETHER;
-    }
-
     std::vector<uint8_t> ll_identifier_out = ll_identifier;
+    uint16_t htype_out = htype;
+
+    // If link layer address unspecified, use address of one of the
+    // interfaces present in the system. Also, update the link
+    // layer type accordingly.
     if (ll_identifier_out.empty()) {
-        createLinkLayerId(ll_identifier_out);
+        createLinkLayerId(ll_identifier_out, htype_out);
+
+    } else if (htype_out == 0) {
+        // If link layer type unspecified and link layer adddress
+        // is specified, use HTYPE_ETHER.
+        htype_out = HTYPE_ETHER;
+
     }
 
-    std::vector<uint8_t> duid_out(2 + sizeof(time_out) + sizeof(htype_out));
+    // Render DUID.
+    std::vector<uint8_t> duid_out(DUID_TYPE_LEN + sizeof(time_out) +
+                                  sizeof(htype_out));
     writeUint16(DUID::DUID_LLT, &duid_out[0], 2);
     writeUint16(htype_out, &duid_out[2], 2);
     writeUint32(time_out, &duid_out[4], 4);
     duid_out.insert(duid_out.end(), ll_identifier_out.begin(),
                     ll_identifier_out.end());
 
-    duid_.reset(new DUID(duid_out));
+    // Set new DUID and persist in a file.
+    set(duid_out);
 }
 
-/*void
+void
 DUIDFactory::createEN(const uint32_t enterprise_id,
-                          const std::vector<uint8_t>& identifier) {
-}*/
+                      const std::vector<uint8_t>& identifier) {
+    // Enterprise id 0 means "unspecified". In this case use the ISC
+    // enterprise id.
+    uint32_t enterprise_id_out = enterprise_id != 0 ?
+        enterprise_id : ENTERPRISE_ID_ISC;
 
-/*void
-DUIDFactory::createLL(const uint16_t htype, const std::vector<uint8_t>& ll_identifier) {
-} */
+    // Render DUID.
+    std::vector<uint8_t> duid_out(DUID_TYPE_LEN + ENTERPRISE_ID_LEN);
+    writeUint16(DUID::DUID_EN, &duid_out[0], 2);
+    writeUint32(enterprise_id_out, &duid_out[2], ENTERPRISE_ID_LEN);
+
+    if (identifier.empty()) {
+        // Identifier is empty, so we have to extend the DUID by 6 bytes
+        // to fit the random identifier.
+        duid_out.resize(DUID_TYPE_LEN + ENTERPRISE_ID_LEN +
+                        DUID_EN_IDENTIFIER_LEN);
+        // Variable length identifier consists of random numbers. The generated
+        // identifier is always 6 bytes long.
+        ::srandom(time(NULL));
+        fillRandom(&duid_out[DUID_TYPE_LEN + ENTERPRISE_ID_LEN],
+                   &duid_out[DUID_TYPE_LEN + ENTERPRISE_ID_LEN +
+                             DUID_EN_IDENTIFIER_LEN]);
+
+    } else {
+        // Append the specified identifier to the end of DUID.
+        duid_out.insert(duid_out.end(), identifier.begin(), identifier.end());
+    }
+
+    // Set new DUID and persist in a file.
+    set(duid_out);
+}
 
 void
-DUIDFactory::createLinkLayerId(std::vector<uint8_t>& identifier) const {
+DUIDFactory::createLL(const uint16_t htype,
+                      const std::vector<uint8_t>& ll_identifier) {
+    std::vector<uint8_t> ll_identifier_out = ll_identifier;
+    uint16_t htype_out = htype;
+
+    // If link layer address unspecified, use address of one of the
+    // interfaces present in the system. Also, update the link
+    // layer type accordingly.
+    if (ll_identifier_out.empty()) {
+        createLinkLayerId(ll_identifier_out, htype_out);
+
+    } else if (htype_out == 0) {
+        // If link layer type unspecified and link layer adddress
+        // is specified, use HTYPE_ETHER.
+        htype_out = HTYPE_ETHER;
+
+    }
+
+    // Render DUID.
+    std::vector<uint8_t> duid_out(DUID_TYPE_LEN + sizeof(htype_out));
+    writeUint16(DUID::DUID_LL, &duid_out[0], 2);
+    writeUint16(htype_out, &duid_out[2], 2);
+    duid_out.insert(duid_out.end(), ll_identifier_out.begin(),
+                    ll_identifier_out.end());
+
+    // Set new DUID and persist in a file.
+    set(duid_out);
+}
+
+void
+DUIDFactory::createLinkLayerId(std::vector<uint8_t>& identifier,
+                               uint16_t& htype) const {
     const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
 
     // Let's find suitable interface.
@@ -121,12 +200,112 @@ DUIDFactory::createLinkLayerId(std::vector<uint8_t>& identifier) const {
             continue;
         }
 
+        // Assign link layer address and type.
         identifier.assign(iface->getMac(), iface->getMac() + iface->getMacLen());
+        htype = iface->getHWType();
     }
+
+    // We failed to find an interface which link layer address could be
+    // used for generating DUID-LLT.
+    if (identifier.empty()) {
+        isc_throw(Unexpected, "unable to find suitable interface for "
+                  " generating a DUID-LLT");
+    }
+}
+
+void
+DUIDFactory::set(const std::vector<uint8_t>& duid_vector) {
+    // Check the minimal length.
+    if (duid_vector.size() < DUID::MIN_DUID_LEN) {
+        isc_throw(BadValue, "generated DUID must have at least "
+                  << DUID::MIN_DUID_LEN << " bytes");
+    }
+
+    // Persist DUID in a file if file location specified.
+    if (isPersisted()) {
+        std::ofstream ofs;
+        try {
+            ofs.open(storage_location_, std::ofstream::out |
+                     std::ofstream::trunc);
+            if (!ofs.good()) {
+                isc_throw(InvalidOperation, "unable to open DUID file "
+                          << storage_location_ << " for writing");
+            }
+
+            // Create temporary DUID object.
+            DUID duid(duid_vector);
+
+            // Write DUID to file.
+            ofs << duid.toText();
+            if (!ofs.good()) {
+                isc_throw(InvalidOperation, "unable to write to DUID file "
+                          << storage_location_);
+            }
+        } catch (...) {
+            // Close stream before leaving the function.
+            ofs.close();
+            throw;
+        }
+        ofs.close();
+    }
+
+    duid_.reset(new DUID(duid_vector));
 }
 
 DuidPtr
 DUIDFactory::get() {
+    // If DUID is initialized, return it.
+    if (duid_) {
+        return (duid_);
+    }
+
+    // If DUID object hasn't been initialized then we need to retrieve a
+    // DUID from the file or create one.
+    std::ostringstream duid_str;
+    if (isPersisted()) {
+        std::ifstream ifs;
+        ifs.open(storage_location_, std::ifstream::in);
+        if (ifs.good()) {
+            std::string read_contents;
+            while (!ifs.eof() && ifs.good()) {
+                ifs >> read_contents;
+                duid_str << read_contents;
+            }
+        }
+        ifs.close();
+
+        // If we have read anything from the file, let's try to use it to
+        // create a DUID.
+        if (duid_str.tellp() != 0) {
+            try {
+                duid_.reset(new DUID(DUID::fromText(duid_str.str())));
+                return (duid_);
+
+            } catch (...) {
+                // The contents of this file don't represent a valid DUID.
+                // We'll need to generate it.
+            }
+        }
+
+    }
+
+    try {
+        // There is no file with a DUID or the DUID stored in the file is
+        // invalid. We need to generate a new DUID.
+        createLLT(0, 0, std::vector<uint8_t>());
+
+    } catch (...) {
+        // It is possible that the creation of the DUID-LLT failed if there
+        // are no suitable interfaces present in the system.
+    }
+
+    if (!duid_) {
+        // Fall back to creation of DUID enterprise. If that fails we allow
+        // for propagating exception to indicate a fatal error. This may
+        // be the case if we failed to write it to a file.
+        createEN(0, std::vector<uint8_t>());
+    }
+
     return (duid_);
 }
 
