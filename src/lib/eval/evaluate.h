@@ -28,7 +28,7 @@ namespace dhcp {
 /// @return the boolean decision
 /// @throw EvalStackError if there is not exactly one element on the value
 ///        stack at the end of the evaluation
-/// @throw EvalNotBoolError if the value at the top of the stack at the
+/// @throw EvalTypeError if the value at the top of the stack at the
 ///        end of the evaluation is not "false" or "true"
 bool evaluate(const Expression& expr, const Pkt& pkt);
 

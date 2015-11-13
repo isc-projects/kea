@@ -46,11 +46,11 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief EvalNotBoolError is thrown when a boolean (i.e., "false" or
-///        "true") was required but is not.
-class EvalNotBoolError : public Exception {
+/// @brief EvalTypeError is thrown when a value on the stack has a content
+///        with an unexpected type.
+class EvalTypeError : public Exception {
 public:
-    EvalNotBoolError(const char* file, size_t line, const char* what) :
+    EvalTypeError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 

@@ -124,7 +124,7 @@ TEST_F(EvaluateTest, bad4) {
     TokenPtr bad;
     ASSERT_NO_THROW(bad.reset(new TokenString("bad")));
     e_.push_back(bad);
-    ASSERT_THROW(evaluate(e_, *pkt4_), EvalNotBoolError);
+    ASSERT_THROW(evaluate(e_, *pkt4_), EvalTypeError);
 }
 
 // This checks the evaluation must lead to "false" or "true"
@@ -133,7 +133,7 @@ TEST_F(EvaluateTest, bad6) {
     TokenPtr bad;
     ASSERT_NO_THROW(bad.reset(new TokenString("bad")));
     e_.push_back(bad);
-    ASSERT_THROW(evaluate(e_, *pkt6_), EvalNotBoolError);
+    ASSERT_THROW(evaluate(e_, *pkt6_), EvalTypeError);
 }
 
 // This checks the evaluation must leave only one value on the stack
