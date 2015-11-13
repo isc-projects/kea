@@ -682,6 +682,39 @@ LibDHCP::packOptions(isc::util::OutputBuffer& buf,
     }
 }
 
+void
+LibDHCP::packOptions4(isc::util::OutputBuffer& buf,
+                     const OptionCollection& options) {
+    OptionCollection::const_iterator it = options.begin();
+    for (; it != options.end(); ++it) {
+	// Some options must be last
+	if ((it->first == DHO_DHCP_AGENT_OPTIONS) ||
+	    (it->first == DHO_END)) {
+	    continue;
+	}
+        it->second->pack(buf);
+    }
+    // Add the RAI option if it exists
+    it = options.find(DHO_DHCP_AGENT_OPTIONS);
+    if (it != options.end()) {
+	it->second->pack(buf);
+    }
+    // And at the end the END option
+    it = options.find(DHO_END);
+    if (it != options.end()) {
+	it->second->pack(buf);
+    }
+}
+
+void
+LibDHCP::packOptions6(isc::util::OutputBuffer& buf,
+                      const OptionCollection& options) {
+    for (OptionCollection::const_iterator it = options.begin();
+         it != options.end(); ++it) {
+        it->second->pack(buf);
+    }
+}
+
 void LibDHCP::OptionFactoryRegister(Option::Universe u,
                                     uint16_t opt_type,
                                     Option::Factory* factory) {
