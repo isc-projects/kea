@@ -762,9 +762,20 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
 	MYSQL_BIND inbind[2];
 	memset(inbind, 0, sizeof(inbind));
 
-	inbind[0].buffer_type = MYSQL_TYPE_LONG;
-	inbind[0].buffer = reinterpret_cast<char*>(subnet_id);
-	inbind[0].is_unsigned = MLM_TRUE;
+    uint32_t subnet_buffer = static_cast<uint32_t>(subnet_id);
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet_buffer);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    /// @todo: Rethink the logic in BaseHostDataSource::get4(subnet, hwaddr, duid)
+    if (hwaddr && duid) {
+        isc_throw(BadValue, "MySQL host data source get4() called with both"
+                  " hwaddr and duid, only one of them is allowed");
+    }
+    if (!hwaddr && !duid) {
+        isc_throw(BadValue, "MySQL host data source get4() called with "
+                  "neither hwaddr or duid specified, one of them is required");
+    }
 
 	// Choosing one of the identifiers
 	if (hwaddr) {
