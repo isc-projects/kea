@@ -69,6 +69,16 @@ public:
     /// @return DUID in textual form acceptable by Host constructor
     std::string generateDuid();
 
+    /// @brief Compares hardware addresses of the two hosts.
+    ///
+    /// This method compares two hwardware address and uses gtest
+    /// macros to signal unexpected (mismatch if expect_match is true;
+    /// match if expect_match is false) values.
+    void
+    compareHwaddrs(const ConstHostPtr& host1,
+                   const ConstHostPtr& host2,
+                   bool expect_match);
+
     /// @brief Compares two hosts
     ///
     /// This method uses gtest macros to signal errors.
@@ -102,6 +112,17 @@ public:
     ///
     /// Uses gtest macros to report failures.
     void testBasic4();
+
+    /// @brief Test inserts several hosts with unique IPv4 address and
+    ///        checks that they can be retrieved properly.
+    ///
+    /// Uses gtest macros to report failures.
+    void testGetByIPv4();
+
+    /// @brief Test that hosts can be retrieved by hardware address.
+    ///
+    /// Uses gtest macros to report failures.
+    void testGetByHWaddr();
 };
 
 }; // namespace test

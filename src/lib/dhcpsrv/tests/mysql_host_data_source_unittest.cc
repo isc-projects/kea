@@ -304,11 +304,14 @@ TEST_F(MySqlHostDataSourceTest, basic4) {
     testBasic4();
 }
 
+TEST_F(MySqlHostDataSourceTest, getByIPv4) {
+    testGetByIPv4();
+}
+
 // Test verifies if a host reservation can be added and later retrieved by
 // hardware address.
-TEST_F(MySqlHostDataSourceTest, hwaddr) {
-    /// @todo: add host reservation with hardware address, retrieve it by
-    /// hardware address and make sure the values are correct.
+TEST_F(MySqlHostDataSourceTest, getByHWaddr) {
+    testGetByHWaddr();
 }
 
 // Test verifies if a host reservation can be added and later retrieved by

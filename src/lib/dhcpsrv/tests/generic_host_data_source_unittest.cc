@@ -36,8 +36,27 @@ GenericHostDataSourceTest::~GenericHostDataSourceTest() {
 
 std::string
 GenericHostDataSourceTest::generateHWAddr() {
-    /// @todo: Make this code return different hwaddress every time.
-    return ("01:02:03:04:05:06");
+
+    static uint8_t hwaddr[] = {65, 66, 67, 68, 69, 70};
+
+
+    stringstream tmp;
+    for (int i = 0; i < sizeof(hwaddr); ++i) {
+        if (i) {
+            tmp << ":";
+        }
+        tmp << std::setw(2) << std::hex << std::setfill('0')
+            << static_cast<unsigned int>(hwaddr[i]);
+    }
+
+    // Increase the address for the next time we use it.
+    // This is primitive, but will work for 65k unique
+    // addresses.
+    hwaddr[0]++;
+    if (hwaddr[0] == 0) {
+        hwaddr[1]++;
+    }
+    return (tmp.str());
 }
 
 std::string
@@ -108,27 +127,49 @@ HostPtr GenericHostDataSourceTest::initializeHost6(std::string address,
     return (host);
 }
 
-void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
-                                             const ConstHostPtr& host2) {
+void
+GenericHostDataSourceTest::compareHwaddrs(const ConstHostPtr& host1,
+                                          const ConstHostPtr& host2,
+                                          bool expect_match) {
     ASSERT_TRUE(host1);
     ASSERT_TRUE(host2);
 
     // Compare if both have or have not HWaddress set.
     if ((host1->getHWAddress() && !host2->getHWAddress()) ||
         (!host1->getHWAddress() && host2->getHWAddress())) {
-        ADD_FAILURE() << "Host comparison failed: host1 hwaddress="
-                      << host1->getHWAddress() << ", host2 hwaddress="
-                      << host2->getHWAddress();
+
+        // One host has hardware address set while the other has not.
+        // Let's see if it's a problem.
+        if (expect_match) {
+            ADD_FAILURE() << "Host comparison failed: host1 hwaddress="
+                          << host1->getHWAddress() << ", host2 hwaddress="
+                          << host2->getHWAddress();
+        }
         return;
     }
+
+    // Now we know that either both or neither have hw address set.
+    // If host1 has it, we can proceed to value comparison.
     if (host1->getHWAddress()) {
-        // Compare the actual address if they match.
-        EXPECT_TRUE(*host1->getHWAddress() == *host2->getHWAddress());
+
+        if (expect_match) {
+            // Compare the actual address if they match.
+            EXPECT_TRUE(*host1->getHWAddress() == *host2->getHWAddress());
+        } else {
+            EXPECT_FALSE(*host1->getHWAddress() == *host2->getHWAddress());
+        }
         if (*host1->getHWAddress() != *host2->getHWAddress()) {
             cout << host1->getHWAddress()->toText(true) << endl;
             cout << host2->getHWAddress()->toText(true) << endl;
         }
     }
+}
+
+void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
+                                             const ConstHostPtr& host2) {
+
+    // Let's compare HW addresses and expect match.
+    compareHwaddrs(host1, host2, true);
 
     // comapre if both have or have not DUID set
     if ((host1->getDuid() && !host2->getDuid()) ||
@@ -200,6 +241,79 @@ void GenericHostDataSourceTest::testBasic4() {
 
     // Finally, let's check if what we got makes any sense.
     compareHosts(host, from_hds);
+}
+
+void GenericHostDataSourceTest::testGetByIPv4() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a couple of hosts...
+    HostPtr host1 = initializeHost4("192.0.2.1", true);
+    HostPtr host2 = initializeHost4("192.0.2.2", true);
+    HostPtr host3 = initializeHost4("192.0.2.3", true);
+    HostPtr host4 = initializeHost4("192.0.2.4", true);
+
+    // ... and add them to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+    ASSERT_NO_THROW(hdsptr_->add(host2));
+    ASSERT_NO_THROW(hdsptr_->add(host3));
+    ASSERT_NO_THROW(hdsptr_->add(host4));
+
+    SubnetID subnet1 = host1->getIPv4SubnetID();
+    SubnetID subnet2 = host2->getIPv4SubnetID();
+    SubnetID subnet3 = host3->getIPv4SubnetID();
+    SubnetID subnet4 = host4->getIPv4SubnetID();
+
+    // And then try to retrieve them back.
+    ConstHostPtr from_hds1 = hdsptr_->get4(subnet1, IOAddress("192.0.2.1"));
+    ConstHostPtr from_hds2 = hdsptr_->get4(subnet2, IOAddress("192.0.2.2"));
+    ConstHostPtr from_hds3 = hdsptr_->get4(subnet3, IOAddress("192.0.2.3"));
+    ConstHostPtr from_hds4 = hdsptr_->get4(subnet4, IOAddress("192.0.2.4"));
+
+    // Make sure we got something back.
+    ASSERT_TRUE(from_hds1);
+    ASSERT_TRUE(from_hds2);
+    ASSERT_TRUE(from_hds3);
+    ASSERT_TRUE(from_hds4);
+
+    // Then let's check that what we got seems correct.
+    compareHosts(host1, from_hds1);
+    compareHosts(host2, from_hds2);
+    compareHosts(host3, from_hds3);
+    compareHosts(host4, from_hds4);
+
+    // Ok, finally let's check that getting by a different address
+    // will not work.
+    EXPECT_FALSE(hdsptr_->get4(subnet1, IOAddress("192.0.1.5")));
+}
+
+void GenericHostDataSourceTest::testGetByHWaddr() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    HostPtr host1 = initializeHost4("192.0.2.1", true);
+    HostPtr host2 = initializeHost4("192.0.2.2", true);
+
+    // Sanity check: make sure the hosts have different HW addresses.
+    ASSERT_TRUE(host1->getHWAddress());
+    ASSERT_TRUE(host2->getHWAddress());
+    compareHwaddrs(host1, host2, false);
+
+    // Try to add both of the to the host data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+    ASSERT_NO_THROW(hdsptr_->add(host2));
+
+    SubnetID subnet1 = host1->getIPv4SubnetID();
+    SubnetID subnet2 = host2->getIPv4SubnetID();
+
+    ConstHostPtr from_hds1 = hdsptr_->get4(subnet1, host1->getHWAddress());
+    ConstHostPtr from_hds2 = hdsptr_->get4(subnet2, host2->getHWAddress());
+
+    // Now let's check if we got what we expected.
+    ASSERT_TRUE(from_hds1);
+    ASSERT_TRUE(from_hds2);
+    compareHosts(host1, from_hds1);
+    compareHosts(host2, from_hds2);
 }
 
 }; // namespace test
