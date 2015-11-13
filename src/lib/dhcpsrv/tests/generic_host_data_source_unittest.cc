@@ -459,6 +459,57 @@ void GenericHostDataSourceTest::testClientIdNotHWAddr() {
     EXPECT_FALSE(by_hwaddr);
 }
 
+void
+GenericHostDataSourceTest::testHostname(std::string name, int num) {
+
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Initialize the address to 192.0.2.0 (this will be bumped
+    // up to 192.0.2.1 in the first iteration)
+    IOAddress addr("192.0.2.0");
+
+    vector<HostPtr> hosts;
+
+    // Prepare a vector of hosts with unique hostnames
+    for (int i = 0; i < num; ++i) {
+
+        addr = IOAddress::increase(addr);
+
+        HostPtr host = initializeHost4(addr.toText(), false);
+
+        stringstream hostname;
+        hostname.str("");
+        if (num > 1) {
+            hostname << i;
+        }
+        hostname << name;
+        host->setHostname(hostname.str());
+
+        hosts.push_back(host);
+    }
+
+    // Now add them all to the host data source.
+    for (vector<HostPtr>::const_iterator it = hosts.begin();
+         it != hosts.end(); ++it) {
+        // Try to add both of the to the host data source.
+        ASSERT_NO_THROW(hdsptr_->add(*it));
+    }
+
+    // And finally retrieve them one by one and check
+    // if the hostname was preserved.
+    for (vector<HostPtr>::const_iterator it = hosts.begin();
+         it != hosts.end(); ++it) {
+
+        ConstHostPtr from_hds;
+        ASSERT_NO_THROW(from_hds = hdsptr_->get4(
+                            (*it)->getIPv4SubnetID(),
+                            (*it)->getIPv4Reservation()));
+        ASSERT_TRUE(from_hds);
+
+        EXPECT_EQ((*it)->getHostname(), from_hds->getHostname());
+    }
+}
 
 }; // namespace test
 }; // namespace dhcp

@@ -153,14 +153,30 @@ public:
     /// @brief Test that clients with stored HW address can't be retrieved
     ///        by DUID with the same value.
     ///
+    /// Test procedure: add host reservation with hardware address X, try to retrieve
+    /// host by client-identifier X, verify that the reservation is not returned.
+    ///
     /// Uses gtest macros to report failures.
     void testHWAddrNotClientId();
 
     /// @brief Test that clients with stored DUID can't be retrieved
     ///        by HW address of the same value.
     ///
+    /// Test procedure: add host reservation with client identifier X, try to
+    /// retrieve host by hardware address X, verify that the reservation is not
+    /// returned.
+    ///
     /// Uses gtest macros to report failures.
     void testClientIdNotHWAddr();
+
+    /// @brief Test adds specified number of hosts with unique hostnames, then
+    /// retrives them and checks that the hostnames are set properly.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    /// @param name hostname to be used (if n>1, numbers will be appended)
+    /// @param num number of hostnames to be added.
+    void testHostname(std::string name, int num);
 
     /// @brief Returns DUID with identical content as specified HW address
     ///

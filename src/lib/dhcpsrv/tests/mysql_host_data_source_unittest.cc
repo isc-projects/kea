@@ -337,26 +337,45 @@ TEST_F(MySqlHostDataSourceTest, getByClientId) {
 // Test verifies if hardware address and client identifier are not confused.
 TEST_F(MySqlHostDataSourceTest, hwaddrNotClientId1) {
     testHWAddrNotClientId();
-    /// @todo: add host reservation with hardware address X, try to retrieve
-    /// host by client-identifier X, verify that the reservation is not returned.
 }
 
 // Test verifies if hardware address and client identifier are not confused.
 TEST_F(MySqlHostDataSourceTest, hwaddrNotClientId2) {
     testClientIdNotHWAddr();
-    /// @todo: add host reservation with client identifier X, try to retrieve host
-    /// by hardware address X, verify that the reservation is not returned.
+}
+
+// Test verifies if a host with FQDN hostname can be stored and later retrieved.
+TEST_F(MySqlHostDataSourceTest, hostnameFQDN) {
+    testHostname("foo.example.org", 1);
+}
+
+// Test verifies if 100 hosts with unique FQDN hostnames can be stored and later
+// retrieved.
+TEST_F(MySqlHostDataSourceTest, hostnameFQDN100) {
+    testHostname("foo.example.org", 1);
+}
+
+// Test verifies if a host without any hostname specified can be stored and later
+// retrieved.
+TEST_F(MySqlHostDataSourceTest, noHostname) {
+    testHostname("", 1);
 }
 
 // Test verifies if the hardware or client-id query can match hardware address.
-TEST_F(MySqlHostDataSourceTest, hwaddrOrClientId1) {
+TEST_F(MySqlHostDataSourceTest, DISABLED_hwaddrOrClientId1) {
+    /// @todo: The logic behind ::get4(subnet_id, hwaddr, duid) call needs to
+    /// be discussed.
+    ///
     /// @todo: Add host reservation with hardware address X, try to retrieve
     /// host for hardware address X or client identifier Y, verify that the
     /// reservation is returned.
 }
 
 // Test verifies if the hardware or client-id query can match client-id.
-TEST_F(MySqlHostDataSourceTest, hwaddrOrClientId2) {
+TEST_F(MySqlHostDataSourceTest, DISABLED_hwaddrOrClientId2) {
+    /// @todo: The logic behind ::get4(subnet_id, hwaddr, duid) call needs to
+    /// be discussed.
+    ///
     /// @todo: Add host reservation with client identifier Y, try to retrieve
     /// host for hardware address X or client identifier Y, verify that the
     /// reservation is returned.
