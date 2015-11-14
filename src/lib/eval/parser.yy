@@ -88,7 +88,7 @@ string_expr : STRING
                   }
             | OPTION "[" INTEGER "]"
                   {
-                      int n;
+                      int n = 0;
                       try {
                           n  = boost::lexical_cast<int>($3);
                       } catch (const boost::bad_lexical_cast &) {
