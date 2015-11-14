@@ -595,7 +595,7 @@ namespace isc { namespace eval {
   case 6:
 #line 90 "parser.yy" // lalr1.cc:859
     {
-                      int n;
+                      int n = 0;
                       try {
                           n  = boost::lexical_cast<int>(yystack_[1].value.as< std::string > ());
                       } catch (const boost::bad_lexical_cast &) {
