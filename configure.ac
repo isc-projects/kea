@@ -764,7 +764,7 @@ then
    DISABLED_CRYPTO="OpenSSL"
    CRYPTO_PACKAGE="botan-1.8"
    CRYPTO_CFLAGS=""
-   DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-botan=$botan_config"
+   DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-botan-config=$botan_config"
    AC_DEFINE_UNQUOTED([WITH_BOTAN], [], [Compile with Botan crypto])
 else
    CRYPTO_NAME="OpenSSL"
