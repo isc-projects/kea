@@ -1255,6 +1255,8 @@ EOF
     $RM -f bisontest.y bisontest.cc
 fi
 
+AM_CONDITIONAL([GENERATE_PARSER], [test x$enable_generate_parser != xno])
+
 AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
   [regenerate documentation using Docbook [default=no]])],
   enable_generate_docs=$enableval, enable_generate_docs=no)

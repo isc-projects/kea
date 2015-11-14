@@ -73,6 +73,8 @@ maintainer-clean-local:
 # Make sure you have both flex and bison installed.
 parser-clean: maintainer-clean-local
 
+if GENERATE_PARSER
+
 parser: lexer.cc location.hh position.hh stack.hh parser.cc parser.h
 	@echo "Flex/bison files regenerated"
 
@@ -82,3 +84,10 @@ location.hh position.hh stack.hh parser.cc parser.h: parser.yy
 
 lexer.cc: lexer.ll
 	$(LEX) -o lexer.cc lexer.ll
+
+else
+
+parser location.hh position.hh stack.hh parser.cc parser.h lexer.cc:
+	@echo Parser generation disabled. Configure with --enable-generate-parser to enable it.
+
+endif
