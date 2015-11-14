@@ -24,18 +24,15 @@
 {
 #include <string>
 #include <eval/token.h>
-class EvalContext;
+#include <eval/eval_context_decl.h>
+#include <boost/lexical_cast.hpp>
 
 using namespace isc::dhcp;
+using namespace isc::eval;
 }
 // The parsing context.
 %param { EvalContext& ctx }
 %locations
-%initial-action
-{
-  // Initialize the initial location.
-  @$.begin.filename = @$.end.filename = &ctx.file;
-};
 %define parse.trace
 %define parse.error verbose
 %code
@@ -46,13 +43,21 @@ using namespace isc::dhcp;
 %token
   END  0  "end of file"
   EQUAL "=="
+  OPTION "option"
   SUBSTRING "substring"
+  ALL "all"
   COMA ","
   LPAREN  "("
   RPAREN  ")"
+  LBRACKET "["
+  RBRACKET "]"
 ;
+
 %token <std::string> STRING "constant string"
-%token <int> OPTION "option code"
+%token <std::string> INTEGER "integer"
+%token <std::string> HEXSTRING "constant hexstring"
+%token <std::string> TOKEN
+
 %printer { yyoutput << $$; } <*>;
 %%
 
@@ -60,30 +65,77 @@ using namespace isc::dhcp;
 %start expression;
 
 // Expression can either be a single token or a (something == something) expression
-expression:
-token EQUAL token {
-    TokenPtr eq(new TokenEqual());
-    ctx.expression.push_back(eq);
-}
-| token;
 
-token:
-STRING {
-    TokenPtr str(new TokenString($1));
-    ctx.expression.push_back(str);
-}
-| OPTION {
-    TokenPtr opt(new TokenOption($1));
-    ctx.expression.push_back(opt);
-}
-| SUBSTRING "(" token "," token "," token ")" {
-    /* push back TokenSubstring */
-  }
+expression : bool_expr
+           ;
+
+bool_expr : string_expr EQUAL string_expr
+                {
+                    TokenPtr eq(new TokenEqual());
+                    ctx.expression.push_back(eq);
+                }
+          ;
+
+string_expr : STRING
+                  {
+                      TokenPtr str(new TokenString($1));
+                      ctx.expression.push_back(str);
+                  }
+            | HEXSTRING
+                  {
+                      TokenPtr hex(new TokenHexString($1));
+                      ctx.expression.push_back(hex);
+                  }
+            | OPTION "[" INTEGER "]"
+                  {
+                      int n;
+                      try {
+                          n  = boost::lexical_cast<int>($3);
+                      } catch (const boost::bad_lexical_cast &) {
+                          // This can't happen...
+                          ctx.error(@3,
+                                    "Option code has invalid value in " + $3);
+                      }
+                      if (n < 0 || n > 65535) {
+                          ctx.error(@3,
+                                    "Option code has invalid value in "
+                                    + $3 + ". Allowed range: 0..65535");
+                      }
+                      TokenPtr opt(new TokenOption(static_cast<uint16_t>(n)));
+                      ctx.expression.push_back(opt);
+                  }
+            | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
+                  {
+                      TokenPtr sub(new TokenSubstring());
+                      ctx.expression.push_back(sub);
+                  }
+            | TOKEN
+                // Temporary unused token to avoid explict but long errors
+            ;
+
+start_expr : INTEGER
+                 {
+                     TokenPtr str(new TokenString($1));
+                     ctx.expression.push_back(str);
+                 }
+           ;
+
+length_expr : INTEGER
+                  {
+                      TokenPtr str(new TokenString($1));
+                      ctx.expression.push_back(str);
+                  }
+            | ALL
+                 {
+                     TokenPtr str(new TokenString("all"));
+                     ctx.expression.push_back(str);
+                 }
+            ;
 
 %%
 void
-isc::eval::EvalParser::error(const location_type& l,
-                             const std::string& m)
+isc::eval::EvalParser::error(const location_type& loc,
+                             const std::string& what)
 {
-    ctx.error(l, m);
+    ctx.error(loc, what);
 }

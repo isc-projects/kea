@@ -38,11 +38,19 @@ typedef std::vector<TokenPtr> Expression;
 /// Evaluated values are stored as a stack of strings
 typedef std::stack<std::string> ValueStack;
 
-/// @brief EvalStackError is thrown when more or less parameters are on the
+/// @brief EvalBadStack is thrown when more or less parameters are on the
 ///        stack than expected.
 class EvalBadStack : public Exception {
 public:
     EvalBadStack(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief EvalTypeError is thrown when a value on the stack has a content
+///        with an unexpected type.
+class EvalTypeError : public Exception {
+public:
+    EvalTypeError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
@@ -241,6 +249,8 @@ public:
     /// - -1, -4  => "ooba"
     ///
     /// @throw EvalBadStack if there are less than 3 values on stack
+    /// @throw EvalTypeError if start is not a number or length a number or
+    ///        the special value "all".
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (3 arguments will be popped, 1 result
