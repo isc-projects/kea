@@ -591,6 +591,7 @@ AC_ARG_WITH([botan-config],
   AC_HELP_STRING([--with-botan-config=PATH],
     [specify the path to the botan-config script]),
     [botan_config="$withval"])
+distcheck_botan="--with-botan-config=$botan_config"
 if test "${botan_config}" = "no" ; then
     if test "${use_openssl}" = "no" ; then
        AC_MSG_ERROR([Need Botan or OpenSSL for libcryptolink])
@@ -764,7 +765,7 @@ then
    DISABLED_CRYPTO="OpenSSL"
    CRYPTO_PACKAGE="botan-1.8"
    CRYPTO_CFLAGS=""
-   DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-botan-config=$botan_config"
+   DISTCHECK_CRYPTO_CONFIGURE_FLAG="$distcheck_botan"
    AC_DEFINE_UNQUOTED([WITH_BOTAN], [], [Compile with Botan crypto])
 else
    CRYPTO_NAME="OpenSSL"
