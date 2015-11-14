@@ -1225,14 +1225,14 @@ AC_PROG_LEX
 # unless you want to regenerate grammar in src/lib/eval
 AC_PROG_YACC
 
-if test "x$enable_generate_parser" != xno; then
+if test "x$enable_generate_parser" != "xno"; then
 
     if test "x$LEX" == "x"; then
-       AC_MSG_ERROR("Flex is required for enable-generate-parser, but was not found")
+       AC_MSG_ERROR([Flex is required for enable-generate-parser, but was not found])
     fi
 
     if test "x$YACC" == "x"; then
-       AC_MSG_ERROR("Bison it required for enable-generate-parser, but was not found")
+       AC_MSG_ERROR([Bison is required for enable-generate-parser, but was not found])
     fi
 
 # Ok, let's check if we have at least 3.0.0 version of the bison. The code used
