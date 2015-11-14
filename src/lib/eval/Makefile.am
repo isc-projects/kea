@@ -17,6 +17,7 @@ libkea_eval_la_SOURCES += token.cc token.h
 
 libkea_eval_la_SOURCES += parser.cc parser.h
 libkea_eval_la_SOURCES += lexer.cc
+libkea_eval_la_SOURCES += location.hh position.hh stack.hh
 libkea_eval_la_SOURCES += eval_context.cc eval_context.h eval_context_decl.h
 
 nodist_libkea_eval_la_SOURCES = eval_messages.h eval_messages.cc
@@ -34,6 +35,7 @@ libkea_eval_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = eval.dox
 EXTRA_DIST += eval_messages.mes
+EXTRA_DIST += lexer.ll parser.yy
 
 # Define rule to build logging source files from message file
 eval_messages.h eval_messages.cc: s-messages
