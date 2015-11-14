@@ -121,19 +121,21 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     int length;
     try {
         start_pos = boost::lexical_cast<int>(start_str);
+    } catch (const boost::bad_lexical_cast&) {
+        isc_throw(EvalTypeError, "the parameter '" << start_str
+                  << "' for the starting postion of the substring "
+                  << "couldn't be converted to an integer.");
+    }
+    try {
         if (len_str == "all") {
             length = string_str.length();
         } else {
             length = boost::lexical_cast<int>(len_str);
         }
     } catch (const boost::bad_lexical_cast&) {
-        LOG_DEBUG(eval_logger, EVAL_DBG_TRACE,
-                  EVAL_SUBSTRING_BAD_PARAM_CONVERSION)
-            .arg(start_str)
-            .arg(len_str);
-
-        values.push("");
-        return;
+        isc_throw(EvalTypeError, "the parameter '" << len_str
+                  << "' for the length of the substring "
+                  << "couldn't be converted to an integer.");
     }
 
     const int string_length = string_str.length();

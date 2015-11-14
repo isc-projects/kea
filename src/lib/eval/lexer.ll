@@ -62,9 +62,9 @@ static isc::eval::location loc;
 
 /* These are not token expressions yet, just convenience expressions that
    can be used during actual token definitions. */
-int   [0-9]+
+int   \-?[0-9]+
+hex   [0-9a-fA-F]+
 blank [ \t]
-str [a-zA-Z_0-9]*
 
 %{
 // This code run each time a pattern is matched. It updates the location
@@ -90,7 +90,7 @@ str [a-zA-Z_0-9]*
     loc.step();
 }
 
-\'{str}\' {
+\'[^\'\n]*\' {
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
     // for 'foo' we should get foo
@@ -100,82 +100,57 @@ str [a-zA-Z_0-9]*
     return isc::eval::EvalParser::make_STRING(tmp, loc);
 }
 
-option\[{int}\] {
-    // option[123] token found. Let's see if the numeric value can be
-    // converted to integer and if it has a reasonable value.
-    // yytext contains the whole expression (.e.g. option[123]). We need
-    // to trim it down to just the code, which will be transformed to
-    // integer.
+0[xX]{hex} {
+    // A hex string has been matched. It contains the '0x' or '0X' header
+    // followed by at least one hexadecimal digit.
+    return isc::eval::EvalParser::make_HEXSTRING(yytext, loc);
+}
+
+{int} {
+    // An integer was found.
     std::string tmp(yytext);
 
-    // Sanity check if the token is at least 9 (strlen("option[X]")) long.
-    // This should never happen as it would indicate bison bug.
-    if (tmp.length() < 9) {
-        driver.error(loc, "The string matched (" + tmp + ") is too short,"
-                     " expected at least 9 (option[X]) characters");
-    }
-    size_t pos = tmp.find("[");
-    if (pos == std::string::npos) {
-        driver.error(loc, "The string matched (" + tmp + ") is invalid,"
-                     " as it does not contain opening bracket.");
-    }
-    // Let's get rid of all the text before [, including [.
-    tmp = tmp.substr(pos + 1);
-
-    // And finally remove the trailing ].
-    pos = tmp.find("]");
-    if (pos == std::string::npos) {
-        driver.error(loc, "The string matched (" + tmp + ") is invalid,"
-                     " as it does not contain closing bracket.");
-    }
-    tmp = tmp.substr(0, pos);
-
-    uint16_t n = 0;
     try {
-        n = boost::lexical_cast<int>(tmp);
+        static_cast<void>(boost::lexical_cast<int>(tmp));
     } catch (const boost::bad_lexical_cast &) {
-        driver.error(loc, "Failed to convert specified option code to "
-                     "number ('" + tmp + "' in expression " + std::string(yytext));
+        driver.error(loc, "Failed to convert " + tmp + " to an integer.");
     }
 
-    // 65535 is the maximum value of the option code in DHCPv6. We want the
-    // code to be the same for v4 and v6, so let's ignore for a moment that
-    // max. option code in DHCPv4 is 255.
-    /// @todo: Maybe add a flag somewhere in EvalContext to indicate if we're
-    /// running in v4 (allowed max 255) or v6 (allowed max 65535).
-    if (n<0 || n>65535) {
-        driver.error(loc, "Option code has invalid value in " +
-                     std::string(yytext) + ". Allowed range: 0..65535");
-    }
-
-    return isc::eval::EvalParser::make_OPTION(n, loc);
+    // The parser needs the string form as double conversion is no lossless
+    return isc::eval::EvalParser::make_INTEGER(tmp, loc);
 }
 
 "=="        return isc::eval::EvalParser::make_EQUAL(loc);
+"option"    return isc::eval::EvalParser::make_OPTION(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
+"all"       return isc::eval::EvalParser::make_ALL(loc);
 "("         return isc::eval::EvalParser::make_LPAREN(loc);
 ")"         return isc::eval::EvalParser::make_RPAREN(loc);
+"["         return isc::eval::EvalParser::make_LBRACKET(loc);
+"]"         return isc::eval::EvalParser::make_RBRACKET(loc);
 ","         return isc::eval::EvalParser::make_COMA(loc);
 
 .          driver.error (loc, "Invalid character: " + std::string(yytext));
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);
 %%
 
+using namespace isc::eval;
+
 void
-EvalContext::scanBegin()
+EvalContext::scanStringBegin()
 {
+    loc.initialize(&file_);
     yy_flex_debug = trace_scanning_;
-    if (file.empty () || file == "-") {
-        yyin = stdin;
-    }
-    else if (!(yyin = fopen(file.c_str (), "r"))) {
-        error("cannot open " + file + ": " + strerror(errno));
+    YY_BUFFER_STATE buffer;
+    buffer = yy_scan_bytes(string_.c_str(), string_.size());
+    if (!buffer) {
+        error("cannot scan string");
         exit(EXIT_FAILURE);
     }
 }
 
 void
-EvalContext::scanEnd()
+EvalContext::scanStringEnd()
 {
-    fclose(yyin);
+    yy_delete_buffer(YY_CURRENT_BUFFER);
 }
