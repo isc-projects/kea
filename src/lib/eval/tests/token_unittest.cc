@@ -72,10 +72,12 @@ public:
     /// @param test_start The postion to start when getting a substring
     /// @param test_length The length of the substring to get
     /// @param result_string The expected result of the eval
+    /// @param should_throw The eval will throw
     void verifySubstringEval(const std::string& test_string,
                              const std::string& test_start,
                              const std::string& test_length,
-                             const std::string& result_string) {
+                             const std::string& result_string,
+                             bool should_throw = false) {
 
         // create the token
         ASSERT_NO_THROW(t_.reset(new TokenSubstring()));
@@ -86,14 +88,19 @@ public:
         values_.push(test_length);
 
         // evaluate the token
-        EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+        if (should_throw) {
+            EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+            ASSERT_EQ(0, values_.size());
+        } else {
+            EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
 
-        // verify results
-        ASSERT_EQ(1, values_.size());
-        EXPECT_EQ(result_string, values_.top());
+            // verify results
+            ASSERT_EQ(1, values_.size());
+            EXPECT_EQ(result_string, values_.top());
 
-        // remove result
-        values_.pop();
+            // remove result
+            values_.pop();
+        }
     }
 
     /// @todo: Add more option types here
@@ -443,13 +450,13 @@ TEST_F(TokenTest, substringStartingPosition) {
 // Check what happens if we use strings that aren't numbers for start or length
 // We should return the empty string
 TEST_F(TokenTest, substringBadParams) {
-    verifySubstringEval("foobar", "0ick", "all", "");
-    verifySubstringEval("foobar", "ick0", "all", "");
-    verifySubstringEval("foobar", "ick", "all", "");
-    verifySubstringEval("foobar", "0", "ick", "");
-    verifySubstringEval("foobar", "0", "0ick", "");
-    verifySubstringEval("foobar", "0", "ick0", "");
-    verifySubstringEval("foobar", "0", "allaboard", "");
+    verifySubstringEval("foobar", "0ick", "all", "", true);
+    verifySubstringEval("foobar", "ick0", "all", "", true);
+    verifySubstringEval("foobar", "ick", "all", "", true);
+    verifySubstringEval("foobar", "0", "ick", "", true);
+    verifySubstringEval("foobar", "0", "0ick", "", true);
+    verifySubstringEval("foobar", "0", "ick0", "", true);
+    verifySubstringEval("foobar", "0", "allaboard", "", true);
 }
 
 // lastly check that we don't get anything if the string is empty or

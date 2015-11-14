@@ -12,41 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <eval/eval_context.h>
-#include <eval/parser.h>
-#include <exceptions/exceptions.h>
-#include <fstream>
+#ifndef EVAL_CONTEXT_DECL_H
+#define EVAL_CONTEXT_DECL_H
 
-EvalContext::EvalContext()
-  : trace_scanning_(false), trace_parsing_(false)
-{
-}
+/// @file eval_context_decl.h Forward declaration of the EvalContext class
 
-EvalContext::~EvalContext()
-{
-}
+namespace isc {
+namespace eval {
 
-bool
-EvalContext::parseString(const std::string& str)
-{
-    file_ = "<string>";
-    string_ = str;
-    scanStringBegin();
-    isc::eval::EvalParser parser(*this);
-    parser.set_debug_level(trace_parsing_);
-    int res = parser.parse();
-    scanStringEnd();
-    return (res == 0);
-}
+class EvalContext;
 
-void
-EvalContext::error(const isc::eval::location& loc, const std::string& what)
-{
-    isc_throw(EvalParseError, loc << ": " << what);
-}
+}; // end of isc::eval namespace
+}; // end of isc namespace
 
-void
-EvalContext::error (const std::string& what)
-{
-    isc_throw(EvalParseError, what);
-}
+#endif
