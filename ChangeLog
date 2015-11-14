@@ -1,3 +1,7 @@
+1048.	[func]		fdupont,tomek
+	Implement expression parser for client classification.
+	(Trac #4088, git xxx)
+
 1047.	[func]*		stephen
 	Change the way that hooks libraries are defined in the configuration
 	file in preparation for allowing the specification of library-specific
