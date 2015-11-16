@@ -698,6 +698,8 @@ MySqlHostDataSource::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const 
 	MYSQL_BIND inbind[2];
 	memset(inbind, 0, sizeof(inbind));
 
+        uint8_t dhcp_identifier_type = 0;
+
 	if (duid){
             // DUID
             // set proper dhcp_identifier_type
