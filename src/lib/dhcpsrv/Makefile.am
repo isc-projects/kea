@@ -26,13 +26,20 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 # Whenever new file is added to the parsers folder, it must be
 # added here.
 EXTRA_DIST =
+EXTRA_DIST += parsers/client_class_def_parser.cc
+EXTRA_DIST += parsers/client_class_def_parser.h
+EXTRA_DIST += parsers/dhcp_config_parser.h
 EXTRA_DIST += parsers/dbaccess_parser.cc
 EXTRA_DIST += parsers/dbaccess_parser.h
 EXTRA_DIST += parsers/dhcp_parsers.cc
 EXTRA_DIST += parsers/dhcp_parsers.h
+EXTRA_DIST += parsers/expiration_config_parser.cc
+EXTRA_DIST += parsers/expiration_config_parser.h
 EXTRA_DIST += parsers/host_reservation_parser.cc
 EXTRA_DIST += parsers/host_reservation_parser.h
 EXTRA_DIST += parsers/host_reservations_list_parser.h
+EXTRA_DIST += parsers/ifaces_config_parser.cc
+EXTRA_DIST += parsers/ifaces_config_parser.h
 
 # Define rule to build logging source files from message file
 alloc_engine_messages.h alloc_engine_messages.cc dhcpsrv_messages.h \
@@ -133,6 +140,8 @@ libkea_dhcpsrv_la_SOURCES += utils.h
 libkea_dhcpsrv_la_SOURCES += writable_host_data_source.h
 
 # Configuration parsers
+libkea_dhcpsrv_la_SOURCES += parsers/client_class_def_parser.cc
+libkea_dhcpsrv_la_SOURCES += parsers/client_class_def_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/dhcp_config_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/dbaccess_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/dbaccess_parser.h
@@ -156,6 +165,7 @@ libkea_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_dhcpsrv_la_LIBADD   = $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/stats/libkea-stats.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/eval/libkea-eval.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
