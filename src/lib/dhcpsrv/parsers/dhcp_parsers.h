@@ -711,6 +711,8 @@ private:
 
 };
 
+typedef boost::shared_ptr<OptionDataListParser> OptionDataListParserPtr;
+
 
 /// @brief Parser for a single option definition.
 ///
