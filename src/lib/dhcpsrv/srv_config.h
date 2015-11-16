@@ -15,6 +15,7 @@
 #ifndef DHCPSRV_CONFIG_H
 #define DHCPSRV_CONFIG_H
 
+#include <dhcpsrv/cfg_duid.h>
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_iface.h>
@@ -272,6 +273,18 @@ public:
         return (cfg_expiration_);
     }
 
+    /// @brief Returns pointer to the object holding configuration of the
+    /// server identifier.
+    CfgDUIDPtr getCfgDUID() {
+        return (cfg_duid_);
+    }
+
+    /// @brief Returns const pointer to the object holding configuration
+    /// of the server identifier.
+    ConstCfgDUIDPtr getCfgDUID() const {
+        return (cfg_duid_);
+    }
+
     //@}
 
     /// @brief Returns non-const reference to an array that stores
@@ -457,6 +470,9 @@ private:
     /// @brief Pointer to the configuration pertaining to processing of
     /// expired leases.
     CfgExpirationPtr cfg_expiration_;
+
+    /// @brief Pointer to the configuration of the server identifier.
+    CfgDUIDPtr cfg_duid_;
 
     /// @brief Pointer to the control-socket information
     isc::data::ConstElementPtr control_socket_;
