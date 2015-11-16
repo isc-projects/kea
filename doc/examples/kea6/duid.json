@@ -1,0 +1,80 @@
+# This is an example configuration file for DHCPv6 server in Kea.
+# It demonstrates how to configure Kea to use DUID-LLT with some
+# values specified explicitly.
+
+{ "Dhcp6":
+
+{
+
+# Configure server identifier (DUID-LLT). The hexadecimal value of the
+# identifier will be used as link layer address component of the DUID.
+# The link layer type will be ethernet. The value of time is set to 0
+# which indicates that the server must generate this value, i.e. use
+# current time. Note that it is easy to move from this configuration
+# to DUID-EN or DUID-LL. It would require changing the "type" value
+# to "EN" or "LL" respectively. The "identifier" would hold a
+# DUID-EN variable length identifier or DUID-LL link layer address.
+# The values of "time" and "htype" would be ignored for DUID-EN.
+# If one wanted to use a non-default enterprise-id for DUID-EN, the
+# "enterprise-id" parameter would need to be added. Note that only
+# a "type" parameter is mandatory while specifying "server-id" map.
+  "server-id": {
+    "type": "LLT",
+    "identifier": "12C4D5AF870C",
+    "time": 0,
+    "htype": 1
+  },
+
+# Kea is told to listen on ethX interface only.
+  "interfaces-config": {
+    "interfaces": [ "ethX" ]
+  },
+
+# We need to specify lease type. As of May 2014, three backends are supported:
+# memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
+# any prior set up.
+  "lease-database": {
+    "type": "memfile"
+  },
+
+# Addresses will be assigned with preferred and valid lifetimes
+# being 3000 and 4000, respectively. Client is told to start
+# renewing after 1000 seconds. If the server does not respond
+# after 2000 seconds since the lease was granted, client is supposed
+# to start REBIND procedure (emergency renewal that allows switching
+# to a different server).
+  "preferred-lifetime": 3000,
+  "valid-lifetime": 4000,
+  "renew-timer": 1000,
+  "rebind-timer": 2000,
+
+# The following list defines subnets. Each subnet consists of at
+# least subnet and pool entries.
+  "subnet6": [ 
+    {
+      "pools": [ { "pool": "2001:db8:1::/80" } ],
+      "subnet": "2001:db8:1::/64",
+      "interface": "ethX"
+    }
+  ]
+},
+
+# The following configures logging. Kea will log all debug messages
+# to /var/log/kea-debug.log file.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp6",
+            "output_options": [
+                {
+                    "output": "/var/log/kea-debug.log"
+                }
+            ], 
+            "debuglevel": 99,
+            "severity": "DEBUG"
+        }
+    ]
+}
+
+}
+
