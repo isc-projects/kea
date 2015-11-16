@@ -19,6 +19,9 @@
 
 #include <gtest/gtest.h>
 
+/// @file client_class_def_unittest.cc Unit tests for client class storage
+/// classes.
+
 using namespace std;
 using namespace isc::dhcp;
 using namespace isc::util;
@@ -35,7 +38,8 @@ TEST(ClientClassDef, construction) {
     CfgOptionPtr cfg_option;
 
     // Classes cannot have blank names
-    ASSERT_THROW(cclass.reset(new ClientClassDef("", expr, cfg_option)), BadValue);
+    ASSERT_THROW(cclass.reset(new ClientClassDef("", expr, cfg_option)),
+                 BadValue);
 
     // Verify we can create a class with a name, expression, and no cfg_option
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
@@ -87,7 +91,7 @@ TEST(ClientClassDef, cfgOptionBasics) {
     // Now make sure we can find all the options
     OptionDescriptor opt_desc = class_options->get("dhcp4",17);
     ASSERT_TRUE(opt_desc.option_);
-    EXPECT_EQ(100, opt_desc.option_->getType());
+    EXPECT_EQ(17, opt_desc.option_->getType());
 
     opt_desc = class_options->get("isc",101);
     ASSERT_TRUE(opt_desc.option_);
