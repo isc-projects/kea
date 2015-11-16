@@ -699,7 +699,7 @@ MySqlHostDataSource::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const 
 	memset(inbind, 0, sizeof(inbind));
 
         uint8_t dhcp_identifier_type = 0;
-
+        long unsigned int length = 0;
 	if (duid){
             // DUID
             // set proper dhcp_identifier_type
@@ -707,24 +707,24 @@ MySqlHostDataSource::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const 
             inbind[1].buffer = reinterpret_cast<char*>(&dhcp_identifier_type);
 
             const vector<uint8_t>& duid_vector = duid->getDuid();
-            unsigned long duid_length = duid_vector.size();
+            length = duid_vector.size();
             inbind[0].buffer_type = MYSQL_TYPE_BLOB;
             inbind[0].buffer = reinterpret_cast<char*>
                                 (const_cast<uint8_t*>(&duid_vector[0]));
-            inbind[0].buffer_length = duid_length;
-            inbind[0].length = &duid_length;
+            inbind[0].buffer_length = length;
+            inbind[0].length = &length;
 	} else if (hwaddr) {
             // HW Address
             dhcp_identifier_type = 0; // 0 = IDENT_HWADDR
             inbind[1].buffer = reinterpret_cast<char*>(&dhcp_identifier_type);
 
             const vector<uint8_t>& hwaddr_vector = hwaddr->hwaddr_;
-            unsigned long hwaddr_length = hwaddr_vector.size();
+            length = hwaddr_vector.size();
             inbind[0].buffer_type = MYSQL_TYPE_BLOB;
             inbind[0].buffer = reinterpret_cast<char*>
                                 (const_cast<uint8_t*>(&hwaddr_vector[0]));
-            inbind[0].buffer_length = hwaddr_length;
-            inbind[0].length = &hwaddr_length;
+            inbind[0].buffer_length = length;
+            inbind[0].length = &length;
 	}
 
 	// dhcp_identifier_type
