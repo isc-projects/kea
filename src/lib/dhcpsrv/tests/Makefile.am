@@ -65,6 +65,7 @@ libdhcpsrv_unittests_SOURCES += alloc_engine_hooks_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine4_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine6_unittest.cc
 libdhcpsrv_unittests_SOURCES += callout_handle_store_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfg_duid_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_expiration_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_hosts_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_iface_unittest.cc
