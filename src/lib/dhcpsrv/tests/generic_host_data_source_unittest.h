@@ -178,6 +178,15 @@ public:
     /// @param num number of hostnames to be added.
     void testHostname(std::string name, int num);
 
+    /// @brief Test inserts multiple reservations for the same host for different
+    /// subnets and check that they can be retrieved properly.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    /// @param subnets number of subnets to test
+    /// @param hwaddr true = use HW address, false = use client-id
+    void testMultipleSubnets(int subnets, bool hwaddr);
+
     /// @brief Returns DUID with identical content as specified HW address
     ///
     /// This method does not have any sense in real life and is only useful

@@ -208,9 +208,9 @@ GenericHostDataSourceTest::compareDuids(const ConstHostPtr& host1,
     if (host1->getDuid()) {
 
         if (expect_match) {
-            EXPECT_TRUE(*host1->getDuid() == *host1->getDuid());
+            EXPECT_TRUE(*host1->getDuid() == *host2->getDuid());
         } else {
-            EXPECT_FALSE(*host1->getDuid() == *host1->getDuid());
+            EXPECT_FALSE(*host1->getDuid() == *host2->getDuid());
         }
         if (*host1->getDuid() != *host2->getDuid()) {
             cout << host1->getDuid()->toText() << endl;
@@ -508,6 +508,62 @@ GenericHostDataSourceTest::testHostname(std::string name, int num) {
         ASSERT_TRUE(from_hds);
 
         EXPECT_EQ((*it)->getHostname(), from_hds->getHostname());
+    }
+}
+
+void
+GenericHostDataSourceTest::testMultipleSubnets(int subnets, bool hwaddr) {
+
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    HostPtr host = initializeHost4("192.0.2.1", hwaddr);
+
+    for (int i = 0; i < subnets; ++i) {
+        host->setIPv4SubnetID(i + 1000);
+
+        // Check that the same host can have reservations in multiple subnets.
+        EXPECT_NO_THROW(hdsptr_->add(host));
+    }
+
+    // Now check that the reservations can be retrieved by IPv4 address from
+    // each subnet separately.
+    for (int i = 0; i < subnets; ++i) {
+
+        // Try to retrieve the host by IPv4 address.
+        ConstHostPtr from_hds = hdsptr_->get4(i + 1000, host->getIPv4Reservation());
+
+        ASSERT_TRUE(from_hds);
+        EXPECT_EQ(i + 1000, from_hds->getIPv4SubnetID());
+
+        // Try to retrieve the host by either HW address of client-id
+        from_hds = hdsptr_->get4(i + 1000, host->getHWAddress(), host->getDuid());
+        ASSERT_TRUE(from_hds);
+        EXPECT_EQ(i + 1000, from_hds->getIPv4SubnetID());
+    }
+
+    // Now check that they can be retrieved all at once, by IPv4 address.
+    ConstHostCollection all_by_addr = hdsptr_->getAll4(IOAddress("192.0.2.1"));
+    ASSERT_EQ(subnets, all_by_addr.size());
+
+    // Verify that the values returned are proper.
+    int i = 0;
+    for (ConstHostCollection::const_iterator it = all_by_addr.begin();
+         it != all_by_addr.end(); ++it) {
+        EXPECT_EQ(IOAddress("192.0.2.1"), (*it)->getIPv4Reservation());
+        EXPECT_EQ(1000 + i++, (*it)->getIPv4SubnetID());
+    }
+
+    // Finally, check that the hosts can be retrived by HW address or DUID
+    ConstHostCollection all_by_id = hdsptr_->getAll(host->getHWAddress(), host->getDuid());
+    ASSERT_EQ(subnets, all_by_id.size());
+
+    // Check that the returned values are as expected.
+    i = 0;
+    for (ConstHostCollection::const_iterator it = all_by_id.begin();
+         it != all_by_id.end(); ++it) {
+        EXPECT_EQ(IOAddress("192.0.2.1"), (*it)->getIPv4Reservation());
+        EXPECT_EQ(1000 + i++, (*it)->getIPv4SubnetID());
     }
 }
 

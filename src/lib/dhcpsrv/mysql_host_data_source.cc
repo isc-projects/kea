@@ -701,7 +701,8 @@ MySqlHostDataSource::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const 
 	if (duid){
             // DUID
             // set proper dhcp_identifier_type
-            inbind[1].buffer = reinterpret_cast<char*>(1);
+            dhcp_identifier_type = 1; // 1 = IDENT_DUID
+            inbind[1].buffer = reinterpret_cast<char*>(&dhcp_identifier_type);
 
             const vector<uint8_t>& duid_vector = duid->getDuid();
             unsigned long duid_length = duid_vector.size();
@@ -712,8 +713,8 @@ MySqlHostDataSource::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const 
             inbind[0].length = &duid_length;
 	} else if (hwaddr) {
             // HW Address
-	    // set proper dhcp_identifier_type
-	    inbind[1].buffer = reinterpret_cast<char*>(0);
+            dhcp_identifier_type = 0; // 0 = IDENT_HWADDR
+            inbind[1].buffer = reinterpret_cast<char*>(&dhcp_identifier_type);
 
             const vector<uint8_t>& hwaddr_vector = hwaddr->hwaddr_;
             unsigned long hwaddr_length = hwaddr_vector.size();

@@ -421,15 +421,11 @@ TEST_F(MySqlHostDataSourceTest, DISABLED_multipleClientClassesBoth) {
     /// check that the classes are not confused.
 }
 
-// Test if retrieving hosts by hardware addresses is working correctly.
-TEST_F(MySqlHostDataSourceTest, uniqueHW) {
-    /// @todo: Insert 100 host reservations, each with unique hardware address,
-    /// try to retrieve each and make sure that the correct host is returned.
-}
-
 // Test if the same host can have reservations in different subnets (with the
 // same hardware address)
-TEST_F(MySqlHostDataSourceTest, MultipleSubnetsHWAddr) {
+TEST_F(MySqlHostDataSourceTest, multipleSubnetsHWAddr) {
+    testMultipleSubnets(10, true);
+
     /// @todo: Insert 10 host reservations for a given physical host (the same
     /// hardware address), but for different subnets (different subnet-ids).
     /// Make sure that getAll() returns them all correctly.
@@ -437,16 +433,11 @@ TEST_F(MySqlHostDataSourceTest, MultipleSubnetsHWAddr) {
 
 // Test if the same host can have reservations in different subnets (with the
 // same client identifier)
-TEST_F(MySqlHostDataSourceTest, MultipleSubnetsClientId) {
+TEST_F(MySqlHostDataSourceTest, multipleSubnetsClientId) {
+    testMultipleSubnets(10, false);
     /// @todo: Insert 10 host reservations for a given physical host (the same
     /// client-identifier), but for different subnets (different subnet-ids).
     /// Make sure that getAll() returns them correctly.
-}
-
-// Test if host reservations made for different IPv4 subnets are handled correctly.
-TEST_F(MySqlHostDataSourceTest, subnetId4) {
-    /// @todo: Insert 10 host reservations for different subnets. Make sure that
-    /// get4(subnet-id, ...) calls return correct reservation.
 }
 
 // Test if host reservations made for different IPv6 subnets are handled correctly.
