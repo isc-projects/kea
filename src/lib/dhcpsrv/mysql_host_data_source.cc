@@ -761,9 +761,9 @@ ConstHostPtr
 MySqlHostDataSource::get4(const SubnetID& subnet_id,
 		const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
 
-	// Set up the WHERE clause value
-	MYSQL_BIND inbind[2];
-	memset(inbind, 0, sizeof(inbind));
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
 
     uint32_t subnet_buffer = static_cast<uint32_t>(subnet_id);
     inbind[0].buffer_type = MYSQL_TYPE_LONG;
@@ -780,38 +780,44 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
                   "neither hwaddr or duid specified, one of them is required");
     }
 
-	// Choosing one of the identifiers
-	if (hwaddr) {
-		// HW Address
-		const vector<uint8_t>& hwaddr_vector = hwaddr->hwaddr_;
-		unsigned long hwaddr_length = hwaddr_vector.size();
-		inbind[1].buffer_type = MYSQL_TYPE_BLOB;
-		inbind[1].buffer = reinterpret_cast<char*>
-		                    (const_cast<uint8_t*>(&hwaddr_vector[0]));
-		inbind[1].buffer_length = hwaddr_length;
-		inbind[1].length = &hwaddr_length;
-	} else if (duid) {
-		// DUID
-		const vector<uint8_t>& duid_vector = duid->getDuid();
-		unsigned long duid_length = duid_vector.size();
-		inbind[1].buffer_type = MYSQL_TYPE_BLOB;
-		inbind[1].buffer = reinterpret_cast<char*>
-		                    (const_cast<uint8_t*>(&duid_vector[0]));
-		inbind[1].buffer_length = duid_length;
-		inbind[1].length = &duid_length;
-	}
-	// if none of the identifiers was given, this field should remain null
+    // Note that length must be defined in this method scope, not in the
+    // if { ... } scope. Otherwise, we would be referencing a temporary variable
+    // outside of scope of its validity. The temporary variable is created on
+    // stack and when it goes out of scope, the memory may contain random garbage.
+    unsigned long length = 0;
 
-	ConstHostCollection collection;
-	getHostCollection(GET_HOST_SUBID4_DHCPID, inbind, hostExchange_,
-	        collection, true);
+    // Choosing one of the identifiers
+    if (hwaddr) {
+        // HW Address
+        const vector<uint8_t>& hwaddr_vector = hwaddr->hwaddr_;
+        length = hwaddr_vector.size();
+        inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+        inbind[0].buffer = reinterpret_cast<char*>
+            (const_cast<uint8_t*>(&hwaddr_vector[0]));
+        inbind[0].buffer_length = length;
+        inbind[0].length = &length;
+    } else if (duid) {
+        // DUID
+        const vector<uint8_t>& duid_vector = duid->getDuid();
+        length = duid_vector.size();
+        inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+        inbind[0].buffer = reinterpret_cast<char*>
+            (const_cast<uint8_t*>(&duid_vector[0]));
+        inbind[0].buffer_length = length;
+        inbind[0].length = &length;
+    }
+    // if none of the identifiers was given, this field should remain null
 
-	// Return single record if present, else clear the host.
-	ConstHostPtr result;
-	if (!collection.empty())
-	    result = *collection.begin();
+    ConstHostCollection collection;
+    getHostCollection(GET_HOST_SUBID4_DHCPID, inbind, hostExchange_,
+                      collection, true);
 
-	return (result);
+    // Return single record if present, else clear the host.
+    ConstHostPtr result;
+    if (!collection.empty())
+        result = *collection.begin();
+
+    return (result);
 }
 
 ConstHostPtr
