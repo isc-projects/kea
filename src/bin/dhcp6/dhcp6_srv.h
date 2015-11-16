@@ -564,34 +564,6 @@ protected:
     void releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
                        AllocEngine::ClientContext6& ctx);
 
-    /// @brief Sets server-identifier.
-    ///
-    /// This method attempts to generate server-identifier DUID. It generates a
-    /// new DUID using interface link-layer addresses (EUI-64) + timestamp (DUID
-    /// type duid-llt, see RFC3315, section 9.2). If there are no suitable
-    /// interfaces present, exception it thrown
-    ///
-    /// @throws isc::Unexpected Failed to read DUID file and no suitable
-    ///         interfaces for new DUID generation are detected.
-    void generateServerID();
-
-    /// @brief attempts to load DUID from a file
-    ///
-    /// Tries to load duid from a text file. If the load is successful,
-    /// it creates server-id option and stores it in serverid_ (to be used
-    /// later by getServerID()).
-    ///
-    /// @param file_name name of the DUID file to load
-    /// @return true if load was successful, false otherwise
-    bool loadServerID(const std::string& file_name);
-
-    /// @brief attempts to write DUID to a file
-    /// Tries to write duid content (stored in serverid_) to a text file.
-    ///
-    /// @param file_name name of the DUID file to write
-    /// @return true if write was successful, false otherwise
-    bool writeServerID(const std::string& file_name);
-
     /// @brief converts DUID to text
     /// Converts content of DUID option to a text representation, e.g.
     /// 01:ff:02:03:06:80:90:ab:cd:ef
@@ -599,7 +571,6 @@ protected:
     /// @param opt option that contains DUID
     /// @return string representation
     static std::string duidToString(const OptionPtr& opt);
-
 
     /// @brief dummy wrapper around IfaceMgr::receive6
     ///

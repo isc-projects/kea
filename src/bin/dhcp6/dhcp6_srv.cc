@@ -19,6 +19,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/duid.h>
+#include <dhcp/duid_factory.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_addrlst.h>
@@ -199,21 +200,12 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
         }
 
         string duid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_DUID_FILE);
-        if (loadServerID(duid_file)) {
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_SERVERID_LOADED)
-                .arg(duidToString(getServerID()))
-                .arg(duid_file);
-        } else {
-            generateServerID();
-            LOG_INFO(dhcp6_logger, DHCP6_SERVERID_GENERATED)
-                .arg(duidToString(getServerID()))
-                .arg(duid_file);
-
-            if (!writeServerID(duid_file)) {
-                LOG_WARN(dhcp6_logger, DHCP6_SERVERID_WRITE_FAIL)
-                    .arg(duid_file);
-            }
-        }
+        DUIDFactory duid_factory(duid_file);
+        DuidPtr duid = duid_factory.get();
+        serverid_.reset(new Option(Option::V6, D6O_SERVERID, duid->getDuid()));
+        LOG_INFO(dhcp6_logger, DHCP6_USING_SERVERID)
+            .arg(duidToString(getServerID()))
+            .arg(duid_file);
 
         // Instantiate allocation engine. The number of allocation attempts equal
         // to zero indicates that the allocation engine will use the number of
@@ -717,38 +709,6 @@ bool Dhcpv6Srv::run() {
     return (true);
 }
 
-bool Dhcpv6Srv::loadServerID(const std::string& file_name) {
-
-    // load content of the file into a string
-    fstream f(file_name.c_str(), ios::in);
-    if (!f.is_open()) {
-        return (false);
-    }
-
-    string hex_string;
-    f >> hex_string;
-    f.close();
-
-    // remove any spaces
-    boost::algorithm::erase_all(hex_string, " ");
-
-    // now remove :
-    /// @todo: We should check first if the format is sane.
-    /// Otherwise 1:2:3:4 will be converted to 0x12, 0x34
-    boost::algorithm::erase_all(hex_string, ":");
-
-    std::vector<uint8_t> bin;
-
-    // Decode the hex string and store it in bin (which happens
-    // to be OptionBuffer format)
-    isc::util::encode::decodeHex(hex_string, bin);
-
-    // Now create server-id option
-    serverid_.reset(new Option(Option::V6, D6O_SERVERID, bin));
-
-    return (true);
-}
-
 std::string
 Dhcpv6Srv::duidToString(const OptionPtr& opt) {
     stringstream tmp;
@@ -767,102 +727,6 @@ Dhcpv6Srv::duidToString(const OptionPtr& opt) {
     }
 
     return tmp.str();
-}
-
-bool
-Dhcpv6Srv::writeServerID(const std::string& file_name) {
-    fstream f(file_name.c_str(), ios::out | ios::trunc);
-    if (!f.good()) {
-        return (false);
-    }
-    f << duidToString(getServerID());
-    f.close();
-    return (true);
-}
-
-void
-Dhcpv6Srv::generateServerID() {
-
-    /// @todo: This code implements support for DUID-LLT (the recommended one).
-    /// We should eventually add support for other DUID types: DUID-LL, DUID-EN
-    /// and DUID-UUID
-
-    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
-
-    // Let's find suitable interface.
-    BOOST_FOREACH(IfacePtr iface, ifaces) {
-        // All the following checks could be merged into one multi-condition
-        // statement, but let's keep them separated as perhaps one day
-        // we will grow knobs to selectively turn them on or off. Also,
-        // this code is used only *once* during first start on a new machine
-        // and then server-id is stored. (or at least it will be once
-        // DUID storage is implemented)
-
-        // I wish there was a this_is_a_real_physical_interface flag...
-
-        // MAC address should be at least 6 bytes. Although there is no such
-        // requirement in any RFC, all decent physical interfaces (Ethernet,
-        // WiFi, InfiniBand, etc.) have 6 bytes long MAC address. We want to
-        // base our DUID on real hardware address, rather than virtual
-        // interface that pretends that underlying IP address is its MAC.
-        if (iface->getMacLen() < MIN_MAC_LEN) {
-            continue;
-        }
-
-        // Let's don't use loopback.
-        if (iface->flag_loopback_) {
-            continue;
-        }
-
-        // Let's skip downed interfaces. It is better to use working ones.
-        if (!iface->flag_up_) {
-            continue;
-        }
-
-        // Some interfaces (like lo on Linux) report 6-bytes long
-        // MAC address 00:00:00:00:00:00. Let's not use such weird interfaces
-        // to generate DUID.
-        if (isRangeZero(iface->getMac(), iface->getMac() + iface->getMacLen())) {
-            continue;
-        }
-
-        // Ok, we have useful MAC. Let's generate DUID-LLT based on
-        // it. See RFC3315, Section 9.2 for details.
-
-        // DUID uses seconds since midnight of 01-01-2000, time() returns
-        // seconds since 01-01-1970. DUID_TIME_EPOCH substitution corrects
-        // that.
-        time_t seconds = time(NULL);
-        seconds -= DUID_TIME_EPOCH;
-
-        OptionBuffer srvid(8 + iface->getMacLen());
-        // We know that the buffer is more than 8 bytes long at this point.
-        writeUint16(DUID::DUID_LLT, &srvid[0], 2);
-        writeUint16(HWTYPE_ETHERNET, &srvid[2], 2);
-        writeUint32(static_cast<uint32_t>(seconds), &srvid[4], 4);
-        memcpy(&srvid[8], iface->getMac(), iface->getMacLen());
-
-        serverid_ = OptionPtr(new Option(Option::V6, D6O_SERVERID,
-                                         srvid.begin(), srvid.end()));
-        return;
-    }
-
-    // If we reached here, there are no suitable interfaces found.
-    // Either interface detection is not supported on this platform or
-    // this is really weird box. Let's use DUID-EN instead.
-    // See Section 9.3 of RFC3315 for details.
-
-    OptionBuffer srvid(12);
-    writeUint16(DUID::DUID_EN, &srvid[0], srvid.size());
-    writeUint32(ENTERPRISE_ID_ISC, &srvid[2], srvid.size() - 2);
-
-    // Length of the identifier is company specific. I hereby declare
-    // ISC "standard" of 6 bytes long pseudo-random numbers.
-    srandom(time(NULL));
-    fillRandom(&srvid[6], &srvid[12]);
-
-    serverid_ = OptionPtr(new Option(Option::V6, D6O_SERVERID,
-                                     srvid.begin(), srvid.end()));
 }
 
 void
