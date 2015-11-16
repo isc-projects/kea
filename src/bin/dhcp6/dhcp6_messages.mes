@@ -649,19 +649,16 @@ recommended as existing clients will not recognize the server and may go
 through a rebind phase. However, they should be able to recover without
 losing their leases.
 
-% DHCP6_SERVERID_LOADED server-id %1 has been loaded from file %2
-This debug message indicates that the server loaded its server identifier.
-That value is sent in all server responses and clients use it to
-discriminate between servers. This is a part of normal startup or
-reconfiguration procedure.
-
-% DHCP6_SERVERID_WRITE_FAIL server was not able to write its ID to file %1
-This warning message indicates that server was not able to write its
-server identifier (DUID) to a file. This likely indicates lack of write
-permission to a given file or directory. This is not critical and the
-server will continue to operate, but server will generate different DUID
-during every start and clients will need to go through a rebind phase
-to recover.
+% DHCP6_USING_SERVERID server is using server-id %1 and stores in the the file %2
+This info message is logged when the server reads its server-id from a
+file or generates it. This message is a notification to the administrator
+what server-id will be used and where it is persisted. Typically, there is
+no need to modify the server id. However, it is possible to do it in the
+Kea configuration file. It is important to understand the implications of
+such modification. The clients will remember previous server-id, and will
+use it to extend their leases. As a result, they will have to go through
+a rebinding phase to re-acquire their leases and associate them with a
+new server id.
 
 % DHCP6_SERVER_FAILED server failed: %1
 The IPv6 DHCP server has encountered a fatal error and is terminating.
