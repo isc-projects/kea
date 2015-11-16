@@ -791,20 +791,20 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
         // HW Address
         const vector<uint8_t>& hwaddr_vector = hwaddr->hwaddr_;
         length = hwaddr_vector.size();
-        inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-        inbind[0].buffer = reinterpret_cast<char*>
+        inbind[1].buffer_type = MYSQL_TYPE_BLOB;
+        inbind[1].buffer = reinterpret_cast<char*>
             (const_cast<uint8_t*>(&hwaddr_vector[0]));
-        inbind[0].buffer_length = length;
-        inbind[0].length = &length;
+        inbind[1].buffer_length = length;
+        inbind[1].length = &length;
     } else if (duid) {
         // DUID
         const vector<uint8_t>& duid_vector = duid->getDuid();
         length = duid_vector.size();
-        inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-        inbind[0].buffer = reinterpret_cast<char*>
+        inbind[1].buffer_type = MYSQL_TYPE_BLOB;
+        inbind[1].buffer = reinterpret_cast<char*>
             (const_cast<uint8_t*>(&duid_vector[0]));
-        inbind[0].buffer_length = length;
-        inbind[0].length = &length;
+        inbind[1].buffer_length = length;
+        inbind[1].length = &length;
     }
     // if none of the identifiers was given, this field should remain null
 
