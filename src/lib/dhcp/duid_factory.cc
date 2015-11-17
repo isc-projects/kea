@@ -312,7 +312,7 @@ DUIDFactory::set(const std::vector<uint8_t>& duid_vector) {
     if (isPersisted()) {
         std::ofstream ofs;
         try {
-            ofs.open(storage_location_, std::ofstream::out |
+            ofs.open(storage_location_.c_str(), std::ofstream::out |
                      std::ofstream::trunc);
             if (!ofs.good()) {
                 isc_throw(InvalidOperation, "unable to open DUID file "
@@ -380,7 +380,7 @@ DUIDFactory::readFromFile() {
     std::ostringstream duid_str;
    if (isPersisted()) {
         std::ifstream ifs;
-        ifs.open(storage_location_, std::ifstream::in);
+        ifs.open(storage_location_.c_str(), std::ifstream::in);
         if (ifs.good()) {
             std::string read_contents;
             while (!ifs.eof() && ifs.good()) {
