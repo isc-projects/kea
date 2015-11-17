@@ -55,6 +55,10 @@ class ClientClassDef {
     ClientClassDef(const std::string& name, const ExpressionPtr& match_expr,
                 const CfgOptionPtr& options = CfgOptionPtr());
 
+
+    /// Copy constructor
+    ClientClassDef(const ClientClassDef& rhs);
+
     /// @brief Destructor
     virtual ~ClientClassDef();
 
@@ -82,6 +86,31 @@ class ClientClassDef {
     /// @param options the option collection to assign the class
     void setCfgOption(const CfgOptionPtr& cfg_option);
 
+    /// @brief Compares two @c ClientClassDef objects for equality.
+    ///
+    /// @param other Other client class definition to compare to.
+    ///
+    /// @return true if objects are equal, false otherwise.
+    bool equals(const ClientClassDef& other) const;
+
+    /// @brief Equality operator.
+    ///
+    /// @param other Other client class definition to compare to.
+    ///
+    /// @return true if the definitions equal, false otherwise.
+    bool operator==(const ClientClassDef& other) const {
+        return (equals(other));
+    }
+
+    /// @brief Inequality operator.
+    ///
+    /// @param other Other client class definition to compare to.
+    ///
+    /// @return true if the definitions are not equal, false otherwise.
+    bool operator!=(const ClientClassDef& other) const {
+        return (!(equals(other)));
+    }
+
     /// @brief Provides a convenient text representation of the class
     friend std::ostream& operator<<(std::ostream& os, const ClientClassDef& x);
 
@@ -106,12 +135,17 @@ typedef std::map<std::string,ClientClassDefPtr> ClientClassDefMap;
 /// @brief Defines a pointer to a ClientClassDictionary
 typedef boost::shared_ptr<ClientClassDefMap> ClientClassDefMapPtr;
 
+/// @brief Defines a pair for working wiht ClientClassMap
+typedef std::pair<std::string,ClientClassDefPtr> ClientClassMapPair;
+
 /// @brief Maintains a list of ClientClassDef's
 class ClientClassDictionary {
 
   public:
     /// @brief Constructor
     ClientClassDictionary();
+
+    ClientClassDictionary(const ClientClassDictionary& rhs);
 
     /// @brief Destructor
     ~ClientClassDictionary();
@@ -156,6 +190,31 @@ class ClientClassDictionary {
     ///
     /// @return ClientClassDefMapPtr to the map of classes
     const ClientClassDefMapPtr& getClasses() const;
+
+    /// @brief Compares two @c ClientClassDictionary objects for equality.
+    ///
+    /// @param other Other client class definition to compare to.
+    ///
+    /// @return true if descriptors equal, false otherwise.
+    bool equals(const ClientClassDictionary& other) const;
+
+    /// @brief Equality operator.
+    ///
+    /// @param other Other client class dictionary to compare to.
+    ///
+    /// @return true if the dictionaries are equal, false otherwise.
+    bool operator==(const ClientClassDictionary& other) const {
+        return (equals(other));
+    }
+
+    /// @brief Inequality operator.
+    ///
+    /// @param other Other client class dictionary to compare to.
+    ///
+    /// @return true if the dictionaries are not equal, false otherwise.
+    bool operator!=(const ClientClassDictionary& other) const {
+        return (!equals(other));
+    }
 
   private:
 
