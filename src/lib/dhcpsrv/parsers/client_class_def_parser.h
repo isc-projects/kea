@@ -150,7 +150,7 @@ typedef boost::shared_ptr<ClientClassDefParser> ClientClassDefParserPtr;
 /// This parser iterates over all configuration entries that define
 /// client classes and creates ClientClassDef instances for each.
 /// If the parsing done in build() is successful, the collection of
-/// created definitions is given to the @todo CfgMgr.
+/// created definitions is given to the CfgMgr.
 class ClientClassDefListParser : public DhcpConfigParser {
 public:
     /// @brief Constructor.
