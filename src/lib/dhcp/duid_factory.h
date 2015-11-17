@@ -87,15 +87,18 @@ public:
     ///
     /// This method generates DUID-LLT.
     ///
-    /// @param htype Link layer type. If this is set to 0 and link layer
-    /// address is empty a default value of @c HTYPE_ETHER is used.
-    /// Otherwise a link layer type of selected interface is used.
+    /// @param htype Hardware type. If this is set to 0 and link layer
+    /// address is empty a value from existing DUID or a default value
+    /// of @c HTYPE_ETHER is used. Otherwise a link layer type of selected
+    /// interface is used.
     /// @param time_in Explicit value of time for the DUID. If this is
-    /// set to 0 a current time is used, otherwise a value specified is
-    /// used.
+    /// set to 0 a value from existing DUOD or current time is used,
+    /// otherwise a value specified is used.
     /// @param ll_identifier Data to be used as link layer address. If
-    /// this is an empty vector this method will iterate over all
-    /// active interfaces and will pick link layer address of one of them.
+    /// this is an empty vector this method will try to use link layer
+    /// address from existing DUID. If there is no DUID yet, it will
+    /// iterate over all active interfaces and will pick link layer
+    /// address of one of them.
     ///
     /// @throw isc::Unexpected if none of the interfaces includes has a
     /// suitable link layer address.
@@ -104,22 +107,27 @@ public:
 
     /// @brief Generates DUID-EN.
     ///
-    /// @param enterprise_id Enterprise id. If this value is 0, the ISC's
-    /// enterprise id is used.
+    /// @param enterprise_id Enterprise id. If this value is 0, a value
+    /// from existing DUID is used or ISC's enterprise id if there is
+    /// no DUID yet.
     /// @param identifier Data to be used as variable length identifier.
-    /// If this is an empty vector, the 6-bytes long vector with random
+    /// If this is an empty vector, an identifier from existing DUID is
+    /// used. If there is no DUID yet, the 6-bytes long vector with random
     /// values is generated.
     void createEN(const uint32_t enterprise_id,
                   const std::vector<uint8_t>& identifier);
 
     /// @brief Generates DUID-LL.
     ///
-    /// @param htype Link layer type. If this is set to 0 and link layer
-    /// address is empty a default value of @c HTYPE_ETHER is used.
-    /// Otherwise a link layer type of selected interface is used.
+    /// @param htype Hardware type. If this is set to 0 and link layer
+    /// address is empty a value from existing DUID or a default value
+    /// of @c HTYPE_ETHER is used. Otherwise a link layer type of selected
+    /// interface is used.
     /// @param ll_identifier Data to be used as link layer address. If
-    /// this is an empty vector this method will iterate over all
-    /// active interfaces and will pick link layer address of one of them.
+    /// this is an empty vector this method will try to use link layer
+    /// address from existing DUID. If there is no DUID yet, it will
+    /// iterate over all active interfaces and will pick link layer
+    /// address of one of them.
     ///
     /// @throw isc::Unexpected if none of the interfaces includes has a
     /// suitable link layer address.
@@ -163,6 +171,9 @@ private:
     ///
     /// @param duid_vector New DUID represented as vector of bytes.
     void set(const std::vector<uint8_t>& duid_vector);
+
+    /// @brief Reads DUID from file, if file exists.
+    void readFromFile();
 
     /// @brief Location of the file holding generated DUID (if specified).
     std::string storage_location_;

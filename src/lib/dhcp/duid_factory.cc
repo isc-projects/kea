@@ -59,10 +59,32 @@ DUIDFactory::isPersisted() const {
 void
 DUIDFactory::createLLT(const uint16_t htype, const uint32_t time_in,
                        const std::vector<uint8_t>& ll_identifier) {
+    // We'll need DUID stored in the file to compare it against the
+    // new configuration. If the new configuration indicates that some
+    // bits of the DUID should be generated we'll first try to use the
+    // values stored in the file to prvent DUID from changing if possible.
+    readFromFile();
+
+    uint16_t htype_current = 0;
+    uint32_t time_current = 0;
+    std::vector<uint8_t> identifier_current;
+
+    // If DUID exists in the file, try to use it as much as possible.
+    if (duid_) {
+        std::vector<uint8_t> duid_vec = duid_->getDuid();
+        if ((duid_->getType() == DUID::DUID_LLT) && (duid_vec.size() > 8)) {
+            htype_current = readUint16(&duid_vec[2], duid_vec.size() - 2);
+            time_current = readUint32(&duid_vec[4], duid_vec.size() - 4);
+            identifier_current.assign(duid_vec.begin() + 8, duid_vec.end());
+        }
+    }
+
     uint32_t time_out = time_in;
-    // If time unspecified, use current time.
+    // If time is unspecified (ANY), then use the time from current DUID or
+    // set it to current time.
     if (time_out == 0) {
-        time_out = static_cast<uint32_t>(time(NULL) - DUID_TIME_EPOCH);
+        time_out = (time_current != 0 ? time_current :
+            static_cast<uint32_t>(time(NULL) - DUID_TIME_EPOCH));
     }
 
     std::vector<uint8_t> ll_identifier_out = ll_identifier;
@@ -72,7 +94,14 @@ DUIDFactory::createLLT(const uint16_t htype, const uint32_t time_in,
     // interfaces present in the system. Also, update the link
     // layer type accordingly.
     if (ll_identifier_out.empty()) {
-        createLinkLayerId(ll_identifier_out, htype_out);
+        // If DUID doesn't exist yet, generate a new identifier.
+        if (identifier_current.empty()) {
+            createLinkLayerId(ll_identifier_out, htype_out);
+        } else {
+            // Use current identifier and hardware type.
+            ll_identifier_out = identifier_current;
+            htype_out = htype_current;
+        }
 
     } else if (htype_out == 0) {
         // If link layer type unspecified and link layer adddress
@@ -97,27 +126,60 @@ DUIDFactory::createLLT(const uint16_t htype, const uint32_t time_in,
 void
 DUIDFactory::createEN(const uint32_t enterprise_id,
                       const std::vector<uint8_t>& identifier) {
-    // Enterprise id 0 means "unspecified". In this case use the ISC
-    // enterprise id.
-    uint32_t enterprise_id_out = enterprise_id != 0 ?
-        enterprise_id : ENTERPRISE_ID_ISC;
+    // We'll need DUID stored in the file to compare it against the
+    // new configuration. If the new configuration indicates that some
+    // bits of the DUID should be generated we'll first try to use the
+    // values stored in the file to prvent DUID from changing if possible.
+    readFromFile();
+
+    uint32_t enterprise_id_current = 0;
+    std::vector<uint8_t> identifier_current;
+
+    // If DUID exists in the file, try to use it as much as possible.
+    if (duid_) {
+        std::vector<uint8_t> duid_vec = duid_->getDuid();
+        if ((duid_->getType() == DUID::DUID_EN) && (duid_vec.size() > 6)) {
+            enterprise_id_current = readUint32(&duid_vec[2], duid_vec.size() - 2);
+            identifier_current.assign(duid_vec.begin() + 6, duid_vec.end());
+        }
+    }
+
+    // Enterprise id 0 means "unspecified". In this case, try to use existing
+    // DUID's enterprise id, or use ISC enterprise id.
+    uint32_t enterprise_id_out = enterprise_id;
+    if (enterprise_id_out == 0) {
+        if (enterprise_id_current != 0) {
+            enterprise_id_out = enterprise_id_current;
+        } else {
+            enterprise_id_out = ENTERPRISE_ID_ISC;
+        }
+    }
 
     // Render DUID.
     std::vector<uint8_t> duid_out(DUID_TYPE_LEN + ENTERPRISE_ID_LEN);
     writeUint16(DUID::DUID_EN, &duid_out[0], 2);
     writeUint32(enterprise_id_out, &duid_out[2], ENTERPRISE_ID_LEN);
 
+    // If no identifier specified, we'll have to use the one from the
+    // DUID file or generate new.
     if (identifier.empty()) {
-        // Identifier is empty, so we have to extend the DUID by 6 bytes
-        // to fit the random identifier.
-        duid_out.resize(DUID_TYPE_LEN + ENTERPRISE_ID_LEN +
-                        DUID_EN_IDENTIFIER_LEN);
-        // Variable length identifier consists of random numbers. The generated
-        // identifier is always 6 bytes long.
-        ::srandom(time(NULL));
-        fillRandom(&duid_out[DUID_TYPE_LEN + ENTERPRISE_ID_LEN],
-                   &duid_out[DUID_TYPE_LEN + ENTERPRISE_ID_LEN +
-                             DUID_EN_IDENTIFIER_LEN]);
+        // No DUID file, so generate new.
+        if (identifier_current.empty()) {
+            // Identifier is empty, so we have to extend the DUID by 6 bytes
+            // to fit the random identifier.
+            duid_out.resize(DUID_TYPE_LEN + ENTERPRISE_ID_LEN +
+                            DUID_EN_IDENTIFIER_LEN);
+            // Variable length identifier consists of random numbers. The generated
+            // identifier is always 6 bytes long.
+            ::srandom(time(NULL));
+            fillRandom(&duid_out[DUID_TYPE_LEN + ENTERPRISE_ID_LEN],
+                       &duid_out[DUID_TYPE_LEN + ENTERPRISE_ID_LEN +
+                                 DUID_EN_IDENTIFIER_LEN]);
+        } else {
+            // Append existing identifier.
+            duid_out.insert(duid_out.end(), identifier_current.begin(),
+                            identifier_current.end());
+        }
 
     } else {
         // Append the specified identifier to the end of DUID.
@@ -131,6 +193,24 @@ DUIDFactory::createEN(const uint32_t enterprise_id,
 void
 DUIDFactory::createLL(const uint16_t htype,
                       const std::vector<uint8_t>& ll_identifier) {
+    // We'll need DUID stored in the file to compare it against the
+    // new configuration. If the new configuration indicates that some
+    // bits of the DUID should be generated we'll first try to use the
+    // values stored in the file to prvent DUID from changing if possible.
+    readFromFile();
+
+    uint16_t htype_current = 0;
+    std::vector<uint8_t> identifier_current;
+
+    // If DUID exists in the file, try to use it as much as possible.
+    if (duid_) {
+        std::vector<uint8_t> duid_vec = duid_->getDuid();
+        if ((duid_->getType() == DUID::DUID_LL) && (duid_vec.size() > 4)) {
+            htype_current = readUint16(&duid_vec[2], duid_vec.size() - 2);
+            identifier_current.assign(duid_vec.begin() + 4, duid_vec.end());
+        }
+    }
+
     std::vector<uint8_t> ll_identifier_out = ll_identifier;
     uint16_t htype_out = htype;
 
@@ -138,7 +218,14 @@ DUIDFactory::createLL(const uint16_t htype,
     // interfaces present in the system. Also, update the link
     // layer type accordingly.
     if (ll_identifier_out.empty()) {
-        createLinkLayerId(ll_identifier_out, htype_out);
+        // If DUID doesn't exist yet, generate a new identifier.
+        if (identifier_current.empty()) {
+            createLinkLayerId(ll_identifier_out, htype_out);
+        } else {
+            // Use current identifier and hardware type.
+            ll_identifier_out = identifier_current;
+            htype_out = htype_current;
+        }
 
     } else if (htype_out == 0) {
         // If link layer type unspecified and link layer adddress
@@ -259,36 +346,13 @@ DUIDFactory::get() {
         return (duid_);
     }
 
-    // If DUID object hasn't been initialized then we need to retrieve a
-    // DUID from the file or create one.
-    std::ostringstream duid_str;
-    if (isPersisted()) {
-        std::ifstream ifs;
-        ifs.open(storage_location_, std::ifstream::in);
-        if (ifs.good()) {
-            std::string read_contents;
-            while (!ifs.eof() && ifs.good()) {
-                ifs >> read_contents;
-                duid_str << read_contents;
-            }
-        }
-        ifs.close();
-
-        // If we have read anything from the file, let's try to use it to
-        // create a DUID.
-        if (duid_str.tellp() != 0) {
-            try {
-                duid_.reset(new DUID(DUID::fromText(duid_str.str())));
-                return (duid_);
-
-            } catch (...) {
-                // The contents of this file don't represent a valid DUID.
-                // We'll need to generate it.
-            }
-        }
-
+    // Try to read DUID from file, if it exists.
+    readFromFile();
+    if (duid_) {
+        return (duid_);
     }
 
+    // DUID doesn't exist, so we need to create it.
     try {
         // There is no file with a DUID or the DUID stored in the file is
         // invalid. We need to generate a new DUID.
@@ -308,6 +372,38 @@ DUIDFactory::get() {
 
     return (duid_);
 }
+
+void
+DUIDFactory::readFromFile() {
+    duid_.reset();
+
+    std::ostringstream duid_str;
+   if (isPersisted()) {
+        std::ifstream ifs;
+        ifs.open(storage_location_, std::ifstream::in);
+        if (ifs.good()) {
+            std::string read_contents;
+            while (!ifs.eof() && ifs.good()) {
+                ifs >> read_contents;
+                duid_str << read_contents;
+            }
+        }
+        ifs.close();
+
+        // If we have read anything from the file, let's try to use it to
+        // create a DUID.
+        if (duid_str.tellp() != 0) {
+            try {
+                duid_.reset(new DUID(DUID::fromText(duid_str.str())));
+
+            } catch (...) {
+                // The contents of this file don't represent a valid DUID.
+                // We'll need to generate it.
+            }
+        }
+   }
+}
+
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
