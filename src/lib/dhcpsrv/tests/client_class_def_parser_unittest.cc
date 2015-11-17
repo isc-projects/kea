@@ -101,6 +101,9 @@ protected:
         ClientClassDefListParser parser("", context);
         parser.build(config_element);
 
+        // Commit should push it to CfgMgr staging
+        parser.commit();
+
         // Return the parser's local dicationary
         return (parser.local_dictionary_);
     }
@@ -417,6 +420,13 @@ TEST_F(ClientClassDefListParserTest, simpleValidList) {
     // For good measure, make sure we can't find a non-existant class.
     ASSERT_NO_THROW(cclass = dictionary->findClass("bogus"));
     EXPECT_FALSE(cclass);
+
+    // Verify that the dictionary was pushed to the CfgMgr's staging config.
+    SrvConfigPtr staging = CfgMgr::instance().getStagingCfg();
+    ASSERT_TRUE(staging);
+    ClientClassDictionaryPtr staged_dictionary = staging->getClientClassDictionary();
+    ASSERT_TRUE(staged_dictionary);
+    EXPECT_TRUE(*staged_dictionary == *dictionary);
 }
 
 // Verifies that class list containing a duplicate class entries, fails
