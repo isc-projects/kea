@@ -184,7 +184,7 @@ const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 static const char* SERVER_DUID_FILE = "kea-dhcp6-serverid";
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
-    : serverid_(), port_(port), shutdown_(true), alloc_engine_()
+    : port_(port), serverid_(), shutdown_(true), alloc_engine_()
 {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
@@ -203,9 +203,6 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
         DUIDFactory duid_factory(duid_file);
         DuidPtr duid = duid_factory.get();
         serverid_.reset(new Option(Option::V6, D6O_SERVERID, duid->getDuid()));
-        LOG_INFO(dhcp6_logger, DHCP6_USING_SERVERID)
-            .arg(duidToString(getServerID()))
-            .arg(duid_file);
 
         // Instantiate allocation engine. The number of allocation attempts equal
         // to zero indicates that the allocation engine will use the number of
