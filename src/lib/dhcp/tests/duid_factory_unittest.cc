@@ -95,6 +95,22 @@ public:
                  const bool time_equal,
                  const std::string& expected_hwaddr);
 
+    /// @brief Tests creation of a DUID-LLT.
+    ///
+    /// @param expected_htype Expected link layer type as string.
+    /// @param expected_time Expected time as string.
+    /// @param time_equal Indicates if @c expected time should be
+    /// compared for equality with the time being part of a DUID
+    /// (if true), or the time being part of the DUID should be
+    /// less or equal current time (if false).
+    /// @param expected_hwaddr Expected link layer type as string.
+    /// @param factory_ref Reference to DUID factory.
+    void testLLT(const std::string& expected_htype,
+                 const std::string& expected_time,
+                 const bool time_equal,
+                 const std::string& expected_hwaddr,
+                 DUIDFactory& factory_ref);
+
     /// @brief Tests creation of a DUID-EN.
     ///
     /// @param expected_enterprise_id Expected enterprise id as string.
@@ -203,7 +219,17 @@ DUIDFactoryTest::testLLT(const std::string& expected_htype,
                          const std::string& expected_time,
                          const bool time_equal,
                          const std::string& expected_hwaddr) {
-    DuidPtr duid = factory().get();
+    testLLT(expected_htype, expected_time, time_equal, expected_hwaddr,
+            factory());
+}
+
+void
+DUIDFactoryTest::testLLT(const std::string& expected_htype,
+                         const std::string& expected_time,
+                         const bool time_equal,
+                         const std::string& expected_hwaddr,
+                         DUIDFactory& factory_ref) {
+    DuidPtr duid = factory_ref.get();
     ASSERT_TRUE(duid);
     ASSERT_GE(duid->getDuid().size(), 14);
     std::string duid_text = toString(duid->getDuid());
@@ -228,6 +254,8 @@ DUIDFactoryTest::testLLT(const std::string& expected_htype,
     // Compare DUID with the one stored in the file.
     EXPECT_EQ(duid->toText(), readDefaultFile());
 }
+
+
 
 void
 DUIDFactoryTest::testEN(const std::string& expected_enterprise_id,
@@ -321,6 +349,21 @@ TEST_F(DUIDFactoryTest, createLLTAllExplcitParameters) {
     testLLT("0008", "FAFAFAFA", true, "24242424242424242424");
 }
 
+// This test verifies that the createLLT function will try to reuse existing
+// DUID for the non-explicitly specified values.
+TEST_F(DUIDFactoryTest, createLLTReuse) {
+    // Create DUID-LLT and store it in a file.
+    ASSERT_NO_THROW(factory().createLLT(HTYPE_FDDI, 0xFAFAFAFA,
+                                        toVector("242424242424")));
+    // Create another factory class, which uses the same file.
+    DUIDFactory factory2(absolutePath(DEFAULT_DUID_FILE));
+    // Create DUID-LLT without specifying hardware type, time and
+    // link layer address. The factory function should use the
+    // values in the existing DUID.
+    ASSERT_NO_THROW(factory2.createLLT(0, 0, std::vector<uint8_t>()));
+    testLLT("0008", "FAFAFAFA", true, "242424242424");
+}
+
 // This test verifies that the DUID-EN can be generated entirely. Such
 // generated DUID contains ISC enterprise id and the random identifier.
 TEST_F(DUIDFactoryTest, createEN) {
@@ -346,6 +389,17 @@ TEST_F(DUIDFactoryTest, createENExplicitIdentifier) {
 TEST_F(DUIDFactoryTest, createENAllExplicitParameters) {
     ASSERT_NO_THROW(factory().createEN(0x01020304, toVector("ABCD")));
     testEN("01020304", "ABCD");
+}
+
+// This test verifies that the createEN function will try to reuse existing
+// DUID for the non-explicitly specified values.
+TEST_F(DUIDFactoryTest, createENReuse) {
+    // Create DUID-EN and store it in a file.
+    ASSERT_NO_THROW(factory().createEN(0xFAFAFAFA, toVector("242424242424")));
+    // Create another factory class, which uses the same file.
+    DUIDFactory factory2(absolutePath(DEFAULT_DUID_FILE));
+    ASSERT_NO_THROW(factory2.createEN(0, std::vector<uint8_t>()));
+    testEN("FAFAFAFA", "242424242424");
 }
 
 // This test verifies that the DUID-LL is generated when neither link layer
@@ -391,6 +445,20 @@ TEST_F(DUIDFactoryTest, createENIfNotExists) {
     ASSERT_NO_THROW(duid = factory().get());
     ASSERT_TRUE(duid);
     EXPECT_EQ(DUID::DUID_EN, duid->getType());
+}
+
+// This test verifies that the createLL function will try to reuse existing
+// DUID for the non-explicitly specified values.
+TEST_F(DUIDFactoryTest, createLLReuse) {
+    // Create DUID-EN and store it in a file.
+    ASSERT_NO_THROW(factory().createLL(HTYPE_FDDI, toVector("242424242424")));
+    // Create another factory class, which uses the same file.
+    DUIDFactory factory2(absolutePath(DEFAULT_DUID_FILE));
+    // Create DUID-LL without specifying hardware type, time and
+    // link layer address. The factory function should use the
+    // values in the existing DUID.
+    ASSERT_NO_THROW(factory2.createLL(0, std::vector<uint8_t>()));
+    testLL("0008", "242424242424");
 }
 
 // This test verifies that it is possible to override a DUID.
