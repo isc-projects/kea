@@ -39,6 +39,19 @@ of active interfaces. This doesn't prevent the server from listening to
 the DHCP traffic through open sockets, but will rather be used by Interface
 Manager to select active interfaces when sockets are re-opened.
 
+% DHCPSRV_CFGMGR_CONFIGURE_SERVERID server configuration includes specification of a server identifier
+This warning message is issued when the server specified configuration of
+a server identifier. If this new configuration overrides an existing
+server identifier, this will affect existing bindings of the clients.
+Clients will use old server identifier when they renew their bindings.
+The server will not respond to those renews, and the clients will
+eventually transition to rebinding state. The server should reassign
+existing bindings and the clients will subsequently use new server
+identifier. It is recommended to not modify the server identifier, unless
+there is a good reason for it, to avoid increased number of renewals and
+a need for rebinding (increase of multicast traffic, which may be received
+by multiple servers).
+
 % DHCPSRV_CFGMGR_NO_SUBNET4 no suitable subnet is defined for address hint %1
 This debug message is output when the DHCP configuration manager has received
 a request for an IPv4 subnet for the specified address, but no such

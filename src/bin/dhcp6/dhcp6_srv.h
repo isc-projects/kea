@@ -760,13 +760,13 @@ private:
     /// @param query packet transmitted
     static void processStatsSent(const Pkt6Ptr& response);
 
-    /// Server DUID (to be sent in server-identifier option)
-    OptionPtr serverid_;
-
     /// UDP port number on which server listens.
     uint16_t port_;
 
 protected:
+
+    /// Server DUID (to be sent in server-identifier option)
+    OptionPtr serverid_;
 
     /// Indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
