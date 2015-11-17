@@ -147,7 +147,7 @@ ClientClassDefListParser::build(ConstElementPtr client_class_def_list) {
 
 void
 ClientClassDefListParser::commit() {
-    //  CfgMgr::instance().setClientClassConfig(local_dictionary_);
+    CfgMgr::instance().getStagingCfg()->setClientClassDictionary(local_dictionary_);
 }
 
 } // end of namespace isc::dhcp
