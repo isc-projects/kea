@@ -2,7 +2,7 @@
 	Add a new --enable-generate-parser configuration parameter
 	(disabled by default) which makes flex and bison to regenerate
 	parser files.
-	(trac #4125, git xxx)
+	(trac #4125, git 18321bf85f93b24d720f1ab2d90b4f4da85bc471)
 
 1048.	[func]		fdupont,tomek
 	Implement expression parser for client classification.
