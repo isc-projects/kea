@@ -167,7 +167,7 @@ DUIDFactoryTest::removeDefaultFile() const {
 std::string
 DUIDFactoryTest::readDefaultFile() const {
     std::ifstream ifs;
-    ifs.open(absolutePath(DEFAULT_DUID_FILE), std::ifstream::in);
+    ifs.open(absolutePath(DEFAULT_DUID_FILE).c_str(), std::ifstream::in);
     if (!ifs.good()) {
         return (std::string());
     }
