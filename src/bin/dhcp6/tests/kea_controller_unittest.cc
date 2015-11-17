@@ -349,4 +349,39 @@ TEST_F(JSONFileBackendTest, timers) {
     EXPECT_FALSE(lease_reclaimed);
 }
 
+// This test verifies that the DUID type can be selected.
+TEST_F(JSONFileBackendTest, serverId) {
+    string config =
+        "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "    \"interfaces\": [ ]"
+        "},"
+        "\"lease-database\": {"
+        "     \"type\": \"memfile\","
+        "     \"persist\": false"
+        "},"
+        "\"server-id\": {"
+        "     \"type\": \"EN\","
+        "     \"enterprise-id\": 1234"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ ],"
+        "\"preferred-lifetime\": 3000, "
+        "\"valid-lifetime\": 4000 }"
+        "}";
+    writeFile(TEST_FILE, config);
+
+    // Create an instance of the server and intialize it.
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new ControlledDhcpv6Srv(0)));
+    ASSERT_NO_THROW(srv->init(TEST_FILE));
+
+    // Check that DUID configuration is affected.
+    ConstCfgDUIDPtr duid_cfg = CfgMgr::instance().getCurrentCfg()->getCfgDUID();
+    ASSERT_TRUE(duid_cfg);
+    EXPECT_EQ(DUID::DUID_EN, duid_cfg->getType());
+    EXPECT_EQ(1234, duid_cfg->getEnterpriseId());
+}
+
 } // End of anonymous namespace
