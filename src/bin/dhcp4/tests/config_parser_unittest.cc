@@ -3898,4 +3898,78 @@ TEST_F(Dhcp4ParserTest, 4o6subnetInterfaceId) {
     EXPECT_EQ(0, memcmp(&data[0], exp, data.size()));
 }
 
+// Verifies that simple list of valid classes parses and
+// is staged for commit.
+TEST_F(Dhcp4ParserTest, validClientClassDictionary) {
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"client-classes\" : [ \n"
+        "   { \n"
+        "       \"name\": \"one\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"two\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"three\" \n"
+        "   } \n"
+        "], \n"
+        "\"subnet4\": [ {  \n"
+        "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.100\" } ], \n"
+        "    \"subnet\": \"192.0.2.0/24\"  \n"
+        " } ] \n"
+        "} \n";
+
+    ConstElementPtr status;
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // We check staging config because CfgMgr::commit hasn't been executed.
+    ClientClassDictionaryPtr dictionary;
+    dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+    ASSERT_TRUE(dictionary);
+    EXPECT_EQ(3, dictionary->getClasses()->size());
+
+    // Execute the commit
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Verify that after commit, the current config has the correct dictionary
+    dictionary = CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+    ASSERT_TRUE(dictionary);
+    EXPECT_EQ(3, dictionary->getClasses()->size());
+}
+
+// Verifies that an class list containing an invalid
+// class definition causes a configuraiton error.
+TEST_F(Dhcp4ParserTest, invalidClientClassDictionary) {
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"client-classes\" : [ \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"bogus\": \"bad\" \n"
+        "   } \n"
+        "], \n"
+        "\"subnet4\": [ {  \n"
+        "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.100\" } ], \n"
+        "    \"subnet\": \"192.0.2.0/24\"  \n"
+        " } ] \n"
+        "} \n";
+
+    ConstElementPtr status;
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 1);
+}
+
+
 }
