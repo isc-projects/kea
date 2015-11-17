@@ -93,6 +93,8 @@ TEST(CfgDUIDTest, setIdentifier) {
         << toString(cfg_duid.getIdentifier());
 }
 
+// This test verifies that the invalid identifier is rejected and
+// exception is thrown.
 TEST(CfgDUIDTest, setInvalidIdentifier) {
     CfgDUID cfg_duid;
     // Check that hexadecimal characters may be lower case.
