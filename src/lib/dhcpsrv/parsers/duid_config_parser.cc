@@ -17,6 +17,7 @@
 #include <dhcp/duid.h>
 #include <dhcpsrv/cfg_duid.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/duid_config_parser.h>
 #include <exceptions/exceptions.h>
 #include <boost/foreach.hpp>
@@ -66,6 +67,8 @@ DUIDConfigParser::build(isc::data::ConstElementPtr duid_configuration) {
                   " for the DUID configuration ("
                   << duid_configuration->getPosition() << ")");
     }
+
+    LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_CONFIGURE_SERVERID);
 }
 
 void
