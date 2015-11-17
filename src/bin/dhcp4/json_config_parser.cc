@@ -20,6 +20,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
@@ -451,6 +452,8 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
         parser = new ControlSocketParser(config_id);
     } else if (config_id.compare("expired-leases-processing") == 0) {
         parser = new ExpirationConfigParser();
+    } else if (config_id.compare("client-classes") == 0) {
+        parser = new ClientClassDefListParser(config_id, globalContext());
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "
@@ -524,6 +527,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     ParserPtr option_parser;
     ParserPtr iface_parser;
     ParserPtr leases_parser;
+    ParserPtr client_classes_parser;
 
     // Some of the parsers alter the state of the system in a way that can't
     // easily be undone. (Or alter it in a way such that undoing the change has
@@ -574,6 +578,8 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 // but defer the commit until everything else has committed.
                 hooks_parser = parser;
                 parser->build(config_pair.second);
+            } else if (config_pair.first == "client-classes") {
+                client_classes_parser = parser;
             } else {
                 // Those parsers should be started before other
                 // parsers so we can call build straight away.
@@ -593,6 +599,15 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             config_pair.first = "option-data";
             option_parser->build(option_config->second);
             option_parser->commit();
+        }
+
+        // The class definitions parser is the next one to be run.
+        std::map<std::string, ConstElementPtr>::const_iterator cc_config =
+            values_map.find("client-classes");
+        if (cc_config != values_map.end()) {
+            config_pair.first = "client-classes";
+            client_classes_parser->build(cc_config->second);
+            client_classes_parser->commit();
         }
 
         // The subnet parser is the next one to be run.
