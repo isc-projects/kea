@@ -20,6 +20,8 @@
 #include <util/encode/hex.h>
 #include <gtest/gtest.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -28,11 +30,52 @@ using namespace isc::dhcp;
 
 namespace {
 
+/// @brief Specifies file name holding DUID.
+const std::string DUID_FILE_NAME = "test.duid";
+
+/// @brief Test fixture class for @c CfgDUID.
+class CfgDUIDTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Removes DUID file if present.
+    CfgDUIDTest() {
+        static_cast<void>(remove(absolutePath(DUID_FILE_NAME).c_str()));
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Removes DUID file if present.
+    virtual ~CfgDUIDTest() {
+        static_cast<void>(remove(absolutePath(DUID_FILE_NAME).c_str()));
+    }
+
+    /// @brief Returns absolute path to a file used by tests.
+    ///
+    /// @param filename File name.
+    std::string absolutePath(const std::string& filename) const;
+
+    /// @brief Converts vector to string of hexadecimal digits.
+    ///
+    /// @param vec Input vector.
+    /// @return String of hexadecimal digits converted from vector.
+    std::string toString(const std::vector<uint8_t>& vec) const;
+};
+
+std::string
+CfgDUIDTest::absolutePath(const std::string& filename) const {
+    std::ostringstream s;
+    s << DHCP_DATA_DIR << "/" << filename;
+    return (s.str());
+}
+
 /// @brief Converts vector to string of hexadecimal digits.
 ///
 /// @param vec Input vector.
 /// @return String of hexadecimal digits converted from vector.
-std::string toString(const std::vector<uint8_t>& vec) {
+std::string
+CfgDUIDTest::toString(const std::vector<uint8_t>& vec) const {
     try {
         return (util::encode::encodeHex(vec));
     } catch (...) {
@@ -44,7 +87,7 @@ std::string toString(const std::vector<uint8_t>& vec) {
 
 
 // This test verifies default values of the DUID configuration.
-TEST(CfgDUIDTest, defaults) {
+TEST_F(CfgDUIDTest, defaults) {
     CfgDUID cfg_duid;
     EXPECT_EQ(DUID::DUID_LLT, cfg_duid.getType());
 
@@ -58,7 +101,7 @@ TEST(CfgDUIDTest, defaults) {
 }
 
 // This test verifies that it is possible to set values for the CfgDUID.
-TEST(CfgDUIDTest, setValues) {
+TEST_F(CfgDUIDTest, setValues) {
     CfgDUID cfg_duid;
     // Set values.
     ASSERT_NO_THROW(cfg_duid.setType(DUID::DUID_EN));
@@ -76,7 +119,7 @@ TEST(CfgDUIDTest, setValues) {
 }
 
 // This test checks positive scenarios for setIdentifier.
-TEST(CfgDUIDTest, setIdentifier) {
+TEST_F(CfgDUIDTest, setIdentifier) {
     CfgDUID cfg_duid;
     // Check that hexadecimal characters may be lower case.
     ASSERT_NO_THROW(cfg_duid.setIdentifier("a1b2c3"));
@@ -95,7 +138,7 @@ TEST(CfgDUIDTest, setIdentifier) {
 
 // This test verifies that the invalid identifier is rejected and
 // exception is thrown.
-TEST(CfgDUIDTest, setInvalidIdentifier) {
+TEST_F(CfgDUIDTest, setInvalidIdentifier) {
     CfgDUID cfg_duid;
     // Check that hexadecimal characters may be lower case.
     ASSERT_NO_THROW(cfg_duid.setIdentifier("a1b2c3"));
@@ -105,6 +148,59 @@ TEST(CfgDUIDTest, setInvalidIdentifier) {
     // value.
     ASSERT_THROW(cfg_duid.setIdentifier("hola!"), isc::BadValue);
     EXPECT_EQ("A1B2C3", toString(cfg_duid.getIdentifier()));
+}
+
+// This method checks that the DUID-LLT can be created from the
+// specified configuration.
+TEST_F(CfgDUIDTest, createLLT) {
+    CfgDUID cfg;
+    ASSERT_NO_THROW(cfg.setType(DUID::DUID_LLT));
+    ASSERT_NO_THROW(cfg.setTime(0x1123));
+    ASSERT_NO_THROW(cfg.setHType(8));
+    ASSERT_NO_THROW(cfg.setIdentifier("12564325A63F"));
+
+    // Generate DUID from this configuration.
+    DuidPtr duid;
+    ASSERT_NO_THROW(duid = cfg.create(absolutePath(DUID_FILE_NAME)));
+    ASSERT_TRUE(duid);
+
+    // Verify if the DUID is correct.
+    EXPECT_EQ("00:01:00:08:00:00:11:23:12:56:43:25:a6:3f",
+              duid->toText());
+}
+
+// This method checks that the DUID-EN can be created from the
+// specified configuration.
+TEST_F(CfgDUIDTest, createEN) {
+    CfgDUID cfg;
+    ASSERT_NO_THROW(cfg.setType(DUID::DUID_EN));
+    ASSERT_NO_THROW(cfg.setIdentifier("250F3E26A762"));
+    ASSERT_NO_THROW(cfg.setEnterpriseId(0x1010));
+
+    // Generate DUID from this configuration.
+    DuidPtr duid;
+    ASSERT_NO_THROW(duid = cfg.create(absolutePath(DUID_FILE_NAME)));
+    ASSERT_TRUE(duid);
+
+    // Verify if the DUID is correct.
+    EXPECT_EQ("00:02:00:00:10:10:25:0f:3e:26:a7:62", duid->toText());
+}
+
+// This method checks that the DUID-LL can be created from the
+// specified configuration.
+TEST_F(CfgDUIDTest, createLL) {
+    CfgDUID cfg;
+    ASSERT_NO_THROW(cfg.setType(DUID::DUID_LL));
+    ASSERT_NO_THROW(cfg.setIdentifier("124134A4B367"));
+    ASSERT_NO_THROW(cfg.setHType(2));
+
+    // Generate DUID from this configuration.
+    DuidPtr duid;
+    ASSERT_NO_THROW(duid = cfg.create(absolutePath(DUID_FILE_NAME)));
+    ASSERT_TRUE(duid);
+
+    // Verify if the DUID is correct.
+    EXPECT_EQ("00:03:00:02:12:41:34:a4:b3:67", duid->toText());
 }
 
 } // end of anonymous namespace
