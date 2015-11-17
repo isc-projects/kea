@@ -102,6 +102,95 @@ TEST(ClientClassDef, cfgOptionBasics) {
     EXPECT_EQ(100, opt_desc.option_->getType());
 }
 
+// Verifies copy constructor and equality tools (methods/operators)
+TEST(ClientClassDef, copyAndEquality) {
+
+    boost::scoped_ptr<ClientClassDef> cclass;
+    ExpressionPtr expr;
+    CfgOptionPtr test_options;
+    OptionPtr opt;
+
+    // Make an expression
+    expr.reset(new Expression());
+    TokenPtr token(new TokenString("boo"));
+    expr->push_back(token);
+
+    // Create an option container with an option
+    OptionPtr option;
+    test_options.reset(new CfgOption());
+    option.reset(new Option(Option::V4, 17, OptionBuffer(10, 0xFF)));
+    ASSERT_NO_THROW(test_options->add(option, false, "dhcp4"));
+
+    // Now remake the client class with cfg_option
+    ASSERT_NO_THROW(cclass.reset(new ClientClassDef("class_one", expr,
+                                                    test_options)));
+
+    // Now lets make a copy of it.
+    boost::scoped_ptr<ClientClassDef> cclass2;
+    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef(*cclass)));
+
+    // The allocated Expression pointers should not match
+    EXPECT_TRUE(cclass->getMatchExpr().get() !=
+                 cclass2->getMatchExpr().get());
+
+    // The allocated CfgOption pointers should not match
+    EXPECT_TRUE(cclass->getCfgOption().get() !=
+                 cclass2->getCfgOption().get());
+
+    // Verify the equality tools reflect that the classes are equal.
+    EXPECT_TRUE(cclass->equals(*cclass2));
+    EXPECT_TRUE(*cclass == *cclass2);
+    EXPECT_FALSE(*cclass != *cclass2);
+
+    // Make a class that differs from the first class only by name and
+    // verify that the equality tools reflect that the classes are not equal.
+    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_two", expr,
+                                                     test_options)));
+    EXPECT_FALSE(cclass->equals(*cclass2));
+    EXPECT_FALSE(*cclass == *cclass2);
+    EXPECT_TRUE(*cclass != *cclass2);
+
+    // Make a class with the same name and options, but no expression
+    // verify that the equality tools reflect that the classes are not equal.
+    expr.reset();
+    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_one", expr,
+                                                     test_options)));
+    EXPECT_FALSE(cclass->equals(*cclass2));
+    EXPECT_FALSE(*cclass == *cclass2);
+    EXPECT_TRUE(*cclass != *cclass2);
+
+    // Make a class with the same name and options, but different expression,
+    // verify that the equality tools reflect that the classes are not equal.
+    expr.reset(new Expression());
+    token.reset(new TokenString("yah"));
+    expr->push_back(token);
+    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_one", expr,
+                                                      test_options)));
+    EXPECT_FALSE(cclass->equals(*cclass2));
+    EXPECT_FALSE(*cclass == *cclass2);
+    EXPECT_TRUE(*cclass != *cclass2);
+
+    // Make a class with same name and expression, but no options
+    // verify that the equality tools reflect that the classes are not equal.
+    test_options.reset(new CfgOption());
+    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_one", expr,
+                                                     test_options)));
+    EXPECT_FALSE(cclass->equals(*cclass2));
+    EXPECT_FALSE(*cclass == *cclass2);
+    EXPECT_TRUE(*cclass != *cclass2);
+
+    // Make a class that with same name and expression, but different options
+    // verify that the equality tools reflect that the classes are not equal.
+    option.reset(new Option(Option::V4, 20, OptionBuffer(10, 0xFF)));
+    ASSERT_NO_THROW(test_options->add(option, false, "dhcp4"));
+    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_one", expr,
+                                                     test_options)));
+    EXPECT_FALSE(cclass->equals(*cclass2));
+    EXPECT_FALSE(*cclass == *cclass2);
+    EXPECT_TRUE(*cclass != *cclass2);
+}
+
+
 // Tests the basic operation of ClientClassDictionary
 // This includes adding, finding, and removing classes
 TEST(ClientClassDictionary, basics) {
@@ -174,6 +263,47 @@ TEST(ClientClassDictionary, basics) {
     // without harm.
     ASSERT_NO_THROW(dictionary->removeClass("cc3"));
     EXPECT_EQ(2, classes->size());
+}
+
+// Verifies copy constructor and equality tools (methods/operators)
+TEST(ClientClassDictionary, copyAndEquality) {
+    ClientClassDictionaryPtr dictionary;
+    ClientClassDictionaryPtr dictionary2;
+    ClientClassDefPtr cclass;
+    ExpressionPtr expr;
+    CfgOptionPtr options;
+
+    dictionary.reset(new ClientClassDictionary());
+    ASSERT_NO_THROW(dictionary->addClass("one", expr, options));
+    ASSERT_NO_THROW(dictionary->addClass("two", expr, options));
+    ASSERT_NO_THROW(dictionary->addClass("three", expr, options));
+
+    // Copy constructor should succeed.
+    ASSERT_NO_THROW(dictionary2.reset(new ClientClassDictionary(*dictionary)));
+
+    // Allocated class map pointers should not be equal
+    EXPECT_NE(dictionary->getClasses().get(), dictionary2->getClasses().get());
+
+    // Equality tools should reflect that the dictionaries are equal.
+    EXPECT_TRUE(dictionary->equals(*dictionary2));
+    EXPECT_TRUE(*dictionary == *dictionary2);
+    EXPECT_FALSE(*dictionary != *dictionary2);
+
+    // Remove a class from dictionary2.
+    ASSERT_NO_THROW(dictionary2->removeClass("two"));
+
+    // Equality tools should reflect that the dictionaries are not equal.
+    EXPECT_FALSE(dictionary->equals(*dictionary2));
+    EXPECT_FALSE(*dictionary == *dictionary2);
+    EXPECT_TRUE(*dictionary != *dictionary2);
+
+    // Create an empty dictionary.
+    dictionary2.reset(new ClientClassDictionary());
+
+    // Equality tools should reflect that the dictionaries are not equal.
+    EXPECT_FALSE(dictionary->equals(*dictionary2));
+    EXPECT_FALSE(*dictionary == *dictionary2);
+    EXPECT_TRUE(*dictionary != *dictionary2);
 }
 
 } // end of anonymous namespace
