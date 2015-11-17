@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dhcp/duid_factory.h>
 #include <dhcpsrv/cfg_duid.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -51,6 +52,31 @@ CfgDUID::setIdentifier(const std::string& identifier_as_hex) {
          // If specified identifier is empty, clear our internal identifier.
         identifier_.clear();
     }
+}
+
+DuidPtr
+CfgDUID::create(const std::string& duid_file_path) const {
+    // Use DUID factory to create a DUID instance.
+    DUIDFactory factory(duid_file_path);
+
+    switch (getType()) {
+    case DUID::DUID_LLT:
+        factory.createLLT(getHType(), getTime(), getIdentifier());
+        break;
+    case DUID::DUID_EN:
+        factory.createEN(getEnterpriseId(), getIdentifier());
+        break;
+    case DUID::DUID_LL:
+        factory.createLL(getHType(), getIdentifier());
+        break;
+    default:
+        // This should actually never happen.
+        isc_throw(Unexpected, "invalid DUID type used " << getType()
+                  << " to create a new DUID");
+    }
+
+    // Return generated DUID.
+    return (factory.get());
 }
 
 

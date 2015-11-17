@@ -100,6 +100,12 @@ public:
         enterprise_id_ = enterprise_id;
     }
 
+    /// @brief Creates instance of a DUID from the current configuration.
+    ///
+    /// @param duid_file_path Absolute path to a DUID file.
+    /// @return Pointer to an instance of new DUID.
+    DuidPtr create(const std::string& duid_file_path) const;
+
 private:
 
     /// @brief DUID type.
