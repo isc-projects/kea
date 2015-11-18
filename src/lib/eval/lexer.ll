@@ -145,7 +145,7 @@ EvalContext::scanStringBegin()
     buffer = yy_scan_bytes(string_.c_str(), string_.size());
     if (!buffer) {
         error("cannot scan string");
-        exit(EXIT_FAILURE);
+	// error throws an exception so this can't be reached
     }
 }
 
