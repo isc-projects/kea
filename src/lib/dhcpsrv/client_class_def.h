@@ -136,7 +136,7 @@ typedef std::map<std::string,ClientClassDefPtr> ClientClassDefMap;
 typedef boost::shared_ptr<ClientClassDefMap> ClientClassDefMapPtr;
 
 /// @brief Defines a pair for working wiht ClientClassMap
-typedef std::pair<std::string,ClientClassDefPtr> ClientClassMapPair;
+typedef std::pair<std::string, ClientClassDefPtr> ClientClassMapPair;
 
 /// @brief Maintains a list of ClientClassDef's
 class ClientClassDictionary {
