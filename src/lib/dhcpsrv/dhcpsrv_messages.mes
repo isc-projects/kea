@@ -220,6 +220,13 @@ with the specified address to the memory file backend database.
 The code has issued a commit call.  For the memory file database, this is
 a no-op.
 
+% DHCPRSV_MEMFILE_CONVERTING_LEASE_FILES running LFC now to convert lease files to the current schema: %1.%2
+A warning message issued when the server has detected lease files that need
+to be either upgraded or downgraded to match the server's schema, and that
+the server is automatically running the LFC process to perform the conversion.
+This should only occur the first time the server is launched following a Kea
+installation upgrade (or downgrade).
+
 % DHCPSRV_MEMFILE_DB opening memory file lease database: %1
 This informational message is logged when a DHCP server (either V4 or
 V6) is about to open a memory file lease database.  The parameters of
@@ -351,6 +358,21 @@ This error message is logged when Memfile backend fails to unregister
 timer used for lease file cleanup scheduling. This is highly unlikely
 and indicates programming error. The message include the reason for this
 error.
+
+% DHCPSRV_MEMFILE_NEEDS_DOWNGRADING version of lease file: %1 schema is later than version %2
+A warning message issued when the schema of the lease file loaded by the server
+is newer than the memfile schema of the server.  The server converts the lease
+data from newer schemas to its schema as it is read, therefore the lease
+information in use by the server will be correct. Note though, that any data
+data stored in newer schema fields will be dropped.  What remains is for the
+file itself to be rewritten using the current schema.
+
+% DHCPSRV_MEMFILE_NEEDS_UPGRADING version of lease file: %1 schema is earlier than version %2
+A warning message issued when the schema of the lease file loaded by the server
+pre-dates the memfile schema of the server.  Note that the server converts the
+lease data from older schemas to the current schema as it is read, therefore
+the lease information in use by the server will be correct.  What remains is
+for the file itself to be rewritten using the current schema.
 
 % DHCPSRV_MEMFILE_NO_STORAGE running in non-persistent mode, leases will be lost after restart
 A warning message issued when writes of leases to disk have been disabled

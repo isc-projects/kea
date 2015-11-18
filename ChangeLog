@@ -1,3 +1,30 @@
+1050.   [doc]     [tmark]
+	Corrected the descriptions of ncr-protocol and ncr-format parameters
+	in the Kea Admin Guide.
+	(Trac #4117    git 034c1c95b57768d5abbc7fb40cc57d7cadad21dd)
+
+1049.	[build]		fdupont
+	Add a new --enable-generate-parser configuration parameter
+	(disabled by default) which makes flex and bison to regenerate
+	parser files.
+	(trac #4125, git 18321bf85f93b24d720f1ab2d90b4f4da85bc471)
+
+1048.	[func]		fdupont,tomek
+	Implement expression parser for client classification.
+	(Trac #4088, git ac9eb312bfd1c6bf22a868ad789a0c049f33f637)
+
+1047.	[func]*		stephen
+	Change the way that hooks libraries are defined in the configuration
+	file in preparation for allowing the specification of library-specific
+	parameters in a future version of Kea.
+	(Trac #3259, git b2986b0b0299e691b13123922129bdbf8575afdb)
+
+1046.	[func]		tmark
+	Upon startup Kea servers will now detect memfile lease files
+	that need upgrading, and will launch in instance of the LFC
+	to convert them to the most current memfile schema version.
+	(Trac #3601, git ce4b0e42e8a01bbf3b58fdb1f505bbd6e2fad134)
+
 1045.	[func]		tmark
 	Added classes for storing client class definitions to libdhcpsrv.
 	(Trac #4095, git 1039a942450e2a45a1e1aa9924cae4fdbd1541fe)

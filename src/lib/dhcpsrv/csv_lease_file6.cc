@@ -23,14 +23,14 @@ namespace isc {
 namespace dhcp {
 
 CSVLeaseFile6::CSVLeaseFile6(const std::string& filename)
-    : CSVFile(filename) {
+    : VersionedCSVFile(filename) {
     initColumns();
 }
 
 void
 CSVLeaseFile6::open(const bool seek_to_end) {
     // Call the base class to open the file
-    CSVFile::open(seek_to_end);
+    VersionedCSVFile::open(seek_to_end);
 
     // and clear any statistics we may have
     clearStatistics();
@@ -61,7 +61,7 @@ CSVLeaseFile6::append(const Lease6& lease) {
     }
     row.writeAt(getColumnIndex("state"), lease.state_);
     try {
-        CSVFile::append(row);
+        VersionedCSVFile::append(row);
     } catch (const std::exception&) {
         // Catch any errors so we can bump the error counter than rethrow it
         ++write_errs_;
@@ -84,7 +84,7 @@ CSVLeaseFile6::next(Lease6Ptr& lease) {
     try {
         // Get the row of CSV values.
         CSVRow row;
-        CSVFile::next(row);
+        VersionedCSVFile::next(row);
         // The empty row signals EOF.
         if (row == CSVFile::EMPTY_ROW()) {
             lease.reset();
@@ -122,20 +122,23 @@ CSVLeaseFile6::next(Lease6Ptr& lease) {
 
 void
 CSVLeaseFile6::initColumns() {
-    addColumn("address");
-    addColumn("duid");
-    addColumn("valid_lifetime");
-    addColumn("expire");
-    addColumn("subnet_id");
-    addColumn("pref_lifetime");
-    addColumn("lease_type");
-    addColumn("iaid");
-    addColumn("prefix_len");
-    addColumn("fqdn_fwd");
-    addColumn("fqdn_rev");
-    addColumn("hostname");
-    addColumn("hwaddr");
-    addColumn("state");
+    addColumn("address", "1.0");
+    addColumn("duid", "1.0");
+    addColumn("valid_lifetime", "1.0");
+    addColumn("expire", "1.0");
+    addColumn("subnet_id", "1.0");
+    addColumn("pref_lifetime", "1.0");
+    addColumn("lease_type", "1.0");
+    addColumn("iaid", "1.0");
+    addColumn("prefix_len", "1.0");
+    addColumn("fqdn_fwd", "1.0");
+    addColumn("fqdn_rev", "1.0");
+    addColumn("hostname", "1.0");
+    addColumn("hwaddr", "2.0");
+    addColumn("state", "3.0", "0");
+
+    // Any file with less than hostname is invalid
+    setMinimumValidColumns("hostname");
 }
 
 Lease::Type
