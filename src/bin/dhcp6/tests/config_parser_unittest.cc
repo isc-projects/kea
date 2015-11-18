@@ -2912,6 +2912,9 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
 // of hooks libraries.
 std::string
 buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
+    const string lbrace("{");
+    const string rbrace("}");
+    const string liblabel("\"library\": ");
     const string quote("\"");
 
     // Create the first part of the configuration string.
@@ -2924,7 +2927,7 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
         if (i > 0) {
             config += string(", ");
         }
-        config += (quote + libraries[i] + quote);
+        config += (lbrace + liblabel + quote + libraries[i] + quote + rbrace);
     }
 
     // Append the remainder of the configuration.

@@ -248,17 +248,65 @@ HooksLibrariesParser::HooksLibrariesParser(const std::string& param_name)
     }
 }
 
+// Parse the configuration.  As Kea has not yet implemented parameters, the
+// parsing code only checks that:
+//
+// 1. Each element in the hooks-libraries list is a map
+// 2. The map contains an element "library" whose value is a string: all
+//    other elements in the map are ignored.
 void
 HooksLibrariesParser::build(ConstElementPtr value) {
     // Initialize.
     libraries_.clear();
     changed_ = false;
 
-    // Extract the list of libraries.
-    BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
-        string libname = iface->str();
-        boost::erase_all(libname, "\"");
-        libraries_.push_back(libname);
+    // This is the new syntax.  Iterate through it and get each map.
+    BOOST_FOREACH(ConstElementPtr library_entry, value->listValue()) {
+        // Is it a map?
+        if (library_entry->getType() != Element::map) {
+            isc_throw(DhcpConfigError, "hooks library configuration error:"
+                " one or more entries in the hooks-libraries list is not"
+                " a map (" << library_entry->getPosition() << ")");
+        }
+
+        // Iterate iterate through each element in the map.  We check
+        // whether we have found a library element.
+        bool lib_found = false;
+        BOOST_FOREACH(ConfigPair entry_item, library_entry->mapValue()) {
+            if (entry_item.first == "library") {
+                if (entry_item.second->getType() != Element::string) {
+                    isc_throw(DhcpConfigError, "hooks library configuration"
+                        " error: value of 'library' element is not a string"
+                        " giving the path to a hooks library (" <<
+                        entry_item.second->getPosition() << ")");
+                }
+
+                // Get the name of the library and add it to the list after
+                // removing quotes.
+                string libname = (entry_item.second)->stringValue();
+
+                // Remove leading/trailing quotes and any leading/trailing
+                // spaces.
+                boost::erase_all(libname, "\"");
+                libname = isc::util::str::trim(libname);
+                if (libname.empty()) {
+                    isc_throw(DhcpConfigError, "hooks library configuration"
+                        " error: value of 'library' element must not be"
+                        " blank (" <<
+                        entry_item.second->getPosition() << ")");
+                }
+                libraries_.push_back(libname);
+
+                // Note we have found the library name.
+                lib_found = true;
+            }
+        }
+        if (! lib_found) {
+            isc_throw(DhcpConfigError, "hooks library configuration error:"
+                " one or more hooks-libraries elements are missing the"
+                " name of the library"  <<
+                " (" << library_entry->getPosition() << ")");
+        }
     }
 
     // Check if the list of libraries has changed.  If not, nothing is done

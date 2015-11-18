@@ -26,7 +26,10 @@ if HAVE_GTEST
 
 TESTS += libeval_unittests
 
-libeval_unittests_SOURCES  = token_unittest.cc run_unittests.cc
+libeval_unittests_SOURCES  = context_unittest.cc
+libeval_unittests_SOURCES += evaluate_unittest.cc
+libeval_unittests_SOURCES += token_unittest.cc
+libeval_unittests_SOURCES += run_unittests.cc
 libeval_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 libeval_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libeval_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
