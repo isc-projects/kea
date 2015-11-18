@@ -46,7 +46,7 @@ public:
 
 /// @brief Embodies a single client class definition
 class ClientClassDef {
-  public:
+public:
     /// @brief Constructor
     ///
     /// @param name Name to assign to this class
@@ -114,7 +114,7 @@ class ClientClassDef {
     /// @brief Provides a convenient text representation of the class
     friend std::ostream& operator<<(std::ostream& os, const ClientClassDef& x);
 
-  private:
+private:
     /// @brief Unique text identifier by which this class is known.
     std::string name_;
 
@@ -135,13 +135,13 @@ typedef std::map<std::string, ClientClassDefPtr> ClientClassDefMap;
 /// @brief Defines a pointer to a ClientClassDictionary
 typedef boost::shared_ptr<ClientClassDefMap> ClientClassDefMapPtr;
 
-/// @brief Defines a pair for working wiht ClientClassMap
+/// @brief Defines a pair for working with ClientClassMap
 typedef std::pair<std::string, ClientClassDefPtr> ClientClassMapPair;
 
 /// @brief Maintains a list of ClientClassDef's
 class ClientClassDictionary {
 
-  public:
+public:
     /// @brief Constructor
     ClientClassDictionary();
 
@@ -216,7 +216,7 @@ class ClientClassDictionary {
         return (!equals(other));
     }
 
-  private:
+private:
 
     /// @brief Map of the class definitions
     ClientClassDefMapPtr classes_;
