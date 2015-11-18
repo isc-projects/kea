@@ -56,6 +56,7 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+
 /// @brief Base class for all tokens
 ///
 /// It provides an interface for all tokens and storage for string representation

@@ -13,6 +13,7 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 lib_LTLIBRARIES = libkea-eval.la
 libkea_eval_la_SOURCES  =
 libkea_eval_la_SOURCES += eval_log.cc eval_log.h
+libkea_eval_la_SOURCES += evaluate.cc evaluate.h
 libkea_eval_la_SOURCES += token.cc token.h
 
 libkea_eval_la_SOURCES += parser.cc parser.h

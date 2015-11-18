@@ -27,6 +27,7 @@ if HAVE_GTEST
 TESTS += libeval_unittests
 
 libeval_unittests_SOURCES  = context_unittest.cc
+libeval_unittests_SOURCES += evaluate_unittest.cc
 libeval_unittests_SOURCES += token_unittest.cc
 libeval_unittests_SOURCES += run_unittests.cc
 libeval_unittests_CXXFLAGS = $(AM_CXXFLAGS)
