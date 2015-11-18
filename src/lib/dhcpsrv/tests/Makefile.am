@@ -145,10 +145,10 @@ endif
 
 libdhcpsrv_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
