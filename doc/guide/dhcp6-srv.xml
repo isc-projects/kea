@@ -2352,27 +2352,212 @@ should include options from the isc option space:
       <title>Server Identifier in DHCPv6</title>
       <para>The DHCPv6 protocol uses a "server identifier" (also known
       as a DUID) for clients to be able to discriminate between several
-      servers present on the same link.  There are several types of
-      DUIDs defined, but <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink> instructs servers to use DUID-LLT if
-      possible. This format consists of a link-layer (MAC) address and a
-      timestamp. When started for the first time, the DHCPv6 server will
-      automatically generate such a DUID and store the chosen value to
-      a file.  That file is read by the server
-      and the contained value used whenever the server is subsequently started.
-      </para>
-      <para>
-        It is unlikely that this parameter should ever need to be changed.
-        However, if such a need arises, stop the server, edit the file and restart
-        the server. (The file is named kea-dhcp6-serverid and by default is
-        stored in the "var" subdirectory of the directory in which Kea is installed.
-        This can be changed when Kea is built by using "--localstatedir"
-        on the "configure" command line.)  The file is a text file that contains
-        double digit hexadecimal values
-        separated by colons. This format is similar to typical MAC address
-        format. Spaces are ignored. No extra characters are allowed in this
-        file.
+      servers present on the same link.
+      <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>
+      defines three DUID types: DUID-LLT, DUID-EN and DUID-LL.
+      <ulink url="http://tools.ietf.org/html/rfc6355">RFC 6355</ulink>
+      also defines DUID-UUID. Future specifications may introduce new
+      DUID types.</para>
+
+      <para>Kea DHCPv6 server generates a server identifier once, upon
+      the first startup, and stores it in a file. This identifier isn't
+      modified across restarts of the server (stable identifier).</para>
+
+      <para>Kea follows recommendation from
+      <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>
+      to use DUID-LLT as a default server identifier. However, we have
+      received reports that some deployments require different DUID
+      types, and there is a need to administratively select both DUID
+      type and/or its contents.</para>
+
+      <para>The server identifier can be configured using parameters
+      within the <command>server-id</command> map element in the global
+      scope of the Kea configuration file. The following example
+      demonstrates how to select DUID-EN as a server identifier:
+
+<screen>
+"Dhcp6": {
+    "server-id": {
+        "type": "EN"
+    },
+    ...
+}
+</screen>
+
       </para>
 
+      <para>Currently supported values for <command>type</command>
+      parameter are: "LLT", "EN" and "LL", for DUID-LLT, DUID-EN and
+      DUID-LL respectively.</para>
+
+      <para>When a new DUID type is selected the server will generate its
+      value and replace any existing DUID in the file. The server will
+      use the new server identifier in all future interactions with the
+      clients.</para>
+
+      <note><para>If the new server identifier is created after some clients
+      have obtained their leases, the clients using old identifier will not
+      be able to renew the leases. The server will ignore messages
+      containing the old server identifier. Clients will continue sending
+      Renew until they transition to rebinding state. In this state they
+      will start sending Rebind messages to multicast address and without
+      a server identifier. The server will respond to the Rebind messages
+      with a new server identifier and the clients will associate the
+      new server identifier with their leases. Although the clients will
+      be able to keep their leases and will eventually learn the new server
+      identifier, this will be at the cost of increased number of renewals
+      and multicast traffic due to a need to rebind. Therefore it is
+      recommended to avoid modification of the server identifier type
+      and its value if the server has already assigned leases and these
+      leases are still valid.</para></note>
+
+      <para>There are cases when an administrator needs to explicitly
+      specify a DUID value, rather than allow the server to generate it.
+      The following example demonstrates how to explicitly set all
+      components of a DUID-LLT.
+
+<screen>
+"Dhcp6": {
+    "server-id": {
+        "type": "LLT",
+        "htype": 8,
+        "identifier": "A65DC7410F0568",
+        "time": 2518920166
+    },
+    ...
+}
+</screen>
+
+      where:
+      <itemizedlist>
+        <listitem><simpara><command>htype</command> is a 16-bit unsigned value
+        specifying hardware type,</simpara></listitem>
+        <listitem><simpara><command>identifier</command> is a link layer
+        address, specified as a string of hexadecimal digits,</simpara>
+        </listitem>
+        <listitem><simpara><command>time</command> is a 32-bit unsigned
+        time value.</simpara></listitem>
+      </itemizedlist>
+      </para>
+
+      <para>The hexadecimal representation of the DUID generated as a result
+      of the configuration specified above will be:
+<screen>
+00:01:00:08:96:23:AB:E6:A6:5D:C7:41:0F:05:68
+--------------------------------------------
+|type|htype|   time    |    identifier     |
+</screen>
+      </para>
+
+      <para>It is allowed to use special value of 0 for "htype" and "time",
+      which indicates that the server should use ANY value for these
+      components. If the server already uses a DUID-LLT it will use the
+      values from this DUID. If the server uses a DUID of a different type
+      or doesn't use any DUID yet, it will generate these values.
+      Similarly, if the "identifier" is assigned an empty string, the
+      value of the identifier will be generated. Omitting any of these
+      parameters is equivalent to setting them to those special values.
+      </para>
+
+      <para>For example, the following configuration:
+<screen>
+"Dhcp6": {
+    "server-id": {
+        "type": "LLT",
+        "htype": 0,
+        "identifier": "",
+        "time": 2518920166
+    },
+    ...
+}
+</screen>
+
+      indicates that the server should use ANY link layer address and
+      hardware type. If the server is already using DUID-LLT it will
+      use link layer address and hardware type from the existing DUID.
+      If the server is not using any DUID yet, it will use link layer
+      address and hardware type from one of the available network
+      interfaces. The server will use explicit value of time. If it
+      is different than a time value present in the currently used
+      DUID, this value will be replaced. This will effectively cause
+      modification of the current server identifier.
+      </para>
+
+      <para>
+        The following example demonstrates an explicit configuration of
+        a DUID-EN:
+
+<screen>
+"Dhcp6": {
+    "server-id": {
+        "type": "EN",
+        "enterprise-id": 2495,
+        "identifier": "87ABEF7A5BB545",
+    },
+    ...
+}
+</screen>
+
+      where:
+      <itemizedlist>
+        <listitem><simpara><command>enterprise-id</command> is a 32-bit
+        unsigned value holding enterprise number,</simpara></listitem>
+        <listitem><simpara><command>identifier</command> is a variable
+        length identifier within DUID-EN.</simpara></listitem>
+      </itemizedlist>
+      </para>
+
+      <para>
+        The hexadecimal representation of the DUID-EN created accoring to
+        the configuration above is:
+<screen>
+00:02:00:00:09:BF:87:AB:EF:7A:5B:B5:45
+--------------------------------------
+|type|  ent-id   |    identifier     |
+</screen>
+      </para>
+
+      <para>As in the case of the DUID-LLT, special values can be used for the
+      configuration of the DUID-EN. If the "enterprise-id" is 0, the server
+      will use a value from the existing DUID-EN. If the server is not using
+      any DUID or the existing DUID has a different type, the ISC enterprise
+      id will be used. When an empty string is used for "identifier", the
+      identifier from the existing DUID-EN will be used. If the server is
+      not using any DUID-EN the new 6-bytes long identifier will be generated.
+      </para>
+
+      <para>DUID-LL is configured in the same way as DUID-LLT with an exception
+      that the <command>time</command> parameter has no effect for DUID-LL,
+      because this DUID type only comprises a hardware type and link layer
+      address. The following example demonstrates how to configure DUID-LL:
+
+<screen>
+"Dhcp6": {
+    "server-id": {
+        "type": "LL",
+        "htype": 8,
+        "identifier": "A65DC7410F0568",
+    },
+    ...
+}
+</screen>
+
+      </para>
+
+      <para>
+      which will result in the following server identifier:
+
+<screen>
+00:03:00:08:A6:5D:C7:41:0F:05:68
+---------------------------------
+|type|htype|     identifier     |
+</screen>
+      </para>
+
+      <para>Server stores a generated server identifier in the following
+      location: <userinput>[kea-install-dir]/var/kea/kea-dhcp6-serverid
+      </userinput>.
+      </para>
     </section>
 
     <section id="stateless-dhcp6">
