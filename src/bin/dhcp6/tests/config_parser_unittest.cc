@@ -4038,7 +4038,7 @@ TEST_F(Dhcp6ParserTest, validClientClassDictionary) {
     EXPECT_EQ(3, dictionary->getClasses()->size());
 }
 
-// Verifies that an class list containing an invalid
+// Verifies that a class list containing an invalid
 // class definition causes a configuraiton error.
 TEST_F(Dhcp6ParserTest, invalidClientClassDictionary) {
     string config = "{ " + genIfaceConfig() + "," +
