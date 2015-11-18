@@ -127,7 +127,7 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
         If the file already exists and contains the PID of a live process,
         the server will issue a DHCP6_ALREADY_RUNNING log message and exit. It
         is possible, though unlikely, that the file is a remnant of a system crash
-        and the process to which the PID belongs is unrelated to Kea.  In such a 
+        and the process to which the PID belongs is unrelated to Kea.  In such a
         case it would be necessary to manually delete the PID file.
       </para>
     </section>
@@ -2684,25 +2684,71 @@ should include options from the isc option space:
 
     <section id="dhcp6-decline">
       <title>Duplicate Addresses (DECLINE support)</title>
-      <note>
-        <para>@todo: Full text will be added as part of #3990.</para>
-      </note>
 
-      <para>
-        The server does not decrease assigned-addresses statistics
-        when Decline message is received and processed successfully. While
-        technically a declined address is no longer assigned, the primary usage
-        of the assigned-addresses statistic is to monitor pool utilization. Most
-        people would forget to include declined-addresses in the calculation,
-        and simply do assigned-addresses/total-addresses. This would have a bias
-        towards under-representing pool utilization. As this has a
-        potential for major issues, we decided not to decrease assigned
-        addresses immediately after receiving Decline, but to do
-        it later when we recover the address back to the available pool.
-      </para>
+      <para>The DHCPv6 server is configured with a certain pool of
+      addresses that it is expected to hand out to the DHCPv6 clients.
+      It is assumed that the server is authoritative and has complete
+      jurisdiction over those addresses. However, due to various
+      reasons, like misconfiguration or faulty client implenetation
+      that retains its address beyond valid lifetime, there may be
+      devices connected that use those addresses without the server's
+      approval or knowledge. Such an unwelcome event can be detected
+      by legitimate clients (using Duplicate Address Detection) and
+      reported to the DHCPv6 server using DECLINE message. The server
+      will sanity check it (if the client declining an address really
+      was supposed to use it), then will conduct clean up operation
+      and confirm it by sending back a REPLY message. Any DNS entries
+      related to that address will be removed, the fact will be logged
+      and hooks will be triggered. After that is done, the address
+      will be marked as declined (which indicates that it is used by
+      an unknown entity and thus not available for assignment to
+      anyone) and probation time on it will be set. Unless otherwise
+      configured, the probation period lasts 24 hours. After that
+      period, the server will recover the lease, i.e. put it back into
+      available state. The address will be available for assignment
+      again. It should be noted that if the underlying issue of a
+      misconfigured device is not resolved, the duplicate address
+      scenario will repeat. On the other hand, it provides an
+      opportunity to recover from such an event automatically, without
+      any sysadmin intervention.</para>
 
+      <para>To configure decline probation period to a value different
+      than the default, the following syntax can be used:
+<screen>
+  "Dhcp6": {
+    <userinput>"decline-probation-period": 3600</userinput>,
+    "subnet6": [ ... ],
+    ...
+}
+</screen>
+      The parameter is expressed in seconds, so the example above will instruct
+      the server to recycle declined leases after an hour.</para>
+
+      <para>There are several statistics and hook points associated with the
+      Decline handling procedure. lease6_decline hook is triggered after the
+      incoming Decline message was sanitized and the server is about to decline
+      the lease. declined-addresses statistic is increased after the hook
+      returns (both global and subnet specific variants).</para>
+
+      <para>Once the probation time elapses, the declined lease is recovered
+      using standard expired lease reclaimation procedure, with several
+      additional steps. In particular, both declined-addresses statistics
+      (global and subnet specific) are being decreased. At the same time,
+      reclaimed-declined-addresses statistics (again in two variants, global and
+      subnet specific) are increased.</para>
+
+      <para>Note about statistics: The server does not decrease
+      assigned-addresses statistics when Decline message is received and
+      processed successfully. While technically a declined address is no longer
+      assigned, the primary usage of the assigned-addresses statistic is to
+      monitor pool utilization. Most people would forget to include
+      declined-addresses in the calculation, and simply do
+      assigned-addresses/total-addresses. This would have a bias towards
+      under-representing pool utilization. As this has a potential for major
+      issues, we decided not to decrease assigned addresses immediately after
+      receiving Decline, but to do it later when we recover the address back to
+      the available pool.</para>
     </section>
-
 
     <section id="dhcp6-stats">
       <title>Statistics in DHCPv6 server</title>
@@ -2959,6 +3005,64 @@ should include options from the isc option space:
             </entry>
             </row>
 
+            <row>
+            <entry>declined-addresses</entry>
+            <entry>integer</entry>
+            <entry>
+              This statistic shows the number of IPv6 adresses that are
+              currently declined. This statistic counts the number of leases
+              being currently unavailable. Once the lease is recovered, this
+              statistic will be decreased. Ideally, this statistic should not
+              have non-zero values. If this statistic has non-zero or increasing
+              values, a network administrator should investigate if there is
+              a misbehaving device in his network. This is a global statistic
+              that covers all subnets.
+            </entry>
+            </row>
+
+            <row>
+            <entry>subnet[id].declined-addresses</entry>
+            <entry>integer</entry>
+            <entry>
+              This statistic shows the number of IPv6 adresses that are
+              currently declined in a given subnet. This statistic counts the
+              number of leases being currently unavailable. Once the lease is
+              recovered, this statistic will be decreased. Ideally, this
+              statistic should not have non-zero values. If this statistic has
+              non-zero or increasing values, a network administrator should
+              investigate if there is a misbehaving device in his network. The
+              <emphasis>id</emphasis> is the subnet-id of a given subnet. This
+              statistic is exposed for each subnet separately.
+            </entry>
+            </row>
+
+            <row>
+            <entry>reclaimed-declined-addresses</entry>
+            <entry>integer</entry>
+            <entry>
+              This statistic shows the number of IPv6 adresses that were
+              declined, but are now recovered. Contrary to the
+              declined-addresses, this statistic never decreases. It can be used
+              as a long term indicator of how many actual valid Declines were
+              conducted and recovered from. This is a global statistic that
+              covers all subnets.
+            </entry>
+            </row>
+
+            <row>
+            <entry>subnet[id].reclaimed-declined-addresses</entry>
+            <entry>integer</entry>
+            <entry>
+              This statistic shows the number of IPv6 adresses that were
+              declined, but are now recovered. Contrary to the
+              declined-addresses, this statistic never decreases. It can be used
+              as a long term indicator of how many actual valid Declines were
+              conducted and eventually recovered from. The
+              <emphasis>id</emphasis> is the subnet-id of a given subnet. This
+              statistic is exposed for each subnet separately.
+            </entry>
+            </row>
+
         </tbody>
         </tgroup>
         </table>
@@ -2989,12 +3093,12 @@ should include options from the isc option space:
       </para>
 
       <para>
-	The length of the path specified by the <command>socket-name</command>
-	parameter is restricted by the maximum length for the unix socket name
-	on your operating system, i.e. the size of the <command>sun_path</command>
-	field in the <command>sockaddr_un</command> structure, decreased by 1.
-	This value varies on different operating systems between 91 and 107
-	characters. The typical values are 107 on Linux and 103 on FreeBSD.
+        The length of the path specified by the <command>socket-name</command>
+        parameter is restricted by the maximum length for the unix socket name
+        on your operating system, i.e. the size of the <command>sun_path</command>
+        field in the <command>sockaddr_un</command> structure, decreased by 1.
+        This value varies on different operating systems between 91 and 107
+        characters. The typical values are 107 on Linux and 103 on FreeBSD.
       </para>
 
       <para>
