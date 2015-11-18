@@ -50,3 +50,9 @@ EvalContext::error (const std::string& what)
 {
     isc_throw(EvalParseError, what);
 }
+
+void
+EvalContext::fatal (const std::string& what)
+{
+    isc_throw(Unexpected, what);
+}
