@@ -13,7 +13,13 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 lib_LTLIBRARIES = libkea-eval.la
 libkea_eval_la_SOURCES  =
 libkea_eval_la_SOURCES += eval_log.cc eval_log.h
+libkea_eval_la_SOURCES += evaluate.cc evaluate.h
 libkea_eval_la_SOURCES += token.cc token.h
+
+libkea_eval_la_SOURCES += parser.cc parser.h
+libkea_eval_la_SOURCES += lexer.cc
+libkea_eval_la_SOURCES += location.hh position.hh stack.hh
+libkea_eval_la_SOURCES += eval_context.cc eval_context.h eval_context_decl.h
 
 nodist_libkea_eval_la_SOURCES = eval_messages.h eval_messages.cc
 
@@ -30,6 +36,7 @@ libkea_eval_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = eval.dox
 EXTRA_DIST += eval_messages.mes
+EXTRA_DIST += lexer.ll parser.yy
 
 # Define rule to build logging source files from message file
 eval_messages.h eval_messages.cc: s-messages
@@ -48,3 +55,40 @@ s-messages: eval_messages.mes
 BUILT_SOURCES = eval_messages.h eval_messages.cc
 
 CLEANFILES = eval_messages.h eval_messages.cc s-messages
+
+# If we want to get rid of all flex/bison generated files, we need to use
+# make maintainer-clean. The proper way to introduce custom commands for
+# that operation is to define maintainer-clean-local target. However,
+# make maintainer-clean also removes Makefile, so running configure script
+# is required. To make it easy to rebuild flex/bison without going through
+# reconfigure, a new target parser-clean has been added.
+maintainer-clean-local:
+	rm -f location.hh lexer.cc parser.cc parser.h position.hh stack.hh
+
+# To regenerate flex/bison files, one can do:
+#
+# make parser-clean
+# make parser
+#
+# This is needed only when the lexer.ll or parser.yy files are modified.
+# Make sure you have both flex and bison installed.
+parser-clean: maintainer-clean-local
+
+if GENERATE_PARSER
+
+parser: lexer.cc location.hh position.hh stack.hh parser.cc parser.h
+	@echo "Flex/bison files regenerated"
+
+# --- Flex/Bison stuff below --------------------------------------------------
+location.hh position.hh stack.hh parser.cc parser.h: parser.yy
+	$(YACC) --defines=parser.h -o parser.cc parser.yy
+
+lexer.cc: lexer.ll
+	$(LEX) -o lexer.cc lexer.ll
+
+else
+
+parser location.hh position.hh stack.hh parser.cc parser.h lexer.cc:
+	@echo Parser generation disabled. Configure with --enable-generate-parser to enable it.
+
+endif

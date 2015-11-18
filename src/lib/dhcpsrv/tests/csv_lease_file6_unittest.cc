@@ -18,8 +18,6 @@
 #include <dhcpsrv/csv_lease_file6.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/tests/lease_file_io.h>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -126,22 +124,22 @@ TEST_F(CSVLeaseFile6Test, parse) {
     writeSampleFile();
 
     // Open the lease file.
-    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
-    ASSERT_NO_THROW(lf->open());
+    CSVLeaseFile6 lf(filename_);
+    ASSERT_NO_THROW(lf.open());
 
     // Verify the counters are cleared
     {
     SCOPED_TRACE("Check stats are empty");
-    checkStats(*lf, 0, 0, 0, 0, 0, 0);
+    checkStats(lf, 0, 0, 0, 0, 0, 0);
     }
 
     Lease6Ptr lease;
     // Reading first read should be successful.
     {
     SCOPED_TRACE("First lease valid");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     ASSERT_TRUE(lease);
-    checkStats(*lf, 1, 1, 0, 0, 0, 0);
+    checkStats(lf, 1, 1, 0, 0, 0, 0);
 
     // Verify that the lease attributes are correct.
     EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
@@ -162,17 +160,17 @@ TEST_F(CSVLeaseFile6Test, parse) {
     // Second lease is malformed - DUID is empty.
     {
     SCOPED_TRACE("Second lease malformed");
-    EXPECT_FALSE(lf->next(lease));
-    checkStats(*lf, 2, 1, 1, 0, 0, 0);
+    EXPECT_FALSE(lf.next(lease));
+    checkStats(lf, 2, 1, 1, 0, 0, 0);
     }
 
     // Even, parsing previous lease failed, reading the next lease should be
     // successful.
     {
     SCOPED_TRACE("Third lease valid");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     ASSERT_TRUE(lease);
-    checkStats(*lf, 3, 2, 1, 0, 0, 0);
+    checkStats(lf, 3, 2, 1, 0, 0, 0);
 
     // Verify that the third lease is correct.
     EXPECT_EQ("2001:db8:2::10", lease->addr_.toText());
@@ -193,9 +191,9 @@ TEST_F(CSVLeaseFile6Test, parse) {
     // Reading the fourth lease should be successful.
     {
     SCOPED_TRACE("Fourth lease valid");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     ASSERT_TRUE(lease);
-    checkStats(*lf, 4, 3, 1, 0, 0, 0);
+    checkStats(lf, 4, 3, 1, 0, 0, 0);
 
     // Verify that the lease is correct.
     EXPECT_EQ("3000:1::", lease->addr_.toText());
@@ -217,30 +215,30 @@ TEST_F(CSVLeaseFile6Test, parse) {
     // lease pointer should be NULL.
     {
     SCOPED_TRACE("Fifth read empty");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     EXPECT_FALSE(lease);
-    checkStats(*lf, 5, 3, 1, 0, 0, 0);
+    checkStats(lf, 5, 3, 1, 0, 0, 0);
     }
 
     // We should be able to do it again.
     {
     SCOPED_TRACE("Sixth read empty");
-    EXPECT_TRUE(lf->next(lease));
+    EXPECT_TRUE(lf.next(lease));
     EXPECT_FALSE(lease);
-    checkStats(*lf, 6, 3, 1, 0, 0, 0);
+    checkStats(lf, 6, 3, 1, 0, 0, 0);
     }
 }
 
 // This test checks creation of the lease file and writing leases.
 TEST_F(CSVLeaseFile6Test, recreate) {
-    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
-    ASSERT_NO_THROW(lf->recreate());
+    CSVLeaseFile6 lf(filename_);
+    ASSERT_NO_THROW(lf.recreate());
     ASSERT_TRUE(io_.exists());
 
     // Verify the counters are cleared
     {
     SCOPED_TRACE("Check stats are empty");
-    checkStats(*lf, 0, 0, 0, 0, 0, 0);
+    checkStats(lf, 0, 0, 0, 0, 0, 0);
     }
 
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
@@ -250,8 +248,8 @@ TEST_F(CSVLeaseFile6Test, recreate) {
     lease->cltt_ = 0;
     {
     SCOPED_TRACE("First write");
-    ASSERT_NO_THROW(lf->append(*lease));
-    checkStats(*lf, 0, 0, 0, 1, 1, 0);
+    ASSERT_NO_THROW(lf.append(*lease));
+    checkStats(lf, 0, 0, 0, 1, 1, 0);
     }
 
     lease.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:2::10"),
@@ -261,8 +259,8 @@ TEST_F(CSVLeaseFile6Test, recreate) {
     lease->cltt_ = 0;
     {
     SCOPED_TRACE("Second write");
-    ASSERT_NO_THROW(lf->append(*lease));
-    checkStats(*lf, 0, 0, 0, 2, 2, 0);
+    ASSERT_NO_THROW(lf.append(*lease));
+    checkStats(lf, 0, 0, 0, 2, 2, 0);
     }
 
     lease.reset(new Lease6(Lease::TYPE_PD, IOAddress("3000:1:1::"),
@@ -272,8 +270,8 @@ TEST_F(CSVLeaseFile6Test, recreate) {
     lease->cltt_ = 0;
     {
     SCOPED_TRACE("Third write");
-    ASSERT_NO_THROW(lf->append(*lease));
-    checkStats(*lf, 0, 0, 0, 3, 3, 0);
+    ASSERT_NO_THROW(lf.append(*lease));
+    checkStats(lf, 0, 0, 0, 3, 3, 0);
     }
 
     EXPECT_EQ("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
@@ -287,6 +285,180 @@ TEST_F(CSVLeaseFile6Test, recreate) {
               "300,300,10,150,2,7,64,0,0,,,0\n",
               io_.readFile());
 }
+
+// Verifies that a 1.0 schema file with records from
+// schema 1.0, 2.0, and 3.0 loads correctly.
+TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
+    // Create a mixed schema file
+    io_.writeFile(
+             // schema 1.0 header
+              "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+              "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname\n"
+              // schema 1.0 record
+              "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:01,"
+              "200,200,8,100,0,7,0,1,1,one.example.com\n"
+
+              // schema 2.0 record - has hwaddr
+              "2001:db8:1::2,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:02,"
+              "200,200,8,100,0,7,0,1,1,two.example.com,01:02:03:04:05\n"
+
+              // schema 3.0 record - has hwaddr and state
+              "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03,"
+              "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1\n");
+
+    // Open the lease file.
+    CSVLeaseFile6 lf(filename_);
+    ASSERT_NO_THROW(lf.open());
+
+    Lease6Ptr lease;
+    {
+    SCOPED_TRACE("First lease valid");
+    EXPECT_TRUE(lf.next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the lease attributes are correct.
+    EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:01", lease->duid_->toText());
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(Lease::TYPE_NA, lease->type_);
+    EXPECT_EQ(7, lease->iaid_);
+    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("one.example.com", lease->hostname_);
+    // Verify that added HWaddr is empty
+    EXPECT_FALSE(lease->hwaddr_);
+    // Verify that added state is STATE_DEFAULT
+    EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+    }
+
+    {
+    SCOPED_TRACE("Second lease valid");
+    EXPECT_TRUE(lf.next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the lease attributes are correct.
+    EXPECT_EQ("2001:db8:1::2", lease->addr_.toText());
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:02", lease->duid_->toText());
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(Lease::TYPE_NA, lease->type_);
+    EXPECT_EQ(7, lease->iaid_);
+    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("two.example.com", lease->hostname_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_EQ("01:02:03:04:05", lease->hwaddr_->toText(false));
+    // Verify that added state is STATE_DEFAULT
+    EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+    }
+
+    {
+    SCOPED_TRACE("Third lease valid");
+    EXPECT_TRUE(lf.next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the lease attributes are correct.
+    EXPECT_EQ("2001:db8:1::3", lease->addr_.toText());
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03", lease->duid_->toText());
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(Lease::TYPE_NA, lease->type_);
+    EXPECT_EQ(7, lease->iaid_);
+    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("three.example.com", lease->hostname_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_EQ("0a:0b:0c:0d:0e", lease->hwaddr_->toText(false));
+    EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    }
+
+}
+
+// Verifies that a lease file with fewer header columns than the
+// minimum allowed will not open.
+TEST_F(CSVLeaseFile6Test, tooFewHeaderColumns) {
+    io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+              "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev\n");
+
+    // Open should fail.
+    CSVLeaseFile6 lf(filename_);
+    ASSERT_THROW(lf.open(), CSVFileError);
+}
+
+// Verifies that a lease file with an unrecognized column header
+// will not open.
+TEST_F(CSVLeaseFile6Test, invalidHeaderColumn) {
+    io_.writeFile("address,BOGUS,valid_lifetime,expire,subnet_id,pref_lifetime,"
+              "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+              "hwaddr,state\n");
+
+    // Open should fail.
+    CSVLeaseFile6 lf(filename_);
+    ASSERT_THROW(lf.open(), CSVFileError);
+}
+
+// Verifies that a lease file with more header columns than defined
+// columns will open as needing a downgrade.
+TEST_F(CSVLeaseFile6Test, downGrade) {
+    // Create a mixed schema file
+    io_.writeFile(
+             // schema 1.0 header
+              "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+              "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+              "hwaddr,state,FUTURE_COL\n"
+
+              // schema 3.0 record - has hwaddr and state
+              "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03,"
+              "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1,"
+              "BOGUS\n");
+
+    // Open should succeed in the event someone is downgrading.
+    CSVLeaseFile6 lf(filename_);
+    ASSERT_NO_THROW(lf.open());
+    EXPECT_TRUE(lf.needsConversion());
+    EXPECT_EQ(util::VersionedCSVFile::NEEDS_DOWNGRADE,
+              lf.getInputSchemaState());
+
+
+    Lease6Ptr lease;
+    {
+    SCOPED_TRACE("First lease valid");
+    EXPECT_TRUE(lf.next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the lease attributes are correct.
+    EXPECT_EQ("2001:db8:1::3", lease->addr_.toText());
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03", lease->duid_->toText());
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(Lease::TYPE_NA, lease->type_);
+    EXPECT_EQ(7, lease->iaid_);
+    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("three.example.com", lease->hostname_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_EQ("0a:0b:0c:0d:0e", lease->hwaddr_->toText(false));
+    EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    }
+}
+
 
 /// @todo Currently we don't check invalid lease attributes, such as invalid
 /// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6

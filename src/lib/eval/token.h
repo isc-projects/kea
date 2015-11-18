@@ -40,13 +40,22 @@ typedef boost::shared_ptr<Expression> ExpressionPtr;
 /// Evaluated values are stored as a stack of strings
 typedef std::stack<std::string> ValueStack;
 
-/// @brief EvalStackError is thrown when more or less parameters are on the
+/// @brief EvalBadStack is thrown when more or less parameters are on the
 ///        stack than expected.
 class EvalBadStack : public Exception {
 public:
     EvalBadStack(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+/// @brief EvalTypeError is thrown when a value on the stack has a content
+///        with an unexpected type.
+class EvalTypeError : public Exception {
+public:
+    EvalTypeError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 
 /// @brief Base class for all tokens
 ///
@@ -157,6 +166,16 @@ public:
     /// @param values value of the option will be pushed here (or "")
     void evaluate(const Pkt& pkt, ValueStack& values);
 
+    /// @brief Returns option-code
+    ///
+    /// This method is used in testing to determine if the parser had
+    /// instantiated TokenOption with correct parameters.
+    ///
+    /// @return option-code of the option this token expects to extract.
+    uint16_t getCode() const {
+        return (option_code_);
+    }
+
 private:
     uint16_t option_code_; ///< code of the option to be extracted
 };
@@ -233,6 +252,8 @@ public:
     /// - -1, -4  => "ooba"
     ///
     /// @throw EvalBadStack if there are less than 3 values on stack
+    /// @throw EvalTypeError if start is not a number or length a number or
+    ///        the special value "all".
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (3 arguments will be popped, 1 result

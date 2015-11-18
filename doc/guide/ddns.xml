@@ -152,7 +152,7 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
         If the file already exists and contains the PID of a live process,
         the server will issue a DHCP_DDNS_ALREADY_RUNNING log message and exit. It
         is possible, though unlikely, that the file is a remnant of a system crash
-        and the process to which the PID belongs is unrelated to Kea.  In such a 
+        and the process to which the PID belongs is unrelated to Kea.  In such a
         case it would be necessary to manually delete the PID file.
       </para>
 
@@ -233,15 +233,15 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
       </simpara></listitem>
 
       <listitem><simpara>
-      <command>ncr_protocol</command> - Packet format to use when sending requests to D2.
-      Currently only JSON format is supported.  Other formats may be available
-      in future releases.
+      <command>ncr_protocol</command> - Socket protocol to use when sending requests to D2.
+      Currently only UDP is supported.  TCP may be available in an upcoming
+      release.
       </simpara></listitem>
 
       <listitem><simpara>
-      <command>ncr_format</command> - Socket protocol to use when sending requests to D2.
-      Currently only UDP is supported.  TCP may be available in an upcoming
-      release.
+      <command>ncr_format</command> - Packet format to use when sending requests to D2.
+      Currently only JSON format is supported.  Other formats may be available
+      in future releases.
       </simpara></listitem>
 
       </itemizedlist>
