@@ -130,7 +130,7 @@ class ClientClassDef {
 typedef boost::shared_ptr<ClientClassDef> ClientClassDefPtr;
 
 /// @brief Defines a map of ClientClassDef's, keyed by the class name.
-typedef std::map<std::string,ClientClassDefPtr> ClientClassDefMap;
+typedef std::map<std::string, ClientClassDefPtr> ClientClassDefMap;
 
 /// @brief Defines a pointer to a ClientClassDictionary
 typedef boost::shared_ptr<ClientClassDefMap> ClientClassDefMapPtr;
