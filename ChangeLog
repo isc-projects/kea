@@ -1,3 +1,8 @@
+1050.   [doc]     [tmark]
+	Corrected the descriptions of ncr-protocol and ncr-format parameters
+	in the Kea Admin Guide.
+	(Trac #4117    git 034c1c95b57768d5abbc7fb40cc57d7cadad21dd)
+
 1049.	[build]		fdupont
 	Add a new --enable-generate-parser configuration parameter
 	(disabled by default) which makes flex and bison to regenerate
