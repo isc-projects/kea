@@ -3944,7 +3944,7 @@ TEST_F(Dhcp4ParserTest, validClientClassDictionary) {
 }
 
 // Verifies that a class list containing an invalid
-// class definition causes a configuraiton error.
+// class definition causes a configuration error.
 TEST_F(Dhcp4ParserTest, invalidClientClassDictionary) {
     string config = "{ " + genIfaceConfig() + "," +
         "\"valid-lifetime\": 4000, \n"
