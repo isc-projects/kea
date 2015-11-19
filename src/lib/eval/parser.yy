@@ -120,7 +120,7 @@ string_expr : STRING
             | OPTION "[" INTEGER "]" DOTTEXT
                   {
                       uint16_t numeric_code = convert_option_code($3, @3, ctx);
-                      TokenPtr opt(new TokenOption(numeric_code));
+                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::TEXTUAL));
                       ctx.expression.push_back(opt);
                   }
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"

@@ -253,8 +253,8 @@ TEST_F(TokenTest, optionString4) {
     TokenPtr not_found;
 
     // The packets we use have option 100 with a string in them.
-    ASSERT_NO_THROW(found.reset(new TokenOption(100)));
-    ASSERT_NO_THROW(not_found.reset(new TokenOption(101)));
+    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::TEXTUAL)));
 
     // This should evaluate to the content of the option 100 (i.e. "hundred4")
     ASSERT_NO_THROW(found->evaluate(*pkt4_, values_));
@@ -281,8 +281,8 @@ TEST_F(TokenTest, optionString6) {
     TokenPtr not_found;
 
     // The packets we use have option 100 with a string in them.
-    ASSERT_NO_THROW(found.reset(new TokenOption(100)));
-    ASSERT_NO_THROW(not_found.reset(new TokenOption(101)));
+    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::TEXTUAL)));
 
     // This should evaluate to the content of the option 100 (i.e. "hundred6")
     ASSERT_NO_THROW(found->evaluate(*pkt6_, values_));
