@@ -32,6 +32,7 @@ SrvConfig::SrvConfig()
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
       cfg_expiration_(new CfgExpiration()),
+      class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0) {
 }
 
@@ -41,6 +42,7 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
       cfg_expiration_(new CfgExpiration()),
+      class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0) {
 }
 
@@ -103,6 +105,9 @@ SrvConfig::copy(SrvConfig& new_config) const {
     // Replace option definitions.
     cfg_option_def_->copyTo(*new_config.cfg_option_def_);
     cfg_option_->copyTo(*new_config.cfg_option_);
+    // Replace the client class dictionary
+    new_config.class_dictionary_.reset(new ClientClassDictionary(*class_dictionary_));
+
 }
 
 void
@@ -146,7 +151,8 @@ SrvConfig::equals(const SrvConfig& other) const {
     // Logging information is equal between objects, so check other values.
     return ((*cfg_iface_ == *other.cfg_iface_) &&
             (*cfg_option_def_ == *other.cfg_option_def_) &&
-            (*cfg_option_ == *other.cfg_option_));
+            (*cfg_option_ == *other.cfg_option_) &&
+            (*class_dictionary_ == *other.class_dictionary_));
 }
 
 void

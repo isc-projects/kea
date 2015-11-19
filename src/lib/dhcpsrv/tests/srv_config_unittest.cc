@@ -40,7 +40,8 @@ public:
     /// Creates IPv4 and IPv6 subnets for unit test. The number of subnets
     /// is @c TEST_SUBNETS_NUM for IPv4 and IPv6 each.
     SrvConfigTest()
-        : iface_mgr_test_config_(true) {
+        : iface_mgr_test_config_(true),
+          ref_dictionary_(new ClientClassDictionary()) {
 
         // Disable DDNS.
         enableDDNS(false);
@@ -69,7 +70,13 @@ public:
             Subnet6Ptr subnet(new Subnet6(prefix, 64, 1000, 2000, 3000, 4000));
             test_subnets6_.push_back(subnet);
         }
+
+        // Build our reference dictionary of client classes
+        ref_dictionary_->addClass("cc1", ExpressionPtr(), CfgOptionPtr());
+        ref_dictionary_->addClass("cc2", ExpressionPtr(), CfgOptionPtr());
+        ref_dictionary_->addClass("cc3", ExpressionPtr(), CfgOptionPtr());
     }
+
 
     /// @brief Destructor.
     virtual ~SrvConfigTest() {
@@ -118,6 +125,8 @@ public:
     /// @brief Fakes interface configuration.
     isc::dhcp::test::IfaceMgrTestConfig iface_mgr_test_config_;
 
+    /// @brief Client class dictionary with fixed content
+    ClientClassDictionaryPtr ref_dictionary_;
 };
 
 void
@@ -239,6 +248,26 @@ TEST_F(SrvConfigTest, summarySubnets) {
 
 }
 
+// Verifies that we can get and set the client class dictionary
+TEST_F(SrvConfigTest, classDictionaryBasics) {
+    ClientClassDictionaryPtr d1;
+    SrvConfig conf(32);
+
+    // Upon construction the dictionary should be empty.
+    ASSERT_TRUE(d1 = conf.getClientClassDictionary());
+    EXPECT_EQ(0, d1->getClasses()->size());
+
+    // Verify we can replace it with a new dictionary.
+    ASSERT_NO_THROW(conf.setClientClassDictionary(ref_dictionary_));
+    ASSERT_TRUE(d1 = conf.getClientClassDictionary());
+    EXPECT_EQ(ref_dictionary_->getClasses()->size(), d1->getClasses()->size());
+
+    // Verify const fetcher works too.
+    const ClientClassDictionaryPtr cd = conf.getClientClassDictionary();
+    ASSERT_TRUE(cd);
+    EXPECT_EQ(ref_dictionary_->getClasses()->size(), cd->getClasses()->size());
+}
+
 // This test checks if entire configuration can be copied and that the sequence
 // number is not affected.
 TEST_F(SrvConfigTest, copy) {
@@ -264,6 +293,9 @@ TEST_F(SrvConfigTest, copy) {
     // Add an option.
     OptionPtr option(new Option(Option::V6, 1000, OptionBuffer(10, 0xFF)));
     conf1.getCfgOption()->add(option, true, "dhcp6");
+
+    // Add a class dictionary
+    conf1.setClientClassDictionary(ref_dictionary_);
 
     // Make sure both configurations are different.
     ASSERT_TRUE(conf1 != conf2);
@@ -340,6 +372,16 @@ TEST_F(SrvConfigTest, equality) {
 
     conf2.getCfgOption()->add(option, false, "isc");
 
+    EXPECT_TRUE(conf1 == conf2);
+    EXPECT_FALSE(conf1 != conf2);
+
+    // Add a class dictionary to conf1
+    conf1.setClientClassDictionary(ref_dictionary_);
+    EXPECT_FALSE(conf1 == conf2);
+    EXPECT_TRUE(conf1 != conf2);
+
+    // Add same class dictionary to conf2
+    conf2.setClientClassDictionary(ref_dictionary_);
     EXPECT_TRUE(conf1 == conf2);
     EXPECT_FALSE(conf1 != conf2);
 }
