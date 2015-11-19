@@ -66,7 +66,8 @@ void
 TokenOption::evaluate(const Pkt& pkt, ValueStack& values) {
     OptionPtr opt = pkt.getOption(option_code_);
     if (opt) {
-        values.push(opt->toString());
+        values.push(representation_type_ == TEXTUAL ? opt->toString()
+                    : opt->toHexString());
     } else {
         // Option not found, push empty string
         values.push("");

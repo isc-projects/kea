@@ -219,7 +219,8 @@ public:
     /// @brief Returns string containing hexadecimal representation of option.
     ///
     /// @param include_header Boolean flag which indicates if the output should
-    /// also contain header fields. The default is that it shouldn't.
+    /// also contain header fields. The default is that it shouldn't include
+    /// header fields.
     ///
     /// @return String containing hexadecimal representation of the option.
     virtual std::string toHexString(const bool include_header = false);
