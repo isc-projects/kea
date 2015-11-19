@@ -29,7 +29,9 @@ ClientClassDef::ClientClassDef(const std::string& name,
     if (name_.empty()) {
         isc_throw(BadValue, "ClientClassDef name cannot be empty");
     }
-    // @todo Does it make sense for a class to NOT have match expression?
+
+    // We permit an empty expression for now.  This will likely be useful
+    // for automatic classes such as vendor class.
 
     // For classes without options, make sure we have an empty collection
     if (!cfg_option_) {
@@ -37,7 +39,7 @@ ClientClassDef::ClientClassDef(const std::string& name,
     }
 }
 
-ClientClassDef::ClientClassDef(const ClientClassDef& rhs) 
+ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
     : name_(rhs.name_), match_expr_(ExpressionPtr()),
       cfg_option_(new CfgOption()) {
 
@@ -88,10 +90,10 @@ bool
 ClientClassDef::equals(const ClientClassDef& other) const {
     return ((name_ == other.name_) &&
         ((!match_expr_ && !other.match_expr_) ||
-        (match_expr_ && other.match_expr_ && 
+        (match_expr_ && other.match_expr_ &&
          (*match_expr_ == *(other.match_expr_)))) &&
         ((!cfg_option_ && !other.cfg_option_) ||
-        (cfg_option_ && other.cfg_option_ && 
+        (cfg_option_ && other.cfg_option_ &&
          (*cfg_option_ == *other.cfg_option_))));
 }
 
@@ -168,9 +170,9 @@ ClientClassDictionary::equals(const ClientClassDictionary& other) const {
 
     ClientClassDefMap::iterator this_class = classes_->begin();
     ClientClassDefMap::iterator other_class = other.classes_->begin();
-    while (this_class != classes_->end() && 
+    while (this_class != classes_->end() &&
            other_class != other.classes_->end()) {
-        if (!(*this_class).second || !(*other_class).second || 
+        if (!(*this_class).second || !(*other_class).second ||
             (*(*this_class).second) != (*(*other_class).second)) {
                 return false;
         }
