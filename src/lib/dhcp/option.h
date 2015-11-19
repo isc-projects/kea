@@ -216,6 +216,14 @@ public:
     /// @return string that represents the value of the option.
     virtual std::string toString();
 
+    /// @brief Returns string containing hexadecimal representation of option.
+    ///
+    /// @param include_header Boolean flag which indicates if the output should
+    /// also contain header fields. The default is that it shouldn't.
+    ///
+    /// @return String containing hexadecimal representation of the option.
+    virtual std::string toHexString(const bool include_header = false);
+
     /// Returns option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
     ///
     /// @return option type
