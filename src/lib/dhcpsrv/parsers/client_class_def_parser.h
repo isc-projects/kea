@@ -42,14 +42,14 @@
 /// -# "name" - a string containing the name of the class
 ///
 /// -# "test" - a string containing the logical expression used to determine
-/// membership in the class.  @todo This is passed into the Bison parser.
+/// membership in the class. This is passed into the eval parser.
 ///
 /// -# "option-data" - a list which defines the options that should be
 /// assigned to memebers of the class.  This element is optional and parsed
 /// using the @ref dhcp::OptionDataListParser.
 ///
 /// ExpressionParser  - creates an eval::Expression from a string element,
-/// using the Bison Parser @todo.
+/// using the Eval Parser.
 ///
 namespace isc {
 namespace dhcp {
@@ -57,7 +57,7 @@ namespace dhcp {
 /// @brief Parser for a logical expression
 ///
 /// This parser creates an instance of an Expression from a string.  The
-/// string is passed to the Bison Parser and the resultant Expression is
+/// string is passed to the Eval Parser and the resultant Expression is
 /// stored into the ExpressionPtr reference passed into the constructor.
 class ExpressionParser : public DhcpConfigParser {
 public:
