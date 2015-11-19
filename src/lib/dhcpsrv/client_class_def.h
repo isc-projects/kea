@@ -15,7 +15,7 @@
 #ifndef CLIENT_CLASS_DEF_H
 #define CLIENT_CLASS_DEF_H
 
-#include <dhcp/option.h>
+#include <dhcpsrv/cfg_option.h>
 #include <eval/token.h>
 #include <exceptions/exceptions.h>
 
@@ -46,14 +46,18 @@ public:
 
 /// @brief Embodies a single client class definition
 class ClientClassDef {
-  public:
+public:
     /// @brief Constructor
     ///
     /// @param name Name to assign to this class
     /// @param match_expr Expression the class will use to determine membership
     /// @param options Collection of options members should be given
     ClientClassDef(const std::string& name, const ExpressionPtr& match_expr,
-                const OptionCollectionPtr& options = OptionCollectionPtr());
+                   const CfgOptionPtr& options = CfgOptionPtr());
+
+
+    /// Copy constructor
+    ClientClassDef(const ClientClassDef& rhs);
 
     /// @brief Destructor
     virtual ~ClientClassDef();
@@ -75,51 +79,73 @@ class ClientClassDef {
     void setMatchExpr(const ExpressionPtr& match_expr);
 
     /// @brief Fetches the class's option collection
-    const OptionCollectionPtr& getOptions() const;
+    const CfgOptionPtr& getCfgOption() const;
 
     /// @brief Sets the class's option collection
     ///
     /// @param options the option collection to assign the class
-    void setOptions(const OptionCollectionPtr& options);
+    void setCfgOption(const CfgOptionPtr& cfg_option);
 
-    /// @brief Fetches an option from the class's collection by code
+    /// @brief Compares two @c ClientClassDef objects for equality.
     ///
-    /// @param option_code Option code value of the desired option
-    /// @return A pointer to the option if found, otherwise an
-    /// empty pointer
-    OptionPtr findOption(uint16_t option_code) const;
+    /// @param other Other client class definition to compare to.
+    ///
+    /// @return true if objects are equal, false otherwise.
+    bool equals(const ClientClassDef& other) const;
+
+    /// @brief Equality operator.
+    ///
+    /// @param other Other client class definition to compare to.
+    ///
+    /// @return true if the definitions equal, false otherwise.
+    bool operator==(const ClientClassDef& other) const {
+        return (equals(other));
+    }
+
+    /// @brief Inequality operator.
+    ///
+    /// @param other Other client class definition to compare to.
+    ///
+    /// @return true if the definitions are not equal, false otherwise.
+    bool operator!=(const ClientClassDef& other) const {
+        return (!(equals(other)));
+    }
 
     /// @brief Provides a convenient text representation of the class
     friend std::ostream& operator<<(std::ostream& os, const ClientClassDef& x);
 
-  private:
+private:
     /// @brief Unique text identifier by which this class is known.
     std::string name_;
 
-    /// @brief The logical expression which deteremines membership in
+    /// @brief The logical expression which determines membership in
     /// this class.
     ExpressionPtr match_expr_;
 
-    /// @brief The collection of options members should be given
-    /// Currently this is a multimap, not sure we need/want that complexity
-    OptionCollectionPtr options_;
+    /// @brief The option data configuration for this class
+    CfgOptionPtr cfg_option_;
 };
 
 /// @brief a pointer to an ClientClassDef
 typedef boost::shared_ptr<ClientClassDef> ClientClassDefPtr;
 
 /// @brief Defines a map of ClientClassDef's, keyed by the class name.
-typedef std::map<std::string,ClientClassDefPtr> ClientClassDefMap;
+typedef std::map<std::string, ClientClassDefPtr> ClientClassDefMap;
 
 /// @brief Defines a pointer to a ClientClassDefMap
 typedef boost::shared_ptr<ClientClassDefMap> ClientClassDefMapPtr;
 
+/// @brief Defines a pair for working with ClientClassMap
+typedef std::pair<std::string, ClientClassDefPtr> ClientClassMapPair;
+
 /// @brief Maintains a list of ClientClassDef's
 class ClientClassDictionary {
 
-  public:
+public:
     /// @brief Constructor
     ClientClassDictionary();
+
+    ClientClassDictionary(const ClientClassDictionary& rhs);
 
     /// @brief Destructor
     ~ClientClassDictionary();
@@ -134,7 +160,7 @@ class ClientClassDictionary {
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for
     /// others.
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
-                  const OptionCollectionPtr& options);
+                  const CfgOptionPtr& options);
 
     /// @brief Adds a new class to the list
     ///
@@ -154,7 +180,7 @@ class ClientClassDictionary {
 
     /// @brief Removes a given class definition from the dictionary
     ///
-    /// Removes the class defintion from the map if it exists, otherwise
+    /// Removes the class definition from the map if it exists, otherwise
     /// no harm, no foul.
     ///
     /// @param name the name of the class to remove
@@ -165,7 +191,32 @@ class ClientClassDictionary {
     /// @return ClientClassDefMapPtr to the map of classes
     const ClientClassDefMapPtr& getClasses() const;
 
-  private:
+    /// @brief Compares two @c ClientClassDictionary objects for equality.
+    ///
+    /// @param other Other client class definition to compare to.
+    ///
+    /// @return true if descriptors equal, false otherwise.
+    bool equals(const ClientClassDictionary& other) const;
+
+    /// @brief Equality operator.
+    ///
+    /// @param other Other client class dictionary to compare to.
+    ///
+    /// @return true if the dictionaries are equal, false otherwise.
+    bool operator==(const ClientClassDictionary& other) const {
+        return (equals(other));
+    }
+
+    /// @brief Inequality operator.
+    ///
+    /// @param other Other client class dictionary to compare to.
+    ///
+    /// @return true if the dictionaries are not equal, false otherwise.
+    bool operator!=(const ClientClassDictionary& other) const {
+        return (!equals(other));
+    }
+
+private:
 
     /// @brief Map of the class definitions
     ClientClassDefMapPtr classes_;

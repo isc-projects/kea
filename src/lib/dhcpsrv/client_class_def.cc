@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "client_class_def.h"
+#include <boost/foreach.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -21,18 +22,34 @@ namespace dhcp {
 
 ClientClassDef::ClientClassDef(const std::string& name,
                                const ExpressionPtr& match_expr,
-                               const OptionCollectionPtr& options)
-    : name_(name), match_expr_(match_expr), options_(options) {
+                               const CfgOptionPtr& cfg_option)
+    : name_(name), match_expr_(match_expr), cfg_option_(cfg_option) {
 
     // Name can't be blank
     if (name_.empty()) {
-        isc_throw(BadValue, "ClientClassDef name cannot be empty");
+        isc_throw(BadValue, "Client Class name cannot be blank");
     }
-    // @todo Does it make sense for a class to NOT have match expression?
+
+    // We permit an empty expression for now.  This will likely be useful
+    // for automatic classes such as vendor class.
 
     // For classes without options, make sure we have an empty collection
-    if (!options_) {
-        options_.reset(new OptionCollection());
+    if (!cfg_option_) {
+        cfg_option_.reset(new CfgOption());
+    }
+}
+
+ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
+    : name_(rhs.name_), match_expr_(ExpressionPtr()),
+      cfg_option_(new CfgOption()) {
+
+    if (rhs.match_expr_) {
+        match_expr_.reset(new Expression());
+        *match_expr_ = *(rhs.match_expr_);
+    }
+
+    if (rhs.cfg_option_) {
+        rhs.cfg_option_->copyTo(*cfg_option_);
     }
 }
 
@@ -59,26 +76,25 @@ ClientClassDef::setMatchExpr(const ExpressionPtr& match_expr) {
     match_expr_ = match_expr;
 }
 
-const OptionCollectionPtr&
-ClientClassDef::getOptions() const {
-    return (options_);
+const CfgOptionPtr&
+ClientClassDef::getCfgOption() const {
+    return (cfg_option_);
 }
 
 void
-ClientClassDef::setOptions(const OptionCollectionPtr& options) {
-    options_ = options;
+ClientClassDef::setCfgOption(const CfgOptionPtr& cfg_option) {
+    cfg_option_ = cfg_option;
 }
 
-OptionPtr
-ClientClassDef::findOption(uint16_t option_code) const {
-    if (options_) {
-        isc::dhcp::OptionCollection::iterator it = options_->find(option_code);
-        if (it != options_->end()) {
-            return ((*it).second);
-        }
-    }
-
-    return (OptionPtr());
+bool
+ClientClassDef::equals(const ClientClassDef& other) const {
+    return ((name_ == other.name_) &&
+        ((!match_expr_ && !other.match_expr_) ||
+        (match_expr_ && other.match_expr_ &&
+         (*match_expr_ == *(other.match_expr_)))) &&
+        ((!cfg_option_ && !other.cfg_option_) ||
+        (cfg_option_ && other.cfg_option_ &&
+         (*cfg_option_ == *other.cfg_option_))));
 }
 
 std::ostream& operator<<(std::ostream& os, const ClientClassDef& x) {
@@ -92,14 +108,22 @@ ClientClassDictionary::ClientClassDictionary()
     : classes_(new ClientClassDefMap()) {
 }
 
+ClientClassDictionary::ClientClassDictionary(const ClientClassDictionary& rhs)
+    : classes_(new ClientClassDefMap()) {
+    BOOST_FOREACH(ClientClassMapPair cclass, *(rhs.classes_)) {
+        ClientClassDefPtr copy(new ClientClassDef(*(cclass.second)));
+        addClass(copy);
+    }
+}
+
 ClientClassDictionary::~ClientClassDictionary() {
 }
 
 void
 ClientClassDictionary::addClass(const std::string& name,
                                 const ExpressionPtr& match_expr,
-                                const OptionCollectionPtr& options) {
-    ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, options));
+                                const CfgOptionPtr& cfg_option) {
+    ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
     addClass(cclass);
 }
 
@@ -137,6 +161,29 @@ const ClientClassDefMapPtr&
 ClientClassDictionary::getClasses() const {
     return (classes_);
 }
+
+bool
+ClientClassDictionary::equals(const ClientClassDictionary& other) const {
+    if (classes_->size() != other.classes_->size()) {
+        return (false);
+    }
+
+    ClientClassDefMap::iterator this_class = classes_->begin();
+    ClientClassDefMap::iterator other_class = other.classes_->begin();
+    while (this_class != classes_->end() &&
+           other_class != other.classes_->end()) {
+        if (!(*this_class).second || !(*other_class).second ||
+            (*(*this_class).second) != (*(*other_class).second)) {
+                return false;
+        }
+
+        ++this_class;
+        ++other_class;
+    }
+
+    return (true);
+}
+
 
 } // namespace isc::dhcp
 } // namespace isc

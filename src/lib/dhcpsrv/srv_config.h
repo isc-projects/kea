@@ -24,6 +24,7 @@
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfg_mac_source.h>
+#include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/logging_info.h>
 #include <cc/data.h>
 #include <boost/shared_ptr.hpp>
@@ -302,6 +303,24 @@ public:
         control_socket_ = control_socket;
     }
 
+    /// @brief Returns pointer to the dictionary of global client
+    /// class definitions
+    ClientClassDictionaryPtr getClientClassDictionary() {
+        return (class_dictionary_);
+    }
+
+    /// @brief Returns pointer to const dictionary of global client
+    /// class definitions
+    const ClientClassDictionaryPtr getClientClassDictionary() const {
+        return (class_dictionary_);
+    }
+
+    /// @brief Sets the client class dictionary
+    /// @param dictionary pointer to the new class dictionary
+    void setClientClassDictionary(const ClientClassDictionaryPtr& dictionary) {
+        class_dictionary_ = dictionary;
+    }
+
     /// @brief Copies the currnet configuration to a new configuration.
     ///
     /// This method copies the parameters stored in the configuration to
@@ -460,6 +479,9 @@ private:
 
     /// @brief Pointer to the control-socket information
     isc::data::ConstElementPtr control_socket_;
+
+    /// @brief Pointer to the dictionary of global client class definitions
+    ClientClassDictionaryPtr class_dictionary_;
 
     /// @brief Decline Period time
     ///
