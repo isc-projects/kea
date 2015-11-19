@@ -19,6 +19,9 @@
 
 #include <gtest/gtest.h>
 
+/// @file client_class_def_unittest.cc Unit tests for client class storage
+/// classes.
+
 using namespace std;
 using namespace isc::dhcp;
 using namespace isc::util;
@@ -26,82 +29,175 @@ using namespace isc;
 
 namespace {
 
+// Tests basic construction of ClientClassDef
 TEST(ClientClassDef, construction) {
     boost::scoped_ptr<ClientClassDef> cclass;
 
     std::string name = "class1";
     ExpressionPtr expr;
-    OptionCollectionPtr options;
+    CfgOptionPtr cfg_option;
 
     // Classes cannot have blank names
-    ASSERT_THROW(cclass.reset(new ClientClassDef("", expr, options)), BadValue);
+    ASSERT_THROW(cclass.reset(new ClientClassDef("", expr, cfg_option)),
+                 BadValue);
 
-    // Verify we can create a class with a name, expression, and no options
+    // Verify we can create a class with a name, expression, and no cfg_option
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
     EXPECT_EQ(name, cclass->getName());
     ASSERT_FALSE(cclass->getMatchExpr());
 
-    // Verify we get an empty collection of options
-    options = cclass->getOptions();
-    ASSERT_TRUE(options);
-    EXPECT_EQ(0, options->size());
+    // Verify we get an empty collection of cfg_option
+    cfg_option = cclass->getCfgOption();
+    ASSERT_TRUE(cfg_option);
+    //EXPECT_EQ(0, cfg_option->size());
 }
 
-TEST(ClientClassDef, optionsBasics) {
+// Tests options operations.  Note we just do the basics
+// as CfgOption is heavily tested elsewhere.
+TEST(ClientClassDef, cfgOptionBasics) {
     boost::scoped_ptr<ClientClassDef> cclass;
 
     std::string name = "class1";
     ExpressionPtr expr;
-    OptionCollectionPtr options;
+    CfgOptionPtr test_options;
+    CfgOptionPtr class_options;
     OptionPtr opt;
 
     // First construct the class with empty option pointer
-    ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr, options)));
+    ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr, test_options)));
 
     // We should get back a collection with no entries,
     // not an empty collection pointer
-    options = cclass->getOptions();
-    ASSERT_TRUE(options);
-    EXPECT_EQ(0, options->size());
+    class_options = cclass->getCfgOption();
+    ASSERT_TRUE(class_options);
 
-    // We should not be able find an option
-    opt = cclass->findOption(17);
-    ASSERT_FALSE(opt);
+    // Create an option container and add some options
+    OptionPtr option;
+    test_options.reset(new CfgOption());
+    option.reset(new Option(Option::V4, 17, OptionBuffer(10, 0xFF)));
+    ASSERT_NO_THROW(test_options->add(option, false, "dhcp4"));
 
-    // Create an option container with two options
-    options.reset(new OptionCollection());
-    EXPECT_NO_THROW(opt.reset(new Option(Option::V4, 17)));
-    options->insert(make_pair(17, opt));
-    EXPECT_NO_THROW(opt.reset(new Option(Option::V4, 18)));
-    options->insert(make_pair(18, opt));
+    option.reset(new Option(Option::V6, 101, OptionBuffer(10, 0xFF)));
+    ASSERT_NO_THROW(test_options->add(option, false, "isc"));
 
-    // Now remake the client class with options
-    ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr, options)));
+    option.reset(new Option(Option::V6, 100, OptionBuffer(10, 0xFF)));
+    ASSERT_NO_THROW(test_options->add(option, false, "dhcp6"));
 
-    options = cclass->getOptions();
-    ASSERT_TRUE(options);
-    EXPECT_EQ(2, options->size());
+    // Now remake the client class with cfg_option
+    ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr, test_options)));
+    class_options = cclass->getCfgOption();
+    ASSERT_TRUE(class_options);
 
-    // We should be able to find option 17
-    opt = cclass->findOption(17);
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(17, opt->getType());
+    // Now make sure we can find all the options
+    OptionDescriptor opt_desc = class_options->get("dhcp4",17);
+    ASSERT_TRUE(opt_desc.option_);
+    EXPECT_EQ(17, opt_desc.option_->getType());
 
-    // We should be able to find option 18
-    opt = cclass->findOption(18);
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(18, opt->getType());
+    opt_desc = class_options->get("isc",101);
+    ASSERT_TRUE(opt_desc.option_);
+    EXPECT_EQ(101, opt_desc.option_->getType());
 
-    // We should not be able to find option 90
-    opt = cclass->findOption(90);
-    ASSERT_FALSE(opt);
+    opt_desc = class_options->get("dhcp6",100);
+    ASSERT_TRUE(opt_desc.option_);
+    EXPECT_EQ(100, opt_desc.option_->getType());
 }
 
+// Verifies copy constructor and equality tools (methods/operators)
+TEST(ClientClassDef, copyAndEquality) {
+
+    boost::scoped_ptr<ClientClassDef> cclass;
+    ExpressionPtr expr;
+    CfgOptionPtr test_options;
+    OptionPtr opt;
+
+    // Make an expression
+    expr.reset(new Expression());
+    TokenPtr token(new TokenString("boo"));
+    expr->push_back(token);
+
+    // Create an option container with an option
+    OptionPtr option;
+    test_options.reset(new CfgOption());
+    option.reset(new Option(Option::V4, 17, OptionBuffer(10, 0xFF)));
+    ASSERT_NO_THROW(test_options->add(option, false, "dhcp4"));
+
+    // Now remake the client class with cfg_option
+    ASSERT_NO_THROW(cclass.reset(new ClientClassDef("class_one", expr,
+                                                    test_options)));
+
+    // Now lets make a copy of it.
+    boost::scoped_ptr<ClientClassDef> cclass2;
+    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef(*cclass)));
+
+    // The allocated Expression pointers should not match
+    EXPECT_TRUE(cclass->getMatchExpr().get() !=
+                 cclass2->getMatchExpr().get());
+
+    // The allocated CfgOption pointers should not match
+    EXPECT_TRUE(cclass->getCfgOption().get() !=
+                 cclass2->getCfgOption().get());
+
+    // Verify the equality tools reflect that the classes are equal.
+    EXPECT_TRUE(cclass->equals(*cclass2));
+    EXPECT_TRUE(*cclass == *cclass2);
+    EXPECT_FALSE(*cclass != *cclass2);
+
+    // Make a class that differs from the first class only by name and
+    // verify that the equality tools reflect that the classes are not equal.
+    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_two", expr,
+                                                     test_options)));
+    EXPECT_FALSE(cclass->equals(*cclass2));
+    EXPECT_FALSE(*cclass == *cclass2);
+    EXPECT_TRUE(*cclass != *cclass2);
+
+    // Make a class with the same name and options, but no expression
+    // verify that the equality tools reflect that the classes are not equal.
+    expr.reset();
+    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_one", expr,
+                                                     test_options)));
+    EXPECT_FALSE(cclass->equals(*cclass2));
+    EXPECT_FALSE(*cclass == *cclass2);
+    EXPECT_TRUE(*cclass != *cclass2);
+
+    // Make a class with the same name and options, but different expression,
+    // verify that the equality tools reflect that the classes are not equal.
+    expr.reset(new Expression());
+    token.reset(new TokenString("yah"));
+    expr->push_back(token);
+    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_one", expr,
+                                                      test_options)));
+    EXPECT_FALSE(cclass->equals(*cclass2));
+    EXPECT_FALSE(*cclass == *cclass2);
+    EXPECT_TRUE(*cclass != *cclass2);
+
+    // Make a class with same name and expression, but no options
+    // verify that the equality tools reflect that the classes are not equal.
+    test_options.reset(new CfgOption());
+    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_one", expr,
+                                                     test_options)));
+    EXPECT_FALSE(cclass->equals(*cclass2));
+    EXPECT_FALSE(*cclass == *cclass2);
+    EXPECT_TRUE(*cclass != *cclass2);
+
+    // Make a class that with same name and expression, but different options
+    // verify that the equality tools reflect that the classes are not equal.
+    option.reset(new Option(Option::V4, 20, OptionBuffer(10, 0xFF)));
+    ASSERT_NO_THROW(test_options->add(option, false, "dhcp4"));
+    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_one", expr,
+                                                     test_options)));
+    EXPECT_FALSE(cclass->equals(*cclass2));
+    EXPECT_FALSE(*cclass == *cclass2);
+    EXPECT_TRUE(*cclass != *cclass2);
+}
+
+
+// Tests the basic operation of ClientClassDictionary
+// This includes adding, finding, and removing classes
 TEST(ClientClassDictionary, basics) {
     ClientClassDictionaryPtr dictionary;
     ClientClassDefPtr cclass;
     ExpressionPtr expr;
-    OptionCollectionPtr options;
+    CfgOptionPtr cfg_option;
 
     // Verify constructor doesn't throw
     ASSERT_NO_THROW(dictionary.reset(new ClientClassDictionary()));
@@ -113,19 +209,19 @@ TEST(ClientClassDictionary, basics) {
     EXPECT_EQ(0, classes->size());
 
     // Verify that we can add classes with both addClass variants
-    // First addClass(name, expression, options)
-    ASSERT_NO_THROW(dictionary->addClass("cc1", expr, options));
-    ASSERT_NO_THROW(dictionary->addClass("cc2", expr, options));
+    // First addClass(name, expression, cfg_option)
+    ASSERT_NO_THROW(dictionary->addClass("cc1", expr, cfg_option));
+    ASSERT_NO_THROW(dictionary->addClass("cc2", expr, cfg_option));
 
     // Verify duplicate add attempt throws
-    ASSERT_THROW(dictionary->addClass("cc2", expr, options),
+    ASSERT_THROW(dictionary->addClass("cc2", expr, cfg_option),
                  DuplicateClientClassDef);
 
     // Verify that you cannot add a class with no name.
-    ASSERT_THROW(dictionary->addClass("", expr, options), BadValue);
+    ASSERT_THROW(dictionary->addClass("", expr, cfg_option), BadValue);
 
     // Now with addClass(class pointer)
-    ASSERT_NO_THROW(cclass.reset(new ClientClassDef("cc3", expr, options)));
+    ASSERT_NO_THROW(cclass.reset(new ClientClassDef("cc3", expr, cfg_option)));
     ASSERT_NO_THROW(dictionary->addClass(cclass));
 
     // Verify duplicate add attempt throws
@@ -167,6 +263,47 @@ TEST(ClientClassDictionary, basics) {
     // without harm.
     ASSERT_NO_THROW(dictionary->removeClass("cc3"));
     EXPECT_EQ(2, classes->size());
+}
+
+// Verifies copy constructor and equality tools (methods/operators)
+TEST(ClientClassDictionary, copyAndEquality) {
+    ClientClassDictionaryPtr dictionary;
+    ClientClassDictionaryPtr dictionary2;
+    ClientClassDefPtr cclass;
+    ExpressionPtr expr;
+    CfgOptionPtr options;
+
+    dictionary.reset(new ClientClassDictionary());
+    ASSERT_NO_THROW(dictionary->addClass("one", expr, options));
+    ASSERT_NO_THROW(dictionary->addClass("two", expr, options));
+    ASSERT_NO_THROW(dictionary->addClass("three", expr, options));
+
+    // Copy constructor should succeed.
+    ASSERT_NO_THROW(dictionary2.reset(new ClientClassDictionary(*dictionary)));
+
+    // Allocated class map pointers should not be equal
+    EXPECT_NE(dictionary->getClasses().get(), dictionary2->getClasses().get());
+
+    // Equality tools should reflect that the dictionaries are equal.
+    EXPECT_TRUE(dictionary->equals(*dictionary2));
+    EXPECT_TRUE(*dictionary == *dictionary2);
+    EXPECT_FALSE(*dictionary != *dictionary2);
+
+    // Remove a class from dictionary2.
+    ASSERT_NO_THROW(dictionary2->removeClass("two"));
+
+    // Equality tools should reflect that the dictionaries are not equal.
+    EXPECT_FALSE(dictionary->equals(*dictionary2));
+    EXPECT_FALSE(*dictionary == *dictionary2);
+    EXPECT_TRUE(*dictionary != *dictionary2);
+
+    // Create an empty dictionary.
+    dictionary2.reset(new ClientClassDictionary());
+
+    // Equality tools should reflect that the dictionaries are not equal.
+    EXPECT_FALSE(dictionary->equals(*dictionary2));
+    EXPECT_FALSE(*dictionary == *dictionary2);
+    EXPECT_TRUE(*dictionary != *dictionary2);
 }
 
 } // end of anonymous namespace
