@@ -3020,6 +3020,65 @@ It is merely echoed by the server
               statistic is exposed for each subnet separately. This statistic is
               reset during reconfiguration event.</entry>
             </row>
+
+            <row>
+            <entry>declined-addresses</entry>
+            <entry>integer</entry>
+            <entry>
+              This statistic shows the number of IPv4 adresses that are
+              currently declined. This statistic counts the number of leases
+              currently unavailable. Once a lease is recovered, this
+              statistic will be decreased. Ideally, this statistic should be
+              zero. If this statistic is non-zero (or worse increasing),
+              a network administrator should investigate if there is
+              a misbehaving device in his network. This is a global statistic
+              that covers all subnets.
+            </entry>
+            </row>
+
+            <row>
+            <entry>subnet[id].declined-addresses</entry>
+            <entry>integer</entry>
+            <entry>
+              This statistic shows the number of IPv4 adresses that are
+              currently declined in a given subnet. This statistic counts the
+              number of leases currently unavailable. Once a lease is
+              recovered, this statistic will be decreased. Ideally, this
+              statistic should be zero. If this statistic is
+              non-zero (or worse increasing), a network administrator should
+              investigate if there is a misbehaving device in his network. The
+              <emphasis>id</emphasis> is the subnet-id of a given subnet. This
+              statistic is exposed for each subnet separately.
+            </entry>
+            </row>
+
+            <row>
+            <entry>reclaimed-declined-addresses</entry>
+            <entry>integer</entry>
+            <entry>
+              This statistic shows the number of IPv4 adresses that were
+              declined, but have now been recovered. Unlike
+              declined-addresses, this statistic never decreases. It can be used
+              as a long term indicator of how many actual valid Declines were
+              processed and recovered from. This is a global statistic that
+              covers all subnets.
+            </entry>
+            </row>
+
+            <row>
+            <entry>subnet[id].reclaimed-declined-addresses</entry>
+            <entry>integer</entry>
+            <entry>
+              This statistic shows the number of IPv4 adresses that were
+              declined, but have now been recovered. Unlike
+              declined-addresses, this statistic never decreases. It can be used
+              as a long term indicator of how many actual valid Declines were
+              processed and recovered from. The
+              <emphasis>id</emphasis> is the subnet-id of a given subnet. This
+              statistic is exposed for each subnet separately.
+            </entry>
+            </row>
+
         </tbody>
         </tgroup>
         </table>

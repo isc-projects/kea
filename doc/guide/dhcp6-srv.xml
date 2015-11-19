@@ -3043,7 +3043,7 @@ should include options from the isc option space:
             <entry>integer</entry>
             <entry>
               This statistic shows the number of IPv6 adresses that were
-              declined, but are now recovered. Unlike
+              declined, but have now been recovered. Unlike
               declined-addresses, this statistic never decreases. It can be used
               as a long term indicator of how many actual valid Declines were
               processed and recovered from. This is a global statistic that
@@ -3056,7 +3056,7 @@ should include options from the isc option space:
             <entry>integer</entry>
             <entry>
               This statistic shows the number of IPv6 adresses that were
-              declined, but are now recovered. Unlike
+              declined, but have now been recovered. Unlike
               declined-addresses, this statistic never decreases. It can be used
               as a long term indicator of how many actual valid Declines were
               processed and recovered from. The
