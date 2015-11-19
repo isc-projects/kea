@@ -53,7 +53,7 @@ public:
     /// @param match_expr Expression the class will use to determine membership
     /// @param options Collection of options members should be given
     ClientClassDef(const std::string& name, const ExpressionPtr& match_expr,
-                const CfgOptionPtr& options = CfgOptionPtr());
+                   const CfgOptionPtr& options = CfgOptionPtr());
 
 
     /// Copy constructor
@@ -118,7 +118,7 @@ private:
     /// @brief Unique text identifier by which this class is known.
     std::string name_;
 
-    /// @brief The logical expression which deteremines membership in
+    /// @brief The logical expression which determines membership in
     /// this class.
     ExpressionPtr match_expr_;
 
@@ -180,7 +180,7 @@ public:
 
     /// @brief Removes a given class definition from the dictionary
     ///
-    /// Removes the class defintion from the map if it exists, otherwise
+    /// Removes the class definition from the map if it exists, otherwise
     /// no harm, no foul.
     ///
     /// @param name the name of the class to remove
