@@ -44,7 +44,7 @@ protected:
     /// occur.
     /// @return Returns a pointer to class instance created, or NULL if
     /// for some unforeseen reason it wasn't created in the local dictionary
-    /// @throw indirectly, execptions convertring the JSON text to elements,
+    /// @throw indirectly, exceptions convertring the JSON text to elements,
     /// or by the parsing itself are not caught
     ClientClassDefPtr parseClientClassDef(const std::string& config,
                                           Option::Universe universe) {
