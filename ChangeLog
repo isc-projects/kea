@@ -1,4 +1,9 @@
-1050.   [doc]     [tmark]
+1051.	[func]		[tmark]
+	kea-dhcp4 and kea-dhcp6 configuration parsing now supports
+	the "client-classes" element for defining client classes.
+	(Trac #4096    git d21fd6925983eb20f82029e3866652398ea5e5fe)
+
+1050.	[doc]		[tmark]
 	Corrected the descriptions of ncr-protocol and ncr-format parameters
 	in the Kea Admin Guide.
 	(Trac #4117    git 034c1c95b57768d5abbc7fb40cc57d7cadad21dd)
