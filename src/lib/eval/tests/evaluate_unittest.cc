@@ -196,7 +196,7 @@ TEST_F(EvaluateTest, packet) {
     TokenPtr tstring;
     TokenPtr tequal;
 
-    ASSERT_NO_THROW(toption.reset(new TokenOption(100)));
+    ASSERT_NO_THROW(toption.reset(new TokenOption(100, TokenOption::TEXTUAL)));
     e_.push_back(toption);
     ASSERT_NO_THROW(tstring.reset(new TokenString("hundred4")));
     e_.push_back(tstring);
@@ -219,7 +219,7 @@ TEST_F(EvaluateTest, complex) {
     TokenPtr tequal;
 
     // Get the option, i.e., "hundred[46]"
-    ASSERT_NO_THROW(toption.reset(new TokenOption(100)));
+    ASSERT_NO_THROW(toption.reset(new TokenOption(100, TokenOption::TEXTUAL)));
     e_.push_back(toption);
 
     // Get substring("hundred[46]", 0, 7), i.e., "hundred"
