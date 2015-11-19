@@ -27,7 +27,7 @@ ClientClassDef::ClientClassDef(const std::string& name,
 
     // Name can't be blank
     if (name_.empty()) {
-        isc_throw(BadValue, "ClientClassDef name cannot be empty");
+        isc_throw(BadValue, "Client Class name cannot be blank");
     }
 
     // We permit an empty expression for now.  This will likely be useful
