@@ -126,7 +126,6 @@ TEST(ExpressionParserTest, validExpression4) {
     ASSERT_NO_THROW(parser.reset(new ExpressionParser("", parsed_expr,
                                                       context)));
     // Expression should parse and commit.
-    (parser->build(config_element));
     ASSERT_NO_THROW(parser->build(config_element));
     ASSERT_NO_THROW(parser->commit());
 
@@ -158,7 +157,6 @@ TEST(ExpressionParserTest, validExpression6) {
     ASSERT_NO_THROW(parser.reset(new ExpressionParser("", parsed_expr,
                                                       context)));
     // Expression should parse and commit.
-    (parser->build(config_element));
     ASSERT_NO_THROW(parser->build(config_element));
     ASSERT_NO_THROW(parser->commit());
 
