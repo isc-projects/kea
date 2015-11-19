@@ -122,6 +122,8 @@ blank [ \t]
 
 "=="        return isc::eval::EvalParser::make_EQUAL(loc);
 "option"    return isc::eval::EvalParser::make_OPTION(loc);
+".text"     return isc::eval::EvalParser::make_DOTTEXT(loc);
+".hex"      return isc::eval::EvalParser::make_DOTHEX(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
 "all"       return isc::eval::EvalParser::make_ALL(loc);
 "("         return isc::eval::EvalParser::make_LPAREN(loc);
