@@ -209,6 +209,16 @@ TEST_F(EvalContextTest, option) {
     checkTokenOption(eval.expression.at(0), 123);
 }
 
+// Test parsing of an option represented as hexadecimal string.
+TEST_F(EvalContextTest, optionHex) {
+    EvalContext eval;
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].hex == 0x666F6F"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, eval.expression.size());
+    checkTokenOption(eval.expression.at(0), 123);
+}
+
 // Test the parsing of a substring expression
 TEST_F(EvalContextTest, substring) {
     EvalContext eval;
