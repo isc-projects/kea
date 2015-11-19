@@ -45,6 +45,8 @@ using namespace isc::eval;
   EQUAL "=="
   OPTION "option"
   SUBSTRING "substring"
+  DOTTEXT ".text"
+  DOTHEX ".hex"
   ALL "all"
   COMA ","
   LPAREN  "("
@@ -59,6 +61,35 @@ using namespace isc::eval;
 %token <std::string> TOKEN
 
 %printer { yyoutput << $$; } <*>;
+
+%code
+{
+namespace {
+
+/* Convert option code specified as string to an 16 bit unsigned
+   representation. If the option code is not within the range of
+   0..65535 an error is reported. */
+uint16_t
+convert_option_code(const std::string& option_code,
+                    const isc::eval::EvalParser::location_type& loc,
+                    EvalContext& ctx) {
+    int n = 0;
+    try {
+        n  = boost::lexical_cast<int>(option_code);
+    } catch (const boost::bad_lexical_cast &) {
+        // This can't happen...
+        ctx.error(loc, "Option code has invalid value in " + option_code);
+    }
+    if (n < 0 || n > 65535) {
+        ctx.error(loc, "Option code has invalid value in "
+                      + option_code + ". Allowed range: 0..65535");
+    }
+    return (static_cast<uint16_t>(n));
+}
+}
+
+}
+
 %%
 
 // The whole grammar starts with an expression.
@@ -86,22 +117,10 @@ string_expr : STRING
                       TokenPtr hex(new TokenHexString($1));
                       ctx.expression.push_back(hex);
                   }
-            | OPTION "[" INTEGER "]"
+            | OPTION "[" INTEGER "]" DOTTEXT
                   {
-                      int n = 0;
-                      try {
-                          n  = boost::lexical_cast<int>($3);
-                      } catch (const boost::bad_lexical_cast &) {
-                          // This can't happen...
-                          ctx.error(@3,
-                                    "Option code has invalid value in " + $3);
-                      }
-                      if (n < 0 || n > 65535) {
-                          ctx.error(@3,
-                                    "Option code has invalid value in "
-                                    + $3 + ". Allowed range: 0..65535");
-                      }
-                      TokenPtr opt(new TokenOption(static_cast<uint16_t>(n)));
+                      uint16_t numeric_code = convert_option_code($3, @3, ctx);
+                      TokenPtr opt(new TokenOption(numeric_code));
                       ctx.expression.push_back(opt);
                   }
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
