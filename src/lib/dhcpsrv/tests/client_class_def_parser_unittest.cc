@@ -370,7 +370,7 @@ TEST_F(ClientClassDefParserTest, noClassName) {
 
     std::string cfg_text =
         "{ \n"
-        "    \"test\": \"vendor-class-identifier == 'MSFT'\", \n"
+        "    \"test\": \"option[123] == 'abc'\", \n"
         "    \"option-data\": [ \n"
         "        { \n"
         "           \"name\": \"domain-name-servers\", \n"
@@ -386,6 +386,30 @@ TEST_F(ClientClassDefParserTest, noClassName) {
     ASSERT_THROW(cclass = parseClientClassDef(cfg_text, Option::V4),
                  DhcpConfigError);
 }
+
+// Verifies that a class with a blank name, fails to parse.
+TEST_F(ClientClassDefParserTest, blankClassName) {
+
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"\", \n"
+        "    \"test\": \"option[123] == 'abc'\", \n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"domain-name-servers\", \n"
+        "           \"code\": 6, \n"
+        "           \"space\": \"dhcp4\", \n"
+        "           \"csv-format\": true, \n"
+        "           \"data\": \"192.0.2.1, 192.0.2.2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, Option::V4),
+                 DhcpConfigError);
+}
+
 
 // Verifies that a class with an unknown element, fails to parse.
 TEST_F(ClientClassDefParserTest, unknownElement) {
