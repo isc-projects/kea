@@ -16,6 +16,8 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
+#include <eval/eval_context.h>
+
 #include <boost/foreach.hpp>
 
 using namespace isc::data;
@@ -31,27 +33,33 @@ namespace dhcp {
 
 ExpressionParser::ExpressionParser(const std::string&,
     ExpressionPtr& expression, ParserContextPtr global_context)
-    : local_expression_(ExpressionPtr()), expression_(expression), 
+    : local_expression_(ExpressionPtr()), expression_(expression),
       global_context_(global_context) {
 }
 
 void
 ExpressionParser::build(ConstElementPtr expression_cfg) {
-    // Here is where we would call bison parser with our string
-    // For now we'll just create an expression with a string token
-    // containing the expression text
+    if (expression_cfg->getType() != Element::string) {
+        isc_throw(DhcpConfigError, "expression ["
+            << expression_cfg->str() << "] must be a string, at ("
+            << expression_cfg->getPosition() << ")");
+    }
+
+    // Get the expression's text via getValue() as the text returned
+    // by str() enclosed in quotes.
+    std::string value;
+    expression_cfg->getValue(value);
     try {
-        if (expression_cfg->getType() != Element::string) {
-            isc_throw(TypeError, "expression value must be a string");
-        } 
-        std::string expression_text = expression_cfg->str();
-        TokenPtr dummy(new TokenString(expression_text));
+        EvalContext eval_ctx;
+        eval_ctx.parseString(value);
         local_expression_.reset(new Expression());
-        local_expression_->push_back(dummy);
+        *local_expression_ = eval_ctx.expression;
     } catch (const std::exception& ex) {
         // Append position if there is a failure.
-        isc_throw(DhcpConfigError, ex.what() << " ("
-                  << expression_cfg->getPosition() << ")");
+        isc_throw(DhcpConfigError,
+                  "expression: [" << value
+                  <<  "] error: " << ex.what() << " at ("
+                  <<  expression_cfg->getPosition() << ")");
     }
 }
 
@@ -121,9 +129,9 @@ ClientClassDefParser::build(ConstElementPtr class_def_cfg) {
 // ****************** ClientClassDefListParser ************************
 
 ClientClassDefListParser::ClientClassDefListParser(const std::string&,
-                                                   ParserContextPtr 
+                                                   ParserContextPtr
                                                    global_context)
-    : local_dictionary_(new ClientClassDictionary()), 
+    : local_dictionary_(new ClientClassDictionary()),
       global_context_(global_context) {
 }
 
@@ -135,10 +143,10 @@ ClientClassDefListParser::build(ConstElementPtr client_class_def_list) {
                   << client_class_def_list->getPosition() << ")");
     }
 
-    BOOST_FOREACH(ConstElementPtr client_class_def, 
+    BOOST_FOREACH(ConstElementPtr client_class_def,
                   client_class_def_list->listValue()) {
         boost::shared_ptr<ClientClassDefParser>
-            parser(new ClientClassDefParser("client-class-def", 
+            parser(new ClientClassDefParser("client-class-def",
                                             local_dictionary_,
                                             global_context_));
         parser->build(client_class_def);

@@ -15,8 +15,10 @@
 #include <config.h>
 
 #include <cc/data.h>
+#include <dhcp/option_string.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
+#include <eval/evaluate.h>
 #include <gtest/gtest.h>
 #include <sstream>
 #include <stdint.h>
@@ -109,51 +111,100 @@ protected:
     }
 };
 
-
-// Verifies basic operation of an ExpressionParser. Until we tie
-// this into the actual Bison parsing there's not much to test.
-TEST(ExpressionParserTest, simpleStringExpression) {
+// Verifies that given a valid expression, the ExpressionParser
+// produces an Expression which can be evaluated against a v4 packet.
+TEST(ExpressionParserTest, validExpression4) {
     ParserContextPtr context(new ParserContext(Option::V4));
     ExpressionParserPtr parser;
     ExpressionPtr parsed_expr;
 
     // Turn config into elements.  This may emit exceptions.
-    std::string cfg_txt = "\"astring\"";
+    std::string cfg_txt = "\"option[100] == 'hundred4'\"";
     ElementPtr config_element = Element::fromJSON(cfg_txt);
 
     // Create the parser.
     ASSERT_NO_THROW(parser.reset(new ExpressionParser("", parsed_expr,
                                                       context)));
     // Expression should parse and commit.
+    (parser->build(config_element));
     ASSERT_NO_THROW(parser->build(config_element));
     ASSERT_NO_THROW(parser->commit());
 
     // Parsed expression should exist.
     ASSERT_TRUE(parsed_expr);
 
-    // Evaluate it. For now the result will be the
-    // expression string as dummy ExpressionParser
-    // just makes an expression of one TokenString
-    // containing the expression string itself.
-    ValueStack vstack;
-    Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
-    (*parsed_expr)[0]->evaluate(*pkt4, vstack);
-    EXPECT_EQ(vstack.top(), "\"astring\"");
+    // Build a packet that will fail evaluation.
+    Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 123));
+    EXPECT_FALSE(evaluate(*parsed_expr, *pkt4));
+
+    // Now add the option so it will pass.
+    OptionPtr opt(new OptionString(Option::V4, 100, "hundred4"));
+    pkt4->addOption(opt);
+    EXPECT_TRUE(evaluate(*parsed_expr, *pkt4));
 }
 
-// Verifies that given an invalid expression, the Expression parser
-// will throw a DhdpConfigError.  Note this is not intended to be
-// an exhaustive test or expression syntax.  It is simply to ensure
-// that if the parser fails, it does so properly.  For now, since
-// our parser is a dummy parser which only checks that it's given
-// Element::string so send it an integer.
-TEST(ExpressionParserTest, invalidExpression) {
+// Verifies that given a valid expression, the ExpressionParser
+// produces an Expression which can be evaluated against a v6 packet.
+TEST(ExpressionParserTest, validExpression6) {
+    ParserContextPtr context(new ParserContext(Option::V6));
+    ExpressionParserPtr parser;
+    ExpressionPtr parsed_expr;
+
+    // Turn config into elements.  This may emit exceptions.
+    std::string cfg_txt = "\"option[100] == 'hundred6'\"";
+    ElementPtr config_element = Element::fromJSON(cfg_txt);
+
+    // Create the parser.
+    ASSERT_NO_THROW(parser.reset(new ExpressionParser("", parsed_expr,
+                                                      context)));
+    // Expression should parse and commit.
+    (parser->build(config_element));
+    ASSERT_NO_THROW(parser->build(config_element));
+    ASSERT_NO_THROW(parser->commit());
+
+    // Parsed expression should exist.
+    ASSERT_TRUE(parsed_expr);
+
+    // Build a packet that will fail evaluation.
+    Pkt6Ptr pkt6(new Pkt6(DHCPDISCOVER, 123));
+    EXPECT_FALSE(evaluate(*parsed_expr, *pkt6));
+
+    // Now add the option so it will pass.
+    OptionPtr opt(new OptionString(Option::V6, 100, "hundred6"));
+    pkt6->addOption(opt);
+    EXPECT_TRUE(evaluate(*parsed_expr, *pkt6));
+}
+
+
+// Verifies that an the ExpressionParser only accepts StringElements.
+TEST(ExpressionParserTest, invalidExpressionElement) {
+    ParserContextPtr context(new ParserContext(Option::V4));
+    ExpressionParserPtr parser;
+    ExpressionPtr parsed_expr;
+
+    // This will create an integer element should fail.
+    std::string cfg_txt = "777";
+    ElementPtr config_element = Element::fromJSON(cfg_txt);
+
+    // Create the parser.
+    ASSERT_NO_THROW(parser.reset(new ExpressionParser("", parsed_expr,
+                                                      context)));
+    // Expressionn build() should fail.
+    ASSERT_THROW(parser->build(config_element), DhcpConfigError);
+}
+
+// Verifies that given an invalid expression with a syntax error,
+// the Expression parser will throw a DhdpConfigError.  Note this
+// is not intended to be an exhaustive test or expression syntax.
+// It is simply to ensure that if the parser fails, it does so
+// Properly.
+TEST(ExpressionParserTest, expressionSyntaxError) {
     ParserContextPtr context(new ParserContext(Option::V4));
     ExpressionParserPtr parser;
     ExpressionPtr parsed_expr;
 
     // Turn config into elements.
-    std::string cfg_txt = "777";
+    std::string cfg_txt = "\"option 'bogus'\"";
     ElementPtr config_element = Element::fromJSON(cfg_txt);
 
     // Create the parser.
@@ -199,8 +250,8 @@ TEST_F(ClientClassDefParserTest, nameAndExpressionClass) {
 
     std::string cfg_text =
         "{ \n"
-        "    \"name\": \"MICROSOFT\", \n"
-        "    \"test\": \"vendor-class-identifier == 'MSFT'\" \n"
+        "    \"name\": \"class_one\", \n"
+        "    \"test\": \"option[100] == 'works right'\" \n"
         "} \n";
 
     ClientClassDefPtr cclass;
@@ -208,7 +259,7 @@ TEST_F(ClientClassDefParserTest, nameAndExpressionClass) {
 
     // We should find our class.
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("MICROSOFT", cclass->getName());
+    EXPECT_EQ("class_one", cclass->getName());
 
     // CfgOption should be a non-null pointer but there
     // should be no options.  Currently there's no good
@@ -224,15 +275,14 @@ TEST_F(ClientClassDefParserTest, nameAndExpressionClass) {
     ExpressionPtr match_expr = cclass->getMatchExpr();
     ASSERT_TRUE(match_expr);
 
-    // Evaluate it. For now the result will be the
-    // expression string as dummy ExpressionParser
-    // just makes an expression of one TokenString
-    // containing the expression string itself.
-    ValueStack vstack;
-    Pkt4Ptr pkt4;
-    pkt4.reset(new Pkt4(DHCPDISCOVER, 12345));
-    (*match_expr)[0]->evaluate(*pkt4, vstack);
-    EXPECT_EQ(vstack.top(), "\"vendor-class-identifier == 'MSFT'\"");
+    // Build a packet that will fail evaluation.
+    Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 123));
+    EXPECT_FALSE(evaluate(*match_expr, *pkt4));
+
+    // Now add the option so it will pass.
+    OptionPtr opt(new OptionString(Option::V4, 100, "works right"));
+    pkt4->addOption(opt);
+    EXPECT_TRUE(evaluate(*match_expr, *pkt4));
 }
 
 // Verifies you can create a class with a name and options,
@@ -277,7 +327,7 @@ TEST_F(ClientClassDefParserTest, basicValidClass) {
     std::string cfg_text =
         "{ \n"
         "    \"name\": \"MICROSOFT\", \n"
-        "    \"test\": \"vendor-class-identifier == 'MSFT'\", \n"
+        "    \"test\": \"option[100] == 'booya'\", \n"
         "    \"option-data\": [ \n"
         "        { \n"
         "           \"name\": \"domain-name-servers\", \n"
@@ -305,15 +355,14 @@ TEST_F(ClientClassDefParserTest, basicValidClass) {
     ExpressionPtr match_expr = cclass->getMatchExpr();
     ASSERT_TRUE(match_expr);
 
-    // Evaluate it. For now the result will be the
-    // expression string as dummy ExpressionParser
-    // just makes an expression of one TokenString
-    // containing the expression string itself.
-    ValueStack vstack;
-    Pkt4Ptr pkt4;
-    pkt4.reset(new Pkt4(DHCPDISCOVER, 12345));
-    (*match_expr)[0]->evaluate(*pkt4, vstack);
-    EXPECT_EQ(vstack.top(), "\"vendor-class-identifier == 'MSFT'\"");
+    // Build a packet that will fail evaluation.
+    Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 123));
+    EXPECT_FALSE(evaluate(*match_expr, *pkt4));
+
+    // Now add the option so it will pass.
+    OptionPtr opt(new OptionString(Option::V4, 100, "booya"));
+    pkt4->addOption(opt);
+    EXPECT_TRUE(evaluate(*match_expr, *pkt4));
 }
 
 // Verifies that a class with no name, fails to parse.
