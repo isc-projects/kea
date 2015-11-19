@@ -117,7 +117,12 @@ TEST_F(EvalContextTest, basic) {
 
     EvalContext tmp;
 
-    EXPECT_NO_THROW(parsed_ = tmp.parseString("option[123] == 'MSFT'"));
+    try {
+        tmp.parseString("option[123].text == 'MSFT'");
+    } catch (const std::exception& ex) {
+        std::cout << ex.what() << std::endl;
+    }
+    EXPECT_NO_THROW(parsed_ = tmp.parseString("option[123].text == 'MSFT'"));
     EXPECT_TRUE(parsed_);
 }
 
@@ -143,7 +148,7 @@ TEST_F(EvalContextTest, integer) {
     EvalContext eval;
 
     EXPECT_NO_THROW(parsed_ =
-        eval.parseString("substring(option[123], 0, 2) == '42'"));
+        eval.parseString("substring(option[123].text, 0, 2) == '42'"));
     EXPECT_TRUE(parsed_);
 }
 
@@ -198,7 +203,7 @@ TEST_F(EvalContextTest, equal) {
 TEST_F(EvalContextTest, option) {
     EvalContext eval;
 
-    EXPECT_NO_THROW(parsed_ = eval.parseString("option[123] == 'foo'"));
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].text == 'foo'"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, eval.expression.size());
     checkTokenOption(eval.expression.at(0), 123);
@@ -245,16 +250,16 @@ TEST_F(EvalContextTest, scanParseErrors) {
     checkError("0abc",
                "<string>:1.1: syntax error, unexpected integer");
     checkError("===", "<string>:1.1-2: syntax error, unexpected ==");
-    checkError("option[-1]",
+    checkError("option[-1].text",
                "<string>:1.8-9: Option code has invalid "
                "value in -1. Allowed range: 0..65535");
-    checkError("option[65536]",
+    checkError("option[65536].text",
                "<string>:1.8-12: Option code has invalid "
                "value in 65536. Allowed range: 0..65535");
     checkError("option[12345678901234567890]",
                "<string>:1.8-27: Failed to convert 12345678901234567890 "
                "to an integer.");
-    checkError("option[123] < 'foo'", "<string>:1.13: Invalid character: <");
+    checkError("option[123].text < 'foo'", "<string>:1.18: Invalid character: <");
     checkError("substring('foo',12345678901234567890,1)",
                "<string>:1.17-36: Failed to convert 12345678901234567890 "
                "to an integer.");
@@ -274,11 +279,11 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("option(10) == 'ab'",
                "<string>:1.7: syntax error, "
                "unexpected (, expecting [");
-    checkError("option['ab'] == 'foo'",
+    checkError("option['ab'].text == 'foo'",
                "<string>:1.8-11: syntax error, "
                "unexpected constant string, "
                "expecting integer");
-    checkError("option[0xa] == 'ab'",
+    checkError("option[0xa].text == 'ab'",
                "<string>:1.8-10: syntax error, "
                "unexpected constant hexstring, "
                "expecting integer");
