@@ -204,6 +204,7 @@ public:
     using Dhcpv4Srv::srvidToString;
     using Dhcpv4Srv::unpackOptions;
     using Dhcpv4Srv::classifyPacket;
+    using Dhcpv4Srv::classSpecificProcessing;
     using Dhcpv4Srv::accept;
     using Dhcpv4Srv::acceptMessageType;
     using Dhcpv4Srv::selectSubnet;

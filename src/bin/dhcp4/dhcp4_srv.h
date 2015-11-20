@@ -706,10 +706,11 @@ protected:
 
     /// @brief Assigns incoming packet to zero or more classes.
     ///
-    /// @note For now, the client classification is very simple. It just uses
-    /// content of the vendor-class-identifier option as a class. The resulting
-    /// class will be stored in packet (see @ref isc::dhcp::Pkt4::classes_ and
-    /// @ref isc::dhcp::Pkt4::inClass).
+    /// @note It is done in two phases: first the content of the
+    /// vendor-class-identifier option is used as a class. Second
+    /// classification match expressions are evaluated. The resulting
+    /// class will be stored in packet (see @ref isc::dhcp::Pkt4::classes_
+    /// and @ref isc::dhcp::Pkt4::inClass).
     ///
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
