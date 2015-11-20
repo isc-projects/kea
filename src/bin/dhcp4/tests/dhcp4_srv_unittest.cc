@@ -1679,20 +1679,20 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     NakedDhcpv4Srv srv(0);
 
     // The router class matches incoming packets with foo in a host-name
-    // option (code 12) and sets an ip-forwarding option in the response
+    // option (code 12) and sets an ip-forwarding option in the response.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
-        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
         "    \"subnet\": \"192.0.2.0/24\" } ], "
         "\"client-classes\": [ "
-        "{   \"name\": \"router\","
+        "{   \"name\": \"router\", "
         "    \"option-data\": ["
-        "        {    \"name\": \"ip-forwarding\","
-        "             \"data\": \"true\" } ],"
+        "        {    \"name\": \"ip-forwarding\", "
+        "             \"data\": \"true\" } ], "
         "    \"test\": \"option[12] == 'foo'\" } ] }";
 
     ElementPtr json = Element::fromJSON(config);
@@ -1739,6 +1739,158 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     srv.classSpecificProcessing(ex2);
     OptionPtr opt2 = response2->getOption(DHO_IP_FORWARDING);
     EXPECT_FALSE(opt2);
+}
+
+// Checks subnet options have the priority over class options
+TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Subnet sets an ip-forwarding option in the response.
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 12) and sets an ip-forwarding option in the response.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"option-data\": ["
+        "        {    \"name\": \"ip-forwarding\", "
+        "             \"data\": \"false\" } ] } ], "
+        "\"client-classes\": [ "
+        "{   \"name\": \"router\","
+        "    \"option-data\": ["
+        "        {    \"name\": \"ip-forwarding\", "
+        "             \"data\": \"true\" } ], "
+        "    \"test\": \"option[12] == 'foo'\" } ] }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a PRL option to the query
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_IP_FORWARDING);
+    query->addOption(prl);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V4, 12, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Classify the packet
+    srv.classifyPacket(query);
+
+    // The packet should be in the router class
+    EXPECT_TRUE(query->inClass("router"));
+
+    // Process the query
+    Pkt4Ptr response = srv.processDiscover(query);
+
+    // A processing should add an ip-forwarding option
+    OptionPtr opt = response->getOption(DHO_IP_FORWARDING);
+    ASSERT_TRUE(opt);
+    ASSERT_GT(opt->len(), opt->getHeaderLen());
+    // Classification sets the value to true/1, subnet to false/0
+    // Here subnet has the priority
+    EXPECT_EQ(0, opt->getUint8());
+}
+
+// Checks class options have the priority over global options
+// Note it is not currently the case, cf #4205
+TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
+    NakedDhcpv4Srv srv(0);
+
+    // A global ip-forwarding option is set in the response.
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 12) and sets an ip-forwarding option in the response.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ], "
+        "\"option-data\": ["
+        "    {    \"name\": \"ip-forwarding\", "
+        "         \"data\": \"false\" } ], "
+        "\"client-classes\": [ "
+        "{   \"name\": \"router\","
+        "    \"option-data\": ["
+        "        {    \"name\": \"ip-forwarding\", "
+        "             \"data\": \"true\" } ], "
+        "    \"test\": \"option[12] == 'foo'\" } ] }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a PRL option to the query
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_IP_FORWARDING);
+    query->addOption(prl);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V4, 12, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Classify the packet
+    srv.classifyPacket(query);
+
+    // The packet should be in the router class
+    EXPECT_TRUE(query->inClass("router"));
+
+    // Process the query
+    Pkt4Ptr response = srv.processDiscover(query);
+
+    // A processing should add an ip-forwarding option
+    OptionPtr opt = response->getOption(DHO_IP_FORWARDING);
+    ASSERT_TRUE(opt);
+    ASSERT_GT(opt->len(), opt->getHeaderLen());
+    // Classification sets the value to true/1, global to false/0
+    // Here class should have the priority but hasn't, cf #4205
+    EXPECT_EQ(0, opt->getUint8());
 }
 
 // Checks if the client-class field is indeed used for subnet selection.
