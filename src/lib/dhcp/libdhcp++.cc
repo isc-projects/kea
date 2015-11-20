@@ -32,6 +32,8 @@
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <list>
+
 using namespace std;
 using namespace isc::dhcp;
 using namespace isc::util;
@@ -198,9 +200,47 @@ LibDHCP::getVendorOptionDef(const Option::Universe u, const uint32_t vendor_id,
     return (OptionDefinitionPtr());
 }
 
+OptionDefinitionPtr
+LibDHCP::getRuntimeOptionDef(const std::string& space, const uint16_t code) {
+    OptionDefContainerPtr container = runtime_option_defs_.getItems(space);
+    const OptionDefContainerTypeIndex& index = container->get<1>();
+    const OptionDefContainerTypeRange& range = index.equal_range(code);
+    if (range.first != range.second) {
+        return (*range.first);
+    }
+
+    return (OptionDefinitionPtr());
+}
+
+OptionDefinitionPtr
+LibDHCP::getRuntimeOptionDef(const std::string& space, const std::string& name) {
+    OptionDefContainerPtr container = runtime_option_defs_.getItems(space);
+    const OptionDefContainerNameIndex& index = container->get<2>();
+    const OptionDefContainerNameRange& range = index.equal_range(name);
+    if (range.first != range.second) {
+        return (*range.first);
+    }
+
+    return (OptionDefinitionPtr());
+}
+
+OptionDefContainerPtr
+LibDHCP::getRuntimeOptionDefs(const std::string& space) {
+    return (runtime_option_defs_.getItems(space));
+}
+
 void
 LibDHCP::setRuntimeOptionDefs(const OptionDefSpaceContainer& defs) {
-    
+    std::list<std::string> option_space_names = defs.getOptionSpaceNames();
+    for (std::list<std::string>::const_iterator name = option_space_names.begin();
+         name != option_space_names.end(); ++name) {
+        OptionDefContainerPtr container = defs.getItems(*name);
+        for (OptionDefContainer::const_iterator def = container->begin();
+             def != container->end(); ++def) {
+            OptionDefinitionPtr def_copy(new OptionDefinition(**def));
+            runtime_option_defs_.addItem(def_copy, *name);
+        }
+    }
 }
 
 void
@@ -275,7 +315,14 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
     OptionDefContainer option_defs;
     if (option_space == "dhcp6") {
         option_defs = LibDHCP::getOptionDefs(Option::V6);
+    } else {
+        OptionDefContainerPtr option_defs_ptr =
+            LibDHCP::getRuntimeOptionDefs(option_space);
+        if (option_defs_ptr) {
+            option_defs = *option_defs_ptr;
+        }
     }
+
     // @todo Once we implement other option spaces we should add else clause
     // here and gather option definitions for them. For now leaving option_defs
     // empty will imply creation of generic Option.
