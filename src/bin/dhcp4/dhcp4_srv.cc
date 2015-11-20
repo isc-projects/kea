@@ -2371,18 +2371,19 @@ Dhcpv4Srv::classSpecificProcessing(const Dhcpv4Exchange& ex) {
         rsp->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS());
     }
 
-    // Process each class
-    const ClientClassDefMapPtr& defs_ptr = CfgMgr::instance().getCurrentCfg()->
-        getClientClassDictionary()->getClasses();
-    for (ClientClassDefMap::const_iterator it = defs_ptr->begin();
-         it != defs_ptr->end(); ++it) {
-        // Is the query in this class?
-        if (!it->second || !query->inClass(it->first)) {
+    // Process each class in the packet
+    const ClientClasses& classes = query->getClasses();
+    for (ClientClasses::const_iterator cclass = classes.begin();
+         cclass != classes.end(); ++cclass) {
+        // Find the client class definition for this class
+        const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
+            getClientClassDictionary()->findClass(*cclass);
+        if (!ccdef) {
+            // Not found
             continue;
         }
         // Get the configured options of this class
-        const OptionContainerPtr& options =
-            it->second->getCfgOption()->getAll("dhcp4");
+        const OptionContainerPtr& options = ccdef->getCfgOption()->getAll("dhcp4");
         if (!options || options->empty()) {
             continue;
         }
