@@ -80,12 +80,12 @@
 14.                 TokenPtr hex(new TokenHexString($1));
 15.                 ctx.expression.push_back(hex);
 16.             }
-17.       | OPTION '[' INTEGER ']' DOTTEXT
+17.       | OPTION '[' INTEGER ']' DOT TEXT
 18.             {
 19.                 TokenPtr opt(new TokenOption($3, TokenOption::TEXTUAL));
 20.                 ctx.expression.push_back(opt);
 21.             }
-22.       | OPTION '[' INTEGER ']' DOTHEX
+22.       | OPTION '[' INTEGER ']' DOT HEX
 23.             {
 24.                 TokenPtr opt(new TokenOption($3, TokenOption::HEXADECIMAL));
 25.                 ctx.expression.push_back(opt);

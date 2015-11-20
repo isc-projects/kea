@@ -117,11 +117,6 @@ TEST_F(EvalContextTest, basic) {
 
     EvalContext tmp;
 
-    try {
-        tmp.parseString("option[123].text == 'MSFT'");
-    } catch (const std::exception& ex) {
-        std::cout << ex.what() << std::endl;
-    }
     EXPECT_NO_THROW(parsed_ = tmp.parseString("option[123].text == 'MSFT'"));
     EXPECT_TRUE(parsed_);
 }
@@ -266,10 +261,14 @@ TEST_F(EvalContextTest, scanParseErrors) {
     checkError("option[65536].text",
                "<string>:1.8-12: Option code has invalid "
                "value in 65536. Allowed range: 0..65535");
-    checkError("option[12345678901234567890]",
+    checkError("option[12345678901234567890].text",
                "<string>:1.8-27: Failed to convert 12345678901234567890 "
                "to an integer.");
-    checkError("option[123].text < 'foo'", "<string>:1.18: Invalid character: <");
+    checkError("option[123]",
+               "<string>:1.12: syntax error, unexpected end of file,"
+               " expecting .");
+    checkError("option[123].text < 'foo'", "<string>:1.18: Invalid"
+               " character: <");
     checkError("substring('foo',12345678901234567890,1)",
                "<string>:1.17-36: Failed to convert 12345678901234567890 "
                "to an integer.");

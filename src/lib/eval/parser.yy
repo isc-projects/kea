@@ -45,9 +45,10 @@ using namespace isc::eval;
   EQUAL "=="
   OPTION "option"
   SUBSTRING "substring"
-  DOTTEXT ".text"
-  DOTHEX ".hex"
+  TEXT "text"
+  HEX "hex"
   ALL "all"
+  DOT "."
   COMA ","
   LPAREN  "("
   RPAREN  ")"
@@ -117,13 +118,13 @@ string_expr : STRING
                       TokenPtr hex(new TokenHexString($1));
                       ctx.expression.push_back(hex);
                   }
-            | OPTION "[" INTEGER "]" DOTTEXT
+            | OPTION "[" INTEGER "]" DOT TEXT
                   {
                       uint16_t numeric_code = convert_option_code($3, @3, ctx);
                       TokenPtr opt(new TokenOption(numeric_code, TokenOption::TEXTUAL));
                       ctx.expression.push_back(opt);
                   }
-            | OPTION "[" INTEGER "]" DOTHEX
+            | OPTION "[" INTEGER "]" DOT HEX
                   {
                       uint16_t numeric_code = convert_option_code($3, @3, ctx);
                       TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
