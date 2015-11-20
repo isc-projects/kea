@@ -235,16 +235,10 @@ Option::toHexString(const bool include_header) {
     const uint8_t* option_data = static_cast<const uint8_t*>(buf.getData());
     std::vector<uint8_t> option_vec;
 
-    // Exclude header.
-    if (!include_header) {
-        if (buf.getLength() > getHeaderLen()) {
-            option_vec.assign(option_data + getHeaderLen(),
-                              option_data + buf.getLength());
-        }
-
-    } else {
-        option_vec.assign(option_data, option_data + buf.getLength());
-    }
+    // Assign option data to a vector, with or without option header depending
+    // on the value of "include_header" flag.
+    option_vec.assign(option_data + (include_header ? 0 : getHeaderLen()),
+                      option_data + buf.getLength());
 
     // Return hexadecimal representation prepended with 0x or empty string
     // if option has no payload and the header fields are excluded.
