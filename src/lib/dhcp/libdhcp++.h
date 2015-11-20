@@ -91,6 +91,37 @@ public:
                                                   const uint32_t vendor_id,
                                                   const std::string& name);
 
+
+    /// @brief Returns runtime (non-standard) option definition by space and
+    /// option code.
+    ///
+    /// @param space Option space name.
+    /// @param code Option code.
+    ///
+    /// @return Pointer to option definition or NULL if it doesn't exist.
+    static OptionDefinitionPtr getRuntimeOptionDef(const std::string& space,
+                                                   const uint16_t code);
+
+    /// @brief Returns runtime (non-standard) option definition by space and
+    /// option name.
+    ///
+    /// @param space Option space name.
+    /// @param name Option name.
+    ///
+    /// @return Pointer to option definition or NULL if it doesn't exist.
+    static OptionDefinitionPtr getRuntimeOptionDef(const std::string& space,
+                                                   const std::string& name);
+
+    /// @brief Returns runtime (non-standard) option definitions for specified
+    /// option space name.
+    ///
+    /// @param space Option space name.
+    ///
+    /// @return Pointer to the container holding option definitions or NULL.
+    static OptionDefContainerPtr
+    getRuntimeOptionDefs(const std::string& space);
+
+
     /// @brief Check if the specified option is a standard option.
     ///
     /// @param u universe (V4 or V6)
