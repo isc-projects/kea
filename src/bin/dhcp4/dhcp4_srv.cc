@@ -38,6 +38,8 @@
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/utils.h>
 #include <dhcpsrv/utils.h>
+#include <eval/evaluate.h>
+#include <eval/eval_messages.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
@@ -2242,13 +2244,14 @@ Dhcpv4Srv::unpackOptions(const OptionBuffer& buf,
 }
 
 void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
+    string classes = "";
+
+    // Built-in vendor class processing
     boost::shared_ptr<OptionString> vendor_class =
         boost::dynamic_pointer_cast<OptionString>(pkt->getOption(DHO_VENDOR_CLASS_IDENTIFIER));
 
-    string classes = "";
-
     if (!vendor_class) {
-        return;
+        goto vendor_class_done;
     }
 
     // DOCSIS specific section
@@ -2275,8 +2278,49 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
         pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER);
         classes += string(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER) + " ";
     } else {
-        classes += VENDOR_CLASS_PREFIX + vendor_class->getValue();
         pkt->addClass(VENDOR_CLASS_PREFIX + vendor_class->getValue());
+        classes += VENDOR_CLASS_PREFIX + vendor_class->getValue();
+    }
+
+vendor_class_done:
+
+    // Run match expressions
+    // Note getClientClassDictionary() cannot be null
+    const ClientClassDefMapPtr& defs_ptr = CfgMgr::instance().getCurrentCfg()->
+        getClientClassDictionary()->getClasses();
+    for (ClientClassDefMap::const_iterator it = defs_ptr->begin();
+         it != defs_ptr->end(); ++it) {
+        // Note second cannot be null
+        const ExpressionPtr& expr_ptr = it->second->getMatchExpr();
+        // Nothing to do without an expression to evaluate
+        if (!expr_ptr) {
+            continue;
+        }
+        // Evaluate the expression which can return false (no match),
+        // true (match) or raise an exception (error)
+        try {
+            bool status = evaluate(*expr_ptr, *pkt);
+            if (status) {
+                LOG_INFO(options4_logger, EVAL_RESULT)
+                    .arg(it->first)
+                    .arg(status);
+                // Matching: add the class
+                pkt->addClass(it->first);
+                classes += it->first + " ";
+            } else {
+                LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
+                    .arg(it->first)
+                    .arg(status);
+            }
+        } catch (const Exception& ex) {
+            LOG_ERROR(options4_logger, EVAL_RESULT)
+                .arg(it->first)
+                .arg(ex.what());
+        } catch (...) {
+            LOG_ERROR(options4_logger, EVAL_RESULT)
+                .arg(it->first)
+                .arg("get exception?");
+        }
     }
 
     if (!classes.empty()) {
@@ -2298,6 +2342,7 @@ Dhcpv4Srv::classSpecificProcessing(const Dhcpv4Exchange& ex) {
         return (true);
     }
 
+    // DOCSIS3 class modem specific processing
     if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM)) {
 
         // Set next-server. This is TFTP server address. Cable modems will
@@ -2319,10 +2364,37 @@ Dhcpv4Srv::classSpecificProcessing(const Dhcpv4Exchange& ex) {
         }
     }
 
+    // DOCSIS3 class erouter specific processing
     if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER)) {
 
         // Do not set TFTP server address for eRouter devices.
         rsp->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+    }
+
+    // Process each class
+    const ClientClassDefMapPtr& defs_ptr = CfgMgr::instance().getCurrentCfg()->
+        getClientClassDictionary()->getClasses();
+    for (ClientClassDefMap::const_iterator it = defs_ptr->begin();
+         it != defs_ptr->end(); ++it) {
+        // Is the query in this class?
+        if (!it->second || !query->inClass(it->first)) {
+            continue;
+        }
+        // Get the configured options of this class
+        const OptionContainerPtr& options =
+            it->second->getCfgOption()->getAll("dhcp4");
+        if (!options || options->empty()) {
+            continue;
+        }
+        // Go through each OptionDescriptor
+        for (OptionContainer::const_iterator desc = options->begin();
+             desc != options->end(); ++desc) {
+            OptionPtr opt = desc->option_;
+            // Add the option if it doesn't exist yet
+            if (!rsp->getOption(opt->getType())) {
+                rsp->addOption(opt);
+            }
+        }
     }
 
     return (true);
