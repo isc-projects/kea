@@ -18,10 +18,10 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcp/option_definition.h>
+#include <dhcp/option_space_container.h>
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
-#include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <exceptions/exceptions.h>
@@ -35,12 +35,6 @@
 
 namespace isc {
 namespace dhcp {
-
-/// @brief Storage for option definitions.
-typedef OptionSpaceContainer<OptionDefContainer,
-    OptionDefinitionPtr, std::string> OptionDefStorage;
-/// @brief Shared pointer to option definitions storage.
-typedef boost::shared_ptr<OptionDefStorage> OptionDefStoragePtr;
 
 /// Collection of containers holding option spaces. Each container within
 /// a particular option space holds so-called option descriptors.

@@ -52,6 +52,10 @@ VendorOptionDefContainers LibDHCP::vendor4_defs_;
 
 VendorOptionDefContainers LibDHCP::vendor6_defs_;
 
+// Static container with option definitions created in runtime.
+OptionDefSpaceContainer LibDHCP::runtime_option_defs_;
+
+
 // Those two vendor classes are used for cable modems:
 
 /// DOCSIS3.0 compatible cable modem
@@ -193,6 +197,17 @@ LibDHCP::getVendorOptionDef(const Option::Universe u, const uint32_t vendor_id,
     }
     return (OptionDefinitionPtr());
 }
+
+void
+LibDHCP::setRuntimeOptionDefs(const OptionDefSpaceContainer& defs) {
+    
+}
+
+void
+LibDHCP::clearRuntimeOptionDefs() {
+    runtime_option_defs_.clearItems();
+}
+
 
 bool
 LibDHCP::isStandardOption(const Option::Universe u, const uint16_t code) {
