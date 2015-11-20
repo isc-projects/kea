@@ -2243,15 +2243,13 @@ Dhcpv4Srv::unpackOptions(const OptionBuffer& buf,
     return (offset);
 }
 
-void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
-    string classes = "";
-
+void Dhcpv4Srv::classifyByVendor(const Pkt4Ptr& pkt, std::string& classes) {
     // Built-in vendor class processing
     boost::shared_ptr<OptionString> vendor_class =
         boost::dynamic_pointer_cast<OptionString>(pkt->getOption(DHO_VENDOR_CLASS_IDENTIFIER));
 
     if (!vendor_class) {
-        goto vendor_class_done;
+        return;
     }
 
     // DOCSIS specific section
@@ -2281,8 +2279,13 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
         pkt->addClass(VENDOR_CLASS_PREFIX + vendor_class->getValue());
         classes += VENDOR_CLASS_PREFIX + vendor_class->getValue();
     }
+}
 
-vendor_class_done:
+void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
+    string classes = "";
+
+    // First phase: built-in vendor class processing
+    classifyByVendor(pkt, classes);
 
     // Run match expressions
     // Note getClientClassDictionary() cannot be null

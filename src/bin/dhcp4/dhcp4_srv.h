@@ -707,10 +707,11 @@ protected:
     /// @brief Assigns incoming packet to zero or more classes.
     ///
     /// @note It is done in two phases: first the content of the
-    /// vendor-class-identifier option is used as a class. Second
-    /// classification match expressions are evaluated. The resulting
-    /// class will be stored in packet (see @ref isc::dhcp::Pkt4::classes_
-    /// and @ref isc::dhcp::Pkt4::inClass).
+    /// vendor-class-identifier option is used as a class, by
+    /// calling @ref classifyByVendor(). Second classification match
+    /// expressions are evaluated. The resulting class will be stored
+    /// in packet (see @ref isc::dhcp::Pkt4::classes_ and
+    /// @ref isc::dhcp::Pkt4::inClass).
     ///
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
@@ -734,6 +735,14 @@ protected:
     boost::shared_ptr<AllocEngine> alloc_engine_;
 
 private:
+
+    /// @brief Assign class using vendor-class-identifier option
+    ///
+    /// @note This is the first part of @ref classifyPacket
+    ///
+    /// @param pkt packet to be classified
+    /// @param classes a reference to added class names for logging
+    void classifyByVendor(const Pkt4Ptr& pkt, std::string& classes);
 
     /// @brief Constructs netmask option based on subnet4
     /// @param subnet subnet for which the netmask will be calculated
