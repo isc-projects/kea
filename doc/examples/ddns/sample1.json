@@ -14,9 +14,9 @@
 #   on port 53001.  Maximum time to we will  wait for a DNS server to
 #   respond to us is 1000 ms.
 
-    "ip_address": "172.16.1.10",
+    "ip-address": "172.16.1.10",
     "port": 53001,
-    "dns_server_timeout" : 1000,
+    "dns-server-timeout" : 1000,
 
 #
 # ----------------- Forward DDNS  ------------------
@@ -30,18 +30,18 @@
 #      It does not use TSIG.
 #      It is server by one DNS server at "2001:db8:1::10" on port 7802
 
-    "forward_ddns":
+    "forward-ddns":
     {
-        "ddns_domains":
+        "ddns-domains":
         [
 #           DdnsDomain for zone "four.example.com."
             {
                 "name": "four.example.com.",
-                "key_name": "d2.md5.key",
-                "dns_servers":
+                "key-name": "d2.md5.key",
+                "dns-servers":
                 [
                     {
-                        "ip_address": "172.16.1.1"
+                        "ip-address": "172.16.1.1"
                     }
                 ]
             },
@@ -49,10 +49,10 @@
 #           DdnsDomain for zone "six.example.com."
             {
                 "name": "six.example.com.",
-                "dns_servers":
+                "dns-servers":
                 [
                     {
-                        "ip_address": "2001:db8:1::10",
+                        "ip-address": "2001:db8:1::10",
                         "port": 7802
                     }
                 ]
@@ -67,21 +67,21 @@
 # uses TSIG with key "d2.sha1.key" and is served by two DNS servers:
 # one listening at "172.16.1.1" on 53001 and the other at "192.168.2.10".
 #
-    "reverse_ddns":
+    "reverse-ddns":
     {
-        "ddns_domains":
+        "ddns-domains":
         [
             {
                 "name": "2.0.192.in-addr.arpa.",
-                "key_name": "d2.sha1.key",
-                "dns_servers":
+                "key-name": "d2.sha1.key",
+                "dns-servers":
                 [
                     {
-                        "ip_address": "172.16.1.1",
+                        "ip-address": "172.16.1.1",
                         "port": 53001
                     },
                     {
-                        "ip_address": "192.168.2.10"
+                        "ip-address": "192.168.2.10"
                     }
                 ]
             }
@@ -94,7 +94,7 @@
 #   Each key has a name, an algorithm (HMAC-MD5, HMAC-SHA1, HMAC-SHA224...)
 #   and a base-64 encoded shared secret.
 #
-    "tsig_keys":
+    "tsig-keys":
     [
         {
             "name": "d2.md5.key",
@@ -109,7 +109,7 @@
         {
             "name": "d2.sha512.key",
             "algorithm": "HMAC-SHA512",
-            "digest_bits": 256,
+            "digest-bits": 256,
             "secret": "/4wklkm04jeH4anx2MKGJLcya+ZLHldL5d6mK+4q6UXQP7KJ9mS2QG29hh0SJR4LA0ikxNJTUMvir42gLx6fGQ=="
         }
     ]

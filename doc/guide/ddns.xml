@@ -166,17 +166,17 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
 	configuration is a template that can be customised to your requirements.
 <screen>
 <userinput>"DhcpDdns": {
-    "ip_address": "127.0.0.1",
+    "ip-address": "127.0.0.1",
     "port": 53001,
-    "dns_server_timeout": 100,
-    "ncr_protocol": "UDP",
-    "ncr_format": "JSON",
-    "tsig_keys": [ ],
-    "forward_ddns": {
-	"ddns_domains": [ ]
+    "dns-server-timeout": 100,
+    "ncr-protocol": "UDP",
+    "ncr-format": "JSON",
+    "tsig-keys": [ ],
+    "forward-ddns": {
+	"ddns-domains": [ ]
     },
-    "reverse_ddns": {
-	"ddns_domains": [ ]
+    "reverse-ddns": {
+	"ddns-domains": [ ]
     }
 }</userinput>
 </screen>
@@ -216,7 +216,7 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
       <itemizedlist>
 
       <listitem><simpara>
-      <command>ip_address</command> - IP address on which D2
+      <command>ip-address</command> - IP address on which D2
       listens for requests. The default is the local loopback interface at
       address 127.0.0.1. You may specify either an IPv4 or IPv6 address.
       </simpara></listitem>
@@ -227,19 +227,19 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
       </simpara></listitem>
 
       <listitem><simpara>
-      <command>dns_server_timeout</command> - The maximum amount
+      <command>dns-server-timeout</command> - The maximum amount
       of time in milliseconds, that D2 will wait for a response from a
       DNS server to a single DNS update message.
       </simpara></listitem>
 
       <listitem><simpara>
-      <command>ncr_protocol</command> - Socket protocol to use when sending requests to D2.
+      <command>ncr-protocol</command> - Socket protocol to use when sending requests to D2.
       Currently only UDP is supported.  TCP may be available in an upcoming
       release.
       </simpara></listitem>
 
       <listitem><simpara>
-      <command>ncr_format</command> - Packet format to use when sending requests to D2.
+      <command>ncr-format</command> - Packet format to use when sending requests to D2.
       Currently only JSON format is supported.  Other formats may be available
       in future releases.
       </simpara></listitem>
@@ -252,7 +252,7 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
 	at 192.168.1.10 port 900:
 <screen>
 "DhcpDdns": {
-    <userinput>"ip_address": "192.168.1.10",
+    <userinput>"ip-address": "192.168.1.10",
     "port": 900,</userinput>
     ...
     }
@@ -272,7 +272,7 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
 	</warning>
 <note>
 <simpara>
-If the ip_address and port are changed, it will be necessary to change the
+If the ip-address and port are changed, it will be necessary to change the
 corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 </simpara>
 </note>
@@ -298,7 +298,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	corresponding TSIG key in the TSIG Key list.</para>
 
 	<para>
-	As one might gather from the name, the tsig_key section of the
+	As one might gather from the name, the tsig-key section of the
 	D2 configuration lists the TSIG keys.  Each entry describes a
 	TSIG key used by one or more DNS servers to authenticate requests
 	and sign responses.  Every entry in the list has three parameters:
@@ -345,7 +345,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	  </listitem>
 	  <listitem>
 	    <simpara>
-	      <command>digest_bits</command> -
+	      <command>digest-bits</command> -
 	      is used to specify the minimum truncated length in bits.
 	      The default value 0 means truncation is forbidden, not 0
 	      values must be an integral number of octets, be greater
@@ -380,7 +380,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	By default, the TSIG Key list is empty:
 <screen>
 "DhcpDdns": {
-   <userinput>"tsig_keys": [ ]</userinput>,
+   <userinput>"tsig-keys": [ ]</userinput>,
    ...
 }
 </screen>
@@ -388,7 +388,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	We must extend the list with a new key:
 <screen>
 "DhcpDdns": {
-    "tsig_keys": [
+    "tsig-keys": [
     <userinput>    {
 	    "name": "key.four.example.com.",
 	    "algorithm": "HMAC-SHA224",
@@ -413,8 +413,8 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	forward DDNS Domains, which is a list of structures.
 <screen>
 "DhcpDdns": {
-    <userinput>"forward_ddns": {
-	"ddns_domains": [ ]
+    <userinput>"forward-ddns": {
+	"ddns-domains": [ ]
     }</userinput>,
     ...
 }
@@ -451,7 +451,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	    </listitem>
 	    <listitem>
 	      <simpara>
-	      <command>key_name</command> -
+	      <command>key-name</command> -
 	      If TSIG is used with this domain's servers, this
 	      value should be the name of the key from within the TSIG Key List
 	      to use.  If the value is blank (the default), TSIG will not be
@@ -460,7 +460,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	    </listitem>
 	    <listitem>
 	      <simpara>
-	      <command>dns_servers</command> -
+	      <command>dns-servers</command> -
 	      A list of one or more DNS servers which can conduct the server
 	      side of the DDNS protocol for this domain.  The servers
 	      are used in a first to last preference. In other words, when D2
@@ -475,12 +475,12 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	element and set its parameters:
 <screen>
 "DhcpDdns": {
-    "forward_ddns": {
-	"ddns_domains": [
+    "forward-ddns": {
+	"ddns-domains": [
 	    <userinput>{
 		"name": "other.example.com.",
-		"key_name": "",
-		"dns_servers": [
+		"key-name": "",
+		"dns-servers": [
 		]
 	    }</userinput>
 	]
@@ -514,7 +514,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	    </listitem>
 	    <listitem>
 	      <simpara>
-	      <command>ip_address</command> -
+	      <command>ip-address</command> -
 	      The IP address at which the server listens for DDNS requests.
 	      This may be either an IPv4 or an IPv6 address.
 	      </simpara>
@@ -533,15 +533,15 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	follows:
 <screen>
 "DhcpDdns": {
-    "forward_ddns": {
-	"ddns_domains": [
+    "forward-ddns": {
+	"ddns-domains": [
 	    {
 		"name": "other.example.com.",
-		"key_name": "",
-		"dns_servers": [
+		"key-name": "",
+		"dns-servers": [
 		    <userinput>{
 			"hostname": "",
-			"ip_address": "172.88.99.10",
+			"ip-address": "172.88.99.10",
 			"port": 53
 		    }</userinput>
 		]
@@ -554,7 +554,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
     <note><simpara>
 	As stated earlier, "hostname" is not yet supported so, the parameter
-	"ip_address" must be set to the address of the DNS server.
+	"ip-address" must be set to the address of the DNS server.
     </simpara></note>
 
 	</section> <!-- "add-forward-dns-servers" -->
@@ -572,8 +572,8 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	reverse DDNS Domains, which is a list of structures.
 <screen>
 "DhcpDdns": {
-    <userinput>"reverse_ddns": {
-	"ddns_domains": [ ]
+    <userinput>"reverse-ddns": {
+	"ddns-domains": [ ]
     }</userinput>
     ...
 }
@@ -615,7 +615,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	    </listitem>
 	    <listitem>
 	      <simpara>
-	      <command>key_name</command> -
+	      <command>key-name</command> -
 	      If TSIG should be used with this domain's servers, then this
 	      value should be the name of that key from the TSIG Key List.
 	      If the value is blank (the default), TSIG will not be
@@ -625,7 +625,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	    </listitem>
 	    <listitem>
 	      <simpara>
-	      <command>dns_servers</command> -
+	      <command>dns-servers</command> -
 	      a list of one or more DNS servers which can conduct the server
 	      side of the DDNS protocol for this domain.  Currently the servers
 	      are used in a first to last preference. In other words, when D2
@@ -641,12 +641,12 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	the following configuration could be used:
 <screen>
 "DhcpDdns": {
-    "reverse_ddns": {
-	"ddns_domains": [
+    "reverse-ddns": {
+	"ddns-domains": [
 	    <userinput>{
 		"name": "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa.",
-		"key_name": "",
-		"dns_servers": [
+		"key-name": "",
+		"dns-servers": [
 		]
 	    }</userinput>
 	]
@@ -680,7 +680,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	    </listitem>
 	    <listitem>
 	      <simpara>
-	      <command>ip_address</command> -
+	      <command>ip-address</command> -
 	      The IP address at which the server listens for DDNS requests.
 	      </simpara>
 	    </listitem>
@@ -698,15 +698,15 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	follows:
 <screen>
 "DhcpDdns": {
-    "reverse_ddns": {
-	"ddns_domains": [
+    "reverse-ddns": {
+	"ddns-domains": [
 	    {
 		"name": "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa.",
-		"key_name": "",
-		"dns_servers": [
+		"key-name": "",
+		"dns-servers": [
 		    <userinput>{
 			"hostname": "",
-			"ip_address": "172.88.99.10",
+			"ip-address": "172.88.99.10",
 			"port": 53
 		    }</userinput>
 		]
@@ -720,7 +720,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
     <note>
     <simpara>
     As stated earlier, "hostname" is not yet supported so, the parameter
-    "ip_address" must be set to the address of the DNS server.
+    "ip-address" must be set to the address of the DNS server.
     </simpara>
     </note>
 
@@ -820,28 +820,28 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	The following example configuration specified the Forward DDNS Domains.
 <screen><userinput>
 "DhcpDdns": {
-    "forward_ddns": {
-	"ddns_domains": [
+    "forward-ddns": {
+	"ddns-domains": [
 	    {
 		"name": "four.example.com.",
-		"key_name": "",
-		"dns_servers": [
-		    { "ip_address": "172.16.1.5" },
-		    { "ip_address": "172.16.2.5" }
+		"key-name": "",
+		"dns-servers": [
+		    { "ip-address": "172.16.1.5" },
+		    { "ip-address": "172.16.2.5" }
 		]
 	    },
 	    {
 		"name": "six.example.com.",
-		"key_name": "",
-		"dns_servers": [
-		    { "ip_address": "2001:db8::1" }
+		"key-name": "",
+		"dns-servers": [
+		    { "ip-address": "2001:db8::1" }
 		]
 	    },
 	    {
 		"name": "example.com.",
-		"key_name": "",
-		"dns_servers": [
-		    { "ip_address": "172.16.2.5" }
+		"key-name": "",
+		"dns-servers": [
+		    { "ip-address": "172.16.2.5" }
 		]
 	    },
 
@@ -894,28 +894,28 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
 <screen><userinput>
 "DhcpDdns": {
-    "reverse_ddns": {
-	"ddns_domains": [
+    "reverse-ddns": {
+	"ddns-domains": [
 	    {
 		"name": "2.0.192.in-addr.arpa.",
-		"key_name": "",
-		"dns_servers": [
-		    { "ip_address": "172.16.1.5" },
-		    { "ip_address": "172.16.2.5" }
+		"key-name": "",
+		"dns-servers": [
+		    { "ip-address": "172.16.1.5" },
+		    { "ip-address": "172.16.2.5" }
 		]
 	    }
 	    {
 		"name": "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa.",
-		"key_name": "",
-		"dns_servers": [
-		    { "ip_address": "2001:db8::1" }
+		"key-name": "",
+		"dns-servers": [
+		    { "ip-address": "2001:db8::1" }
 		]
 	    }
 	    {
 		"name": "0.192.in-addr.arpa.",
-		"key_name": "",
-		"dns_servers": [
-		    { "ip_address": "172.16.2.5" }
+		"key-name": "",
+		"dns-servers": [
+		    { "ip-address": "172.16.2.5" }
 		]
 	    }
 	]
