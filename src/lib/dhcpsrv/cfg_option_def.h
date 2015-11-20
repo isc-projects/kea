@@ -16,7 +16,7 @@
 #define CFG_OPTION_DEF_H
 
 #include <dhcp/option_definition.h>
-#include <dhcpsrv/option_space_container.h>
+#include <dhcp/option_space_container.h>
 #include <string>
 
 namespace isc {

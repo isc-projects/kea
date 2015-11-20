@@ -16,6 +16,7 @@
 #define LIBDHCP_H
 
 #include <dhcp/option_definition.h>
+#include <dhcp/option_space_container.h>
 #include <dhcp/pkt6.h>
 #include <util/buffer.h>
 
@@ -256,6 +257,21 @@ public:
                                        const OptionBuffer& buf,
                                        isc::dhcp::OptionCollection& options);
 
+
+    /// @brief Copies option definitions created at runtime.
+    ///
+    /// Copied option definitions will be used as "runtime" option definitions.
+    /// A typical use case is to set option definitions specified by the user
+    /// in the server configuration. These option definitions should be removed
+    /// or replaced with new option definitions upon reconfiguration.
+    ///
+    /// @param defs Const reference to a container holding option definitions
+    /// grouped by option spaces.
+    static void setRuntimeOptionDefs(const OptionDefSpaceContainer& defs);
+
+    /// @brief Removes runtime option definitions.
+    static void clearRuntimeOptionDefs();
+
 private:
 
     /// Initialize standard DHCPv4 option definitions.
@@ -301,6 +317,9 @@ private:
 
     /// Container for v6 vendor option definitions
     static VendorOptionDefContainers vendor6_defs_;
+
+    /// Container for additional option defnitions created in runtime.
+    static OptionDefSpaceContainer runtime_option_defs_;
 };
 
 }

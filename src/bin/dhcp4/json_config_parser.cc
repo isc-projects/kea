@@ -22,7 +22,6 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcp4/json_config_parser.h>
-#include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>

@@ -16,8 +16,8 @@
 #define CFG_OPTION_H
 
 #include <dhcp/option.h>
+#include <dhcp/option_space_container.h>
 #include <dhcpsrv/key_from_key.h>
-#include <dhcpsrv/option_space_container.h>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
