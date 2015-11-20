@@ -105,11 +105,11 @@
 # DHCP DDNS configuration starts here.
 "DhcpDdns":
 {
-  "ip_address": "127.0.0.1",
+  "ip-address": "127.0.0.1",
   "port": 53001,
-  "tsig_keys": [],
-  "forward_ddns" : {},
-  "reverse_ddns" : {}
+  "tsig-keys": [],
+  "forward-ddns" : {},
+  "reverse-ddns" : {}
 },
 
 # Logging configuration starts here. It tells Kea servers to store
