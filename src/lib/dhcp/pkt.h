@@ -237,6 +237,12 @@ public:
     /// @param client_class name of the class to be added
     void addClass(const isc::dhcp::ClientClass& client_class);
 
+    /// @brief Returns the class set
+    ///
+    /// @note This should be used only to iterate over the class set.
+    /// @return
+    const ClientClasses& getClasses() const { return (classes_); }
+
     /// @brief Unparsed data (in received packets).
     ///
     /// @warning This public member is accessed by derived
