@@ -25,6 +25,7 @@
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/cfg_option.h>
 #include <hooks/callout_handle.h>
 #include <dhcpsrv/daemon.h>
 
@@ -110,6 +111,16 @@ public:
         return (context_);
     }
 
+    /// @brief Returns the configured option list
+    CfgOptionList& getCfgOptionList() {
+        return (cfg_option_list_);
+    }
+
+    /// @brief Returns the configured option list
+    const CfgOptionList& getCfgOptionList() const {
+        return (cfg_option_list_);
+    }
+
 private:
 
     /// @brief Copies default parameters from client's to server's message
@@ -142,6 +153,8 @@ private:
     Pkt4Ptr resp_;
     /// @brief Context for use with allocation engine.
     AllocEngine::ClientContext4Ptr context_;
+    /// @brief Configured option list for appending otions.
+    CfgOptionList cfg_option_list_;
 };
 
 /// @brief Type representing the pointer to the @c Dhcpv4Exchange.
@@ -421,6 +434,14 @@ protected:
     ///
     /// @return DHCPACK to be sent to the client.
     Pkt4Ptr processInform(Pkt4Ptr& inform);
+
+    /// @brief Build the configured option list
+    ///
+    /// @note The configured option list is an *ordered* list of
+    /// @c CfgOption objects used to append options to the response.
+    ///
+    /// @param ex The exchange where the configured option list is cached
+    void buildCfgOptionList(Dhcpv4Exchange& ex);
 
     /// @brief Appends options requested by client.
     ///

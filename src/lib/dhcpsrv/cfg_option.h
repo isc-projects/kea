@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <string>
 #include <set>
+#include <list>
 
 namespace isc {
 namespace dhcp {
@@ -406,6 +407,9 @@ typedef boost::shared_ptr<CfgOption> CfgOptionPtr;
 
 /// @brief Const pointer.
 typedef boost::shared_ptr<const CfgOption> ConstCfgOptionPtr;
+
+/// @brief Const pointer list.
+typedef std::list<ConstCfgOptionPtr> CfgOptionList;
 
 //@}
 
