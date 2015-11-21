@@ -84,6 +84,9 @@ The first argument specifies the client and transaction identification
 information. The second argument includes all classes to which the
 packet has been assigned.
 
+% DHCP4_CLASS_UNCONFIGURED %1: client packet belongs an unconfigured class: %2
+This debug message informs that incoming packet belongs to a class which cannot be found in the configuration. Either a hook written before the classification was added to Kea is used, or class naming is inconsistent.
+
 % DHCP4_CLIENTID_IGNORED_FOR_LEASES %1: not using client identifier for lease allocation for subnet %2
 This debug message is issued when the server is processing the DHCPv4 message
 for which client identifier will not be used when allocating new lease or
