@@ -1256,8 +1256,10 @@ SubnetConfigParser::createSubnet() {
         subnet_->setIface(iface);
     }
 
-    // Merge globally defined options to the subnet specific options.
-    CfgMgr::instance().getStagingCfg()->getCfgOption()->mergeTo(*options_);
+    // Here globally defined options were merged to the subnet specific
+    // options but it is no longer the case (they have a different
+    // and not consecutive priority).
+
     // Copy all options to the subnet configuration.
     options_->copyTo(*subnet_->getCfgOption());
     // Append suboptions to the top-level options.

@@ -264,6 +264,8 @@ public:
     /// as a parameter. If an item exists in the destination it is not
     /// copied.
     ///
+    /// @note: this method is not longer used so should become private.
+    ///
     /// @param [out] other Configuration object to merge to.
     void mergeTo(CfgOption& other) const;
 
