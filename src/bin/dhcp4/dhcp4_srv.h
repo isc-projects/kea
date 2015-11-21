@@ -706,11 +706,11 @@ protected:
 
     /// @brief Assigns incoming packet to zero or more classes.
     ///
-    /// @note It is done in two phases: first the content of the
+    /// @note This is done in two phases: first the content of the
     /// vendor-class-identifier option is used as a class, by
     /// calling @ref classifyByVendor(). Second classification match
-    /// expressions are evaluated. The resulting class will be stored
-    /// in packet (see @ref isc::dhcp::Pkt4::classes_ and
+    /// expressions are evaluated. The resulting classes will be stored
+    /// in the packet (see @ref isc::dhcp::Pkt4::classes_ and
     /// @ref isc::dhcp::Pkt4::inClass).
     ///
     /// @param pkt packet to be classified
