@@ -88,6 +88,12 @@ to establish a session with the Kea control channel.
 This debug message informs that incoming packet has been assigned to specified
 class or classes.
 
+% DHCP6_CLASS_UNCONFIGURED client packet belongs an unconfigured class: %1
+This debug message informs that incoming packet belongs to a class
+which cannot be found in the configuration. Either a hook written
+before the classification was added to Kea is used, or class naming is
+inconsistent.
+
 % DHCP6_COMMAND_RECEIVED received command %1, arguments: %2
 A debug message listing the command (and possible arguments) received
 from the Kea control system by the IPv6 DHCP server.
