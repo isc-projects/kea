@@ -42,6 +42,8 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/utils.h>
+#include <eval/evaluate.h>
+#include <eval/eval_messages.h>
 #include <exceptions/exceptions.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_log.h>
@@ -888,6 +890,36 @@ Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr&, Pkt6Ptr& answer) {
 }
 
 void
+Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
+                              AllocEngine::ClientContext6& ctx) {
+    CfgOptionList& co_list = getCfgOptionList();
+
+    // First subnet configured options
+    if (ctx.subnet_) {
+        co_list.push_back(ctx.subnet_->getCfgOption());
+    }
+
+    // Each class in the incoming packet
+    const ClientClasses& classes = question->getClasses();
+    for (ClientClasses::const_iterator cclass = classes.begin();
+         cclass != classes.end(); ++cclass) {
+        // Find the client class definition for this class
+        const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
+            getClientClassDictionary()->findClass(*cclass);
+        if (!ccdef) {
+            // Not found: the class is not configured
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNCONFIGURED)
+                .arg(*cclass);
+            continue;
+        }
+        co_list.push_back(ccdef->getCfgOption());
+    }
+
+    // Last global options
+    co_list.push_back(CfgMgr::instance().getCurrentCfg()->getCfgOption());
+}
+
+void
 Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                                   AllocEngine::ClientContext6& ctx) {
 
@@ -902,32 +934,18 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         return;
     }
 
-    // Get global option definitions (i.e. options defined to apply to all,
-    // unless overwritten on a subnet or host level)
-    ConstCfgOptionPtr global_opts = CfgMgr::instance().getCurrentCfg()->
-        getCfgOption();
-
     // Get the list of options that client requested.
     const std::vector<uint16_t>& requested_opts = option_oro->getValues();
     BOOST_FOREACH(uint16_t opt, requested_opts) {
-        // If we found a subnet for this client, all options (including the
-        // global options) should be available through the options
-        // configuration for the subnet.
-        if (ctx.subnet_) {
-            OptionDescriptor desc = ctx.subnet_->getCfgOption()->get("dhcp6",
-                                                                     opt);
-            if (desc.option_) {
-                // Attempt to assign an option from subnet first.
-                answer->addOption(desc.option_);
-                continue;
-            }
-
-        // If there is no subnet selected (e.g. Information-request message
-        // case) we need to look at the global options.
-        } else {
-            OptionDescriptor desc = global_opts->get("dhcp6", opt);
+        // Iterate on the configured option list
+        const CfgOptionList& co_list = getCfgOptionList();
+        for (CfgOptionList::const_iterator copts = co_list.begin();
+             copts != co_list.end(); ++copts) {
+            OptionDescriptor desc = (*copts)->get("dhcp6", opt);
+            // Got it: add it and jump to the outer loop
             if (desc.option_) {
                 answer->addOption(desc.option_);
+                break;
             }
         }
     }
@@ -972,10 +990,15 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer
     bool added = false;
     const std::vector<uint16_t>& requested_opts = oro->getValues();
     BOOST_FOREACH(uint16_t opt, requested_opts) {
-        OptionDescriptor desc = ctx.subnet_->getCfgOption()->get(vendor_id, opt);
-        if (desc.option_) {
-            vendor_rsp->addOption(desc.option_);
-            added = true;
+        const CfgOptionList& co_list = getCfgOptionList();
+        for (CfgOptionList::const_iterator copts = co_list.begin();
+             copts != co_list.end(); ++copts) {
+            OptionDescriptor desc = (*copts)->get(vendor_id, opt);
+            if (desc.option_) {
+                vendor_rsp->addOption(desc.option_);
+                added = true;
+                break;
+            }
         }
     }
 
@@ -2297,6 +2320,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     }
 
     copyClientOptions(solicit, response);
+    buildCfgOptionList(solicit, ctx);
     appendDefaultOptions(solicit, response);
     appendRequestedOptions(solicit, response, ctx);
     appendRequestedVendorOptions(solicit, response, ctx);
@@ -2324,6 +2348,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
     copyClientOptions(request, reply);
+    buildCfgOptionList(request, ctx);
     appendDefaultOptions(request, reply);
     appendRequestedOptions(request, reply, ctx);
     appendRequestedVendorOptions(request, reply, ctx);
@@ -2347,6 +2372,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
 
     copyClientOptions(renew, reply);
+    buildCfgOptionList(renew, ctx);
     appendDefaultOptions(renew, reply);
     appendRequestedOptions(renew, reply, ctx);
 
@@ -2369,6 +2395,7 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
 
     copyClientOptions(rebind, reply);
+    buildCfgOptionList(rebind, ctx);
     appendDefaultOptions(rebind, reply);
     appendRequestedOptions(rebind, reply, ctx);
 
@@ -2399,7 +2426,9 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, confirm->getTransid()));
     // Make sure that the necessary options are included.
     copyClientOptions(confirm, reply);
+    buildCfgOptionList(confirm, ctx);
     appendDefaultOptions(confirm, reply);
+    appendRequestedOptions(confirm, reply, ctx);
     // Indicates if at least one address has been verified. If no addresses
     // are verified it means that the client has sent no IA_NA options
     // or no IAAddr options and that client's message has to be discarded.
@@ -2778,6 +2807,9 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     // Copy client options (client-id, also relay information if present)
     copyClientOptions(inf_request, reply);
 
+    // Build the configured option list for append methods
+    buildCfgOptionList(inf_request, ctx);
+
     // Append default options, i.e. options that the server is supposed
     // to put in all messages it sends (server-id for now, but possibly other
     // options once we start supporting authentication)
@@ -2891,7 +2923,7 @@ Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
     return (offset);
 }
 
-void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
+void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt, std::string& classes) {
     OptionVendorClassPtr vclass = boost::dynamic_pointer_cast<
         OptionVendorClass>(pkt->getOption(D6O_VENDOR_CLASS));
 
@@ -2899,22 +2931,68 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
         return;
     }
 
-    std::ostringstream classes;
     if (vclass->hasTuple(DOCSIS3_CLASS_MODEM)) {
-        classes << VENDOR_CLASS_PREFIX << DOCSIS3_CLASS_MODEM;
+        pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM);
+        classes += VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM + " ";
 
     } else if (vclass->hasTuple(DOCSIS3_CLASS_EROUTER)) {
-        classes << VENDOR_CLASS_PREFIX << DOCSIS3_CLASS_EROUTER;
+        pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER);
+        classes += VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER + " ";
 
     } else {
-        classes << VENDOR_CLASS_PREFIX << vclass->getTuple(0).getText();
+        pkt->addClass(VENDOR_CLASS_PREFIX + vclass->getTuple(0).getText());
+        classes + VENDOR_CLASS_PREFIX + vclass->getTuple(0).getText() + " ";
+    }
+}
+
+void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
+    string classes = "";
+
+    // First phase: built-in vendor class processing
+    classifyByVendor(pkt, classes);
+
+    // Run match expressions
+    // Note getClientClassDictionary() cannot be null
+    const ClientClassDefMapPtr& defs_ptr = CfgMgr::instance().getCurrentCfg()->
+        getClientClassDictionary()->getClasses();
+    for (ClientClassDefMap::const_iterator it = defs_ptr->begin();
+         it != defs_ptr->end(); ++it) {
+        // Note second cannot be null
+        const ExpressionPtr& expr_ptr = it->second->getMatchExpr();
+        // Nothing to do without an expression to evaluate
+        if (!expr_ptr) {
+            continue;
+        }
+        // Evaluate the expression which can return false (no match),
+        // true (match) or raise an exception (error)
+        try {
+            bool status = evaluate(*expr_ptr, *pkt);
+            if (status) {
+                LOG_INFO(dhcp6_logger, EVAL_RESULT)
+                    .arg(it->first)
+                    .arg(status);
+                // Matching: add the class
+                pkt->addClass(it->first);
+                classes += it->first + " ";
+            } else {
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, EVAL_RESULT)
+                    .arg(it->first)
+                    .arg(status);
+            }
+        } catch (const Exception& ex) {
+            LOG_ERROR(dhcp6_logger, EVAL_RESULT)
+                .arg(it->first)
+                .arg(ex.what());
+        } catch (...) {
+            LOG_ERROR(dhcp6_logger, EVAL_RESULT)
+                .arg(it->first)
+                .arg("get exception?");
+        }
     }
 
-    // If there is no class identified, leave.
-    if (!classes.str().empty()) {
-        pkt->addClass(classes.str());
+    if (!classes.empty()) {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
-            .arg(classes.str());
+            .arg(classes);
     }
 }
 

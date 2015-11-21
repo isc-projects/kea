@@ -24,6 +24,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
@@ -428,6 +429,25 @@ protected:
     /// @param answer server's message (options will be copied here)
     void copyClientOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
+    /// @brief Returns the configured option list
+    CfgOptionList& getCfgOptionList() {
+        return (cfg_option_list_);
+    }
+
+    /// @brief Returns the configured option list
+    const CfgOptionList& getCfgOptionList() const {
+        return (cfg_option_list_);
+    }
+
+    /// @brief Build the configured option list
+    ///
+    /// @note The configured option list is an *ordered* list of
+    /// @c CfgOption objects used to append options to the response.
+    ///
+    /// @param ex The exchange where the configured option list is cached
+    void buildCfgOptionList(const Pkt6Ptr& question,
+                            AllocEngine::ClientContext6& ctx);
+
     /// @brief Appends default options to server's answer.
     ///
     /// Adds required options to server's answer. In particular, server-id
@@ -633,9 +653,11 @@ protected:
 
     /// @brief Assigns incoming packet to zero or more classes.
     ///
-    /// @note For now, the client classification is very simple. It just uses
-    /// content of the vendor-class-identifier option as a class. The resulting
-    /// class will be stored in packet (see @ref isc::dhcp::Pkt6::classes_ and
+    /// @note This is done in two phases: first the content of the
+    /// vendor-class-identifier option is used as a class, by
+    /// calling @ref classifyByVendor(). Second classification match
+    /// expressions are evaluated. The resulting classes will be stored
+    /// in the packet (see @ref isc::dhcp::Pkt6::classes_ and
     /// @ref isc::dhcp::Pkt6::inClass).
     ///
     /// @param pkt packet to be classified
@@ -739,6 +761,14 @@ protected:
 
 private:
 
+    /// @brief Assign class using vendor-class-identifier option
+    ///
+    /// @note This is the first part of @ref classifyPacket
+    ///
+    /// @param pkt packet to be classified
+    /// @param classes a reference to added class names for logging
+    void classifyByVendor(const Pkt6Ptr& pkt, std::string& classes);
+
     /// @brief Generate FQDN to be sent to a client if none exists.
     ///
     /// This function is meant to be called by the functions which process
@@ -794,6 +824,9 @@ private:
 
     /// UDP port number on which server listens.
     uint16_t port_;
+
+    /// @brief Configured option list for appending otions.
+    CfgOptionList cfg_option_list_;
 
 protected:
 
