@@ -861,6 +861,33 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
             }
         }
     }
+
+    // Process each class in the packet
+    const ClientClasses& classes = query->getClasses();
+    for (ClientClasses::const_iterator cclass = classes.begin();
+         cclass != classes.end(); ++cclass) {
+        // Find the client class definition for this class
+        const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
+            getClientClassDictionary()->findClass(*cclass);
+        if (!ccdef) {
+            // Not found: the class is not configured
+            LOG_DEBUG(options4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNCONFIGURED)
+                .arg(query->getLabel())
+                .arg(*cclass);
+            continue;
+        }
+        // For each requested option code get the instance of the option
+        // in the class to be returned to the client.
+        for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
+             opt != requested_opts.end(); ++opt) {
+            if (!resp->getOption(*opt)) {
+                OptionDescriptor desc = ccdef->getCfgOption()->get("dhcp4", *opt);
+                if (desc.option_) {
+                    resp->addOption(desc.option_);
+                }
+            }
+        }
+    }
 }
 
 void
@@ -1611,7 +1638,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     /// @todo: decide whether we want to add a new hook point for
     /// doing class specific processing.
-    if (!classSpecificProcessing(ex)) {
+    if (!vendorClassSpecificProcessing(ex)) {
         /// @todo add more verbosity here
         LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_DISCOVER_CLASS_PROCESSING_FAILED)
             .arg(discover->getLabel());
@@ -1661,7 +1688,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
     /// @todo: decide whether we want to add a new hook point for
     /// doing class specific processing.
-    if (!classSpecificProcessing(ex)) {
+    if (!vendorClassSpecificProcessing(ex)) {
         /// @todo add more verbosity here
         LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_REQUEST_CLASS_PROCESSING_FAILED)
             .arg(ex.getQuery()->getLabel());
@@ -1949,7 +1976,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
 
     /// @todo: decide whether we want to add a new hook point for
     /// doing class specific processing.
-    if (!classSpecificProcessing(ex)) {
+    if (!vendorClassSpecificProcessing(ex)) {
         LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL,
                   DHCP4_INFORM_CLASS_PROCESSING_FAILED)
             .arg(inform->getLabel());
@@ -2334,7 +2361,7 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
 }
 
 bool
-Dhcpv4Srv::classSpecificProcessing(const Dhcpv4Exchange& ex) {
+Dhcpv4Srv::vendorClassSpecificProcessing(const Dhcpv4Exchange& ex) {
 
     Subnet4Ptr subnet = ex.getContext()->subnet_;
     Pkt4Ptr query = ex.getQuery();
@@ -2345,7 +2372,6 @@ Dhcpv4Srv::classSpecificProcessing(const Dhcpv4Exchange& ex) {
         return (true);
     }
 
-    // DOCSIS3 class modem specific processing
     if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM)) {
 
         // Set next-server. This is TFTP server address. Cable modems will
@@ -2367,50 +2393,10 @@ Dhcpv4Srv::classSpecificProcessing(const Dhcpv4Exchange& ex) {
         }
     }
 
-    // DOCSIS3 class erouter specific processing
     if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER)) {
 
         // Do not set TFTP server address for eRouter devices.
         rsp->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS());
-    }
-
-    // try to get the 'Parameter Request List' option which holds the
-    // codes of requested options.
-    OptionUint8ArrayPtr option_prl = boost::dynamic_pointer_cast<
-        OptionUint8Array>(query->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
-    // If there is no PRL option in the message from the client then
-    // there is nothing to do.
-    if (!option_prl) {
-        return (true);
-    }
-    // Get the codes of requested options.
-    const std::vector<uint8_t>& requested_opts = option_prl->getValues();
-
-    // Process each class in the packet
-    const ClientClasses& classes = query->getClasses();
-    for (ClientClasses::const_iterator cclass = classes.begin();
-         cclass != classes.end(); ++cclass) {
-        // Find the client class definition for this class
-        const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
-            getClientClassDictionary()->findClass(*cclass);
-        if (!ccdef) {
-            // Not found: the class is not configured
-	    LOG_DEBUG(options4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNCONFIGURED)
-		.arg(query->getLabel())
-		.arg(*cclass);
-            continue;
-        }
-	// For each requested option code get the instance of the option
-	// in the class to be returned to the client.
-	for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
-	     opt != requested_opts.end(); ++opt) {
-	    if (!rsp->getOption(*opt)) {
-		OptionDescriptor desc = ccdef->getCfgOption()->get("dhcp4", *opt);
-		if (desc.option_) {
-		    rsp->addOption(desc.option_);
-		}
-	    }
-	}
     }
 
     return (true);
