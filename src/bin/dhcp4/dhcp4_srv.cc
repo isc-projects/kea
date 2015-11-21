@@ -2394,7 +2394,10 @@ Dhcpv4Srv::classSpecificProcessing(const Dhcpv4Exchange& ex) {
         const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
             getClientClassDictionary()->findClass(*cclass);
         if (!ccdef) {
-            // Not found
+            // Not found: the class is not configured
+	    LOG_DEBUG(options4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNCONFIGURED)
+		.arg(query->getLabel())
+		.arg(*cclass);
             continue;
         }
 	// For each requested option code get the instance of the option
