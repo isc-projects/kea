@@ -75,6 +75,7 @@ kea_dhcp6_SOURCES  = main.cc
 
 kea_dhcp6_LDADD  = libdhcp6.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la

@@ -887,8 +887,8 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
          opt != requested_opts.end(); ++opt) {
         // Add nothing when it is already there
         if (!resp->getOption(*opt)) {
-            const CfgOptionList& co_list = ex.getCfgOptionList();
             // Iterate on the configured option list
+            const CfgOptionList& co_list = ex.getCfgOptionList();
             for (CfgOptionList::const_iterator copts = co_list.begin();
                  copts != co_list.end(); ++copts) {
                 OptionDescriptor desc = (*copts)->get("dhcp4", *opt);
