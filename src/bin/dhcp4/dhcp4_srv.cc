@@ -822,6 +822,37 @@ Dhcpv4Srv::appendServerID(Dhcpv4Exchange& ex) {
 }
 
 void
+Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
+    CfgOptionList& co_list = ex.getCfgOptionList();
+
+    // First subnet configured options
+    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    if (subnet) {
+        co_list.push_back(subnet->getCfgOption());
+    }
+
+    // Each class in the incoming packet
+    const ClientClasses& classes = ex.getQuery()->getClasses();
+    for (ClientClasses::const_iterator cclass = classes.begin();
+         cclass != classes.end(); ++cclass) {
+        // Find the client class definition for this class
+        const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
+            getClientClassDictionary()->findClass(*cclass);
+        if (!ccdef) {
+            // Not found: the class is not configured
+            LOG_DEBUG(options4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNCONFIGURED)
+                .arg(ex.getQuery()->getLabel())
+                .arg(*cclass);
+            continue;
+        }
+        co_list.push_back(ccdef->getCfgOption());
+    }
+
+    // Last global options
+    co_list.push_back(CfgMgr::instance().getCurrentCfg()->getCfgOption());
+}
+
+void
 Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     // Get the subnet relevant for the client. We will need it
     // to get the options associated with it.
@@ -854,36 +885,17 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     // to be returned to the client.
     for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
          opt != requested_opts.end(); ++opt) {
+        // Add nothing when it is already there
         if (!resp->getOption(*opt)) {
-            OptionDescriptor desc = subnet->getCfgOption()->get("dhcp4", *opt);
-            if (desc.option_) {
-                resp->addOption(desc.option_);
-            }
-        }
-    }
-
-    // Process each class in the packet
-    const ClientClasses& classes = query->getClasses();
-    for (ClientClasses::const_iterator cclass = classes.begin();
-         cclass != classes.end(); ++cclass) {
-        // Find the client class definition for this class
-        const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
-            getClientClassDictionary()->findClass(*cclass);
-        if (!ccdef) {
-            // Not found: the class is not configured
-            LOG_DEBUG(options4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNCONFIGURED)
-                .arg(query->getLabel())
-                .arg(*cclass);
-            continue;
-        }
-        // For each requested option code get the instance of the option
-        // in the class to be returned to the client.
-        for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
-             opt != requested_opts.end(); ++opt) {
-            if (!resp->getOption(*opt)) {
-                OptionDescriptor desc = ccdef->getCfgOption()->get("dhcp4", *opt);
+            const CfgOptionList& co_list = ex.getCfgOptionList();
+            // Iterate on the configured option list
+            for (CfgOptionList::const_iterator copts = co_list.begin();
+                 copts != co_list.end(); ++copts) {
+                OptionDescriptor desc = (*copts)->get("dhcp4", *opt);
+                // Got it: add it and jump to the outer loop
                 if (desc.option_) {
                     resp->addOption(desc.option_);
+                    break;
                 }
             }
         }
@@ -932,11 +944,15 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
          code != requested_opts.end(); ++code) {
         if  (!vendor_rsp->getOption(*code)) {
-            OptionDescriptor desc = subnet->getCfgOption()->get(vendor_id,
-                                                                *code);
-            if (desc.option_) {
-                vendor_rsp->addOption(desc.option_);
-                added = true;
+            const CfgOptionList& co_list = ex.getCfgOptionList();
+            for (CfgOptionList::const_iterator copts = co_list.begin();
+                 copts != co_list.end(); ++copts) {
+                OptionDescriptor desc = (*copts)->get(vendor_id, *code);
+                if (desc.option_) {
+                    vendor_rsp->addOption(desc.option_);
+                    added = true;
+                    break;
+                }
             }
         }
 
@@ -973,10 +989,14 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
         OptionPtr opt = resp->getOption(required_options[i]);
         if (!opt) {
             // Check whether option has been configured.
-            OptionDescriptor desc = subnet->getCfgOption()->
-                get("dhcp4", required_options[i]);
-            if (desc.option_) {
-                resp->addOption(desc.option_);
+            const CfgOptionList& co_list = ex.getCfgOptionList();
+            for (CfgOptionList::const_iterator copts = co_list.begin();
+                 copts != co_list.end(); ++copts) {
+                OptionDescriptor desc = (*copts)->get("dhcp4", required_options[i]);
+                if (desc.option_) {
+                    resp->addOption(desc.option_);
+                    break;
+                }
             }
         }
     }
@@ -1617,6 +1637,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
+        buildCfgOptionList(ex);
         appendRequestedOptions(ex);
         appendRequestedVendorOptions(ex);
         // There are a few basic options that we always want to
@@ -1672,6 +1693,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
+        buildCfgOptionList(ex);
         appendRequestedOptions(ex);
         appendRequestedVendorOptions(ex);
         // There are a few basic options that we always want to
@@ -1951,6 +1973,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
 
     Pkt4Ptr ack = ex.getResponse();
 
+    buildCfgOptionList(ex);
     appendRequestedOptions(ex);
     appendRequestedVendorOptions(ex);
     appendBasicOptions(ex);
@@ -2380,15 +2403,19 @@ Dhcpv4Srv::vendorClassSpecificProcessing(const Dhcpv4Exchange& ex) {
 
         // Now try to set up file field in DHCPv4 packet. We will just copy
         // content of the boot-file option, which contains the same information.
-        OptionDescriptor desc = subnet->getCfgOption()->
-            get("dhcp4", DHO_BOOT_FILE_NAME);
+        const CfgOptionList& co_list = ex.getCfgOptionList();
+        for (CfgOptionList::const_iterator copts = co_list.begin();
+             copts != co_list.end(); ++copts) {
+            OptionDescriptor desc = (*copts)->get("dhcp4", DHO_BOOT_FILE_NAME);
 
-        if (desc.option_) {
-            boost::shared_ptr<OptionString> boot =
-                boost::dynamic_pointer_cast<OptionString>(desc.option_);
-            if (boot) {
-                std::string filename = boot->getValue();
-                rsp->setFile((const uint8_t*)filename.c_str(), filename.size());
+            if (desc.option_) {
+                boost::shared_ptr<OptionString> boot =
+                    boost::dynamic_pointer_cast<OptionString>(desc.option_);
+                if (boot) {
+                    std::string filename = boot->getValue();
+                    rsp->setFile((const uint8_t*)filename.c_str(), filename.size());
+                    break;
+                }
             }
         }
     }
