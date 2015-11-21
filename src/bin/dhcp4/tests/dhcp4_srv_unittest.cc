@@ -1711,24 +1711,39 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     query1->setRemoteAddr(IOAddress("192.0.2.1"));
     Pkt4Ptr query2(new Pkt4(DHCPDISCOVER, 1234));
     query2->setRemoteAddr(IOAddress("192.0.2.1"));
+    Pkt4Ptr query3(new Pkt4(DHCPDISCOVER, 1234));
+    query3->setRemoteAddr(IOAddress("192.0.2.1"));
 
-    // Create and add a host-name option to the first query
+    // Create and add a PRL option to the first 2 queries
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_IP_FORWARDING);
+    query1->addOption(prl);
+    query2->addOption(prl);
+
+    // Create and add a host-name option to the first and last queries
     OptionStringPtr hostname(new OptionString(Option::V4, 12, "foo"));
     ASSERT_TRUE(hostname);
     query1->addOption(hostname);
+    query3->addOption(hostname);
 
     // Classify packets
     srv.classifyPacket(query1);
     srv.classifyPacket(query2);
+    srv.classifyPacket(query3);
 
-    // The first packet (and only the first) should be in the router class
+    // Packets at the exception of the second should be in the router class
     EXPECT_TRUE(query1->inClass("router"));
     EXPECT_FALSE(query2->inClass("router"));
+    EXPECT_TRUE(query3->inClass("router"));
 
     Dhcpv4Exchange ex1 = createExchange(query1);
     Pkt4Ptr response1 = ex1.getResponse();
     Dhcpv4Exchange ex2 = createExchange(query2);
     Pkt4Ptr response2 = ex2.getResponse();
+    Dhcpv4Exchange ex3 = createExchange(query3);
+    Pkt4Ptr response3 = ex3.getResponse();
 
     // Classification processing should add an ip-forwarding option
     srv.classSpecificProcessing(ex1);
@@ -1739,6 +1754,11 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     srv.classSpecificProcessing(ex2);
     OptionPtr opt2 = response2->getOption(DHO_IP_FORWARDING);
     EXPECT_FALSE(opt2);
+
+    // But only for the first exchange
+    srv.classSpecificProcessing(ex3);
+    OptionPtr opt3 = response3->getOption(DHO_IP_FORWARDING);
+    EXPECT_FALSE(opt3);
 }
 
 // Checks subnet options have the priority over class options
