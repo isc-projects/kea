@@ -2374,6 +2374,18 @@ Dhcpv4Srv::classSpecificProcessing(const Dhcpv4Exchange& ex) {
         rsp->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS());
     }
 
+    // try to get the 'Parameter Request List' option which holds the
+    // codes of requested options.
+    OptionUint8ArrayPtr option_prl = boost::dynamic_pointer_cast<
+        OptionUint8Array>(query->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
+    // If there is no PRL option in the message from the client then
+    // there is nothing to do.
+    if (!option_prl) {
+        return (true);
+    }
+    // Get the codes of requested options.
+    const std::vector<uint8_t>& requested_opts = option_prl->getValues();
+
     // Process each class in the packet
     const ClientClasses& classes = query->getClasses();
     for (ClientClasses::const_iterator cclass = classes.begin();
@@ -2385,20 +2397,17 @@ Dhcpv4Srv::classSpecificProcessing(const Dhcpv4Exchange& ex) {
             // Not found
             continue;
         }
-        // Get the configured options of this class
-        const OptionContainerPtr& options = ccdef->getCfgOption()->getAll("dhcp4");
-        if (!options || options->empty()) {
-            continue;
-        }
-        // Go through each OptionDescriptor
-        for (OptionContainer::const_iterator desc = options->begin();
-             desc != options->end(); ++desc) {
-            OptionPtr opt = desc->option_;
-            // Add the option if it doesn't exist yet
-            if (!rsp->getOption(opt->getType())) {
-                rsp->addOption(opt);
-            }
-        }
+	// For each requested option code get the instance of the option
+	// in the class to be returned to the client.
+	for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
+	     opt != requested_opts.end(); ++opt) {
+	    if (!rsp->getOption(*opt)) {
+		OptionDescriptor desc = ccdef->getCfgOption()->get("dhcp4", *opt);
+		if (desc.option_) {
+		    rsp->addOption(desc.option_);
+		}
+	    }
+	}
     }
 
     return (true);
