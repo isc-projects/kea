@@ -1676,6 +1676,9 @@ TEST_F(Dhcpv4SrvTest, docsisClientClassification) {
 
 // Checks if client packets are classified properly using match expressions.
 TEST_F(Dhcpv4SrvTest, matchClassification) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     NakedDhcpv4Srv srv(0);
 
     // The router class matches incoming packets with foo in a host-name
@@ -1707,12 +1710,19 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     CfgMgr::instance().commit();
 
     // Create packets with enough to select the subnet
+    OptionPtr clientid = generateClientId();
     Pkt4Ptr query1(new Pkt4(DHCPDISCOVER, 1234));
     query1->setRemoteAddr(IOAddress("192.0.2.1"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
     Pkt4Ptr query2(new Pkt4(DHCPDISCOVER, 1234));
     query2->setRemoteAddr(IOAddress("192.0.2.1"));
+    query2->addOption(clientid);
+    query2->setIface("eth1");
     Pkt4Ptr query3(new Pkt4(DHCPDISCOVER, 1234));
     query3->setRemoteAddr(IOAddress("192.0.2.1"));
+    query3->addOption(clientid);
+    query3->setIface("eth1");
 
     // Create and add a PRL option to the first 2 queries
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
@@ -1738,25 +1748,20 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     EXPECT_FALSE(query2->inClass("router"));
     EXPECT_TRUE(query3->inClass("router"));
 
-    Dhcpv4Exchange ex1 = createExchange(query1);
-    Pkt4Ptr response1 = ex1.getResponse();
-    Dhcpv4Exchange ex2 = createExchange(query2);
-    Pkt4Ptr response2 = ex2.getResponse();
-    Dhcpv4Exchange ex3 = createExchange(query3);
-    Pkt4Ptr response3 = ex3.getResponse();
+    // Process queries
+    Pkt4Ptr response1 = srv.processDiscover(query1);
+    Pkt4Ptr response2 = srv.processDiscover(query2);
+    Pkt4Ptr response3 = srv.processDiscover(query3);
 
     // Classification processing should add an ip-forwarding option
-    srv.classSpecificProcessing(ex1);
     OptionPtr opt1 = response1->getOption(DHO_IP_FORWARDING);
     EXPECT_TRUE(opt1);
 
-    // But only for the first exchange
-    srv.classSpecificProcessing(ex2);
+    // But only for the first exchange: second was not classified
     OptionPtr opt2 = response2->getOption(DHO_IP_FORWARDING);
     EXPECT_FALSE(opt2);
 
-    // But only for the first exchange
-    srv.classSpecificProcessing(ex3);
+    // But only for the first exchange: third has no PRL
     OptionPtr opt3 = response3->getOption(DHO_IP_FORWARDING);
     EXPECT_FALSE(opt3);
 }
