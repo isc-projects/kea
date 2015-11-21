@@ -716,7 +716,7 @@ protected:
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
 
-    /// @brief Performs packet processing specific to a class
+    /// @brief Performs packet processing specific to a vendor class
     ///
     /// If the selected subnet, query or response in the @c ex object is NULL
     /// this method returns immediately and returns true.
@@ -726,7 +726,7 @@ protected:
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
     /// @return true if successful, false otherwise (will prevent sending response)
-    bool classSpecificProcessing(const Dhcpv4Exchange& ex);
+    bool vendorClassSpecificProcessing(const Dhcpv4Exchange& ex);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
