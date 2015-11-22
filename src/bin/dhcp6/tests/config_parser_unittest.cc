@@ -2057,10 +2057,8 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     EXPECT_FALSE(def->getArrayType());
 }
 
-// Goal of this test is to verify that global option
-// data is configured for the subnet if the subnet
-// configuration does not include options configuration.
-TEST_F(Dhcp6ParserTest, optionDataDefaults) {
+// Goal of this test is to verify that global option data is configured
+TEST_F(Dhcp6ParserTest, optionDataDefaultsGlobal) {
     ConstElementPtr x;
     string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
@@ -2086,10 +2084,86 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
 
+    // These options are global
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
     OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
+    ASSERT_EQ(0, options->size());
+
+    options = CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp6");
+    ASSERT_EQ(2, options->size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const OptionContainerTypeIndex& idx = options->get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(D6O_SUBSCRIBER_ID);
+    // Expect single option with the code equal to 38.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    const uint8_t subid_expected[] = {
+        0xAB, 0xCD, 0xEF, 0x01, 0x05
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range.first, D6O_SUBSCRIBER_ID, subid_expected,
+               sizeof(subid_expected));
+
+    range = idx.equal_range(D6O_PREFERENCE);
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // Do another round of testing with second option.
+    const uint8_t pref_expected[] = {
+        0x01
+    };
+    testOption(*range.first, D6O_PREFERENCE, pref_expected,
+               sizeof(pref_expected));
+
+    // Check that options with other option codes are not returned.
+    for (uint16_t code = 47; code < 57; ++code) {
+        range = idx.equal_range(code);
+        EXPECT_EQ(0, std::distance(range.first, range.second));
+    }
+}
+
+// Goal of this test is to verify that subnet option data is configured
+TEST_F(Dhcp6ParserTest, optionDataDefaultsSubnet) {
+    ConstElementPtr x;
+    string config = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"option-data\": [ {"
+        "        \"name\": \"subscriber-id\","
+        "        \"data\": \"ABCDEF0105\","
+        "        \"csv-format\": False"
+        "     },"
+        "     {"
+        "        \"name\": \"preference\","
+        "        \"data\": \"01\""
+        "     } ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 0);
+
+    // These options are subnet options
+    OptionContainerPtr options =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp6");
+    ASSERT_EQ(0, options->size());
+
+    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
+        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ASSERT_TRUE(subnet);
+    options = subnet->getCfgOption()->getAll("dhcp6");
     ASSERT_EQ(2, options->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -2173,21 +2247,21 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    // Options should be now available for the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
+    // Options should be now available
     // Try to get the option from the space dhcp6.
-    OptionDescriptor desc1 = subnet->getCfgOption()->get("dhcp6", 38);
+    OptionDescriptor desc1 =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get("dhcp6", 38);
     ASSERT_TRUE(desc1.option_);
     EXPECT_EQ(38, desc1.option_->getType());
     // Try to get the option from the space isc.
-    OptionDescriptor desc2 = subnet->getCfgOption()->get("isc", 38);
+    OptionDescriptor desc2 =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get("isc", 38);
     ASSERT_TRUE(desc2.option_);
     EXPECT_EQ(38, desc1.option_->getType());
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
-    OptionDescriptor desc3 = subnet->getCfgOption()->get("non-existing", 38);
+    OptionDescriptor desc3 = CfgMgr::instance().getStagingCfg()->
+        getCfgOption()->get("non-existing", 38);
     ASSERT_FALSE(desc3.option_);
 }
 
@@ -2306,18 +2380,15 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    // Get the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
-
     // We should have one option available.
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp6");
     ASSERT_TRUE(options);
     ASSERT_EQ(1, options->size());
 
     // Get the option.
-    OptionDescriptor desc = subnet->getCfgOption()->get("dhcp6", 100);
+    OptionDescriptor desc =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get("dhcp6", 100);
     EXPECT_TRUE(desc.option_);
     EXPECT_EQ(100, desc.option_->getType());
 
@@ -2681,23 +2752,22 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    // Options should be now available for the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
-
+    // Options should be now available
     // Try to get the option from the vendor space 4491
-    OptionDescriptor desc1 = subnet->getCfgOption()->get(4491, 100);
+    OptionDescriptor desc1 =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(4491, 100);
     ASSERT_TRUE(desc1.option_);
     EXPECT_EQ(100, desc1.option_->getType());
     // Try to get the option from the vendor space 1234
-    OptionDescriptor desc2 = subnet->getCfgOption()->get(1234, 100);
+    OptionDescriptor desc2 =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(1234, 100);
     ASSERT_TRUE(desc2.option_);
     EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
-    OptionDescriptor desc3 = subnet->getCfgOption()->get(5678, 38);
+    OptionDescriptor desc3 =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(5678, 38);
     ASSERT_FALSE(desc3.option_);
 }
 
@@ -2739,19 +2809,17 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    // Options should be now available for the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
-    ASSERT_TRUE(subnet);
-
+    // Options should be now available.
     // Try to get the option from the vendor space 4491
-    OptionDescriptor desc1 = subnet->getCfgOption()->get(4491, 100);
+    OptionDescriptor desc1 =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(4491, 100);
     ASSERT_TRUE(desc1.option_);
     EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
-    OptionDescriptor desc2 = subnet->getCfgOption()->get(5678, 100);
+    OptionDescriptor desc2 =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(5678, 100);
     ASSERT_FALSE(desc2.option_);
 }
 

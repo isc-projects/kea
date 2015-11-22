@@ -884,16 +884,16 @@ Dhcpv6Srv::copyClientOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 }
 
 void
-Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr&, Pkt6Ptr& answer) {
+Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr&, Pkt6Ptr& answer,
+                                const CfgOptionList&) {
     // add server-id
     answer->addOption(getServerID());
 }
 
 void
 Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
-                              AllocEngine::ClientContext6& ctx) {
-    CfgOptionList& co_list = getCfgOptionList();
-
+                              AllocEngine::ClientContext6& ctx,
+                              CfgOptionList& co_list) {
     // First subnet configured options
     if (ctx.subnet_) {
         co_list.push_back(ctx.subnet_->getCfgOption());
@@ -921,7 +921,8 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
 
 void
 Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                                  AllocEngine::ClientContext6& ctx) {
+                                  AllocEngine::ClientContext6& ctx,
+                                  const CfgOptionList& co_list) {
 
     // Client requests some options using ORO option. Try to
     // get this option from client's message.
@@ -938,7 +939,6 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
     const std::vector<uint16_t>& requested_opts = option_oro->getValues();
     BOOST_FOREACH(uint16_t opt, requested_opts) {
         // Iterate on the configured option list
-        const CfgOptionList& co_list = getCfgOptionList();
         for (CfgOptionList::const_iterator copts = co_list.begin();
              copts != co_list.end(); ++copts) {
             OptionDescriptor desc = (*copts)->get("dhcp6", opt);
@@ -952,8 +952,10 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
 }
 
 void
-Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                                        AllocEngine::ClientContext6& ctx) {
+Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
+                                        Pkt6Ptr& answer,
+                                        AllocEngine::ClientContext6& ctx,
+                                        const CfgOptionList& co_list) {
 
     // Leave if there is no subnet matching the incoming packet.
     // There is no need to log the error message here because
@@ -990,7 +992,6 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer
     bool added = false;
     const std::vector<uint16_t>& requested_opts = oro->getValues();
     BOOST_FOREACH(uint16_t opt, requested_opts) {
-        const CfgOptionList& co_list = getCfgOptionList();
         for (CfgOptionList::const_iterator copts = co_list.begin();
              copts != co_list.end(); ++copts) {
             OptionDescriptor desc = (*copts)->get(vendor_id, opt);
@@ -2320,10 +2321,11 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     }
 
     copyClientOptions(solicit, response);
-    buildCfgOptionList(solicit, ctx);
-    appendDefaultOptions(solicit, response);
-    appendRequestedOptions(solicit, response, ctx);
-    appendRequestedVendorOptions(solicit, response, ctx);
+    CfgOptionList co_list;
+    buildCfgOptionList(solicit, ctx, co_list);
+    appendDefaultOptions(solicit, response, co_list);
+    appendRequestedOptions(solicit, response, ctx, co_list);
+    appendRequestedVendorOptions(solicit, response, ctx, co_list);
 
     processClientFqdn(solicit, response, ctx);
     assignLeases(solicit, response, ctx);
@@ -2348,10 +2350,11 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
     copyClientOptions(request, reply);
-    buildCfgOptionList(request, ctx);
-    appendDefaultOptions(request, reply);
-    appendRequestedOptions(request, reply, ctx);
-    appendRequestedVendorOptions(request, reply, ctx);
+    CfgOptionList co_list;
+    buildCfgOptionList(request, ctx, co_list);
+    appendDefaultOptions(request, reply, co_list);
+    appendRequestedOptions(request, reply, ctx, co_list);
+    appendRequestedVendorOptions(request, reply, ctx, co_list);
 
     processClientFqdn(request, reply, ctx);
     assignLeases(request, reply, ctx);
@@ -2372,9 +2375,10 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
 
     copyClientOptions(renew, reply);
-    buildCfgOptionList(renew, ctx);
-    appendDefaultOptions(renew, reply);
-    appendRequestedOptions(renew, reply, ctx);
+    CfgOptionList co_list;
+    buildCfgOptionList(renew, ctx, co_list);
+    appendDefaultOptions(renew, reply, co_list);
+    appendRequestedOptions(renew, reply, ctx, co_list);
 
     processClientFqdn(renew, reply, ctx);
     extendLeases(renew, reply, ctx);
@@ -2395,9 +2399,10 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
 
     copyClientOptions(rebind, reply);
-    buildCfgOptionList(rebind, ctx);
-    appendDefaultOptions(rebind, reply);
-    appendRequestedOptions(rebind, reply, ctx);
+    CfgOptionList co_list;
+    buildCfgOptionList(rebind, ctx, co_list);
+    appendDefaultOptions(rebind, reply, co_list);
+    appendRequestedOptions(rebind, reply, ctx, co_list);
 
     processClientFqdn(rebind, reply, ctx);
     extendLeases(rebind, reply, ctx);
@@ -2426,9 +2431,10 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, confirm->getTransid()));
     // Make sure that the necessary options are included.
     copyClientOptions(confirm, reply);
-    buildCfgOptionList(confirm, ctx);
-    appendDefaultOptions(confirm, reply);
-    appendRequestedOptions(confirm, reply, ctx);
+    CfgOptionList co_list;
+    buildCfgOptionList(confirm, ctx, co_list);
+    appendDefaultOptions(confirm, reply, co_list);
+    appendRequestedOptions(confirm, reply, ctx, co_list);
     // Indicates if at least one address has been verified. If no addresses
     // are verified it means that the client has sent no IA_NA options
     // or no IAAddr options and that client's message has to be discarded.
@@ -2507,7 +2513,9 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, release->getTransid()));
 
     copyClientOptions(release, reply);
-    appendDefaultOptions(release, reply);
+    CfgOptionList co_list;
+    // buildCfgOptionList(release, ctx, co_list);
+    appendDefaultOptions(release, reply, co_list);
 
     releaseLeases(release, reply, ctx);
 
@@ -2532,8 +2540,12 @@ Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
     // Copy client options (client-id, also relay information if present)
     copyClientOptions(decline, reply);
 
+    // Get the configured option list
+    CfgOptionList co_list;
+    buildCfgOptionList(decline, ctx, co_list);
+
     // Include server-id
-    appendDefaultOptions(decline, reply);
+    appendDefaultOptions(decline, reply, co_list);
 
     if (declineLeases(decline, reply, ctx)) {
         return (reply);
@@ -2808,15 +2820,16 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     copyClientOptions(inf_request, reply);
 
     // Build the configured option list for append methods
-    buildCfgOptionList(inf_request, ctx);
+    CfgOptionList co_list;
+    buildCfgOptionList(inf_request, ctx, co_list);
 
     // Append default options, i.e. options that the server is supposed
     // to put in all messages it sends (server-id for now, but possibly other
     // options once we start supporting authentication)
-    appendDefaultOptions(inf_request, reply);
+    appendDefaultOptions(inf_request, reply, co_list);
 
     // Try to assign options that were requested by the client.
-    appendRequestedOptions(inf_request, reply, ctx);
+    appendRequestedOptions(inf_request, reply, ctx, co_list);
 
     return (reply);
 }

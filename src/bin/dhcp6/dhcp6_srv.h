@@ -429,24 +429,17 @@ protected:
     /// @param answer server's message (options will be copied here)
     void copyClientOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
-    /// @brief Returns the configured option list
-    CfgOptionList& getCfgOptionList() {
-        return (cfg_option_list_);
-    }
-
-    /// @brief Returns the configured option list
-    const CfgOptionList& getCfgOptionList() const {
-        return (cfg_option_list_);
-    }
-
     /// @brief Build the configured option list
     ///
     /// @note The configured option list is an *ordered* list of
     /// @c CfgOption objects used to append options to the response.
     ///
-    /// @param ex The exchange where the configured option list is cached
+    /// @param question client's message
+    /// @param ctx client context (for the subnet)
+    /// @param co_list configured option list to build
     void buildCfgOptionList(const Pkt6Ptr& question,
-                            AllocEngine::ClientContext6& ctx);
+                            AllocEngine::ClientContext6& ctx,
+                            CfgOptionList& co_list);
 
     /// @brief Appends default options to server's answer.
     ///
@@ -456,7 +449,9 @@ protected:
     ///
     /// @param question client's message
     /// @param answer server's message (options will be added here)
-    void appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
+    /// @param co_list configured option list (currently unused)
+    void appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                              const CfgOptionList& co_list);
 
     /// @brief Appends requested options to server's answer.
     ///
@@ -465,8 +460,10 @@ protected:
     /// @param question client's message
     /// @param answer server's message (options will be added here)
     /// @param ctx client context (contains subnet, duid and other parameters)
+    /// @param co_list configured option list
     void appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                                AllocEngine::ClientContext6& ctx);
+                                AllocEngine::ClientContext6& ctx,
+                                const CfgOptionList& co_list);
 
     /// @brief Appends requested vendor options to server's answer.
     ///
@@ -476,8 +473,10 @@ protected:
     /// @param question client's message
     /// @param answer server's message (vendor options will be added here)
     /// @param ctx client context (contains subnet, duid and other parameters)
+    /// @param co_list configured option list
     void appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                                AllocEngine::ClientContext6& ctx);
+                                      AllocEngine::ClientContext6& ctx,
+                                      const CfgOptionList& co_list);
 
     /// @brief Assigns leases.
     ///
@@ -824,9 +823,6 @@ private:
 
     /// UDP port number on which server listens.
     uint16_t port_;
-
-    /// @brief Configured option list for appending otions.
-    CfgOptionList cfg_option_list_;
 
 protected:
 

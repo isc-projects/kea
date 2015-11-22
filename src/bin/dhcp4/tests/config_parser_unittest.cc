@@ -1826,10 +1826,8 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
 
 }
 
-// Goal of this test is to verify that global option
-// data is configured for the subnet if the subnet
-// configuration does not include options configuration.
-TEST_F(Dhcp4ParserTest, optionDataDefaults) {
+// Goal of this test is to verify that global option data is configured
+TEST_F(Dhcp4ParserTest, optionDataDefaultsGlobal) {
     ConstElementPtr x;
     string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000,"
@@ -1855,10 +1853,78 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
 
+    // These options are global
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
     OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
+    ASSERT_EQ(0, options->size());
+
+    options = CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp4");
+    ASSERT_EQ(2, options->size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const OptionContainerTypeIndex& idx = options->get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(56);
+    // Expect single option with the code equal to 56.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    const uint8_t foo_expected[] = {
+        0xAB, 0xCD, 0xEF, 0x01, 0x05
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range.first, 56, foo_expected, sizeof(foo_expected));
+
+    range = idx.equal_range(23);
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // Do another round of testing with second option.
+    const uint8_t foo2_expected[] = {
+        0x01
+    };
+    testOption(*range.first, 23, foo2_expected, sizeof(foo2_expected));
+}
+
+// Goal of this test is to verify that subnet option data is configured
+TEST_F(Dhcp4ParserTest, optionDataDefaultsSubnet) {
+    ConstElementPtr x;
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"option-data\": [ {"
+        "        \"name\": \"dhcp-message\","
+        "        \"data\": \"ABCDEF0105\","
+        "        \"csv-format\": False"
+        "     },"
+        "     {"
+        "        \"name\": \"default-ip-ttl\","
+        "        \"data\": \"01\","
+        "        \"csv-format\": False"
+        "     } ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 0);
+
+    // These options are subnet options
+    OptionContainerPtr options =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp4");
+    ASSERT_EQ(0, options->size());
+
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+    options = subnet->getCfgOption()->getAll("dhcp4");
     ASSERT_EQ(2, options->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -1933,21 +1999,21 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    // Options should be now available for the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
-        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
-    ASSERT_TRUE(subnet);
+    // Options should be now available
     // Try to get the option from the space dhcp4.
-    OptionDescriptor desc1 = subnet->getCfgOption()->get("dhcp4", 56);
+    OptionDescriptor desc1 =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get("dhcp4", 56);
     ASSERT_TRUE(desc1.option_);
     EXPECT_EQ(56, desc1.option_->getType());
     // Try to get the option from the space isc.
-    OptionDescriptor desc2 = subnet->getCfgOption()->get("isc", 56);
+    OptionDescriptor desc2 =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get("isc", 56);
     ASSERT_TRUE(desc2.option_);
     EXPECT_EQ(56, desc1.option_->getType());
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
-    OptionDescriptor desc3 = subnet->getCfgOption()->get("non-existing", 56);
+    OptionDescriptor desc3 =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get("non-existing", 56);
     ASSERT_FALSE(desc3.option_);
 }
 
@@ -1960,8 +2026,8 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
 TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
 
     // @todo DHCP configurations has many dependencies between
-    // parameters. First of all, configuration for subnet is
-    // inherited from the global values. Thus subnet has to be
+    // parameters. First of all, configuration for subnet was
+    // inherited from the global values. Thus subnet had to be
     // configured when all global values have been configured.
     // Also, an option can encapsulate another option only
     // if the latter has been configured. For this reason in this
@@ -2011,7 +2077,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     CfgMgr::instance().clear();
 
     // Stage 2. Configure base option and a subnet. Please note that
-    // the configuration from the stage 2 is repeated because BIND
+    // the configuration from the stage 2 is repeated because Kea
     // configuration manager sends whole configuration for the lists
     // where at least one element is being modified or added.
     config = "{ " + genIfaceConfig() + "," +
@@ -2063,18 +2129,15 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    // Get the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
-        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
-    ASSERT_TRUE(subnet);
-
     // We should have one option available.
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
+    OptionContainerPtr options =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp4");
     ASSERT_TRUE(options);
     ASSERT_EQ(1, options->size());
 
     // Get the option.
-    OptionDescriptor desc = subnet->getCfgOption()->get("dhcp4", 222);
+    OptionDescriptor desc =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get("dhcp4", 222);
     EXPECT_TRUE(desc.option_);
     EXPECT_EQ(222, desc.option_->getType());
 
@@ -2605,19 +2668,15 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    // Get the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
-        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
-    ASSERT_TRUE(subnet);
-
     // We should have one option available.
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
+    OptionContainerPtr options =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp4");
     ASSERT_TRUE(options);
     ASSERT_EQ(1, options->size());
 
     // Get the option.
-    OptionDescriptor desc =
-        subnet->getCfgOption()->get("dhcp4", DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    OptionDescriptor desc = CfgMgr::instance().getStagingCfg()->
+        getCfgOption()->get("dhcp4", DHO_VENDOR_ENCAPSULATED_OPTIONS);
     EXPECT_TRUE(desc.option_);
     EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, desc.option_->getType());
 
@@ -2651,7 +2710,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
 }
 
 // This test checks if vendor options can be specified in the config file
-// (in hex format), and later retrieved from configured subnet
+// (in hex format), and later retrieved
 TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
 
     // This configuration string is to configure two options
@@ -2689,28 +2748,26 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    // Options should be now available for the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
-        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
-    ASSERT_TRUE(subnet);
-
     // Try to get the option from the vendor space 4491
-    OptionDescriptor desc1 = subnet->getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
+    OptionDescriptor desc1 = CfgMgr::instance().getStagingCfg()->
+        getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
     ASSERT_TRUE(desc1.option_);
     EXPECT_EQ(100, desc1.option_->getType());
     // Try to get the option from the vendor space 1234
-    OptionDescriptor desc2 = subnet->getCfgOption()->get(1234, 100);
+    OptionDescriptor desc2 =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(1234, 100);
     ASSERT_TRUE(desc2.option_);
     EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
-    OptionDescriptor desc3 = subnet->getCfgOption()->get(5678, 100);
+    OptionDescriptor desc3 =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(5678, 100);
     ASSERT_FALSE(desc3.option_);
 }
 
 // This test checks if vendor options can be specified in the config file,
-// (in csv format), and later retrieved from configured subnet
+// (in csv format), and later retrieved
 TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
 
     // This configuration string is to configure two options
@@ -2746,19 +2803,16 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    // Options should be now available for the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
-        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
-    ASSERT_TRUE(subnet);
-
     // Try to get the option from the vendor space 4491
-    OptionDescriptor desc1 = subnet->getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
+    OptionDescriptor desc1 = CfgMgr::instance().getStagingCfg()->
+        getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
     ASSERT_TRUE(desc1.option_);
     EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
-    OptionDescriptor desc2 = subnet->getCfgOption()->get(5678, 100);
+    OptionDescriptor desc2 =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(5678, 100);
     ASSERT_FALSE(desc2.option_);
 }
 
