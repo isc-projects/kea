@@ -459,10 +459,8 @@ protected:
     ///
     /// @param question client's message
     /// @param answer server's message (options will be added here)
-    /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param co_list configured option list
     void appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                                AllocEngine::ClientContext6& ctx,
                                 const CfgOptionList& co_list);
 
     /// @brief Appends requested vendor options to server's answer.
