@@ -1844,8 +1844,10 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
 }
 
 // Checks class options have the priority over global options
-// Note it is not currently the case, cf #4205
 TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     NakedDhcpv4Srv srv(0);
 
     // A global ip-forwarding option is set in the response.
@@ -1914,13 +1916,13 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
     ASSERT_TRUE(opt);
     ASSERT_GT(opt->len(), opt->getHeaderLen());
     // Classification sets the value to true/1, global to false/0
-    // Here class should have the priority but hasn't, cf #4205
-    EXPECT_EQ(0, opt->getUint8());
+    // Here class has the priority
+    EXPECT_NE(0, opt->getUint8());
 }
 
 // Checks if the client-class field is indeed used for subnet selection.
 // Note that packet classification is already checked in Dhcpv4SrvTest
-// .*clientClassification above.
+// .*Classification above.
 TEST_F(Dhcpv4SrvTest, clientClassify) {
 
     // This test configures 2 subnets. We actually only need the
