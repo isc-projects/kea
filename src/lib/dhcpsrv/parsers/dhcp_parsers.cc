@@ -730,6 +730,12 @@ OptionDataListParser::commit() {
     BOOST_FOREACH(ParserPtr parser, parsers_) {
         parser->commit();
     }
+    // Append suboptions to the top-level options
+    if (cfg_) {
+        cfg_->encapsulate();
+    } else {
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->encapsulate();
+    }
 }
 
 // ******************************** OptionDefParser ****************************
@@ -1260,10 +1266,8 @@ SubnetConfigParser::createSubnet() {
     // options but it is no longer the case (they have a different
     // and not consecutive priority).
 
-    // Copy all options to the subnet configuration.
+    // Copy options to the subnet configuration.
     options_->copyTo(*subnet_->getCfgOption());
-    // Append suboptions to the top-level options.
-    subnet_->getCfgOption()->encapsulate();
 }
 
 isc::dhcp::Triplet<uint32_t>

@@ -718,7 +718,8 @@ public:
 
     /// @brief Commit all option values.
     ///
-    /// This function invokes commit for all option values.
+    /// This function invokes commit for all option values
+    /// and append suboptions to the top-level options.
     void commit();
 
 private:
