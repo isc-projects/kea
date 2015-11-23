@@ -16,6 +16,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <exceptions/exceptions.h>
+#include <util/encode/hex.h>
 #include <util/io_utilities.h>
 
 #include <iomanip>
@@ -219,6 +220,34 @@ Option::toString() {
     return (toText(0));
 }
 
+std::string
+Option::toHexString(const bool include_header) {
+    OutputBuffer buf(len());
+    try {
+        // If the option is too long, exception will be thrown. We allow
+        // for this exception to propagate to not mask this error.
+        pack(buf);
+
+    } catch (const std::exception &ex) {
+        isc_throw(OutOfRange, "unable to obtain hexadecimal representation"
+                  " of option " << getType() << ": " << ex.what());
+    }
+    const uint8_t* option_data = static_cast<const uint8_t*>(buf.getData());
+    std::vector<uint8_t> option_vec;
+
+    // Assign option data to a vector, with or without option header depending
+    // on the value of "include_header" flag.
+    option_vec.assign(option_data + (include_header ? 0 : getHeaderLen()),
+                      option_data + buf.getLength());
+
+    // Return hexadecimal representation prepended with 0x or empty string
+    // if option has no payload and the header fields are excluded.
+    std::ostringstream s;
+    if (!option_vec.empty()) {
+        s << "0x" << encode::encodeHex(option_vec);
+    }
+    return (s.str());
+}
 
 std::string
 Option::headerToText(const int indent, const std::string& type_name) {
