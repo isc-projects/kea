@@ -202,6 +202,11 @@ public:
     /// @brief default constructor
     CfgOption();
 
+    /// @brief Indicates the object is empty
+    ///
+    /// @return true when the object is empty
+    bool empty() const;
+
     /// @name Methods and operators used for comparing objects.
     ///
     //@{

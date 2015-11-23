@@ -895,7 +895,7 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
                               AllocEngine::ClientContext6& ctx,
                               CfgOptionList& co_list) {
     // First subnet configured options
-    if (ctx.subnet_) {
+    if (ctx.subnet_ && !ctx.subnet_->getCfgOption()->empty()) {
         co_list.push_back(ctx.subnet_->getCfgOption());
     }
 
@@ -912,11 +912,17 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
                 .arg(*cclass);
             continue;
         }
+        if (ccdef->getCfgOption()->empty()) {
+            // Skip classes which don't configure options
+            continue;
+        }
         co_list.push_back(ccdef->getCfgOption());
     }
 
     // Last global options
-    co_list.push_back(CfgMgr::instance().getCurrentCfg()->getCfgOption());
+    if (!CfgMgr::instance().getCurrentCfg()->getCfgOption()->empty()) {
+        co_list.push_back(CfgMgr::instance().getCurrentCfg()->getCfgOption());
+    }
 }
 
 void
@@ -930,7 +936,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         (question->getOption(D6O_ORO));
 
     // Option ORO not found? We're done here then.
-    if (!option_oro) {
+    if (!option_oro || co_list.empty()) {
         return;
     }
 
@@ -968,7 +974,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
     // Try to get the vendor option
     boost::shared_ptr<OptionVendor> vendor_req =
         boost::dynamic_pointer_cast<OptionVendor>(question->getOption(D6O_VENDOR_OPTS));
-    if (!vendor_req) {
+    if (!vendor_req || co_list.empty()) {
         return;
     }
 
