@@ -1396,14 +1396,13 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
                     // There's no point in keeping declined lease after its
                     // reclaimation. Declined lease doesn't have any client
                     // identifying information anymore.
-                    remove_tmp = true;
 
                     // Do extra steps required for declined lease reclaimation:
                     // - bump decline-related stats
                     // - log separate message
                     // - call lease6_recover hooks
                     // (hooks can override the removal decision and keep the lease)
-                    remove_tmp = reclaimDeclined(lease) && remove_lease;
+                    remove_tmp = reclaimDeclined(lease);
                 }
 
                 // Reclaim the lease - depending on the configuration, set the
@@ -1621,12 +1620,11 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
                     // There's no point in keeping declined lease after its
                     // reclaimation. Declined lease doesn't have any client
                     // identifying information anymore.
-                    remove_tmp = true;
 
                     // Do extra steps required for declined lease reclaimation:
                     // - bump decline-related stats
                     // - log separate message
-                    remove_tmp = reclaimDeclined(lease) && remove_tmp;
+                    remove_tmp = reclaimDeclined(lease);
                 }
 
                 // Reclaim the lease - depending on the configuration, set the
@@ -1745,7 +1743,7 @@ AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
     if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease4_recover_)) {
 
         // Let's use a static callout handle. It will be initialized the first
-        // time lease6_recover is called and will keep to that value.
+        // time lease4_recover is called and will keep to that value.
         static CalloutHandlePtr callout_handle;
         if (!callout_handle) {
             callout_handle = HooksManager::createCalloutHandle();
