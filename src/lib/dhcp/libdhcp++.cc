@@ -248,7 +248,6 @@ LibDHCP::clearRuntimeOptionDefs() {
     runtime_option_defs_.clearItems();
 }
 
-
 bool
 LibDHCP::isStandardOption(const Option::Universe u, const uint16_t code) {
     if (u == Option::V6) {
