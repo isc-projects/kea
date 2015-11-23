@@ -57,18 +57,18 @@ Dhcp4SrvD2Test::buildTestNcr(uint32_t dhcid_id_num) {
 
     stream <<
         "{"
-        " \"change_type\" : 0 , "
-        " \"forward_change\" : true , "
-        " \"reverse_change\" : false , "
+        " \"change-type\" : 0 , "
+        " \"forward-change\" : true , "
+        " \"reverse-change\" : false , "
         " \"fqdn\" : \"myhost.example.com.\" , "
-        " \"ip_address\" : \"192.168.2.1\" , "
+        " \"ip-address\" : \"192.168.2.1\" , "
         " \"dhcid\" : \""
 
         << std::hex << std::setfill('0') << std::setw(16)
         << dhcid_id_num << "\" , "
 
-        " \"lease_expires_on\" : \"20140121132405\" , "
-        " \"lease_length\" : 1300 "
+        " \"lease-expires-on\" : \"20140121132405\" , "
+        " \"lease-length\" : 1300 "
         "}";
 
     return (dhcp_ddns::NameChangeRequest::fromJSON(stream.str()));

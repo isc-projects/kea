@@ -21,18 +21,18 @@ This is a library of classes (in the isc::dhcp_ddns namespace) for sending
 and receiving requests used by ISC's DHCP-DDNS (aka D2) service to carry
 out DHCP-driven DNS updates.  Each request contains the following information:
 
-    - change_type -  indicates if this is a request to add or remove DNS entries
-    - forward_change - indicates if the forward DNS zone (the one that
+    - change-type -  indicates if this is a request to add or remove DNS entries
+    - forward-change - indicates if the forward DNS zone (the one that
       contains name to address mappings) should be updated
-    - reverse_change - indicates if reverse DNS zone (which contains the
+    - reverse-change - indicates if reverse DNS zone (which contains the
       address to name mappings) should be updated
     - fqdn - the fully qualified domain name whose DNS entries should be updated
-    - ip_address - IP address (v4 or v6) leased to the client with the
+    - ip-address - IP address (v4 or v6) leased to the client with the
       given FQDN
     - dhcid - DHCID (a form of identification) of the client to whom the IP
       address is leased
-    - lease_expires_on - timestamp containing the date/time the lease expires
-    - lease_length - duration in seconds for which the lease is valid.
+    - lease-expires-on - timestamp containing the date/time the lease expires
+    - lease-length - duration in seconds for which the lease is valid.
 
 These requests are implemented in this library by the class,
 isc::dhcp_ddns::NameChangeRequest.  This class provides services for
