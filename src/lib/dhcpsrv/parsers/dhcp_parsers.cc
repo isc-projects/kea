@@ -780,6 +780,12 @@ OptionDefParser::build(ConstElementPtr option_def) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << option_def->getPosition() << ")");
     }
+
+    // All definitions have been prepared. Put them as runtime options into
+    // the libdhcp++.
+    const OptionDefSpaceContainer& container =
+        CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->getContainer();
+    LibDHCP::setRuntimeOptionDefs(container);
 }
 
 void
