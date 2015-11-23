@@ -323,40 +323,40 @@ public:
     ///
     /// @code
     ///     {
-    ///      "change_type" : <integer>,
-    ///      "forward_change" : <boolean>,
-    ///      "reverse_change" : <boolean>,
+    ///      "change-type" : <integer>,
+    ///      "forward-change" : <boolean>,
+    ///      "reverse-change" : <boolean>,
     ///      "fqdn" : "<fqdn>",
-    ///      "ip_address" : "<address>",
+    ///      "ip-address" : "<address>",
     ///      "dhcid" : "<hex_string>",
-    ///      "lease_expires_on" : "<yyyymmddHHMMSS>",
-    ///      "lease_length" : <secs>
+    ///      "lease-expires-on" : "<yyyymmddHHMMSS>",
+    ///      "lease-length" : <secs>
     ///     }
     /// @endcode
     ///
-    /// - change_type - indicates whether this request is to add or update
+    /// - change-type - indicates whether this request is to add or update
     ///   DNS entries or to remove them.  The value is an integer and is
     ///   0 for add/update and 1 for remove.
-    /// - forward_change - indicates whether the the forward (name to
+    /// - forward-change - indicates whether the the forward (name to
     ///   address) DNS zone should be updated.  The value is a string
     ///   representing a boolean.  It is "true" if the zone should be updated
     ///   and "false" if not. (Unlike the keyword, the boolean value is
     ///   case-insensitive.)
-    /// - reverse_change - indicates whether the the reverse (address to
+    /// - reverse-change - indicates whether the the reverse (address to
     ///   name) DNS zone should be updated.  The value is a string
     ///   representing a boolean.  It is "true" if the zone should be updated
     ///   and "false" if not. (Unlike the keyword, the boolean value is
     ///   case-insensitive.)
     /// - fqdn - fully qualified domain name such as "myhost.example.com.".
     ///   (Note that a trailing dot will be appended if not supplied.)
-    /// - ip_address - the IPv4 or IPv6 address of the client.  The value
+    /// - ip-address - the IPv4 or IPv6 address of the client.  The value
     ///   is a string representing the IP address (e.g. "192.168.0.1" or
     ///   "2001:db8:1::2").
     /// - dhcid - identification of the DHCP client to whom the IP address has
     ///   been leased.  The value is a string containing an even number of
     ///   hexadecimal digits without delimiters such as "2C010203040A7F8E3D"
     ///   (case insensitive).
-    /// - lease_expires_on - the date and time on which the lease expires.
+    /// - lease-expires-on - the date and time on which the lease expires.
     ///   The value is a string of the form "yyyymmddHHMMSS" where:
     ///     - yyyy - four digit year
     ///     - mm - month of year (1-12),
@@ -364,7 +364,7 @@ public:
     ///     - HH - hour of the day (0-23)
     ///     - MM - minutes of the hour (0-59)
     ///     - SS - seconds of the minute (0-59)
-    /// - lease_length - the length of the lease in seconds.  This is an
+    /// - lease-length - the length of the lease in seconds.  This is an
     ///   integer and may range between 1 and 4294967295 (2^32 - 1) inclusive.
     ///
     /// Examples:
@@ -373,14 +373,14 @@ public:
     ///
     /// @code
     ///  {
-    ///     "change_type" : 1,
-    ///     "forward_change" : true,
-    ///     "reverse_change" : false,
+    ///     "change-type" : 1,
+    ///     "forward-change" : true,
+    ///     "reverse-change" : false,
     ///     "fqdn" : "myhost.example.com.",
-    ///     "ip_address" : "192.168.2.1" ,
+    ///     "ip-address" : "192.168.2.1" ,
     ///     "dhcid" : "010203040A7F8E3D" ,
-    ///     "lease_expires_on" : "20130121132405",
-    ///     "lease_length" : 1300
+    ///     "lease-expires-on" : "20130121132405",
+    ///     "lease-length" : 1300
     ///  }
     /// @endcode
     ///
@@ -388,14 +388,14 @@ public:
     ///
     /// @code
     ///  {
-    ///     "change_type" : 0,
-    ///     "forward_change" : true,
-    ///     "reverse_change" : true,
+    ///     "change-type" : 0,
+    ///     "forward-change" : true,
+    ///     "reverse-change" : true,
     ///     "fqdn" : "someother.example.com.",
-    ///     "ip_address" : "2001::db8:1::2",
+    ///     "ip-address" : "2001::db8:1::2",
     ///     "dhcid" : "010203040A7F8E3D" , "
-    ///     "lease_expires_on" : "20130121132405",
-    ///     "lease_length" : 27400
+    ///     "lease-expires-on" : "20130121132405",
+    ///     "lease-length" : 27400
     ///   }
     /// @endcode
     ///
