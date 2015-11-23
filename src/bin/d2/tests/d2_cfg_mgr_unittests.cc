@@ -89,14 +89,14 @@ public:
         std::ostringstream config;
         config <<
             "{"
-            " \"ip_address\": \"" << ip_address << "\" , "
+            " \"ip-address\": \"" << ip_address << "\" , "
             " \"port\": " << port << " , "
-            " \"dns_server_timeout\": " << dns_server_timeout << " , "
-            " \"ncr_protocol\": \"" << ncr_protocol << "\" , "
-            " \"ncr_format\": \"" << ncr_format << "\", "
-            "\"tsig_keys\": [], "
-            "\"forward_ddns\" : {}, "
-            "\"reverse_ddns\" : {} "
+            " \"dns-server-timeout\": " << dns_server_timeout << " , "
+            " \"ncr-protocol\": \"" << ncr_protocol << "\" , "
+            " \"ncr-format\": \"" << ncr_format << "\", "
+            "\"tsig-keys\": [], "
+            "\"forward-ddns\" : {}, "
+            "\"reverse-ddns\" : {} "
             "}";
 
         return (config.str());
@@ -396,12 +396,12 @@ TEST_F(D2CfgMgrTest, defaultValues) {
     std::string config =
             "{"
             " \"port\": 777 , "
-            " \"dns_server_timeout\": 333 , "
-            " \"ncr_protocol\": \"UDP\" , "
-            " \"ncr_format\": \"JSON\", "
-            "\"tsig_keys\": [], "
-            "\"forward_ddns\" : {}, "
-            "\"reverse_ddns\" : {} "
+            " \"dns-server-timeout\": 333 , "
+            " \"ncr-protocol\": \"UDP\" , "
+            " \"ncr-format\": \"JSON\", "
+            "\"tsig-keys\": [], "
+            "\"forward-ddns\" : {}, "
+            "\"reverse-ddns\" : {} "
             "}";
 
     runConfig(config);
@@ -411,13 +411,13 @@ TEST_F(D2CfgMgrTest, defaultValues) {
     // Check that omitting port gets you its default
     config =
             "{"
-            " \"ip_address\": \"192.0.0.1\" , "
-            " \"dns_server_timeout\": 333 , "
-            " \"ncr_protocol\": \"UDP\" , "
-            " \"ncr_format\": \"JSON\", "
-            "\"tsig_keys\": [], "
-            "\"forward_ddns\" : {}, "
-            "\"reverse_ddns\" : {} "
+            " \"ip-address\": \"192.0.0.1\" , "
+            " \"dns-server-timeout\": 333 , "
+            " \"ncr-protocol\": \"UDP\" , "
+            " \"ncr-format\": \"JSON\", "
+            "\"tsig-keys\": [], "
+            "\"forward-ddns\" : {}, "
+            "\"reverse-ddns\" : {} "
             "}";
 
     runConfig(config);
@@ -426,13 +426,13 @@ TEST_F(D2CfgMgrTest, defaultValues) {
     // Check that omitting timeout gets you its default
     config =
             "{"
-            " \"ip_address\": \"192.0.0.1\" , "
+            " \"ip-address\": \"192.0.0.1\" , "
             " \"port\": 777 , "
-            " \"ncr_protocol\": \"UDP\" , "
-            " \"ncr_format\": \"JSON\", "
-            "\"tsig_keys\": [], "
-            "\"forward_ddns\" : {}, "
-            "\"reverse_ddns\" : {} "
+            " \"ncr-protocol\": \"UDP\" , "
+            " \"ncr-format\": \"JSON\", "
+            "\"tsig-keys\": [], "
+            "\"forward-ddns\" : {}, "
+            "\"reverse-ddns\" : {} "
             "}";
 
     runConfig(config);
@@ -442,13 +442,13 @@ TEST_F(D2CfgMgrTest, defaultValues) {
     // Check that protocol timeout gets you its default
     config =
             "{"
-            " \"ip_address\": \"192.0.0.1\" , "
+            " \"ip-address\": \"192.0.0.1\" , "
             " \"port\": 777 , "
-            " \"dns_server_timeout\": 333 , "
-            " \"ncr_format\": \"JSON\", "
-            "\"tsig_keys\": [], "
-            "\"forward_ddns\" : {}, "
-            "\"reverse_ddns\" : {} "
+            " \"dns-server-timeout\": 333 , "
+            " \"ncr-format\": \"JSON\", "
+            "\"tsig-keys\": [], "
+            "\"forward-ddns\" : {}, "
+            "\"reverse-ddns\" : {} "
             "}";
 
     runConfig(config);
@@ -458,13 +458,13 @@ TEST_F(D2CfgMgrTest, defaultValues) {
     // Check that format timeout gets you its default
     config =
             "{"
-            " \"ip_address\": \"192.0.0.1\" , "
+            " \"ip-address\": \"192.0.0.1\" , "
             " \"port\": 777 , "
-            " \"dns_server_timeout\": 333 , "
-            " \"ncr_protocol\": \"UDP\", "
-            "\"tsig_keys\": [], "
-            "\"forward_ddns\" : {}, "
-            "\"reverse_ddns\" : {} "
+            " \"dns-server-timeout\": 333 , "
+            " \"ncr-protocol\": \"UDP\", "
+            "\"tsig-keys\": [], "
+            "\"forward-ddns\" : {}, "
+            "\"reverse-ddns\" : {} "
             "}";
 
     runConfig(config);
@@ -477,15 +477,15 @@ TEST_F(D2CfgMgrTest, unsupportedTopLevelItems) {
     // Check that an unsupported top level parameter fails.
     std::string config =
             "{"
-            " \"ip_address\": \"127.0.0.1\", "
+            " \"ip-address\": \"127.0.0.1\", "
             " \"port\": 777 , "
-            " \"dns_server_timeout\": 333 , "
-            " \"ncr_protocol\": \"UDP\" , "
-            " \"ncr_format\": \"JSON\", "
-            "\"tsig_keys\": [], "
-            "\"forward_ddns\" : {}, "
-            "\"reverse_ddns\" : {}, "
-            "\"bogus_param\" : true "
+            " \"dns-server-timeout\": 333 , "
+            " \"ncr-protocol\": \"UDP\" , "
+            " \"ncr-format\": \"JSON\", "
+            "\"tsig-keys\": [], "
+            "\"forward-ddns\" : {}, "
+            "\"reverse-ddns\" : {}, "
+            "\"bogus-param\" : true "
             "}";
 
     runConfig(config, SHOULD_FAIL);
@@ -494,16 +494,16 @@ TEST_F(D2CfgMgrTest, unsupportedTopLevelItems) {
     // D2 these fail as they are not in the parse order.
     config =
             "{"
-            " \"ip_address\": \"127.0.0.1\", "
+            " \"ip-address\": \"127.0.0.1\", "
             " \"port\": 777 , "
-            " \"dns_server_timeout\": 333 , "
-            " \"ncr_protocol\": \"UDP\" , "
-            " \"ncr_format\": \"JSON\", "
-            "\"tsig_keys\": [], "
-            "\"bogus_object_one\" : {}, "
-            "\"forward_ddns\" : {}, "
-            "\"reverse_ddns\" : {}, "
-            "\"bogus_object_two\" : {} "
+            " \"dns-server-timeout\": 333 , "
+            " \"ncr-protocol\": \"UDP\" , "
+            " \"ncr-format\": \"JSON\", "
+            "\"tsig-keys\": [], "
+            "\"bogus-object-one\" : {}, "
+            "\"forward-ddns\" : {}, "
+            "\"reverse-ddns\" : {}, "
+            "\"bogus-object-two\" : {} "
             "}";
 
     runConfig(config, SHOULD_FAIL);
@@ -622,7 +622,7 @@ TEST_F(TSIGKeyInfoTest, validEntry) {
     std::string config = "{"
                          " \"name\": \"d2_key_one\" , "
                          " \"algorithm\": \"HMAC-MD5\" , "
-                         " \"digest_bits\": 120 , "
+                         " \"digest-bits\": 120 , "
                          " \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          "}";
     ASSERT_TRUE(fromJSON(config));
@@ -654,13 +654,13 @@ TEST_F(TSIGKeyInfoTest, invalidTSIGKeyList) {
 
                          " { \"name\": \"key1\" , "
                          "   \"algorithm\": \"HMAC-MD5\" ,"
-                         " \"digest_bits\": 120 , "
+                         " \"digest-bits\": 120 , "
                          "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " },"
                          // this entry has an invalid algorithm
                          " { \"name\": \"key2\" , "
                          "   \"algorithm\": \"\" ,"
-                         " \"digest_bits\": 120 , "
+                         " \"digest-bits\": 120 , "
                          "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " },"
                          " { \"name\": \"key3\" , "
@@ -687,12 +687,12 @@ TEST_F(TSIGKeyInfoTest, duplicateTSIGKey) {
 
                          " { \"name\": \"key1\" , "
                          "   \"algorithm\": \"HMAC-MD5\" ,"
-                         " \"digest_bits\": 120 , "
+                         " \"digest-bits\": 120 , "
                          "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " },"
                          " { \"name\": \"key2\" , "
                          "   \"algorithm\": \"HMAC-MD5\" ,"
-                         " \"digest_bits\": 120 , "
+                         " \"digest-bits\": 120 , "
                          "   \"secret\": \"GWG/Xfbju4O2iXGqkSu4PQ==\" "
                          " },"
                          " { \"name\": \"key1\" , "
@@ -719,32 +719,32 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
 
                          " { \"name\": \"key1\" , "
                          "   \"algorithm\": \"HMAC-MD5\" ,"
-                         " \"digest_bits\": 80 , "
+                         " \"digest-bits\": 80 , "
                          "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " },"
                          " { \"name\": \"key2\" , "
                          "   \"algorithm\": \"HMAC-SHA1\" ,"
-                         " \"digest_bits\": 80 , "
+                         " \"digest-bits\": 80 , "
                          "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " },"
                          " { \"name\": \"key3\" , "
                          "   \"algorithm\": \"HMAC-SHA256\" ,"
-                         " \"digest_bits\": 128 , "
+                         " \"digest-bits\": 128 , "
                          "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " },"
                          " { \"name\": \"key4\" , "
                          "   \"algorithm\": \"HMAC-SHA224\" ,"
-                         " \"digest_bits\": 112 , "
+                         " \"digest-bits\": 112 , "
                          "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " },"
                          " { \"name\": \"key5\" , "
                          "   \"algorithm\": \"HMAC-SHA384\" ,"
-                         " \"digest_bits\": 192 , "
+                         " \"digest-bits\": 192 , "
                          "  \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " },"
                          " { \"name\": \"key6\" , "
                          "   \"algorithm\": \"HMAC-SHA512\" ,"
-                         " \"digest_bits\": 256 , "
+                         " \"digest-bits\": 256 , "
                          "   \"secret\": \"dGhpcyBrZXkgd2lsbCBtYXRjaA==\" "
                          " }"
                          " ]";
@@ -827,20 +827,20 @@ TEST_F(DnsServerInfoTest, invalidEntry) {
     // Create a config in which both host and ip address are supplied.
     // Verify that build fails.
     std::string config = "{ \"hostname\": \"pegasus.tmark\", "
-                         "  \"ip_address\": \"127.0.0.1\" } ";
+                         "  \"ip-address\": \"127.0.0.1\" } ";
     ASSERT_TRUE(fromJSON(config));
     EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Neither host nor ip address supplied
     // Verify that builds fails.
     config = "{ \"hostname\": \"\", "
-             "  \"ip_address\": \"\" } ";
+             "  \"ip-address\": \"\" } ";
     ASSERT_TRUE(fromJSON(config));
     EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Create a config with a negative port number.
     // Verify that build fails.
-    config = "{ \"ip_address\": \"192.168.5.6\" ,"
+    config = "{ \"ip-address\": \"192.168.5.6\" ,"
              "  \"port\": -100 }";
     ASSERT_TRUE(fromJSON(config));
     EXPECT_THROW (parser_->build(config_set_), isc::BadValue);
@@ -877,7 +877,7 @@ TEST_F(DnsServerInfoTest, validEntry) {
     /// reset();
 
     // Valid entries for static ip
-    std::string config = " { \"ip_address\": \"127.0.0.1\" , "
+    std::string config = " { \"ip-address\": \"127.0.0.1\" , "
                          "  \"port\": 100 }";
     ASSERT_TRUE(fromJSON(config));
 
@@ -897,7 +897,7 @@ TEST_F(DnsServerInfoTest, validEntry) {
     reset();
 
     // Valid entries for static ip, no port
-    config = " { \"ip_address\": \"192.168.2.5\" }";
+    config = " { \"ip-address\": \"192.168.2.5\" }";
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that it builds and commits without throwing.
@@ -918,9 +918,9 @@ TEST_F(DnsServerInfoTest, validEntry) {
 /// entries is detected.
 TEST_F(ConfigParseTest, invalidServerList) {
     // Construct a list of servers with an invalid server entry.
-    std::string config = "[ { \"ip_address\": \"127.0.0.1\" }, "
-                        "{ \"ip_address\": \"\" }, "
-                        "{ \"ip_address\": \"127.0.0.2\" } ]";
+    std::string config = "[ { \"ip-address\": \"127.0.0.1\" }, "
+                        "{ \"ip-address\": \"\" }, "
+                        "{ \"ip-address\": \"127.0.0.2\" } ]";
     ASSERT_TRUE(fromJSON(config));
 
     // Create the server storage and list parser.
@@ -936,9 +936,9 @@ TEST_F(ConfigParseTest, invalidServerList) {
 /// a valid configuration.
 TEST_F(ConfigParseTest, validServerList) {
     // Create a valid list of servers.
-    std::string config = "[ { \"ip_address\": \"127.0.0.1\" }, "
-                        "{ \"ip_address\": \"127.0.0.2\" }, "
-                        "{ \"ip_address\": \"127.0.0.3\" } ]";
+    std::string config = "[ { \"ip-address\": \"127.0.0.1\" }, "
+                        "{ \"ip-address\": \"127.0.0.2\" }, "
+                        "{ \"ip-address\": \"127.0.0.3\" } ]";
     ASSERT_TRUE(fromJSON(config));
 
     // Create the server storage and list parser.
@@ -984,13 +984,13 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
                  new DdnsDomainParser("test", domains, keys_)), D2CfgError);
 
     // Create a domain configuration without a name
-    std::string config = "{  \"key_name\": \"d2_key.tmark.org\" , "
-                         "  \"dns_servers\" : [ "
-                         "  {  \"ip_address\": \"127.0.0.1\" , "
+    std::string config = "{  \"key-name\": \"d2_key.tmark.org\" , "
+                         "  \"dns-servers\" : [ "
+                         "  {  \"ip-address\": \"127.0.0.1\" , "
                          "    \"port\": 100 },"
-                         "  { \"ip_address\": \"127.0.0.2\" , "
+                         "  { \"ip-address\": \"127.0.0.2\" , "
                          "    \"port\": 200 },"
-                         "  {  \"ip_address\": \"127.0.0.3\" , "
+                         "  {  \"ip-address\": \"127.0.0.3\" , "
                          "    \"port\": 300 } ] } ";
     ASSERT_TRUE(fromJSON(config));
 
@@ -999,8 +999,8 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
 
     // Create a domain configuration with an empty server list.
     config = "{ \"name\": \"tmark.org\" , "
-             "  \"key_name\": \"d2_key.tmark.org\" , "
-             "  \"dns_servers\" : [ "
+             "  \"key-name\": \"d2_key.tmark.org\" , "
+             "  \"dns-servers\" : [ "
              "   ] } ";
     ASSERT_TRUE(fromJSON(config));
 
@@ -1009,9 +1009,9 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
 
     // Create a domain configuration with a mal-formed server entry.
     config = "{ \"name\": \"tmark.org\" , "
-             "  \"key_name\": \"d2_key.tmark.org\" , "
-             "  \"dns_servers\" : [ "
-             "  {  \"ip_address\": \"127.0.0.3\" , "
+             "  \"key-name\": \"d2_key.tmark.org\" , "
+             "  \"dns-servers\" : [ "
+             "  {  \"ip-address\": \"127.0.0.3\" , "
              "    \"port\": -1 } ] } ";
     ASSERT_TRUE(fromJSON(config));
 
@@ -1020,9 +1020,9 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
 
     // Create a domain configuration without an defined key name
     config = "{ \"name\": \"tmark.org\" , "
-             "  \"key_name\": \"d2_key.tmark.org\" , "
-             "  \"dns_servers\" : [ "
-             "  {  \"ip_address\": \"127.0.0.3\" , "
+             "  \"key-name\": \"d2_key.tmark.org\" , "
+             "  \"dns-servers\" : [ "
+             "  {  \"ip-address\": \"127.0.0.3\" , "
              "    \"port\": 300 } ] } ";
     ASSERT_TRUE(fromJSON(config));
 
@@ -1041,13 +1041,13 @@ TEST_F(DdnsDomainTest, ddnsDomainParsing) {
     // servers.
     std::string config =
                         "{ \"name\": \"tmark.org\" , "
-                        "  \"key_name\": \"d2_key.tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  {  \"ip_address\": \"127.0.0.1\" , "
+                        "  \"key-name\": \"d2_key.tmark.org\" , "
+                        "  \"dns-servers\" : [ "
+                        "  {  \"ip-address\": \"127.0.0.1\" , "
                         "    \"port\": 100 },"
-                        "  { \"ip_address\": \"127.0.0.2\" , "
+                        "  { \"ip-address\": \"127.0.0.2\" , "
                         "    \"port\": 200 },"
-                        "  {  \"ip_address\": \"127.0.0.3\" , "
+                        "  {  \"ip-address\": \"127.0.0.3\" , "
                         "    \"port\": 300 } ] } ";
     ASSERT_TRUE(fromJSON(config));
 
@@ -1107,23 +1107,23 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
     std::string config =
                         "[ "
                         "{ \"name\": \"tmark.org\" , "
-                        "  \"key_name\": \"d2_key.tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" , "
+                        "  \"key-name\": \"d2_key.tmark.org\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.1\" , "
                         "    \"port\": 100 },"
-                        "  { \"ip_address\": \"127.0.0.2\" , "
+                        "  { \"ip-address\": \"127.0.0.2\" , "
                         "    \"port\": 200 },"
-                        "  { \"ip_address\": \"127.0.0.3\" , "
+                        "  { \"ip-address\": \"127.0.0.3\" , "
                         "    \"port\": 300 } ] } "
                         ", "
                         "{ \"name\": \"billcat.net\" , "
-                        "  \"key_name\": \"d2_key.billcat.net\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.4\" , "
+                        "  \"key-name\": \"d2_key.billcat.net\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.4\" , "
                         "    \"port\": 400 },"
-                        "  { \"ip_address\": \"127.0.0.5\" , "
+                        "  { \"ip-address\": \"127.0.0.5\" , "
                         "    \"port\": 500 },"
-                        "  { \"ip_address\": \"127.0.0.6\" , "
+                        "  { \"ip-address\": \"127.0.0.6\" , "
                         "    \"port\": 600 } ] } "
                         "] ";
 
@@ -1212,13 +1212,13 @@ TEST_F(DdnsDomainTest, duplicateDomain) {
     std::string config =
                         "[ "
                         "{ \"name\": \"tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.3\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.3\" , "
                         "    \"port\": 300 } ] } "
                         ", "
                         "{ \"name\": \"tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.3\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.3\" , "
                         "    \"port\": 300 } ] } "
                         "] ";
     ASSERT_TRUE(fromJSON(config));
@@ -1264,12 +1264,12 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     // both the forward and reverse ddns managers.  Both managers have two
     // domains with three servers per domain.
     std::string config = "{ "
-                        "\"ip_address\" : \"192.168.1.33\" , "
+                        "\"ip-address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
-                        " \"dns_server_timeout\": 333 , "
-                        " \"ncr_protocol\": \"UDP\" , "
-                        " \"ncr_format\": \"JSON\", "
-                        "\"tsig_keys\": ["
+                        " \"dns-server-timeout\": 333 , "
+                        " \"ncr-protocol\": \"UDP\" , "
+                        " \"ncr-format\": \"JSON\", "
+                        "\"tsig-keys\": ["
                         "{"
                         "  \"name\": \"d2_key.tmark.org\" , "
                         "  \"algorithm\": \"hmac-md5\" , "
@@ -1278,44 +1278,44 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "{"
                         "  \"name\": \"d2_key.billcat.net\" , "
                         "  \"algorithm\": \"hmac-md5\" , "
-                        " \"digest_bits\": 120 , "
+                        " \"digest-bits\": 120 , "
                         "   \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\" "
                         "}"
                         "],"
-                        "\"forward_ddns\" : {"
-                        "\"ddns_domains\": [ "
+                        "\"forward-ddns\" : {"
+                        "\"ddns-domains\": [ "
                         "{ \"name\": \"tmark.org\" , "
-                        "  \"key_name\": \"d2_key.tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" } , "
-                        "  { \"ip_address\": \"127.0.0.2\" } , "
-                        "  { \"ip_address\": \"127.0.0.3\"} "
+                        "  \"key-name\": \"d2_key.tmark.org\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.1\" } , "
+                        "  { \"ip-address\": \"127.0.0.2\" } , "
+                        "  { \"ip-address\": \"127.0.0.3\"} "
                         "  ] } "
                         ", "
                         "{ \"name\": \"billcat.net\" , "
-                        "  \"key_name\": \"d2_key.billcat.net\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.4\" } , "
-                        "  { \"ip_address\": \"127.0.0.5\" } , "
-                        "  { \"ip_address\": \"127.0.0.6\" } "
+                        "  \"key-name\": \"d2_key.billcat.net\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.4\" } , "
+                        "  { \"ip-address\": \"127.0.0.5\" } , "
+                        "  { \"ip-address\": \"127.0.0.6\" } "
                         "  ] } "
                         "] },"
-                        "\"reverse_ddns\" : {"
-                        "\"ddns_domains\": [ "
+                        "\"reverse-ddns\" : {"
+                        "\"ddns-domains\": [ "
                         "{ \"name\": \" 0.168.192.in.addr.arpa.\" , "
-                        "  \"key_name\": \"d2_key.tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.1.1\" } , "
-                        "  { \"ip_address\": \"127.0.2.1\" } , "
-                        "  { \"ip_address\": \"127.0.3.1\" } "
+                        "  \"key-name\": \"d2_key.tmark.org\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.1.1\" } , "
+                        "  { \"ip-address\": \"127.0.2.1\" } , "
+                        "  { \"ip-address\": \"127.0.3.1\" } "
                         "  ] } "
                         ", "
                         "{ \"name\": \" 0.247.106.in.addr.arpa.\" , "
-                        "  \"key_name\": \"d2_key.billcat.net\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.4.1\" }, "
-                        "  { \"ip_address\": \"127.0.5.1\" } , "
-                        "  { \"ip_address\": \"127.0.6.1\" } "
+                        "  \"key-name\": \"d2_key.billcat.net\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.4.1\" }, "
+                        "  { \"ip-address\": \"127.0.5.1\" } , "
+                        "  { \"ip-address\": \"127.0.6.1\" } "
                         "  ] } "
                         "] } }";
 
@@ -1407,27 +1407,27 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
     // Create  configuration with one domain, one sub domain, and the wild
     // card.
     std::string config = "{ "
-                        "\"ip_address\" : \"192.168.1.33\" , "
+                        "\"ip-address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
-                        "\"tsig_keys\": [] ,"
-                        "\"forward_ddns\" : {"
-                        "\"ddns_domains\": [ "
+                        "\"tsig-keys\": [] ,"
+                        "\"forward-ddns\" : {"
+                        "\"ddns-domains\": [ "
                         "{ \"name\": \"tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" } "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.1\" } "
                         "  ] } "
                         ", "
                         "{ \"name\": \"one.tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.2\" } "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.2\" } "
                         "  ] } "
                         ", "
                         "{ \"name\": \"*\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.3\" } "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.3\" } "
                         "  ] } "
                         "] }, "
-                        "\"reverse_ddns\" : {} "
+                        "\"reverse-ddns\" : {} "
                         "}";
 
 
@@ -1480,22 +1480,22 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
 TEST_F(D2CfgMgrTest, matchNoWildcard) {
     // Create a configuration with one domain, one sub-domain, and NO wild card.
     std::string config = "{ "
-                        "\"ip_address\" : \"192.168.1.33\" , "
+                        "\"ip-address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
-                        "\"tsig_keys\": [] ,"
-                        "\"forward_ddns\" : {"
-                        "\"ddns_domains\": [ "
+                        "\"tsig-keys\": [] ,"
+                        "\"forward-ddns\" : {"
+                        "\"ddns-domains\": [ "
                         "{ \"name\": \"tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" } "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.1\" } "
                         "  ] } "
                         ", "
                         "{ \"name\": \"one.tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.2\" } "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.2\" } "
                         "  ] } "
                         "] }, "
-                        "\"reverse_ddns\" : {} "
+                        "\"reverse-ddns\" : {} "
                         " }";
 
     ASSERT_TRUE(fromJSON(config));
@@ -1527,17 +1527,17 @@ TEST_F(D2CfgMgrTest, matchNoWildcard) {
 /// This test verifies that any FQDN matches the wild card.
 TEST_F(D2CfgMgrTest, matchAll) {
     std::string config = "{ "
-                        "\"ip_address\" : \"192.168.1.33\" , "
+                        "\"ip-address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
-                        "\"tsig_keys\": [] ,"
-                        "\"forward_ddns\" : {"
-                        "\"ddns_domains\": [ "
+                        "\"tsig-keys\": [] ,"
+                        "\"forward-ddns\" : {"
+                        "\"ddns-domains\": [ "
                         "{ \"name\": \"*\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" } "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.1\" } "
                         "  ] } "
                         "] }, "
-                        "\"reverse_ddns\" : {} "
+                        "\"reverse-ddns\" : {} "
                         "}";
 
     ASSERT_TRUE(fromJSON(config));
@@ -1573,32 +1573,32 @@ TEST_F(D2CfgMgrTest, matchAll) {
 /// as a match.
 TEST_F(D2CfgMgrTest, matchReverse) {
     std::string config = "{ "
-                        "\"ip_address\" : \"192.168.1.33\" , "
+                        "\"ip-address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
-                        "\"tsig_keys\": [] ,"
-                        "\"forward_ddns\" : {}, "
-                        "\"reverse_ddns\" : {"
-                        "\"ddns_domains\": [ "
+                        "\"tsig-keys\": [] ,"
+                        "\"forward-ddns\" : {}, "
+                        "\"reverse-ddns\" : {"
+                        "\"ddns-domains\": [ "
                         "{ \"name\": \"5.100.168.192.in-addr.arpa.\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" } "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.1\" } "
                         "  ] }, "
                         "{ \"name\": \"100.200.192.in-addr.arpa.\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" } "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.1\" } "
                         "  ] }, "
                         "{ \"name\": \"170.192.in-addr.arpa.\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" } "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.1\" } "
                         "  ] }, "
                         // Note mixed case to test case insensitivity.
                         "{ \"name\": \"2.0.3.0.8.b.d.0.1.0.0.2.IP6.ARPA.\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" } "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.1\" } "
                         "  ] },"
                         "{ \"name\": \"*\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" } "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.1\" } "
                         "  ] } "
                         "] } }";
 
@@ -1662,7 +1662,7 @@ TEST_F(D2CfgMgrTest, matchReverse) {
 ///
 /// #    Each test has:
 /// #      1. description - optional text description
-/// #      2. should_fail - bool indicator if parsing is expected to file
+/// #      2. should-fail - bool indicator if parsing is expected to file
 /// #         (defaults to false)
 /// #       3. data - configuration text to parse
 /// #
@@ -1702,15 +1702,16 @@ TEST_F(D2CfgMgrTest, configPermutations) {
 
     // Read in each test For each test, read:
     //  1. description - optional text description
-    //  2. should_fail - bool indicator if parsing is expected to file (defaults
+    //  2. should-fail - bool indicator if parsing is expected to file (defaults
     //     to false
     //  3. data - configuration text to parse
     //
     // Next attempt to parse the configuration by passing it into
     // D2CfgMgr::parseConfig().  Then check the parsing outcome against the
-    // expected outcome as given by should_fail.
+    // expected outcome as given by should-fail.
     isc::data::ConstElementPtr test;
-    BOOST_FOREACH(test, tests->get("test_list")->listValue()) {
+    ASSERT_TRUE(tests->get("test-list"));
+    BOOST_FOREACH(test, tests->get("test-list")->listValue()) {
 
         // Grab the description.
         std::string description = "<no desc>";
@@ -1719,10 +1720,10 @@ TEST_F(D2CfgMgrTest, configPermutations) {
             elem->getValue(description);
         }
 
-        // Grab the outcome flag, should_fail, defaults to false if it's
+        // Grab the outcome flag, should-fail, defaults to false if it's
         // not specified.
         bool should_fail = false;
-        elem = test->get("should_fail");
+        elem = test->get("should-fail");
         if (elem)  {
             elem->getValue(should_fail);
         }

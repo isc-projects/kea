@@ -36,26 +36,26 @@ namespace {
 
 /// @brief Valid configuration containing an unavailable IP address.
 const char* bad_ip_d2_config = "{ "
-                        "\"ip_address\" : \"1.1.1.1\" , "
+                        "\"ip-address\" : \"1.1.1.1\" , "
                         "\"port\" : 5031, "
-                        "\"tsig_keys\": ["
+                        "\"tsig-keys\": ["
                         "{ \"name\": \"d2_key.tmark.org\" , "
                         "   \"algorithm\": \"HMAC-MD5\" ,"
                         "   \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\" "
                         "} ],"
-                        "\"forward_ddns\" : {"
-                        "\"ddns_domains\": [ "
+                        "\"forward-ddns\" : {"
+                        "\"ddns-domains\": [ "
                         "{ \"name\": \"tmark.org\" , "
-                        "  \"key_name\": \"d2_key.tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.101\" } "
+                        "  \"key-name\": \"d2_key.tmark.org\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.101\" } "
                         "] } ] }, "
-                        "\"reverse_ddns\" : {"
-                        "\"ddns_domains\": [ "
+                        "\"reverse-ddns\" : {"
+                        "\"ddns-domains\": [ "
                         "{ \"name\": \" 0.168.192.in.addr.arpa.\" , "
-                        "  \"key_name\": \"d2_key.tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.101\" , "
+                        "  \"key-name\": \"d2_key.tmark.org\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.101\" , "
                         "    \"port\": 100 } ] } "
                         "] } }";
 
@@ -274,14 +274,14 @@ TEST_F(D2ProcessTest, queueFullRecovery) {
     // Valid test message, contents are unimportant.
     const char* test_msg =
         "{"
-        " \"change_type\" : 0 , "
-        " \"forward_change\" : true , "
-        " \"reverse_change\" : false , "
+        " \"change-type\" : 0 , "
+        " \"forward-change\" : true , "
+        " \"reverse-change\" : false , "
         " \"fqdn\" : \"walah.walah.com\" , "
-        " \"ip_address\" : \"192.168.2.1\" , "
+        " \"ip-address\" : \"192.168.2.1\" , "
         " \"dhcid\" : \"010203040A7F8E3D\" , "
-        " \"lease_expires_on\" : \"20130121132405\" , "
-        " \"lease_length\" : 1300 "
+        " \"lease-expires-on\" : \"20130121132405\" , "
+        " \"lease-length\" : 1300 "
         "}";
 
     // Start queue manager with known good config.
@@ -515,14 +515,14 @@ TEST_F(D2ProcessTest, canShutdown) {
 
     const char* test_msg =
         "{"
-        " \"change_type\" : 0 , "
-        " \"forward_change\" : true , "
-        " \"reverse_change\" : false , "
+        " \"change-type\" : 0 , "
+        " \"forward-change\" : true , "
+        " \"reverse-change\" : false , "
         " \"fqdn\" : \"fish.tmark.org\" , "
-        " \"ip_address\" : \"192.168.2.1\" , "
+        " \"ip-address\" : \"192.168.2.1\" , "
         " \"dhcid\" : \"010203040A7F8E3D\" , "
-        " \"lease_expires_on\" : \"20130121132405\" , "
-        " \"lease_length\" : 1300 "
+        " \"lease-expires-on\" : \"20130121132405\" , "
+        " \"lease-length\" : 1300 "
         "}";
 
     // Manually enqueue a request.  This lets us test logic with queue
@@ -608,11 +608,11 @@ TEST_F(D2ProcessTest, fatalErrorShutdown) {
 /// loopback.
 TEST_F(D2ProcessTest, notLoopbackTest) {
     const char* config = "{ "
-                        "\"ip_address\" : \"0.0.0.0\" , "
+                        "\"ip-address\" : \"0.0.0.0\" , "
                         "\"port\" : 53001, "
-                        "\"tsig_keys\": [],"
-                        "\"forward_ddns\" : {},"
-                        "\"reverse_ddns\" : {}"
+                        "\"tsig-keys\": [],"
+                        "\"forward-ddns\" : {},"
+                        "\"reverse-ddns\" : {}"
                         "}";
 
     // Note we don't care nor can we predict if this
@@ -626,11 +626,11 @@ TEST_F(D2ProcessTest, notLoopbackTest) {
 /// DHCP_DDNS_NOT_ON_LOOPBACK is not issued.
 TEST_F(D2ProcessTest, v4LoopbackTest) {
     const char* config = "{ "
-                        "\"ip_address\" : \"127.0.0.1\" , "
+                        "\"ip-address\" : \"127.0.0.1\" , "
                         "\"port\" : 53001, "
-                        "\"tsig_keys\": [],"
-                        "\"forward_ddns\" : {},"
-                        "\"reverse_ddns\" : {}"
+                        "\"tsig-keys\": [],"
+                        "\"forward-ddns\" : {},"
+                        "\"reverse-ddns\" : {}"
                         "}";
     ASSERT_TRUE(runWithConfig(config));
 }
@@ -639,11 +639,11 @@ TEST_F(D2ProcessTest, v4LoopbackTest) {
 /// DHCP_DDNS_NOT_ON_LOOPBACK is not issued.
 TEST_F(D2ProcessTest, v6LoopbackTest) {
     const char* config = "{ "
-                        "\"ip_address\" : \"::1\" , "
+                        "\"ip-address\" : \"::1\" , "
                         "\"port\" : 53001, "
-                        "\"tsig_keys\": [],"
-                        "\"forward_ddns\" : {},"
-                        "\"reverse_ddns\" : {}"
+                        "\"tsig-keys\": [],"
+                        "\"forward-ddns\" : {},"
+                        "\"reverse-ddns\" : {}"
                         "}";
     ASSERT_TRUE(runWithConfig(config));
 }

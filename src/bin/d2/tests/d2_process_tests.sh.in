@@ -22,11 +22,11 @@ EXPECTED_VERSION="@PACKAGE_VERSION@"
 CONFIG="{
     \"DhcpDdns\":
     {
-        \"ip_address\": \"127.0.0.1\",
+        \"ip-address\": \"127.0.0.1\",
         \"port\": 53001,
-        \"tsig_keys\": [],
-        \"forward_ddns\" : {},
-        \"reverse_ddns\" : {}
+        \"tsig-keys\": [],
+        \"forward-ddns\" : {},
+        \"reverse-ddns\" : {}
     },
     \"Logging\":
     {
@@ -49,11 +49,11 @@ CONFIG="{
 CONFIG_INVALID="{
     \"DhcpDdns\":
     {
-        \"ip_address\": \"127.0.0.1\",
+        \"ip-address\": \"127.0.0.1\",
         \"port\": BOGUS,
-        \"tsig_keys\": [],
-        \"forward_ddns\" : {},
-        \"reverse_ddns\" : {}
+        \"tsig-keys\": [],
+        \"forward-ddns\" : {},
+        \"reverse-ddns\" : {}
     },
     \"Logging\":
     {

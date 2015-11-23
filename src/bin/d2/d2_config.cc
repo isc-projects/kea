@@ -118,12 +118,12 @@ std::string
 D2Params::toText() const {
     std::ostringstream stream;
 
-    stream << ", ip_address: " << ip_address_.toText()
+    stream << ", ip-address: " << ip_address_.toText()
            << ", port: " << port_
-           << ", dns_server_timeout_: " << dns_server_timeout_
-           << ", ncr_protocol: "
+           << ", dns-server-timeout_: " << dns_server_timeout_
+           << ", ncr-protocol: "
            << dhcp_ddns::ncrProtocolToString(ncr_protocol_)
-           << ", ncr_format: " << ncr_format_
+           << ", ncr-format: " << ncr_format_
            << dhcp_ddns::ncrFormatToString(ncr_format_);
 
     return (stream.str());
@@ -382,7 +382,7 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
     try {
         pos["name"] = local_scalars_.getParam("name", name);
         pos["algorithm"] = local_scalars_.getParam("algorithm", algorithm);
-        pos["digest_bits"] = local_scalars_.getParam("digest_bits", digestbits,
+        pos["digest-bits"] = local_scalars_.getParam("digest-bits", digestbits,
                                                      DCfgContextBase::OPTIONAL);
         pos["secret"] = local_scalars_.getParam("secret", secret);
     } catch (const std::exception& ex) {
@@ -415,34 +415,34 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
     if (digestbits > 0) {
       if ((digestbits % 8) != 0) {
           isc_throw(D2CfgError, "Invalid TSIG key digest_bits specified : " <<
-                                digestbits << " (" << pos["digest_bits"] << ")");
+                                digestbits << " (" << pos["digest-bits"] << ")");
       }
       if (digestbits < 80) {
           isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
-                                digestbits << " (" << pos["digest_bits"] << ")");
+                                digestbits << " (" << pos["digest-bits"] << ")");
       }
       if (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA224_STR)) {
           if (digestbits < 112) {
               isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
-                                    digestbits << " (" << pos["digest_bits"]
+                                    digestbits << " (" << pos["digest-bits"]
                                     << ")");
           }
       } else if (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA256_STR)) {
           if (digestbits < 128) {
               isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
-                                    digestbits << " (" << pos["digest_bits"]
+                                    digestbits << " (" << pos["digest-bits"]
                                     << ")");
           }
       } else if (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA384_STR)) {
           if (digestbits < 192) {
               isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
-                                    digestbits << " (" << pos["digest_bits"]
+                                    digestbits << " (" << pos["digest-bits"]
                                     << ")");
           }
       } else if (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA512_STR)) {
           if (digestbits < 256) {
               isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
-                                    digestbits << " (" << pos["digest_bits"]
+                                    digestbits << " (" << pos["digest-bits"]
                                     << ")");
           }
       }
@@ -483,7 +483,7 @@ TSIGKeyInfoParser::createConfigParser(const std::string& config_id,
         (config_id == "secret")) {
         parser = new isc::dhcp::StringParser(config_id,
                                              local_scalars_.getStringStorage());
-    } else if (config_id == "digest_bits") {
+    } else if (config_id == "digest-bits") {
         parser = new isc::dhcp::Uint32Parser(config_id,
                                              local_scalars_.getUint32Storage());
     } else {
@@ -588,7 +588,7 @@ DnsServerInfoParser::build(isc::data::ConstElementPtr server_config) {
     // local storage.  They're all optional, so no try-catch here.
     pos["hostname"] = local_scalars_.getParam("hostname", hostname,
                                               DCfgContextBase::OPTIONAL);
-    pos["ip_address"] = local_scalars_.getParam("ip_address", ip_address,
+    pos["ip-address"] = local_scalars_.getParam("ip-address", ip_address,
                                                 DCfgContextBase::OPTIONAL);
     pos["port"] =  local_scalars_.getParam("port", port,
                                            DCfgContextBase::OPTIONAL);
@@ -632,7 +632,7 @@ DnsServerInfoParser::build(isc::data::ConstElementPtr server_config) {
             serverInfo.reset(new DnsServerInfo(hostname, io_addr, port));
         } catch (const isc::asiolink::IOError& ex) {
             isc_throw(D2CfgError, "Dns Server : invalid IP address : "
-                      << ip_address << " (" << pos["ip_address"] << ")");
+                      << ip_address << " (" << pos["ip-address"] << ")");
         }
     }
 
@@ -648,7 +648,7 @@ DnsServerInfoParser::createConfigParser(const std::string& config_id,
     // Based on the configuration id of the element, create the appropriate
     // parser. Scalars are set to use the parser's local scalar storage.
     if ((config_id == "hostname")  ||
-        (config_id == "ip_address")) {
+        (config_id == "ip-address")) {
         parser = new isc::dhcp::StringParser(config_id,
                                              local_scalars_.getStringStorage());
     } else if (config_id == "port") {
@@ -760,7 +760,7 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
     // Any required that are missing will throw.
     try {
         pos["name"] = local_scalars_.getParam("name", name);
-        pos["key_name"] = local_scalars_.getParam("key_name", key_name,
+        pos["key-name"] = local_scalars_.getParam("key-name", key_name,
                                                   DCfgContextBase::OPTIONAL);
     } catch (const std::exception& ex) {
         isc_throw(D2CfgError, "DdnsDomain incomplete : " << ex.what()
@@ -796,7 +796,7 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
         if (!tsig_key_info) {
             isc_throw(D2CfgError, "DdnsDomain : " << name
                       << " specifies an undefined key: " << key_name
-                      << " (" << pos["key_name"] << ")");
+                      << " (" << pos["key-name"] << ")");
         }
     }
 
@@ -814,10 +814,10 @@ DdnsDomainParser::createConfigParser(const std::string& config_id,
     // Based on the configuration id of the element, create the appropriate
     // parser. Scalars are set to use the parser's local scalar storage.
     if ((config_id == "name")  ||
-        (config_id == "key_name")) {
+        (config_id == "key-name")) {
         parser = new isc::dhcp::StringParser(config_id,
                                              local_scalars_.getStringStorage());
-    } else if (config_id == "dns_servers") {
+    } else if (config_id == "dns-servers") {
        // Server list parser is given in our local server storage. It will pass
        // this down to its server parsers and is where they will write their
        // server instances upon commit.
@@ -918,7 +918,7 @@ DdnsDomainListMgrParser::createConfigParser(const std::string& config_id,
                                             const isc::data::Element::
                                             Position& pos) {
     DhcpConfigParser* parser = NULL;
-    if (config_id == "ddns_domains") {
+    if (config_id == "ddns-domains") {
        // Domain list parser is given our local domain storage. It will pass
        // this down to its domain parsers and is where they will write their
        // domain instances upon commit.
