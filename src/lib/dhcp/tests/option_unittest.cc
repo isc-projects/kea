@@ -236,6 +236,38 @@ TEST_F(OptionTest, v4_toText) {
     EXPECT_EQ("type=253, len=003: 00:0f:ff", opt.toText());
 }
 
+// Test converting option to the hexadecimal representation.
+TEST_F(OptionTest, v4_toHexString) {
+    std::vector<uint8_t> payload;
+    for (unsigned int i = 0; i < 16; ++i) {
+        payload.push_back(static_cast<uint8_t>(i));
+    }
+    Option opt(Option::V4, 122, payload);
+    EXPECT_EQ("0x000102030405060708090A0B0C0D0E0F", opt.toHexString());
+    EXPECT_EQ("0x7A10000102030405060708090A0B0C0D0E0F",
+              opt.toHexString(true));
+
+    // Test empty option.
+    Option opt_empty(Option::V4, 65, std::vector<uint8_t>());
+    EXPECT_TRUE(opt_empty.toHexString().empty());
+    EXPECT_EQ("0x4100", opt_empty.toHexString(true));
+
+    // Test too long option. We can't simply create such option by
+    // providing a long payload, because class constructor would not
+    // accept it. Instead we'll add two long sub options after we
+    // create an option instance.
+    Option opt_too_long(Option::V4, 33);
+    // Both suboptions have payloads of 150 bytes.
+    std::vector<uint8_t> long_payload(150, 1);
+    OptionPtr sub1(new Option(Option::V4, 100, long_payload));
+    OptionPtr sub2(new Option(Option::V4, 101, long_payload));
+    opt_too_long.addOption(sub1);
+    opt_too_long.addOption(sub2);
+
+    // The toHexString() should throw exception.
+    EXPECT_THROW(opt_too_long.toHexString(), isc::OutOfRange);
+}
+
 // Tests simple constructor
 TEST_F(OptionTest, v6_basic) {
 
@@ -446,6 +478,22 @@ TEST_F(OptionTest, v6_toText) {
     EXPECT_EQ("type=00258, len=00003: 00:0f:ff", opt->toText());
 }
 
+// Test converting option to the hexadecimal representation.
+TEST_F(OptionTest, v6_toHexString) {
+    std::vector<uint8_t> payload;
+    for (unsigned int i = 0; i < 16; ++i) {
+        payload.push_back(static_cast<uint8_t>(i));
+    }
+    Option opt(Option::V6, 12202, payload);
+    EXPECT_EQ("0x000102030405060708090A0B0C0D0E0F", opt.toHexString());
+    EXPECT_EQ("0x2FAA0010000102030405060708090A0B0C0D0E0F",
+              opt.toHexString(true));
+
+    // Test empty option.
+    Option opt_empty(Option::V6, 65000, std::vector<uint8_t>());
+    EXPECT_TRUE(opt_empty.toHexString().empty());
+    EXPECT_EQ("0xFDE80000", opt_empty.toHexString(true));
+}
 
 TEST_F(OptionTest, getUintX) {
 
