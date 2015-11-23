@@ -827,7 +827,7 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
 
     // First subnet configured options
     Subnet4Ptr subnet = ex.getContext()->subnet_;
-    if (subnet) {
+    if (subnet && !subnet->getCfgOption()->empty()) {
         co_list.push_back(subnet->getCfgOption());
     }
 
@@ -845,11 +845,17 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
                 .arg(*cclass);
             continue;
         }
+        if (ccdef->getCfgOption()->empty()) {
+            // Skip classes which don't configure options
+            continue;
+        }
         co_list.push_back(ccdef->getCfgOption());
     }
 
     // Last global options
-    co_list.push_back(CfgMgr::instance().getCurrentCfg()->getCfgOption());
+    if (!CfgMgr::instance().getCurrentCfg()->getCfgOption()->empty()) {
+        co_list.push_back(CfgMgr::instance().getCurrentCfg()->getCfgOption());
+    }
 }
 
 void
@@ -862,6 +868,12 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     // error because it will be logged by the assignLease method
     // anyway.
     if (!subnet) {
+        return;
+    }
+
+    // Unlikely short cut
+    const CfgOptionList& co_list = ex.getCfgOptionList();
+    if (co_list.empty()) {
         return;
     }
 
@@ -888,7 +900,6 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         // Add nothing when it is already there
         if (!resp->getOption(*opt)) {
             // Iterate on the configured option list
-            const CfgOptionList& co_list = ex.getCfgOptionList();
             for (CfgOptionList::const_iterator copts = co_list.begin();
                  copts != co_list.end(); ++copts) {
                 OptionDescriptor desc = (*copts)->get("dhcp4", *opt);
@@ -912,6 +923,12 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     // pick the suitable subnet. We don't want to duplicate
     // error messages in such case.
     if (!subnet) {
+        return;
+    }
+
+    // Unlikely short cut
+    const CfgOptionList& co_list = ex.getCfgOptionList();
+    if (co_list.empty()) {
         return;
     }
 
@@ -944,7 +961,6 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
          code != requested_opts.end(); ++code) {
         if  (!vendor_rsp->getOption(*code)) {
-            const CfgOptionList& co_list = ex.getCfgOptionList();
             for (CfgOptionList::const_iterator copts = co_list.begin();
                  copts != co_list.end(); ++copts) {
                 OptionDescriptor desc = (*copts)->get(vendor_id, *code);
@@ -981,6 +997,12 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
         return;
     }
 
+    // Unlikely short cut
+    const CfgOptionList& co_list = ex.getCfgOptionList();
+    if (co_list.empty()) {
+        return;
+    }
+
     Pkt4Ptr resp = ex.getResponse();
 
     // Try to find all 'required' options in the outgoing
@@ -989,7 +1011,6 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
         OptionPtr opt = resp->getOption(required_options[i]);
         if (!opt) {
             // Check whether option has been configured.
-            const CfgOptionList& co_list = ex.getCfgOptionList();
             for (CfgOptionList::const_iterator copts = co_list.begin();
                  copts != co_list.end(); ++copts) {
                 OptionDescriptor desc = (*copts)->get("dhcp4", required_options[i]);
