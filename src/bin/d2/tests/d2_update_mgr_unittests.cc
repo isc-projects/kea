@@ -96,14 +96,14 @@ public:
     void makeCannedNcrs() {
         const char* msg_str =
         "{"
-        " \"change_type\" : 0 , "
-        " \"forward_change\" : true , "
-        " \"reverse_change\" : false , "
+        " \"change-type\" : 0 , "
+        " \"forward-change\" : true , "
+        " \"reverse-change\" : false , "
         " \"fqdn\" : \"my.example.com.\" , "
-        " \"ip_address\" : \"192.168.1.2\" , "
+        " \"ip-address\" : \"192.168.1.2\" , "
         " \"dhcid\" : \"0102030405060708\" , "
-        " \"lease_expires_on\" : \"20130121132405\" , "
-        " \"lease_length\" : 1300 "
+        " \"lease-expires-on\" : \"20130121132405\" , "
+        " \"lease-length\" : 1300 "
         "}";
 
         const char* dhcids[] = { "111111", "222222", "333333", "444444"};

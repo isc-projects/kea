@@ -274,14 +274,14 @@ TEST_F(D2ProcessTest, queueFullRecovery) {
     // Valid test message, contents are unimportant.
     const char* test_msg =
         "{"
-        " \"change_type\" : 0 , "
-        " \"forward_change\" : true , "
-        " \"reverse_change\" : false , "
+        " \"change-type\" : 0 , "
+        " \"forward-change\" : true , "
+        " \"reverse-change\" : false , "
         " \"fqdn\" : \"walah.walah.com\" , "
-        " \"ip_address\" : \"192.168.2.1\" , "
+        " \"ip-address\" : \"192.168.2.1\" , "
         " \"dhcid\" : \"010203040A7F8E3D\" , "
-        " \"lease_expires_on\" : \"20130121132405\" , "
-        " \"lease_length\" : 1300 "
+        " \"lease-expires-on\" : \"20130121132405\" , "
+        " \"lease-length\" : 1300 "
         "}";
 
     // Start queue manager with known good config.
@@ -515,14 +515,14 @@ TEST_F(D2ProcessTest, canShutdown) {
 
     const char* test_msg =
         "{"
-        " \"change_type\" : 0 , "
-        " \"forward_change\" : true , "
-        " \"reverse_change\" : false , "
+        " \"change-type\" : 0 , "
+        " \"forward-change\" : true , "
+        " \"reverse-change\" : false , "
         " \"fqdn\" : \"fish.tmark.org\" , "
-        " \"ip_address\" : \"192.168.2.1\" , "
+        " \"ip-address\" : \"192.168.2.1\" , "
         " \"dhcid\" : \"010203040A7F8E3D\" , "
-        " \"lease_expires_on\" : \"20130121132405\" , "
-        " \"lease_length\" : 1300 "
+        " \"lease-expires-on\" : \"20130121132405\" , "
+        " \"lease-length\" : 1300 "
         "}";
 
     // Manually enqueue a request.  This lets us test logic with queue
