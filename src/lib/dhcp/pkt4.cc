@@ -143,7 +143,7 @@ Pkt4::pack() {
         // write DHCP magic cookie
         buffer_out_.writeUint32(DHCP_OPTIONS_COOKIE);
 
-        LibDHCP::packOptions(buffer_out_, options_);
+        LibDHCP::packOptions4(buffer_out_, options_);
 
         // add END option that indicates end of options
         // (End option is very simple, just a 255 octet)
