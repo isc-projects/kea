@@ -1696,7 +1696,7 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
         "    \"option-data\": ["
         "        {    \"name\": \"ip-forwarding\", "
         "             \"data\": \"true\" } ], "
-        "    \"test\": \"option[12] == 'foo'\" } ] }";
+        "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
     ElementPtr json = Element::fromJSON(config);
     ConstElementPtr status;
@@ -1792,7 +1792,7 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
         "    \"option-data\": ["
         "        {    \"name\": \"ip-forwarding\", "
         "             \"data\": \"true\" } ], "
-        "    \"test\": \"option[12] == 'foo'\" } ] }";
+        "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
     ElementPtr json = Element::fromJSON(config);
     ConstElementPtr status;
@@ -1869,7 +1869,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
         "    \"option-data\": ["
         "        {    \"name\": \"ip-forwarding\", "
         "             \"data\": \"true\" } ], "
-        "    \"test\": \"option[12] == 'foo'\" } ] }";
+        "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
     ElementPtr json = Element::fromJSON(config);
     ConstElementPtr status;

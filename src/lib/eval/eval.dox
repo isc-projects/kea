@@ -18,8 +18,9 @@
   @section dhcpEvalIntroduction Introduction
 
   The core of the libeval library is a parser that is able to parse an
-  expression (e.g. option[123] == 'APC'). This is currently used for client
-  classification, but in the future may be also used for other applications.
+  expression (e.g. option[123].text == 'APC'). This is currently used for
+  client classification, but in the future may be also used for other
+  applications.
 
   The external interface to the library is the @ref isc::eval::EvalContext
   class.  Once instantiated, it offers a major method:
@@ -79,12 +80,17 @@
 14.                 TokenPtr hex(new TokenHexString($1));
 15.                 ctx.expression.push_back(hex);
 16.             }
-17.       | OPTION '[' INTEGER ']'
+17.       | OPTION '[' INTEGER ']' DOT TEXT
 18.             {
-19.                 TokenPtr opt(new TokenOption($3));
+19.                 TokenPtr opt(new TokenOption($3, TokenOption::TEXTUAL));
 20.                 ctx.expression.push_back(opt);
-21.              }
-22.       ;
+21.             }
+22.       | OPTION '[' INTEGER ']' DOT HEX
+23.             {
+24.                 TokenPtr opt(new TokenOption($3, TokenOption::HEXADECIMAL));
+25.                 ctx.expression.push_back(opt);
+26.              }
+27.       ;
 @endcode
 
 This code determines that the grammar starts from expression (line 1).
@@ -92,7 +98,8 @@ The actual definition of expression (lines 3-5) may either be a
 single token or an expression "token == token" (EQUAL has been defined as
 "==" elsewhere). Token is further
 defined in lines 7-22: it may either be a string (lines 7-11),
-a hex string (lines 12-16) or option (lines 17-21).
+a hex string (lines 12-16), option in the textual format (lines 17-21)
+or option in a hexadecimal format (lines 22-26).
 When the actual case is determined, the respective C++ action
 is executed. For example, if the token is a string, the TokenString class is
 instantiated with the appropriate value and put onto the expression vector.
