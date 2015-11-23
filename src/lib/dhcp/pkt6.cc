@@ -244,7 +244,7 @@ Pkt6::packUDP() {
         buffer_out_.writeUint8( (transid_) & 0xff );
 
         // the rest are options
-        LibDHCP::packOptions6(buffer_out_, options_);
+        LibDHCP::packOptions(buffer_out_, options_);
     }
     catch (const Exception& e) {
        // An exception is thrown and message will be written to Logger
