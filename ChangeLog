@@ -1,3 +1,8 @@
+1052.	[func]		marcin
+	libeval: expressions involving options can now use textual or
+	hexadecimal format of the options.
+	(Trac #4093 git 4cdf0fff1067b3dde6570dc6831e8b1343bc50fe)
+
 1051.	[func]		[tmark]
 	kea-dhcp4 and kea-dhcp6 configuration parsing now supports
 	the "client-classes" element for defining client classes.
