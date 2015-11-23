@@ -32,6 +32,11 @@ CfgOption::CfgOption() {
 }
 
 bool
+CfgOption::empty() const {
+    return (options_.empty() && vendor_options_.empty());
+}
+
+bool
 CfgOption::equals(const CfgOption& other) const {
     return (options_.equals(other.options_) &&
             vendor_options_.equals(other.vendor_options_));
