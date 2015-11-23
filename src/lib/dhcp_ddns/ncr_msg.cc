@@ -323,28 +323,28 @@ NameChangeRequest::fromJSON(const std::string& json) {
     // content is lexically invalid.   If the element is NOT found in the
     // map, getElement will throw NcrMessageError indicating the missing
     // member. Currently there are no optional values.
-    element = ncr->getElement("change_type", element_map);
+    element = ncr->getElement("change-type", element_map);
     ncr->setChangeType(element);
 
-    element = ncr->getElement("forward_change", element_map);
+    element = ncr->getElement("forward-change", element_map);
     ncr->setForwardChange(element);
 
-    element = ncr->getElement("reverse_change", element_map);
+    element = ncr->getElement("reverse-change", element_map);
     ncr->setReverseChange(element);
 
     element = ncr->getElement("fqdn", element_map);
     ncr->setFqdn(element);
 
-    element = ncr->getElement("ip_address", element_map);
+    element = ncr->getElement("ip-address", element_map);
     ncr->setIpAddress(element);
 
     element = ncr->getElement("dhcid", element_map);
     ncr->setDhcid(element);
 
-    element = ncr->getElement("lease_expires_on", element_map);
+    element = ncr->getElement("lease-expires-on", element_map);
     ncr->setLeaseExpiresOn(element);
 
-    element = ncr->getElement("lease_length", element_map);
+    element = ncr->getElement("lease-length", element_map);
     ncr->setLeaseLength(element);
 
     // All members were in the Element set and were correct lexically. Now
@@ -363,16 +363,16 @@ NameChangeRequest::toJSON() const  {
     // forward.
     std::ostringstream stream;
 
-    stream << "{\"change_type\":" << getChangeType() << ","
-        << "\"forward_change\":"
+    stream << "{\"change-type\":" << getChangeType() << ","
+        << "\"forward-change\":"
         << (isForwardChange() ? "true" : "false") << ","
-        << "\"reverse_change\":"
+        << "\"reverse-change\":"
         << (isReverseChange() ? "true" : "false") << ","
         << "\"fqdn\":\"" << getFqdn() << "\","
-        << "\"ip_address\":\"" << getIpAddress() << "\","
+        << "\"ip-address\":\"" << getIpAddress() << "\","
         << "\"dhcid\":\"" << getDhcid().toStr() << "\","
-        << "\"lease_expires_on\":\""  << getLeaseExpiresOnStr() << "\","
-        << "\"lease_length\":" << getLeaseLength() << "}";
+        << "\"lease-expires-on\":\""  << getLeaseExpiresOnStr() << "\","
+        << "\"lease-length\":" << getLeaseLength() << "}";
 
     return (stream.str());
 }
@@ -456,7 +456,7 @@ NameChangeRequest::setForwardChange(isc::data::ConstElementPtr element) {
     } catch (isc::data::TypeError& ex) {
         // We expect a boolean Element type, don't have one.
         isc_throw(NcrMessageError,
-                  "Wrong data type for forward_change: " << ex.what());
+                  "Wrong data type for forward-change: " << ex.what());
     }
 
     // Good to go, make the assignment.

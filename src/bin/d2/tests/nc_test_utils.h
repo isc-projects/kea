@@ -319,14 +319,14 @@ extern dns::RRsetPtr getRRFromSection(const D2UpdateMessagePtr& request,
 /// @code
 ///        const char* msg_str =
 ///            "{"
-///            " \"change_type\" : 0 , "
-///            " \"forward_change\" : true , "
-///            " \"reverse_change\" : true , "
+///            " \"change-type\" : 0 , "
+///            " \"forward-change\" : true , "
+///            " \"reverse-change\" : true , "
 ///            " \"fqdn\" : \"my.example.com.\" , "
-///            " \"ip_address\" : \"192.168.2.1\" , "
+///            " \"ip-address\" : \"192.168.2.1\" , "
 ///            " \"dhcid\" : \"0102030405060708\" , "
-///            " \"lease_expires_on\" : \"20130121132405\" , "
-///            " \"lease_length\" : 1300 "
+///            " \"lease-expires-on\" : \"20130121132405\" , "
+///            " \"lease-length\" : 1300 "
 ///            "}";
 ///
 /// @endcode

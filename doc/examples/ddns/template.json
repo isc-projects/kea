@@ -14,26 +14,26 @@
 #    All of the global parameters have default values as shown.  If these
 #    are satisfactory you may omit them.
 #
-#    "ip_address" : "127.0.0.1",
+#    "ip-address" : "127.0.0.1",
 #    "port" : 53001,
-#    "dns_server_timeout" : 100,
-#    "ncr_protocol" : "UDP"
-#    "ncr_format" : "JSON"
+#    "dns-server-timeout" : 100,
+#    "ncr-protocol" : "UDP"
+#    "ncr-format" : "JSON"
 
 #
 # ----------------- Forward DDNS  ------------------
 #
-    "forward_ddns" :
+    "forward-ddns" :
     {
-        "ddns_domains" :
+        "ddns-domains" :
         [
             {
                 "name" : "<zone name 1>",
-#                "key_name" : "<key name>",
-                "dns_servers" :
+#                "key-name" : "<key name>",
+                "dns-servers" :
                 [
                     {
-                        "ip_address" : "<ip address>"
+                        "ip-address" : "<ip address>"
 #                       ,"port" : 53
                     }
 #                   ,
@@ -54,17 +54,17 @@
 #
 # ----------------- Reverse DDNS  ------------------
 #
-    "reverse_ddns" :
+    "reverse-ddns" :
     {
-        "ddns_domains" :
+        "ddns-domains" :
         [
             {
                 "name" : "<reverse zone name 1>",
-#                "key_name" : "<key name>",
-                "dns_servers" :
+#                "key-name" : "<key name>",
+                "dns-servers" :
                 [
                     {
-                        "ip_address" : "<ip address>"
+                        "ip-address" : "<ip address>"
 #                        ,"port" : 53
                     }
 #                   ,
@@ -84,7 +84,7 @@
 #
 # ------------------ TSIG keys ---------------------
 #
-    "tsig_keys" :
+    "tsig-keys" :
     [
         {
             "name" : "<key name>",
@@ -92,7 +92,7 @@
 #            Valid values for algorithm are:    HMAC-MD5, HMAC-SHA1,
 #                                               HMAC-SHA224, HMAC-SHA256,
 #                                               HMAC-SHA384, HMAC-SHA512
-#           "digest_bits" : 256,
+#           "digest-bits" : 256,
 #           Minimum truncated length in bits.
 #           Default 0 (means truncation is forbidden).
             "secret" : "<shared secret value>"
