@@ -1,3 +1,8 @@
+1053.	[doc]		tomek
+	Support for DHCPDECLINE (v4) and DECLINE (v6) messages is
+	now described in the Kea User's Guide.
+	(Trac #3990, git 6b0db91610420f3cce55d9f887d7c73660ece209)
+
 1052.	[func]		marcin
 	libeval: expressions involving options can now use textual or
 	hexadecimal format of the options.
