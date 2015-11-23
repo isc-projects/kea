@@ -184,14 +184,14 @@ public:
         // Build an NCR from json string.
         const char* ncr_str =
             "{"
-            " \"change_type\" : 0 , "
-            " \"forward_change\" : true , "
-            " \"reverse_change\" : false , "
+            " \"change-type\" : 0 , "
+            " \"forward-change\" : true , "
+            " \"reverse-change\" : false , "
             " \"fqdn\" : \"myhost.example.com.\" , "
-            " \"ip_address\" : \"192.168.2.1\" , "
+            " \"ip-address\" : \"192.168.2.1\" , "
             " \"dhcid\" : \"010203040A7F8E3D\" , "
-            " \"lease_expires_on\" : \"20140121132405\" , "
-            " \"lease_length\" : 1300 "
+            " \"lease-expires-on\" : \"20140121132405\" , "
+            " \"lease-length\" : 1300 "
             "}";
 
         return (dhcp_ddns::NameChangeRequest::fromJSON(ncr_str));
