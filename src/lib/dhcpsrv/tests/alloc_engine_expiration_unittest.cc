@@ -1644,6 +1644,10 @@ ExpirationAllocEngine4Test::ExpirationAllocEngine4Test()
     : ExpirationAllocEngineTest<Lease4Ptr>("type=memfile universe=4 persist=false") {
     createLeases();
     callout_argument_name = "lease4";
+
+    // Let's clear any garbage previous test may have left in static fields.
+    callout_name_ = string("");
+    callout_lease_.reset();
 }
 
 void
@@ -1987,13 +1991,13 @@ TEST_F(ExpirationAllocEngine4Test, reclaimDeclinedStats) {
     testReclaimDeclinedStats("assigned-addresses");
 }
 
-// This test verifies if the hooks installed on lease6_recover are called
+// This test verifies if the hooks installed on lease4_recover are called
 // when the lease expires.
 TEST_F(ExpirationAllocEngine4Test, reclaimDeclinedHook1) {
     testReclaimDeclinedHook(false); // false = don't use skip callout
 }
 
-// This test verifies if the hooks installed on lease6_recover are called
+// This test verifies if the hooks installed on lease4_recover are called
 // when the lease expires and that the next step status set to SKIP
 // causes the recovery to not be conducted.
 TEST_F(ExpirationAllocEngine4Test, reclaimDeclinedHook2) {
