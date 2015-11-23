@@ -120,14 +120,18 @@ public:
     OptionDefinitionPtr get(const std::string& option_space,
                             const std::string& option_name) const;
 
+    /// @brief Returns reference to container holding option definitions.
+    const OptionDefSpaceContainer& getContainer() const {
+        return (option_definitions_);
+    }
+
 private:
 
     /// @brief A collection of option definitions.
     ///
     /// The option definitions stored in this container can be accessed
     /// using the option space name they belong to.
-    OptionSpaceContainer<OptionDefContainer, OptionDefinitionPtr,
-                         std::string> option_definitions_;
+    OptionDefSpaceContainer option_definitions_;
 
 };
 

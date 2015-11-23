@@ -495,6 +495,15 @@ TEST_F(ParseConfigTest, basicOptionDefTest) {
     EXPECT_FALSE(def->getArrayType());
     EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def->getType());
     EXPECT_TRUE(def->getEncapsulatedSpace().empty());
+
+    // Check if libdhcp++ runtime options have been updated.
+    OptionDefinitionPtr def_libdhcp = LibDHCP::getRuntimeOptionDef("isc", 100);
+    ASSERT_TRUE(def_libdhcp);
+
+    // The LibDHCP should return a separate instance of the option definition
+    // but the values should be equal.
+    EXPECT_TRUE(def_libdhcp != def);
+    EXPECT_TRUE(*def_libdhcp == *def);
 }
 
 /// @brief Check minimal parsing of option definitions.
