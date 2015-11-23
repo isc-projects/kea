@@ -45,12 +45,13 @@
 #include <string>
 #include <eval/token.h>
 #include <eval/eval_context_decl.h>
+#include <dhcp/option.h>
 #include <boost/lexical_cast.hpp>
 
 using namespace isc::dhcp;
 using namespace isc::eval;
 
-#line 54 "parser.h" // lalr1.cc:392
+#line 55 "parser.h" // lalr1.cc:392
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -127,7 +128,7 @@ using namespace isc::eval;
 
 #line 21 "parser.yy" // lalr1.cc:392
 namespace isc { namespace eval {
-#line 131 "parser.h" // lalr1.cc:392
+#line 132 "parser.h" // lalr1.cc:392
 
 
 
@@ -514,7 +515,7 @@ namespace isc { namespace eval {
 
 
     /// Build a parser object.
-    EvalParser (EvalContext& ctx_yyarg);
+    EvalParser (EvalContext& ctx_yyarg, const Option::Universe& option_universe_yyarg);
     virtual ~EvalParser ();
 
     /// Parse.
@@ -597,7 +598,7 @@ namespace isc { namespace eval {
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -717,7 +718,7 @@ namespace isc { namespace eval {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 21,     ///< Last index in yytable_.
+      yylast_ = 29,     ///< Last index in yytable_.
       yynnts_ = 6,  ///< Number of nonterminal symbols.
       yyfinal_ = 11, ///< Termination state number.
       yyterror_ = 1,
@@ -728,6 +729,7 @@ namespace isc { namespace eval {
 
     // User arguments.
     EvalContext& ctx;
+    const Option::Universe& option_universe;
   };
 
   // Symbol number corresponding to token number t.
@@ -1083,7 +1085,7 @@ namespace isc { namespace eval {
 
 #line 21 "parser.yy" // lalr1.cc:392
 } } // isc::eval
-#line 1087 "parser.h" // lalr1.cc:392
+#line 1089 "parser.h" // lalr1.cc:392
 
 
 

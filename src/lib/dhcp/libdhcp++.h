@@ -121,7 +121,6 @@ public:
     static OptionDefContainerPtr
     getRuntimeOptionDefs(const std::string& space);
 
-
     /// @brief Check if the specified option is a standard option.
     ///
     /// @param u universe (V4 or V6)
