@@ -2720,22 +2720,68 @@ It is merely echoed by the server
 
     <section id="dhcp4-decline">
       <title>Duplicate Addresses (DHCPDECLINE support)</title>
-      <note>
-        <para>@todo: Full text will be added as part of #3990.</para>
-      </note>
 
-      <para>
-        The server does not decrease assigned-addresses statistics
-        when DHCPDECLINE is received and processed successfully. While
-        technically a declined address is no longer assigned, the primary usage
-        of the assigned-addresses statistic is to monitor pool utilization. Most
-        people would forget to include declined-addresses in the calculation,
-        and simply do assigned-addresses/total-addresses. This would have a bias
-        towards under-representing pool utilization. As this has a
-        potential for major issues, we decided not to decrease assigned
-        addresses immediately after receiving DHCPDECLINE, but to do
-        it later when we recover the address back to the available pool.
-      </para>
+      <para>The DHCPv4 server is configured with a certain pool of addresses
+      that it is expected to hand out to the DHCPv4 clients.  It is
+      assumed that the server is authoritative and has complete jurisdiction
+      over those addresses. However, due to various reasons, such as
+      misconfiguration or a faulty client implemetation that retains its
+      address beyond the valid lifetime, there may be devices connected that use
+      those addresses without the server's approval or knowledge.</para>
+
+      <para>Such an
+      unwelcome event can be detected by legitimate clients (using ARP or ICMP
+      Echo Request mechanisms) and reported to the DHCPv4 server using a DHCPDECLINE
+      message. The server will do a sanity check (if the client declining an
+      address really was supposed to use it), and then will conduct a clean up
+      operation. Any DNS entries related to that address will be removed, the
+      fact will be logged and hooks will be triggered. After that is done, the
+      address will be marked as declined (which indicates that it is used by an
+      unknown entity and thus not available for assignment to anyone) and a
+      probation time will be set on it. Unless otherwise configured, the
+      probation period lasts 24 hours. After that period, the server will
+      recover the lease, i.e. put it back into the available state. The address will
+      be available for assignment again. It should be noted that if the
+      underlying issue of a misconfigured device is not resolved, the duplicate
+      address scenario will repeat. On the other hand, it provides an
+      opportunity to recover from such an event automatically, without any
+      sysadmin intervention.</para>
+
+      <para>To configure the decline probation period to a value different
+      than the default, the following syntax can be used:
+<screen>
+  "Dhcp4": {
+    <userinput>"decline-probation-period": 3600</userinput>,
+    "subnet4": [ ... ],
+    ...
+}
+</screen>
+      The parameter is expressed in seconds, so the example above will instruct
+      the server to recycle declined leases after an hour.</para>
+
+      <para>There are several statistics and hook points associated with the
+      Decline handling procedure. The lease4_decline hook is triggered after the
+      incoming DHCPDECLINE message has been sanitized and the server is about to
+      decline the lease. The declined-addresses statistic is increased after the
+      hook returns (both global and subnet specific variants).</para>
+
+      <para>Once the probation time elapses, the declined lease is recovered
+      using the standard expired lease reclaimation procedure, with several
+      additional steps. In particular, both declined-addresses statistics
+      (global and subnet specific) are decreased. At the same time,
+      reclaimed-declined-addresses statistics (again in two variants, global and
+      subnet specific) are increased.</para>
+
+      <para>Note about statistics: The server does not decrease
+      assigned-addresses statistics when a DHCPDECLINE is received and processed
+      successfully. While technically a declined address is no longer assigned,
+      the primary usage of the assigned-addresses statistic is to monitor pool
+      utilization. Most people would forget to include declined-addresses in the
+      calculation, and simply do assigned-addresses/total-addresses. This would
+      have a bias towards under-representing pool utilization. As this has a
+      potential for major issues, we decided not to decrease assigned addresses
+      immediately after receiving DHCPDECLINE, but to do it later when we
+      recover the address back to the available pool.</para>
 
     </section>
 
@@ -2970,6 +3016,65 @@ It is merely echoed by the server
               separately. This statistic is reset during reconfiguration event.
               </entry>
             </row>
+
+            <row>
+            <entry>declined-addresses</entry>
+            <entry>integer</entry>
+            <entry>
+              This statistic shows the number of IPv4 adresses that are
+              currently declined. This statistic counts the number of leases
+              currently unavailable. Once a lease is recovered, this
+              statistic will be decreased. Ideally, this statistic should be
+              zero. If this statistic is non-zero (or worse increasing),
+              a network administrator should investigate if there is
+              a misbehaving device in his network. This is a global statistic
+              that covers all subnets.
+            </entry>
+            </row>
+
+            <row>
+            <entry>subnet[id].declined-addresses</entry>
+            <entry>integer</entry>
+            <entry>
+              This statistic shows the number of IPv4 adresses that are
+              currently declined in a given subnet. This statistic counts the
+              number of leases currently unavailable. Once a lease is
+              recovered, this statistic will be decreased. Ideally, this
+              statistic should be zero. If this statistic is
+              non-zero (or worse increasing), a network administrator should
+              investigate if there is a misbehaving device in his network. The
+              <emphasis>id</emphasis> is the subnet-id of a given subnet. This
+              statistic is exposed for each subnet separately.
+            </entry>
+            </row>
+
+            <row>
+            <entry>reclaimed-declined-addresses</entry>
+            <entry>integer</entry>
+            <entry>
+              This statistic shows the number of IPv4 adresses that were
+              declined, but have now been recovered. Unlike
+              declined-addresses, this statistic never decreases. It can be used
+              as a long term indicator of how many actual valid Declines were
+              processed and recovered from. This is a global statistic that
+              covers all subnets.
+            </entry>
+            </row>
+
+            <row>
+            <entry>subnet[id].reclaimed-declined-addresses</entry>
+            <entry>integer</entry>
+            <entry>
+              This statistic shows the number of IPv4 adresses that were
+              declined, but have now been recovered. Unlike
+              declined-addresses, this statistic never decreases. It can be used
+              as a long term indicator of how many actual valid Declines were
+              processed and recovered from. The
+              <emphasis>id</emphasis> is the subnet-id of a given subnet. This
+              statistic is exposed for each subnet separately.
+            </entry>
+            </row>
+
         </tbody>
         </tgroup>
         </table>
