@@ -29,8 +29,8 @@ typedef boost::shared_ptr<Token> TokenPtr;
 
 /// This is a structure that holds an expression converted to RPN
 ///
-/// For example expression: option[123] == 'foo' will be converted to:
-/// [0] = option[123] (TokenOption object)
+/// For example expression: option[123].text == 'foo' will be converted to:
+/// [0] = option[123].text (TokenOption object)
 /// [1] = 'foo' (TokenString object)
 /// [2] = == operator (TokenEqual object)
 typedef std::vector<TokenPtr> Expression;
@@ -64,7 +64,7 @@ public:
 ///
 /// This class represents a single token. Examples of a token are:
 /// - "foo" (a constant string)
-/// - option[123] (a token that extracts value of option 123)
+/// - option[123].text (a token that extracts textual value of option 123)
 /// - == (an operator that compares two other tokens)
 /// - substring(a,b,c) (an operator that takes three arguments: a string,
 ///   first character and length)
@@ -92,7 +92,7 @@ public:
 /// @brief Token representing a constant string
 ///
 /// This token holds value of a constant string, e.g. it represents
-/// "MSFT" in expression option[vendor-class] == "MSFT"
+/// "MSFT" in expression option[vendor-class].text == "MSFT"
 class TokenString : public Token {
 public:
     /// Value is set during token construction.
@@ -140,7 +140,8 @@ protected:
 /// @brief Token that represents a value of an option
 ///
 /// This represents a reference to a given option, e.g. in the expression
-/// option[vendor-class] == "MSFT", it represents option[vendor-class]
+/// option[vendor-class].text == "MSFT", it represents
+/// option[vendor-class].text
 ///
 /// During the evaluation it tries to extract the value of the specified
 /// option. If the option is not found, an empty string ("") is returned.
@@ -197,8 +198,8 @@ private:
 
 /// @brief Token that represents equality operator (compares two other tokens)
 ///
-/// For example in the expression option[vendor-class] == "MSFT" this token
-/// represents the equal (==) sign.
+/// For example in the expression option[vendor-class].text == "MSFT"
+/// this token represents the equal (==) sign.
 class TokenEqual : public Token {
 public:
     /// @brief Constructor (does nothing)
