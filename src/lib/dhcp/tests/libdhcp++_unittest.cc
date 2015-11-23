@@ -342,7 +342,7 @@ TEST_F(LibDhcpTest, packOptions6) {
 
     OutputBuffer assembled(512);
 
-    EXPECT_NO_THROW(LibDHCP::packOptions6(assembled, opts));
+    EXPECT_NO_THROW(LibDHCP::packOptions(assembled, opts));
     EXPECT_EQ(sizeof(v6packed), assembled.getLength());
     EXPECT_EQ(0, memcmp(assembled.getData(), v6packed, sizeof(v6packed)));
 }
@@ -528,16 +528,15 @@ TEST_F(LibDhcpTest, packOptions4) {
     // the map. This gurantees that options are packed in the same order
     // they were added. Otherwise, options would get sorted by code and
     // the resulting buffer wouldn't match with the reference buffer.
-    // But this doesn't apply to the RAI code which is always the last one
     opts.insert(make_pair(opt1->getType(), opt1));
     opts.insert(make_pair(opt1->getType(), opt2));
-    opts.insert(make_pair(rai->getType(), rai));
     opts.insert(make_pair(opt1->getType(), opt3));
     opts.insert(make_pair(opt1->getType(), opt4));
     opts.insert(make_pair(opt1->getType(), opt5));
+    opts.insert(make_pair(opt1->getType(), rai));
 
     OutputBuffer buf(100);
-    EXPECT_NO_THROW(LibDHCP::packOptions4(buf, opts));
+    EXPECT_NO_THROW(LibDHCP::packOptions(buf, opts));
     ASSERT_EQ(buf.getLength(), sizeof(v4_opts));
     EXPECT_EQ(0, memcmp(v4_opts, buf.getData(), sizeof(v4_opts)));
 }
