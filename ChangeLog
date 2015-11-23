@@ -1,3 +1,12 @@
+1054.	[func]		[tmark]
+	Replaced underscores, "_", with hyphens "-", in the parameter
+	names used in the kea-ddns server's configuration as well as
+	those in the DDNS messages (NCRs) sent to the server. For
+	example, "ip_address" is now "ip-address", "change_type" is
+	now "change-type".  This makes JSON element naming consistent
+	throughout Kea.
+	(Trac #4202    git 91bf527662060d4b1e294cd53e79b431edf0e910)
+
 1053.	[doc]		tomek
 	Support for DHCPDECLINE (v4) and DECLINE (v6) messages is
 	now described in the Kea User's Guide.
