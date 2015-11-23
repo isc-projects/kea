@@ -11,7 +11,7 @@
     <title>Client Classification Overview</title>
       <para>
       In certain cases it is useful to differentiate between different
-      types of clients and treat them differently. There are many reasons
+      types of clients and treat them accordingly. There are many reasons
       why one might want to treat clients different some common reasons
       include:
       <itemizedlist>
@@ -49,12 +49,22 @@
       </para>
 
       <para>
-      Options will be included from all of the assigned classes. In the case two
+      When determining which options to include in the response the server will
+      examine the union of options from all of the assigned classes. In the case two
       or more classes include an option the value from the first class will be used.
       Similarly if two or more classes are associated with a subnet the first subnet
       will be used. In the future the processing order of the various classes may
       be specified but for now it is being left unspecified and may change in
       future releases.
+      </para>
+
+      <para>
+      For example imagine two classes.  Class "foo" defines values for an NTP server
+      (option 42 in DHCPv4) and an SMTP server (option 69 in DHCPv4) while class
+      "bar" defines values for an NTP server and a POP3 server (option 70 in DHCPv4).
+      The server will examine the three options NTP, SMTP and POP3 and return any
+      of them that the client requested.  As the NTP server was defined twice the
+      server will choose only one of the values for the reply.
       </para>
 
       <para>
@@ -72,7 +82,7 @@
         limited in order to minimize the amount of time required to process each
 	expression. The expression for each class must be executed on each packet,
         if they are overly complex or time consuming they may impact the performance
-        of the server. If you require complex or time consuming expressions you
+        of the server. If you need complex or time consuming expressions you
         should write a hook to perform the necessary work.
       </para>
       </note>
@@ -143,7 +153,8 @@
           </thead>
           <tbody>
 <row><entry>String</entry><entry>'example'</entry><entry>A string</entry></row>
-<row><entry>Hex String</entry><entry>'0XABCD'</entry><entry>A hexadecimal string</entry></row>
+<row><entry>Hex String</entry><entry>0XABCD</entry><entry>A hexadecimal string</entry></row>
+<row><entry>Integer</entry><entry>123</entry><entry>An integer value</entry></row>
 <row><entry>Option</entry><entry>option[code]</entry><entry>The value of the option with code "code" from the packet</entry></row>
           </tbody>
           </tgroup>
@@ -259,22 +270,38 @@
         In certain cases it beneficial to restrict access to certain subnets
         only to clients that belong to a given subnet. For details on client
         classes, see <xref linkend="classification-using-vendor"/> and
-	<xref linkend="classification-using-expressions"/>
+        <xref linkend="classification-using-expressions"/>
         Let's assume that the server is connected to a network segment that uses
         the 192.0.2.0/24 prefix. The Administrator of that network has decided
         that addresses from range 192.0.2.10 to 192.0.2.20 are going to be
         managed by the DHCP4 server. Only clients belonging to client class
-        example_class are allowed to use this subnet. Such a
+        Client_foo  are allowed to use this subnet. Such a
         configuration can be achieved in the following way:
         <screen>
 "Dhcp4": {
     "subnet4": [
+<userinput>
         {
-            <userinput>"subnet": "192.0.2.0/24",
+            "subnet": "192.0.2.0/24",
             "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
-            "client-class": "example_class"</userinput>
+            "client-class": "Client_foo"
         }
+</userinput>
     ],
+    "client-class": [
+        {
+            "name": "Client_foo",
+            "test": "substring(option[61],0,3) == 'foo'",
+            "option-data": [
+                {
+                    "name": "doamin-name-servers",
+                    "code": 6,
+                    "space": "dhcp4",
+                    "csv-format": true,
+                    "data": "192.0.2.1, 192.0.2.2"
+                }
+            ]
+        }
     ...
 }</screen>
       </para>
@@ -302,7 +329,10 @@
       expression would either be complex or time consuming and be easier or
       better to write as code.  Once the hook has added the proper class name
       to the packet the rest of the classification system will work as normal
-      in choosing a subnet and selecting options.
+      in choosing a subnet and selecting options.  For a description of the
+      hooks see <xref linkend="hooks-libraries"/>, for a description on
+      configuring he classes see <xref linkend="classification-configuring"/>
+      and <xref linkend="classification-subnets"/>.
       </para>
   </section>
 
