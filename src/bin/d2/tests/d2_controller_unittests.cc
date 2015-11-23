@@ -259,11 +259,11 @@ TEST_F(D2ControllerTest, validConfigReload) {
     // Define a replacement config.
     const char* second_cfg =
             "{"
-            " \"ip_address\": \"192.168.77.1\" , "
+            " \"ip-address\": \"192.168.77.1\" , "
             " \"port\": 777 , "
-            "\"tsig_keys\": [], "
-            "\"forward_ddns\" : {}, "
-            "\"reverse_ddns\" : {} "
+            "\"tsig-keys\": [], "
+            "\"forward-ddns\" : {}, "
+            "\"reverse-ddns\" : {} "
             "}";
 
     // Schedule to replace the configuration file after launch. This way the

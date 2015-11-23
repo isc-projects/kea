@@ -274,14 +274,14 @@ TEST(NameAddTransaction, construction) {
 
     const char* msg_str =
         "{"
-        " \"change_type\" : 1 , "
-        " \"forward_change\" : true , "
-        " \"reverse_change\" : true , "
+        " \"change-type\" : 1 , "
+        " \"forward-change\" : true , "
+        " \"reverse-change\" : true , "
         " \"fqdn\" : \"example.com.\" , "
-        " \"ip_address\" : \"192.168.2.1\" , "
+        " \"ip-address\" : \"192.168.2.1\" , "
         " \"dhcid\" : \"0102030405060708\" , "
-        " \"lease_expires_on\" : \"20130121132405\" , "
-        " \"lease_length\" : 1300 "
+        " \"lease-expires-on\" : \"20130121132405\" , "
+        " \"lease-length\" : 1300 "
         "}";
 
     dhcp_ddns::NameChangeRequestPtr ncr;

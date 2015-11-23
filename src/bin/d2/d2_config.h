@@ -87,9 +87,9 @@ namespace d2 {
 /// @code
 /// {
 ///  "interface" : "eth1" ,
-///  "ip_address" : "192.168.1.33" ,
+///  "ip-address" : "192.168.1.33" ,
 ///  "port" : 88 ,
-///  "tsig_keys":
+///  "tsig-keys":
 //// [
 ///    {
 ///     "name": "d2_key.tmark.org" ,
@@ -97,14 +97,14 @@ namespace d2 {
 ///     "secret": "0123456989"
 ///    }
 ///  ],
-///  "forward_ddns" :
+///  "forward-ddns" :
 ///  {
-///    "ddns_domains":
+///    "ddns-domains":
 ///    [
 ///      {
 ///        "name": "tmark.org." ,
-///        "key_name": "d2_key.tmark.org" ,
-///        "dns_servers" :
+///        "key-name": "d2_key.tmark.org" ,
+///        "dns-servers" :
 ///        [
 ///          { "hostname": "fserver.tmark.org" },
 ///          { "hostname": "f2server.tmark.org" }
@@ -112,24 +112,24 @@ namespace d2 {
 ///      },
 ///      {
 ///        "name": "pub.tmark.org." ,
-///        "key_name": "d2_key.tmark.org" ,
-///        "dns_servers" :
+///        "key-name": "d2_key.tmark.org" ,
+///        "dns-servers" :
 ///        [
 ///          { "hostname": "f3server.tmark.org" }
 ///        ]
 ///      }
 ///    ]
 ///  },
-///  "reverse_ddns" :
+///  "reverse-ddns" :
 ///  {
-///    "ddns_domains":
+///    "ddns-domains":
 ///    [
 ///      {
 ///        "name": " 0.168.192.in.addr.arpa." ,
-///        "key_name": "d2_key.tmark.org" ,
-///        "dns_servers" :
+///        "key-name": "d2_key.tmark.org" ,
+///        "dns-servers" :
 ///        [
-///          { "ip_address": "127.0.0.101" , "port": 100 }
+///          { "ip-address": "127.0.0.101" , "port": 100 }
 ///        ]
 ///      }
 ///    ]
@@ -742,7 +742,7 @@ typedef boost::shared_ptr<DScalarContext> DScalarContextPtr;
 
 /// @brief Parser for  TSIGKeyInfo
 ///
-/// This class parses the configuration element "tsig_key" defined in
+/// This class parses the configuration element "tsig-key" defined in
 /// src/bin/d2/dhcp-ddns.spec and creates an instance of a TSIGKeyInfo.
 class TSIGKeyInfoParser : public  isc::dhcp::DhcpConfigParser {
 public:
@@ -758,16 +758,16 @@ public:
     /// @brief Destructor
     virtual ~TSIGKeyInfoParser();
 
-    /// @brief Performs the actual parsing of the given  "tsig_key" element.
+    /// @brief Performs the actual parsing of the given  "tsig-key" element.
     ///
     /// Parses a configuration for the elements needed to instantiate a
     /// TSIGKeyInfo, validates those entries, creates a TSIGKeyInfo instance
     /// then attempts to add to a list of keys
     ///
-    /// @param key_config is the "tsig_key" configuration to parse
+    /// @param key_config is the "tsig-key" configuration to parse
     virtual void build(isc::data::ConstElementPtr key_config);
 
-    /// @brief Creates a parser for the given "tsig_key" member element id.
+    /// @brief Creates a parser for the given "tsig-key" member element id.
     ///
     /// The key elements currently supported are(see dhcp-ddns.spec):
     ///   1. name
@@ -776,7 +776,7 @@ public:
     ///   4. secret
     ///
     /// @param config_id is the "item_name" for a specific member element of
-    /// the "tsig_key" specification.
+    /// the "tsig-key" specification.
     /// @param pos position within the configuration text (or file) of element
     /// to be parsed.  This is passed for error messaging.
     ///
@@ -811,7 +811,7 @@ private:
 
 /// @brief Parser for a list of TSIGKeyInfos
 ///
-/// This class parses a list of "tsig_key" configuration elements.
+/// This class parses a list of "tsig-key" configuration elements.
 /// (see src/bin/d2/dhcp-ddns.spec). The TSIGKeyInfo instances are added
 /// to the given storage upon commit.
 class TSIGKeyInfoListParser : public isc::dhcp::DhcpConfigParser {
@@ -827,7 +827,7 @@ public:
     /// @brief Destructor
     virtual ~TSIGKeyInfoListParser();
 
-    /// @brief Performs the parsing of the given list "tsig_key" elements.
+    /// @brief Performs the parsing of the given list "tsig-key" elements.
     ///
     /// It iterates over each key entry in the list:
     ///   1. Instantiate a TSIGKeyInfoParser for the entry
@@ -865,7 +865,7 @@ private:
 
 /// @brief Parser for  DnsServerInfo
 ///
-/// This class parses the configuration element "dns_server" defined in
+/// This class parses the configuration element "dns-server" defined in
 /// src/bin/d2/dhcp-ddns.spec and creates an instance of a DnsServerInfo.
 class DnsServerInfoParser : public  isc::dhcp::DhcpConfigParser {
 public:
@@ -882,13 +882,13 @@ public:
     /// @brief Destructor
     virtual ~DnsServerInfoParser();
 
-    /// @brief Performs the actual parsing of the given  "dns_server" element.
+    /// @brief Performs the actual parsing of the given  "dns-server" element.
     ///
     /// Parses a configuration for the elements needed to instantiate a
     /// DnsServerInfo, validates those entries, creates a DnsServerInfo instance
     /// then attempts to add to a list of  servers.
     ///
-    /// @param server_config is the "dns_server" configuration to parse
+    /// @param server_config is the "dns-server" configuration to parse
     ///
     /// @throw D2CfgError if:
     /// -# hostname is not blank, hostname is not yet supported
@@ -896,7 +896,7 @@ public:
     /// -# port is 0
     virtual void build(isc::data::ConstElementPtr server_config);
 
-    /// @brief Creates a parser for the given "dns_server" member element id.
+    /// @brief Creates a parser for the given "dns-server" member element id.
     ///
     /// The server elements currently supported are(see dhcp-ddns.spec):
     ///   1. hostname
@@ -904,7 +904,7 @@ public:
     ///   3. port
     ///
     /// @param config_id is the "item_name" for a specific member element of
-    /// the "dns_server" specification.
+    /// the "dns-server" specification.
     /// @param pos position within the configuration text (or file) of element
     /// to be parsed.  This is passed for error messaging.
     ///
@@ -939,7 +939,7 @@ private:
 
 /// @brief Parser for a list of DnsServerInfos
 ///
-/// This class parses a list of "dns_server" configuration elements.
+/// This class parses a list of "dns-server" configuration elements.
 /// (see src/bin/d2/dhcp-ddns.spec). The DnsServerInfo instances are added
 /// to the given storage upon commit.
 class DnsServerInfoListParser : public isc::dhcp::DhcpConfigParser {
@@ -956,7 +956,7 @@ public:
     /// @brief Destructor
     virtual ~DnsServerInfoListParser();
 
-    /// @brief Performs the actual parsing of the given list "dns_server"
+    /// @brief Performs the actual parsing of the given list "dns-server"
     /// elements.
     /// It iterates over each server entry in the list:
     ///   1. Instantiate a DnsServerInfoParser for the entry
@@ -966,7 +966,7 @@ public:
     /// The net effect is to parse all of the server entries in the list
     /// prepping them for commit.
     ///
-    /// @param server_list_config is the list of "dns_server" elements to parse.
+    /// @param server_list_config is the list of "dns-server" elements to parse.
     virtual void build(isc::data::ConstElementPtr server_list_config);
 
     /// @brief Commits the list of DnsServerInfos
@@ -990,7 +990,7 @@ private:
 
 /// @brief Parser for  DdnsDomain
 ///
-/// This class parses the configuration element "ddns_domain" defined in
+/// This class parses the configuration element "ddns-domain" defined in
 /// src/bin/d2/dhcp-ddns.spec and creates an instance of a DdnsDomain.
 class DdnsDomainParser : public isc::dhcp::DhcpConfigParser {
 public:
@@ -998,7 +998,7 @@ public:
     ///
     /// @param entry_name is an arbitrary label assigned to this configuration
     /// definition. Since domains are specified in a list this value is likely
-    /// be something akin to "forward_ddns:0", set during parsing.
+    /// be something akin to "forward-ddns:0", set during parsing.
     /// @param domains is a pointer to the storage area to which the parser
     /// @param keys is a pointer to a map of the defined TSIG keys.
     /// should commit the newly created DdnsDomain instance.
@@ -1008,16 +1008,16 @@ public:
     /// @brief Destructor
     virtual ~DdnsDomainParser();
 
-    /// @brief Performs the actual parsing of the given  "ddns_domain" element.
+    /// @brief Performs the actual parsing of the given  "ddns-domain" element.
     ///
     /// Parses a configuration for the elements needed to instantiate a
     /// DdnsDomain, validates those entries, creates a DdnsDomain instance
     /// then attempts to add it to a list of domains.
     ///
-    /// @param domain_config is the "ddns_domain" configuration to parse
+    /// @param domain_config is the "ddns-domain" configuration to parse
     virtual void build(isc::data::ConstElementPtr domain_config);
 
-    /// @brief Creates a parser for the given "ddns_domain" member element id.
+    /// @brief Creates a parser for the given "ddns-domain" member element id.
     ///
     /// The domain elements currently supported are(see dhcp-ddns.spec):
     ///   1. name
@@ -1025,7 +1025,7 @@ public:
     ///   3. dns_servers
     ///
     /// @param config_id is the "item_name" for a specific member element of
-    /// the "ddns_domain" specification.
+    /// the "ddns-domain" specification.
     /// @param pos position within the configuration text (or file) of element
     /// to be parsed.  This is passed for error messaging.
     ///
@@ -1071,7 +1071,7 @@ private:
 
 /// @brief Parser for a list of DdnsDomains
 ///
-/// This class parses a list of "ddns_domain" configuration elements.
+/// This class parses a list of "ddns-domain" configuration elements.
 /// (see src/bin/d2/dhcp-ddns.spec). The DdnsDomain instances are added
 /// to the given storage upon commit.
 class DdnsDomainListParser : public isc::dhcp::DhcpConfigParser {
@@ -1089,7 +1089,7 @@ public:
     /// @brief Destructor
     virtual ~DdnsDomainListParser();
 
-    /// @brief Performs the actual parsing of the given list "ddns_domain"
+    /// @brief Performs the actual parsing of the given list "ddns-domain"
     /// elements.
     /// It iterates over each domain entry in the list:
     ///   1. Instantiate a DdnsDomainParser for the entry
@@ -1099,7 +1099,7 @@ public:
     /// The net effect is to parse all of the domain entries in the list
     /// prepping them for commit.
     ///
-    /// @param domain_list_config is the list of "ddns_domain" elements to
+    /// @param domain_list_config is the list of "ddns-domain" elements to
     /// parse.
     virtual void build(isc::data::ConstElementPtr domain_list_config);
 
@@ -1130,8 +1130,8 @@ private:
 
 /// @brief Parser for DdnsDomainListMgr
 ///
-/// This class parses the configuration elements "forward_ddns" and
-/// "reverse_ddns" as defined in src/bin/d2/dhcp-ddns.spec.  It populates the
+/// This class parses the configuration elements "forward-ddns" and
+/// "reverse-ddns" as defined in src/bin/d2/dhcp-ddns.spec.  It populates the
 /// given DdnsDomainListMgr with parsed information upon commit.  Note that
 /// unlike other parsers, this parser does NOT instantiate the final object
 /// during the commit phase, it populates it.  It must pre-exist.

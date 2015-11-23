@@ -5,7 +5,7 @@
     "module_description": "DHPC-DDNS Service",
     "config_data": [
     { 
-        "item_name": "ip_address",
+        "item_name": "ip-address",
         "item_type": "string",
         "item_optional": false,
         "item_default": "127.0.0.1" 
@@ -17,31 +17,31 @@
         "item_default": 53001 
     },
     {
-        "item_name": "dns_server_timeout",
+        "item_name": "dns-server-timeout",
         "item_type": "integer",
         "item_optional": true,
         "item_default": 100
     },
     {
-        "item_name": "ncr_protocol",
+        "item_name": "ncr-protocol",
         "item_type": "string",
         "item_optional": true,
         "item_default": "UDP"
     },
     {
-        "item_name": "ncr_format",
+        "item_name": "ncr-format",
         "item_type": "string",
         "item_optional": true,
         "item_default": "JSON"
     },
     {
-        "item_name": "tsig_keys",
+        "item_name": "tsig-keys",
         "item_type": "list",
         "item_optional": true, 
         "item_default": [],
         "list_item_spec":
         {
-            "item_name": "tsig_key",
+            "item_name": "tsig-key",
             "item_type": "map",
             "item_optional": false,
             "item_default": {"algorithm" : "HMAC-MD5"},
@@ -59,7 +59,7 @@
                 "item_default": ""
             },
             {
-                "item_name": "digest_bits",
+                "item_name": "digest-bits",
                 "item_type": "integer",
                 "item_optional": true,
                 "item_default": 0
@@ -73,19 +73,19 @@
         }
     },
     {
-        "item_name": "forward_ddns",
+        "item_name": "forward-ddns",
         "item_type": "map",
         "item_optional": true,
          "item_default": {},
          "map_item_spec": [ 
          {
-            "item_name": "ddns_domains",
+            "item_name": "ddns-domains",
             "item_type": "list",
             "item_optional": false, 
             "item_default": [],
             "list_item_spec":
             {
-                "item_name": "ddns_domain",
+                "item_name": "ddns-domain",
                 "item_type": "map",
                 "item_optional": false,
                 "item_default": {},
@@ -98,20 +98,20 @@
                 },
 
                 { 
-                    "item_name": "key_name",
+                    "item_name": "key-name",
                     "item_type": "string",
                     "item_optional": true,
                     "item_default": "" 
                 },
     
                 {
-                    "item_name": "dns_servers",
+                    "item_name": "dns-servers",
                     "item_type": "list",
                     "item_optional": false, 
                     "item_default": [],
                     "list_item_spec":
                     {
-                        "item_name": "dns_server",
+                        "item_name": "dns-server",
                         "item_type": "map",
                         "item_optional": false, 
                         "item_default": {},
@@ -123,7 +123,7 @@
                             "item_default": ""
                         },
                         { 
-                            "item_name": "ip_address",
+                            "item_name": "ip-address",
                             "item_type": "string",
                             "item_optional": true,
                             "item_default": ""
@@ -141,19 +141,19 @@
     },
 
     {
-        "item_name": "reverse_ddns",
+        "item_name": "reverse-ddns",
         "item_type": "map",
         "item_optional": true,
          "item_default": {},
          "map_item_spec": [ 
          { 
-            "item_name": "ddns_domains",
+            "item_name": "ddns-domains",
             "item_type": "list",
             "item_optional": false, 
             "item_default": [],
             "list_item_spec":
             {
-                "item_name": "ddns_domain",
+                "item_name": "ddns-domain",
                 "item_type": "map",
                 "item_optional": false,
                 "item_default": {},
@@ -166,20 +166,20 @@
                 },
 
                 { 
-                    "item_name": "key_name",
+                    "item_name": "key-name",
                     "item_type": "string",
                     "item_optional": true,
                     "item_default": "" 
                 },
     
                 {
-                    "item_name": "dns_servers",
+                    "item_name": "dns-servers",
                     "item_type": "list",
                     "item_optional": false, 
                     "item_default": [],
                     "list_item_spec":
                     {
-                        "item_name": "dns_server",
+                        "item_name": "dns-server",
                         "item_type": "map",
                         "item_optional": false, 
                         "item_default": {},
@@ -191,7 +191,7 @@
                             "item_default": ""
                         },
                         { 
-                            "item_name": "ip_address",
+                            "item_name": "ip-address",
                             "item_type": "string",
                             "item_optional": true,
                             "item_default": ""
