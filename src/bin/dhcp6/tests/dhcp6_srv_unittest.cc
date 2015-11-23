@@ -1866,7 +1866,7 @@ TEST_F(Dhcpv6SrvTest, matchClassification) {
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
         "             \"data\": \"true\" } ], "
-        "    \"test\": \"option[1234] == 'foo'\" } ] }";
+        "    \"test\": \"option[1234].text == 'foo'\" } ] }";
     ASSERT_NO_THROW(configure(config));
 
     // Create packets with enough to select the subnet
@@ -1962,7 +1962,7 @@ TEST_F(Dhcpv6SrvTest, subnetClassPriority) {
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
         "             \"data\": \"true\" } ], "
-        "    \"test\": \"option[1234] == 'foo'\" } ] }";
+        "    \"test\": \"option[1234].text == 'foo'\" } ] }";
     ASSERT_NO_THROW(configure(config));
 
     // Create a packet with enough to select the subnet and go through
@@ -2037,7 +2037,7 @@ TEST_F(Dhcpv6SrvTest, classGlobalPriority) {
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
         "             \"data\": \"true\" } ], "
-        "    \"test\": \"option[1234] == 'foo'\" } ] }";
+        "    \"test\": \"option[1234].text == 'foo'\" } ] }";
     ASSERT_NO_THROW(configure(config));
 
     // Create a packet with enough to select the subnet and go through

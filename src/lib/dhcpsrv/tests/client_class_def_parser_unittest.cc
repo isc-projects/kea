@@ -119,7 +119,7 @@ TEST(ExpressionParserTest, validExpression4) {
     ExpressionPtr parsed_expr;
 
     // Turn config into elements.  This may emit exceptions.
-    std::string cfg_txt = "\"option[100] == 'hundred4'\"";
+    std::string cfg_txt = "\"option[100].text == 'hundred4'\"";
     ElementPtr config_element = Element::fromJSON(cfg_txt);
 
     // Create the parser.
@@ -150,7 +150,7 @@ TEST(ExpressionParserTest, validExpression6) {
     ExpressionPtr parsed_expr;
 
     // Turn config into elements.  This may emit exceptions.
-    std::string cfg_txt = "\"option[100] == 'hundred6'\"";
+    std::string cfg_txt = "\"option[100].text == 'hundred6'\"";
     ElementPtr config_element = Element::fromJSON(cfg_txt);
 
     // Create the parser.
@@ -249,7 +249,7 @@ TEST_F(ClientClassDefParserTest, nameAndExpressionClass) {
     std::string cfg_text =
         "{ \n"
         "    \"name\": \"class_one\", \n"
-        "    \"test\": \"option[100] == 'works right'\" \n"
+        "    \"test\": \"option[100].text == 'works right'\" \n"
         "} \n";
 
     ClientClassDefPtr cclass;
@@ -325,7 +325,7 @@ TEST_F(ClientClassDefParserTest, basicValidClass) {
     std::string cfg_text =
         "{ \n"
         "    \"name\": \"MICROSOFT\", \n"
-        "    \"test\": \"option[100] == 'booya'\", \n"
+        "    \"test\": \"option[100].text == 'booya'\", \n"
         "    \"option-data\": [ \n"
         "        { \n"
         "           \"name\": \"domain-name-servers\", \n"
@@ -368,7 +368,7 @@ TEST_F(ClientClassDefParserTest, noClassName) {
 
     std::string cfg_text =
         "{ \n"
-        "    \"test\": \"option[123] == 'abc'\", \n"
+        "    \"test\": \"option[123].text == 'abc'\", \n"
         "    \"option-data\": [ \n"
         "        { \n"
         "           \"name\": \"domain-name-servers\", \n"
@@ -391,7 +391,7 @@ TEST_F(ClientClassDefParserTest, blankClassName) {
     std::string cfg_text =
         "{ \n"
         "    \"name\": \"\", \n"
-        "    \"test\": \"option[123] == 'abc'\", \n"
+        "    \"test\": \"option[123].text == 'abc'\", \n"
         "    \"option-data\": [ \n"
         "        { \n"
         "           \"name\": \"domain-name-servers\", \n"
