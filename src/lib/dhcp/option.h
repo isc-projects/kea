@@ -216,6 +216,15 @@ public:
     /// @return string that represents the value of the option.
     virtual std::string toString();
 
+    /// @brief Returns binary representation of the option.
+    ///
+    /// @param include_header Boolean flag which indicates if the output should
+    /// also contain header fields. The default is that it shouldn't include
+    /// header fields.
+    ///
+    /// @return Vector holding binary representation of the option.
+    virtual std::vector<uint8_t> toBinary(const bool include_header = false);
+
     /// @brief Returns string containing hexadecimal representation of option.
     ///
     /// @param include_header Boolean flag which indicates if the output should
