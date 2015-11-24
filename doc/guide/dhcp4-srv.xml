@@ -1558,58 +1558,154 @@ It is merely echoed by the server
 
     <section id="dhcp4-client-classifier">
       <title>Client Classification in DHCPv4</title>
-      <note>
       <para>
-        The DHCPv4 server has been extended to support limited client classification.
-        Although the current capability is modest, it is expected to be expanded
-        in the future. However, it is envisaged that the majority of client classification
-        extensions will be using hooks extensions.
-      </para>
-      </note>
-      <para>In certain cases it is useful to differentiate between different
-      types of clients and treat them differently. The process of doing
-      classification is conducted in two steps. The first step is to assess an
-      incoming packet and assign it to zero or more classes. This classification
-      is currently simple, but is expected to grow in capability soon. Currently
-      the server checks whether an incoming packet includes the vendor class identifier
-      option (60). If it does, the content of that option is prepended with
-      &quot;VENDOR_CLASS_&quot; then it is interpreted as a class. For example,
-      modern cable modems will send this option with value &quot;docsis3.0&quot;
-      and as a result the packet will belong to class &quot;VENDOR_CLASS_docsis3.0&quot;.
+      The DHCPv4 server includes support for client classification.  At the
+      current time the capabilities of the classification process are limited
+      but it is expected they will be expanded in the future. For a deeper
+      discussion of the classification process see <xref linkend="classify"/>.
       </para>
 
-      <para>It is envisaged that the client classification will be used for changing the
+      <para>
+      In certain cases it is useful to differentiate between different types of
+      clients and treat them accordingly. It is envisaged that client classification
+      will be used for changing the
       behavior of almost any part of the DHCP message processing, including assigning
       leases from different pools, assigning different options (or different values of
-      the same options) etc. For now, there are only two mechanisms that are taking
-      advantage of client classification: specific processing for cable modems and
-      subnet selection.</para>
+      the same options) etc. For now, there are only three mechanisms that are taking
+      advantage of client classification: subnet seletion, assigning different options,
+      and for cable modems there are specific options for use with the TFTP
+      server address and the boot file field.
+      </para>
 
       <para>
+      The process of doing classification is conducted in three steps. The first step
+      is to assess an incoming packet and assign it to zero or more classes.  The
+      second step is to choose a subnet, possibly based on the class information.
+      The third step is to assign options again possibly based on the class
+      information.
+      </para>
+
+      <para>
+      There are two methods of doing classification. The first is automatic and relies
+      on examining the values in the vendor class options. Information from these
+      options is extracted and a class name is constructed from it and added to
+      the class list for the packet. The second allows you to specify an expression
+      that is evaluated for each packet. If the result is true the packet is
+      a member of the class.
+      </para>
+
+      <para>
+      Kea can be instructed to limit access to given subnets based on class information.
+      This is particularly useful for cases where two types of devices share the
+      same link and are expected to be served from two different subnets. The
+      primary use case for such a scenario is cable networks. There are two
+      classes of devices: the cable modem itself, which should be handed a lease
+      from subnet A and all other devices behind the modem that should get a lease
+      from subnet B. That segregation is essential to prevent overly curious
+      users from playing with their cable modems. For details on how to set up
+      class restrictions on subnets, see <xref linkend="dhcp4-subnet-class"/>.
+      </para>
+
+      <note><para>
+        Care should be taken with client classification as it is easy for
+        clients that do not meet class criteria to be denied any service altogether.
+      </para></note>
+
+      <section>
+        <title>Using Vendor Class Information in Classification</title>
+        <para>
+        The server checks whether an incoming packet includes the vendor class identifier
+        option (60). If it does, the content of that option is prepended with
+        &quot;VENDOR_CLASS_&quot; then it is interpreted as a class. For example,
+        modern cable modems will send this option with value &quot;docsis3.0&quot;
+        and as a result the packet will belong to class &quot;VENDOR_CLASS_docsis3.0&quot;.
+        </para>
+
+        <para>
         For clients that belong to the VENDOR_CLASS_docsis3.0 class, the siaddr
         field is set to the value of next-server (if specified in a subnet). If
         there is a boot-file-name option specified, its value is also set in the
         file field in the DHCPv4 packet. For eRouter1.0 class, the siaddr is
         always set to 0.0.0.0. That capability is expected to be moved to
         an external hook library that will be dedicated to cable modems.
-      </para>
+        </para>
+      </section>
 
-      <para>
-        Kea can be instructed to limit access to given subnets based on class information.
-        This is particularly useful for cases where two types of devices share the
-        same link and are expected to be served from two different subnets. The
-        primary use case for such a scenario is cable networks. There are two
-        classes of devices: the cable modem itself, which should be handed a lease
-        from subnet A and all other devices behind the modem that should get a lease
-        from subnet B. That segregation is essential to prevent overly curious
-        users from playing with their cable modems. For details on how to set up
-        class restrictions on subnets, see <xref linkend="dhcp4-subnet-class"/>.
-      </para>
+      <section>
+        <title>Using Expressions in Classification</title>
+        <para>
+        The expression portion of classification contains operators and values.
+        Values are currently strings and operators take a string or strings and
+        return another string. When all the operations have completed
+        the result should be a value of &quot;true&quot; or &quot;false&quot;.
+        The packet belongs to
+        the class (and the class name is added to the list of classes) if the result
+        is &quot;true&quot;. Expressions are written in standard format and can be nested.
+        For more information about expressions see
+        <xref linkend="classification-using-expressions"/>
+        </para>
+      </section>
 
+      <section>
+        <title>Configuring Classes</title>
+        <para>
+        A class contains three items: a name, a test expression and option data.
+        The name must exist and must be unique amongst all classes. The test
+        expression and option data are optional.
+        </para>
 
-    <section id="dhcp4-subnet-class">
-      <title>Limiting Access to IPv4 Subnet to Certain Classes</title>
-      <para>
+        <para>
+        The test expression is a string containing the logical expression used to
+        determine membership in the class.  The entire expression is in double
+        quotes.
+        </para>
+
+        <para>
+        The option data is a list which defines any options that should be assigned
+        to members of this class.
+        </para>
+
+        <para>
+          <screen>
+"Dhcp4": {
+    "subnet4": [
+        {
+            "subnet": "192.0.2.0/24",
+            "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
+            "client-class": "Client_foo"
+        }
+    ],
+    "client-class": [
+<userinput>
+        {
+            "name": "Client_foo",
+            "test": "substring(option[61].text,0,3) == 'foo'",
+            "option-data": [
+                {
+                    "name": "doamin-name-servers",
+                    "code": 6,
+                    "space": "dhcp4",
+                    "csv-format": true,
+                    "data": "192.0.2.1, 192.0.2.2"
+                }
+            ]
+        }
+</userinput>
+    ...
+}</screen>
+        </para>
+
+        <para>
+        In this example the class named &quot;Client_foo&quot; is defined.  It is comprised
+        of all clients who's client ids (option 61) start with the string &quot;foo&quot;.
+        They will be given an address from 192.0.2.10 to 192.0.2.20 and 192.0.2.1
+        and 192.0.2.2 as their domain name servers.
+        </para>
+      </section>
+
+      <section id="dhcp4-subnet-class">
+        <title>Limiting Access to IPv4 Subnet to Certain Classes</title>
+        <para>
         In certain cases it beneficial to restrict access to certain subnets
         only to clients that belong to a given subnet. For details on client
         classes, see <xref linkend="dhcp4-client-classifier"/>. This is an
@@ -1631,13 +1727,8 @@ It is merely echoed by the server
     ],
     ...
 }</screen>
-      </para>
-
-      <para>
-        Care should be taken with client classification as it is easy for
-        clients that do not meet class criteria to be denied any service altogether.
-      </para>
-    </section>
+        </para>
+      </section>
     </section>
 
     <section id="dhcp4-ddns-config">

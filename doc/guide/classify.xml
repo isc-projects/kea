@@ -34,10 +34,10 @@
       It is envisaged that client classification will be used for changing the
       behavior of almost any part of the DHCP message processing, including assigning
       leases from different pools, assigning different options (or different values of
-      the same options) etc. For now, there are only two mechanisms that take
-      advantage of client classification: subnet selection and assigning different
-      options.  For cable modems there are specific options for use with the TFTP
-      server address and the boot file field.
+      the same options) etc. For now, there are only three mechanisms that take
+      advantage of client classification: subnet selection, assigning different
+      options and for DHCPv4 cable modems there are specific options for use with
+      the TFTP server address and the boot file field.
       </para>
 
       <para>
@@ -80,7 +80,7 @@
       <para>
         The power of the expressions in the classification step is deliberately
         limited in order to minimize the amount of time required to process each
-	expression. The expression for each class must be executed on each packet,
+        expression. The expression for each class must be executed on each packet,
         if they are overly complex or time consuming they may impact the performance
         of the server. If you need complex or time consuming expressions you
         should write a hook to perform the necessary work.
@@ -123,11 +123,17 @@
       <para>
       Expressions are pre-processed during the parsing of the configuration file
       and converted to an internal representation. This allows certain types of
-      errors (such as incorrect syntax) to be caught and logged. Other errors
-      (for example mistakes when setting up the values for a substring) won't be
-      caught and may affect the classification. In general if an expression has
-      a problem a log message will be emitted at the debug level and the result
-      will be an empty string.
+      errors to be caught and logged during parsing.  Examples of these errors
+      include incorrect number or types of arguments to an operator.  The
+      evaluation code will also check for this class of error and generally
+      throw an exception, though they should not occur in a normally functioning
+      system.
+      </para>
+
+      <para>
+      Other issues, for example the starting position of a substring being
+      outside of the substring or an option not existing in the packet, result
+      in the operator returning an empty string.
       </para>
 
       <para>
@@ -147,7 +153,7 @@
           <thead>
             <row>
               <entry>Name</entry>
-	      <entry>Example</entry>
+              <entry>Example</entry>
               <entry>Description</entry>
             </row>
           </thead>
@@ -155,7 +161,8 @@
 <row><entry>String</entry><entry>'example'</entry><entry>A string</entry></row>
 <row><entry>Hex String</entry><entry>0XABCD</entry><entry>A hexadecimal string</entry></row>
 <row><entry>Integer</entry><entry>123</entry><entry>An integer value</entry></row>
-<row><entry>Option</entry><entry>option[code]</entry><entry>The value of the option with code "code" from the packet</entry></row>
+<row><entry>Option Text</entry><entry>option[code].text</entry><entry>The value of the option with code "code" from the packet as text</entry></row>
+<row><entry>Option Hex</entry><entry>option[code].hex</entry><entry>The value of the option with code "code" from the packet as hex</entry></row>
           </tbody>
           </tgroup>
         </table>
@@ -169,7 +176,10 @@
 
       <para>
       Option extracts the value of the given option from the incoming packet. If the
-      packet doesn't contain the option it returns an empty string.
+      packet doesn't contain the option it returns an empty string.  The string can
+      be presented as text or hex with the ".text" or ".hex" modifiers.  In both
+      cases only the payload is presented the type code and length fields aren't
+      included.
       </para>
 
       <para>
@@ -214,7 +224,7 @@
       The name must exist and must be unique amongst all classes. The test
       expression and option data are optional.
       </para>
-      
+
       <para>
       The test expression is a string containing the logical expression used to
       determine membership in the class.  The entire expression is in double
@@ -240,7 +250,7 @@
 <userinput>
         {
             "name": "Client_foo",
-            "test": "substring(option[61],0,3) == 'foo'",
+            "test": "substring(option[61].text,0,3) == 'foo'",
             "option-data": [
                 {
                     "name": "doamin-name-servers",
@@ -291,7 +301,7 @@
     "client-class": [
         {
             "name": "Client_foo",
-            "test": "substring(option[61],0,3) == 'foo'",
+            "test": "substring(option[61].text,0,3) == 'foo'",
             "option-data": [
                 {
                     "name": "doamin-name-servers",
