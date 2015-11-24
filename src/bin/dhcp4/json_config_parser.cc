@@ -513,6 +513,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Remove any existing timers.
     TimerMgr::instance()->unregisterTimers();
 
+    // Revert any runtime option definitions configured so far and not committed.
+    LibDHCP::revertRuntimeOptionDefs();
+
     // Some of the values specified in the configuration depend on
     // other values. Typically, the values in the subnet4 structure
     // depend on the global values. Also, option values configuration
@@ -699,6 +702,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Rollback changes as the configuration parsing failed.
     if (rollback) {
         globalContext().reset(new ParserContext(original_context));
+        // Revert to original configuration of runtime option definitions
+        // in the libdhcp++.
+        LibDHCP::revertRuntimeOptionDefs();
         return (answer);
     }
 
