@@ -64,6 +64,7 @@ using namespace isc::eval;
 %token <std::string> STRING "constant string"
 %token <std::string> INTEGER "integer"
 %token <std::string> HEXSTRING "constant hexstring"
+%token <std::string> OPTION_NAME "option name"
 %token <std::string> TOKEN
 
 %printer { yyoutput << $$; } <*>;
@@ -135,7 +136,7 @@ string_expr : STRING
                       TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
                       ctx.expression.push_back(opt);
                   }
-            | OPTION "[" STRING "]" DOT TEXT
+            | OPTION "[" OPTION_NAME "]" DOT TEXT
                   {
                       try {
                           // This may result in exception if the specified
@@ -148,7 +149,7 @@ string_expr : STRING
                           ctx.error(@3, ex.what());
                       }
                   }
-            | OPTION "[" STRING "]" DOT HEX
+            | OPTION "[" OPTION_NAME "]" DOT HEX
                   {
                       try {
                           // This may result in exception if the specified
