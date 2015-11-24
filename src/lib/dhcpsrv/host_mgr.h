@@ -198,6 +198,14 @@ public:
     /// @param host Pointer to the new @c Host object being added.
     virtual void add(const HostPtr& host);
 
+    /// @brief Returns pointer to the host data source
+    ///
+    /// May return NULL
+    /// @return pointer to the host data source (or NULL)
+    HostDataSourcePtr getHostDataSource() const {
+        return (alternate_source);
+    }
+
 private:
 
     /// @brief Private default constructor.
@@ -206,7 +214,7 @@ private:
     /// @brief Pointer to an alternate host data source.
     ///
     /// If this pointer is NULL, the source is not in use.
-    boost::scoped_ptr<BaseHostDataSource> alternate_source;
+    HostDataSourcePtr alternate_source;
 
     /// @brief Returns a pointer to the currently used instance of the
     /// @c HostMgr.

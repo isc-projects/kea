@@ -17,6 +17,7 @@
 #include <dhcp/option.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 
 #include <boost/foreach.hpp>
@@ -34,8 +35,9 @@ namespace dhcp {
 
 
 // Factory function to build the parser
-DbAccessParser::DbAccessParser(const std::string&, const ParserContext& ctx)
-    : values_(), ctx_(ctx)
+DbAccessParser::DbAccessParser(const std::string&, DBType db_type,
+                               const ParserContext& ctx)
+    : values_(), type_(db_type), ctx_(ctx)
 {
 }
 
@@ -139,11 +141,29 @@ DbAccessParser::getDbAccessString() const {
 // Commit the changes - reopen the database with the new parameters
 void
 DbAccessParser::commit() {
-    // Close current lease manager database.
-    LeaseMgrFactory::destroy();
 
-    // ... and open the new database using the access string.
-    LeaseMgrFactory::create(getDbAccessString());
+    switch (type_) {
+    case LEASE_DB:
+    {
+        // Close current lease manager database.
+        LeaseMgrFactory::destroy();
+
+        // ... and open the new database using the access string.
+        LeaseMgrFactory::create(getDbAccessString());
+        break;
+    }
+    case HOSTS_DB:
+    {
+        // Let's instantiate HostMgr with new parameters. Note that HostMgr's
+        // constructor will call HostDataSourceFactory::create() with appropriate
+        // parameters.
+        HostMgr::create(getDbAccessString());
+        break;
+    }
+    default:
+        isc_throw(BadValue, "Incorrect type specified in DbAccessParser: "
+                  << type_);
+    };
 }
 
 };  // namespace dhcp

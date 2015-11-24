@@ -20,6 +20,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/host.h>
 #include <exceptions/exceptions.h>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -181,6 +182,9 @@ public:
     virtual void add(const HostPtr& host) = 0;
 
 };
+
+/// @brief HostDataSource pointer
+typedef boost::shared_ptr<BaseHostDataSource> HostDataSourcePtr;
 
 }
 }
