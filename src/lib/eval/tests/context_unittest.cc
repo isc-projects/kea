@@ -210,7 +210,7 @@ TEST_F(EvalContextTest, optionWithName) {
     EvalContext eval(Option::V4);
 
     // Option 'host-name' is a standard DHCPv4 option defined in the libdhcp++.
-    EXPECT_NO_THROW(parsed_ = eval.parseString("option['host-name'].text == 'foo'"));
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[host-name].text == 'foo'"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, eval.expression.size());
     checkTokenOption(eval.expression.at(0), 12);
@@ -300,12 +300,12 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("option(10) == 'ab'",
                "<string>:1.7: syntax error, "
                "unexpected (, expecting [");
-    checkError("option['ab'].text == 'foo'",
-               "<string>:1.8-11: option 'ab' is not defined");
+    checkError("option[ab].text == 'foo'",
+               "<string>:1.8-9: option 'ab' is not defined");
     checkError("option[0xa].text == 'ab'",
                "<string>:1.8-10: syntax error, "
                "unexpected constant hexstring, "
-               "expecting constant string or integer");
+               "expecting integer or option name");
     checkError("substring('foobar') == 'f'",
                "<string>:1.19: syntax error, "
                "unexpected ), expecting \",\"");
