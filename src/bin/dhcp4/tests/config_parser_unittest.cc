@@ -1356,6 +1356,15 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
     EXPECT_FALSE(def->getArrayType());
     EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def->getType());
     EXPECT_TRUE(def->getEncapsulatedSpace().empty());
+
+    // The copy of the option definition should be available in the libdhcp++.
+    OptionDefinitionPtr def_libdhcp = LibDHCP::getRuntimeOptionDef("isc", 100);
+    ASSERT_TRUE(def_libdhcp);
+
+    // Both definitions should be held in distinct pointers but they should
+    // be equal.
+    EXPECT_TRUE(def_libdhcp != def);
+    EXPECT_TRUE(*def_libdhcp == *def);
 }
 
 // The goal of this test is to check whether an option definition
@@ -1468,6 +1477,14 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
 // The goal of this test is to verify that the duplicated option
 // definition is not accepted.
 TEST_F(Dhcp4ParserTest, optionDefDuplicate) {
+    // Preconfigure libdhcp++ with option definitions. The new configuration
+    // should override it, but when the new configuration fails, it should
+    // revert to this original configuration.
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("bar", 233, "string"));
+    defs.addItem(def, "isc");
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
 
     // Configuration string. Both option definitions have
     // the same code and belong to the same option space.
@@ -1498,6 +1515,15 @@ TEST_F(Dhcp4ParserTest, optionDefDuplicate) {
     ASSERT_TRUE(status);
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    // The new configuration should have inserted option 100, but
+    // once configuration failed (on the duplicate option definition)
+    // the original configuration in libdhcp++ should be reverted.
+    EXPECT_FALSE(LibDHCP::getRuntimeOptionDef("isc", 100));
+    def = LibDHCP::getRuntimeOptionDef("isc", 233);
+    ASSERT_TRUE(def);
+    EXPECT_EQ("bar", def->getName());
+    EXPECT_EQ(233, def->getCode());
 }
 
 // The goal of this test is to verify that the option definition

@@ -19,6 +19,7 @@
 #include <dhcp/option_space_container.h>
 #include <dhcp/pkt6.h>
 #include <util/buffer.h>
+#include <util/staged_value.h>
 
 #include <iostream>
 #include <string>
@@ -302,6 +303,12 @@ public:
     /// @brief Removes runtime option definitions.
     static void clearRuntimeOptionDefs();
 
+    /// @brief Reverts uncommited changes to runtime option definitions.
+    static void revertRuntimeOptionDefs();
+
+    /// @brief Commits runtime option definitions.
+    static void commitRuntimeOptionDefs();
+
 private:
 
     /// Initialize standard DHCPv4 option definitions.
@@ -349,7 +356,7 @@ private:
     static VendorOptionDefContainers vendor6_defs_;
 
     /// Container for additional option defnitions created in runtime.
-    static OptionDefSpaceContainer runtime_option_defs_;
+    static util::StagedValue<OptionDefSpaceContainer> runtime_option_defs_;
 };
 
 }

@@ -55,7 +55,7 @@ VendorOptionDefContainers LibDHCP::vendor4_defs_;
 VendorOptionDefContainers LibDHCP::vendor6_defs_;
 
 // Static container with option definitions created in runtime.
-OptionDefSpaceContainer LibDHCP::runtime_option_defs_;
+StagedValue<OptionDefSpaceContainer> LibDHCP::runtime_option_defs_;
 
 
 // Those two vendor classes are used for cable modems:
@@ -202,7 +202,7 @@ LibDHCP::getVendorOptionDef(const Option::Universe u, const uint32_t vendor_id,
 
 OptionDefinitionPtr
 LibDHCP::getRuntimeOptionDef(const std::string& space, const uint16_t code) {
-    OptionDefContainerPtr container = runtime_option_defs_.getItems(space);
+    OptionDefContainerPtr container = runtime_option_defs_.getValue().getItems(space);
     const OptionDefContainerTypeIndex& index = container->get<1>();
     const OptionDefContainerTypeRange& range = index.equal_range(code);
     if (range.first != range.second) {
@@ -214,7 +214,7 @@ LibDHCP::getRuntimeOptionDef(const std::string& space, const uint16_t code) {
 
 OptionDefinitionPtr
 LibDHCP::getRuntimeOptionDef(const std::string& space, const std::string& name) {
-    OptionDefContainerPtr container = runtime_option_defs_.getItems(space);
+    OptionDefContainerPtr container = runtime_option_defs_.getValue().getItems(space);
     const OptionDefContainerNameIndex& index = container->get<2>();
     const OptionDefContainerNameRange& range = index.equal_range(name);
     if (range.first != range.second) {
@@ -226,11 +226,12 @@ LibDHCP::getRuntimeOptionDef(const std::string& space, const std::string& name) 
 
 OptionDefContainerPtr
 LibDHCP::getRuntimeOptionDefs(const std::string& space) {
-    return (runtime_option_defs_.getItems(space));
+    return (runtime_option_defs_.getValue().getItems(space));
 }
 
 void
 LibDHCP::setRuntimeOptionDefs(const OptionDefSpaceContainer& defs) {
+    OptionDefSpaceContainer defs_copy;
     std::list<std::string> option_space_names = defs.getOptionSpaceNames();
     for (std::list<std::string>::const_iterator name = option_space_names.begin();
          name != option_space_names.end(); ++name) {
@@ -238,14 +239,25 @@ LibDHCP::setRuntimeOptionDefs(const OptionDefSpaceContainer& defs) {
         for (OptionDefContainer::const_iterator def = container->begin();
              def != container->end(); ++def) {
             OptionDefinitionPtr def_copy(new OptionDefinition(**def));
-            runtime_option_defs_.addItem(def_copy, *name);
+            defs_copy.addItem(def_copy, *name);
         }
     }
+    runtime_option_defs_ = defs_copy;
 }
 
 void
 LibDHCP::clearRuntimeOptionDefs() {
-    runtime_option_defs_.clearItems();
+    runtime_option_defs_.reset();
+}
+
+void
+LibDHCP::revertRuntimeOptionDefs() {
+    runtime_option_defs_.revert();
+}
+
+void
+LibDHCP::commitRuntimeOptionDefs() {
+    runtime_option_defs_.commit();
 }
 
 bool
