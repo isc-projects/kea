@@ -1,3 +1,8 @@
+1XXX.	[doc]		[sar]
+	Added description of the expression based classification
+	system to the Kea Admin Guide.
+	(Trac #4101	git <tbd>)
+
 1051.	[func]		[tmark]
 	kea-dhcp4 and kea-dhcp6 configuration parsing now supports
 	the "client-classes" element for defining client classes.
