@@ -20,6 +20,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/host.h>
 #include <exceptions/exceptions.h>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -213,6 +214,9 @@ public:
     /// support transactions, this is a no-op.
     virtual void rollback() {};
 };
+
+/// @brief HostDataSource pointer
+typedef boost::shared_ptr<BaseHostDataSource> HostDataSourcePtr;
 
 }
 }
