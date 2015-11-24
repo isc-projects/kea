@@ -349,7 +349,7 @@ TEST_F(TokenTest, optionHexString4) {
     values_.pop();
 
     // Then the content of the option 100.
-    EXPECT_EQ("0x68756E6472656434", values_.top());
+    EXPECT_EQ("hundred4", values_.top());
 }
 
 // This test checks if a token representing an option identified by name is
@@ -371,7 +371,7 @@ TEST_F(TokenTest, optionWithNameHexString4) {
     ASSERT_EQ(1, values_.size());
 
     // Then the content of the option.
-    EXPECT_EQ("0x68756E6472656434", values_.top());
+    EXPECT_EQ("hundred4", values_.top());
 }
 
 // This test checks if a token representing an option value is able to extract
@@ -451,7 +451,7 @@ TEST_F(TokenTest, optionHexString6) {
     values_.pop();
 
     // Then the content of the option 100.
-    EXPECT_EQ("0x68756E6472656436", values_.top());
+    EXPECT_EQ("hundred6", values_.top());
 }
 
 // This test checks if a token representing an option identified by name is
@@ -473,7 +473,7 @@ TEST_F(TokenTest, optionWithNameHexString6) {
     ASSERT_EQ(1, values_.size());
 
     // Then the content of the option.
-    EXPECT_EQ("0x68756E6472656436", values_.top());
+    EXPECT_EQ("hundred6", values_.top());
 }
 
 // This test checks if a token representing an == operator is able to
