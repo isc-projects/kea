@@ -840,9 +840,14 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
             getClientClassDictionary()->findClass(*cclass);
         if (!ccdef) {
             // Not found: the class is not configured
-            LOG_DEBUG(options4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNCONFIGURED)
-                .arg(ex.getQuery()->getLabel())
-                .arg(*cclass);
+            if (((*cclass).size() <= VENDOR_CLASS_PREFIX.size()) ||
+                ((*cclass).compare(0, VENDOR_CLASS_PREFIX.size(), VENDOR_CLASS_PREFIX) != 0)) {
+                // Not a VENDOR_CLASS_* so should be configured
+                LOG_DEBUG(options4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNCONFIGURED)
+                    .arg(ex.getQuery()->getLabel())
+                    .arg(*cclass);
+            }
+            // Skip it
             continue;
         }
         if (ccdef->getCfgOption()->empty()) {

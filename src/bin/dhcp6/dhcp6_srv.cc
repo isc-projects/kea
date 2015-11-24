@@ -908,8 +908,13 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
             getClientClassDictionary()->findClass(*cclass);
         if (!ccdef) {
             // Not found: the class is not configured
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNCONFIGURED)
-                .arg(*cclass);
+            if (((*cclass).size() <= VENDOR_CLASS_PREFIX.size()) ||
+                ((*cclass).compare(0, VENDOR_CLASS_PREFIX.size(), VENDOR_CLASS_PREFIX) != 0)) {
+                // Not a VENDOR_CLASS_* so should be configured
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNCONFIGURED)
+                    .arg(*cclass);
+            }
+            // Skip it
             continue;
         }
         if (ccdef->getCfgOption()->empty()) {
