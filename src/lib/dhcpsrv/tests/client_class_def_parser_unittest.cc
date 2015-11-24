@@ -178,7 +178,7 @@ TEST_F(ExpressionParserTest, validExpression4) {
 // Verifies that the option name can be used in the evaluated expression.
 TEST_F(ExpressionParserTest, validExpressionWithOptionName4) {
     testValidExpression<Pkt4>(Option::V4,
-                              "\"option['host-name'].text == 'hundred4'\"",
+                              "\"option[host-name].text == 'hundred4'\"",
                               "hundred4");
 }
 
@@ -194,7 +194,7 @@ TEST_F(ExpressionParserTest, validExpressionWithHex4) {
 // the evaluated expression.
 TEST_F(ExpressionParserTest, validExpressionWithOptionNameAndHex4) {
     testValidExpression<Pkt6>(Option::V4,
-                              "\"option['host-name'].text == 0x68756E6472656434\"",
+                              "\"option[host-name].text == 0x68756E6472656434\"",
                               "hundred4");
 }
 
@@ -208,7 +208,7 @@ TEST_F(ExpressionParserTest, validExpression6) {
 // Verifies that the option name can be used in the evaluated expression.
 TEST_F(ExpressionParserTest, validExpressionWithOptionName6) {
     testValidExpression<Pkt6>(Option::V6,
-                              "\"option['bootfile-url'].text == 'hundred6'\"",
+                              "\"option[bootfile-url].text == 'hundred6'\"",
                               "hundred6");
 }
 
@@ -224,7 +224,7 @@ TEST_F(ExpressionParserTest, validExpressionWithHex6) {
 // the evaluated expression.
 TEST_F(ExpressionParserTest, validExpressionWithOptionNameAndHex6) {
     testValidExpression<Pkt6>(Option::V6,
-                              "\"option['bootfile-url'].text == 0x68756E6472656436\"",
+                              "\"option[bootfile-url].text == 0x68756E6472656436\"",
                               "hundred6");
 }
 

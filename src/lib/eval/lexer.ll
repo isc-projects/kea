@@ -133,6 +133,13 @@ blank [ \t]
 "]"         return isc::eval::EvalParser::make_RBRACKET(loc);
 ","         return isc::eval::EvalParser::make_COMA(loc);
 
+[A-Za-z][A-Za-z0-9_\-]+/] {
+    // This string specifies option name starting with a letter
+    // and further containing letters, digits, hyphens and
+    // underscores.
+    return isc::eval::EvalParser::make_OPTION_NAME(yytext, loc);
+}
+
 .          driver.error (loc, "Invalid character: " + std::string(yytext));
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);
 %%
