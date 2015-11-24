@@ -17,6 +17,7 @@
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
+#include <dhcpsrv/host_mgr.h>
 #include <log/logger_support.h>
 
 #include <gtest/gtest.h>
@@ -201,8 +202,9 @@ public:
     /// @brief Constructor
     ///
     /// @brief Keyword/value collection of ddatabase access parameters
-    TestDbAccessParser(const std::string& param_name, const ParserContext& ctx)
-        : DbAccessParser(param_name, ctx)
+    TestDbAccessParser(const std::string& param_name, DbAccessParser::DBType type,
+                       const ParserContext& ctx)
+        : DbAccessParser(param_name, type, ctx)
     {}
 
     /// @brief Destructor
@@ -243,7 +245,8 @@ TEST_F(DbAccessParserTest, validTypeMemfile) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB,
+                              ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
 }
@@ -259,7 +262,8 @@ TEST_F(DbAccessParserTest, emptyKeyword) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB,
+                              ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
 }
@@ -276,7 +280,8 @@ TEST_F(DbAccessParserTest, persistV4Memfile) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB,
+                              ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
 
     checkAccessString("Valid memfile", parser.getDbAccessParameters(),
@@ -295,7 +300,8 @@ TEST_F(DbAccessParserTest, persistV6Memfile) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database", ParserContext(Option::V6));
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB,
+                              ParserContext(Option::V6));
     EXPECT_NO_THROW(parser.build(json_elements));
 
     checkAccessString("Valid memfile", parser.getDbAccessParameters(),
@@ -314,7 +320,8 @@ TEST_F(DbAccessParserTest, validLFCInterval) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database", ParserContext(Option::V6));
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB,
+                              ParserContext(Option::V6));
     ASSERT_NO_THROW(parser.build(json_elements));
     checkAccessString("Valid LFC Interval", parser.getDbAccessParameters(),
                       config, Option::V6);
@@ -332,7 +339,8 @@ TEST_F(DbAccessParserTest, negativeLFCInterval) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database", ParserContext(Option::V6));
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB,
+                              ParserContext(Option::V6));
     EXPECT_THROW(parser.build(json_elements), BadValue);
 }
 
@@ -348,7 +356,8 @@ TEST_F(DbAccessParserTest, largeLFCInterval) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database", ParserContext(Option::V6));
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB,
+                              ParserContext(Option::V6));
     EXPECT_THROW(parser.build(json_elements), BadValue);
 }
 
@@ -365,7 +374,8 @@ TEST_F(DbAccessParserTest, validTypeMysql) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB,
+                              ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Valid mysql", parser.getDbAccessParameters(), config);
 }
@@ -382,7 +392,8 @@ TEST_F(DbAccessParserTest, missingTypeKeyword) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB,
+                              ParserContext(Option::V4));
     EXPECT_THROW(parser.build(json_elements), TypeKeywordMissing);
 }
 
@@ -442,7 +453,8 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
                              "name",     "keatest",
                              NULL};
 
-    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB,
+                              ParserContext(Option::V4));
 
     // First configuration string should cause a representation of that string
     // to be held.
@@ -506,7 +518,8 @@ TEST_F(DbAccessParserTest, getDbAccessString) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB,
+                              ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
 
     // Get the database access string
@@ -518,10 +531,10 @@ TEST_F(DbAccessParserTest, getDbAccessString) {
     EXPECT_EQ(dbaccess, "name=keatest type=mysql universe=4");
 }
 
-// Check that the "commit" function actually opens the database.  We will
-// only do this for the "memfile" database, as that does not assume that the
-// test has been built with MySQL support.
-TEST_F(DbAccessParserTest, commit) {
+// Check that the "commit" function actually opens the database, when type
+// is set to LEASE_DB.  We will only do this for the "memfile" database, as
+// that does not assume that the test has been built with MySQL support.
+TEST_F(DbAccessParserTest, commitLeaseDb) {
 
     // Verify that no lease database is open
     EXPECT_THROW({
@@ -536,7 +549,8 @@ TEST_F(DbAccessParserTest, commit) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB,
+                              ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
 
     // Ensure that the access string is as expected.
@@ -550,6 +564,48 @@ TEST_F(DbAccessParserTest, commit) {
     std::string dbtype;
     EXPECT_NO_THROW(dbtype = LeaseMgrFactory::instance().getType());
     EXPECT_EQ(std::string("memfile"), dbtype);
+}
+
+// Check that the "commit" function actually opens the database, when type
+// is set to HOSTS_DB.
+TEST_F(DbAccessParserTest, commitHostsDb) {
+
+    // Verify that no lease database is open
+    EXPECT_THROW({
+            LeaseMgr& manager = LeaseMgrFactory::instance();
+            manager.getType();  // Never executed but satisfies compiler
+            }, isc::dhcp::NoLeaseManager);
+
+    // Set up the parser to open the memfile database.
+    const char* config[] = {"type", "memfile", "persist", "false", NULL};
+    string json_config = toJson(config);
+
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser("hosts-database", DbAccessParser::HOSTS_DB,
+                              ParserContext(Option::V4));
+    EXPECT_NO_THROW(parser.build(json_elements));
+
+    // Ensure that the access string is as expected.
+    EXPECT_EQ("persist=false type=memfile universe=4",
+              parser.getDbAccessString());
+
+    // Destroy lease mgr (if there's any)
+    LeaseMgrFactory::destroy();
+
+    // Committal of the parser changes should not create LeaseMgr.
+    // It should create HostDataSource instead.
+    EXPECT_NO_THROW(parser.commit());
+
+    // Check that LeaseMgr was NOT created (it shouldn't, this is for HOSTS_DB.
+    EXPECT_THROW(LeaseMgrFactory::instance(), NoLeaseManager);
+
+    HostDataSourcePtr hds = HostMgr::instance().getHostDataSource();
+
+    /// @todo: Uncomment this once 3682 is merged. The whole unit-test
+    /// should create MySQL database and be ifdefed appropriately.
+    // ASSERT_TRUE(hds);
 }
 
 };  // Anonymous namespace

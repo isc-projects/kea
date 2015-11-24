@@ -45,6 +45,13 @@ public:
 /// depend on the database chosen.
 class DbAccessParser: public DhcpConfigParser {
 public:
+
+    /// @brief Specifies the database type
+    typedef enum {
+        LEASE_DB = 1,
+        HOSTS_DB = 2
+    } DBType;
+
     /// @brief Keyword and associated value
     typedef std::pair<std::string, std::string> StringPair;
 
@@ -55,8 +62,10 @@ public:
     ///
     /// @param param_name Name of the parameter under which the database
     ///        access details are held.
+    /// @param db_type Specifies database type (lease or hosts)
     /// @param ctx Parser context.
-    DbAccessParser(const std::string& param_name, const ParserContext& ctx);
+    DbAccessParser(const std::string& param_name, DBType db_type,
+                   const ParserContext& ctx);
 
     /// The destructor.
     virtual ~DbAccessParser()
@@ -103,7 +112,14 @@ public:
     ///         destroying the parser after use.
     static DhcpConfigParser* factory(const std::string& param_name,
                                      const ParserContext& ctx) {
-        return (new DbAccessParser(param_name, ctx));
+        if (param_name == "lease-database") {
+            return (new DbAccessParser(param_name, DbAccessParser::LEASE_DB, ctx));
+        } else if (param_name == "hosts-database") {
+            return (new DbAccessParser(param_name, DbAccessParser::HOSTS_DB, ctx));
+        } else {
+            isc_throw(BadValue, "Unexpected parameter name (" << param_name
+                      << ") passed to DbAccessParser::factory");
+        }
     }
 
 protected:
@@ -129,6 +145,8 @@ protected:
 private:
 
     std::map<std::string, std::string> values_; ///< Stored parameter values
+
+    DBType type_; ///< Database type (leases or hosts)
 
     ParserContext ctx_; ///< Parser context
 };
