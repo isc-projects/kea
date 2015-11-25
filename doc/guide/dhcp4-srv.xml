@@ -1567,14 +1567,26 @@ It is merely echoed by the server
 
       <para>
       In certain cases it is useful to differentiate between different types of
-      clients and treat them accordingly. It is envisaged that client classification
-      will be used for changing the
-      behavior of almost any part of the DHCP message processing, including assigning
-      leases from different pools, assigning different options (or different values of
-      the same options) etc. For now, there are only three mechanisms that are taking
-      advantage of client classification: subnet seletion, assigning different options,
-      and for cable modems there are specific options for use with the TFTP
-      server address and the boot file field.
+      clients and treat them accordingly. It is envisaged that client
+      classification will be used for changing the behavior of almost any part of
+      the DHCP message processing, including the assignment of leases from different
+      pools, the assignmen of different options (or different values of the same
+      options) etc. In the current release of the software however, there are
+      only three mechanisms that take advantage of client classification:
+      subnet seletion, assignment of different options, and, for cable modems, there
+      are specific options for use with the TFTP server address and the boot file field.
+      </para>
+
+      <para>
+      Kea can be instructed to limit access to given subnets based on class information.
+      This is particularly useful for cases where two types of devices share the
+      same link and are expected to be served from two different subnets. The
+      primary use case for such a scenario is cable networks. There are two
+      classes of devices: the cable modem itself, which should be handed a lease
+      from subnet A and all other devices behind the modem that should get a lease
+      from subnet B. That segregation is essential to prevent overly curious
+      users from playing with their cable modems. For details on how to set up
+      class restrictions on subnets, see <xref linkend="classification-subnets"/>.
       </para>
 
       <para>
@@ -1592,18 +1604,6 @@ It is merely echoed by the server
       the class list for the packet. The second allows you to specify an expression
       that is evaluated for each packet. If the result is true the packet is
       a member of the class.
-      </para>
-
-      <para>
-      Kea can be instructed to limit access to given subnets based on class information.
-      This is particularly useful for cases where two types of devices share the
-      same link and are expected to be served from two different subnets. The
-      primary use case for such a scenario is cable networks. There are two
-      classes of devices: the cable modem itself, which should be handed a lease
-      from subnet A and all other devices behind the modem that should get a lease
-      from subnet B. That segregation is essential to prevent overly curious
-      users from playing with their cable modems. For details on how to set up
-      class restrictions on subnets, see <xref linkend="dhcp4-subnet-class"/>.
       </para>
 
       <note><para>
@@ -1632,51 +1632,20 @@ It is merely echoed by the server
       </section>
 
       <section>
-        <title>Using Expressions in Classification</title>
+        <title>Configuring Classes Example</title>
         <para>
-        The expression portion of classification contains operators and values.
-        Values are currently strings and operators take a string or strings and
-        return another string. When all the operations have completed
-        the result should be a value of &quot;true&quot; or &quot;false&quot;.
-        The packet belongs to
-        the class (and the class name is added to the list of classes) if the result
-        is &quot;true&quot;. Expressions are written in standard format and can be nested.
-        For more information about expressions see
-        <xref linkend="classification-using-expressions"/>
-        </para>
-      </section>
+        The following example shows how to configure a class using an expression
+        and a subnet making use of that class. This configuration defines the
+        class named &quot;Client_foo&quot;.
+        It is comprised of all clients who's client ids (option 61) start with the
+        string &quot;foo&quot;. Members of this class will be given addresses from
+        192.0.2.10 to 192.0.2.20 and 192.0.2.1 and 192.0.2.2 as their domain name
+        servers. For a deeper discussion of the classification process see
+        <xref linkend="classify"/>.
 
-      <section>
-        <title>Configuring Classes</title>
-        <para>
-        A class contains three items: a name, a test expression and option data.
-        The name must exist and must be unique amongst all classes. The test
-        expression and option data are optional.
-        </para>
-
-        <para>
-        The test expression is a string containing the logical expression used to
-        determine membership in the class.  The entire expression is in double
-        quotes.
-        </para>
-
-        <para>
-        The option data is a list which defines any options that should be assigned
-        to members of this class.
-        </para>
-
-        <para>
           <screen>
 "Dhcp4": {
-    "subnet4": [
-        {
-            "subnet": "192.0.2.0/24",
-            "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
-            "client-class": "Client_foo"
-        }
-    ],
-    "client-class": [
-<userinput>
+    "client-classes": [
         {
             "name": "Client_foo",
             "test": "substring(option[61].text,0,3) == 'foo'",
@@ -1689,40 +1658,35 @@ It is merely echoed by the server
                     "data": "192.0.2.1, 192.0.2.2"
                 }
             ]
-        }
-</userinput>
+        },
+        ...
+    ],
+    "subnet4": [
+        {
+            "subnet": "192.0.2.0/24",
+            "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
+            "client-class": "Client_foo"
+        },
+        ...
+    ],
     ...
 }</screen>
         </para>
 
         <para>
-        In this example the class named &quot;Client_foo&quot; is defined.  It is comprised
-        of all clients who's client ids (option 61) start with the string &quot;foo&quot;.
-        They will be given an address from 192.0.2.10 to 192.0.2.20 and 192.0.2.1
-        and 192.0.2.2 as their domain name servers.
-        </para>
-      </section>
+        This example shows a configuration using an automatcially generated
+        "VENDOR_CLASS_" class. The Administrator of the network has
+        decided that addresses from range 192.0.2.10 to 192.0.2.20 are
+        going to be managed by the Dhcp4 server and only clients belonging to the
+        docsis3.0 client class are allowed to use that pool.
 
-      <section id="dhcp4-subnet-class">
-        <title>Limiting Access to IPv4 Subnet to Certain Classes</title>
-        <para>
-        In certain cases it beneficial to restrict access to certain subnets
-        only to clients that belong to a given subnet. For details on client
-        classes, see <xref linkend="dhcp4-client-classifier"/>. This is an
-        extension of a previous example from <xref linkend="dhcp4-address-config"/>.
-        Let's assume that the server is connected to a network segment that uses
-        the 192.0.2.0/24 prefix. The Administrator of that network has decided
-        that addresses from range 192.0.2.10 to 192.0.2.20 are going to be
-        managed by the Dhcp4 server. Only clients belonging to client class
-        VENDOR_CLASS_docsis3.0 are allowed to use this subnet. Such a
-        configuration can be achieved in the following way:
         <screen>
 "Dhcp4": {
     "subnet4": [
         {
-            <userinput>"subnet": "192.0.2.0/24",
+            "subnet": "192.0.2.0/24",
             "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
-            "client-class": "VENDOR_CLASS_docsis3.0"</userinput>
+            <userinput>"client-class": "VENDOR_CLASS_docsis3.0"</userinput>
         }
     ],
     ...
@@ -2770,7 +2734,7 @@ It is merely echoed by the server
         <para>
           In certain cases, it is useful to mix relay address information,
           introduced in <xref linkend="dhcp4-relay-override"/> with client
-          classification, explained in <xref linkend="dhcp4-subnet-class"/>.
+          classification, explained in <xref linkend="classify"/>.
           One specific example is cable network, where typically modems
           get addresses from a different subnet than all devices connected
           behind them.
