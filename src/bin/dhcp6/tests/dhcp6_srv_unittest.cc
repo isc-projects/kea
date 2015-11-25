@@ -1905,7 +1905,7 @@ TEST_F(Dhcpv6SrvTest, matchClassification) {
     srv.classifyPacket(query2);
     srv.classifyPacket(query3);
 
-    // Packets at the exception of the second should be in the router class
+    // Packets with the exception of the second should be in the router class
     EXPECT_TRUE(query1->inClass("router"));
     EXPECT_FALSE(query2->inClass("router"));
     EXPECT_TRUE(query3->inClass("router"));
@@ -1919,11 +1919,11 @@ TEST_F(Dhcpv6SrvTest, matchClassification) {
     OptionPtr opt1 = response1->getOption(2345);
     EXPECT_TRUE(opt1);
 
-    // But only for the first exchange: second was not classified
+    // But only for the first query: second was not classified
     OptionPtr opt2 = response2->getOption(2345);
     EXPECT_FALSE(opt2);
 
-    // But only for the first exchange: third has no ORO
+    // But only for the first query: third has no ORO
     OptionPtr opt3 = response3->getOption(2345);
     EXPECT_FALSE(opt3);
 }
@@ -1974,7 +1974,7 @@ TEST_F(Dhcpv6SrvTest, subnetClassPriority) {
     query->setIface("eth1");
     query->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
 
-    // Create and add a ORO option to the query
+    // Create and add an ORO option to the query
     OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
     ASSERT_TRUE(oro);
     oro->addValue(2345);
@@ -1994,7 +1994,7 @@ TEST_F(Dhcpv6SrvTest, subnetClassPriority) {
     // Process the query
     Pkt6Ptr response = srv.processSolicit(query);
 
-    // A processing should add an ip-forwarding option
+    // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(2345);
     ASSERT_TRUE(opt);
     ASSERT_GT(opt->len(), opt->getHeaderLen());
@@ -2049,7 +2049,7 @@ TEST_F(Dhcpv6SrvTest, classGlobalPriority) {
     query->setIface("eth1");
     query->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
 
-    // Create and add a ORO option to the query
+    // Create and add an ORO option to the query
     OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
     ASSERT_TRUE(oro);
     oro->addValue(2345);
@@ -2069,7 +2069,7 @@ TEST_F(Dhcpv6SrvTest, classGlobalPriority) {
     // Process the query
     Pkt6Ptr response = srv.processSolicit(query);
 
-    // A processing should add an ip-forwarding option
+    // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(2345);
     ASSERT_TRUE(opt);
     ASSERT_GT(opt->len(), opt->getHeaderLen());
@@ -2091,7 +2091,7 @@ TEST_F(Dhcpv6SrvTest, clientClassifySubnet) {
 
     // The second subnet does not play any role here. The client's
     // IP address belongs to the first subnet, so only that first
-    // subnet it being tested.
+    // subnet is being tested.
     string config = "{ \"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"

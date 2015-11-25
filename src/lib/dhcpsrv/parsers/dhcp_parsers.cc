@@ -1263,7 +1263,7 @@ SubnetConfigParser::createSubnet() {
     }
 
     // Here globally defined options were merged to the subnet specific
-    // options but it is no longer the case (they have a different
+    // options but this is no longer the case (they have a different
     // and not consecutive priority).
 
     // Copy options to the subnet configuration.

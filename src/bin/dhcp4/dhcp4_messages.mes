@@ -84,7 +84,7 @@ The first argument specifies the client and transaction identification
 information. The second argument includes all classes to which the
 packet has been assigned.
 
-% DHCP4_CLASS_UNCONFIGURED %1: client packet belongs an unconfigured class: %2
+% DHCP4_CLASS_UNCONFIGURED %1: client packet belongs to an unconfigured class: %2
 This debug message informs that incoming packet belongs to a class
 which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
