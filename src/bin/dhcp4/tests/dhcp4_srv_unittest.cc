@@ -1743,7 +1743,7 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     srv.classifyPacket(query2);
     srv.classifyPacket(query3);
 
-    // Packets at the exception of the second should be in the router class
+    // Packets with the exception of the second should be in the router class
     EXPECT_TRUE(query1->inClass("router"));
     EXPECT_FALSE(query2->inClass("router"));
     EXPECT_TRUE(query3->inClass("router"));
@@ -1757,11 +1757,11 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     OptionPtr opt1 = response1->getOption(DHO_IP_FORWARDING);
     EXPECT_TRUE(opt1);
 
-    // But only for the first exchange: second was not classified
+    // But only for the first query: second was not classified
     OptionPtr opt2 = response2->getOption(DHO_IP_FORWARDING);
     EXPECT_FALSE(opt2);
 
-    // But only for the first exchange: third has no PRL
+    // But only for the first query: third has no PRL
     OptionPtr opt3 = response3->getOption(DHO_IP_FORWARDING);
     EXPECT_FALSE(opt3);
 }
@@ -1834,7 +1834,7 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
     // Process the query
     Pkt4Ptr response = srv.processDiscover(query);
 
-    // A processing should add an ip-forwarding option
+    // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(DHO_IP_FORWARDING);
     ASSERT_TRUE(opt);
     ASSERT_GT(opt->len(), opt->getHeaderLen());
@@ -1911,7 +1911,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
     // Process the query
     Pkt4Ptr response = srv.processDiscover(query);
 
-    // A processing should add an ip-forwarding option
+    // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(DHO_IP_FORWARDING);
     ASSERT_TRUE(opt);
     ASSERT_GT(opt->len(), opt->getHeaderLen());
@@ -1933,7 +1933,7 @@ TEST_F(Dhcpv4SrvTest, clientClassify) {
 
     // The second subnet does not play any role here. The client's
     // IP address belongs to the first subnet, so only that first
-    // subnet it being tested.
+    // subnet is being tested.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
         "},"

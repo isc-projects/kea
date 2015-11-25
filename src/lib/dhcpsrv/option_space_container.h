@@ -41,7 +41,7 @@ public:
 
     /// @brief Indicates the container is empty
     ///
-    /// @return true when the confainer is empty
+    /// @return true when the container is empty
     bool empty() const {
         return (option_space_map_.empty());
     }
