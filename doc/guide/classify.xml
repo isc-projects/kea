@@ -213,32 +213,16 @@
           string.  If length is longer than the remaining portion of the string then
           the entire remaining portion is returned.  Some examples may be helpful:
 
-          <itemizedlist>
-          <listitem><para>
-            substring('foobar', 0, 6) == 'foobar'
-          </para></listitem>
-          <listitem><para>
-            substring('foobar', 3, 3) == 'bar'
-          </para></listitem>
-          <listitem><para>
-            substring('foobar', 3, all) == 'bar'
-          </para></listitem>
-          <listitem><para>
-            substring('foobar', 1, 4) == 'ooba'
-          </para></listitem>
-          <listitem><para>
-            substring('foobar', -5, 4) == 'ooba'
-          </para></listitem>
-          <listitem><para>
-            substring('foobar', -1, -4) == 'ooba'
-          </para></listitem>
-          <listitem><para>
-            substring('foobar', 5, -4) == 'ooba'
-          </para></listitem>
-          <listitem><para>
-            substring('foobar', 10, 2) == ''
-          </para></listitem>
-          </itemizedlist>
+            <screen>
+        substring('foobar', 0, 6) == 'foobar'
+        substring('foobar', 3, 3) == 'bar'
+        substring('foobar', 3, all) == 'bar'
+        substring('foobar', 1, 4) == 'ooba'
+        substring('foobar', -5, 4) == 'ooba'
+        substring('foobar', -1, -4) == 'ooba'
+        substring('foobar', 5, -4) == 'ooba'
+        substring('foobar', 10, 2) == ''
+            </screen>
         </section>
       </para>
     </section>
