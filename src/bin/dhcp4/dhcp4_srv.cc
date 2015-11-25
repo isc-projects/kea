@@ -848,7 +848,7 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
             if (((*cclass).size() <= VENDOR_CLASS_PREFIX.size()) ||
                 ((*cclass).compare(0, VENDOR_CLASS_PREFIX.size(), VENDOR_CLASS_PREFIX) != 0)) {
                 // Not a VENDOR_CLASS_* so should be configured
-                LOG_DEBUG(options4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNCONFIGURED)
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNCONFIGURED)
                     .arg(ex.getQuery()->getLabel())
                     .arg(*cclass);
             }
@@ -2408,7 +2408,7 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     }
 
     if (!classes.empty()) {
-        LOG_DEBUG(options4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
             .arg(pkt->getLabel())
             .arg(classes);
     }
