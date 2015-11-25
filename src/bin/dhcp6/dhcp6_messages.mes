@@ -84,11 +84,14 @@ successfully established a session with the Kea control channel.
 This debug message is issued just before the IPv6 DHCP server attempts
 to establish a session with the Kea control channel.
 
-% DHCP6_CLASS_ASSIGNED client packet has been assigned to the following class(es): %1
+% DHCP6_CLASS_ASSIGNED %1: client packet has been assigned to the following class(es): %2
 This debug message informs that incoming packet has been assigned to specified
-class or classes.
+class or classes. This is a normal behavior and indicates successful operation.
+The first argument specifies the client and transaction identification
+information. The second argument includes all classes to which the
+packet has been assigned.
 
-% DHCP6_CLASS_UNCONFIGURED client packet belongs to an unconfigured class: %1
+% DHCP6_CLASS_UNCONFIGURED %1: client packet belongs to an unconfigured class: %1
 This debug message informs that incoming packet belongs to a class
 which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is

@@ -912,6 +912,7 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
                 ((*cclass).compare(0, VENDOR_CLASS_PREFIX.size(), VENDOR_CLASS_PREFIX) != 0)) {
                 // Not a VENDOR_CLASS_* so should be configured
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNCONFIGURED)
+                    .arg(question->getLabel())
                     .arg(*cclass);
             }
             // Skip it
@@ -3015,6 +3016,7 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
 
     if (!classes.empty()) {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
+            .arg(pkt->getLabel())
             .arg(classes);
     }
 }
