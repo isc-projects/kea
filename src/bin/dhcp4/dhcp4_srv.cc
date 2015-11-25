@@ -38,6 +38,8 @@
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/utils.h>
 #include <dhcpsrv/utils.h>
+#include <eval/evaluate.h>
+#include <eval/eval_messages.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
@@ -820,6 +822,53 @@ Dhcpv4Srv::appendServerID(Dhcpv4Exchange& ex) {
 }
 
 void
+Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
+    CfgOptionList& co_list = ex.getCfgOptionList();
+
+    // First subnet configured options
+    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    if (!subnet) {
+        // All methods using the CfgOptionList object return soon when
+        // there is no subnet so do the same
+        return;
+    }
+    if (!subnet->getCfgOption()->empty()) {
+        co_list.push_back(subnet->getCfgOption());
+    }
+
+    // Each class in the incoming packet
+    const ClientClasses& classes = ex.getQuery()->getClasses();
+    for (ClientClasses::const_iterator cclass = classes.begin();
+         cclass != classes.end(); ++cclass) {
+        // Find the client class definition for this class
+        const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
+            getClientClassDictionary()->findClass(*cclass);
+        if (!ccdef) {
+            // Not found: the class is not configured
+            if (((*cclass).size() <= VENDOR_CLASS_PREFIX.size()) ||
+                ((*cclass).compare(0, VENDOR_CLASS_PREFIX.size(), VENDOR_CLASS_PREFIX) != 0)) {
+                // Not a VENDOR_CLASS_* so should be configured
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNCONFIGURED)
+                    .arg(ex.getQuery()->getLabel())
+                    .arg(*cclass);
+            }
+            // Skip it
+            continue;
+        }
+        if (ccdef->getCfgOption()->empty()) {
+            // Skip classes which don't configure options
+            continue;
+        }
+        co_list.push_back(ccdef->getCfgOption());
+    }
+
+    // Last global options
+    if (!CfgMgr::instance().getCurrentCfg()->getCfgOption()->empty()) {
+        co_list.push_back(CfgMgr::instance().getCurrentCfg()->getCfgOption());
+    }
+}
+
+void
 Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     // Get the subnet relevant for the client. We will need it
     // to get the options associated with it.
@@ -829,6 +878,12 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     // error because it will be logged by the assignLease method
     // anyway.
     if (!subnet) {
+        return;
+    }
+
+    // Unlikely short cut
+    const CfgOptionList& co_list = ex.getCfgOptionList();
+    if (co_list.empty()) {
         return;
     }
 
@@ -852,10 +907,17 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     // to be returned to the client.
     for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
          opt != requested_opts.end(); ++opt) {
+        // Add nothing when it is already there
         if (!resp->getOption(*opt)) {
-            OptionDescriptor desc = subnet->getCfgOption()->get("dhcp4", *opt);
-            if (desc.option_) {
-                resp->addOption(desc.option_);
+            // Iterate on the configured option list
+            for (CfgOptionList::const_iterator copts = co_list.begin();
+                 copts != co_list.end(); ++copts) {
+                OptionDescriptor desc = (*copts)->get("dhcp4", *opt);
+                // Got it: add it and jump to the outer loop
+                if (desc.option_) {
+                    resp->addOption(desc.option_);
+                    break;
+                }
             }
         }
     }
@@ -871,6 +933,12 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     // pick the suitable subnet. We don't want to duplicate
     // error messages in such case.
     if (!subnet) {
+        return;
+    }
+
+    // Unlikely short cut
+    const CfgOptionList& co_list = ex.getCfgOptionList();
+    if (co_list.empty()) {
         return;
     }
 
@@ -903,11 +971,14 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
          code != requested_opts.end(); ++code) {
         if  (!vendor_rsp->getOption(*code)) {
-            OptionDescriptor desc = subnet->getCfgOption()->get(vendor_id,
-                                                                *code);
-            if (desc.option_) {
-                vendor_rsp->addOption(desc.option_);
-                added = true;
+            for (CfgOptionList::const_iterator copts = co_list.begin();
+                 copts != co_list.end(); ++copts) {
+                OptionDescriptor desc = (*copts)->get(vendor_id, *code);
+                if (desc.option_) {
+                    vendor_rsp->addOption(desc.option_);
+                    added = true;
+                    break;
+                }
             }
         }
 
@@ -936,6 +1007,12 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
         return;
     }
 
+    // Unlikely short cut
+    const CfgOptionList& co_list = ex.getCfgOptionList();
+    if (co_list.empty()) {
+        return;
+    }
+
     Pkt4Ptr resp = ex.getResponse();
 
     // Try to find all 'required' options in the outgoing
@@ -944,10 +1021,13 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
         OptionPtr opt = resp->getOption(required_options[i]);
         if (!opt) {
             // Check whether option has been configured.
-            OptionDescriptor desc = subnet->getCfgOption()->
-                get("dhcp4", required_options[i]);
-            if (desc.option_) {
-                resp->addOption(desc.option_);
+            for (CfgOptionList::const_iterator copts = co_list.begin();
+                 copts != co_list.end(); ++copts) {
+                OptionDescriptor desc = (*copts)->get("dhcp4", required_options[i]);
+                if (desc.option_) {
+                    resp->addOption(desc.option_);
+                    break;
+                }
             }
         }
     }
@@ -1588,6 +1668,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
+        buildCfgOptionList(ex);
         appendRequestedOptions(ex);
         appendRequestedVendorOptions(ex);
         // There are a few basic options that we always want to
@@ -1609,7 +1690,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     /// @todo: decide whether we want to add a new hook point for
     /// doing class specific processing.
-    if (!classSpecificProcessing(ex)) {
+    if (!vendorClassSpecificProcessing(ex)) {
         /// @todo add more verbosity here
         LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_DISCOVER_CLASS_PROCESSING_FAILED)
             .arg(discover->getLabel());
@@ -1643,6 +1724,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
+        buildCfgOptionList(ex);
         appendRequestedOptions(ex);
         appendRequestedVendorOptions(ex);
         // There are a few basic options that we always want to
@@ -1659,7 +1741,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
     /// @todo: decide whether we want to add a new hook point for
     /// doing class specific processing.
-    if (!classSpecificProcessing(ex)) {
+    if (!vendorClassSpecificProcessing(ex)) {
         /// @todo add more verbosity here
         LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_REQUEST_CLASS_PROCESSING_FAILED)
             .arg(ex.getQuery()->getLabel());
@@ -1922,6 +2004,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
 
     Pkt4Ptr ack = ex.getResponse();
 
+    buildCfgOptionList(ex);
     appendRequestedOptions(ex);
     appendRequestedVendorOptions(ex);
     appendBasicOptions(ex);
@@ -1947,7 +2030,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
 
     /// @todo: decide whether we want to add a new hook point for
     /// doing class specific processing.
-    if (!classSpecificProcessing(ex)) {
+    if (!vendorClassSpecificProcessing(ex)) {
         LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL,
                   DHCP4_INFORM_CLASS_PROCESSING_FAILED)
             .arg(inform->getLabel());
@@ -2241,11 +2324,10 @@ Dhcpv4Srv::unpackOptions(const OptionBuffer& buf,
     return (offset);
 }
 
-void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
+void Dhcpv4Srv::classifyByVendor(const Pkt4Ptr& pkt, std::string& classes) {
+    // Built-in vendor class processing
     boost::shared_ptr<OptionString> vendor_class =
         boost::dynamic_pointer_cast<OptionString>(pkt->getOption(DHO_VENDOR_CLASS_IDENTIFIER));
-
-    string classes = "";
 
     if (!vendor_class) {
         return;
@@ -2275,19 +2357,65 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
         pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER);
         classes += string(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER) + " ";
     } else {
-        classes += VENDOR_CLASS_PREFIX + vendor_class->getValue();
         pkt->addClass(VENDOR_CLASS_PREFIX + vendor_class->getValue());
+        classes += VENDOR_CLASS_PREFIX + vendor_class->getValue();
+    }
+}
+
+void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
+    string classes = "";
+
+    // First phase: built-in vendor class processing
+    classifyByVendor(pkt, classes);
+
+    // Run match expressions
+    // Note getClientClassDictionary() cannot be null
+    const ClientClassDefMapPtr& defs_ptr = CfgMgr::instance().getCurrentCfg()->
+        getClientClassDictionary()->getClasses();
+    for (ClientClassDefMap::const_iterator it = defs_ptr->begin();
+         it != defs_ptr->end(); ++it) {
+        // Note second cannot be null
+        const ExpressionPtr& expr_ptr = it->second->getMatchExpr();
+        // Nothing to do without an expression to evaluate
+        if (!expr_ptr) {
+            continue;
+        }
+        // Evaluate the expression which can return false (no match),
+        // true (match) or raise an exception (error)
+        try {
+            bool status = evaluate(*expr_ptr, *pkt);
+            if (status) {
+                LOG_INFO(options4_logger, EVAL_RESULT)
+                    .arg(it->first)
+                    .arg(status);
+                // Matching: add the class
+                pkt->addClass(it->first);
+                classes += it->first + " ";
+            } else {
+                LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
+                    .arg(it->first)
+                    .arg(status);
+            }
+        } catch (const Exception& ex) {
+            LOG_ERROR(options4_logger, EVAL_RESULT)
+                .arg(it->first)
+                .arg(ex.what());
+        } catch (...) {
+            LOG_ERROR(options4_logger, EVAL_RESULT)
+                .arg(it->first)
+                .arg("get exception?");
+        }
     }
 
     if (!classes.empty()) {
-        LOG_DEBUG(options4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
             .arg(pkt->getLabel())
             .arg(classes);
     }
 }
 
 bool
-Dhcpv4Srv::classSpecificProcessing(const Dhcpv4Exchange& ex) {
+Dhcpv4Srv::vendorClassSpecificProcessing(const Dhcpv4Exchange& ex) {
 
     Subnet4Ptr subnet = ex.getContext()->subnet_;
     Pkt4Ptr query = ex.getQuery();
@@ -2306,15 +2434,19 @@ Dhcpv4Srv::classSpecificProcessing(const Dhcpv4Exchange& ex) {
 
         // Now try to set up file field in DHCPv4 packet. We will just copy
         // content of the boot-file option, which contains the same information.
-        OptionDescriptor desc = subnet->getCfgOption()->
-            get("dhcp4", DHO_BOOT_FILE_NAME);
+        const CfgOptionList& co_list = ex.getCfgOptionList();
+        for (CfgOptionList::const_iterator copts = co_list.begin();
+             copts != co_list.end(); ++copts) {
+            OptionDescriptor desc = (*copts)->get("dhcp4", DHO_BOOT_FILE_NAME);
 
-        if (desc.option_) {
-            boost::shared_ptr<OptionString> boot =
-                boost::dynamic_pointer_cast<OptionString>(desc.option_);
-            if (boot) {
-                std::string filename = boot->getValue();
-                rsp->setFile((const uint8_t*)filename.c_str(), filename.size());
+            if (desc.option_) {
+                boost::shared_ptr<OptionString> boot =
+                    boost::dynamic_pointer_cast<OptionString>(desc.option_);
+                if (boot) {
+                    std::string filename = boot->getValue();
+                    rsp->setFile((const uint8_t*)filename.c_str(), filename.size());
+                    break;
+                }
             }
         }
     }

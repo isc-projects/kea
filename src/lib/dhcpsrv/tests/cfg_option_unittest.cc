@@ -28,6 +28,27 @@ using namespace isc::dhcp;
 
 namespace {
 
+// This test verifies the empty predicate.
+TEST(CfgOptionTest, empty) {
+    CfgOption cfg1;
+    CfgOption cfg2;
+
+    // Initially the option configurations should be empty.
+    ASSERT_TRUE(cfg1.empty());
+    ASSERT_TRUE(cfg2.empty());
+
+    // Add an option to each configuration
+    OptionPtr option(new Option(Option::V6, 1));
+    ASSERT_NO_THROW(cfg1.add(option, false, "dhcp6"));
+    ASSERT_NO_THROW(cfg2.add(option, true, "isc"));
+
+    // The first option configuration has an option
+    ASSERT_FALSE(cfg1.empty());
+
+    // The second option configuration has a vendor option
+    ASSERT_FALSE(cfg2.empty());
+}
+
 // This test verifies that the option configurations can be compared.
 TEST(CfgOptionTest, equals) {
     CfgOption cfg1;
