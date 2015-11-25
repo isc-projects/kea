@@ -1887,6 +1887,12 @@ TEST_F(Dhcp4ParserTest, optionDataDefaultsGlobal) {
         0x01
     };
     testOption(*range.first, 23, foo2_expected, sizeof(foo2_expected));
+
+    // Check that options with other option codes are not returned.
+    for (uint8_t code = 24; code < 35; ++code) {
+        range = idx.equal_range(code);
+        EXPECT_EQ(0, std::distance(range.first, range.second));
+    }
 }
 
 // Goal of this test is to verify that subnet option data is configured
