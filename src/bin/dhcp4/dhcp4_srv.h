@@ -25,6 +25,7 @@
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/cfg_option.h>
 #include <hooks/callout_handle.h>
 #include <dhcpsrv/daemon.h>
 
@@ -110,6 +111,16 @@ public:
         return (context_);
     }
 
+    /// @brief Returns the configured option list (non-const version)
+    CfgOptionList& getCfgOptionList() {
+        return (cfg_option_list_);
+    }
+
+    /// @brief Returns the configured option list (const version)
+    const CfgOptionList& getCfgOptionList() const {
+        return (cfg_option_list_);
+    }
+
 private:
 
     /// @brief Copies default parameters from client's to server's message
@@ -142,6 +153,10 @@ private:
     Pkt4Ptr resp_;
     /// @brief Context for use with allocation engine.
     AllocEngine::ClientContext4Ptr context_;
+    /// @brief Configured option list.
+    /// @note The configured option list is an *ordered* list of
+    /// @c CfgOption objects used to append options to the response.
+    CfgOptionList cfg_option_list_;
 };
 
 /// @brief Type representing the pointer to the @c Dhcpv4Exchange.
@@ -421,6 +436,14 @@ protected:
     ///
     /// @return DHCPACK to be sent to the client.
     Pkt4Ptr processInform(Pkt4Ptr& inform);
+
+    /// @brief Build the configured option list
+    ///
+    /// @note The configured option list is an *ordered* list of
+    /// @c CfgOption objects used to append options to the response.
+    ///
+    /// @param ex The exchange where the configured option list is cached
+    void buildCfgOptionList(Dhcpv4Exchange& ex);
 
     /// @brief Appends options requested by client.
     ///
@@ -706,15 +729,17 @@ protected:
 
     /// @brief Assigns incoming packet to zero or more classes.
     ///
-    /// @note For now, the client classification is very simple. It just uses
-    /// content of the vendor-class-identifier option as a class. The resulting
-    /// class will be stored in packet (see @ref isc::dhcp::Pkt4::classes_ and
+    /// @note This is done in two phases: first the content of the
+    /// vendor-class-identifier option is used as a class, by
+    /// calling @ref classifyByVendor(). Second classification match
+    /// expressions are evaluated. The resulting classes will be stored
+    /// in the packet (see @ref isc::dhcp::Pkt4::classes_ and
     /// @ref isc::dhcp::Pkt4::inClass).
     ///
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
 
-    /// @brief Performs packet processing specific to a class
+    /// @brief Performs packet processing specific to a vendor class
     ///
     /// If the selected subnet, query or response in the @c ex object is NULL
     /// this method returns immediately and returns true.
@@ -724,7 +749,7 @@ protected:
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
     /// @return true if successful, false otherwise (will prevent sending response)
-    bool classSpecificProcessing(const Dhcpv4Exchange& ex);
+    bool vendorClassSpecificProcessing(const Dhcpv4Exchange& ex);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
@@ -733,6 +758,14 @@ protected:
     boost::shared_ptr<AllocEngine> alloc_engine_;
 
 private:
+
+    /// @brief Assign class using vendor-class-identifier option
+    ///
+    /// @note This is the first part of @ref classifyPacket
+    ///
+    /// @param pkt packet to be classified
+    /// @param classes a reference to added class names for logging
+    void classifyByVendor(const Pkt4Ptr& pkt, std::string& classes);
 
     /// @brief Constructs netmask option based on subnet4
     /// @param subnet subnet for which the netmask will be calculated

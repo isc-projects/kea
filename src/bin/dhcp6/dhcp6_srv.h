@@ -24,6 +24,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
@@ -428,6 +429,18 @@ protected:
     /// @param answer server's message (options will be copied here)
     void copyClientOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
+    /// @brief Build the configured option list
+    ///
+    /// @note The configured option list is an *ordered* list of
+    /// @c CfgOption objects used to append options to the response.
+    ///
+    /// @param question client's message
+    /// @param ctx client context (for the subnet)
+    /// @param co_list configured option list to build
+    void buildCfgOptionList(const Pkt6Ptr& question,
+                            AllocEngine::ClientContext6& ctx,
+                            CfgOptionList& co_list);
+
     /// @brief Appends default options to server's answer.
     ///
     /// Adds required options to server's answer. In particular, server-id
@@ -436,7 +449,9 @@ protected:
     ///
     /// @param question client's message
     /// @param answer server's message (options will be added here)
-    void appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
+    /// @param co_list configured option list (currently unused)
+    void appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                              const CfgOptionList& co_list);
 
     /// @brief Appends requested options to server's answer.
     ///
@@ -444,9 +459,9 @@ protected:
     ///
     /// @param question client's message
     /// @param answer server's message (options will be added here)
-    /// @param ctx client context (contains subnet, duid and other parameters)
+    /// @param co_list configured option list
     void appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                                AllocEngine::ClientContext6& ctx);
+                                const CfgOptionList& co_list);
 
     /// @brief Appends requested vendor options to server's answer.
     ///
@@ -456,8 +471,10 @@ protected:
     /// @param question client's message
     /// @param answer server's message (vendor options will be added here)
     /// @param ctx client context (contains subnet, duid and other parameters)
+    /// @param co_list configured option list
     void appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                                AllocEngine::ClientContext6& ctx);
+                                      AllocEngine::ClientContext6& ctx,
+                                      const CfgOptionList& co_list);
 
     /// @brief Assigns leases.
     ///
@@ -633,9 +650,11 @@ protected:
 
     /// @brief Assigns incoming packet to zero or more classes.
     ///
-    /// @note For now, the client classification is very simple. It just uses
-    /// content of the vendor-class-identifier option as a class. The resulting
-    /// class will be stored in packet (see @ref isc::dhcp::Pkt6::classes_ and
+    /// @note This is done in two phases: first the content of the
+    /// vendor-class-identifier option is used as a class, by
+    /// calling @ref classifyByVendor(). Second classification match
+    /// expressions are evaluated. The resulting classes will be stored
+    /// in the packet (see @ref isc::dhcp::Pkt6::classes_ and
     /// @ref isc::dhcp::Pkt6::inClass).
     ///
     /// @param pkt packet to be classified
@@ -738,6 +757,14 @@ protected:
                        const OptionPtr& status);
 
 private:
+
+    /// @brief Assign class using vendor-class-identifier option
+    ///
+    /// @note This is the first part of @ref classifyPacket
+    ///
+    /// @param pkt packet to be classified
+    /// @param classes a reference to added class names for logging
+    void classifyByVendor(const Pkt6Ptr& pkt, std::string& classes);
 
     /// @brief Generate FQDN to be sent to a client if none exists.
     ///

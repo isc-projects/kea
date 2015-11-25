@@ -1,3 +1,9 @@
+1055.	[func]		[fdupont]
+	Classify match expressions are evaluated on incoming packets and
+	requested options are appended when configured by the subnet, a
+	class or globally.
+	(git #409[78], git xxx)
+
 1054.	[func]		[tmark]
 	Replaced underscores, "_", with hyphens "-", in the parameter
 	names used in the kea-ddns server's configuration as well as
@@ -5,7 +11,7 @@
 	example, "ip_address" is now "ip-address", "change_type" is
 	now "change-type".  This makes JSON element naming consistent
 	throughout Kea.
-	(Trac #4202    git 91bf527662060d4b1e294cd53e79b431edf0e910)
+	(Trac #4202, git 91bf527662060d4b1e294cd53e79b431edf0e910)
 
 1053.	[doc]		tomek
 	Support for DHCPDECLINE (v4) and DECLINE (v6) messages is
@@ -15,7 +21,7 @@
 1052.	[func]		marcin
 	libeval: expressions involving options can now use textual or
 	hexadecimal format of the options.
-	(Trac #4093 git 4cdf0fff1067b3dde6570dc6831e8b1343bc50fe)
+	(Trac #4093, git 4cdf0fff1067b3dde6570dc6831e8b1343bc50fe)
 
 1051.	[func]		[tmark]
 	kea-dhcp4 and kea-dhcp6 configuration parsing now supports
