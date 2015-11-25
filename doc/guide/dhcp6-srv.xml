@@ -1547,7 +1547,7 @@ should include options from the isc option space:
       <title>Client Classification in DHCPv6</title>
 
       <para>
-      The DHCPv4 server includes support for client classification.  At the
+      The DHCPv6 server includes support for client classification.  At the
       current time the capabilities of the classification process are limited
       but it is expected they will be expanded in the future. For a deeper
       discussion of the classification process see <xref linkend="classify"/>.
@@ -2664,7 +2664,7 @@ should include options from the isc option space:
       from the clients and administrators
       frequently use that information to perform certain tasks, like per host
       configuration, address reserveration for specific MAC addresses and other.
-      Unfortunately, DHCPv6 protocol does not provide any completely reliable way
+      Unfortunately, the DHCPv6 protocol does not provide any completely reliable way
       to retrieve that information. To mitigate that issue a number of mechanisms
       have been implemented in Kea that attempt to gather that information. Each
       of those mechanisms works in certain cases, but may fail in other cases.
