@@ -32,8 +32,8 @@
       It is envisaged that client classification will be used for changing the
       behavior of almost any part of the DHCP message processing, including the assignment of
       leases from different pools, the assignment of different options (or different values of
-      the same options) etc. In the current release of the software however, there are only three
-      mechanisms that take
+      the same options) etc. In the current release of the software however, there are
+      only three mechanisms that take
       advantage of client classification: subnet selection, assignment of different
       options and, for DHCPv4 cable modems, the setting of specific options for use with
       the TFTP server address and the boot file field.
@@ -58,7 +58,7 @@
       When determining which options to include in the response the server will examine
       the union of options from all of the assigned classes. In the case two or more
       classes include the same option, the value from the first class examined will
-      be used.  Similarly if two or more classes are associated with a subnet, the
+      be used.  Similarly if two or more classes are  associated with subnets, the
       first class examined will be used. In the future the processing order of the
       various classes may be specified but for now it is being left unspecified and
       may change in future releases.
@@ -201,17 +201,47 @@
           </tgroup>
         </table>
 
-      The substring operator "substring(value, start, length)" accepts both positive and
-      negative values for the starting position and the length.  For "start", a value of
-      0 is the first byte in the string while -1 is the last byte.  If the starting
-      point is outside of the original string an empty string is returned.  "length"
-      is the number of bytes to extract.  A negative number means to count towards
-      the beginning of the string but doesn't include the byte pointed to by "start".
-      The special value "all" means to return all bytes from start to the end of the
-      string.  If length is longer than the remaining portion of the string then
-      the entire remaining portion is returned.
+        <section>
+          <title>Substring</title>
+          The substring operator "substring(value, start, length)" accepts both positive and
+          negative values for the starting position and the length.  For "start", a value of
+          0 is the first byte in the string while -1 is the last byte.  If the starting
+          point is outside of the original string an empty string is returned.  "length"
+          is the number of bytes to extract.  A negative number means to count towards
+          the beginning of the string but doesn't include the byte pointed to by "start".
+          The special value "all" means to return all bytes from start to the end of the
+          string.  If length is longer than the remaining portion of the string then
+          the entire remaining portion is returned.  Some examples may be helpful:
+
+          <itemizedlist>
+          <listitem><para>
+            substring('foobar', 0, 6) == 'foobar'
+          </para></listitem>
+          <listitem><para>
+            substring('foobar', 3, 3) == 'bar'
+          </para></listitem>
+          <listitem><para>
+            substring('foobar', 3, all) == 'bar'
+          </para></listitem>
+          <listitem><para>
+            substring('foobar', 1, 4) == 'ooba'
+          </para></listitem>
+          <listitem><para>
+            substring('foobar', -5, 4) == 'ooba'
+          </para></listitem>
+          <listitem><para>
+            substring('foobar', -1, -4) == 'ooba'
+          </para></listitem>
+          <listitem><para>
+            substring('foobar', 5, -4) == 'ooba'
+          </para></listitem>
+          <listitem><para>
+            substring('foobar', 10, 2) == ''
+          </para></listitem>
+          </itemizedlist>
+        </section>
       </para>
-  </section>
+    </section>
 
   <note>
   <para>
@@ -242,9 +272,14 @@
       </para>
 
       <para>
+      In the following example the class named &quot;Client_foo&quot; is defined.
+      It is comprised of all clients who's client ids (option 61) start with the
+      string &quot;foo&quot;. Members of this class will be given 192.0.2.1 and
+      192.0.2.2 as their domain name servers.
+
         <screen>
 "Dhcp4": {
-    "client-class": [<userinput>
+    "client-classes": [<userinput>
         {
             "name": "Client_foo",
             "test": "substring(option[61].text,0,3) == 'foo'",
@@ -265,10 +300,31 @@
       </para>
 
       <para>
-      In this example the class named &quot;Client_foo&quot; is defined.  It is comprised
-      of all clients who's client ids (option 61) start with the string &quot;foo&quot;.
-      Members of this class will be  given 192.0.2.1 and 192.0.2.2 as their domain name
-      servers.
+      This example shows a client class being defined for use by the DHCPv6 server.
+      In it the class named &quot;Client_enterprise&quot; is defined.  It is comprised
+      of all clients who's client identifiers start with the given hex string (which
+      would indicate a DUID based on an enterprise id of 0xAABBCCDD). Members of this
+      class will be given an 2001:db8:0::1 and 2001:db8:2::1 as their domain name servers.
+        <screen>
+"Dhcp6": {
+    "client-classes": [<userinput>
+        {
+            "name": "Client_enterprise",
+            "test": "substring(option[2].hex,0,6) == 0x0002AABBCCDD'",
+            "option-data": [
+                {
+                    "name": "dns-servers",
+                    "code": 23,
+                    "space": "dhcp6",
+                    "csv-format": true,
+                    "data": "2001:db8:0::1, 2001:db8:2::1"
+                }
+            ]
+        },
+        ...
+    ],</userinput>
+    ...
+}</screen>
       </para>
   </section>
 
@@ -276,7 +332,11 @@
     <title>Configuring Subnets With Class Information</title>
       <para>
         In certain cases it beneficial to restrict access to certain subnets
-        only to clients that belong to a given class.
+        only to clients that belong to a given class using the "client-class"
+        keyword when defining the subnet.
+      </para>
+
+      <para>
         Let's assume that the server is connected to a network segment that uses
         the 192.0.2.0/24 prefix. The Administrator of that network has decided
         that addresses from range 192.0.2.10 to 192.0.2.20 are going to be
@@ -285,7 +345,7 @@
         configuration can be achieved in the following way:
         <screen>
 "Dhcp4": {
-    "client-class": [
+    "client-classes": [
         {
             "name": "Client_foo",
             "test": "substring(option[61].text,0,3) == 'foo'",
@@ -306,8 +366,43 @@
             "subnet": "192.0.2.0/24",
             "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
             "client-class": "Client_foo"
+        },
+        ...
+    ],</userinput>,
+    ...
+}</screen>
+      </para>
+
+      <para>
+     	The following example shows restricting access to a DHCPv6 subnet.  This
+        configuration will restrict use of the addresses 2001:db8:1::1 to
+        2001:db8:1::FFFF to members of the "Client_enterprise" class.
+
+        <screen>
+"Dhcp6": {
+    "client-classes": [
+        {
+            "name": "Client_enterprise",
+            "test": "substring(option[2].hex,0,6) == 0x0002AABBCCDD'",
+            "option-data": [
+                {
+                    "name": "dns-servers",
+                    "code": 23,
+                    "space": "dhcp6",
+                    "csv-format": true,
+                    "data": "2001:db8:0::1, 2001:db8:2::1"
+                }
+            ]
+        },
+        ...
+    ], <userinput>
+    "subnet6": [
+        {
+            "subnet": "2001:db8:1::/64",
+            "pools": [ { "pool": "2001:db8:1::-2001:db8:1::ffff" } ],
+            "client-class": "Client_enterprise"
         }
-    ]</userinput>,
+    ],</userinput>
     ...
 }</screen>
       </para>
