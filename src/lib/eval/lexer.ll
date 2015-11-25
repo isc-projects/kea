@@ -133,7 +133,7 @@ blank [ \t]
 "]"         return isc::eval::EvalParser::make_RBRACKET(loc);
 ","         return isc::eval::EvalParser::make_COMA(loc);
 
-[A-Za-z][A-Za-z0-9_\-]+/] {
+[A-Za-z][A-Za-z0-9_\-]+/{blank}*] {
     // This string specifies option name starting with a letter
     // and further containing letters, digits, hyphens and
     // underscores.

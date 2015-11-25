@@ -216,6 +216,17 @@ TEST_F(EvalContextTest, optionWithName) {
     checkTokenOption(eval.expression.at(0), 12);
 }
 
+// Test checking that whitespace can surround option name.
+TEST_F(EvalContextTest, optionWithNameAndWhitespace) {
+    EvalContext eval(Option::V4);
+
+    // Option 'host-name' is a standard DHCPv4 option defined in the libdhcp++.
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[  host-name  ].text == 'foo'"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, eval.expression.size());
+    checkTokenOption(eval.expression.at(0), 12);
+}
+
 // Test parsing of an option represented as hexadecimal string.
 TEST_F(EvalContextTest, optionHex) {
     EvalContext eval(Option::V4);
