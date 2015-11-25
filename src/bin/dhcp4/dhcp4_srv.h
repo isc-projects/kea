@@ -111,12 +111,12 @@ public:
         return (context_);
     }
 
-    /// @brief Returns the configured option list
+    /// @brief Returns the configured option list (non-const version)
     CfgOptionList& getCfgOptionList() {
         return (cfg_option_list_);
     }
 
-    /// @brief Returns the configured option list
+    /// @brief Returns the configured option list (const version)
     const CfgOptionList& getCfgOptionList() const {
         return (cfg_option_list_);
     }
