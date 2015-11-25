@@ -153,7 +153,9 @@ private:
     Pkt4Ptr resp_;
     /// @brief Context for use with allocation engine.
     AllocEngine::ClientContext4Ptr context_;
-    /// @brief Configured option list for appending otions.
+    /// @brief Configured option list.
+    /// @note The configured option list is an *ordered* list of
+    /// @c CfgOption objects used to append options to the response.
     CfgOptionList cfg_option_list_;
 };
 
