@@ -1876,12 +1876,12 @@ TEST_F(Dhcpv6SrvTest, matchClassification) {
     query1->addOption(clientid);
     query1->setIface("eth1");
     query1->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
-    Pkt6Ptr query2(new Pkt6(DHCPDISCOVER, 1234));
+    Pkt6Ptr query2(new Pkt6(DHCPV6_SOLICIT, 1234));
     query2->setRemoteAddr(IOAddress("fe80::abcd"));
     query2->addOption(clientid);
     query2->setIface("eth1");
     query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
-    Pkt6Ptr query3(new Pkt6(DHCPDISCOVER, 1234));
+    Pkt6Ptr query3(new Pkt6(DHCPV6_SOLICIT, 1234));
     query3->setRemoteAddr(IOAddress("fe80::abcd"));
     query3->addOption(clientid);
     query3->setIface("eth1");
