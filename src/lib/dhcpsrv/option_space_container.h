@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,6 +38,13 @@ public:
 
     /// Pointer to the container.
     typedef boost::shared_ptr<ContainerType> ItemsContainerPtr;
+
+    /// @brief Indicates the container is empty
+    ///
+    /// @return true when the container is empty
+    bool empty() const {
+        return (option_space_map_.empty());
+    }
 
     /// @brief Adds a new item to the option_space.
     ///

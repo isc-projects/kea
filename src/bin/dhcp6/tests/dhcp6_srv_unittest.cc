@@ -1807,8 +1807,8 @@ TEST_F(Dhcpv6SrvTest, unpackOptions) {
     EXPECT_EQ(0x0, option_bar->getValue());
 }
 
-// Checks if client packets are classified properly
-TEST_F(Dhcpv6SrvTest, clientClassification) {
+// Checks if DOCSIS client packets are classified properly
+TEST_F(Dhcpv6SrvTest, docsisClientClassification) {
 
     NakedDhcpv6Srv srv(0);
 
@@ -1836,10 +1836,318 @@ TEST_F(Dhcpv6SrvTest, clientClassification) {
     EXPECT_FALSE(sol2->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0"));
 }
 
+// Checks if client packets are classified properly using match expressions.
+TEST_F(Dhcpv6SrvTest, matchClassification) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 1234) and sets an ipv6-forwarding option in the response.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"option-def\": [ "
+        "{   \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\" },"
+        "{   \"name\": \"ipv6-forwarding\","
+        "    \"code\": 2345,"
+        "    \"type\": \"boolean\" }],"
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"router\", "
+        "    \"option-data\": ["
+        "        {    \"name\": \"ipv6-forwarding\", "
+        "             \"data\": \"true\" } ], "
+        "    \"test\": \"option[1234].text == 'foo'\" } ] }";
+    ASSERT_NO_THROW(configure(config));
+
+    // Create packets with enough to select the subnet
+    OptionPtr clientid = generateClientId();
+    Pkt6Ptr query1(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query1->setRemoteAddr(IOAddress("fe80::abcd"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
+    Pkt6Ptr query2(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query2->setRemoteAddr(IOAddress("fe80::abcd"));
+    query2->addOption(clientid);
+    query2->setIface("eth1");
+    query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    Pkt6Ptr query3(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query3->setRemoteAddr(IOAddress("fe80::abcd"));
+    query3->addOption(clientid);
+    query3->setIface("eth1");
+    query3->addOption(generateIA(D6O_IA_NA, 345, 1500, 3000));
+
+    // Create and add an ORO option to the first 2 queries
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(2345);
+    query1->addOption(oro);
+    query2->addOption(oro);
+
+    // Create and add a host-name option to the first and last queries
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    ASSERT_TRUE(hostname);
+    query1->addOption(hostname);
+    query3->addOption(hostname);
+
+    // Classify packets
+    srv.classifyPacket(query1);
+    srv.classifyPacket(query2);
+    srv.classifyPacket(query3);
+
+    // Packets with the exception of the second should be in the router class
+    EXPECT_TRUE(query1->inClass("router"));
+    EXPECT_FALSE(query2->inClass("router"));
+    EXPECT_TRUE(query3->inClass("router"));
+
+    // Process queries
+    Pkt6Ptr response1 = srv.processSolicit(query1);
+    Pkt6Ptr response2 = srv.processSolicit(query2);
+    Pkt6Ptr response3 = srv.processSolicit(query3);
+
+    // Classification processing should add an ip-forwarding option
+    OptionPtr opt1 = response1->getOption(2345);
+    EXPECT_TRUE(opt1);
+
+    // But only for the first query: second was not classified
+    OptionPtr opt2 = response2->getOption(2345);
+    EXPECT_FALSE(opt2);
+
+    // But only for the first query: third has no ORO
+    OptionPtr opt3 = response3->getOption(2345);
+    EXPECT_FALSE(opt3);
+}
+
+// Checks subnet options have the priority over class options
+TEST_F(Dhcpv6SrvTest, subnetClassPriority) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // Subnet sets an ipv6-forwarding option in the response.
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 1234) and sets an ipv6-forwarding option in the response.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"option-def\": [ "
+        "{   \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\" },"
+        "{   \"name\": \"ipv6-forwarding\","
+        "    \"code\": 2345,"
+        "    \"type\": \"boolean\" }],"
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\", "
+        "    \"option-data\": ["
+        "        {    \"name\": \"ipv6-forwarding\", "
+        "             \"data\": \"false\" } ] } ], "
+        "\"client-classes\": [ "
+        "{   \"name\": \"router\","
+        "    \"option-data\": ["
+        "        {    \"name\": \"ipv6-forwarding\", "
+        "             \"data\": \"true\" } ], "
+        "    \"test\": \"option[1234].text == 'foo'\" } ] }";
+    ASSERT_NO_THROW(configure(config));
+
+    // Create a packet with enough to select the subnet and go through
+    // the SOLICIT processing
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query->setRemoteAddr(IOAddress("fe80::abcd"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+    query->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
+
+    // Create and add an ORO option to the query
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(2345);
+    query->addOption(oro);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Classify the packet
+    srv.classifyPacket(query);
+
+    // The packet should be in the router class
+    EXPECT_TRUE(query->inClass("router"));
+
+    // Process the query
+    Pkt6Ptr response = srv.processSolicit(query);
+
+    // Processing should add an ip-forwarding option
+    OptionPtr opt = response->getOption(2345);
+    ASSERT_TRUE(opt);
+    ASSERT_GT(opt->len(), opt->getHeaderLen());
+    // Classification sets the value to true/1, subnet to false/0
+    // Here subnet has the priority
+    EXPECT_EQ(0, opt->getUint8());
+}
+
+// Checks subnet options have the priority over global options
+TEST_F(Dhcpv6SrvTest, subnetGlobalPriority) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // Subnet sets an ipv6-forwarding option in the response.
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 1234) and sets an ipv6-forwarding option in the response.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"option-def\": [ "
+        "{   \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\" },"
+        "{   \"name\": \"ipv6-forwarding\","
+        "    \"code\": 2345,"
+        "    \"type\": \"boolean\" }],"
+        "\"option-data\": ["
+        "    {    \"name\": \"ipv6-forwarding\", "
+        "         \"data\": \"false\" } ], "
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\", "
+        "    \"option-data\": ["
+        "        {    \"name\": \"ipv6-forwarding\", "
+        "             \"data\": \"false\" } ] } ] }";
+    ASSERT_NO_THROW(configure(config));
+
+    // Create a packet with enough to select the subnet and go through
+    // the SOLICIT processing
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query->setRemoteAddr(IOAddress("fe80::abcd"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+    query->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
+
+    // Create and add an ORO option to the query
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(2345);
+    query->addOption(oro);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Process the query
+    Pkt6Ptr response = srv.processSolicit(query);
+
+    // Processing should add an ip-forwarding option
+    OptionPtr opt = response->getOption(2345);
+    ASSERT_TRUE(opt);
+    ASSERT_GT(opt->len(), opt->getHeaderLen());
+    // Global sets the value to true/1, subnet to false/0
+    // Here subnet has the priority
+    EXPECT_EQ(0, opt->getUint8());
+}
+
+// Checks class options have the priority over global options
+TEST_F(Dhcpv6SrvTest, classGlobalPriority) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // A global ipv6-forwarding option is set in the response.
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 1234) and sets an ipv6-forwarding option in the response.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"option-def\": [ "
+        "{   \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\" },"
+        "{   \"name\": \"ipv6-forwarding\","
+        "    \"code\": 2345,"
+        "    \"type\": \"boolean\" }],"
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" } ],"
+        "\"option-data\": ["
+        "    {    \"name\": \"ipv6-forwarding\", "
+        "         \"data\": \"false\" } ], "
+        "\"client-classes\": [ "
+        "{   \"name\": \"router\","
+        "    \"option-data\": ["
+        "        {    \"name\": \"ipv6-forwarding\", "
+        "             \"data\": \"true\" } ], "
+        "    \"test\": \"option[1234].text == 'foo'\" } ] }";
+    ASSERT_NO_THROW(configure(config));
+
+    // Create a packet with enough to select the subnet and go through
+    // the SOLICIT processing
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query->setRemoteAddr(IOAddress("fe80::abcd"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+    query->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
+
+    // Create and add an ORO option to the query
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(2345);
+    query->addOption(oro);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Classify the packet
+    srv.classifyPacket(query);
+
+    // The packet should be in the router class
+    EXPECT_TRUE(query->inClass("router"));
+
+    // Process the query
+    Pkt6Ptr response = srv.processSolicit(query);
+
+    // Processing should add an ip-forwarding option
+    OptionPtr opt = response->getOption(2345);
+    ASSERT_TRUE(opt);
+    ASSERT_GT(opt->len(), opt->getHeaderLen());
+    // Classification sets the value to true/1, global to false/0
+    // Here class has the priority
+    EXPECT_NE(0, opt->getUint8());
+}
+
 // Checks if the client-class field is indeed used for subnet selection.
 // Note that packet classification is already checked in Dhcpv6SrvTest
-// .clientClassification above.
-TEST_F(Dhcpv6SrvTest, clientClassify2) {
+// .*Classification above.
+TEST_F(Dhcpv6SrvTest, clientClassifySubnet) {
 
     // This test configures 2 subnets. We actually only need the
     // first one, but since there's still this ugly hack that picks
@@ -1849,7 +2157,7 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
 
     // The second subnet does not play any role here. The client's
     // IP address belongs to the first subnet, so only that first
-    // subnet it being tested.
+    // subnet is being tested.
     string config = "{ \"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"
@@ -1895,7 +2203,7 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
 
 // Tests whether a packet with custom vendor-class (not erouter or docsis)
 // is classified properly.
-TEST_F(Dhcpv6SrvTest, clientClassification3) {
+TEST_F(Dhcpv6SrvTest, vendorClientClassification2) {
     NakedDhcpv6Srv srv(0);
 
     // Let's create a SOLICIT.

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -84,4 +84,34 @@ TEST(ClassifyTest, ClientClassesFromString) {
         ClientClasses classes(", ,, ,");
         EXPECT_TRUE(classes.empty());
     }
+}
+
+// Check if one can iterate over a ClientClasses object
+TEST(ClassifyTest, ClientClassesIterator) {
+    ClientClasses classes("alpha, beta, gamma");
+    size_t count = 0;
+    bool seenalpha = false;
+    bool seenbeta = false;
+    bool seengamma = false;
+    bool seendelta = false;
+    for (ClientClasses::const_iterator it = classes.begin();
+         it != classes.end(); ++it) {
+        ++count;
+        if (*it == "alpha") {
+            seenalpha = true;
+        } else if (*it == "beta") {
+            seenbeta = true;
+        } else if (*it == "gamma") {
+            seengamma = true;
+        } else if (*it == "delta") {
+            seendelta = true;
+        } else {
+            ADD_FAILURE() << "Got unexpected " << *it;
+        }
+    }
+    EXPECT_EQ(count, classes.size());
+    EXPECT_TRUE(seenalpha);
+    EXPECT_TRUE(seenbeta);
+    EXPECT_TRUE(seengamma);
+    EXPECT_FALSE(seendelta);
 }

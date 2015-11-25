@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <string>
 #include <set>
+#include <list>
 
 namespace isc {
 namespace dhcp {
@@ -201,6 +202,11 @@ public:
     /// @brief default constructor
     CfgOption();
 
+    /// @brief Indicates the object is empty
+    ///
+    /// @return true when the object is empty
+    bool empty() const;
+
     /// @name Methods and operators used for comparing objects.
     ///
     //@{
@@ -262,6 +268,8 @@ public:
     /// configuration and copies them to the configuration specified
     /// as a parameter. If an item exists in the destination it is not
     /// copied.
+    ///
+    /// @note: this method is not longer used so should become private.
     ///
     /// @param [out] other Configuration object to merge to.
     void mergeTo(CfgOption& other) const;
@@ -406,6 +414,9 @@ typedef boost::shared_ptr<CfgOption> CfgOptionPtr;
 
 /// @brief Const pointer.
 typedef boost::shared_ptr<const CfgOption> ConstCfgOptionPtr;
+
+/// @brief Const pointer list.
+typedef std::list<ConstCfgOptionPtr> CfgOptionList;
 
 //@}
 
