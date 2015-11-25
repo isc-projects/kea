@@ -827,7 +827,12 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
 
     // First subnet configured options
     Subnet4Ptr subnet = ex.getContext()->subnet_;
-    if (subnet && !subnet->getCfgOption()->empty()) {
+    if (!subnet) {
+        // All methods using the CfgOptionList object return soon when
+        // there is no subnet so do the same
+        return;
+    }
+    if (!subnet->getCfgOption()->empty()) {
         co_list.push_back(subnet->getCfgOption());
     }
 
