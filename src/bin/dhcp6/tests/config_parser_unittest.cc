@@ -1583,6 +1583,12 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // We need to commit option definitions because later in this test we
+    // will be checking if they get removed when "option-def" parameter
+    // is removed from a configuration.
+    LibDHCP::commitRuntimeOptionDefs();
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
@@ -1602,6 +1608,16 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
     // be equal.
     EXPECT_TRUE(def_libdhcp != def);
     EXPECT_TRUE(*def_libdhcp == *def);
+
+    // Let's apply empty configuration. This removes the option definitions
+    // configuration and should result in removal of the option 100 from the
+    // libdhcp++.
+    config = "{ }";
+    json = Element::fromJSON(config);
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 0);
+
+    EXPECT_FALSE(LibDHCP::getRuntimeOptionDef("isc", 100));
 }
 
 // The goal of this test is to check whether an option definition

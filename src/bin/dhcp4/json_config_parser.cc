@@ -515,6 +515,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
     // Revert any runtime option definitions configured so far and not committed.
     LibDHCP::revertRuntimeOptionDefs();
+    // Let's set empty container in case a user hasn't specified any configuration
+    // for option definitions. This is equivalent to commiting empty container.
+    LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
 
     // Some of the values specified in the configuration depend on
     // other values. Typically, the values in the subnet4 structure
