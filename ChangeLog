@@ -1,3 +1,8 @@
+1057.	[func]		marcin
+	It is now possible to specify type and value of a DUID used
+	as DHCPv6 server identifier.
+	(trac #3874, git faf52b069cf774d0050d76b4f47b542b2b5105f2)
+
 1056.	[doc]		[sar]
 	Added description of the expression based classification
 	system to the Kea Admin Guide.
