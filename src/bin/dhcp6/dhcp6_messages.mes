@@ -635,20 +635,6 @@ etc. The exact reason for rejecting the packet is included in the message.
 % DHCP6_RESPONSE_DATA responding with packet type %1 data is %2
 A debug message listing the data returned to the client.
 
-% DHCP6_SERVERID_GENERATED server-id %1 has been generated and will be stored in %2
-This informational messages indicates that the server was not able to read
-its server identifier (DUID) and has generated a new one. This server-id
-will be stored in a file and will be read and used during next restart. It
-is normal behavior when the server is started for the first time. If
-this message is printed every start, please check that the server have
-sufficient permission to write its server-id file and that the file is not
-corrupt.
-
-Changing the server identifier in a production environment is not
-recommended as existing clients will not recognize the server and may go
-through a rebind phase. However, they should be able to recover without
-losing their leases.
-
 % DHCP6_USING_SERVERID server is using server-id %1 and stores in the the file %2
 This info message is logged when the server reads its server-id from a
 file or generates it. This message is a notification to the administrator

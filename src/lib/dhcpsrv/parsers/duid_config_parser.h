@@ -23,7 +23,14 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Parser for a single host reservation entry.
+/// @brief Parser for server DUID configuration.
+///
+/// This parser currently supports the following DUID types:
+/// - DUID-LLT,
+/// - DUID-EN
+/// - DUID-LL
+///
+/// @todo Add support for DUID-UUID in the parser.
 class DUIDConfigParser : public DhcpConfigParser {
 public:
 

@@ -54,7 +54,7 @@ public:
     /// @brief Returns absolute path to a test DUID storage.
     ///
     /// @param duid_file_name Name of the file holding test DUID.
-    std::string absolutePath(const std::string& duid_file_path) const;
+    std::string absolutePath(const std::string& duid_file_name) const;
 
     /// @brief Removes default DUID file used in the tests.
     ///
@@ -115,9 +115,21 @@ public:
     ///
     /// @param expected_enterprise_id Expected enterprise id as string.
     /// @param expected_identifier Expected variable length identifier
-    /// as string.
+    /// as string. If empty string specified the test method only checks
+    /// that generated identifier consists of some random values.
     void testEN(const std::string& expected_enterprise_id,
                 const std::string& expected_identifier = "");
+
+    /// @brief Tests creation of a DUID-EN.
+    ///
+    /// @param expected_enterprise_id Expected enterprise id as string.
+    /// @param expected_identifier Expected variable length identifier
+    /// as string. If empty string specified the test method only checks
+    /// that generated identifier consists of some random values.
+    /// @param factory_ref Reference to DUID factory.
+    void testEN(const std::string& expected_enterprise_id,
+                const std::string& expected_identifier,
+                DUIDFactory& factory_ref);
 
     /// @brief Tests creation of a DUID-LL.
     ///
@@ -125,6 +137,15 @@ public:
     /// @param expected_hwaddr Expected link layer type as string.
     void testLL(const std::string& expected_htype,
                 const std::string& expected_hwaddr);
+
+    /// @brief Tests creation of a DUID-LL.
+    ///
+    /// @param expected_htype Expected link layer type as string.
+    /// @param expected_hwaddr Expected link layer type as string.
+    /// @param factory_ref Reference to DUID factory.
+    void testLL(const std::string& expected_htype,
+                const std::string& expected_hwaddr,
+                DUIDFactory& factory_ref);
 
     /// @brief Returns reference to a default factory.
     DUIDFactory& factory() {
@@ -153,9 +174,9 @@ DUIDFactoryTest::~DUIDFactoryTest() {
 }
 
 std::string
-DUIDFactoryTest::absolutePath(const std::string& duid_file_path) const {
+DUIDFactoryTest::absolutePath(const std::string& duid_file_name) const {
     std::ostringstream s;
-    s << TEST_DATA_BUILDDIR << "/" << duid_file_path;
+    s << TEST_DATA_BUILDDIR << "/" << duid_file_name;
     return (s.str());
 }
 
@@ -255,12 +276,17 @@ DUIDFactoryTest::testLLT(const std::string& expected_htype,
     EXPECT_EQ(duid->toText(), readDefaultFile());
 }
 
-
-
 void
 DUIDFactoryTest::testEN(const std::string& expected_enterprise_id,
                         const std::string& expected_identifier) {
-    DuidPtr duid = factory().get();
+    testEN(expected_enterprise_id, expected_identifier, factory());
+}
+
+void
+DUIDFactoryTest::testEN(const std::string& expected_enterprise_id,
+                        const std::string& expected_identifier,
+                        DUIDFactory& factory_ref) {
+    DuidPtr duid = factory_ref.get();
     ASSERT_TRUE(duid);
     ASSERT_GE(duid->getDuid().size(), 8);
     std::string duid_text = toString(duid->getDuid());
@@ -270,7 +296,7 @@ DUIDFactoryTest::testEN(const std::string& expected_enterprise_id,
     // Verify enterprise ID.
     EXPECT_EQ(expected_enterprise_id, duid_text.substr(4, 8));
 
-    // If no expecyed identifier, we should at least check that the
+    // If no expected identifier, we should at least check that the
     // generated identifier contains some random non-zero digits.
     if (expected_identifier.empty()) {
         EXPECT_FALSE(isRangeZero(duid->getDuid().begin(),
@@ -287,14 +313,21 @@ DUIDFactoryTest::testEN(const std::string& expected_enterprise_id,
 void
 DUIDFactoryTest::testLL(const std::string& expected_htype,
                         const std::string& expected_hwaddr) {
-    DuidPtr duid = factory().get();
+    testLL(expected_htype, expected_hwaddr, factory());
+}
+
+void
+DUIDFactoryTest::testLL(const std::string& expected_htype,
+                        const std::string& expected_hwaddr,
+                        DUIDFactory& factory_ref) {
+    DuidPtr duid = factory_ref.get();
     ASSERT_TRUE(duid);
     ASSERT_GE(duid->getDuid().size(), 8);
     std::string duid_text = toString(duid->getDuid());
 
     // DUID type LL
     EXPECT_EQ("0003", duid_text.substr(0, 4));
-    // Link layer type HTYPE_ETHER
+    // Link layer type.
     EXPECT_EQ(expected_htype, duid_text.substr(4, 4));
 
     // MAC address of the interface.
@@ -314,7 +347,7 @@ TEST_F(DUIDFactoryTest, createLLT) {
     // use current time, HTYPE_ETHER and MAC address of one of the
     // interfaces.
     ASSERT_NO_THROW(factory().createLLT(0, 0, std::vector<uint8_t>()));
-    testLLT("0001", timeAsHexString(), false, "010101010101");
+    testLLT("0001", timeAsHexString(), false, "080808080808");
 }
 
 // This test verifies that the factory class creates a DUID-LLT from
@@ -322,7 +355,7 @@ TEST_F(DUIDFactoryTest, createLLT) {
 // generated.
 TEST_F(DUIDFactoryTest, createLLTExplicitTime) {
     ASSERT_NO_THROW(factory().createLLT(0, 0xABCDEF, std::vector<uint8_t>()));
-    testLLT("0001", "00ABCDEF", true, "010101010101");
+    testLLT("0001", "00ABCDEF", true, "080808080808");
 }
 
 // This test verifies that the factory class creates DUID-LLT with
@@ -330,7 +363,7 @@ TEST_F(DUIDFactoryTest, createLLTExplicitTime) {
 // is used to generate the DUID.
 TEST_F(DUIDFactoryTest, createLLTExplicitHtype) {
     ASSERT_NO_THROW(factory().createLLT(HTYPE_FDDI, 0, std::vector<uint8_t>()));
-    testLLT("0001", timeAsHexString(), false, "010101010101");
+    testLLT("0001", timeAsHexString(), false, "080808080808");
 }
 
 // This test verifies that the factory class creates DUID-LLT from
@@ -361,7 +394,27 @@ TEST_F(DUIDFactoryTest, createLLTReuse) {
     // link layer address. The factory function should use the
     // values in the existing DUID.
     ASSERT_NO_THROW(factory2.createLLT(0, 0, std::vector<uint8_t>()));
-    testLLT("0008", "FAFAFAFA", true, "242424242424");
+    testLLT("0008", "FAFAFAFA", true, "242424242424", factory2);
+
+    // Try to reuse only a time value.
+    DUIDFactory factory3(absolutePath(DEFAULT_DUID_FILE));
+    ASSERT_NO_THROW(factory3.createLLT(HTYPE_ETHER, 0,
+                                       toVector("121212121212")));
+    testLLT("0001", "FAFAFAFA", true, "121212121212", factory3);
+
+    // Reuse only a hardware type.
+    DUIDFactory factory4(absolutePath(DEFAULT_DUID_FILE));
+    ASSERT_NO_THROW(factory4.createLLT(0, 0x23432343,
+                                       toVector("455445544554")));
+    testLLT("0001", "23432343", true, "455445544554", factory4);
+
+    // Reuse link layer address. Note that in this case the hardware
+    // type is set to the type of the interface from which hardware
+    // address is obtained and the explicit value is ignored.
+    DUIDFactory factory5(absolutePath(DEFAULT_DUID_FILE));
+    ASSERT_NO_THROW(factory5.createLLT(HTYPE_FDDI, 0x11111111,
+                                       std::vector<uint8_t>()));
+    testLLT("0001", "11111111", true, "455445544554", factory5);
 }
 
 // This test verifies that the DUID-EN can be generated entirely. Such
@@ -399,21 +452,31 @@ TEST_F(DUIDFactoryTest, createENReuse) {
     // Create another factory class, which uses the same file.
     DUIDFactory factory2(absolutePath(DEFAULT_DUID_FILE));
     ASSERT_NO_THROW(factory2.createEN(0, std::vector<uint8_t>()));
-    testEN("FAFAFAFA", "242424242424");
+    testEN("FAFAFAFA", "242424242424", factory2);
+
+    // Reuse only enterprise id.
+    DUIDFactory factory3(absolutePath(DEFAULT_DUID_FILE));
+    ASSERT_NO_THROW(factory3.createEN(0, toVector("121212121212")));
+    testEN("FAFAFAFA", "121212121212", factory3);
+
+    // Reuse only variable length identifier.
+    DUIDFactory factory4(absolutePath(DEFAULT_DUID_FILE));
+    ASSERT_NO_THROW(factory4.createEN(0x1234, std::vector<uint8_t>()));
+    testEN("00001234", "121212121212", factory4);
 }
 
 // This test verifies that the DUID-LL is generated when neither link layer
 // type nor address is specified.
 TEST_F(DUIDFactoryTest, createLL) {
     ASSERT_NO_THROW(factory().createLL(0, std::vector<uint8_t>()));
-    testLL("0001", "010101010101");
+    testLL("0001", "080808080808");
 }
 
 // This test verifies that the DUID-LL is generated and the link layer type
 // used is taken from the interface used to generate link layer address.
 TEST_F(DUIDFactoryTest, createLLExplicitHtype) {
     ASSERT_NO_THROW(factory().createLL(HTYPE_FDDI, std::vector<uint8_t>()));
-    testLL("0001", "010101010101");
+    testLL("0001", "080808080808");
 }
 
 // This test verifies that DUID-LL is created from explicitly provided
@@ -458,14 +521,26 @@ TEST_F(DUIDFactoryTest, createLLReuse) {
     // link layer address. The factory function should use the
     // values in the existing DUID.
     ASSERT_NO_THROW(factory2.createLL(0, std::vector<uint8_t>()));
-    testLL("0008", "242424242424");
+    testLL("0008", "242424242424", factory2);
+
+    // Reuse only hardware type
+    DUIDFactory factory3(absolutePath(DEFAULT_DUID_FILE));
+    ASSERT_NO_THROW(factory3.createLL(0, toVector("121212121212")));
+    testLL("0008", "121212121212", factory3);
+
+    // Reuse link layer address. Note that when the link layer address is
+    // reused, the explicit value of hardware type is reused too and the
+    // explicit value of hardware type is ignored.
+    DUIDFactory factory4(absolutePath(DEFAULT_DUID_FILE));
+    ASSERT_NO_THROW(factory4.createLL(HTYPE_ETHER, std::vector<uint8_t>()));
+    testLL("0008", "121212121212", factory4);
 }
 
 // This test verifies that it is possible to override a DUID.
 TEST_F(DUIDFactoryTest, override) {
     // Create default DUID-LLT.
     ASSERT_NO_THROW(static_cast<void>(factory().get()));
-    testLLT("0001", timeAsHexString(), false, "010101010101");
+    testLLT("0001", timeAsHexString(), false, "080808080808");
 
     ASSERT_NO_THROW(factory().createEN(0, toVector("12131415")));
     testEN("000009BF", "12131415");
