@@ -25,6 +25,7 @@
 #include <string>
 #include <eval/token.h>
 #include <eval/eval_context_decl.h>
+#include <dhcp/option.h>
 #include <boost/lexical_cast.hpp>
 
 using namespace isc::dhcp;
@@ -39,6 +40,10 @@ using namespace isc::eval;
 {
 # include "eval_context.h"
 }
+// Option universe: DHCPv4 or DHCPv6. This is required to use correct option
+// definition set to map option names to codes.
+%parse-param { const Option::Universe& option_universe }
+
 %define api.token.prefix {TOKEN_}
 %token
   END  0  "end of file"
@@ -59,6 +64,7 @@ using namespace isc::eval;
 %token <std::string> STRING "constant string"
 %token <std::string> INTEGER "integer"
 %token <std::string> HEXSTRING "constant hexstring"
+%token <std::string> OPTION_NAME "option name"
 %token <std::string> TOKEN
 
 %printer { yyoutput << $$; } <*>;
@@ -129,6 +135,32 @@ string_expr : STRING
                       uint16_t numeric_code = convert_option_code($3, @3, ctx);
                       TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
                       ctx.expression.push_back(opt);
+                  }
+            | OPTION "[" OPTION_NAME "]" DOT TEXT
+                  {
+                      try {
+                          // This may result in exception if the specified
+                          // name is unknown.
+                          TokenPtr opt(new TokenOption($3, option_universe,
+                                                       TokenOption::TEXTUAL));
+                          ctx.expression.push_back(opt);
+
+                      } catch (const std::exception& ex) {
+                          ctx.error(@3, ex.what());
+                      }
+                  }
+            | OPTION "[" OPTION_NAME "]" DOT HEX
+                  {
+                      try {
+                          // This may result in exception if the specified
+                          // name is unknown.
+                          TokenPtr opt(new TokenOption($3, option_universe,
+                                                       TokenOption::HEXADECIMAL));
+                          ctx.expression.push_back(opt);
+
+                      } catch (const std::exception& ex) {
+                          ctx.error(@3, ex.what());
+                      }
                   }
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
                   {

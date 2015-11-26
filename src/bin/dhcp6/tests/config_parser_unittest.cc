@@ -1583,6 +1583,12 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // We need to commit option definitions because later in this test we
+    // will be checking if they get removed when "option-def" parameter
+    // is removed from a configuration.
+    LibDHCP::commitRuntimeOptionDefs();
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("isc", 100);
@@ -1593,6 +1599,25 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
     EXPECT_EQ(100, def->getCode());
     EXPECT_FALSE(def->getArrayType());
     EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, def->getType());
+
+    // The copy of the option definition should be available in the libdhcp++.
+    OptionDefinitionPtr def_libdhcp = LibDHCP::getRuntimeOptionDef("isc", 100);
+    ASSERT_TRUE(def_libdhcp);
+
+    // Both definitions should be held in distinct pointers but they should
+    // be equal.
+    EXPECT_TRUE(def_libdhcp != def);
+    EXPECT_TRUE(*def_libdhcp == *def);
+
+    // Let's apply empty configuration. This removes the option definitions
+    // configuration and should result in removal of the option 100 from the
+    // libdhcp++.
+    config = "{ }";
+    json = Element::fromJSON(config);
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 0);
+
+    EXPECT_FALSE(LibDHCP::getRuntimeOptionDef("isc", 100));
 }
 
 // The goal of this test is to check whether an option definition
@@ -1702,6 +1727,14 @@ TEST_F(Dhcp6ParserTest, optionDefMultiple) {
 // The goal of this test is to verify that the duplicated option
 // definition is not accepted.
 TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
+    // Preconfigure libdhcp++ with option definitions. The new configuration
+    // should override it, but when the new configuration fails, it should
+    // revert to this original configuration.
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("bar", 233, "string"));
+    defs.addItem(def, "isc");
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
 
     // Configuration string. Both option definitions have
     // the same code and belong to the same option space.
@@ -1732,6 +1765,15 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
     ASSERT_TRUE(status);
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    // The new configuration should have inserted option 100, but
+    // once configuration failed (on the duplicate option definition)
+    // the original configuration in libdhcp++ should be reverted.
+    EXPECT_FALSE(LibDHCP::getRuntimeOptionDef("isc", 100));
+    def = LibDHCP::getRuntimeOptionDef("isc", 233);
+    ASSERT_TRUE(def);
+    EXPECT_EQ("bar", def->getName());
+    EXPECT_EQ(233, def->getCode());
 }
 
 // The goal of this test is to verify that the option definition

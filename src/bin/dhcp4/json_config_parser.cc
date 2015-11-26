@@ -22,7 +22,6 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcp4/json_config_parser.h>
-#include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
@@ -514,6 +513,12 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Remove any existing timers.
     TimerMgr::instance()->unregisterTimers();
 
+    // Revert any runtime option definitions configured so far and not committed.
+    LibDHCP::revertRuntimeOptionDefs();
+    // Let's set empty container in case a user hasn't specified any configuration
+    // for option definitions. This is equivalent to commiting empty container.
+    LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
+
     // Some of the values specified in the configuration depend on
     // other values. Typically, the values in the subnet4 structure
     // depend on the global values. Also, option values configuration
@@ -700,6 +705,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Rollback changes as the configuration parsing failed.
     if (rollback) {
         globalContext().reset(new ParserContext(original_context));
+        // Revert to original configuration of runtime option definitions
+        // in the libdhcp++.
+        LibDHCP::revertRuntimeOptionDefs();
         return (answer);
     }
 

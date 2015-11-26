@@ -15,6 +15,7 @@
 #include <config.h>
 #include <cc/data.h>
 #include <config/command_mgr.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
@@ -218,6 +219,10 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
             return (isc::config::createAnswer(1, err.str()));
         }
     }
+
+    // Finally, we can commit runtime option definitions in libdhcp++. This is
+    // exception free.
+    LibDHCP::commitRuntimeOptionDefs();
 
     return (answer);
 }
