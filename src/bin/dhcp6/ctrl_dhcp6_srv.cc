@@ -28,6 +28,13 @@ using namespace isc::hooks;
 using namespace isc::stats;
 using namespace std;
 
+namespace {
+
+// Name of the file holding server identifier.
+static const char* SERVER_DUID_FILE = "kea-dhcp6-serverid";
+
+}
+
 namespace isc {
 namespace dhcp {
 
@@ -171,6 +178,24 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     } catch (const std::exception& ex) {
         return (isc::config::createAnswer(1, "Failed to process configuration:"
                                           + string(ex.what())));
+    }
+
+    // Regenerate server identifier if needed.
+    try {
+        const std::string duid_file = CfgMgr::instance().getDataDir() + "/" +
+            std::string(SERVER_DUID_FILE);
+        DuidPtr duid = CfgMgr::instance().getStagingCfg()->getCfgDUID()->create(duid_file);
+        server_->serverid_.reset(new Option(Option::V6, D6O_SERVERID, duid->getDuid()));
+        if (duid) {
+            LOG_INFO(dhcp6_logger, DHCP6_USING_SERVERID)
+                .arg(duid->toText())
+                .arg(duid_file);
+        }
+
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "unable to configure server identifier: " << ex.what();
+        return (isc::config::createAnswer(1, err.str()));
     }
 
     // Server will start DDNS communications if its enabled.

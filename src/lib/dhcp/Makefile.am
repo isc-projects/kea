@@ -17,6 +17,7 @@ libkea_dhcp___la_SOURCES  =
 libkea_dhcp___la_SOURCES += classify.cc classify.h
 libkea_dhcp___la_SOURCES += dhcp6.h dhcp4.h
 libkea_dhcp___la_SOURCES += duid.cc duid.h
+libkea_dhcp___la_SOURCES += duid_factory.cc duid_factory.h
 libkea_dhcp___la_SOURCES += hwaddr.cc hwaddr.h
 libkea_dhcp___la_SOURCES += iface_mgr.cc iface_mgr.h
 libkea_dhcp___la_SOURCES += iface_mgr_bsd.cc
