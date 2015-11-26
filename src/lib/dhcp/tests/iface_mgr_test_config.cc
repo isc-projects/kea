@@ -95,6 +95,12 @@ IfaceMgrTestConfig::createIface(const std::string &name, const int ifindex) {
     iface->flag_broadcast_ = false;
     iface->flag_up_ = true;
     iface->flag_running_ = true;
+
+    // Set MAC address to 08:08:08:08:08:08.
+    std::vector<uint8_t> mac_vec(6, 8);
+    iface->setMac(&mac_vec[0], mac_vec.size());
+    iface->setHWType(HTYPE_ETHER);
+
     return (iface);
 }
 

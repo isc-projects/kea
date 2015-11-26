@@ -4,6 +4,44 @@
     "module_description": "DHCPv6 server daemon",
     "config_data": [
       {
+        "item_name": "server-id",
+        "item_type": "map",
+        "item_optional": true,
+        "item_default": { "type": "LLT" },
+        "map_item_spec": [
+        {
+            "item_name": "type",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": ""
+        },
+        {
+            "item_name": "identifier",
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": ""
+        },
+        {
+            "item_name": "htype",
+            "item_type": "integer",
+            "item_optional": true,
+            "item_default": 0
+        },
+        {
+            "item_name": "time",
+            "item_type": "integer",
+            "item_optional": true,
+            "item_default": 0
+        },
+        {
+            "item_name": "enterprise-id",
+            "item_type": "integer",
+            "item_optional": true,
+            "item_default": 0
+        }
+        ]
+      },
+      {
         "item_name": "hooks-libraries",
         "item_type": "list",
         "item_optional": true,
