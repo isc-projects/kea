@@ -70,8 +70,8 @@
                     "output": "/var/log/kea-debug.log"
                 }
             ], 
-            "debuglevel": 99,
-            "severity": "DEBUG"
+            "debuglevel": 0,
+            "severity": "INFO"
         }
     ]
 }
