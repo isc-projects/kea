@@ -1,13 +1,13 @@
 1056.	[doc]		[sar]
 	Added description of the expression based classification
 	system to the Kea Admin Guide.
-	(Trac #4101	git <tbd>)
+	(Trac #4101, git 3ec88e0669470ab406c45d50d0f853f9aeb3bf04)
 
 1055.	[func]		[fdupont]
 	Classify match expressions are evaluated on incoming packets and
 	requested options are appended when configured by the subnet, a
 	class or globally.
-	(git #409[78], git xxx)
+	(Trac #4097, git 752ad11ff4ebe97ec27d098aff706d1999900346)
 
 1054.	[func]		[tmark]
 	Replaced underscores, "_", with hyphens "-", in the parameter
