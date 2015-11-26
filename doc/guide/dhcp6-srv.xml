@@ -1615,7 +1615,7 @@ should include options from the isc option space:
     "client-classes": [
         {<userinput>
             "name": "Client_enterprise",
-            "test": "substring(option[2].hex,0,6) == 0x0002AABBCCDD'",
+            "test": "substring(option[2].bin,0,6) == 0x0002AABBCCDD'",
             "option-data": [
                 {
                     "name": "dns-servers",

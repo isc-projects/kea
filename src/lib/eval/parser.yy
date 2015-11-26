@@ -51,7 +51,7 @@ using namespace isc::eval;
   OPTION "option"
   SUBSTRING "substring"
   TEXT "text"
-  HEX "hex"
+  BIN "bin"
   ALL "all"
   DOT "."
   COMA ","
@@ -130,10 +130,10 @@ string_expr : STRING
                       TokenPtr opt(new TokenOption(numeric_code, TokenOption::TEXTUAL));
                       ctx.expression.push_back(opt);
                   }
-            | OPTION "[" INTEGER "]" DOT HEX
+            | OPTION "[" INTEGER "]" DOT BIN
                   {
                       uint16_t numeric_code = convert_option_code($3, @3, ctx);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
+                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::BINARY));
                       ctx.expression.push_back(opt);
                   }
             | OPTION "[" OPTION_NAME "]" DOT TEXT
@@ -145,20 +145,20 @@ string_expr : STRING
                                                        TokenOption::TEXTUAL));
                           ctx.expression.push_back(opt);
 
-                      } catch (const std::exception& ex) {
+                      } catch (const isc::BadValue& ex) {
                           ctx.error(@3, ex.what());
                       }
                   }
-            | OPTION "[" OPTION_NAME "]" DOT HEX
+            | OPTION "[" OPTION_NAME "]" DOT BIN
                   {
                       try {
                           // This may result in exception if the specified
                           // name is unknown.
                           TokenPtr opt(new TokenOption($3, option_universe,
-                                                       TokenOption::HEXADECIMAL));
+                                                       TokenOption::BINARY));
                           ctx.expression.push_back(opt);
 
-                      } catch (const std::exception& ex) {
+                      } catch (const isc::BadValue& ex) {
                           ctx.error(@3, ex.what());
                       }
                   }

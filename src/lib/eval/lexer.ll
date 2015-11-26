@@ -120,10 +120,17 @@ blank [ \t]
     return isc::eval::EvalParser::make_INTEGER(tmp, loc);
 }
 
+[A-Za-z]([-_A-Za-z0-9]*[A-Za-z0-9])?/{blank}*] {
+    // This string specifies option name starting with a letter
+    // and further containing letters, digits, hyphens and
+    // underscores and finishing by letters or digits.
+    return isc::eval::EvalParser::make_OPTION_NAME(yytext, loc);
+}
+
 "=="        return isc::eval::EvalParser::make_EQUAL(loc);
 "option"    return isc::eval::EvalParser::make_OPTION(loc);
 "text"      return isc::eval::EvalParser::make_TEXT(loc);
-"hex"       return isc::eval::EvalParser::make_HEX(loc);
+"bin"       return isc::eval::EvalParser::make_BIN(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
 "all"       return isc::eval::EvalParser::make_ALL(loc);
 "."         return isc::eval::EvalParser::make_DOT(loc);
@@ -132,13 +139,6 @@ blank [ \t]
 "["         return isc::eval::EvalParser::make_LBRACKET(loc);
 "]"         return isc::eval::EvalParser::make_RBRACKET(loc);
 ","         return isc::eval::EvalParser::make_COMA(loc);
-
-[A-Za-z][A-Za-z0-9_\-]+/{blank}*] {
-    // This string specifies option name starting with a letter
-    // and further containing letters, digits, hyphens and
-    // underscores.
-    return isc::eval::EvalParser::make_OPTION_NAME(yytext, loc);
-}
 
 .          driver.error (loc, "Invalid character: " + std::string(yytext));
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);
