@@ -45,12 +45,13 @@
 #include <string>
 #include <eval/token.h>
 #include <eval/eval_context_decl.h>
+#include <dhcp/option.h>
 #include <boost/lexical_cast.hpp>
 
 using namespace isc::dhcp;
 using namespace isc::eval;
 
-#line 54 "parser.h" // lalr1.cc:392
+#line 55 "parser.h" // lalr1.cc:392
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -127,7 +128,7 @@ using namespace isc::eval;
 
 #line 21 "parser.yy" // lalr1.cc:392
 namespace isc { namespace eval {
-#line 131 "parser.h" // lalr1.cc:392
+#line 132 "parser.h" // lalr1.cc:392
 
 
 
@@ -297,6 +298,7 @@ namespace isc { namespace eval {
       // "constant string"
       // "integer"
       // "constant hexstring"
+      // "option name"
       // TOKEN
       char dummy1[sizeof(std::string)];
 };
@@ -337,7 +339,8 @@ namespace isc { namespace eval {
         TOKEN_STRING = 270,
         TOKEN_INTEGER = 271,
         TOKEN_HEXSTRING = 272,
-        TOKEN_TOKEN = 273
+        TOKEN_OPTION_NAME = 273,
+        TOKEN_TOKEN = 274
       };
     };
 
@@ -510,11 +513,15 @@ namespace isc { namespace eval {
 
     static inline
     symbol_type
+    make_OPTION_NAME (const std::string& v, const location_type& l);
+
+    static inline
+    symbol_type
     make_TOKEN (const std::string& v, const location_type& l);
 
 
     /// Build a parser object.
-    EvalParser (EvalContext& ctx_yyarg);
+    EvalParser (EvalContext& ctx_yyarg, const Option::Universe& option_universe_yyarg);
     virtual ~EvalParser ();
 
     /// Parse.
@@ -597,7 +604,7 @@ namespace isc { namespace eval {
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -717,17 +724,18 @@ namespace isc { namespace eval {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 21,     ///< Last index in yytable_.
+      yylast_ = 31,     ///< Last index in yytable_.
       yynnts_ = 6,  ///< Number of nonterminal symbols.
       yyfinal_ = 11, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 19  ///< Number of tokens.
+      yyntokens_ = 20  ///< Number of tokens.
     };
 
 
     // User arguments.
     EvalContext& ctx;
+    const Option::Universe& option_universe;
   };
 
   // Symbol number corresponding to token number t.
@@ -766,9 +774,9 @@ namespace isc { namespace eval {
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18
+      15,    16,    17,    18,    19
     };
-    const unsigned int user_token_number_max_ = 273;
+    const unsigned int user_token_number_max_ = 274;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -804,7 +812,8 @@ namespace isc { namespace eval {
       case 15: // "constant string"
       case 16: // "integer"
       case 17: // "constant hexstring"
-      case 18: // TOKEN
+      case 18: // "option name"
+      case 19: // TOKEN
         value.copy< std::string > (other.value);
         break;
 
@@ -828,7 +837,8 @@ namespace isc { namespace eval {
       case 15: // "constant string"
       case 16: // "integer"
       case 17: // "constant hexstring"
-      case 18: // TOKEN
+      case 18: // "option name"
+      case 19: // TOKEN
         value.copy< std::string > (v);
         break;
 
@@ -883,7 +893,8 @@ namespace isc { namespace eval {
       case 15: // "constant string"
       case 16: // "integer"
       case 17: // "constant hexstring"
-      case 18: // TOKEN
+      case 18: // "option name"
+      case 19: // TOKEN
         value.template destroy< std::string > ();
         break;
 
@@ -913,7 +924,8 @@ namespace isc { namespace eval {
       case 15: // "constant string"
       case 16: // "integer"
       case 17: // "constant hexstring"
-      case 18: // TOKEN
+      case 18: // "option name"
+      case 19: // TOKEN
         value.move< std::string > (s.value);
         break;
 
@@ -973,7 +985,7 @@ namespace isc { namespace eval {
     yytoken_number_[] =
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,   270,   271,   272,   273
+     265,   266,   267,   268,   269,   270,   271,   272,   273,   274
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1075,6 +1087,12 @@ namespace isc { namespace eval {
   }
 
   EvalParser::symbol_type
+  EvalParser::make_OPTION_NAME (const std::string& v, const location_type& l)
+  {
+    return symbol_type (token::TOKEN_OPTION_NAME, v, l);
+  }
+
+  EvalParser::symbol_type
   EvalParser::make_TOKEN (const std::string& v, const location_type& l)
   {
     return symbol_type (token::TOKEN_TOKEN, v, l);
@@ -1083,7 +1101,7 @@ namespace isc { namespace eval {
 
 #line 21 "parser.yy" // lalr1.cc:392
 } } // isc::eval
-#line 1087 "parser.h" // lalr1.cc:392
+#line 1105 "parser.h" // lalr1.cc:392
 
 
 

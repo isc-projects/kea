@@ -220,8 +220,8 @@ Option::toString() {
     return (toText(0));
 }
 
-std::string
-Option::toHexString(const bool include_header) {
+std::vector<uint8_t>
+Option::toBinary(const bool include_header) {
     OutputBuffer buf(len());
     try {
         // If the option is too long, exception will be thrown. We allow
@@ -233,12 +233,18 @@ Option::toHexString(const bool include_header) {
                   " of option " << getType() << ": " << ex.what());
     }
     const uint8_t* option_data = static_cast<const uint8_t*>(buf.getData());
-    std::vector<uint8_t> option_vec;
 
     // Assign option data to a vector, with or without option header depending
     // on the value of "include_header" flag.
-    option_vec.assign(option_data + (include_header ? 0 : getHeaderLen()),
-                      option_data + buf.getLength());
+    std::vector<uint8_t> option_vec(option_data + (include_header ? 0 : getHeaderLen()),
+                                    option_data + buf.getLength());
+    return (option_vec);
+}
+
+std::string
+Option::toHexString(const bool include_header) {
+    // Prepare binary version of the option.
+    std::vector<uint8_t> option_vec = toBinary(include_header);
 
     // Return hexadecimal representation prepended with 0x or empty string
     // if option has no payload and the header fields are excluded.

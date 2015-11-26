@@ -14,6 +14,8 @@
 
 #include <eval/token.h>
 #include <eval/eval_log.h>
+#include <dhcp/option_definition.h>
+#include <dhcp/libdhcp++.h>
 #include <util/encode/hex.h>
 #include <boost/lexical_cast.hpp>
 #include <cstring>
@@ -62,16 +64,42 @@ TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     values.push(value_);
 }
 
+TokenOption::TokenOption(const std::string& option_name,
+                         const Option::Universe& option_universe,
+                         const RepresentationType& rep_type)
+    : option_code_(0), representation_type_(rep_type) {
+    OptionDefinitionPtr option_def = LibDHCP::getOptionDef(option_universe,
+                                                           option_name);
+    if (!option_def) {
+        const std::string global_space =
+            (option_universe == Option::V4) ? "dhcp4" : "dhcp6";
+        option_def = LibDHCP::getRuntimeOptionDef(global_space, option_name);
+    }
+
+    if (!option_def) {
+        isc_throw(BadValue, "option '" << option_name << "' is not defined");
+    }
+
+    option_code_ = option_def->getCode();
+}
+
+
 void
 TokenOption::evaluate(const Pkt& pkt, ValueStack& values) {
     OptionPtr opt = pkt.getOption(option_code_);
+    std::string opt_str;
     if (opt) {
-        values.push(representation_type_ == TEXTUAL ? opt->toString()
-                    : opt->toHexString());
-    } else {
-        // Option not found, push empty string
-        values.push("");
+        if (representation_type_ == TEXTUAL) {
+            opt_str = opt->toString();
+        } else {
+            std::vector<uint8_t> binary = opt->toBinary();
+            opt_str.assign(binary.begin(), binary.end());
+        }
     }
+
+    // Push value of the option or empty string if there was no such option
+    // in the packet.
+    values.push(opt_str);
 }
 
 void

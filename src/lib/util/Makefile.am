@@ -21,6 +21,7 @@ libkea_util_la_SOURCES += pointer_util.h
 libkea_util_la_SOURCES += process_spawn.h process_spawn.cc
 libkea_util_la_SOURCES += range_utilities.h
 libkea_util_la_SOURCES += signal_set.cc signal_set.h
+libkea_util_la_SOURCES += staged_value.h
 libkea_util_la_SOURCES += stopwatch.cc stopwatch.h
 libkea_util_la_SOURCES += stopwatch_impl.cc stopwatch_impl.h
 libkea_util_la_SOURCES += versioned_csv_file.h versioned_csv_file.cc

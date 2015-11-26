@@ -42,7 +42,11 @@ class EvalContext
 {
 public:
     /// @brief Default constructor.
-    EvalContext();
+    ///
+    /// @param option_universe Option universe: DHCPv4 or DHCPv6. This is used
+    /// by the parser to determine which option definitions set should be used
+    /// to map option names to option codes.
+    EvalContext(const Option::Universe& option_universe);
 
     /// @brief destructor
     virtual ~EvalContext();
@@ -55,7 +59,7 @@ public:
 
     /// @brief Method called after the last tokens are scanned from a string.
     void scanStringEnd();
-    
+
     /// @brief Run the parser on the string specified.
     ///
     /// @param str string to be written
@@ -87,7 +91,12 @@ public:
 
     /// @brief Flag determing parser debugging.
     bool trace_parsing_;
-  
+
+    /// @brief Option universe: DHCPv4 or DHCPv6.
+    ///
+    /// This is used by the parser to determine which option definitions
+    /// set should be used to map option name to option code.
+    Option::Universe option_universe_;
 };
 
 }; // end of isc::eval namespace
