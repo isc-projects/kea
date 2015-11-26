@@ -1599,7 +1599,7 @@ should include options from the isc option space:
       </para></note>
 
       <section>
-        <title>Configuring Classes Example</title>
+        <title>Defining and Using Custom Classes</title>
         <para>
         The following example shows how to configure a class using an expression
         and a subnet making use of that class. This configuration defines the
@@ -1613,7 +1613,7 @@ should include options from the isc option space:
         <screen>
 "Dhcp6": {
     "client-classes": [
-        {
+        {<userinput>
             "name": "Client_enterprise",
             "test": "substring(option[2].hex,0,6) == 0x0002AABBCCDD'",
             "option-data": [
@@ -1624,7 +1624,7 @@ should include options from the isc option space:
                     "csv-format": true,
                     "data": "2001:db8:0::1, 2001:db8:2::1"
                 }
-            ]
+            ]</userinput>
         },
         ...
     ],
@@ -1632,7 +1632,7 @@ should include options from the isc option space:
         {
             "subnet": "2001:db8:1::/64",
             "pools": [ { "pool": "2001:db8:1::-2001:db8:1::ffff" } ],
-            "client-class": "Client_enterprise"
+            <userinput>"client-class": "Client_enterprise"</userinput>
         }
     ],
     ...

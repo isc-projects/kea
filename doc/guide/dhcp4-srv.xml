@@ -1570,10 +1570,10 @@ It is merely echoed by the server
       clients and treat them accordingly. It is envisaged that client
       classification will be used for changing the behavior of almost any part of
       the DHCP message processing, including the assignment of leases from different
-      pools, the assignmen of different options (or different values of the same
+      pools, the assignment of different options (or different values of the same
       options) etc. In the current release of the software however, there are
       only three mechanisms that take advantage of client classification:
-      subnet seletion, assignment of different options, and, for cable modems, there
+      subnet selection, assignment of different options, and, for cable modems, there
       are specific options for use with the TFTP server address and the boot file field.
       </para>
 
@@ -1629,49 +1629,6 @@ It is merely echoed by the server
         always set to 0.0.0.0. That capability is expected to be moved to
         an external hook library that will be dedicated to cable modems.
         </para>
-      </section>
-
-      <section>
-        <title>Configuring Classes Example</title>
-        <para>
-        The following example shows how to configure a class using an expression
-        and a subnet making use of that class. This configuration defines the
-        class named &quot;Client_foo&quot;.
-        It is comprised of all clients who's client ids (option 61) start with the
-        string &quot;foo&quot;. Members of this class will be given addresses from
-        192.0.2.10 to 192.0.2.20 and 192.0.2.1 and 192.0.2.2 as their domain name
-        servers. For a deeper discussion of the classification process see
-        <xref linkend="classify"/>.
-
-          <screen>
-"Dhcp4": {
-    "client-classes": [
-        {
-            "name": "Client_foo",
-            "test": "substring(option[61].text,0,3) == 'foo'",
-            "option-data": [
-                {
-                    "name": "doamin-name-servers",
-                    "code": 6,
-                    "space": "dhcp4",
-                    "csv-format": true,
-                    "data": "192.0.2.1, 192.0.2.2"
-                }
-            ]
-        },
-        ...
-    ],
-    "subnet4": [
-        {
-            "subnet": "192.0.2.0/24",
-            "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
-            "client-class": "Client_foo"
-        },
-        ...
-    ],
-    ...
-}</screen>
-        </para>
 
         <para>
         This example shows a configuration using an automatcially generated
@@ -1688,6 +1645,50 @@ It is merely echoed by the server
             "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
             <userinput>"client-class": "VENDOR_CLASS_docsis3.0"</userinput>
         }
+    ],
+    ...
+}</screen>
+        </para>
+
+      </section>
+
+      <section>
+        <title>Defining and Using Custom Classes</title>
+        <para>
+        The following example shows how to configure a class using an expression
+        and a subnet making use of that class. This configuration defines the
+        class named &quot;Client_foo&quot;.
+        It is comprised of all clients who's client ids (option 61) start with the
+        string &quot;foo&quot;. Members of this class will be given addresses from
+        192.0.2.10 to 192.0.2.20 and 192.0.2.1 and 192.0.2.2 as their domain name
+        servers. For a deeper discussion of the classification process see
+        <xref linkend="classify"/>.
+
+          <screen>
+"Dhcp4": {
+    "client-classes": [
+        {<userinput>
+            "name": "Client_foo",
+            "test": "substring(option[61].text,0,3) == 'foo'",
+            "option-data": [
+                {
+                    "name": "domain-name-servers",
+                    "code": 6,
+                    "space": "dhcp4",
+                    "csv-format": true,
+                    "data": "192.0.2.1, 192.0.2.2"
+                }
+            ]</userinput>
+        },
+        ...
+    ],
+    "subnet4": [
+        {
+            "subnet": "192.0.2.0/24",
+            "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
+            <userinput>"client-class": "Client_foo"</userinput>
+        },
+        ...
     ],
     ...
 }</screen>
