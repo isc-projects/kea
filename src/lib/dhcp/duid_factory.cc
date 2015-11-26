@@ -106,7 +106,8 @@ DUIDFactory::createLLT(const uint16_t htype, const uint32_t time_in,
     } else if (htype_out == 0) {
         // If link layer type unspecified and link layer adddress
         // is specified, use current type or HTYPE_ETHER.
-        htype_out = (htype_current != 0) ? htype_current : HTYPE_ETHER;
+        htype_out = ((htype_current != 0) ? htype_current :
+                     static_cast<uint16_t>(HTYPE_ETHER));
 
     }
 
@@ -230,7 +231,8 @@ DUIDFactory::createLL(const uint16_t htype,
     } else if (htype_out == 0) {
         // If link layer type unspecified and link layer adddress
         // is specified, use current type or HTYPE_ETHER.
-        htype_out = (htype_current != 0) ? htype_current : HTYPE_ETHER;
+        htype_out = ((htype_current != 0) ? htype_current :
+            static_cast<uint16_t>(HTYPE_ETHER));
 
     }
 
@@ -394,7 +396,7 @@ DUIDFactory::readFromFile() {
 
         // If we have read anything from the file, let's try to use it to
         // create a DUID.
-        if (duid_str.tellp() != 0) {
+        if (duid_str.tellp() != std::streampos(0)) {
             try {
                 duid_.reset(new DUID(DUID::fromText(duid_str.str())));
 
