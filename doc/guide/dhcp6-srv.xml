@@ -2421,7 +2421,7 @@ should include options from the isc option space:
     "server-id": {
         "type": "LLT",
         "htype": 8,
-        "identifier": "A65DC7410F0568",
+        "identifier": "A65DC7410F05",
         "time": 2518920166
     },
     ...
@@ -2443,9 +2443,9 @@ should include options from the isc option space:
       <para>The hexadecimal representation of the DUID generated as a result
       of the configuration specified above will be:
 <screen>
-00:01:00:08:96:23:AB:E6:A6:5D:C7:41:0F:05:68
---------------------------------------------
-|type|htype|   time    |    identifier     |
+00:01:00:08:96:23:AB:E6:A6:5D:C7:41:0F:05
+------------------------------------------
+|type|htype|   time    |   identifier    |
 </screen>
       </para>
 
@@ -2536,7 +2536,7 @@ should include options from the isc option space:
     "server-id": {
         "type": "LL",
         "htype": 8,
-        "identifier": "A65DC7410F0568",
+        "identifier": "A65DC7410F05",
     },
     ...
 }
@@ -2548,9 +2548,9 @@ should include options from the isc option space:
       which will result in the following server identifier:
 
 <screen>
-00:03:00:08:A6:5D:C7:41:0F:05:68
----------------------------------
-|type|htype|     identifier     |
+00:03:00:08:A6:5D:C7:41:0F:05
+------------------------------
+|type|htype|   identifier   |
 </screen>
       </para>
 

@@ -52,7 +52,7 @@ DUIDFactory::DUIDFactory(const std::string& storage_location)
 }
 
 bool
-DUIDFactory::isPersisted() const {
+DUIDFactory::isStored() const {
     return (!storage_location_.empty());
 }
 
@@ -62,7 +62,7 @@ DUIDFactory::createLLT(const uint16_t htype, const uint32_t time_in,
     // We'll need DUID stored in the file to compare it against the
     // new configuration. If the new configuration indicates that some
     // bits of the DUID should be generated we'll first try to use the
-    // values stored in the file to prvent DUID from changing if possible.
+    // values stored in the file to prevent DUID from changing if possible.
     readFromFile();
 
     uint16_t htype_current = 0;
@@ -105,8 +105,8 @@ DUIDFactory::createLLT(const uint16_t htype, const uint32_t time_in,
 
     } else if (htype_out == 0) {
         // If link layer type unspecified and link layer adddress
-        // is specified, use HTYPE_ETHER.
-        htype_out = HTYPE_ETHER;
+        // is specified, use current type or HTYPE_ETHER.
+        htype_out = (htype_current != 0) ? htype_current : HTYPE_ETHER;
 
     }
 
@@ -229,8 +229,8 @@ DUIDFactory::createLL(const uint16_t htype,
 
     } else if (htype_out == 0) {
         // If link layer type unspecified and link layer adddress
-        // is specified, use HTYPE_ETHER.
-        htype_out = HTYPE_ETHER;
+        // is specified, use current type or HTYPE_ETHER.
+        htype_out = (htype_current != 0) ? htype_current : HTYPE_ETHER;
 
     }
 
@@ -263,9 +263,10 @@ DUIDFactory::createLinkLayerId(std::vector<uint8_t>& identifier,
 
         // MAC address should be at least 6 bytes. Although there is no such
         // requirement in any RFC, all decent physical interfaces (Ethernet,
-        // WiFi, InfiniBand, etc.) have 6 bytes long MAC address. We want to
-        // base our DUID on real hardware address, rather than virtual
-        // interface that pretends that underlying IP address is its MAC.
+        // WiFi, InfiniBand, etc.) have at least 6 bytes long MAC address.
+        // We want to/ base our DUID on real hardware address, rather than
+        // virtual interface that pretends that underlying IP address is its
+        // MAC.
         if (iface->getMacLen() < MIN_MAC_LEN) {
             continue;
         }
@@ -308,8 +309,8 @@ DUIDFactory::set(const std::vector<uint8_t>& duid_vector) {
                   << DUID::MIN_DUID_LEN << " bytes");
     }
 
-    // Persist DUID in a file if file location specified.
-    if (isPersisted()) {
+    // Store DUID in a file if file location specified.
+    if (isStored()) {
         std::ofstream ofs;
         try {
             ofs.open(storage_location_.c_str(), std::ofstream::out |
@@ -353,10 +354,11 @@ DUIDFactory::get() {
     }
 
     // DUID doesn't exist, so we need to create it.
+    const std::vector<uint8_t> empty_vector;
     try {
         // There is no file with a DUID or the DUID stored in the file is
         // invalid. We need to generate a new DUID.
-        createLLT(0, 0, std::vector<uint8_t>());
+        createLLT(0, 0, empty_vector);
 
     } catch (...) {
         // It is possible that the creation of the DUID-LLT failed if there
@@ -367,7 +369,7 @@ DUIDFactory::get() {
         // Fall back to creation of DUID enterprise. If that fails we allow
         // for propagating exception to indicate a fatal error. This may
         // be the case if we failed to write it to a file.
-        createEN(0, std::vector<uint8_t>());
+        createEN(0, empty_vector);
     }
 
     return (duid_);
@@ -378,7 +380,7 @@ DUIDFactory::readFromFile() {
     duid_.reset();
 
     std::ostringstream duid_str;
-   if (isPersisted()) {
+   if (isStored()) {
         std::ifstream ifs;
         ifs.open(storage_location_.c_str(), std::ifstream::in);
         if (ifs.good()) {

@@ -64,7 +64,7 @@ namespace dhcp {
 ///
 /// This class is also responsible for storing the generated DUID in a
 /// file. The location of this file is specified in the class constructor.
-/// If this location is not specified the DUID is not persisted, i.e. is
+/// If this location is not specified the DUID is not stored, i.e. is
 /// lost when the server or client shuts down. However, the DUID may be
 /// reconstructed according to the configuration of the client or server
 /// when they are back online.
@@ -77,22 +77,22 @@ public:
     /// stored.
     DUIDFactory(const std::string& storage_location = "");
 
-    /// @brief Checks if generated DUID will be persisted in the file.
+    /// @brief Checks if generated DUID will be stored in the file.
     ///
-    /// @return true if generated DUIDs are persisted in a file, false
+    /// @return true if generated DUIDs are stored in a file, false
     /// otherwise.
-    bool isPersisted() const;
+    bool isStored() const;
 
     /// @brief Generates DUID-LLT.
     ///
-    /// This method generates DUID-LLT.
+    /// This method generates DUID-LLT (Link Layer plus Time).
     ///
     /// @param htype Hardware type. If this is set to 0 and link layer
     /// address is empty a value from existing DUID or a default value
     /// of @c HTYPE_ETHER is used. Otherwise a link layer type of selected
     /// interface is used.
     /// @param time_in Explicit value of time for the DUID. If this is
-    /// set to 0 a value from existing DUOD or current time is used,
+    /// set to 0 a value from existing DUID or current time is used,
     /// otherwise a value specified is used.
     /// @param ll_identifier Data to be used as link layer address. If
     /// this is an empty vector this method will try to use link layer
@@ -107,6 +107,8 @@ public:
 
     /// @brief Generates DUID-EN.
     ///
+    /// This method generates DUID-EN (DUID Enterprise).
+    ///
     /// @param enterprise_id Enterprise id. If this value is 0, a value
     /// from existing DUID is used or ISC's enterprise id if there is
     /// no DUID yet.
@@ -118,6 +120,8 @@ public:
                   const std::vector<uint8_t>& identifier);
 
     /// @brief Generates DUID-LL.
+    ///
+    /// This method generates DUID-LL (Link Layer).
     ///
     /// @param htype Hardware type. If this is set to 0 and link layer
     /// address is empty a value from existing DUID or a default value
@@ -144,7 +148,7 @@ public:
     /// generation of the DUID-LLT may fail, e.g. when there are no interfaces
     /// with a suitable link layer address. In this case, this method will
     /// generate DUID-EN, with the ISC enterprise id. If this fails, e.g. as a
-    /// result of error while persisting the generated DUID-EN, exception
+    /// result of error while storing the generated DUID-EN, exception
     /// is thrown.
     ///
     /// @return Instance of the DUID read from file, or generated.
@@ -166,7 +170,7 @@ private:
 
     /// @brief Sets a new DUID as current.
     ///
-    /// The generated DUID is persisted in the file, if such file is specified.
+    /// The generated DUID is stored in the file, if such file is specified.
     /// The new DUID will be returned when @c DUIDFactory::get is called.
     ///
     /// @param duid_vector New DUID represented as vector of bytes.
