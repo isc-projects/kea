@@ -58,8 +58,11 @@
       When determining which options to include in the response the server will examine
       the union of options from all of the assigned classes. In the case two or more
       classes include the same option, the value from the first class examined will
-      be used.  Similarly if two or more classes are  associated with subnets, the
-      first class examined will be used. In the future the processing order of the
+      be used.  When choosing a subnet the server will iterate over all of the
+      subnets that are feasible given the information found in the packet (client address,
+      relay address etc). It will use the first subnet it finds that either doesn't
+      have a class associated with it or that has a class which matches one of
+      the packet's classes. In the future the processing order of the
       various classes may be specified but for now it is being left unspecified and
       may change in future releases.
       </para>
@@ -200,31 +203,31 @@
           </tbody>
           </tgroup>
         </table>
+      </para>
 
-        <section>
-          <title>Substring</title>
-          The substring operator "substring(value, start, length)" accepts both positive and
-          negative values for the starting position and the length.  For "start", a value of
-          0 is the first byte in the string while -1 is the last byte.  If the starting
-          point is outside of the original string an empty string is returned.  "length"
-          is the number of bytes to extract.  A negative number means to count towards
-          the beginning of the string but doesn't include the byte pointed to by "start".
-          The special value "all" means to return all bytes from start to the end of the
-          string.  If length is longer than the remaining portion of the string then
-          the entire remaining portion is returned.  Some examples may be helpful:
+      <section>
+        <title>Substring</title>
+        The substring operator "substring(value, start, length)" accepts both positive and
+        negative values for the starting position and the length.  For "start", a value of
+        0 is the first byte in the string while -1 is the last byte.  If the starting
+        point is outside of the original string an empty string is returned.  "length"
+        is the number of bytes to extract.  A negative number means to count towards
+        the beginning of the string but doesn't include the byte pointed to by "start".
+        The special value "all" means to return all bytes from start to the end of the
+        string.  If length is longer than the remaining portion of the string then
+        the entire remaining portion is returned.  Some examples may be helpful:
 
-            <screen>
+          <screen>
         substring('foobar', 0, 6) == 'foobar'
         substring('foobar', 3, 3) == 'bar'
         substring('foobar', 3, all) == 'bar'
         substring('foobar', 1, 4) == 'ooba'
         substring('foobar', -5, 4) == 'ooba'
-        substring('foobar', -1, -4) == 'ooba'
-        substring('foobar', 5, -4) == 'ooba'
+        substring('foobar', -1, -3) == 'oba'
+        substring('foobar', 4, -2) == 'ob'
         substring('foobar', 10, 2) == ''
-            </screen>
-        </section>
-      </para>
+          </screen>
+      </section>
     </section>
 
   <note>
