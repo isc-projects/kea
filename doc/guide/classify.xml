@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+
+<chapter id="classify">
+  <title>Client Classification</title>
+
+  <section>
+    <title>Client Classification Overview</title>
+      <para>
+      In certain cases it is useful to differentiate between different
+      types of clients and treat them accordingly. Common reasons include:
+      <itemizedlist>
+      <listitem><para>
+      The clients represent different pieces of topology, e.g. a cable
+      modem is different to the clients behind that modem.
+      </para></listitem>
+      <listitem><para>
+      The clients have different behavior, e.g.a smart phone behaves
+      differently to a lapttop.
+      </para></listitem>
+      <listitem><para>
+      The clients require different values for some options, e.g. a docsis3.0
+      cable modem requires different settings to docsis2.0 cable modem.
+      </para></listitem>
+      </itemizedlist>
+      </para>
+
+      <para>
+      It is envisaged that client classification will be used for changing the
+      behavior of almost any part of the DHCP message processing, including the assignment of
+      leases from different pools, the assignment of different options (or different values of
+      the same options) etc. In the current release of the software however, there are
+      only three mechanisms that take
+      advantage of client classification: subnet selection, assignment of different
+      options and, for DHCPv4 cable modems, the setting of specific options for use with
+      the TFTP server address and the boot file field.
+      </para>
+
+      <para>
+      The process of doing classification is conducted in three steps:
+      <orderedlist>
+      <listitem><para>
+      Assess an incoming packet and assign it to zero or more classes.
+      </para></listitem>
+      <listitem><para>
+      Choose a subnet, possibly based on the class information.
+      </para></listitem>
+      <listitem><para>
+      Assign options, again possibly based on the class information.
+      </para></listitem>
+      </orderedlist>
+      </para>
+
+      <para>
+      When determining which options to include in the response the server will examine
+      the union of options from all of the assigned classes. In the case two or more
+      classes include the same option, the value from the first class examined will
+      be used.  When choosing a subnet the server will iterate over all of the
+      subnets that are feasible given the information found in the packet (client address,
+      relay address etc). It will use the first subnet it finds that either doesn't
+      have a class associated with it or that has a class which matches one of
+      the packet's classes. In the future the processing order of the
+      various classes may be specified but for now it is being left unspecified and
+      may change in future releases.
+      </para>
+
+      <para>
+      As an example, imagine two classes.  Class "foo" defines values for an NTP server
+      (option 42 in DHCPv4) and an SMTP server (option 69 in DHCPv4) while class
+      "bar" defines values for an NTP server and a POP3 server (option 70 in DHCPv4).
+      The server will examine the three options NTP, SMTP and POP3 and return any
+      of them that the client requested.  As the NTP server was defined twice the
+      server will choose only one of the values for the reply: the class from which the
+      value is obtained is unspecified.
+      </para>
+
+      <para>
+      There are two methods of doing classification. The first is automatic and relies
+      on examining the values in the vendor class options. Information from these
+      options is extracted and a class name is constructed from it and added to
+      the class list for the packet. The second allows you to specify an expression
+      that is evaluated for each packet. If the result is true, the packet is
+      a member of the class.
+      </para>
+
+      <note>
+      <para>
+        Care should be taken with client classification as it is easy for
+        clients that do not meet class criteria to be denied any service altogether.
+      </para>
+      </note>
+  </section>
+
+  <section id="classification-using-vendor">
+    <title>Using Vendor Class Information In Classification</title>
+      <para>
+      The server checks whether an incoming DHCPv4 packet includes
+      the vendor class identifier option (60) or an incoming DHCPv6 packet
+      includes the vendor class option (16). If it does, the content of that
+      option is prepended with &quot;VENDOR_CLASS_&quot; and the result is interpreted
+      as a class. For example, modern cable modems will send this option with
+      value &quot;docsis3.0&quot; and so the packet will belong to
+      class &quot;VENDOR_CLASS_docsis3.0&quot;.
+      </para>
+  </section>
+
+  <section id="classification-using-expressions">
+    <title>Using Expressions In Classification</title>
+      <para>
+      The expression portion of classification contains operators and values.
+      All values are currently strings and operators take a string or strings and
+      return another string. When all the operations have completed
+      the result should be a value of &quot;true&quot; or &quot;false&quot;.
+      The packet belongs to
+      the class (and the class name is added to the list of classes) if the result
+      is &quot;true&quot;. Expressions are written in standard format and can be nested.
+      </para>
+
+      <para>
+      Expressions are pre-processed during the parsing of the configuration file
+      and converted to an internal representation. This allows certain types of
+      errors to be caught and logged during parsing.  Examples of these errors
+      include incorrect number or types of arguments to an operator.  The
+      evaluation code will also check for this class of error and generally
+      throw an exception, though they should not occur in a normally functioning
+      system.
+      </para>
+
+      <para>
+      Other issues, for example the starting position of a substring being
+      outside of the substring or an option not existing in the packet, result
+      in the operator returning an empty string.
+      </para>
+
+      <para>
+      Expressions are a work in progress and the supported operators and
+      values are limited. The expectation is that additional operators and values
+      will be added over time, however it is expected the basic mechanisms will
+      remain the same.
+      </para>
+
+      <para>
+        <table frame="all" id="classification-values-list">
+          <title>List of Classification Values</title>
+          <tgroup cols='3'>
+          <colspec colname='name' />
+          <colspec colname='example' />
+          <colspec colname='description' />
+          <thead>
+            <row>
+              <entry>Name</entry>
+              <entry>Example</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+<row><entry>String</entry><entry>'example'</entry><entry>A string</entry></row>
+<row><entry>Hex String</entry><entry>0XABCD</entry><entry>A hexadecimal string</entry></row>
+<row><entry>Integer</entry><entry>123</entry><entry>An integer value</entry></row>
+<row><entry>Option Text</entry><entry>option[code].text</entry><entry>The value of the option with code "code" from the packet as text</entry></row>
+<row><entry>Option Hex</entry><entry>option[code].hex</entry><entry>The value of the option with code "code" from the packet as hex</entry></row>
+          </tbody>
+          </tgroup>
+        </table>
+      Hex Strings are converted into a string as expected.  The starting &quot;0X&quot; or
+      &quot;0x&quot; is removed and if the string is an odd number of characters a
+      &quot;0&quot; is prepended to it.
+      </para>
+
+      <para>
+      Integers in the expression are converted to strings
+      when the expression is read into Kea.
+      </para>
+
+      <para>
+      "option[code]" extracts the value of the option with the given code
+      from the incoming packet. If the packet doesn't contain the option, it
+      returns the empty string.  The string can be presented as text or hex
+      with the ".text" or ".hex" modifiers.  In both cases only the payload
+      is presented; the type code and length fields are not included.
+      </para>
+
+      <para>
+        <table frame="all" id="classification-expressions-list">
+          <title>List of Classification Expressions</title>
+          <tgroup cols='3'>
+          <colspec colname='name' />
+          <colspec colname='example' />
+          <colspec colname='description' />
+          <thead>
+            <row>
+              <entry>Name</entry>
+              <entry>Example</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+<row><entry>Equal</entry> <entry>'foo' == 'bar'</entry><entry>Compare the two values and return "true" or "false"</entry></row>
+<row><entry>Substring</entry><entry>substring('foobar',0,3)</entry><entry>Return the requested substring</entry></row>
+          </tbody>
+          </tgroup>
+        </table>
+      </para>
+
+      <section>
+        <title>Substring</title>
+        The substring operator "substring(value, start, length)" accepts both positive and
+        negative values for the starting position and the length.  For "start", a value of
+        0 is the first byte in the string while -1 is the last byte.  If the starting
+        point is outside of the original string an empty string is returned.  "length"
+        is the number of bytes to extract.  A negative number means to count towards
+        the beginning of the string but doesn't include the byte pointed to by "start".
+        The special value "all" means to return all bytes from start to the end of the
+        string.  If length is longer than the remaining portion of the string then
+        the entire remaining portion is returned.  Some examples may be helpful:
+
+          <screen>
+        substring('foobar', 0, 6) == 'foobar'
+        substring('foobar', 3, 3) == 'bar'
+        substring('foobar', 3, all) == 'bar'
+        substring('foobar', 1, 4) == 'ooba'
+        substring('foobar', -5, 4) == 'ooba'
+        substring('foobar', -1, -3) == 'oba'
+        substring('foobar', 4, -2) == 'ob'
+        substring('foobar', 10, 2) == ''
+          </screen>
+      </section>
+    </section>
+
+  <note>
+  <para>
+    The expression for each class is executed on each packet received.
+    If the expressions are overly complex, the time taken to execute
+    them may impact the performance of the server. If you need
+    complex or time consuming expressions you should write a <link
+    linkend='hooks-libraries'>hook</link> to perform the necessary work.
+  </para> </note>
+
+  <section id="classification-configuring">
+    <title>Configuring Classes</title>
+      <para>
+      A class contains three items: a name, a test expression and option data.
+      The name must exist and must be unique amongst all classes. The test
+      expression and option data are optional.
+      </para>
+
+      <para>
+      The test expression is a string containing the logical expression used to
+      determine membership in the class.  The entire expression is in double
+      quotes.
+      </para>
+
+      <para>
+      The option data is a list which defines any options that should be assigned
+      to members of this class.
+      </para>
+
+      <para>
+      In the following example the class named &quot;Client_foo&quot; is defined.
+      It is comprised of all clients who's client ids (option 61) start with the
+      string &quot;foo&quot;. Members of this class will be given 192.0.2.1 and
+      192.0.2.2 as their domain name servers.
+
+        <screen>
+"Dhcp4": {
+    "client-classes": [<userinput>
+        {
+            "name": "Client_foo",
+            "test": "substring(option[61].text,0,3) == 'foo'",
+            "option-data": [
+                {
+                    "name": "domain-name-servers",
+                    "code": 6,
+                    "space": "dhcp4",
+                    "csv-format": true,
+                    "data": "192.0.2.1, 192.0.2.2"
+                }
+            ]
+        },
+        ...
+    ],</userinput>
+    ...
+}</screen>
+      </para>
+
+      <para>
+      This example shows a client class being defined for use by the DHCPv6 server.
+      In it the class named &quot;Client_enterprise&quot; is defined.  It is comprised
+      of all clients who's client identifiers start with the given hex string (which
+      would indicate a DUID based on an enterprise id of 0xAABBCCDD). Members of this
+      class will be given an 2001:db8:0::1 and 2001:db8:2::1 as their domain name servers.
+        <screen>
+"Dhcp6": {
+    "client-classes": [<userinput>
+        {
+            "name": "Client_enterprise",
+            "test": "substring(option[2].hex,0,6) == 0x0002AABBCCDD'",
+            "option-data": [
+                {
+                    "name": "dns-servers",
+                    "code": 23,
+                    "space": "dhcp6",
+                    "csv-format": true,
+                    "data": "2001:db8:0::1, 2001:db8:2::1"
+                }
+            ]
+        },
+        ...
+    ],</userinput>
+    ...
+}</screen>
+      </para>
+  </section>
+
+  <section id="classification-subnets">
+    <title>Configuring Subnets With Class Information</title>
+      <para>
+        In certain cases it beneficial to restrict access to certain subnets
+        only to clients that belong to a given class using the "client-class"
+        keyword when defining the subnet.
+      </para>
+
+      <para>
+        Let's assume that the server is connected to a network segment that uses
+        the 192.0.2.0/24 prefix. The Administrator of that network has decided
+        that addresses from range 192.0.2.10 to 192.0.2.20 are going to be
+        managed by the DHCP4 server. Only clients belonging to client class
+        Client_foo  are allowed to use this subnet. Such a
+        configuration can be achieved in the following way:
+        <screen>
+"Dhcp4": {
+    "client-classes": [
+        {
+            "name": "Client_foo",
+            "test": "substring(option[61].text,0,3) == 'foo'",
+            "option-data": [
+                {
+                    "name": "domain-name-servers",
+                    "code": 6,
+                    "space": "dhcp4",
+                    "csv-format": true,
+                    "data": "192.0.2.1, 192.0.2.2"
+                }
+            ]
+        },
+        ...
+    ],<userinput>
+    "subnet4": [
+        {
+            "subnet": "192.0.2.0/24",
+            "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
+            "client-class": "Client_foo"
+        },
+        ...
+    ],</userinput>,
+    ...
+}</screen>
+      </para>
+
+      <para>
+     	The following example shows restricting access to a DHCPv6 subnet.  This
+        configuration will restrict use of the addresses 2001:db8:1::1 to
+        2001:db8:1::FFFF to members of the "Client_enterprise" class.
+
+        <screen>
+"Dhcp6": {
+    "client-classes": [
+        {
+            "name": "Client_enterprise",
+            "test": "substring(option[2].hex,0,6) == 0x0002AABBCCDD'",
+            "option-data": [
+                {
+                    "name": "dns-servers",
+                    "code": 23,
+                    "space": "dhcp6",
+                    "csv-format": true,
+                    "data": "2001:db8:0::1, 2001:db8:2::1"
+                }
+            ]
+        },
+        ...
+    ], <userinput>
+    "subnet6": [
+        {
+            "subnet": "2001:db8:1::/64",
+            "pools": [ { "pool": "2001:db8:1::-2001:db8:1::ffff" } ],
+            "client-class": "Client_enterprise"
+        }
+    ],</userinput>
+    ...
+}</screen>
+      </para>
+  </section>
+
+  <section>
+    <title>Using Classes</title>
+      <para>
+      Currently classes can be used for two functions.  They can supply options
+      to the members of the class and they can be used to choose a subnet from which an
+      address will be assigned to the class member.
+      </para>
+
+      <para>
+      When supplying options, options defined as part of the class definition
+      are considered &quot;class globals&quot;.  They will override any global options that
+      may be defined and in turn will be overridden by any options defined for an
+      individual subnet.
+      </para>
+  </section>
+
+  <section>
+    <title>Classes and Hooks</title>
+      <para>
+      You may use a hook to classify your packets. This may be useful if the
+      expression would either be complex or time consuming and be easier or
+      better to write as code.  Once the hook has added the proper class name
+      to the packet the rest of the classification system will work as normal
+      in choosing a subnet and selecting options.  For a description of the
+      hooks see <xref linkend="hooks-libraries"/>, for a description on
+      configuring he classes see <xref linkend="classification-configuring"/>
+      and <xref linkend="classification-subnets"/>.
+      </para>
+  </section>
+
+</chapter>
