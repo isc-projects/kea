@@ -182,19 +182,19 @@ TEST_F(ExpressionParserTest, validExpressionWithOptionName4) {
                               "hundred4");
 }
 
-// Verifies that given a valid expression using .hex operator for option, the
+// Verifies that given a valid expression using .bin operator for option, the
 // ExpressionParser produces an Expression which can be evaluated against
 // a v4 packet.
-TEST_F(ExpressionParserTest, validExpressionWithHex4) {
-    testValidExpression<Pkt4>(Option::V4, "\"option[12].hex == 0x68756E6472656434\"",
+TEST_F(ExpressionParserTest, validExpressionWithBin4) {
+    testValidExpression<Pkt4>(Option::V4, "\"option[12].bin == 0x68756E6472656434\"",
                               "hundred4");
 }
 
-// Verifies that the option name can be used together with .hex operator in
+// Verifies that the option name can be used together with .bin operator in
 // the evaluated expression.
-TEST_F(ExpressionParserTest, validExpressionWithOptionNameAndHex4) {
+TEST_F(ExpressionParserTest, validExpressionWithOptionNameAndBin4) {
     testValidExpression<Pkt6>(Option::V4,
-                              "\"option[host-name].text == 0x68756E6472656434\"",
+                              "\"option[host-name].bin == 0x68756E6472656434\"",
                               "hundred4");
 }
 
@@ -212,19 +212,19 @@ TEST_F(ExpressionParserTest, validExpressionWithOptionName6) {
                               "hundred6");
 }
 
-// Verifies that given a valid expression using .hex operator for option, the
+// Verifies that given a valid expression using .bin operator for option, the
 // ExpressionParser produces an Expression which can be evaluated against
 // a v6 packet.
-TEST_F(ExpressionParserTest, validExpressionWithHex6) {
-    testValidExpression<Pkt6>(Option::V6, "\"option[59].hex == 0x68756E6472656436\"",
+TEST_F(ExpressionParserTest, validExpressionWithBin6) {
+    testValidExpression<Pkt6>(Option::V6, "\"option[59].bin == 0x68756E6472656436\"",
                               "hundred6");
 }
 
-// Verifies that the option name can be used together with .hex operator in
+// Verifies that the option name can be used together with .bin operator in
 // the evaluated expression.
-TEST_F(ExpressionParserTest, validExpressionWithOptionNameAndHex6) {
+TEST_F(ExpressionParserTest, validExpressionWithOptionNameAndBin6) {
     testValidExpression<Pkt6>(Option::V6,
-                              "\"option[bootfile-url].text == 0x68756E6472656436\"",
+                              "\"option[bootfile-url].bin == 0x68756E6472656436\"",
                               "hundred6");
 }
 

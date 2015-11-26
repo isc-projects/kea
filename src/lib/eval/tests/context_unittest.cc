@@ -227,11 +227,11 @@ TEST_F(EvalContextTest, optionWithNameAndWhitespace) {
     checkTokenOption(eval.expression.at(0), 12);
 }
 
-// Test parsing of an option represented as hexadecimal string.
-TEST_F(EvalContextTest, optionHex) {
+// Test parsing of an option represented as binary string.
+TEST_F(EvalContextTest, optionBin) {
     EvalContext eval(Option::V4);
 
-    EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].hex == 0x666F6F"));
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].bin == 0x666F6F"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, eval.expression.size());
     checkTokenOption(eval.expression.at(0), 123);
@@ -292,6 +292,11 @@ TEST_F(EvalContextTest, scanParseErrors) {
                " expecting .");
     checkError("option[123].text < 'foo'", "<string>:1.18: Invalid"
                " character: <");
+    checkError("option[-ab].text", "<string>:1.8: Invalid character: -");
+    checkError("option[0ab].text",
+               "<string>:1.9-10: syntax error, unexpected option name, "
+               "expecting ]");
+    checkError("option[ab_].bin", "<string>:1.8: Invalid character: a");
     checkError("substring('foo',12345678901234567890,1)",
                "<string>:1.17-36: Failed to convert 12345678901234567890 "
                "to an integer.");
@@ -311,6 +316,10 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("option(10) == 'ab'",
                "<string>:1.7: syntax error, "
                "unexpected (, expecting [");
+    checkError("option['ab'].text == 'foo'",
+               "<string>:1.8-11: syntax error, "
+               "unexpected constant string, "
+               "expecting integer or option name");
     checkError("option[ab].text == 'foo'",
                "<string>:1.8-9: option 'ab' is not defined");
     checkError("option[0xa].text == 'ab'",

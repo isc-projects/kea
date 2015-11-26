@@ -1766,6 +1766,101 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     EXPECT_FALSE(opt3);
 }
 
+// Checks if client packets are classified properly using match expressions
+// using option names
+TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
+    NakedDhcpv4Srv srv(0);
+
+    // The router class matches incoming packets with foo in a host-name
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ], "
+        "\"client-classes\": [ "
+        "{   \"name\": \"router\", "
+        "    \"test\": \"option[host-name].text == 'foo'\" } ] }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V4, 12, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Classify packets
+    srv.classifyPacket(query);
+
+    // The queey should be in the router class
+    EXPECT_TRUE(query->inClass("router"));
+}
+
+// Checks if client packets are classified properly using match expressions
+// using option names and definitions
+TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
+    NakedDhcpv4Srv srv(0);
+
+    // The router class matches incoming packets with foo in a defined
+    // option
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ], "
+        "\"client-classes\": [ "
+        "{   \"name\": \"router\", "
+        "    \"test\": \"option[my-host-name].text == 'foo'\" } ], "
+        "\"option-def\": [ {"
+        "    \"name\": \"my-host-name\", "
+        "    \"code\": 250, "
+        "    \"type\": \"string\" } ] }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+
+    // Create and add a my-host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V4, 250, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Classify packets
+    srv.classifyPacket(query);
+
+    // The queey should be in the router class
+    EXPECT_TRUE(query->inClass("router"));
+}
+
 // Checks subnet options have the priority over class options
 TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
     IfaceMgrTestConfig test_config(true);
