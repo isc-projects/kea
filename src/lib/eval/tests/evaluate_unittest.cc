@@ -217,7 +217,7 @@ TEST_F(EvaluateTest, optionHex) {
 
     ASSERT_NO_THROW(toption.reset(new TokenOption(100, TokenOption::HEXADECIMAL)));
     e_.push_back(toption);
-    ASSERT_NO_THROW(tstring.reset(new TokenString("0x68756E6472656434")));
+    ASSERT_NO_THROW(tstring.reset(new TokenString("hundred4")));
     e_.push_back(tstring);
     ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
     e_.push_back(tequal);

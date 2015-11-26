@@ -16,8 +16,10 @@
 #define TOKEN_H
 
 #include <exceptions/exceptions.h>
+#include <dhcp/option.h>
 #include <dhcp/pkt.h>
 #include <stack>
+#include <string>
 
 namespace isc {
 namespace dhcp {
@@ -161,15 +163,23 @@ public:
     };
 
     /// @brief Constructor that takes an option code as a parameter
-    /// @param option_code code of the option
     ///
-    /// Note: There is no constructor that takes option_name, as it would
-    /// introduce complex dependency of the libkea-eval on libdhcpsrv.
-    ///
-    /// @param option_code code of the option to be represented.
+    /// @param option_code Code of the option to be represented.
     /// @param rep_type Token representation type.
     TokenOption(const uint16_t option_code, const RepresentationType& rep_type)
         : option_code_(option_code), representation_type_(rep_type) {}
+
+    /// @brief Constructor that takes option name as a parameter.
+    ///
+    /// This constructor will throw exception if there is no definition using
+    /// specified option name in libdhcp++.
+    ///
+    /// @param option_name Name of the option to be represented.
+    /// @param option_universe Option universe: DHCPv4 or DHCPv6.
+    /// @param rep_type Token representation type.
+    TokenOption(const std::string& option_name,
+                const Option::Universe& option_universe,
+                const RepresentationType& rep_type);
 
     /// @brief Evaluates the values of the option
     ///
