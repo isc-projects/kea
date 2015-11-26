@@ -643,7 +643,7 @@ namespace isc { namespace eval {
 #line 134 "parser.yy" // lalr1.cc:859
     {
                       uint16_t numeric_code = convert_option_code(yystack_[3].value.as< std::string > (), yystack_[3].location, ctx);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
+                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::BINARY));
                       ctx.expression.push_back(opt);
                   }
 #line 650 "parser.cc" // lalr1.cc:859
@@ -659,7 +659,7 @@ namespace isc { namespace eval {
                                                        TokenOption::TEXTUAL));
                           ctx.expression.push_back(opt);
 
-                      } catch (const std::exception& ex) {
+                      } catch (const isc::BadValue& ex) {
                           ctx.error(yystack_[3].location, ex.what());
                       }
                   }
@@ -673,10 +673,10 @@ namespace isc { namespace eval {
                           // This may result in exception if the specified
                           // name is unknown.
                           TokenPtr opt(new TokenOption(yystack_[3].value.as< std::string > (), option_universe,
-                                                       TokenOption::HEXADECIMAL));
+                                                       TokenOption::BINARY));
                           ctx.expression.push_back(opt);
 
-                      } catch (const std::exception& ex) {
+                      } catch (const isc::BadValue& ex) {
                           ctx.error(yystack_[3].location, ex.what());
                       }
                   }
@@ -1058,7 +1058,7 @@ namespace isc { namespace eval {
   const EvalParser::yytname_[] =
   {
   "\"end of file\"", "error", "$undefined", "\"==\"", "\"option\"",
-  "\"substring\"", "\"text\"", "\"hex\"", "\"all\"", "\".\"", "\",\"",
+  "\"substring\"", "\"text\"", "\"bin\"", "\"all\"", "\".\"", "\",\"",
   "\"(\"", "\")\"", "\"[\"", "\"]\"", "\"constant string\"", "\"integer\"",
   "\"constant hexstring\"", "\"option name\"", "TOKEN", "$accept",
   "expression", "bool_expr", "string_expr", "start_expr", "length_expr", YY_NULLPTR

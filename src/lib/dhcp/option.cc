@@ -229,7 +229,7 @@ Option::toBinary(const bool include_header) {
         pack(buf);
 
     } catch (const std::exception &ex) {
-        isc_throw(OutOfRange, "unable to obtain hexadecimal representation"
+        isc_throw(OutOfRange, "unable to obtain binary representation"
                   " of option " << getType() << ": " << ex.what());
     }
     const uint8_t* option_data = static_cast<const uint8_t*>(buf.getData());

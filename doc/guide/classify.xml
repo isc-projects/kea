@@ -161,7 +161,7 @@
 <row><entry>Hex String</entry><entry>0XABCD</entry><entry>A hexadecimal string</entry></row>
 <row><entry>Integer</entry><entry>123</entry><entry>An integer value</entry></row>
 <row><entry>Option Text</entry><entry>option[code].text</entry><entry>The value of the option with code "code" from the packet as text</entry></row>
-<row><entry>Option Hex</entry><entry>option[code].hex</entry><entry>The value of the option with code "code" from the packet as hex</entry></row>
+<row><entry>Option Bin</entry><entry>option[code].bin</entry><entry>The value of the option with code "code" from the packet as binary</entry></row>
           </tbody>
           </tgroup>
         </table>
@@ -178,8 +178,8 @@
       <para>
       "option[code]" extracts the value of the option with the given code
       from the incoming packet. If the packet doesn't contain the option, it
-      returns the empty string.  The string can be presented as text or hex
-      with the ".text" or ".hex" modifiers.  In both cases only the payload
+      returns the empty string.  The string can be presented as text or binary
+      with the ".text" or ".bin" modifiers.  In both cases only the payload
       is presented; the type code and length fields are not included.
       </para>
 
@@ -297,7 +297,7 @@
     "client-classes": [<userinput>
         {
             "name": "Client_enterprise",
-            "test": "substring(option[2].hex,0,6) == 0x0002AABBCCDD'",
+            "test": "substring(option[2].bin,0,6) == 0x0002AABBCCDD'",
             "option-data": [
                 {
                     "name": "dns-servers",
@@ -370,7 +370,7 @@
     "client-classes": [
         {
             "name": "Client_enterprise",
-            "test": "substring(option[2].hex,0,6) == 0x0002AABBCCDD'",
+            "test": "substring(option[2].bin,0,6) == 0x0002AABBCCDD'",
             "option-data": [
                 {
                     "name": "dns-servers",

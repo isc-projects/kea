@@ -93,7 +93,10 @@ TokenOption::evaluate(const Pkt& pkt, ValueStack& values) {
             opt_str = opt->toString();
         } else {
             std::vector<uint8_t> binary = opt->toBinary();
-            opt_str.assign(binary.begin(), binary.end());
+            opt_str.resize(binary.size());
+            if (!binary.empty()) {
+                memmove(&opt_str[0], &binary[0], binary.size());
+            }
         }
     }
 
