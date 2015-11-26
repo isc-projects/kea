@@ -1432,38 +1432,6 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayInterfaceId) {
     EXPECT_EQ(subnet2, srv.selectSubnet(pkt));
 }
 
-// This test verifies if the server-id disk operations (read, write) are
-// working properly.
-TEST_F(Dhcpv6SrvTest, ServerID) {
-    NakedDhcpv6Srv srv(0);
-
-    string duid1_text = "01:ff:02:03:06:80:90:ab:cd:ef";
-    uint8_t duid1[] = { 0x01, 0xff, 2, 3, 6, 0x80, 0x90, 0xab, 0xcd, 0xef };
-    OptionBuffer expected_duid1(duid1, duid1 + sizeof(duid1));
-
-    fstream file1(DUID_FILE, ios::out | ios::trunc);
-    file1 << duid1_text;
-    file1.close();
-
-    // Test reading from a file
-    EXPECT_TRUE(srv.loadServerID(DUID_FILE));
-    ASSERT_TRUE(srv.getServerID());
-    ASSERT_EQ(sizeof(duid1) + Option::OPTION6_HDR_LEN, srv.getServerID()->len());
-    ASSERT_TRUE(expected_duid1 == srv.getServerID()->getData());
-
-    // Now test writing to a file
-    EXPECT_EQ(0, remove(DUID_FILE));
-    EXPECT_NO_THROW(srv.writeServerID(DUID_FILE));
-
-    fstream file2(DUID_FILE, ios::in);
-    ASSERT_TRUE(file2.good());
-    string text;
-    file2 >> text;
-    file2.close();
-
-    EXPECT_EQ(duid1_text, text);
-}
-
 // Checks if server responses are sent to the proper port.
 TEST_F(Dhcpv6SrvTest, portsDirectTraffic) {
 

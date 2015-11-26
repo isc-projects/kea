@@ -31,7 +31,7 @@ SrvConfig::SrvConfig()
       cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
-      cfg_expiration_(new CfgExpiration()),
+      cfg_expiration_(new CfgExpiration()), cfg_duid_(new CfgDUID()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0) {
 }
@@ -41,7 +41,7 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
-      cfg_expiration_(new CfgExpiration()),
+      cfg_expiration_(new CfgExpiration()), cfg_duid_(new CfgDUID()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0) {
 }
