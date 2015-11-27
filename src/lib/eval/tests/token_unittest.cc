@@ -325,14 +325,14 @@ TEST_F(TokenTest, optionWithNameString4) {
 
 // This test checks if a token representing option value is able to extract
 // the option from an IPv4 packet and properly store its value in a
-// binary format.
-TEST_F(TokenTest, optionBinString4) {
+// hexadecimal format.
+TEST_F(TokenTest, optionHexString4) {
     TokenPtr found;
     TokenPtr not_found;
 
     // The packets we use have option 100 with a string in them.
-    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::BINARY)));
-    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::BINARY)));
+    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::HEXADECIMAL)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::HEXADECIMAL)));
 
     // This should evaluate to the content of the option 100 (i.e. "hundred4")
     ASSERT_NO_THROW(found->evaluate(*pkt4_, values_));
@@ -354,8 +354,8 @@ TEST_F(TokenTest, optionBinString4) {
 
 // This test checks if a token representing an option identified by name is
 // able to extract this option from an IPv4 packet and properly store its
-// value in the binary format.
-TEST_F(TokenTest, optionWithNameBinString4) {
+// value in the hexadecimal format.
+TEST_F(TokenTest, optionWithNameHexString4) {
     // Create definition of option 100 to provide a mapping between option
     // code and option name.
     ASSERT_NO_THROW(createOptionDefinitions4());
@@ -364,7 +364,7 @@ TEST_F(TokenTest, optionWithNameBinString4) {
     // map the option name to its code.
     TokenPtr token;
     ASSERT_NO_THROW(token.reset(new TokenOption("name-hundred4", Option::V4,
-                                                TokenOption::BINARY)));
+                                                TokenOption::HEXADECIMAL)));
 
     // Evaluate option in the packet.
     ASSERT_NO_THROW(token->evaluate(*pkt4_, values_));
@@ -426,15 +426,15 @@ TEST_F(TokenTest, optionWithNameString6) {
 
 
 // This test checks if a token representing an option value is able to extract
-// the option from an IPv6 packet and properly store its value in binary
+// the option from an IPv6 packet and properly store its value in hexadecimal
 // format.
-TEST_F(TokenTest, optionBinString6) {
+TEST_F(TokenTest, optionHexString6) {
     TokenPtr found;
     TokenPtr not_found;
 
     // The packets we use have option 100 with a string in them.
-    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::BINARY)));
-    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::BINARY)));
+    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::HEXADECIMAL)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::HEXADECIMAL)));
 
     // This should evaluate to the content of the option 100 (i.e. "hundred6")
     ASSERT_NO_THROW(found->evaluate(*pkt6_, values_));
@@ -456,8 +456,8 @@ TEST_F(TokenTest, optionBinString6) {
 
 // This test checks if a token representing an option identified by name is
 // able to extract this option from an IPv6 packet and properly store its
-// value in the binary format.
-TEST_F(TokenTest, optionWithNameBinString6) {
+// value in the hexadecimal format.
+TEST_F(TokenTest, optionWithNameHexString6) {
     // Create definition of option 100 to provide a mapping between option
     // code and option name.
     ASSERT_NO_THROW(createOptionDefinitions6());
@@ -466,7 +466,7 @@ TEST_F(TokenTest, optionWithNameBinString6) {
     // map the option name to its code.
     TokenPtr token;
     ASSERT_NO_THROW(token.reset(new TokenOption("name-hundred6", Option::V6,
-                                                TokenOption::BINARY)));
+                                                TokenOption::HEXADECIMAL)));
 
     // Evaluate option in the packet.
     ASSERT_NO_THROW(token->evaluate(*pkt6_, values_));
