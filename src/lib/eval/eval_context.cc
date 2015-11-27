@@ -22,8 +22,8 @@
 #include <fstream>
 
 EvalContext::EvalContext(const Option::Universe& option_universe)
-  : option_universe_(option_universe),
-    trace_scanning_(false), trace_parsing_(false)
+  : trace_scanning_(false), trace_parsing_(false),
+    option_universe_(option_universe)
 {
 }
 
