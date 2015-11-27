@@ -104,18 +104,18 @@ public:
     uint16_t convert_option_name(const std::string& option_name,
                                  const isc::eval::location& loc);
 
-    /// @brief Option universe: DHCPv4 or DHCPv6.
-    ///
-    /// This is used by the parser to determine which option definitions
-    /// set should be used to map option name to option code.
-    Option::Universe option_universe_;
-
  private:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
 
     /// @brief Flag determing parser debugging.
     bool trace_parsing_;
+
+    /// @brief Option universe: DHCPv4 or DHCPv6.
+    ///
+    /// This is used by the parser to determine which option definitions
+    /// set should be used to map option name to option code.
+    Option::Universe option_universe_;
 
 };
 
