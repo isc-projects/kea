@@ -66,41 +66,6 @@ using namespace isc::eval;
 
 %printer { yyoutput << $$; } <*>;
 
-%code
-{
-namespace {
-
-/* Convert option code specified as string to an 16 bit unsigned
-   representation. If the option code is not within the range of
-   0..65535 an error is reported. */
-uint16_t
-convert_option_code(const std::string& option_code,
-                    const isc::eval::EvalParser::location_type& loc,
-                    EvalContext& ctx) {
-    int n = 0;
-    try {
-        n  = boost::lexical_cast<int>(option_code);
-    } catch (const boost::bad_lexical_cast &) {
-        // This can't happen...
-        ctx.error(loc, "Option code has invalid value in " + option_code);
-    }
-    if (ctx.option_universe_ == Option::V6) {
-        if (n < 0 || n > 65535) {
-            ctx.error(loc, "Option code has invalid value in "
-                          + option_code + ". Allowed range: 0..65535");
-        }
-    } else {
-        if (n < 0 || n > 255) {
-            ctx.error(loc, "Option code has invalid value in "
-                          + option_code + ". Allowed range: 0..255");
-        }
-    }
-    return (static_cast<uint16_t>(n));
-}
-}
-
-}
-
 %%
 
 // The whole grammar starts with an expression.
@@ -130,13 +95,13 @@ string_expr : STRING
                   }
             | OPTION "[" INTEGER "]" DOT TEXT
                   {
-                      uint16_t numeric_code = convert_option_code($3, @3, ctx);
+                      uint16_t numeric_code = ctx.convert_option_code($3, @3);
                       TokenPtr opt(new TokenOption(numeric_code, TokenOption::TEXTUAL));
                       ctx.expression.push_back(opt);
                   }
             | OPTION "[" INTEGER "]" DOT HEX
                   {
-                      uint16_t numeric_code = convert_option_code($3, @3, ctx);
+                      uint16_t numeric_code = ctx.convert_option_code($3, @3);
                       TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
                       ctx.expression.push_back(opt);
                   }

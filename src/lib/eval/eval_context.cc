@@ -52,3 +52,29 @@ EvalContext::error (const std::string& what)
 {
     isc_throw(EvalParseError, what);
 }
+
+uint16_t
+EvalContext::convert_option_code(const std::string& option_code,
+                                 const isc::eval::location& loc)
+{
+    int n = 0;
+    try {
+        n  = boost::lexical_cast<int>(option_code);
+    } catch (const boost::bad_lexical_cast &) {
+        // This can't happen...
+        error(loc, "Option code has invalid value in " + option_code);
+    }
+    if (option_universe_ == Option::V6) {
+        if (n < 0 || n > 65535) {
+            error(loc, "Option code has invalid value in "
+                      + option_code + ". Allowed range: 0..65535");
+        }
+    } else {
+        if (n < 0 || n > 255) {
+            error(loc, "Option code has invalid value in "
+                      + option_code + ". Allowed range: 0..255");
+        }
+    }
+    return (static_cast<uint16_t>(n));
+}
+
