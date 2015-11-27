@@ -120,7 +120,7 @@ blank [ \t]
     return isc::eval::EvalParser::make_INTEGER(tmp, loc);
 }
 
-[A-Za-z]([-_A-Za-z0-9]*[A-Za-z0-9])?/{blank}*] {
+[A-Za-z]([-_A-Za-z0-9]*[A-Za-z0-9])?/({blank}|\n)*] {
     // This string specifies option name starting with a letter
     // and further containing letters, digits, hyphens and
     // underscores and finishing by letters or digits.

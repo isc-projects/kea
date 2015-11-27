@@ -227,6 +227,18 @@ TEST_F(EvalContextTest, optionWithNameAndWhitespace) {
     checkTokenOption(eval.expression.at(0), 12);
 }
 
+// Test checking that newlines can surround option name.
+TEST_F(EvalContextTest, optionWithNameAndNewline) {
+    EvalContext eval(Option::V4);
+
+    // Option 'host-name' is a standard DHCPv4 option defined in the libdhcp++.
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("option[\n host-name \n ].text == \n'foo'"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, eval.expression.size());
+    checkTokenOption(eval.expression.at(0), 12);
+}
+
 // Test parsing of an option represented as hexadecimal string.
 TEST_F(EvalContextTest, optionHex) {
     EvalContext eval(Option::V4);
@@ -297,6 +309,8 @@ TEST_F(EvalContextTest, scanParseErrors) {
                "<string>:1.9-10: syntax error, unexpected option name, "
                "expecting ]");
     checkError("option[ab_].hex", "<string>:1.8: Invalid character: a");
+    checkError("option[\nhost-name\n].hex =\n= 'foo'",
+               "<string>:3.7: Invalid character: =");
     checkError("substring('foo',12345678901234567890,1)",
                "<string>:1.17-36: Failed to convert 12345678901234567890 "
                "to an integer.");
