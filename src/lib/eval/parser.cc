@@ -625,77 +625,61 @@ namespace isc { namespace eval {
   case 8:
 #line 109 "parser.yy" // lalr1.cc:859
     {
-                      try {
-                          // This may result in exception if the specified
-                          // name is unknown.
-                          TokenPtr opt(new TokenOption(yystack_[3].value.as< std::string > (),
-                                                       ctx.option_universe_,
-                                                       TokenOption::TEXTUAL));
-                          ctx.expression.push_back(opt);
-
-                      } catch (const isc::BadValue& ex) {
-                          ctx.error(yystack_[3].location, ex.what());
-                      }
+                      uint16_t numeric_code = ctx.convert_option_name(yystack_[3].value.as< std::string > (), yystack_[3].location);
+                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::TEXTUAL));
+                      ctx.expression.push_back(opt);
                   }
-#line 641 "parser.cc" // lalr1.cc:859
+#line 633 "parser.cc" // lalr1.cc:859
     break;
 
   case 9:
-#line 123 "parser.yy" // lalr1.cc:859
+#line 115 "parser.yy" // lalr1.cc:859
     {
-                      try {
-                          // This may result in exception if the specified
-                          // name is unknown.
-                          TokenPtr opt(new TokenOption(yystack_[3].value.as< std::string > (),
-                                                       ctx.option_universe_,
-                                                       TokenOption::HEXADECIMAL));
-                          ctx.expression.push_back(opt);
-
-                      } catch (const isc::BadValue& ex) {
-                          ctx.error(yystack_[3].location, ex.what());
-                      }
+                      uint16_t numeric_code = ctx.convert_option_name(yystack_[3].value.as< std::string > (), yystack_[3].location);
+                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
+                      ctx.expression.push_back(opt);
                   }
-#line 659 "parser.cc" // lalr1.cc:859
+#line 643 "parser.cc" // lalr1.cc:859
     break;
 
   case 10:
-#line 137 "parser.yy" // lalr1.cc:859
+#line 121 "parser.yy" // lalr1.cc:859
     {
                       TokenPtr sub(new TokenSubstring());
                       ctx.expression.push_back(sub);
                   }
-#line 668 "parser.cc" // lalr1.cc:859
+#line 652 "parser.cc" // lalr1.cc:859
     break;
 
   case 12:
-#line 146 "parser.yy" // lalr1.cc:859
+#line 130 "parser.yy" // lalr1.cc:859
     {
                      TokenPtr str(new TokenString(yystack_[0].value.as< std::string > ()));
                      ctx.expression.push_back(str);
                  }
-#line 677 "parser.cc" // lalr1.cc:859
+#line 661 "parser.cc" // lalr1.cc:859
     break;
 
   case 13:
-#line 153 "parser.yy" // lalr1.cc:859
+#line 137 "parser.yy" // lalr1.cc:859
     {
                       TokenPtr str(new TokenString(yystack_[0].value.as< std::string > ()));
                       ctx.expression.push_back(str);
                   }
-#line 686 "parser.cc" // lalr1.cc:859
+#line 670 "parser.cc" // lalr1.cc:859
     break;
 
   case 14:
-#line 158 "parser.yy" // lalr1.cc:859
+#line 142 "parser.yy" // lalr1.cc:859
     {
                      TokenPtr str(new TokenString("all"));
                      ctx.expression.push_back(str);
                  }
-#line 695 "parser.cc" // lalr1.cc:859
+#line 679 "parser.cc" // lalr1.cc:859
     break;
 
 
-#line 699 "parser.cc" // lalr1.cc:859
+#line 683 "parser.cc" // lalr1.cc:859
             default:
               break;
             }
@@ -1043,8 +1027,8 @@ namespace isc { namespace eval {
   const unsigned char
   EvalParser::yyrline_[] =
   {
-       0,    76,    76,    79,    86,    91,    96,   102,   108,   122,
-     136,   141,   145,   152,   157
+       0,    76,    76,    79,    86,    91,    96,   102,   108,   114,
+     120,   125,   129,   136,   141
   };
 
   // Print the state stack on the debug stream.
@@ -1079,8 +1063,8 @@ namespace isc { namespace eval {
 
 #line 21 "parser.yy" // lalr1.cc:1167
 } } // isc::eval
-#line 1083 "parser.cc" // lalr1.cc:1167
-#line 164 "parser.yy" // lalr1.cc:1168
+#line 1067 "parser.cc" // lalr1.cc:1167
+#line 148 "parser.yy" // lalr1.cc:1168
 
 void
 isc::eval::EvalParser::error(const location_type& loc,

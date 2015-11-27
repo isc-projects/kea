@@ -107,31 +107,15 @@ string_expr : STRING
                   }
             | OPTION "[" OPTION_NAME "]" DOT TEXT
                   {
-                      try {
-                          // This may result in exception if the specified
-                          // name is unknown.
-                          TokenPtr opt(new TokenOption($3,
-                                                       ctx.option_universe_,
-                                                       TokenOption::TEXTUAL));
-                          ctx.expression.push_back(opt);
-
-                      } catch (const isc::BadValue& ex) {
-                          ctx.error(@3, ex.what());
-                      }
+                      uint16_t numeric_code = ctx.convert_option_name($3, @3);
+                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::TEXTUAL));
+                      ctx.expression.push_back(opt);
                   }
             | OPTION "[" OPTION_NAME "]" DOT HEX
                   {
-                      try {
-                          // This may result in exception if the specified
-                          // name is unknown.
-                          TokenPtr opt(new TokenOption($3,
-                                                       ctx.option_universe_,
-                                                       TokenOption::HEXADECIMAL));
-                          ctx.expression.push_back(opt);
-
-                      } catch (const isc::BadValue& ex) {
-                          ctx.error(@3, ex.what());
-                      }
+                      uint16_t numeric_code = ctx.convert_option_name($3, @3);
+                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
+                      ctx.expression.push_back(opt);
                   }
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
                   {
