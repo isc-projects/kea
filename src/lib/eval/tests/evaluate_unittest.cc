@@ -209,13 +209,13 @@ TEST_F(EvaluateTest, packet) {
     EXPECT_FALSE(result_);
 }
 
-// A test which compares option value represented in binary format.
+// A test which compares option value represented in hexadecimal format.
 TEST_F(EvaluateTest, optionHex) {
     TokenPtr toption;
     TokenPtr tstring;
     TokenPtr tequal;
 
-    ASSERT_NO_THROW(toption.reset(new TokenOption(100, TokenOption::BINARY)));
+    ASSERT_NO_THROW(toption.reset(new TokenOption(100, TokenOption::HEXADECIMAL)));
     e_.push_back(toption);
     ASSERT_NO_THROW(tstring.reset(new TokenString("hundred4")));
     e_.push_back(tstring);
