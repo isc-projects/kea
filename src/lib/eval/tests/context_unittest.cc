@@ -326,6 +326,8 @@ TEST_F(EvalContextTest, parseErrors) {
                "<string>:1.8-10: syntax error, "
                "unexpected constant hexstring, "
                "expecting integer or option name");
+    checkError("option[10].bin", "<string>:1.12: Invalid character: b");
+    checkError("option[boot-size].bin", "<string>:1.19: Invalid character: b");
     checkError("substring('foobar') == 'f'",
                "<string>:1.19: syntax error, "
                "unexpected ), expecting \",\"");
