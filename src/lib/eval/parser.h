@@ -295,12 +295,18 @@ namespace isc { namespace eval {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
+      // option_repr_type
+      char dummy1[sizeof(TokenOption::RepresentationType)];
+
       // "constant string"
       // "integer"
       // "constant hexstring"
       // "option name"
       // TOKEN
-      char dummy1[sizeof(std::string)];
+      char dummy2[sizeof(std::string)];
+
+      // option_code
+      char dummy3[sizeof(uint16_t)];
 };
 
     /// Symbol semantic values.
@@ -378,7 +384,11 @@ namespace isc { namespace eval {
 
   basic_symbol (typename Base::kind_type t, const location_type& l);
 
+  basic_symbol (typename Base::kind_type t, const TokenOption::RepresentationType v, const location_type& l);
+
   basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const uint16_t v, const location_type& l);
 
 
       /// Constructor for symbols with semantic value.
@@ -724,8 +734,8 @@ namespace isc { namespace eval {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 31,     ///< Last index in yytable_.
-      yynnts_ = 6,  ///< Number of nonterminal symbols.
+      yylast_ = 24,     ///< Last index in yytable_.
+      yynnts_ = 8,  ///< Number of nonterminal symbols.
       yyfinal_ = 11, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
@@ -808,12 +818,20 @@ namespace isc { namespace eval {
   {
       switch (other.type_get ())
     {
+      case 25: // option_repr_type
+        value.copy< TokenOption::RepresentationType > (other.value);
+        break;
+
       case 15: // "constant string"
       case 16: // "integer"
       case 17: // "constant hexstring"
       case 18: // "option name"
       case 19: // TOKEN
         value.copy< std::string > (other.value);
+        break;
+
+      case 24: // option_code
+        value.copy< uint16_t > (other.value);
         break;
 
       default:
@@ -833,12 +851,20 @@ namespace isc { namespace eval {
     (void) v;
       switch (this->type_get ())
     {
+      case 25: // option_repr_type
+        value.copy< TokenOption::RepresentationType > (v);
+        break;
+
       case 15: // "constant string"
       case 16: // "integer"
       case 17: // "constant hexstring"
       case 18: // "option name"
       case 19: // TOKEN
         value.copy< std::string > (v);
+        break;
+
+      case 24: // option_code
+        value.copy< uint16_t > (v);
         break;
 
       default:
@@ -857,7 +883,21 @@ namespace isc { namespace eval {
   {}
 
   template <typename Base>
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const TokenOption::RepresentationType v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
   EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const uint16_t v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
@@ -889,12 +929,20 @@ namespace isc { namespace eval {
     // Type destructor.
     switch (yytype)
     {
+      case 25: // option_repr_type
+        value.template destroy< TokenOption::RepresentationType > ();
+        break;
+
       case 15: // "constant string"
       case 16: // "integer"
       case 17: // "constant hexstring"
       case 18: // "option name"
       case 19: // TOKEN
         value.template destroy< std::string > ();
+        break;
+
+      case 24: // option_code
+        value.template destroy< uint16_t > ();
         break;
 
       default:
@@ -920,12 +968,20 @@ namespace isc { namespace eval {
     super_type::move(s);
       switch (this->type_get ())
     {
+      case 25: // option_repr_type
+        value.move< TokenOption::RepresentationType > (s.value);
+        break;
+
       case 15: // "constant string"
       case 16: // "integer"
       case 17: // "constant hexstring"
       case 18: // "option name"
       case 19: // TOKEN
         value.move< std::string > (s.value);
+        break;
+
+      case 24: // option_code
+        value.move< uint16_t > (s.value);
         break;
 
       default:
@@ -1100,7 +1156,7 @@ namespace isc { namespace eval {
 
 #line 21 "parser.yy" // lalr1.cc:392
 } } // isc::eval
-#line 1104 "parser.h" // lalr1.cc:392
+#line 1160 "parser.h" // lalr1.cc:392
 
 
 

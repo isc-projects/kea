@@ -64,6 +64,9 @@ using namespace isc::eval;
 %token <std::string> OPTION_NAME "option name"
 %token <std::string> TOKEN
 
+%type <uint16_t> option_code
+%type <TokenOption::RepresentationType> option_repr_type
+
 %printer { yyoutput << $$; } <*>;
 
 %%
@@ -93,28 +96,9 @@ string_expr : STRING
                       TokenPtr hex(new TokenHexString($1));
                       ctx.expression.push_back(hex);
                   }
-            | OPTION "[" INTEGER "]" DOT TEXT
+            | OPTION "[" option_code "]" "." option_repr_type
                   {
-                      uint16_t numeric_code = ctx.convert_option_code($3, @3);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::TEXTUAL));
-                      ctx.expression.push_back(opt);
-                  }
-            | OPTION "[" INTEGER "]" DOT HEX
-                  {
-                      uint16_t numeric_code = ctx.convert_option_code($3, @3);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
-                      ctx.expression.push_back(opt);
-                  }
-            | OPTION "[" OPTION_NAME "]" DOT TEXT
-                  {
-                      uint16_t numeric_code = ctx.convert_option_name($3, @3);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::TEXTUAL));
-                      ctx.expression.push_back(opt);
-                  }
-            | OPTION "[" OPTION_NAME "]" DOT HEX
-                  {
-                      uint16_t numeric_code = ctx.convert_option_name($3, @3);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
+                      TokenPtr opt(new TokenOption($3, $6));
                       ctx.expression.push_back(opt);
                   }
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
@@ -125,6 +109,26 @@ string_expr : STRING
             | TOKEN
                 // Temporary unused token to avoid explict but long errors
             ;
+
+option_code : INTEGER
+                 {
+                     $$ = ctx.convert_option_code($1, @1);
+                 }
+            | OPTION_NAME
+                 {
+                     $$ = ctx.convert_option_name($1, @1);
+                 }
+            ;
+
+option_repr_type : TEXT
+                      {
+                          $$ = TokenOption::TEXTUAL;
+                      }
+                 | HEX
+                      {
+                          $$ = TokenOption::HEXADECIMAL;
+                      }
+                 ;
 
 start_expr : INTEGER
                  {

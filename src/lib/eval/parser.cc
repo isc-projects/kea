@@ -251,12 +251,20 @@ namespace isc { namespace eval {
   {
       switch (that.type_get ())
     {
+      case 25: // option_repr_type
+        value.move< TokenOption::RepresentationType > (that.value);
+        break;
+
       case 15: // "constant string"
       case 16: // "integer"
       case 17: // "constant hexstring"
       case 18: // "option name"
       case 19: // TOKEN
         value.move< std::string > (that.value);
+        break;
+
+      case 24: // option_code
+        value.move< uint16_t > (that.value);
         break;
 
       default:
@@ -274,12 +282,20 @@ namespace isc { namespace eval {
     state = that.state;
       switch (that.type_get ())
     {
+      case 25: // option_repr_type
+        value.copy< TokenOption::RepresentationType > (that.value);
+        break;
+
       case 15: // "constant string"
       case 16: // "integer"
       case 17: // "constant hexstring"
       case 18: // "option name"
       case 19: // TOKEN
         value.copy< std::string > (that.value);
+        break;
+
+      case 24: // option_code
+        value.copy< uint16_t > (that.value);
         break;
 
       default:
@@ -320,37 +336,51 @@ namespace isc { namespace eval {
     {
             case 15: // "constant string"
 
-#line 67 "parser.yy" // lalr1.cc:636
+#line 70 "parser.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 326 "parser.cc" // lalr1.cc:636
+#line 342 "parser.cc" // lalr1.cc:636
         break;
 
       case 16: // "integer"
 
-#line 67 "parser.yy" // lalr1.cc:636
+#line 70 "parser.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 333 "parser.cc" // lalr1.cc:636
+#line 349 "parser.cc" // lalr1.cc:636
         break;
 
       case 17: // "constant hexstring"
 
-#line 67 "parser.yy" // lalr1.cc:636
+#line 70 "parser.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 340 "parser.cc" // lalr1.cc:636
+#line 356 "parser.cc" // lalr1.cc:636
         break;
 
       case 18: // "option name"
 
-#line 67 "parser.yy" // lalr1.cc:636
+#line 70 "parser.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 347 "parser.cc" // lalr1.cc:636
+#line 363 "parser.cc" // lalr1.cc:636
         break;
 
       case 19: // TOKEN
 
-#line 67 "parser.yy" // lalr1.cc:636
+#line 70 "parser.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 354 "parser.cc" // lalr1.cc:636
+#line 370 "parser.cc" // lalr1.cc:636
+        break;
+
+      case 24: // option_code
+
+#line 70 "parser.yy" // lalr1.cc:636
+        { yyoutput << yysym.value.template as< uint16_t > (); }
+#line 377 "parser.cc" // lalr1.cc:636
+        break;
+
+      case 25: // option_repr_type
+
+#line 70 "parser.yy" // lalr1.cc:636
+        { yyoutput << yysym.value.template as< TokenOption::RepresentationType > (); }
+#line 384 "parser.cc" // lalr1.cc:636
         break;
 
 
@@ -550,12 +580,20 @@ namespace isc { namespace eval {
          when using variants.  */
         switch (yyr1_[yyn])
     {
+      case 25: // option_repr_type
+        yylhs.value.build< TokenOption::RepresentationType > ();
+        break;
+
       case 15: // "constant string"
       case 16: // "integer"
       case 17: // "constant hexstring"
       case 18: // "option name"
       case 19: // TOKEN
         yylhs.value.build< std::string > ();
+        break;
+
+      case 24: // option_code
+        yylhs.value.build< uint16_t > ();
         break;
 
       default:
@@ -576,110 +614,111 @@ namespace isc { namespace eval {
           switch (yyn)
             {
   case 3:
-#line 80 "parser.yy" // lalr1.cc:859
+#line 83 "parser.yy" // lalr1.cc:859
     {
                     TokenPtr eq(new TokenEqual());
                     ctx.expression.push_back(eq);
                 }
-#line 585 "parser.cc" // lalr1.cc:859
+#line 623 "parser.cc" // lalr1.cc:859
     break;
 
   case 4:
-#line 87 "parser.yy" // lalr1.cc:859
+#line 90 "parser.yy" // lalr1.cc:859
     {
                       TokenPtr str(new TokenString(yystack_[0].value.as< std::string > ()));
                       ctx.expression.push_back(str);
                   }
-#line 594 "parser.cc" // lalr1.cc:859
+#line 632 "parser.cc" // lalr1.cc:859
     break;
 
   case 5:
-#line 92 "parser.yy" // lalr1.cc:859
+#line 95 "parser.yy" // lalr1.cc:859
     {
                       TokenPtr hex(new TokenHexString(yystack_[0].value.as< std::string > ()));
                       ctx.expression.push_back(hex);
                   }
-#line 603 "parser.cc" // lalr1.cc:859
+#line 641 "parser.cc" // lalr1.cc:859
     break;
 
   case 6:
-#line 97 "parser.yy" // lalr1.cc:859
+#line 100 "parser.yy" // lalr1.cc:859
     {
-                      uint16_t numeric_code = ctx.convert_option_code(yystack_[3].value.as< std::string > (), yystack_[3].location);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::TEXTUAL));
+                      TokenPtr opt(new TokenOption(yystack_[3].value.as< uint16_t > (), yystack_[0].value.as< TokenOption::RepresentationType > ()));
                       ctx.expression.push_back(opt);
                   }
-#line 613 "parser.cc" // lalr1.cc:859
+#line 650 "parser.cc" // lalr1.cc:859
     break;
 
   case 7:
-#line 103 "parser.yy" // lalr1.cc:859
-    {
-                      uint16_t numeric_code = ctx.convert_option_code(yystack_[3].value.as< std::string > (), yystack_[3].location);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
-                      ctx.expression.push_back(opt);
-                  }
-#line 623 "parser.cc" // lalr1.cc:859
-    break;
-
-  case 8:
-#line 109 "parser.yy" // lalr1.cc:859
-    {
-                      uint16_t numeric_code = ctx.convert_option_name(yystack_[3].value.as< std::string > (), yystack_[3].location);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::TEXTUAL));
-                      ctx.expression.push_back(opt);
-                  }
-#line 633 "parser.cc" // lalr1.cc:859
-    break;
-
-  case 9:
-#line 115 "parser.yy" // lalr1.cc:859
-    {
-                      uint16_t numeric_code = ctx.convert_option_name(yystack_[3].value.as< std::string > (), yystack_[3].location);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
-                      ctx.expression.push_back(opt);
-                  }
-#line 643 "parser.cc" // lalr1.cc:859
-    break;
-
-  case 10:
-#line 121 "parser.yy" // lalr1.cc:859
+#line 105 "parser.yy" // lalr1.cc:859
     {
                       TokenPtr sub(new TokenSubstring());
                       ctx.expression.push_back(sub);
                   }
-#line 652 "parser.cc" // lalr1.cc:859
+#line 659 "parser.cc" // lalr1.cc:859
+    break;
+
+  case 9:
+#line 114 "parser.yy" // lalr1.cc:859
+    {
+                     yylhs.value.as< uint16_t > () = ctx.convert_option_code(yystack_[0].value.as< std::string > (), yystack_[0].location);
+                 }
+#line 667 "parser.cc" // lalr1.cc:859
+    break;
+
+  case 10:
+#line 118 "parser.yy" // lalr1.cc:859
+    {
+                     yylhs.value.as< uint16_t > () = ctx.convert_option_name(yystack_[0].value.as< std::string > (), yystack_[0].location);
+                 }
+#line 675 "parser.cc" // lalr1.cc:859
+    break;
+
+  case 11:
+#line 124 "parser.yy" // lalr1.cc:859
+    {
+                          yylhs.value.as< TokenOption::RepresentationType > () = TokenOption::TEXTUAL;
+                      }
+#line 683 "parser.cc" // lalr1.cc:859
     break;
 
   case 12:
-#line 130 "parser.yy" // lalr1.cc:859
+#line 128 "parser.yy" // lalr1.cc:859
+    {
+                          yylhs.value.as< TokenOption::RepresentationType > () = TokenOption::HEXADECIMAL;
+                      }
+#line 691 "parser.cc" // lalr1.cc:859
+    break;
+
+  case 13:
+#line 134 "parser.yy" // lalr1.cc:859
     {
                      TokenPtr str(new TokenString(yystack_[0].value.as< std::string > ()));
                      ctx.expression.push_back(str);
                  }
-#line 661 "parser.cc" // lalr1.cc:859
+#line 700 "parser.cc" // lalr1.cc:859
     break;
 
-  case 13:
-#line 137 "parser.yy" // lalr1.cc:859
+  case 14:
+#line 141 "parser.yy" // lalr1.cc:859
     {
                       TokenPtr str(new TokenString(yystack_[0].value.as< std::string > ()));
                       ctx.expression.push_back(str);
                   }
-#line 670 "parser.cc" // lalr1.cc:859
+#line 709 "parser.cc" // lalr1.cc:859
     break;
 
-  case 14:
-#line 142 "parser.yy" // lalr1.cc:859
+  case 15:
+#line 146 "parser.yy" // lalr1.cc:859
     {
                      TokenPtr str(new TokenString("all"));
                      ctx.expression.push_back(str);
                  }
-#line 679 "parser.cc" // lalr1.cc:859
+#line 718 "parser.cc" // lalr1.cc:859
     break;
 
 
-#line 683 "parser.cc" // lalr1.cc:859
+#line 722 "parser.cc" // lalr1.cc:859
             default:
               break;
             }
@@ -942,71 +981,69 @@ namespace isc { namespace eval {
   EvalParser::yypact_[] =
   {
       -4,    -9,    -5,   -14,   -14,   -14,     8,   -14,     9,   -13,
-      -4,   -14,    -4,     0,     6,    11,   -14,    13,    14,    15,
-      10,    12,   -14,    16,   -14,   -14,   -14,   -14,    -6,   -14,
-     -14,    17,   -14
+      -4,   -14,    -4,   -14,   -14,     0,    11,   -14,    13,     2,
+      10,   -14,    14,   -14,   -14,   -14,    -6,   -14,   -14,     7,
+     -14
   };
 
   const unsigned char
   EvalParser::yydefact_[] =
   {
-       0,     0,     0,     4,     5,    11,     0,     2,     0,     0,
-       0,     1,     0,     0,     0,     0,     3,     0,     0,     0,
-       0,     0,    12,     0,     6,     7,     8,     9,     0,    14,
-      13,     0,    10
+       0,     0,     0,     4,     5,     8,     0,     2,     0,     0,
+       0,     1,     0,     9,    10,     0,     0,     3,     0,     0,
+       0,    13,     0,    11,    12,     6,     0,    15,    14,     0,
+       7
   };
 
   const signed char
   EvalParser::yypgoto_[] =
   {
-     -14,   -14,   -14,    -3,   -14,   -14
+     -14,   -14,   -14,    -3,   -14,   -14,   -14,   -14
   };
 
   const signed char
   EvalParser::yydefgoto_[] =
   {
-      -1,     6,     7,     8,    23,    31
+      -1,     6,     7,     8,    15,    25,    22,    29
   };
 
   const unsigned char
   EvalParser::yytable_[] =
   {
-       1,     2,    29,    13,     9,    14,    10,    15,    11,    16,
-      30,     3,    12,     4,    17,     5,    24,    25,    26,    27,
-      18,    19,    20,    21,     0,     0,    28,     0,     0,    32,
-       0,    22
+       1,     2,    27,    13,     9,    14,    10,    16,    11,    17,
+      28,     3,    12,     4,    18,     5,    23,    24,    21,    30,
+       0,    19,    20,     0,    26
   };
 
   const signed char
   EvalParser::yycheck_[] =
   {
        4,     5,     8,    16,    13,    18,    11,    10,     0,    12,
-      16,    15,     3,    17,    14,    19,     6,     7,     6,     7,
-      14,    10,     9,     9,    -1,    -1,    10,    -1,    -1,    12,
-      -1,    16
+      16,    15,     3,    17,    14,    19,     6,     7,    16,    12,
+      -1,    10,     9,    -1,    10
   };
 
   const unsigned char
   EvalParser::yystos_[] =
   {
        0,     4,     5,    15,    17,    19,    21,    22,    23,    13,
-      11,     0,     3,    16,    18,    23,    23,    14,    14,    10,
-       9,     9,    16,    24,     6,     7,     6,     7,    10,     8,
-      16,    25,    12
+      11,     0,     3,    16,    18,    24,    23,    23,    14,    10,
+       9,    16,    26,     6,     7,    25,    10,     8,    16,    27,
+      12
   };
 
   const unsigned char
   EvalParser::yyr1_[] =
   {
-       0,    20,    21,    22,    23,    23,    23,    23,    23,    23,
-      23,    23,    24,    25,    25
+       0,    20,    21,    22,    23,    23,    23,    23,    23,    24,
+      24,    25,    25,    26,    27,    27
   };
 
   const unsigned char
   EvalParser::yyr2_[] =
   {
-       0,     2,     1,     3,     1,     1,     6,     6,     6,     6,
-       8,     1,     1,     1,     1
+       0,     2,     1,     3,     1,     1,     6,     8,     1,     1,
+       1,     1,     1,     1,     1,     1
   };
 
 
@@ -1020,15 +1057,16 @@ namespace isc { namespace eval {
   "\"substring\"", "\"text\"", "\"hex\"", "\"all\"", "\".\"", "\",\"",
   "\"(\"", "\")\"", "\"[\"", "\"]\"", "\"constant string\"", "\"integer\"",
   "\"constant hexstring\"", "\"option name\"", "TOKEN", "$accept",
-  "expression", "bool_expr", "string_expr", "start_expr", "length_expr", YY_NULLPTR
+  "expression", "bool_expr", "string_expr", "option_code",
+  "option_repr_type", "start_expr", "length_expr", YY_NULLPTR
   };
 
 #if YYDEBUG
   const unsigned char
   EvalParser::yyrline_[] =
   {
-       0,    76,    76,    79,    86,    91,    96,   102,   108,   114,
-     120,   125,   129,   136,   141
+       0,    79,    79,    82,    89,    94,    99,   104,   109,   113,
+     117,   123,   127,   133,   140,   145
   };
 
   // Print the state stack on the debug stream.
@@ -1063,8 +1101,8 @@ namespace isc { namespace eval {
 
 #line 21 "parser.yy" // lalr1.cc:1167
 } } // isc::eval
-#line 1067 "parser.cc" // lalr1.cc:1167
-#line 148 "parser.yy" // lalr1.cc:1168
+#line 1105 "parser.cc" // lalr1.cc:1167
+#line 152 "parser.yy" // lalr1.cc:1168
 
 void
 isc::eval::EvalParser::error(const location_type& loc,
