@@ -95,6 +95,15 @@ public:
     uint16_t convert_option_code(const std::string& option_code,
                                  const isc::eval::location& loc);
 
+    /// @brief Option name convertion
+    ///
+    /// @param option_name the option name
+    /// @param loc the location of the token
+    /// @result the option code
+    /// @throw calls the syntax error function if the name cannot be resolved
+    uint16_t convert_option_name(const std::string& option_name,
+                                 const isc::eval::location& loc);
+
     /// @brief Option universe: DHCPv4 or DHCPv6.
     ///
     /// This is used by the parser to determine which option definitions
