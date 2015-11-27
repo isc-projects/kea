@@ -14,9 +14,6 @@
 
 #include <config.h>
 #include <eval/token.h>
-#include <dhcp/libdhcp++.h>
-#include <dhcp/option.h>
-#include <dhcp/option_definition.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/dhcp4.h>
@@ -55,13 +52,6 @@ public:
         pkt6_->addOption(option_str6_);
     }
 
-    /// @brief Destructor.
-    ///
-    /// Removes any option definitions registered in runtime.
-    virtual ~TokenTest() {
-        LibDHCP::clearRuntimeOptionDefs();
-    }
-
     TokenPtr t_; ///< Just a convenience pointer
 
     ValueStack values_; ///< evaluated values will be stored here
@@ -72,23 +62,6 @@ public:
     OptionPtr option_str4_; ///< A string option for DHCPv4
     OptionPtr option_str6_; ///< A string option for DHCPv6
 
-    /// @brief Create definitions of DHCPv4 options used by unit tests.
-    void createOptionDefinitions4() {
-        OptionDefSpaceContainer defs;
-        OptionDefinitionPtr opt_def4(new OptionDefinition("name-hundred4",
-                                                          100, "string"));
-        defs.addItem(opt_def4, "dhcp4");
-        LibDHCP::setRuntimeOptionDefs(defs);
-    }
-
-    /// @brief Create definitions of DHCPv6 options used by unit tests.
-    void createOptionDefinitions6() {
-        OptionDefSpaceContainer defs;
-        OptionDefinitionPtr opt_def6(new OptionDefinition("name-hundred6",
-                                                          100, "string"));
-        defs.addItem(opt_def6, "dhcp6");
-        LibDHCP::setRuntimeOptionDefs(defs);
-    }
 
     /// @brief Verify that the substring eval works properly
     ///
@@ -301,28 +274,6 @@ TEST_F(TokenTest, optionString4) {
     EXPECT_EQ("hundred4", values_.top());
 }
 
-// This test checks if a token representing an option identified by name is
-// able to extract this option from an IPv4 packet and properly store the
-// option's value.
-TEST_F(TokenTest, optionWithNameString4) {
-    // Create definition of option 100 to provide a mapping between option
-    // code and option name.
-    ASSERT_NO_THROW(createOptionDefinitions4());
-
-    // Create token for option referenced by name. The constructor should
-    // map the option name to its code.
-    TokenPtr token;
-    ASSERT_NO_THROW(token.reset(new TokenOption("name-hundred4", Option::V4,
-                                                TokenOption::TEXTUAL)));
-
-    // Evaluate option in the packet.
-    ASSERT_NO_THROW(token->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-
-    // Then the content of the option.
-    EXPECT_EQ("hundred4", values_.top());
-}
-
 // This test checks if a token representing option value is able to extract
 // the option from an IPv4 packet and properly store its value in a
 // hexadecimal format.
@@ -349,28 +300,6 @@ TEST_F(TokenTest, optionHexString4) {
     values_.pop();
 
     // Then the content of the option 100.
-    EXPECT_EQ("hundred4", values_.top());
-}
-
-// This test checks if a token representing an option identified by name is
-// able to extract this option from an IPv4 packet and properly store its
-// value in the hexadecimal format.
-TEST_F(TokenTest, optionWithNameHexString4) {
-    // Create definition of option 100 to provide a mapping between option
-    // code and option name.
-    ASSERT_NO_THROW(createOptionDefinitions4());
-
-    // Create token for option referenced by name. The constructor should
-    // map the option name to its code.
-    TokenPtr token;
-    ASSERT_NO_THROW(token.reset(new TokenOption("name-hundred4", Option::V4,
-                                                TokenOption::HEXADECIMAL)));
-
-    // Evaluate option in the packet.
-    ASSERT_NO_THROW(token->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-
-    // Then the content of the option.
     EXPECT_EQ("hundred4", values_.top());
 }
 
@@ -402,29 +331,6 @@ TEST_F(TokenTest, optionString6) {
     EXPECT_EQ("hundred6", values_.top());
 }
 
-// This test checks if a token representing an option identified by name is
-// able to extract this option from an IPv6 packet and properly store the
-// option's value.
-TEST_F(TokenTest, optionWithNameString6) {
-    // Create definition of option 100 to provide a mapping between option
-    // code and option name.
-    ASSERT_NO_THROW(createOptionDefinitions6());
-
-    // Create token for option referenced by name. The constructor should
-    // map the option name to its code.
-    TokenPtr token;
-    ASSERT_NO_THROW(token.reset(new TokenOption("name-hundred6", Option::V6,
-                                                TokenOption::TEXTUAL)));
-
-    // Evaluate option in the packet.
-    ASSERT_NO_THROW(token->evaluate(*pkt6_, values_));
-    ASSERT_EQ(1, values_.size());
-
-    // Then the content of the option.
-    EXPECT_EQ("hundred6", values_.top());
-}
-
-
 // This test checks if a token representing an option value is able to extract
 // the option from an IPv6 packet and properly store its value in hexadecimal
 // format.
@@ -451,28 +357,6 @@ TEST_F(TokenTest, optionHexString6) {
     values_.pop();
 
     // Then the content of the option 100.
-    EXPECT_EQ("hundred6", values_.top());
-}
-
-// This test checks if a token representing an option identified by name is
-// able to extract this option from an IPv6 packet and properly store its
-// value in the hexadecimal format.
-TEST_F(TokenTest, optionWithNameHexString6) {
-    // Create definition of option 100 to provide a mapping between option
-    // code and option name.
-    ASSERT_NO_THROW(createOptionDefinitions6());
-
-    // Create token for option referenced by name. The constructor should
-    // map the option name to its code.
-    TokenPtr token;
-    ASSERT_NO_THROW(token.reset(new TokenOption("name-hundred6", Option::V6,
-                                                TokenOption::HEXADECIMAL)));
-
-    // Evaluate option in the packet.
-    ASSERT_NO_THROW(token->evaluate(*pkt6_, values_));
-    ASSERT_EQ(1, values_.size());
-
-    // Then the content of the option.
     EXPECT_EQ("hundred6", values_.top());
 }
 
