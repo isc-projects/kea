@@ -31,6 +31,12 @@ namespace {
 /// @brief Test class for testing EvalContext aka class test parsing
 class EvalContextTest : public ::testing::Test {
 public:
+    /// @brief constructor to initialize members
+    EvalContextTest() : ::testing::Test() {
+        parsed_ = false;
+        universe_ = Option::V4;
+    }
+
     /// @brief checks if the given token is a string with the expected value
     void checkTokenString(const TokenPtr& token, const std::string& expected) {
         ASSERT_TRUE(token);
@@ -95,7 +101,7 @@ public:
     /// @brief checks if the given expression raises the expected message
     /// when it is parsed.
     void checkError(const string& expr, const string& msg) {
-        EvalContext eval(Option::V4);
+        EvalContext eval(universe_);
         parsed_ = false;
         try {
             parsed_ = eval.parseString(expr);
@@ -110,6 +116,13 @@ public:
         }
     }
 
+    /// @brief sets the universe
+    /// @note the default universe is DHCPv4
+    void setUniverse(const Option::Universe& universe) {
+        universe_ = universe;
+    }
+
+    Option::Universe universe_;
     bool parsed_; ///< Parsing status
 };
 
@@ -292,10 +305,15 @@ TEST_F(EvalContextTest, scanParseErrors) {
     checkError("===", "<string>:1.1-2: syntax error, unexpected ==");
     checkError("option[-1].text",
                "<string>:1.8-9: Option code has invalid "
-               "value in -1. Allowed range: 0..65535");
+               "value in -1. Allowed range: 0..255");
+    checkError("option[256].text",
+               "<string>:1.8-10: Option code has invalid "
+               "value in 256. Allowed range: 0..255");
+    setUniverse(Option::V6);
     checkError("option[65536].text",
                "<string>:1.8-12: Option code has invalid "
                "value in 65536. Allowed range: 0..65535");
+    setUniverse(Option::V4);
     checkError("option[12345678901234567890].text",
                "<string>:1.8-27: Failed to convert 12345678901234567890 "
                "to an integer.");

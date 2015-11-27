@@ -85,6 +85,12 @@ public:
     /// cases when the EvalParser is not able to handle the packet.
     void error(const std::string& what);
 
+    /// @brief Option universe: DHCPv4 or DHCPv6.
+    ///
+    /// This is used by the parser to determine which option definitions
+    /// set should be used to map option name to option code.
+    Option::Universe option_universe_;
+
  private:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
@@ -92,11 +98,6 @@ public:
     /// @brief Flag determing parser debugging.
     bool trace_parsing_;
 
-    /// @brief Option universe: DHCPv4 or DHCPv6.
-    ///
-    /// This is used by the parser to determine which option definitions
-    /// set should be used to map option name to option code.
-    Option::Universe option_universe_;
 };
 
 }; // end of isc::eval namespace

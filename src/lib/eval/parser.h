@@ -521,7 +521,7 @@ namespace isc { namespace eval {
 
 
     /// Build a parser object.
-    EvalParser (EvalContext& ctx_yyarg, const Option::Universe& option_universe_yyarg);
+    EvalParser (EvalContext& ctx_yyarg);
     virtual ~EvalParser ();
 
     /// Parse.
@@ -735,7 +735,6 @@ namespace isc { namespace eval {
 
     // User arguments.
     EvalContext& ctx;
-    const Option::Universe& option_universe;
   };
 
   // Symbol number corresponding to token number t.
@@ -1101,7 +1100,7 @@ namespace isc { namespace eval {
 
 #line 21 "parser.yy" // lalr1.cc:392
 } } // isc::eval
-#line 1105 "parser.h" // lalr1.cc:392
+#line 1104 "parser.h" // lalr1.cc:392
 
 
 
