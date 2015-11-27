@@ -32,10 +32,9 @@ namespace {
 class EvalContextTest : public ::testing::Test {
 public:
     /// @brief constructor to initialize members
-    EvalContextTest() : ::testing::Test() {
-        parsed_ = false;
-        universe_ = Option::V4;
-    }
+    EvalContextTest() : ::testing::Test(),
+    universe_(Option::V4), parsed_(false)
+    { }
 
     /// @brief checks if the given token is a string with the expected value
     void checkTokenString(const TokenPtr& token, const std::string& expected) {
