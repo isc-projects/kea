@@ -19,8 +19,8 @@
 #include <fstream>
 
 EvalContext::EvalContext(const Option::Universe& option_universe)
-  : trace_scanning_(false), trace_parsing_(false),
-    option_universe_(option_universe)
+  : option_universe_(option_universe),
+    trace_scanning_(false), trace_parsing_(false)
 {
 }
 
@@ -34,7 +34,7 @@ EvalContext::parseString(const std::string& str)
     file_ = "<string>";
     string_ = str;
     scanStringBegin();
-    isc::eval::EvalParser parser(*this, option_universe_);
+    isc::eval::EvalParser parser(*this);
     parser.set_debug_level(trace_parsing_);
     int res = parser.parse();
     scanStringEnd();

@@ -40,9 +40,6 @@ using namespace isc::eval;
 {
 # include "eval_context.h"
 }
-// Option universe: DHCPv4 or DHCPv6. This is required to use correct option
-// definition set to map option names to codes.
-%parse-param { const Option::Universe& option_universe }
 
 %define api.token.prefix {TOKEN_}
 %token
@@ -87,9 +84,16 @@ convert_option_code(const std::string& option_code,
         // This can't happen...
         ctx.error(loc, "Option code has invalid value in " + option_code);
     }
-    if (n < 0 || n > 65535) {
-        ctx.error(loc, "Option code has invalid value in "
-                      + option_code + ". Allowed range: 0..65535");
+    if (ctx.option_universe_ == Option::V6) {
+        if (n < 0 || n > 65535) {
+            ctx.error(loc, "Option code has invalid value in "
+                          + option_code + ". Allowed range: 0..65535");
+        }
+    } else {
+        if (n < 0 || n > 255) {
+            ctx.error(loc, "Option code has invalid value in "
+                          + option_code + ". Allowed range: 0..255");
+        }
     }
     return (static_cast<uint16_t>(n));
 }
@@ -141,7 +145,8 @@ string_expr : STRING
                       try {
                           // This may result in exception if the specified
                           // name is unknown.
-                          TokenPtr opt(new TokenOption($3, option_universe,
+                          TokenPtr opt(new TokenOption($3,
+                                                       ctx.option_universe_,
                                                        TokenOption::TEXTUAL));
                           ctx.expression.push_back(opt);
 
@@ -154,7 +159,8 @@ string_expr : STRING
                       try {
                           // This may result in exception if the specified
                           // name is unknown.
-                          TokenPtr opt(new TokenOption($3, option_universe,
+                          TokenPtr opt(new TokenOption($3,
+                                                       ctx.option_universe_,
                                                        TokenOption::HEXADECIMAL));
                           ctx.expression.push_back(opt);
 
