@@ -328,7 +328,7 @@ namespace isc { namespace eval {
         TOKEN_OPTION = 259,
         TOKEN_SUBSTRING = 260,
         TOKEN_TEXT = 261,
-        TOKEN_BIN = 262,
+        TOKEN_HEX = 262,
         TOKEN_ALL = 263,
         TOKEN_DOT = 264,
         TOKEN_COMA = 265,
@@ -469,7 +469,7 @@ namespace isc { namespace eval {
 
     static inline
     symbol_type
-    make_BIN (const location_type& l);
+    make_HEX (const location_type& l);
 
     static inline
     symbol_type
@@ -1021,9 +1021,9 @@ namespace isc { namespace eval {
   }
 
   EvalParser::symbol_type
-  EvalParser::make_BIN (const location_type& l)
+  EvalParser::make_HEX (const location_type& l)
   {
-    return symbol_type (token::TOKEN_BIN, l);
+    return symbol_type (token::TOKEN_HEX, l);
   }
 
   EvalParser::symbol_type

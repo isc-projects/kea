@@ -85,9 +85,9 @@
 19.                 TokenPtr opt(new TokenOption($3, TokenOption::TEXTUAL));
 20.                 ctx.expression.push_back(opt);
 21.             }
-22.       | OPTION '[' INTEGER ']' DOT BIN
+22.       | OPTION '[' INTEGER ']' DOT HEX
 23.             {
-24.                 TokenPtr opt(new TokenOption($3, TokenOption::BINARY));
+24.                 TokenPtr opt(new TokenOption($3, TokenOption::HEXADECIMAL));
 25.                 ctx.expression.push_back(opt);
 26.              }
 27.       ;
@@ -99,7 +99,7 @@ single token or an expression "token == token" (EQUAL has been defined as
 "==" elsewhere). Token is further
 defined in lines 7-22: it may either be a string (lines 7-11),
 a hex string (lines 12-16), option in the textual format (lines 17-21)
-or option in the binary format (lines 22-26).
+or option in a hexadecimal format (lines 22-26).
 When the actual case is determined, the respective C++ action
 is executed. For example, if the token is a string, the TokenString class is
 instantiated with the appropriate value and put onto the expression vector.

@@ -51,7 +51,7 @@ using namespace isc::eval;
   OPTION "option"
   SUBSTRING "substring"
   TEXT "text"
-  BIN "bin"
+  HEX "hex"
   ALL "all"
   DOT "."
   COMA ","
@@ -130,10 +130,10 @@ string_expr : STRING
                       TokenPtr opt(new TokenOption(numeric_code, TokenOption::TEXTUAL));
                       ctx.expression.push_back(opt);
                   }
-            | OPTION "[" INTEGER "]" DOT BIN
+            | OPTION "[" INTEGER "]" DOT HEX
                   {
                       uint16_t numeric_code = convert_option_code($3, @3, ctx);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::BINARY));
+                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
                       ctx.expression.push_back(opt);
                   }
             | OPTION "[" OPTION_NAME "]" DOT TEXT
@@ -149,13 +149,13 @@ string_expr : STRING
                           ctx.error(@3, ex.what());
                       }
                   }
-            | OPTION "[" OPTION_NAME "]" DOT BIN
+            | OPTION "[" OPTION_NAME "]" DOT HEX
                   {
                       try {
                           // This may result in exception if the specified
                           // name is unknown.
                           TokenPtr opt(new TokenOption($3, option_universe,
-                                                       TokenOption::BINARY));
+                                                       TokenOption::HEXADECIMAL));
                           ctx.expression.push_back(opt);
 
                       } catch (const isc::BadValue& ex) {

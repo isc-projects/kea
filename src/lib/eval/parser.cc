@@ -643,7 +643,7 @@ namespace isc { namespace eval {
 #line 134 "parser.yy" // lalr1.cc:859
     {
                       uint16_t numeric_code = convert_option_code(yystack_[3].value.as< std::string > (), yystack_[3].location, ctx);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::BINARY));
+                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
                       ctx.expression.push_back(opt);
                   }
 #line 650 "parser.cc" // lalr1.cc:859
@@ -673,7 +673,7 @@ namespace isc { namespace eval {
                           // This may result in exception if the specified
                           // name is unknown.
                           TokenPtr opt(new TokenOption(yystack_[3].value.as< std::string > (), option_universe,
-                                                       TokenOption::BINARY));
+                                                       TokenOption::HEXADECIMAL));
                           ctx.expression.push_back(opt);
 
                       } catch (const isc::BadValue& ex) {
@@ -1058,7 +1058,7 @@ namespace isc { namespace eval {
   const EvalParser::yytname_[] =
   {
   "\"end of file\"", "error", "$undefined", "\"==\"", "\"option\"",
-  "\"substring\"", "\"text\"", "\"bin\"", "\"all\"", "\".\"", "\",\"",
+  "\"substring\"", "\"text\"", "\"hex\"", "\"all\"", "\".\"", "\",\"",
   "\"(\"", "\")\"", "\"[\"", "\"]\"", "\"constant string\"", "\"integer\"",
   "\"constant hexstring\"", "\"option name\"", "TOKEN", "$accept",
   "expression", "bool_expr", "string_expr", "start_expr", "length_expr", YY_NULLPTR
