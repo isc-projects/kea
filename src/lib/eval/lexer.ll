@@ -31,6 +31,9 @@
 // The location of the current token. The lexer will keep updating it. This
 // variable will be useful for logging errors.
 static isc::eval::location loc;
+
+// To avoid the call to exit... oops!
+#define YY_FATAL_ERROR(msg) isc::eval::EvalContext::fatal(msg)
 %}
 
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
@@ -147,8 +150,8 @@ EvalContext::scanStringBegin()
     YY_BUFFER_STATE buffer;
     buffer = yy_scan_bytes(string_.c_str(), string_.size());
     if (!buffer) {
-        error("cannot scan string");
-        exit(EXIT_FAILURE);
+        fatal("cannot scan string");
+	// fatal() throws an exception so this can't be reached
     }
 }
 
@@ -156,4 +159,11 @@ void
 EvalContext::scanStringEnd()
 {
     yy_delete_buffer(YY_CURRENT_BUFFER);
+}
+
+namespace {
+/// To avoid unused function error
+class Dummy {
+    void dummy() { yy_fatal_error("Fix me: how to disable its definition?"); }
+};
 }

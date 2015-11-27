@@ -81,6 +81,11 @@ public:
     /// cases when the EvalParser is not able to handle the packet.
     void error(const std::string& what);
 
+    /// @brief Fatal error handler
+    ///
+    /// This is for should not happen but fatal errors
+    static void fatal(const std::string& what);
+
  private:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
