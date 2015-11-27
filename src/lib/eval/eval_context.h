@@ -85,6 +85,16 @@ public:
     /// cases when the EvalParser is not able to handle the packet.
     void error(const std::string& what);
 
+    /// @brief Option code convertion
+    ///
+    /// @param option_code a string representing the integer code
+    /// @param loc the location of the token
+    /// @result the option code
+    /// @throw calls the syntax error function if the value is no in
+    ///        the range 0..255 or 0..65535
+    uint16_t convert_option_code(const std::string& option_code,
+                                 const isc::eval::location& loc);
+
     /// @brief Option universe: DHCPv4 or DHCPv6.
     ///
     /// This is used by the parser to determine which option definitions
