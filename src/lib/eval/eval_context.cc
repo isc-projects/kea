@@ -12,10 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dhcp/option.h>
+#include <dhcp/option_definition.h>
+#include <dhcp/libdhcp++.h>
 #include <eval/eval_context.h>
 #include <eval/parser.h>
 #include <exceptions/exceptions.h>
-#include <dhcp/option.h>
+#include <boost/lexical_cast.hpp>
 #include <fstream>
 
 EvalContext::EvalContext(const Option::Universe& option_universe)
@@ -78,3 +81,21 @@ EvalContext::convert_option_code(const std::string& option_code,
     return (static_cast<uint16_t>(n));
 }
 
+uint16_t
+EvalContext::convert_option_name(const std::string& option_name,
+                                 const isc::eval::location& loc)
+{
+    OptionDefinitionPtr option_def = LibDHCP::getOptionDef(option_universe_,
+                                                           option_name);
+    if (!option_def) {
+        const std::string global_space =
+            (option_universe_ == Option::V4) ? "dhcp4" : "dhcp6";
+        option_def = LibDHCP::getRuntimeOptionDef(global_space, option_name);
+    }
+
+    if (!option_def) {
+        error(loc, "option '" + option_name + "' is not defined");
+    }
+
+    return (option_def->getCode());
+}
