@@ -18,7 +18,7 @@
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 5
-#define YY_FLEX_SUBMINOR_VERSION 35
+#define YY_FLEX_SUBMINOR_VERSION 39
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -72,7 +72,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -80,7 +79,6 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
-#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -110,6 +108,8 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
+
+#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -225,9 +225,16 @@ extern FILE *yyin, *yyout;
      */
     #define  YY_LESS_LINENO(n) \
             do { \
-                yy_size_t yyl;\
+                int yyl;\
                 for ( yyl = n; yyl < yyleng; ++yyl )\
                     if ( yytext[yyl] == '\n' )\
+                        --yylineno;\
+            }while(0)
+    #define YY_LINENO_REWIND_TO(dst) \
+            do {\
+                const char *p;\
+                for ( p = yy_cp-1; p >= (dst); --p)\
+                    if ( *p == '\n' )\
                         --yylineno;\
             }while(0)
     
@@ -420,7 +427,7 @@ void yyfree (void *  );
 /* %% [1.0] yytext/yyin/yyout/yy_state_type/yylineno etc. def's & init go here */
 /* Begin user sect3 */
 
-#define yywrap(n) 1
+#define yywrap() 1
 #define YY_SKIP_YYWRAP
 
 #define FLEX_DEBUG
@@ -438,6 +445,8 @@ int yylineno = 1;
 extern char *yytext;
 #define yytext_ptr yytext
 
+/* %% [1.5] DFA */
+
 /* %if-c-only Standard (non-C++) definition */
 
 static yy_state_type yy_get_previous_state (void );
@@ -453,7 +462,7 @@ static void yy_fatal_error (yyconst char msg[]  );
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
 /* %% [2.0] code to fiddle yytext and yyleng for yymore() goes here \ */\
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	yyleng = (size_t) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 /* %% [3.0] code to copy yytext_ptr to yytext[] goes here, if %array \ */\
@@ -585,8 +594,8 @@ int yy_flex_debug = 1;
 
 static yyconst flex_int16_t yy_rule_linenum[19] =
     {   0,
-       83,   87,   93,  103,  109,  123,  124,  125,  126,  127,
-      128,  129,  130,  131,  132,  133,  134,  136
+       86,   90,   96,  106,  112,  126,  127,  128,  129,  130,
+      131,  132,  133,  134,  135,  136,  137,  139
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -630,6 +639,9 @@ char *yytext;
 // The location of the current token. The lexer will keep updating it. This
 // variable will be useful for logging errors.
 static isc::eval::location loc;
+
+// To avoid the call to exit... oops!
+#define YY_FATAL_ERROR(msg) isc::eval::EvalContext::fatal(msg)
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
    always parse only a single string, there's no need to do any wraps. And
    using yywrap requires linking with -lfl, which provides the default yywrap
@@ -648,12 +660,12 @@ static isc::eval::location loc;
    useful in more complex cases. */
 /* These are not token expressions yet, just convenience expressions that
    can be used during actual token definitions. */
-#line 70 "lexer.ll"
+#line 73 "lexer.ll"
 // This code run each time a pattern is matched. It updates the location
 // by moving it ahead by yyleng bytes. yyleng specifies the length of the
 // currently matched token.
 #define YY_USER_ACTION  loc.columns(yyleng);
-#line 657 "lexer.cc"
+#line 669 "lexer.cc"
 
 #define INITIAL 0
 
@@ -771,7 +783,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( yytext, yyleng, 1, yyout )
+#define ECHO do { if (fwrite( yytext, yyleng, 1, yyout )) {} } while (0)
 /* %endif */
 /* %if-c++-only C++ definition */
 /* %endif */
@@ -786,7 +798,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		yy_size_t n; \
+		size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -892,17 +904,6 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-/* %% [7.0] user's declarations go here */
-#line 76 "lexer.ll"
-
-
-
-    // Code run each time yylex is called.
-    loc.step();
-
-
-#line 905 "lexer.cc"
-
 	if ( !(yy_init) )
 		{
 		(yy_init) = 1;
@@ -937,6 +938,18 @@ YY_DECL
 		yy_load_buffer_state( );
 		}
 
+	{
+/* %% [7.0] user's declarations go here */
+#line 79 "lexer.ll"
+
+
+
+    // Code run each time yylex is called.
+    loc.step();
+
+
+#line 952 "lexer.cc"
+
 	while ( 1 )		/* loops until end-of-file is reached */
 		{
 /* %% [8.0] yymore()-related code goes here */
@@ -955,7 +968,7 @@ YY_DECL
 yy_match:
 		do
 			{
-			register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
+			register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)] ;
 			if ( yy_accept[yy_current_state] )
 				{
 				(yy_last_accepting_state) = yy_current_state;
@@ -1023,7 +1036,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 83 "lexer.ll"
+#line 86 "lexer.ll"
 {
     // Ok, we found a with space. Let's ignore it and update loc variable.
     loc.step();
@@ -1032,7 +1045,7 @@ YY_RULE_SETUP
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 87 "lexer.ll"
+#line 90 "lexer.ll"
 {
     // Newline found. Let's update the location and continue.
     loc.lines(yyleng);
@@ -1041,7 +1054,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 93 "lexer.ll"
+#line 96 "lexer.ll"
 {
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
@@ -1054,7 +1067,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 103 "lexer.ll"
+#line 106 "lexer.ll"
 {
     // A hex string has been matched. It contains the '0x' or '0X' header
     // followed by at least one hexadecimal digit.
@@ -1063,7 +1076,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 109 "lexer.ll"
+#line 112 "lexer.ll"
 {
     // An integer was found.
     std::string tmp(yytext);
@@ -1080,79 +1093,79 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 123 "lexer.ll"
+#line 126 "lexer.ll"
 return isc::eval::EvalParser::make_EQUAL(loc);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 124 "lexer.ll"
+#line 127 "lexer.ll"
 return isc::eval::EvalParser::make_OPTION(loc);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 125 "lexer.ll"
+#line 128 "lexer.ll"
 return isc::eval::EvalParser::make_TEXT(loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 126 "lexer.ll"
+#line 129 "lexer.ll"
 return isc::eval::EvalParser::make_HEX(loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 127 "lexer.ll"
+#line 130 "lexer.ll"
 return isc::eval::EvalParser::make_SUBSTRING(loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 128 "lexer.ll"
+#line 131 "lexer.ll"
 return isc::eval::EvalParser::make_ALL(loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 129 "lexer.ll"
+#line 132 "lexer.ll"
 return isc::eval::EvalParser::make_DOT(loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 130 "lexer.ll"
+#line 133 "lexer.ll"
 return isc::eval::EvalParser::make_LPAREN(loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 131 "lexer.ll"
+#line 134 "lexer.ll"
 return isc::eval::EvalParser::make_RPAREN(loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 132 "lexer.ll"
+#line 135 "lexer.ll"
 return isc::eval::EvalParser::make_LBRACKET(loc);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 133 "lexer.ll"
+#line 136 "lexer.ll"
 return isc::eval::EvalParser::make_RBRACKET(loc);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 134 "lexer.ll"
+#line 137 "lexer.ll"
 return isc::eval::EvalParser::make_COMA(loc);
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 136 "lexer.ll"
+#line 139 "lexer.ll"
 driver.error (loc, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 137 "lexer.ll"
+#line 140 "lexer.ll"
 return isc::eval::EvalParser::make_END(loc);
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 138 "lexer.ll"
+#line 141 "lexer.ll"
 ECHO;
 	YY_BREAK
-#line 1156 "lexer.cc"
+#line 1169 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1283,6 +1296,7 @@ ECHO;
 			"fatal flex scanner internal error--no action found" );
 	} /* end of action switch */
 		} /* end of scanning one token */
+	} /* end of user's declarations */
 } /* end of yylex */
 /* %ok-for-header */
 
@@ -1357,7 +1371,7 @@ static int yy_get_next_buffer (void)
 			{ /* Not enough room in the buffer - grow it. */
 
 			/* just a shorter name for the current buffer */
-			YY_BUFFER_STATE b = YY_CURRENT_BUFFER;
+			YY_BUFFER_STATE b = YY_CURRENT_BUFFER_LVALUE;
 
 			int yy_c_buf_p_offset =
 				(int) ((yy_c_buf_p) - b->yy_ch_buf);
@@ -1503,7 +1517,7 @@ static int yy_get_next_buffer (void)
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 	yy_is_jam = (yy_current_state == 51);
 
-	return yy_is_jam ? 0 : yy_current_state;
+		return yy_is_jam ? 0 : yy_current_state;
 }
 
 /* %if-c-only */
@@ -1562,7 +1576,7 @@ static int yy_get_next_buffer (void)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( yywrap( ) )
-						return 0;
+						return EOF;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
 						YY_NEW_FILE;
@@ -1725,17 +1739,6 @@ static void yy_load_buffer_state  (void)
 
 	yyfree((void *) b  );
 }
-
-/* %if-c-only */
-
-#ifndef __cplusplus
-extern int isatty (int );
-#endif /* __cplusplus */
-    
-/* %endif */
-
-/* %if-c++-only */
-/* %endif */
 
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
@@ -1977,8 +1980,8 @@ YY_BUFFER_STATE yy_scan_string (yyconst char * yystr )
 /* %if-c-only */
 /** Setup the input buffer state to scan the given bytes. The next call to yylex() will
  * scan from a @e copy of @a bytes.
- * @param bytes the byte buffer to scan
- * @param len the number of bytes in the buffer pointed to by @a bytes.
+ * @param yybytes the byte buffer to scan
+ * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */
@@ -1986,7 +1989,8 @@ YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len 
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t n, i;
+	yy_size_t n;
+	yy_size_t i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
@@ -2249,7 +2253,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 138 "lexer.ll"
+#line 141 "lexer.ll"
 
 
 
@@ -2263,8 +2267,8 @@ EvalContext::scanStringBegin()
     YY_BUFFER_STATE buffer;
     buffer = yy_scan_bytes(string_.c_str(),string_.size());
     if (!buffer) {
-        error("cannot scan string");
-        exit(EXIT_FAILURE);
+        fatal("cannot scan string");
+	// fatal() throws an exception so this can't be reached
     }
 }
 
@@ -2272,5 +2276,12 @@ void
 EvalContext::scanStringEnd()
 {
     yy_delete_buffer(YY_CURRENT_BUFFER);
+}
+
+namespace {
+/// To avoid unused function error
+class Dummy {
+    void dummy() { yy_fatal_error("Fix me: how to disable its definition?"); }
+};
 }
 
