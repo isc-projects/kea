@@ -2281,6 +2281,7 @@ EvalContext::scanStringEnd()
 namespace {
 /// To avoid unused function error
 class Dummy {
+    // cppcheck-suppress unusedPrivateFunction
     void dummy() { yy_fatal_error("Fix me: how to disable its definition?"); }
 };
 }
