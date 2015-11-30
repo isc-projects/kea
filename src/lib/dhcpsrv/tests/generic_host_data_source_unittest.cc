@@ -240,7 +240,7 @@ void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
 
     // Now check that the identifiers returned as vectors are the same
     EXPECT_EQ(host1->getIdentifierType(), host2->getIdentifierType());
-    EXPECT_EQ(host1->getIdentifier(), host2->getIdentifier());
+    EXPECT_TRUE(host1->getIdentifier() == host2->getIdentifier());
 
     // Check host parameters
     EXPECT_EQ(host1->getIPv4SubnetID(), host2->getIPv4SubnetID());
