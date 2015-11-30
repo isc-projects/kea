@@ -17,6 +17,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/hosts_log.h>
+#include <dhcpsrv/host_data_source_factory.h>
 
 namespace {
 
@@ -37,6 +38,8 @@ namespace dhcp {
 
 using namespace isc::asiolink;
 
+boost::shared_ptr<BaseHostDataSource> HostMgr::alternate_source;
+
 boost::scoped_ptr<HostMgr>&
 HostMgr::getHostMgrPtr() {
     static boost::scoped_ptr<HostMgr> host_mgr_ptr;
@@ -44,11 +47,15 @@ HostMgr::getHostMgrPtr() {
 }
 
 void
-HostMgr::create(const std::string&) {
+HostMgr::create(const std::string& access) {
     getHostMgrPtr().reset(new HostMgr());
 
-    /// @todo Initialize alternate_source here, using the parameter.
-    /// For example: alternate_source.reset(new MysqlHostDataSource(access)).
+    if (!access.empty()) {
+        HostDataSourceFactory::create(access);
+
+        /// @todo Initialize alternate_source here.
+        //alternate_source = HostDataSourceFactory::getHostDataSourcePtr();
+    }
 }
 
 HostMgr&
@@ -151,7 +158,6 @@ HostMgr::get6(const SubnetID& subnet_id,
     }
     return (host);
 }
-
 
 void
 HostMgr::add(const HostPtr&) {

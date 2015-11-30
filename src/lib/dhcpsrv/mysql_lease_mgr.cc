@@ -415,8 +415,8 @@ public:
             // expiry time (expire).  The relationship is given by:
             //
             // expire = cltt_ + valid_lft_
-            MySqlLeaseMgr::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
-                                                 expire_);
+            MySqlConnection::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+                                                   expire_);
             bind_[4].buffer_type = MYSQL_TYPE_TIMESTAMP;
             bind_[4].buffer = reinterpret_cast<char*>(&expire_);
             bind_[4].buffer_length = sizeof(expire_);
@@ -590,7 +590,7 @@ public:
         // Convert times received from the database to times for the lease
         // structure
         time_t cltt = 0;
-        MySqlLeaseMgr::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+        MySqlConnection::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
 
         if (client_id_null_==MLM_TRUE) {
             // There's no client-id, so we pass client-id_length_ set to 0
@@ -795,8 +795,8 @@ public:
             //
             // expire = cltt_ + valid_lft_
             //
-            MySqlLeaseMgr::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
-                                                 expire_);
+            MySqlConnection::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+                                                   expire_);
             bind_[3].buffer_type = MYSQL_TYPE_TIMESTAMP;
             bind_[3].buffer = reinterpret_cast<char*>(&expire_);
             bind_[3].buffer_length = sizeof(expire_);
@@ -1161,7 +1161,7 @@ public:
                                     subnet_id_, fqdn_fwd_, fqdn_rev_,
                                     hostname, hwaddr, prefixlen_));
         time_t cltt = 0;
-        MySqlLeaseMgr::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+        MySqlConnection::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
         result->cltt_ = cltt;
 
         // Set state.
@@ -1267,77 +1267,6 @@ MySqlLeaseMgr::getDBVersion() {
     tmp << ", library " << mysql_get_client_info();
     return (tmp.str());
 }
-
-
-// Time conversion methods.
-//
-// Note that the MySQL TIMESTAMP data type (used for "expire") converts data
-// from the current timezone to UTC for storage, and from UTC to the current
-// timezone for retrieval.
-//
-// This causes no problems providing that:
-// a) cltt is given in local time
-// b) We let the system take care of timezone conversion when converting
-//    from a time read from the database into a local time.
-
-void
-MySqlLeaseMgr::convertToDatabaseTime(const time_t input_time,
-                                     MYSQL_TIME& output_time) {
-
-    // Convert to broken-out time
-    struct tm time_tm;
-    (void) localtime_r(&input_time, &time_tm);
-
-    // Place in output expire structure.
-    output_time.year = time_tm.tm_year + 1900;
-    output_time.month = time_tm.tm_mon + 1;     // Note different base
-    output_time.day = time_tm.tm_mday;
-    output_time.hour = time_tm.tm_hour;
-    output_time.minute = time_tm.tm_min;
-    output_time.second = time_tm.tm_sec;
-    output_time.second_part = 0;                // No fractional seconds
-    output_time.neg = my_bool(0);               // Not negative
-}
-
-void
-MySqlLeaseMgr::convertToDatabaseTime(const time_t cltt,
-                                     const uint32_t valid_lifetime,
-                                     MYSQL_TIME& expire) {
-
-    // Calculate expiry time. Store it in the 64-bit value so as we can detect
-    // overflows.
-    const int64_t expire_time_64 = static_cast<int64_t>(cltt) +
-        static_cast<int64_t>(valid_lifetime);
-
-    // Even on 64-bit systems MySQL doesn't seem to accept the timestamps
-    // beyond the max value of int32_t.
-    if (expire_time_64 > LeaseMgr::MAX_DB_TIME) {
-        isc_throw(BadValue, "Time value is too large: " << expire_time_64);
-    }
-
-    convertToDatabaseTime(static_cast<time_t>(expire_time_64), expire);
-}
-
-void
-MySqlLeaseMgr::convertFromDatabaseTime(const MYSQL_TIME& expire,
-                                       uint32_t valid_lifetime, time_t& cltt) {
-
-    // Copy across fields from MYSQL_TIME structure.
-    struct tm expire_tm;
-    memset(&expire_tm, 0, sizeof(expire_tm));
-
-    expire_tm.tm_year = expire.year - 1900;
-    expire_tm.tm_mon = expire.month - 1;
-    expire_tm.tm_mday = expire.day;
-    expire_tm.tm_hour = expire.hour;
-    expire_tm.tm_min = expire.minute;
-    expire_tm.tm_sec = expire.second;
-    expire_tm.tm_isdst = -1;    // Let the system work out about DST
-
-    // Convert to local time
-    cltt = mktime(&expire_tm) - valid_lifetime;
-}
-
 
 // Add leases to the database.  The two public methods accept a lease object
 // (either V4 of V6), bind the contents to the appropriate prepared
@@ -1828,7 +1757,7 @@ MySqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
 
     // Expiration timestamp.
     MYSQL_TIME expire_time;
-    convertToDatabaseTime(time(NULL), expire_time);
+    conn_.convertToDatabaseTime(time(NULL), expire_time);
     inbind[1].buffer_type = MYSQL_TYPE_TIMESTAMP;
     inbind[1].buffer = reinterpret_cast<char*>(&expire_time);
     inbind[1].buffer_length = sizeof(expire_time);
@@ -2019,7 +1948,7 @@ MySqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
 
     // Expiration timestamp.
     MYSQL_TIME expire_time;
-    convertToDatabaseTime(time(NULL) - static_cast<time_t>(secs), expire_time);
+    conn_.convertToDatabaseTime(time(NULL) - static_cast<time_t>(secs), expire_time);
     inbind[1].buffer_type = MYSQL_TYPE_TIMESTAMP;
     inbind[1].buffer = reinterpret_cast<char*>(&expire_time);
     inbind[1].buffer_length = sizeof(expire_time);

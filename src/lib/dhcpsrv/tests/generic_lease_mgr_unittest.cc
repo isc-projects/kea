@@ -688,7 +688,7 @@ GenericLeaseMgrTest::testMaxDate4() {
     // Set valid_lft_ to 1 day, cllt_ to max time. This should make expire
     // time too large to store.
     lease->valid_lft_ = 24*60*60;
-    lease->cltt_ = LeaseMgr::MAX_DB_TIME;
+    lease->cltt_ = DatabaseConnection::MAX_DB_TIME;
 
     // Insert should throw.
     ASSERT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
@@ -857,7 +857,7 @@ GenericLeaseMgrTest::testMaxDate6() {
     // Set valid_lft_ to 1 day, cllt_ to max time. This should make expire
     // time too large to store.
     lease->valid_lft_ = 24*60*60;
-    lease->cltt_ = LeaseMgr::MAX_DB_TIME;
+    lease->cltt_ = DatabaseConnection::MAX_DB_TIME;
 
     // Insert should throw.
     ASSERT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
