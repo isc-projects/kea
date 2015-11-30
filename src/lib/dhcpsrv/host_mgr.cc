@@ -38,8 +38,6 @@ namespace dhcp {
 
 using namespace isc::asiolink;
 
-boost::shared_ptr<BaseHostDataSource> HostMgr::alternate_source;
-
 boost::scoped_ptr<HostMgr>&
 HostMgr::getHostMgrPtr() {
     static boost::scoped_ptr<HostMgr> host_mgr_ptr;
