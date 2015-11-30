@@ -204,6 +204,7 @@ packet processing. Hook points that are not specific to packet processing
 
  - @b Arguments:
    - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
+   - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
 
  - @b Description: this callout is executed when server's response
    is about to be sent back to the client. The sole argument "response4"
@@ -213,7 +214,10 @@ packet processing. Hook points that are not specific to packet processing
    of the @c Pkt4 object can be modified at this time, except @c buffer_out_.
    (This is scratch space used for constructing the packet after all
    pkt4_send callouts are complete, so any changes to that field will
-   be overwritten.)
+   be overwritten.)\n\n
+   The argument query4 contains a pointer to the corresponding query packet
+   (allowing to perform correlation between response and query). This object
+   cannot be modified.
 
  - <b>Next step action</b>: if any callout installed on the "pkt4_send" hook
    sets the next step action to SKIP, the server will not construct the raw
