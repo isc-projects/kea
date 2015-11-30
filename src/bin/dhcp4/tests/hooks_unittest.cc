@@ -314,6 +314,8 @@ public:
 
         callout_handle.getArgument("response4", callback_pkt4_);
 
+        callout_handle.getArgument("query4", callback_pkt4_query_);
+
         callback_argument_names_ = callout_handle.getArgumentNames();
         return (0);
     }
@@ -504,6 +506,7 @@ public:
     void resetCalloutBuffers() {
         callback_name_ = string("");
         callback_pkt4_.reset();
+        callback_pkt4_query_.reset();
         callback_lease4_.reset();
         callback_hwaddr_.reset();
         callback_clientid_.reset();
@@ -522,6 +525,12 @@ public:
 
     /// Pkt4 structure returned in the callout
     static Pkt4Ptr callback_pkt4_;
+
+    /// @brief Pkt4 structure returned in the callout
+    ///
+    /// pkt4_send hook now passes both the query and the response,
+    /// so we actually need two fields.
+    static Pkt4Ptr callback_pkt4_query_;
 
     /// Lease4 structure returned in the callout
     static Lease4Ptr callback_lease4_;
@@ -546,6 +555,7 @@ public:
 // See fields description in the class for details
 string HooksDhcpv4SrvTest::callback_name_;
 Pkt4Ptr HooksDhcpv4SrvTest::callback_pkt4_;
+Pkt4Ptr HooksDhcpv4SrvTest::callback_pkt4_query_;
 Subnet4Ptr HooksDhcpv4SrvTest::callback_subnet4_;
 HWAddrPtr HooksDhcpv4SrvTest::callback_hwaddr_;
 ClientIdPtr HooksDhcpv4SrvTest::callback_clientid_;
@@ -817,11 +827,19 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
     Pkt4Ptr adv = srv_->fake_sent_.front();
 
     // Check that pkt4 argument passing was successful and returned proper value
+    ASSERT_TRUE(callback_pkt4_);
     EXPECT_TRUE(callback_pkt4_.get() == adv.get());
+
+    // That that the query4 argument was correctly set to the Discover we sent.
+    ASSERT_TRUE(callback_pkt4_query_);
+    EXPECT_TRUE(callback_pkt4_query_.get() == sol.get());
 
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
     expected_argument_names.push_back(string("response4"));
+    expected_argument_names.push_back(string("query4"));
+    sort(callback_argument_names_.begin(), callback_argument_names_.end());
+    sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
 }
 
