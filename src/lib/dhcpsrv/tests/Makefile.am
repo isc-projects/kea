@@ -100,10 +100,12 @@ libdhcpsrv_unittests_SOURCES += lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += logging_unittest.cc
 libdhcpsrv_unittests_SOURCES += logging_info_unittest.cc
 libdhcpsrv_unittests_SOURCES += generic_lease_mgr_unittest.cc generic_lease_mgr_unittest.h
+libdhcpsrv_unittests_SOURCES += generic_host_data_source_unittest.cc generic_host_data_source_unittest.h
 libdhcpsrv_unittests_SOURCES += memfile_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp_parsers_unittest.cc
 if HAVE_MYSQL
 libdhcpsrv_unittests_SOURCES += mysql_lease_mgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += mysql_host_data_source_unittest.cc
 endif
 
 libdhcpsrv_unittests_SOURCES += ncr_generator_unittest.cc
