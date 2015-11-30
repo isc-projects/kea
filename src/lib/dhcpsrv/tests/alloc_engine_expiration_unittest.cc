@@ -1632,6 +1632,7 @@ TEST_F(ExpirationAllocEngine6Test, reclaimReusedLeasesSolicit) {
 // again when the Solicit message is being processed.
 TEST_F(ExpirationAllocEngine6Test, reclaimReusedLeasesSolicitAlreadyReclaimed) {
     testReclaimReusedLeases(DHCPV6_SOLICIT, true);
+}
 
 // This test verifies if the hooks installed on lease6_recover are called
 // when the lease expires.
