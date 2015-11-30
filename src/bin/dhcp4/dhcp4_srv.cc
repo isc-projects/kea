@@ -697,6 +697,9 @@ Dhcpv4Srv::run() {
             // Set our response
             callout_handle->setArgument("response4", rsp);
 
+            // Also pass the corresponding query packet as argument
+            callout_handle->setArgument("query4", query);
+
             // Call all installed callouts
             HooksManager::callCallouts(hook_index_pkt4_send_,
                                        *callout_handle);
