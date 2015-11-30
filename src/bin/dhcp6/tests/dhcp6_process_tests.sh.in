@@ -26,6 +26,10 @@ CONFIG="{
     {   \"interfaces-config\": {
           \"interfaces\": [ ]
         },
+        \"server-id\": {
+          \"type\": \"LLT\",
+          \"persist\": false
+        },
         \"preferred-lifetime\": 3000,
         \"valid-lifetime\": 4000,
         \"renew-timer\": 1000,
@@ -291,7 +295,7 @@ lfc_timer_test() {
     # Create a configuration with the LFC enabled, by replacing the section
     # with the lfc-interval and persist parameters.
     LFC_CONFIG=$(printf "${CONFIG}" | sed -e 's/\"lfc-interval\": 0/\"lfc-interval\": 1/g' \
-                        | sed -e 's/\"persist\": false/\"persist\": true/g')
+                        | sed -e 's/\"persist\": false,/\"persist\": true,/g')
     # Create new configuration file.
     create_config "${LFC_CONFIG}"
     # Instruct Kea to log to the specific file.

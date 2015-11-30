@@ -175,16 +175,6 @@ namespace dhcp {
 
 const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
-/// @brief file name of a server-id file
-///
-/// Server must store its duid in persistent storage that must not change
-/// between restarts. This is name of the file that is created in dataDir
-/// (see isc::dhcp::CfgMgr::getDataDir()). It is a text file that uses
-/// double digit hex values separated by colons format, e.g.
-/// 01:ff:02:03:06:80:90:ab:cd:ef. Server will create it during first
-/// run and then use it afterwards.
-static const char* SERVER_DUID_FILE = "kea-dhcp6-serverid";
-
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
     : port_(port), serverid_(), shutdown_(true), alloc_engine_()
 {
@@ -201,8 +191,8 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
             return;
         }
 
-        string duid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_DUID_FILE);
-        DUIDFactory duid_factory(duid_file);
+        // Create a DUID instance but do not store it into a file.
+        DUIDFactory duid_factory;
         DuidPtr duid = duid_factory.get();
         serverid_.reset(new Option(Option::V6, D6O_SERVERID, duid->getDuid()));
 

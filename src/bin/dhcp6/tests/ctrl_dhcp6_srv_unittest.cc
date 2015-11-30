@@ -21,6 +21,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
+#include <dhcp6/tests/dhcp6_test_utils.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <testutils/unix_control_client.h>
@@ -58,9 +59,10 @@ public:
     using Dhcpv6Srv::receivePacket;
 };
 
-class CtrlDhcpv6SrvTest : public ::testing::Test {
+class CtrlDhcpv6SrvTest : public BaseServerTest {
 public:
-    CtrlDhcpv6SrvTest() {
+    CtrlDhcpv6SrvTest()
+        : BaseServerTest() {
         reset();
     }
 

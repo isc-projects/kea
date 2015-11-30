@@ -2533,7 +2533,7 @@ should include options from the isc option space:
     "server-id": {
         "type": "EN",
         "enterprise-id": 2495,
-        "identifier": "87ABEF7A5BB545",
+        "identifier": "87ABEF7A5BB545"
     },
     ...
 }
@@ -2577,7 +2577,7 @@ should include options from the isc option space:
     "server-id": {
         "type": "LL",
         "htype": 8,
-        "identifier": "A65DC7410F05",
+        "identifier": "A65DC7410F05"
     },
     ...
 }
@@ -2599,6 +2599,32 @@ should include options from the isc option space:
       location: <userinput>[kea-install-dir]/var/kea/kea-dhcp6-serverid
       </userinput>.
       </para>
+
+      <para>In some uncommon deployments where no stable storage is
+      available, it is desired to configure the server to not try to
+      store the server identifier on the hard drive. It is controlled
+      by the value of <command>persist</command> boolean parameter:
+<screen>
+"Dhcp6": {
+    "server-id": {
+        "type": "EN",
+        "enterprise-id": 2495,
+        "identifier": "87ABEF7A5BB545",
+        "persist": false
+    },
+    ...
+}
+</screen>
+      </para>
+      <para>The default value of the "persist" parameter is
+      <command>true</command> which configures the server to store the
+      server identifier on a disk.</para>
+
+      <para>In the example above, the server is configured to not store
+      the generated server identifier on a disk. But, if the server
+      identifier is not modified in the configuration the same value
+      will be used after server restart, because entire server
+      identifier is explicitly specified in a configuration.</para>
     </section>
 
     <section id="stateless-dhcp6">

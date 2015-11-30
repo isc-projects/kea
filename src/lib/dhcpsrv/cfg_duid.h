@@ -100,6 +100,22 @@ public:
         enterprise_id_ = enterprise_id;
     }
 
+    /// @brief Checks if server identifier should be stored on disk.
+    ///
+    /// @return true if the server identifier should be stored on
+    /// the disk, false otherwise.
+    bool persist() const {
+        return (persist_);
+    }
+
+    /// @brief Sets a boolean flag indicating if the server identifier
+    /// should be stored on the disk (if true) or not (if false).
+    ///
+    /// @param persist New value of the flag.
+    void setPersist(const bool persist) {
+        persist_ = persist;
+    }
+
     /// @brief Creates instance of a DUID from the current configuration.
     ///
     /// @param duid_file_path Absolute path to a DUID file.
@@ -123,6 +139,9 @@ private:
     /// @brief Enterprise id used for DUID-EN.
     uint32_t enterprise_id_;
 
+    /// @brief Boolean flag which indicates if server identifier should
+    /// be stored on the disk.
+    bool persist_;
 };
 
 /// @name Pointers to the @c CfgDUID objects.
