@@ -1,3 +1,7 @@
+1060.	[func]		stephen
+	Incremented KEA_HOOKS_VERSION to 3 for Kea 1.0.
+	(Trac #4208, git bf6f3d495604942a395b51bbe4c37001b7541242)
+
 1059.	[func]		nicolas
 	The client packet is now passed as a new parameter "query4"
 	to the pkt4_send hook point. Thanks to Nicolas Chaigneau from
