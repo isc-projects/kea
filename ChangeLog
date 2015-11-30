@@ -1,3 +1,8 @@
+1060.	[func]		kalmus
+	MySqlHostDataSource class implementation. It provides methods
+	for adding and extracting Host objects to and from MySQL database.
+	(Trac #3682, git 275b40fb941a6934c6434715184ae1c39f3fb3f2)
+
 1060.	[func]		stephen
 	Incremented KEA_HOOKS_VERSION to 3 for Kea 1.0.
 	(Trac #4208, git bf6f3d495604942a395b51bbe4c37001b7541242)
