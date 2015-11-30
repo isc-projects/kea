@@ -19,6 +19,10 @@ This debug message is issued when new host (with reservations) is added to
 the server's configuration. The argument describes the host and its
 reservations in detail.
 
+% HOSTS_CFG_CLOSE_HOST_DATA_SOURCE Closing host data source: %1
+This is a normal message being printed when the server closes host data
+source connection.
+
 % HOSTS_CFG_GET_ALL_ADDRESS4 get all hosts with reservations for IPv4 address %1
 This debug message is issued when starting to retrieve all hosts, holding the
 reservation for the specific IPv4 address, from the configuration. The

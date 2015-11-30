@@ -64,6 +64,20 @@ public:
 class BaseHostDataSource {
 public:
 
+    /// @brief Specifies the type of an identifier.
+    ///
+    /// This is currently used only by MySQL host data source for now, but
+    /// it is envisagad that it will be used by other host data sources
+    /// in the future. Also, this list will grow over time. It is likely
+    /// that we'll implement other identifiers in the future, e.g. remote-id.
+    ///
+    /// Those value correspond direclty to dhcp_identifier_type in hosts
+    /// table in MySQL schema.
+    enum IdType {
+        ID_HWADDR = 0, ///< Hardware address
+        ID_DUID = 1    ///< DUID/client-id
+    };
+
     /// @brief Default destructor implementation.
     virtual ~BaseHostDataSource() { }
 
@@ -180,6 +194,24 @@ public:
     /// @param host Pointer to the new @c Host object being added.
     virtual void add(const HostPtr& host) = 0;
 
+    /// @brief Return backend type
+    ///
+    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
+    ///
+    /// @return Type of the backend.
+    virtual std::string getType() const = 0;
+
+    /// @brief Commit Transactions
+    ///
+    /// Commits all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    virtual void commit() {};
+
+    /// @brief Rollback Transactions
+    ///
+    /// Rolls back all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
+    virtual void rollback() {};
 };
 
 }

@@ -192,8 +192,106 @@ MySqlConnection::~MySqlConnection() {
     }
     statements_.clear();
     text_statements_.clear();
-
 }
+
+// Time conversion methods.
+//
+// Note that the MySQL TIMESTAMP data type (used for "expire") converts data
+// from the current timezone to UTC for storage, and from UTC to the current
+// timezone for retrieval.
+//
+// This causes no problems providing that:
+// a) cltt is given in local time
+// b) We let the system take care of timezone conversion when converting
+//    from a time read from the database into a local time.
+void
+MySqlConnection::convertToDatabaseTime(const time_t input_time,
+                                       MYSQL_TIME& output_time) {
+
+    // Convert to broken-out time
+    struct tm time_tm;
+    (void) localtime_r(&input_time, &time_tm);
+
+    // Place in output expire structure.
+    output_time.year = time_tm.tm_year + 1900;
+    output_time.month = time_tm.tm_mon + 1;     // Note different base
+    output_time.day = time_tm.tm_mday;
+    output_time.hour = time_tm.tm_hour;
+    output_time.minute = time_tm.tm_min;
+    output_time.second = time_tm.tm_sec;
+    output_time.second_part = 0;                // No fractional seconds
+    output_time.neg = my_bool(0);               // Not negative
+}
+
+void
+MySqlConnection::convertToDatabaseTime(const time_t cltt,
+                                     const uint32_t valid_lifetime,
+                                     MYSQL_TIME& expire) {
+
+    // Calculate expiry time. Store it in the 64-bit value so as we can detect
+    // overflows.
+    int64_t expire_time_64 = static_cast<int64_t>(cltt) +
+        static_cast<int64_t>(valid_lifetime);
+
+    // Even on 64-bit systems MySQL doesn't seem to accept the timestamps
+    // beyond the max value of int32_t.
+    if (expire_time_64 > DatabaseConnection::MAX_DB_TIME) {
+        isc_throw(BadValue, "Time value is too large: " << expire_time_64);
+    }
+
+    const time_t expire_time = static_cast<const time_t>(expire_time_64);
+
+    // Convert to broken-out time
+    struct tm expire_tm;
+    (void) localtime_r(&expire_time, &expire_tm);
+
+    // Place in output expire structure.
+    expire.year = expire_tm.tm_year + 1900;
+    expire.month = expire_tm.tm_mon + 1;     // Note different base
+    expire.day = expire_tm.tm_mday;
+    expire.hour = expire_tm.tm_hour;
+    expire.minute = expire_tm.tm_min;
+    expire.second = expire_tm.tm_sec;
+    expire.second_part = 0;                  // No fractional seconds
+    expire.neg = my_bool(0);                 // Not negative
+}
+
+void
+MySqlConnection::convertFromDatabaseTime(const MYSQL_TIME& expire,
+                                       uint32_t valid_lifetime, time_t& cltt) {
+
+    // Copy across fields from MYSQL_TIME structure.
+    struct tm expire_tm;
+    memset(&expire_tm, 0, sizeof(expire_tm));
+
+    expire_tm.tm_year = expire.year - 1900;
+    expire_tm.tm_mon = expire.month - 1;
+    expire_tm.tm_mday = expire.day;
+    expire_tm.tm_hour = expire.hour;
+    expire_tm.tm_min = expire.minute;
+    expire_tm.tm_sec = expire.second;
+    expire_tm.tm_isdst = -1;    // Let the system work out about DST
+
+    // Convert to local time
+    cltt = mktime(&expire_tm) - valid_lifetime;
+}
+
+void MySqlConnection::commit() {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_COMMIT);
+        if (mysql_commit(mysql_) != 0) {
+                isc_throw(DbOperationError, "commit failed: "
+                        << mysql_error(mysql_));
+        }
+}
+
+void MySqlConnection::rollback() {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_ROLLBACK);
+        if (mysql_rollback(mysql_) != 0) {
+                isc_throw(DbOperationError, "rollback failed: "
+                        << mysql_error(mysql_));
+        }
+}
+
 
 } // namespace isc::dhcp
 } // namespace isc
