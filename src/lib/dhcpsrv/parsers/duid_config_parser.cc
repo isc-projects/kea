@@ -50,6 +50,8 @@ DUIDConfigParser::build(isc::data::ConstElementPtr duid_configuration) {
                 setTime(element.second->intValue());
             } else if (element.first == "enterprise-id") {
                 setEnterpriseId(element.second->intValue());
+            } else if (element.first == "persist") {
+                setPersist(element.second->boolValue());
             } else {
                 isc_throw(DhcpConfigError, "unsupported configuration "
                           "parameter '" << element.first << "'");
@@ -116,6 +118,12 @@ DUIDConfigParser::setEnterpriseId(const int64_t enterprise_id) const {
     const CfgDUIDPtr& cfg = CfgMgr::instance().getStagingCfg()->getCfgDUID();
     checkRange<uint32_t>("enterprise-id", enterprise_id);
     cfg->setEnterpriseId(static_cast<uint32_t>(enterprise_id));
+}
+
+void
+DUIDConfigParser::setPersist(const bool persist) {
+    const CfgDUIDPtr& cfg = CfgMgr::instance().getStagingCfg()->getCfgDUID();
+    cfg->setPersist(persist);
 }
 
 template<typename NumericType>

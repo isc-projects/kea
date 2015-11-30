@@ -67,8 +67,13 @@ CfgMgr::addOptionSpace6(const OptionSpacePtr& space) {
 }
 
 
-std::string CfgMgr::getDataDir() {
+std::string CfgMgr::getDataDir() const {
     return (datadir_);
+}
+
+void
+CfgMgr::setDataDir(const std::string& datadir) {
+    datadir_ = datadir;
 }
 
 bool

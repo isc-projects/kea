@@ -184,7 +184,8 @@ TEST_F(DUIDConfigParserTest, allParameters) {
                           "  \"identifier\": \"ABCDEF\","
                           "  \"time\": 100,"
                           "  \"htype\": 8,"
-                          "  \"enterprise-id\": 2024"
+                          "  \"enterprise-id\": 2024,"
+                          "  \"persist\": false"
                           "}"));
 
     // Verify that parameters have been set correctly.
@@ -194,6 +195,7 @@ TEST_F(DUIDConfigParserTest, allParameters) {
     EXPECT_EQ(8, cfg_duid->getHType());
     EXPECT_EQ(100, cfg_duid->getTime());
     EXPECT_EQ(2024, cfg_duid->getEnterpriseId());
+    EXPECT_FALSE(cfg_duid->persist());
 }
 
 // Test out of range values for time.
