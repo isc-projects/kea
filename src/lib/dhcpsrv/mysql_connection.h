@@ -17,7 +17,7 @@
 
 #include <dhcpsrv/database_connection.h>
 #include <boost/scoped_ptr.hpp>
-#include <mysql.h>
+#include <mysql/mysql.h>
 #include <vector>
 
 namespace isc {
@@ -31,6 +31,11 @@ namespace dhcp {
 /// FALSE.
 extern const my_bool MLM_FALSE;
 extern const my_bool MLM_TRUE;
+
+// Define the current database schema values
+
+const uint32_t CURRENT_VERSION_VERSION = 3;
+const uint32_t CURRENT_VERSION_MINOR = 0;
 
 /// @brief Fetch and Release MySQL Results
 ///
@@ -188,6 +193,83 @@ public:
     /// @throw NoDatabaseName Mandatory database name not given
     /// @throw DbOpenError Error opening the database
     void openDatabase();
+
+    ///@{
+    /// The following methods are used to convert between times and time
+    /// intervals stored in the Lease object, and the times stored in the
+    /// database.  The reason for the difference is because in the DHCP server,
+    /// the cltt (Client Time Since Last Transmission) is the natural data; in
+    /// the lease file - which may be read by the user - it is the expiry time
+    /// of the lease.
+
+    /// @brief Convert time_t value to database time.
+    ///
+    /// @param input_time A time_t value representing time.
+    /// @param output_time Reference to MYSQL_TIME object where converted time
+    ///        will be put.
+    static
+    void convertToDatabaseTime(const time_t input_time, MYSQL_TIME& output_time);
+
+    /// @brief Convert Lease Time to Database Times
+    ///
+    /// Within the DHCP servers, times are stored as client last transmit time
+    /// and valid lifetime.  In the database, the information is stored as
+    /// valid lifetime and "expire" (time of expiry of the lease).  They are
+    /// related by the equation:
+    ///
+    /// - expire = client last transmit time + valid lifetime
+    ///
+    /// This method converts from the times in the lease object into times
+    /// able to be added to the database.
+    ///
+    /// @param cltt Client last transmit time
+    /// @param valid_lifetime Valid lifetime
+    /// @param expire Reference to MYSQL_TIME object where the expiry time of
+    ///        the lease will be put.
+    ///
+    /// @throw isc::BadValue if the sum of the calculated expiration time is
+    /// greater than the value of @c LeaseMgr::MAX_DB_TIME.
+    static
+    void convertToDatabaseTime(const time_t cltt, const uint32_t valid_lifetime,
+            MYSQL_TIME& expire);
+
+    /// @brief Convert Database Time to Lease Times
+    ///
+    /// Within the database, time is stored as "expire" (time of expiry of the
+    /// lease) and valid lifetime.  In the DHCP server, the information is
+    /// stored client last transmit time and valid lifetime.  These are related
+    /// by the equation:
+    ///
+    /// - client last transmit time = expire - valid_lifetime
+    ///
+    /// This method converts from the times in the database into times
+    /// able to be inserted into the lease object.
+    ///
+    /// @param expire Reference to MYSQL_TIME object from where the expiry
+    ///        time of the lease is taken.
+    /// @param valid_lifetime lifetime of the lease.
+    /// @param cltt Reference to location where client last transmit time
+    ///        is put.
+    static
+    void convertFromDatabaseTime(const MYSQL_TIME& expire,
+            uint32_t valid_lifetime, time_t& cltt);
+    ///@}
+
+    /// @brief Commit Transactions
+    ///
+    /// Commits all pending database operations. On databases that don't
+    /// support transactions, this is a no-op.
+    ///
+    /// @throw DbOperationError If the commit failed.
+    void commit();
+
+    /// @brief Rollback Transactions
+    ///
+    /// Rolls back all pending database operations. On databases that don't
+    /// support transactions, this is a no-op.
+    ///
+    /// @throw DbOperationError If the rollback failed.
+    void rollback();
 
     /// @brief Prepared statements
     ///
