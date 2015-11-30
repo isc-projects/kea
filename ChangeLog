@@ -1,3 +1,9 @@
+1059.	[func]		nicolas
+	The client packet is now passed as a new parameter "query4"
+	to the pkt4_send hook point. Thanks to Nicolas Chaigneau from
+	Capgemini for providing this patch.
+	(Github #8, git )
+
 1058.	[func]		tomek
 	Two new hook points lease4_recover and lease6_recover have been
 	implemented. They are called when a declined IPv4 or IPv6 lease

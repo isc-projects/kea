@@ -68,6 +68,7 @@ We have received the following contributions:
 
  - Nicolas Chaigneau, Capgemini
    2014-09: Fix for interfaces with multiple addresses in perfdhcp
+   2015-11: query4 parameter added to pkt4_send hook point
 
  - Marcin Wyszynki, Facebook
    2014-11: Export CalloutManager headers for testing statically linked
