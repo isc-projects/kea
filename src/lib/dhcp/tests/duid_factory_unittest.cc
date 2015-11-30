@@ -16,6 +16,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/duid_factory.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
+#include <testutils/io_utils.h>
 #include <util/encode/hex.h>
 #include <util/range_utilities.h>
 #include <boost/algorithm/string.hpp>
@@ -187,20 +188,7 @@ DUIDFactoryTest::removeDefaultFile() const {
 
 std::string
 DUIDFactoryTest::readDefaultFile() const {
-    std::ifstream ifs;
-    ifs.open(absolutePath(DEFAULT_DUID_FILE).c_str(), std::ifstream::in);
-    if (!ifs.good()) {
-        return (std::string());
-    }
-    std::string buf;
-    std::ostringstream output;
-    while (!ifs.eof() && ifs.good()) {
-        ifs >> buf;
-        output << buf;
-    }
-    ifs.close();
-
-    return (output.str());
+    return (dhcp::test::readFile(absolutePath(DEFAULT_DUID_FILE)));
 }
 
 std::vector<uint8_t>

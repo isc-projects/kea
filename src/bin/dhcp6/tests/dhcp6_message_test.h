@@ -26,7 +26,7 @@ namespace test {
 
 /// @brief Base class for test fixure classes used to validate the DHCPv6
 /// message processing by the server.
-class Dhcpv6MessageTest : public isc::dhcp::test::Dhcpv6SrvTest {
+class Dhcpv6MessageTest : public Dhcpv6SrvTest {
 public:
     /// @brief Constructor.
     ///

@@ -57,6 +57,10 @@ config="{
         \"interfaces-config\": {
             \"interfaces\": [ ]
         },
+        \"server-id\": {
+          \"type\": \"LLT\",
+          \"persist\": false
+        },
         \"preferred-lifetime\": 3000,
         \"valid-lifetime\": 4000,
         \"renew-timer\": 1000,
