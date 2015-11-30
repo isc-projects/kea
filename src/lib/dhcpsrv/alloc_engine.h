@@ -881,20 +881,24 @@ private:
     /// These are the additional steps required when recoving a declined lease:
     /// - bump decline recovered stat
     /// - log lease recovery
-    /// - call hook (@todo)
+    /// - call lease4_recover hook
     ///
     /// @param lease Lease to be reclaimed from Declined state
-    void reclaimDeclined(const Lease4Ptr& lease);
+    /// @return true if it's ok to remove the lease (false = hooks status says
+    ///         to keep it)
+    bool reclaimDeclined(const Lease4Ptr& lease);
 
     /// @brief Conducts steps necessary for reclaiming declined IPv6 lease.
     ///
     /// These are the additional steps required when recoving a declined lease:
     /// - bump decline recovered stat
     /// - log lease recovery
-    /// - call hook (@todo)
+    /// - call lease6_recover hook
     ///
     /// @param lease Lease to be reclaimed from Declined state
-    void reclaimDeclined(const Lease6Ptr& lease);
+    /// @return true if it's ok to remove the lease (false = hooks status says
+    ///         to keep it)
+    bool reclaimDeclined(const Lease6Ptr& lease);
 
 public:
 
