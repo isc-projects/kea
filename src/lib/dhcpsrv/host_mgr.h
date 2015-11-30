@@ -198,6 +198,15 @@ public:
     /// @param host Pointer to the new @c Host object being added.
     virtual void add(const HostPtr& host);
 
+    /// @brief Return backend type
+    ///
+    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
+    ///
+    /// @return Type of the backend.
+    virtual std::string getType() const {
+        return (std::string("host_mgr"));
+    }
+
 private:
 
     /// @brief Private default constructor.
@@ -206,7 +215,7 @@ private:
     /// @brief Pointer to an alternate host data source.
     ///
     /// If this pointer is NULL, the source is not in use.
-    boost::scoped_ptr<BaseHostDataSource> alternate_source;
+    static boost::shared_ptr<BaseHostDataSource> alternate_source;
 
     /// @brief Returns a pointer to the currently used instance of the
     /// @c HostMgr.

@@ -16,6 +16,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
@@ -289,7 +290,7 @@ TEST_F(MySqlLeaseMgrTest, checkTimeConversion) {
     (void) localtime_r(&expire_time, &tm_expire);
 
     // Convert to the database time
-    MySqlLeaseMgr::convertToDatabaseTime(cltt, valid_lft, mysql_expire);
+    MySqlConnection::convertToDatabaseTime(cltt, valid_lft, mysql_expire);
 
     // Are the times the same?
     EXPECT_EQ(tm_expire.tm_year + 1900, mysql_expire.year);
@@ -303,7 +304,7 @@ TEST_F(MySqlLeaseMgrTest, checkTimeConversion) {
 
     // Convert back
     time_t converted_cltt = 0;
-    MySqlLeaseMgr::convertFromDatabaseTime(mysql_expire, valid_lft, converted_cltt);
+    MySqlConnection::convertFromDatabaseTime(mysql_expire, valid_lft, converted_cltt);
     EXPECT_EQ(cltt, converted_cltt);
 }
 
