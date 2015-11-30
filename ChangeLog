@@ -1,20 +1,27 @@
+1058.	[func]		tomek
+	Two new hook points lease4_recover and lease6_recover have been
+	implemented. They are called when a declined IPv4 or IPv6 lease
+	concludes its probation period and is being recovered into
+	unsable state.
+	(Trac #3988, 3989, git 1930797c48fee7f4006a33cecd6f08b05ae76725)
+
 1057.	[func]		marcin
 	It is now possible to specify type and value of a DUID used
 	as DHCPv6 server identifier.
 	(trac #3874, git faf52b069cf774d0050d76b4f47b542b2b5105f2)
 
-1056.	[doc]		[sar]
+1056.	[doc]		sar
 	Added description of the expression based classification
 	system to the Kea Admin Guide.
 	(Trac #4101, git 3ec88e0669470ab406c45d50d0f853f9aeb3bf04)
 
-1055.	[func]		[fdupont]
+1055.	[func]		fdupont
 	Classify match expressions are evaluated on incoming packets and
 	requested options are appended when configured by the subnet, a
 	class or globally.
 	(Trac #4097, git 752ad11ff4ebe97ec27d098aff706d1999900346)
 
-1054.	[func]		[tmark]
+1054.	[func]		tmark
 	Replaced underscores, "_", with hyphens "-", in the parameter
 	names used in the kea-ddns server's configuration as well as
 	those in the DDNS messages (NCRs) sent to the server. For
@@ -33,12 +40,12 @@
 	hexadecimal format of the options.
 	(Trac #4093, git 4cdf0fff1067b3dde6570dc6831e8b1343bc50fe)
 
-1051.	[func]		[tmark]
+1051.	[func]		tmark
 	kea-dhcp4 and kea-dhcp6 configuration parsing now supports
 	the "client-classes" element for defining client classes.
 	(Trac #4096, git d21fd6925983eb20f82029e3866652398ea5e5fe)
 
-1050.	[doc]		[tmark]
+1050.	[doc]		tmark
 	Corrected the descriptions of ncr-protocol and ncr-format parameters
 	in the Kea Admin Guide.
 	(Trac #4117, git 034c1c95b57768d5abbc7fb40cc57d7cadad21dd)
