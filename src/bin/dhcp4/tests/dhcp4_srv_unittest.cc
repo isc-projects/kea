@@ -2659,23 +2659,7 @@ TEST_F(Dhcpv4SrvTest, statisticsUnknownRcvd) {
     EXPECT_EQ(1, drop_stat->getInteger().first);
 }
 
-#ifdef HAVE_MYSQL
-// Checks if the v4 server can be configured to use MySQL HostDataSource.
-TEST_F(Dhcpv4SrvTest, hostDataSourceMySQL) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
-
-    EXPECT_NO_THROW(configure(CONFIGS[1]));
-
-    HostDataSourcePtr hds;
-    hds = HostMgr::instance().getHostDataSource();
-
-    /// @todo: Uncomment this once #3682 is merged.
-    /// EXPECT_TRUE(hds);
-}
-
-#endif
+/// @todo: Implement proper tests for MySQL lease/host database,
+///        see ticket #4214.
 
 }; // end of anonymous namespace
