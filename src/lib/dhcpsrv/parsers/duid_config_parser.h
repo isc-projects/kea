@@ -75,6 +75,13 @@ private:
     /// @param enterprise_id Enterprise id.
     void setEnterpriseId(const int64_t enterprise_id) const;
 
+    /// @brief Set persistence flag.
+    ///
+    /// @param persist A boolean value indicating if the server
+    /// identifier should be stored on the disk (if true) or
+    /// not (if false).
+    void setPersist(const bool persist);
+
     /// @brief Verifies if the specified parameter is in range.
     ///
     /// Each numeric value must be in range of [0 .. max_value], where

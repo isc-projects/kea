@@ -131,7 +131,12 @@ public:
     /// This method returns a path to writeable directory that DHCP servers
     /// can store data in.
     /// @return data directory
-    std::string getDataDir();
+    std::string getDataDir() const;
+
+    /// @brief Sets new data directory.
+    ///
+    /// @param datadir New data directory.
+    void setDataDir(const std::string& datadir);
 
     /// @brief Sets whether server should send back client-id in DHCPv4
     ///
