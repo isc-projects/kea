@@ -21,7 +21,7 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
-#include <mysql/mysql.h>
+#include <mysql.h>
 
 namespace isc {
 namespace dhcp {
