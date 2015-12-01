@@ -1,3 +1,8 @@
+1061.	[func]		marcin
+	libeval: options may be referenced by their names in
+	expressions used for client classification.
+	(Trac #4204 git 38aebe9566e09daa30796df686cfdd6d0c43fa4d)
+
 1060.	[func]		kalmus
 	MySqlHostDataSource class implementation. It provides methods
 	for adding and extracting Host objects to and from MySQL database.
