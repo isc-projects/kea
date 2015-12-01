@@ -10,6 +10,13 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 # But older GCC compilers don't have the flag.
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
+# GCC 4.4 emits warning about breaking strict aliasing rule.
+# This warning is a result of a GCC bug:
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=41874
+# The warning is raised in the generated code in parser.h.
+# Disabling the strict aliasing rule suppresses this warning.
+AM_CXXFLAGS += $(WARNING_GCC_44_STRICT_ALIASING_CFLAG)
+
 lib_LTLIBRARIES = libkea-eval.la
 libkea_eval_la_SOURCES  =
 libkea_eval_la_SOURCES += eval_log.cc eval_log.h
