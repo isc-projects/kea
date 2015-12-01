@@ -575,6 +575,9 @@ TEST_F(DbAccessParserTest, commitLeaseDb) {
 // depend this test on MYSQL availability.
 TEST_F(DbAccessParserTest, commitHostsDb) {
 
+    // Remove schema (if there are any leftovers from previous tests).
+    destroyMySQLSchema();
+
     // Verify that no lease database is open
     EXPECT_THROW({
             LeaseMgr& manager = LeaseMgrFactory::instance();
