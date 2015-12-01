@@ -123,7 +123,7 @@ public:
                                               uint16_t type,
                                               const OptionBuffer& buf);
 
-    /// @brief Stores options in a buffer.
+    /// @brief Stores DHCPv4 options in a buffer.
     ///
     /// Stores all options defined in options containers in a on-wire
     /// format in output buffer specified by buf.
@@ -132,18 +132,28 @@ public:
     /// may be different reasons (option too large, option malformed,
     /// too many options etc.)
     ///
+    /// This is v4 specific version, which stores Relay Agent Information
+    /// option and END options last.
+    ///
     /// @param buf output buffer (assembled options will be stored here)
     /// @param options collection of options to store to
-
-    /// Generic version: to be used when there is no specific order
-    static void packOptions(isc::util::OutputBuffer& buf,
-                            const isc::dhcp::OptionCollection& options);
-
-    /// DHCPv4 version: put some options last
     static void packOptions4(isc::util::OutputBuffer& buf,
                              const isc::dhcp::OptionCollection& options);
 
-    /// DHCPv6 version (currently same than the generic one)
+    /// @brief Stores DHCPv6 options in a buffer.
+    ///
+    /// Stores all options defined in options containers in a on-wire
+    /// format in output buffer specified by buf.
+    ///
+    /// May throw different exceptions if option assembly fails. There
+    /// may be different reasons (option too large, option malformed,
+    /// too many options etc.)
+    ///
+    /// Currently there's no special logic in it. Options are stored in
+    /// the order of their option codes.
+    ///
+    /// @param buf output buffer (assembled options will be stored here)
+    /// @param options collection of options to store to
     static void packOptions6(isc::util::OutputBuffer& buf,
                              const isc::dhcp::OptionCollection& options);
 

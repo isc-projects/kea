@@ -476,6 +476,7 @@ static uint8_t v4_opts[] = {
     0x01, 0x02, 0x03, 0x00  // Vendor Specific Information continued
 };
 
+// This test verifies that pack options for v4 is working correctly.
 TEST_F(LibDhcpTest, packOptions4) {
 
     vector<uint8_t> payload[5];
@@ -540,6 +541,41 @@ TEST_F(LibDhcpTest, packOptions4) {
     EXPECT_NO_THROW(LibDHCP::packOptions4(buf, opts));
     ASSERT_EQ(buf.getLength(), sizeof(v4_opts));
     EXPECT_EQ(0, memcmp(v4_opts, buf.getData(), sizeof(v4_opts)));
+}
+
+// This test verifies that pack options for v4 is working correctly
+// and RAI option is packed last.
+TEST_F(LibDhcpTest, packOptions4Order) {
+
+    uint8_t expected[] = {
+        12,  3, 0,   1,  2, // Just a random option
+        99,  3, 10, 11, 12, // Another random option
+        82,  3, 20, 21, 22 // Relay Agent Info option
+    };
+
+    vector<uint8_t> payload[3];
+    for (unsigned i = 0; i < 3; i++) {
+        payload[i].resize(3);
+        payload[i][0] = i*10;
+        payload[i][1] = i*10+1;
+        payload[i][2] = i*10+2;
+    }
+
+    OptionPtr opt12(new Option(Option::V4, 12, payload[0]));
+    OptionPtr opt99(new Option(Option::V4, 99, payload[1]));
+    OptionPtr opt82(new Option(Option::V4, 82, payload[2]));
+
+    // Let's create options. They are added in 82,12,99, but the should be
+    // packed in 12,99,82 order (82, which is RAI, should go last)
+    isc::dhcp::OptionCollection opts;
+    opts.insert(make_pair(opt82->getType(), opt82));
+    opts.insert(make_pair(opt12->getType(), opt12));
+    opts.insert(make_pair(opt99->getType(), opt99));
+
+    OutputBuffer buf(100);
+    EXPECT_NO_THROW(LibDHCP::packOptions4(buf, opts));
+    ASSERT_EQ(buf.getLength(), sizeof(expected));
+    EXPECT_EQ(0, memcmp(expected, buf.getData(), sizeof(expected)));
 }
 
 TEST_F(LibDhcpTest, unpackOptions4) {
