@@ -396,7 +396,7 @@ TEST_F(LibDhcpTest, packOptions6) {
 
     OutputBuffer assembled(512);
 
-    EXPECT_NO_THROW(LibDHCP::packOptions(assembled, opts));
+    EXPECT_NO_THROW(LibDHCP::packOptions6(assembled, opts));
     EXPECT_EQ(sizeof(v6packed), assembled.getLength());
     EXPECT_EQ(0, memcmp(assembled.getData(), v6packed, sizeof(v6packed)));
 }
@@ -591,7 +591,7 @@ TEST_F(LibDhcpTest, packOptions4) {
     opts.insert(make_pair(opt1->getType(), rai));
 
     OutputBuffer buf(100);
-    EXPECT_NO_THROW(LibDHCP::packOptions(buf, opts));
+    EXPECT_NO_THROW(LibDHCP::packOptions4(buf, opts));
     ASSERT_EQ(buf.getLength(), sizeof(v4_opts));
     EXPECT_EQ(0, memcmp(v4_opts, buf.getData(), sizeof(v4_opts)));
 }
