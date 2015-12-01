@@ -6,8 +6,6 @@ EXTRA_DIST += devel/contribute.dox
 EXTRA_DIST += devel/mainpage.dox
 EXTRA_DIST += devel/qa.dox
 
-EXTRA_DIST += images/isc-logo.png
-
 nobase_dist_doc_DATA  = examples/ddns/sample1.json
 nobase_dist_doc_DATA += examples/ddns/template.json
 nobase_dist_doc_DATA += examples/kea4/hooks.json
