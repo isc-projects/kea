@@ -125,7 +125,7 @@ public:
                               const ClientClasses& classes2);
 
     /// @brief Pointer to the host data source
-    BaseHostDataSource* hdsptr_;
+    HostDataSourcePtr hdsptr_;
 
     /// @brief Test that checks that simple host with IPv4 reservation
     ///        can be inserted and later retrieved.

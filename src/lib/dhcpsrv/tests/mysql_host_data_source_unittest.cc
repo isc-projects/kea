@@ -166,7 +166,7 @@ public:
             throw;
         }
 
-        hdsptr_ = &(HostDataSourceFactory::instance());
+        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
     }
 
     /// @brief Destructor
@@ -189,7 +189,7 @@ public:
     void reopen(Universe) {
         HostDataSourceFactory::destroy();
         HostDataSourceFactory::create(validConnectionString());
-        hdsptr_ = &(HostDataSourceFactory::instance());
+        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
     }
 
 };
@@ -211,7 +211,7 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     //  If it fails, print the error message.
     try {
         HostDataSourceFactory::create(validConnectionString());
-        EXPECT_NO_THROW((void) HostDataSourceFactory::instance());
+        EXPECT_NO_THROW((void) HostDataSourceFactory::getHostDataSourcePtr());
         HostDataSourceFactory::destroy();
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
@@ -222,7 +222,7 @@ TEST(MySqlHostDataSource, OpenDatabase) {
 
     // Check that attempting to get an instance of the lease manager when
     // none is set throws an exception.
-    EXPECT_THROW(HostDataSourceFactory::instance(), NoHostDataSourceManager);
+    EXPECT_FALSE(HostDataSourceFactory::getHostDataSourcePtr());
 
     // Check that wrong specification of backend throws an exception.
     // (This is really a check on LeaseMgrFactory, but is convenient to
