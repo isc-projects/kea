@@ -1,3 +1,7 @@
+1063.	[doc]		tmark
+	Added Kea logo to documentation.
+	(trac #3702, git 7cae813ffe9a7320db5c84ac4beb1c3c0ecabbf7)
+
 1062.	[func]		marcin
 	It is possible to disable writing generated DHCPv6 server
 	identifier in a persistent storage. This also fixes a
