@@ -59,6 +59,7 @@ kea_lfc_SOURCES  = main.cc
 
 kea_lfc_LDADD  = liblfc.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+kea_lfc_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
