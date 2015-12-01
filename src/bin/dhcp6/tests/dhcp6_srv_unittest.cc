@@ -2737,20 +2737,7 @@ TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
 
-#ifdef HAVE_MYSQL
-// Checks if the v6 server can be configured to use MySQL HostDataSource.
-TEST_F(Dhcpv6SrvTest, hostDataSourceMySQL) {
-
-    Dhcp6Client client;
-
-    EXPECT_NO_THROW(configure(CONFIGS[1], *client.getServer()));
-
-    HostDataSourcePtr hds;
-    hds = HostMgr::instance().getHostDataSource();
-
-    /// @todo: Uncomment this once #3682 is merged.
-    /// EXPECT_TRUE(hds);
-}
-#endif
+/// @todo: Implement proper tests for MySQL lease/host database,
+///        see ticket #4214.
 
 }   // end of anonymous namespace
