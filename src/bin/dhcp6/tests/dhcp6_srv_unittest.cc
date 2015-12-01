@@ -1805,6 +1805,7 @@ TEST_F(Dhcpv6SrvTest, docsisClientClassification) {
 }
 
 // Checks if client packets are classified properly using match expressions.
+// Note option names and definitions are used.
 TEST_F(Dhcpv6SrvTest, matchClassification) {
     IfaceMgrTestConfig test_config(true);
 
@@ -1834,7 +1835,7 @@ TEST_F(Dhcpv6SrvTest, matchClassification) {
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
         "             \"data\": \"true\" } ], "
-        "    \"test\": \"option[1234].text == 'foo'\" } ] }";
+        "    \"test\": \"option[host-name].text == 'foo'\" } ] }";
     ASSERT_NO_THROW(configure(config));
 
     // Create packets with enough to select the subnet

@@ -17,6 +17,7 @@
 
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
+#include <dhcp/option_space_container.h>
 
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
@@ -765,6 +766,10 @@ typedef OptionDefContainer::nth_index<2>::type OptionDefContainerNameIndex;
 /// represents the end.
 typedef std::pair<OptionDefContainerNameIndex::const_iterator,
                   OptionDefContainerNameIndex::const_iterator> OptionDefContainerNameRange;
+
+typedef OptionSpaceContainer<
+    OptionDefContainer, OptionDefinitionPtr, std::string
+> OptionDefSpaceContainer;
 
 
 } // namespace isc::dhcp

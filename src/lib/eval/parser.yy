@@ -25,6 +25,7 @@
 #include <string>
 #include <eval/token.h>
 #include <eval/eval_context_decl.h>
+#include <dhcp/option.h>
 #include <boost/lexical_cast.hpp>
 
 using namespace isc::dhcp;
@@ -39,6 +40,7 @@ using namespace isc::eval;
 {
 # include "eval_context.h"
 }
+
 %define api.token.prefix {TOKEN_}
 %token
   END  0  "end of file"
@@ -59,37 +61,13 @@ using namespace isc::eval;
 %token <std::string> STRING "constant string"
 %token <std::string> INTEGER "integer"
 %token <std::string> HEXSTRING "constant hexstring"
+%token <std::string> OPTION_NAME "option name"
 %token <std::string> TOKEN
 
+%type <uint16_t> option_code
+%type <TokenOption::RepresentationType> option_repr_type
+
 %printer { yyoutput << $$; } <*>;
-
-%code
-{
-namespace {
-
-/* Convert option code specified as string to an 16 bit unsigned
-   representation. If the option code is not within the range of
-   0..65535 an error is reported. */
-uint16_t
-convert_option_code(const std::string& option_code,
-                    const isc::eval::EvalParser::location_type& loc,
-                    EvalContext& ctx) {
-    int n = 0;
-    try {
-        n  = boost::lexical_cast<int>(option_code);
-    } catch (const boost::bad_lexical_cast &) {
-        // This can't happen...
-        ctx.error(loc, "Option code has invalid value in " + option_code);
-    }
-    if (n < 0 || n > 65535) {
-        ctx.error(loc, "Option code has invalid value in "
-                      + option_code + ". Allowed range: 0..65535");
-    }
-    return (static_cast<uint16_t>(n));
-}
-}
-
-}
 
 %%
 
@@ -118,16 +96,9 @@ string_expr : STRING
                       TokenPtr hex(new TokenHexString($1));
                       ctx.expression.push_back(hex);
                   }
-            | OPTION "[" INTEGER "]" DOT TEXT
+            | OPTION "[" option_code "]" "." option_repr_type
                   {
-                      uint16_t numeric_code = convert_option_code($3, @3, ctx);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::TEXTUAL));
-                      ctx.expression.push_back(opt);
-                  }
-            | OPTION "[" INTEGER "]" DOT HEX
-                  {
-                      uint16_t numeric_code = convert_option_code($3, @3, ctx);
-                      TokenPtr opt(new TokenOption(numeric_code, TokenOption::HEXADECIMAL));
+                      TokenPtr opt(new TokenOption($3, $6));
                       ctx.expression.push_back(opt);
                   }
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
@@ -138,6 +109,26 @@ string_expr : STRING
             | TOKEN
                 // Temporary unused token to avoid explict but long errors
             ;
+
+option_code : INTEGER
+                 {
+                     $$ = ctx.convertOptionCode($1, @1);
+                 }
+            | OPTION_NAME
+                 {
+                     $$ = ctx.convertOptionName($1, @1);
+                 }
+            ;
+
+option_repr_type : TEXT
+                      {
+                          $$ = TokenOption::TEXTUAL;
+                      }
+                 | HEX
+                      {
+                          $$ = TokenOption::HEXADECIMAL;
+                      }
+                 ;
 
 start_expr : INTEGER
                  {

@@ -123,6 +123,13 @@ blank [ \t]
     return isc::eval::EvalParser::make_INTEGER(tmp, loc);
 }
 
+[A-Za-z]([-_A-Za-z0-9]*[A-Za-z0-9])?/({blank}|\n)*] {
+    // This string specifies option name starting with a letter
+    // and further containing letters, digits, hyphens and
+    // underscores and finishing by letters or digits.
+    return isc::eval::EvalParser::make_OPTION_NAME(yytext, loc);
+}
+
 "=="        return isc::eval::EvalParser::make_EQUAL(loc);
 "option"    return isc::eval::EvalParser::make_OPTION(loc);
 "text"      return isc::eval::EvalParser::make_TEXT(loc);

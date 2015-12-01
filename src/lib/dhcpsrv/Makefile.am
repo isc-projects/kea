@@ -132,7 +132,6 @@ libkea_dhcpsrv_la_SOURCES += ncr_generator.cc ncr_generator.h
 if HAVE_PGSQL
 libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
 endif
-libkea_dhcpsrv_la_SOURCES += option_space_container.h
 libkea_dhcpsrv_la_SOURCES += pool.cc pool.h
 libkea_dhcpsrv_la_SOURCES += srv_config.cc srv_config.h
 libkea_dhcpsrv_la_SOURCES += subnet.cc subnet.h
