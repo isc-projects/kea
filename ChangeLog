@@ -1,3 +1,9 @@
+1062.	[func]		marcin
+	It is possible to disable writing generated DHCPv6 server
+	identifier in a persistent storage. This also fixes a
+	failing distcheck.
+	(trac #4211, git d8f39b7aff9312237d4b6d6de39a7336a25ead4c)
+
 1061.	[func]		marcin
 	libeval: options may be referenced by their names in
 	expressions used for client classification.
