@@ -17,6 +17,7 @@
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
+#include <dhcpsrv/tests/mysql_schema.h>
 #include <dhcpsrv/host_mgr.h>
 #include <log/logger_support.h>
 
@@ -28,6 +29,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::data;
 using namespace isc::config;
 
@@ -536,6 +538,8 @@ TEST_F(DbAccessParserTest, getDbAccessString) {
 // that does not assume that the test has been built with MySQL support.
 TEST_F(DbAccessParserTest, commitLeaseDb) {
 
+    EXPECT_NO_THROW(createMySQLSchema());
+
     // Verify that no lease database is open
     EXPECT_THROW({
             LeaseMgr& manager = LeaseMgrFactory::instance();
@@ -566,8 +570,11 @@ TEST_F(DbAccessParserTest, commitLeaseDb) {
     EXPECT_EQ(std::string("memfile"), dbtype);
 }
 
+#ifdef HAVE_MYSQL
 // Check that the "commit" function actually opens the database, when type
-// is set to HOSTS_DB.
+// is set to HOSTS_DB. We're using MySQL here. Since the only currently supported
+// host data source is the one that uses MySQL, we have no other choice, but to
+// depend this test on MYSQL availability.
 TEST_F(DbAccessParserTest, commitHostsDb) {
 
     // Verify that no lease database is open
@@ -577,7 +584,8 @@ TEST_F(DbAccessParserTest, commitHostsDb) {
             }, isc::dhcp::NoLeaseManager);
 
     // Set up the parser to open the memfile database.
-    const char* config[] = {"type", "memfile", "persist", "false", NULL};
+    const char* config[] = {"type", "mysql", "user", "keatest",
+                            "password", "keatest", "name", "keatest", NULL};
     string json_config = toJson(config);
 
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -588,24 +596,29 @@ TEST_F(DbAccessParserTest, commitHostsDb) {
     EXPECT_NO_THROW(parser.build(json_elements));
 
     // Ensure that the access string is as expected.
-    EXPECT_EQ("persist=false type=memfile universe=4",
+    EXPECT_EQ("name=keatest password=keatest type=mysql universe=4 user=keatest",
               parser.getDbAccessString());
 
     // Destroy lease mgr (if there's any)
     LeaseMgrFactory::destroy();
 
+    EXPECT_NO_THROW(createMySQLSchema());
+
     // Committal of the parser changes should not create LeaseMgr.
     // It should create HostDataSource instead.
     EXPECT_NO_THROW(parser.commit());
 
-    // Check that LeaseMgr was NOT created (it shouldn't, this is for HOSTS_DB.
+    // Check that LeaseMgr was NOT created (it shouldn't, this is for HOSTS_DB).
     EXPECT_THROW(LeaseMgrFactory::instance(), NoLeaseManager);
 
+    // Verify that HostDataSource has been created.
     HostDataSourcePtr hds = HostMgr::instance().getHostDataSource();
+    ASSERT_TRUE(hds);
 
-    /// @todo: Uncomment this once 3682 is merged. The whole unit-test
-    /// should create MySQL database and be ifdefed appropriately.
-    // ASSERT_TRUE(hds);
+    EXPECT_EQ("mysql", hds->getType());
+
+    EXPECT_NO_THROW(destroyMySQLSchema());
 }
+#endif
 
 };  // Anonymous namespace

@@ -51,9 +51,10 @@ HostMgr::create(const std::string& access) {
     if (!access.empty()) {
         HostDataSourceFactory::create(access);
 
-        /// @todo Initialize alternate_source here.
-        //alternate_source = HostDataSourceFactory::getHostDataSourcePtr();
     }
+
+    // Now store the host data source pointer.
+    getHostMgrPtr()->alternate_source = HostDataSourceFactory::getHostDataSourcePtr();
 }
 
 HostMgr&
