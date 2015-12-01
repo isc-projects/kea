@@ -43,7 +43,8 @@
             "item_name": "persist",
             "item_type": "boolean",
             "item_optional": true,
-            "item_default": true
+            "item_default": true,
+            "item_description": "Indicates if generated server identifier should be stored in a stable storage."
         }
         ]
       },
