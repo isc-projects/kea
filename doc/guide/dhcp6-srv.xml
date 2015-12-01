@@ -2602,7 +2602,7 @@ should include options from the isc option space:
 
       <para>In some uncommon deployments where no stable storage is
       available, it is desired to configure the server to not try to
-      store the server identifier on the hard drive. It is controlled
+      store the server identifier on the stable storage. It is controlled
       by the value of <command>persist</command> boolean parameter:
 <screen>
 "Dhcp6": {
