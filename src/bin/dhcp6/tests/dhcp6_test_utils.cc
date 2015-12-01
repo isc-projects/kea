@@ -21,6 +21,8 @@
 #include <util/pointer_util.h>
 #include <cc/command_interpreter.h>
 #include <stats/stats_mgr.h>
+#include <cstdio>
+#include <sstream>
 #include <string.h>
 
 using namespace isc::data;
@@ -32,10 +34,24 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-const char* NakedDhcpv6SrvTest::DUID_FILE = "server-id-test.txt";
+const char* BaseServerTest::DUID_FILE = "kea-dhcp6-serverid";
+
+BaseServerTest::BaseServerTest()
+    : original_datadir_(CfgMgr::instance().getDataDir()) {
+    CfgMgr::instance().setDataDir(TEST_DATA_BUILDDIR);
+}
+
+BaseServerTest::~BaseServerTest() {
+    // Remove test DUID file.
+    std::ostringstream s;
+    s << CfgMgr::instance().getDataDir() << "/" << DUID_FILE;
+    static_cast<void>(::remove(s.str().c_str()));
+    // Revert to original data directory.
+    CfgMgr::instance().setDataDir(original_datadir_);
+}
 
 Dhcpv6SrvTest::Dhcpv6SrvTest()
-:srv_(0) {
+    : NakedDhcpv6SrvTest(), srv_(0) {
     subnet_ = isc::dhcp::Subnet6Ptr
         (new isc::dhcp::Subnet6(isc::asiolink::IOAddress("2001:db8:1::"),
                                 48, 1000, 2000, 3000, 4000));

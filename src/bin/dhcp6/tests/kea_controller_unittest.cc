@@ -20,6 +20,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
+#include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -53,9 +54,10 @@ public:
 };
 
 
-class JSONFileBackendTest : public ::testing::Test {
+class JSONFileBackendTest : public dhcp::test::BaseServerTest {
 public:
-    JSONFileBackendTest() {
+    JSONFileBackendTest()
+        : BaseServerTest() {
     }
 
     ~JSONFileBackendTest() {

@@ -42,6 +42,30 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
+/// @brief Base class for DHCPv6 server testing.
+///
+/// Currently it configures the test data path directory in
+/// the @c CfgMgr. When the object is destroyed, the original
+/// path is reverted.
+class BaseServerTest : public ::testing::Test {
+public:
+
+    /// @brief Location of a test DUID file
+    static const char* DUID_FILE;
+
+    /// @brief Constructor.
+    BaseServerTest();
+
+    /// @brief Destructor.
+    virtual ~BaseServerTest();
+
+private:
+
+    /// @brief Holds the original data directory.
+    std::string original_datadir_;
+
+};
+
 /// @brief "naked" Dhcpv6Srv class that exposes internal members
 class NakedDhcpv6Srv: public isc::dhcp::Dhcpv6Srv {
 public:
@@ -131,14 +155,11 @@ public:
 
 /// @brief Test fixture for any tests requiring blank/empty configuration
 ///        serves as base class for additional tests
-class NakedDhcpv6SrvTest : public ::testing::Test {
+class NakedDhcpv6SrvTest : public BaseServerTest {
 public:
 
     /// @brief Constructor
     NakedDhcpv6SrvTest();
-
-    /// @brief Location of a test DUID file
-    static const char* DUID_FILE;
 
     // Generate IA_NA or IA_PD option with specified parameters
     boost::shared_ptr<isc::dhcp::Option6IA> generateIA
