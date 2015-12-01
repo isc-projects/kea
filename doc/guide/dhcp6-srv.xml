@@ -470,9 +470,22 @@ be followed by a comma and another object definition.</para>
 </section>
 </section>
 
-<!-- Uncomment this once 3682 is merged
+<!-- Uncomment this once 4212 is merged. While the host storage for
+     MySQL is there, it is able to store hosts, but not IPv6
+     reservations. So technically we have host reservations for v6 in
+     MySQL, but in practice it's kinda useless right now as it can't
+     store addresses or prefixes. Let's keep it commented out until
+     we implement that functionality -->
+
 <section>
   <title>Hosts Storage</title>
+
+    <note>
+      <para>This feature did not undergo the regular system level
+      testing conducted by ISC. As such, please treat it as
+      experimental.</para>
+    </note>
+
     <para>Kea is also able to store information about host reservations in the
     database. Hosts database configuration uses the same syntax as lease
     database. In fact, Kea server opens independent connections for each
