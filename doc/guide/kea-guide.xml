@@ -26,13 +26,25 @@
   <?xml-stylesheet href="kea-guide.css" type="text/css"?>
 
   <bookinfo>
-    <title>Kea Administrator Reference Manual</title>
+
+    <title>
+    Kea Administrator Reference Manual
+    <inlinemediaobject>
+        <imageobject>
+            <imagedata fileref="kea-logo-100x70.png" align="left"/>
+        </imageobject>
+    </inlinemediaobject>
+    </title>
+
+    <releaseinfo>This is the reference guide for Kea version
+        &__VERSION__;.</releaseinfo>
 
     <copyright>
       <year>2010-2015</year><holder>Internet Systems Consortium, Inc.</holder>
     </copyright>
 
     <abstract>
+
       <para>
         Kea is an open source implementation of the Dynamic Host Configuration
         Protocol (DHCP) servers, developed and maintained by Internet Systems
@@ -45,9 +57,6 @@
         and plain text formats), along with other documents for
         Kea, can be found at <ulink url="http://kea.isc.org/docs"/>.
         </para> </abstract>
-
-      <releaseinfo>This is the reference guide for Kea version
-        &__VERSION__;.</releaseinfo>
 
   </bookinfo>
 
