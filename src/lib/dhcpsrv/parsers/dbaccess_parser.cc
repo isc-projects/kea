@@ -155,8 +155,9 @@ DbAccessParser::commit() {
     case HOSTS_DB:
     {
         // Let's instantiate HostMgr with new parameters. Note that HostMgr's
-        // constructor will call HostDataSourceFactory::create() with appropriate
-        // parameters.
+        // create method will call HostDataSourceFactory::create() with
+        // appropriate parameters. It will also destroy a pre-existing
+        // instance, if it existed.
         HostMgr::create(getDbAccessString());
         break;
     }
