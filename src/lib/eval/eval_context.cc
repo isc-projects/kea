@@ -57,8 +57,8 @@ EvalContext::error (const std::string& what)
 }
 
 uint16_t
-EvalContext::convert_option_code(const std::string& option_code,
-                                 const isc::eval::location& loc)
+EvalContext::convertOptionCode(const std::string& option_code,
+                               const isc::eval::location& loc)
 {
     int n = 0;
     try {
@@ -82,8 +82,8 @@ EvalContext::convert_option_code(const std::string& option_code,
 }
 
 uint16_t
-EvalContext::convert_option_name(const std::string& option_name,
-                                 const isc::eval::location& loc)
+EvalContext::convertOptionName(const std::string& option_name,
+                               const isc::eval::location& loc)
 {
     OptionDefinitionPtr option_def = LibDHCP::getOptionDef(option_universe_,
                                                            option_name);

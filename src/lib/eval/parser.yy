@@ -112,11 +112,11 @@ string_expr : STRING
 
 option_code : INTEGER
                  {
-                     $$ = ctx.convert_option_code($1, @1);
+                     $$ = ctx.convertOptionCode($1, @1);
                  }
             | OPTION_NAME
                  {
-                     $$ = ctx.convert_option_name($1, @1);
+                     $$ = ctx.convertOptionName($1, @1);
                  }
             ;
 

@@ -661,7 +661,7 @@ namespace isc { namespace eval {
   case 9:
 #line 114 "parser.yy" // lalr1.cc:859
     {
-                     yylhs.value.as< uint16_t > () = ctx.convert_option_code(yystack_[0].value.as< std::string > (), yystack_[0].location);
+                     yylhs.value.as< uint16_t > () = ctx.convertOptionCode(yystack_[0].value.as< std::string > (), yystack_[0].location);
                  }
 #line 667 "parser.cc" // lalr1.cc:859
     break;
@@ -669,7 +669,7 @@ namespace isc { namespace eval {
   case 10:
 #line 118 "parser.yy" // lalr1.cc:859
     {
-                     yylhs.value.as< uint16_t > () = ctx.convert_option_name(yystack_[0].value.as< std::string > (), yystack_[0].location);
+                     yylhs.value.as< uint16_t > () = ctx.convertOptionName(yystack_[0].value.as< std::string > (), yystack_[0].location);
                  }
 #line 675 "parser.cc" // lalr1.cc:859
     break;
