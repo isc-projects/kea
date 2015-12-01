@@ -92,8 +92,8 @@ public:
     /// @result the option code
     /// @throw calls the syntax error function if the value is no in
     ///        the range 0..255 or 0..65535
-    uint16_t convert_option_code(const std::string& option_code,
-                                 const isc::eval::location& loc);
+    uint16_t convertOptionCode(const std::string& option_code,
+                               const isc::eval::location& loc);
 
     /// @brief Option name convertion
     ///
@@ -101,8 +101,8 @@ public:
     /// @param loc the location of the token
     /// @result the option code
     /// @throw calls the syntax error function if the name cannot be resolved
-    uint16_t convert_option_name(const std::string& option_name,
-                                 const isc::eval::location& loc);
+    uint16_t convertOptionName(const std::string& option_name,
+                               const isc::eval::location& loc);
 
  private:
     /// @brief Flag determining scanner debugging.
