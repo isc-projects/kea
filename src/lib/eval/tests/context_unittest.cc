@@ -16,6 +16,7 @@
 #include <eval/token.h>
 #include <eval/eval_context.h>
 #include <eval/token.h>
+#include <dhcp/option.h>
 #include <dhcp/pkt4.h>
 
 #include <boost/shared_ptr.hpp>
@@ -30,6 +31,11 @@ namespace {
 /// @brief Test class for testing EvalContext aka class test parsing
 class EvalContextTest : public ::testing::Test {
 public:
+    /// @brief constructor to initialize members
+    EvalContextTest() : ::testing::Test(),
+    universe_(Option::V4), parsed_(false)
+    { }
+
     /// @brief checks if the given token is a string with the expected value
     void checkTokenString(const TokenPtr& token, const std::string& expected) {
         ASSERT_TRUE(token);
@@ -94,7 +100,7 @@ public:
     /// @brief checks if the given expression raises the expected message
     /// when it is parsed.
     void checkError(const string& expr, const string& msg) {
-        EvalContext eval;
+        EvalContext eval(universe_);
         parsed_ = false;
         try {
             parsed_ = eval.parseString(expr);
@@ -109,21 +115,28 @@ public:
         }
     }
 
+    /// @brief sets the universe
+    /// @note the default universe is DHCPv4
+    void setUniverse(const Option::Universe& universe) {
+        universe_ = universe;
+    }
+
+    Option::Universe universe_;
     bool parsed_; ///< Parsing status
 };
 
 // Test the parsing of a basic expression
 TEST_F(EvalContextTest, basic) {
 
-    EvalContext tmp;
+    EvalContext eval(Option::V4);
 
-    EXPECT_NO_THROW(parsed_ = tmp.parseString("option[123].text == 'MSFT'"));
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].text == 'MSFT'"));
     EXPECT_TRUE(parsed_);
 }
 
 // Test the parsing of a string terminal
 TEST_F(EvalContextTest, string) {
-    EvalContext eval;
+    EvalContext eval(Option::V4);
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("'foo' == 'bar'"));
     EXPECT_TRUE(parsed_);
@@ -140,7 +153,7 @@ TEST_F(EvalContextTest, string) {
 // Test the parsing of a basic expression using integers
 TEST_F(EvalContextTest, integer) {
 
-    EvalContext eval;
+    EvalContext eval(Option::V4);
 
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("substring(option[123].text, 0, 2) == '42'"));
@@ -149,7 +162,7 @@ TEST_F(EvalContextTest, integer) {
 
 // Test the parsing of a hexstring terminal
 TEST_F(EvalContextTest, hexstring) {
-    EvalContext eval;
+    EvalContext eval(Option::V4);
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("0x666f6f == 'foo'"));
     EXPECT_TRUE(parsed_);
@@ -164,7 +177,7 @@ TEST_F(EvalContextTest, hexstring) {
 // Test the parsing of a hexstring terminal with an odd number of
 // hexadecimal digits
 TEST_F(EvalContextTest, oddHexstring) {
-    EvalContext eval;
+    EvalContext eval(Option::V4);
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("0X7 == 'foo'"));
     EXPECT_TRUE(parsed_);
@@ -178,7 +191,7 @@ TEST_F(EvalContextTest, oddHexstring) {
 
 // Test the parsing of an equal expression
 TEST_F(EvalContextTest, equal) {
-    EvalContext eval;
+    EvalContext eval(Option::V4);
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("'foo' == 'bar'"));
     EXPECT_TRUE(parsed_);
@@ -196,7 +209,7 @@ TEST_F(EvalContextTest, equal) {
 
 // Test the parsing of an option terminal
 TEST_F(EvalContextTest, option) {
-    EvalContext eval;
+    EvalContext eval(Option::V4);
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].text == 'foo'"));
     EXPECT_TRUE(parsed_);
@@ -204,9 +217,43 @@ TEST_F(EvalContextTest, option) {
     checkTokenOption(eval.expression.at(0), 123);
 }
 
+// Test parsing of an option identified by name.
+TEST_F(EvalContextTest, optionWithName) {
+    EvalContext eval(Option::V4);
+
+    // Option 'host-name' is a standard DHCPv4 option defined in the libdhcp++.
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[host-name].text == 'foo'"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, eval.expression.size());
+    checkTokenOption(eval.expression.at(0), 12);
+}
+
+// Test checking that whitespace can surround option name.
+TEST_F(EvalContextTest, optionWithNameAndWhitespace) {
+    EvalContext eval(Option::V4);
+
+    // Option 'host-name' is a standard DHCPv4 option defined in the libdhcp++.
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[  host-name  ].text == 'foo'"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, eval.expression.size());
+    checkTokenOption(eval.expression.at(0), 12);
+}
+
+// Test checking that newlines can surround option name.
+TEST_F(EvalContextTest, optionWithNameAndNewline) {
+    EvalContext eval(Option::V4);
+
+    // Option 'host-name' is a standard DHCPv4 option defined in the libdhcp++.
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("option[\n host-name \n ].text == \n'foo'"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, eval.expression.size());
+    checkTokenOption(eval.expression.at(0), 12);
+}
+
 // Test parsing of an option represented as hexadecimal string.
 TEST_F(EvalContextTest, optionHex) {
-    EvalContext eval;
+    EvalContext eval(Option::V4);
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].hex == 0x666F6F"));
     EXPECT_TRUE(parsed_);
@@ -216,7 +263,7 @@ TEST_F(EvalContextTest, optionHex) {
 
 // Test the parsing of a substring expression
 TEST_F(EvalContextTest, substring) {
-    EvalContext eval;
+    EvalContext eval(Option::V4);
 
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("substring('foobar',2,all) == 'obar'"));
@@ -257,10 +304,15 @@ TEST_F(EvalContextTest, scanParseErrors) {
     checkError("===", "<string>:1.1-2: syntax error, unexpected ==");
     checkError("option[-1].text",
                "<string>:1.8-9: Option code has invalid "
-               "value in -1. Allowed range: 0..65535");
+               "value in -1. Allowed range: 0..255");
+    checkError("option[256].text",
+               "<string>:1.8-10: Option code has invalid "
+               "value in 256. Allowed range: 0..255");
+    setUniverse(Option::V6);
     checkError("option[65536].text",
                "<string>:1.8-12: Option code has invalid "
                "value in 65536. Allowed range: 0..65535");
+    setUniverse(Option::V4);
     checkError("option[12345678901234567890].text",
                "<string>:1.8-27: Failed to convert 12345678901234567890 "
                "to an integer.");
@@ -269,6 +321,13 @@ TEST_F(EvalContextTest, scanParseErrors) {
                " expecting .");
     checkError("option[123].text < 'foo'", "<string>:1.18: Invalid"
                " character: <");
+    checkError("option[-ab].text", "<string>:1.8: Invalid character: -");
+    checkError("option[0ab].text",
+               "<string>:1.9-10: syntax error, unexpected option name, "
+               "expecting ]");
+    checkError("option[ab_].hex", "<string>:1.8: Invalid character: a");
+    checkError("option[\nhost-name\n].hex =\n= 'foo'",
+               "<string>:3.7: Invalid character: =");
     checkError("substring('foo',12345678901234567890,1)",
                "<string>:1.17-36: Failed to convert 12345678901234567890 "
                "to an integer.");
@@ -291,11 +350,15 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("option['ab'].text == 'foo'",
                "<string>:1.8-11: syntax error, "
                "unexpected constant string, "
-               "expecting integer");
+               "expecting integer or option name");
+    checkError("option[ab].text == 'foo'",
+               "<string>:1.8-9: option 'ab' is not defined");
     checkError("option[0xa].text == 'ab'",
                "<string>:1.8-10: syntax error, "
                "unexpected constant hexstring, "
-               "expecting integer");
+               "expecting integer or option name");
+    checkError("option[10].bin", "<string>:1.12: Invalid character: b");
+    checkError("option[boot-size].bin", "<string>:1.19: Invalid character: b");
     checkError("substring('foobar') == 'f'",
                "<string>:1.19: syntax error, "
                "unexpected ), expecting \",\"");

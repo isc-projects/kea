@@ -42,7 +42,11 @@ class EvalContext
 {
 public:
     /// @brief Default constructor.
-    EvalContext();
+    ///
+    /// @param option_universe Option universe: DHCPv4 or DHCPv6. This is used
+    /// by the parser to determine which option definitions set should be used
+    /// to map option names to option codes.
+    EvalContext(const Option::Universe& option_universe);
 
     /// @brief destructor
     virtual ~EvalContext();
@@ -55,7 +59,7 @@ public:
 
     /// @brief Method called after the last tokens are scanned from a string.
     void scanStringEnd();
-    
+
     /// @brief Run the parser on the string specified.
     ///
     /// @param str string to be written
@@ -86,13 +90,38 @@ public:
     /// This is for should not happen but fatal errors
     static void fatal(const std::string& what);
 
+    /// @brief Option code convertion
+    ///
+    /// @param option_code a string representing the integer code
+    /// @param loc the location of the token
+    /// @result the option code
+    /// @throw calls the syntax error function if the value is no in
+    ///        the range 0..255 or 0..65535
+    uint16_t convertOptionCode(const std::string& option_code,
+                               const isc::eval::location& loc);
+
+    /// @brief Option name convertion
+    ///
+    /// @param option_name the option name
+    /// @param loc the location of the token
+    /// @result the option code
+    /// @throw calls the syntax error function if the name cannot be resolved
+    uint16_t convertOptionName(const std::string& option_name,
+                               const isc::eval::location& loc);
+
  private:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
 
     /// @brief Flag determing parser debugging.
     bool trace_parsing_;
-  
+
+    /// @brief Option universe: DHCPv4 or DHCPv6.
+    ///
+    /// This is used by the parser to determine which option definitions
+    /// set should be used to map option name to option code.
+    Option::Universe option_universe_;
+
 };
 
 }; // end of isc::eval namespace

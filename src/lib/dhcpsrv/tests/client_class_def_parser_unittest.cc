@@ -15,6 +15,8 @@
 #include <config.h>
 
 #include <cc/data.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option.h>
 #include <dhcp/option_string.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
@@ -31,6 +33,61 @@ using namespace isc::data;
 using namespace isc::dhcp;
 
 namespace {
+
+/// @brief Test fixture class for @c ExpressionParser.
+class ExpressionParserTest : public ::testing::Test {
+protected:
+
+    /// @brief Test that validate expression can be evaluated against v4 or
+    /// v6 packet.
+    ///
+    /// Verifies that given a valid expression, the ExpressionParser
+    /// produces an Expression which can be evaluated against a v4 or v6
+    /// packet.
+    ///
+    /// @param universe V4 or V6.
+    /// @param expression Textual representation of the expression to be
+    /// evaluated.
+    /// @param option_string String data to be placed in the hostname
+    /// option, being placed in the packet used for evaluation.
+    /// @tparam Type of the packet: @c Pkt4 or @c Pkt6.
+    template<typename PktType>
+    void testValidExpression(const Option::Universe& universe,
+                             const std::string& expression,
+                             const std::string& option_string) {
+        ParserContextPtr context(new ParserContext(universe));
+        ExpressionParserPtr parser;
+        ExpressionPtr parsed_expr;
+
+        // Turn config into elements.  This may emit exceptions.
+        ElementPtr config_element = Element::fromJSON(expression);
+
+        // Create the parser.
+        ASSERT_NO_THROW(parser.reset(new ExpressionParser("", parsed_expr,
+                                                      context)));
+        // Expression should parse and commit.
+        ASSERT_NO_THROW(parser->build(config_element));
+        ASSERT_NO_THROW(parser->commit());
+
+        // Parsed expression should exist.
+        ASSERT_TRUE(parsed_expr);
+
+        // Build a packet that will fail evaluation.
+        boost::shared_ptr<PktType> pkt(new PktType(universe == Option::V4 ?
+                                                   DHCPDISCOVER : DHCPV6_SOLICIT,
+                                                   123));
+        EXPECT_FALSE(evaluate(*parsed_expr, *pkt));
+
+        // Now add the option so it will pass. Use a standard option carrying a
+        // single string value, i.e. hostname for DHCPv4 and bootfile url for
+        // DHCPv6.
+        OptionPtr opt(new OptionString(universe, universe == Option::V4 ?
+                                       DHO_HOST_NAME : D6O_BOOTFILE_URL,
+                                       option_string));
+        pkt->addOption(opt);
+        EXPECT_TRUE(evaluate(*parsed_expr, *pkt));
+    }
+};
 
 /// @brief Test fixture class for @c ClientClassDefParser.
 class ClientClassDefParserTest : public ::testing::Test {
@@ -113,69 +170,66 @@ protected:
 
 // Verifies that given a valid expression, the ExpressionParser
 // produces an Expression which can be evaluated against a v4 packet.
-TEST(ExpressionParserTest, validExpression4) {
-    ParserContextPtr context(new ParserContext(Option::V4));
-    ExpressionParserPtr parser;
-    ExpressionPtr parsed_expr;
+TEST_F(ExpressionParserTest, validExpression4) {
+    testValidExpression<Pkt4>(Option::V4, "\"option[12].text == 'hundred4'\"",
+                              "hundred4");
+}
 
-    // Turn config into elements.  This may emit exceptions.
-    std::string cfg_txt = "\"option[100].text == 'hundred4'\"";
-    ElementPtr config_element = Element::fromJSON(cfg_txt);
+// Verifies that the option name can be used in the evaluated expression.
+TEST_F(ExpressionParserTest, validExpressionWithOptionName4) {
+    testValidExpression<Pkt4>(Option::V4,
+                              "\"option[host-name].text == 'hundred4'\"",
+                              "hundred4");
+}
 
-    // Create the parser.
-    ASSERT_NO_THROW(parser.reset(new ExpressionParser("", parsed_expr,
-                                                      context)));
-    // Expression should parse and commit.
-    ASSERT_NO_THROW(parser->build(config_element));
-    ASSERT_NO_THROW(parser->commit());
+// Verifies that given a valid expression using .hex operator for option, the
+// ExpressionParser produces an Expression which can be evaluated against
+// a v4 packet.
+TEST_F(ExpressionParserTest, validExpressionWithHex4) {
+    testValidExpression<Pkt4>(Option::V4, "\"option[12].hex == 0x68756E6472656434\"",
+                              "hundred4");
+}
 
-    // Parsed expression should exist.
-    ASSERT_TRUE(parsed_expr);
-
-    // Build a packet that will fail evaluation.
-    Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 123));
-    EXPECT_FALSE(evaluate(*parsed_expr, *pkt4));
-
-    // Now add the option so it will pass.
-    OptionPtr opt(new OptionString(Option::V4, 100, "hundred4"));
-    pkt4->addOption(opt);
-    EXPECT_TRUE(evaluate(*parsed_expr, *pkt4));
+// Verifies that the option name can be used together with .hex operator in
+// the evaluated expression.
+TEST_F(ExpressionParserTest, validExpressionWithOptionNameAndHex4) {
+    testValidExpression<Pkt6>(Option::V4,
+                              "\"option[host-name].text == 0x68756E6472656434\"",
+                              "hundred4");
 }
 
 // Verifies that given a valid expression, the ExpressionParser
 // produces an Expression which can be evaluated against a v6 packet.
-TEST(ExpressionParserTest, validExpression6) {
-    ParserContextPtr context(new ParserContext(Option::V6));
-    ExpressionParserPtr parser;
-    ExpressionPtr parsed_expr;
-
-    // Turn config into elements.  This may emit exceptions.
-    std::string cfg_txt = "\"option[100].text == 'hundred6'\"";
-    ElementPtr config_element = Element::fromJSON(cfg_txt);
-
-    // Create the parser.
-    ASSERT_NO_THROW(parser.reset(new ExpressionParser("", parsed_expr,
-                                                      context)));
-    // Expression should parse and commit.
-    ASSERT_NO_THROW(parser->build(config_element));
-    ASSERT_NO_THROW(parser->commit());
-
-    // Parsed expression should exist.
-    ASSERT_TRUE(parsed_expr);
-
-    // Build a packet that will fail evaluation.
-    Pkt6Ptr pkt6(new Pkt6(DHCPDISCOVER, 123));
-    EXPECT_FALSE(evaluate(*parsed_expr, *pkt6));
-
-    // Now add the option so it will pass.
-    OptionPtr opt(new OptionString(Option::V6, 100, "hundred6"));
-    pkt6->addOption(opt);
-    EXPECT_TRUE(evaluate(*parsed_expr, *pkt6));
+TEST_F(ExpressionParserTest, validExpression6) {
+    testValidExpression<Pkt6>(Option::V6, "\"option[59].text == 'hundred6'\"",
+                              "hundred6");
 }
 
+// Verifies that the option name can be used in the evaluated expression.
+TEST_F(ExpressionParserTest, validExpressionWithOptionName6) {
+    testValidExpression<Pkt6>(Option::V6,
+                              "\"option[bootfile-url].text == 'hundred6'\"",
+                              "hundred6");
+}
+
+// Verifies that given a valid expression using .hex operator for option, the
+// ExpressionParser produces an Expression which can be evaluated against
+// a v6 packet.
+TEST_F(ExpressionParserTest, validExpressionWithHex6) {
+    testValidExpression<Pkt6>(Option::V6, "\"option[59].hex == 0x68756E6472656436\"",
+                              "hundred6");
+}
+
+// Verifies that the option name can be used together with .hex operator in
+// the evaluated expression.
+TEST_F(ExpressionParserTest, validExpressionWithOptionNameAndHex6) {
+    testValidExpression<Pkt6>(Option::V6,
+                              "\"option[bootfile-url].text == 0x68756E6472656436\"",
+                              "hundred6");
+}
 
 // Verifies that an the ExpressionParser only accepts StringElements.
-TEST(ExpressionParserTest, invalidExpressionElement) {
+TEST_F(ExpressionParserTest, invalidExpressionElement) {
     ParserContextPtr context(new ParserContext(Option::V4));
     ExpressionParserPtr parser;
     ExpressionPtr parsed_expr;
@@ -196,7 +250,7 @@ TEST(ExpressionParserTest, invalidExpressionElement) {
 // is not intended to be an exhaustive test or expression syntax.
 // It is simply to ensure that if the parser fails, it does so
 // Properly.
-TEST(ExpressionParserTest, expressionSyntaxError) {
+TEST_F(ExpressionParserTest, expressionSyntaxError) {
     ParserContextPtr context(new ParserContext(Option::V4));
     ExpressionParserPtr parser;
     ExpressionPtr parsed_expr;

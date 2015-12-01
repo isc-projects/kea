@@ -147,6 +147,60 @@ public:
         return (OptionBuffer(opt_data, opt_data + sizeof(opt_data)));
     }
 
+    /// @brief Create option definitions and store in the container.
+    ///
+    /// @param spaces_num Number of option spaces to be created.
+    /// @param defs_num Number of option definitions to be created for
+    /// each option space.
+    /// @param [out] defs Container to which option definitions should be
+    /// added.
+    static void createRuntimeOptionDefs(const uint16_t spaces_num,
+                                        const uint16_t defs_num,
+                                        OptionDefSpaceContainer& defs) {
+        for (uint16_t space = 0; space < spaces_num; ++space) {
+            std::ostringstream space_name;
+            space_name << "option-space-" << space;
+            for (uint16_t code = 0; code < defs_num; ++code) {
+                std::ostringstream name;
+                name << "name-for-option-" << code;
+                OptionDefinitionPtr opt_def(new OptionDefinition(name.str(),
+                                                                 code, "string"));
+                defs.addItem(opt_def, space_name.str());
+            }
+        }
+    }
+
+    /// @brief Test if runtime option definitions have been added.
+    ///
+    /// This method uses the same naming conventions for space names and
+    /// options names as @c createRuntimeOptionDefs method.
+    ///
+    /// @param spaces_num Number of option spaces to be tested.
+    /// @param defs_num Number of option definitions that should exist
+    /// in each option space.
+    /// @param should_exist Boolean value which indicates if option
+    /// definitions should exist. If this is false, this function will
+    /// check that they don't exist.
+    static void testRuntimeOptionDefs(const uint16_t spaces_num,
+                                      const uint16_t defs_num,
+                                      const bool should_exist) {
+        for (uint16_t space = 0; space < spaces_num; ++space) {
+            std::ostringstream space_name;
+            space_name << "option-space-" << space;
+            for (uint16_t code = 0; code < defs_num; ++code) {
+                std::ostringstream name;
+                name << "name-for-option-" << code;
+                OptionDefinitionPtr opt_def =
+                    LibDHCP::getRuntimeOptionDef(space_name.str(), name.str());
+                if (should_exist) {
+                    ASSERT_TRUE(opt_def);
+                } else {
+                    ASSERT_FALSE(opt_def);
+                }
+            }
+        }
+    }
+
 private:
 
     /// @brief Test DHCPv4 or DHCPv6 option definition.
@@ -1317,6 +1371,30 @@ TEST_F(LibDhcpTest, vendorClass6) {
     EXPECT_EQ(20, vclass->len());
     ASSERT_EQ(1, vclass->getTuplesNum());
     EXPECT_EQ("eRouter1.0", vclass->getTuple(0).getText());
+}
+
+// This test verifies that it is possible to add runtime option definitions,
+// retrieve them and remove them.
+TEST_F(LibDhcpTest, setRuntimeOptionDefs) {
+    // Create option definitions in 5 namespaces.
+    OptionDefSpaceContainer defs;
+    createRuntimeOptionDefs(5, 100, defs);
+
+    // Apply option definitions.
+    ASSERT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    // Retrieve all inserted option definitions.
+    testRuntimeOptionDefs(5, 100, true);
+
+    // Attempting to retrieve non existing definitions.
+    EXPECT_FALSE(LibDHCP::getRuntimeOptionDef("option-space-non-existent", 1));
+    EXPECT_FALSE(LibDHCP::getRuntimeOptionDef("option-space-0", 145));
+
+    // Remove all runtime option definitions.
+    ASSERT_NO_THROW(LibDHCP::clearRuntimeOptionDefs());
+
+    // All option definitions should be gone now.
+    testRuntimeOptionDefs(5, 100, false);
 }
 
 } // end of anonymous space

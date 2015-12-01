@@ -16,8 +16,10 @@
 #define LIBDHCP_H
 
 #include <dhcp/option_definition.h>
+#include <dhcp/option_space_container.h>
 #include <dhcp/pkt6.h>
 #include <util/buffer.h>
+#include <util/staged_value.h>
 
 #include <iostream>
 #include <string>
@@ -89,6 +91,36 @@ public:
     static OptionDefinitionPtr getVendorOptionDef(const Option::Universe u,
                                                   const uint32_t vendor_id,
                                                   const std::string& name);
+
+
+    /// @brief Returns runtime (non-standard) option definition by space and
+    /// option code.
+    ///
+    /// @param space Option space name.
+    /// @param code Option code.
+    ///
+    /// @return Pointer to option definition or NULL if it doesn't exist.
+    static OptionDefinitionPtr getRuntimeOptionDef(const std::string& space,
+                                                   const uint16_t code);
+
+    /// @brief Returns runtime (non-standard) option definition by space and
+    /// option name.
+    ///
+    /// @param space Option space name.
+    /// @param name Option name.
+    ///
+    /// @return Pointer to option definition or NULL if it doesn't exist.
+    static OptionDefinitionPtr getRuntimeOptionDef(const std::string& space,
+                                                   const std::string& name);
+
+    /// @brief Returns runtime (non-standard) option definitions for specified
+    /// option space name.
+    ///
+    /// @param space Option space name.
+    ///
+    /// @return Pointer to the container holding option definitions or NULL.
+    static OptionDefContainerPtr
+    getRuntimeOptionDefs(const std::string& space);
 
     /// @brief Check if the specified option is a standard option.
     ///
@@ -256,6 +288,27 @@ public:
                                        const OptionBuffer& buf,
                                        isc::dhcp::OptionCollection& options);
 
+
+    /// @brief Copies option definitions created at runtime.
+    ///
+    /// Copied option definitions will be used as "runtime" option definitions.
+    /// A typical use case is to set option definitions specified by the user
+    /// in the server configuration. These option definitions should be removed
+    /// or replaced with new option definitions upon reconfiguration.
+    ///
+    /// @param defs Const reference to a container holding option definitions
+    /// grouped by option spaces.
+    static void setRuntimeOptionDefs(const OptionDefSpaceContainer& defs);
+
+    /// @brief Removes runtime option definitions.
+    static void clearRuntimeOptionDefs();
+
+    /// @brief Reverts uncommited changes to runtime option definitions.
+    static void revertRuntimeOptionDefs();
+
+    /// @brief Commits runtime option definitions.
+    static void commitRuntimeOptionDefs();
+
 private:
 
     /// Initialize standard DHCPv4 option definitions.
@@ -301,6 +354,9 @@ private:
 
     /// Container for v6 vendor option definitions
     static VendorOptionDefContainers vendor6_defs_;
+
+    /// Container for additional option defnitions created in runtime.
+    static util::StagedValue<OptionDefSpaceContainer> runtime_option_defs_;
 };
 
 }

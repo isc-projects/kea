@@ -50,7 +50,7 @@ ExpressionParser::build(ConstElementPtr expression_cfg) {
     std::string value;
     expression_cfg->getValue(value);
     try {
-        EvalContext eval_ctx;
+        EvalContext eval_ctx(global_context_->universe_);
         eval_ctx.parseString(value);
         local_expression_.reset(new Expression());
         *local_expression_ = eval_ctx.expression;
