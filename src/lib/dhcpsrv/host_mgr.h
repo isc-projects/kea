@@ -212,7 +212,7 @@ public:
     /// May return NULL
     /// @return pointer to the host data source (or NULL)
     HostDataSourcePtr getHostDataSource() const {
-        return (alternate_source);
+        return (alternate_source_);
     }
 
 private:
@@ -223,7 +223,7 @@ private:
     /// @brief Pointer to an alternate host data source.
     ///
     /// If this pointer is NULL, the source is not in use.
-    HostDataSourcePtr alternate_source;
+    HostDataSourcePtr alternate_source_;
 
     /// @brief Returns a pointer to the currently used instance of the
     /// @c HostMgr.
