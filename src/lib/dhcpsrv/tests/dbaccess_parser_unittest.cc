@@ -538,8 +538,6 @@ TEST_F(DbAccessParserTest, getDbAccessString) {
 // that does not assume that the test has been built with MySQL support.
 TEST_F(DbAccessParserTest, commitLeaseDb) {
 
-    EXPECT_NO_THROW(createMySQLSchema());
-
     // Verify that no lease database is open
     EXPECT_THROW({
             LeaseMgr& manager = LeaseMgrFactory::instance();
