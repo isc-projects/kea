@@ -118,7 +118,16 @@ Option::packHeader(isc::util::OutputBuffer& buf) {
 
 void
 Option::packOptions(isc::util::OutputBuffer& buf) {
-    LibDHCP::packOptions(buf, options_);
+    switch (universe_) {
+    case V4:
+        LibDHCP::packOptions4(buf, options_);
+        return;
+    case V6:
+        LibDHCP::packOptions6(buf, options_);
+        return;
+    default:
+        isc_throw(isc::BadValue, "Invalid universe type " << universe_);
+    }
 }
 
 void Option::unpack(OptionBufferConstIter begin,
