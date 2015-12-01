@@ -18,8 +18,8 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
 #include <dhcp/classify.h>
+#include <dhcp/option_space_container.h>
 #include <dhcpsrv/cfg_option.h>
-#include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/triplet.h>
 #include <dhcpsrv/lease.h>

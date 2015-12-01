@@ -65,13 +65,22 @@ TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 void
 TokenOption::evaluate(const Pkt& pkt, ValueStack& values) {
     OptionPtr opt = pkt.getOption(option_code_);
+    std::string opt_str;
     if (opt) {
-        values.push(representation_type_ == TEXTUAL ? opt->toString()
-                    : opt->toHexString());
-    } else {
-        // Option not found, push empty string
-        values.push("");
+        if (representation_type_ == TEXTUAL) {
+            opt_str = opt->toString();
+        } else {
+            std::vector<uint8_t> binary = opt->toBinary();
+            opt_str.resize(binary.size());
+            if (!binary.empty()) {
+                memmove(&opt_str[0], &binary[0], binary.size());
+            }
+        }
     }
+
+    // Push value of the option or empty string if there was no such option
+    // in the packet.
+    values.push(opt_str);
 }
 
 void
