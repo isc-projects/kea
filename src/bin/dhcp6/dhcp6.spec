@@ -38,6 +38,13 @@
             "item_type": "integer",
             "item_optional": true,
             "item_default": 0
+        },
+        {
+            "item_name": "persist",
+            "item_type": "boolean",
+            "item_optional": true,
+            "item_default": true,
+            "item_description": "Indicates if generated server identifier should be stored in a stable storage."
         }
         ]
       },

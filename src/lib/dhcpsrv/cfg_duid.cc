@@ -27,7 +27,7 @@ namespace dhcp {
 
 CfgDUID::CfgDUID()
     : type_(DUID::DUID_LLT), identifier_(), htype_(0), time_(0),
-      enterprise_id_(0) {
+      enterprise_id_(0), persist_(true) {
 }
 
 void
@@ -57,7 +57,7 @@ CfgDUID::setIdentifier(const std::string& identifier_as_hex) {
 DuidPtr
 CfgDUID::create(const std::string& duid_file_path) const {
     // Use DUID factory to create a DUID instance.
-    DUIDFactory factory(duid_file_path);
+    DUIDFactory factory(persist() ? duid_file_path : "");
 
     switch (getType()) {
     case DUID::DUID_LLT:

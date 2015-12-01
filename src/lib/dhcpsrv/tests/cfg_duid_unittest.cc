@@ -17,6 +17,7 @@
 #include <dhcp/duid.h>
 #include <dhcpsrv/cfg_duid.h>
 #include <exceptions/exceptions.h>
+#include <testutils/io_utils.h>
 #include <util/encode/hex.h>
 #include <gtest/gtest.h>
 #include <stdint.h>
@@ -98,6 +99,7 @@ TEST_F(CfgDUIDTest, defaults) {
     EXPECT_EQ(0, cfg_duid.getHType());
     EXPECT_EQ(0, cfg_duid.getTime());
     EXPECT_EQ(0, cfg_duid.getEnterpriseId());
+    EXPECT_TRUE(cfg_duid.persist());
 }
 
 // This test verifies that it is possible to set values for the CfgDUID.
@@ -109,6 +111,7 @@ TEST_F(CfgDUIDTest, setValues) {
     ASSERT_NO_THROW(cfg_duid.setHType(100));
     ASSERT_NO_THROW(cfg_duid.setTime(32100));
     ASSERT_NO_THROW(cfg_duid.setEnterpriseId(10));
+    ASSERT_NO_THROW(cfg_duid.setPersist(false));
 
     // Check that values have been set correctly.
     EXPECT_EQ(DUID::DUID_EN, cfg_duid.getType());
@@ -116,6 +119,7 @@ TEST_F(CfgDUIDTest, setValues) {
     EXPECT_EQ(100, cfg_duid.getHType());
     EXPECT_EQ(32100, cfg_duid.getTime());
     EXPECT_EQ(10, cfg_duid.getEnterpriseId());
+    EXPECT_FALSE(cfg_duid.persist());
 }
 
 // This test checks positive scenarios for setIdentifier.
@@ -167,6 +171,9 @@ TEST_F(CfgDUIDTest, createLLT) {
     // Verify if the DUID is correct.
     EXPECT_EQ("00:01:00:08:00:00:11:23:12:56:43:25:a6:3f",
               duid->toText());
+
+    // Verify that the DUID file has been created.
+    EXPECT_TRUE(dhcp::test::fileExists(absolutePath(DUID_FILE_NAME)));
 }
 
 // This method checks that the DUID-EN can be created from the
@@ -184,6 +191,9 @@ TEST_F(CfgDUIDTest, createEN) {
 
     // Verify if the DUID is correct.
     EXPECT_EQ("00:02:00:00:10:10:25:0f:3e:26:a7:62", duid->toText());
+
+    // Verify that the DUID file has been created.
+    EXPECT_TRUE(dhcp::test::fileExists(absolutePath(DUID_FILE_NAME)));
 }
 
 // This method checks that the DUID-LL can be created from the
@@ -201,6 +211,30 @@ TEST_F(CfgDUIDTest, createLL) {
 
     // Verify if the DUID is correct.
     EXPECT_EQ("00:03:00:02:12:41:34:a4:b3:67", duid->toText());
+
+    // Verify that the DUID file has been created.
+    EXPECT_TRUE(dhcp::test::fileExists(absolutePath(DUID_FILE_NAME)));
+}
+
+// This test verifies that it is possible to disable storing
+// generated DUID on a hard drive.
+TEST_F(CfgDUIDTest, createDisableWrite) {
+    CfgDUID cfg;
+    ASSERT_NO_THROW(cfg.setType(DUID::DUID_EN));
+    ASSERT_NO_THROW(cfg.setIdentifier("250F3E26A762"));
+    ASSERT_NO_THROW(cfg.setEnterpriseId(0x1010));
+    ASSERT_NO_THROW(cfg.setPersist(false));
+
+    // Generate DUID from this configuration.
+    DuidPtr duid;
+    ASSERT_NO_THROW(duid = cfg.create(absolutePath(DUID_FILE_NAME)));
+    ASSERT_TRUE(duid);
+
+    // Verify if the DUID is correct.
+    EXPECT_EQ("00:02:00:00:10:10:25:0f:3e:26:a7:62", duid->toText());
+
+    // DUID persistence is disabled so there should be no DUID file.
+    EXPECT_FALSE(dhcp::test::fileExists(absolutePath(DUID_FILE_NAME)));
 }
 
 } // end of anonymous namespace

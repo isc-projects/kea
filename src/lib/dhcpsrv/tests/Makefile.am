@@ -164,6 +164,7 @@ libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 libdhcpsrv_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 libdhcpsrv_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 endif
