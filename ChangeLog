@@ -1,3 +1,8 @@
+1064.	[func]		fdupont,tomek
+	The DHCPv4 server now stores Relay Agent Information option as
+	the last one.
+	(trac #4121, git 2f883d4afb9b27c6c59d993692370685b206b6c2)
+
 1063.	[doc]		tmark
 	Added Kea logo to documentation.
 	(trac #3702, git 7cae813ffe9a7320db5c84ac4beb1c3c0ecabbf7)
