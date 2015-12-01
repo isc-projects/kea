@@ -475,7 +475,7 @@ be followed by a comma and another object definition.</para>
      reservations. So technically we have host reservations for v6 in
      MySQL, but in practice it's kinda useless right now as it can't
      store addresses or prefixes. Let's keep it commented out until
-     we implement that functionality -->
+     we implement that functionality
 
 <section>
   <title>Hosts Storage</title>
@@ -546,7 +546,6 @@ be followed by a comma and another object definition.</para>
 </section>
 </section>
 -->
-
 
 <section id="dhcp6-interface-selection">
   <title>Interface selection</title>
