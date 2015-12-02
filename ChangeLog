@@ -1,3 +1,9 @@
+1065.	[func]		tomek
+	Configuration parameters for setting up external hosts storage
+	are now implemented. This feature is considered experimental
+	for DHCPv4 and currently not really usable for DHCPv6.
+	(Trac #3569, git 8896c9c3f77a7836d67e6c33943ac4892b851213)
+
 1064.	[func]		fdupont,tomek
 	The DHCPv4 server now stores Relay Agent Information option as
 	the last one.
