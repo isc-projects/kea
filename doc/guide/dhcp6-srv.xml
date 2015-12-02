@@ -424,18 +424,18 @@ be followed by a comma and another object definition.</para>
 </section>
 
 <section id="database-configuration6">
-  <title>Database Configuration</title>
+  <title>Lease Database Configuration</title>
 
   <note>
-    <para>Database access information must be configured for the DHCPv6 server,
+    <para>Lease database access information must be configured for the DHCPv6 server,
     even if it has already been configured for the DHCPv4 server.  The servers
     store their information independently, so each server can use a separate
     database or both servers can use the same database.</para>
   </note>
 
-  <para>Database configuration is controlled through the Dhcp6/lease-database
-  parameters. The type of the database must be set to "mysql" or "postgresql",
-  e.g.
+  <para>Lease database configuration is controlled through the
+  Dhcp6/lease-database parameters. The type of the database must be set to
+  "memfile", "mysql" or "postgresql", e.g.
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
@@ -469,6 +469,83 @@ be followed by a comma and another object definition.</para>
   "". (This is also the default.)</para>
 </section>
 </section>
+
+<!-- Uncomment this once 4212 is merged. While the host storage for
+     MySQL is there, it is able to store hosts, but not IPv6
+     reservations. So technically we have host reservations for v6 in
+     MySQL, but in practice it's kinda useless right now as it can't
+     store addresses or prefixes. Let's keep it commented out until
+     we implement that functionality
+
+<section>
+  <title>Hosts Storage</title>
+
+    <note>
+      <para>This feature did not undergo the regular system level
+      testing conducted by ISC. As such, please treat it as
+      experimental.</para>
+    </note>
+
+    <para>Kea is also able to store information about host reservations in the
+    database. Hosts database configuration uses the same syntax as lease
+    database. In fact, Kea server opens independent connections for each
+    purpose, be it lease or hosts information. This gives the solution most
+    flexibility. Kea can be used to keep leases and host reservations
+    separately, but can also point to the same database. Currently the only
+    supported hosts database type is MySQL.</para>
+
+    <para>Please note that usage of hosts storage is optional. User can define
+    all host reservations in the configuration file. That is the recommended way
+    if the number of reservations is small. However, with the number of
+    reservations growing it's more convenient to use host storage. Please note
+    that both storages (configuration file and MySQL) can be used together. If
+    hosts are defined in both places, the definitions from configuration file
+    are checked first and external storage is checked later, if
+    necessary.</para>
+
+    <para>All hosts leases issued by the server are stored in the hosts
+    database. Currently there is only one available backend: MySQL. Other host
+    backends will become available in future Kea versions.</para>
+
+<section id="hosts-database-configuration6">
+  <title>IPv6 Hosts Database Configuration</title>
+
+  <para>Hosts database configuration is controlled through the Dhcp6/hosts-database
+  parameters. If enabled, the type of the database must be set to "mysql". Other
+  hosts backends may be added in later Kea versions.
+<screen>
+"Dhcp6": { "hosts-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
+</screen>
+  Next, the name of the database to hold the leases must be set: this is the
+  name used when the lease database was created (see <xref linkend="mysql-database-create"/>).
+<screen>
+"Dhcp6": { "hosts-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
+</screen>
+  If the database is located on a different system to the DHCPv6 server, the
+  database host name must also be specified (although it should be noted that this
+  configuration may have a severe impact on server performance):
+<screen>
+"Dhcp6": { "hosts-database": { <userinput>"host": <replaceable>remote-host-name</replaceable></userinput>, ... }, ... }
+</screen>
+  The usual state of affairs will be to have the database on the same machine as
+  the DHCPv6 server.  In this case, set the value to the empty string:
+<screen>
+"Dhcp6": { "hosts-database": { <userinput>"host" : ""</userinput>, ... }, ... }
+</screen>
+  </para>
+  <para>Finally, the credentials of the account under which the server will
+  access the database should be set:
+<screen>
+"Dhcp6": { "hosts-database": { <userinput>"user": "<replaceable>user-name</replaceable>"</userinput>,
+                               <userinput>"password": "<replaceable>password</replaceable>"</userinput>,
+                              ... },
+           ... }
+</screen>
+  If there is no password to the account, set the password to the empty string
+  "". (This is also the default.)</para>
+</section>
+</section>
+-->
 
 <section id="dhcp6-interface-selection">
   <title>Interface selection</title>

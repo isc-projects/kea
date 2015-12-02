@@ -38,8 +38,6 @@ namespace dhcp {
 
 using namespace isc::asiolink;
 
-boost::shared_ptr<BaseHostDataSource> HostMgr::alternate_source;
-
 boost::scoped_ptr<HostMgr>&
 HostMgr::getHostMgrPtr() {
     static boost::scoped_ptr<HostMgr> host_mgr_ptr;
@@ -51,11 +49,20 @@ HostMgr::create(const std::string& access) {
     getHostMgrPtr().reset(new HostMgr());
 
     if (!access.empty()) {
+        // If the user specified parameters, let's pass them to the create
+        // method. It will destroy any prior instances and will create
+        // the new one.
         HostDataSourceFactory::create(access);
-
-        /// @todo Initialize alternate_source here.
-        //alternate_source = HostDataSourceFactory::getHostDataSourcePtr();
+    } else {
+        // Ok, no parameters were specified. We should destroy the existing
+        // insteance.
+        HostDataSourceFactory::destroy();
     }
+
+    // Now store the host data source pointer. It may be NULL. That's ok as
+    // NULL value indicates that there's no host data source configured.
+    getHostMgrPtr()->alternate_source_ =
+        HostDataSourceFactory::getHostDataSourcePtr();
 }
 
 HostMgr&
@@ -70,8 +77,8 @@ HostMgr::instance() {
 ConstHostCollection
 HostMgr::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
     ConstHostCollection hosts = getCfgHosts()->getAll(hwaddr, duid);
-    if (alternate_source) {
-        ConstHostCollection hosts_plus = alternate_source->getAll(hwaddr, duid);
+    if (alternate_source_) {
+        ConstHostCollection hosts_plus = alternate_source_->getAll(hwaddr, duid);
         hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
     }
     return (hosts);
@@ -80,8 +87,8 @@ HostMgr::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
 ConstHostCollection
 HostMgr::getAll4(const IOAddress& address) const {
     ConstHostCollection hosts = getCfgHosts()->getAll4(address);
-    if (alternate_source) {
-        ConstHostCollection hosts_plus = alternate_source->getAll4(address);
+    if (alternate_source_) {
+        ConstHostCollection hosts_plus = alternate_source_->getAll4(address);
         hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
     }
     return (hosts);
@@ -91,13 +98,13 @@ ConstHostPtr
 HostMgr::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
               const DuidPtr& duid) const {
     ConstHostPtr host = getCfgHosts()->get4(subnet_id, hwaddr, duid);
-    if (!host && alternate_source) {
+    if (!host && alternate_source_) {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
                   HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_HWADDR_DUID)
             .arg(subnet_id)
             .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
             .arg(duid ? duid->toText() : "(duid)");
-        host = alternate_source->get4(subnet_id, hwaddr, duid);
+        host = alternate_source_->get4(subnet_id, hwaddr, duid);
     }
     return (host);
 }
@@ -106,12 +113,12 @@ ConstHostPtr
 HostMgr::get4(const SubnetID& subnet_id,
               const asiolink::IOAddress& address) const {
     ConstHostPtr host = getCfgHosts()->get4(subnet_id, address);
-    if (!host && alternate_source) {
+    if (!host && alternate_source_) {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
                   HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_ADDRESS4)
             .arg(subnet_id)
             .arg(address.toText());
-        host = alternate_source->get4(subnet_id, address);
+        host = alternate_source_->get4(subnet_id, address);
     }
     return (host);
 }
@@ -121,13 +128,13 @@ ConstHostPtr
 HostMgr::get6(const SubnetID& subnet_id, const DuidPtr& duid,
                const HWAddrPtr& hwaddr) const {
     ConstHostPtr host = getCfgHosts()->get6(subnet_id, duid, hwaddr);
-    if (!host && alternate_source) {
+    if (!host && alternate_source_) {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
                   HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_DUID_HWADDR)
             .arg(subnet_id)
             .arg(duid ? duid->toText() : "(duid)")
             .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)");
-        host = alternate_source->get6(subnet_id, duid, hwaddr);
+        host = alternate_source_->get6(subnet_id, duid, hwaddr);
     }
     return (host);
 }
@@ -135,12 +142,12 @@ HostMgr::get6(const SubnetID& subnet_id, const DuidPtr& duid,
 ConstHostPtr
 HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
     ConstHostPtr host = getCfgHosts()->get6(prefix, prefix_len);
-    if (!host && alternate_source) {
+    if (!host && alternate_source_) {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
                   HOSTS_MGR_ALTERNATE_GET6_PREFIX)
             .arg(prefix.toText())
             .arg(static_cast<int>(prefix_len));
-        host = alternate_source->get6(prefix, prefix_len);
+        host = alternate_source_->get6(prefix, prefix_len);
     }
     return (host);
 }
@@ -149,12 +156,12 @@ ConstHostPtr
 HostMgr::get6(const SubnetID& subnet_id,
               const asiolink::IOAddress& addr) const {
     ConstHostPtr host = getCfgHosts()->get6(subnet_id, addr);
-    if (!host && alternate_source) {
+    if (!host && alternate_source_) {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
                   HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_ADDRESS6)
             .arg(subnet_id)
             .arg(addr.toText());
-        host = alternate_source->get6(subnet_id, addr);
+        host = alternate_source_->get6(subnet_id, addr);
     }
     return (host);
 }

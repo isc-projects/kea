@@ -34,6 +34,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/utils.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
@@ -60,6 +61,53 @@ using namespace isc::util;
 using namespace std;
 
 namespace {
+
+const char* CONFIGS[] = {
+    // Configuration 0:
+    // - used in advertiseOptions
+    "{ \"interfaces-config\": {"
+    "  \"interfaces\": [ \"*\" ]"
+    "},"
+    "\"preferred-lifetime\": 3000,"
+    "\"rebind-timer\": 2000, "
+    "\"renew-timer\": 1000, "
+    "\"subnet6\": [ { "
+    "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+    "    \"subnet\": \"2001:db8:1::/48\", "
+    "    \"interface\": \"eth0\", "
+    "    \"option-data\": [ {"
+    "          \"name\": \"dns-servers\","
+    "          \"data\": \"2001:db8:1234:FFFF::1, 2001:db8:1234:FFFF::2\""
+    "        },"
+    "        {"
+    "          \"name\": \"subscriber-id\","
+    "          \"data\": \"1234\","
+    "          \"csv-format\": False"
+    "        } ]"
+    " } ],"
+    "\"valid-lifetime\": 4000 }",
+
+    // Configuration 1:
+    // - a single subnet
+    // - MySQL host data source
+    "{ \"interfaces-config\": {"
+    "  \"interfaces\": [ \"*\" ]"
+    "},"
+    "\"hosts-database\": {"
+    "    \"type\": \"mysql\","
+    "    \"name\": \"keatest\","
+    "    \"user\": \"keatest\","
+    "    \"password\": \"keatest\""
+    "},"
+    "\"preferred-lifetime\": 3000,"
+    "\"rebind-timer\": 2000, "
+    "\"renew-timer\": 1000, "
+    "\"subnet6\": [ { "
+    "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+    "    \"subnet\": \"2001:db8:1::/48\" "
+    " } ],"
+    "\"valid-lifetime\": 4000 }"
+};
 
 // This test verifies that incoming SOLICIT can be handled properly when
 // there are no subnets configured.
@@ -288,28 +336,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     IfaceMgrTestConfig test_config(true);
 
     ConstElementPtr x;
-    string config = "{ \"interfaces-config\": {"
-        "  \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
-        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-        "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"interface\": \"eth0\", "
-        "    \"option-data\": [ {"
-        "          \"name\": \"dns-servers\","
-        "          \"data\": \"2001:db8:1234:FFFF::1, 2001:db8:1234:FFFF::2\""
-        "        },"
-        "        {"
-        "          \"name\": \"subscriber-id\","
-        "          \"data\": \"1234\","
-        "          \"csv-format\": False"
-        "        } ]"
-        " } ],"
-        "\"valid-lifetime\": 4000 }";
-    ASSERT_NO_THROW(configure(config));
+    ASSERT_NO_THROW(configure(CONFIGS[0]));
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
@@ -2707,9 +2734,10 @@ TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {
     EXPECT_EQ(1, recv_drop->getInteger().first);
 }
 
-
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
 
+/// @todo: Implement proper tests for MySQL lease/host database,
+///        see ticket #4214.
 
 }   // end of anonymous namespace

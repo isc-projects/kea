@@ -39,6 +39,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/utils.h>
+#include <dhcpsrv/host_mgr.h>
 #include <gtest/gtest.h>
 #include <stats/stats_mgr.h>
 #include <boost/scoped_ptr.hpp>
@@ -74,7 +75,31 @@ const char* CONFIGS[] = {
         "    \"valid-lifetime\": 4000,"
         "    \"interface\": \"eth0\" "
         " } ],"
-        "\"valid-lifetime\": 4000 }"
+    "\"valid-lifetime\": 4000 }",
+
+    // Configuration 1:
+    // - 1 subnet: 192.0.2.0/24
+    // - MySQL Host Data Source configured
+    "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"hosts-database\": {"
+        "    \"type\": \"mysql\","
+        "    \"name\": \"keatest\","
+        "    \"user\": \"keatest\","
+        "    \"password\": \"keatest\""
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"eth0\" "
+        " } ],"
+    "\"valid-lifetime\": 4000 }"
 };
 
 // This test verifies that the destination address of the response
@@ -2633,5 +2658,8 @@ TEST_F(Dhcpv4SrvTest, statisticsUnknownRcvd) {
     ASSERT_TRUE(drop_stat);
     EXPECT_EQ(1, drop_stat->getInteger().first);
 }
+
+/// @todo: Implement proper tests for MySQL lease/host database,
+///        see ticket #4214.
 
 }; // end of anonymous namespace
