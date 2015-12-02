@@ -20,6 +20,7 @@
 #include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/mysql_host_data_source.h>
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
+#include <dhcpsrv/tests/mysql_schema.h>
 #include <dhcpsrv/host_data_source_factory.h>
 
 #include <gtest/gtest.h>
@@ -38,111 +39,6 @@ using namespace std;
 
 namespace {
 
-// This holds statements to create and destroy the schema.
-#include "schema_mysql_copy.h"
-
-// Connection strings.
-// Database: keatest
-// Host: localhost
-// Username: keatest
-// Password: keatest
-const char* VALID_TYPE = "type=mysql";
-const char* INVALID_TYPE = "type=unknown";
-const char* VALID_NAME = "name=keatest";
-const char* INVALID_NAME = "name=invalidname";
-const char* VALID_HOST = "host=localhost";
-const char* INVALID_HOST = "host=invalidhost";
-const char* VALID_USER = "user=keatest";
-const char* INVALID_USER = "user=invaliduser";
-const char* VALID_PASSWORD = "password=keatest";
-const char* INVALID_PASSWORD = "password=invalid";
-
-// Given a combination of strings above, produce a connection string.
-string connectionString(const char* type, const char* name, const char* host,
-                        const char* user, const char* password) {
-    const string space = " ";
-    string result = "";
-
-    if (type != NULL) {
-        result += string(type);
-    }
-    if (name != NULL) {
-        if (! result.empty()) {
-            result += space;
-        }
-        result += string(name);
-    }
-
-    if (host != NULL) {
-        if (! result.empty()) {
-            result += space;
-        }
-        result += string(host);
-    }
-
-    if (user != NULL) {
-        if (! result.empty()) {
-            result += space;
-        }
-        result += string(user);
-    }
-
-    if (password != NULL) {
-        if (! result.empty()) {
-            result += space;
-        }
-        result += string(password);
-    }
-
-    return (result);
-}
-
-// Return valid connection string
-string
-validConnectionString() {
-    return (connectionString(VALID_TYPE, VALID_NAME, VALID_HOST,
-                             VALID_USER, VALID_PASSWORD));
-}
-
-// @brief Clear everything from the database
-//
-// There is no error checking in this code: if something fails, one of the
-// tests will (should) fall over.
-void destroySchema() {
-    MySqlHolder mysql;
-
-    // Open database
-    (void) mysql_real_connect(mysql, "localhost", "keatest",
-                              "keatest", "keatest", 0, NULL, 0);
-
-    // Get rid of everything in it.
-    for (int i = 0; destroy_statement[i] != NULL; ++i) {
-        (void) mysql_query(mysql, destroy_statement[i]);
-    }
-}
-
-// @brief Create the Schema
-//
-// Creates all the tables in what is assumed to be an empty database.
-//
-// There is no error checking in this code: if it fails, one of the tests
-// will fall over.
-void createSchema() {
-    MySqlHolder mysql;
-
-    // Open database
-    (void) mysql_real_connect(mysql, "localhost", "keatest",
-                              "keatest", "keatest", 0, NULL, 0);
-
-    // Execute creation statements.
-    for (int i = 0; create_statement[i] != NULL; ++i) {
-        ASSERT_EQ(0, mysql_query(mysql, create_statement[i]))
-            << "Failed on statement " << i << ": " << create_statement[i];
-    }
-}
-
-
-
 class MySqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
     /// @brief Constructor
@@ -151,12 +47,12 @@ public:
     MySqlHostDataSourceTest() {
 
         // Ensure schema is the correct one.
-        destroySchema();
-        createSchema();
+        destroyMySQLSchema();
+        createMySQLSchema();
 
         // Connect to the database
         try {
-            HostDataSourceFactory::create(validConnectionString());
+            HostDataSourceFactory::create(validMySQLConnectionString());
         } catch (...) {
             std::cerr << "*** ERROR: unable to open database. The test\n"
                          "*** environment is broken and must be fixed before\n"
@@ -166,7 +62,7 @@ public:
             throw;
         }
 
-        hdsptr_ = &(HostDataSourceFactory::instance());
+        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
     }
 
     /// @brief Destructor
@@ -176,7 +72,7 @@ public:
     virtual ~MySqlHostDataSourceTest() {
         hdsptr_->rollback();
         HostDataSourceFactory::destroy();
-        destroySchema();
+        destroyMySQLSchema();
     }
 
     /// @brief Reopen the database
@@ -188,8 +84,8 @@ public:
     /// the same database.
     void reopen(Universe) {
         HostDataSourceFactory::destroy();
-        HostDataSourceFactory::create(validConnectionString());
-        hdsptr_ = &(HostDataSourceFactory::instance());
+        HostDataSourceFactory::create(validMySQLConnectionString());
+        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
     }
 
 };
@@ -204,14 +100,14 @@ public:
 TEST(MySqlHostDataSource, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
-    destroySchema();
-    createSchema();
+    destroyMySQLSchema();
+    createMySQLSchema();
 
     // Check that lease manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
     try {
-        HostDataSourceFactory::create(validConnectionString());
-        EXPECT_NO_THROW((void) HostDataSourceFactory::instance());
+        HostDataSourceFactory::create(validMySQLConnectionString());
+        EXPECT_NO_THROW((void) HostDataSourceFactory::getHostDataSourcePtr());
         HostDataSourceFactory::destroy();
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
@@ -222,7 +118,7 @@ TEST(MySqlHostDataSource, OpenDatabase) {
 
     // Check that attempting to get an instance of the lease manager when
     // none is set throws an exception.
-    EXPECT_THROW(HostDataSourceFactory::instance(), NoHostDataSourceManager);
+    EXPECT_FALSE(HostDataSourceFactory::getHostDataSourcePtr());
 
     // Check that wrong specification of backend throws an exception.
     // (This is really a check on LeaseMgrFactory, but is convenient to
@@ -254,7 +150,7 @@ TEST(MySqlHostDataSource, OpenDatabase) {
         NoDatabaseName);
 
     // Tidy up after the test
-    destroySchema();
+    destroyMySQLSchema();
 }
 
 /// @brief Check conversion functions

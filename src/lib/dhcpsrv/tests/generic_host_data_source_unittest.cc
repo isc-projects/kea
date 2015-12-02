@@ -27,7 +27,7 @@ namespace dhcp {
 namespace test {
 
 GenericHostDataSourceTest::GenericHostDataSourceTest()
-    :hdsptr_(NULL) {
+    :hdsptr_() {
 
 }
 

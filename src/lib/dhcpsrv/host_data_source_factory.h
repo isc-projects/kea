@@ -88,23 +88,12 @@ public:
     /// host data source is available.
     static void destroy();
 
-    /// @brief Return current host data source
-    ///
-    /// @returns An instance of the "current" host data source.  An exception
-    /// will be thrown if none is available.
-    ///
-    /// @throw NoHostDataSourceManager No host data source is available: use
-    ///        create() to create one before calling this method.
-    static BaseHostDataSource& instance();
-
-private:
     /// @brief Hold pointer to host data source instance
     ///
     /// Holds a pointer to the singleton host data source.  The singleton
     /// is encapsulated in this method to avoid a "static initialization
     /// fiasco" if defined in an external static variable.
-    static boost::scoped_ptr<BaseHostDataSource>& getHostDataSourcePtr();
-
+    static HostDataSourcePtr& getHostDataSourcePtr();
 };
 
 

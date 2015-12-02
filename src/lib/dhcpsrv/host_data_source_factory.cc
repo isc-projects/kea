@@ -39,9 +39,9 @@ namespace isc {
 namespace dhcp {
 
 
-boost::scoped_ptr<BaseHostDataSource>&
+HostDataSourcePtr&
 HostDataSourceFactory::getHostDataSourcePtr() {
-    static boost::scoped_ptr<BaseHostDataSource> hostDataSourcePtr;
+    static HostDataSourcePtr hostDataSourcePtr;
     return (hostDataSourcePtr);
 }
 
@@ -99,6 +99,7 @@ HostDataSourceFactory::destroy() {
     getHostDataSourcePtr().reset();
 }
 
+#if 0
 BaseHostDataSource&
 HostDataSourceFactory::instance() {
     BaseHostDataSource* hdsptr = getHostDataSourcePtr().get();
@@ -108,6 +109,7 @@ HostDataSourceFactory::instance() {
     }
     return (*hdsptr);
 }
+#endif
 
 }; // namespace dhcp
 }; // namespace isc
