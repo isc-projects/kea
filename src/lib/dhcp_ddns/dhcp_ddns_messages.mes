@@ -77,6 +77,12 @@ This is an error message indicating that an IO error occurred while sending a
 DNS update request to DHCP_DDNS over a UDP socket.  This could indicate a
 network connectivity or system resource issue.
 
+% DHCP_DDNS_UDP_SENDER_WATCH_SOCKET_CLOSE_ERROR watch socket failed to close: %1
+This is an error message that indicates the application was unable to close
+the inbound or outbound side of a NCR sender's watch socket. While technically
+possible the error is highly unlikely to occur and should not impair the
+application's ability to process requests.
+
 % DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR unexpected exception thrown from the application receive completion handler: %1
 This is an error message that indicates that an exception was thrown but not
 caught in the application's request receive completion handler.  This is a
@@ -88,9 +94,3 @@ This is an error message that indicates that an exception was thrown but not
 caught in the application's send completion handler.  This is a programmatic
 error that needs to be reported.  Dependent upon the nature of the error the
 client may or may not continue operating normally.
-
-% DHCP_DDNS_UDP_SENDER_WATCH_SOCKET_CLOSE_ERROR watch socket failed to close: %1
-This is an error message that indicates the application was unable to close
-the inbound or outbound side of a NCR sender's watch socket. While technically
-possible the error is highly unlikely to occur and should not impair the
-application's ability to process requests.
