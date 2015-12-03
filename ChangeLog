@@ -1,7 +1,7 @@
 106x.	[doc]		sar
 	Remove description of option[xx].text operator from classification
 	until it's use becomes clearer.
-	(Trac #4218, git TBD)
+	(Trac #4218, git 22fe2bf889984078cd86c2a230a038632d21432c)
 
 1065.	[func]		tomek
 	Configuration parameters for setting up external hosts storage
