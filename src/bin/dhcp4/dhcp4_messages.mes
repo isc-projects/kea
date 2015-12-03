@@ -194,17 +194,17 @@ address that it is not supposed to. The server will fully recover from this
 situation, but if the underlying problem of a misconfigured or rogue device
 is not solved, this address may be declined again in the future.
 
-% DHCP4_DECLINE_LEASE_NOT_FOUND Received DHCPDECLINE for addr %1 from client %2, but no such lease found.
-This warning message indicates that a client reported that his address was
-detected as a duplicate (i.e. another device in the network is using this address).
-However, the server does not have a record for this address. This may indicate
-a client's error or a server's purged database.
-
 % DHCP4_DECLINE_LEASE_MISMATCH Received DHCPDECLINE for addr %1 from client %2, but the data doesn't match: received hwaddr: %3, lease hwaddr: %4, received client-id: %5, lease client-id: %6
 This informational message means that a client attempted to report his address
 as declined (i.e. used by unknown entity). The server has information about
 a lease for that address, but the client's hardware address or client identifier
 does not match the server's stored information. The client's request will be ignored.
+
+% DHCP4_DECLINE_LEASE_NOT_FOUND Received DHCPDECLINE for addr %1 from client %2, but no such lease found.
+This warning message indicates that a client reported that his address was
+detected as a duplicate (i.e. another device in the network is using this address).
+However, the server does not have a record for this address. This may indicate
+a client's error or a server's purged database.
 
 % DHCP4_DISCOVER_CLASS_PROCESSING_FAILED %1: client class specific processing failed for DHCPDISCOVER
 This debug message means that the server processing that is unique for each
@@ -528,7 +528,6 @@ failure is given in the message.
 A debug message printing the details of the received packet. The first
 argument includes the client and the transaction identification
 information.
-
 
 % DHCP4_RELEASE %1: address %2 was released properly.
 This debug message indicates that an address was released properly. It
