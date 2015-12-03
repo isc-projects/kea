@@ -867,7 +867,7 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id, const DuidPtr& duid,
     inbind[0].buffer = reinterpret_cast<char*>(&subnet_buffer);
     inbind[0].is_unsigned = MLM_TRUE;
 
-    /// @todo: Rethink the logic in BaseHostDataSource::get4(subnet, hwaddr, duid)
+    /// @todo: Rethink the logic in BaseHostDataSource::get6(subnet, hwaddr, duid)
     if (hwaddr && duid) {
         isc_throw(BadValue, "MySQL host data source get6() called with both"
                   " hwaddr and duid, only one of them is allowed");

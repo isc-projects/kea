@@ -104,7 +104,12 @@ HostMgr::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
             .arg(subnet_id)
             .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
             .arg(duid ? duid->toText() : "(duid)");
-        host = alternate_source_->get4(subnet_id, hwaddr, duid);
+        if (duid) {
+            host = alternate_source_->get4(subnet_id, HWAddrPtr(), duid);
+        }
+        if (!host && hwaddr) {
+            host = alternate_source_->get4(subnet_id, hwaddr, DuidPtr());
+        }
     }
     return (host);
 }
@@ -134,7 +139,12 @@ HostMgr::get6(const SubnetID& subnet_id, const DuidPtr& duid,
             .arg(subnet_id)
             .arg(duid ? duid->toText() : "(duid)")
             .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)");
-        host = alternate_source_->get6(subnet_id, duid, hwaddr);
+        if (duid) {
+            host = alternate_source_->get6(subnet_id, duid, HWAddrPtr());
+        }
+        if (!host && hwaddr) {
+            host = alternate_source_->get6(subnet_id, DuidPtr(), hwaddr);
+        }
     }
     return (host);
 }
