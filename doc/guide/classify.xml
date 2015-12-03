@@ -160,7 +160,9 @@
 <row><entry>String</entry><entry>'example'</entry><entry>A string</entry></row>
 <row><entry>Hex String</entry><entry>0XABCD</entry><entry>A hexadecimal string</entry></row>
 <row><entry>Integer</entry><entry>123</entry><entry>An integer value</entry></row>
+<!-- Text option not fully defined yet, leave it out
 <row><entry>Option Text</entry><entry>option[code].text</entry><entry>The value of the option with code "code" from the packet as text</entry></row>
+-->
 <row><entry>Option Hex</entry><entry>option[code].hex</entry><entry>The value of the option with code "code" from the packet as hex</entry></row>
           </tbody>
           </tgroup>
@@ -176,11 +178,10 @@
       </para>
 
       <para>
-      "option[code]" extracts the value of the option with the given code
+      "option[code].hex" extracts the value of the option with the given code
       from the incoming packet. If the packet doesn't contain the option, it
-      returns the empty string.  The string can be presented as text or hex
-      with the ".text" or ".hex" modifiers.  In both cases only the payload
-      is presented; the type code and length fields are not included.
+      returns the empty string. The string is presented as a byte string of
+      the option payload without the type code or length fields.
       </para>
 
       <para>
@@ -269,7 +270,7 @@
     "client-classes": [<userinput>
         {
             "name": "Client_foo",
-            "test": "substring(option[61].text,0,3) == 'foo'",
+            "test": "substring(option[61].hex,0,3) == 'foo'",
             "option-data": [
                 {
                     "name": "domain-name-servers",
@@ -335,7 +336,7 @@
     "client-classes": [
         {
             "name": "Client_foo",
-            "test": "substring(option[61].text,0,3) == 'foo'",
+            "test": "substring(option[61].hex,0,3) == 'foo'",
             "option-data": [
                 {
                     "name": "domain-name-servers",
