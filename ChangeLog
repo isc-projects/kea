@@ -1,30 +1,32 @@
-1065.	[func]		tomek
+Kea 1.0.0-beta released on December 8, 2015
+
+1066.	[func]		tomek
 	Configuration parameters for setting up external hosts storage
 	are now implemented. This feature is considered experimental
 	for DHCPv4 and currently not really usable for DHCPv6.
 	(Trac #3569, git 8896c9c3f77a7836d67e6c33943ac4892b851213)
 
-1064.	[func]		fdupont,tomek
+1065.	[func]		fdupont,tomek
 	The DHCPv4 server now stores Relay Agent Information option as
 	the last one.
 	(trac #4121, git 2f883d4afb9b27c6c59d993692370685b206b6c2)
 
-1063.	[doc]		tmark
+1064.	[doc]		tmark
 	Added Kea logo to documentation.
 	(trac #3702, git 7cae813ffe9a7320db5c84ac4beb1c3c0ecabbf7)
 
-1062.	[func]		marcin
+1063.	[func]		marcin
 	It is possible to disable writing generated DHCPv6 server
 	identifier in a persistent storage. This also fixes a
 	failing distcheck.
 	(trac #4211, git d8f39b7aff9312237d4b6d6de39a7336a25ead4c)
 
-1061.	[func]		marcin
+1062.	[func]		marcin
 	libeval: options may be referenced by their names in
 	expressions used for client classification.
 	(Trac #4204 git 38aebe9566e09daa30796df686cfdd6d0c43fa4d)
 
-1060.	[func]		kalmus
+1061.	[func]		kalmus
 	MySqlHostDataSource class implementation. It provides methods
 	for adding and extracting Host objects to and from MySQL database.
 	(Trac #3682, git 275b40fb941a6934c6434715184ae1c39f3fb3f2)
@@ -43,7 +45,7 @@
 	Two new hook points lease4_recover and lease6_recover have been
 	implemented. They are called when a declined IPv4 or IPv6 lease
 	concludes its probation period and is being recovered into
-	unsable state.
+	usable state.
 	(Trac #3988, 3989, git 1930797c48fee7f4006a33cecd6f08b05ae76725)
 
 1057.	[func]		marcin
@@ -132,7 +134,7 @@
 	(Trac #3927, git c7460e849258ec77cf1215a2baf840d98f1ab77b)
 
 1041.	[func]		tomek
-	A new library, libkea-eval has been edded. It is not functional
+	A new library, libkea-eval has been added. It is not functional
 	yet, but its purpose is to provide a generic expression
 	evaluations that will be used in the upcoming client classification.
 	(Trac #4081, git 28d818a26a5d128e8a51d62b68c0cc817e6e2415)
@@ -160,7 +162,7 @@
 1036.	[func]		tmark
 	kea-admin now supports upgrading from Postgres schema version
 	1.0 to 2.0.  Schema 2.0 includes support for lease expiration
-	and reclaimation.
+	and reclamation.
 	(Trac #3969, git 8fde70c1b63b5a2646688290b1d0cf53f4c964ad)
 
 1035.	[doc]		fdupont
@@ -294,7 +296,7 @@
 
 1012.	[bug]		stephen
 	Replace #include of message_dictionary.h in message_initializer.h
-	with a declaration of the MessageDictionary class, avoing the need
+	with a declaration of the MessageDictionary class, avoiding the need
 	to include message_dictionary.h in the set of header files installed.
 	(Trac #4046, git 9f1801b4326f62632a7c9f0aa939d58f120c10e8)
 
@@ -306,7 +308,7 @@
 	(Trac #4015, git 95f8c0d0af45807c1f303b9bbbb08f82b3bfc343)
 
 1010.	[bug]		tmark
-	Fixed test failures occuring for some tests after
+	Fixed test failures occurring for some tests after
 	IfaceMgr::closeSockets was called.
 	(Trac #4067, git 9161867dc6a354659ae8b5115ee437ec76c1771e)
 
@@ -363,7 +365,7 @@
 	Fixed critical C++ issues in the Kea code. This does not cover
 	auto_ptr warnings (just ignore them) or the gtest 1.7.0 bug with
 	EXPECT_TRUE() and ASSERT_TRUE() macros (we recommend to download
-	last subversion souces at http://googletest.googlecode.com/svn/trunk
+	last subversion sources at http://googletest.googlecode.com/svn/trunk
 	and use the --with-gtest-source configuration argument when
 	you'd like to build unit tests).
 	(Trac #4024, git 55afd98fead0c16bb81107dfc1a5f49a5e295aa6)
