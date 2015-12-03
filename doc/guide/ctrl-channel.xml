@@ -24,7 +24,7 @@
     Both servers can be instructed to open control sockets, which
     is a communication channel. The server is able to receive
     commands on that channel, act on them and report back status.
-    While the set of commands supported in Kea 0.9.2 is limited,
+    While the set of commands supported in Kea 1.0 is limited,
     the number is expected to grow over time.</para>
 
     <para>Currently the only supported type of control channel

@@ -2431,7 +2431,7 @@ should include options from the isc option space:
       dynamic pool. Therefore it can skip the reservation checks when dealing
       with in-pool addresses, thus improving performance. Do not use this mode
       if any of your reservations use in-pool address. Caution is advised when
-      using this setting. Kea 0.9.1 does not sanity check the reservations against
+      using this setting. Kea does not sanity check the reservations against
       <command>reservation-mode</command>. Misconfiguration may cause problems.
       </simpara></listitem>
 
