@@ -196,12 +196,6 @@ This message is printed when DHCPv6 server disables an interface from being
 used to receive DHCPv6 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
-% DHCP6_DECLINE_PROCESS_IA Processing of IA (IAID: %1) from client %2 started.
-This debug message is printed when the server starts processing an IA_NA option
-received in Decline message. It's expected that the option will contain an
-address that is being declined. Specific information will be printed in a
-separate message.
-
 % DHCP6_DECLINE_FAIL_DUID_MISMATCH Client %1 sent DECLINE for address %2, but it belongs to client with DUID %3
 This informational message is printed when a client attempts to decline
 a lease, but that lease belongs to a different client. The decline request
@@ -239,6 +233,12 @@ the lease after decline-probation-time elapses) will recover automatically.
 However, if the underlying problem is not solved, the conditions leading
 to this message may reappear.
 
+% DHCP6_DECLINE_PROCESS_IA Processing of IA (IAID: %1) from client %2 started.
+This debug message is printed when the server starts processing an IA_NA option
+received in Decline message. It's expected that the option will contain an
+address that is being declined. Specific information will be printed in a
+separate message.
+
 % DHCP6_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal
 This is the info message logged when the DHCPv6 server starts reconfiguration
 as a result of receiving SIGHUP signal.
@@ -272,6 +272,13 @@ or released leases), but the response will not be send to the client.
 The argument includes the client and transaction identification
 information.
 
+% DHCP6_HOOK_DECLINE_DROP During Decline processing (client=%1, interface=%2, addr=%3) hook callout set status to DROP, dropping packet.
+This message indicates that the server received DECLINE message, it was verified
+to be correct and matching server's lease information. The server called hooks
+for the lease6_decline hook point and one of the callouts set next step status to DROP.
+The server will now abort processing of the packet as if it was never
+received. The lease will continue to be assigned to this client.
+
 % DHCP6_HOOK_DECLINE_SKIP During Decline processing (client=%1, interface=%2, addr=%3) hook callout set status to SKIP, skipping decline.
 This message indicates that the server received DECLINE message, it was verified
 to be correct and matching server's lease information. The server called hooks
@@ -279,13 +286,6 @@ for the lease6_decline hook point and one of the callouts set next step status t
 The server will skip the operation of moving the lease to the declined state and
 will continue processing the packet. In particular, it will send a REPLY message
 as if the decline actually took place.
-
-% DHCP6_HOOK_DECLINE_DROP During Decline processing (client=%1, interface=%2, addr=%3) hook callout set status to DROP, dropping packet.
-This message indicates that the server received DECLINE message, it was verified
-to be correct and matching server's lease information. The server called hooks
-for the lease6_decline hook point and one of the callouts set next step status to DROP.
-The server will now abort processing of the packet as if it was never
-received. The lease will continue to be assigned to this client.
 
 % DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP %1: DHCPv6 address lease was not released because a callout set the skip flag
 This debug message is printed when a callout installed on the
@@ -644,17 +644,6 @@ etc. The exact reason for rejecting the packet is included in the message.
 % DHCP6_RESPONSE_DATA responding with packet type %1 data is %2
 A debug message listing the data returned to the client.
 
-% DHCP6_USING_SERVERID server is using server-id %1 and stores in the the file %2
-This info message is logged when the server reads its server-id from a
-file or generates it. This message is a notification to the administrator
-what server-id will be used and where it is persisted. Typically, there is
-no need to modify the server id. However, it is possible to do it in the
-Kea configuration file. It is important to understand the implications of
-such modification. The clients will remember previous server-id, and will
-use it to extend their leases. As a result, they will have to go through
-a rebinding phase to re-acquire their leases and associate them with a
-new server id.
-
 % DHCP6_SERVER_FAILED server failed: %1
 The IPv6 DHCP server has encountered a fatal error and is terminating.
 The reason for the failure is included in the message.
@@ -729,3 +718,14 @@ This debug message is printed when server receives a message of unknown type.
 That could either mean missing functionality or invalid or broken relay or client.
 The list of formally defined message types is available here:
 http://www.iana.org/assignments/dhcpv6-parameters.
+
+% DHCP6_USING_SERVERID server is using server-id %1 and stores in the the file %2
+This info message is logged when the server reads its server-id from a
+file or generates it. This message is a notification to the administrator
+what server-id will be used and where it is persisted. Typically, there is
+no need to modify the server id. However, it is possible to do it in the
+Kea configuration file. It is important to understand the implications of
+such modification. The clients will remember previous server-id, and will
+use it to extend their leases. As a result, they will have to go through
+a rebinding phase to re-acquire their leases and associate them with a
+new server id.

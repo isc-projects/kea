@@ -14,6 +14,13 @@
 
 $NAMESPACE isc::dhcp
 
+% DHCPRSV_MEMFILE_CONVERTING_LEASE_FILES running LFC now to convert lease files to the current schema: %1.%2
+A warning message issued when the server has detected lease files that need
+to be either upgraded or downgraded to match the server's schema, and that
+the server is automatically running the LFC process to perform the conversion.
+This should only occur the first time the server is launched following a Kea
+installation upgrade (or downgrade).
+
 % DHCPSRV_CFGMGR_ADD_IFACE listening on interface %1
 An info message issued when a new interface is being added to the collection of
 interfaces on which the server listens to DHCP messages.
@@ -249,13 +256,6 @@ with the specified address to the memory file backend database.
 The code has issued a commit call.  For the memory file database, this is
 a no-op.
 
-% DHCPRSV_MEMFILE_CONVERTING_LEASE_FILES running LFC now to convert lease files to the current schema: %1.%2
-A warning message issued when the server has detected lease files that need
-to be either upgraded or downgraded to match the server's schema, and that
-the server is automatically running the LFC process to perform the conversion.
-This should only occur the first time the server is launched following a Kea
-installation upgrade (or downgrade).
-
 % DHCPSRV_MEMFILE_DB opening memory file lease database: %1
 This informational message is logged when a DHCP server (either V4 or
 V6) is about to open a memory file lease database.  The parameters of
@@ -454,6 +454,11 @@ V6) is about to open a MySQL lease database.  The parameters of the
 connection including database name and username needed to access it
 (but not the password if any) are logged.
 
+% DHCPSRV_MYSQL_DELETED_EXPIRED_RECLAIMED deleted %1 reclaimed leases from the database
+A debug message issued when the server has removed a number of reclaimed
+leases from the database. The number of removed leases is included in the
+message.
+
 % DHCPSRV_MYSQL_DELETE_ADDR deleting lease for address %1
 A debug message issued when the server is attempting to delete a lease for
 the specified address from the MySQL database for the specified address.
@@ -469,11 +474,6 @@ A debug message issued when the server is removing reclaimed DHCPv6
 leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
-
-% DHCPSRV_MYSQL_DELETED_EXPIRED_RECLAIMED deleted %1 reclaimed leases from the database
-A debug message issued when the server has removed a number of reclaimed
-leases from the database. The number of removed leases is included in the
-message.
 
 % DHCPSRV_MYSQL_FATAL_ERROR Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4). Server exiting now!
 An error message indicating that communication with the MySQL database server
@@ -589,6 +589,18 @@ unlikely to occur or negatively impact server operation.
 A debug message issued when the server is attempting to delete a lease for
 the specified address from the PostgreSQL database for the specified address.
 
+% DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED4 deleting reclaimed IPv4 leases that expired more than %1 seconds ago
+A debug message issued when the server is removing reclaimed DHCPv4
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+% DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED6 deleting reclaimed IPv6 leases that expired more than %1 seconds ago
+A debug message issued when the server is removing reclaimed DHCPv6
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
 % DHCPSRV_PGSQL_FATAL_ERROR Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3). Server exiting now!
 An error message indicating that communication with the MySQL database server
 has been lost.  When this occurs the server exits immediately with a non-zero
@@ -616,18 +628,6 @@ is logged in the message.
 A debug message issued when the server is attempting to obtain expired
 IPv6 leases to reclaim them. The maximum number of leases to be retrieved
 is logged in the message.
-
-% DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED4 deleting reclaimed IPv4 leases that expired more than %1 seconds ago
-A debug message issued when the server is removing reclaimed DHCPv4
-leases which have expired longer than a specified period of time.
-The argument is the amount of time Kea waits after a reclaimed
-lease expires before considering its removal.
-
-% DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED6 deleting reclaimed IPv6 leases that expired more than %1 seconds ago
-A debug message issued when the server is removing reclaimed DHCPv6
-leases which have expired longer than a specified period of time.
-The argument is the amount of time Kea waits after a reclaimed
-lease expires before considering its removal.
 
 % DHCPSRV_PGSQL_GET_HWADDR obtaining IPv4 leases for hardware address %1
 A debug message issued when the server is attempting to obtain a set
