@@ -134,6 +134,9 @@ AllocEngine6Test::AllocEngine6Test() {
     duid_ = DuidPtr(new DUID(std::vector<uint8_t>(8, 0x42)));
     iaid_ = 42;
 
+    // Create fresh instance of the HostMgr, and drop any previous HostMgr state.
+    HostMgr::instance().create();
+
     // Let's use odd hardware type to check if there is no Ethernet
     // hardcoded anywhere.
     const uint8_t mac[] = { 0, 1, 22, 33, 44, 55};
