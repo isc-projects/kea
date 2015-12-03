@@ -1738,7 +1738,7 @@ It is merely echoed by the server
     "client-classes": [
         {<userinput>
             "name": "Client_foo",
-            "test": "substring(option[61].text,0,3) == 'foo'",
+            "test": "substring(option[61].hex,0,3) == 'foo'",
             "option-data": [
                 {
                     "name": "domain-name-servers",

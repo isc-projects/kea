@@ -1,5 +1,10 @@
 Kea 1.0.0-beta released on December 8, 2015
 
+1067.	[doc]		sar
+	Remove description of option[xx].text operator from classification
+	until it's use becomes clearer.
+	(Trac #4218, git 22fe2bf889984078cd86c2a230a038632d21432c)
+
 1066.	[func]		tomek
 	Configuration parameters for setting up external hosts storage
 	are now implemented. This feature is considered experimental
