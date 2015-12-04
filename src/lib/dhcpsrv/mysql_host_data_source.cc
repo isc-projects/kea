@@ -21,6 +21,7 @@
 #include <dhcpsrv/mysql_host_data_source.h>
 #include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/db_exceptions.h>
+#include <dhcpsrv/host.h>
 
 #include <boost/static_assert.hpp>
 #include <mysqld_error.h>
@@ -32,6 +33,7 @@
 
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::asiolink;
 using namespace std;
 
 namespace {
@@ -48,10 +50,16 @@ const size_t HOSTNAME_MAX_LEN = 255;
 
 TaggedStatement tagged_statements[] = {
     {MySqlHostDataSource::INSERT_HOST,
-            "INSERT INTO hosts(host_id, dhcp_identifier, dhcp_identifier_type, "
-                "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
-                "dhcp4_client_classes, dhcp6_client_classes) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+         "INSERT INTO hosts(host_id, dhcp_identifier, dhcp_identifier_type, "
+         "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
+         "dhcp4_client_classes, dhcp6_client_classes) "
+         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+    {MySqlHostDataSource::INSERT_V6_RESRV,
+         "INSERT INTO ipv6_reservations(host_id, address, prefix_len, type, dhcp6_iaid) "
+         "VALUES (?,?,?,?,?)"},
+    {MySqlHostDataSource::GET_V6_RESRV,
+         "SELECT address, prefix_len, type, dhcp6_iaid FROM ipv6_reservations "
+         "WHERE host_id = ?"},
     {MySqlHostDataSource::GET_HOST_HWADDR_DUID,
             "SELECT host_id, dhcp_identifier, dhcp_identifier_type, "
                 "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
@@ -101,6 +109,7 @@ TaggedStatement tagged_statements[] = {
 namespace isc {
 namespace dhcp {
 
+/// @brief This class represents the exchanges related to hosts.
 class MySqlHostReservationExchange {
     /// @brief Set number of database columns for this host structure
     static const size_t HOST_COLUMNS = 9;
@@ -471,9 +480,12 @@ public:
         }
 
         // Returning Host object with set fields
-        return (HostPtr(new Host(dhcp_identifier_buffer_, dhcp_identifier_length_,
-                type, ipv4_subnet_id, ipv6_subnet_id, ipv4_reservation,
-                hostname, dhcp4_client_classes_, dhcp6_client_classes_)));
+        HostPtr h(new Host(dhcp_identifier_buffer_, dhcp_identifier_length_,
+                           type, ipv4_subnet_id, ipv6_subnet_id, ipv4_reservation,
+                           hostname, dhcp4_client_classes_, dhcp6_client_classes_));
+        h->setHostId(host_id_);
+
+        return (h);
     }
 
     /// @brief Return columns in error
@@ -511,7 +523,7 @@ public:
     }
 
 private:
-    uint32_t	host_id_;			/// Host unique identifier
+    uint64_t	host_id_;			/// Host unique identifier
     std::vector<uint8_t> dhcp_identifier_;      /// HW address (0) / DUID (1)
     uint8_t     dhcp_identifier_buffer_[DUID::MAX_DUID_LEN];
                                                 /// Buffer for dhcp identifier
@@ -546,6 +558,258 @@ private:
     HostPtr     host_;			// Pointer to Host object
 };
 
+class MySqlIPv6ReservationExchange {
+    /// @brief Set number of database columns for this reservation structure
+    static const size_t RESRV_COLUMNS = 5;
+
+public:
+
+    /// @brief Constructor
+    ///
+    /// The initialization of the variables here is only to satisfy cppcheck -
+    /// all variables are initialized/set in the methods before they are used.
+    MySqlIPv6ReservationExchange()
+        : host_id_(0), address_("::"), prefix_len_(0), type_(0),
+          iaid_(0), resv_(IPv6Resrv::TYPE_NA, asiolink::IOAddress("::"), 128) {
+
+        std::fill(&error_[0], &error_[RESRV_COLUMNS], MLM_FALSE);
+
+        // Set the column names (for error messages)
+        columns_[0] = "host_id";
+        columns_[1] = "address";
+        columns_[2] = "prefix_len";
+        columns_[3] = "type";
+        columns_[4] = "dhcp6_iaid";
+        BOOST_STATIC_ASSERT(4 < RESRV_COLUMNS);
+    }
+
+    /// @brief Set error indicators
+    ///
+    /// Sets the error indicator for each of the MYSQL_BIND elements. It points
+    /// the "error" field within an element of the input array to the
+    /// corresponding element of the passed error array.
+    ///
+    /// @param bind Array of BIND elements
+    /// @param error Array of error elements.  If there is an error in getting
+    ///        data associated with one of the "bind" elements, the
+    ///        corresponding element in the error array is set to MLM_TRUE.
+    /// @param count Size of each of the arrays.
+    static void setErrorIndicators(MYSQL_BIND* bind, my_bool* error,
+                                   size_t count) {
+        for (size_t i = 0; i < count; ++i) {
+            error[i] = MLM_FALSE;
+            bind[i].error = reinterpret_cast<char*>(&error[i]);
+        }
+    }
+
+    /// @brief Return columns in error
+    ///
+    /// If an error is returned from a fetch (in particular, a truncated
+    /// status), this method can be called to get the names of the fields in
+    /// error.  It returns a string comprising the names of the fields
+    /// separated by commas.  In the case of there being no error indicators
+    /// set, it returns the string "(None)".
+    ///
+    /// @param error Array of error elements.  An element is set to MLM_TRUE
+    ///        if the corresponding column in the database is the source of
+    ///        the error.
+    /// @param names Array of column names, the same size as the error array.
+    /// @param count Size of each of the arrays.
+    static std::string getColumnsInError(my_bool* error, std::string* names,
+                                         size_t count) {
+        std::string result = "";
+
+        // Accumulate list of column names
+        for (size_t i = 0; i < count; ++i) {
+            if (error[i] == MLM_TRUE) {
+                if (!result.empty()) {
+                    result += ", ";
+                }
+                result += names[i];
+            }
+        }
+
+        if (result.empty()) {
+            result = "(None)";
+        }
+
+        return (result);
+    }
+
+    /// @brief Create MYSQL_BIND objects for Host Pointer
+    ///
+    /// Fills in the MYSQL_BIND array for sending data in the Host object to
+    /// the database.
+    ///
+    /// @param host Host object to be added to the database.
+    ///        None of the fields in the host reservation are modified -
+    ///        the host data is only read.
+    ///
+    /// @return Vector of MySQL BIND objects representing the data to be added.
+    std::vector<MYSQL_BIND> createBindForSend(const IPv6Resrv& resv, const HostID& id) {
+
+        // Store the values to ensure they remain valid.
+        resv_ = resv;
+        host_id_ = id;
+
+        // Initialize prior to constructing the array of MYSQL_BIND structures.
+        // It sets all fields, including is_null, to zero, so we need to set
+        // is_null only if it should be true. This gives up minor performance
+        // benefit while being safe approach. For improved readability, the
+        // code that explicitly sets is_null is there, but is commented out.
+        memset(bind_, 0, sizeof(bind_));
+
+        // Set up the structures for the various components of the host structure.
+
+        try {
+            // host_id : INT UNSIGNED NOT NULL
+            host_id_ = static_cast<uint32_t>(NULL);
+            bind_[0].buffer_type = MYSQL_TYPE_LONG;
+            bind_[0].buffer = reinterpret_cast<char*>(&host_id_);
+            bind_[0].is_unsigned = MLM_TRUE;
+
+            // address VARCHAR(39)
+            address_ = resv.getPrefix().toText();
+            address_len_ = address_.length();
+            bind_[1].buffer_type = MYSQL_TYPE_BLOB;
+            bind_[1].buffer = reinterpret_cast<char*>
+                (const_cast<char*>(address_.c_str()));
+            bind_[1].buffer_length = address_len_;
+            bind_[1].length = &address_len_;
+
+            // prefix_len tinyint
+            prefix_len_ = resv.getPrefixLen();
+            bind_[2].buffer_type = MYSQL_TYPE_TINY;
+            bind_[2].buffer = reinterpret_cast<char*>(&prefix_len_);
+            bind_[2].is_unsigned = MLM_TRUE;
+
+            // type tinyint
+            // See lease6_types for values (0 = IA_NA, 1 = IA_TA, 2 = IA_PD)
+            type_ = resv.getType() == IPv6Resrv::TYPE_NA ? 0 : 2;
+            bind_[3].buffer_type = MYSQL_TYPE_TINY;
+            bind_[3].buffer = reinterpret_cast<char*>(&type_);
+            bind_[3].is_unsigned = MLM_TRUE;
+
+            // dhcp6_iaid INT UNSIGNED
+            /// @todo: We don't support iaid in the IPv6Resrv yet.
+            iaid_ = 0;
+            bind_[4].buffer_type = MYSQL_TYPE_LONG;
+            bind_[4].buffer = reinterpret_cast<char*>(&iaid_);
+            bind_[4].is_unsigned = MLM_TRUE;
+
+        } catch (const std::exception& ex) {
+            isc_throw(DbOperationError,
+                      "Could not create bind array from Host: "
+                      << host_->getHostname() << ", reason: " << ex.what());
+        }
+
+        // Add the data to the vector.  Note the end element is one after the
+        // end of the array.
+        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[RESRV_COLUMNS]));
+    }
+
+
+    /// @brief Create BIND array to receive data
+    ///
+    /// Creates a MYSQL_BIND array to receive Lease4 data from the database.
+    /// After data is successfully received, getLeaseData() can be used to copy
+    /// it to a Lease6 object.
+    ///
+    std::vector<MYSQL_BIND> createBindForReceive() {
+        // Initialize MYSQL_BIND array.
+        // It sets all fields, including is_null, to zero, so we need to set
+        // is_null only if it should be true. This gives up minor performance
+        // benefit while being safe approach. For improved readability, the
+        // code that explicitly sets is_null is there, but is commented out.
+        memset(bind_, 0, sizeof(bind_));
+
+        /// @todo: set bind_[X] fields here.
+
+        // Add the error flags
+        setErrorIndicators(bind_, error_, RESRV_COLUMNS);
+
+        // .. and check that we have the numbers correct at compile time.
+        BOOST_STATIC_ASSERT(4 < RESRV_COLUMNS);
+
+        // Add the data to the vector.  Note the end element is one after the
+        // end of the array.
+        return(std::vector<MYSQL_BIND>(&bind_[0], &bind_[RESRV_COLUMNS]));
+
+    }
+
+    /// @brief Copy Received Data into IPv6 reservation
+    ///
+    /// Called after the MYSQL_BIND array created by createBindForReceive()
+    /// has been used, this copies data from the internal member variables
+    /// into a IPv6Resrv object.
+    ///
+    /// @return IPv6Resrv object (containing IPv6 address or prefix reservation)
+    IPv6Resrv getIPv6ReservData(){
+        /// @todo: Implement actual extraction.
+        IPv6Resrv r(IPv6Resrv::TYPE_NA, IOAddress("::"), 128);
+
+        return (r);
+    }
+
+    /// @brief Return columns in error
+    ///
+    /// If an error is returned from a fetch (in particular, a truncated
+    /// status), this method can be called to get the names of the fields in
+    /// error.  It returns a string comprising the names of the fields
+    /// separated by commas.  In the case of there being no error indicators
+    /// set, it returns the string "(None)".
+    ///
+    /// @return Comma-separated list of columns in error, or the string
+    ///         "(None)".
+    std::string getErrorColumns() {
+        return (getColumnsInError(error_, columns_, RESRV_COLUMNS));
+    }
+
+    /// @brief Converts ClientClasses to a signgle string with coma separated values
+    ///
+    /// @param classes classes structure that contains zero or more classes
+    /// @return a single string with coma separated values
+    std::string classesToString(const ClientClasses& classes) {
+        string txt;
+        bool first = true;
+        for (ClientClasses::const_iterator it = classes.begin();
+             it != classes.end(); ++it) {
+            if (!first) {
+                txt += ",";
+            }
+            txt += (*it);
+
+            first = false;
+        }
+
+        return (txt);
+    }
+
+private:
+    uint64_t	host_id_;        /// Host unique identifier
+    size_t      host_id_length_; /// Length of the host unique ID
+    std::string address_;        ///< Address (or prefix)
+    size_t      address_len_;    ///< Length of the textual address representation
+    uint8_t     prefix_len_;     ///< Length of the prefix (128 for addresses)
+    uint8_t     type_;
+    uint8_t     iaid_;
+
+    uint64_t    host_id_len_;
+
+    // NULL flags for subnets id, ipv4 address, hostname and client classes
+    my_bool     host_id_null_;
+    my_bool     address_null_;
+    my_bool     prefix_len_null_;
+    my_bool     iaid_null_;
+
+    IPv6Resrv   resv_;
+
+    MYSQL_BIND  bind_[RESRV_COLUMNS];
+    std::string columns_[RESRV_COLUMNS];	/// Column names
+    my_bool     error_[RESRV_COLUMNS];   /// Error array
+    HostPtr     host_;			// Pointer to Host object
+};
+
 // MySqlHostDataSource Constructor and Destructor
 
 MySqlHostDataSource::MySqlHostDataSource(
@@ -571,6 +835,8 @@ MySqlHostDataSource::MySqlHostDataSource(
     // Create the exchange objects for use in exchanging data between the
     // program and the database.
     hostExchange_.reset(new MySqlHostReservationExchange());
+
+    resvExchange_.reset(new MySqlIPv6ReservationExchange());
 }
 
 MySqlHostDataSource::~MySqlHostDataSource() {
@@ -605,14 +871,43 @@ MySqlHostDataSource::add(const HostPtr& host) {
         std::vector<MYSQL_BIND> bind = hostExchange_->createBindForSend(host);
 
         // ... and call addHost() code.
-        addHost(INSERT_HOST, bind);
+        addQuery(INSERT_HOST, bind);
 
-        /// @todo: Insert IPv6 reservations, if present (ticket #4212)
+        IPv6ResrvRange v6resv = host->getIPv6Reservations();
+        if (std::distance(v6resv.first, v6resv.second) == 0) {
+            // If there are no v6 reservations, we're done here.
+            return;
+        }
+
+        // Ok, there are v6 reservations. Let's insert them. But first, we need
+        // to learn what's the host_id of the host we just added.
+
+        /// @todo: See how get6() is done in hostMgr - calls with duid only first,
+        /// and if can't find it, then calls with hwaddr only.
+        ConstHostPtr from_db = get6(host->getIPv6SubnetID(), host->getDuid(),
+                                    host->getHWAddress());
+        if (!from_db) {
+            // Oops, we have a problem. We can't find the host we just added.
+            isc_throw(DbOperationError, "Unable to retrieve the host that just "
+                      "had been added");
+        }
+
+        for (IPv6ResrvIterator resv = v6resv.first; resv != v6resv.second; ++resv) {
+            addResv(resv->second, from_db->getHostId());
+        }
     }
 }
 
 void
-MySqlHostDataSource::addHost(StatementIndex stindex,
+MySqlHostDataSource::addResv(const IPv6Resrv& resv, HostID id) {
+    std::vector<MYSQL_BIND> bind =
+        resvExchange_->createBindForSend(resv, id);
+
+    addQuery(INSERT_V6_RESRV, bind);
+}
+
+void
+MySqlHostDataSource::addQuery(StatementIndex stindex,
                              std::vector<MYSQL_BIND>& bind) {
 
         // Bind the parameters to the statement

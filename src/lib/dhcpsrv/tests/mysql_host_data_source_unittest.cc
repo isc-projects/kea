@@ -279,49 +279,49 @@ TEST_F(MySqlHostDataSourceTest, DISABLED_hwaddrOrClientId2) {
 
 // Test verifies that host with IPv6 address and DUID can be added and
 // later retrieved by IPv6 address.
-TEST_F(MySqlHostDataSourceTest, DISABLED_get6AddrWithDuid) {
+TEST_F(MySqlHostDataSourceTest, get6AddrWithDuid) {
     /// @todo: Uncomment when IPv6 support (4212) is implemented.
     testGetByIPv6(BaseHostDataSource::ID_DUID, false);
 }
 
 // Test verifies that host with IPv6 address and HWAddr can be added and
 // later retrieved by IPv6 address.
-TEST_F(MySqlHostDataSourceTest, DISABLED_get6AddrWithHWAddr) {
+TEST_F(MySqlHostDataSourceTest, get6AddrWithHWAddr) {
     /// @todo: Uncomment when IPv6 support (4212) is implemented.
     testGetByIPv6(BaseHostDataSource::ID_HWADDR, false);
 }
 
 // Test verifies that host with IPv6 prefix and DUID can be added and
 // later retrieved by IPv6 prefix.
-TEST_F(MySqlHostDataSourceTest, DISABLED_get6PrefixWithDuid) {
+TEST_F(MySqlHostDataSourceTest, get6PrefixWithDuid) {
     /// @todo: Uncomment when IPv6 support (4212) is implemented.
     testGetByIPv6(BaseHostDataSource::ID_DUID, true);
 }
 
 // Test verifies that host with IPv6 prefix and HWAddr can be added and
 // later retrieved by IPv6 prefix.
-TEST_F(MySqlHostDataSourceTest, DISABLED_get6PrefixWithHWaddr) {
+TEST_F(MySqlHostDataSourceTest, get6PrefixWithHWaddr) {
     /// @todo: Uncomment when IPv6 support (4212) is implemented.
     testGetByIPv6(BaseHostDataSource::ID_HWADDR, true);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by
 // hardware address.
-TEST_F(MySqlHostDataSourceTest, DISABLED_get6ByHWaddr) {
+TEST_F(MySqlHostDataSourceTest, get6ByHWaddr) {
     /// @todo: Uncomment when IPv6 support (4212) is implemented.
     testGet6ByHWAddr();
 }
 
 // Test verifies if a host reservation can be added and later retrieved by
 // client identifier.
-TEST_F(MySqlHostDataSourceTest, DISABLED_get6ByClientId) {
+TEST_F(MySqlHostDataSourceTest, get6ByClientId) {
     /// @todo: Uncomment when IPv6 support (4212) is implemented.
     testGet6ByClientId();
 }
 
 // Test verifies if a host reservation can be stored with both IPv6 address and
 // prefix.
-TEST_F(MySqlHostDataSourceTest, DISABLED_addr6AndPrefix) {
+TEST_F(MySqlHostDataSourceTest, addr6AndPrefix) {
     /// @todo: Implement this test as part of #4212.
 
     /// @todo: Add host reservation with an IPv6 address and IPv6 prefix,
@@ -347,7 +347,7 @@ TEST_F(MySqlHostDataSourceTest, DISABLED_multipleClientClasses6) {
 
 // Test verifies if multiple client classes for both IPv4 and IPv6 can be stored.
 TEST_F(MySqlHostDataSourceTest, DISABLED_multipleClientClassesBoth) {
-    /// @todo: Implement this test as part of #4213..
+    /// @todo: Implement this test as part of #4213.
 
     /// Add host reservation with a multiple v4 and v6 client-classes, retrieve
     /// it and make sure that all client classes are retrieved properly. Also,
