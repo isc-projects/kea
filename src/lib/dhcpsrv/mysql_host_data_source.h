@@ -29,6 +29,7 @@ namespace dhcp {
 // Forward declaration of the Host exchange objects.  These classes are defined
 // in the .cc file.
 class MySqlHostReservationExchange;
+class MySqlIPv6ReservationExchange;
 
 /// @brief MySQL Host Data Source
 ///
@@ -230,6 +231,8 @@ public:
     /// The contents of the enum are indexes into the list of SQL statements
     enum StatementIndex {
         INSERT_HOST,		// Insert new host to collection
+        INSERT_V6_RESRV,        // Insert v6 reservation
+        GET_V6_RESRV,           // Gets v6 reservations
         GET_HOST_HWADDR_DUID,   // Gets hosts by DUID and/or HW address
         GET_HOST_ADDR,		// Gets hosts by IPv4 address
         GET_HOST_SUBID4_DHCPID,	// Gets host by IPv4 SubnetID, HW address/DUID
@@ -241,9 +244,9 @@ public:
     };
 
 private:
-    /// @brief Add Host Code
+    /// @brief Add Host or IPv6 reservation Code
     ///
-    /// This method performs adding a host operation.
+    /// This method performs adding a host or IPv6 reservation operation.
     ///	It binds the contents of the host object to
     /// the prepared statement and adds it to the database.
     ///
@@ -251,7 +254,7 @@ private:
     /// @param bind MYSQL_BIND array that has been created for the host
     ///
     /// @htrow isc::dhcp::DuplicateEntry Database throws duplicate entry error
-    void addHost(StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
+    void addQuery(StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
 
     /// @brief Get Host Collection Code
     ///
@@ -303,6 +306,11 @@ private:
     /// @param host Pointer to the new @c Host object being added.
     bool checkIfExists(const HostPtr& host);
 
+    /// @brief Adds IPv6 Reservation
+    ///
+    /// @todo: describe parameters here
+    void addResv(const IPv6Resrv& resv, HostID id);
+    
     // Members
 
     /// The exchange objects are used for transfer of data to/from the database.
@@ -312,6 +320,9 @@ private:
 
     /// @brief MySQL Host Reservation Exchange object
     boost::shared_ptr<MySqlHostReservationExchange> hostExchange_;
+
+    /// @brief MySQL IPv6 Reservation Exchange object
+    boost::shared_ptr<MySqlIPv6ReservationExchange> resvExchange_;
 
     /// @brief MySQL connection
     MySqlConnection conn_;
