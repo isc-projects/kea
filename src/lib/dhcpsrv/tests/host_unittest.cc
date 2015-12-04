@@ -597,4 +597,18 @@ TEST(HostTest, toText) {
               host->toText());
 }
 
+// Test verifies if the host can store HostId properly.
+TEST(HostTest, hostId) {
+    boost::scoped_ptr<Host> host;
+    ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
+                                        SubnetID(1), SubnetID(2),
+                                        IOAddress("192.0.2.3"),
+                                        "myhost.example.com")));
+    EXPECT_EQ(0, host->getHostId());
+
+    EXPECT_NO_THROW(host->setHostId(12345));
+
+    EXPECT_EQ(12345, host->getHostId());
+}
+
 } // end of anonymous namespace

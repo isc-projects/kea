@@ -29,6 +29,9 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief HostID (used only when storing in MySQL or Postgres)
+typedef uint64_t HostID;
+
 /// @brief IPv6 reservation for a host.
 ///
 /// This class represents a reservation for a host of a single IPv6
@@ -420,6 +423,18 @@ public:
     /// @brief Returns information about the host in the textual format.
     std::string toText() const;
 
+    /// @brief Sets Host ID (primary key in MySQL and Postgres backends)
+    /// @param id HostId value
+    void setHostId(HostID id) {
+        host_id_ = id;
+    }
+
+    /// @brief Returns Host ID (primary key in MySQL and Postgres backends)
+    /// @return id HostId value (or 0 if not set)
+    HostID getHostId() const {
+        return (host_id_);
+    }
+
 private:
 
     /// @brief Adds new client class for DHCPv4 or DHCPv6.
@@ -455,6 +470,10 @@ private:
     ClientClasses dhcp4_client_classes_;
     /// @brief Collection of classes associated with a DHCPv6 client.
     ClientClasses dhcp6_client_classes_;
+
+    /// @brief HostID (a unique identifier assigned when the host is stored in
+    ///                MySQL or Pgsql)
+    uint64_t host_id_;
 };
 
 /// @brief Pointer to the @c Host object.
