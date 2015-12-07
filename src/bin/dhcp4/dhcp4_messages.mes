@@ -247,6 +247,11 @@ the message has been received.
 The DHCPv4 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
 
+% DHCP4_PACKET_PROCESS_EXCEPTION exception occurred during packet processing: %1
+This error message indicates that an exception was raised during packet processing
+that was not caught by other, more specific exception handlers. This packet will
+be dropped and the server will continue operation.
+
 % DHCP4_PACKET_PROCESS_FAIL failed to process packet received from %1: %2
 This is a general catch-all message indicating that the processing of a
 received packet failed.  The reason is given in the message.  The server
