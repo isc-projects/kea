@@ -413,6 +413,11 @@ This is a general catch-all message indicating that the processing of the
 specified packet type from the indicated address failed.  The reason is given in the
 message.  The server will not send a response but will instead ignore the packet.
 
+% DHCP6_PACKET_PROCESS_EXCEPTION exception occurred during packet processing: %1
+This error message indicates that an exception was raised during packet processing
+that was not caught by other, more specific exception handlers. This packet will
+be dropped and the server will continue operation.
+
 % DHCP6_PACKET_RECEIVED %1: %2 (type %3) received from %4 to %5 on interface %6
 A debug message noting that the server has received the specified type of
 packet on the specified interface. The first argument specifies the

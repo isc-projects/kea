@@ -315,6 +315,8 @@ bool Dhcpv6Srv::run() {
         Pkt6Ptr rsp;
 
         try {
+
+        try {
             // The lease database backend may install some timers for which
             // the handlers need to be executed periodically. Retrieve the
             // maximum interval at which the handlers must be executed from
@@ -709,6 +711,13 @@ bool Dhcpv6Srv::run() {
                 LOG_ERROR(packet6_logger, DHCP6_PACKET_SEND_FAIL)
                     .arg(e.what());
             }
+        }
+
+        } catch (const std::exception& e) {
+            // General catch-all exception that are not caught by more specific
+            // catches.
+            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
+                .arg(e.what());
         }
     }
 
