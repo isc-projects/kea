@@ -579,6 +579,11 @@ public:
     void
     generateIAFromLeases(const Pkt6Ptr& query);
 
+    /// @brief Adds extra option (an option the client will always send)
+    ///
+    /// @param opt additional option to be sent
+    void addExtraOption(const OptionPtr& opt);
+
 private:
 
     /// @brief Applies the new leases for the client.
@@ -751,6 +756,9 @@ private:
 
     /// @brief forced (Overridden) value of the server-id option (may be NULL)
     OptionPtr forced_server_id_;
+
+    /// @brief Extra options the client will send.
+    OptionCollection extra_options_;
 
     /// @brief FQDN requested by the client.
     Option6ClientFqdnPtr fqdn_;

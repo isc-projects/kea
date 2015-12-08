@@ -369,12 +369,21 @@ Dhcp6Client::createMsg(const uint8_t msg_type) {
     if (use_client_id_) {
         msg->addOption(getClientId());
     }
+
     if (use_oro_) {
         OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
         oro->setValues(oro_);
 
         msg->addOption(oro);
     };
+
+    // If there are any custom options specified, add them all to the message.
+    if (!extra_options_.empty()) {
+        for (OptionCollection::iterator opt = extra_options_.begin();
+             opt != extra_options_.end(); ++opt) {
+            msg->addOption(opt->second);
+        }
+    }
 
     return (msg);
 }
@@ -758,7 +767,10 @@ Dhcp6Client::useFQDN(const uint8_t flags, const std::string& fqdn_name,
     fqdn_.reset(new Option6ClientFqdn(flags, fqdn_name, fqdn_type));
 }
 
-
+void
+Dhcp6Client::addExtraOption(const OptionPtr& opt) {
+    extra_options_.insert(std::make_pair(opt->getType(), opt));
+}
 
 } // end of namespace isc::dhcp::test
 } // end of namespace isc::dhcp
