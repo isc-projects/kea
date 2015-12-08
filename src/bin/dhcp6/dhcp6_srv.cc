@@ -255,6 +255,8 @@ bool Dhcpv6Srv::run() {
         Pkt6Ptr query;
         Pkt6Ptr rsp;
 
+        try{
+
         try {
             // The lease database backend may install some timers for which
             // the handlers need to be executed periodically. Retrieve the
@@ -581,6 +583,18 @@ bool Dhcpv6Srv::run() {
                 LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL)
                     .arg(e.what());
             }
+        }
+
+        } catch (const std::exception& e) {
+            // General catch-all exception that are not caught by more specific
+            // catches.
+            LOG_ERROR(dhcp6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
+                .arg(e.what());
+        } catch (...) {
+            // General catch-all non-standard exception that are not caught
+            // by more specific catches.
+            LOG_ERROR(dhcp6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
+                .arg("an unknown exception not derived from std::exception");
         }
     }
 

@@ -224,6 +224,11 @@ client requested renewal of multiples leases (by sending multiple IA
 options), the server will skip the renewal of the one in question and
 will proceed with other renewals as usual.
 
+% DHCP6_PACKET_PROCESS_EXCEPTION exception occurred during packet processing: %1
+This error message indicates that an exception was raised during packet processing
+that was not caught by other, more specific exception handlers. This packet will
+be dropped and the server will continue operation.
+
 % DHCP6_HOOK_PACKET_RCVD_SKIP received DHCPv6 packet was dropped because a callout set the skip flag
 This debug message is printed when a callout installed on the pkt6_receive
 hook point set the skip flag. For this particular hook point, the
