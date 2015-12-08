@@ -206,6 +206,17 @@ Dhcp4Client::createMsg(const uint8_t msg_type) {
 }
 
 void
+Dhcp4Client::appendExtraOptions() {
+    // If there are any custom options specified, add them all to the message.
+    if (!extra_options_.empty()) {
+        for (OptionCollection::iterator opt = extra_options_.begin();
+             opt != extra_options_.end(); ++opt) {
+            context_.query_->addOption(opt->second);
+        }
+    }
+}
+
+void
 Dhcp4Client::doDiscover(const boost::shared_ptr<IOAddress>& requested_addr) {
     context_.query_ = createMsg(DHCPDISCOVER);
     // Request options if any.
@@ -221,6 +232,9 @@ Dhcp4Client::doDiscover(const boost::shared_ptr<IOAddress>& requested_addr) {
     if (ciaddr_.isSpecified()) {
         context_.query_->setCiaddr(ciaddr_.get());
     }
+
+    appendExtraOptions();
+
     // Send the message to the server.
     sendMsg(context_.query_);
     // Expect response.
@@ -448,6 +462,11 @@ Dhcp4Client::setHWAddress(const std::string& hwaddr_str) {
     } else {
         hwaddr_.reset(new HWAddr(HWAddr::fromText(hwaddr_str)));
     }
+}
+
+void
+Dhcp4Client::addExtraOption(const OptionPtr& opt) {
+    extra_options_.insert(std::make_pair(opt->getType(), opt));
 }
 
 } // end of namespace isc::dhcp::test
