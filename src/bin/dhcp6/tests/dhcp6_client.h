@@ -467,6 +467,10 @@ public:
         return (duid_);
     }
 
+    /// @brief Adds extra option (an option the client will always send)
+    ///
+    /// @param opt additional option to be sent
+    void addExtraOption(const OptionPtr& opt);
 private:
 
     /// @brief Applies the new leases for the client.
@@ -577,6 +581,9 @@ private:
     /// Content of this vector will be sent as ORO if use_oro_ is set
     /// to true. See @ref sendORO for details.
     std::vector<uint16_t> oro_;
+
+    /// @brief Extra options the client will send.
+    OptionCollection extra_options_;
 };
 
 } // end of namespace isc::dhcp::test

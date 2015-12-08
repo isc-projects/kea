@@ -265,6 +265,14 @@ Dhcp6Client::createMsg(const uint8_t msg_type) {
         msg->addOption(oro);
     };
 
+    // If there are any custom options specified, add them all to the message.
+    if (!extra_options_.empty()) {
+        for (OptionCollection::iterator opt = extra_options_.begin();
+             opt != extra_options_.end(); ++opt) {
+            msg->addOption(opt->second);
+        }
+    }
+
     return (msg);
 }
 
@@ -509,6 +517,10 @@ Dhcp6Client::useHint(const uint32_t pref_lft, const uint32_t valid_lft,
                                            len, pref_lft, valid_lft));
 }
 
+void
+Dhcp6Client::addExtraOption(const OptionPtr& opt) {
+    extra_options_.insert(std::make_pair(opt->getType(), opt));
+}
 
 } // end of namespace isc::dhcp::test
 } // end of namespace isc::dhcp
