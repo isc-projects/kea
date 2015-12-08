@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <config/ccsession.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/iface_mgr.h>
@@ -60,6 +61,26 @@ using namespace isc::dhcp::test;
 using namespace isc::test;
 
 namespace {
+
+const char* CONFIGS[] = {
+    // Configuration 0:
+    // - 1 subnet: 10.254.226.0/25
+    // - used for recorded traffic (see PktCaptures::captureRelayedDiscover)
+    "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"10.254.226.0/25\" } ],"
+        "    \"subnet\": \"10.254.226.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"eth0\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
+};
 
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
@@ -3534,6 +3555,28 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
                                                             1234))))
             << "Test failed for message type " << i;
     }
+}
+
+// This test verifies that the server is able to handle an empty client-id
+// in incoming client message.
+TEST_F(Dhcpv4SrvTest, emptyClientId) {
+    Dhcp4Client client;
+
+    EXPECT_NO_THROW(configure(CONFIGS[0], *client.getServer()));
+
+    // Tell the client to not send client-id on its own.
+    client.includeClientId("");
+
+    // Instead, tell him to send this extra option, which happens to be
+    // an empty client-id.
+    OptionPtr empty_client_id(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER));
+    client.addExtraOption(empty_client_id);
+
+    // Let's check whether the server is able to process this packet without
+    // throwing any exceptions. We don't care whether the server sent any
+    // responses or not. The goal is to check that the server didn't throw
+    // any exceptions.
+    EXPECT_NO_THROW(client.doDORA());
 }
 
 }; // end of anonymous namespace
