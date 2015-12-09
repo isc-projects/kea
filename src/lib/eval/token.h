@@ -277,6 +277,31 @@ public:
     void evaluate(const Pkt& pkt, ValueStack& values);
 };
 
+/// @brief Token that represents logical negation operator
+///
+/// For example in the expression "not(option[vendor-class].text == 'MSF')"
+/// this token represents the leading "not"
+class TokenNot : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenNot() {}
+
+    /// @brief Logical negation.
+    ///
+    /// Evaluation does not use packet information, but rather consumes the last
+    /// result. It does a simple string comparison and sets the value to
+    /// either "true" or "false". It requires at least one value to be
+    /// present on stack and to be either "true" or "false".
+    ///
+    /// @throw EvalBadStack if there are less than 1 value on stack
+    /// @throw EvalTypeError if the top value on the stack is not either
+    ///        "true" or "false"
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (logical top value negated)
+    void evaluate(const Pkt& pkt, ValueStack& values);
+};
+
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 

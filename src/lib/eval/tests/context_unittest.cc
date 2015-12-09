@@ -341,6 +341,14 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("== 'ab'", "<string>:1.1-2: syntax error, unexpected ==");
     checkError("'foo' ==",
                "<string>:1.9: syntax error, unexpected end of file");
+    checkError("not 'foo'",
+               "<string>:1.10: syntax error, unexpected end of file, "
+               "expecting ==");
+    checkError("not()",
+               "<string>:1.5: syntax error, unexpected )");
+    checkError("(not('foo' 'bar')",
+               "<string>:1.12-16: syntax error, unexpected constant string, "
+               "expecting ==");
     checkError("('foo' == 'bar'",
                "<string>:1.16: syntax error, unexpected end of file, "
                "expecting )");
