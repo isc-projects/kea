@@ -186,7 +186,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Setup DHCPv4-over-DHCPv6 IPC
     try {
-        Dhcp4o6Ipc::instance().open();
+        Dhcp6to4Ipc::instance().open();
     } catch (const std::exception& ex) {
         std::ostringstream err;
         err << "error starting DHCPv4-over-DHCPv6 IPC "
