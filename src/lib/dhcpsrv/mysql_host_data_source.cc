@@ -976,7 +976,7 @@ std::pair<uint32_t, uint32_t> MySqlHostDataSource::getVersion() const {
     const StatementIndex stindex = GET_VERSION;
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_VERSION);
+              DHCPSRV_MYSQL_HOST_DB_GET_VERSION);
 
     uint32_t major;      // Major version number
     uint32_t minor;      // Minor version number
