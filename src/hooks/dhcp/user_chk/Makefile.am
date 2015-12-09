@@ -13,7 +13,7 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 # Define rule to build logging source files from message file
 user_chk_messages.h user_chk_messages.cc: s-messages
 s-messages: user_chk_messages.mes
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/hooks/dhcp/user_chk/user_chk_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/user_chk/user_chk_messages.mes
 	touch $@
 
 # Tell automake that the message files are built as part of the build process
