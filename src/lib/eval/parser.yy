@@ -47,9 +47,10 @@ using namespace isc::eval;
   EQUAL "=="
   OPTION "option"
   SUBSTRING "substring"
+  NOT "not"
   TEXT "text"
   HEX "hex"
-  NOT "not"
+  EXISTS "exists"
   ALL "all"
   DOT "."
   COMA ","
@@ -90,6 +91,11 @@ bool_expr : "(" bool_expr ")"
                 {
                     TokenPtr eq(new TokenEqual());
                     ctx.expression.push_back(eq);
+                }
+          | OPTION "[" option_code "]" "." EXISTS
+                {
+                    TokenPtr opt(new TokenOption($3, TokenOption::EXISTS));
+                    ctx.expression.push_back(opt);
                 }
           ;
 

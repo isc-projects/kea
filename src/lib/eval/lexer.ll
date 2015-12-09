@@ -134,9 +134,10 @@ blank [ \t]
 "option"    return isc::eval::EvalParser::make_OPTION(loc);
 "text"      return isc::eval::EvalParser::make_TEXT(loc);
 "hex"       return isc::eval::EvalParser::make_HEX(loc);
+"exists"    return isc::eval::EvalParser::make_EXISTS(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
-"not"       return isc::eval::EvalParser::make_NOT(loc);
 "all"       return isc::eval::EvalParser::make_ALL(loc);
+"not"       return isc::eval::EvalParser::make_NOT(loc);
 "."         return isc::eval::EvalParser::make_DOT(loc);
 "("         return isc::eval::EvalParser::make_LPAREN(loc);
 ")"         return isc::eval::EvalParser::make_RPAREN(loc);

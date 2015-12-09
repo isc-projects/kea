@@ -69,13 +69,17 @@ TokenOption::evaluate(const Pkt& pkt, ValueStack& values) {
     if (opt) {
         if (representation_type_ == TEXTUAL) {
             opt_str = opt->toString();
-        } else {
+        } else if (representation_type_ == HEXADECIMAL) {
             std::vector<uint8_t> binary = opt->toBinary();
             opt_str.resize(binary.size());
             if (!binary.empty()) {
                 memmove(&opt_str[0], &binary[0], binary.size());
             }
+        } else {
+            opt_str = "true";
         }
+    } else if (representation_type_ == EXISTS) {
+        opt_str = "false";
     }
 
     // Push value of the option or empty string if there was no such option
