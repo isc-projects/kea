@@ -57,8 +57,8 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
 
     // Is "type" present?
     if (parameters.find(type) == parameters.end()) {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_NOTYPE_DB).arg(dbaccess);
-        isc_throw(InvalidParameter, "Database configuration parameters do not "
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_HOSTDB_NOTYPE).arg(dbaccess);
+        isc_throw(InvalidParameter, "Host database configuration does not "
                   "contain the 'type' keyword");
     }
 
@@ -66,7 +66,7 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
     // Yes, check what it is.
 #ifdef HAVE_MYSQL
     if (parameters[type] == string("mysql")) {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB).arg(redacted);
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_HOST_DB).arg(redacted);
         getHostDataSourcePtr().reset(new MySqlHostDataSource(parameters));
         return;
     }
@@ -74,7 +74,7 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
 
 #ifdef HAVE_PGSQL
     if (parameters[type] == string("postgresql")) {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_DB).arg(redacted);
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB).arg(redacted);
         isc_throw(NotImplemented, "Sorry, Postgres backend for host reservations "
                   "is not implemented yet.");
         // Set pgsql data source here, when it will be implemented.
@@ -83,7 +83,7 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
 #endif
 
     // Get here on no match.
-    LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(parameters[type]);
+    LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_HOST_DB).arg(parameters[type]);
     isc_throw(InvalidType, "Database access parameter 'type' does "
               "not specify a supported database backend");
 }
