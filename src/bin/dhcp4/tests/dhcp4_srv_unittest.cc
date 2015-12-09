@@ -3560,6 +3560,8 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
 // This test verifies that the server is able to handle an empty client-id
 // in incoming client message.
 TEST_F(Dhcpv4SrvTest, emptyClientId) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
     Dhcp4Client client;
 
     EXPECT_NO_THROW(configure(CONFIGS[0], *client.getServer()));
