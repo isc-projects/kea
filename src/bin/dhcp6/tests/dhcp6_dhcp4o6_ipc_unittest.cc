@@ -39,14 +39,14 @@ const uint16_t TEST_PORT = 32000;
 typedef Dhcp4o6TestIpc TestIpc;
 
 /// @brief Test fixture class for DHCPv4 endpoint of DHCPv4o6 IPC.
-class Dhcp4o6IpcTest : public ::testing::Test {
+class Dhcp6to4IpcTest : public ::testing::Test {
 public:
 
     /// @brief Constructor
     ///
     /// Configures IPC to use a test port. It also provides a fake
     /// configuration of interfaces and opens IPv6 sockets.
-    Dhcp4o6IpcTest()
+    Dhcp6to4IpcTest()
         : iface_mgr_test_config_(true) {
         IfaceMgr::instance().openSockets6();
         configurePort(TEST_PORT);
@@ -69,12 +69,12 @@ private:
 };
 
 void
-Dhcp4o6IpcTest::configurePort(const uint16_t port) {
+Dhcp6to4IpcTest::configurePort(const uint16_t port) {
     CfgMgr::instance().getStagingCfg()->setDhcp4o6Port(port);
 }
 
 OptionPtr
-Dhcp4o6IpcTest::createDHCPv4MsgOption() const {
+Dhcp6to4IpcTest::createDHCPv4MsgOption() const {
     // Create the DHCPv4 message.
     Pkt4Ptr pkt(new Pkt4(DHCPREQUEST, 1234));
     // Make a wire representation of the DHCPv4 message.
@@ -90,9 +90,9 @@ Dhcp4o6IpcTest::createDHCPv4MsgOption() const {
 
 // This test verifies that the DHCPv4 endpoint of the DHCPv4o6 IPC can
 // receive messages.
-TEST_F(Dhcp4o6IpcTest, receive) {
+TEST_F(Dhcp6to4IpcTest, receive) {
     // Create instance of the IPC endpoint under test.
-    Dhcp4o6Ipc& ipc = Dhcp4o6Ipc::instance();
+    Dhcp6to4Ipc& ipc = Dhcp6to4Ipc::instance();
     // Create instance of the IPC endpoint being used as a source of messages.
     TestIpc src_ipc(TEST_PORT, TestIpc::ENDPOINT_TYPE_V4);
 
