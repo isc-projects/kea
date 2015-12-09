@@ -46,7 +46,6 @@ void Dhcp4o6Ipc::open() {
 }
 
 void Dhcp4o6Ipc::handler() {
-    std::cout << "handler" << std::endl;
     Dhcp4o6Ipc& ipc = Dhcp4o6Ipc::instance();
 
     // Receive message from IPC.
