@@ -190,6 +190,32 @@ TEST_F(EvaluateTest, compare6) {
     EXPECT_FALSE(result_);
 }
 
+// A test using option existence
+TEST_F(EvaluateTest, exists) {
+    TokenPtr toption;
+
+    ASSERT_NO_THROW(toption.reset(new TokenOption(100, TokenOption::EXISTS)));
+    e_.push_back(toption);
+
+    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    EXPECT_TRUE(result_);
+    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    EXPECT_TRUE(result_);
+}
+
+// A test using option non-existence
+TEST_F(EvaluateTest, dontExists) {
+    TokenPtr toption;
+
+    ASSERT_NO_THROW(toption.reset(new TokenOption(101, TokenOption::EXISTS)));
+    e_.push_back(toption);
+
+    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    EXPECT_FALSE(result_);
+    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    EXPECT_FALSE(result_);
+}
+
 // A test using packets.
 TEST_F(EvaluateTest, packet) {
     TokenPtr toption;

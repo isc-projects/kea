@@ -303,6 +303,28 @@ TEST_F(TokenTest, optionHexString4) {
     EXPECT_EQ("hundred4", values_.top());
 }
 
+// This test checks if a token representing an option value is able to check
+// the existence ofthe option from an IPv4 packet.
+TEST_F(TokenTest, optionExistsString4) {
+    TokenPtr found;
+    TokenPtr not_found;
+
+    // The packets we use have option 100 with a string in them.
+    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::EXISTS)));
+
+    ASSERT_NO_THROW(found->evaluate(*pkt4_, values_));
+    ASSERT_NO_THROW(not_found->evaluate(*pkt4_, values_));
+
+    // There should be 2 values evaluated.
+    ASSERT_EQ(2, values_.size());
+
+    // This is a stack, so the pop order is inversed.
+    EXPECT_EQ("false", values_.top());
+    values_.pop();
+    EXPECT_EQ("true", values_.top());
+}
+
 // This test checks if a token representing an option value is able to extract
 // the option from an IPv6 packet and properly store the option's value.
 TEST_F(TokenTest, optionString6) {
@@ -358,6 +380,28 @@ TEST_F(TokenTest, optionHexString6) {
 
     // Then the content of the option 100.
     EXPECT_EQ("hundred6", values_.top());
+}
+
+// This test checks if a token representing an option value is able to check
+// the existence ofthe option from an IPv6 packet.
+TEST_F(TokenTest, optionExistsString6) {
+    TokenPtr found;
+    TokenPtr not_found;
+
+    // The packets we use have option 100 with a string in them.
+    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::EXISTS)));
+
+    ASSERT_NO_THROW(found->evaluate(*pkt6_, values_));
+    ASSERT_NO_THROW(not_found->evaluate(*pkt6_, values_));
+
+    // There should be 2 values evaluated.
+    ASSERT_EQ(2, values_.size());
+
+    // This is a stack, so the pop order is inversed.
+    EXPECT_EQ("false", values_.top());
+    values_.pop();
+    EXPECT_EQ("true", values_.top());
 }
 
 // This test checks if a token representing an == operator is able to
