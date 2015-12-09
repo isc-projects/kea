@@ -304,6 +304,56 @@ public:
     void evaluate(const Pkt& pkt, ValueStack& values);
 };
 
+/// @brief Token that represents logical and operator
+///
+/// For example "option[10].exists and option[11].exists"
+class TokenAnd : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenAnd() {}
+
+    /// @brief Logical and.
+    ///
+    /// Evaluation does not use packet information, but rather consumes the last
+    /// two parameters. It returns "true" if and only if both are "true".
+    /// It requires at least two logical (i.e., "true" or "false') values
+    /// present on stack.
+    ///
+    /// @throw EvalBadStack if there are less than 2 values on stack
+    /// @throw EvalTypeError if one of the 2 values on stack is not
+    ///        "true" or "false"
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (2 arguments will be popped, 1 result
+    ///        will be pushed)
+    void evaluate(const Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token that represents logical or operator
+///
+/// For example "option[10].exists or option[11].exists"
+class TokenOr : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenOr() {}
+
+    /// @brief Logical or.
+    ///
+    /// Evaluation does not use packet information, but rather consumes the last
+    /// two parameters. It returns "false" if and only if both are "false".
+    /// It requires at least two logical (i.e., "true" or "false') values
+    /// present on stack.
+    ///
+    /// @throw EvalBadStack if there are less than 2 values on stack
+    /// @throw EvalTypeError if one of the 2 values on stack is not
+    ///        "true" or "false"
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (2 arguments will be popped, 1 result
+    ///        will be pushed)
+    void evaluate(const Pkt& pkt, ValueStack& values);
+};
+
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 
