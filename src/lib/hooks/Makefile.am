@@ -15,7 +15,7 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 hooks_messages.h hooks_messages.cc: s-messages
 
 s-messages: hooks_messages.mes
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/hooks/hooks_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/hooks/hooks_messages.mes
 	touch $@
 
 # Tell automake that the message files are built as part of the build process

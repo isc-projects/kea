@@ -54,7 +54,7 @@ spec_config.h: spec_config.h.pre
 d2_messages.h d2_messages.cc: s-messages
 
 s-messages: d2_messages.mes
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/bin/d2/d2_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/d2/d2_messages.mes
 	touch $@
 
 BUILT_SOURCES = spec_config.h d2_messages.h d2_messages.cc
