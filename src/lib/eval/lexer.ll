@@ -135,6 +135,7 @@ blank [ \t]
 "text"      return isc::eval::EvalParser::make_TEXT(loc);
 "hex"       return isc::eval::EvalParser::make_HEX(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
+"not"       return isc::eval::EvalParser::make_NOT(loc);
 "all"       return isc::eval::EvalParser::make_ALL(loc);
 "."         return isc::eval::EvalParser::make_DOT(loc);
 "("         return isc::eval::EvalParser::make_LPAREN(loc);

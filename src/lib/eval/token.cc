@@ -176,3 +176,23 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     // and finally get the substring
     values.push(string_str.substr(start_pos, length));
 }
+
+void
+TokenNot::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    values.pop();
+
+    if (op == "true") {
+        values.push("false");
+    } else if (op == "false") {
+        values.push("true");
+    } else {
+        isc_throw(EvalTypeError, "Expected a logical value at top of stack. "
+                  << "Got '" << op << "'.");
+    }
+}

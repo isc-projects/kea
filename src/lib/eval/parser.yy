@@ -49,6 +49,7 @@ using namespace isc::eval;
   SUBSTRING "substring"
   TEXT "text"
   HEX "hex"
+  NOT "not"
   ALL "all"
   DOT "."
   COMA ","
@@ -80,6 +81,11 @@ expression : bool_expr
            ;
 
 bool_expr : "(" bool_expr ")"
+          | NOT bool_expr
+                {
+                    TokenPtr neg(new TokenNot());
+                    ctx.expression.push_back(neg);
+                }
           | string_expr EQUAL string_expr
                 {
                     TokenPtr eq(new TokenEqual());

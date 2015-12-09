@@ -407,6 +407,39 @@ TEST_F(TokenTest, optionEqualTrue) {
     EXPECT_EQ("true", values_.top());
 }
 
+// This test checks if a token representing a not is able to
+// negate a boolean value (with incorrectly built stack).
+TEST_F(TokenTest, optionNotInvalid) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenNot()));
+
+    // CASE 1: The stack is empty.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 2: The top value is not a boolean
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
+
+// This test checks if a token representing a not operator is able to
+// negate a boolean value.
+TEST_F(TokenTest, optionNot) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenNot()));
+
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be the negation of the value.
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // Double negation is identity.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+}
+
 };
 
 // This test checks if an a token representing a substring request
