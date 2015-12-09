@@ -200,3 +200,74 @@ TokenNot::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
                   << "Got '" << op << "'.");
     }
 }
+
+void
+TokenAnd::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+
+    if (values.size() < 2) {
+        isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
+                  "2 values for and operator, got " << values.size());
+    }
+
+    string op1 = values.top();
+    values.pop();
+    string op2 = values.top();
+    values.pop(); // Dammit, std::stack interface is awkward.
+
+    if (op1 == "true") {
+        if (op2 == "true") {
+            values.push("true");
+        } else if (op2 == "false") {
+            values.push("false");
+        } else {
+            isc_throw(EvalTypeError, "Expected logical values at "
+                      << "top of stack. Got 'true' and '" << op2 << "'");
+        }
+    } else if (op1 == "false") {
+        if ((op2 == "true") || (op2 == "false")) {
+            values.push("false");
+        } else {
+            isc_throw(EvalTypeError, "Expected logical values at "
+                      << "top of stack. Got 'false' and '" << op2 << "'");
+        }
+    } else {
+        isc_throw(EvalTypeError, "Expected logical values at top of stack. "
+                  << "Got '" << op1 << "' and '" << op2 << "'");
+    }
+}
+
+void
+TokenOr::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+
+    if (values.size() < 2) {
+        isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
+                  "2 values for or operator, got " << values.size());
+    }
+
+    string op1 = values.top();
+    values.pop();
+    string op2 = values.top();
+    values.pop(); // Dammit, std::stack interface is awkward.
+
+    if (op1 == "true") {
+        if ((op2 == "true") || (op2 == "false")) {
+            values.push("true");
+        } else {
+            isc_throw(EvalTypeError, "Expected logical values at "
+                      << "top of stack. Got 'true' and '" << op2 << "'");
+        }
+    } else if (op1 == "false") {
+        if (op2 == "true") {
+            values.push("true");
+        } else if (op2 == "false") {
+            values.push("false");
+        } else {
+            isc_throw(EvalTypeError, "Expected logical values at "
+                      << "top of stack. Got 'false' and '" << op2 << "'");
+        }
+    } else {
+        isc_throw(EvalTypeError, "Expected logical values at top of stack. "
+                  << "Got '" << op1 << "' and '" << op2 << "'");
+    }
+}
+

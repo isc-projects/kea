@@ -138,6 +138,8 @@ blank [ \t]
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
 "all"       return isc::eval::EvalParser::make_ALL(loc);
 "not"       return isc::eval::EvalParser::make_NOT(loc);
+"and"       return isc::eval::EvalParser::make_AND(loc);
+"or"        return isc::eval::EvalParser::make_OR(loc);
 "."         return isc::eval::EvalParser::make_DOT(loc);
 "("         return isc::eval::EvalParser::make_LPAREN(loc);
 ")"         return isc::eval::EvalParser::make_RPAREN(loc);
