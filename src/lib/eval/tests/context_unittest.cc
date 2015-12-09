@@ -271,6 +271,83 @@ TEST_F(EvalContextTest, optionHex) {
     checkTokenOption(eval.expression.at(0), 123);
 }
 
+// Test parsing of logical operators
+TEST_F(EvalContextTest, logicalOps) {
+    // option.exists
+    EvalContext eval0(Option::V4);
+    EXPECT_NO_THROW(parsed_ = eval0.parseString("option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(1, eval0.expression.size());
+    TokenPtr token = eval0.expression.at(0);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenOption> opt =
+        boost::dynamic_pointer_cast<TokenOption>(token);
+    EXPECT_TRUE(opt);
+
+    // not
+    EvalContext evaln(Option::V4);
+    EXPECT_NO_THROW(parsed_ = evaln.parseString("not option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(2, evaln.expression.size());
+    token = evaln.expression.at(1);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenNot> tnot =
+        boost::dynamic_pointer_cast<TokenNot>(token);
+    EXPECT_TRUE(tnot);
+
+    // and
+    EvalContext evala(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evala.parseString("option[123].exists and option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, evala.expression.size());
+    token = evala.expression.at(2);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenAnd> tand =
+        boost::dynamic_pointer_cast<TokenAnd>(token);
+    EXPECT_TRUE(tand);
+
+    // or
+    EvalContext evalo(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evalo.parseString("option[123].exists or option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, evalo.expression.size());
+    token = evalo.expression.at(2);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenOr> tor =
+        boost::dynamic_pointer_cast<TokenOr>(token);
+    EXPECT_TRUE(tor);
+}
+
+// Test parsing of logical operators with precedence
+TEST_F(EvalContextTest, logicalPrecedence) {
+    // not precedence > and precedence
+    EvalContext evalna(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evalna.parseString("not option[123].exists and option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(4, evalna.expression.size());
+    TokenPtr token = evalna.expression.at(3);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenAnd> tand =
+        boost::dynamic_pointer_cast<TokenAnd>(token);
+    EXPECT_TRUE(tand);
+
+    // and precedence > or precedence
+    EvalContext evaloa(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evaloa.parseString("option[123].exists or option[123].exists "
+                         "and option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(5, evaloa.expression.size());
+    token = evaloa.expression.at(4);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenOr> tor =
+        boost::dynamic_pointer_cast<TokenOr>(token);
+    EXPECT_TRUE(tor);
+}
+
 // Test the parsing of a substring expression
 TEST_F(EvalContextTest, substring) {
     EvalContext eval(Option::V4);
