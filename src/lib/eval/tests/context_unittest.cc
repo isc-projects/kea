@@ -341,6 +341,12 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("== 'ab'", "<string>:1.1-2: syntax error, unexpected ==");
     checkError("'foo' ==",
                "<string>:1.9: syntax error, unexpected end of file");
+    checkError("('foo' == 'bar'",
+               "<string>:1.16: syntax error, unexpected end of file, "
+               "expecting )");
+    checkError("('foo' == 'bar') ''",
+               "<string>:1.18-19: syntax error, unexpected constant string, "
+               "expecting end of file");
     checkError("option 'ab'",
                "<string>:1.8-11: syntax error, unexpected "
                "constant string, expecting [");
@@ -382,6 +388,9 @@ TEST_F(EvalContextTest, typeErrors) {
     checkError("substring('foobar',0x32,1) == 'foo'",
                "<string>:1.20-23: syntax error, unexpected constant "
                "hexstring, expecting integer");
+    checkError("('foo' == 'bar') == 'false'",
+               "<string>:1.18-19: syntax error, unexpected ==, "
+               "expecting end of file");
 }
 
 };
