@@ -228,6 +228,16 @@ TEST_F(EvalContextTest, optionWithName) {
     checkTokenOption(eval.expression.at(0), 12);
 }
 
+// Test parsing of an option existence
+TEST_F(EvalContextTest, optionExists) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[100].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(1, eval.expression.size());
+    checkTokenOption(eval.expression.at(0), 100);
+}
+
 // Test checking that whitespace can surround option name.
 TEST_F(EvalContextTest, optionWithNameAndWhitespace) {
     EvalContext eval(Option::V4);
@@ -373,6 +383,9 @@ TEST_F(EvalContextTest, parseErrors) {
                "expecting integer or option name");
     checkError("option[10].bin", "<string>:1.12: Invalid character: b");
     checkError("option[boot-size].bin", "<string>:1.19: Invalid character: b");
+    checkError("option[10].exists == 'foo'",
+               "<string>:1.19-20: syntax error, unexpected ==, "
+               "expecting end of file");
     checkError("substring('foobar') == 'f'",
                "<string>:1.19: syntax error, "
                "unexpected ), expecting \",\"");
