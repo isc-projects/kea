@@ -40,7 +40,7 @@ public:
 ///
 /// When the DHCPv6 server receives the DHCPv4 query message it needs
 /// to forward it to the DHCPv4 server for processing. The DHCPv4
-/// server processes the message and responds with the DHCPv4 response
+/// server processes the message and answers with the DHCPv4 response
 /// message to the DHCPv6 server. The server forwards it back to the
 /// client. This class implements the communication between the DHCPv4
 /// and DHCPv6 servers to allow for transmission of the DHCPv4 query
