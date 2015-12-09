@@ -79,7 +79,8 @@ using namespace isc::eval;
 expression : bool_expr
            ;
 
-bool_expr : string_expr EQUAL string_expr
+bool_expr : "(" bool_expr ")"
+          | string_expr EQUAL string_expr
                 {
                     TokenPtr eq(new TokenEqual());
                     ctx.expression.push_back(eq);
