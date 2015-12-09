@@ -48,6 +48,8 @@ using namespace isc::eval;
   OPTION "option"
   SUBSTRING "substring"
   NOT "not"
+  AND "and"
+  OR "or"
   TEXT "text"
   HEX "hex"
   EXISTS "exists"
@@ -69,6 +71,10 @@ using namespace isc::eval;
 %type <uint16_t> option_code
 %type <TokenOption::RepresentationType> option_repr_type
 
+%left OR
+%left AND
+%precedence NOT
+
 %printer { yyoutput << $$; } <*>;
 
 %%
@@ -85,6 +91,16 @@ bool_expr : "(" bool_expr ")"
           | NOT bool_expr
                 {
                     TokenPtr neg(new TokenNot());
+                    ctx.expression.push_back(neg);
+                }
+          | bool_expr AND bool_expr
+                {
+                    TokenPtr neg(new TokenAnd());
+                    ctx.expression.push_back(neg);
+                }
+          | bool_expr OR bool_expr
+                {
+                    TokenPtr neg(new TokenOr());
                     ctx.expression.push_back(neg);
                 }
           | string_expr EQUAL string_expr
@@ -120,7 +136,7 @@ string_expr : STRING
                       ctx.expression.push_back(sub);
                   }
             | TOKEN
-                // Temporary unused token to avoid explict but long errors
+                // Temporary unused token to avoid explicit but long errors
             ;
 
 option_code : INTEGER

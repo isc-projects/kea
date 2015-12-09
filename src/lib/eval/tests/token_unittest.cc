@@ -484,6 +484,138 @@ TEST_F(TokenTest, optionNot) {
     EXPECT_EQ("true", values_.top());
 }
 
+// This test checks if a token representing an and is able to
+// conjugate two values (with incorrectly built stack).
+TEST_F(TokenTest, optionAndInvalid) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
+
+    // CASE 1: There's not enough values on the stack. and is an operator that
+    // takes two parameters. There are 0 on the stack.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 2: One value is still not enough.
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 3: The two values must be logical
+    values_.push("true");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // Swap the 2 values
+    values_.push("true");
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
+
+// This test checks if a token representing an and operator is able to
+// conjugate false with another logical
+TEST_F(TokenTest, optionAndFalse) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
+
+    values_.push("true");
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "false" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // After true and false, checks false and true
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // And false and false
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+}
+
+// This test checks if a token representing an and is able to
+// conjugate two true values.
+TEST_F(TokenTest, optionAndTrue) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
+
+    values_.push("true");
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "true" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+}
+
+// This test checks if a token representing an or is able to
+// combinate two values (with incorrectly built stack).
+TEST_F(TokenTest, optionOrInvalid) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenOr()));
+
+    // CASE 1: There's not enough values on the stack. or is an operator that
+    // takes two parameters. There are 0 on the stack.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 2: One value is still not enough.
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 3: The two values must be logical
+    values_.push("true");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // Swap the 2 values
+    values_.push("true");
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
+
+// This test checks if a token representing an or is able to
+// conjugate two false values.
+TEST_F(TokenTest, optionOrFalse) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenOr()));
+
+    values_.push("false");
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "false" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+}
+
+// This test checks if a token representing an == operator is able to
+// conjugate true with another logical
+TEST_F(TokenTest, optionOrTrue) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenOr()));
+
+    values_.push("false");
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "true" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // After false or true, checks true or false
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // And true or true
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+}
+
 };
 
 // This test checks if an a token representing a substring request

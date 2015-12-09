@@ -348,9 +348,19 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("'foo''bar'",
                "<string>:1.6-10: syntax error, unexpected constant string, "
                "expecting ==");
+    checkError("'foo' (",
+               "<string>:1.7: syntax error, unexpected (, expecting ==");
     checkError("== 'ab'", "<string>:1.1-2: syntax error, unexpected ==");
     checkError("'foo' ==",
                "<string>:1.9: syntax error, unexpected end of file");
+    checkError("('foo' == 'bar'",
+               "<string>:1.16: syntax error, unexpected end of file, "
+               "expecting and or or or )");
+    checkError("('foo' == 'bar') ''",
+               "<string>:1.18-19: syntax error, unexpected constant string, "
+               "expecting end of file");
+    checkError("not",
+               "<string>:1.4: syntax error, unexpected end of file");
     checkError("not 'foo'",
                "<string>:1.10: syntax error, unexpected end of file, "
                "expecting ==");
@@ -359,12 +369,24 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("(not('foo' 'bar')",
                "<string>:1.12-16: syntax error, unexpected constant string, "
                "expecting ==");
-    checkError("('foo' == 'bar'",
-               "<string>:1.16: syntax error, unexpected end of file, "
-               "expecting )");
-    checkError("('foo' == 'bar') ''",
-               "<string>:1.18-19: syntax error, unexpected constant string, "
-               "expecting end of file");
+    checkError("and",
+               "<string>:1.1-3: syntax error, unexpected and");
+    checkError("'foo' and",
+               "<string>:1.7-9: syntax error, unexpected and, expecting ==");
+    checkError("'foo' == 'bar' and",
+               "<string>:1.19: syntax error, unexpected end of file");
+    checkError("'foo' == 'bar' and ''",
+               "<string>:1.22: syntax error, unexpected end of file, "
+               "expecting ==");
+    checkError("or",
+               "<string>:1.1-2: syntax error, unexpected or");
+    checkError("'foo' or",
+               "<string>:1.7-8: syntax error, unexpected or, expecting ==");
+    checkError("'foo' == 'bar' or",
+               "<string>:1.18: syntax error, unexpected end of file");
+    checkError("'foo' == 'bar' or ''",
+               "<string>:1.21: syntax error, unexpected end of file, "
+               "expecting ==");
     checkError("option 'ab'",
                "<string>:1.8-11: syntax error, unexpected "
                "constant string, expecting [");
@@ -398,7 +420,7 @@ TEST_F(EvalContextTest, parseErrors) {
                "<string>:1.22: Invalid character: a");
 }
 
-// Tests some type error cases (caught only by the strongly typed parser)
+// Tests some type error cases
 TEST_F(EvalContextTest, typeErrors) {
     checkError("'foobar'",
                "<string>:1.9: syntax error, unexpected end of file, "
@@ -412,6 +434,13 @@ TEST_F(EvalContextTest, typeErrors) {
     checkError("('foo' == 'bar') == 'false'",
                "<string>:1.18-19: syntax error, unexpected ==, "
                "expecting end of file");
+    checkError("not 'true'",
+               "<string>:1.11: syntax error, unexpected end of file, "
+               "expecting ==");
+    checkError("'true' and 'false'",
+               "<string>:1.8-10: syntax error, unexpected and, expecting ==");
+    checkError("'true' or 'false'",
+               "<string>:1.8-9: syntax error, unexpected or, expecting ==");
 }
 
 };
