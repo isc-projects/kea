@@ -1,3 +1,8 @@
+1069.	[bug]		tomek
+	Improved handling of incoming packets with invalid client-id
+	and DUID.
+	(Trac #4206, git 2c94f80e30abe53ae5b677762fc69e888c92e03f)
+
 1068.	[func]		marcin
 	Renamed log message compiler binary from 'message' to
 	'kea-msg-compiler'.
