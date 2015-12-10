@@ -62,6 +62,7 @@ libdhcp4_la_SOURCES += ctrl_dhcp4_srv.cc ctrl_dhcp4_srv.h
 libdhcp4_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp4_la_SOURCES += dhcp4_log.cc dhcp4_log.h
 libdhcp4_la_SOURCES += dhcp4_srv.cc dhcp4_srv.h
+libdhcp4_la_SOURCES += dhcp4_dhcp4o6_ipc.cc dhcp4_dhcp4o6_ipc.h
 
 libdhcp4_la_SOURCES += kea_controller.cc
 
