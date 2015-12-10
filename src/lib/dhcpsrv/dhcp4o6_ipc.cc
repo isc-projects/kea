@@ -23,6 +23,7 @@
 #include <dhcpsrv/dhcp4o6_ipc.h>
 #include <boost/pointer_cast.hpp>
 #include <errno.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <string>
 
