@@ -33,6 +33,7 @@
 #include <dhcp/option_vendor_class.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
+#include <dhcp6/dhcp6_dhcp4o6_ipc.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/callout_handle_store.h>
@@ -218,6 +219,13 @@ Dhcpv6Srv::~Dhcpv6Srv() {
     } catch(const std::exception& ex) {
         // Highly unlikely, but lets Report it but go on
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_D2STOP_ERROR).arg(ex.what());
+    }
+
+    try {
+        Dhcp6to4Ipc::instance().close();
+    } catch(const std::exception& ex) {
+        // Highly unlikely, but lets Report it but go on
+        // LOG_ERROR(dhcp6_logger, DHCP6_SRV_DHCP4O6_ERROR).arg(ex.what());
     }
 
     IfaceMgr::instance().closeSockets();
