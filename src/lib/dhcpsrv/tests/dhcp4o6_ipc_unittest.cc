@@ -288,7 +288,7 @@ Dhcp4o6IpcBaseTest::testSendReceive(const uint16_t iterations_num,
         // Check that the interface is correct.
         EXPECT_EQ(concatenate("eth", i % 2), pkt_received->getIface());
 
-        // Check taht the address conveyed is correct.
+        // Check that the address conveyed is correct.
         EXPECT_EQ(concatenate("2001:db8:1::", i),
                   pkt_received->getRemoteAddr().toText());
 
