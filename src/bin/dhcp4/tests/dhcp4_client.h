@@ -355,7 +355,16 @@ public:
     /// in the client's messages.
     isc::util::OptionalValue<asiolink::IOAddress> ciaddr_;
 
+    /// @brief Adds extra option (an option the client will always send)
+    ///
+    /// @param opt additional option to be sent
+    void addExtraOption(const OptionPtr& opt);
+
 private:
+    /// @brief Appends extra options, previously added with addExtraOption()
+    ///
+    /// @brief Copies options from extra_options_ into outgoing message
+    void appendExtraOptions();
 
     /// @brief Creates and adds Requested IP Address option to the client's
     /// query.
@@ -467,6 +476,8 @@ private:
     /// @brief Enable relaying messages to the server.
     bool use_relay_;
 
+    /// @brief Extra options the client will send.
+    OptionCollection extra_options_;
 };
 
 } // end of namespace isc::dhcp::test

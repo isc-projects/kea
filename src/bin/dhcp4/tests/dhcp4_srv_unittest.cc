@@ -19,6 +19,7 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/iface_mgr.h>
@@ -2658,6 +2659,31 @@ TEST_F(Dhcpv4SrvTest, statisticsUnknownRcvd) {
     ASSERT_TRUE(drop_stat);
     EXPECT_EQ(1, drop_stat->getInteger().first);
 }
+
+// This test verifies that the server is able to handle an empty client-id
+// in incoming client message.
+TEST_F(Dhcpv4SrvTest, emptyClientId) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+    Dhcp4Client client;
+
+    EXPECT_NO_THROW(configure(CONFIGS[0], *client.getServer()));
+
+    // Tell the client to not send client-id on its own.
+    client.includeClientId("");
+
+    // Instead, tell him to send this extra option, which happens to be
+    // an empty client-id.
+    OptionPtr empty_client_id(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER));
+    client.addExtraOption(empty_client_id);
+
+    // Let's check whether the server is able to process this packet without
+    // throwing any exceptions. We don't care whether the server sent any
+    // responses or not. The goal is to check that the server didn't throw
+    // any exceptions.
+    EXPECT_NO_THROW(client.doDORA());
+}
+
 
 /// @todo: Implement proper tests for MySQL lease/host database,
 ///        see ticket #4214.
