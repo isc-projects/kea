@@ -1,3 +1,8 @@
+1068.	[func]		marcin
+	Renamed log message compiler binary from 'message' to
+	'kea-msg-compiler'.
+	(Trac #4228, git bbeb5c776c39b9f4132f7f614720db75590ccef9)
+
 Kea 1.0.0-beta released on December 8, 2015
 
 1067.	[doc]		sar

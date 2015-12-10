@@ -350,7 +350,7 @@ programs.
 The message compiler is a program built in the src/log/compiler directory.
 It is invoked by the command:
 @code
-message [-h] [-v] [-d dir] <message-file>
+kea-msg-compiler [-h] [-v] [-d dir] <message-file>
 @endcode
 "-v" prints the version number and exits; "-h" prints brief help text.
 Finally, the "-d" switch directs the compiler to produce the output
@@ -427,7 +427,7 @@ the entries needed.
 hooks_messages.h hooks_messages.cc: s-messages
 
 s-messages: hooks_messages.mes
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/hooks/hooks_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/hooks/hooks_messages.mes
 	touch $@
 
 # Tell automake that the message files are built as part of the build process
