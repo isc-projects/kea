@@ -231,7 +231,7 @@ void Dhcp4o6IpcBase::send(const Pkt6Ptr& pkt) {
     }
 
     // Check if vendor option exists.
-    OptionVendorPtr option_vendor = dynamic_pointer_cast<
+    OptionVendorPtr option_vendor = boost::dynamic_pointer_cast<
         OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
 
     // If vendor option doesn't exist or its enterprise id is not ISC's
