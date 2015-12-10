@@ -67,7 +67,6 @@ using namespace isc::eval;
 %token <std::string> HEXSTRING "constant hexstring"
 %token <std::string> OPTION_NAME "option name"
 %token <std::string> IP_ADDRESS "ip address"
-%token <std::string> TOKEN
 
 %type <uint16_t> option_code
 %type <TokenOption::RepresentationType> option_repr_type
@@ -141,8 +140,6 @@ string_expr : STRING
                       TokenPtr sub(new TokenSubstring());
                       ctx.expression.push_back(sub);
                   }
-            | TOKEN
-                // Temporary unused token to avoid explicit but long errors
             ;
 
 option_code : INTEGER
