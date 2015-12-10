@@ -1,3 +1,8 @@
+10XX.	[doc]		sar
+	Correct v6 classification examples to use client-id (1) instead
+	of server-id (2).
+	(Trac #4222, git TBD)
+
 Kea 1.0.0-beta released on December 8, 2015
 
 1067.	[doc]		sar
