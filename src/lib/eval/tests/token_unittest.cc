@@ -246,6 +246,78 @@ TEST_F(TokenTest, hexstring6) {
     EXPECT_EQ("", values_.top());
 }
 
+// This test checks that a TokenIpAddress, representing an IP address as
+// a constant string, can be used in Pkt4 evaluation.
+// (The actual packet is not used)
+TEST_F(TokenTest, ipaddress4) {
+    TokenPtr ip4;
+    TokenPtr ip6;
+
+    // Bad IPv4 address
+    EXPECT_THROW(ip4.reset(new TokenIpAddress("10.0.0.0.1")), EvalTypeError);
+    // Bad IPv6 address
+    EXPECT_THROW(ip6.reset(new TokenIpAddress(":::")), EvalTypeError);
+    // IPv4 address
+    ASSERT_NO_THROW(ip4.reset(new TokenIpAddress("10.0.0.1")));
+    // IPv6 address
+    ASSERT_NO_THROW(ip6.reset(new TokenIpAddress("2001:db8::1")));
+
+    // Make sure that tokens can be evaluated without exceptions.
+    ASSERT_NO_THROW(ip4->evaluate(*pkt4_, values_));
+    ASSERT_NO_THROW(ip6->evaluate(*pkt4_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(2, values_.size());
+
+    // Check IPv6 address
+    uint8_t expected6[] = { 0x20, 1, 0xd, 0xb8, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 1 };
+    EXPECT_EQ(16, values_.top().size());
+    EXPECT_EQ(0, memcmp(expected6, &values_.top()[0], 16));
+    values_.pop();
+
+    // Check IPv4 address
+    uint8_t expected4[] = { 10, 0, 0, 1 };
+    EXPECT_EQ(4, values_.top().size());
+    EXPECT_EQ(0, memcmp(expected4, &values_.top()[0], 4));
+}
+
+// This test checks that a TokenIpAddress, representing an IP address as
+// a constant string, can be used in Pkt6 evaluation.
+// (The actual packet is not used)
+TEST_F(TokenTest, ipaddress6) {
+    TokenPtr ip4;
+    TokenPtr ip6;
+
+    // Bad IPv4 address
+    EXPECT_THROW(ip4.reset(new TokenIpAddress("10.0.0.0.1")), EvalTypeError);
+    // Bad IPv6 address
+    EXPECT_THROW(ip6.reset(new TokenIpAddress(":::")), EvalTypeError);
+    // IPv4 address
+    ASSERT_NO_THROW(ip4.reset(new TokenIpAddress("10.0.0.1")));
+    // IPv6 address
+    ASSERT_NO_THROW(ip6.reset(new TokenIpAddress("2001:db8::1")));
+
+    // Make sure that tokens can be evaluated without exceptions.
+    ASSERT_NO_THROW(ip4->evaluate(*pkt6_, values_));
+    ASSERT_NO_THROW(ip6->evaluate(*pkt6_, values_));
+
+    // Check that the evaluation put its value on the values stack.
+    ASSERT_EQ(2, values_.size());
+
+    // Check IPv6 address
+    uint8_t expected6[] = { 0x20, 1, 0xd, 0xb8, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 1 };
+    EXPECT_EQ(16, values_.top().size());
+    EXPECT_EQ(0, memcmp(expected6, &values_.top()[0], 16));
+    values_.pop();
+
+    // Check IPv4 address
+    uint8_t expected4[] = { 10, 0, 0, 1 };
+    EXPECT_EQ(4, values_.top().size());
+    EXPECT_EQ(0, memcmp(expected4, &values_.top()[0], 4));
+}
+
 // This test checks if a token representing an option value is able to extract
 // the option from an IPv4 packet and properly store the option's value.
 TEST_F(TokenTest, optionString4) {

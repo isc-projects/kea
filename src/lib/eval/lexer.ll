@@ -19,6 +19,7 @@
 #include <string>
 #include <eval/eval_context.h>
 #include <eval/parser.h>
+#include <asiolink/io_address.h>
 #include <boost/lexical_cast.hpp>
 
 // Work around an incompatibility in flex (at least versions
@@ -128,6 +129,19 @@ blank [ \t]
     // and further containing letters, digits, hyphens and
     // underscores and finishing by letters or digits.
     return isc::eval::EvalParser::make_OPTION_NAME(yytext, loc);
+}
+
+@[0-9a-fA-F:.]+ {
+    // IP address
+    std::string tmp(yytext+1);
+
+    try {
+        isc::asiolink::IOAddress ip(tmp);
+    } catch (...) {
+        driver.error(loc, "Failed to convert " + tmp + " to an IP address.");
+    }
+
+    return isc::eval::EvalParser::make_IP_ADDRESS(tmp, loc);
 }
 
 "=="        return isc::eval::EvalParser::make_EQUAL(loc);

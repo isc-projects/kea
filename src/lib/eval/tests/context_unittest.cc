@@ -18,12 +18,14 @@
 #include <eval/token.h>
 #include <dhcp/option.h>
 #include <dhcp/pkt4.h>
+#include <asiolink/io_address.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 using namespace std;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 
 namespace {
@@ -71,12 +73,59 @@ public:
         EXPECT_EQ(expected, values.top());
     }
 
+    /// @brief checks if the given token is an IP address with the expected value
+    void checkTokenIpAddress(const TokenPtr& token,
+                             const std::string& expected) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenIpAddress> ipaddr =
+            boost::dynamic_pointer_cast<TokenIpAddress>(token);
+        ASSERT_TRUE(ipaddr);
+
+        Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
+        ValueStack values;
+
+        EXPECT_NO_THROW(token->evaluate(*pkt4, values));
+
+        ASSERT_EQ(1, values.size());
+        string value = values.top();
+
+        boost::scoped_ptr<IOAddress> exp_ip;
+        ASSERT_NO_THROW(exp_ip.reset(new IOAddress(expected)));
+        vector<uint8_t> exp_addr = exp_ip->toBytes();
+        ASSERT_EQ(exp_addr.size(), value.size());
+        EXPECT_EQ(0, memcmp(&exp_addr[0], &value[0], value.size()));
+    }
+
     /// @brief checks if the given token is an equal operator
     void checkTokenEq(const TokenPtr& token) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenEqual> eq =
             boost::dynamic_pointer_cast<TokenEqual>(token);
         EXPECT_TRUE(eq);
+    }
+
+    /// @brief checks if the given token is a not operator
+    void checkTokenNot(const TokenPtr& token) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenNot> tnot =
+            boost::dynamic_pointer_cast<TokenNot>(token);
+        EXPECT_TRUE(tnot);
+    }
+
+    /// @brief checks if the given token is an and operator
+    void checkTokenAnd(const TokenPtr& token) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenAnd> tand =
+            boost::dynamic_pointer_cast<TokenAnd>(token);
+        EXPECT_TRUE(tand);
+    }
+
+    /// @brief checks if the given token is an or operator
+    void checkTokenOr(const TokenPtr& token) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenOr> tor =
+            boost::dynamic_pointer_cast<TokenOr>(token);
+        EXPECT_TRUE(tor);
     }
 
     /// @brief checks if the given token is an option with the expected code
@@ -189,6 +238,34 @@ TEST_F(EvalContextTest, oddHexstring) {
     checkTokenHexString(tmp, "\a");
 }
 
+// Test the parsing of an IPv4 address
+TEST_F(EvalContextTest, ipaddress4) {
+    EvalContext eval(Option::V6);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("@10.0.0.1 == 'foo'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(3, eval.expression.size());
+
+    TokenPtr tmp = eval.expression.at(0);
+
+    checkTokenIpAddress(tmp, "10.0.0.1");
+}
+
+// Test the parsing of an IPv6 address
+TEST_F(EvalContextTest, ipaddress6) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("@2001:db8::1 == 'foo'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(3, eval.expression.size());
+
+    TokenPtr tmp = eval.expression.at(0);
+
+    checkTokenIpAddress(tmp, "2001:db8::1");
+}
+
 // Test the parsing of an equal expression
 TEST_F(EvalContextTest, equal) {
     EvalContext eval(Option::V4);
@@ -278,22 +355,14 @@ TEST_F(EvalContextTest, logicalOps) {
     EXPECT_NO_THROW(parsed_ = eval0.parseString("option[123].exists"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(1, eval0.expression.size());
-    TokenPtr token = eval0.expression.at(0);
-    ASSERT_TRUE(token);
-    boost::shared_ptr<TokenOption> opt =
-        boost::dynamic_pointer_cast<TokenOption>(token);
-    EXPECT_TRUE(opt);
+    checkTokenOption(eval0.expression.at(0), 123);
 
     // not
     EvalContext evaln(Option::V4);
     EXPECT_NO_THROW(parsed_ = evaln.parseString("not option[123].exists"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(2, evaln.expression.size());
-    token = evaln.expression.at(1);
-    ASSERT_TRUE(token);
-    boost::shared_ptr<TokenNot> tnot =
-        boost::dynamic_pointer_cast<TokenNot>(token);
-    EXPECT_TRUE(tnot);
+    checkTokenNot(evaln.expression.at(1));
 
     // and
     EvalContext evala(Option::V4);
@@ -301,11 +370,7 @@ TEST_F(EvalContextTest, logicalOps) {
         evala.parseString("option[123].exists and option[123].exists"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, evala.expression.size());
-    token = evala.expression.at(2);
-    ASSERT_TRUE(token);
-    boost::shared_ptr<TokenAnd> tand =
-        boost::dynamic_pointer_cast<TokenAnd>(token);
-    EXPECT_TRUE(tand);
+    checkTokenAnd(evala.expression.at(2));
 
     // or
     EvalContext evalo(Option::V4);
@@ -313,11 +378,7 @@ TEST_F(EvalContextTest, logicalOps) {
         evalo.parseString("option[123].exists or option[123].exists"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, evalo.expression.size());
-    token = evalo.expression.at(2);
-    ASSERT_TRUE(token);
-    boost::shared_ptr<TokenOr> tor =
-        boost::dynamic_pointer_cast<TokenOr>(token);
-    EXPECT_TRUE(tor);
+    checkTokenOr(evalo.expression.at(2));
 }
 
 // Test parsing of logical operators with precedence
@@ -328,11 +389,7 @@ TEST_F(EvalContextTest, logicalPrecedence) {
         evalna.parseString("not option[123].exists and option[123].exists"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(4, evalna.expression.size());
-    TokenPtr token = evalna.expression.at(3);
-    ASSERT_TRUE(token);
-    boost::shared_ptr<TokenAnd> tand =
-        boost::dynamic_pointer_cast<TokenAnd>(token);
-    EXPECT_TRUE(tand);
+    checkTokenAnd(evalna.expression.at(3));
 
     // and precedence > or precedence
     EvalContext evaloa(Option::V4);
@@ -341,11 +398,7 @@ TEST_F(EvalContextTest, logicalPrecedence) {
                          "and option[123].exists"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(5, evaloa.expression.size());
-    token = evaloa.expression.at(4);
-    ASSERT_TRUE(token);
-    boost::shared_ptr<TokenOr> tor =
-        boost::dynamic_pointer_cast<TokenOr>(token);
-    EXPECT_TRUE(tor);
+    checkTokenOr(evaloa.expression.at(4));
 }
 
 // Test the parsing of a substring expression
@@ -375,6 +428,7 @@ TEST_F(EvalContextTest, scanErrors) {
     checkError("'\''", "<string>:1.3: Invalid character: '");
     checkError("'\n'", "<string>:1.1: Invalid character: '");
     checkError("0x123h", "<string>:1.6: Invalid character: h");
+    checkError("@h", "<string>:1.1: Invalid character: @");
     checkError("=", "<string>:1.1: Invalid character: =");
     checkError("subtring", "<string>:1.1: Invalid character: s");
     checkError("foo", "<string>:1.1: Invalid character: f");
@@ -388,6 +442,11 @@ TEST_F(EvalContextTest, scanParseErrors) {
     checkError("0x", "<string>:1.1: syntax error, unexpected integer");
     checkError("0abc",
                "<string>:1.1: syntax error, unexpected integer");
+    checkError("@10.0.0.0.1",
+               "<string>:1.1-11: Failed to convert 10.0.0.0.1 to "
+               "an IP address.");
+    checkError("@:::",
+               "<string>:1.1-4: Failed to convert ::: to an IP address.");
     checkError("===", "<string>:1.1-2: syntax error, unexpected ==");
     checkError("option[-1].text",
                "<string>:1.8-9: Option code has invalid "

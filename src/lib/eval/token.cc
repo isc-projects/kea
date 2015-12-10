@@ -15,6 +15,7 @@
 #include <eval/token.h>
 #include <eval/eval_log.h>
 #include <util/encode/hex.h>
+#include <asiolink/io_address.h>
 #include <boost/lexical_cast.hpp>
 #include <cstring>
 #include <string>
@@ -58,6 +59,27 @@ TokenHexString::TokenHexString(const string& str) : value_("") {
 
 void
 TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+    // Literals only push, nothing to pop
+    values.push(value_);
+}
+
+TokenIpAddress::TokenIpAddress(const string& addr) : value_("") {
+    // Transform IP address into binary format
+    vector<uint8_t> binary;
+    try {
+        asiolink::IOAddress ip(addr);
+        binary = ip.toBytes();
+    } catch (...) {
+        isc_throw(EvalTypeError, "Cannot convert IP address '" + addr + "'");
+    }
+
+    // Convert to a string (note that binary.size() is 4 or 16, so not 0)
+    value_.resize(binary.size());
+    memmove(&value_[0], &binary[0], binary.size());
+}
+
+void
+TokenIpAddress::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
 }

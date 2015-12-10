@@ -137,6 +137,30 @@ protected:
     std::string value_; ///< Constant value
 };
 
+/// @brief Token representing an IP address as a constant string
+///
+/// This token holds value of an IP address as a constant string,
+/// for instance 10.0.0.1 is 0x10000001
+class TokenIpAddress : public Token {
+public:
+    /// Value is set during token construction.
+    ///
+    /// @param addr IP address to be represented as a constant string
+    TokenIpAddress(const std::string& addr);
+
+    /// @brief Token evaluation (puts value of the constant string on
+    /// the stack after decoding)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented IP address will be pushed here)
+    ///
+    /// @throw EvalTypeError if the IP address cannot be converted
+    void evaluate(const Pkt& pkt, ValueStack& values);
+
+protected:
+    std::string value_; ///< Constant value
+};
+
 /// @brief Token that represents a value of an option
 ///
 /// This represents a reference to a given option, e.g. in the expression
