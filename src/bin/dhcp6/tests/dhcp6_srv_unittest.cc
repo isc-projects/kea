@@ -2734,6 +2734,77 @@ TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {
     EXPECT_EQ(1, recv_drop->getInteger().first);
 }
 
+// This test verifies that the server is able to handle an empty DUID (client-id)
+// in incoming client message.
+TEST_F(Dhcpv6SrvTest, emptyClientId) {
+    Dhcp6Client client;
+
+    // The following configuration enables RSOO options: 110 and 120.
+    // It also configures the server with option 120 which should
+    // "override" the option 120 sent in the RSOO by the relay.
+    string config =
+        "{"
+        "    \"preferred-lifetime\": 3000,"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"subnet6\": [ { "
+        "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "        \"subnet\": \"2001:db8::/48\" "
+        "     } ],"
+        "    \"valid-lifetime\": 4000"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Tell the client to not send client-id on its own.
+    client.useClientId(false);
+
+    // Instead, tell him to send this extra option, which happens to be
+    // an empty client-id.
+    OptionPtr empty_client_id(new Option(Option::V6, D6O_CLIENTID));
+    client.addExtraOption(empty_client_id);
+
+    // Let's check whether the server is able to process this packet without
+    // throwing any exceptions. We don't care whether the server sent any
+    // responses or not. The goal is to check that the server didn't throw
+    // any exceptions.
+    EXPECT_NO_THROW(client.doSARR());
+}
+
+// This test verifies that the server is able to handle an empty DUID (server-id)
+// in incoming client message.
+TEST_F(Dhcpv6SrvTest, emptyServerId) {
+    Dhcp6Client client;
+
+    // The following configuration enables RSOO options: 110 and 120.
+    // It also configures the server with option 120 which should
+    // "override" the option 120 sent in the RSOO by the relay.
+    string config =
+        "{"
+        "    \"preferred-lifetime\": 3000,"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"subnet6\": [ { "
+        "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "        \"subnet\": \"2001:db8::/48\" "
+        "     } ],"
+        "    \"valid-lifetime\": 4000"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Tell the client to use this specific server-id.
+    OptionPtr empty_server_id(new Option(Option::V6, D6O_SERVERID));
+    client.useServerId(empty_server_id);
+
+    // Let's check whether the server is able to process this packet without
+    // throwing any exceptions. We don't care whether the server sent any
+    // responses or not. The goal is to check that the server didn't throw
+    // any exceptions.
+    EXPECT_NO_THROW(client.doSARR());
+}
+
+
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
 

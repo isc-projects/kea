@@ -428,6 +428,8 @@ Dhcpv4Srv::run() {
         Pkt4Ptr rsp;
 
         try {
+
+        try {
             uint32_t timeout = 1000;
             LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT).arg(timeout);
             query = receivePacket(timeout);
@@ -786,6 +788,19 @@ Dhcpv4Srv::run() {
             LOG_ERROR(packet4_logger, DHCP4_PACKET_SEND_FAIL)
                 .arg(rsp->getLabel())
                 .arg(e.what());
+        }
+
+        } catch (const std::exception& e) {
+            // General catch-all exception that are not caught by more specific
+            // catches. This one is for exceptions derived from std::exception.
+            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
+                .arg(e.what());
+        } catch (...) {
+            // General catch-all exception that are not caught by more specific
+            // catches. This one is for other exceptions, not derived from
+            // std::exception.
+            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
+                .arg("an unknown exception not derived from std::exception");
         }
     }
 
