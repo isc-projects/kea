@@ -425,6 +425,11 @@ because packets of this type must be sent to multicast. The first argument
 specifies the client and transaction identification information, the
 second argument specifies packet type.
 
+% DHCP6_PACKET_PROCESS_EXCEPTION exception occurred during packet processing: %1
+This error message indicates that an exception was raised during packet processing
+that was not caught by other, more specific exception handlers. This packet will
+be dropped and the server will continue operation.
+
 % DHCP6_PACKET_PROCESS_FAIL processing of %1 message received from %2 failed: %3
 This is a general catch-all message indicating that the processing of the
 specified packet type from the indicated address failed.  The reason is given in the

@@ -309,6 +309,8 @@ bool Dhcpv6Srv::run() {
         Pkt6Ptr rsp;
 
         try {
+
+        try {
             uint32_t timeout = 1000;
             LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT).arg(timeout);
             query = receivePacket(timeout);
@@ -700,6 +702,18 @@ bool Dhcpv6Srv::run() {
                 LOG_ERROR(packet6_logger, DHCP6_PACKET_SEND_FAIL)
                     .arg(e.what());
             }
+        }
+
+        } catch (const std::exception& e) {
+            // General catch-all standard exceptions that are not caught by more
+            // specific catches.
+            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
+                .arg(e.what());
+        } catch (...) {
+            // General catch-all non-standard exception that are not caught
+            // by more specific catches.
+            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
+                .arg("an unknown exception not derived from std::exception");
         }
     }
 
