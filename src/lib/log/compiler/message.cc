@@ -58,7 +58,7 @@ static const char* VERSION = "1.0-0";
 /// \b Invocation<BR>
 /// The program is invoked with the command:
 ///
-/// <tt>message [-v | -h | -d &lt;dir&gt; | <message-file>]</tt>
+/// <tt>kea-msg-compiler [-v | -h | -d &lt;dir&gt; | <message-file>]</tt>
 ///
 /// It reads the message file and writes out two files of the same
 /// name in the current working directory (unless -d is used) but
@@ -85,7 +85,7 @@ version() {
 void
 usage() {
     cout <<
-        "Usage: message [-h] [-v] [-d dir] <message-file>\n" <<
+        "Usage: kea-msg-compiler [-h] [-v] [-d dir] <message-file>\n" <<
         "\n" <<
         "-h       Print this message and exit\n" <<
         "-v       Print the program version and exit\n" <<

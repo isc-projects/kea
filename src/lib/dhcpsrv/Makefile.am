@@ -46,11 +46,11 @@ alloc_engine_messages.h alloc_engine_messages.cc dhcpsrv_messages.h \
 dhcpsrv_messages.cc hosts_messages.h hosts_messages.cc: s-messages
 
 s-messages: alloc_engine_messages.mes dhcpsrv_messages.mes hosts_messages.mes
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/dhcpsrv/alloc_engine_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/alloc_engine_messages.mes
 	touch $@
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
 	touch $@
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/dhcpsrv/hosts_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/hosts_messages.mes
 	touch $@
 
 # Tell Automake that the {alloc_engine,dhcpsrv,hosts}_messages.{cc,h} source files
