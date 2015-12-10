@@ -15,6 +15,7 @@
 #include <config.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/tests/pkt_filter6_test_stub.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <list>
 
