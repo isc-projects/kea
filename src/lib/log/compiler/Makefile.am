@@ -11,11 +11,11 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-bin_PROGRAMS = message
+bin_PROGRAMS = kea-msg-compiler
 
-message_SOURCES = message.cc
-message_LDADD   = $(top_builddir)/src/lib/log/libkea-log.la
-message_LDADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
-message_LDADD  += $(top_builddir)/src/lib/util/libkea-util.la
-message_LDADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-message_LDADD  += $(LOG4CPLUS_LIBS)
+kea_msg_compiler_SOURCES = message.cc
+kea_msg_compiler_LDADD   = $(top_builddir)/src/lib/log/libkea-log.la
+kea_msg_compiler_LDADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+kea_msg_compiler_LDADD  += $(top_builddir)/src/lib/util/libkea-util.la
+kea_msg_compiler_LDADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+kea_msg_compiler_LDADD  += $(LOG4CPLUS_LIBS)
