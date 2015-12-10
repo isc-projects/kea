@@ -1,3 +1,8 @@
+989.	[bug]		tomek
+	Improved handling of incoming packets with invalid client-id
+	and DUID.
+	(Trac #4206_0.9.2, git aeed14f1966a5436d1bf7740eacd2cee2995dbe1)
+
 Kea 0.9.2 released on July 28, 2015
 
 988.	[bug]		fdupont
