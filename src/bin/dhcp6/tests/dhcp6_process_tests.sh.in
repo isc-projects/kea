@@ -133,7 +133,7 @@ dynamic_reconfiguration_test() {
 
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
-    get_pids ${bin}
+    get_pid ${bin}
     if [ ${_GET_PIDS_NUM} -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started. Found %d processes\
  started.\n" ${_GET_PIDS_NUM}
@@ -173,7 +173,7 @@ dynamic_reconfiguration_test() {
     fi
 
     # Make sure the server is still operational.
-    get_pids ${bin}
+    get_pid ${bin}
     if [ ${_GET_PIDS_NUM} -ne 1 ]; then
         printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
         clean_exit 1
@@ -200,7 +200,7 @@ dynamic_reconfiguration_test() {
     fi
 
     # Make sure the server is still operational.
-    get_pids ${bin}
+    get_pid ${bin}
     if [ ${_GET_PIDS_NUM} -ne 1 ]; then
         printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
         clean_exit 1
@@ -242,7 +242,7 @@ shutdown_test() {
 
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
-    get_pids ${bin}
+    get_pid ${bin}
     if [ ${_GET_PIDS_NUM} -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started. Found %d processes\
  started.\n" ${_GET_PIDS_NUM}
@@ -311,7 +311,7 @@ lfc_timer_test() {
 
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
-    get_pids ${bin}
+    get_pid ${bin}
     if [ ${_GET_PIDS_NUM} -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started. Found %d processes\
  started.\n" ${_GET_PIDS_NUM}
@@ -351,7 +351,7 @@ lfc_timer_test() {
     fi
 
     # Make sure the server is still operational.
-    get_pids ${bin}
+    get_pid ${bin}
     if [ ${_GET_PIDS_NUM} -ne 1 ]; then
         printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
         clean_exit 1
