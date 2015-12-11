@@ -2684,6 +2684,32 @@ TEST_F(Dhcpv4SrvTest, emptyClientId) {
     EXPECT_NO_THROW(client.doDORA());
 }
 
+// This test verifies that the server is able to handle too long client-id
+// in incoming client message.
+TEST_F(Dhcpv4SrvTest, tooLongClientId) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+    Dhcp4Client client;
+
+    EXPECT_NO_THROW(configure(CONFIGS[0], *client.getServer()));
+
+    // Tell the client to not send client-id on its own.
+    client.includeClientId("");
+
+    // Instead, tell him to send this extra option, which happens to be
+    // an empty client-id.
+    std::vector<uint8_t> data(250, 250);
+    OptionPtr long_client_id(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
+                                        data));
+    client.addExtraOption(long_client_id);
+
+    // Let's check whether the server is able to process this packet without
+    // throwing any exceptions. We don't care whether the server sent any
+    // responses or not. The goal is to check that the server didn't throw
+    // any exceptions.
+    EXPECT_NO_THROW(client.doDORA());
+}
+
 
 /// @todo: Implement proper tests for MySQL lease/host database,
 ///        see ticket #4214.
