@@ -88,8 +88,8 @@ typedef boost::shared_ptr<VersionedColumn> VersionedColumnPtr;
 /// -# If there are fewer columns in the header than in the schema, the file
 /// is presumed to be an earlier schema version and will be upgraded as it is
 /// read.  There is an ability to mark a specific column as being the minimum
-/// column which must be present, see @ref VersionedCSVFile::
-/// setMinimumValidColumns().  If the header columns do not match up to this
+/// column which must be present, see @ref VersionedCSVFile::setMinimumValidColumns().
+/// If the header columns do not match up to this
 /// minimum column, the file is presumed to be too old to upgrade and the
 /// open will fail.  A valid, upgradable file will have an input schema
 /// state of VersionedCSVFile::NEEDS_UPGRADE.
