@@ -313,6 +313,7 @@ private:
     PoolStoragePtr pools_;
 };
 
+/// @anchor Subnet6ConfigParser
 /// @brief This class parses a single IPv6 subnet.
 ///
 /// This is the IPv6 derivation of the SubnetConfigParser class and it parses

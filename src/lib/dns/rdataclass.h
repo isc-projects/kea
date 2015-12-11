@@ -1692,7 +1692,7 @@ public:
     /// \param data The OPTION-DATA field of the pseudo RR.
     /// \param length The size of the \c data argument. OPTION-LENGTH is
     /// set to this size.
-    /// \throw \c isc::InvalidParameter if this pseudo RR would cause
+    /// \throw isc::InvalidParameter if this pseudo RR would cause
     /// the OPT RDATA to overflow its RDLENGTH.
     void appendPseudoRR(uint16_t code, const uint8_t* data, uint16_t length);
 
