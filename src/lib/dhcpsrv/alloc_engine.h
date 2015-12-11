@@ -397,7 +397,7 @@ public:
     /// response to SOLICIT).
     ///
     /// This method uses host reservation if ctx.host_ is set. The easy way to
-    /// set it is to call @ref isc::dhcp::AllocEngine::findReservation(ctx).
+    /// set it is to call @ref isc::dhcp::AllocEngine::findReservation(ClientContext6& ctx).
     /// The host reservation is convenient, but incurs performance penalty,
     /// so it can be tweaked on a per subnet basis. There are three possible modes:
     /// 1. disabled (no host reservation at all). This is the most performant one
@@ -524,9 +524,9 @@ public:
     /// declined state). Therefore remove_leases parameter is ignored for
     /// declined leases. They are always removed.
     ///
-    /// Also, for declined leases @ref reclaimDeclined is called. It conducts
-    /// several declined specific operation (extra log entry, stats dump,
-    /// hooks).
+    /// Also, for declined leases @ref reclaimDeclined(const Lease6Ptr&) is
+    /// called. It conducts several declined specific operation (extra log
+    /// entry, stats dump, hooks).
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
     /// @param timeout Maximum amount of time that the reclaimation routine
@@ -582,9 +582,9 @@ public:
     /// declined state). Therefore remove_leases parameter is ignored for
     /// declined leases. They are always removed.
     ///
-    /// Also, for declined leases @ref reclaimDeclined is called. It conducts
-    /// several declined specific operation (extra log entry, stats dump,
-    /// hooks).
+    /// Also, for declined leases @ref reclaimDeclined(const Lease4Ptr&) is
+    /// called. It conductsseveral declined specific operation (extra log
+    /// entry, stats dump, hooks).
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
     /// @param timeout Maximum amount of time that the reclaimation routine

@@ -114,6 +114,8 @@ public:
     /// \param secret Point to a binary sequence of the shared secret to be
     /// used for this key, or \c NULL if the secret is empty.
     /// \param secret_len The size of the binary %data (\c secret) in bytes.
+    /// \param digestbits The number of bits to include in the digest
+    /// (0 means to include all)
     TSIGKey(const Name& key_name, const Name& algorithm_name,
             const void* secret, size_t secret_len, size_t digestbits = 0);
 
