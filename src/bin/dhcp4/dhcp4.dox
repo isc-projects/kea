@@ -39,7 +39,7 @@ from the common configuration parsers and customize their behavior. For
 example: the @c Subnet4ConfigParser is used to parse parameters
 describing a single subnet. It derives from the @c
 isc::dhcp::SubnetConfigParser, which implements the common base for both
-DHCPv4 and DHCPv6 subnets. The @ref isc::dhcp::Subnet4ConfigParser
+DHCPv4 and DHCPv6 subnets. The @ref Subnet4ConfigParser
 implements the @c initSubnet abstract method, which creates an instance of
 the DHCPv4 subnet. This method is invoked by the parent class.
 
@@ -233,7 +233,7 @@ library. See ticket #3275. The class specific behavior is:
 - docsis3.0 packets have file field set to the content of the boot-file-name option
 - eRouter1.0 packets have siaddr (next server) field cleared
 
-Aforementioned modifications are conducted in @ref isc::dhcp::Dhcpv4Srv::classSpecificProcessing.
+Aforementioned modifications are conducted in @ref isc::dhcp::Dhcpv4Srv::vendorClassSpecificProcessing.
 
 It is possible to define class restrictions in subnet, so a given subnet is only
 accessible to clients that belong to a given class. That is implemented as isc::dhcp::Pkt4::classes_

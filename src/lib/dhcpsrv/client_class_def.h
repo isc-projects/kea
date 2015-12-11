@@ -83,7 +83,7 @@ public:
 
     /// @brief Sets the class's option collection
     ///
-    /// @param options the option collection to assign the class
+    /// @param cfg_option the option collection to assign the class
     void setCfgOption(const CfgOptionPtr& cfg_option);
 
     /// @brief Compares two @c ClientClassDef objects for equality.

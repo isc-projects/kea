@@ -22,7 +22,7 @@ namespace isc {
 namespace dhcp {
 
 //@{
-/// \brief Logging levels for the @c AllocEngine.
+/// @brief Logging levels for the @c AllocEngine.
 ///
 /// Defines the levels used to output debug messages from the @c AllocEngine.
 
@@ -47,7 +47,7 @@ const int ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA = DBGLVL_TRACE_DETAIL_DATA;
 
 //@}
 
-/// @brief Logger for the @c AllocEngine..
+/// @brief Logger for the @c AllocEngine.
 ///
 /// Define the logger used to log messages in @c AllocEngine.
 extern isc::log::Logger alloc_engine_logger;

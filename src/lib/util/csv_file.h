@@ -119,7 +119,7 @@ public:
 
     /// @brief Trims a given number of elements from the end of a row
     ///
-    /// @param number of elements to trim
+    /// @param count number of elements to trim
     ///
     /// @throw CSVFileError if the number to trim is larger than
     /// then the number of elements
