@@ -524,7 +524,7 @@ public:
     /// declined state). Therefore remove_leases parameter is ignored for
     /// declined leases. They are always removed.
     ///
-    /// Also, for declined leases @ref reclaimDeclined(const Lease6Ptr&) is
+    /// Also, for declined leases @ref reclaimDeclined-Lease6 is
     /// called. It conducts several declined specific operation (extra log
     /// entry, stats dump, hooks).
     ///
@@ -582,7 +582,7 @@ public:
     /// declined state). Therefore remove_leases parameter is ignored for
     /// declined leases. They are always removed.
     ///
-    /// Also, for declined leases @ref reclaimDeclined(const Lease4Ptr&) is
+    /// Also, for declined leases @ref reclaimDeclined-Lease4 is
     /// called. It conductsseveral declined specific operation (extra log
     /// entry, stats dump, hooks).
     ///
@@ -876,6 +876,7 @@ private:
                                 const boost::function<void (const LeasePtrType&)>&
                                 lease_update_fun) const;
 
+    /// @anchor reclaimDeclined-Lease4
     /// @brief Conducts steps necessary for reclaiming declined IPv4 lease.
     ///
     /// These are the additional steps required when recoving a declined lease:
@@ -888,6 +889,7 @@ private:
     ///         to keep it)
     bool reclaimDeclined(const Lease4Ptr& lease);
 
+    /// @anchor reclaimDeclined-Lease6
     /// @brief Conducts steps necessary for reclaiming declined IPv6 lease.
     ///
     /// These are the additional steps required when recoving a declined lease:

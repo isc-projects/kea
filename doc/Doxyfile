@@ -652,8 +652,10 @@ INPUT                  = ../src/bin/d2 \
                          ../src/bin/sockcreator \
                          ../src/bin/lfc \
                          ../src/hooks/dhcp/user_chk \
+                         ../src/lib/asiodns \
                          ../src/lib/asiolink \
                          ../src/lib/cc \
+                         ../src/lib/cfgrpt \
                          ../src/lib/config \
                          ../src/lib/cryptolink \
                          ../src/lib/dhcp \
@@ -666,10 +668,15 @@ INPUT                  = ../src/bin/d2 \
                          ../src/lib/hooks \
                          ../src/lib/log \
                          ../src/lib/log/compiler \
+                         ../src/lib/log/interprocess \
+                         ../src/lib/stats \
                          ../src/lib/testutils \
                          ../src/lib/util \
+                         ../src/lib/util/encode \
                          ../src/lib/util/io \
+                         ../src/lib/util/random \
                          ../src/lib/util/threads \
+                         ../src/lib/util/unittests \
                          devel
 
 # This tag can be used to specify the character encoding of the source files
@@ -706,7 +713,9 @@ RECURSIVE              = NO
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                =
+EXCLUDE                = ../src/lib/dns/master_lexer.cc \
+                         ../src/lib/dns/rdataclass.cc \
+                         ../src/lib/eval/lexer.cc
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded

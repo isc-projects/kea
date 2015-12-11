@@ -144,8 +144,20 @@ public:
     ///  with above constructor which has only question section. All
     ///  other parameters are same.
     ///
+    /// \param protocol Fetch protocol, either IOFetch::TCP or IOFetch::UDP
+    /// \param service I/O Service object to handle the asynchronous
+    ///        operations.
     /// \param query_message the shared_ptr to a full query message
     ///        got from a query client.
+    /// \param address IP address of upstream server
+    /// \param port Port to which to connect on the upstream server
+    /// \param buff Output buffer into which the response (in wire format)
+    ///        is written (if a response is received).
+    /// \param cb Callback object containing the callback to be called when we
+    ///        terminate.  The caller is responsible for managing this object
+    ///        and deleting it if necessary.
+    /// \param wait Timeout for the fetch (in ms).  The default value of
+    ///        -1 indicates no timeout.
     IOFetch(Protocol protocol, isc::asiolink::IOService& service,
         isc::dns::ConstMessagePtr query_message,
         const isc::asiolink::IOAddress& address,

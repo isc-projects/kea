@@ -108,6 +108,7 @@ protected:
     }
 };
 
+/// @anchor Subnet4ConfigParser
 /// @brief This class parses a single IPv4 subnet.
 ///
 /// This is the IPv4 derivation of the SubnetConfigParser class and it parses

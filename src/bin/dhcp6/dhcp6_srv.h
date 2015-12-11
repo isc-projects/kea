@@ -623,7 +623,7 @@ protected:
     ///
     /// @note This is done in two phases: first the content of the
     /// vendor-class-identifier option is used as a class, by
-    /// calling @ref classifyByVendor(). Second classification match
+    /// calling @ref classifyByVendor-decl. Second classification match
     /// expressions are evaluated. The resulting classes will be stored
     /// in the packet (see @ref isc::dhcp::Pkt6::classes_ and
     /// @ref isc::dhcp::Pkt6::inClass).
@@ -729,6 +729,7 @@ protected:
 
 private:
 
+    /// @anchor classifyByVendor-decl
     /// @brief Assign class using vendor-class-identifier option
     ///
     /// @note This is the first part of @ref classifyPacket
