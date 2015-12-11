@@ -362,7 +362,7 @@ Pkt4::getLabel() const {
     } catch (...) {
         // This should not happen with the current code, but we may add extra
         // sanity checks in the future that would possibly throw if
-        // the hwaddr lenght is 0.
+        // the hwaddr length is 0.
         label << " (malformed hw address)";
     }
 
