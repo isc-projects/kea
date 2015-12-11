@@ -93,7 +93,7 @@ const char* const sectiontext[] = {
 
 class MessageImpl {
 public:
-    MessageImpl(Message::Mode mode);
+    explicit MessageImpl(Message::Mode mode);
     // Open issues: should we rather have a header in wire-format
     // for efficiency?
     Message::Mode mode_;
@@ -1036,7 +1036,7 @@ Message::makeResponse() {
 ///
 template <typename T>
 struct SectionIteratorImpl {
-    SectionIteratorImpl(const typename vector<T>::const_iterator& it) :
+    explicit SectionIteratorImpl(const typename vector<T>::const_iterator& it) :
         it_(it) {}
     typename vector<T>::const_iterator it_;
 };

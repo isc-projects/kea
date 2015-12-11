@@ -334,7 +334,7 @@ public:
     ///
     /// @param instance_getter is a function pointer to the static instance
     /// method of the DControllerBase derivation under test.
-    DControllerTest(InstanceGetter instance_getter)
+    explicit DControllerTest(InstanceGetter instance_getter)
          : write_timer_(), new_cfg_content_() {
         // Set the static fetcher member, then invoke it via getController.
         // This ensures the singleton is instantiated.
@@ -844,7 +844,7 @@ public:
         /// @brief Constructor
         ///
         /// @param signum OS signal value of the signal to send
-        SendSignalCallback(int signum) : signum_(signum) {
+        explicit SendSignalCallback(int signum) : signum_(signum) {
         }
 
         /// @brief Callback method invoked when the timer expires

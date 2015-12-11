@@ -62,7 +62,7 @@ public:
     ///
     /// @param List of libraries that this collection will manage.  The order
     ///        of the libraries is important.
-    PublicLibraryManagerCollection(const std::vector<std::string>& libraries)
+    explicit PublicLibraryManagerCollection(const std::vector<std::string>& libraries)
         : LibraryManagerCollection(libraries)
     {}
 

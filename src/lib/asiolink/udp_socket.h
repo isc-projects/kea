@@ -62,7 +62,7 @@ public:
     /// socket.  In this case, the open() and close() methods are used.
     ///
     /// \param service I/O Service object used to manage the socket.
-    UDPSocket(IOService& service);
+    explicit UDPSocket(IOService& service);
 
     /// \brief Destructor
     virtual ~UDPSocket();

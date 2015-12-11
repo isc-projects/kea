@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -60,7 +60,7 @@ public:
     /// the message compiler, and the global dictionary when used in a server.
     /// The ownership of the dictionary object is not transferred - the caller
     /// is responsible for managing the lifetime of the dictionary.
-    MessageReader(MessageDictionary* dictionary = NULL) :
+    explicit MessageReader(MessageDictionary* dictionary = NULL) :
         dictionary_(dictionary), lineno_(0)
     {}
 

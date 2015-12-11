@@ -30,7 +30,8 @@ struct OptionalValueState {
 
     /// @brief Constructor.
     ///
-    /// @param specified A boolean value to be assigned.
+    /// @param Specified a boolean value to be assigned.
+    // cppcheck-suppress noExplicitConstructor
     OptionalValueState(const bool specified)
         : specified_(specified) {
     }

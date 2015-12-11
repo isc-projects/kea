@@ -60,6 +60,7 @@ public:
         /// @brief default and the only constructor
         ///
         /// @param addr an IP address of the relay (may be :: or 0.0.0.0)
+        // cppcheck-suppress noExplicitConstructor
         RelayInfo(const isc::asiolink::IOAddress& addr);
 
         /// @brief IP address of the relay

@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <string>
 #include <map>
+#include <boost/noncopyable.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -61,7 +62,8 @@ typedef std::pair<std::string, isc::data::ConstElementPtr> ConfigPair;
 /// element. Sometimes elements are simple (e.g. a string) and sometimes quite
 /// complex (e.g. a subnet). In such case, it is likely that a parser will
 /// spawn child parsers to parse child elements in the configuration.
-class DhcpConfigParser {
+/// @note the @c DhcpConfigParser class is not copyable or assignable.
+class DhcpConfigParser : private boost::noncopyable {
     ///
     /// @name Constructors and Destructor
     ///
@@ -69,13 +71,6 @@ class DhcpConfigParser {
     /// intentionally defined as private to make it explicit that this is a
     /// pure base class.
     //@{
-private:
-
-    // Private constructor and assignment operator assures that nobody
-    // will be able to copy or assign a parser. There are no defined
-    // bodies for them.
-    DhcpConfigParser(const DhcpConfigParser& source);
-    DhcpConfigParser& operator=(const DhcpConfigParser& source);
 protected:
     /// @brief The default constructor.
     ///

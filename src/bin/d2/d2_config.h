@@ -626,7 +626,7 @@ public:
     /// @brief Constructor
     ///
     /// @param name is an arbitrary label assigned to this manager.
-    DdnsDomainListMgr(const std::string& name);
+    explicit DdnsDomainListMgr(const std::string& name);
 
     /// @brief Destructor
     virtual ~DdnsDomainListMgr ();

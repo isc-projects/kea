@@ -1,4 +1,4 @@
-// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -217,7 +217,7 @@ private:
     ///
     /// @param name Name of the library to load.  This should be an absolute
     ///        path name.
-    LibraryManager(const std::string& name);
+    explicit LibraryManager(const std::string& name);
 
     // Member variables
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,7 +41,7 @@ namespace {
 template <typename T>
 class RdataRenderBenchMark {
 public:
-    RdataRenderBenchMark(const vector<T>& dataset) :
+    explicit RdataRenderBenchMark(const vector<T>& dataset) :
         dataset_(dataset),
         renderer_(NULL)
     {}
@@ -72,7 +72,7 @@ private:
 // an RdataFields object for the rendering.
 class RdataFieldsStore {
 public:
-    RdataFieldsStore(ConstRdataPtr rdata) {
+    explicit RdataFieldsStore(ConstRdataPtr rdata) {
         const RdataFields fields(*rdata);
 
         spec_size_ = fields.getFieldSpecDataSize();

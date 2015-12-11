@@ -60,6 +60,7 @@ public:
     /// a corresponding standard exception will be thrown.
     ///
     /// \param address_str Textual representation of address.
+    // cppcheck-suppress noExplicitConstructor
     IOAddress(const std::string& address_str);
 
     /// \brief Constructor from an ASIO \c ip::address object.
@@ -80,6 +81,7 @@ public:
     /// network byte order
     ///
     /// @param v4address IPv4 address represnted by uint32_t
+    // cppcheck-suppress noExplicitConstructor
     IOAddress(uint32_t v4address);
 
     /// \brief Convert the address to a string.

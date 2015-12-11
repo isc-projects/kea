@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 
 #include <dns/exceptions.h>
 
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <stdint.h>
@@ -128,7 +129,7 @@ const unsigned int MAX_CHARSTRING_LEN = 255;
 /// specifically concerned about a particular type.
 /// So, this API generally handles \c Rdata in a polymorphic way through
 /// a pointer or reference to this base abstract class.
-class Rdata {
+class Rdata : private boost::noncopyable {
     ///
     /// \name Constructors and Destructor
     ///
@@ -145,9 +146,6 @@ protected:
     /// either, because an \c Rdata object without concrete data isn't
     /// meaningful.
     Rdata() {}
-private:
-    Rdata(const Rdata& source);
-    void operator=(const Rdata& source);
 public:
     /// The destructor.
     virtual ~Rdata() {};

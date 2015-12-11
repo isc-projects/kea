@@ -1,4 +1,4 @@
-// Copyright (C) 2012, 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -155,7 +155,7 @@ public:
     /// contains invalid characters or is empty. This constructor uses
     /// \ref OptionSpace::validateName function to check that the specified
     /// name is correct.
-    OptionSpace6(const std::string& name);
+    explicit OptionSpace6(const std::string& name);
 
     /// @brief Constructor for vendor-specific options.
     ///

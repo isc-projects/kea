@@ -76,7 +76,7 @@ public:
     /// socket.  In this case, the open() and close() methods are used.
     ///
     /// \param service I/O Service object used to manage the socket.
-    TCPSocket(IOService& service);
+    explicit TCPSocket(IOService& service);
 
     /// \brief Destructor
     virtual ~TCPSocket();

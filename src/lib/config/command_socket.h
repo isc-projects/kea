@@ -93,7 +93,7 @@ public:
     /// parameter here.
     ///
     /// @param sockfd socket descriptor
-    ConnectionSocket(int sockfd);
+    explicit ConnectionSocket(int sockfd);
 
     /// @brief Method used to handle incoming data
     ///

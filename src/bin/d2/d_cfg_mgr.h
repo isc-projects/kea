@@ -190,7 +190,7 @@ public:
 
 protected:
     /// @brief Copy constructor for use by derivations in clone().
-    DCfgContextBase(const DCfgContextBase& rhs);
+    explicit DCfgContextBase(const DCfgContextBase& rhs);
 
 private:
     /// @brief Private assignment operator to avoid potential for slicing.
@@ -272,7 +272,7 @@ public:
     /// will use for storing parsed results.
     ///
     /// @throw throws DCfgMgrBaseError if context is null
-    DCfgMgrBase(DCfgContextBasePtr context);
+    explicit DCfgMgrBase(DCfgContextBasePtr context);
 
     /// @brief Destructor
     virtual ~DCfgMgrBase();

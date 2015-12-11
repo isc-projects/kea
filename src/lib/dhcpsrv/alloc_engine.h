@@ -96,7 +96,7 @@ protected:
         ///
         /// Specifies which type of leases this allocator will assign
         /// @param pool_type specifies pool type (addresses, temp. addr or prefixes)
-        Allocator(Lease::Type pool_type)
+        explicit Allocator(Lease::Type pool_type)
             :pool_type_(pool_type) {
         }
 
@@ -125,7 +125,7 @@ protected:
         ///
         /// Does not do anything
         /// @param type - specifies allocation type
-        IterativeAllocator(Lease::Type type);
+        explicit IterativeAllocator(Lease::Type type);
 
         /// @brief returns the next address from pools in a subnet
         ///
@@ -162,7 +162,7 @@ protected:
 
         /// @brief default constructor (does nothing)
         /// @param type - specifies allocation type
-        HashedAllocator(Lease::Type type);
+        explicit HashedAllocator(Lease::Type type);
 
         /// @brief returns an address based on hash calculated from client's DUID.
         ///
@@ -185,7 +185,7 @@ protected:
 
         /// @brief default constructor (does nothing)
         /// @param type - specifies allocation type
-        RandomAllocator(Lease::Type type);
+        explicit RandomAllocator(Lease::Type type);
 
         /// @brief returns a random address from pool of specified subnet
         ///

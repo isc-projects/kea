@@ -2043,7 +2043,7 @@ namespace generic {
 
 class HINFOImpl {
 public:
-    HINFOImpl(const std::string& hinfo_str) {
+    explicit HINFOImpl(const std::string& hinfo_str) {
         std::istringstream ss(hinfo_str);
         MasterLexer lexer;
         lexer.pushSource(ss);
@@ -2072,7 +2072,7 @@ public:
         }
     }
 
-    HINFOImpl(MasterLexer& lexer)
+    explicit HINFOImpl(MasterLexer& lexer)
     {
         parseHINFOData(lexer);
     }
@@ -2593,7 +2593,7 @@ public:
         }
     }
 
-    NAPTRImpl(const std::string& naptr_str) : replacement(".") {
+    explicit NAPTRImpl(const std::string& naptr_str) : replacement(".") {
         std::istringstream ss(naptr_str);
         MasterLexer lexer;
         lexer.pushSource(ss);
@@ -2612,7 +2612,7 @@ public:
         }
     }
 
-    NAPTRImpl(MasterLexer& lexer) : replacement(".")
+    explicit NAPTRImpl(MasterLexer& lexer) : replacement(".")
     {
         parseNAPTRData(lexer);
     }

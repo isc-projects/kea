@@ -281,11 +281,11 @@ SocketSession::SocketSession(int sock, int family, int type, int protocol,
 }
 
 struct SocketSessionReceiver::ReceiverImpl {
-    ReceiverImpl(int fd) : fd_(fd),
-                           sa_local_(convertSockAddr(&ss_local_)),
-                           sa_remote_(convertSockAddr(&ss_remote_)),
-                           header_buf_(DEFAULT_HEADER_BUFLEN),
-                           data_buf_(INITIAL_BUFSIZE)
+    explicit ReceiverImpl(int fd) : fd_(fd),
+                                    sa_local_(convertSockAddr(&ss_local_)),
+                                    sa_remote_(convertSockAddr(&ss_remote_)),
+                                    header_buf_(DEFAULT_HEADER_BUFLEN),
+                                    data_buf_(INITIAL_BUFSIZE)
     {
         if (setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, &SOCKSESSION_BUFSIZE,
                        sizeof(SOCKSESSION_BUFSIZE)) == -1) {
@@ -332,7 +332,7 @@ readFail(int actual_len, int expected_len) {
 // SocketSessionReceiver::pop that ensures the socket is closed unless it
 // can be safely passed to the caller via release().
 struct ScopedSocket : boost::noncopyable {
-    ScopedSocket(int fd) : fd_(fd) {}
+    explicit ScopedSocket(int fd) : fd_(fd) {}
     ~ScopedSocket() {
         if (fd_ >= 0) {
             close(fd_);

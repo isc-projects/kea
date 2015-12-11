@@ -70,7 +70,7 @@ public:
     /// Creates a logger of the specific name.
     ///
     /// \param name Name of the logger.
-    LoggerImpl(const std::string& name);
+    explicit LoggerImpl(const std::string& name);
 
 
     /// \brief Destructor

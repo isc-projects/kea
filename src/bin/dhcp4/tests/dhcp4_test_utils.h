@@ -122,7 +122,7 @@ public:
     ///
     /// @param port port number to listen on; the default value 0 indicates
     /// that sockets should not be opened.
-    NakedDhcpv4Srv(uint16_t port = 0)
+    explicit NakedDhcpv4Srv(uint16_t port = 0)
         : Dhcpv4Srv(port, false, false) {
         // Create a default lease database backend.
         std::string dbconfig = "type=memfile universe=4 persist=false";

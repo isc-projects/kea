@@ -325,7 +325,7 @@ public:
     ///
     /// @param ignored first parameter
     /// stores global scope parameters, options, option definitions.
-    Subnet6ConfigParser(const std::string&)
+    explicit Subnet6ConfigParser(const std::string&)
         :SubnetConfigParser("", globalContext(), IOAddress("::")) {
     }
 
@@ -531,7 +531,7 @@ public:
     ///
     /// @param dummy first argument, always ignored. All parsers accept a
     /// string parameter "name" as their first argument.
-    Subnets6ListConfigParser(const std::string&) {
+    explicit Subnets6ListConfigParser(const std::string&) {
     }
 
     /// @brief parses contents of the list
@@ -589,7 +589,7 @@ public:
     ///
     /// @param param_name name of the configuration parameter being parsed
     /// @throw BadValue if supplied parameter name is not "relay-supplied-options"
-    RSOOListConfigParser(const std::string& param_name) {
+    explicit RSOOListConfigParser(const std::string& param_name) {
         if (param_name != "relay-supplied-options") {
             isc_throw(BadValue, "Internal error. RSOO configuration "
                       "parser called for the wrong parameter: " << param_name);

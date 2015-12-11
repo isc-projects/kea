@@ -410,7 +410,7 @@ TEST_F(LoggerTest, setInterprocessSync) {
 class MockSync : public isc::log::interprocess::InterprocessSync {
 public:
     /// \brief Constructor
-    MockSync(const std::string& component_name) :
+    explicit MockSync(const std::string& component_name) :
         InterprocessSync(component_name), was_locked_(false),
         was_unlocked_(false)
     {}

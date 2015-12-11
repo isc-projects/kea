@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -56,7 +56,7 @@ public:
     /// \param task_name Name of the synchronization task. This has to be
     /// identical among the various processes that need to be
     /// synchronized for the same task.
-    InterprocessSyncFile(const std::string& task_name) :
+    explicit InterprocessSyncFile(const std::string& task_name) :
         InterprocessSync(task_name), fd_(-1)
     {}
 

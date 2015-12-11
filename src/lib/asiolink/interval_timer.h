@@ -88,7 +88,7 @@ public:
     /// This constructor may also throw \c boost::system::system_error.
     ///
     /// \param io_service A reference to an instance of IOService
-    IntervalTimer(IOService& io_service);
+    explicit IntervalTimer(IOService& io_service);
 
     /// \brief The destructor.
     ///

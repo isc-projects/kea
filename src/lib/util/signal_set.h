@@ -99,7 +99,7 @@ public:
     /// @param sig0 First signal.
     /// @throw SignalSetError If attempting to add duplicated signal or
     /// the signal is invalid.
-    SignalSet(const int sig0);
+    explicit SignalSet(const int sig0);
 
     /// @brief Constructor installing two signals.
     ///

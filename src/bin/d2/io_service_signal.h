@@ -204,7 +204,7 @@ public:
     ///
     /// @param io_service the IOService to which to send signals.
     /// @throw IOSignalError if io_service is NULL.
-    IOSignalQueue (asiolink::IOServicePtr& io_service);
+    explicit IOSignalQueue(asiolink::IOServicePtr& io_service);
 
     /// @brief Destructor.
     ~IOSignalQueue();

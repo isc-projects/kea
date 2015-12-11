@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -423,7 +423,7 @@ class BasicRdataIterator : public RdataIterator {
 private:
     BasicRdataIterator() {}
 public:
-    BasicRdataIterator(const std::vector<rdata::ConstRdataPtr>& datavector) :
+    explicit BasicRdataIterator(const std::vector<rdata::ConstRdataPtr>& datavector) :
         datavector_(&datavector), it_(datavector_->begin())
     {}
     ~BasicRdataIterator() {}

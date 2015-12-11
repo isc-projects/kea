@@ -589,7 +589,7 @@ public:
 
 class NullElement : public Element {
 public:
-    NullElement(const Position& pos = ZERO_POSITION())
+    explicit NullElement(const Position& pos = ZERO_POSITION())
         : Element(null, pos) {};
     void toJSON(std::ostream& ss) const;
     bool equals(const Element& other) const;
@@ -614,7 +614,7 @@ class ListElement : public Element {
     std::vector<ConstElementPtr> l;
 
 public:
-    ListElement(const Position& pos = ZERO_POSITION())
+    explicit ListElement(const Position& pos = ZERO_POSITION())
         : Element(list, pos) {}
     const std::vector<ConstElementPtr>& listValue() const { return (l); }
     using Element::getValue;
@@ -646,7 +646,8 @@ class MapElement : public Element {
     std::map<std::string, ConstElementPtr> m;
 
 public:
-    MapElement(const Position& pos = ZERO_POSITION()) : Element(map, pos) {}
+    explicit MapElement(const Position& pos = ZERO_POSITION())
+        : Element(map, pos) {}
     // @todo should we have direct iterators instead of exposing the std::map
     // here?
     const std::map<std::string, ConstElementPtr>& mapValue() const {

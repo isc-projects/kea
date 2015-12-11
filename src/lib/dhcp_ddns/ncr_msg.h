@@ -106,7 +106,7 @@ public:
     ///
     /// @throw NcrMessageError if the input data contains non-digits
     /// or there is an odd number of digits.
-    D2Dhcid(const std::string& data);
+    explicit D2Dhcid(const std::string& data);
 
     /// @brief Constructor, creates an instance of the @c D2Dhcid from the
     /// HW address.

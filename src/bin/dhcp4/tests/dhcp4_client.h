@@ -97,7 +97,7 @@ public:
     /// @brief Creates a new client.
     ///
     /// @param Initial client's state.
-    Dhcp4Client(const State& state = SELECTING);
+    explicit Dhcp4Client(const State& state = SELECTING);
 
     /// @brief Creates a new client that communicates with a specified server.
     ///

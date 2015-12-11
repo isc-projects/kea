@@ -105,7 +105,7 @@ public:
     ///
     /// \param lexer A \c MasterLexer object parsing a master file for this
     /// RDATA.
-    TXTLikeImpl(MasterLexer& lexer) {
+    explicit TXTLikeImpl(MasterLexer& lexer) {
         buildFromTextHelper(lexer);
     }
 

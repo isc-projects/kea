@@ -60,7 +60,7 @@ const char TEST_DATA[] = "Kea test";
 // or exception in a RAII manner.  non copyable to prevent duplicate close.
 struct ScopedSocket : boost::noncopyable {
     ScopedSocket() : fd(-1) {}
-    ScopedSocket(int sock) : fd(sock) {}
+    explicit ScopedSocket(int sock) : fd(sock) {}
     ~ScopedSocket() {
         closeSocket();
     }

@@ -63,13 +63,13 @@ public:
 
     // Type used to indicate whether or not forward updates are expected
     struct ExpFwd {
-        ExpFwd(bool exp_fwd) : value_(exp_fwd){};
+        explicit ExpFwd(bool exp_fwd) : value_(exp_fwd){};
         bool value_;
     };
 
     // Type used to indicate whether or not reverse updates are expected
     struct ExpRev {
-        ExpRev(bool exp_rev) : value_(exp_rev){};
+        explicit ExpRev(bool exp_rev) : value_(exp_rev){};
         bool value_;
     };
 

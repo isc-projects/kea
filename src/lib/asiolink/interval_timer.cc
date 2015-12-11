@@ -42,7 +42,7 @@ private:
     IntervalTimerImpl(const IntervalTimerImpl& source);
     IntervalTimerImpl& operator=(const IntervalTimerImpl& source);
 public:
-    IntervalTimerImpl(IOService& io_service);
+    explicit IntervalTimerImpl(IOService& io_service);
     ~IntervalTimerImpl();
     void setup(const IntervalTimer::Callback& cbfunc, const long interval,
                const IntervalTimer::Mode& interval_mode

@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -83,18 +83,19 @@ class IOEndpoint;
 /// (i.e., getDummy variants below).
 ///
 /// \param C Template parameter identifying type of the callback object.
+///
+/// \note \c IOAsioSocket is not copyable nor assignable.
 
 template <typename C>
 class IOAsioSocket : public IOSocket {
     ///
     /// \name Constructors and Destructor
     ///
-    /// Note: The copy constructor and the assignment operator are
-    /// intentionally defined as private, making this class non-copyable.
     //@{
 private:
-    IOAsioSocket(const IOAsioSocket<C>& source);
-    IOAsioSocket& operator=(const IOAsioSocket<C>& source);
+    /// \brief Class is non-copyable
+    IOAsioSocket(const IOAsioSocket&);
+    IOAsioSocket& operator=(const IOAsioSocket&);
 protected:
     /// \brief The default constructor.
     ///
@@ -301,7 +302,7 @@ public:
     /// For example, to specify TCP \c protocol must be \c IPPROTO_TCP.
     ///
     /// \param protocol The network protocol number for the socket.
-    DummyAsioSocket(const int protocol) : protocol_(protocol) {}
+    explicit DummyAsioSocket(const int protocol) : protocol_(protocol) {}
 
     /// \brief A dummy derived method of \c IOAsioSocket::getNative().
     ///

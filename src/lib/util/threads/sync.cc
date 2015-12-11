@@ -48,7 +48,7 @@ public:
 namespace {
 
 struct Deinitializer {
-    Deinitializer(pthread_mutexattr_t& attributes):
+    explicit Deinitializer(pthread_mutexattr_t& attributes):
         attributes_(attributes)
     {}
     ~Deinitializer() {

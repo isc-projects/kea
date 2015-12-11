@@ -55,7 +55,7 @@ struct OptionDescriptor {
     /// @brief Constructor
     ///
     /// @param persist if true option is always sent.
-    OptionDescriptor(bool persist)
+    explicit OptionDescriptor(bool persist)
         : option_(OptionPtr()), persistent_(persist) {};
 
     /// @brief Checks if the one descriptor is equal to another.

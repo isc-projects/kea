@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -57,7 +57,7 @@ public:
     /// \param task_name Name of the synchronization task. This has to be
     /// identical among the various processes that need to be
     /// synchronized for the same task.
-    InterprocessSync(const std::string& task_name) :
+    explicit InterprocessSync(const std::string& task_name) :
         task_name_(task_name), is_locked_(false)
     {}
 
@@ -99,7 +99,7 @@ public:
     ///
     /// \param sync The sync object which has to be locked/unlocked by
     /// this locker object.
-    InterprocessSyncLocker(InterprocessSync& sync) :
+    explicit InterprocessSyncLocker(InterprocessSync& sync) :
         sync_(sync)
     {}
 

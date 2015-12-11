@@ -167,7 +167,7 @@ public:
         /// valid_ field is set to false;
         ///
         /// \param socket socket descriptor.
-        TestControlSocket(const int socket);
+        explicit TestControlSocket(const int socket);
 
         /// \brief Destructor of the socket wrapper class.
         ///
@@ -213,7 +213,7 @@ public:
         ///
         /// \param range maximum number generated. If 0 is given then
         /// range defaults to maximum uint32_t value.
-        SequentialGenerator(uint32_t range = 0xFFFFFFFF) :
+        explicit SequentialGenerator(uint32_t range = 0xFFFFFFFF) :
             NumberGenerator(),
             num_(0),
             range_(range) {

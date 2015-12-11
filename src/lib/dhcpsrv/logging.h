@@ -53,7 +53,7 @@ public:
     /// @brief Constructor
     ///
     /// @param storage parsed logging configuration will be stored here
-    LogConfigParser(const SrvConfigPtr& storage);
+    explicit LogConfigParser(const SrvConfigPtr& storage);
 
     /// @brief Parses specified configuration
     ///

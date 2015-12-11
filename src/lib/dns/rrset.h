@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <iostream>
 #include <string>
 
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <dns/exceptions.h>
@@ -159,16 +160,11 @@ typedef boost::shared_ptr<RdataIterator> RdataIteratorPtr;
 ///     monolithic.)
 ///   - Do we need to allow the user to remove specific Rdata?
 ///     Probably not, according to the current usage of the BIND9 code.
-class AbstractRRset {
+/// @note This pure base class is not copyable nor assignable.
+class AbstractRRset : private boost::noncopyable {
     ///
     /// \name Constructors and Destructor
     ///
-    /// Note: The copy constructor and the assignment operator are intentionally
-    /// defined as private to make it explicit that this is a pure base class.
-    //@{
-private:
-    AbstractRRset(const AbstractRRset& source);
-    AbstractRRset& operator=(const AbstractRRset& source);
 protected:
     /// \brief The default constructor.
     ///
@@ -563,7 +559,7 @@ public:
 /// Most applications will simply go through the RDATA objects contained in
 /// an RRset, examining (and possibly using) each object, as one path
 /// operation.
-class RdataIterator {
+class RdataIterator : private boost::noncopyable {
     ///
     /// \name Constructors and Destructor
     ///
@@ -579,9 +575,6 @@ protected:
 public:
     /// \brief Destructor
     virtual ~RdataIterator() {}
-private:
-    RdataIterator(const RdataIterator& source);
-    RdataIterator& operator=(const RdataIterator& source);
     //@}
 
 public:

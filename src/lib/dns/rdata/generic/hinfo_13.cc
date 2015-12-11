@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@ using namespace isc::dns;
 
 class HINFOImpl {
 public:
-    HINFOImpl(const std::string& hinfo_str) {
+    explicit HINFOImpl(const std::string& hinfo_str) {
         std::istringstream ss(hinfo_str);
         MasterLexer lexer;
         lexer.pushSource(ss);
@@ -59,7 +59,7 @@ public:
         }
     }
 
-    HINFOImpl(MasterLexer& lexer)
+    explicit HINFOImpl(MasterLexer& lexer)
     {
         parseHINFOData(lexer);
     }

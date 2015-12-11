@@ -1,4 +1,4 @@
-// Copyright (C) 2011,2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -89,7 +89,7 @@ public:
     /// and associated message text. N.B. This object stores a pointer to the
     /// passed array; the array MUST remain valid at least until
     /// loadDictionary() has been called.
-    MessageInitializer(const char* values[]);
+    explicit MessageInitializer(const char* values[]);
 
     /// \brief Destructor
     ///

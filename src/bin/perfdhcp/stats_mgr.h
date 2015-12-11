@@ -69,7 +69,7 @@ public:
         /// log file to report value of each counter.
         ///
         /// \param name name of the counter used in log file.
-        CustomCounter(const std::string& name) :
+        explicit CustomCounter(const std::string& name) :
             counter_(0),
             name_(name) { };
 
@@ -851,7 +851,7 @@ public:
     ///
     /// \param archive_enabled true indicates that packets
     /// archive mode is enabled.
-    StatsMgr(const bool archive_enabled = false) :
+    explicit StatsMgr(const bool archive_enabled = false) :
         exchanges_(),
         archive_enabled_(archive_enabled),
         boot_time_(boost::posix_time::microsec_clock::universal_time()) {

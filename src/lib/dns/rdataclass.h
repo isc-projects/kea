@@ -18,7 +18,7 @@ class MasterLexer;
 class MasterLoaderCallbacks;
 }
 }
-// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -512,7 +512,7 @@ public:
     // END_COMMON_MEMBERS
 
     // CNAME specific methods
-    CNAME(const Name& cname);
+    explicit CNAME(const Name& cname);
     const Name& getCname() const;
 private:
     Name cname_;
@@ -682,7 +682,7 @@ public:
     // END_COMMON_MEMBERS
 
     // DNAME specific methods
-    DNAME(const Name& dname);
+    explicit DNAME(const Name& dname);
     const Name& getDname() const;
 private:
     Name dname_;

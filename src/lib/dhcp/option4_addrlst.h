@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -51,7 +51,7 @@ public:
     /// with addAddress(), setAddress() or setAddresses().
     ///
     /// @param type option type
-    Option4AddrLst(uint8_t type);
+    explicit Option4AddrLst(uint8_t type);
 
     /// @brief Constructor, creates an option with a list of addresses.
     ///

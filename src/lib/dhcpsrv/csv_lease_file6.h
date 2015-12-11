@@ -46,7 +46,7 @@ public:
     /// Initializes columns of the lease file.
     ///
     /// @param filename Name of the lease file.
-    CSVLeaseFile6(const std::string& filename);
+    explicit CSVLeaseFile6(const std::string& filename);
 
     /// @brief Opens a lease file.
     ///

@@ -200,7 +200,7 @@ public:
     ///
     /// @param universe is the Option::Universe value of this
     /// context.
-    ParserContext(Option::Universe universe);
+    explicit ParserContext(Option::Universe universe);
 
     /// @brief Copy constructor
     ParserContext(const ParserContext& rhs);
@@ -348,7 +348,7 @@ public:
     /// See @ref DhcpConfigParser class for details.
     ///
     /// @param param_name name of the parsed parameter
-    DebugParser(const std::string& param_name);
+    explicit DebugParser(const std::string& param_name);
 
     /// @brief builds parameter value
     ///
@@ -421,7 +421,7 @@ private:
 class ControlSocketParser : public DhcpConfigParser {
 public:
 
-    ControlSocketParser(const std::string& param_name);
+    explicit ControlSocketParser(const std::string& param_name);
 
     /// @brief Stores contents of the control-socket map in the staging config.
     ///
@@ -463,7 +463,7 @@ public:
     /// @param param_name name of the configuration parameter being parsed.
     ///
     /// @throw BadValue if supplied parameter name is not "hooks-libraries"
-    HooksLibrariesParser(const std::string& param_name);
+    explicit HooksLibrariesParser(const std::string& param_name);
 
     /// @brief Parses parameters value
     ///
@@ -1137,7 +1137,7 @@ public:
     ///
     /// @param entry_name is an arbitrary label assigned to this configuration
     /// definition.
-    D2ClientConfigParser(const std::string& entry_name);
+    explicit D2ClientConfigParser(const std::string& entry_name);
 
     /// @brief Destructor
     virtual ~D2ClientConfigParser();

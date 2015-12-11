@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -59,7 +59,7 @@ class Filename {
 public:
 
     /// \brief Constructor
-    Filename(const std::string& name) :
+    explicit Filename(const std::string& name) :
         full_name_(""), directory_(""), name_(""), extension_("")
     {
         setName(name);

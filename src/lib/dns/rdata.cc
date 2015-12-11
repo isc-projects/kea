@@ -204,7 +204,7 @@ compareNames(const Name& n1, const Name& n2) {
 
 namespace generic {
 struct GenericImpl {
-    GenericImpl(const vector<uint8_t>& data) : data_(data) {}
+    explicit GenericImpl(const vector<uint8_t>& data) : data_(data) {}
     vector<uint8_t> data_;
 };
 
@@ -344,7 +344,7 @@ Generic::operator=(const Generic& source) {
 namespace {
 class UnknownRdataDumper {
 public:
-    UnknownRdataDumper(ostringstream& oss) : oss_(&oss) {}
+    explicit UnknownRdataDumper(ostringstream& oss) : oss_(&oss) {}
     void operator()(const unsigned char d)
     {
         *oss_ << setw(2) << static_cast<unsigned int>(d);

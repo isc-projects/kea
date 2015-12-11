@@ -110,7 +110,7 @@ public:
     /// data.
     ///
     /// \param which Which of the two callback objects this is
-    TCPCallback(std::string which) : ptr_(new PrivateData())
+    explicit TCPCallback(std::string which) : ptr_(new PrivateData())
     {
         ptr_->name_ = which;
     }

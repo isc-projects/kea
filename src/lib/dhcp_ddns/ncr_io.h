@@ -210,7 +210,7 @@ public:
     ///
     /// @param recv_handler is a pointer the application layer handler to be
     /// invoked each time a NCR is received or a receive error occurs.
-    NameChangeListener(RequestReceiveHandler& recv_handler);
+    explicit NameChangeListener(RequestReceiveHandler& recv_handler);
 
     /// @brief Destructor
     virtual ~NameChangeListener() {

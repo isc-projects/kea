@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -68,7 +68,7 @@ public:
     ///
     /// \param callback The callback functor to be called for each collated
     /// RRset.
-    RRCollator(const AddRRsetCallback& callback);
+    explicit RRCollator(const AddRRsetCallback& callback);
 
     /// \brief Destructor.
     ///

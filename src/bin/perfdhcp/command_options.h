@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -53,7 +53,7 @@ public:
         /// \brief Constructor from lease type code.
         ///
         /// \param lease_type A lease type code.
-        LeaseType(const Type lease_type);
+        explicit LeaseType(const Type lease_type);
 
         /// \brief Checks if lease type has the specified code.
         ///

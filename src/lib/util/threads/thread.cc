@@ -69,7 +69,7 @@ private:
 // overhead anyway.
 class Thread::Impl {
 public:
-    Impl(const boost::function<void ()>& main) :
+    explicit Impl(const boost::function<void ()>& main) :
         // Two things to happen before destruction - thread needs to terminate
         // and the creating thread needs to release it.
         waiting_(2),

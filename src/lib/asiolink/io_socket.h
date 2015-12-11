@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,8 @@
 #include <functional>
 #include <string>
 
+#include <boost/noncopyable.hpp>
+
 #include <exceptions/exceptions.h>
 
 namespace isc {
@@ -42,16 +44,12 @@ namespace asiolink {
 /// modules use it.  Also, at that point we may define a separate (visible)
 /// derived class for testing purposes rather than providing factory methods
 /// (i.e., getDummy variants below).
-class IOSocket {
+/// \note \c IOSocket is not copyable nor assignable.
+class IOSocket : private boost::noncopyable {
     ///
     /// \name Constructors and Destructor
     ///
-    /// Note: The copy constructor and the assignment operator are
-    /// intentionally defined as private, making this class non-copyable.
     //@{
-private:
-    IOSocket(const IOSocket& source);
-    IOSocket& operator=(const IOSocket& source);
 protected:
     /// \brief The default constructor.
     ///

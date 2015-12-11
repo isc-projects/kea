@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -72,7 +72,7 @@ public:
     ///
     /// @param length_field_type Indicates a length of the field which holds
     /// the size of the tuple.
-    OpaqueDataTuple(LengthFieldType length_field_type);
+    explicit OpaqueDataTuple(LengthFieldType length_field_type);
 
     /// @brief Constructor
     ///

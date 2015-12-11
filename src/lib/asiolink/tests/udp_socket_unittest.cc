@@ -92,7 +92,7 @@ public:
     /// data.
     ///
     /// \param which Which of the two callback objects this is
-    UDPCallback(std::string which) : ptr_(new PrivateData())
+    explicit UDPCallback(std::string which) : ptr_(new PrivateData())
     {
         setName(which);
     }

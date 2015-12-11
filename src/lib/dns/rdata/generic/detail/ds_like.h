@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -71,7 +71,7 @@ public:
     /// \throw InvalidRdataText if any fields are out of their valid range.
     ///
     /// \param ds_str A string containing the RDATA to be created
-    DSLikeImpl(const std::string& ds_str) {
+    explicit DSLikeImpl(const std::string& ds_str) {
         try {
             std::istringstream ss(ds_str);
             MasterLexer lexer;

@@ -44,7 +44,7 @@ public:
     /// Opens specified UNIX socket.
     ///
     /// @param filename socket filename
-    UnixCommandSocket(const std::string& filename)
+    explicit UnixCommandSocket(const std::string& filename)
         : filename_(filename) {
 
         // Create the socket and set it up.

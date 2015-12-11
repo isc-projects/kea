@@ -1,4 +1,4 @@
-// Copyright (C) 2013,2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -133,7 +133,7 @@ public:
     /// @param num_libraries Number of loaded libraries.
     ///
     /// @throw isc::BadValue if the number of libraries is less than 0,
-    CalloutManager(int num_libraries = 0);
+    explicit CalloutManager(int num_libraries = 0);
 
     /// @brief Register a callout on a hook for the current library
     ///

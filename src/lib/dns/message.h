@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -99,7 +99,7 @@ template <typename T>
 class SectionIterator : public std::iterator<std::input_iterator_tag, T> {
 public:
     SectionIterator() : impl_(NULL) {}
-    SectionIterator(const SectionIteratorImpl<T>& impl);
+    explicit SectionIterator(const SectionIteratorImpl<T>& impl);
     ~SectionIterator();
     SectionIterator(const SectionIterator<T>& source);
     void operator=(const SectionIterator<T>& source);
@@ -257,7 +257,7 @@ public:
 public:
     /// \brief The constructor.
     /// The mode of the message is specified by the \c mode parameter.
-    Message(Mode mode);
+    explicit Message(Mode mode);
     /// \brief The destructor.
     ~Message();
 private:

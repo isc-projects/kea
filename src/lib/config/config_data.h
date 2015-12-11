@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -42,7 +42,8 @@ public:
     /// Constructs a ConfigData option with the given specification
     /// and an empty configuration.
     /// \param module_spec A ModuleSpec for the relevant module
-    ConfigData(const ModuleSpec& module_spec) : _module_spec(module_spec) {
+    explicit ConfigData(const ModuleSpec& module_spec) :
+        _module_spec(module_spec) {
         _config = isc::data::Element::createMap();
     }
 

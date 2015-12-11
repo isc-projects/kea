@@ -63,7 +63,7 @@ namespace dhcp {
         ///
         /// @param class_names A string containing a client classes separated
         /// with commas. The class names are trimmed before insertion to the set.
-        ClientClasses(const std::string& class_names);
+        explicit ClientClasses(const std::string& class_names);
 
         /// @brief returns if class x belongs to the defined classes
         ///

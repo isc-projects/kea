@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,9 @@
 #include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
 
-# include <ostream>
+#include <boost/noncopyable.hpp>
+
+#include <ostream>
 
 #include <unistd.h>             // for some network system calls
 
@@ -43,16 +45,12 @@ namespace asiolink {
 /// Derived class implementations are completely hidden within the
 /// implementation.  User applications only get access to concrete
 /// \c IOEndpoint objects via the abstract interfaces.
-class IOEndpoint {
+/// \note \c IOEndpoint is not copyable nor assignable.
+class IOEndpoint : private boost::noncopyable {
     ///
     /// \name Constructors and Destructor
     ///
-    /// Note: The copy constructor and the assignment operator are
-    /// intentionally defined as private, making this class non-copyable.
     //@{
-private:
-    IOEndpoint(const IOEndpoint& source);
-    IOEndpoint& operator=(const IOEndpoint& source);
 protected:
     /// \brief The default constructor.
     ///

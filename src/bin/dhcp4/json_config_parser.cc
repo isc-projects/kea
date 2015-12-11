@@ -119,7 +119,7 @@ public:
     ///
     /// @param ignored first parameter
     /// stores global scope parameters, options, option definitions.
-    Subnet4ConfigParser(const std::string&)
+    explicit Subnet4ConfigParser(const std::string&)
         :SubnetConfigParser("", globalContext(), IOAddress("0.0.0.0")) {
     }
 
@@ -371,7 +371,7 @@ public:
     ///
     /// @param dummy first argument, always ignored. All parsers accept a
     /// string parameter "name" as their first argument.
-    Subnets4ListConfigParser(const std::string&) {
+    explicit Subnets4ListConfigParser(const std::string&) {
     }
 
     /// @brief parses contents of the list

@@ -76,7 +76,7 @@ public:
     /// @brief Constructor.
     ///
     /// Sets arbitrary configuration sequence number.
-    SrvConfig(const uint32_t sequence);
+    explicit SrvConfig(const uint32_t sequence);
 
     /// @brief Returns summary of the configuration in the textual format.
     ///

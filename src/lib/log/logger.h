@@ -170,7 +170,7 @@ public:
     /// \note Note also that there is no constructor taking a std::string. This
     /// minimizes the possibility of initializing a static logger with a
     /// string, so leading to problems mentioned above.
-    Logger(const char* name) : loggerptr_(NULL) {
+    explicit Logger(const char* name) : loggerptr_(NULL) {
 
         // Validate the name of the logger.
         if (name == NULL) {

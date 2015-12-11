@@ -1,4 +1,4 @@
-// Copyright (C) 2012, 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -81,6 +81,7 @@ public:
     /// value.
     ///
     /// @param value A number to be assigned as min, max and default value.
+    // cppcheck-suppress noExplicitConstructor
     Triplet(T value)
         : min_(value), default_(value), max_(value),
           unspecified_(false) {

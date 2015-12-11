@@ -54,6 +54,7 @@ class DUID {
     } DUIDType;
 
     /// @brief Constructor from vector
+    // cppcheck-suppress noExplicitConstructor
     DUID(const std::vector<uint8_t>& duid);
 
     /// @brief Constructor from array and array size
@@ -155,6 +156,7 @@ public:
     static const size_t MAX_CLIENT_ID_LEN = DUID::MAX_DUID_LEN;
 
     /// @brief Constructor based on vector<uint8_t>
+    // cppcheck-suppress noExplicitConstructor
     ClientId(const std::vector<uint8_t>& clientid);
 
     /// @brief Constructor based on array and array size

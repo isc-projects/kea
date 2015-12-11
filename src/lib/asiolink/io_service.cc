@@ -30,7 +30,7 @@ namespace {
 // io_service::post().
 class CallbackWrapper {
 public:
-    CallbackWrapper(const boost::function<void()>& callback) :
+    explicit CallbackWrapper(const boost::function<void()>& callback) :
         callback_(callback)
     {}
     void operator()() {
@@ -43,7 +43,7 @@ private:
 
 class IOServiceImpl {
 private:
-    IOServiceImpl(const IOService& source);
+    explicit IOServiceImpl(const IOService& source);
     IOServiceImpl& operator=(const IOService& source);
 public:
     /// \brief The constructor

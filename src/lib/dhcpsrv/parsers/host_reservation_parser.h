@@ -30,7 +30,7 @@ public:
     ///
     /// @param subnet_id Identifier of the subnet that the host is
     /// connected to.
-    HostReservationParser(const SubnetID& subnet_id);
+    explicit HostReservationParser(const SubnetID& subnet_id);
 
     /// @brief Parses a single entry for host reservation.
     ///
@@ -80,7 +80,7 @@ public:
     ///
     /// @param subnet_id Identifier of the subnet that the host is
     /// connected to.
-    HostReservationParser4(const SubnetID& subnet_id);
+    explicit HostReservationParser4(const SubnetID& subnet_id);
 
     /// @brief Parses a single host reservation for DHCPv4.
     ///
@@ -108,7 +108,7 @@ public:
     ///
     /// @param subnet_id Identifier of the subnet that the host is
     /// connected to.
-    HostReservationParser6(const SubnetID& subnet_id);
+    explicit HostReservationParser6(const SubnetID& subnet_id);
 
     /// @brief Parses a single host reservation for DHCPv6.
     ///

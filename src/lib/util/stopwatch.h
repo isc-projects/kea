@@ -50,7 +50,7 @@ public:
     /// since it has been started (object has been constructed in this case.
     /// If the parameter is set to false (default value), the
     /// @c Stopwatch::start must be called to start time measurement.
-    Stopwatch(const bool autostart = true);
+    explicit Stopwatch(const bool autostart = true);
 
     /// @brief Destructor.
     ///

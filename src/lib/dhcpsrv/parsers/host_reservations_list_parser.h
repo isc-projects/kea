@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -36,7 +36,7 @@ public:
     ///
     /// @param subnet_id Identifier of the subnet to which the reservations
     /// belong.
-    HostReservationsListParser(const SubnetID& subnet_id)
+    explicit HostReservationsListParser(const SubnetID& subnet_id)
         : subnet_id_(subnet_id) {
     }
 

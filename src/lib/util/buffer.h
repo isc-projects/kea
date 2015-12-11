@@ -308,7 +308,7 @@ public:
     /// \brief Constructor from the initial size of the buffer.
     ///
     /// \param len The initial length of the buffer in bytes.
-    OutputBuffer(size_t len) :
+    explicit OutputBuffer(size_t len) :
         buffer_(NULL),
         size_(0),
         allocated_(len)

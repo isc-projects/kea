@@ -45,7 +45,7 @@ public:
     /// @c StopwatchMock::getCurrentTime is initialized to this value.
     /// Subsequent calls to the @c StopwatchMock::ffwd move the value of
     /// the @c current_time_ forward.
-    StopwatchMock(const ptime& ref_time);
+    explicit StopwatchMock(const ptime& ref_time);
 
     /// @brief Fast forward time.
     ///

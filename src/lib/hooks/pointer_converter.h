@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -38,7 +38,7 @@ public:
     /// one returned by dlsym).
     ///
     /// @param dlsym_ptr void* pointer returned by call to dlsym()
-    PointerConverter(void* dlsym_ptr) {
+    explicit PointerConverter(void* dlsym_ptr) {
         memset(&pointers_, 0, sizeof(pointers_));
         pointers_.dlsym_ptr = dlsym_ptr;
     }
@@ -51,7 +51,7 @@ public:
     /// "1".
     ///
     /// @param callout_ptr Pointer to callout function
-    PointerConverter(CalloutPtr callout_ptr) {
+    explicit PointerConverter(CalloutPtr callout_ptr) {
         memset(&pointers_, 0, sizeof(pointers_));
         pointers_.callout_ptr = callout_ptr;
     }

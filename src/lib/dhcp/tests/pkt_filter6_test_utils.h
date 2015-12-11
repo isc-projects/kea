@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -43,7 +43,7 @@ public:
     /// that no socket has been opened. Specific tests will reinitialize this
     /// structure with the values of the open sockets. For non-negative socket
     /// descriptors, the class destructor will close associated sockets.
-    PktFilter6Test(const uint16_t port);
+    explicit PktFilter6Test(const uint16_t port);
 
     /// @brief Destructor
     ///

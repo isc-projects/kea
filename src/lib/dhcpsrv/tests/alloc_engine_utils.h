@@ -76,7 +76,7 @@ public:
 
         /// @brief constructor
         /// @param type pool types that will be interated
-        NakedIterativeAllocator(Lease::Type type)
+        explicit NakedIterativeAllocator(Lease::Type type)
             :IterativeAllocator(type) {
         }
 

@@ -62,7 +62,7 @@ public:
         }
     }
 
-    NAPTRImpl(const std::string& naptr_str) : replacement(".") {
+    explicit NAPTRImpl(const std::string& naptr_str) : replacement(".") {
         std::istringstream ss(naptr_str);
         MasterLexer lexer;
         lexer.pushSource(ss);
@@ -81,7 +81,7 @@ public:
         }
     }
 
-    NAPTRImpl(MasterLexer& lexer) : replacement(".")
+    explicit NAPTRImpl(MasterLexer& lexer) : replacement(".")
     {
         parseNAPTRData(lexer);
     }

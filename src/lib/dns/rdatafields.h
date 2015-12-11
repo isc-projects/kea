@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -252,7 +252,7 @@ public:
     /// of this constructor.
     ///
     /// \param rdata The RDATA for which the \c RdataFields to be constructed.
-    RdataFields(const Rdata& rdata);
+    explicit RdataFields(const Rdata& rdata);
 
     /// Constructor from field parameters.
     ///

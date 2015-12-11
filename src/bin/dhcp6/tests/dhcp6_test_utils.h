@@ -69,7 +69,7 @@ private:
 /// @brief "naked" Dhcpv6Srv class that exposes internal members
 class NakedDhcpv6Srv: public isc::dhcp::Dhcpv6Srv {
 public:
-    NakedDhcpv6Srv(uint16_t port) : isc::dhcp::Dhcpv6Srv(port) {
+    explicit NakedDhcpv6Srv(uint16_t port) : isc::dhcp::Dhcpv6Srv(port) {
         // Open the "memfile" database for leases
         std::string memfile = "type=memfile universe=6 persist=false";
         isc::dhcp::LeaseMgrFactory::create(memfile);

@@ -36,7 +36,7 @@ public:
     /// For example, to specify TCP \c protocol must be \c IPPROTO_TCP.
     ///
     /// \param protocol The network protocol number for the socket.
-    DummySocket(const int protocol) : protocol_(protocol) {}
+    explicit DummySocket(const int protocol) : protocol_(protocol) {}
 
     /// \brief A dummy derived method of \c IOSocket::getNative().
     ///

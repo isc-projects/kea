@@ -50,7 +50,7 @@ public:
     /// @brief Constructor
     ///
     /// @param filename PID filename.
-    PIDFile(const std::string& filename);
+    explicit PIDFile(const std::string& filename);
 
     /// @brief Destructor
     ~PIDFile();

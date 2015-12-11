@@ -75,7 +75,7 @@ testGetTime() {
 // update method.
 class TestTSIGContext : public TSIGContext {
 public:
-    TestTSIGContext(const TSIGKey& key) :
+    explicit TestTSIGContext(const TSIGKey& key) :
         TSIGContext(key)
     {}
     TestTSIGContext(const Name& key_name, const Name& algorithm_name,

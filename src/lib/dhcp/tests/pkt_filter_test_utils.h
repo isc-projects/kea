@@ -43,7 +43,7 @@ public:
     /// that no socket has been opened. Specific tests will reinitialize this
     /// structure with the values of the open sockets. For non-negative socket
     /// descriptors, the class destructor will close associated sockets.
-    PktFilterTest(const uint16_t port);
+    explicit PktFilterTest(const uint16_t port);
 
     /// @brief Destructor
     ///

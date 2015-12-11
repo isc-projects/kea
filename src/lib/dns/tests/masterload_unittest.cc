@@ -36,7 +36,7 @@ namespace {
 // A callback functor for masterLoad() commonly used for the following tests.
 class TestCallback : public unary_function<ConstRRsetPtr, void> {
 public:
-    TestCallback(vector<ConstRRsetPtr>& rrsets) : rrsets_(rrsets) {}
+    explicit TestCallback(vector<ConstRRsetPtr>& rrsets) : rrsets_(rrsets) {}
     void operator()(ConstRRsetPtr rrset) {
         rrsets_.push_back(rrset);
     }
@@ -371,7 +371,7 @@ TEST_F(MasterLoadTest, loadBadRRText) {
 // in the middle of processing.
 class StreamInvalidator : public unary_function<ConstRRsetPtr, void> {
 public:
-    StreamInvalidator(stringstream& ss) : ss_(ss) {}
+    explicit StreamInvalidator(stringstream& ss) : ss_(ss) {}
     void operator()(ConstRRsetPtr) {
         ss_.setstate(ios::badbit);
     }

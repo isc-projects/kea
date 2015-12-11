@@ -39,7 +39,8 @@ protected:
     ~IntervalTimerTest() {}
     class TimerCallBack : public std::unary_function<void, void> {
     public:
-        TimerCallBack(IntervalTimerTest* test_obj) : test_obj_(test_obj) {}
+        explicit TimerCallBack(IntervalTimerTest* test_obj) :
+            test_obj_(test_obj) {}
         void operator()() const {
             test_obj_->timer_called_ = true;
             test_obj_->io_service_.stop();
@@ -50,7 +51,7 @@ protected:
     };
     class TimerCallBackCounter : public std::unary_function<void, void> {
     public:
-        TimerCallBackCounter(IntervalTimerTest* test_obj) :
+        explicit TimerCallBackCounter(IntervalTimerTest* test_obj) :
             test_obj_(test_obj)
         {
             counter_ = 0;
