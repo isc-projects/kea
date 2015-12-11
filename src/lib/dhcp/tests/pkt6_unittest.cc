@@ -1530,4 +1530,15 @@ TEST_F(Pkt6Test, getLabel) {
 
 }
 
+// Test that empty client identifier option doesn't cause an exception from
+// Pkt6::getLabel.
+TEST_F(Pkt6Test, getLabelEmptyClientId) {
+    // Create a packet.
+    Pkt6 pkt(DHCPV6_SOLICIT, 0x2312);
+
+    // Add empty client idenitifier option.
+    pkt.addOption(OptionPtr(new Option(Option::V6, D6O_CLIENTID)));
+    EXPECT_EQ("duid=[no info], tid=0x2312", pkt.getLabel());
+}
+
 }
