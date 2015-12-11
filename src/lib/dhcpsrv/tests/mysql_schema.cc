@@ -122,7 +122,9 @@ void createMySQLSchema() {
     // Execute creation statements.
     for (int i = 0; create_statement[i] != NULL; ++i) {
         ASSERT_EQ(0, mysql_query(mysql, create_statement[i]))
-            << "Failed on statement " << i << ": " << create_statement[i];
+            << "Failed on statement " << i << ": " << create_statement[i]
+            << " error: " << mysql_error(mysql) << " (error code "
+            << mysql_errno(mysql) << ")";
     }
 }
 

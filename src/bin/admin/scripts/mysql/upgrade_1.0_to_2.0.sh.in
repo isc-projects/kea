@@ -24,7 +24,7 @@ ALTER TABLE lease6
 CREATE TABLE lease_hwaddr_source (
     hwaddr_source INT PRIMARY KEY NOT NULL,
     name VARCHAR(40)
-);
+) ENGINE = INNODB;
 
 -- See src/lib/dhcp/dhcp/pkt.h for detailed explanation
 INSERT INTO lease_hwaddr_source VALUES (1, "HWADDR_SOURCE_RAW");

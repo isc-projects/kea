@@ -38,11 +38,6 @@ keaadmin=@abs_top_builddir@/src/bin/admin/kea-admin
 mysql_wipe() {
     printf "Wiping whole database %s\n" $db_name
 
-    # ipv6_reservations table must be deleted first, as it has contraints that
-    # are dependent on hosts. Therefore hosts table cannot be deleted before
-    # ipv6_reservations.
-    mysql_execute "DROP TABLE IF EXISTS ipv6_reservations;"
-
     # First we build the list of drop table commands
     # We don't bother with "cascade" because as of MySQL
     # 5.1 it is only there to ease porting, it doesn't
