@@ -337,7 +337,13 @@ class StatsMgr : public boost::noncopyable {
 
  private:
 
-    /// @anchor setValueInternal
+    /// @brief Private constructor.
+    /// StatsMgr is a singleton. It should be accessed using @ref instance
+    /// method.
+    StatsMgr();
+
+    /// @public
+
     /// @brief Sets a given statistic to specified value (internal version).
     ///
     /// This template method sets statistic identified by name to a value
@@ -361,7 +367,6 @@ class StatsMgr : public boost::noncopyable {
         }
     }
 
-    /// @anchor addValueInternal
     /// @brief Adds specified value to a given statistic (internal version).
     ///
     /// This template method adds specified value to a given statistic (identified
@@ -390,18 +395,14 @@ class StatsMgr : public boost::noncopyable {
         }
     }
 
-    /// @brief Private constructor.
-    /// StatsMgr is a singleton. It should be accessed using @ref instance
-    /// method.
-    StatsMgr();
-
-    /// @anchor addObservation
     /// @brief Adds a new observation.
     ///
     /// That's an utility method used by public @ref setValue() and
     /// @ref addValue() methods.
     /// @param obs observation
     void addObservation(const ObservationPtr& o);
+
+    /// @private
 
     /// @brief Tries to delete an observation.
     ///
