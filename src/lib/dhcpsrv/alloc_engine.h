@@ -397,7 +397,7 @@ public:
     /// response to SOLICIT).
     ///
     /// This method uses host reservation if ctx.host_ is set. The easy way to
-    /// set it is to call @ref isc::dhcp::AllocEngine::findReservation(ClientContext6& ctx) const.
+    /// set it is to call @ref findReservation-decl.
     /// The host reservation is convenient, but incurs performance penalty,
     /// so it can be tweaked on a per subnet basis. There are three possible modes:
     /// 1. disabled (no host reservation at all). This is the most performant one
@@ -608,6 +608,7 @@ public:
     void deleteExpiredReclaimedLeases4(const uint32_t secs);
 
 
+    /// @anchor findReservation-decl
     /// @brief Attempts to find appropriate host reservation.
     ///
     /// Attempts to find appropriate host reservation in HostMgr. If found, it
