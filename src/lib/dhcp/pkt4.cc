@@ -352,20 +352,22 @@ Pkt4::getLabel() const {
             client_id = ClientIdPtr(new ClientId(client_opt->getData()));
         } catch (...) {
             // ClientId may throw if the client-id is too short.
-            suffix = "(malformed client-id)";
+            suffix = " (malformed client-id)";
         }
     }
 
-    std::string txt;
+    std::ostringstream label;
     try {
-        txt = makeLabel(hwaddr_, client_id, transid_);
+        label << makeLabel(hwaddr_, client_id, transid_);
     } catch (...) {
         // This should not happen with the current code, but we may add extra
         // sanity checks in the future that would possibly throw if
         // the hwaddr lenght is 0.
-        txt = "(malformed hw address)";
+        label << " (malformed hw address)";
     }
-    return (txt + suffix);
+
+    label << suffix;
+    return (label.str());
 }
 
 std::string
