@@ -425,7 +425,7 @@ protected:
     ///
     /// This method processes incoming DHCPDECLINE. In particular, it extracts
     /// Requested IP Address option, checks that the address really belongs to
-    /// the client and if it does, calls @ref declineLease.
+    /// the client and if it does, calls @ref declineLease().
     ///
     /// @param decline message received from client
     void processDecline(Pkt4Ptr& decline);
@@ -730,7 +730,7 @@ protected:
     ///
     /// @note This is done in two phases: first the content of the
     /// vendor-class-identifier option is used as a class, by
-    /// calling @ref classifyByVendor. Second classification match
+    /// calling @ref classifyByVendor(). Second classification match
     /// expressions are evaluated. The resulting classes will be stored
     /// in the packet (see @ref isc::dhcp::Pkt4::classes_ and
     /// @ref isc::dhcp::Pkt4::inClass).
