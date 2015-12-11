@@ -170,6 +170,52 @@ set_logger() {
     export KEA_LOGGER_DESTINATION=${LOG_FILE}
 }
 
+# PID file path is by default var/kea, but can be overriden by the
+# environmental variable.
+PID_FILE_PATH=@localstatedir@/@PACKAGE@/
+if [ ! -z ${KEA_PIDFILE_DIR} ]; then
+    PID_FILE_PATH="${KEA_PIDFILE_DIR}"
+fi
+
+# Returns 1 if specified Kea process is running, 0 otherwise
+# This function uses PID file to make this determination.
+# Return values:
+#   _GET_PID: holds a PID if process is running
+#   _GET_PIDS_NUM: 1 if process running, 0 otherwise
+get_pid() {
+    local proc_name=${1}     # Process name
+    local cfg_file_name=${2} # Configuration file name without extension.
+
+    # PID file name includes process name. The process name is required.
+    if [ -z ${proc_name} ]; then
+        test_lib_error "get_pid requires process name"
+        clean_exit 1
+    fi
+
+    # PID file name includes server configuration file name. For most of
+    # the tests it is 'test-config' (excluding .json extension). It is
+    # possible to specify custom name if required.
+    if [ -z ${cfg_file_name} ]; then
+        cfg_file_name="test_config"
+    fi
+
+    # Get the absolute location of the PID file for the specified process
+    # name.
+    abs_pidfile_path="${PID_FILE_PATH}/${cfg_file_name}.${proc_name}.pid"
+    _GET_PID=0
+    _GET_PIDS_NUM=0
+
+    # If the PID file exists, get the PID and see if the process is alive.
+    if [ -e ${abs_pidfile_path} ]; then
+        pid=$( cat $abs_pidfile_path )
+        kill -0 ${pid} > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            _GET_PID=${pid}
+            _GET_PIDS_NUM=1
+        fi
+    fi
+}
+
 # Returns the number of running process pids and the list of pids.
 # Return values:
 #   _GET_PIDS: holds space separated list of pids.
@@ -236,13 +282,12 @@ cleanup() {
     # of them if running.
     for proc_name in ${KEA_PROCS}
     do
-        get_pids ${proc_name}
-        # Shut down running Kea processes.
-        for pid in ${_GET_PIDS}
-        do
-            printf "Shutting down Kea proccess having pid %d.\n" ${pid}
-            kill -9 ${pid}
-        done
+        get_pid ${proc_name}
+        # Shut down running Kea process.
+        if [ ${_GET_PIDS_NUM} -ne 0 ]; then
+            printf "Shutting down Kea proccess having pid %d.\n" ${_GET_PID}
+            kill -9 ${_GET_PID}
+        fi
     done
 
     # Remove temporary files.
@@ -391,7 +436,7 @@ wait_for_server_down() {
     test_lib_info "wait_for_server_down ${proc_name}: " "skip-new-line"
     while [ ${loops} -le ${timeout} ]; do
         printf "."
-        get_pids ${proc_name}
+        get_pid ${proc_name}
         if [ ${_GET_PIDS_NUM} -eq 0 ]; then
             printf "\n"
             _WAIT_FOR_SERVER_DOWN=1
@@ -421,15 +466,15 @@ must be a number"
         clean_exit 1
     fi
     # Get Kea pid.
-    get_pids ${proc_name}
+    get_pid ${proc_name}
     if [ ${_GET_PIDS_NUM} -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started.\
  Found %d processes started.\n" ${_GET_PIDS_NUM}
         clean_exit 1
     fi
-    printf "Sending signal ${sig} to Kea process (pid=%s).\n" ${_GET_PIDS}
+    printf "Sending signal ${sig} to Kea process (pid=%s).\n" ${_GET_PID}
     # Actually send a signal.
-    kill -${sig} ${_GET_PIDS}
+    kill -${sig} ${_GET_PID}
 }
 
 # Verifies that a server is up running by its PID file
@@ -537,7 +582,7 @@ logger_vars_test() {
     sleep 1
 
     # Check if it is still running. It should have terminated.
-    get_pids ${bin}
+    get_pid ${bin}
     if [ ${_GET_PIDS_NUM} -ne 0 ]; then
         printf "ERROR: expected Kea process to not start. Found %d processes"
         printf " running.\n" ${_GET_PIDS_NUM}
@@ -569,7 +614,7 @@ logger_vars_test() {
     sleep 1
 
     # Check if it is still running. It should have terminated.
-    get_pids ${bin}
+    get_pid ${bin}
     if [ ${_GET_PIDS_NUM} -ne 0 ]; then
         printf "ERROR: expected Kea process to not start. Found %d processes"
         printf " running.\n" ${_GET_PIDS_NUM}
