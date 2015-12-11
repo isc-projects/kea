@@ -103,6 +103,8 @@ public:
     /// wrapper around static makeLabel(). See this method for string
     /// content.
     ///
+    /// This method is exception safe.
+    ///
     /// @return string with text representation
     std::string getLabel() const;
 
