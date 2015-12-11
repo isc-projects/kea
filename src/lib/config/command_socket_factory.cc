@@ -134,6 +134,8 @@ private:
         return (fd);
     }
 
+    /// @public
+
     /// @brief Connection acceptor, a callback used to accept incoming connections.
     ///
     /// This callback is used on a control socket. Once called, it will accept
@@ -179,6 +181,8 @@ private:
         LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_OPENED).arg(fd2)
             .arg(sockfd_);
     }
+
+    /// @private
 
     // This method is called when we shutdown the connection.
     void close() {
