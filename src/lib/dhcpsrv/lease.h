@@ -430,7 +430,7 @@ struct Lease6 : public Lease {
     /// @brief Lease type
     ///
     /// One of normal address, temporary address, or prefix.
-    Type type_;
+    Lease::Type type_;
 
     /// @brief IPv6 prefix length
     ///
@@ -467,7 +467,7 @@ struct Lease6 : public Lease {
     /// @param subnet_id A Subnet identifier.
     /// @param hwaddr hardware/MAC address (optional)
     /// @param prefixlen An address prefix length (optional, defaults to 128)
-    Lease6(Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
+    Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
            uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
            uint32_t t2, SubnetID subnet_id, const HWAddrPtr& hwaddr = HWAddrPtr(),
            uint8_t prefixlen = 128);
@@ -488,7 +488,7 @@ struct Lease6 : public Lease {
     /// @param hostname FQDN of the client which gets the lease.
     /// @param hwaddr hardware address (MAC), may be NULL
     /// @param prefixlen An address prefix length.
-    Lease6(Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
+    Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
            uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
            uint32_t t2, SubnetID subnet_id, const bool fqdn_fwd,
            const bool fqdn_rev, const std::string& hostname,
