@@ -32,15 +32,13 @@ namespace {
 // Deletion of existing tables.
 
 const char* destroy_statement[] = {
+    // Turning off referential integrity checks ensures tables get dropped
+    "SET SESSION FOREIGN_KEY_CHECKS = 0",
     "DROP TABLE lease4",
     "DROP TABLE lease6",
     "DROP TABLE lease6_types",
     "DROP TABLE lease_hwaddr_source",
     "DROP TABLE schema_version",
-
-    // We need to drop ipv6_reservations before hosts, as it has constrains
-    // that depend on hosts. Therefore hosts table cannot be deleted while
-    // ipv6_reservations exists.
     "DROP TABLE ipv6_reservations",
     "DROP TABLE hosts",
     "DROP TABLE dhcp4_options",
@@ -92,7 +90,7 @@ const char* create_statement[] = {
     "CREATE TABLE lease6_types ("
         "lease_type TINYINT PRIMARY KEY NOT NULL,"
         "name VARCHAR(5)"
-        ")",
+        ") ENGINE = INNODB",
 
     "INSERT INTO lease6_types VALUES (0, \"IA_NA\")",
     "INSERT INTO lease6_types VALUES (1, \"IA_TA\")",
@@ -101,7 +99,7 @@ const char* create_statement[] = {
     "CREATE TABLE schema_version ("
         "version INT PRIMARY KEY NOT NULL,"
         "minor INT"
-        ")",
+        ") ENGINE = INNODB",
 
     "INSERT INTO schema_version VALUES (1, 0)",
     "COMMIT",
