@@ -228,7 +228,7 @@ Lease4::operator=(const Lease4& other) {
     return (*this);
 }
 
-Lease6::Lease6(Type type, const isc::asiolink::IOAddress& addr,
+Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
                DuidPtr duid, uint32_t iaid, uint32_t preferred, uint32_t valid,
                uint32_t t1, uint32_t t2, SubnetID subnet_id,
                const HWAddrPtr& hwaddr, uint8_t prefixlen)
@@ -242,7 +242,7 @@ Lease6::Lease6(Type type, const isc::asiolink::IOAddress& addr,
     cltt_ = time(NULL);
 }
 
-Lease6::Lease6(Type type, const isc::asiolink::IOAddress& addr,
+Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
                DuidPtr duid, uint32_t iaid, uint32_t preferred, uint32_t valid,
                uint32_t t1, uint32_t t2, SubnetID subnet_id,
                const bool fqdn_fwd, const bool fqdn_rev,
