@@ -367,6 +367,8 @@ class StatsMgr : public boost::noncopyable {
         }
     }
 
+    /// @public
+
     /// @brief Adds specified value to a given statistic (internal version).
     ///
     /// This template method adds specified value to a given statistic (identified
@@ -395,12 +397,14 @@ class StatsMgr : public boost::noncopyable {
         }
     }
 
+    /// @public
+
     /// @brief Adds a new observation.
     ///
     /// That's an utility method used by public @ref setValue() and
     /// @ref addValue() methods.
-    /// @param obs observation
-    void addObservation(const ObservationPtr& o);
+    /// @param stat observation
+    void addObservation(const ObservationPtr& stat);
 
     /// @private
 
