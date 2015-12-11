@@ -555,7 +555,18 @@ Pkt6::toText() const {
 DuidPtr
 Pkt6::getClientId() const {
     OptionPtr opt_duid = getOption(D6O_CLIENTID);
-    return (opt_duid ? DuidPtr(new DUID(opt_duid->getData())) : DuidPtr());
+    try {
+        // This will throw if the DUID length is larger than 128 bytes
+        // or is too short.
+        return (opt_duid ? DuidPtr(new DUID(opt_duid->getData())) : DuidPtr());
+    } catch (...) {
+        // Do nothing. This method is used only by getLabel(), which is
+        // used for logging purposes. We should not throw, but rather
+        // report no DUID. We should not log anything, as we're in the
+        // process of logging something for this packet. So the only
+        // choice left is to return an empty pointer.
+    }
+    return DuidPtr();
 }
 
 isc::dhcp::OptionCollection
