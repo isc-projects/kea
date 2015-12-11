@@ -566,7 +566,7 @@ Pkt6::getClientId() const {
         // process of logging something for this packet. So the only
         // choice left is to return an empty pointer.
     }
-    return DuidPtr();
+    return (DuidPtr());
 }
 
 isc::dhcp::OptionCollection
