@@ -28,7 +28,8 @@ dhcp4_client_classes VARCHAR(255) NULL ,
 dhcp6_client_classes VARCHAR(255) NULL ,
 PRIMARY KEY (host_id) ,
 INDEX key_dhcp4_identifier_subnet_id (dhcp_identifier ASC, dhcp_identifier_type ASC) ,
-INDEX key_dhcp6_identifier_subnet_id (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC) );
+INDEX key_dhcp6_identifier_subnet_id (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC) 
+) ENGINE = INNODB;
 
 CREATE TABLE IF NOT EXISTS ipv6_reservations (
 reservation_id INT NOT NULL AUTO_INCREMENT ,
@@ -43,7 +44,8 @@ CONSTRAINT fk_ipv6_reservations_Host
 FOREIGN KEY (host_id )
 REFERENCES hosts (host_id )
 ON DELETE NO ACTION
-ON UPDATE NO ACTION);
+ON UPDATE NO ACTION
+) ENGINE = INNODB;
 
 CREATE TABLE IF NOT EXISTS dhcp4_options (
 option_id INT UNSIGNED NOT NULL AUTO_INCREMENT ,
@@ -62,7 +64,8 @@ CONSTRAINT fk_options_host1
 FOREIGN KEY (host_id )
 REFERENCES hosts (host_id )
 ON DELETE NO ACTION
-ON UPDATE NO ACTION);
+ON UPDATE NO ACTION
+) ENGINE = INNODB;
 
 CREATE TABLE IF NOT EXISTS dhcp6_options (
 option_id INT UNSIGNED NOT NULL AUTO_INCREMENT ,
@@ -81,7 +84,8 @@ CONSTRAINT fk_options_host10
 FOREIGN KEY (host_id )
 REFERENCES hosts (host_id )
 ON DELETE NO ACTION
-ON UPDATE NO ACTION);
+ON UPDATE NO ACTION
+) ENGINE = INNODB;
 
 DELIMITER $$
 CREATE TRIGGER host_BDEL BEFORE DELETE ON hosts FOR EACH ROW
