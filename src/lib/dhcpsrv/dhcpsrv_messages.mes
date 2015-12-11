@@ -238,12 +238,6 @@ hook point sets the skip flag. It means that the server was told that
 no lease6 should be assigned. The server will not put that lease in its
 database and the client will get a NoAddrsAvail for that IA_NA option.
 
-% DHCPSRV_HOSTDB_NOTYPE 'type' parameter is missing from hosts database configuration: %1
-This is an error message, logged when an attempt has been made to access
-the configured hosts database, but no 'type' keyword has been included in
-the access string.  The access string (less any passwords) is included
-in the message.
-
 % DHCPSRV_INVALID_ACCESS invalid database access string: %1
 This is logged when an attempt has been made to parse a database access string
 and the attempt ended in error.  The access string in question - which
@@ -795,8 +789,4 @@ indicate an error in the source code, please submit a bug report.
 
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
-message) that is unknown to the software.  This is a configuration error.
-
-% DHCPSRV_UNKNOWN_HOST_DB unknown hosts database type: %1
-The hosts database access string specified a database type (given in the
 message) that is unknown to the software.  This is a configuration error.
