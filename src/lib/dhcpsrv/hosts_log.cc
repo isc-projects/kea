@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// @file Defines the logger used by the @c isc::dhcp::HostMgr
+/// @brief Defines the logger used by the @c isc::dhcp::HostMgr
 
 #include "dhcpsrv/hosts_log.h"
 

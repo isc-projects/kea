@@ -408,7 +408,7 @@ class CAA : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
-    explicit CAA(const std::string& type_str);
+    explicit CAA(const std::string& caa_str);
     CAA(isc::util::InputBuffer& buffer, size_t rdata_len);
     CAA(const CAA& other);
     CAA(
@@ -2304,7 +2304,7 @@ class TLSA : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
-    explicit TLSA(const std::string& type_str);
+    explicit TLSA(const std::string& tlsa_str);
     TLSA(isc::util::InputBuffer& buffer, size_t rdata_len);
     TLSA(const TLSA& other);
     TLSA(

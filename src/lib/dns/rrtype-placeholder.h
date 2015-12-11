@@ -185,7 +185,8 @@ public:
     /// If resource allocation in rendering process fails, a corresponding
     /// standard exception will be thrown.
     ///
-    /// \param buffer An output buffer to store the wire data.
+    /// \param renderer DNS message rendering context that encapsulates the
+    /// output buffer in which the RRType is to be stored.
     void toWire(AbstractMessageRenderer& renderer) const;
     /// \brief Render the \c RRType in the wire format.
     ///
@@ -195,8 +196,7 @@ public:
     /// If resource allocation in rendering process fails, a corresponding
     /// standard exception will be thrown.
     ///
-    /// \param renderer DNS message rendering context that encapsulates the
-    /// output buffer in which the RRType is to be stored.
+    /// \param buffer An output buffer to store the wire data.
     void toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
