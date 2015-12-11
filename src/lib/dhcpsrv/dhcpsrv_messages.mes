@@ -538,7 +538,7 @@ V6) is about to open a MySQL hosts database.  The parameters of the
 connection including database name and username needed to access it
 (but not the password if any) are logged.
 
-% DHCPSRV_MYSQL_HOST_DB_GET_VERSION obtaining schema version information
+% DHCPSRV_MYSQL_HOST_DB_GET_VERSION obtaining schema version information for the MySQL hosts database
 A debug message issued when the server is about to obtain schema version
 information from the MySQL hosts database.
 
