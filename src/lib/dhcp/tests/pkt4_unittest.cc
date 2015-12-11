@@ -1023,6 +1023,19 @@ TEST_F(Pkt4Test, getLabel) {
 
 }
 
+// Test that empty client identifier option doesn't cause an exception from
+// Pkt4::getLabel.
+TEST_F(Pkt4Test, getLabelEmptyClientId) {
+    Pkt4 pkt(DHCPOFFER, 1234);
+
+    // Create empty client identifier option.
+    OptionPtr empty_opt(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER));
+    pkt.addOption(empty_opt);
+
+    EXPECT_EQ("[hwtype=1 ], cid=[no info], tid=0x4d2"
+              " (malformed client-id)", pkt.getLabel());
+}
+
 // Tests that the correct DHCPv4 message name is returned for various
 // message types.
 TEST_F(Pkt4Test, getName) {

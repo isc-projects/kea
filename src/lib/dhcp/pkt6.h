@@ -217,6 +217,8 @@ public:
 
     /// @brief Retrieves the DUID from the Client Identifier option.
     ///
+    /// This method is exception safe.
+    ///
     /// @return Pointer to the DUID or NULL if the option doesn't exist.
     DuidPtr getClientId() const;
 

@@ -343,15 +343,31 @@ std::string
 Pkt4::getLabel() const {
 
     /// @todo If and when client id is extracted into Pkt4, this method should
-    /// the instance member rather than fetch it every time.
+    /// use the instance member rather than fetch it every time.
+    std::string suffix;
     ClientIdPtr client_id;
     OptionPtr client_opt = getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    if (client_opt ) {
-        client_id = ClientIdPtr(new ClientId(client_opt->getData()));
+    if (client_opt) {
+        try {
+            client_id = ClientIdPtr(new ClientId(client_opt->getData()));
+        } catch (...) {
+            // ClientId may throw if the client-id is too short.
+            suffix = " (malformed client-id)";
+        }
     }
 
-    return makeLabel(hwaddr_, client_id, transid_);
-
+    std::ostringstream label;
+    try {
+        label << makeLabel(hwaddr_, client_id, transid_);
+    } catch (...) {
+        // This should not happen with the current code, but we may add extra
+        // sanity checks in the future that would possibly throw if
+        // the hwaddr length is 0.
+        label << " (malformed hw address)";
+    }
+ 
+    label << suffix;
+    return (label.str());
 }
 
 std::string
