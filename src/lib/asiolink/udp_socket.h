@@ -54,7 +54,7 @@ public:
     /// \param socket The ASIO representation of the UDP socket.  It is assumed
     ///        that the caller will open and close the socket, so these
     ///        operations are a no-op for that socket.
-    UDPSocket(boost::asio::ip::udp::socket& socket);
+    explicit UDPSocket(boost::asio::ip::udp::socket& socket);
 
     /// \brief Constructor
     ///

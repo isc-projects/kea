@@ -71,6 +71,7 @@ public:
     /// This constructor never throws an exception.
     ///
     /// \param asio_address The ASIO \c ip::address to be converted.
+    // cppcheck-suppress noExplicitConstructor
     IOAddress(const boost::asio::ip::address& asio_address);
     //@}
 

@@ -136,7 +136,7 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
-    Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& parameters);
+    explicit Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes file)
     virtual ~Memfile_LeaseMgr();

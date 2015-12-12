@@ -176,7 +176,7 @@ public:
     ///
     /// Clears configuration, creates new lease manager and allocation engine
     /// instances.
-    ExpirationAllocEngineTest(const std::string& lease_mgr_params) {
+    explicit ExpirationAllocEngineTest(const std::string& lease_mgr_params) {
         // Clear configuration.
         CfgMgr::instance().clear();
         D2ClientConfigPtr cfg(new D2ClientConfig());

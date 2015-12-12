@@ -68,7 +68,7 @@ public:
     /// \param socket The ASIO representation of the TCP socket.  It is assumed
     ///        that the caller will open and close the socket, so these
     ///        operations are a no-op for that socket.
-    TCPSocket(boost::asio::ip::tcp::socket& socket);
+    explicit TCPSocket(boost::asio::ip::tcp::socket& socket);
 
     /// \brief Constructor
     ///

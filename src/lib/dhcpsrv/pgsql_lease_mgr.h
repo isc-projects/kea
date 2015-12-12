@@ -146,7 +146,7 @@ public:
     /// @throw isc::dhcp::DbOpenError Error opening the database
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
+    explicit PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
     virtual ~PgSqlLeaseMgr();

@@ -3,6 +3,11 @@
 debug
 missingInclude
 
+// flex and bison generated files
+*:lexer.cc
+*:parser.h
+*:stack.hh
+
 // Please don't add any suppressions here. We now use inline
 // suppressions (in the .cc files) so that we don't have to
 // maintain line numbers in this file.

@@ -65,7 +65,7 @@ public:
     /// way, any error from mysql_stmt_free_result is ignored. (Generating
     /// an exception is not much help, as it will only confuse things if the
     /// method calling mysql_stmt_fetch is exiting via an exception.)
-    MySqlFreeResult(MYSQL_STMT* statement) : statement_(statement)
+    explicit MySqlFreeResult(MYSQL_STMT* statement) : statement_(statement)
     {}
 
     /// @brief Destructor
@@ -150,7 +150,7 @@ public:
     /// @brief Constructor
     ///
     /// Initialize MySqlConnection object with parameters needed for connection.
-    MySqlConnection(const ParameterMap& parameters)
+    explicit MySqlConnection(const ParameterMap& parameters)
         : DatabaseConnection(parameters) {
     }
 

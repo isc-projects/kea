@@ -61,7 +61,7 @@ public:
     /// corresponding ASIO class, \c udp::endpoint.
     ///
     /// \param asio_endpoint The ASIO representation of the UDP endpoint.
-    UDPEndpoint(boost::asio::ip::udp::endpoint& asio_endpoint) :
+    explicit UDPEndpoint(boost::asio::ip::udp::endpoint& asio_endpoint) :
         asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
     {}
 
@@ -71,7 +71,7 @@ public:
     /// corresponding ASIO class, \c udp::endpoint.
     ///
     /// \param asio_endpoint The ASIO representation of the TCP endpoint.
-    UDPEndpoint(const boost::asio::ip::udp::endpoint& asio_endpoint) :
+    explicit UDPEndpoint(const boost::asio::ip::udp::endpoint& asio_endpoint) :
         asio_endpoint_placeholder_(new boost::asio::ip::udp::endpoint(asio_endpoint)),
         asio_endpoint_(*asio_endpoint_placeholder_)
     {}

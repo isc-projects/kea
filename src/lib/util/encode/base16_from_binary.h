@@ -80,7 +80,7 @@ class base16_from_binary :
 public:
     // make composable by using templated constructor
     template<class T>
-    base16_from_binary(T start) :
+    explicit base16_from_binary(T start) :
         super_t(
             Base(static_cast<T>(start)),
             detail::from_4_bit<CharType>()

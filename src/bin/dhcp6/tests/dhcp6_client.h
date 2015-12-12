@@ -74,7 +74,7 @@ public:
         /// @brief Constructor which sets the lease type.
         ///
         /// @param lease_type One of the D6O_IA_NA or D6O_IA_PD.
-        LeaseInfo(const uint16_t lease_type) :
+        explicit LeaseInfo(const uint16_t lease_type) :
             lease_(), status_code_(0) {
             lease_.type_ = lease_type == D6O_IA_NA ? Lease::TYPE_NA :
                 Lease::TYPE_PD;
@@ -178,7 +178,7 @@ public:
     /// - not relayed
     ///
     /// @param srv Object representing server under test.
-    Dhcp6Client(boost::shared_ptr<isc::dhcp::test::NakedDhcpv6Srv>& srv);
+    explicit Dhcp6Client(boost::shared_ptr<isc::dhcp::test::NakedDhcpv6Srv>& srv);
 
     /// @brief Create lease for the client.
     ///

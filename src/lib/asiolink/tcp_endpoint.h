@@ -61,7 +61,7 @@ public:
     /// corresponding ASIO class, \c tcp::endpoint.
     ///
     /// \param asio_endpoint The ASIO representation of the TCP endpoint.
-    TCPEndpoint(boost::asio::ip::tcp::endpoint& asio_endpoint) :
+    explicit TCPEndpoint(boost::asio::ip::tcp::endpoint& asio_endpoint) :
         asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
     {}
 
@@ -71,7 +71,7 @@ public:
     /// corresponding ASIO class, \c tcp::endpoint.
     ///
     /// \param asio_endpoint The ASIO representation of the TCP endpoint.
-    TCPEndpoint(const boost::asio::ip::tcp::endpoint& asio_endpoint) :
+    explicit TCPEndpoint(const boost::asio::ip::tcp::endpoint& asio_endpoint) :
         asio_endpoint_placeholder_(new boost::asio::ip::tcp::endpoint(asio_endpoint)),
         asio_endpoint_(*asio_endpoint_placeholder_)
     {}

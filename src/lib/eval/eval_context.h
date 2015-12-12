@@ -46,7 +46,7 @@ public:
     /// @param option_universe Option universe: DHCPv4 or DHCPv6. This is used
     /// by the parser to determine which option definitions set should be used
     /// to map option names to option codes.
-    EvalContext(const Option::Universe& option_universe);
+    explicit EvalContext(const Option::Universe& option_universe);
 
     /// @brief destructor
     virtual ~EvalContext();

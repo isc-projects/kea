@@ -88,7 +88,7 @@ class binary_from_base32hex : public
 public:
     // make composable by using templated constructor
     template<class T>
-    binary_from_base32hex(T start) :
+    explicit binary_from_base32hex(T start) :
         super_t(
             Base(static_cast<T>(start)),
             detail::to_5_bit<CharType>()

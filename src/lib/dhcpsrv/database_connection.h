@@ -71,8 +71,8 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
-    DatabaseConnection(const ParameterMap& parameters)
-        :parameters_(parameters) {
+    explicit DatabaseConnection(const ParameterMap& parameters)
+        : parameters_(parameters) {
     }
 
     /// @brief Returns value of a connection parameter.

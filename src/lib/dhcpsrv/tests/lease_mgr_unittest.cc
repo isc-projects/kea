@@ -43,7 +43,7 @@ public:
     /// dbconfig is a generic way of passing parameters. Parameters
     /// are passed in the "name=value" format, separated by spaces.
     /// Values may be enclosed in double quotes, if needed.
-    ConcreteLeaseMgr(const DatabaseConnection::ParameterMap&)
+    explicit ConcreteLeaseMgr(const DatabaseConnection::ParameterMap&)
         : LeaseMgr()
     {}
 

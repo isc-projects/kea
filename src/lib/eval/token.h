@@ -98,7 +98,7 @@ public:
     /// Value is set during token construction.
     ///
     /// @param str constant string to be represented.
-    TokenString(const std::string& str)
+    explicit TokenString(const std::string& str)
         :value_(str){
     }
 
@@ -123,7 +123,7 @@ public:
     /// @param str constant string to be represented
     /// (must be "0x" or "0X" followed by a string of hexadecimal digits
     /// or decoding will fail)
-    TokenHexString(const std::string& str);
+    explicit TokenHexString(const std::string& str);
 
     /// @brief Token evaluation (puts value of the constant string on
     /// the stack after decoding or an empty string if decoding fails

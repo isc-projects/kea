@@ -140,7 +140,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param filename CSV file name.
-    VersionedCSVFile(const std::string& filename);
+    explicit VersionedCSVFile(const std::string& filename);
 
     /// @brief Destructor
     virtual ~VersionedCSVFile();

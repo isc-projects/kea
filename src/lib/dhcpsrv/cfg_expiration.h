@@ -133,7 +133,7 @@ public:
     /// test mode. In this mode the intervals for the timers are considered to
     /// be specified in milliseconds, rather than seconds. This facilitates
     /// testing execution of timers without the delays.
-    CfgExpiration(const bool test_mode = false);
+    explicit CfgExpiration(const bool test_mode = false);
 
     /// @brief Returns reclaim-timer-wait-time
     uint16_t getReclaimTimerWaitTime() const {

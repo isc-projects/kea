@@ -75,7 +75,7 @@ public:
     /// @c Memfile_LeaseMgr class.
     ///
     /// @param callback A pointer to the callback function.
-    LFCSetup(asiolink::IntervalTimer::Callback callback);
+    explicit LFCSetup(asiolink::IntervalTimer::Callback callback);
 
     /// @brief Destructor.
     ///

@@ -75,7 +75,7 @@ public:
     ///
     /// @param storage_location Absolute path to the file where DUID is
     /// stored.
-    DUIDFactory(const std::string& storage_location = "");
+    explicit DUIDFactory(const std::string& storage_location = "");
 
     /// @brief Checks if generated DUID will be stored in the file.
     ///
