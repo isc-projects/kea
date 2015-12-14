@@ -1,3 +1,8 @@
+10XX.	[doc]		sar
+	Correct v6 classification examples to use client-id (1) instead
+	of server-id (2).
+	(Trac #4222, git TBD)
+
 1069.	[bug]		tomek
 	Improved handling of incoming packets with invalid client-id
 	and DUID.
