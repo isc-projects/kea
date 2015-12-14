@@ -164,9 +164,9 @@ INFO/keactrl: Starting kea-dhcp-ddns -c /usr/local/etc/kea/kea.conf -d
       </para>
 
       <para>Kea's servers create PID files upon startup. These files are used
-      by keactrl to deteremine whether or not a given server is running.  If
+      by keactrl to determine whether or not a given server is running.  If
       one or more servers are running when the start command is issued, the
-      output will look similiar to the following:
+      output will look similar to the following:
 <screen>
 <userinput>$ keactrl start</userinput>
 INFO/keactrl: kea-dhcp4 appears to be running, see: PID 10918, PID file: /usr/local/var/kea/kea.kea-dhcp4.pid.
