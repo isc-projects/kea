@@ -36,7 +36,7 @@
       a <replaceable>major.minor</replaceable> format. The minor
       number is increased when there are backward compatibile changes
       introduced.  For example, the addition of a new index. It is
-      desirable, but not mandatory to to apply such a change; you
+      desirable, but not mandatory to apply such a change; you
       can run on older database version if you want to. (Although, in
       the example given, running without the new index may be at the
       expense of a performance penalty.) On the other hand, the major
