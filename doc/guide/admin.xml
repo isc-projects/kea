@@ -34,7 +34,7 @@
     <para>
       Backend versions are specified in
       a <replaceable>major.minor</replaceable> format. The minor
-      number is increased when there are backward compatibile changes
+      number is increased when there are backward compatible changes
       introduced.  For example, the addition of a new index. It is
       desirable, but not mandatory to apply such a change; you
       can run on older database version if you want to. (Although, in

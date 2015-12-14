@@ -10,7 +10,7 @@
     <section id="kea-lfc-overview">
       <title>Overview</title>
       <para><command>kea-lfc</command> is a service process that removes
-      redundant infomation from the files used to provide persistent storage
+      redundant information from the files used to provide persistent storage
       for the memfile data base backend. This service is written to run as a
       stand alone process.  
       </para>
@@ -58,7 +58,7 @@ kea-lfc [-4 | -6] -c config-file -p pid-file -x previous-file -i copy-file -o ou
             When <command>kea-lfc</command> starts this
             is the result of any previous run of <command>kea-lfc</command>.
             When <command>kea-lfc</command> finishes it is the result of this run.
-            If <command>kea-lfc</command> is interrupted before compelting
+            If <command>kea-lfc</command> is interrupted before completing,
             this file may not exist.
           </simpara></listitem>
 

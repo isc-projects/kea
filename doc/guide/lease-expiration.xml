@@ -136,7 +136,7 @@
     the cycles.
     </para>
 
-    <para>According to the <command>reclamim-timer-wait-time</command> the
+    <para>According to the <command>reclaim-timer-wait-time</command> the
     server keeps fixed intervals of 5 seconds between the end of one cycle
     and the start of the next cycle. This guarantees the presence of
     5s long periods during which the server remains responsive to DHCP
