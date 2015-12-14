@@ -724,7 +724,7 @@ That could either mean missing functionality or invalid or broken relay or clien
 The list of formally defined message types is available here:
 http://www.iana.org/assignments/dhcpv6-parameters.
 
-% DHCP6_USING_SERVERID server is using server-id %1 and stores in the the file %2
+% DHCP6_USING_SERVERID server is using server-id %1 and stores in the file %2
 This info message is logged when the server reads its server-id from a
 file or generates it. This message is a notification to the administrator
 what server-id will be used and where it is persisted. Typically, there is
