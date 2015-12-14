@@ -169,7 +169,7 @@
         <para>
             The template files should be used in conjunction with the command
             line parameters which specify offsets of the data fields being
-            modified in outbound packets. For example, example, the <option>-E
+            modified in outbound packets. For example, the <option>-E
             <replaceable class="parameter">time-offset</replaceable></option>
             switch specifies the offset of the DHCPv6 Elapsed Time option in
             the packet template. If the offset is specified, perfdhcp will
