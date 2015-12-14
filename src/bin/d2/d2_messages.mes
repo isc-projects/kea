@@ -145,7 +145,7 @@ This is an error message issued when DNSClient returns an unrecognized status
 while DHCP_DDNS was adding a forward address mapping.  The request will be
 aborted.  This is most likely a programmatic issue and should be reported.
 
-% DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE DNS Request ID %1:  udpate message to add a forward DNS entry could not be constructed for this request: %2, reason: %3
+% DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE DNS Request ID %1:  update message to add a forward DNS entry could not be constructed for this request: %2, reason: %3
 This is an error message issued when an error occurs attempting to construct
 the server bound packet requesting a forward address addition.  This is due
 to invalid data contained in the NameChangeRequest. The request will be aborted.
@@ -171,7 +171,7 @@ This is an error message issued when DNSClient returns an unrecognized status
 while DHCP_DDNS was removing a forward address mapping.  The request will be
 aborted.  This is most likely a programmatic issue and should be reported.
 
-% DHCP_DDNS_FORWARD_REMOVE_ADDRS_BUILD_FAILURE DNS Request ID %1: udpate message to remove a forward DNS Address entry could not be constructed for this request: %2, reason: %3
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_BUILD_FAILURE DNS Request ID %1: update message to remove a forward DNS Address entry could not be constructed for this request: %2, reason: %3
 This is an error message issued when an error occurs attempting to construct
 the server bound packet requesting a forward address (A or AAAA) removal.  This
 is due to invalid data contained in the NameChangeRequest. The request will be
@@ -198,10 +198,11 @@ This is an error message issued when DNSClient returns an unrecognized status
 while DHCP_DDNS was removing forward RRs.  The request will be aborted. This is
 most likely a programmatic issue and should be reported.
 
-% DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE DNS Request ID %1: udpate message to remove forward DNS RR entries could not be constructed for this request: %2,  reason: %3
+% DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE DNS Request ID %1: update message to remove forward DNS RR entries could not be constructed for this request: %2,  reason: %3
 This is an error message issued when an error occurs attempting to construct
 the server bound packet requesting forward RR (DHCID RR) removal.  This is due
-to invalid data contained in the NameChangeRequest. The request will be aborted.This is most likely a configuration issue.
+to invalid data contained in the NameChangeRequest. The request will be aborted.
+This is most likely a configuration issue.
 
 % DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR DHCP_DDNS Request ID %1: encountered an IO error sending a forward RR removal for FQDN %2 to DNS server %3
 This is an error message issued when a communication error occurs while
@@ -391,7 +392,7 @@ mapping removals which were received and accepted by an appropriate DNS server.
 % DHCP_DDNS_REQUEST_DROPPED Request ID %1: Request contains no enabled update requests and will be dropped: %2
 This is a debug message issued when DHCP_DDNS receives a request which does not
 contain updates in a direction that is enabled.  In other words, if only forward
-updates are enabled and request is recevied that asks only for reverse updates
+updates are enabled and request is received that asks only for reverse updates
 then the request is dropped.
 
 % DHCP_DDNS_REVERSE_REMOVE_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing reverse address mapping for FQDN %3 to DNS server %4
@@ -475,7 +476,7 @@ unable to respond correctly to signals.
 
 % DHCP_DDNS_STARTED Kea DHCP-DDNS server version %1 started
 This informational message indicates that the DHCP-DDNS server has
-processed all configuration information and is ready to beging processing.
+processed all configuration information and is ready to begin processing.
 The version is also printed.
 
 % DHCP_DDNS_STARTING DHCP-DDNS starting, pid: %1, version: %2
