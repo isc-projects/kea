@@ -72,7 +72,7 @@ kea-lfc [-4 | -6] -c config-file -p pid-file -x previous-file -i copy-file -o ou
           <listitem><simpara>
             <command>output</command> &mdash;
             The temporary file <command>kea-lfc</command> should use to write the leases.
-            Upon completion of writing this this file it will be moved to the finish file
+            Upon completion of writing this file, it will be moved to the finish file
            (see below).
           </simpara></listitem>
 

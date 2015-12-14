@@ -113,7 +113,7 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
         <itemizedlist>
             <listitem>
             <simpara><command>localstatedir</command>: The value as passed into the
-            build configure script. It defaults defaults to "/usr/local/var".  Note
+            build configure script. It defaults to "/usr/local/var".  Note
             that this value may be overridden at run time by setting the environment
             variable KEA_PIDFILE_DIR.  This is intended primarily for testing purposes.
             </simpara>
