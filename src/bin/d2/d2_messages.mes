@@ -293,7 +293,7 @@ This is an error message that occurs when DHCP_DDNS is unable to create
 its PID file.  The log message should contain details sufficient to
 determine the underlying cause.  The most likely culprits are that
 some portion of the pathname does not exist or a permissions issue. The
-default path is determined by --localstatedir configure paramter but
+default path is determined by --localstatedir configure parameter but
 may be overridden by setting environment variable, KEA_PIDFILE_DIR.  The
 first argument is the DHCP_DDNS process name.
 
