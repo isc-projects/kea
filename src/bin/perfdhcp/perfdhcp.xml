@@ -764,7 +764,7 @@
                             multicast address FF05::1:3).  The server is
                             mandatory except where the <option>-l</option>
                             option is given to specify an interface, in
-                            which case it defauls to 'all'.
+                            which case it defaults to 'all'.
                         </para>
                     </listitem>
                 </varlistentry>
