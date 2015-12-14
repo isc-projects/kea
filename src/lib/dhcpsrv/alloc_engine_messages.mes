@@ -208,7 +208,7 @@ address from the dynamic pool and allocate it to the client.
 
 % ALLOC_ENGINE_V4_REQUEST_REMOVE_LEASE %1: removing previous client's lease %2
 This message is logged when the allocation engine removes previous
-lease for the client because the cliet has been allocated new one.
+lease for the client because the client has been allocated new one.
 
 % ALLOC_ENGINE_V4_REQUEST_USE_HR client %1 hasn't requested specific address, using reserved address %2
 This message is issued when the client is not requesting any specific
@@ -264,7 +264,7 @@ This message is logged when the allocation engine is in the process if
 allocating leases for the client, there are no static reservations,
 but lease(s) exist for the client. The allocation engine will remove
 leases which are reserved for other clients, and return all
-remaning leases to the client.
+remaining leases to the client.
 
 % ALLOC_ENGINE_V6_ALLOC_NO_LEASES_HR no leases found but reservations exist for client %1
 This message is logged when the allocation engine is in the process of
@@ -426,7 +426,7 @@ allocate reserved leases for the client sending a Renew message.
 The server will also remove any leases that the client is trying
 to renew that are not reserved for the client.
 
-% ALLOC_ENGINE_V6_RENEW_REMOVE_RESERVED %1: checking if existing client's leases are reseved for another client
+% ALLOC_ENGINE_V6_RENEW_REMOVE_RESERVED %1: checking if existing client's leases are reserved for another client
 This message is logged when the allocation engine finds leases for
 the client and will check if these leases are reserved for another
 client. If they are, they will not be renewed for the client

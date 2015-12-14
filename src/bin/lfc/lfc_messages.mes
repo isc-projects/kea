@@ -15,19 +15,19 @@
 $NAMESPACE isc::lfc
 % LFC_FAIL_PID_CREATE : %1
 This message is issued if LFC detected a failure when trying
-to create the PID file.  It includes a more specifc error string.
+to create the PID file.  It includes a more specific error string.
 
 % LFC_FAIL_PID_DEL : %1
 This message is issued if LFC detected a failure when trying
-to delete the PID file.  It includes a more specifc error string.
+to delete the PID file.  It includes a more specific error string.
 
 % LFC_FAIL_PROCESS : %1
 This message is issued if LFC detected a failure when trying
-to process the files.  It includes a more specifc error string.
+to process the files.  It includes a more specific error string.
 
 % LFC_FAIL_ROTATE : %1
 This message is issued if LFC detected a failure when trying
-to rotate the files.  It includes a more specifc error string.
+to rotate the files.  It includes a more specific error string.
 
 % LFC_PROCESSING Previous file: %1, copy file: %2
 This message is issued just before LFC starts processing the

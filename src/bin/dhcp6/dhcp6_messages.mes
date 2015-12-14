@@ -223,7 +223,7 @@ be able to recover from that.
 
 % DHCP6_DECLINE_LEASE Client %1 sent DECLINE for address %2 and the server marked it as declined. The lease will be recovered in %3 seconds.
 This informational message indicates that the client leased an address, but
-discovered that it is being used by some other devicea and reported this to the
+discovered that it is being used by some other device and reported this to the
 server by sending a Decline message. The server marked the lease as
 declined. This likely indicates a misconfiguration in the network. Either
 the server is configured with an incorrect pool or there are devices that have
@@ -671,7 +671,7 @@ has failed.  As a result, the server will exit.  The reason for the
 failure is given within the message.
 
 % DHCP6_SRV_D2STOP_ERROR error stopping IO with DHCP_DDNS during shutdown: %1
-This error message indicates that during shutdown, an erro occurred while
+This error message indicates that during shutdown, an error occurred while
 stopping IO between the DHCPv6 server and the DHCP_DDNS server.  This is
 probably due to a programmatic error is not likely to impact either server
 upon restart.  The reason for the failure is given within the message.
