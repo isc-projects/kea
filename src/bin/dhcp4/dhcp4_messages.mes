@@ -329,7 +329,7 @@ identification information. The second argument specifies the hostname.
 The third argument contains the error details.
 
 % DHCP4_NCR_CREATE %1: DDNS updates enabled, therefore sending name change requests
-This debug message message is issued when the server is starting to send
+This debug message is issued when the server is starting to send
 name change requests to the D2 module to update records for the client
 in the DNS. This includes removal of old records and addition of the
 new records as required. Details of the name change requests will be

@@ -371,7 +371,7 @@ configures the LFC to be executed periodically. The argument holds the
 interval in seconds in which the LFC will be executed.
 
 % DHCPSRV_MEMFILE_LFC_SPAWN_FAIL lease file cleanup failed to run because kea-lfc process couldn't be spawned
-This error message is logged when the the Kea server fails to run kea-lfc,
+This error message is logged when the Kea server fails to run kea-lfc,
 the program that cleans up the lease file. The server will try again the
 next time a lease file cleanup is scheduled. Although this message should
 not appear and the reason why it did investigated, the occasional failure
@@ -393,7 +393,7 @@ A warning message issued when the schema of the lease file loaded by the server
 is newer than the memfile schema of the server.  The server converts the lease
 data from newer schemas to its schema as it is read, therefore the lease
 information in use by the server will be correct. Note though, that any data
-data stored in newer schema fields will be dropped.  What remains is for the
+stored in newer schema fields will be dropped.  What remains is for the
 file itself to be rewritten using the current schema.
 
 % DHCPSRV_MEMFILE_NEEDS_UPGRADING version of lease file: %1 schema is earlier than version %2

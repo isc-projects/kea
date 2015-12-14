@@ -242,7 +242,7 @@ Alternatively, if the you know that the number of concurrently active
 clients is less than the addresses you have available, you may want to
 consider reducing the lease lifetime.  In this way, addresses allocated
 to clients that are no longer active on the network will become available
-available sooner.
+sooner.
 
 % ALLOC_ENGINE_V6_ALLOC_HR_LEASE_EXISTS %1: lease type %2 for reserved address/prefix %3 already exists
 This debug message is issued when the allocation engine determines that
@@ -337,11 +337,11 @@ the lease using the client's hint because the lease for this hint
 is reserved for another client. The first argument includes the
 client identification information.
 
-% ALLOC_ENGINE_V6_HR_ADDR_GRANTED reserved address %1 was was assigned to client %2
+% ALLOC_ENGINE_V6_HR_ADDR_GRANTED reserved address %1 was assigned to client %2
 This informational message signals that the specified client was assigned the address
 reserved for it.
 
-% ALLOC_ENGINE_V6_HR_PREFIX_GRANTED reserved prefix %1/%2 was was assigned to client %3
+% ALLOC_ENGINE_V6_HR_PREFIX_GRANTED reserved prefix %1/%2 was assigned to client %3
 This informational message signals that the specified client was assigned the prefix
 reserved for it.
 
