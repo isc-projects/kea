@@ -35,7 +35,7 @@ of hosts found respectively.
 
 % HOSTS_CFG_GET_ALL_ADDRESS4_HOST using address %1 found host: %2
 This debug message is issued when found host with the reservation
-for the specified IPv4 addres. The arguments specify the IPv4 address
+for the specified IPv4 address. The arguments specify the IPv4 address
 and the detailed description of the host found.
 
 % HOSTS_CFG_GET_ALL_ADDRESS6 get all hosts with reservations for IPv6 address %1
@@ -148,7 +148,7 @@ the alternate host data source.
 
 % HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_ADDRESS6 trying alternate source for host using subnet id %1 and IPv6 address %2
 This debug message is issued when the Host Manager doesn't find the
-host connected to teh specific subnet and having the reservation for
+host connected to the specific subnet and having the reservation for
 the specified IPv6 address, and it is starting to search for this
 host in the alternate host data source.
 
