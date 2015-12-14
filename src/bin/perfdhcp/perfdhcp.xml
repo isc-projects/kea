@@ -853,10 +853,15 @@
     <refsect1>
         <title>SEE ALSO</title>
         <para>
+            <citerefentry><refentrytitle>dhcpd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>kea-dhcp4</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>kea-dhcp6</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-            <citetitle>Kea Administrator Guide</citetitle>,
-            <citetitle>DHCP Performance Guide</citetitle>.
+            <citetitle>Kea Administrator Guide</citetitle>.
+<!--
+see http://kea.isc.org/ticket/4077
+            <citetitle>DHCP Performance Guide</citetitle>
+-->
+
         </para>
     </refsect1>
 
