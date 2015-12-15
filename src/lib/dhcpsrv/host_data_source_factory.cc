@@ -47,45 +47,38 @@ HostDataSourceFactory::getHostDataSourcePtr() {
 
 void
 HostDataSourceFactory::create(const std::string& dbaccess) {
-    const std::string type = "type";
-
     // Parse the access string and create a redacted string for logging.
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
-    std::string redacted =
-            DatabaseConnection::redactedAccessString(parameters);
 
-    // Is "type" present?
-    if (parameters.find(type) == parameters.end()) {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_NOTYPE_DB).arg(dbaccess);
-        isc_throw(InvalidParameter, "Database configuration parameters do not "
+    // Get the databaase type and open the corresponding database
+    DatabaseConnection::ParameterMap::iterator it = parameters.find("type");
+    if (it == parameters.end()) {
+        isc_throw(InvalidParameter, "Host database configuration does not "
                   "contain the 'type' keyword");
     }
 
+    std::string db_type = it->second;
 
-    // Yes, check what it is.
 #ifdef HAVE_MYSQL
-    if (parameters[type] == string("mysql")) {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB).arg(redacted);
+    if (db_type == "mysql") {
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_HOST_DB)
+            .arg(DatabaseConnection::redactedAccessString(parameters));
         getHostDataSourcePtr().reset(new MySqlHostDataSource(parameters));
         return;
     }
 #endif
 
 #ifdef HAVE_PGSQL
-    if (parameters[type] == string("postgresql")) {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_DB).arg(redacted);
-        isc_throw(NotImplemented, "Sorry, Postgres backend for host reservations "
+    if (db_type == "postgresql") {
+        isc_throw(NotImplemented, "Sorry, PostgreSQL backend for host reservations "
                   "is not implemented yet.");
-        // Set pgsql data source here, when it will be implemented.
-        return;
     }
 #endif
 
     // Get here on no match.
-    LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(parameters[type]);
-    isc_throw(InvalidType, "Database access parameter 'type' does "
-              "not specify a supported database backend");
+    isc_throw(InvalidType, "Hosts database access parameter 'type': " <<
+                           db_type << " is invalid");
 }
 
 void
