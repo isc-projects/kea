@@ -1,3 +1,9 @@
+1071.	[func]		tmark
+	Assigned unique log message IDs to log messages issued from
+	MySQL hosts storage operations, eliminating resuse of
+	lease database message IDs.
+	(Trac #4216, git f0e37cd6d45537971a730c68187011dce41217cc)
+
 1070.	[doc]		sar
 	Correct v6 classification examples to use client-id (1) instead
 	of server-id (2).
