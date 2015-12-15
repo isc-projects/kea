@@ -1632,9 +1632,6 @@ fi
 
 cat >> config.report << END
 
-Features:
-  $enable_features
-
 Developer:
   Enable Debugging: $debug_enabled
   Google Tests: $enable_gtest
