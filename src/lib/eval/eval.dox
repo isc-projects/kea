@@ -146,7 +146,7 @@ instantiated with the appropriate value and put onto the expression vector.
  - isc::dhcp::TokenOption - represents an option in a packet, e.g.
                     option[123].text;
  - isc::dhcp::TokenEqual - represents equal (==) operator;
- - isc::dhcp::TokenSubstring - represents substring(text, begin, end) operator;
+ - isc::dhcp::TokenSubstring - represents substring(text, start, length) operator;
 
 More operators are expected to be implemented in upcoming releases.
 
