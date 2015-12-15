@@ -177,11 +177,18 @@ if [ ! -z ${KEA_PIDFILE_DIR} ]; then
     PID_FILE_PATH="${KEA_PIDFILE_DIR}"
 fi
 
-# Returns 1 if specified Kea process is running, 0 otherwise
-# This function uses PID file to make this determination.
-# Return values:
+# Checks if specified process is running.
+#
+# This function uses PID file to obtain the PID and then calls
+# 'kill -0 <pid>' to check if the process is alive.
+# The PID files are expected to be located in the ${PID_FILE_PATH},
+# and their names are should follow the follwing pattern:
+# <cfg_file_name>.<proc_name>.pid. If the <cfg_file_name> is not
+# specified a 'test_config' is used by default.
+#
+# Return value:
 #   _GET_PID: holds a PID if process is running
-#   _GET_PIDS_NUM: 1 if process running, 0 otherwise
+#   _GET_PIDS_NUM: holds 1 if process is running, 0 otherwise
 get_pid() {
     local proc_name=${1}     # Process name
     local cfg_file_name=${2} # Configuration file name without extension.
@@ -214,21 +221,6 @@ get_pid() {
             _GET_PIDS_NUM=1
         fi
     fi
-}
-
-# Returns the number of running process pids and the list of pids.
-# Return values:
-#   _GET_PIDS: holds space separated list of pids.
-#   _GET_PIDS_NUM: holds the number pids.
-get_pids() {
-    local proc_name=${1} # Process name
-    if [ -z ${proc_name} ]; then
-        test_lib_error "get_pids requires process name"
-        clean_exit 1
-    fi
-    _GET_PIDS=$( ps axwwo pid,command | grep ${proc_name} \
-        | grep -v grep | awk '{print $1}' )
-    _GET_PIDS_NUM=$( printf "%s" "${_GET_PIDS}" | wc -w | awk '{print $1}' )
 }
 
 # Returns the number of occurrences of the Kea log message in the log file.
