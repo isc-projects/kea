@@ -303,7 +303,7 @@ configuration.
 
 The signal handler for SIGHUP (also for SIGTERM and SIGINT) are installed in the
 kea_controller.cc using the @c isc::util::SignalSet class. The
-@c isc::dhcp::Dhcp6Srv calls @c isc::dhcp::Daemon::handleSignal on each pass
+@c isc::dhcp::Dhcp4Srv calls @c isc::dhcp::Daemon::handleSignal on each pass
 through the main loop. This method fetches the last received signal and calls
 a handler function defined in the kea_controller.cc. The handler function
 calls a static function @c configure defined in the kea_controller.cc.
