@@ -152,6 +152,7 @@ AC_DEFUN([KEA_CXX_TRY_FLAG], [
 ])
 
 CXX_VERSION="unknown"
+CPPP="$CPP"
 
 # SunStudio compiler requires special compiler options for boost
 # (http://blogs.sun.com/sga/entry/boost_mini_howto)
@@ -189,6 +190,10 @@ if test "$CXX_DUMP_VERSION" \< "4.5"; then
        WARNING_GCC_44_STRICT_ALIASING_CFLAG="-fno-strict-aliasing"
 fi
 AC_SUBST(WARNING_GCC_44_STRICT_ALIASING_CFLAG)
+# gcc 5 preprocessor requires -P for checking its output
+if test "$CXX_DUMP_VERSION" \> "5"; then
+       CPPP="$CPP -P"
+fi
 
 case "$host" in
 *-solaris*)
@@ -673,7 +678,7 @@ then
 AUTOCONF_BOTAN_VERSION=BOTAN_VERSION_MAJOR . BOTAN_VERSION_MINOR . BOTAN_VERSION_PATCH
 EOF
 
-   CRYPTO_VERSION=`$CPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+   CRYPTO_VERSION=`$CPPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
    if test -z "$CRYPTO_VERSION"; then
       CRYPTO_VERSION="unknown"
    fi
@@ -843,7 +848,7 @@ else
 AUTOCONF_OPENSSL_VERSION=OPENSSL_VERSION_TEXT
 EOF
 
-    CRYPTO_VERSION=`$CPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_OPENSSL_VERSION=' | $SED -e 's/^AUTOCONF_OPENSSL_VERSION=//' -e 's/"//g' 2> /dev/null`
+    CRYPTO_VERSION=`$CPPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_OPENSSL_VERSION=' | $SED -e 's/^AUTOCONF_OPENSSL_VERSION=//' -e 's/"//g' 2> /dev/null`
     if test -z "$CRYPTO_VERSION" ; then
        CRYPTO_VERSION="unknown"
     fi
@@ -1048,7 +1053,7 @@ cat > conftest.cpp << EOF
 AUTOCONF_LOG4CPLUS_VERSION=LOG4CPLUS_VERSION_STR
 EOF
 
-LOG4CPLUS_VERSION=`$CPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+LOG4CPLUS_VERSION=`$CPPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
 if test -z "$LOG4CPLUS_VERSION"; then
   LOG4CPLUS_VERSION="unknown"
 fi
