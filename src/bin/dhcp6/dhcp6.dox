@@ -214,7 +214,7 @@ definitions).
 
 @section dhcpv6Classifier DHCPv6 Client Classification
 
-The Kea DHCPv4 currently supports two classification modes: simplified client
+The Kea DHCPv6 currently supports two classification modes: simplified client
 classification (that was an early implementation that used values of vendor class option)
 and full client classification.
 
@@ -256,7 +256,7 @@ As of Kea 1.0, the only supported scope is global, but there are plans to suppor
 class definitions that are subnet specific.
 
 Client classification is done in isc::dhcp::Dhcpv6Srv::classifyPacket. First, the old
-"built-in" (see @ref dhcpv4ClassifierSimple) classification is called (see @ref
+"built-in" (see @ref dhcpv6ClassifierSimple) classification is called (see @ref
 isc::dhcp::Dhcpv6Srv::classifyByVendor). Then the code iterates over all class definitions
 and for each class definition it calls isc::dhcp::evaluate, which is implemented in libeval
 (see @ref dhcpEval). If the evaluation is successful, the class name is added to the packet
@@ -269,7 +269,7 @@ to evaluate the next class.
 @subsection dhcpv6ClassifierUsage How client classification information is used in DHCPv6
 
 Currently there is no class behavior coded in DHCPv6, hence no v6 equivalent of
-@ref isc::dhcp::Dhcpv4Srv::vendorClassSpecificProcessing. Should any need for such a code arise,
+@ref isc::dhcp::Dhcpv6Srv::vendorClassSpecificProcessing. Should any need for such a code arise,
 it will be conducted in an external hooks library.
 
 It is possible to define class restrictions in subnet, so a given subnet is only
