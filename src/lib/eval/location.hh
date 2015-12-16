@@ -1,4 +1,4 @@
-// Generated 20151207
+// Generated 20151216
 // A Bison parser, made by GNU Bison 3.0.4.
 
 // Locations for Bison parsers in C++
@@ -41,7 +41,7 @@
 
 # include "position.hh"
 
-#line 21 "parser.yy" // location.cc:337
+#line 13 "parser.yy" // location.cc:337
 namespace isc { namespace eval {
 #line 46 "location.hh" // location.cc:337
   /// Abstract a location.
@@ -187,7 +187,7 @@ namespace isc { namespace eval {
     return ostr;
   }
 
-#line 21 "parser.yy" // location.cc:337
+#line 13 "parser.yy" // location.cc:337
 } } // isc::eval
 #line 192 "location.hh" // location.cc:337
 #endif // !YY_YY_LOCATION_HH_INCLUDED
