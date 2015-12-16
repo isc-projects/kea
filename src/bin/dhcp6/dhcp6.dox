@@ -214,10 +214,16 @@ definitions).
 
 @section dhcpv6Classifier DHCPv6 Client Classification
 
-The Kea DHCPv6 server currently supports simplified client classification. It is called
+The Kea DHCPv6 currently supports two classification modes: simplified client
+classification (that was an early implementation that used values of vendor class option)
+and full client classification.
+
+@subsection dhcpv6ClassifierSimple Simple Client Classification in DHCPv6
+
+The Kea DHCPv6 server supports simplified client classification. It is called
 "simplified", because the incoming packets are classified based on the content
-of the vendor class (16) option. More flexible classification is planned, but there
-are no specific development dates agreed.
+of the vendor class (16) option. More flexible classification was added in 1.0
+and is described in @ref dhcpv6ClassifierFull.
 
 For each incoming packet, @ref isc::dhcp::Dhcpv6Srv::classifyPacket() method is
 called.  It attempts to extract content of the vendor class option and interprets
@@ -235,8 +241,35 @@ Nevertheless, there is such a possibility and it will be used in a near future. 
 check whether a packet belongs to given class, isc::dhcp::Pkt6::inClass method should
 be used.
 
+The code sometimes refers to this classification as "simple" or 'built-in", because
+it does not require any configuration and thus is built into the server logic.
+
+@subsection dhcpv6ClassifierFull Full Client Classification in DHCPv6
+
+Kea 1.0 introduced full client classification. Each client class consists of a name
+and an expression that can be evaluated on an incoming packet. If it evaluates to
+true, this packet is considered a member of said class. Class definitions are stored
+in isc::dhcp::ClientClassDef objects that are kept in isc::dhcp::ClientClassDictionary
+and can be retrieved from CfgMgr using isc::dhcp::SrvConfig::getClientClassDictionary().
+This is convenient as there are often multiple classes associated with a given scope.
+As of Kea 1.0, the only supported scope is global, but there are plans to support
+class definitions that are subnet specific.
+
+Client classification is done in isc::dhcp::Dhcpv6Srv::classifyPacket. First, the old
+"built-in" (see @ref dhcpv6ClassifierSimple) classification is called (see @ref
+isc::dhcp::Dhcpv6Srv::classifyByVendor). Then the code iterates over all class definitions
+and for each class definition it calls isc::dhcp::evaluate, which is implemented in libeval
+(see @ref dhcpEval). If the evaluation is successful, the class name is added to the packet
+(by calling isc::dhcp::pkt::addClass).
+
+If packet belongs to at least one class, this fact is logged. If there are any
+exceptions raised during class evaluation, an error is logged and the code attempts
+to evaluate the next class.
+
+@subsection dhcpv6ClassifierUsage How client classification information is used in DHCPv6
+
 Currently there is no class behavior coded in DHCPv6, hence no v6 equivalent of
-@ref isc::dhcp::Dhcpv4Srv::classSpecificProcessing. Should any need for such a code arise,
+@ref isc::dhcp::Dhcpv6Srv::vendorClassSpecificProcessing. Should any need for such a code arise,
 it will be conducted in an external hooks library.
 
 It is possible to define class restrictions in subnet, so a given subnet is only
@@ -245,33 +278,16 @@ being passed in isc::dhcp::Dhcpv6Srv::selectSubnet() to isc::dhcp::CfgMgr::getSu
 Currently this capability is usable, but the number of scenarios it supports is
 limited.
 
- @section dhcpv6ConfigBackend Configuration backend for DHCPv6
+Finally, it is possible to define client class-specific options, so clients belonging
+to a class foo, will get options associated with class foo. This is implemented in
+isc::dhcp::Dhcpv6Srv::buildCfgOptionList.
 
-There are many theoretical ways in which the server configuration can be stored.
-The legacy ISC-DHCP implementation uses flat files. Configuration stored in JSON files is
-becoming more and more popular among various projects. There are unofficial patches for
-ISC-DHCP that keep parts of the configuration in LDAP. It was also suggested that in some
-cases it would be convenient to keep configuration in XML files.
+@section dhcpv6ConfigBackend Configuration backend for DHCPv6
 
-Kea 0.9 has introduced configuration backends that are switchable during the
-compilation phase. Currently the only choice is JSON.
-
-JSON is a new configuration backend that causes Kea to read JSON configuration file from
-disk. It does not require any framework and thus is considered more lightweight. It will
-allow dynamic on-line reconfiguration, but will lack remote capabilities (i.e. no RESTful
-API). This configuration backend is expected to be the default for upcoming Kea 0.9. It
-requires <tt> -c config-file </tt> command-line option.
-
-Internally, the configuration backend is implemented as am implementations of the
-isc::dhcp::ControlledDhcpv6Srv class, stored in kea_controller.cc files.
-
-While it is unlikely that ISC will support more than one backend at any given time, there
-are several aspects that make that approach appealing in the long term. First, having
-two backends is essential during transition time, where both old and new backend is used.
-Second, there are external organizations that develop and presumably maintain LDAP backend
-for ISC-DHCP. Is at least possible that similar will happen for Kea. Finally, if we ever
-extend the isc::dhcp::CfgMgr with configuration export, this approach could be used as
-a migration tool.
+Earlier Kea vesions had a concept of backends, which were implementations of
+different ways how configuration could be delivered to Kea. It seems that the
+concept of backends didn't get much enthusiasm from users and having multiple
+backends was cumbersome to maintain, so it was removed in 1.0.
 
 @section dhcpv6SignalBasedReconfiguration Reconfiguring DHCPv6 server with SIGHUP signal
 
