@@ -1,3 +1,8 @@
+1073.	[doc]		tomek
+	Developer's Guide updated with client classification text
+	and several clean-ups.
+	(Trac #4102, git ac33ebf7428ba5935d3302d000bed317716fabfe)
+
 1072.	[bug]		tmark
 	The lease6 hardware address source value is now being properly populated.
 	Prior to this the value stored with each IPv6 lease was always zero.
