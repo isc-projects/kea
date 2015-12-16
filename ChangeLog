@@ -1,3 +1,8 @@
+1075.	[doc]		marcin
+	Changed Kea license from ISC to Mozilla Public License,
+	v. 2.0.
+	(Trac #4236, git a0574cdab4deb31e3244fc4e237753a1ad361d96)
+
 1074.	[bug]		marcin
 	PID files created by Kea processes are used in shell based
 	tests to determine if the given process is running. This
