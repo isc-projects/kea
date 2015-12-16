@@ -1,3 +1,11 @@
+1074.	[bug]		marcin
+	PID files created by Kea processes are used in shell based
+	tests to determine if the given process is running. This
+	solves the problem whereby some unrelated processes could
+	be reported as running Kea processes in those tests, causing
+	the tests to fail.
+	(Trac #4224, git 94edccc50cb374ec4db35f653b869c9f06d356ea)
+
 1073.	[doc]		tomek
 	Developer's Guide updated with client classification text
 	and several clean-ups.
