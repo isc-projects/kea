@@ -342,9 +342,10 @@ SELECT
     l.fqdn_rev,
     l.hostname,
     s.name
-from
+FROm
     lease4 l
-    LEFT OUTER JOIN lease_state s on (l.state = s.state);
+    LEFT OUTER JOIN lease_state s on (l.state = s.state)
+ORDER BY l.address;
 END $$
 DELIMITER ;
 
@@ -382,14 +383,26 @@ SELECT
 FROM lease6 l
     left outer join lease6_types t on (l.lease_type = t.lease_type)
     left outer join lease_state s on (l.state = s.state)
-    left outer join lease_hwaddr_source h on (l.hwaddr_source = h.hwaddr_source);
+    left outer join lease_hwaddr_source h on (l.hwaddr_source = h.hwaddr_source)
+ORDER BY l.address;
 END $$
 DELIMITER ;
 
 # Update the schema version number
 UPDATE schema_version
 SET version = '4', minor = '0';
+
 # This line concludes database upgrade to version 4.0.
+
+# In the event hardware address cannot be determined, we need to satisfy
+# foreign key constraint between lease6 and lease_hardware_source
+INSERT INTO lease_hwaddr_source VALUES (0, "HWADDR_SOURCE_UNKNOWN");
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '4', minor = '1';
+
+# This line concludes database upgrade to version 4.1.
 
 # Notes:
 #
