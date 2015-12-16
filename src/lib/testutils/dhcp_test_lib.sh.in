@@ -170,8 +170,8 @@ set_logger() {
     export KEA_LOGGER_DESTINATION=${LOG_FILE}
 }
 
-# PID file path is by default var/kea, but can be overriden by the
-# environmental variable.
+# PID file path is by default <kea-install-dir>/var/kea, but can be
+# overriden by the environmental variable.
 PID_FILE_PATH=@localstatedir@/@PACKAGE@/
 if [ ! -z ${KEA_PIDFILE_DIR} ]; then
     PID_FILE_PATH="${KEA_PIDFILE_DIR}"
@@ -182,7 +182,7 @@ fi
 # This function uses PID file to obtain the PID and then calls
 # 'kill -0 <pid>' to check if the process is alive.
 # The PID files are expected to be located in the ${PID_FILE_PATH},
-# and their names are should follow the follwing pattern:
+# and their names should match the follwing pattern:
 # <cfg_file_name>.<proc_name>.pid. If the <cfg_file_name> is not
 # specified a 'test_config' is used by default.
 #
