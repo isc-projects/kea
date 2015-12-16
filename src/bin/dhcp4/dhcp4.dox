@@ -52,7 +52,7 @@ src/bin/dhcp4/json_config_parser.cc.
 @section dhcpv4ConfigInherit DHCPv4 configuration inheritance
 
 One notable useful feature of DHCP configuration is its parameter inheritance.
-For example, "renew-timer" value may be specified at a global scope and it then
+For example, the "renew-timer" value may be specified at a global scope and it then
 applies to all subnets. However, some subnets may have it overwritten with subnet
 specific values that takes precedence over global values that are considered
 defaults. The parameters inheritance is implemented by means of the "global
