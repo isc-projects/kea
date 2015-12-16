@@ -1,9 +1,12 @@
+Kea 0.9.1-P1 released on December 22, 2015
+
 920.	[bug]		tomek
 	Improved handling of incoming packets with invalid client-id
 	and DUID.
 	(Trac #4206_0.9.1, git 893cf1b3a0ba4a8104a8a1d23303cf2aa8a75ec3)
 
 Kea 0.9.1 released on March 31, 2015
+
 919.	[doc]		stephen
 	Corrected some configuration examples in the documentation.
 	(Trac #3772 git e9f084525bc1eec1cca635c00f33228bf7fac6a4)
