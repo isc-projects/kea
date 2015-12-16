@@ -207,7 +207,7 @@ mysql_upgrade_test() {
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 4.0
+    # Ok, we have a 1.0 database. Let's upgrade it to 4.1
     ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts
     ERRCODE=$?
 
@@ -257,7 +257,6 @@ EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "dhcp6_options table is missing or broken. (returned status code %d, expected %d)"
 
-    # Verify that it reports version 3.0.
     #table: lease_state table added (upgrade 3.0 -> 4.0)
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT state,name from lease_state;
@@ -286,10 +285,34 @@ EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "lease dump stored procedures are missing or broken. (returned status code %d, expected %d)"
 
-    # Verify that it reports version 4.0.
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name)
+    #lease_hardware_source should have row for source = 0 (upgrade 4.0 -> 4.1)
+    qry="select count(hwaddr_source) from lease_hwaddr_source where hwaddr_source = 0 and name='HWADDR_SOURCE_UNKNOWN';"
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select from lease_hwaddr_source failed. (returned status code %d, expected %d)"
+    assert_eq 1 "$count" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UKNOWN. (record count %d, expected %d)"
 
-    assert_str_eq "4.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+    # table: stored procedures for lease data dumps were modified (upgrade 4.0 -> 4.1)
+    # verify  lease4DumpData has order by lease address
+    qry="show create procedure lease4DumpData"
+    text=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "procedure text fetch for lease4DumpData failed. (returned status code %d, expected %d)"
+    count=`echo $text | grep -ic "order by l\.address"`
+    assert_eq 1 $count "lease4DumpData doesn't have order by clause. (returned count %d, expected %d)"
+   
+    # verify  lease6DumpData has order by lease address
+    qry="show create procedure lease6DumpData"
+    text=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "procedure text fetch for lease6DumpData failed. (returned status code %d, expected %d)"
+    count=`echo $text | grep -ic "order by l\.address"`
+    assert_eq 1 $count "lease6DumpData doesn't have order by clause. (returned count %d, expected %d)"
+
+    # Verify upgraded schemd reports version 4.1.
+    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts)
+    assert_str_eq "4.1" ${version} "Expected kea-admin to return %s, returned value was %s"
+
 
     # Let's wipe the whole database
     mysql_wipe
