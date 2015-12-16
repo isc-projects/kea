@@ -1,3 +1,8 @@
+1072.	[bug]		tmark
+	The lease6 hardware address source value is now being properly populated.
+	Prior to this the value stored with each IPv6 lease was always zero.
+	(Trac #4247, git 27886dadcf9051dc622ee6fde586c27f3d431f8b)
+
 1071.	[func]		tmark
 	Assigned unique log message IDs to log messages issued from
 	MySQL hosts storage operations, eliminating resuse of
