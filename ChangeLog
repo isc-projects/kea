@@ -1,3 +1,5 @@
+Kea 1.0.0-beta2 released on December 22, 2015
+
 1069.	[bug]		tomek
 	Improved handling of incoming packets with invalid client-id
 	and DUID.
