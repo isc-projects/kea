@@ -127,11 +127,27 @@ instantiated with the appropriate value and put onto the expression vector.
 @section dhcpEvalConfigure Configure options
 
  Since the flex/bison tools are not necessary for a regular compilation,
- checks conducted during configure, but the lack of flex or
- bison tools does not stop the configure process. There is a flag
+ checks are conducted during the configure script, but the lack of flex or
+ bison tools does not stop the process. There is a flag
  (--enable-generate-parser) that tells configure script that the
  parser will be generated. With this flag, the checks for flex/bison
  are mandatory. If either tool is missing or at too early a version, the
  configure process will terminate with an error.
+
+@section dhcpEcalToken Supported tokens
+
+ There is a number of tokens implemented. Each token is derived from
+ isc::eval::Token class and represents a certain expression primitive.
+ Currently supported tokens are:
+
+ - isc::dhcp::TokenString - represents a constant string, e.g. "MSFT";
+ - isc::dhcp::TokenHexString - represents a constant string, encoded as
+   hex string, e.g. 0x666f6f which is actually "foo";
+ - isc::dhcp::TokenOption - represents an option in a packet, e.g.
+                    option[123].text;
+ - isc::dhcp::TokenEqual - represents equal (==) operator;
+ - isc::dhcp::TokenSubstring - represents substring(text, start, length) operator;
+
+More operators are expected to be implemented in upcoming releases.
 
 */
