@@ -453,9 +453,10 @@ Pkt6::unpackTCP() {
 
 HWAddrPtr
 Pkt6::getMACFromDUID() {
+    HWAddrPtr mac;
     OptionPtr opt_duid = getOption(D6O_CLIENTID);
     if (!opt_duid) {
-        return (HWAddrPtr());
+        return (mac);
     }
 
     uint8_t hlen = opt_duid->getData().size();
@@ -470,31 +471,33 @@ Pkt6::getMACFromDUID() {
     {
         // 2 bytes of duid type, 2 bytes of hardware type and at least
         // 1 byte of actual identification
-        if (duid_data.size() < 5) {
-            // This duid is truncated. We can't extract anything from it.
-            return (HWAddrPtr());
+        if (duid_data.size() >= 5) {
+            uint16_t hwtype = util::readUint16(&duid_data[2],
+                                               duid_data.size() - 2);
+            mac.reset(new HWAddr(&duid_data[4], duid_data.size() - 4, hwtype));
         }
-
-        uint16_t hwtype = util::readUint16(&duid_data[2], duid_data.size() - 2);
-        return (HWAddrPtr(new HWAddr(&duid_data[4], duid_data.size() - 4,
-                                     hwtype)));
+        break;
     }
     case DUID::DUID_LLT:
     {
         // 2 bytes of duid type, 2 bytes of hardware, 4 bytes for timestamp,
         // and at least 1 byte of actual identification
-        if (duid_data.size() < 9) {
-            // This duid is truncated. We can't extract anything from it.
-            return (HWAddrPtr());
+        if (duid_data.size() >= 9) {
+            uint16_t hwtype = util::readUint16(&duid_data[2],
+                                               duid_data.size() - 2);
+            mac.reset(new HWAddr(&duid_data[8], duid_data.size() - 8, hwtype));
         }
-
-        uint16_t hwtype = util::readUint16(&duid_data[2], duid_data.size() - 2);
-        return (HWAddrPtr(new HWAddr(&duid_data[8], duid_data.size() - 8,
-                                     hwtype)));
+        break;
     }
     default:
-        return (HWAddrPtr());
+        break;
     }
+
+    if (mac) {
+        mac->source_ = HWAddr::HWADDR_SOURCE_DUID;
+    }
+
+    return (mac);
 }
 
 std::string
@@ -705,116 +708,113 @@ Pkt6::getMACFromSrcLinkLocalAddr() {
 
 HWAddrPtr
 Pkt6::getMACFromIPv6RelayOpt() {
-    if (relay_info_.empty()) {
-        // This is a direct message
-        return (HWAddrPtr());
-    }
-    // RFC6969 Section 6: Look for the client_linklayer_addr option on the
-    // relay agent closest to the client
-    OptionPtr opt = getAnyRelayOption(D6O_CLIENT_LINKLAYER_ADDR, RELAY_GET_FIRST);
-    if (opt) {
-        const OptionBuffer data = opt->getData();
-        if (data.size() < 3) {
-            // This client link address option is truncated. It's supposed to be
-            // 2 bytes of link-layer type followed by link-layer address.
-            return (HWAddrPtr());
-        }
+    HWAddrPtr mac;
 
-        // +2, -2 means to skip the initial 2 bytes which are hwaddress type
-        return (HWAddrPtr(new HWAddr(&data[0] + 2, data.size() - 2,
-                                     opt->getUint16())));
-    } else {
-        return (HWAddrPtr());
+    // This is not a direct message
+    if (!relay_info_.empty()) {
+        // RFC6969 Section 6: Look for the client_linklayer_addr option on the
+        // relay agent closest to the client
+        OptionPtr opt = getAnyRelayOption(D6O_CLIENT_LINKLAYER_ADDR,
+                                          RELAY_GET_FIRST);
+        if (opt) {
+            const OptionBuffer data = opt->getData();
+            // This client link address option is supposed to be
+            // 2 bytes of link-layer type followed by link-layer address.
+            if (data.size() >= 3) {
+                // +2, -2 means to skip the initial 2 bytes which are
+                // hwaddress type
+                mac.reset(new HWAddr(&data[0] + 2, data.size() - 2,
+                          opt->getUint16()));
+
+                mac->source_ = HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION;
+            }
+        }
     }
+
+    return mac;
 }
 
 HWAddrPtr
 Pkt6::getMACFromDocsisModem() {
+    HWAddrPtr mac;
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<
         OptionVendor>(getOption(D6O_VENDOR_OPTS));
 
     // Check if this is indeed DOCSIS3 environment
-    if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
-        return (HWAddrPtr());
+    if (vendor && vendor->getVendorId() == VENDOR_ID_CABLE_LABS) {
+        // If it is, try to get device-id option
+        OptionPtr device_id = vendor->getOption(DOCSIS3_V6_DEVICE_ID);
+        if (device_id) {
+            // If the option contains any data, use it as MAC address
+            if (!device_id->getData().empty()) {
+                mac.reset(new HWAddr(device_id->getData(), HTYPE_DOCSIS));
+                mac->source_ = HWAddr::HWADDR_SOURCE_DOCSIS_MODEM;
+            }
+        }
     }
 
-    // If it is, try to get device-id option
-    OptionPtr device_id = vendor->getOption(DOCSIS3_V6_DEVICE_ID);
-    if (!device_id) {
-        return (HWAddrPtr());
-    }
-
-    // If the option contains any data, use it as MAC address
-    if (!device_id->getData().empty()) {
-        return (HWAddrPtr(new HWAddr(device_id->getData(), HTYPE_DOCSIS)));
-    } else {
-        return (HWAddrPtr());
-    }
+    return mac;
 }
 
 HWAddrPtr
 Pkt6::getMACFromDocsisCMTS() {
-    if (relay_info_.empty()) {
-        // This message didn't pass through a CMTS, so there won't be any
-        // CMTS-specific options in it.
-        return (HWAddrPtr());
+    HWAddrPtr mac;
+
+    // If the message passed through a CMTS, there'll
+    // CMTS-specific options in it.
+    if (!relay_info_.empty()) {
+        OptionVendorPtr vendor = boost::dynamic_pointer_cast<
+            OptionVendor>(getAnyRelayOption(D6O_VENDOR_OPTS,
+                                            RELAY_SEARCH_FROM_CLIENT));
+
+        // Check if this is indeed DOCSIS3 environment
+        if (vendor && vendor->getVendorId() == VENDOR_ID_CABLE_LABS) {
+            // Try to get cable modem mac
+            OptionPtr cm_mac = vendor->getOption(DOCSIS3_V6_CMTS_CM_MAC);
+
+            // If the option contains any data, use it as MAC address
+            if (cm_mac && !cm_mac->getData().empty()) {
+                mac.reset(new HWAddr(cm_mac->getData(), HTYPE_DOCSIS));
+                mac->source_ = HWAddr::HWADDR_SOURCE_DOCSIS_CMTS;
+            }
+        }
     }
 
-    OptionVendorPtr vendor = boost::dynamic_pointer_cast<
-        OptionVendor>(getAnyRelayOption(D6O_VENDOR_OPTS,
-                                        RELAY_SEARCH_FROM_CLIENT));
-
-    // Check if this is indeed DOCSIS3 environment
-    if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
-        return (HWAddrPtr());
-    }
-
-    // If it is, try to get cable modem mac
-    OptionPtr cm_mac = vendor->getOption(DOCSIS3_V6_CMTS_CM_MAC);
-    if (!cm_mac) {
-        return (HWAddrPtr());
-    }
-
-    // If the option contains any data, use it as MAC address
-    if (!cm_mac->getData().empty()) {
-        return (HWAddrPtr(new HWAddr(cm_mac->getData(), HTYPE_DOCSIS)));
-    } else {
-        return (HWAddrPtr());
-    }
+    return (mac);
 }
 
 HWAddrPtr
 Pkt6::getMACFromRemoteIdRelayOption() {
-    if (relay_info_.empty()) {
-        // This is a direct message
-        return (HWAddrPtr());
+    HWAddrPtr mac;
+
+    // If this is relayed message
+    if (!relay_info_.empty()) {
+        // Get remote-id option from a relay agent closest to the client
+        OptionPtr opt = getAnyRelayOption(D6O_REMOTE_ID, RELAY_GET_FIRST);
+        if (opt) {
+            const OptionBuffer data = opt->getData();
+            // This remote-id option is supposed to be 4 bytes of
+            // of enterprise-number followed by remote-id.
+            if (data.size() >= 5) {
+                // Let's get the interface this packet was received on.
+                // We need it to get the hardware type.
+                IfacePtr iface = IfaceMgr::instance().getIface(iface_);
+                uint16_t hwtype = 0; // not specified
+
+                // If we get the interface HW type, great! If not,
+                // let's not panic.
+                if (iface) {
+                    hwtype = iface->getHWType();
+                }
+
+                // Skip the initial 4 bytes which are enterprise-number.
+                mac.reset(new HWAddr(&data[0] + 4, data.size() - 4, hwtype));
+                mac->source_ = HWAddr::HWADDR_SOURCE_REMOTE_ID;
+            }
+        }
     }
 
-    // Get remote-id option from a relay agent closest to the client
-    OptionPtr opt = getAnyRelayOption(D6O_REMOTE_ID, RELAY_GET_FIRST);
-    if (opt) {
-        const OptionBuffer data = opt->getData();
-        if (data.size() < 5) {
-            // This remote-id option is truncated. It's supposed to be
-            // 4 bytes of enterprise-number followed by remote-id.
-            return (HWAddrPtr());
-        }
-
-        // Let's get the interface this packet was received on. We need it to get
-        // the hardware type.
-        IfacePtr iface = IfaceMgr::instance().getIface(iface_);
-        uint16_t hwtype = 0; // not specified
-
-        // If we get the interface HW type, great! If not, let's not panic.
-        if (iface) {
-            hwtype = iface->getHWType();
-        }
-
-        // Skip the initial 4 bytes which are enterprise-number.
-        return (HWAddrPtr(new HWAddr(&data[0] + 4, data.size() - 4, hwtype)));
-    } else {
-        return (HWAddrPtr());
-    }
+    return (mac);
 }
 
 } // end of isc::dhcp namespace
