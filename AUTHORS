@@ -87,6 +87,9 @@ We have received the following contributions:
  - Jinmei Tatuya
    2015-10: Pkt4o6 class improvements
 
+ - Sebastien Couture, Ubity Inc
+   2015-12: Fixes to MySQL schema creation
+
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
 (http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for
