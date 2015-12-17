@@ -342,7 +342,7 @@ SELECT
     l.fqdn_rev,
     l.hostname,
     s.name
-FROm
+FROM
     lease4 l
     LEFT OUTER JOIN lease_state s on (l.state = s.state)
 ORDER BY l.address;
