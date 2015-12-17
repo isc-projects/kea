@@ -2403,11 +2403,20 @@ It is merely echoed by the server
     has to be identified by its hardware/MAC address. There is an optional
     <command>reservations</command> array in the <command>Subnet4</command>
     element. Each element in that array is a structure, that holds information
-    about reservrations for a single host. In particular, such a structure has
+    about reservations for a single host. In particular, such a structure has
     to have an indentifer that uniquely identifies a host.  In DHCPv4 context, such an
     identifier is a hardware or MAC address.  In most cases, also an address
     will be specified. It is possible to specify a hostname. Additional
     capabilities are planned.</para>
+
+    <note><para>In Kea 1.0.0 it is only possible to create host reservations
+    using client's hardware address. Host reservations by client identifier
+    (or DUID) are not supported in this version of Kea. This capability will
+    be implemented in Kea 1.1.0. Currently, the configuration parsing code
+    will accept the "duid" parameter in the reservation configuration, but
+    the server will misinterpret its value. Therefore, this parameter MUST
+    NOT be used until the client identifier based host reservations are
+    properly implemented and documented.</para></note>
 
     <para>The following example shows how to reserve addresses for specific
     hosts:
