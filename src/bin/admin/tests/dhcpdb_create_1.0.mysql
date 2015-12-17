@@ -75,7 +75,7 @@ CREATE INDEX lease6_by_iaid_subnet_id_duid ON lease6 (iaid, subnet_id, duid);
 CREATE TABLE lease6_types (
     lease_type TINYINT PRIMARY KEY NOT NULL,    # Lease type code.
     name VARCHAR(5)                             # Name of the lease type
-    );
+    ) ENGINE = INNODB;
 START TRANSACTION;
 INSERT INTO lease6_types VALUES (0, "IA_NA");   # Non-temporary v6 addresses
 INSERT INTO lease6_types VALUES (1, "IA_TA");   # Temporary v6 addresses
@@ -94,7 +94,7 @@ COMMIT;
 CREATE TABLE schema_version (
     version INT PRIMARY KEY NOT NULL,       # Major version number
     minor INT                               # Minor version number
-    );
+    ) ENGINE = INNODB;
 START TRANSACTION;
 INSERT INTO schema_version VALUES (1, 0);
 COMMIT;

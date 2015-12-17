@@ -1417,6 +1417,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/admin/scripts/mysql/upgrade_1.0_to_2.0.sh
                  src/bin/admin/scripts/mysql/upgrade_2.0_to_3.0.sh
                  src/bin/admin/scripts/mysql/upgrade_3.0_to_4.0.sh
+                 src/bin/admin/scripts/mysql/upgrade_4.0_to_4.1.sh
                  src/bin/admin/scripts/pgsql/Makefile
                  src/bin/admin/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/hooks/Makefile
