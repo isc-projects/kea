@@ -215,6 +215,28 @@ get_pid() {
     fi
 }
 
+# Kills processes specified by name.
+#
+# This function kills all processes having a specified name.
+# It uses 'pgrep' to obtain pids of those processes.
+# This function should be used when identifying process by
+# the value in its PID file is not relevant.
+kill_processes() {
+    local proc_name=${1} # Process name
+    if [ -z ${proc_name} ]; then
+        test_lib_error "get_pids requires process name"
+        clean_exit 1
+    fi
+    # Obtain PIDs of running processes.
+    local pids=$( pgrep ${proc_name} )
+    # For each PID found, send kill signal.
+    for pid in ${pids}
+    do
+        printf "Shutting down Kea process ${proc_name} having pid %d.\n" ${pid}
+        kill -9 ${pid}
+    done
+}
+
 # Returns the number of occurrences of the Kea log message in the log file.
 # Return value:
 #   _GET_LOG_MESSAGES: number of log message occurrences.
@@ -273,6 +295,15 @@ cleanup() {
             kill -9 ${_GET_PID}
         fi
     done
+
+    # Kill any running LFC processes. Even though 'kea-lfc' creates PID
+    # file we rather want to use 'pgrep' to find the process PID, because
+    # kea-lfc execution is not controlled from the test and thus there
+    # is possibility that process is already/still running but the PID
+    # file doesn't exist for it. As a result, the process will not
+    # be killed. This is not a problem for other processes because
+    # tests control launching them and monitor when they are shut down.
+    kill_pids "kea-lfc"
 
     # Remove temporary files.
     rm -rf ${LOG_FILE}
