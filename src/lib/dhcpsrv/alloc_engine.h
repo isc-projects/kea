@@ -397,7 +397,7 @@ public:
     /// response to SOLICIT).
     ///
     /// This method uses host reservation if ctx.host_ is set. The easy way to
-    /// set it is to call @ref findReservation-decl.
+    /// set it is to call @ref findReservationDecl.
     /// The host reservation is convenient, but incurs performance penalty,
     /// so it can be tweaked on a per subnet basis. There are three possible modes:
     /// 1. disabled (no host reservation at all). This is the most performant one
@@ -524,7 +524,7 @@ public:
     /// declined state). Therefore remove_leases parameter is ignored for
     /// declined leases. They are always removed.
     ///
-    /// Also, for declined leases @ref reclaimDeclined-Lease6 is
+    /// Also, for declined leases @ref reclaimDeclinedLease6 is
     /// called. It conducts several declined specific operation (extra log
     /// entry, stats dump, hooks).
     ///
@@ -582,7 +582,7 @@ public:
     /// declined state). Therefore remove_leases parameter is ignored for
     /// declined leases. They are always removed.
     ///
-    /// Also, for declined leases @ref reclaimDeclined-Lease4 is
+    /// Also, for declined leases @ref reclaimDeclinedLease4 is
     /// called. It conductsseveral declined specific operation (extra log
     /// entry, stats dump, hooks).
     ///
@@ -608,7 +608,7 @@ public:
     void deleteExpiredReclaimedLeases4(const uint32_t secs);
 
 
-    /// @anchor findReservation-decl
+    /// @anchor findReservationDecl
     /// @brief Attempts to find appropriate host reservation.
     ///
     /// Attempts to find appropriate host reservation in HostMgr. If found, it
@@ -877,7 +877,7 @@ private:
                                 const boost::function<void (const LeasePtrType&)>&
                                 lease_update_fun) const;
 
-    /// @anchor reclaimDeclined-Lease4
+    /// @anchor reclaimDeclinedLease4
     /// @brief Conducts steps necessary for reclaiming declined IPv4 lease.
     ///
     /// These are the additional steps required when recoving a declined lease:
@@ -890,7 +890,7 @@ private:
     ///         to keep it)
     bool reclaimDeclined(const Lease4Ptr& lease);
 
-    /// @anchor reclaimDeclined-Lease6
+    /// @anchor reclaimDeclinedLease6
     /// @brief Conducts steps necessary for reclaiming declined IPv6 lease.
     ///
     /// These are the additional steps required when recoving a declined lease:
