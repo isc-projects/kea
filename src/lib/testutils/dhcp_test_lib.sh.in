@@ -221,7 +221,7 @@ get_pid() {
 # It uses 'pgrep' to obtain pids of those processes.
 # This function should be used when identifying process by
 # the value in its PID file is not relevant.
-kill_processes() {
+kill_processes_by_name() {
     local proc_name=${1} # Process name
     if [ -z ${proc_name} ]; then
         test_lib_error "get_pids requires process name"
@@ -303,7 +303,7 @@ cleanup() {
     # file doesn't exist for it. As a result, the process will not
     # be killed. This is not a problem for other processes because
     # tests control launching them and monitor when they are shut down.
-    kill_pids "kea-lfc"
+    kill_processes_by_name "kea-lfc"
 
     # Remove temporary files.
     rm -rf ${LOG_FILE}
