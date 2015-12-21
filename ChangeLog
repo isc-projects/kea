@@ -1,3 +1,11 @@
+1074.	[bug]		marcin
+	Addressed regression in distcheck after merge of #4224.
+	Before the changes one of the lease files produced by
+	'kea-lfc' was not removed after tests running lease file
+	cleanup. As a result, the distcheck failed discovering
+	this file being left after distclean.
+	(Trac #4249, git 04aa9b95bf8c4dd8b555dd78cc8cd57126473800)
+
 1073.	[bug]		tmark
 	This change bumps the MySQL schema version from 4.0 to 4.1 and includes
 	the following changes: added explicit use of InnoDB engine to all MySQL
