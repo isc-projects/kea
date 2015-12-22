@@ -38,7 +38,7 @@
 ///
 /// -# "option-data" - a list which defines the options that should be
 /// assigned to memebers of the class.  This element is optional and parsed
-/// using the @ref dhcp::OptionDataListParser.
+/// using the @ref isc::dhcp::OptionDataListParser.
 ///
 /// ExpressionParser  - creates an eval::Expression from a string element,
 /// using the Eval Parser.
@@ -163,7 +163,7 @@ public:
     /// @param class_def_list pointer to an element that holds entries
     /// for client class definitions.
     /// @throw DhcpConfigError if configuration parsing fails.
-    void build(isc::data::ConstElementPtr option_def_list);
+    void build(isc::data::ConstElementPtr class_def_list);
 
     /// @brief Commits class definitions to CfgMgr's global storage.
     void commit();

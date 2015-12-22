@@ -270,8 +270,6 @@ public:
 };
 
 
-#include "io_socket.h"
-
 /// \brief The \c DummyAsioSocket class is a concrete derived class of
 /// \c IOAsioSocket that is not associated with any real socket.
 ///

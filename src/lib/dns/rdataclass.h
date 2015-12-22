@@ -376,7 +376,7 @@ class CAA : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
-    explicit CAA(const std::string& type_str);
+    explicit CAA(const std::string& caa_str);
     CAA(isc::util::InputBuffer& buffer, size_t rdata_len);
     CAA(const CAA& other);
     CAA(
@@ -1548,7 +1548,7 @@ public:
     /// \param data The OPTION-DATA field of the pseudo RR.
     /// \param length The size of the \c data argument. OPTION-LENGTH is
     /// set to this size.
-    /// \throw \c isc::InvalidParameter if this pseudo RR would cause
+    /// \throw isc::InvalidParameter if this pseudo RR would cause
     /// the OPT RDATA to overflow its RDLENGTH.
     void appendPseudoRR(uint16_t code, const uint8_t* data, uint16_t length);
 
@@ -2104,7 +2104,7 @@ class TLSA : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
 
-    explicit TLSA(const std::string& type_str);
+    explicit TLSA(const std::string& tlsa_str);
     TLSA(isc::util::InputBuffer& buffer, size_t rdata_len);
     TLSA(const TLSA& other);
     TLSA(

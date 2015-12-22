@@ -31,7 +31,7 @@ from the common configuration parsers and customize their behavior. For
 example: the @c Subnet4ConfigParser is used to parse parameters
 describing a single subnet. It derives from the @c
 isc::dhcp::SubnetConfigParser, which implements the common base for both
-DHCPv4 and DHCPv6 subnets. The @ref isc::dhcp::Subnet4ConfigParser
+DHCPv4 and DHCPv6 subnets. The @ref Subnet4ConfigParser
 implements the @c initSubnet abstract method, which creates an instance of
 the DHCPv4 subnet. This method is invoked by the parent class.
 
