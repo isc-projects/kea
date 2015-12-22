@@ -31,7 +31,7 @@ from the common configuration parsers and customize their behavior. For
 example: the @c Subnet6ConfigParser is used to parse parameters
 describing a single subnet. It derives from the @c
 isc::dhcp::SubnetConfigParser, which implements the common base for both
-DHCPv4 and DHCPv6 subnets. The @ref isc::dhcp::Subnet6ConfigParser
+DHCPv4 and DHCPv6 subnets. The @ref Subnet6ConfigParser
 implements the @c initSubnet abstract method, which creates an instance of
 the DHCPv6 subnet. This method is invoked by the parent class.
 
@@ -261,7 +261,7 @@ to evaluate the next class.
 @subsection dhcpv6ClassifierUsage How client classification information is used in DHCPv6
 
 Currently there is no class behavior coded in DHCPv6, hence no v6 equivalent of
-@ref isc::dhcp::Dhcpv6Srv::vendorClassSpecificProcessing. Should any need for such a code arise,
+@ref isc::dhcp::Dhcpv4Srv::vendorClassSpecificProcessing. Should any need for such a code arise,
 it will be conducted in an external hooks library.
 
 It is possible to define class restrictions in subnet, so a given subnet is only

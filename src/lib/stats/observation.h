@@ -126,7 +126,7 @@ class Observation {
     ///
     /// @param value duration value observed
     /// @throw InvalidStatType if statistic is not time duration
-    void setValue(const StatsDuration& duration);
+    void setValue(const StatsDuration& value);
 
     /// @brief Records absolute string observation
     ///

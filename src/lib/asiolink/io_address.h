@@ -238,8 +238,10 @@ public:
     /// @brief Subtracts one address from another (a - b)
     ///
     /// Treats addresses as integers and subtracts them. For example:
+    /// @code
     /// 192.0.2.5 - 192.0.2.0 = 0.0.0.5
     /// fe80::abcd - fe80:: = ::abcd
+    /// @endcode
     ///
     /// It is possible to subtract greater from lesser address, e.g.
     /// 192.168.56.10 - 192.168.67.20, but please do understand that

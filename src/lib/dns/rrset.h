@@ -209,7 +209,7 @@ public:
     ///
     /// \return The length of the wire format representation of the
     /// \c AbstractRRset.
-    /// \throw \c EmptyRRset if the \c AbstractRRset is empty.
+    /// \throw EmptyRRset if the \c AbstractRRset is empty.
     virtual uint16_t getLength() const = 0;
 
     /// \brief Returns the owner name of the \c RRset.
@@ -670,7 +670,7 @@ public:
     ///
     /// \return The length of the wire format representation of the
     /// \c BasicRRset.
-    /// \throw \c EmptyRRset if the \c BasicRRset is empty.
+    /// \throw EmptyRRset if the \c BasicRRset is empty.
     virtual uint16_t getLength() const;
 
     /// \brief Returns the owner name of the \c RRset.
@@ -855,7 +855,7 @@ public:
     ///
     /// \return The length of the wire format representation of the
     /// \c RRset.
-    /// \throw \c EmptyRRset if the \c RRset is empty.
+    /// \throw EmptyRRset if the \c RRset is empty.
     virtual uint16_t getLength() const;
 
     /// \brief Render the RRset in the wire format with name compression and
