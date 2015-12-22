@@ -1075,7 +1075,6 @@ protected:
     ///
     /// @throw BadValue if the text cannot be converted.
     ///
-    /// @param text representation for conversion
     /// @return one of allowed HRMode values
     static Subnet::HRMode hrModeFromText(const std::string& txt);
 

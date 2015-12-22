@@ -55,7 +55,7 @@ namespace stats {
 ///   either all or nothing. Adding logging entries only when necessary
 ///   in the code that uses StatsMgr gives better granularity.
 ///
-/// If this decision is revisited in the futere, the most universal places
+/// If this decision is revisited in the future, the most universal places
 /// for adding logging have been marked in @ref addValueInternal and
 /// @ref setValueInternal.
 class StatsMgr : public boost::noncopyable {
@@ -117,7 +117,7 @@ class StatsMgr : public boost::noncopyable {
     /// @param name name of the observation
     /// @param value duration value observed
     /// @throw InvalidStatType if statistic is not time duration
-    void addValue(const std::string& name, const StatsDuration& time);
+    void addValue(const std::string& name, const StatsDuration& value);
 
     /// @brief Records incremental string observation.
     ///
@@ -248,12 +248,12 @@ class StatsMgr : public boost::noncopyable {
     ///
     /// @param name name of the command (ignored, should be "statistic-get")
     /// @param params structure containing a map that contains "name"
-    /// @param return answer containing details of specified statistic
+    /// @return answer containing details of specified statistic
     static isc::data::ConstElementPtr
     statisticGetHandler(const std::string& name,
                         const isc::data::ConstElementPtr& params);
 
-    /// @param Handles statistic-reset command
+    /// @brief Handles statistic-reset command
     ///
     /// This method handles statistic-reset command, which resets value
     /// of a given statistic. It expects one parameter stored in params map:
@@ -266,12 +266,12 @@ class StatsMgr : public boost::noncopyable {
     ///
     /// @param name name of the command (ignored, should be "statistic-reset")
     /// @param params structure containing a map that contains "name"
-    /// @param return answer containing confirmation
+    /// @return answer containing confirmation
     static isc::data::ConstElementPtr
     statisticResetHandler(const std::string& name,
                           const isc::data::ConstElementPtr& params);
 
-    /// @param Handles statistic-remove command
+    /// @brief Handles statistic-remove command
     ///
     /// This method handles statistic-reset command, which removes a given
     /// statistic completely. It expects one parameter stored in params map:
@@ -284,7 +284,7 @@ class StatsMgr : public boost::noncopyable {
     ///
     /// @param name name of the command (ignored, should be "statistic-remove")
     /// @param params structure containing a map that contains "name" element
-    /// @param return answer containing confirmation
+    /// @return answer containing confirmation
     static isc::data::ConstElementPtr
     statisticRemoveHandler(const std::string& name,
                            const isc::data::ConstElementPtr& params);
@@ -296,7 +296,7 @@ class StatsMgr : public boost::noncopyable {
     ///
     /// @param name name of the command (ignored, should be "statistic-get-all")
     /// @param params ignored
-    /// @param return answer containing values of all statistic
+    /// @return answer containing values of all statistic
     static isc::data::ConstElementPtr
     statisticGetAllHandler(const std::string& name,
                            const isc::data::ConstElementPtr& params);
@@ -308,7 +308,7 @@ class StatsMgr : public boost::noncopyable {
     ///
     /// @param name name of the command (ignored, should be "statistic-reset-all")
     /// @param params ignored
-    /// @param return answer confirming success of this operation
+    /// @return answer confirming success of this operation
     static isc::data::ConstElementPtr
     statisticResetAllHandler(const std::string& name,
                              const isc::data::ConstElementPtr& params);
@@ -320,7 +320,7 @@ class StatsMgr : public boost::noncopyable {
     ///
     /// @param name name of the command (ignored, should be "statistic-remove-all")
     /// @param params ignored
-    /// @param return answer confirming success of this operation
+    /// @return answer confirming success of this operation
     static isc::data::ConstElementPtr
     statisticRemoveAllHandler(const std::string& name,
                               const isc::data::ConstElementPtr& params);
@@ -328,6 +328,13 @@ class StatsMgr : public boost::noncopyable {
     /// @}
 
  private:
+
+    /// @brief Private constructor.
+    /// StatsMgr is a singleton. It should be accessed using @ref instance
+    /// method.
+    StatsMgr();
+
+    /// @public
 
     /// @brief Sets a given statistic to specified value (internal version).
     ///
@@ -351,6 +358,8 @@ class StatsMgr : public boost::noncopyable {
             addObservation(stat);
         }
     }
+
+    /// @public
 
     /// @brief Adds specified value to a given statistic (internal version).
     ///
@@ -380,17 +389,16 @@ class StatsMgr : public boost::noncopyable {
         }
     }
 
-    /// @brief Private constructor.
-    /// StatsMgr is a singleton. It should be accessed using @ref instance
-    /// method.
-    StatsMgr();
+    /// @public
 
     /// @brief Adds a new observation.
     ///
     /// That's an utility method used by public @ref setValue() and
     /// @ref addValue() methods.
-    /// @param obs observation
-    void addObservation(const ObservationPtr& o);
+    /// @param stat observation
+    void addObservation(const ObservationPtr& stat);
+
+    /// @private
 
     /// @brief Tries to delete an observation.
     ///

@@ -670,7 +670,7 @@ protected:
     ///
     /// @param decline Decline messege sent by a client
     /// @param reply Server's response (IA_NA with status will be added here)
-    /// @param client context
+    /// @param ctx context
     /// @return true when expected to continue, false when hooks told us to drop
     ///         the packet
     bool declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
@@ -721,6 +721,7 @@ protected:
 
 private:
 
+    /// @public
     /// @brief Assign class using vendor-class-identifier option
     ///
     /// @note This is the first part of @ref classifyPacket
@@ -729,6 +730,7 @@ private:
     /// @param classes a reference to added class names for logging
     void classifyByVendor(const Pkt6Ptr& pkt, std::string& classes);
 
+    /// @private
     /// @brief Generate FQDN to be sent to a client if none exists.
     ///
     /// This function is meant to be called by the functions which process

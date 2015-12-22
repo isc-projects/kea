@@ -1,3 +1,7 @@
+1075.	[bug]		fdupont
+	Removed warnings emitted during generation of Doxygen documentation.
+	(Trac #4234, git xxx)
+
 1074.	[bug]		marcin
 	Addressed regression in distcheck after merge of #4224.
 	Before the changes one of the lease files produced by

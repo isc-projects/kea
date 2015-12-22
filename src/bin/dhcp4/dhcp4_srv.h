@@ -558,6 +558,7 @@ private:
     /// server's response.
     void processHostnameOption(Dhcpv4Exchange& ex);
 
+    /// @public
     /// @brief Marks lease as declined.
     ///
     /// This method moves a lease to declined state with all the steps involved:
@@ -569,8 +570,7 @@ private:
     ///
     /// @param lease lease to be declined
     /// @param decline client's message
-    void
-    declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline);
+    void declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline);
 
 protected:
 
@@ -751,6 +751,7 @@ protected:
 
 private:
 
+    /// @public
     /// @brief Assign class using vendor-class-identifier option
     ///
     /// @note This is the first part of @ref classifyPacket
@@ -759,6 +760,7 @@ private:
     /// @param classes a reference to added class names for logging
     void classifyByVendor(const Pkt4Ptr& pkt, std::string& classes);
 
+    /// @private
     /// @brief Constructs netmask option based on subnet4
     /// @param subnet subnet for which the netmask will be calculated
     ///
