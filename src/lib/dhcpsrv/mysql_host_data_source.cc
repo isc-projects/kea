@@ -515,7 +515,7 @@ private:
     std::vector<uint8_t> dhcp_identifier_;      /// HW address (0) / DUID (1)
     uint8_t     dhcp_identifier_buffer_[DUID::MAX_DUID_LEN];
                                                 /// Buffer for dhcp identifier
-    size_t      dhcp_identifier_length_;        /// Length of dhcp identifier
+    unsigned long dhcp_identifier_length_;      /// Length of dhcp identifier
     uint8_t     dhcp_identifier_type_;		/// Type of dhcp_identifier
     uint32_t    dhcp4_subnet_id_;		/// Subnet DHCPv4 identifier
     uint32_t    dhcp6_subnet_id_;		/// Subnet DHCPv6 identifier
