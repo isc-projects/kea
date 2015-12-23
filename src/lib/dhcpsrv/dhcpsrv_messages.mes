@@ -188,7 +188,7 @@ have been experienced.  Any such errors should have preceding entries in the
 log with details.  No further attempts to communicate with kea-dhcp-ddns will
 be made without intervention.
 
-% DHCPSRV_HOOK_LEASE4_RECOVER_SKIP DHCPv4 lease %1 was not recoverd from the declined state because a callout set the skip status.
+% DHCPSRV_HOOK_LEASE4_RECOVER_SKIP DHCPv4 lease %1 was not recovered from the declined state because a callout set the skip status.
 This debug message is printed when a callout installed on lease4_recover
 hook point set the next step status to SKIP. For this particular hook point, this
 indicates that the server should not recover the lease from declined state.
@@ -272,7 +272,7 @@ The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
 
 % DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START starting deletion of %1 expired-reclaimed leases
-A debug message issued wheb the server has found expired-reclaimed
+A debug message issued when the server has found expired-reclaimed
 leases to be removed. The number of leases to be removed is logged
 in the message.
 
@@ -363,7 +363,7 @@ configures the LFC to be executed periodically. The argument holds the
 interval in seconds in which the LFC will be executed.
 
 % DHCPSRV_MEMFILE_LFC_SPAWN_FAIL lease file cleanup failed to run because kea-lfc process couldn't be spawned
-This error message is logged when the the Kea server fails to run kea-lfc,
+This error message is logged when the Kea server fails to run kea-lfc,
 the program that cleans up the lease file. The server will try again the
 next time a lease file cleanup is scheduled. Although this message should
 not appear and the reason why it did investigated, the occasional failure
@@ -385,7 +385,7 @@ A warning message issued when the schema of the lease file loaded by the server
 is newer than the memfile schema of the server.  The server converts the lease
 data from newer schemas to its schema as it is read, therefore the lease
 information in use by the server will be correct. Note though, that any data
-data stored in newer schema fields will be dropped.  What remains is for the
+stored in newer schema fields will be dropped.  What remains is for the
 file itself to be rewritten using the current schema.
 
 % DHCPSRV_MEMFILE_NEEDS_UPGRADING version of lease file: %1 schema is earlier than version %2
@@ -420,9 +420,9 @@ lease from the memory file database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the memory file database for the specified address.
 
-% DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE current configuration will result in opening multiple brodcast capable sockets on some interfaces and some DHCP messages may be duplicated
+% DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE current configuration will result in opening multiple broadcast capable sockets on some interfaces and some DHCP messages may be duplicated
 A warning message issued when the current configuration indicates that multiple
-sockets, capable of receiving brodcast traffic, will be opened on some of the
+sockets, capable of receiving broadcast traffic, will be opened on some of the
 interfaces. It must be noted that this may lead to receiving and processing
 the same DHCP message multiple times, as it will be received by each socket
 individually.
@@ -734,7 +734,7 @@ but the server was unable to flag that the handler function
 should be executed for this timer. The callback will not
 be executed this time and most likely the subsequent attempts
 will not be successful too. This error is highly unlikely.
-The name of the timer and thre reason for failure is included
+The name of the timer and the reason for failure is included
 in the message.
 
 % DHCPSRV_TIMERMGR_START_THREAD starting thread for timers

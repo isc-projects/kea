@@ -81,7 +81,7 @@
             directly.  The following command may be used to extract this
             information.  The binary <userinput>path</userinput> may be found
             in the install directory or in the <filename>.libs</filename>
-            subdirectory in the source treee. For example
+            subdirectory in the source tree. For example
             <filename>kea/src/bin/dhcp4/.libs/kea-dhcp4</filename>.
 
 <screen>
@@ -113,13 +113,13 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
         <itemizedlist>
             <listitem>
             <simpara><command>localstatedir</command>: The value as passed into the
-            build configure script. It defaults defaults to "/usr/local/var".  Note
+            build configure script. It defaults to "/usr/local/var".  Note
             that this value may be overridden at run time by setting the environment
             variable KEA_PIDFILE_DIR.  This is intended primarily for testing purposes.
             </simpara>
             </listitem>
             <listitem>
-            <simpara><command>conf name</command>: The confguration file name
+            <simpara><command>conf name</command>: The configuration file name
             used to start the server, minus all preceding path and file extension.
             For example, given a pathname of "/usr/local/etc/kea/myconf.txt", the
             portion used would be "myconf".
@@ -642,13 +642,13 @@ temporarily override a list of interface names and listen on all interfaces.
   default value <userinput>raw</userinput> is used.
   </para>
 
-  <para>Using UDP sockets automatically disables the reception of brodcast
+  <para>Using UDP sockets automatically disables the reception of broadcast
   packets from directly connected clients. This effectively means that the
   UDP sockets can be used for relayed traffic only. When using the raw sockets,
   both the traffic from the directly connected clients and the relayed traffic
   will be handled. Caution should be taken when configuring the server to open
   multiple raw sockets on the interface with several IPv4 addresses assigned.
-  If the directly connected client sends the message to the brodcast address
+  If the directly connected client sends the message to the broadcast address
   all sockets on this link will receive this message and multiple responses
   will be sent to the client. Hence, the configuration with multiple IPv4
   addresses assigned to the interface should not be used when the directly
@@ -673,7 +673,7 @@ temporarily override a list of interface names and listen on all interfaces.
   mentioned in the <xref linkend="dhcp4-interface-configuration"/>. From
   the administrator's perspective it is often desired to be able to
   configure the system's firewall to filter out the unwanted traffic, and
-  the use of UDP sockets faciliates it. However, the administrator must
+  the use of UDP sockets facilitates it. However, the administrator must
   also be aware of the implications related to filtering certain types
   of traffic as it may impair the DHCP server's operation.
   </para>
@@ -1498,7 +1498,7 @@ It is merely echoed by the server
       <title>Unspecified parameters for DHCPv4 option configuration</title>
       <para>In many cases it is not required to specify all parameters for
       an option configuration and the default values may be used. However, it is
-      important to understand the implications of not specifing some of them
+      important to understand the implications of not specifying some of them
       as it may result in configuration errors. The list below explains
       the behavior of the server when a particular parameter is not explicitly
       specified:
@@ -1700,7 +1700,7 @@ It is merely echoed by the server
         </para>
 
         <para>
-        This example shows a configuration using an automatcially generated
+        This example shows a configuration using an automatically generated
         "VENDOR_CLASS_" class. The Administrator of the network has
         decided that addresses from range 192.0.2.10 to 192.0.2.20 are
         going to be managed by the Dhcp4 server and only clients belonging to the
@@ -2226,7 +2226,7 @@ It is merely echoed by the server
         database for this client, using the client identification information as a
         search key.</simpara></listitem>
         <listitem><simpara>Some configurations use static reservations for the IP
-        addreses and other configuration information. The server's administrator
+        addresses and other configuration information. The server's administrator
         uses client identification information to create these static assignments.
         </simpara></listitem>
         <listitem><simpara>In the dual stack networks there is often a need to
@@ -2272,7 +2272,7 @@ It is merely echoed by the server
       database and will hand out the existing lease rather than allocate
       a new one. Each lease in the lease database is associated with the
       'client identifier' and/or 'chaddr'. The server will first use the
-      'client identifer' (if present) to search the lease. If the lease is
+      'client identifier' (if present) to search the lease. If the lease is
       found, the server will treat this lease as belonging to the client
       even if the current 'chaddr' and the 'chaddr' associated with
       the lease do not match. This facilitates the scenario when the network card
@@ -2390,7 +2390,7 @@ It is merely echoed by the server
     new reservation has been made for the client for the address being currently
     in use by another client. We call this situation a "conflict". The conflicts
     get resolved automatically over time as described in the subsequent sections.
-    Once conflict is resolved,the client will keep receiving the reserved
+    Once conflict is resolved, the client will keep receiving the reserved
     configuration when it renews.</para>
 
     <para>Another example when the host reservations are applicable is when a host
@@ -2404,7 +2404,7 @@ It is merely echoed by the server
     <command>reservations</command> array in the <command>Subnet4</command>
     element. Each element in that array is a structure, that holds information
     about reservations for a single host. In particular, such a structure has
-    to have an indentifer that uniquely identifies a host.  In DHCPv4 context, such an
+    to have an identifier that uniquely identifies a host.  In DHCPv4 context, such an
     identifier is a hardware or MAC address.  In most cases, also an address
     will be specified. It is possible to specify a hostname. Additional
     capabilities are planned.</para>
@@ -2442,7 +2442,7 @@ It is merely echoed by the server
 ]
 </screen>
     The first entry reserves the 192.0.2.202 address for the client that uses
-    MAC adress of 1a:1b:1c:1d:1e:1f. The second entry reserves the address
+    MAC address of 1a:1b:1c:1d:1e:1f. The second entry reserves the address
     192.0.2.100 and the hostname of alice-laptop for client using MAC
     address 0a:0b:0c:0d:0e:0f. Note that if you plan to do DNS updates, it
     is strongly recommended for the hostnames to be unique.
@@ -2648,7 +2648,7 @@ It is merely echoed by the server
       also must not be reserved for another client. Second, when renewing a lease,
       additional check must be performed whether the address being renewed is not
       reserved for another client. Finally, when a host renews an address, the server
-      has to check whether there's a reservation for this host, so the exisiting
+      has to check whether there's a reservation for this host, so the existing
       (dynamically allocated) address should be revoked and the reserved one be
       used instead.
       </para>
@@ -2859,7 +2859,7 @@ It is merely echoed by the server
       that it is expected to hand out to the DHCPv4 clients.  It is
       assumed that the server is authoritative and has complete jurisdiction
       over those addresses. However, due to various reasons, such as
-      misconfiguration or a faulty client implemetation that retains its
+      misconfiguration or a faulty client implementation that retains its
       address beyond the valid lifetime, there may be devices connected that use
       those addresses without the server's approval or knowledge.</para>
 
@@ -2900,7 +2900,7 @@ It is merely echoed by the server
       hook returns (both global and subnet specific variants).</para>
 
       <para>Once the probation time elapses, the declined lease is recovered
-      using the standard expired lease reclaimation procedure, with several
+      using the standard expired lease reclamation procedure, with several
       additional steps. In particular, both declined-addresses statistics
       (global and subnet specific) are decreased. At the same time,
       reclaimed-declined-addresses statistics (again in two variants, global and
@@ -3155,7 +3155,7 @@ It is merely echoed by the server
             <entry>declined-addresses</entry>
             <entry>integer</entry>
             <entry>
-              This statistic shows the number of IPv4 adresses that are
+              This statistic shows the number of IPv4 addresses that are
               currently declined. This statistic counts the number of leases
               currently unavailable. Once a lease is recovered, this
               statistic will be decreased. Ideally, this statistic should be
@@ -3170,7 +3170,7 @@ It is merely echoed by the server
             <entry>subnet[id].declined-addresses</entry>
             <entry>integer</entry>
             <entry>
-              This statistic shows the number of IPv4 adresses that are
+              This statistic shows the number of IPv4 addresses that are
               currently declined in a given subnet. This statistic counts the
               number of leases currently unavailable. Once a lease is
               recovered, this statistic will be decreased. Ideally, this
@@ -3186,7 +3186,7 @@ It is merely echoed by the server
             <entry>reclaimed-declined-addresses</entry>
             <entry>integer</entry>
             <entry>
-              This statistic shows the number of IPv4 adresses that were
+              This statistic shows the number of IPv4 addresses that were
               declined, but have now been recovered. Unlike
               declined-addresses, this statistic never decreases. It can be used
               as a long term indicator of how many actual valid Declines were
@@ -3199,7 +3199,7 @@ It is merely echoed by the server
             <entry>subnet[id].reclaimed-declined-addresses</entry>
             <entry>integer</entry>
             <entry>
-              This statistic shows the number of IPv4 adresses that were
+              This statistic shows the number of IPv4 addresses that were
               declined, but have now been recovered. Unlike
               declined-addresses, this statistic never decreases. It can be used
               as a long term indicator of how many actual valid Declines were

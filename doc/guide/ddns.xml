@@ -117,7 +117,7 @@
             directly.  The following command may be used to extract this
             information.  The binary <userinput>path</userinput> may be found
             in the install directory or in the <filename>.libs</filename>
-            subdirectory in the source treee. For example
+            subdirectory in the source tree. For example
             <filename>kea/src/bin/d2/.libs/kea-dhcp-ddns</filename>.
 <screen>
 strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
@@ -136,13 +136,13 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
         <itemizedlist>
             <listitem>
             <simpara><command>localstatedir</command>: The value as passed into the
-            build configure script. It defaults defaults to "/usr/local/var".  Note
+            build configure script. It defaults to "/usr/local/var".  Note
             that this value may be overridden at run time by setting the environment
             variable KEA_PIDFILE_DIR.  This is intended primarily for testing purposes.
             </simpara>
             </listitem>
             <listitem>
-            <simpara><command>conf name</command>: The confguration file name
+            <simpara><command>conf name</command>: The configuration file name
             used to start the server, minus all preceding path and file extension.
             For example, given a pathname of "/usr/local/etc/kea/myconf.txt", the
             portion used would be "myconf".
@@ -608,7 +608,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	      lease address. The zone name should follow the appropriate
 	      standards: for example, to to support the IPv4 subnet 172.16.1,
 	      the name should be. "1.16.172.in-addr.arpa.".  Similarly,
-	      to support an IPv6 subent of 2001:db8:1, the name should be
+	      to support an IPv6 subnet of 2001:db8:1, the name should be
 	      "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa."
 	      Whatever the name, it must be unique within the catalog.
 	      </simpara>

@@ -73,7 +73,7 @@
     <command>result</command> indicates the outcome of the command. A value of 0
     means success while any non-zero value designates an error. Currently 1 is
     used as a generic error, but additional error codes may be added in the
-    future.<command>text</command> field typically appears when result is
+    future. <command>text</command> field typically appears when result is
     non-zero and contains a description of the error encountered, but it may
     also appear for successful results. That's command specific.
     <command>arguments</command> is a map of additional data values returned by
@@ -165,7 +165,7 @@ configuration file.</para>
 
       <para>
 	<emphasis>shutdown</emphasis> command instructs the server to initiate
-	its shutdown procedure. It is the equivalent of sending a SIGTERM singal
+	its shutdown procedure. It is the equivalent of sending a SIGTERM signal
 	to the process. This command does not take any arguments.  An example
 	command may look like this:
 <screen>

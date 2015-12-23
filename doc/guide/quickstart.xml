@@ -90,7 +90,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
 
         <listitem>
           <para>
-            If the server has been started sucessfully, test that it is
+            If the server has been started successfully, test that it is
             responding to DHCP queries and that the client
             receives a configuration from the server; for example, use
             the <ulink url="http://www.isc.org/downloads/DHCP/">ISC DHCP client</ulink>.
@@ -118,7 +118,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
       <title>Running Kea servers directly</title>
       <para>Kea servers can be started directly (without a need to use
       <command>keactrl</command>). To start DHCPv4 server run the following
-      commmand:
+      command:
       <screen># <userinput>kea-dhcp4 -c /path/to/your/kea4/config/file.json</userinput></screen>
       And, to start the DHCPv6 server run the following command:
       <screen># <userinput>kea-dhcp6 -c /path/to/your/kea6/config/file.json</userinput></screen>

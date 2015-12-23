@@ -161,7 +161,7 @@
         <para>
             The template files should be used in conjunction with the command
             line parameters which specify offsets of the data fields being
-            modified in outbound packets. For example, example, the <option>-E
+            modified in outbound packets. For example, the <option>-E
             <replaceable class="parameter">time-offset</replaceable></option>
             switch specifies the offset of the DHCPv6 Elapsed Time option in
             the packet template. If the offset is specified, perfdhcp will
@@ -756,7 +756,7 @@
                             multicast address FF05::1:3).  The server is
                             mandatory except where the <option>-l</option>
                             option is given to specify an interface, in
-                            which case it defauls to 'all'.
+                            which case it defaults to 'all'.
                         </para>
                     </listitem>
                 </varlistentry>
@@ -845,10 +845,15 @@
     <refsect1>
         <title>SEE ALSO</title>
         <para>
+            <citerefentry><refentrytitle>dhcpd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>kea-dhcp4</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>kea-dhcp6</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-            <citetitle>Kea Administrator Guide</citetitle>,
-            <citetitle>DHCP Performance Guide</citetitle>.
+            <citetitle>Kea Administrator Guide</citetitle>.
+<!--
+see http://kea.isc.org/ticket/4077
+            <citetitle>DHCP Performance Guide</citetitle>
+-->
+
         </para>
     </refsect1>
 
