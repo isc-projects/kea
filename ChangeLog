@@ -1,6 +1,6 @@
 1075.	[bug]		fdupont
 	Removed warnings emitted during generation of Doxygen documentation.
-	(Trac #4234, git xxx)
+	(Trac #4234, git b67910a3893bc79eb77a48bae6c31214a317bd40)
 
 1074.	[bug]		marcin
 	Addressed regression in distcheck after merge of #4224.
