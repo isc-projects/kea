@@ -57,11 +57,12 @@ We have received the following contributions:
    2013-12: interface detection for BSD systems
    2014-04: PostgreSQL support
 
- - Jiri Popelka from Red Hat
+ - Jiri Popelka, Red Hat
    2014-08: config files examples permission fix
    2014-08: compilation fix for armv7
    2014-08: configure.ac update: AC_PROG_LIBTOOL => LT_INIT
    2014-08: PostgreSQL compilation fix on i686
+   2015-12: compilation fix in MySQL host data source
 
  - Adam Osuchowski, Silesian University of Technology
    2014-09: Examples corrected in Kea ARM

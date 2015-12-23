@@ -1,3 +1,9 @@
+1076.	[bug]		jpopelka
+	Fixed compilation issue in MySQL host data source: the
+	dhcp_identifer_length is now unsigned long. This addresses
+	a compilation problem on Fedora.
+	(Github #17, git TBD)
+
 1075.	[bug]		fdupont
 	Removed warnings emitted during generation of Doxygen documentation.
 	(Trac #4234, git b67910a3893bc79eb77a48bae6c31214a317bd40)
