@@ -194,22 +194,24 @@
       <citerefentry>
         <refentrytitle>keactrl</refentrytitle>
         <manvolnum>8</manvolnum>
-      </citerefentry>
+      </citerefentry>,
 
       <citerefentry>
         <refentrytitle>kea-dhcp4</refentrytitle>
         <manvolnum>8</manvolnum>
-      </citerefentry>
+      </citerefentry>,
 
       <citerefentry>
         <refentrytitle>kea-dhcp6</refentrytitle>
         <manvolnum>8</manvolnum>
-      </citerefentry>
+      </citerefentry>,
 
       <citerefentry>
         <refentrytitle>kea-dhcp-ddns</refentrytitle>
         <manvolnum>8</manvolnum>
-      </citerefentry>
+      </citerefentry>,
+
+      <citetitle>Kea Administrator Guide</citetitle>.
 
     </para>
   </refsect1>

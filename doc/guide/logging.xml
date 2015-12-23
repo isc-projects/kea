@@ -188,9 +188,9 @@
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp4.bad-packets</command> - this is the
-            logger used by the DHCPv4 server deamon for logging inbound client
+            logger used by the DHCPv4 server daemon for logging inbound client
             packets that were dropped or to which the server responded with a
-            DHCPNAK. The allows adminstrators to configure a separate log
+            DHCPNAK. The allows administrators to configure a separate log
             output that contains only packet drop and reject entries.</simpara>
           </listitem>
           <listitem>
@@ -213,7 +213,7 @@
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp4.dhcp4</command> - this is the logger
-            by the DHCPv4 server deamon to log basic operations.</simpara>
+            by the DHCPv4 server daemon to log basic operations.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp4.dhcpsrv</command> - this is a base
@@ -234,7 +234,7 @@
           <listitem>
             <simpara><command>kea-dhcp4.hosts</command> - this logger is used
             within the libdhcpsrv and it logs messages related to the management
-            of the DHCPv4 host reservations, i.e. retrieval of the resevations
+            of the DHCPv4 host reservations, i.e. retrieval of the reservations
             and adding new reservations.</simpara>
           </listitem>
           <listitem>
@@ -278,7 +278,7 @@
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp6.bad-packets</command> - this is the
-            logger used by the DHCPv6 server deamon for logging inbound client
+            logger used by the DHCPv6 server daemon for logging inbound client
             packets that were dropped.</simpara>
           </listitem>
           <listitem>
@@ -301,7 +301,7 @@
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp6.dhcp6</command> - this is the logger
-            used DHCPv6 server deamon to log basic operations.</simpara>
+            used DHCPv6 server daemon to log basic operations.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp6.dhcpsrv</command> - this is a base
@@ -322,7 +322,7 @@
           <listitem>
             <simpara><command>kea-dhcp6.hosts</command> - this logger is used
             within the libdhcpsrv and it logs messages related to the management
-            of the DHCPv6 host reservations, i.e. retrieval of the resevations
+            of the DHCPv6 host reservations, i.e. retrieval of the reservations
             and adding new reservations.</simpara>
           </listitem>
           <listitem>
@@ -353,25 +353,25 @@
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp-ddns</command> - this is the root logger for
-            the kea-dhcp-ddns deamon. All components used by this deamon inherit
+            the kea-dhcp-ddns daemon. All components used by this daemon inherit
             the settings from this logger if there is no specialized logger
             provided.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp-ddns.dhcpddns</command> - this is the logger
-            used by the kea-dhcp-ddns deamon for logging configuration and global
+            used by the kea-dhcp-ddns daemon for logging configuration and global
             event information.  This logger does not specify logging settings
-            for libraries used by the deamon.</simpara>
+            for libraries used by the daemon.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp-ddns.dhcp-to-d2</command> - this is the logger
-            used by the kea-dhcp-ddns deamon for logging information about events
-            dealing with receving messages from the DHCP servers and adding them
+            used by the kea-dhcp-ddns daemon for logging information about events
+            dealing with receiving messages from the DHCP servers and adding them
             to the queue for processing.</simpara>
           </listitem>
           <listitem>
             <simpara><command>kea-dhcp-ddns.d2-to-dns</command> - this is the logger
-            used by the kea-dhcp-ddns deamon for logging information about events
+            used by the kea-dhcp-ddns daemon for logging information about events
             dealing with sending and receiving messages with the DNS servers.
             </simpara>
           </listitem>
@@ -770,7 +770,7 @@ file be created.</para>
       </para>
       <para>
         The following environment variables can be used to control the
-        behavio of logging during startup:
+        behavior of logging during startup:
       </para>
 
           <variablelist>

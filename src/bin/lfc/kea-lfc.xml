@@ -120,7 +120,7 @@
           <command>kea-lfc</command> process.  It may also
           contain configuration entries for other Kea services.
           Currently <command>kea-lfc</command> gets all of its arguments from
-          the comamnd line, in the future it will be extended to get some arguments
+          the command line, in the future it will be extended to get some arguments
           from the config file.
         </para></listitem>
       </varlistentry>
@@ -142,7 +142,7 @@
           Previous or ex lease file - When <command>kea-lfc</command> starts this
           is the result of any previous run of <command>kea-lfc</command>.
           When <command>kea-lfc</command> finishes it is the result of this run.
-          If <command>kea-lfc</command> is interrupted before compelting
+          If <command>kea-lfc</command> is interrupted before completing,
           this file may not exist.
         </para></listitem>
       </varlistentry>
