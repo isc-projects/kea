@@ -1,16 +1,8 @@
 // Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
 
@@ -406,7 +398,7 @@ TEST_F(Pkt6Test, unpackVendorMalformed) {
     orig.push_back(3);
     orig.push_back(4);
     orig.push_back(1); // suboption type=0x101
-    orig.push_back(1); 
+    orig.push_back(1);
     orig.push_back(0); // suboption length=3
     orig.push_back(3);
     orig.push_back(102); // data="foo"
@@ -428,7 +420,7 @@ TEST_F(Pkt6Test, unpackVendorMalformed) {
     shortv[len_index] = 20;
     Pkt6Ptr too_short_vendor_pkt(new Pkt6(&shortv[0], shortv.size()));
     EXPECT_NO_THROW(too_short_vendor_pkt->unpack());
-    
+
     // Truncated option header is not accepted
     vector<uint8_t> shorth = orig;
     shorth.resize(orig.size() - 4);
@@ -996,10 +988,17 @@ TEST_F(Pkt6Test, getMAC) {
     // Let's check if setting IPv6 address improves the situation.
     IOAddress linklocal_eui64("fe80::204:06ff:fe08:0a0c");
     pkt.setRemoteAddr(linklocal_eui64);
-    EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
-    EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL));
-    EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL |
-                           HWAddr::HWADDR_SOURCE_RAW));
+    HWAddrPtr mac;
+    ASSERT_TRUE(mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL, mac->source_);
+
+    ASSERT_TRUE(mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL, mac->source_);
+
+    ASSERT_TRUE(mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL |
+                                 HWAddr::HWADDR_SOURCE_RAW));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL, mac->source_);
+
     pkt.setRemoteAddr(IOAddress("::"));
 
     // Let's invent a MAC
@@ -1011,10 +1010,15 @@ TEST_F(Pkt6Test, getMAC) {
     pkt.setRemoteHWAddr(dummy_hwaddr);
 
     // Now we should be able to get something
-    ASSERT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
+    ASSERT_TRUE(mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_RAW, mac->source_);
+
     ASSERT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_RAW));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_RAW, mac->source_);
+
     EXPECT_TRUE(pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL |
                            HWAddr::HWADDR_SOURCE_RAW));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_RAW, mac->source_);
 
     // Check that the returned MAC is indeed the expected one
     ASSERT_TRUE(*dummy_hwaddr == *pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
@@ -1050,6 +1054,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_direct) {
     pkt.setRemoteAddr(linklocal_eui64);
     HWAddrPtr found = pkt.getMAC(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL);
     ASSERT_TRUE(found);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL, found->source_);
 
     stringstream tmp;
     tmp << "hwtype=" << (int)iface->getHWType() << " f0:04:06:08:0a:0c";
@@ -1097,6 +1102,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_singleRelay) {
     stringstream tmp;
     tmp << "hwtype=" << (int)iface->getHWType() << " f0:04:06:08:0a:0c";
     EXPECT_EQ(tmp.str(), found->toText(true));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL, found->source_);
 }
 
 // Test checks whether getMACFromIPv6LinkLocal() returns the hardware (MAC)
@@ -1151,6 +1157,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_multiRelay) {
     stringstream tmp;
     tmp << "hwtype=" << iface->getHWType() << " 00:00:00:00:00:01";
     EXPECT_EQ(tmp.str(), found->toText(true));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL, found->source_);
 }
 
 // Test checks whether getMACFromIPv6RelayOpt() returns the hardware (MAC)
@@ -1184,6 +1191,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_singleRelay) {
     stringstream tmp;
     tmp << "hwtype=1 0a:1b:0b:01:ca:fe";
     EXPECT_EQ(tmp.str(), found->toText(true));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION, found->source_);
 }
 
 // Test checks whether getMACFromIPv6RelayOpt() returns the hardware (MAC)
@@ -1232,6 +1240,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
     stringstream tmp;
     tmp << "hwtype=1 fa:30:0b:fa:c0:fe";
     EXPECT_EQ(tmp.str(), found->toText(true));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION,found->source_);
 }
 
 TEST_F(Pkt6Test, getMACFromDUID) {
@@ -1271,6 +1280,7 @@ TEST_F(Pkt6Test, getMACFromDUID) {
     HWAddrPtr mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_DUID);
     ASSERT_TRUE(mac);
     EXPECT_EQ("hwtype=7 0a:0b:0c:0d:0e:0f:10", mac->toText(true));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_DUID, mac->source_);
 
     // Let's test DUID-LL. This should work.
     ASSERT_TRUE(pkt.delOption(D6O_CLIENTID));
@@ -1278,6 +1288,7 @@ TEST_F(Pkt6Test, getMACFromDUID) {
     mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_DUID);
     ASSERT_TRUE(mac);
     EXPECT_EQ("hwtype=11 0a:0b:0c:0d:0e", mac->toText(true));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_DUID, mac->source_);
 
     // Finally, let's try DUID-EN. This should fail, as EN type does not
     // contain any MAC address information.
@@ -1303,6 +1314,7 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_Modem) {
 
     // Let's check the info.
     EXPECT_EQ("hwtype=1 10:0d:7f:00:07:88", found->toText(true));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_DOCSIS_MODEM, found->source_);
 
     // Now let's remove the option
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<
@@ -1331,6 +1343,7 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_CMTS) {
 
     // Let's check the info.
     EXPECT_EQ("hwtype=1 20:e5:2a:b8:15:14", found->toText(true));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_DOCSIS_CMTS, found->source_);
 
     // Now let's remove the suboption 1026 that is inserted by the
     // relay.
@@ -1393,6 +1406,7 @@ TEST_F(Pkt6Test, getMACFromRemoteIdRelayOption) {
     tmp << "hwtype=" << (int)iface->getHWType() << " 0a:0b:0c:0d:0e:0f";
 
     EXPECT_EQ(tmp.str(), mac->toText(true));
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_REMOTE_ID, mac->source_);
 }
 
 // This test verifies that a solicit that passed through two relays is parsed

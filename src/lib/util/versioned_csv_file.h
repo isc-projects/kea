@@ -1,16 +1,8 @@
 // Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef VERSIONED_CSV_FILE_H
 #define VERSIONED_CSV_FILE_H
@@ -88,8 +80,8 @@ typedef boost::shared_ptr<VersionedColumn> VersionedColumnPtr;
 /// -# If there are fewer columns in the header than in the schema, the file
 /// is presumed to be an earlier schema version and will be upgraded as it is
 /// read.  There is an ability to mark a specific column as being the minimum
-/// column which must be present, see @ref VersionedCSVFile::
-/// setMinimumValidColumns().  If the header columns do not match up to this
+/// column which must be present, see @ref VersionedCSVFile::setMinimumValidColumns().
+/// If the header columns do not match up to this
 /// minimum column, the file is presumed to be too old to upgrade and the
 /// open will fail.  A valid, upgradable file will have an input schema
 /// state of VersionedCSVFile::NEEDS_UPGRADE.
@@ -152,7 +144,7 @@ public:
     /// The name of the column will be placed in the CSV header when new file
     /// is created by calling @c recreate or @c open function.
     ///
-    /// @param name Name of the column.
+    /// @param col_name Name of the column.
     /// @param version  Text representation of the schema version in which
     /// this column first appeared.
     /// @param default_value value the missing column should be given during
@@ -232,7 +224,6 @@ public:
     /// specified by that column's descriptor.
     ///
     /// @param [out] row Object receiving the parsed CSV file.
-    /// @param skip_validation Do not perform validation.
     ///
     /// @return true if row has been read and validated; false if validation
     /// failed.
@@ -255,7 +246,7 @@ public:
     ///
     /// @param index index within the list of columns of the desired column
     /// @return a pointer to the VersionedColumn at the given index
-    /// @trow OutOfRange exception if the index is invalid
+    /// @throw OutOfRange exception if the index is invalid
     const VersionedColumnPtr& getVersionedColumn(const size_t index) const;
 
     /// @brief Fetches the state of the input file's schema

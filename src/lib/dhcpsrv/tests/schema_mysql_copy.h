@@ -1,16 +1,8 @@
 // Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef SCHEMA_COPY_H
 #define SCHEMA_COPY_H
@@ -32,15 +24,13 @@ namespace {
 // Deletion of existing tables.
 
 const char* destroy_statement[] = {
+    // Turning off referential integrity checks ensures tables get dropped
+    "SET SESSION FOREIGN_KEY_CHECKS = 0",
     "DROP TABLE lease4",
     "DROP TABLE lease6",
     "DROP TABLE lease6_types",
     "DROP TABLE lease_hwaddr_source",
     "DROP TABLE schema_version",
-
-    // We need to drop ipv6_reservations before hosts, as it has constrains
-    // that depend on hosts. Therefore hosts table cannot be deleted while
-    // ipv6_reservations exists.
     "DROP TABLE ipv6_reservations",
     "DROP TABLE hosts",
     "DROP TABLE dhcp4_options",
@@ -92,7 +82,7 @@ const char* create_statement[] = {
     "CREATE TABLE lease6_types ("
         "lease_type TINYINT PRIMARY KEY NOT NULL,"
         "name VARCHAR(5)"
-        ")",
+        ") ENGINE = INNODB",
 
     "INSERT INTO lease6_types VALUES (0, \"IA_NA\")",
     "INSERT INTO lease6_types VALUES (1, \"IA_TA\")",
@@ -101,7 +91,7 @@ const char* create_statement[] = {
     "CREATE TABLE schema_version ("
         "version INT PRIMARY KEY NOT NULL,"
         "minor INT"
-        ")",
+        ") ENGINE = INNODB",
 
     "INSERT INTO schema_version VALUES (1, 0)",
     "COMMIT",

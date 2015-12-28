@@ -18,8 +18,8 @@
       modem is different to the clients behind that modem.
       </para></listitem>
       <listitem><para>
-      The clients have different behavior, e.g.a smart phone behaves
-      differently to a lapttop.
+      The clients have different behavior, e.g. a smart phone behaves
+      differently to a laptop.
       </para></listitem>
       <listitem><para>
       The clients require different values for some options, e.g. a docsis3.0
@@ -298,7 +298,7 @@
     "client-classes": [<userinput>
         {
             "name": "Client_enterprise",
-            "test": "substring(option[2].hex,0,6) == 0x0002AABBCCDD'",
+            "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD'",
             "option-data": [
                 {
                     "name": "dns-servers",
@@ -371,7 +371,7 @@
     "client-classes": [
         {
             "name": "Client_enterprise",
-            "test": "substring(option[2].hex,0,6) == 0x0002AABBCCDD'",
+            "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD'",
             "option-data": [
                 {
                     "name": "dns-servers",

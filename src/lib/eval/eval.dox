@@ -1,16 +1,8 @@
-// Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /**
   @page dhcpEval libeval - Expression evaluation and client classification
@@ -127,11 +119,27 @@ instantiated with the appropriate value and put onto the expression vector.
 @section dhcpEvalConfigure Configure options
 
  Since the flex/bison tools are not necessary for a regular compilation,
- checks conducted during configure, but the lack of flex or
- bison tools does not stop the configure process. There is a flag
+ checks are conducted during the configure script, but the lack of flex or
+ bison tools does not stop the process. There is a flag
  (--enable-generate-parser) that tells configure script that the
  parser will be generated. With this flag, the checks for flex/bison
  are mandatory. If either tool is missing or at too early a version, the
  configure process will terminate with an error.
+
+@section dhcpEcalToken Supported tokens
+
+ There is a number of tokens implemented. Each token is derived from
+ isc::eval::Token class and represents a certain expression primitive.
+ Currently supported tokens are:
+
+ - isc::dhcp::TokenString - represents a constant string, e.g. "MSFT";
+ - isc::dhcp::TokenHexString - represents a constant string, encoded as
+   hex string, e.g. 0x666f6f which is actually "foo";
+ - isc::dhcp::TokenOption - represents an option in a packet, e.g.
+                    option[123].text;
+ - isc::dhcp::TokenEqual - represents equal (==) operator;
+ - isc::dhcp::TokenSubstring - represents substring(text, start, length) operator;
+
+More operators are expected to be implemented in upcoming releases.
 
 */

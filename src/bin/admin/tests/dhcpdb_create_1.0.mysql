@@ -1,17 +1,8 @@
-# Copyright (C) 2012-2013  Internet Systems Consortium.
+# Copyright (C) 2012-2015 Internet Systems Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
-# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # This is the Kea schema 1.0 specification for MySQL.
 # Note: this is outdated version on purpose and it used to test upgrade
@@ -84,7 +75,7 @@ CREATE INDEX lease6_by_iaid_subnet_id_duid ON lease6 (iaid, subnet_id, duid);
 CREATE TABLE lease6_types (
     lease_type TINYINT PRIMARY KEY NOT NULL,    # Lease type code.
     name VARCHAR(5)                             # Name of the lease type
-    );
+    ) ENGINE = INNODB;
 START TRANSACTION;
 INSERT INTO lease6_types VALUES (0, "IA_NA");   # Non-temporary v6 addresses
 INSERT INTO lease6_types VALUES (1, "IA_TA");   # Temporary v6 addresses
@@ -103,7 +94,7 @@ COMMIT;
 CREATE TABLE schema_version (
     version INT PRIMARY KEY NOT NULL,       # Major version number
     minor INT                               # Minor version number
-    );
+    ) ENGINE = INNODB;
 START TRANSACTION;
 INSERT INTO schema_version VALUES (1, 0);
 COMMIT;

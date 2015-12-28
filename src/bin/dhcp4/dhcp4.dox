@@ -1,16 +1,8 @@
 // Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /**
  @page dhcp4 DHCPv4 Server Component
@@ -39,7 +31,7 @@ from the common configuration parsers and customize their behavior. For
 example: the @c Subnet4ConfigParser is used to parse parameters
 describing a single subnet. It derives from the @c
 isc::dhcp::SubnetConfigParser, which implements the common base for both
-DHCPv4 and DHCPv6 subnets. The @ref isc::dhcp::Subnet4ConfigParser
+DHCPv4 and DHCPv6 subnets. The @ref Subnet4ConfigParser
 implements the @c initSubnet abstract method, which creates an instance of
 the DHCPv4 subnet. This method is invoked by the parent class.
 
@@ -52,7 +44,7 @@ src/bin/dhcp4/json_config_parser.cc.
 @section dhcpv4ConfigInherit DHCPv4 configuration inheritance
 
 One notable useful feature of DHCP configuration is its parameter inheritance.
-For example, "renew-timer" value may be specified at a global scope and it then
+For example, the "renew-timer" value may be specified at a global scope and it then
 applies to all subnets. However, some subnets may have it overwritten with subnet
 specific values that takes precedence over global values that are considered
 defaults. The parameters inheritance is implemented by means of the "global
@@ -207,10 +199,16 @@ these constants will be removed.
 
 @section dhcpv4Classifier DHCPv4 Client Classification
 
-The Kea DHCPv4 server currently supports simplified client classification. It is called
+The Kea DHCPv4 currently supports two classification modes: simplified client
+classification (that was an early implementation that used values of vendor class option)
+and full client classification.
+
+@subsection dhcpv4ClassifierSimple Simple Client Classification in DHCPv4
+
+The Kea DHCPv4 server supports simplified client classification. It is called
 "simplified", because the incoming packets are classified based on the content
-of the vendor class (60) option. More flexible classification is planned, but there
-are no specific development dates agreed.
+of the vendor class (60) option. More flexible classification was added in 1.0
+and is described in @ref dhcpv4ClassifierFull .
 
 For each incoming packet, @ref isc::dhcp::Dhcpv4Srv::classifyPacket() method is called.
 It attempts to extract content of the vendor class option and interpret as a name
@@ -225,48 +223,59 @@ Nevertheless, there is such a possibility and it will be used in a near future. 
 check whether a packet belongs to given class, isc::dhcp::Pkt4::inClass method should
 be used.
 
+The code sometimes refers to this classification as "simple" or 'built-in", because
+it does not require any configuration and thus is built into the server logic.
+
+@subsection dhcpv4ClassifierFull Full Client Classification in DHCPv4
+
+Kea 1.0 introduced full client classification. Each client class consists of a name
+and an expression that can be evaluated on an incoming packet. If it evaluates to
+true, this packet is considered a member of said class. Class definitions are stored
+in isc::dhcp::ClientClassDef objects that are kept in isc::dhcp::ClientClassDictionary.
+This is convenient as there are often multiple classes associated with a given scope.
+As of Kea 1.0, the only supported scope is global, but there are plans to support
+class definitions that are subnet specific.
+
+Client classification is done in isc::dhcp::Dhcpv4Srv::classifyPacket. First, the old
+"built-in" (see @ref dhcpv4ClassifierSimple) classification is called. Then the code
+iterates over all class definitions and for each class definition it calls
+isc::dhcp::evaluate, which is implemented in libeval (see @ref dhcpEval). If the
+evaluation is successful, the class name is added to the packet (by calling
+isc::dhcp::pkt::addClass).
+
+If packet belongs to at least one class, this fact is logged. If there are any
+exceptions raised during class evaluation, an error is logged and the code attempts
+to evaluate the next class.
+
+@subsection dhcpv4ClassifierUsage How client classification information is used in DHCPv4
+
 Currently there is a short code section that alternates packet processing depending on
-which class it belongs to. It is planned to move that capability to an external hook
-library. See ticket #3275. The class specific behavior is:
+which class it belongs to. (It is planned to move that capability to an external hook
+library, see ticket #3275.) The class specific behavior is:
 
 - docsis3.0 packets have siaddr (next server) field set
 - docsis3.0 packets have file field set to the content of the boot-file-name option
 - eRouter1.0 packets have siaddr (next server) field cleared
 
-Aforementioned modifications are conducted in @ref isc::dhcp::Dhcpv4Srv::classSpecificProcessing.
+Aforementioned modifications are conducted in
+@ref isc::dhcp::Dhcpv4Srv::vendorClassSpecificProcessing.
 
 It is possible to define class restrictions in subnet, so a given subnet is only
-accessible to clients that belong to a given class. That is implemented as isc::dhcp::Pkt4::classes_
-being passed in isc::dhcp::Dhcpv4Srv::selectSubnet() to isc::dhcp::CfgMgr::getSubnet4().
-Currently this capability is usable, but the number of scenarios it supports is
-limited.
+accessible to clients that belong to a given class. That is implemented as
+isc::dhcp::Pkt4::classes_ being passed in isc::dhcp::Dhcpv4Srv::selectSubnet()
+to isc::dhcp::CfgMgr::getSubnet4().  Currently this capability is usable, but
+the number of scenarios it supports is limited.
 
- @section dhcpv4ConfigBackend Configuration backend for DHCPv4
+Finally, it is possible to define client class-specific options, so clients belonging
+to a class foo, will get options associated with class foo. This is implemented in
+isc::dhcp::Dhcpv4Srv::buildCfgOptionList.
 
-There are many theoretical ways in which server configuration can be stored.
-The legacy ISC-DHCP implementation uses flat files. Configuration stored in JSON files is
-becoming more and more popular among various projects. There are unofficial patches for
-ISC-DHCP that keep parts of the configuration in LDAP. It was also suggested that in some
-cases it would be convenient to keep configuration in XML files.
+@section dhcpv4ConfigBackend Configuration backend for DHCPv4
 
-Kea 0.9 has introduced configuration backends that are switchable during compilation phase. Currently the only choice is JSON.
-
-JSON is a new configuration backend that causes Kea to read JSON configuration file from
-disk. It does not require any framework and thus is considered more lightweight. It will
-allow dynamic on-line reconfiguration, but will lack remote capabilities (i.e. no RESTful
-API). This configuration backend is expected to be the default for upcoming Kea 0.9. It
-requires <tt> -c config-file </tt> command-line option.
-
-Internally, configuration backends are implemented as different implementations of the
-isc::dhcp::ControlledDhcpv4Srv class, stored in kea_controller.cc files.
-
-While it is unlikely that ISC will support more than one backend at any given time, there
-are several aspects that make that approach appealing in the long term. First, having
-two backends is essential during transition time, where both old and new backend is used.
-Second, there are external organizations that develop and presumably maintain LDAP backend
-for ISC-DHCP. Is at least possible that similar will happen for Kea. Finally, if we ever
-extend the isc::dhcp::CfgMgr with configuration export, this approach could be used as
-a migration tool.
+Earlier Kea vesions had a concept of backends, which were implementations of
+different ways how configuration could be delivered to Kea. It seems that the
+concept of backends didn't get much enthusiasm from users and having multiple
+backends was cumbersome to maintain, so it was removed in 1.0.
 
 @section dhcpv4SignalBasedReconfiguration Reconfiguring DHCPv4 server with SIGHUP signal
 
@@ -286,7 +295,7 @@ configuration.
 
 The signal handler for SIGHUP (also for SIGTERM and SIGINT) are installed in the
 kea_controller.cc using the @c isc::util::SignalSet class. The
-@c isc::dhcp::Dhcp6Srv calls @c isc::dhcp::Daemon::handleSignal on each pass
+@c isc::dhcp::Dhcp4Srv calls @c isc::dhcp::Daemon::handleSignal on each pass
 through the main loop. This method fetches the last received signal and calls
 a handler function defined in the kea_controller.cc. The handler function
 calls a static function @c configure defined in the kea_controller.cc.

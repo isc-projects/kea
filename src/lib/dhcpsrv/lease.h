@@ -1,16 +1,8 @@
 // Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef LEASE_H
 #define LEASE_H
@@ -430,7 +422,7 @@ struct Lease6 : public Lease {
     /// @brief Lease type
     ///
     /// One of normal address, temporary address, or prefix.
-    Type type_;
+    Lease::Type type_;
 
     /// @brief IPv6 prefix length
     ///
@@ -467,7 +459,7 @@ struct Lease6 : public Lease {
     /// @param subnet_id A Subnet identifier.
     /// @param hwaddr hardware/MAC address (optional)
     /// @param prefixlen An address prefix length (optional, defaults to 128)
-    Lease6(Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
+    Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
            uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
            uint32_t t2, SubnetID subnet_id, const HWAddrPtr& hwaddr = HWAddrPtr(),
            uint8_t prefixlen = 128);
@@ -488,7 +480,7 @@ struct Lease6 : public Lease {
     /// @param hostname FQDN of the client which gets the lease.
     /// @param hwaddr hardware address (MAC), may be NULL
     /// @param prefixlen An address prefix length.
-    Lease6(Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
+    Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
            uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
            uint32_t t2, SubnetID subnet_id, const bool fqdn_fwd,
            const bool fqdn_rev, const std::string& hostname,

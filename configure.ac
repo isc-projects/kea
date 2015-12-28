@@ -7,7 +7,7 @@ AC_PREREQ([2.59])
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
 # version that was used as a base + changes that were made later, but
 # are not released yet.
-AC_INIT(kea, 1.0.0-beta2, kea-dev@lists.isc.org)
+AC_INIT(kea,1.0.0, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -1417,6 +1417,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/admin/scripts/mysql/upgrade_1.0_to_2.0.sh
                  src/bin/admin/scripts/mysql/upgrade_2.0_to_3.0.sh
                  src/bin/admin/scripts/mysql/upgrade_3.0_to_4.0.sh
+                 src/bin/admin/scripts/mysql/upgrade_4.0_to_4.1.sh
                  src/bin/admin/scripts/pgsql/Makefile
                  src/bin/admin/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/hooks/Makefile
@@ -1579,9 +1580,6 @@ Log4cplus:
   LOG4CPLUS_INCLUDES: ${LOG4CPLUS_INCLUDES}
   LOG4CPLUS_LIBS:  ${LOG4CPLUS_LIBS}
 
-Kea config backend:
-  CONFIG_BACKEND:  ${CONFIG_BACKEND}
-
 Flex/bison:
   FLEX:  ${LEX}
   BISON: ${YACC}
@@ -1634,9 +1632,6 @@ END
 fi
 
 cat >> config.report << END
-
-Features:
-  $enable_features
 
 Developer:
   Enable Debugging: $debug_enabled

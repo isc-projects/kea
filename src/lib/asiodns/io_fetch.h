@@ -1,16 +1,8 @@
-// Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef IO_FETCH_H
 #define IO_FETCH_H 1
@@ -144,8 +136,20 @@ public:
     ///  with above constructor which has only question section. All
     ///  other parameters are same.
     ///
+    /// \param protocol Fetch protocol, either IOFetch::TCP or IOFetch::UDP
+    /// \param service I/O Service object to handle the asynchronous
+    ///        operations.
     /// \param query_message the shared_ptr to a full query message
     ///        got from a query client.
+    /// \param address IP address of upstream server
+    /// \param port Port to which to connect on the upstream server
+    /// \param buff Output buffer into which the response (in wire format)
+    ///        is written (if a response is received).
+    /// \param cb Callback object containing the callback to be called when we
+    ///        terminate.  The caller is responsible for managing this object
+    ///        and deleting it if necessary.
+    /// \param wait Timeout for the fetch (in ms).  The default value of
+    ///        -1 indicates no timeout.
     IOFetch(Protocol protocol, isc::asiolink::IOService& service,
         isc::dns::ConstMessagePtr query_message,
         const isc::asiolink::IOAddress& address,

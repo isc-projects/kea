@@ -1,16 +1,8 @@
-# Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 #
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-# PERFORMANCE OF THIS SOFTWARE.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 $NAMESPACE isc::dhcp
 
@@ -223,7 +215,7 @@ be able to recover from that.
 
 % DHCP6_DECLINE_LEASE Client %1 sent DECLINE for address %2 and the server marked it as declined. The lease will be recovered in %3 seconds.
 This informational message indicates that the client leased an address, but
-discovered that it is being used by some other devicea and reported this to the
+discovered that it is being used by some other device and reported this to the
 server by sending a Decline message. The server marked the lease as
 declined. This likely indicates a misconfiguration in the network. Either
 the server is configured with an incorrect pool or there are devices that have
@@ -671,7 +663,7 @@ has failed.  As a result, the server will exit.  The reason for the
 failure is given within the message.
 
 % DHCP6_SRV_D2STOP_ERROR error stopping IO with DHCP_DDNS during shutdown: %1
-This error message indicates that during shutdown, an erro occurred while
+This error message indicates that during shutdown, an error occurred while
 stopping IO between the DHCPv6 server and the DHCP_DDNS server.  This is
 probably due to a programmatic error is not likely to impact either server
 upon restart.  The reason for the failure is given within the message.
@@ -724,7 +716,7 @@ That could either mean missing functionality or invalid or broken relay or clien
 The list of formally defined message types is available here:
 http://www.iana.org/assignments/dhcpv6-parameters.
 
-% DHCP6_USING_SERVERID server is using server-id %1 and stores in the the file %2
+% DHCP6_USING_SERVERID server is using server-id %1 and stores in the file %2
 This info message is logged when the server reads its server-id from a
 file or generates it. This message is a notification to the administrator
 what server-id will be used and where it is persisted. Typically, there is

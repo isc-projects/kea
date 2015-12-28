@@ -1,18 +1,10 @@
 #!/bin/sh
 
-# Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 #
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-# PERFORMANCE OF THIS SOFTWARE.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # Include common test library.
 . @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
@@ -20,8 +12,10 @@
 # Set location of the keactrl.
 keactrl=@abs_top_builddir@/src/bin/keactrl/keactrl
 
+# Name of the configuration file without its extension.
+CFG_FILE_NAME="test_config"
 # A name of the configuration file to be used by Kea.
-CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/test_config.json
+CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${CFG_FILE_NAME}.json
 # A name of the keactrl config file
 KEACTRL_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/keactrl_test.conf
 # Path to the Kea log file.
@@ -186,15 +180,15 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that all servers are running.
-    get_pids ${kea4_name}
+    get_pid ${kea4_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
-    get_pids ${kea6_name}
+    get_pid ${kea6_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
-    get_pids ${d2_name}
+    get_pid ${d2_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
@@ -290,15 +284,15 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that all servers are running.
-    get_pids ${kea4_name}
+    get_pid ${kea4_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
-    get_pids ${kea6_name}
+    get_pid ${kea6_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
-    get_pids ${d2_name}
+    get_pid ${d2_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
@@ -369,17 +363,17 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that DHCPv4 server is running.
-    get_pids ${kea4_name}
+    get_pid ${kea4_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that DHCPv6 server is not running.
-    get_pids ${kea6_name}
+    get_pid ${kea6_name}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that D2 server is not running.
-    get_pids ${d2_name}
+    get_pid ${d2_name}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
@@ -450,17 +444,17 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that DHCPv6 server is running.
-    get_pids ${kea6_name}
+    get_pid ${kea6_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that DHCPv4 server is not running.
-    get_pids ${kea4_name}
+    get_pid ${kea4_name}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that D2 server is not running.
-    get_pids ${d2_name}
+    get_pid ${d2_name}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
@@ -532,12 +526,12 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that DHCPv6 server is running.
-    get_pids ${kea6_name}
+    get_pid ${kea6_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that DHCPv4 server is not running.
-    get_pids ${kea4_name}
+    get_pid ${kea4_name}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
@@ -577,17 +571,17 @@ Expected wait_for_message return %d, returned %d."
 
 
     # Make sure that DHCPv6 server is running.
-    get_pids ${kea6_name}
+    get_pid ${kea6_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that DHCPv4 server is running.
-    get_pids ${kea4_name}
+    get_pid ${kea4_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that D2 server is running.
-    get_pids ${d2_name}
+    get_pid ${d2_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
@@ -681,17 +675,17 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that DHCPv4 server is running.
-    get_pids ${kea4_name}
+    get_pid ${kea4_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that DHCPv6 server is not running.
-    get_pids ${kea6_name}
+    get_pid ${kea6_name}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that D2 server is not running.
-    get_pids ${d2_name}
+    get_pid ${d2_name}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
@@ -731,17 +725,17 @@ Expected wait_for_message return %d, returned %d."
 
 
     # Make sure that DHCPv6 server is running.
-    get_pids ${kea6_name}
+    get_pid ${kea6_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that DHCPv4 server is running.
-    get_pids ${kea4_name}
+    get_pid ${kea4_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that D2 server is running.
-    get_pids ${d2_name}
+    get_pid ${d2_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
@@ -858,15 +852,15 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that both servers are running.
-    get_pids ${kea4_name}
+    get_pid ${kea4_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
-    get_pids ${kea6_name}
+    get_pid ${kea6_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
-    get_pids ${d2_name}
+    get_pid ${d2_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
@@ -888,12 +882,12 @@ Expected wait_for_message return %d, returned %d."
         "Expected wait_for_server_down return %d, returned %d"
 
     # Make sure DHCPv6 server is still running
-    get_pids ${kea6_name}
+    get_pid ${kea6_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure D2 server is still running
-    get_pids ${kea6_name}
+    get_pid ${kea6_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
@@ -915,7 +909,7 @@ Expected wait_for_message return %d, returned %d."
         "Expected wait_for_server_down return %d, returned %d"
 
     # Make sure D2 server is still running
-    get_pids ${d2_name}
+    get_pid ${d2_name}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 

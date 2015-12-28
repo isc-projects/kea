@@ -1,16 +1,8 @@
 // Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
 #include <utility>
@@ -140,6 +132,7 @@ Pkt::getMAC(uint32_t hw_addr_src) {
     if (hw_addr_src & HWAddr::HWADDR_SOURCE_RAW) {
         mac = getRemoteHWAddr();
         if (mac) {
+            mac->source_ = HWAddr::HWADDR_SOURCE_RAW;
             return (mac);
         } else if (hw_addr_src == HWAddr::HWADDR_SOURCE_RAW) {
             // If we're interested only in RAW sockets as source of that info,
@@ -228,47 +221,45 @@ Pkt::getMAC(uint32_t hw_addr_src) {
 
 HWAddrPtr
 Pkt::getMACFromIPv6(const isc::asiolink::IOAddress& addr) {
+    HWAddrPtr mac;
 
-    if (!addr.isV6LinkLocal()) {
-        return (HWAddrPtr());
+    if (addr.isV6LinkLocal()) {
+        std::vector<uint8_t> bin = addr.toBytes();
+
+        // Double check that it's of appropriate size
+        if ((bin.size() == isc::asiolink::V6ADDRESS_LEN) &&
+            // Check that it's link-local (starts with fe80).
+            (bin[0] == 0xfe) && (bin[1] == 0x80) &&
+            // Check that u bit is set and g is clear.
+            // See Section 2.5.1 of RFC2373 for details.
+            ((bin[8] & 3) == 2) &&
+            // And that the IID is of EUI-64 type.
+            (bin[11] == 0xff) && (bin[12] == 0xfe)) {
+
+                // Remove 8 most significant bytes
+                bin.erase(bin.begin(), bin.begin() + 8);
+
+                // Ok, we're down to EUI-64 only now: XX:XX:XX:ff:fe:XX:XX:XX
+                bin.erase(bin.begin() + 3, bin.begin() + 5);
+
+                // MAC-48 to EUI-64 involves inverting u bit (see explanation
+                // in Section 2.5.1 of RFC2373). We need to revert that.
+                bin[0] = bin[0] ^ 2;
+
+                // Let's get the interface this packet was received on.
+                // We need it to get hardware type
+                IfacePtr iface = IfaceMgr::instance().getIface(iface_);
+                uint16_t hwtype = 0; // not specified
+                if (iface) {
+                    hwtype = iface->getHWType();
+                }
+
+            mac.reset(new HWAddr(bin, hwtype));
+            mac->source_ = HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL;
+        }
     }
 
-    std::vector<uint8_t> bin = addr.toBytes();
-
-    // Double check that it's of appropriate size
-    if ((bin.size() != isc::asiolink::V6ADDRESS_LEN) ||
-
-        // Check that it's link-local (starts with fe80).
-        (bin[0] != 0xfe) || (bin[1] != 0x80) ||
-
-        // Check that u bit is set and g is clear. See Section 2.5.1 of RFC2373
-        // for details.
-        ((bin[8] & 3) != 2) ||
-
-        // And that the IID is of EUI-64 type.
-        (bin[11] != 0xff) || (bin[12] != 0xfe)) {
-        return (HWAddrPtr());
-    }
-
-    // Remove 8 most significant bytes
-    bin.erase(bin.begin(), bin.begin() + 8);
-
-    // Ok, we're down to EUI-64 only now: XX:XX:XX:ff:fe:XX:XX:XX
-    bin.erase(bin.begin() + 3, bin.begin() + 5);
-
-    // MAC-48 to EUI-64 involves inverting u bit (see explanation in Section
-    // 2.5.1 of RFC2373). We need to revert that.
-    bin[0] = bin[0] ^ 2;
-
-    // Let's get the interface this packet was received on. We need it to get
-    // hardware type
-    IfacePtr iface = IfaceMgr::instance().getIface(iface_);
-    uint16_t hwtype = 0; // not specified
-    if (iface) {
-        hwtype = iface->getHWType();
-    }
-
-    return (HWAddrPtr(new HWAddr(bin, hwtype)));
+    return (mac);
 }
 
 };

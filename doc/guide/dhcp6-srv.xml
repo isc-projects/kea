@@ -79,7 +79,7 @@
             directly.  The following command may be used to extract this
             information.  The binary <userinput>path</userinput> may be found
             in the install directory or in the <filename>.libs</filename>
-            subdirectory in the source treee. For example
+            subdirectory in the source tree. For example
             <filename>kea/src/bin/dhcp6/.libs/kea-dhcp6</filename>.
 
 <screen>
@@ -111,13 +111,13 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
         <itemizedlist>
             <listitem>
             <simpara><command>localstatedir</command>: The value as passed into the
-            build configure script. It defaults defaults to "/usr/local/var".  Note
+            build configure script. It defaults to "/usr/local/var".  Note
             that this value may be overridden at run time by setting the environment
             variable KEA_PIDFILE_DIR.  This is intended primarily for testing purposes.
             </simpara>
             </listitem>
             <listitem>
-            <simpara><command>conf name</command>: The confguration file name
+            <simpara><command>conf name</command>: The configuration file name
             used to start the server, minus all preceding path and file extension.
             For example, given a pathname of "/usr/local/etc/kea/myconf.txt", the
             portion used would be "myconf".
@@ -1376,7 +1376,7 @@ should include options from the isc option space:
       <title>Unspecified parameters for DHCPv6 option configuration</title>
       <para>In many cases it is not required to specify all parameters for
       an option configuration and the default values can be used. However, it is
-      important to understand the implications of not specifing some of them
+      important to understand the implications of not specifying some of them
       as it may result in configuration errors. The list below explains
       the behavior of the server when a particular parameter is not explicitly
       specified:
@@ -1595,7 +1595,7 @@ should include options from the isc option space:
       <para>There are certain conditions that must be met for the option to be
       included. First, the server must not provide the option by itself. In
       other words, if both relay and server provide an option, the server always
-      takes precedence. Second, the option must be RSOO-enabled. IANA mantains a
+      takes precedence. Second, the option must be RSOO-enabled. IANA maintains a
       list of RSOO-enabled options <ulink url="http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#options-relay-supplied">here</ulink>.
       However, there may be cases when system administrators want to echo other
       options. Kea can be instructed to treat other options as RSOO-enabled.
@@ -1634,11 +1634,11 @@ should include options from the isc option space:
       In certain cases it is useful to differentiate between different types
       of clients and treat them accordingly. It is envisaged that client
       classification will be used for changing the behavior of almost any part of
-      the DHCP message processing, including the assignement of leases from different
-      pools, the assigment of different options (or different values of the same
-      options) etc. In the current release of the sofware however, there are
+      the DHCP message processing, including the assignment of leases from different
+      pools, the assignment of different options (or different values of the same
+      options) etc. In the current release of the software however, there are
       only two mechanisms that take advantage of client classification:
-      subnet selection and assignment of differnet options.
+      subnet selection and assignment of different options.
       </para>
 
       <para>
@@ -1692,7 +1692,7 @@ should include options from the isc option space:
     "client-classes": [
         {<userinput>
             "name": "Client_enterprise",
-            "test": "substring(option[2].hex,0,6) == 0x0002AABBCCDD'",
+            "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD'",
             "option-data": [
                 {
                     "name": "dns-servers",
@@ -1717,7 +1717,7 @@ should include options from the isc option space:
       </para>
 
       <para>
-      This example shows a configuration using an automatcially generated
+      This example shows a configuration using an automatically generated
       "VENDOR_CLASS_" class. The Administrator of the network has
       decided that addresses from range 2001:db8:1::1 to 2001:db8:1::ffff are
       going to be managed by the Dhcp6 server and only clients belonging to the
@@ -2169,7 +2169,7 @@ should include options from the isc option space:
     that has specific requirements, e.g. a printer that needs additional DHCP options
     or a cable modem needs specific parameters. Yet another possible use case for
     host reservation is to define unique names for hosts.  Although not all of
-    the presented use cases are are implemented yet, Kea software will support them
+    the presented use cases are implemented yet, Kea software will support them
     in the near future.</para>
 
     <para>Hosts reservations are defined as parameters for each subnet. Each host
@@ -2178,7 +2178,7 @@ should include options from the isc option space:
     <command>reservations</command> array in the
     <command>Subnet6</command> structure. Each element in that array
     is a structure, that holds information about a single host. In
-    particular, such a structure has to have an indentifer that
+    particular, such a structure has to have an identifier that
     uniquely identifies a host.  In DHCPv6 context, such an identifier
     is a hardware (MAC) address or a DUID.  Also, either one or more
     addresses or prefixes should be specified. It is possible to
@@ -2237,7 +2237,7 @@ should include options from the isc option space:
     It is not allowed to define multiple host definitions with the same hardware
     address in a single subnet. It is a valid configuration, if such definitions
     are specified in different subnets, though. The reservation for a given host
-    should include only one identifier, either DUID or hwardware address. Defining
+    should include only one identifier, either DUID or hardware address. Defining
     both for the same host is considered a configuration error, but as of 0.9.1
     beta, it is not rejected.
     </para>
@@ -2275,7 +2275,7 @@ should include options from the isc option space:
     <section id="reservation6-conflict">
       <title>Conflicts in DHCPv6 reservations</title>
       <para>As reservations and lease information are stored in different places,
-      conflicts may arrise. Consider the following series of events. The server
+      conflicts may arise. Consider the following series of events. The server
       has configured the dynamic pool of addresses from the range of 2001:db8::10
       to 2001:db8::20. Host A requests an address and gets 2001:db8::10. Now the
       system administrator decides to reserve an address for host B. He decides
@@ -2327,7 +2327,7 @@ should include options from the isc option space:
       <para>When the reservation for the client includes the <command>hostname
       </command>, the server will assign this hostname to the client and send
       it back in the Client FQDN, if the client sent the FQDN option to the
-      the server. The reserved hostname always takes precedence over the hostname
+      server. The reserved hostname always takes precedence over the hostname
        supplied by the client (via the FQDN option) or the autogenerated
       (from the IPv6 address) hostname.</para>
 
@@ -2626,7 +2626,7 @@ should include options from the isc option space:
       </para>
 
       <para>
-        The hexadecimal representation of the DUID-EN created accoring to
+        The hexadecimal representation of the DUID-EN created according to
         the configuration above is:
 <screen>
 00:02:00:00:09:BF:87:AB:EF:7A:5B:B5:45
@@ -2897,10 +2897,10 @@ should include options from the isc option space:
 
     <section id="mac-in-dhcpv6">
       <title>MAC/Hardware addresses in DHCPv6</title>
-      <para>MAC/hardware addesses are available in DHCPv4 messages
+      <para>MAC/hardware addresses are available in DHCPv4 messages
       from the clients and administrators
       frequently use that information to perform certain tasks, like per host
-      configuration, address reserveration for specific MAC addresses and other.
+      configuration, address reservation for specific MAC addresses and other.
       Unfortunately, the DHCPv6 protocol does not provide any completely reliable way
       to retrieve that information. To mitigate that issue a number of mechanisms
       have been implemented in Kea that attempt to gather that information. Each
@@ -2951,18 +2951,18 @@ should include options from the isc option space:
         <simpara><command>duid</command> - DHCPv6 uses DUID identifiers instead of
         MAC addresses. There are currently four DUID types defined, with two of them
         (DUID-LLT, which is the default one and DUID-LL) convey MAC address information.
-        Although RFC3315 forbids it, it is possible to parse those DUIDs and extract
+        Although RFC 3315 forbids it, it is possible to parse those DUIDs and extract
         necessary information from them. This method is not completely reliable, as
         clients may use other DUID types, namely DUID-EN or DUID-UUID.
         </simpara>
       </listitem>
       <listitem>
-        <simpara><command>ipv6-link-local</command> - Another possible aquisition
+        <simpara><command>ipv6-link-local</command> - Another possible acquisition
         method comes from the source IPv6 address. In typical usage, clients are
         sending their packets from IPv6 link-local addresses. There's a good chance
         that those addresses are based on EUI-64, which contains MAC address. This
         method is not completely reliable, as clients may use other link-local address
-        types.  In particular, privacy extensions, defined in RFC4941, do not use
+        types.  In particular, privacy extensions, defined in RFC 4941, do not use
         MAC addresses.  Also note that successful extraction requires that the
         address's u-bit must be set to 1 and its g-bit set to 0, indicating that it
         is an interface identifier as per
@@ -3029,7 +3029,7 @@ should include options from the isc option space:
       addresses that it is expected to hand out to the DHCPv6 clients.
       It is assumed that the server is authoritative and has complete
       jurisdiction over those addresses. However, due to various
-      reasons, such as misconfiguration or a faulty client implenetation
+      reasons, such as misconfiguration or a faulty client implementation
       that retains its address beyond the valid lifetime, there may be
       devices connected that use those addresses without the server's
       approval or knowledge.</para>
@@ -3073,7 +3073,7 @@ should include options from the isc option space:
       returns (both global and subnet specific variants).</para>
 
       <para>Once the probation time elapses, the declined lease is recovered
-      using the standard expired lease reclaimation procedure, with several
+      using the standard expired lease reclamation procedure, with several
       additional steps. In particular, both declined-addresses statistics
       (global and subnet specific) are decreased. At the same time,
       reclaimed-declined-addresses statistics (again in two variants, global and
@@ -3162,7 +3162,7 @@ should include options from the isc option space:
               <entry>
                 Number of ADVERTISE packets received. Advertise packets are sent
                 by the server and the server is never expected to receive them. A non-zero
-                value of this statistic indicates an error ocurring in the network.
+                value of this statistic indicates an error occurring in the network.
                 One likely cause would be a misbehaving relay agent that incorrectly
                 forwards ADVERTISE messages towards the server, rather back to the
                 clients.
@@ -3349,7 +3349,7 @@ should include options from the isc option space:
             <entry>declined-addresses</entry>
             <entry>integer</entry>
             <entry>
-              This statistic shows the number of IPv6 adresses that are
+              This statistic shows the number of IPv6 addresses that are
               currently declined. This statistic counts the number of leases
               currently unavailable. Once a lease is recovered, this
               statistic will be decreased. Ideally, this statistic should be
@@ -3364,7 +3364,7 @@ should include options from the isc option space:
             <entry>subnet[id].declined-addresses</entry>
             <entry>integer</entry>
             <entry>
-              This statistic shows the number of IPv6 adresses that are
+              This statistic shows the number of IPv6 addresses that are
               currently declined in a given subnet. This statistic counts the
               number of leases currently unavailable. Once a lease is
               recovered, this statistic will be decreased. Ideally, this
@@ -3380,7 +3380,7 @@ should include options from the isc option space:
             <entry>reclaimed-declined-addresses</entry>
             <entry>integer</entry>
             <entry>
-              This statistic shows the number of IPv6 adresses that were
+              This statistic shows the number of IPv6 addresses that were
               declined, but have now been recovered. Unlike
               declined-addresses, this statistic never decreases. It can be used
               as a long term indicator of how many actual valid Declines were
@@ -3393,7 +3393,7 @@ should include options from the isc option space:
             <entry>subnet[id].reclaimed-declined-addresses</entry>
             <entry>integer</entry>
             <entry>
-              This statistic shows the number of IPv6 adresses that were
+              This statistic shows the number of IPv6 addresses that were
               declined, but have now been recovered. Unlike
               declined-addresses, this statistic never decreases. It can be used
               as a long term indicator of how many actual valid Declines were

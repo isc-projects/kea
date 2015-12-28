@@ -1,16 +1,8 @@
 // Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef CLIENT_CLASS_DEF_PARSER_H
 #define CLIENT_CLASS_DEF_PARSER_H
@@ -46,7 +38,7 @@
 ///
 /// -# "option-data" - a list which defines the options that should be
 /// assigned to memebers of the class.  This element is optional and parsed
-/// using the @ref dhcp::OptionDataListParser.
+/// using the @ref isc::dhcp::OptionDataListParser.
 ///
 /// ExpressionParser  - creates an eval::Expression from a string element,
 /// using the Eval Parser.
@@ -171,7 +163,7 @@ public:
     /// @param class_def_list pointer to an element that holds entries
     /// for client class definitions.
     /// @throw DhcpConfigError if configuration parsing fails.
-    void build(isc::data::ConstElementPtr option_def_list);
+    void build(isc::data::ConstElementPtr class_def_list);
 
     /// @brief Commits class definitions to CfgMgr's global storage.
     void commit();

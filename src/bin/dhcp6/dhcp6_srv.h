@@ -1,16 +1,8 @@
 // Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef DHCPV6_SRV_H
 #define DHCPV6_SRV_H
@@ -678,7 +670,7 @@ protected:
     ///
     /// @param decline Decline messege sent by a client
     /// @param reply Server's response (IA_NA with status will be added here)
-    /// @param client context
+    /// @param ctx context
     /// @return true when expected to continue, false when hooks told us to drop
     ///         the packet
     bool declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
@@ -729,6 +721,7 @@ protected:
 
 private:
 
+    /// @public
     /// @brief Assign class using vendor-class-identifier option
     ///
     /// @note This is the first part of @ref classifyPacket
@@ -737,6 +730,7 @@ private:
     /// @param classes a reference to added class names for logging
     void classifyByVendor(const Pkt6Ptr& pkt, std::string& classes);
 
+    /// @private
     /// @brief Generate FQDN to be sent to a client if none exists.
     ///
     /// This function is meant to be called by the functions which process

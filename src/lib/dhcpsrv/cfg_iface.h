@@ -1,16 +1,8 @@
 // Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef CFG_IFACE_H
 #define CFG_IFACE_H
@@ -97,6 +89,42 @@ public:
 /// but it doesn't verify that the address family value passed as @c uint16_t
 /// parameter is equal to one of them. It is a callers responsibility to
 /// guarantee that the address family value is correct.
+///
+/// The interface name is passed as an argument of the @ref CfgIface::use
+/// function which controls the selection of the interface on which the
+/// DHCP queries should be received by the server. The interface name
+/// passed as the argument of this function may appear in one of the following
+/// formats:
+/// - interface-name, e.g. eth0
+/// - interface-name/address, e.g. eth0/2001:db8:1::1 or eth0/192.168.8.1
+///
+/// Extraneous spaces surrounding the interface name and/or address
+/// are accepted. For example: eth0 / 2001:db8:1::1 will be accepted.
+///
+/// When only interface name is specified (without an address) it is allowed
+/// to use the "wildcard" interface name (*) which indicates that the server
+/// should open sockets on all interfaces. When IPv6 is in use, the sockets
+/// will be bound to the link local addresses. Wildcard interface names are
+/// not allowed when specifying a unicast address. For example:
+/// */2001:db8:1::1 is not allowed.
+///
+/// The DHCPv6 configuration accepts simultaneous use of the "interface-name"
+/// and "interface-name/address" tuple for the same interface, e.g.
+/// "eth0", "eth0/2001:db8:1::1" specifies that the server should open a
+/// socket and bind to link local address as well as open a socket bound to
+/// the specified unicast address.
+///
+/// The DHCPv4 configuration doesn't accept the simulatenous use of the
+/// "interface-name" and the "interface-name/address" tuple for the
+/// given interface. When the "interface-name" is specified it implies
+/// that the sockets will be opened on for all addresses configured on
+/// this interface. If the tuple of "interface-name/address" is specified
+/// there will be only one socket opened and bound to the specified address.
+/// This socket will be configured to listen to the broadcast messages
+/// reaching the interface as well as unicast messages sent to the address
+/// to which it is bound. It is allowed to select multiple addresses on the
+/// particular interface explicitly, e.g. "eth0/192.168.8.1",
+/// "eth0/192.168.8.2".
 class CfgIface {
 public:
 
@@ -149,40 +177,7 @@ public:
 
     /// @brief Select interface to be used to receive DHCP traffic.
     ///
-    /// This function controls the selection of the interface on which the
-    /// DHCP queries should be received by the server. The interface name
-    /// passed as the argument of this function may appear in one of the following
-    /// formats:
-    /// - interface-name, e.g. eth0
-    /// - interface-name/address, e.g. eth0/2001:db8:1::1 or eth0/192.168.8.1
-    ///
-    /// Extraneous spaces surrounding the interface name and/or address
-    /// are accepted. For example: eth0 / 2001:db8:1::1 will be accepted.
-    ///
-    /// When only interface name is specified (without an address) it is allowed
-    /// to use the "wildcard" interface name (*) which indicates that the server
-    /// should open sockets on all interfaces. When IPv6 is in use, the sockets
-    /// will be bound to the link local addresses. Wildcard interface names are
-    /// not allowed when specifying a unicast address. For example:
-    /// */2001:db8:1::1 is not allowed.
-    ///
-    /// The DHCPv6 configuration accepts simultaneous use of the "interface-name"
-    /// and "interface-name/address" tuple for the same interface, e.g.
-    /// "eth0", "eth0/2001:db8:1::1" specifies that the server should open a
-    /// socket and bind to link local address as well as open a socket bound to
-    /// the specified unicast address.
-    ///
-    /// The DHCPv4 configuration doesn't accept the simulatenous use of the
-    /// "interface-name" and the "interface-name/address" tuple for the
-    /// given interface. When the "interface-name" is specified it implies
-    /// that the sockets will be opened on for all addresses configured on
-    /// this interface. If the tuple of "interface-name/address" is specified
-    /// there will be only one socket opened and bound to the specified address.
-    /// This socket will be configured to listen to the broadcast messages
-    /// reaching the interface as well as unicast messages sent to the address
-    /// to which it is bound. It is allowed to select multiple addresses on the
-    /// particular interface explicitly, e.g. "eth0/192.168.8.1",
-    /// "eth0/192.168.8.2".
+    /// @ref CfgIface for a detail explaination of the interface name argument.
     ///
     /// @param family Address family (AF_INET or AF_INET6).
     /// @param iface_name Explicit interface name, a wildcard name (*) of

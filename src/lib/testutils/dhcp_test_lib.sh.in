@@ -1,16 +1,8 @@
 # Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
 #
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-# PERFORMANCE OF THIS SOFTWARE.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # A list of Kea processes, mainly used by the cleanup functions.
 KEA_PROCS="kea-dhcp4 kea-dhcp6 kea-dhcp-ddns"
@@ -170,19 +162,79 @@ set_logger() {
     export KEA_LOGGER_DESTINATION=${LOG_FILE}
 }
 
-# Returns the number of running process pids and the list of pids.
-# Return values:
-#   _GET_PIDS: holds space separated list of pids.
-#   _GET_PIDS_NUM: holds the number pids.
-get_pids() {
+# PID file path is by default <kea-install-dir>/var/kea, but can be
+# overriden by the environmental variable.
+PID_FILE_PATH=@localstatedir@/@PACKAGE@/
+if [ ! -z ${KEA_PIDFILE_DIR} ]; then
+    PID_FILE_PATH="${KEA_PIDFILE_DIR}"
+fi
+
+# Checks if specified process is running.
+#
+# This function uses PID file to obtain the PID and then calls
+# 'kill -0 <pid>' to check if the process is alive.
+# The PID files are expected to be located in the ${PID_FILE_PATH},
+# and their names should match the follwing pattern:
+# <cfg_file_name>.<proc_name>.pid. If the <cfg_file_name> is not
+# specified a 'test_config' is used by default.
+#
+# Return value:
+#   _GET_PID: holds a PID if process is running
+#   _GET_PIDS_NUM: holds 1 if process is running, 0 otherwise
+get_pid() {
+    local proc_name=${1}     # Process name
+    local cfg_file_name=${2} # Configuration file name without extension.
+
+    # PID file name includes process name. The process name is required.
+    if [ -z ${proc_name} ]; then
+        test_lib_error "get_pid requires process name"
+        clean_exit 1
+    fi
+
+    # PID file name includes server configuration file name. For most of
+    # the tests it is 'test-config' (excluding .json extension). It is
+    # possible to specify custom name if required.
+    if [ -z ${cfg_file_name} ]; then
+        cfg_file_name="test_config"
+    fi
+
+    # Get the absolute location of the PID file for the specified process
+    # name.
+    abs_pidfile_path="${PID_FILE_PATH}/${cfg_file_name}.${proc_name}.pid"
+    _GET_PID=0
+    _GET_PIDS_NUM=0
+
+    # If the PID file exists, get the PID and see if the process is alive.
+    if [ -e ${abs_pidfile_path} ]; then
+        pid=$( cat $abs_pidfile_path )
+        kill -0 ${pid} > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            _GET_PID=${pid}
+            _GET_PIDS_NUM=1
+        fi
+    fi
+}
+
+# Kills processes specified by name.
+#
+# This function kills all processes having a specified name.
+# It uses 'pgrep' to obtain pids of those processes.
+# This function should be used when identifying process by
+# the value in its PID file is not relevant.
+kill_processes_by_name() {
     local proc_name=${1} # Process name
     if [ -z ${proc_name} ]; then
         test_lib_error "get_pids requires process name"
         clean_exit 1
     fi
-    _GET_PIDS=$( ps axwwo pid,command | grep ${proc_name} \
-        | grep -v grep | awk '{print $1}' )
-    _GET_PIDS_NUM=$( printf "%s" "${_GET_PIDS}" | wc -w | awk '{print $1}' )
+    # Obtain PIDs of running processes.
+    local pids=$( pgrep ${proc_name} )
+    # For each PID found, send kill signal.
+    for pid in ${pids}
+    do
+        printf "Shutting down Kea process ${proc_name} having pid %d.\n" ${pid}
+        kill -9 ${pid}
+    done
 }
 
 # Returns the number of occurrences of the Kea log message in the log file.
@@ -236,14 +288,22 @@ cleanup() {
     # of them if running.
     for proc_name in ${KEA_PROCS}
     do
-        get_pids ${proc_name}
-        # Shut down running Kea processes.
-        for pid in ${_GET_PIDS}
-        do
-            printf "Shutting down Kea proccess having pid %d.\n" ${pid}
-            kill -9 ${pid}
-        done
+        get_pid ${proc_name}
+        # Shut down running Kea process.
+        if [ ${_GET_PIDS_NUM} -ne 0 ]; then
+            printf "Shutting down Kea proccess having pid %d.\n" ${_GET_PID}
+            kill -9 ${_GET_PID}
+        fi
     done
+
+    # Kill any running LFC processes. Even though 'kea-lfc' creates PID
+    # file we rather want to use 'pgrep' to find the process PID, because
+    # kea-lfc execution is not controlled from the test and thus there
+    # is possibility that process is already/still running but the PID
+    # file doesn't exist for it. As a result, the process will not
+    # be killed. This is not a problem for other processes because
+    # tests control launching them and monitor when they are shut down.
+    kill_processes_by_name "kea-lfc"
 
     # Remove temporary files.
     rm -rf ${LOG_FILE}
@@ -391,7 +451,7 @@ wait_for_server_down() {
     test_lib_info "wait_for_server_down ${proc_name}: " "skip-new-line"
     while [ ${loops} -le ${timeout} ]; do
         printf "."
-        get_pids ${proc_name}
+        get_pid ${proc_name}
         if [ ${_GET_PIDS_NUM} -eq 0 ]; then
             printf "\n"
             _WAIT_FOR_SERVER_DOWN=1
@@ -421,15 +481,15 @@ must be a number"
         clean_exit 1
     fi
     # Get Kea pid.
-    get_pids ${proc_name}
+    get_pid ${proc_name}
     if [ ${_GET_PIDS_NUM} -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started.\
  Found %d processes started.\n" ${_GET_PIDS_NUM}
         clean_exit 1
     fi
-    printf "Sending signal ${sig} to Kea process (pid=%s).\n" ${_GET_PIDS}
+    printf "Sending signal ${sig} to Kea process (pid=%s).\n" ${_GET_PID}
     # Actually send a signal.
-    kill -${sig} ${_GET_PIDS}
+    kill -${sig} ${_GET_PID}
 }
 
 # Verifies that a server is up running by its PID file
@@ -537,7 +597,7 @@ logger_vars_test() {
     sleep 1
 
     # Check if it is still running. It should have terminated.
-    get_pids ${bin}
+    get_pid ${bin}
     if [ ${_GET_PIDS_NUM} -ne 0 ]; then
         printf "ERROR: expected Kea process to not start. Found %d processes"
         printf " running.\n" ${_GET_PIDS_NUM}
@@ -569,7 +629,7 @@ logger_vars_test() {
     sleep 1
 
     # Check if it is still running. It should have terminated.
-    get_pids ${bin}
+    get_pid ${bin}
     if [ ${_GET_PIDS_NUM} -ne 0 ]; then
         printf "ERROR: expected Kea process to not start. Found %d processes"
         printf " running.\n" ${_GET_PIDS_NUM}

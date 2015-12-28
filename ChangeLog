@@ -1,3 +1,67 @@
+Kea 1.0.0 released on December 29, 2015
+
+1079.	[bug]		jpopelka
+	Fixed compilation issue in MySQL host data source: the
+	dhcp_identifier_length is now unsigned long. This addresses
+	a compilation problem on Fedora.
+	(Github #17, git 8548d1b589df98cc956b4d80d2cb8819ef576717)
+
+1078.	[bug]		fdupont
+	Removed warnings emitted during generation of Doxygen documentation.
+	(Trac #4234, git b67910a3893bc79eb77a48bae6c31214a317bd40)
+
+1077.	[bug]		marcin
+	Addressed regression in distcheck after merge of #4224.
+	Before the changes one of the lease files produced by
+	'kea-lfc' was not removed after tests running lease file
+	cleanup. As a result, the distcheck failed discovering
+	this file being left after distclean.
+	(Trac #4249, git 04aa9b95bf8c4dd8b555dd78cc8cd57126473800)
+
+1076.	[bug]		tmark
+	This change bumps the MySQL schema version from 4.0 to 4.1 and includes
+	the following changes: added explicit use of InnoDB engine to all MySQL
+	table create statements,  MySQL lease dump output is now sorted by lease
+	address in ascending order, and the MySQL lease_hwaddr_source table now
+	contains an entry for HWADDR_SOURCE_UNKNOWN (i.e. source = 0). Our thanks
+	to Sebastien Couture at Ubity Inc. for reporting the InnoDB engine issue
+	and submitting a fix for it.
+	(Github #16, Trac #4237,#4238, git f0fb9f35a394785215573a591c2bcc68ab481436)
+
+1075.	[doc]		marcin
+	Changed Kea license from ISC to Mozilla Public License,
+	v. 2.0.
+	(Trac #4236, git a0574cdab4deb31e3244fc4e237753a1ad361d96)
+
+1074.	[bug]		marcin
+	PID files created by Kea processes are used in shell based
+	tests to determine if the given process is running. This
+	solves the problem whereby some unrelated processes could
+	be reported as running Kea processes in those tests, causing
+	the tests to fail.
+	(Trac #4224, git 94edccc50cb374ec4db35f653b869c9f06d356ea)
+
+1073.	[doc]		tomek
+	Developer's Guide updated with client classification text
+	and several clean-ups.
+	(Trac #4102, git ac33ebf7428ba5935d3302d000bed317716fabfe)
+
+1072.	[bug]		tmark
+	The lease6 hardware address source value is now being properly populated.
+	Prior to this the value stored with each IPv6 lease was always zero.
+	(Trac #4247, git 27886dadcf9051dc622ee6fde586c27f3d431f8b)
+
+1071.	[func]		tmark
+	Assigned unique log message IDs to log messages issued from
+	MySQL hosts storage operations, eliminating resuse of
+	lease database message IDs.
+	(Trac #4216, git f0e37cd6d45537971a730c68187011dce41217cc)
+
+1070.	[doc]		sar
+	Correct v6 classification examples to use client-id (1) instead
+	of server-id (2).
+	(Trac #4222, git 69dd98d03861d9de72c2ef75c17c8154b0c5088b)
+
 Kea 1.0.0-beta2 released on December 22, 2015
 
 1069.	[bug]		tomek

@@ -1,16 +1,8 @@
-# Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
 #
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-# PERFORMANCE OF THIS SOFTWARE.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 $NAMESPACE isc::dhcp
 
@@ -35,7 +27,7 @@ of hosts found respectively.
 
 % HOSTS_CFG_GET_ALL_ADDRESS4_HOST using address %1 found host: %2
 This debug message is issued when found host with the reservation
-for the specified IPv4 addres. The arguments specify the IPv4 address
+for the specified IPv4 address. The arguments specify the IPv4 address
 and the detailed description of the host found.
 
 % HOSTS_CFG_GET_ALL_ADDRESS6 get all hosts with reservations for IPv6 address %1
@@ -148,7 +140,7 @@ the alternate host data source.
 
 % HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_ADDRESS6 trying alternate source for host using subnet id %1 and IPv6 address %2
 This debug message is issued when the Host Manager doesn't find the
-host connected to teh specific subnet and having the reservation for
+host connected to the specific subnet and having the reservation for
 the specified IPv6 address, and it is starting to search for this
 host in the alternate host data source.
 

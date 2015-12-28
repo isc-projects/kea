@@ -1,16 +1,8 @@
 # Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
 #
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-# PERFORMANCE OF THIS SOFTWARE.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 $NAMESPACE isc::dhcp
 
@@ -55,7 +47,7 @@ through its main loop to perform handling of any pending signals
 and timers. After that, it will enter the wait state again.
 
 % DHCP4_BUFFER_WAIT_INTERRUPTED interrupted wait for the next packet due to timeout, signal or external socket callback (timeout value is %1)
-This debug message is issued when the server intrrupts waiting
+This debug message is issued when the server interrupts waiting
 for reception of the next DHCPv6 message due to timeout, signal
 or reception of the data over socket other than used for DHCPv4
 message transmission. The server will now handle signals
@@ -329,7 +321,7 @@ identification information. The second argument specifies the hostname.
 The third argument contains the error details.
 
 % DHCP4_NCR_CREATE %1: DDNS updates enabled, therefore sending name change requests
-This debug message message is issued when the server is starting to send
+This debug message is issued when the server is starting to send
 name change requests to the D2 module to update records for the client
 in the DNS. This includes removal of old records and addition of the
 new records as required. Details of the name change requests will be
@@ -540,7 +532,7 @@ is a normal operation during client shutdown. The first argument includes
 the client and transaction identification information. The second argument
 includes the released IPv4 address.
 
-% DHCP4_RELEASE_EXCEPTION %1: while trying to release address %2 an exception occured: %3
+% DHCP4_RELEASE_EXCEPTION %1: while trying to release address %2 an exception occurred: %3
 This message is output when an error was encountered during an attempt
 to process a DHCPRELEASE message. The error will not affect the client,
 which does not expect any response from the server for DHCPRELEASE
@@ -632,7 +624,7 @@ has failed.  As a result, the server will exit.  The reason for the
 failure is given within the message.
 
 % DHCP4_SRV_D2STOP_ERROR error stopping IO with DHCP_DDNS during shutdown: %1
-This error message indicates that during shutdown, an erro occurred while
+This error message indicates that during shutdown, an error occurred while
 stopping IO between the DHCPv4 server and the DHCP_DDNS server.  This is
 probably due to a programmatic error is not likely to impact either server
 upon restart.  The reason for the failure is given within the message.
