@@ -217,10 +217,7 @@ TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 ///
 /// \param tsig_str A string containing the RDATA to be created
 TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the TSIGImpl that constructFromLexer() returns.
-    std::auto_ptr<TSIGImpl> impl_ptr(NULL);
+    std::unique_ptr<TSIGImpl> impl_ptr;
 
     try {
         std::istringstream ss(tsig_str);
@@ -942,10 +939,7 @@ CAA::constructFromLexer(MasterLexer& lexer) {
 CAA::CAA(const string& caa_str) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the CAAImpl that constructFromLexer() returns.
-    std::auto_ptr<CAAImpl> impl_ptr(NULL);
+    std::unique_ptr<CAAImpl> impl_ptr;
 
     try {
         std::istringstream ss(caa_str);
@@ -1601,10 +1595,7 @@ struct DNSKEYImpl {
 DNSKEY::DNSKEY(const std::string& dnskey_str) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the DNSKEYImpl that constructFromLexer() returns.
-    std::auto_ptr<DNSKEYImpl> impl_ptr(NULL);
+    std::unique_ptr<DNSKEYImpl> impl_ptr;
 
     try {
         std::istringstream ss(dnskey_str);
@@ -2899,10 +2890,7 @@ struct NSEC3Impl {
 NSEC3::NSEC3(const std::string& nsec3_str) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the NSEC3Impl that constructFromLexer() returns.
-    std::auto_ptr<NSEC3Impl> impl_ptr(NULL);
+    std::unique_ptr<NSEC3Impl> impl_ptr;
 
     try {
         std::istringstream ss(nsec3_str);
@@ -3222,10 +3210,7 @@ struct NSEC3PARAMImpl {
 NSEC3PARAM::NSEC3PARAM(const std::string& nsec3param_str) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the NSEC3PARAMImpl that constructFromLexer() returns.
-    std::auto_ptr<NSEC3PARAMImpl> impl_ptr(NULL);
+    std::unique_ptr<NSEC3PARAMImpl> impl_ptr;
 
     try {
         std::istringstream ss(nsec3param_str);
@@ -3703,7 +3688,7 @@ OPT::OPT(MasterLexer&, const Name*,
 OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
     impl_(NULL)
 {
-    std::auto_ptr<OPTImpl> impl_ptr(new OPTImpl);
+    std::unique_ptr<OPTImpl> impl_ptr(new OPTImpl);
 
     while (true) {
         if (rdata_len == 0) {
@@ -4266,10 +4251,7 @@ RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 RRSIG::RRSIG(const std::string& rrsig_str) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the RRSIGImpl that constructFromLexer() returns.
-    std::auto_ptr<RRSIGImpl> impl_ptr(NULL);
+    std::unique_ptr<RRSIGImpl> impl_ptr;
 
     try {
         std::istringstream iss(rrsig_str);
@@ -4924,10 +4906,7 @@ SSHFP::constructFromLexer(MasterLexer& lexer) {
 SSHFP::SSHFP(const string& sshfp_str) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the SSHFPImpl that constructFromLexer() returns.
-    std::auto_ptr<SSHFPImpl> impl_ptr(NULL);
+    std::unique_ptr<SSHFPImpl> impl_ptr;
 
     try {
         std::istringstream ss(sshfp_str);

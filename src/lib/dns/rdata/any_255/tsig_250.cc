@@ -208,10 +208,7 @@ TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 ///
 /// \param tsig_str A string containing the RDATA to be created
 TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the TSIGImpl that constructFromLexer() returns.
-    std::auto_ptr<TSIGImpl> impl_ptr(NULL);
+    std::unique_ptr<TSIGImpl> impl_ptr;
 
     try {
         std::istringstream ss(tsig_str);
