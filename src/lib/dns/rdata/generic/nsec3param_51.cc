@@ -57,10 +57,7 @@ struct NSEC3PARAMImpl {
 NSEC3PARAM::NSEC3PARAM(const std::string& nsec3param_str) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the NSEC3PARAMImpl that constructFromLexer() returns.
-    std::auto_ptr<NSEC3PARAMImpl> impl_ptr(NULL);
+    std::unique_ptr<NSEC3PARAMImpl> impl_ptr;
 
     try {
         std::istringstream ss(nsec3param_str);

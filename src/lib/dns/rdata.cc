@@ -278,10 +278,7 @@ Generic::constructFromLexer(MasterLexer& lexer) {
 Generic::Generic(const std::string& rdata_string) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the GenericImpl that constructFromLexer() returns.
-    std::auto_ptr<GenericImpl> impl_ptr(NULL);
+    std::unique_ptr<GenericImpl> impl_ptr;
 
     try {
         std::istringstream ss(rdata_string);

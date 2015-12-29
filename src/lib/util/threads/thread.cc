@@ -20,7 +20,7 @@
 
 using std::string;
 using std::exception;
-using std::auto_ptr;
+using std::unique_ptr;
 using boost::scoped_ptr;
 
 namespace isc {
@@ -122,7 +122,7 @@ public:
 Thread::Thread(const boost::function<void ()>& main) :
     impl_(NULL)
 {
-    auto_ptr<Impl> impl(new Impl(main));
+    unique_ptr<Impl> impl(new Impl(main));
     Blocker blocker;
     const int result = pthread_create(&impl->tid_, NULL, &Impl::run,
                                       impl.get());

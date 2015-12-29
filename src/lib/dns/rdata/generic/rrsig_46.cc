@@ -137,10 +137,7 @@ RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 RRSIG::RRSIG(const std::string& rrsig_str) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the RRSIGImpl that constructFromLexer() returns.
-    std::auto_ptr<RRSIGImpl> impl_ptr(NULL);
+    std::unique_ptr<RRSIGImpl> impl_ptr;
 
     try {
         std::istringstream iss(rrsig_str);
