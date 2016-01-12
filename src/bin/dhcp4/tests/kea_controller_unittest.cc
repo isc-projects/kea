@@ -60,11 +60,6 @@ public:
         LeaseMgrFactory::destroy();
         isc::log::setDefaultLoggingOutput();
         static_cast<void>(remove(TEST_FILE));
-
-        // Remove default lease file.
-        std::ostringstream s;
-        s << CfgMgr::instance().getDataDir() << "/kea-leases4.csv";
-        static_cast<void>(remove(s.str().c_str()));
     };
 
     /// @brief writes specified content to a well known file
