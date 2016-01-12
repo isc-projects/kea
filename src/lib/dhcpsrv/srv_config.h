@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #ifndef DHCPSRV_CONFIG_H
 #define DHCPSRV_CONFIG_H
 
+#include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfg_duid.h>
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
@@ -278,6 +279,18 @@ public:
         return (cfg_duid_);
     }
 
+    /// @brief Returns pointer to the objec holding configuration of the
+    /// lease and host database connection parameters.
+    CfgDbAccessPtr getCfgDbAccess() {
+        return (cfg_db_access_);
+    }
+
+    /// @brief Returns const pointer to the object holding configuration of
+    /// the lease and host database connection parameters.
+    ConstCfgDbAccessPtr getCfgDbAccess() const {
+        return (cfg_db_access_);
+    }
+
     //@}
 
     /// @brief Returns non-const reference to an array that stores
@@ -484,6 +497,10 @@ private:
 
     /// @brief Pointer to the configuration of the server identifier.
     CfgDUIDPtr cfg_duid_;
+
+    /// @brief Pointer to the configuration of the lease and host database
+    /// connection parameters.
+    CfgDbAccessPtr cfg_db_access_;
 
     /// @brief Pointer to the control-socket information
     isc::data::ConstElementPtr control_socket_;

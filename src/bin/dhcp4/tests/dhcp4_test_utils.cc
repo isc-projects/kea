@@ -32,6 +32,16 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
+BaseServerTest::BaseServerTest()
+    : original_datadir_(CfgMgr::instance().getDataDir()) {
+    CfgMgr::instance().setDataDir(TEST_DATA_BUILDDIR);
+}
+
+BaseServerTest::~BaseServerTest() {
+    // Revert to original data directory.
+    CfgMgr::instance().setDataDir(original_datadir_);
+}
+
 Dhcpv4SrvTest::Dhcpv4SrvTest()
 :rcode_(-1), srv_(0) {
 

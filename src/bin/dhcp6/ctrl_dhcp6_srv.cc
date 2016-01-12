@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <config/command_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_db_access.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/json_config_parser.h>
@@ -171,6 +172,17 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     } catch (const std::exception& ex) {
         return (isc::config::createAnswer(1, "Failed to process configuration:"
                                           + string(ex.what())));
+    }
+
+    // Re-open lease and host database with new parameters.
+    try {
+        CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+        cfg_db->setAppendedParameters("universe=6");
+        cfg_db->createManagers();
+
+    } catch (const std::exception& ex) {
+        return (isc::config::createAnswer(1, "Unable to open database: "
+                                          + std::string(ex.what())));
     }
 
     // Regenerate server identifier if needed.

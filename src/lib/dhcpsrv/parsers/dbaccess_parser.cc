@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,8 @@
 #include <config.h>
 
 #include <dhcp/option.h>
+#include <dhcpsrv/cfg_db_access.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/host_mgr.h>
@@ -27,10 +29,8 @@ namespace dhcp {
 
 
 // Factory function to build the parser
-DbAccessParser::DbAccessParser(const std::string&, DBType db_type,
-                               const ParserContext& ctx)
-    : values_(), type_(db_type), ctx_(ctx)
-{
+DbAccessParser::DbAccessParser(const std::string&, DBType db_type)
+    : values_(), type_(db_type) {
 }
 
 // Parse the configuration and check that the various keywords are consistent.
@@ -39,21 +39,17 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
 
     // To cope with incremental updates, the strategy is:
     // 1. Take a copy of the stored keyword/value pairs.
-    // 2. Inject the universe parameter.
-    // 3. Update the copy with the passed keywords.
-    // 4. Perform validation checks on the updated keyword/value pairs.
-    // 5. If all is OK, update the stored keyword/value pairs.
+    // 2. Update the copy with the passed keywords.
+    // 3. Perform validation checks on the updated keyword/value pairs.
+    // 4. If all is OK, update the stored keyword/value pairs.
+    // 5. Save resulting database access string in the Configuration
+    // Manager.
 
     // 1. Take a copy of the stored keyword/value pairs.
     std::map<string, string> values_copy = values_;
 
-    // 2. Inject the parameter which defines whether we are configuring
-    // DHCPv4 or DHCPv6. Some database backends (e.g. Memfile make
-    // use of it).
-    values_copy["universe"] = ctx_.universe_ == Option::V4 ? "4" : "6";
-
     int64_t lfc_interval = 0;
-    // 3. Update the copy with the passed keywords.
+    // 2. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, config_value->mapValue()) {
         try {
             if (param.first == "persist") {
@@ -75,7 +71,7 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
         }
     }
 
-    // 4. Perform validation checks on the updated set of keyword/values.
+    // 3. Perform validation checks on the updated set of keyword/values.
     //
     // a. Check if the "type" keyword exists and thrown an exception if not.
     StringPairMap::const_iterator type_ptr = values_copy.find("type");
@@ -100,11 +96,21 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
                   << std::numeric_limits<uint32_t>::max());
     }
 
-    // 5. If all is OK, update the stored keyword/value pairs.  We do this by
+    // 4. If all is OK, update the stored keyword/value pairs.  We do this by
     // swapping contents - values_copy is destroyed immediately after the
     // operation (when the method exits), so we are not interested in its new
     // value.
     values_.swap(values_copy);
+
+    // 5. Save the database access string in the Configuration Manager.
+    CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+    if (type_ == LEASE_DB) {
+        cfg_db->setLeaseDbAccessString(getDbAccessString());
+
+    } else {
+        cfg_db->setHostDbAccessString(getDbAccessString());
+    }
+
 }
 
 // Create the database access string
@@ -133,30 +139,6 @@ DbAccessParser::getDbAccessString() const {
 // Commit the changes - reopen the database with the new parameters
 void
 DbAccessParser::commit() {
-
-    switch (type_) {
-    case LEASE_DB:
-    {
-        // Close current lease manager database.
-        LeaseMgrFactory::destroy();
-
-        // ... and open the new database using the access string.
-        LeaseMgrFactory::create(getDbAccessString());
-        break;
-    }
-    case HOSTS_DB:
-    {
-        // Let's instantiate HostMgr with new parameters. Note that HostMgr's
-        // create method will call HostDataSourceFactory::create() with
-        // appropriate parameters. It will also destroy a pre-existing
-        // instance, if it existed.
-        HostMgr::create(getDbAccessString());
-        break;
-    }
-    default:
-        isc_throw(BadValue, "Incorrect type specified in DbAccessParser: "
-                  << type_);
-    };
 }
 
 };  // namespace dhcp
