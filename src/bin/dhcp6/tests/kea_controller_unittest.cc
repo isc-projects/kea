@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,6 +56,11 @@ public:
         LeaseMgrFactory::destroy();
         isc::log::setDefaultLoggingOutput();
         static_cast<void>(remove(TEST_FILE));
+
+        // Remove default lease file.
+        std::ostringstream s;
+        s << CfgMgr::instance().getDataDir() << "/kea-leases6.csv";
+        static_cast<void>(remove(s.str().c_str()));
     };
 
     void writeFile(const std::string& file_name, const std::string& content) {
@@ -376,6 +381,34 @@ TEST_F(JSONFileBackendTest, serverId) {
     ASSERT_TRUE(duid_cfg);
     EXPECT_EQ(DUID::DUID_EN, duid_cfg->getType());
     EXPECT_EQ(1234, duid_cfg->getEnterpriseId());
+}
+
+// This test verifies that the server uses default (Memfile) lease database
+// backend when no backend is explicitly specified in the configuration.
+TEST_F(JSONFileBackendTest, defaultLeaseDbBackend) {
+    // This is basic server configuration which excludes lease database
+    // backend specification. The default Memfile backend should be
+    // initialized in this case.
+    string config =
+        "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "    \"interfaces\": [ ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "\"subnet6\": [ ],"
+        "\"preferred-lifetime\": 3000, "
+        "\"valid-lifetime\": 4000 }"
+        "}";
+    writeFile(TEST_FILE, config);
+
+    // Create an instance of the server and intialize it.
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new ControlledDhcpv6Srv(0)));
+    ASSERT_NO_THROW(srv->init(TEST_FILE));
+
+    // The backend should have been created.
+    EXPECT_NO_THROW(static_cast<void>(LeaseMgrFactory::instance()));
 }
 
 } // End of anonymous namespace

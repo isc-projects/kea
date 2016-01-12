@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,7 @@ SrvConfig::SrvConfig()
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
       cfg_expiration_(new CfgExpiration()), cfg_duid_(new CfgDUID()),
+      cfg_db_access_(new CfgDbAccess()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0) {
 }
@@ -34,6 +35,7 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
       cfg_expiration_(new CfgExpiration()), cfg_duid_(new CfgDUID()),
+      cfg_db_access_(new CfgDbAccess()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0) {
 }

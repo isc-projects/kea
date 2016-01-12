@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -50,7 +51,7 @@ public:
 /// It is very simple and currently focuses on reading
 /// config file from disk. It is expected to be expanded in the
 /// near future.
-class JSONFileBackendTest : public ::testing::Test {
+class JSONFileBackendTest : public isc::dhcp::test::BaseServerTest {
 public:
     JSONFileBackendTest() {
     }
@@ -59,6 +60,11 @@ public:
         LeaseMgrFactory::destroy();
         isc::log::setDefaultLoggingOutput();
         static_cast<void>(remove(TEST_FILE));
+
+        // Remove default lease file.
+        std::ostringstream s;
+        s << CfgMgr::instance().getDataDir() << "/kea-leases4.csv";
+        static_cast<void>(remove(s.str().c_str()));
     };
 
     /// @brief writes specified content to a well known file
@@ -393,6 +399,33 @@ TEST_F(JSONFileBackendTest, timers) {
         lease_reclaimed = lease_mgr.getLease4(IOAddress("10.0.0.2"));
     );
     EXPECT_FALSE(lease_reclaimed);
+}
+
+// This test verifies that the server uses default (Memfile) lease database
+// backend when no backend is explicitly specified in the configuration.
+TEST_F(JSONFileBackendTest, defaultLeaseDbBackend) {
+    // This is basic server configuration which excludes lease database
+    // backend specification. The default Memfile backend should be
+    // initialized in this case.
+    string config =
+        "{ \"Dhcp4\": {"
+        "\"interfaces-config\": {"
+        "    \"interfaces\": [ ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "\"subnet4\": [ ],"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+    writeFile(config);
+
+    // Create an instance of the server and intialize it.
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new ControlledDhcpv4Srv(0)));
+    ASSERT_NO_THROW(srv->init(TEST_FILE));
+
+    // The backend should have been created.
+    EXPECT_NO_THROW(static_cast<void>(LeaseMgrFactory::instance()));
 }
 
 } // End of anonymous namespace
