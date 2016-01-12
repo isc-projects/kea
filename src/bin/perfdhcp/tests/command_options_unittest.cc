@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -341,6 +341,9 @@ TEST_F(CommandOptionsTest, RenewRate) {
     // that order doesn't matter.
     EXPECT_NO_THROW(process("perfdhcp -6 -f 5 -r 10 -l ethx all"));
     EXPECT_EQ(5, opt.getRenewRate());
+    // Renew rate should also be accepted for DHCPv4 case.
+    EXPECT_NO_THROW(process("perfdhcp -4 -f 5 -r 10 -l ethx all"));
+    EXPECT_EQ(5, opt.getRenewRate());
     // The renew rate should not be greater than the rate.
     EXPECT_THROW(process("perfdhcp -6 -r 10 -f 11 -l ethx all"),
                  isc::InvalidParameter);
@@ -353,10 +356,6 @@ TEST_F(CommandOptionsTest, RenewRate) {
     // If -r<rate> is not specified the -f<renew-rate> should not
     // be accepted.
     EXPECT_THROW(process("perfdhcp -6 -f 10 -l ethx all"),
-                 isc::InvalidParameter);
-    // Currently the -f<renew-rate> can be specified for IPv6 mode
-    // only.
-    EXPECT_THROW(process("perfdhcp -4 -r 10 -f 10 -l ethx all"),
                  isc::InvalidParameter);
     // Renew rate should be specified.
     EXPECT_THROW(process("perfdhcp -6 -r 10 -f -l ethx all"),
