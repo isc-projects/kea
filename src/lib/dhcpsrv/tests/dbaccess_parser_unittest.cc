@@ -123,11 +123,9 @@ public:
     /// @param dbaccess set of database access parameters to check
     /// @param keyval Array of "const char*" strings in the order keyword,
     ///        value, keyword, value ...  A NULL entry terminates the list.
-    /// @param u Universe (V4 or V6).
     void checkAccessString(const char* trace_string,
                            const DbAccessParser::StringPairMap& parameters,
-                           const char* keyval[],
-                           Option::Universe u = Option::V4) {
+                           const char* keyval[]) {
         SCOPED_TRACE(trace_string);
 
         // Construct a map of keyword value pairs.
@@ -292,7 +290,7 @@ TEST_F(DbAccessParserTest, persistV6Memfile) {
     EXPECT_NO_THROW(parser.build(json_elements));
 
     checkAccessString("Valid memfile", parser.getDbAccessParameters(),
-                      config, Option::V6);
+                      config);
 }
 
 // This test checks that the parser accepts the valid value of the
@@ -310,7 +308,7 @@ TEST_F(DbAccessParserTest, validLFCInterval) {
     TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB);
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Valid LFC Interval", parser.getDbAccessParameters(),
-                      config, Option::V6);
+                      config);
 }
 
 // This test checks that the parser rejects the negative value of the
