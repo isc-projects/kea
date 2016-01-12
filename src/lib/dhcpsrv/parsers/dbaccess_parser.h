@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,9 +55,7 @@ public:
     /// @param param_name Name of the parameter under which the database
     ///        access details are held.
     /// @param db_type Specifies database type (lease or hosts)
-    /// @param ctx Parser context.
-    DbAccessParser(const std::string& param_name, DBType db_type,
-                   const ParserContext& ctx);
+    DbAccessParser(const std::string& param_name, DBType db_type);
 
     /// The destructor.
     virtual ~DbAccessParser()
@@ -83,13 +81,7 @@ public:
     ///        the list of database access keywords.
     virtual void build(isc::data::ConstElementPtr config_value);
 
-    /// @brief Apply the prepared configuration value to the server.
-    ///
-    /// With the string validated, this closes the currently open database (if
-    /// any), then opens a database corresponding to the stored string.
-    ///
-    /// This method is expected to be called after \c build(), and only once.
-    /// The result is undefined otherwise.
+    /// @brief This method is no-op.
     virtual void commit();
 
     /// @brief Factory method to create parser
@@ -98,16 +90,14 @@ public:
     ///
     /// @param param_name Name of the parameter used to access the
     ///         configuration.
-    /// @param ctx Parser context.
     ///
     /// @return Pointer to a DbAccessParser.  The caller is responsible for
     ///         destroying the parser after use.
-    static DhcpConfigParser* factory(const std::string& param_name,
-                                     const ParserContext& ctx) {
+    static DhcpConfigParser* factory(const std::string& param_name) {
         if (param_name == "lease-database") {
-            return (new DbAccessParser(param_name, DbAccessParser::LEASE_DB, ctx));
+            return (new DbAccessParser(param_name, DbAccessParser::LEASE_DB));
         } else if (param_name == "hosts-database") {
-            return (new DbAccessParser(param_name, DbAccessParser::HOSTS_DB, ctx));
+            return (new DbAccessParser(param_name, DbAccessParser::HOSTS_DB));
         } else {
             isc_throw(BadValue, "Unexpected parameter name (" << param_name
                       << ") passed to DbAccessParser::factory");
@@ -139,8 +129,6 @@ private:
     std::map<std::string, std::string> values_; ///< Stored parameter values
 
     DBType type_; ///< Database type (leases or hosts)
-
-    ParserContext ctx_; ///< Parser context
 };
 
 };  // namespace dhcp

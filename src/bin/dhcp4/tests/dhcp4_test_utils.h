@@ -209,7 +209,28 @@ public:
 // dependencies, we use forward declaration here.
 class Dhcp4Client;
 
-class Dhcpv4SrvTest : public ::testing::Test {
+/// @brief Base class for DHCPv4 server testing.
+///
+/// Currently it configures the test data path directory in
+/// the @c CfgMgr. When the object is destroyed, the original
+/// path is reverted.
+class BaseServerTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor.
+    BaseServerTest();
+
+    /// @brief Destructor.
+    virtual ~BaseServerTest();
+
+private:
+
+    /// @brief Holds the original data directory.
+    std::string original_datadir_;
+
+};
+
+class Dhcpv4SrvTest : public BaseServerTest {
 public:
 
     enum ExpectedResult {
