@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -306,13 +306,21 @@ protected:
     /// has been reached.
     void cleanCachedPackets();
 
+    /// \brief Creates DHCPREQUEST from a DHCPACK message.
+    ///
+    /// \param ack An instance of the DHCPACK message to be used to
+    /// create a new message.
+    ///
+    /// \return Pointer to the created message.
+    dhcp::Pkt4Ptr createRequestFromAck(const dhcp::Pkt4Ptr& ack);
+
     /// \brief Creates DHCPv6 message from the Reply packet.
     ///
     /// This function creates DHCPv6 Renew or Release message using the
     /// data from the Reply message by copying options from the Reply
     /// message.
     ///
-    /// \param msg_type A type of the message to be createad.
+    /// \param msg_type A type of the message to be created.
     /// \param reply An instance of the Reply packet which contents should
     /// be used to create an instance of the new message.
     ///
@@ -726,6 +734,15 @@ protected:
                      const uint64_t packets_num,
                      const bool preload = false);
 
+    /// \brief Send number of DHCPREQUEST (renew) messages to a server.
+    ///
+    /// \param socket An object representing socket to be used to send packets.
+    /// \param msg_num A number of messages to be sent.
+    ///
+    /// \return A number of messages actually sent.
+    uint64_t sendMultipleRequests(const TestControlSocket& socket,
+                                  const uint64_t msg_num);
+
     /// \brief Send number of DHCPv6 Renew or Release messages to the server.
     ///
     /// \param socket An object representing socket to be used to send packets.
@@ -737,6 +754,14 @@ protected:
     uint64_t sendMultipleMessages6(const TestControlSocket& socket,
                                    const uint32_t msg_type,
                                    const uint64_t msg_num);
+
+    /// \brief Send DHCPv4 renew (DHCPREQUEST) using specified socket.
+    ///
+    /// \param socket An object encapsulating socket to be used to send
+    /// a packet.
+    ///
+    /// \return true if the message has been sent, false otherwise.
+    bool sendRequestFromAck(const TestControlSocket& socket);
 
     /// \brief Send DHCPv6 Renew or Release message using specified socket.
     ///
@@ -1077,6 +1102,7 @@ protected:
     StatsMgr4Ptr stats_mgr4_;  ///< Statistics Manager 4.
     StatsMgr6Ptr stats_mgr6_;  ///< Statistics Manager 6.
 
+    PacketStorage<dhcp::Pkt4> ack_storage_; ///< A storage for DHCPACK messages.
     PacketStorage<dhcp::Pkt6> reply_storage_; ///< A storage for reply messages.
 
     NumberGeneratorPtr transid_gen_; ///< Transaction id generator.

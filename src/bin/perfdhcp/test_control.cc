@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -313,6 +313,14 @@ TestControl::checkExitConditions() const {
         return (true);
     }
     return (false);
+}
+
+Pkt4Ptr
+TestControl::createRequestFromAck(const dhcp::Pkt4Ptr& ack) {
+    Pkt4Ptr msg(new Pkt4(DHCPREQUEST, generateTransid()));
+    msg->setCiaddr(ack->getYiaddr());
+    msg->setHWAddr(ack->getHWAddr());
+    return (msg);
 }
 
 Pkt6Ptr
@@ -663,6 +671,9 @@ TestControl::initializeStatsMgr() {
             stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RA,
                                           options.getDropTime()[1]);
         }
+        if (options.getRenewRate() != 0) {
+            stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RN);
+        }
 
     } else if (options.getIpVersion() == 6) {
         stats_mgr6_.reset();
@@ -829,6 +840,17 @@ TestControl::sendPackets(const TestControlSocket& socket,
             }
         }
     }
+}
+
+uint64_t
+TestControl::sendMultipleRequests(const TestControlSocket& socket,
+                                  const uint64_t msg_num) {
+    for (uint64_t i = 0; i < msg_num; ++i) {
+        if (!sendRequestFromAck(socket)) {
+            return (i);
+        }
+    }
+    return (msg_num);
 }
 
 uint64_t
@@ -1072,7 +1094,28 @@ TestControl::processReceivedPacket4(const TestControlSocket& socket,
             }
         }
     } else if (pkt4->getType() == DHCPACK) {
-        stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_RA, pkt4);
+        // If received message is DHCPACK, we have to check if this is a response
+        // to 4-way exchange. We'll match this packet with a DHCPREQUESTs sent
+        // as part of the 4-way exchages.
+        if (stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_RA, pkt4)) {
+            // The DHCPACK belongs to DHCPREQUEST-DHCPACK exchange type. So, we
+            // may need to keep this DHCPACK in the storage if renews. Note that,
+            // DHCPACK messages hold the information about leases assigned.
+            // We use this information to renew.
+            if (stats_mgr4_->hasExchangeStats(StatsMgr4::XCHG_RN)) {
+                // Renew messages are sent, because StatsMgr has the
+                // specific exchange type specified. Let's append the DHCPACK.
+                // message to a storage
+                ack_storage_.append(pkt4);
+            }
+        // The DHCPACK message is not a server's response to the DHCPREQUEST
+        // message sent within the 4-way exchange. It may be a response to a
+        // renewal. In this case we first check if StatsMgr has exchange type
+        // for renew specified, and if it has, if there is a corresponding
+        // renew message for the received DHCPACK.
+        } else if (stats_mgr4_->hasExchangeStats(StatsMgr4::XCHG_RN)) {
+            stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_RN, pkt4);
+        }
     }
 }
 
@@ -1364,12 +1407,17 @@ TestControl::run() {
 
         // If -f<renew-rate> option was specified we have to check how many
         // Renew packets should be sent to catch up with a desired rate.
-        if ((options.getIpVersion() == 6) && (options.getRenewRate() != 0)) {
+        if (options.getRenewRate() != 0) {
             uint64_t renew_packets_due =
                 renew_rate_control_.getOutboundMessageCount();
             checkLateMessages(renew_rate_control_);
-            // Send Renew messages.
-            sendMultipleMessages6(socket, DHCPV6_RENEW, renew_packets_due);
+
+            // Send multiple renews to satify the desired rate.
+            if (options.getIpVersion() == 4) {
+                sendMultipleRequests(socket, renew_packets_due);
+            } else {
+                sendMultipleMessages6(socket, DHCPV6_RENEW, renew_packets_due);
+            }
         }
 
         // If -F<release-rate> option was specified we have to check how many
@@ -1567,6 +1615,32 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
     }
     saveFirstPacket(pkt4);
 }
+
+bool
+TestControl::sendRequestFromAck(const TestControlSocket& socket) {
+    // Update timestamp of last sent renewal.
+    renew_rate_control_.updateSendTime();
+
+    // Get one of the recorded DHCPACK messages.
+    Pkt4Ptr ack = ack_storage_.getRandom();
+    if (!ack) {
+        return (false);
+    }
+
+    // Create message of the specified type.
+    Pkt4Ptr msg = createRequestFromAck(ack);
+    setDefaults4(socket, msg);
+    msg->pack();
+    // And send it.
+    IfaceMgr::instance().send(msg);
+    if (!stats_mgr4_) {
+        isc_throw(Unexpected, "Statistics Manager for DHCPv4 "
+                  "hasn't been initialized");
+    }
+    stats_mgr4_->passSentPacket(StatsMgr4::XCHG_RN, msg);
+    return (true);
+}
+
 
 bool
 TestControl::sendMessageFromReply(const uint16_t msg_type,
