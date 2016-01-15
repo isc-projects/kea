@@ -777,6 +777,15 @@ public:
         HWAddrPtr hwaddr_req = request->getHWAddr();
         ASSERT_TRUE(hwaddr_req);
         EXPECT_TRUE(hwaddr_ack->hwaddr_ == hwaddr_req->hwaddr_);
+
+        // Creating message from null DHCPACK should fail.
+        EXPECT_THROW(tc.createRequestFromAck(Pkt4Ptr()), isc::BadValue);
+
+        // Creating message from DHCPACK holding zero yiaddr should fail.
+        asiolink::IOAddress yiaddr = ack->getYiaddr();
+        ack->setYiaddr(asiolink::IOAddress::IPV4_ZERO_ADDRESS());
+        EXPECT_THROW(tc.createRequestFromAck(ack), isc::BadValue);
+        ack->setYiaddr(yiaddr);
     }
 
     /// \brief Test that the DHCPv6 Release or Renew message is created
