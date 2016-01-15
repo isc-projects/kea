@@ -440,6 +440,16 @@ protected:
                                                uint16_t type,
                                                const dhcp::OptionBuffer& buf);
 
+    /// \brief Generate DHCPv4 client identifier from HW address.
+    ///
+    /// This method generates DHCPv4 client identifier option from a
+    /// HW address.
+    ///
+    /// \param hwaddr HW address.
+    ///
+    /// \return Pointer to an instance of the generated option.
+    dhcp::OptionPtr generateClientId(const dhcp::HWAddrPtr& hwaddr) const;
+
     /// \brief Generate DUID.
     ///
     /// Method generates unique DUID. The number of DUIDs it can generate
