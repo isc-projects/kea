@@ -102,6 +102,7 @@ public:
     using TestControl::factoryOptionRequestOption6;
     using TestControl::factoryRapidCommit6;
     using TestControl::factoryRequestList4;
+    using TestControl::generateClientId;
     using TestControl::generateDuid;
     using TestControl::generateMacAddress;
     using TestControl::getCurrentTimeout;
@@ -1073,6 +1074,34 @@ TEST_F(TestControlTest, reset) {
     EXPECT_TRUE(tc.first_packet_serverid_.empty());
     EXPECT_FALSE(tc.interrupted_);
 
+}
+
+// This test verfies that the client id is generated from the HW address.
+TEST_F(TestControlTest, generateClientId) {
+    // Generate HW address.
+    std::vector<uint8_t> hwaddr;
+    for (unsigned int i = 0; i < 6; ++i) {
+        hwaddr.push_back(i);
+    }
+    HWAddrPtr hwaddr_ptr(new HWAddr(hwaddr, 5));
+
+    // Use generated HW address to generate client id.
+    NakedTestControl tc;
+    OptionPtr opt_client_id;
+    ASSERT_NO_THROW(opt_client_id = tc.generateClientId(hwaddr_ptr));
+    ASSERT_TRUE(opt_client_id);
+
+    // Extract the client id data.
+    const OptionBuffer& client_id = opt_client_id->getData();
+    ASSERT_EQ(7, client_id.size());
+
+    // Verify that the client identifier is generated correctly.
+
+    // First byte is the HW type.
+    EXPECT_EQ(5, client_id[0]);
+    // The rest of the client identifier should be equal to the HW address.
+    std::vector<uint8_t> sub(client_id.begin() + 1, client_id.end());
+    EXPECT_TRUE(hwaddr == sub);
 }
 
 TEST_F(TestControlTest, GenerateDuid) {

@@ -327,6 +327,7 @@ TestControl::createRequestFromAck(const dhcp::Pkt4Ptr& ack) {
     Pkt4Ptr msg(new Pkt4(DHCPREQUEST, generateTransid()));
     msg->setCiaddr(ack->getYiaddr());
     msg->setHWAddr(ack->getHWAddr());
+    msg->addOption(generateClientId(msg->getHWAddr()));
     return (msg);
 }
 
@@ -494,6 +495,15 @@ TestControl::generateMacAddress(uint8_t& randomized) const {
         r >>= 8;
     }
     return (mac_addr);
+}
+
+OptionPtr
+TestControl::generateClientId(const dhcp::HWAddrPtr& hwaddr) const {
+    std::vector<uint8_t> client_id(1, static_cast<uint8_t>(hwaddr->htype_));
+    client_id.insert(client_id.end(), hwaddr->hwaddr_.begin(),
+                     hwaddr->hwaddr_.end());
+    return (OptionPtr(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
+                                 client_id)));
 }
 
 std::vector<uint8_t>
@@ -1559,6 +1569,9 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
     // Set hardware address
     pkt4->setHWAddr(HTYPE_ETHER, mac_address.size(), mac_address);
 
+    // Set client identifier
+    pkt4->addOption(generateClientId(pkt4->getHWAddr()));
+
     pkt4->pack();
     IfaceMgr::instance().send(pkt4);
     if (!preload) {
@@ -1728,6 +1741,8 @@ TestControl::sendRequest4(const TestControlSocket& socket,
 
     // Set hardware address
     pkt4->setHWAddr(offer_pkt4->getHWAddr());
+    // Set client id.
+    pkt4->addOption(generateClientId(pkt4->getHWAddr()));
     // Set elapsed time.
     uint32_t elapsed_time = getElapsedTime<Pkt4Ptr>(discover_pkt4, offer_pkt4);
     pkt4->setSecs(static_cast<uint16_t>(elapsed_time / 1000));
