@@ -317,6 +317,13 @@ TestControl::checkExitConditions() const {
 
 Pkt4Ptr
 TestControl::createRequestFromAck(const dhcp::Pkt4Ptr& ack) {
+    if (!ack) {
+        isc_throw(isc::BadValue, "Unable to create DHCPREQUEST from a"
+                  " null DHCPACK message");
+    } else if (ack->getYiaddr().isV4Zero()) {
+        isc_throw(isc::BadValue, "Unable to create DHCPREQUEST from a"
+                  " DHCPACK message containing yiaddr of 0");
+    }
     Pkt4Ptr msg(new Pkt4(DHCPREQUEST, generateTransid()));
     msg->setCiaddr(ack->getYiaddr());
     msg->setHWAddr(ack->getHWAddr());
