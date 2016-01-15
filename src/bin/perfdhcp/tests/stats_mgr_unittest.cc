@@ -265,6 +265,9 @@ TEST_F(StatsMgrTest, ExchangeToString) {
     EXPECT_EQ("DISCOVER-OFFER",
               StatsMgr4::exchangeToString(StatsMgr4::XCHG_DO));
     EXPECT_EQ("REQUEST-ACK", StatsMgr4::exchangeToString(StatsMgr4::XCHG_RA));
+    EXPECT_EQ("REQUEST-ACK (renewal)",
+              StatsMgr4::exchangeToString(StatsMgr4::XCHG_RNA));
+
 
     // Test DHCPv6 specific exchange names.
     EXPECT_EQ("SOLICIT-ADVERTISE",
