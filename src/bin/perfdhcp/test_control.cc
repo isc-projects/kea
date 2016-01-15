@@ -689,7 +689,7 @@ TestControl::initializeStatsMgr() {
                                           options.getDropTime()[1]);
         }
         if (options.getRenewRate() != 0) {
-            stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RN);
+            stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RNA);
         }
 
     } else if (options.getIpVersion() == 6) {
@@ -1119,7 +1119,7 @@ TestControl::processReceivedPacket4(const TestControlSocket& socket,
             // may need to keep this DHCPACK in the storage if renews. Note that,
             // DHCPACK messages hold the information about leases assigned.
             // We use this information to renew.
-            if (stats_mgr4_->hasExchangeStats(StatsMgr4::XCHG_RN)) {
+            if (stats_mgr4_->hasExchangeStats(StatsMgr4::XCHG_RNA)) {
                 // Renew messages are sent, because StatsMgr has the
                 // specific exchange type specified. Let's append the DHCPACK.
                 // message to a storage
@@ -1130,8 +1130,8 @@ TestControl::processReceivedPacket4(const TestControlSocket& socket,
         // renewal. In this case we first check if StatsMgr has exchange type
         // for renew specified, and if it has, if there is a corresponding
         // renew message for the received DHCPACK.
-        } else if (stats_mgr4_->hasExchangeStats(StatsMgr4::XCHG_RN)) {
-            stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_RN, pkt4);
+        } else if (stats_mgr4_->hasExchangeStats(StatsMgr4::XCHG_RNA)) {
+            stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_RNA, pkt4);
         }
     }
 }
@@ -1657,7 +1657,7 @@ TestControl::sendRequestFromAck(const TestControlSocket& socket) {
         isc_throw(Unexpected, "Statistics Manager for DHCPv4 "
                   "hasn't been initialized");
     }
-    stats_mgr4_->passSentPacket(StatsMgr4::XCHG_RN, msg);
+    stats_mgr4_->passSentPacket(StatsMgr4::XCHG_RNA, msg);
     return (true);
 }
 

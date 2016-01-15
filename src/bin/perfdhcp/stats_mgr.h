@@ -114,6 +114,7 @@ public:
     enum ExchangeType {
         XCHG_DO,  ///< DHCPv4 DISCOVER-OFFER
         XCHG_RA,  ///< DHCPv4 REQUEST-ACK
+        XCHG_RNA, ///< DHCPv4 REQUEST-ACK (renewal)
         XCHG_SA,  ///< DHCPv6 SOLICIT-ADVERTISE
         XCHG_RR,  ///< DHCPv6 REQUEST-REPLY
         XCHG_RN,  ///< DHCPv6 RENEW-REPLY
@@ -1179,6 +1180,8 @@ public:
             return("DISCOVER-OFFER");
         case XCHG_RA:
             return("REQUEST-ACK");
+        case XCHG_RNA:
+            return("REQUEST-ACK (renewal)");
         case XCHG_SA:
             return("SOLICIT-ADVERTISE");
         case XCHG_RR:
