@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+
 #include <config.h>
 
 #include <util/buffer.h>
@@ -24,14 +25,14 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-Dhcp4o6Ipc::Dhcp4o6Ipc() : Dhcp4o6IpcBase() {}
+Dhcp6to4Ipc::Dhcp6to4Ipc() : Dhcp4o6IpcBase() {}
 
-Dhcp4o6Ipc& Dhcp4o6Ipc::instance() {
-    static Dhcp4o6Ipc dhcp4o6_ipc;
-    return (dhcp4o6_ipc);
+Dhcp6to4Ipc& Dhcp6to4Ipc::instance() {
+    static Dhcp6to4Ipc dhcp6to4_ipc;
+    return (dhcp6to4_ipc);
 }
 
-void Dhcp4o6Ipc::open() {
+void Dhcp6to4Ipc::open() {
     uint32_t port = CfgMgr::instance().getStagingCfg()->getDhcp4o6Port();
     if (port == 0) {
         Dhcp4o6IpcBase::close();
@@ -41,13 +42,12 @@ void Dhcp4o6Ipc::open() {
     int old_fd = socket_fd_;
     socket_fd_ = Dhcp4o6IpcBase::open(static_cast<uint16_t>(port), ENDPOINT_TYPE_V6);
     if ((old_fd == -1) && (socket_fd_ != old_fd)) {
-        IfaceMgr::instance().addExternalSocket(socket_fd_, Dhcp4o6Ipc::handler);
+        IfaceMgr::instance().addExternalSocket(socket_fd_, Dhcp6to4Ipc::handler);
     }
 }
 
-void Dhcp4o6Ipc::handler() {
-    std::cout << "handler" << std::endl;
-    Dhcp4o6Ipc& ipc = Dhcp4o6Ipc::instance();
+void Dhcp6to4Ipc::handler() {
+    Dhcp6to4Ipc& ipc = Dhcp6to4Ipc::instance();
 
     // Receive message from IPC.
     Pkt6Ptr pkt = ipc.receive();

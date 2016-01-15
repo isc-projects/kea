@@ -28,23 +28,23 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Handles DHCPv4-over-DHCPv6 IPC on the DHCPv4 server side
-class Dhcp4o6Ipc : public Dhcp4o6IpcBase {
+class Dhcp4to6Ipc : public Dhcp4o6IpcBase {
 protected:
     /// @brief Constructor
     ///
     /// Default constructor
-    Dhcp4o6Ipc();
+    Dhcp4to6Ipc();
 
     /// @brief Destructor.
-    virtual ~Dhcp4o6Ipc() { }
+    virtual ~Dhcp4to6Ipc() { }
 
 public:
     /// @brief Returns pointer to the sole instance of Dhcp4o6Ipc
     ///
-    /// Dhcp4o6Ipc is a singleton class
+    /// Dhcp4to6Ipc is a singleton class
     ///
     /// @return the only existing instance of DHCP4o6 IPC
-    static Dhcp4o6Ipc& instance();
+    static Dhcp4to6Ipc& instance();
 
     /// @brief Open communication socket
     ///

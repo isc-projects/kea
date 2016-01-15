@@ -24,15 +24,15 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-Dhcp4o6Ipc::Dhcp4o6Ipc() : Dhcp4o6IpcBase() {
+Dhcp4to6Ipc::Dhcp4to6Ipc() : Dhcp4o6IpcBase() {
 }
 
-Dhcp4o6Ipc& Dhcp4o6Ipc::instance() {
-    static Dhcp4o6Ipc dhcp4o6_ipc;
-    return (dhcp4o6_ipc);
+Dhcp4to6Ipc& Dhcp4to6Ipc::instance() {
+    static Dhcp4to6Ipc dhcp4to6_ipc;
+    return (dhcp4to6_ipc);
 }
 
-void Dhcp4o6Ipc::open() {
+void Dhcp4to6Ipc::open() {
     uint32_t port = CfgMgr::instance().getStagingCfg()->getDhcp4o6Port();
     if (port == 0) {
         Dhcp4o6IpcBase::close();
@@ -42,12 +42,12 @@ void Dhcp4o6Ipc::open() {
     int old_fd = socket_fd_;
     socket_fd_ = Dhcp4o6IpcBase::open(static_cast<uint16_t>(port), ENDPOINT_TYPE_V4);
     if ((old_fd == -1) && (socket_fd_ != old_fd)) {
-        IfaceMgr::instance().addExternalSocket(socket_fd_, Dhcp4o6Ipc::handler);
+        IfaceMgr::instance().addExternalSocket(socket_fd_, Dhcp4to6Ipc::handler);
     }
 }
 
-void Dhcp4o6Ipc::handler() {
-    Dhcp4o6Ipc& ipc = Dhcp4o6Ipc::instance();
+void Dhcp4to6Ipc::handler() {
+    Dhcp4to6Ipc& ipc = Dhcp4to6Ipc::instance();
 
     // Reset received message in case we return from this method before the
     // received message pointer is updated.
@@ -80,7 +80,7 @@ void Dhcp4o6Ipc::handler() {
     ipc.received_.reset(new Pkt4o6(msg->getData(), pkt));
 }
 
-Pkt4o6Ptr& Dhcp4o6Ipc::getReceived() {
+Pkt4o6Ptr& Dhcp4to6Ipc::getReceived() {
     return (received_);
 }
 
