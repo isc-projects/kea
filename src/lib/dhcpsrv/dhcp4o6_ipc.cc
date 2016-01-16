@@ -24,6 +24,7 @@
 #include <boost/pointer_cast.hpp>
 #include <errno.h>
 #include <netinet/in.h>
+#include <sys/fcntl.h>
 #include <string>
 
 using namespace isc::asiolink;
@@ -100,6 +101,9 @@ int Dhcp4o6IpcBase::open(const uint16_t port, const EndpointType& endpoint_type)
     } else {
         remote6.sin6_port = htons(port);
     }
+    // At least OpenBSD requires the remote address to not be left
+    // unspecified, so we set it to the loopback address.
+    remote6.sin6_addr.s6_addr[15] = 1;
     if (connect(sock, reinterpret_cast<const struct sockaddr*>(&remote6),
                 sizeof(remote6)) < 0) {
         ::close(sock);
@@ -231,7 +235,7 @@ void Dhcp4o6IpcBase::send(const Pkt6Ptr& pkt) {
     }
 
     // Check if vendor option exists.
-    OptionVendorPtr option_vendor = dynamic_pointer_cast<
+    OptionVendorPtr option_vendor = boost::dynamic_pointer_cast<
         OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
 
     // If vendor option doesn't exist or its enterprise id is not ISC's

@@ -437,12 +437,21 @@ TEST_F(Dhcp4o6IpcBaseTest, openError) {
     ASSERT_NE(-1, ipc_bound.getSocketFd());
 
     ipc.setDesiredPort(TEST_PORT + 10);
+#if defined(OS_LINUX)
+    // Linux has a silly interpretation of SO_REUSEADDR so we use
+    // another way to raise an error.
+    ipc.setDesiredPort(65535);
+#endif
     ASSERT_THROW(ipc.open(), isc::dhcp::Dhcp4o6IpcError);
 
     EXPECT_EQ(sock_fd, ipc.getSocketFd());
     EXPECT_EQ(TEST_PORT, ipc.getPort());
 
     ASSERT_NO_THROW(ipc_bound.close());
+#if defined(OS_LINUX)
+    // Restore the expected value
+    ipc.setDesiredPort(TEST_PORT + 10);
+#endif
     ASSERT_NO_THROW(ipc.open());
     EXPECT_NE(-1, ipc.getSocketFd());
     EXPECT_EQ(TEST_PORT + 10, ipc.getPort());
