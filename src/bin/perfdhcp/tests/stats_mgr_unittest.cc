@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,7 +50,7 @@ public:
         // Packet timestamp is normally updated by interface
         // manager on packets reception or send. Unit tests
         // do not use interface manager so we need to do it
-        // ourselfs.
+        // ourselves.
         pkt->updateTimestamp();
         return pkt;
     }
@@ -68,7 +68,7 @@ public:
         // Packet timestamp is normally updated by interface
         // manager on packets reception or send. Unit tests
         // do not use interface manager so we need to do it
-        // ourselfs.
+        // ourselves.
         pkt->updateTimestamp();
         return pkt;
     }
@@ -238,7 +238,7 @@ TEST_F(StatsMgrTest, MultipleExchanges) {
     passMultiplePackets6(stats_mgr, StatsMgr6::XCHG_RR, DHCPV6_REQUEST,
                          request_packets_num);
 
-    // Check if all packets are successfuly passed to packet lists.
+    // Check if all packets are successfully passed to packet lists.
     EXPECT_EQ(solicit_packets_num,
               stats_mgr->getSentPacketsNum(StatsMgr6::XCHG_SA));
     EXPECT_EQ(request_packets_num,
@@ -378,7 +378,7 @@ TEST_F(StatsMgrTest, Delays) {
               std::numeric_limits<double>::max());
     EXPECT_GT(stats_mgr->getMinDelay(StatsMgr4::XCHG_DO), 1);
 
-    // Max delay is supposed to the same value as mininimum
+    // Max delay is supposed to the same value as minimum
     // or maximum delay.
     EXPECT_GT(stats_mgr->getMaxDelay(StatsMgr4::XCHG_DO), 1);
 
