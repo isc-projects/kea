@@ -22,6 +22,7 @@
 #include <dhcpsrv/dhcp4o6_ipc.h>
 
 #include <netinet/in.h>
+#include <sys/fcntl.h>
 #include <string>
 
 using namespace isc::asiolink;
@@ -103,7 +104,11 @@ int Dhcp4o6IpcBase::open(uint16_t port, int side) {
     } else {
         remote6.sin6_port = htons(port);
     }
-    if (connect(sock, (struct sockaddr *)&remote6, sizeof(remote6)) < 0) {
+    // At least OpenBSD requires the remote address to not be left
+    // unspecified, so we set it to the loopback address.
+    remote6.sin6_addr.s6_addr[15] = 1;
+    if (connect(sock, reinterpret_cast<const struct sockaddr*>(&remote6),
+                sizeof(remote6)) < 0) {
         ::close(sock);
         isc_throw(Unexpected, "Failed to connect DHCP4o6 socket.");
     }
@@ -183,8 +188,17 @@ void Dhcp4o6IpcBase::send(Pkt6Ptr pkt) {
         return;
     }
 
-    // Get a vendor option
-    OptionVendorPtr vendor(new OptionVendor(Option::V6, ENTERPRISE_ID_ISC));
+    // Check if vendor option exists.
+    OptionVendorPtr option_vendor = boost::dynamic_pointer_cast<
+        OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
+
+    // If vendor option doesn't exist or its enterprise id is not ISC's
+    // enterprise id, let's create it.
+    if (!option_vendor || (option_vendor->getVendorId() != ENTERPRISE_ID_ISC)) {
+        option_vendor.reset(new OptionVendor(Option::V6, ENTERPRISE_ID_ISC));
+        pkt->addOption(option_vendor);
+
+    }
 
     // Push interface name and source address in it
     vendor->addOption(OptionPtr(new OptionString(Option::V6,
