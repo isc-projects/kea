@@ -753,7 +753,7 @@ TestControl::openSocket() const {
     // Local name is specified along with '-l' option.
     // It may point to interface name or local address.
     if (!localname.empty()) {
-        // CommandOptions should be already aware wether local name
+        // CommandOptions should be already aware whether local name
         // is interface name or address because it uses IfaceMgr to
         // scan interfaces and get's their names.
         if (options.isInterface()) {
@@ -826,7 +826,7 @@ TestControl::sendPackets(const TestControlSocket& socket,
     for (uint64_t i = packets_num; i > 0; --i) {
         if (options.getIpVersion() == 4) {
             // No template packets means that no -T option was specified.
-            // We have to build packets ourselfs.
+            // We have to build packets ourselves.
             if (template_buffers_.empty()) {
                 sendDiscover4(socket, preload);
             } else {
@@ -836,7 +836,7 @@ TestControl::sendPackets(const TestControlSocket& socket,
             }
         } else {
             // No template packets means that no -T option was specified.
-            // We have to build packets ourselfs.
+            // We have to build packets ourselves.
             if (template_buffers_.empty()) {
                 sendSolicit6(socket, preload);
             } else {
@@ -1111,14 +1111,14 @@ TestControl::processReceivedPacket4(const TestControlSocket& socket,
             }
         }
     } else if (pkt4->getType() == DHCPACK) {
-        // If received message is DHCPACK, we have to check if this is a response
-        // to 4-way exchange. We'll match this packet with a DHCPREQUESTs sent
-        // as part of the 4-way exchages.
+        // If received message is DHCPACK, we have to check if this is
+        // a response to 4-way exchange. We'll match this packet with
+        // a DHCPREQUEST sent as part of the 4-way exchanges.
         if (stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_RA, pkt4)) {
-            // The DHCPACK belongs to DHCPREQUEST-DHCPACK exchange type. So, we
-            // may need to keep this DHCPACK in the storage if renews. Note that,
-            // DHCPACK messages hold the information about leases assigned.
-            // We use this information to renew.
+            // The DHCPACK belongs to DHCPREQUEST-DHCPACK exchange type.
+            // So, we may need to keep this DHCPACK in the storage if renews.
+            // Note that, DHCPACK messages hold the information about
+            // leases assigned. We use this information to renew.
             if (stats_mgr4_->hasExchangeStats(StatsMgr4::XCHG_RNA)) {
                 // Renew messages are sent, because StatsMgr has the
                 // specific exchange type specified. Let's append the DHCPACK.
@@ -1429,7 +1429,7 @@ TestControl::run() {
                 renew_rate_control_.getOutboundMessageCount();
             checkLateMessages(renew_rate_control_);
 
-            // Send multiple renews to satify the desired rate.
+            // Send multiple renews to satisfy the desired rate.
             if (options.getIpVersion() == 4) {
                 sendMultipleRequests(socket, renew_packets_due);
             } else {
@@ -1454,7 +1454,7 @@ TestControl::run() {
         }
 
         // If we are sending Renews to the server, the Reply packets are cached
-        // so as leases for which we send Renews can be idenitfied. The major
+        // so as leases for which we send Renews can be identified. The major
         // issue with this approach is that most of the time we are caching
         // more packets than we actually need. This function removes excessive
         // Reply messages to reduce the memory and CPU utilization. Note that
@@ -1493,7 +1493,7 @@ TestControl::run() {
     }
 
     int ret_code = 0;
-    // Check if any packet drops occured.
+    // Check if any packet drops occurred.
     if (options.getIpVersion() == 4) {
         ret_code = stats_mgr4_->droppedPackets() ? 3 : 0;
     } else if (options.getIpVersion() == 6)  {
@@ -1544,7 +1544,7 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
     // Generate the MAC address to be passed in the packet.
     uint8_t randomized = 0;
     std::vector<uint8_t> mac_address = generateMacAddress(randomized);
-    // Generate trasnaction id to be set for the new exchange.
+    // Generate transaction id to be set for the new exchange.
     const uint32_t transid = generateTransid();
     Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, transid));
     if (!pkt4) {
@@ -1589,13 +1589,13 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
                            const std::vector<uint8_t>& template_buf,
                            const bool preload /* = false */) {
     basic_rate_control_.updateSendTime();
-    // Get the first argument if mulitple the same arguments specified
+    // Get the first argument if multiple the same arguments specified
     // in the command line. First one refers to DISCOVER packets.
     const uint8_t arg_idx = 0;
     // Generate the MAC address to be passed in the packet.
     uint8_t randomized = 0;
     std::vector<uint8_t> mac_address = generateMacAddress(randomized);
-    // Generate trasnaction id to be set for the new exchange.
+    // Generate transaction id to be set for the new exchange.
     const uint32_t transid = generateTransid();
     // Get transaction id offset.
     size_t transid_offset = getTransactionIdOffset(arg_idx);
@@ -1773,7 +1773,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     // We need to go back by HW_ETHER_LEN (MAC address length)
     // because this offset points to last octet of MAC address.
     size_t rand_offset = getRandomOffset(arg_idx) - HW_ETHER_LEN + 1;
-    // Create temporaru buffer from the template.
+    // Create temporary buffer from the template.
     std::vector<uint8_t> in_buf(template_buf.begin(),
                                 template_buf.end());
     // Check if given randomization offset is not out of bounds.
@@ -2042,7 +2042,7 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
     // Generate DUID to be passed to the packet
     uint8_t randomized = 0;
     std::vector<uint8_t> duid = generateDuid(randomized);
-    // Generate trasnaction id to be set for the new exchange.
+    // Generate transaction id to be set for the new exchange.
     const uint32_t transid = generateTransid();
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
     if (!pkt6) {
@@ -2091,7 +2091,7 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
     const int arg_idx = 0;
     // Get transaction id offset.
     size_t transid_offset = getTransactionIdOffset(arg_idx);
-    // Generate trasnaction id to be set for the new exchange.
+    // Generate transaction id to be set for the new exchange.
     const uint32_t transid = generateTransid();
     // Create packet.
     PerfPkt6Ptr pkt6(new PerfPkt6(&template_buf[0], template_buf.size(),
@@ -2101,7 +2101,7 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
     }
     size_t rand_offset = getRandomOffset(arg_idx);
     // randomized will pick number of bytes randomized so we can
-    // just use part of the generated duid and substitude a few bytes
+    // just use part of the generated duid and substitute a few bytes
     /// in template.
     uint8_t randomized = 0;
     std::vector<uint8_t> duid = generateDuid(randomized);

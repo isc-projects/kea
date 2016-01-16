@@ -124,7 +124,7 @@ public:
     typedef StatsMgr<dhcp::Pkt4> StatsMgr4;
     /// Pointer to Statistics Manager for DHCPv4;
     typedef boost::shared_ptr<StatsMgr4> StatsMgr4Ptr;
-    /// Statictics Manager for DHCPv6.
+    /// Statistics Manager for DHCPv6.
     typedef StatsMgr<dhcp::Pkt6> StatsMgr6;
     /// Pointer to Statistics Manager for DHCPv6.
     typedef boost::shared_ptr<StatsMgr6> StatsMgr6Ptr;
@@ -246,7 +246,7 @@ public:
     /// throw exception.
     ///
     /// \throw isc::InvalidOperation if command line options are not parsed.
-    /// \throw isc::Unexpected if internal Test Controller error occured.
+    /// \throw isc::Unexpected if internal Test Controller error occurred.
     /// \return error_code, 3 if number of received packets is not equal
     /// to number of sent packets, 0 if everything is ok.
     int run();
@@ -545,7 +545,7 @@ protected:
     /// \throw isc::InvalidOperation if broadcast option can't be
     /// set for the v4 socket or if multicast option can't be set
     /// for the v6 socket.
-    /// \throw isc::Unexpected if interal unexpected error occured.
+    /// \throw isc::Unexpected if internal unexpected error occurred.
     /// \return socket descriptor.
     int openSocket() const;
 
@@ -580,7 +580,7 @@ protected:
     /// \param [in] socket socket to be used.
     /// \param [in] pkt4 object representing DHCPv4 packet received.
     /// \throw isc::BadValue if unknown message type received.
-    /// \throw isc::Unexpected if unexpected error occured.
+    /// \throw isc::Unexpected if unexpected error occurred.
     void processReceivedPacket4(const TestControlSocket& socket,
                                 const dhcp::Pkt4Ptr& pkt4);
 
@@ -597,7 +597,7 @@ protected:
     /// \param [in] socket socket to be used.
     /// \param [in] pkt6 object representing DHCPv6 packet received.
     /// \throw isc::BadValue if unknown message type received.
-    /// \throw isc::Unexpected if unexpected error occured.
+    /// \throw isc::Unexpected if unexpected error occurred.
     void processReceivedPacket6(const TestControlSocket& socket,
                                 const dhcp::Pkt6Ptr& pkt6);
 
@@ -613,7 +613,7 @@ protected:
     ///
     /// \param socket socket to be used.
     /// \throw isc::BadValue if unknown message type received.
-    /// \throw isc::Unexpected if unexpected error occured.
+    /// \throw isc::Unexpected if unexpected error occurred.
     /// \return number of received packets.
     uint64_t receivePackets(const TestControlSocket& socket);
 
@@ -798,7 +798,7 @@ protected:
     /// \param discover_pkt4 DISCOVER packet sent.
     /// \param offer_pkt4 OFFER packet object.
     ///
-    /// \throw isc::Unexpected if unexpected error occured.
+    /// \throw isc::Unexpected if unexpected error occurred.
     /// \throw isc::InvalidOperation if Statistics Manager has not been
     /// initialized.
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
@@ -835,7 +835,7 @@ protected:
     ///
     /// \param socket socket to be used to send message.
     /// \param advertise_pkt6 ADVERTISE packet object.
-    /// \throw isc::Unexpected if unexpected error occured.
+    /// \throw isc::Unexpected if unexpected error occurred.
     /// \throw isc::InvalidOperation if Statistics Manager has not been
     /// initialized.
     ///
@@ -1006,7 +1006,7 @@ protected:
     /// \brief Return transaction id offset in a packet.
     ///
     /// \param arg_idx command line argument index to be used.
-    /// If multiple -X parameters specifed it points to the
+    /// If multiple -X parameters specified it points to the
     /// one to be used.
     /// \return transaction id offset in packet.
     int getTransactionIdOffset(const int arg_idx) const;
@@ -1125,7 +1125,7 @@ protected:
     TemplateBufferCollection template_buffers_;
 
     /// First packets send. They are used at the end of the test
-    /// to print packet templates when diagnostics flag T is specifed.
+    /// to print packet templates when diagnostics flag T is specified.
     std::map<uint8_t, dhcp::Pkt4Ptr> template_packets_v4_;
     std::map<uint8_t, dhcp::Pkt6Ptr> template_packets_v6_;
 
