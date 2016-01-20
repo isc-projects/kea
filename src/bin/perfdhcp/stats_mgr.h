@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <map>
+#include <queue>
 
 
 namespace isc {
@@ -250,6 +251,9 @@ public:
         /// Packet list iterator to access packets using transaction id hash.
         typedef typename PktListTransidHashIndex::const_iterator
             PktListTransidHashIterator;
+        /// Packet list iterator queue for removal.
+        typedef typename std::queue<PktListTransidHashIterator>
+            PktListRemovalQueue;
 
         /// \brief Constructor
         ///
@@ -438,6 +442,8 @@ public:
                 // bucket size the better. If bucket sizes appear to big we
                 // might want to increase number of buckets.
                 unordered_lookup_size_sum_ += std::distance(p.first, p.second);
+                // Removal can be done only after the loop
+                PktListRemovalQueue to_remove;
                 for (PktListTransidHashIterator it = p.first; it != p.second;
                      ++it) {
                     if ((*it)->getTransid() == rcvd_packet->getTransid()) {
@@ -455,18 +461,29 @@ public:
                             (static_cast<double>(packet_period.length().fractional_seconds())
                              / packet_period.length().ticks_per_second());
                         if (drop_time_ > 0 && (period_fractional > drop_time_)) {
-                            // The packet pointed to by 'it' is timed out so we
-                            // have to remove it. Removal may invalidate the
-                            // next_sent_ pointer if it points to the packet
-                            // being removed. So, we set the next_sent_ to point
-                            // to the next packet after removed one. This
-                            // pointer will be further updated in the following
-                            // iterations, if the subsequent packets are also
-                            // timed out.
-                            next_sent_ = eraseSent(sent_packets_.template project<0>(it));
-                            ++collected_;
+                            // Push the iterator on the removal queue.
+                            to_remove.push(it);
+
                         }
                     }
+                }
+
+                // Deal with the removal queue
+                while (!to_remove.empty()) {
+                    PktListTransidHashIterator it = to_remove.front();
+                    to_remove.pop();
+                    // The packet pointed to by 'it' is timed out so
+                    // we have to remove it. 
+                    if (packet_found || !to_remove.empty()) {
+                        eraseSent(sent_packets_.template project<0>(it));
+                    } else {
+                        // Removal may invalidate the next_sent_
+                        // pointer if it points to the packet being
+                        // removed. So, we set the next_sent_ to point
+                        // to the next packet after removed one.
+                        next_sent_ = eraseSent(sent_packets_.template project<0>(it));
+                    }
+                    ++collected_;
                 }
             }
 
