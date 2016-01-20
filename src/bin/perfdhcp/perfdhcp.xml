@@ -319,6 +319,23 @@
             </varlistentry>
 
             <varlistentry>
+              <term><option>-f <replaceable class="parameter">renew-rate</replaceable></option></term>
+              <listitem>
+                <para>
+                    Rate at which DHCPv4 or DHCPv6 renew requests are sent
+                    to a server. This value is only valid when used in conjunction
+                    with the exchange rate (given by <option>-r <replaceable
+                    class="parameter">rate</replaceable></option>).
+                    Furthermore the sum of this value and the release-rate
+                    (given by <option>-F <replaceable class="parameter">
+                    rate</replaceable></option>) must be equal to or less than
+                    the exchange rate.
+                </para>
+              </listitem>
+            </varlistentry>
+
+
+            <varlistentry>
                 <term><option>-h</option></term>
                 <listitem>
                     <para>
@@ -556,23 +573,6 @@
                         <para>
                             Add a rapid commit option (exchanges will be
                             SOLICIT-ADVERTISE).
-                        </para>
-                    </listitem>
-                </varlistentry>
-
-                <varlistentry>
-                    <term><option>-f <replaceable class="parameter">renew-rate</replaceable></option></term>
-                    <listitem>
-                        <para>
-                            Rate at which IPv6 RENEW requests are sent
-                            to a server. This value is only valid when
-                            used in conjunction with the exchange
-                            rate (given by <option>-r <replaceable
-                            class="parameter">rate</replaceable></option>).
-                            Furthermore the sum of this value and the
-                            release-rate (given by <option>-F <replaceable
-                            class="parameter">rate</replaceable></option>)
-                            must be equal to or less than the exchange rate.
                         </para>
                     </listitem>
                 </varlistentry>
