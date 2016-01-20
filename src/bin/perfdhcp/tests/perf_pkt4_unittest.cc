@@ -68,7 +68,7 @@ public:
             255, 255, 255, 255,     // giaddr
         };
 
-	// cppcheck-suppress variableScope
+        // cppcheck-suppress variableScope
         uint8_t v4Opts[] = {
             DHO_HOST_NAME, 3, 0,   1,  2,  // Host name option.
             DHO_BOOT_SIZE, 3, 10, 11, 12,  // Boot file size option
