@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -288,406 +288,8 @@ Dhcpv6Srv::createContext(const Pkt6Ptr& pkt) {
 
 bool Dhcpv6Srv::run() {
     while (!shutdown_) {
-        // client's message and server's response
-        Pkt6Ptr query;
-        Pkt6Ptr rsp;
-
         try {
-
-        try {
-            uint32_t timeout = 1000;
-            LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT).arg(timeout);
-            query = receivePacket(timeout);
-
-            // Log if packet has arrived. We can't log the detailed information
-            // about the DHCP message because it hasn't been unpacked/parsed
-            // yet, and it can't be parsed at this point because hooks will
-            // have to process it first. The only information available at this
-            // point are: the interface, source address and destination addresses
-            // and ports.
-            if (query) {
-                LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_BUFFER_RECEIVED)
-                    .arg(query->getRemoteAddr().toText())
-                    .arg(query->getRemotePort())
-                    .arg(query->getLocalAddr().toText())
-                    .arg(query->getLocalPort())
-                    .arg(query->getIface());
-
-                // Log reception of the packet. We need to increase it early, as
-                // any failures in unpacking will cause the packet to be dropped.
-                // we will increase type specific packets further down the road.
-                // See processStatsReceived().
-                StatsMgr::instance().addValue("pkt6-received", static_cast<int64_t>(1));
-
-            } else {
-                LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_INTERRUPTED)
-                    .arg(timeout);
-            }
-
-        } catch (const SignalInterruptOnSelect) {
-            // Packet reception interrupted because a signal has been received.
-            // This is not an error because we might have received a SIGTERM,
-            // SIGINT or SIGHUP which are handled by the server. For signals
-            // that are not handled by the server we rely on the default
-            // behavior of the system.
-            LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_SIGNAL)
-                .arg(signal_set_->getNext());
-        } catch (const std::exception& e) {
-            LOG_ERROR(packet6_logger, DHCP6_PACKET_RECEIVE_FAIL).arg(e.what());
-        }
-
-        // Handle next signal received by the process. It must be called after
-        // an attempt to receive a packet to properly handle server shut down.
-        // The SIGTERM or SIGINT will be received prior to, or during execution
-        // of select() (select is invoked by receivePacket()). When that happens,
-        // select will be interrupted. The signal handler will be invoked
-        // immediately after select(). The handler will set the shutdown flag
-        // and cause the process to terminate before the next select() function
-        // is called. If the function was called before receivePacket the
-        // process could wait up to the duration of timeout of select() to
-        // terminate.
-        try {
-            handleSignal();
-        } catch (const std::exception& e) {
-            // An (a standard or ISC) exception occurred.
-            LOG_ERROR(dhcp6_logger, DHCP6_HANDLE_SIGNAL_EXCEPTION)
-                .arg(e.what());
-        }
-
-        // Timeout may be reached or signal received, which breaks select()
-        // with no packet received
-        if (!query) {
-            continue;
-        }
-
-        // In order to parse the DHCP options, the server needs to use some
-        // configuration information such as: existing option spaces, option
-        // definitions etc. This is the kind of information which is not
-        // available in the libdhcp, so we need to supply our own implementation
-        // of the option parsing function here, which would rely on the
-        // configuration data.
-        query->setCallback(boost::bind(&Dhcpv6Srv::unpackOptions, this, _1, _2,
-                                       _3, _4, _5));
-
-        bool skip_unpack = false;
-
-        // The packet has just been received so contains the uninterpreted wire
-        // data; execute callouts registered for buffer6_receive.
-        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer6_receive_)) {
-            CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-            // Delete previously set arguments
-            callout_handle->deleteAllArguments();
-
-            // Pass incoming packet as argument
-            callout_handle->setArgument("query6", query);
-
-            // Call callouts
-            HooksManager::callCallouts(Hooks.hook_index_buffer6_receive_, *callout_handle);
-
-            // Callouts decided to skip the next processing step. The next
-            // processing step would to parse the packet, so skip at this
-            // stage means that callouts did the parsing already, so server
-            // should skip parsing.
-            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-                LOG_DEBUG(hooks_logger, DBG_DHCP6_DETAIL, DHCP6_HOOK_BUFFER_RCVD_SKIP)
-                    .arg(query->getRemoteAddr().toText())
-                    .arg(query->getLocalAddr().toText())
-                    .arg(query->getIface());
-                skip_unpack = true;
-            }
-
-            /// @todo: Add support for DROP status.
-
-            callout_handle->getArgument("query6", query);
-        }
-
-        // Unpack the packet information unless the buffer6_receive callouts
-        // indicated they did it
-        if (!skip_unpack) {
-            try {
-                LOG_DEBUG(options6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_UNPACK)
-                    .arg(query->getRemoteAddr().toText())
-                    .arg(query->getLocalAddr().toText())
-                    .arg(query->getIface());
-                query->unpack();
-            } catch (const std::exception &e) {
-                // Failed to parse the packet.
-                LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_DETAIL,
-                          DHCP6_PACKET_DROP_PARSE_FAIL)
-                    .arg(query->getRemoteAddr().toText())
-                    .arg(query->getLocalAddr().toText())
-                    .arg(query->getIface())
-                    .arg(e.what());
-
-                // Increase the statistics of parse failures and dropped packets.
-                StatsMgr::instance().addValue("pkt6-parse-failed",
-                                              static_cast<int64_t>(1));
-                StatsMgr::instance().addValue("pkt6-receive-drop",
-                                              static_cast<int64_t>(1));
-                continue;
-            }
-        }
-
-        // Update statistics accordingly for received packet.
-        processStatsReceived(query);
-
-        // Check if received query carries server identifier matching
-        // server identifier being used by the server.
-        if (!testServerID(query)) {
-
-            // Increase the statistic of dropped packets.
-            StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
-            continue;
-        }
-
-        // Check if the received query has been sent to unicast or multicast.
-        // The Solicit, Confirm, Rebind and Information Request will be
-        // discarded if sent to unicast address.
-        if (!testUnicast(query)) {
-
-            // Increase the statistic of dropped packets.
-            StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
-            continue;
-        }
-
-        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_PACKET_RECEIVED)
-            .arg(query->getLabel())
-            .arg(query->getName())
-            .arg(static_cast<int>(query->getType()))
-            .arg(query->getRemoteAddr())
-            .arg(query->getLocalAddr())
-            .arg(query->getIface());
-        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_QUERY_DATA)
-            .arg(query->getLabel())
-            .arg(query->toText());
-
-        // At this point the information in the packet has been unpacked into
-        // the various packet fields and option objects has been created.
-        // Execute callouts registered for packet6_receive.
-        if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_receive_)) {
-            CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-            // Delete previously set arguments
-            callout_handle->deleteAllArguments();
-
-            // Pass incoming packet as argument
-            callout_handle->setArgument("query6", query);
-
-            // Call callouts
-            HooksManager::callCallouts(Hooks.hook_index_pkt6_receive_, *callout_handle);
-
-            // Callouts decided to skip the next processing step. The next
-            // processing step would to process the packet, so skip at this
-            // stage means drop.
-            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-                LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_RCVD_SKIP)
-                    .arg(query->getLabel());
-                continue;
-            }
-
-            /// @todo: Add support for DROP status.
-
-            callout_handle->getArgument("query6", query);
-        }
-
-        // Assign this packet to a class, if possible
-        classifyPacket(query);
-
-        try {
-            NameChangeRequestPtr ncr;
-
-            switch (query->getType()) {
-            case DHCPV6_SOLICIT:
-                rsp = processSolicit(query);
-                    break;
-
-            case DHCPV6_REQUEST:
-                rsp = processRequest(query);
-                break;
-
-            case DHCPV6_RENEW:
-                rsp = processRenew(query);
-                break;
-
-            case DHCPV6_REBIND:
-                rsp = processRebind(query);
-                break;
-
-            case DHCPV6_CONFIRM:
-                rsp = processConfirm(query);
-                break;
-
-            case DHCPV6_RELEASE:
-                rsp = processRelease(query);
-                break;
-
-            case DHCPV6_DECLINE:
-                rsp = processDecline(query);
-                break;
-
-            case DHCPV6_INFORMATION_REQUEST:
-                rsp = processInfRequest(query);
-                break;
-
-            default:
-                // We received a packet type that we do not recognize.
-                LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_UNKNOWN_MSG_RECEIVED)
-                    .arg(static_cast<int>(query->getType()))
-                    .arg(query->getIface());
-                // Only action is to output a message if debug is enabled,
-                // and that will be covered by the debug statement before
-                // the "switch" statement.
-                ;
-            }
-
-        } catch (const RFCViolation& e) {
-            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
-                .arg(query->getName())
-                .arg(query->getRemoteAddr().toText())
-                .arg(e.what());
-
-            // Increase the statistic of dropped packets.
-            StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
-
-        } catch (const std::exception& e) {
-
-            // Catch-all exception (at least for ones based on the isc Exception
-            // class, which covers more or less all that are explicitly raised
-            // in the Kea code), but also the standard one, which may possibly be
-            // thrown from boost code.  Just log the problem and ignore the packet.
-            // (The problem is logged as a debug message because debug is
-            // disabled by default - it prevents a DDOS attack based on the
-            // sending of problem packets.)
-            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
-                .arg(query->getName())
-                .arg(query->getRemoteAddr().toText())
-                .arg(e.what());
-
-            // Increase the statistic of dropped packets.
-            StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
-        }
-
-        if (rsp) {
-
-            // Process relay-supplied options. It is important to call this very
-            // late in the process, because we now have all the options the
-            // server wanted to send already set. This is important, because
-            // RFC6422, section 6 states:
-            //
-            //   The server SHOULD discard any options that appear in the RSOO
-            //   for which it already has one or more candidates.
-            //
-            // So we ignore any RSOO options if there's an option with the same
-            // code already present.
-            processRSOO(query, rsp);
-
-            rsp->setRemoteAddr(query->getRemoteAddr());
-            rsp->setLocalAddr(query->getLocalAddr());
-
-            if (rsp->relay_info_.empty()) {
-                // Direct traffic, send back to the client directly
-                rsp->setRemotePort(DHCP6_CLIENT_PORT);
-            } else {
-                // Relayed traffic, send back to the relay agent
-                rsp->setRemotePort(DHCP6_SERVER_PORT);
-            }
-
-            rsp->setLocalPort(DHCP6_SERVER_PORT);
-            rsp->setIndex(query->getIndex());
-            rsp->setIface(query->getIface());
-
-            // Specifies if server should do the packing
-            bool skip_pack = false;
-
-            // Server's reply packet now has all options and fields set.
-            // Options are represented by individual objects, but the
-            // output wire data has not been prepared yet.
-            // Execute all callouts registered for packet6_send
-            if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_send_)) {
-                CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-                // Delete all previous arguments
-                callout_handle->deleteAllArguments();
-
-                // Set our response
-                callout_handle->setArgument("response6", rsp);
-
-                // Call all installed callouts
-                HooksManager::callCallouts(Hooks.hook_index_pkt6_send_, *callout_handle);
-
-                // Callouts decided to skip the next processing step. The next
-                // processing step would to pack the packet (create wire data).
-                // That step will be skipped if any callout sets skip flag.
-                // It essentially means that the callout already did packing,
-                // so the server does not have to do it again.
-                if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-                    LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_SEND_SKIP)
-                        .arg(rsp->getLabel());
-                    skip_pack = true;
-                }
-
-                /// @todo: Add support for DROP status
-            }
-
-            if (!skip_pack) {
-                try {
-                    rsp->pack();
-                } catch (const std::exception& e) {
-                    LOG_ERROR(options6_logger, DHCP6_PACK_FAIL)
-                        .arg(e.what());
-                    continue;
-                }
-
-            }
-
-            try {
-
-                // Now all fields and options are constructed into output wire buffer.
-                // Option objects modification does not make sense anymore. Hooks
-                // can only manipulate wire buffer at this stage.
-                // Let's execute all callouts registered for buffer6_send
-                if (HooksManager::calloutsPresent(Hooks.hook_index_buffer6_send_)) {
-                    CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-                    // Delete previously set arguments
-                    callout_handle->deleteAllArguments();
-
-                    // Pass incoming packet as argument
-                    callout_handle->setArgument("response6", rsp);
-
-                    // Call callouts
-                    HooksManager::callCallouts(Hooks.hook_index_buffer6_send_, *callout_handle);
-
-                    // Callouts decided to skip the next processing step. The next
-                    // processing step would to parse the packet, so skip at this
-                    // stage means drop.
-                    if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-                        LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP)
-                            .arg(rsp->getLabel());
-                        continue;
-                    }
-
-                    /// @todo: Add support for DROP status
-
-                    callout_handle->getArgument("response6", rsp);
-                }
-
-                LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA,
-                          DHCP6_RESPONSE_DATA)
-                    .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
-
-                sendPacket(rsp);
-
-                // Update statistics accordingly for sent packet.
-                processStatsSent(rsp);
-
-            } catch (const std::exception& e) {
-                LOG_ERROR(packet6_logger, DHCP6_PACKET_SEND_FAIL)
-                    .arg(e.what());
-            }
-        }
-
+            run_one();
         } catch (const std::exception& e) {
             // General catch-all standard exceptions that are not caught by more
             // specific catches.
@@ -702,6 +304,406 @@ bool Dhcpv6Srv::run() {
     }
 
     return (true);
+}
+
+void Dhcpv6Srv::run_one() {
+    // client's message and server's response
+    Pkt6Ptr query;
+    Pkt6Ptr rsp;
+
+    try {
+        uint32_t timeout = 1000;
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT).arg(timeout);
+        query = receivePacket(timeout);
+
+        // Log if packet has arrived. We can't log the detailed information
+        // about the DHCP message because it hasn't been unpacked/parsed
+        // yet, and it can't be parsed at this point because hooks will
+        // have to process it first. The only information available at this
+        // point are: the interface, source address and destination addresses
+        // and ports.
+        if (query) {
+            LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_BUFFER_RECEIVED)
+                .arg(query->getRemoteAddr().toText())
+                .arg(query->getRemotePort())
+                .arg(query->getLocalAddr().toText())
+                .arg(query->getLocalPort())
+                .arg(query->getIface());
+
+            // Log reception of the packet. We need to increase it early, as
+            // any failures in unpacking will cause the packet to be dropped.
+            // we will increase type specific packets further down the road.
+            // See processStatsReceived().
+            StatsMgr::instance().addValue("pkt6-received", static_cast<int64_t>(1));
+
+        } else {
+            LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_INTERRUPTED)
+                .arg(timeout);
+        }
+
+    } catch (const SignalInterruptOnSelect) {
+        // Packet reception interrupted because a signal has been received.
+        // This is not an error because we might have received a SIGTERM,
+        // SIGINT or SIGHUP which are handled by the server. For signals
+        // that are not handled by the server we rely on the default
+        // behavior of the system.
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_SIGNAL)
+            .arg(signal_set_->getNext());
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_RECEIVE_FAIL).arg(e.what());
+    }
+
+    // Handle next signal received by the process. It must be called after
+    // an attempt to receive a packet to properly handle server shut down.
+    // The SIGTERM or SIGINT will be received prior to, or during execution
+    // of select() (select is invoked by receivePacket()). When that happens,
+    // select will be interrupted. The signal handler will be invoked
+    // immediately after select(). The handler will set the shutdown flag
+    // and cause the process to terminate before the next select() function
+    // is called. If the function was called before receivePacket the
+    // process could wait up to the duration of timeout of select() to
+    // terminate.
+    try {
+        handleSignal();
+    } catch (const std::exception& e) {
+        // An (a standard or ISC) exception occurred.
+        LOG_ERROR(dhcp6_logger, DHCP6_HANDLE_SIGNAL_EXCEPTION)
+            .arg(e.what());
+    }
+
+    // Timeout may be reached or signal received, which breaks select()
+    // with no packet received
+    if (!query) {
+        return;
+    }
+
+    // In order to parse the DHCP options, the server needs to use some
+    // configuration information such as: existing option spaces, option
+    // definitions etc. This is the kind of information which is not
+    // available in the libdhcp, so we need to supply our own implementation
+    // of the option parsing function here, which would rely on the
+    // configuration data.
+    query->setCallback(boost::bind(&Dhcpv6Srv::unpackOptions, this, _1, _2,
+                                   _3, _4, _5));
+
+    bool skip_unpack = false;
+
+    // The packet has just been received so contains the uninterpreted wire
+    // data; execute callouts registered for buffer6_receive.
+    if (HooksManager::calloutsPresent(Hooks.hook_index_buffer6_receive_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete previously set arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass incoming packet as argument
+        callout_handle->setArgument("query6", query);
+
+        // Call callouts
+        HooksManager::callCallouts(Hooks.hook_index_buffer6_receive_, *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to parse the packet, so skip at this
+        // stage means that callouts did the parsing already, so server
+        // should skip parsing.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_DETAIL, DHCP6_HOOK_BUFFER_RCVD_SKIP)
+                .arg(query->getRemoteAddr().toText())
+                .arg(query->getLocalAddr().toText())
+                .arg(query->getIface());
+            skip_unpack = true;
+        }
+
+        /// @todo: Add support for DROP status.
+
+        callout_handle->getArgument("query6", query);
+    }
+
+    // Unpack the packet information unless the buffer6_receive callouts
+    // indicated they did it
+    if (!skip_unpack) {
+        try {
+            LOG_DEBUG(options6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_UNPACK)
+                .arg(query->getRemoteAddr().toText())
+                .arg(query->getLocalAddr().toText())
+                .arg(query->getIface());
+            query->unpack();
+        } catch (const std::exception &e) {
+            // Failed to parse the packet.
+            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_DETAIL,
+                      DHCP6_PACKET_DROP_PARSE_FAIL)
+                .arg(query->getRemoteAddr().toText())
+                .arg(query->getLocalAddr().toText())
+                .arg(query->getIface())
+                .arg(e.what());
+
+            // Increase the statistics of parse failures and dropped packets.
+            StatsMgr::instance().addValue("pkt6-parse-failed",
+                                          static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt6-receive-drop",
+                                          static_cast<int64_t>(1));
+            return;
+        }
+    }
+
+    // Update statistics accordingly for received packet.
+    processStatsReceived(query);
+
+    // Check if received query carries server identifier matching
+    // server identifier being used by the server.
+    if (!testServerID(query)) {
+
+        // Increase the statistic of dropped packets.
+        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+        return;
+    }
+
+    // Check if the received query has been sent to unicast or multicast.
+    // The Solicit, Confirm, Rebind and Information Request will be
+    // discarded if sent to unicast address.
+    if (!testUnicast(query)) {
+
+        // Increase the statistic of dropped packets.
+        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+        return;
+    }
+
+    LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_PACKET_RECEIVED)
+        .arg(query->getLabel())
+        .arg(query->getName())
+        .arg(static_cast<int>(query->getType()))
+        .arg(query->getRemoteAddr())
+        .arg(query->getLocalAddr())
+        .arg(query->getIface());
+    LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_QUERY_DATA)
+        .arg(query->getLabel())
+        .arg(query->toText());
+
+    // At this point the information in the packet has been unpacked into
+    // the various packet fields and option objects has been created.
+    // Execute callouts registered for packet6_receive.
+    if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_receive_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete previously set arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass incoming packet as argument
+        callout_handle->setArgument("query6", query);
+
+        // Call callouts
+        HooksManager::callCallouts(Hooks.hook_index_pkt6_receive_, *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to process the packet, so skip at this
+        // stage means drop.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_RCVD_SKIP)
+                .arg(query->getLabel());
+            return;
+        }
+
+        /// @todo: Add support for DROP status.
+
+        callout_handle->getArgument("query6", query);
+    }
+
+    // Assign this packet to a class, if possible
+    classifyPacket(query);
+
+    try {
+        NameChangeRequestPtr ncr;
+
+        switch (query->getType()) {
+        case DHCPV6_SOLICIT:
+            rsp = processSolicit(query);
+            break;
+
+        case DHCPV6_REQUEST:
+            rsp = processRequest(query);
+            break;
+
+        case DHCPV6_RENEW:
+            rsp = processRenew(query);
+            break;
+
+        case DHCPV6_REBIND:
+            rsp = processRebind(query);
+            break;
+
+        case DHCPV6_CONFIRM:
+            rsp = processConfirm(query);
+            break;
+
+        case DHCPV6_RELEASE:
+            rsp = processRelease(query);
+            break;
+
+        case DHCPV6_DECLINE:
+            rsp = processDecline(query);
+            break;
+
+        case DHCPV6_INFORMATION_REQUEST:
+            rsp = processInfRequest(query);
+            break;
+
+        default:
+            // We received a packet type that we do not recognize.
+            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_UNKNOWN_MSG_RECEIVED)
+                .arg(static_cast<int>(query->getType()))
+                .arg(query->getIface());
+            // Only action is to output a message if debug is enabled,
+            // and that will be covered by the debug statement before
+            // the "switch" statement.
+            ;
+        }
+
+    } catch (const RFCViolation& e) {
+        LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
+            .arg(query->getName())
+            .arg(query->getRemoteAddr().toText())
+            .arg(e.what());
+
+        // Increase the statistic of dropped packets.
+        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+
+    } catch (const std::exception& e) {
+
+        // Catch-all exception (at least for ones based on the isc Exception
+        // class, which covers more or less all that are explicitly raised
+        // in the Kea code), but also the standard one, which may possibly be
+        // thrown from boost code.  Just log the problem and ignore the packet.
+        // (The problem is logged as a debug message because debug is
+        // disabled by default - it prevents a DDOS attack based on the
+        // sending of problem packets.)
+        LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
+            .arg(query->getName())
+            .arg(query->getRemoteAddr().toText())
+            .arg(e.what());
+
+        // Increase the statistic of dropped packets.
+        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+    }
+
+    if (rsp) {
+
+        // Process relay-supplied options. It is important to call this very
+        // late in the process, because we now have all the options the
+        // server wanted to send already set. This is important, because
+        // RFC6422, section 6 states:
+        //
+        //   The server SHOULD discard any options that appear in the RSOO
+        //   for which it already has one or more candidates.
+        //
+        // So we ignore any RSOO options if there's an option with the same
+        // code already present.
+        processRSOO(query, rsp);
+
+        rsp->setRemoteAddr(query->getRemoteAddr());
+        rsp->setLocalAddr(query->getLocalAddr());
+
+        if (rsp->relay_info_.empty()) {
+            // Direct traffic, send back to the client directly
+            rsp->setRemotePort(DHCP6_CLIENT_PORT);
+        } else {
+            // Relayed traffic, send back to the relay agent
+            rsp->setRemotePort(DHCP6_SERVER_PORT);
+        }
+
+        rsp->setLocalPort(DHCP6_SERVER_PORT);
+        rsp->setIndex(query->getIndex());
+        rsp->setIface(query->getIface());
+
+        // Specifies if server should do the packing
+        bool skip_pack = false;
+
+        // Server's reply packet now has all options and fields set.
+        // Options are represented by individual objects, but the
+        // output wire data has not been prepared yet.
+        // Execute all callouts registered for packet6_send
+        if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_send_)) {
+            CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+            // Delete all previous arguments
+            callout_handle->deleteAllArguments();
+
+            // Set our response
+            callout_handle->setArgument("response6", rsp);
+
+            // Call all installed callouts
+            HooksManager::callCallouts(Hooks.hook_index_pkt6_send_, *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to pack the packet (create wire data).
+            // That step will be skipped if any callout sets skip flag.
+            // It essentially means that the callout already did packing,
+            // so the server does not have to do it again.
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+                LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_SEND_SKIP)
+                    .arg(rsp->getLabel());
+                skip_pack = true;
+            }
+
+            /// @todo: Add support for DROP status
+        }
+
+        if (!skip_pack) {
+            try {
+                rsp->pack();
+            } catch (const std::exception& e) {
+                LOG_ERROR(options6_logger, DHCP6_PACK_FAIL)
+                    .arg(e.what());
+                return;
+            }
+
+        }
+
+        try {
+
+            // Now all fields and options are constructed into output wire buffer.
+            // Option objects modification does not make sense anymore. Hooks
+            // can only manipulate wire buffer at this stage.
+            // Let's execute all callouts registered for buffer6_send
+            if (HooksManager::calloutsPresent(Hooks.hook_index_buffer6_send_)) {
+                CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+                // Delete previously set arguments
+                callout_handle->deleteAllArguments();
+
+                // Pass incoming packet as argument
+                callout_handle->setArgument("response6", rsp);
+
+                // Call callouts
+                HooksManager::callCallouts(Hooks.hook_index_buffer6_send_, *callout_handle);
+
+                // Callouts decided to skip the next processing step. The next
+                // processing step would to parse the packet, so skip at this
+                // stage means drop.
+                if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+                    LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP)
+                        .arg(rsp->getLabel());
+                    return;
+                }
+
+                /// @todo: Add support for DROP status
+
+                callout_handle->getArgument("response6", rsp);
+            }
+
+            LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA,
+                      DHCP6_RESPONSE_DATA)
+                .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
+
+            sendPacket(rsp);
+
+            // Update statistics accordingly for sent packet.
+            processStatsSent(rsp);
+
+        } catch (const std::exception& e) {
+            LOG_ERROR(packet6_logger, DHCP6_PACKET_SEND_FAIL)
+                .arg(e.what());
+        }
+    }
 }
 
 std::string

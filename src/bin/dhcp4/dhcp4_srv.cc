@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -415,373 +415,8 @@ Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
 bool
 Dhcpv4Srv::run() {
     while (!shutdown_) {
-        // client's message and server's response
-        Pkt4Ptr query;
-        Pkt4Ptr rsp;
-
         try {
-
-        try {
-            uint32_t timeout = 1000;
-            LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT).arg(timeout);
-            query = receivePacket(timeout);
-
-            // Log if packet has arrived. We can't log the detailed information
-            // about the DHCP message because it hasn't been unpacked/parsed
-            // yet, and it can't be parsed at this point because hooks will
-            // have to process it first. The only information available at this
-            // point are: the interface, source address and destination addresses
-            // and ports.
-            if (query) {
-                LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_BUFFER_RECEIVED)
-                    .arg(query->getRemoteAddr().toText())
-                    .arg(query->getRemotePort())
-                    .arg(query->getLocalAddr().toText())
-                    .arg(query->getLocalPort())
-                    .arg(query->getIface());
-
-            } else {
-                LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_INTERRUPTED)
-                    .arg(timeout);
-            }
-
-        } catch (const SignalInterruptOnSelect) {
-            // Packet reception interrupted because a signal has been received.
-            // This is not an error because we might have received a SIGTERM,
-            // SIGINT, SIGHUP or SIGCHILD which are handled by the server. For
-            // signals that are not handled by the server we rely on the default
-            // behavior of the system.
-            LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
-                .arg(signal_set_->getNext());
-        } catch (const std::exception& e) {
-            // Log all other errors.
-            LOG_ERROR(packet4_logger, DHCP4_BUFFER_RECEIVE_FAIL).arg(e.what());
-        }
-
-        // Handle next signal received by the process. It must be called after
-        // an attempt to receive a packet to properly handle server shut down.
-        // The SIGTERM or SIGINT will be received prior to, or during execution
-        // of select() (select is invoked by receivePacket()). When that
-        // happens, select will be interrupted. The signal handler will be
-        // invoked immediately after select(). The handler will set the
-        // shutdown flag and cause the process to terminate before the next
-        // select() function is called. If the function was called before
-        // receivePacket the process could wait up to the duration of timeout
-        // of select() to terminate.
-        try {
-            handleSignal();
-        } catch (const std::exception& e) {
-            // Standard exception occurred. Let's be on the safe side to
-            // catch std::exception.
-            LOG_ERROR(dhcp4_logger, DHCP4_HANDLE_SIGNAL_EXCEPTION)
-                .arg(e.what());
-        }
-
-        // Timeout may be reached or signal received, which breaks select()
-        // with no reception occurred. No need to log anything here because
-        // we have logged right after the call to receivePacket().
-        if (!query) {
-            continue;
-        }
-
-        // Log reception of the packet. We need to increase it early, as any
-        // failures in unpacking will cause the packet to be dropped. We
-        // will increase type specific packets further down the road.
-        // See processStatsReceived().
-        isc::stats::StatsMgr::instance().addValue("pkt4-received",
-                                                  static_cast<int64_t>(1));
-
-        // In order to parse the DHCP options, the server needs to use some
-        // configuration information such as: existing option spaces, option
-        // definitions etc. This is the kind of information which is not
-        // available in the libdhcp, so we need to supply our own implementation
-        // of the option parsing function here, which would rely on the
-        // configuration data.
-        query->setCallback(boost::bind(&Dhcpv4Srv::unpackOptions, this,
-                                       _1, _2, _3));
-
-        bool skip_unpack = false;
-
-        // The packet has just been received so contains the uninterpreted wire
-        // data; execute callouts registered for buffer4_receive.
-        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_receive_)) {
-            CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-            // Delete previously set arguments
-            callout_handle->deleteAllArguments();
-
-            // Pass incoming packet as argument
-            callout_handle->setArgument("query4", query);
-
-            // Call callouts
-            HooksManager::callCallouts(Hooks.hook_index_buffer4_receive_,
-                                       *callout_handle);
-
-            // Callouts decided to skip the next processing step. The next
-            // processing step would to parse the packet, so skip at this
-            // stage means that callouts did the parsing already, so server
-            // should skip parsing.
-            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-                LOG_DEBUG(hooks_logger, DBG_DHCP4_DETAIL, DHCP4_HOOK_BUFFER_RCVD_SKIP)
-                    .arg(query->getRemoteAddr().toText())
-                    .arg(query->getLocalAddr().toText())
-                    .arg(query->getIface());
-                skip_unpack = true;
-            }
-
-            callout_handle->getArgument("query4", query);
-
-            /// @todo: add support for DROP status
-        }
-
-        // Unpack the packet information unless the buffer4_receive callouts
-        // indicated they did it
-        if (!skip_unpack) {
-            try {
-                LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_UNPACK)
-                    .arg(query->getRemoteAddr().toText())
-                    .arg(query->getLocalAddr().toText())
-                    .arg(query->getIface());
-                query->unpack();
-            } catch (const std::exception& e) {
-                // Failed to parse the packet.
-                LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
-                          DHCP4_PACKET_DROP_0001)
-                    .arg(query->getRemoteAddr().toText())
-                    .arg(query->getLocalAddr().toText())
-                    .arg(query->getIface())
-                    .arg(e.what());
-
-                // Increase the statistics of parse failues and dropped packets.
-                isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed",
-                                                          static_cast<int64_t>(1));
-                isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                          static_cast<int64_t>(1));
-                continue;
-            }
-        }
-
-        // Update statistics accordingly for received packet.
-        processStatsReceived(query);
-
-        // Assign this packet to one or more classes if needed. We need to do
-        // this before calling accept(), because getSubnet4() may need client
-        // class information.
-        classifyPacket(query);
-
-        // Check whether the message should be further processed or discarded.
-        // There is no need to log anything here. This function logs by itself.
-        if (!accept(query)) {
-            // Increase the statistic of dropped packets.
-            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                      static_cast<int64_t>(1));
-            continue;
-        }
-
-        // We have sanity checked (in accept() that the Message Type option
-        // exists, so we can safely get it here.
-        int type = query->getType();
-        LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_PACKET_RECEIVED)
-            .arg(query->getLabel())
-            .arg(query->getName())
-            .arg(type)
-            .arg(query->getRemoteAddr())
-            .arg(query->getLocalAddr())
-            .arg(query->getIface());
-        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
-            .arg(query->getLabel())
-            .arg(query->toText());
-
-        // Let's execute all callouts registered for pkt4_receive
-        if (HooksManager::calloutsPresent(hook_index_pkt4_receive_)) {
-            CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-            // Delete previously set arguments
-            callout_handle->deleteAllArguments();
-
-            // Pass incoming packet as argument
-            callout_handle->setArgument("query4", query);
-
-            // Call callouts
-            HooksManager::callCallouts(hook_index_pkt4_receive_,
-                                       *callout_handle);
-
-            // Callouts decided to skip the next processing step. The next
-            // processing step would to process the packet, so skip at this
-            // stage means drop.
-            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_RCVD_SKIP)
-                    .arg(query->getLabel());
-                continue;
-            }
-
-            /// @todo: Add support for DROP status
-
-            callout_handle->getArgument("query4", query);
-        }
-
-        try {
-            switch (query->getType()) {
-            case DHCPDISCOVER:
-                rsp = processDiscover(query);
-                break;
-
-            case DHCPREQUEST:
-                // Note that REQUEST is used for many things in DHCPv4: for
-                // requesting new leases, renewing existing ones and even
-                // for rebinding.
-                rsp = processRequest(query);
-                break;
-
-            case DHCPRELEASE:
-                processRelease(query);
-                break;
-
-            case DHCPDECLINE:
-                processDecline(query);
-                break;
-
-            case DHCPINFORM:
-                rsp = processInform(query);
-                break;
-
-            default:
-                // Only action is to output a message if debug is enabled,
-                // and that is covered by the debug statement before the
-                // "switch" statement.
-                ;
-            }
-        } catch (const std::exception& e) {
-
-            // Catch-all exception (we used to call only isc::Exception, but
-            // std::exception could potentially be raised and if we don't catch
-            // it here, it would be caught in main() and the process would
-            // terminate).  Just log the problem and ignore the packet.
-            // (The problem is logged as a debug message because debug is
-            // disabled by default - it prevents a DDOS attack based on the
-            // sending of problem packets.)
-            LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC,
-                      DHCP4_PACKET_DROP_0007)
-                .arg(query->getLabel())
-                .arg(e.what());
-
-            // Increase the statistic of dropped packets.
-            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                      static_cast<int64_t>(1));
-        }
-
-        if (!rsp) {
-            continue;
-        }
-
-
-        // Specifies if server should do the packing
-        bool skip_pack = false;
-
-        // Execute all callouts registered for pkt4_send
-        if (HooksManager::calloutsPresent(hook_index_pkt4_send_)) {
-            CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-            // Delete all previous arguments
-            callout_handle->deleteAllArguments();
-
-            // Clear skip flag if it was set in previous callouts
-            callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
-
-            // Set our response
-            callout_handle->setArgument("response4", rsp);
-
-            // Also pass the corresponding query packet as argument
-            callout_handle->setArgument("query4", query);
-
-            // Call all installed callouts
-            HooksManager::callCallouts(hook_index_pkt4_send_,
-                                       *callout_handle);
-
-            // Callouts decided to skip the next processing step. The next
-            // processing step would to send the packet, so skip at this
-            // stage means "drop response".
-            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_SEND_SKIP)
-                    .arg(query->getLabel());
-                skip_pack = true;
-            }
-
-            /// @todo: Add support for DROP status
-        }
-
-        if (!skip_pack) {
-            try {
-                LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_PACK)
-                    .arg(rsp->getLabel());
-                rsp->pack();
-            } catch (const std::exception& e) {
-                LOG_ERROR(options4_logger, DHCP4_PACKET_PACK_FAIL)
-                    .arg(rsp->getLabel())
-                    .arg(e.what());
-            }
-        }
-
-        try {
-            // Now all fields and options are constructed into output wire buffer.
-            // Option objects modification does not make sense anymore. Hooks
-            // can only manipulate wire buffer at this stage.
-            // Let's execute all callouts registered for buffer4_send
-            if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_send_)) {
-                CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-                // Delete previously set arguments
-                callout_handle->deleteAllArguments();
-
-                // Pass incoming packet as argument
-                callout_handle->setArgument("response4", rsp);
-
-                // Call callouts
-                HooksManager::callCallouts(Hooks.hook_index_buffer4_send_,
-                                           *callout_handle);
-
-                // Callouts decided to skip the next processing step. The next
-                // processing step would to parse the packet, so skip at this
-                // stage means drop.
-                if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-                    LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
-                              DHCP4_HOOK_BUFFER_SEND_SKIP)
-                        .arg(rsp->getLabel());
-                    continue;
-                }
-
-                /// @todo: Add support for DROP status.
-
-                callout_handle->getArgument("response4", rsp);
-            }
-
-            LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_SEND)
-                .arg(rsp->getLabel())
-                .arg(rsp->getName())
-                .arg(static_cast<int>(rsp->getType()))
-                .arg(rsp->getLocalAddr())
-                .arg(rsp->getLocalPort())
-                .arg(rsp->getRemoteAddr())
-                .arg(rsp->getRemotePort())
-                .arg(rsp->getIface());
-
-            LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA,
-                      DHCP4_RESPONSE_DATA)
-                .arg(rsp->getLabel())
-                .arg(rsp->getName())
-                .arg(static_cast<int>(rsp->getType()))
-                .arg(rsp->toText());
-            sendPacket(rsp);
-
-            // Update statistics accordingly for sent packet.
-            processStatsSent(rsp);
-
-        } catch (const std::exception& e) {
-            LOG_ERROR(packet4_logger, DHCP4_PACKET_SEND_FAIL)
-                .arg(rsp->getLabel())
-                .arg(e.what());
-        }
-
+            run_one();
         } catch (const std::exception& e) {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for exceptions derived from std::exception.
@@ -797,6 +432,374 @@ Dhcpv4Srv::run() {
     }
 
     return (true);
+}
+
+void
+Dhcpv4Srv::run_one() {
+    // client's message and server's response
+    Pkt4Ptr query;
+    Pkt4Ptr rsp;
+
+    try {
+        uint32_t timeout = 1000;
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT).arg(timeout);
+        query = receivePacket(timeout);
+
+        // Log if packet has arrived. We can't log the detailed information
+        // about the DHCP message because it hasn't been unpacked/parsed
+        // yet, and it can't be parsed at this point because hooks will
+        // have to process it first. The only information available at this
+        // point are: the interface, source address and destination addresses
+        // and ports.
+        if (query) {
+            LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_BUFFER_RECEIVED)
+                .arg(query->getRemoteAddr().toText())
+                .arg(query->getRemotePort())
+                .arg(query->getLocalAddr().toText())
+                .arg(query->getLocalPort())
+                .arg(query->getIface());
+
+        } else {
+            LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_INTERRUPTED)
+                .arg(timeout);
+        }
+
+    } catch (const SignalInterruptOnSelect) {
+        // Packet reception interrupted because a signal has been received.
+        // This is not an error because we might have received a SIGTERM,
+        // SIGINT, SIGHUP or SIGCHILD which are handled by the server. For
+        // signals that are not handled by the server we rely on the default
+        // behavior of the system.
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
+            .arg(signal_set_->getNext());
+    } catch (const std::exception& e) {
+        // Log all other errors.
+        LOG_ERROR(packet4_logger, DHCP4_BUFFER_RECEIVE_FAIL).arg(e.what());
+    }
+
+    // Handle next signal received by the process. It must be called after
+    // an attempt to receive a packet to properly handle server shut down.
+    // The SIGTERM or SIGINT will be received prior to, or during execution
+    // of select() (select is invoked by receivePacket()). When that
+    // happens, select will be interrupted. The signal handler will be
+    // invoked immediately after select(). The handler will set the
+    // shutdown flag and cause the process to terminate before the next
+    // select() function is called. If the function was called before
+    // receivePacket the process could wait up to the duration of timeout
+    // of select() to terminate.
+    try {
+        handleSignal();
+    } catch (const std::exception& e) {
+        // Standard exception occurred. Let's be on the safe side to
+        // catch std::exception.
+        LOG_ERROR(dhcp4_logger, DHCP4_HANDLE_SIGNAL_EXCEPTION)
+            .arg(e.what());
+    }
+
+    // Timeout may be reached or signal received, which breaks select()
+    // with no reception occurred. No need to log anything here because
+    // we have logged right after the call to receivePacket().
+    if (!query) {
+        return;
+    }
+
+    // Log reception of the packet. We need to increase it early, as any
+    // failures in unpacking will cause the packet to be dropped. We
+    // will increase type specific packets further down the road.
+    // See processStatsReceived().
+    isc::stats::StatsMgr::instance().addValue("pkt4-received",
+                                              static_cast<int64_t>(1));
+
+    // In order to parse the DHCP options, the server needs to use some
+    // configuration information such as: existing option spaces, option
+    // definitions etc. This is the kind of information which is not
+    // available in the libdhcp, so we need to supply our own implementation
+    // of the option parsing function here, which would rely on the
+    // configuration data.
+    query->setCallback(boost::bind(&Dhcpv4Srv::unpackOptions, this,
+                                   _1, _2, _3));
+
+    bool skip_unpack = false;
+
+    // The packet has just been received so contains the uninterpreted wire
+    // data; execute callouts registered for buffer4_receive.
+    if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_receive_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete previously set arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass incoming packet as argument
+        callout_handle->setArgument("query4", query);
+
+        // Call callouts
+        HooksManager::callCallouts(Hooks.hook_index_buffer4_receive_,
+                                   *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to parse the packet, so skip at this
+        // stage means that callouts did the parsing already, so server
+        // should skip parsing.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_DETAIL, DHCP4_HOOK_BUFFER_RCVD_SKIP)
+                .arg(query->getRemoteAddr().toText())
+                .arg(query->getLocalAddr().toText())
+                .arg(query->getIface());
+            skip_unpack = true;
+        }
+
+        callout_handle->getArgument("query4", query);
+
+        /// @todo: add support for DROP status
+    }
+
+    // Unpack the packet information unless the buffer4_receive callouts
+    // indicated they did it
+    if (!skip_unpack) {
+        try {
+            LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_UNPACK)
+                .arg(query->getRemoteAddr().toText())
+                .arg(query->getLocalAddr().toText())
+                .arg(query->getIface());
+            query->unpack();
+        } catch (const std::exception& e) {
+            // Failed to parse the packet.
+            LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_PACKET_DROP_0001)
+                .arg(query->getRemoteAddr().toText())
+                .arg(query->getLocalAddr().toText())
+                .arg(query->getIface())
+                .arg(e.what());
+
+            // Increase the statistics of parse failues and dropped packets.
+            isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed",
+                                                      static_cast<int64_t>(1));
+            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                      static_cast<int64_t>(1));
+            return;
+        }
+    }
+
+    // Update statistics accordingly for received packet.
+    processStatsReceived(query);
+
+    // Assign this packet to one or more classes if needed. We need to do
+    // this before calling accept(), because getSubnet4() may need client
+    // class information.
+    classifyPacket(query);
+
+    // Check whether the message should be further processed or discarded.
+    // There is no need to log anything here. This function logs by itself.
+    if (!accept(query)) {
+        // Increase the statistic of dropped packets.
+        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                  static_cast<int64_t>(1));
+        return;
+    }
+
+    // We have sanity checked (in accept() that the Message Type option
+    // exists, so we can safely get it here.
+    int type = query->getType();
+    LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_PACKET_RECEIVED)
+        .arg(query->getLabel())
+        .arg(query->getName())
+        .arg(type)
+        .arg(query->getRemoteAddr())
+        .arg(query->getLocalAddr())
+        .arg(query->getIface());
+    LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
+        .arg(query->getLabel())
+        .arg(query->toText());
+
+    // Let's execute all callouts registered for pkt4_receive
+    if (HooksManager::calloutsPresent(hook_index_pkt4_receive_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete previously set arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass incoming packet as argument
+        callout_handle->setArgument("query4", query);
+
+        // Call callouts
+        HooksManager::callCallouts(hook_index_pkt4_receive_,
+                                   *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to process the packet, so skip at this
+        // stage means drop.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_RCVD_SKIP)
+                .arg(query->getLabel());
+            return;
+        }
+
+        /// @todo: Add support for DROP status
+
+        callout_handle->getArgument("query4", query);
+    }
+
+    try {
+        switch (query->getType()) {
+        case DHCPDISCOVER:
+            rsp = processDiscover(query);
+            break;
+
+        case DHCPREQUEST:
+            // Note that REQUEST is used for many things in DHCPv4: for
+            // requesting new leases, renewing existing ones and even
+            // for rebinding.
+            rsp = processRequest(query);
+            break;
+
+        case DHCPRELEASE:
+            processRelease(query);
+            break;
+
+        case DHCPDECLINE:
+            processDecline(query);
+            break;
+
+        case DHCPINFORM:
+            rsp = processInform(query);
+            break;
+
+        default:
+            // Only action is to output a message if debug is enabled,
+            // and that is covered by the debug statement before the
+            // "switch" statement.
+            ;
+        }
+    } catch (const std::exception& e) {
+
+        // Catch-all exception (we used to call only isc::Exception, but
+        // std::exception could potentially be raised and if we don't catch
+        // it here, it would be caught in main() and the process would
+        // terminate).  Just log the problem and ignore the packet.
+        // (The problem is logged as a debug message because debug is
+        // disabled by default - it prevents a DDOS attack based on the
+        // sending of problem packets.)
+        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC,
+                  DHCP4_PACKET_DROP_0007)
+            .arg(query->getLabel())
+            .arg(e.what());
+
+        // Increase the statistic of dropped packets.
+        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                  static_cast<int64_t>(1));
+    }
+
+    if (!rsp) {
+        return;
+    }
+
+
+    // Specifies if server should do the packing
+    bool skip_pack = false;
+
+    // Execute all callouts registered for pkt4_send
+    if (HooksManager::calloutsPresent(hook_index_pkt4_send_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Clear skip flag if it was set in previous callouts
+        callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+
+        // Set our response
+        callout_handle->setArgument("response4", rsp);
+
+        // Also pass the corresponding query packet as argument
+        callout_handle->setArgument("query4", query);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(hook_index_pkt4_send_,
+                                   *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to send the packet, so skip at this
+        // stage means "drop response".
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_SEND_SKIP)
+                .arg(query->getLabel());
+            skip_pack = true;
+        }
+
+        /// @todo: Add support for DROP status
+    }
+
+    if (!skip_pack) {
+        try {
+            LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_PACK)
+                .arg(rsp->getLabel());
+            rsp->pack();
+        } catch (const std::exception& e) {
+            LOG_ERROR(options4_logger, DHCP4_PACKET_PACK_FAIL)
+                .arg(rsp->getLabel())
+                .arg(e.what());
+        }
+    }
+
+    try {
+        // Now all fields and options are constructed into output wire buffer.
+        // Option objects modification does not make sense anymore. Hooks
+        // can only manipulate wire buffer at this stage.
+        // Let's execute all callouts registered for buffer4_send
+        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_send_)) {
+            CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+            // Delete previously set arguments
+            callout_handle->deleteAllArguments();
+
+            // Pass incoming packet as argument
+            callout_handle->setArgument("response4", rsp);
+
+            // Call callouts
+            HooksManager::callCallouts(Hooks.hook_index_buffer4_send_,
+                                       *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to parse the packet, so skip at this
+            // stage means drop.
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                          DHCP4_HOOK_BUFFER_SEND_SKIP)
+                    .arg(rsp->getLabel());
+                return;
+            }
+
+            /// @todo: Add support for DROP status.
+
+            callout_handle->getArgument("response4", rsp);
+        }
+
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_SEND)
+            .arg(rsp->getLabel())
+            .arg(rsp->getName())
+            .arg(static_cast<int>(rsp->getType()))
+            .arg(rsp->getLocalAddr())
+            .arg(rsp->getLocalPort())
+            .arg(rsp->getRemoteAddr())
+            .arg(rsp->getRemotePort())
+            .arg(rsp->getIface());
+
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA,
+                  DHCP4_RESPONSE_DATA)
+            .arg(rsp->getLabel())
+            .arg(rsp->getName())
+            .arg(static_cast<int>(rsp->getType()))
+            .arg(rsp->toText());
+        sendPacket(rsp);
+
+        // Update statistics accordingly for sent packet.
+        processStatsSent(rsp);
+
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_SEND_FAIL)
+            .arg(rsp->getLabel())
+            .arg(e.what());
+    }
 }
 
 string
