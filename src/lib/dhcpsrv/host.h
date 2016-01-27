@@ -46,8 +46,10 @@ public:
     /// @brief Type of the reservation.
     ///
     /// Currently supported types are NA and PD.
+    /// Added TA type for IPv6 Reservation implementation.
     enum Type {
         TYPE_NA,
+        TYPE_TA,
         TYPE_PD
     };
 
