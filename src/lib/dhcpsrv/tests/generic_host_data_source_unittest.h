@@ -206,6 +206,15 @@ public:
     /// Uses gtest macros to report failures.
     void testGet6ByClientId();
 
+    /// @brief Test verifies if a host reservation can be stored with both
+    ///         IPv6 address and prefix.
+    /// Uses gtest macros to report failures.
+    void testAddr6AndPrefix();
+
+    /// @brief Tests if host with multiple IPv6 reservations can be added and then
+    ///         retrieved correctly.
+    void testMultipletReservations();
+
     /// @brief Test if host reservations made for different IPv6 subnets
     ///        are handled correctly.
     ///
