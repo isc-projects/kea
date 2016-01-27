@@ -280,53 +280,49 @@ TEST_F(MySqlHostDataSourceTest, DISABLED_hwaddrOrClientId2) {
 // Test verifies that host with IPv6 address and DUID can be added and
 // later retrieved by IPv6 address.
 TEST_F(MySqlHostDataSourceTest, get6AddrWithDuid) {
-    /// @todo: Uncomment when IPv6 support (4212) is implemented.
     testGetByIPv6(BaseHostDataSource::ID_DUID, false);
 }
 
 // Test verifies that host with IPv6 address and HWAddr can be added and
 // later retrieved by IPv6 address.
 TEST_F(MySqlHostDataSourceTest, get6AddrWithHWAddr) {
-    /// @todo: Uncomment when IPv6 support (4212) is implemented.
     testGetByIPv6(BaseHostDataSource::ID_HWADDR, false);
 }
 
 // Test verifies that host with IPv6 prefix and DUID can be added and
 // later retrieved by IPv6 prefix.
 TEST_F(MySqlHostDataSourceTest, get6PrefixWithDuid) {
-    /// @todo: Uncomment when IPv6 support (4212) is implemented.
     testGetByIPv6(BaseHostDataSource::ID_DUID, true);
 }
 
 // Test verifies that host with IPv6 prefix and HWAddr can be added and
 // later retrieved by IPv6 prefix.
 TEST_F(MySqlHostDataSourceTest, get6PrefixWithHWaddr) {
-    /// @todo: Uncomment when IPv6 support (4212) is implemented.
     testGetByIPv6(BaseHostDataSource::ID_HWADDR, true);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by
 // hardware address.
 TEST_F(MySqlHostDataSourceTest, get6ByHWaddr) {
-    /// @todo: Uncomment when IPv6 support (4212) is implemented.
     testGet6ByHWAddr();
 }
 
 // Test verifies if a host reservation can be added and later retrieved by
 // client identifier.
 TEST_F(MySqlHostDataSourceTest, get6ByClientId) {
-    /// @todo: Uncomment when IPv6 support (4212) is implemented.
     testGet6ByClientId();
 }
 
 // Test verifies if a host reservation can be stored with both IPv6 address and
 // prefix.
 TEST_F(MySqlHostDataSourceTest, addr6AndPrefix) {
-    /// @todo: Implement this test as part of #4212.
+    testAddr6AndPrefix();
+}
 
-    /// @todo: Add host reservation with an IPv6 address and IPv6 prefix,
-    /// retrieve it and verify that both v6 address and prefix are retrieved
-    /// correctly.
+// Tests if host with multiple IPv6 reservations can be added and then
+// retrieved correctly. Test checks reservations comparing.
+TEST_F(MySqlHostDataSourceTest, multipleReservations){
+    testMultipletReservations();
 }
 
 // Test verifies if multiple client classes for IPv4 can be stored.

@@ -165,6 +165,21 @@ public:
     virtual ConstHostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
 
+    /// @brief Returns all IPv6 reservations assigned to single host
+    ///
+    /// @param host_id ID of a host owning IPv6 reservations
+    ///
+    /// @return Collection of IPv6 reservations
+    virtual IPv6ResrvCollection
+    getAllReservations(HostID host_id) const;
+
+    /// @brief Retrieves all IPv6 reservations for a single host and then
+    ///         adds them to that host.
+    ///
+    /// @param host Pointer to a host to be populated with IPv6 reservations.
+    void
+    assignReservations(HostPtr& host) const;
+
     /// @brief Adds a new host to the collection.
     ///
     /// The implementations of this method should guard against duplicate
@@ -279,6 +294,25 @@ private:
             boost::shared_ptr<MySqlHostReservationExchange> exchange,
             ConstHostCollection& result, bool single = false) const;
 
+    /// @brief Get IPv6 Reservation Collection
+    ///
+    /// This method obtains multiple IPv6 reservations from the database.
+    ///
+    /// @param stindex Index of statement being executed
+    /// @param bind MYSQL_BIND array for input parameters
+    /// @param exchange Exchange object to use
+    /// @param result IPv6ResrvCollection object returned.  Note that any
+    ///        reservations in the collection when this method is called
+    ///        are not erased: the new data is appended to the end.
+    ///
+    /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    void getIPv6ReservationCollection(StatementIndex stindex, MYSQL_BIND* bind,
+            boost::shared_ptr<MySqlIPv6ReservationExchange> exchange,
+            IPv6ResrvCollection& result) const;
+
+
     /// @brief Check Error and Throw Exception
     ///
     /// Virtually all MySQL functions return a status which, if non-zero,
@@ -308,7 +342,8 @@ private:
 
     /// @brief Adds IPv6 Reservation
     ///
-    /// @todo: describe parameters here
+    /// @param resv IPv6 Reservation to be added
+    /// @param id ID of a host owning this reservation
     void addResv(const IPv6Resrv& resv, HostID id);
     
     // Members
