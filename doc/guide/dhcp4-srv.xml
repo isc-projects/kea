@@ -1136,8 +1136,19 @@ This rather belong to the DDNS configuration
 -->
 <row><entry>nwip-domain-name</entry><entry>62</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>nwip-suboptions</entry><entry>63</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>nisplus-domain-name</entry><entry>64</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>nisplus-servers</entry><entry>65</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>tftp-server-name</entry><entry>66</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>boot-file-name</entry><entry>67</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>mobile-ip-home-agent</entry><entry>68</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>smtp-server</entry><entry>69</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>pop-server</entry><entry>70</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>nntp-server</entry><entry>71</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>www-server</entry><entry>72</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>finger-server</entry><entry>73</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>irc-server</entry><entry>74</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>streettalk-server</entry><entry>75</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>streettalk-directory-assistance-server</entry><entry>76</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>user-class</entry><entry>77</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <!-- The Client FQDN option value is not explicitly configured.
 It is a part of the DDNS/D2 configuration
