@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2015 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -128,19 +128,19 @@ enum DHCPOptionType {
     DHO_DHCP_CLIENT_IDENTIFIER       = 61,
     DHO_NWIP_DOMAIN_NAME             = 62,
     DHO_NWIP_SUBOPTIONS              = 63,
-//  DHO_NIS_DOMAIN_NAME              = 64,
-//  DHO_NIS_SERVER_ADDR              = 65,
+    DHO_NIS_DOMAIN_NAME              = 64,
+    DHO_NIS_SERVER_ADDR              = 65,
     DHO_TFTP_SERVER_NAME             = 66,
     DHO_BOOT_FILE_NAME               = 67,
-//  DHO_HOME_AGENT_ADDRS             = 68,
-//  DHO_SMTP_SERVER                  = 69,
-//  DHO_POP3_SERVER                  = 70,
-//  DHO_NNTP_SERVER                  = 71,
-//  DHO_WWW_SERVER                   = 72,
-//  DHO_FINGER_SERVER                = 73,
-//  DHO_IRC_SERVER                   = 74,
-//  DHO_STREETTALK_SERVER            = 75,
-//  DHO_STDASERVER                   = 76,
+    DHO_HOME_AGENT_ADDRS             = 68,
+    DHO_SMTP_SERVER                  = 69,
+    DHO_POP3_SERVER                  = 70,
+    DHO_NNTP_SERVER                  = 71,
+    DHO_WWW_SERVER                   = 72,
+    DHO_FINGER_SERVER                = 73,
+    DHO_IRC_SERVER                   = 74,
+    DHO_STREETTALK_SERVER            = 75,
+    DHO_STDASERVER                   = 76,
     DHO_USER_CLASS                   = 77,
 //  DHO_DIRECTORY_AGENT              = 78,
 //  DHO_SERVICE_SCOPE                = 79,
