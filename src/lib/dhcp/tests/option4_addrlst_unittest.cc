@@ -196,6 +196,16 @@ TEST_F(Option4AddrLstTest, assembly4) {
     );
 }
 
+TEST_F(Option4AddrLstTest, empty) {
+
+    scoped_ptr<Option4AddrLst> opt;
+    // the mobile-ip-home-agent option can be empty
+    EXPECT_NO_THROW(opt.reset(new Option4AddrLst(DHO_HOME_AGENT_ADDRS)));
+    Option4AddrLst::AddressContainer addrs = opt->getAddresses();
+    ASSERT_EQ(0, addrs.size());
+    EXPECT_NO_THROW(opt.reset());
+}
+
 TEST_F(Option4AddrLstTest, setAddress) {
 
     scoped_ptr<Option4AddrLst> opt;
