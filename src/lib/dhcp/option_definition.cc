@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -228,9 +228,12 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
     OptionBuffer buf;
     if (!array_type_ && type_ != OPT_RECORD_TYPE) {
         if (values.empty()) {
-            isc_throw(InvalidOptionValue, "no option value specified");
+            if (type_ != OPT_EMPTY_TYPE) {
+                isc_throw(InvalidOptionValue, "no option value specified");
+            }
+        } else {
+            writeToBuffer(util::str::trim(values[0]), type_, buf);
         }
-        writeToBuffer(util::str::trim(values[0]), type_, buf);
     } else if (array_type_ && type_ != OPT_RECORD_TYPE) {
         for (size_t i = 0; i < values.size(); ++i) {
             writeToBuffer(util::str::trim(values[i]), type_, buf);
