@@ -941,6 +941,9 @@ TEST_F(ParseConfigTest, optionDataNoSubOpion) {
         " } ]"
         "}";
 
+    // The default universe is V6. We need to change it to use dhcp4 option
+    // space.
+    parser_context_->universe_ = Option::V4;
     int rcode = 0;
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     EXPECT_EQ(0, rcode);
