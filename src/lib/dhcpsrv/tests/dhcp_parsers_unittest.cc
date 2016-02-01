@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -930,6 +930,23 @@ TEST_F(ParseConfigTest, emptyOptionData) {
         Option6AddrLst>(getOptionPtr("dhcp6", D6O_DHCPV4_O_DHCPV6_SERVER));
     ASSERT_TRUE(opt);
     ASSERT_EQ(0, opt->getAddresses().size());
+}
+
+// This test verifies an option data without suboptions is supported
+TEST_F(ParseConfigTest, optionDataNoSubOpion) {
+    // Configuration string.
+    const std::string config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"vendor-encapsulated-options\""
+        " } ]"
+        "}";
+
+    int rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    EXPECT_EQ(0, rcode);
+    const OptionPtr opt = getOptionPtr("dhcp4", DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(0, opt->getOptions().size());
 }
 
 /// The next set of tests check basic operation of the HooksLibrariesParser.
