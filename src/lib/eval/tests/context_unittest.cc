@@ -89,6 +89,18 @@ public:
         EXPECT_TRUE(sub);
     }
 
+    /// @brief check if the given token is relay4 with the expected code
+    void checkTokenRelay4(const TokenPtr& token, uint16_t code) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenRelay4Option> relay4 =
+            boost::dynamic_pointer_cast<TokenRelay4Option>(token);
+        EXPECT_TRUE(relay4);
+
+        if (relay4) {
+            EXPECT_EQ(code, relay4->getCode());
+        }
+    }
+
     /// @brief checks if the given expression raises the expected message
     /// when it is parsed.
     void checkError(const string& expr, const string& msg) {
@@ -272,6 +284,33 @@ TEST_F(EvalContextTest, substring) {
     checkTokenString(tmp2, "2");
     checkTokenString(tmp3, "all");
     checkTokenSubstring(tmp4);
+}
+
+// This test checks that the relay[code].hex can be used in expressions.
+TEST_F(EvalContextTest, relay4Option) {
+
+    EvalContext eval(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+                    eval.parseString("relay[13].hex == 'thirteen'"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+
+    checkTokenRelay4(tmp1, 13);
+    checkTokenString(tmp2, "thirteen");
+    checkTokenEq(tmp3);
+}
+
+// Verify that relay[13] is not usable in v6
+// There will be a separate relay accessor for v6.
+TEST_F(EvalContextTest, relay4Error) {
+    universe_ = Option::V6;
+
+    checkError("relay[13].hex == 'thirteen'",
+               "<string>:1.1-5: relay support for v6 is not implemented");
 }
 
 // Test some scanner error cases

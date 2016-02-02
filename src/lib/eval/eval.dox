@@ -139,6 +139,8 @@ instantiated with the appropriate value and put onto the expression vector.
                     option[123].text;
  - isc::dhcp::TokenEqual - represents equal (==) operator;
  - isc::dhcp::TokenSubstring - represents substring(text, start, length) operator;
+ - isc::dhcp::TokenRelay4Option - represents a sub-option inserted by the
+                    DHCPv4 relay, e.g. relay[123].text or relay[123].bin
 
 More operators are expected to be implemented in upcoming releases.
 
