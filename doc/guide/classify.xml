@@ -164,6 +164,10 @@
 <row><entry>Option Text</entry><entry>option[code].text</entry><entry>The value of the option with code "code" from the packet as text</entry></row>
 -->
 <row><entry>Option Hex</entry><entry>option[code].hex</entry><entry>The value of the option with code "code" from the packet as hex</entry></row>
+<row><entry>DHCPv4 Relay Agent
+sub-option</entry><entry>relay[code].hex</entry><entry>The value of
+sub-option with code "code" from the Relay Agent Information option
+(option 82)</entry></row>
           </tbody>
           </tgroup>
         </table>
@@ -182,6 +186,16 @@
       from the incoming packet. If the packet doesn't contain the option, it
       returns the empty string. The string is presented as a byte string of
       the option payload without the type code or length fields.
+      </para>
+
+      <para>
+        "relay[code].hex" attempts to extract value of the sub-option
+        "code" from the option inserted by the Relay Agent Information
+        (82) option. If the packet doesn't contain RAI option, or RAI
+        doesn't contain searched sub-option, the expression returns
+        empty string. The string is presented as a byte string of the
+        option payload without the type code or length fields. This
+        expression is allowed in DHCPv4 only.
       </para>
 
       <para>

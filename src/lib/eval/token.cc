@@ -54,9 +54,14 @@ TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     values.push(value_);
 }
 
+OptionPtr
+TokenOption::getOption(const Pkt& pkt) {
+    return (pkt.getOption(option_code_));
+}
+
 void
 TokenOption::evaluate(const Pkt& pkt, ValueStack& values) {
-    OptionPtr opt = pkt.getOption(option_code_);
+    OptionPtr opt = getOption(pkt);
     std::string opt_str;
     if (opt) {
         if (representation_type_ == TEXTUAL) {
@@ -167,4 +172,21 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 
     // and finally get the substring
     values.push(string_str.substr(start_pos, length));
+}
+
+TokenRelay4Option::TokenRelay4Option(const uint16_t option_code,
+                                     const RepresentationType& rep_type)
+    :TokenOption(option_code, rep_type) {
+}
+
+OptionPtr TokenRelay4Option::getOption(const Pkt& pkt) {
+
+    // Check if there is Relay Agent Option.
+    OptionPtr rai = pkt.getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (!rai) {
+        return (OptionPtr());
+    }
+
+    // If there is, try to return its suboption
+    return (rai->getOption(option_code_));
 }

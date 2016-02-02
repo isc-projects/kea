@@ -44,6 +44,24 @@ public:
         pkt6_->addOption(option_str6_);
     }
 
+    /// @brief Inserts RAI option with several suboptions
+    ///
+    /// The structure inserted is:
+    ///  - RAI (option 82)
+    ///      - option 1 (containing string "one")
+    ///      - option 13 (containing string "thirteen")
+    void insertRelay4Option() {
+
+        // RAI (Relay Agent Information) option
+        OptionPtr rai(new Option(Option::V4, DHO_DHCP_AGENT_OPTIONS));
+        OptionPtr sub1(new OptionString(Option::V4, 1, "one"));
+        OptionPtr sub13(new OptionString(Option::V4, 13, "thirteen"));
+
+        rai->addOption(sub1);
+        rai->addOption(sub13);
+        pkt4_->addOption(rai);
+    }
+
     TokenPtr t_; ///< Just a convenience pointer
 
     ValueStack values_; ///< evaluated values will be stored here
@@ -573,4 +591,65 @@ TEST_F(TokenTest, substringEquals) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("false", values_.top());
 
+}
+
+// This test checks that the existing relay option can be found.
+TEST_F(TokenTest, relayOption) {
+
+    // Insert relay option with sub-options 1 and 13
+    insertRelay4Option();
+
+    // Creating the token should be safe.
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
+
+    // We should be able to evaluate it.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have one value on the stack
+    ASSERT_EQ(1, values_.size());
+
+    // The option should be found and relay[13] should evaluate to the
+    // content of that sub-option, i.e. "thirteen"
+    EXPECT_EQ("thirteen", values_.top());
+}
+
+// This test checks that the code properly handles cases when
+// there is RAI option, but there's no requested sub-option.
+TEST_F(TokenTest, relayOptionNoSuboption) {
+
+    // Insert relay option with sub-options 1 and 13
+    insertRelay4Option();
+
+    // Creating the token should be safe.
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(15, TokenOption::TEXTUAL)));
+
+    // We should be able to evaluate it.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have one value on the stack
+    ASSERT_EQ(1, values_.size());
+
+    // The option should NOT be found (there is no sub-option 15),
+    // so the expression should evaluate to ""
+    EXPECT_EQ("", values_.top());
+}
+
+// This test checks that the code properly handles cases when
+// there's no RAI option at all.
+TEST_F(TokenTest, relayOptionNoRai) {
+
+    // We didn't call insertRelay4Option(), so there's no RAI option.
+
+    // Creating the token should be safe.
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
+
+    // We should be able to evaluate it.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have one value on the stack
+    ASSERT_EQ(1, values_.size());
+
+    // The option should NOT be found (there is no sub-option 13),
+    // so the expression should evaluate to ""
+    EXPECT_EQ("", values_.top());
 }

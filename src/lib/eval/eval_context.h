@@ -101,6 +101,13 @@ public:
     uint16_t convertOptionName(const std::string& option_name,
                                const isc::eval::location& loc);
 
+    /// @brief Returns the universe (v4 or v6)
+    ///
+    /// @return universe
+    Option::Universe getUniverse() {
+        return (option_universe_);
+    }
+
  private:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;

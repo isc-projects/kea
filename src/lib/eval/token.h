@@ -183,7 +183,18 @@ public:
         return (option_code_);
     }
 
-private:
+protected:
+    /// @brief Attempts to retrieve an option
+    ///
+    /// For this class it simply attempts to retrieve the option from the packet,
+    /// but there may be derived classes that would attempt to extract it from
+    /// other places (e.g. relay option, or as a suboption of other specific option).
+    ///
+    ///
+    /// @param pkt the option will be retrieved from here
+    /// @return option instance (or NULL if not found)
+    virtual OptionPtr getOption(const Pkt& pkt);
+
     uint16_t option_code_; ///< Code of the option to be extracted
     RepresentationType representation_type_; ///< Representation type.
 };
@@ -268,6 +279,35 @@ public:
     ///        will be pushed)
     void evaluate(const Pkt& pkt, ValueStack& values);
 };
+
+/// @brief Represents a sub-option inserted by the DHCPv4 relay.
+///
+/// DHCPv4 relays insert sub-options in option 82. This token attempts to extract
+/// such sub-options. Note it is radically different than in DHCPv6 (possible
+/// many encapsulation levels), thus separate classes for v4 and v6.
+///
+/// This token can represent the following expressions:
+/// relay[13].text - Textual representation of sub-option 13 in RAI (option 82)
+/// relay[13].hex  - Binary representation of sub-option 13 in RAI (option 82)
+/// relay[vendor-class].text - Text representation of sub-option X in RAI (option 82)
+/// relay[vendor-class].hex - Binary representation of sub-option X in RAI (option 82)
+class TokenRelay4Option : public TokenOption {
+public:
+
+    /// @brief Construtor for extracting sub-option from RAI (option 82)
+    ///
+    /// @param option_code code of the searched sub-option
+    /// @param rep_type code representation (currently .hex and .text are supported)
+    TokenRelay4Option(const uint16_t option_code,
+                      const RepresentationType& rep_type);
+
+protected:
+    /// @brief Attempts to obtain specified sub-option of option 82 from the packet
+    /// @param pkt DHCPv4 packet (that hopefully contains option 82)
+    /// @return found sub-option from option 82
+    virtual OptionPtr getOption(const Pkt& pkt);
+};
+
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

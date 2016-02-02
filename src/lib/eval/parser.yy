@@ -40,6 +40,7 @@ using namespace isc::eval;
   OPTION "option"
   SUBSTRING "substring"
   TEXT "text"
+  RELAY "relay"
   HEX "hex"
   ALL "all"
   DOT "."
@@ -92,6 +93,19 @@ string_expr : STRING
                   {
                       TokenPtr opt(new TokenOption($3, $6));
                       ctx.expression.push_back(opt);
+                  }
+            | RELAY "[" option_code "]" "." option_repr_type
+                  {
+                     switch (ctx.getUniverse()) {
+                     case Option::V4:
+                     {
+                         TokenPtr opt(new TokenRelay4Option($3, $6));
+                         ctx.expression.push_back(opt);
+                         break;
+                     }
+                     case Option::V6:
+                         error(@1, "relay support for v6 is not implemented");
+                     }
                   }
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
                   {
