@@ -1,9 +1,8 @@
-// Generated 20151216
-// A Bison parser, made by GNU Bison 3.0.4.
+// A Bison parser, made by GNU Bison 3.0.2.
 
 // Positions for Bison parsers in C++
 
-// Copyright (C) 2002-2015 Free Software Foundation, Inc.
+// Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -51,9 +50,9 @@
 #  endif
 # endif
 
-#line 13 "parser.yy" // location.cc:337
+#line 13 "parser.yy" // location.cc:291
 namespace isc { namespace eval {
-#line 56 "position.hh" // location.cc:337
+#line 56 "position.hh" // location.cc:291
   /// Abstract a position.
   class position
   {
@@ -115,7 +114,7 @@ namespace isc { namespace eval {
     }
   };
 
-  /// Add \a width columns, in place.
+  /// Add and assign a position.
   inline position&
   operator+= (position& res, int width)
   {
@@ -123,21 +122,21 @@ namespace isc { namespace eval {
     return res;
   }
 
-  /// Add \a width columns.
+  /// Add two position objects.
   inline position
   operator+ (position res, int width)
   {
     return res += width;
   }
 
-  /// Subtract \a width columns, in place.
+  /// Add and assign a position.
   inline position&
   operator-= (position& res, int width)
   {
     return res += -width;
   }
 
-  /// Subtract \a width columns.
+  /// Add two position objects.
   inline position
   operator- (position res, int width)
   {
@@ -175,7 +174,7 @@ namespace isc { namespace eval {
     return ostr << pos.line << '.' << pos.column;
   }
 
-#line 13 "parser.yy" // location.cc:337
+#line 13 "parser.yy" // location.cc:291
 } } // isc::eval
-#line 180 "position.hh" // location.cc:337
+#line 180 "position.hh" // location.cc:291
 #endif // !YY_YY_POSITION_HH_INCLUDED
