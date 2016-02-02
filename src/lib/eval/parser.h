@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.0.4.
+// A Bison parser, made by GNU Bison 3.0.2.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
-// Copyright (C) 2002-2015 Free Software Foundation, Inc.
+// Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
 #ifndef YY_YY_PARSER_H_INCLUDED
 # define YY_YY_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 16 "parser.yy" // lalr1.cc:392
+#line 16 "parser.yy" // lalr1.cc:372
 
 #include <string>
 #include <eval/token.h>
@@ -51,14 +51,13 @@
 using namespace isc::dhcp;
 using namespace isc::eval;
 
-#line 55 "parser.h" // lalr1.cc:392
+#line 55 "parser.h" // lalr1.cc:372
 
 # include <cassert>
-# include <cstdlib> // std::abort
+# include <vector>
 # include <iostream>
 # include <stdexcept>
 # include <string>
-# include <vector>
 # include "stack.hh"
 # include "location.hh"
 #include <typeinfo>
@@ -126,9 +125,9 @@ using namespace isc::eval;
 # define YYDEBUG 1
 #endif
 
-#line 13 "parser.yy" // lalr1.cc:392
+#line 13 "parser.yy" // lalr1.cc:372
 namespace isc { namespace eval {
-#line 132 "parser.h" // lalr1.cc:392
+#line 131 "parser.h" // lalr1.cc:372
 
 
 
@@ -145,13 +144,13 @@ namespace isc { namespace eval {
 
     /// Empty construction.
     variant ()
-      : yytypeid_ (YY_NULLPTR)
+      : yytname_ (YY_NULLPTR)
     {}
 
     /// Construct and fill.
     template <typename T>
     variant (const T& t)
-      : yytypeid_ (&typeid (T))
+      : yytname_ (typeid (T).name ())
     {
       YYASSERT (sizeof (T) <= S);
       new (yyas_<T> ()) T (t);
@@ -160,7 +159,7 @@ namespace isc { namespace eval {
     /// Destruction, allowed only if empty.
     ~variant ()
     {
-      YYASSERT (!yytypeid_);
+      YYASSERT (!yytname_);
     }
 
     /// Instantiate an empty \a T in here.
@@ -168,9 +167,9 @@ namespace isc { namespace eval {
     T&
     build ()
     {
-      YYASSERT (!yytypeid_);
+      YYASSERT (!yytname_);
       YYASSERT (sizeof (T) <= S);
-      yytypeid_ = & typeid (T);
+      yytname_ = typeid (T).name ();
       return *new (yyas_<T> ()) T;
     }
 
@@ -179,9 +178,9 @@ namespace isc { namespace eval {
     T&
     build (const T& t)
     {
-      YYASSERT (!yytypeid_);
+      YYASSERT (!yytname_);
       YYASSERT (sizeof (T) <= S);
-      yytypeid_ = & typeid (T);
+      yytname_ = typeid (T).name ();
       return *new (yyas_<T> ()) T (t);
     }
 
@@ -190,7 +189,7 @@ namespace isc { namespace eval {
     T&
     as ()
     {
-      YYASSERT (*yytypeid_ == typeid (T));
+      YYASSERT (yytname_ == typeid (T).name ());
       YYASSERT (sizeof (T) <= S);
       return *yyas_<T> ();
     }
@@ -200,7 +199,7 @@ namespace isc { namespace eval {
     const T&
     as () const
     {
-      YYASSERT (*yytypeid_ == typeid (T));
+      YYASSERT (yytname_ == typeid (T).name ());
       YYASSERT (sizeof (T) <= S);
       return *yyas_<T> ();
     }
@@ -217,8 +216,8 @@ namespace isc { namespace eval {
     void
     swap (self_type& other)
     {
-      YYASSERT (yytypeid_);
-      YYASSERT (*yytypeid_ == *other.yytypeid_);
+      YYASSERT (yytname_);
+      YYASSERT (yytname_ == other.yytname_);
       std::swap (as<T> (), other.as<T> ());
     }
 
@@ -248,7 +247,7 @@ namespace isc { namespace eval {
     destroy ()
     {
       as<T> ().~T ();
-      yytypeid_ = YY_NULLPTR;
+      yytname_ = YY_NULLPTR;
     }
 
   private:
@@ -283,7 +282,7 @@ namespace isc { namespace eval {
     } yybuffer_;
 
     /// Whether the content is built: if defined, the name of the stored type.
-    const std::type_info *yytypeid_;
+    const char *yytname_;
   };
 
 
@@ -334,30 +333,28 @@ namespace isc { namespace eval {
         TOKEN_OPTION = 259,
         TOKEN_SUBSTRING = 260,
         TOKEN_TEXT = 261,
-        TOKEN_HEX = 262,
-        TOKEN_ALL = 263,
-        TOKEN_DOT = 264,
-        TOKEN_COMA = 265,
-        TOKEN_LPAREN = 266,
-        TOKEN_RPAREN = 267,
-        TOKEN_LBRACKET = 268,
-        TOKEN_RBRACKET = 269,
-        TOKEN_STRING = 270,
-        TOKEN_INTEGER = 271,
-        TOKEN_HEXSTRING = 272,
-        TOKEN_OPTION_NAME = 273,
-        TOKEN_TOKEN = 274
+        TOKEN_RELAY = 262,
+        TOKEN_HEX = 263,
+        TOKEN_ALL = 264,
+        TOKEN_DOT = 265,
+        TOKEN_COMA = 266,
+        TOKEN_LPAREN = 267,
+        TOKEN_RPAREN = 268,
+        TOKEN_LBRACKET = 269,
+        TOKEN_RBRACKET = 270,
+        TOKEN_STRING = 271,
+        TOKEN_INTEGER = 272,
+        TOKEN_HEXSTRING = 273,
+        TOKEN_OPTION_NAME = 274,
+        TOKEN_TOKEN = 275
       };
     };
 
     /// (External) token type, as returned by yylex.
     typedef token::yytokentype token_type;
 
-    /// Symbol type: an internal symbol number.
+    /// Internal symbol number.
     typedef int symbol_number_type;
-
-    /// The symbol type number to denote an empty symbol.
-    enum { empty_symbol = -2 };
 
     /// Internal symbol number for tokens (subsumed by symbol_number_type).
     typedef unsigned char token_number_type;
@@ -396,14 +393,7 @@ namespace isc { namespace eval {
                     const semantic_type& v,
                     const location_type& l);
 
-      /// Destroy the symbol.
       ~basic_symbol ();
-
-      /// Destroy contents, and record that is empty.
-      void clear ();
-
-      /// Whether empty.
-      bool empty () const;
 
       /// Destructive move, \a s is emptied into this.
       void move (basic_symbol& s);
@@ -434,23 +424,21 @@ namespace isc { namespace eval {
       /// Constructor from (external) token numbers.
       by_type (kind_type t);
 
-      /// Record that this symbol is empty.
-      void clear ();
-
       /// Steal the symbol type from \a that.
       void move (by_type& that);
 
       /// The (internal) type number (corresponding to \a type).
-      /// \a empty when empty.
+      /// -1 when this symbol is empty.
       symbol_number_type type_get () const;
 
       /// The token.
       token_type token () const;
 
+      enum { empty = 0 };
+
       /// The symbol type.
-      /// \a empty_symbol when empty.
-      /// An int, not token_number_type, to be able to store empty_symbol.
-      int type;
+      /// -1 when this symbol is empty.
+      token_number_type type;
     };
 
     /// "External" symbols: returned by the scanner.
@@ -476,6 +464,10 @@ namespace isc { namespace eval {
     static inline
     symbol_type
     make_TEXT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_RELAY (const location_type& l);
 
     static inline
     symbol_type
@@ -570,9 +562,9 @@ namespace isc { namespace eval {
 
     /// Generate an error message.
     /// \param yystate   the state where the error occurred.
-    /// \param yyla      the lookahead token.
+    /// \param yytoken   the lookahead token type, or yyempty_.
     virtual std::string yysyntax_error_ (state_type yystate,
-                                         const symbol_type& yyla) const;
+                                         symbol_number_type yytoken) const;
 
     /// Compute post-reduction state.
     /// \param yystate   the current state
@@ -675,21 +667,16 @@ namespace isc { namespace eval {
       /// Copy constructor.
       by_state (const by_state& other);
 
-      /// Record that this symbol is empty.
-      void clear ();
-
       /// Steal the symbol type from \a that.
       void move (by_state& that);
 
       /// The (internal) type number (corresponding to \a state).
-      /// \a empty_symbol when empty.
+      /// "empty" when empty.
       symbol_number_type type_get () const;
 
-      /// The state number used to denote an empty symbol.
-      enum { empty_state = -1 };
+      enum { empty = 0 };
 
       /// The state.
-      /// \a empty when empty.
       state_type state;
     };
 
@@ -730,16 +717,17 @@ namespace isc { namespace eval {
     /// Pop \a n symbols the three stacks.
     void yypop_ (unsigned int n = 1);
 
-    /// Constants.
+    // Constants.
     enum
     {
       yyeof_ = 0,
-      yylast_ = 24,     ///< Last index in yytable_.
+      yylast_ = 30,     ///< Last index in yytable_.
       yynnts_ = 8,  ///< Number of nonterminal symbols.
-      yyfinal_ = 11, ///< Termination state number.
+      yyempty_ = -2,
+      yyfinal_ = 13, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 20  ///< Number of tokens.
+      yyntokens_ = 21  ///< Number of tokens.
     };
 
 
@@ -783,9 +771,9 @@ namespace isc { namespace eval {
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19
+      15,    16,    17,    18,    19,    20
     };
-    const unsigned int user_token_number_max_ = 274;
+    const unsigned int user_token_number_max_ = 275;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -818,19 +806,19 @@ namespace isc { namespace eval {
   {
       switch (other.type_get ())
     {
-      case 25: // option_repr_type
+      case 26: // option_repr_type
         value.copy< TokenOption::RepresentationType > (other.value);
         break;
 
-      case 15: // "constant string"
-      case 16: // "integer"
-      case 17: // "constant hexstring"
-      case 18: // "option name"
-      case 19: // TOKEN
+      case 16: // "constant string"
+      case 17: // "integer"
+      case 18: // "constant hexstring"
+      case 19: // "option name"
+      case 20: // TOKEN
         value.copy< std::string > (other.value);
         break;
 
-      case 24: // option_code
+      case 25: // option_code
         value.copy< uint16_t > (other.value);
         break;
 
@@ -851,19 +839,19 @@ namespace isc { namespace eval {
     (void) v;
       switch (this->type_get ())
     {
-      case 25: // option_repr_type
+      case 26: // option_repr_type
         value.copy< TokenOption::RepresentationType > (v);
         break;
 
-      case 15: // "constant string"
-      case 16: // "integer"
-      case 17: // "constant hexstring"
-      case 18: // "option name"
-      case 19: // TOKEN
+      case 16: // "constant string"
+      case 17: // "integer"
+      case 18: // "constant hexstring"
+      case 19: // "option name"
+      case 20: // TOKEN
         value.copy< std::string > (v);
         break;
 
-      case 24: // option_code
+      case 25: // option_code
         value.copy< uint16_t > (v);
         break;
 
@@ -908,18 +896,8 @@ namespace isc { namespace eval {
   inline
   EvalParser::basic_symbol<Base>::~basic_symbol ()
   {
-    clear ();
-  }
-
-  template <typename Base>
-  inline
-  void
-  EvalParser::basic_symbol<Base>::clear ()
-  {
     // User destructor.
     symbol_number_type yytype = this->type_get ();
-    basic_symbol<Base>& yysym = *this;
-    (void) yysym;
     switch (yytype)
     {
    default:
@@ -929,19 +907,19 @@ namespace isc { namespace eval {
     // Type destructor.
     switch (yytype)
     {
-      case 25: // option_repr_type
+      case 26: // option_repr_type
         value.template destroy< TokenOption::RepresentationType > ();
         break;
 
-      case 15: // "constant string"
-      case 16: // "integer"
-      case 17: // "constant hexstring"
-      case 18: // "option name"
-      case 19: // TOKEN
+      case 16: // "constant string"
+      case 17: // "integer"
+      case 18: // "constant hexstring"
+      case 19: // "option name"
+      case 20: // TOKEN
         value.template destroy< std::string > ();
         break;
 
-      case 24: // option_code
+      case 25: // option_code
         value.template destroy< uint16_t > ();
         break;
 
@@ -949,15 +927,6 @@ namespace isc { namespace eval {
         break;
     }
 
-    Base::clear ();
-  }
-
-  template <typename Base>
-  inline
-  bool
-  EvalParser::basic_symbol<Base>::empty () const
-  {
-    return Base::type_get () == empty_symbol;
   }
 
   template <typename Base>
@@ -968,19 +937,19 @@ namespace isc { namespace eval {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 25: // option_repr_type
+      case 26: // option_repr_type
         value.move< TokenOption::RepresentationType > (s.value);
         break;
 
-      case 15: // "constant string"
-      case 16: // "integer"
-      case 17: // "constant hexstring"
-      case 18: // "option name"
-      case 19: // TOKEN
+      case 16: // "constant string"
+      case 17: // "integer"
+      case 18: // "constant hexstring"
+      case 19: // "option name"
+      case 20: // TOKEN
         value.move< std::string > (s.value);
         break;
 
-      case 24: // option_code
+      case 25: // option_code
         value.move< uint16_t > (s.value);
         break;
 
@@ -994,7 +963,7 @@ namespace isc { namespace eval {
   // by_type.
   inline
   EvalParser::by_type::by_type ()
-    : type (empty_symbol)
+     : type (empty)
   {}
 
   inline
@@ -1009,17 +978,10 @@ namespace isc { namespace eval {
 
   inline
   void
-  EvalParser::by_type::clear ()
-  {
-    type = empty_symbol;
-  }
-
-  inline
-  void
   EvalParser::by_type::move (by_type& that)
   {
     type = that.type;
-    that.clear ();
+    that.type = empty;
   }
 
   inline
@@ -1040,7 +1002,8 @@ namespace isc { namespace eval {
     yytoken_number_[] =
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,   270,   271,   272,   273,   274
+     265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
+     275
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1073,6 +1036,12 @@ namespace isc { namespace eval {
   EvalParser::make_TEXT (const location_type& l)
   {
     return symbol_type (token::TOKEN_TEXT, l);
+  }
+
+  EvalParser::symbol_type
+  EvalParser::make_RELAY (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_RELAY, l);
   }
 
   EvalParser::symbol_type
@@ -1154,9 +1123,9 @@ namespace isc { namespace eval {
   }
 
 
-#line 13 "parser.yy" // lalr1.cc:392
+#line 13 "parser.yy" // lalr1.cc:372
 } } // isc::eval
-#line 1160 "parser.h" // lalr1.cc:392
+#line 1129 "parser.h" // lalr1.cc:372
 
 
 
