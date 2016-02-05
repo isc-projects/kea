@@ -1130,4 +1130,19 @@ TEST_F(Pkt4Test, toText) {
 
 }
 
+// Sanity check. Verifies that the getName() and getType()
+// don't throw.
+TEST_F(Pkt4Test, getType) {
+
+    Pkt4 pkt(DHCPDISCOVER, 2543);
+    pkt.delOption(DHO_DHCP_MESSAGE_TYPE);
+
+    ASSERT_NO_THROW(pkt.getType());
+    ASSERT_NO_THROW(pkt.getName());
+
+    // The method has to return something that is not NULL,
+    // even if the packet doesn't have Message Type option.
+    EXPECT_TRUE(pkt.getName());
+}
+
 } // end of anonymous namespace

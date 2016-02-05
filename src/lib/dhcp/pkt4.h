@@ -226,6 +226,9 @@ public:
 
     /// @brief Returns DHCP message type (e.g. 1 = DHCPDISCOVER).
     ///
+    /// This method is exception safe. For packets without DHCP Message Type
+    /// option, it returns DHCP_NOTYPE (0).
+    ///
     /// @return message type
     uint8_t getType() const;
 
@@ -235,6 +238,9 @@ public:
     void setType(uint8_t type);
 
     /// @brief Returns name of the DHCP message for a given type number.
+    ///
+    /// This method is exception safe. For messages without DHCP Message Type
+    /// options, it returns UNKNOWN.
     ///
     /// @param type DHCPv4 message type which name should be returned.
     ///

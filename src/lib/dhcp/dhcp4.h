@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2015 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -219,6 +219,7 @@ enum DHCPOptionType {
 
 /* DHCP message types. */
 enum DHCPMessageType {
+    DHCP_NOTYPE         =  0, ///< Message Type option missing
     DHCPDISCOVER        =  1,
     DHCPOFFER           =  2,
     DHCPREQUEST         =  3,
