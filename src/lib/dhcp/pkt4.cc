@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -238,7 +238,7 @@ Pkt4::unpack() {
 uint8_t Pkt4::getType() const {
     OptionPtr generic = getOption(DHO_DHCP_MESSAGE_TYPE);
     if (!generic) {
-        isc_throw(Unexpected, "Missing DHCP Message Type option");
+        return (DHCP_NOTYPE);
     }
 
     // Check if Message Type is specified as OptionInt<uint8_t>
@@ -328,7 +328,15 @@ Pkt4::getName(const uint8_t type) {
 
 const char*
 Pkt4::getName() const {
-    return (Pkt4::getName(getType()));
+
+    uint8_t msg_type = 0;
+    try {
+        msg_type = getType();
+    } catch (...) {
+        // Message Type option is missing.
+    }
+
+    return (Pkt4::getName(msg_type));
 }
 
 std::string
@@ -392,14 +400,11 @@ Pkt4::toText() const {
         << ", remote_adress=" << remote_addr_
         << ":" << remote_port_ << ", msg_type=";
 
-    // Try to obtain message type. This may throw if the Message Type option is
-    // not present. Therefore we guard it with try-catch, because we don't want
-    // toText method to throw.
-    try {
-        uint8_t msg_type = getType();
+    // Try to obtain message type.
+    uint8_t msg_type = getType();
+    if (msg_type != DHCP_NOTYPE) {
         output << getName(msg_type) << " (" << static_cast<int>(msg_type) << ")";
-
-    } catch (...) {
+    } else {
         // Message Type option is missing.
         output << "(missing)";
     }
