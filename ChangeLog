@@ -1,3 +1,8 @@
+1077.	[func]		marcin
+	perfdhcp now accepts -f option for DHCPv4 server testing, which
+	enables lease renewals at the specified rate.
+	(Trac #4254, git 8c5630b9ce6d3fba224f0643a7c69e4f7aaefca7)
+
 1076.	[bug]		jpopelka
 	Fixed compilation issue in MySQL host data source: the
 	dhcp_identifer_length is now unsigned long. This addresses
