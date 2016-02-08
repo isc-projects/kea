@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -691,8 +691,6 @@ CommandOptions::validate() const {
           "-B is not compatible with IPv6 (-6)");
     check((getIpVersion() != 6) && (isRapidCommit() != 0),
           "-6 (IPv6) must be set to use -c");
-    check((getIpVersion() != 6) && (getRenewRate() !=0),
-          "-f<renew-rate> may be used with -6 (IPv6) only");
     check((getIpVersion() != 6) && (getReleaseRate() != 0),
           "-F<release-rate> may be used with -6 (IPv6) only");
     check((getExchangeMode() == DO_SA) && (getNumRequests().size() > 1),
@@ -963,6 +961,11 @@ CommandOptions::usage() const {
         "-E<time-offset>: Offset of the (DHCPv4) secs field / (DHCPv6)\n"
         "    elapsed-time option in the (second/request) template.\n"
         "    The value 0 disables it.\n"
+        "-f<renew-rate>: Rate at which DHCPv4 or DHCPv6 renew requests are sent\n"
+        "    to a server. This value is only valid when used in conjunction\n"
+        "    with the exchange rate (given by -r<rate>).  Furthermore the sum of\n"
+        "    this value and the release-rate (given by -F<rate) must be equal\n"
+        "    to or less than the exchange rate.\n"
         "-h: Print this help.\n"
         "-i: Do only the initial part of an exchange: DO or SA, depending on\n"
         "    whether -6 is given.\n"
@@ -1010,11 +1013,6 @@ CommandOptions::usage() const {
         "\n"
         "DHCPv6 only options:\n"
         "-c: Add a rapid commit option (exchanges will be SA).\n"
-        "-f<renew-rate>: Rate at which IPv6 Renew requests are sent to\n"
-        "    a server. This value is only valid when used in conjunction with\n"
-        "    the exchange rate (given by -r<rate>).  Furthermore the sum of\n"
-        "    this value and the release-rate (given by -F<rate) must be equal\n"
-        "    to or less than the exchange rate.\n"
         "-F<release-rate>: Rate at which IPv6 Release requests are sent to\n"
         "    a server. This value is only valid when used in conjunction with\n"
         "    the exchange rate (given by -r<rate>).  Furthermore the sum of\n"

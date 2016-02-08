@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -124,7 +124,7 @@ public:
     typedef StatsMgr<dhcp::Pkt4> StatsMgr4;
     /// Pointer to Statistics Manager for DHCPv4;
     typedef boost::shared_ptr<StatsMgr4> StatsMgr4Ptr;
-    /// Statictics Manager for DHCPv6.
+    /// Statistics Manager for DHCPv6.
     typedef StatsMgr<dhcp::Pkt6> StatsMgr6;
     /// Pointer to Statistics Manager for DHCPv6.
     typedef boost::shared_ptr<StatsMgr6> StatsMgr6Ptr;
@@ -246,7 +246,7 @@ public:
     /// throw exception.
     ///
     /// \throw isc::InvalidOperation if command line options are not parsed.
-    /// \throw isc::Unexpected if internal Test Controller error occured.
+    /// \throw isc::Unexpected if internal Test Controller error occurred.
     /// \return error_code, 3 if number of received packets is not equal
     /// to number of sent packets, 0 if everything is ok.
     int run();
@@ -306,13 +306,21 @@ protected:
     /// has been reached.
     void cleanCachedPackets();
 
+    /// \brief Creates DHCPREQUEST from a DHCPACK message.
+    ///
+    /// \param ack An instance of the DHCPACK message to be used to
+    /// create a new message.
+    ///
+    /// \return Pointer to the created message.
+    dhcp::Pkt4Ptr createRequestFromAck(const dhcp::Pkt4Ptr& ack);
+
     /// \brief Creates DHCPv6 message from the Reply packet.
     ///
     /// This function creates DHCPv6 Renew or Release message using the
     /// data from the Reply message by copying options from the Reply
     /// message.
     ///
-    /// \param msg_type A type of the message to be createad.
+    /// \param msg_type A type of the message to be created.
     /// \param reply An instance of the Reply packet which contents should
     /// be used to create an instance of the new message.
     ///
@@ -432,6 +440,16 @@ protected:
                                                uint16_t type,
                                                const dhcp::OptionBuffer& buf);
 
+    /// \brief Generate DHCPv4 client identifier from HW address.
+    ///
+    /// This method generates DHCPv4 client identifier option from a
+    /// HW address.
+    ///
+    /// \param hwaddr HW address.
+    ///
+    /// \return Pointer to an instance of the generated option.
+    dhcp::OptionPtr generateClientId(const dhcp::HWAddrPtr& hwaddr) const;
+
     /// \brief Generate DUID.
     ///
     /// Method generates unique DUID. The number of DUIDs it can generate
@@ -527,7 +545,7 @@ protected:
     /// \throw isc::InvalidOperation if broadcast option can't be
     /// set for the v4 socket or if multicast option can't be set
     /// for the v6 socket.
-    /// \throw isc::Unexpected if interal unexpected error occured.
+    /// \throw isc::Unexpected if internal unexpected error occurred.
     /// \return socket descriptor.
     int openSocket() const;
 
@@ -562,7 +580,7 @@ protected:
     /// \param [in] socket socket to be used.
     /// \param [in] pkt4 object representing DHCPv4 packet received.
     /// \throw isc::BadValue if unknown message type received.
-    /// \throw isc::Unexpected if unexpected error occured.
+    /// \throw isc::Unexpected if unexpected error occurred.
     void processReceivedPacket4(const TestControlSocket& socket,
                                 const dhcp::Pkt4Ptr& pkt4);
 
@@ -579,7 +597,7 @@ protected:
     /// \param [in] socket socket to be used.
     /// \param [in] pkt6 object representing DHCPv6 packet received.
     /// \throw isc::BadValue if unknown message type received.
-    /// \throw isc::Unexpected if unexpected error occured.
+    /// \throw isc::Unexpected if unexpected error occurred.
     void processReceivedPacket6(const TestControlSocket& socket,
                                 const dhcp::Pkt6Ptr& pkt6);
 
@@ -595,7 +613,7 @@ protected:
     ///
     /// \param socket socket to be used.
     /// \throw isc::BadValue if unknown message type received.
-    /// \throw isc::Unexpected if unexpected error occured.
+    /// \throw isc::Unexpected if unexpected error occurred.
     /// \return number of received packets.
     uint64_t receivePackets(const TestControlSocket& socket);
 
@@ -726,6 +744,15 @@ protected:
                      const uint64_t packets_num,
                      const bool preload = false);
 
+    /// \brief Send number of DHCPREQUEST (renew) messages to a server.
+    ///
+    /// \param socket An object representing socket to be used to send packets.
+    /// \param msg_num A number of messages to be sent.
+    ///
+    /// \return A number of messages actually sent.
+    uint64_t sendMultipleRequests(const TestControlSocket& socket,
+                                  const uint64_t msg_num);
+
     /// \brief Send number of DHCPv6 Renew or Release messages to the server.
     ///
     /// \param socket An object representing socket to be used to send packets.
@@ -737,6 +764,14 @@ protected:
     uint64_t sendMultipleMessages6(const TestControlSocket& socket,
                                    const uint32_t msg_type,
                                    const uint64_t msg_num);
+
+    /// \brief Send DHCPv4 renew (DHCPREQUEST) using specified socket.
+    ///
+    /// \param socket An object encapsulating socket to be used to send
+    /// a packet.
+    ///
+    /// \return true if the message has been sent, false otherwise.
+    bool sendRequestFromAck(const TestControlSocket& socket);
 
     /// \brief Send DHCPv6 Renew or Release message using specified socket.
     ///
@@ -763,7 +798,7 @@ protected:
     /// \param discover_pkt4 DISCOVER packet sent.
     /// \param offer_pkt4 OFFER packet object.
     ///
-    /// \throw isc::Unexpected if unexpected error occured.
+    /// \throw isc::Unexpected if unexpected error occurred.
     /// \throw isc::InvalidOperation if Statistics Manager has not been
     /// initialized.
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
@@ -800,7 +835,7 @@ protected:
     ///
     /// \param socket socket to be used to send message.
     /// \param advertise_pkt6 ADVERTISE packet object.
-    /// \throw isc::Unexpected if unexpected error occured.
+    /// \throw isc::Unexpected if unexpected error occurred.
     /// \throw isc::InvalidOperation if Statistics Manager has not been
     /// initialized.
     ///
@@ -971,7 +1006,7 @@ protected:
     /// \brief Return transaction id offset in a packet.
     ///
     /// \param arg_idx command line argument index to be used.
-    /// If multiple -X parameters specifed it points to the
+    /// If multiple -X parameters specified it points to the
     /// one to be used.
     /// \return transaction id offset in packet.
     int getTransactionIdOffset(const int arg_idx) const;
@@ -1077,6 +1112,7 @@ protected:
     StatsMgr4Ptr stats_mgr4_;  ///< Statistics Manager 4.
     StatsMgr6Ptr stats_mgr6_;  ///< Statistics Manager 6.
 
+    PacketStorage<dhcp::Pkt4> ack_storage_; ///< A storage for DHCPACK messages.
     PacketStorage<dhcp::Pkt6> reply_storage_; ///< A storage for reply messages.
 
     NumberGeneratorPtr transid_gen_; ///< Transaction id generator.
@@ -1089,7 +1125,7 @@ protected:
     TemplateBufferCollection template_buffers_;
 
     /// First packets send. They are used at the end of the test
-    /// to print packet templates when diagnostics flag T is specifed.
+    /// to print packet templates when diagnostics flag T is specified.
     std::map<uint8_t, dhcp::Pkt4Ptr> template_packets_v4_;
     std::map<uint8_t, dhcp::Pkt6Ptr> template_packets_v6_;
 
