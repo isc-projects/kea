@@ -14,8 +14,7 @@
 
 #include <config.h>
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
+#include <stdint.h>
 
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
@@ -58,9 +57,9 @@ TaggedStatement tagged_statements[] = {
             "dhcp4_client_classes, dhcp6_client_classes) "
          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlHostDataSource::INSERT_V6_RESRV,
-         "INSERT INTO ipv6_reservations(reservation_id, address, prefix_len, type, "
+         "INSERT INTO ipv6_reservations(address, prefix_len, type, "
             "dhcp6_iaid, host_id) "
-         "VALUES (?,?,?,?,?,?)"},
+         "VALUES (?,?,?,?,?)"},
     {MySqlHostDataSource::GET_V6_RESRV,
          "SELECT reservation_id, address, prefix_len, type, dhcp6_iaid, host_id "
          "FROM ipv6_reservations "
@@ -563,6 +562,7 @@ private:
     HostPtr     host_;			// Pointer to Host object
 };
 
+/// @brief This class represents the exchanges related to IPv6 Reservations.
 class MySqlIPv6ReservationExchange {
     /// @brief Set number of database columns for this reservation structure
     static const size_t RESRV_COLUMNS = 6;
@@ -668,47 +668,39 @@ public:
         // Set up the structures for the various components of the host structure.
 
         try {
-            // reservation_id INT UNSIGNED NOT NULL
-            // The host_id is auto_incremented by MySQL database,
-            // so we need to pass the NULL value
-            reservation_id_ = static_cast<uint32_t>(NULL);
-            bind_[0].buffer_type = MYSQL_TYPE_LONG;
-            bind_[0].buffer = reinterpret_cast<char*>(&reservation_id_);
-            bind_[0].is_unsigned = MLM_TRUE;
-
             // address VARCHAR(39)
             address_ = resv.getPrefix().toText();
             address_len_ = address_.length();
-            bind_[1].buffer_type = MYSQL_TYPE_BLOB;
-            bind_[1].buffer = reinterpret_cast<char*>
+            bind_[0].buffer_type = MYSQL_TYPE_BLOB;
+            bind_[0].buffer = reinterpret_cast<char*>
                 (const_cast<char*>(address_.c_str()));
-            bind_[1].buffer_length = address_len_;
-            bind_[1].length = &address_len_;
+            bind_[0].buffer_length = address_len_;
+            bind_[0].length = &address_len_;
 
             // prefix_len tinyint
             prefix_len_ = resv.getPrefixLen();
-            bind_[2].buffer_type = MYSQL_TYPE_TINY;
-            bind_[2].buffer = reinterpret_cast<char*>(&prefix_len_);
-            bind_[2].is_unsigned = MLM_TRUE;
+            bind_[1].buffer_type = MYSQL_TYPE_TINY;
+            bind_[1].buffer = reinterpret_cast<char*>(&prefix_len_);
+            bind_[1].is_unsigned = MLM_TRUE;
 
             // type tinyint
             // See lease6_types for values (0 = IA_NA, 1 = IA_TA, 2 = IA_PD)
             type_ = resv.getType() == IPv6Resrv::TYPE_NA ? 0 : 2;
-            bind_[3].buffer_type = MYSQL_TYPE_TINY;
-            bind_[3].buffer = reinterpret_cast<char*>(&type_);
-            bind_[3].is_unsigned = MLM_TRUE;
+            bind_[2].buffer_type = MYSQL_TYPE_TINY;
+            bind_[2].buffer = reinterpret_cast<char*>(&type_);
+            bind_[2].is_unsigned = MLM_TRUE;
 
             // dhcp6_iaid INT UNSIGNED
             /// @todo: We don't support iaid in the IPv6Resrv yet.
             iaid_ = 0;
-            bind_[4].buffer_type = MYSQL_TYPE_LONG;
-            bind_[4].buffer = reinterpret_cast<char*>(&iaid_);
-            bind_[4].is_unsigned = MLM_TRUE;
+            bind_[3].buffer_type = MYSQL_TYPE_LONG;
+            bind_[3].buffer = reinterpret_cast<char*>(&iaid_);
+            bind_[3].is_unsigned = MLM_TRUE;
 
             // host_id INT UNSIGNED NOT NULL
-            bind_[5].buffer_type = MYSQL_TYPE_LONG;
-            bind_[5].buffer = reinterpret_cast<char*>(&host_id_);
-            bind_[5].is_unsigned = MLM_TRUE;
+            bind_[4].buffer_type = MYSQL_TYPE_LONG;
+            bind_[4].buffer = reinterpret_cast<char*>(&host_id_);
+            bind_[4].is_unsigned = MLM_TRUE;
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -718,7 +710,8 @@ public:
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
-        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[RESRV_COLUMNS]));
+        // RESRV_COLUMNS -1 as we do not set reservation_id.
+        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[RESRV_COLUMNS-1]));
     }
 
 
@@ -789,16 +782,12 @@ public:
     /// @return IPv6Resrv object (containing IPv6 address or prefix reservation)
     IPv6Resrv getIPv6ReservData(){
 
-        // Set the IPv6 Reservation type (0 = IA_NA, 1 = IA_TA, 2 = IA_PD)
+        // Set the IPv6 Reservation type (0 = IA_NA, 2 = IA_PD)
         IPv6Resrv::Type type = IPv6Resrv::TYPE_NA;
 
         switch (type_) {
         case 0:
             type = IPv6Resrv::TYPE_NA;
-            break;
-
-        case 1:
-            type = IPv6Resrv::TYPE_TA;
             break;
 
         case 2:
@@ -809,7 +798,7 @@ public:
             isc_throw(BadValue,
                     "invalid IPv6 reservation type returned: "
                     << static_cast<int>(type_)
-                    << ". Only 0, 1 or 2 are allowed.");
+                    << ". Only 0 or 2 are allowed.");
         }
 
         IPv6Resrv r(type, IOAddress(address_), prefix_len_);
@@ -852,7 +841,7 @@ public:
 
 private:
     uint64_t	host_id_;        /// Host unique identifier
-    uint64_t    reservation_id_; /// Host unique identifier
+    uint64_t    reservation_id_; /// Reservation unique identifier
     size_t      host_id_length_; /// Length of the host unique ID
     std::string address_;        ///< Address (or prefix)
     size_t      address_len_;    ///< Length of the textual address representation
@@ -1007,7 +996,8 @@ MySqlHostDataSource::getIPv6ReservationCollection(StatementIndex stindex,
 
     // Set up the fetch "release" object to release resources associated
     // with the call to mysql_stmt_fetch when this method exits, then
-    // retrieve the data.
+    // retrieve the data. mysql_stmt_fetch return value equal to 0 represents
+    // successful data fetch.
     MySqlFreeResult fetch_release(conn_.statements_[stindex]);
     while ((status = mysql_stmt_fetch(conn_.statements_[stindex])) == 0) {
         try {
@@ -1022,6 +1012,7 @@ MySqlHostDataSource::getIPv6ReservationCollection(StatementIndex stindex,
     }
 
     // How did the fetch end?
+    // If mysql_stmt_fetch return value is equal to 1 an error occurred.
     if (status == 1) {
         // Error - unable to fetch results
         checkError(status, stindex, "unable to fetch results");
@@ -1089,7 +1080,8 @@ MySqlHostDataSource::getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
 
     // Set up the fetch "release" object to release resources associated
     // with the call to mysql_stmt_fetch when this method exits, then
-    // retrieve the data.
+    // retrieve the data. mysql_stmt_fetch return value equal to 0 represents
+    // successful data fetch.
     MySqlFreeResult fetch_release(conn_.statements_[stindex]);
     int count = 0;
     HostPtr host;
@@ -1113,6 +1105,7 @@ MySqlHostDataSource::getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
     }
 
     // How did the fetch end?
+    // If mysql_stmt_fetch return value is equal to 1 an error occurred.
     if (status == 1) {
         // Error - unable to fetch results
         checkError(status, stindex, "unable to fetch results");
@@ -1453,6 +1446,7 @@ std::pair<uint32_t, uint32_t> MySqlHostDataSource::getVersion() const {
 
     // Fetch the data and set up the "release" object to release associated
     // resources when this method exits then retrieve the data.
+    // mysql_stmt_fetch return value other than 0 means error occurrence.
     MySqlFreeResult fetch_release(conn_.statements_[stindex]);
     status = mysql_stmt_fetch(conn_.statements_[stindex]);
     if (status != 0) {
