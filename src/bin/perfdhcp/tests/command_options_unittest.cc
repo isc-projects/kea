@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -341,6 +341,9 @@ TEST_F(CommandOptionsTest, RenewRate) {
     // that order doesn't matter.
     EXPECT_NO_THROW(process("perfdhcp -6 -f 5 -r 10 -l ethx all"));
     EXPECT_EQ(5, opt.getRenewRate());
+    // Renew rate should also be accepted for DHCPv4 case.
+    EXPECT_NO_THROW(process("perfdhcp -4 -f 5 -r 10 -l ethx all"));
+    EXPECT_EQ(5, opt.getRenewRate());
     // The renew rate should not be greater than the rate.
     EXPECT_THROW(process("perfdhcp -6 -r 10 -f 11 -l ethx all"),
                  isc::InvalidParameter);
@@ -353,10 +356,6 @@ TEST_F(CommandOptionsTest, RenewRate) {
     // If -r<rate> is not specified the -f<renew-rate> should not
     // be accepted.
     EXPECT_THROW(process("perfdhcp -6 -f 10 -l ethx all"),
-                 isc::InvalidParameter);
-    // Currently the -f<renew-rate> can be specified for IPv6 mode
-    // only.
-    EXPECT_THROW(process("perfdhcp -4 -r 10 -f 10 -l ethx all"),
                  isc::InvalidParameter);
     // Renew rate should be specified.
     EXPECT_THROW(process("perfdhcp -6 -r 10 -f -l ethx all"),
@@ -384,7 +383,7 @@ TEST_F(CommandOptionsTest, ReleaseRate) {
     // The release-rate of 0 is invalid.
     EXPECT_THROW(process("perfdhcp -6 -r 10 -F 0 -l ethx all"),
                  isc::InvalidParameter);
-    // The negative rlease-rate is invalid.
+    // The negative release-rate is invalid.
     EXPECT_THROW(process("perfdhcp -6 -r 10 -F -5 -l ethx all"),
                  isc::InvalidParameter);
     // If -r<rate> is not specified the -F<release-rate> should not
@@ -634,7 +633,7 @@ TEST_F(CommandOptionsTest, Seed) {
     EXPECT_EQ(0, opt.getSeed());
     EXPECT_FALSE(opt.isSeeded());
 
-    // Negtaive test cases
+    // Negative test cases
     // Seed must be non-negative integer
     EXPECT_THROW(process("perfdhcp -6 -P 2 -s -5 -l ethx all"),
                  isc::InvalidParameter);
@@ -768,7 +767,7 @@ TEST_F(CommandOptionsTest, Interface) {
     // at least one interface name on OS where test is run.
     // Interface Manager has ability to detect interfaces.
     // Although we don't call initIsInterface explicitly
-    // here it is called by CommandOptions object interally
+    // here it is called by CommandOptions object internally
     // so this function is covered by the test.
     dhcp::IfaceMgr& iface_mgr = dhcp::IfaceMgr::instance();
     const dhcp::IfaceMgr::IfaceCollection& ifaces = iface_mgr.getIfaces();
