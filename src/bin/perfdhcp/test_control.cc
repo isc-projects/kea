@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -315,6 +315,22 @@ TestControl::checkExitConditions() const {
     return (false);
 }
 
+Pkt4Ptr
+TestControl::createRequestFromAck(const dhcp::Pkt4Ptr& ack) {
+    if (!ack) {
+        isc_throw(isc::BadValue, "Unable to create DHCPREQUEST from a"
+                  " null DHCPACK message");
+    } else if (ack->getYiaddr().isV4Zero()) {
+        isc_throw(isc::BadValue, "Unable to create DHCPREQUEST from a"
+                  " DHCPACK message containing yiaddr of 0");
+    }
+    Pkt4Ptr msg(new Pkt4(DHCPREQUEST, generateTransid()));
+    msg->setCiaddr(ack->getYiaddr());
+    msg->setHWAddr(ack->getHWAddr());
+    msg->addOption(generateClientId(msg->getHWAddr()));
+    return (msg);
+}
+
 Pkt6Ptr
 TestControl::createMessageFromReply(const uint16_t msg_type,
                                     const dhcp::Pkt6Ptr& reply) {
@@ -479,6 +495,15 @@ TestControl::generateMacAddress(uint8_t& randomized) const {
         r >>= 8;
     }
     return (mac_addr);
+}
+
+OptionPtr
+TestControl::generateClientId(const dhcp::HWAddrPtr& hwaddr) const {
+    std::vector<uint8_t> client_id(1, static_cast<uint8_t>(hwaddr->htype_));
+    client_id.insert(client_id.end(), hwaddr->hwaddr_.begin(),
+                     hwaddr->hwaddr_.end());
+    return (OptionPtr(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
+                                 client_id)));
 }
 
 std::vector<uint8_t>
@@ -663,6 +688,9 @@ TestControl::initializeStatsMgr() {
             stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RA,
                                           options.getDropTime()[1]);
         }
+        if (options.getRenewRate() != 0) {
+            stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RNA);
+        }
 
     } else if (options.getIpVersion() == 6) {
         stats_mgr6_.reset();
@@ -725,7 +753,7 @@ TestControl::openSocket() const {
     // Local name is specified along with '-l' option.
     // It may point to interface name or local address.
     if (!localname.empty()) {
-        // CommandOptions should be already aware wether local name
+        // CommandOptions should be already aware whether local name
         // is interface name or address because it uses IfaceMgr to
         // scan interfaces and get's their names.
         if (options.isInterface()) {
@@ -798,7 +826,7 @@ TestControl::sendPackets(const TestControlSocket& socket,
     for (uint64_t i = packets_num; i > 0; --i) {
         if (options.getIpVersion() == 4) {
             // No template packets means that no -T option was specified.
-            // We have to build packets ourselfs.
+            // We have to build packets ourselves.
             if (template_buffers_.empty()) {
                 sendDiscover4(socket, preload);
             } else {
@@ -808,7 +836,7 @@ TestControl::sendPackets(const TestControlSocket& socket,
             }
         } else {
             // No template packets means that no -T option was specified.
-            // We have to build packets ourselfs.
+            // We have to build packets ourselves.
             if (template_buffers_.empty()) {
                 sendSolicit6(socket, preload);
             } else {
@@ -829,6 +857,17 @@ TestControl::sendPackets(const TestControlSocket& socket,
             }
         }
     }
+}
+
+uint64_t
+TestControl::sendMultipleRequests(const TestControlSocket& socket,
+                                  const uint64_t msg_num) {
+    for (uint64_t i = 0; i < msg_num; ++i) {
+        if (!sendRequestFromAck(socket)) {
+            return (i);
+        }
+    }
+    return (msg_num);
 }
 
 uint64_t
@@ -1072,7 +1111,28 @@ TestControl::processReceivedPacket4(const TestControlSocket& socket,
             }
         }
     } else if (pkt4->getType() == DHCPACK) {
-        stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_RA, pkt4);
+        // If received message is DHCPACK, we have to check if this is
+        // a response to 4-way exchange. We'll match this packet with
+        // a DHCPREQUEST sent as part of the 4-way exchanges.
+        if (stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_RA, pkt4)) {
+            // The DHCPACK belongs to DHCPREQUEST-DHCPACK exchange type.
+            // So, we may need to keep this DHCPACK in the storage if renews.
+            // Note that, DHCPACK messages hold the information about
+            // leases assigned. We use this information to renew.
+            if (stats_mgr4_->hasExchangeStats(StatsMgr4::XCHG_RNA)) {
+                // Renew messages are sent, because StatsMgr has the
+                // specific exchange type specified. Let's append the DHCPACK.
+                // message to a storage
+                ack_storage_.append(pkt4);
+            }
+        // The DHCPACK message is not a server's response to the DHCPREQUEST
+        // message sent within the 4-way exchange. It may be a response to a
+        // renewal. In this case we first check if StatsMgr has exchange type
+        // for renew specified, and if it has, if there is a corresponding
+        // renew message for the received DHCPACK.
+        } else if (stats_mgr4_->hasExchangeStats(StatsMgr4::XCHG_RNA)) {
+            stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_RNA, pkt4);
+        }
     }
 }
 
@@ -1364,12 +1424,17 @@ TestControl::run() {
 
         // If -f<renew-rate> option was specified we have to check how many
         // Renew packets should be sent to catch up with a desired rate.
-        if ((options.getIpVersion() == 6) && (options.getRenewRate() != 0)) {
+        if (options.getRenewRate() != 0) {
             uint64_t renew_packets_due =
                 renew_rate_control_.getOutboundMessageCount();
             checkLateMessages(renew_rate_control_);
-            // Send Renew messages.
-            sendMultipleMessages6(socket, DHCPV6_RENEW, renew_packets_due);
+
+            // Send multiple renews to satisfy the desired rate.
+            if (options.getIpVersion() == 4) {
+                sendMultipleRequests(socket, renew_packets_due);
+            } else {
+                sendMultipleMessages6(socket, DHCPV6_RENEW, renew_packets_due);
+            }
         }
 
         // If -F<release-rate> option was specified we have to check how many
@@ -1389,7 +1454,7 @@ TestControl::run() {
         }
 
         // If we are sending Renews to the server, the Reply packets are cached
-        // so as leases for which we send Renews can be idenitfied. The major
+        // so as leases for which we send Renews can be identified. The major
         // issue with this approach is that most of the time we are caching
         // more packets than we actually need. This function removes excessive
         // Reply messages to reduce the memory and CPU utilization. Note that
@@ -1428,7 +1493,7 @@ TestControl::run() {
     }
 
     int ret_code = 0;
-    // Check if any packet drops occured.
+    // Check if any packet drops occurred.
     if (options.getIpVersion() == 4) {
         ret_code = stats_mgr4_->droppedPackets() ? 3 : 0;
     } else if (options.getIpVersion() == 6)  {
@@ -1479,7 +1544,7 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
     // Generate the MAC address to be passed in the packet.
     uint8_t randomized = 0;
     std::vector<uint8_t> mac_address = generateMacAddress(randomized);
-    // Generate trasnaction id to be set for the new exchange.
+    // Generate transaction id to be set for the new exchange.
     const uint32_t transid = generateTransid();
     Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, transid));
     if (!pkt4) {
@@ -1504,6 +1569,9 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
     // Set hardware address
     pkt4->setHWAddr(HTYPE_ETHER, mac_address.size(), mac_address);
 
+    // Set client identifier
+    pkt4->addOption(generateClientId(pkt4->getHWAddr()));
+
     pkt4->pack();
     IfaceMgr::instance().send(pkt4);
     if (!preload) {
@@ -1521,13 +1589,13 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
                            const std::vector<uint8_t>& template_buf,
                            const bool preload /* = false */) {
     basic_rate_control_.updateSendTime();
-    // Get the first argument if mulitple the same arguments specified
+    // Get the first argument if multiple the same arguments specified
     // in the command line. First one refers to DISCOVER packets.
     const uint8_t arg_idx = 0;
     // Generate the MAC address to be passed in the packet.
     uint8_t randomized = 0;
     std::vector<uint8_t> mac_address = generateMacAddress(randomized);
-    // Generate trasnaction id to be set for the new exchange.
+    // Generate transaction id to be set for the new exchange.
     const uint32_t transid = generateTransid();
     // Get transaction id offset.
     size_t transid_offset = getTransactionIdOffset(arg_idx);
@@ -1567,6 +1635,32 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
     }
     saveFirstPacket(pkt4);
 }
+
+bool
+TestControl::sendRequestFromAck(const TestControlSocket& socket) {
+    // Update timestamp of last sent renewal.
+    renew_rate_control_.updateSendTime();
+
+    // Get one of the recorded DHCPACK messages.
+    Pkt4Ptr ack = ack_storage_.getRandom();
+    if (!ack) {
+        return (false);
+    }
+
+    // Create message of the specified type.
+    Pkt4Ptr msg = createRequestFromAck(ack);
+    setDefaults4(socket, msg);
+    msg->pack();
+    // And send it.
+    IfaceMgr::instance().send(msg);
+    if (!stats_mgr4_) {
+        isc_throw(Unexpected, "Statistics Manager for DHCPv4 "
+                  "hasn't been initialized");
+    }
+    stats_mgr4_->passSentPacket(StatsMgr4::XCHG_RNA, msg);
+    return (true);
+}
+
 
 bool
 TestControl::sendMessageFromReply(const uint16_t msg_type,
@@ -1647,6 +1741,8 @@ TestControl::sendRequest4(const TestControlSocket& socket,
 
     // Set hardware address
     pkt4->setHWAddr(offer_pkt4->getHWAddr());
+    // Set client id.
+    pkt4->addOption(generateClientId(pkt4->getHWAddr()));
     // Set elapsed time.
     uint32_t elapsed_time = getElapsedTime<Pkt4Ptr>(discover_pkt4, offer_pkt4);
     pkt4->setSecs(static_cast<uint16_t>(elapsed_time / 1000));
@@ -1677,7 +1773,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     // We need to go back by HW_ETHER_LEN (MAC address length)
     // because this offset points to last octet of MAC address.
     size_t rand_offset = getRandomOffset(arg_idx) - HW_ETHER_LEN + 1;
-    // Create temporaru buffer from the template.
+    // Create temporary buffer from the template.
     std::vector<uint8_t> in_buf(template_buf.begin(),
                                 template_buf.end());
     // Check if given randomization offset is not out of bounds.
@@ -1946,7 +2042,7 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
     // Generate DUID to be passed to the packet
     uint8_t randomized = 0;
     std::vector<uint8_t> duid = generateDuid(randomized);
-    // Generate trasnaction id to be set for the new exchange.
+    // Generate transaction id to be set for the new exchange.
     const uint32_t transid = generateTransid();
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
     if (!pkt6) {
@@ -1995,7 +2091,7 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
     const int arg_idx = 0;
     // Get transaction id offset.
     size_t transid_offset = getTransactionIdOffset(arg_idx);
-    // Generate trasnaction id to be set for the new exchange.
+    // Generate transaction id to be set for the new exchange.
     const uint32_t transid = generateTransid();
     // Create packet.
     PerfPkt6Ptr pkt6(new PerfPkt6(&template_buf[0], template_buf.size(),
@@ -2005,7 +2101,7 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
     }
     size_t rand_offset = getRandomOffset(arg_idx);
     // randomized will pick number of bytes randomized so we can
-    // just use part of the generated duid and substitude a few bytes
+    // just use part of the generated duid and substitute a few bytes
     /// in template.
     uint8_t randomized = 0;
     std::vector<uint8_t> duid = generateDuid(randomized);

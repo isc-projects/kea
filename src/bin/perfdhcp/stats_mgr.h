@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <map>
+#include <queue>
 
 
 namespace isc {
@@ -114,6 +115,7 @@ public:
     enum ExchangeType {
         XCHG_DO,  ///< DHCPv4 DISCOVER-OFFER
         XCHG_RA,  ///< DHCPv4 REQUEST-ACK
+        XCHG_RNA, ///< DHCPv4 REQUEST-ACK (renewal)
         XCHG_SA,  ///< DHCPv6 SOLICIT-ADVERTISE
         XCHG_RR,  ///< DHCPv6 REQUEST-REPLY
         XCHG_RN,  ///< DHCPv6 RENEW-REPLY
@@ -172,7 +174,7 @@ public:
         /// 1023 values maximum. Search operation on this index generally
         /// returns the range of packets that have the same transaction id
         /// hash assigned but most often these ranges will be short so further
-        /// search within a range to find a packet with pacrticular transaction
+        /// search within a range to find a packet with particular transaction
         /// id will not be intensive.
         ///
         /// Example 1: Add elements to the list
@@ -188,7 +190,7 @@ public:
         /// packets_collection.template get<0>().push_back(pkt2);
         /// \endcode
         ///
-        /// Example 2: Access elements through sequencial index
+        /// Example 2: Access elements through sequential index
         /// \code
         /// PktList packets_collection();
         /// ...  # Add elements to the container
@@ -241,7 +243,7 @@ public:
             >
         > PktList;
 
-        /// Packet list iterator for sequencial access to elements.
+        /// Packet list iterator for sequential access to elements.
         typedef typename PktList::iterator PktListIterator;
         /// Packet list index to search packets using transaction id hash.
         typedef typename PktList::template nth_index<1>::type
@@ -249,6 +251,9 @@ public:
         /// Packet list iterator to access packets using transaction id hash.
         typedef typename PktListTransidHashIndex::const_iterator
             PktListTransidHashIterator;
+        /// Packet list iterator queue for removal.
+        typedef typename std::queue<PktListTransidHashIterator>
+            PktListRemovalQueue;
 
         /// \brief Constructor
         ///
@@ -419,7 +424,7 @@ public:
                 // take a little more expensive approach to look packets using
                 // alternative index (transaction id & 1023).
                 PktListTransidHashIndex& idx = sent_packets_.template get<1>();
-                // Packets are grouped using trasaction id masked with value
+                // Packets are grouped using transaction id masked with value
                 // of 1023. For instance, packets with transaction id equal to
                 // 1, 1024 ... will belong to the same group (a.k.a. bucket).
                 // When using alternative index we don't find the packet but
@@ -437,6 +442,8 @@ public:
                 // bucket size the better. If bucket sizes appear to big we
                 // might want to increase number of buckets.
                 unordered_lookup_size_sum_ += std::distance(p.first, p.second);
+                // Removal can be done only after the loop
+                PktListRemovalQueue to_remove;
                 for (PktListTransidHashIterator it = p.first; it != p.second;
                      ++it) {
                     if ((*it)->getTransid() == rcvd_packet->getTransid()) {
@@ -454,18 +461,29 @@ public:
                             (static_cast<double>(packet_period.length().fractional_seconds())
                              / packet_period.length().ticks_per_second());
                         if (drop_time_ > 0 && (period_fractional > drop_time_)) {
-                            // The packet pointed to by 'it' is timed out so we
-                            // have to remove it. Removal may invalidate the
-                            // next_sent_ pointer if it points to the packet
-                            // being removed. So, we set the next_sent_ to point
-                            // to the next packet after removed one. This
-                            // pointer will be further updated in the following
-                            // iterations, if the subsequent packets are also
-                            // timed out.
-                            next_sent_ = eraseSent(sent_packets_.template project<0>(it));
-                            ++collected_;
+                            // Push the iterator on the removal queue.
+                            to_remove.push(it);
+
                         }
                     }
+                }
+
+                // Deal with the removal queue
+                while (!to_remove.empty()) {
+                    PktListTransidHashIterator it = to_remove.front();
+                    to_remove.pop();
+                    // The packet pointed to by 'it' is timed out so
+                    // we have to remove it. 
+                    if (packet_found || !to_remove.empty()) {
+                        eraseSent(sent_packets_.template project<0>(it));
+                    } else {
+                        // Removal may invalidate the next_sent_
+                        // pointer if it points to the packet being
+                        // removed. So, we set the next_sent_ to point
+                        // to the next packet after removed one.
+                        next_sent_ = eraseSent(sent_packets_.template project<0>(it));
+                    }
+                    ++collected_;
                 }
             }
 
@@ -487,14 +505,14 @@ public:
             return(sent_packet);
         }
 
-        /// \brief Return minumum delay between sent and received packet.
+        /// \brief Return minimum delay between sent and received packet.
         ///
         /// Method returns minimum delay between sent and received packet.
         ///
         /// \return minimum delay between packets.
         double getMinDelay() const { return(min_delay_); }
 
-        /// \brief Return maxmimum delay between sent and received packet.
+        /// \brief Return maximum delay between sent and received packet.
         ///
         /// Method returns maximum delay between sent and received packet.
         ///
@@ -535,13 +553,13 @@ public:
                         getAvgDelay() * getAvgDelay()));
         }
 
-        /// \brief Return number of orphant packets.
+        /// \brief Return number of orphan packets.
         ///
         /// Method returns number of received packets that had no matching
         /// sent packet. It is possible that such packet was late or not
         /// for us.
         ///
-        /// \return number of orphant received packets.
+        /// \return number of orphan received packets.
         uint64_t getOrphans() const { return(orphans_); }
 
         /// \brief Return number of garbage collected packets.
@@ -631,7 +649,8 @@ public:
         /// orphans for the 4-way exchanges, which is wrong. We will need to
         /// move the orphans counting out of the Statistics Manager so as
         /// orphans counter is increased only if the particular message is
-        /// not identified as a reponse to any of the messages sent by perfdhcp.
+        /// not identified as a response to any of the messages sent by
+        /// perfdhcp.
         void printMainStats() const {
             using namespace std;
             cout << "sent packets: " << getSentPacketsNum() << endl
@@ -752,7 +771,7 @@ public:
                  // when test is completed.
                  archived_packets_.push_back(*it);
              }
-             // get<0>() template returns sequencial index to
+             // get<0>() template returns sequential index to
              // container.
              return(sent_packets_.template get<0>().erase(it));
         }
@@ -785,7 +804,7 @@ public:
         /// to keep all packets archived throughout the test.
         bool archive_enabled_;
 
-        /// Maxmimum time elapsed between sending and receiving packet
+        /// Maximum time elapsed between sending and receiving packet
         /// before packet is assumed dropped.
         double drop_time_;
 
@@ -796,16 +815,16 @@ public:
         double sum_delay_;             ///< Sum of delays between sent
                                        ///< and received packets.
         double sum_delay_squared_;     ///< Squared sum of delays between
-                                       ///< sent and recived packets.
+                                       ///< sent and received packets.
 
-        uint64_t orphans_;   ///< Number of orphant received packets.
+        uint64_t orphans_;   ///< Number of orphan received packets.
 
         uint64_t collected_; ///< Number of garbage collected packets.
 
         /// Sum of unordered lookup sets. Needed to calculate mean size of
         /// lookup set. It is desired that number of unordered lookups is
         /// minimal for performance reasons. Tracking number of lookups and
-        /// mean size of the lookup set should give idea of packets serach
+        /// mean size of the lookup set should give idea of packets search
         /// complexity.
         uint64_t unordered_lookup_size_sum_;
 
@@ -823,7 +842,7 @@ public:
     typedef boost::shared_ptr<ExchangeStats> ExchangeStatsPtr;
     /// Map containing all specified exchange types.
     typedef typename std::map<ExchangeType, ExchangeStatsPtr> ExchangesMap;
-    /// Iterator poiting to \ref ExchangesMap
+    /// Iterator pointing to \ref ExchangesMap
     typedef typename ExchangesMap::const_iterator ExchangesMapIterator;
     /// Map containing custom counters.
     typedef typename std::map<std::string, CustomCounterPtr> CustomCountersMap;
@@ -876,7 +895,7 @@ public:
     /// This method checks if the \ref ExchangeStats object of a particular type
     /// exists (has been added using \ref addExchangeStats function).
     ///
-    /// \param xchg_type A type of the exchange being repersented by the
+    /// \param xchg_type A type of the exchange being represented by the
     /// \ref ExchangeStats object.
     ///
     /// \return true if the \ref ExchangeStats object has been added for a
@@ -902,9 +921,9 @@ public:
             CustomCounterPtr(new CustomCounter(long_name));
     }
 
-    /// \brief Check if any packet drops occured.
+    /// \brief Check if any packet drops occurred.
     ///
-    // \return true, if packet drops occured.
+    // \return true, if packet drops occurred.
     bool droppedPackets() const {
         for (ExchangesMapIterator it = exchanges_.begin();
              it != exchanges_.end();
@@ -920,7 +939,7 @@ public:
     ///
     /// Method returns specified counter.
     ///
-    /// \param counter_key key poiting to the counter in the counters map.
+    /// \param counter_key key pointing to the counter in the counters map.
     /// The short counter name has to be used to access counter.
     /// \return pointer to specified counter object.
     CustomCounterPtr getCounter(const std::string& counter_key) {
@@ -936,7 +955,7 @@ public:
     ///
     /// Increment counter value by one.
     ///
-    /// \param counter_key key poiting to the counter in the counters map.
+    /// \param counter_key key pointing to the counter in the counters map.
     /// \param value value to increment counter by.
     /// \return pointer to specified counter after incrementation.
     const CustomCounter& incrementCounter(const std::string& counter_key,
@@ -991,7 +1010,7 @@ public:
         return(sent_packet);
     }
 
-    /// \brief Return minumum delay between sent and received packet.
+    /// \brief Return minimum delay between sent and received packet.
     ///
     /// Method returns minimum delay between sent and received packet
     /// for specified exchange type.
@@ -1004,7 +1023,7 @@ public:
         return(xchg_stats->getMinDelay());
     }
 
-    /// \brief Return maxmimum delay between sent and received packet.
+    /// \brief Return maximum delay between sent and received packet.
     ///
     /// Method returns maximum delay between sent and received packet
     /// for specified exchange type.
@@ -1039,14 +1058,14 @@ public:
         return(xchg_stats->getStdDevDelay());
     }
 
-    /// \brief Return number of orphant packets.
+    /// \brief Return number of orphan packets.
     ///
-    /// Method returns number of orphant packets for specified
+    /// Method returns number of orphan packets for specified
     /// exchange type.
     ///
     /// \param xchg_type exchange type.
     /// \throw isc::BadValue if invalid exchange type specified.
-    /// \return number of orphant packets so far.
+    /// \return number of orphan packets so far.
     uint64_t getOrphans(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         return(xchg_stats->getOrphans());
@@ -1179,6 +1198,8 @@ public:
             return("DISCOVER-OFFER");
         case XCHG_RA:
             return("REQUEST-ACK");
+        case XCHG_RNA:
+            return("REQUEST-ACK (renewal)");
         case XCHG_SA:
             return("SOLICIT-ADVERTISE");
         case XCHG_RR:

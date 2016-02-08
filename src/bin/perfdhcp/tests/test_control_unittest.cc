@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,7 +69,7 @@ public:
         uint32_t transid_; ///< Last generated transaction id.
     };
 
-    /// \brief Sets the due times for sedning Solicit, Renew and Release.
+    /// \brief Sets the due times for sending Solicit, Renew and Release.
     ///
     /// There are three class members that hold the due time for sending DHCP
     /// messages:
@@ -95,12 +95,14 @@ public:
 
     using TestControl::checkExitConditions;
     using TestControl::createMessageFromReply;
+    using TestControl::createRequestFromAck;
     using TestControl::factoryElapsedTime6;
     using TestControl::factoryGeneric;
     using TestControl::factoryIana6;
     using TestControl::factoryOptionRequestOption6;
     using TestControl::factoryRapidCommit6;
     using TestControl::factoryRequestList4;
+    using TestControl::generateClientId;
     using TestControl::generateDuid;
     using TestControl::generateMacAddress;
     using TestControl::getCurrentTimeout;
@@ -114,6 +116,7 @@ public:
     using TestControl::reset;
     using TestControl::sendDiscover4;
     using TestControl::sendPackets;
+    using TestControl::sendMultipleRequests;
     using TestControl::sendMultipleMessages6;
     using TestControl::sendRequest6;
     using TestControl::sendSolicit6;
@@ -265,7 +268,7 @@ public:
     /// \param requested_options reference buffer with options.
     /// \param buf test buffer with options that will be matched.
     /// \return number of options from the buffer matched with options in
-    /// the reference buffer or -1 if error occured.
+    /// the reference buffer or -1 if error occurred.
     int matchRequestedOptions6(const dhcp::OptionBuffer& requested_options,
                                const dhcp::OptionBuffer& buf) const {
         // Sanity check.
@@ -316,7 +319,7 @@ public:
         return (cnt);
     }
 
-    /// \brief Test generation of mulitple DUIDs
+    /// \brief Test generation of multiple DUIDs
     ///
     /// This method checks the generation of multiple DUIDs. Number
     /// of iterations depends on the number of simulated clients.
@@ -403,7 +406,7 @@ public:
             // if randomization algorithm generates the same values but
             // this would be an error in randomization algorithm.
             total_dist += mismatch_dist;
-            // Mismatch may have occured on the DUID octet position
+            // Mismatch may have occurred on the DUID octet position
             // up to calculated earlier unequal_pos.
             ASSERT_LE(mismatch_dist, unequal_pos);
             // unique will inform if tested DUID is unique.
@@ -433,7 +436,7 @@ public:
             // Remember generated DUID.
             duids.push_back(new_duid);
         }
-        // If we have more than one client at least one mismatch occured.
+        // If we have more than one client at least one mismatch occurred.
         if (clients_num < 2) {
             EXPECT_EQ(0, total_dist);
         }
@@ -580,7 +583,7 @@ public:
         int clients_num = CommandOptions::instance().getClientsNum();
         // The old_mac will be holding the value of previously generated
         // MAC address. We will be comparing the newly generated one with it
-        // to see if it changes when mulitple clients are simulated or if it
+        // to see if it changes when multiple clients are simulated or if it
         // does not change when single client is simulated.
         MacAddress old_mac(CommandOptions::instance().getMacTemplate());
         // Holds the position if the octet on which two MAC addresses can
@@ -614,7 +617,7 @@ public:
             // the case if randomization algorithm generates the same
             // values but this would be an error in randomization algorithm.
             total_dist += mismatch_dist;
-            // Mismatch may have occured on the MAC address'es octet position
+            // Mismatch may have occurred on the MAC address'es octet position
             // up to calculated earlier unequal_pos.
             ASSERT_LE(mismatch_dist, unequal_pos);
             // unique will inform if tested DUID is unique.
@@ -650,7 +653,143 @@ public:
         }
     }
 
-    /// \brief Test that the DHCPv4 Release or Renew message is created
+    /// \brief Test sending DHCPv4 renews.
+    ///
+    /// This function simulates acquiring 10 leases from the server. Returned
+    /// DHCPACK messages are cached and used to send renew messages.
+    /// The maximal number of messages which can be sent is equal to the
+    /// number of leases acquired (10). This function also checks that an
+    /// attempt to send more renew messages than the number of leases acquired
+    /// will fail.
+    void testSendRenew4() {
+        std::string loopback_iface(getLocalLoopback());
+        if (loopback_iface.empty()) {
+            std::cout << "Skipping the test because loopback interface could"
+                " not be detected" << std::endl;
+            return;
+        }
+        // Build a command line. Depending on the message type, we will use
+        // -f<renew-rate> or -F<release-rate> parameter.
+        std::ostringstream s;
+        s << "perfdhcp -4 -l " << loopback_iface << " -r 10 -f";
+        s << " 10 -R 10 -L 10067 -n 10 127.0.0.1";
+        ASSERT_NO_THROW(processCmdLine(s.str()));
+        // Create a test controller class.
+        NakedTestControl tc;
+        tc.initializeStatsMgr();
+        // Set the transaction id generator to sequential to control to
+        // guarantee that transaction ids are predictable.
+        boost::shared_ptr<NakedTestControl::IncrementalGenerator>
+            generator(new NakedTestControl::IncrementalGenerator());
+        tc.setTransidGenerator(generator);
+        // Socket has to be created so as we can actually send packets.
+        int sock_handle = 0;
+        ASSERT_NO_THROW(sock_handle = tc.openSocket());
+        TestControl::TestControlSocket sock(sock_handle);
+
+        // Send a number of DHCPDISCOVER messages. Each generated message will
+        // be assigned a different transaction id, starting from 1 to 10.
+        tc.sendPackets(sock, 10);
+
+        // Simulate DHCPOFFER responses from the server. Each DHCPOFFER is
+        // assigned a transaction id from the range of 1 to 10, so as they
+        // match the transaction ids from the DHCPDISCOVER messages.
+        for (unsigned i = generator->getNext() - 10;
+             i < generator->getNext(); ++i) {
+            Pkt4Ptr offer(createOfferPkt4(i));
+            // If DHCPOFFER is matched with the DHCPDISCOVER the call below
+            // will trigger a corresponding DHCPREQUEST. They will be assigned
+            // transaction ids from the range from 11 to 20 (the range of
+            // 1 to 10 has been used by DHCPDISCOVER-DHCPOFFER).
+            ASSERT_NO_THROW(tc.processReceivedPacket4(sock, offer));
+    }
+
+        // Requests have been sent, so now let's simulate responses from the
+        // server. Generate corresponding DHCPACK messages with the transaction
+        // ids from the range from 11 to 20.
+        for (unsigned i = generator->getNext() - 10;
+             i < generator->getNext(); ++i) {
+            Pkt4Ptr ack(createAckPkt4(i));
+            // Each DHCPACK packet corresponds to the new lease acquired. Since
+            // -f<renew-rate> option has been specified, received Reply
+            // messages are held so as renew messages can be sent for
+            // existing leases.
+            ASSERT_NO_THROW(tc.processReceivedPacket4(sock, ack));
+        }
+
+        uint64_t msg_num;
+        // Try to send 5 messages. It should be successful because 10
+        // DHCPREQUEST messages has been received. For each of them we
+        // should be able to send renewal.
+        ASSERT_NO_THROW(
+            msg_num = tc.sendMultipleRequests(sock, 5)
+        );
+        // Make sure that we have sent 5 messages.
+        EXPECT_EQ(5, msg_num);
+
+        // Try to do it again. We should still have 5 Reply packets for
+        // which renews haven't been sent yet.
+        ASSERT_NO_THROW(
+            msg_num = tc.sendMultipleRequests(sock, 5)
+        );
+        EXPECT_EQ(5, msg_num);
+
+        // We used all the DHCPACK packets (we sent renew or release for each of
+        // them already). Therefore, no further renew messages should be sent
+        // before we acquire new leases.
+        ASSERT_NO_THROW(
+            msg_num = tc.sendMultipleRequests(sock, 5)
+        );
+        // Make sure that no message has been sent.
+        EXPECT_EQ(0, msg_num);
+    }
+
+    /// \brief Test that the DHCPREQUEST message is created correctly and
+    /// comprises expected values.
+    void testCreateRequest() {
+        // This command line specifies that the Release/Renew messages should
+        // be sent with the same rate as the Solicit messages.
+        std::ostringstream s;
+        s << "perfdhcp -4 -l lo -r 10 -f 10";
+        s << " -R 10 -L 10067 -n 10 127.0.0.1";
+        ASSERT_NO_THROW(processCmdLine(s.str()));
+        // Create a test controller class.
+        NakedTestControl tc;
+        // Set the transaction id generator which will be used by the
+        // createRenew or createRelease function to generate transaction id.
+        boost::shared_ptr<NakedTestControl::IncrementalGenerator>
+            generator(new NakedTestControl::IncrementalGenerator());
+        tc.setTransidGenerator(generator);
+
+        Pkt4Ptr ack = createAckPkt4(1);
+
+        // Create DHCPREQUST from DHCPACK.
+        Pkt4Ptr request;
+        ASSERT_NO_THROW(request = tc.createRequestFromAck(ack));
+
+        // Make sure that the DHCPACK has been successfully created and that
+        // it holds expected data.
+        ASSERT_TRUE(request);
+        EXPECT_EQ("127.0.0.1", request->getCiaddr().toText());
+
+        // HW address.
+        HWAddrPtr hwaddr_ack = ack->getHWAddr();
+        ASSERT_TRUE(hwaddr_ack);
+        HWAddrPtr hwaddr_req = request->getHWAddr();
+        ASSERT_TRUE(hwaddr_req);
+        EXPECT_TRUE(hwaddr_ack->hwaddr_ == hwaddr_req->hwaddr_);
+
+        // Creating message from null DHCPACK should fail.
+        EXPECT_THROW(tc.createRequestFromAck(Pkt4Ptr()), isc::BadValue);
+
+        // Creating message from DHCPACK holding zero yiaddr should fail.
+        asiolink::IOAddress yiaddr = ack->getYiaddr();
+        ack->setYiaddr(asiolink::IOAddress::IPV4_ZERO_ADDRESS());
+        EXPECT_THROW(tc.createRequestFromAck(ack), isc::BadValue);
+        ack->setYiaddr(yiaddr);
+    }
+
+    /// \brief Test that the DHCPv6 Release or Renew message is created
     /// correctly and comprises expected options.
     ///
     /// \param msg_type A type of the message to be tested: DHCPV6_RELEASE
@@ -721,7 +860,7 @@ public:
     ///
     /// This function simulates acquiring 10 leases from the server. Returned
     /// Reply messages are cached and used to send Renew or Release messages.
-    /// The maxmimal number of Renew or Release messages which can be sent is
+    /// The maximal number of Renew or Release messages which can be sent is
     /// equal to the number of leases acquired (10). This function also checks
     /// that an attempt to send more Renew or Release messages than the number
     /// of leases acquired will fail.
@@ -816,26 +955,47 @@ public:
     /// \brief Parse command line string with CommandOptions.
     ///
     /// \param cmdline command line string to be parsed.
-    /// \throw isc::Unexpected if unexpected error occured.
+    /// \throw isc::Unexpected if unexpected error occurred.
     /// \throw isc::InvalidParameter if command line is invalid.
     void processCmdLine(const std::string& cmdline) const {
         CommandOptionsHelper::process(cmdline);
+    }
+
+    /// \brief Create DHCPOFFER or DHCPACK packet.
+    ///
+    /// \param pkt_type DHCPOFFER or DHCPACK.
+    /// \param transid Transaction id.
+    ///
+    /// \return Instance of the packet.
+    Pkt4Ptr
+    createResponsePkt4(const uint8_t pkt_type,
+                       const uint32_t transid) const {
+        Pkt4Ptr pkt(new Pkt4(pkt_type, transid));
+        OptionPtr opt_serverid = Option::factory(Option::V4,
+                                                 DHO_DHCP_SERVER_IDENTIFIER,
+                                                 OptionBuffer(4, 1));
+        pkt->setYiaddr(asiolink::IOAddress("127.0.0.1"));
+        pkt->addOption(opt_serverid);
+        pkt->updateTimestamp();
+        return (pkt);
     }
 
     /// \brief Create DHCPv4 OFFER packet.
     ///
     /// \param transid transaction id.
     /// \return instance of the packet.
-    boost::shared_ptr<Pkt4>
+    Pkt4Ptr
     createOfferPkt4(uint32_t transid) const {
-        boost::shared_ptr<Pkt4> offer(new Pkt4(DHCPOFFER, transid));
-        OptionPtr opt_serverid = Option::factory(Option::V4,
-                                                 DHO_DHCP_SERVER_IDENTIFIER,
-                                                 OptionBuffer(4, 1));
-        offer->setYiaddr(asiolink::IOAddress("127.0.0.1"));
-        offer->addOption(opt_serverid);
-        offer->updateTimestamp();
-        return (offer);
+        return (createResponsePkt4(DHCPOFFER, transid));
+    }
+
+    /// \brief Create DHCPACK packet.
+    ///
+    /// \param transid transaction id.
+    /// \return instance of the packet.
+    Pkt4Ptr
+    createAckPkt4(const uint32_t transid) const {
+        return (createResponsePkt4(DHCPACK, transid));
     }
 
     /// \brief Create DHCPv6 ADVERTISE packet.
@@ -914,6 +1074,34 @@ TEST_F(TestControlTest, reset) {
     EXPECT_TRUE(tc.first_packet_serverid_.empty());
     EXPECT_FALSE(tc.interrupted_);
 
+}
+
+// This test verifies that the client id is generated from the HW address.
+TEST_F(TestControlTest, generateClientId) {
+    // Generate HW address.
+    std::vector<uint8_t> hwaddr;
+    for (unsigned int i = 0; i < 6; ++i) {
+        hwaddr.push_back(i);
+    }
+    HWAddrPtr hwaddr_ptr(new HWAddr(hwaddr, 5));
+
+    // Use generated HW address to generate client id.
+    NakedTestControl tc;
+    OptionPtr opt_client_id;
+    ASSERT_NO_THROW(opt_client_id = tc.generateClientId(hwaddr_ptr));
+    ASSERT_TRUE(opt_client_id);
+
+    // Extract the client id data.
+    const OptionBuffer& client_id = opt_client_id->getData();
+    ASSERT_EQ(7, client_id.size());
+
+    // Verify that the client identifier is generated correctly.
+
+    // First byte is the HW type.
+    EXPECT_EQ(5, client_id[0]);
+    // The rest of the client identifier should be equal to the HW address.
+    std::vector<uint8_t> sub(client_id.begin() + 1, client_id.end());
+    EXPECT_TRUE(hwaddr == sub);
 }
 
 TEST_F(TestControlTest, GenerateDuid) {
@@ -1252,7 +1440,7 @@ TEST_F(TestControlTest, Packet6ExchangeFromTemplate) {
     // then test should be interrupted and actual number of iterations will
     // be 6.
     const int received_num = 3;
-    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) exchanges.
     // The test function generates server's responses and passes it to the
     // TestControl class methods for processing. The number of exchanges
     // actually performed is returned in 'iterations_performed' argument. If
@@ -1287,14 +1475,14 @@ TEST_F(TestControlTest, Packet6Exchange) {
     // This simulates no packet drops.
     bool use_templates = false;
 
-    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) exchanges.
     // The test function generates server's responses and passes it to the
     // TestControl class methods for processing. The number of exchanges
     // actually performed is returned in 'iterations_performed' argument. If
     // processing is successful, the number of performed iterations should be
     // equal to the number of exchanges specified with the '-n' command line
     // parameter (10 in this case). All exchanged packets carry the IA_NA option
-    // to simulate the IPv6 address acqusition and to verify that the IA_NA
+    // to simulate the IPv6 address acquisition and to verify that the IA_NA
     // options returned by the server are processed correctly.
     testPkt6Exchange(iterations_num, iterations_num, use_templates,
                      iterations_performed);
@@ -1323,7 +1511,7 @@ TEST_F(TestControlTest, Packet6ExchangePrefixDelegation) {
     // This simulates no packet drops.
     bool use_templates = false;
 
-    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) exchanges.
     // The test function generates server's responses and passes it to the
     // TestControl class methods for processing. The number of exchanges
     // actually performed is returned in 'iterations_performed' argument. If
@@ -1358,7 +1546,7 @@ TEST_F(TestControlTest, Packet6ExchangeAddressAndPrefix) {
     // Set number of received packets equal to number of iterations.
     // This simulates no packet drops.
     bool use_templates = false;
-    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) exchanges.
     // The test function generates server's responses and passes it to the
     // TestControl class methods for processing. The number of exchanges
     // actually performed is returned in 'iterations_performed' argument. If
@@ -1432,12 +1620,28 @@ TEST_F(TestControlTest, PacketTemplates) {
     EXPECT_THROW(tc.initPacketTemplates(), isc::BadValue);
 }
 
-TEST_F(TestControlTest, processRenew) {
+// This test verifies that DHCPv4 renew (DHCPREQUEST) messages can be
+// sent for acquired leases.
+TEST_F(TestControlTest, processRenew4) {
+    testSendRenew4();
+}
+
+// This test verifies that DHCPv6 Renew messages can be sent for acquired
+// leases.
+TEST_F(TestControlTest, processRenew6) {
     testSendRenewRelease(DHCPV6_RENEW);
 }
 
-TEST_F(TestControlTest, processRelease) {
+// This test verifies that DHCPv6 Release messages can be sent for acquired
+// leases.
+TEST_F(TestControlTest, processRelease6) {
     testSendRenewRelease(DHCPV6_RELEASE);
+}
+
+// This test verifies that DHCPREQUEST is created correctly from the
+// DHCPACK message.
+TEST_F(TestControlTest, createRequest) {
+    testCreateRequest();
 }
 
 // This test verifies that the DHCPV6 Renew message is created correctly
@@ -1485,8 +1689,8 @@ TEST_F(TestControlTest, getCurrentTimeout) {
 // server's responses is valid. In this case, we are simulating that perfdhcp
 // sends Renew requests to the server, apart from the regular 4-way exchanges.
 // The timeout value depends on both the due time to send next Solicit and the
-// due time to send Renew - the timeout should be ajusted to the due time that
-// occurs sooner.
+// due time to send Renew - the timeout should be adjusted to the due time
+// that occurs sooner.
 TEST_F(TestControlTest, getCurrentTimeoutRenew) {
     // Set the Solicit rate to 10 and the Renew rate 5.
     ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l lo -r 10 -f 5 ::1"));
