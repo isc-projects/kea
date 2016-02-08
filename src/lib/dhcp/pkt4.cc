@@ -415,7 +415,11 @@ Pkt4::toText() const {
         output << "," << std::endl << "options:";
         for (isc::dhcp::OptionCollection::const_iterator opt = options_.begin();
              opt != options_.end(); ++opt) {
-            output << std::endl << opt->second->toText(2);
+            try {
+                output << std::endl << opt->second->toText(2);
+            } catch (...) {
+                output << "(unknown)" << std::endl;
+            }
         }
 
     } else {
@@ -535,7 +539,7 @@ Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
 uint8_t
 Pkt4::getHtype() const {
     if (!hwaddr_) {
-        isc_throw(InvalidOperation, "Can't get HType. HWAddr not defined");
+        return (HTYPE_UNDEFINED);
     }
     return (hwaddr_->htype_);
 }
@@ -543,7 +547,7 @@ Pkt4::getHtype() const {
 uint8_t
 Pkt4::getHlen() const {
     if (!hwaddr_) {
-        isc_throw(InvalidOperation, "Can't get HType. HWAddr not defined");
+        return (0);
     }
     uint8_t len = hwaddr_->hwaddr_.size();
     return (len <= MAX_CHADDR_LEN ? len : MAX_CHADDR_LEN);
