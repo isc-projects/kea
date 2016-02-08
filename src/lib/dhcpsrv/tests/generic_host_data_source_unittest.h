@@ -215,6 +215,10 @@ public:
     ///         retrieved correctly.
     void testMultipletReservations();
 
+    /// @brief Tests if compareIPv6Reservations() method treats same pool of
+    ///         reservations but added in different order as equal.
+    void testMultipletReservationsDifferentOrder();
+
     /// @brief Test if host reservations made for different IPv6 subnets
     ///        are handled correctly.
     ///
@@ -224,10 +228,20 @@ public:
     /// @param id identifier type (ID_HWADDR or ID_DUID)
     void testSubnetId6(int subnets, BaseHostDataSource::IdType id);
 
-    /// @brief Test if the duplicate host instances can't be inserted.
+    /// @brief Test if the duplicate host with same DUID can't be inserted.
     ///
     /// Uses gtest macros to report failures.
-    void testAddDuplicate();
+    void testAddDuplicate6WithSameDUID();
+
+    /// @brief Test if the duplicate host with same HWAddr can't be inserted.
+    ///
+    /// Uses gtest macros to report failures.
+    void testAddDuplicate6WithSameHWAddr();
+
+    /// @brief Test if the duplicate IPv4 host with can't be inserted.
+    ///
+    /// Uses gtest macros to report failures.
+    void testAddDuplicate4();
 
     /// @brief Returns DUID with identical content as specified HW address
     ///

@@ -325,6 +325,12 @@ TEST_F(MySqlHostDataSourceTest, multipleReservations){
     testMultipletReservations();
 }
 
+// Tests if compareIPv6Reservations() method treats same pool of reservations
+// but added in different order as equal.
+TEST_F(MySqlHostDataSourceTest, multipleReservationsDifferentOrder){
+    testMultipletReservationsDifferentOrder();
+}
+
 // Test verifies if multiple client classes for IPv4 can be stored.
 TEST_F(MySqlHostDataSourceTest, DISABLED_multipleClientClasses4) {
     /// @todo: Implement this test as part of #4213.
@@ -381,8 +387,24 @@ TEST_F(MySqlHostDataSourceTest, subnetId6) {
 // Test if the duplicate host instances can't be inserted. The test logic is as
 // follows: try to add multiple instances of the same host reservation and
 // verify that the second and following attempts will throw exceptions.
-TEST_F(MySqlHostDataSourceTest, addDuplicate) {
-    testAddDuplicate();
+// Hosts with same DUID.
+TEST_F(MySqlHostDataSourceTest, addDuplicate6WithDUID) {
+    testAddDuplicate6WithSameDUID();
+}
+
+// Test if the duplicate host instances can't be inserted. The test logic is as
+// follows: try to add multiple instances of the same host reservation and
+// verify that the second and following attempts will throw exceptions.
+// Hosts with same HWAddr.
+TEST_F(MySqlHostDataSourceTest, addDuplicate6WithHWAddr) {
+    testAddDuplicate6WithSameHWAddr();
+}
+
+// Test if the duplicate IPv4 host instances can't be inserted. The test logic is as
+// follows: try to add multiple instances of the same host reservation and
+// verify that the second and following attempts will throw exceptions.
+TEST_F(MySqlHostDataSourceTest, addDuplicate4) {
+    testAddDuplicate4();
 }
 
 }; // Of anonymous namespace

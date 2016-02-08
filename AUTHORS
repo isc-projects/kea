@@ -82,7 +82,8 @@ We have received the following contributions:
    2015-01: Extract MAC address from remote-id
    2015-05: MySQL schema extended to cover host reservation
    2015-10: Common MySQL Connector Pool
-   2015-12: MySQL host data source implemented.
+   2015-12: MySQL host data source implemented
+   2016-02: IPv6 reservations implemented
 
  - Jinmei Tatuya
    2015-10: Pkt4o6 class improvements
