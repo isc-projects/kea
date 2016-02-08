@@ -165,21 +165,6 @@ public:
     virtual ConstHostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
 
-    /// @brief Returns all IPv6 reservations assigned to single host
-    ///
-    /// @param host_id ID of a host owning IPv6 reservations
-    ///
-    /// @return Collection of IPv6 reservations
-    virtual IPv6ResrvCollection
-    getAllReservations(HostID host_id) const;
-
-    /// @brief Retrieves all IPv6 reservations for a single host and then
-    ///         adds them to that host.
-    ///
-    /// @param host Pointer to a host to be populated with IPv6 reservations.
-    void
-    assignReservations(HostPtr& host) const;
-
     /// @brief Adds a new host to the collection.
     ///
     /// The implementations of this method should guard against duplicate
@@ -311,6 +296,21 @@ private:
     void getIPv6ReservationCollection(StatementIndex stindex, MYSQL_BIND* bind,
             boost::shared_ptr<MySqlIPv6ReservationExchange> exchange,
             IPv6ResrvCollection& result) const;
+
+    /// @brief Returns all IPv6 reservations assigned to single host
+    ///
+    /// @param host_id ID of a host owning IPv6 reservations
+    ///
+    /// @return Collection of IPv6 reservations
+    virtual IPv6ResrvCollection
+    getAllReservations(HostID host_id) const;
+
+    /// @brief Retrieves all IPv6 reservations for a single host and then
+    ///         adds them to that host.
+    ///
+    /// @param host Pointer to a host to be populated with IPv6 reservations.
+    void
+    assignReservations(HostPtr& host) const;
 
 
     /// @brief Check Error and Throw Exception
