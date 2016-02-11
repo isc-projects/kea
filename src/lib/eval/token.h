@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -283,8 +283,8 @@ public:
 /// @brief Represents a sub-option inserted by the DHCPv4 relay.
 ///
 /// DHCPv4 relays insert sub-options in option 82. This token attempts to extract
-/// such sub-options. Note it is radically different than in DHCPv6 (possible
-/// many encapsulation levels), thus separate classes for v4 and v6.
+/// such sub-options. Note in DHCPv6 it is radically different (possibly
+/// many encapsulation levels), thus there are separate classes for v4 and v6.
 ///
 /// This token can represent the following expressions:
 /// relay[13].text - Textual representation of sub-option 13 in RAI (option 82)
@@ -294,9 +294,9 @@ public:
 class TokenRelay4Option : public TokenOption {
 public:
 
-    /// @brief Construtor for extracting sub-option from RAI (option 82)
+    /// @brief Constructor for extracting sub-option from RAI (option 82)
     ///
-    /// @param option_code code of the searched sub-option
+    /// @param option_code code of the requested sub-option
     /// @param rep_type code representation (currently .hex and .text are supported)
     TokenRelay4Option(const uint16_t option_code,
                       const RepresentationType& rep_type);

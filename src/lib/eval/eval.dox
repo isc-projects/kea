@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -128,7 +128,7 @@ instantiated with the appropriate value and put onto the expression vector.
 
 @section dhcpEcalToken Supported tokens
 
- There is a number of tokens implemented. Each token is derived from
+ There are a number of tokens implemented. Each token is derived from
  isc::eval::Token class and represents a certain expression primitive.
  Currently supported tokens are:
 
@@ -137,10 +137,10 @@ instantiated with the appropriate value and put onto the expression vector.
    hex string, e.g. 0x666f6f which is actually "foo";
  - isc::dhcp::TokenOption - represents an option in a packet, e.g.
                     option[123].text;
- - isc::dhcp::TokenEqual - represents equal (==) operator;
- - isc::dhcp::TokenSubstring - represents substring(text, start, length) operator;
+ - isc::dhcp::TokenEqual - represents the equal (==) operator;
+ - isc::dhcp::TokenSubstring - represents the substring(text, start, length) operator;
  - isc::dhcp::TokenRelay4Option - represents a sub-option inserted by the
-                    DHCPv4 relay, e.g. relay[123].text or relay[123].bin
+                    DHCPv4 relay, e.g. relay[123].text or relay[123].hex
 
 More operators are expected to be implemented in upcoming releases.
 

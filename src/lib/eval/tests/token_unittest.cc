@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -614,7 +614,7 @@ TEST_F(TokenTest, relayOption) {
 }
 
 // This test checks that the code properly handles cases when
-// there is RAI option, but there's no requested sub-option.
+// there is a RAI option, but there's no requested sub-option.
 TEST_F(TokenTest, relayOptionNoSuboption) {
 
     // Insert relay option with sub-options 1 and 13
