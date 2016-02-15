@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -190,14 +190,12 @@ TokenNot::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 
     string op = values.top();
     values.pop();
+    bool val = toBool(op);
 
-    if (op == "true") {
-        values.push("false");
-    } else if (op == "false") {
-        values.push("true");
+    if (val) {
+	values.push("false");
     } else {
-        isc_throw(EvalTypeError, "Expected a logical value at top of stack. "
-                  << "Got '" << op << "'.");
+	values.push("true");
     }
 }
 
@@ -211,28 +209,15 @@ TokenAnd::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 
     string op1 = values.top();
     values.pop();
+    bool val1 = toBool(op1);
     string op2 = values.top();
     values.pop(); // Dammit, std::stack interface is awkward.
+    bool val2 = toBool(op2);
 
-    if (op1 == "true") {
-        if (op2 == "true") {
-            values.push("true");
-        } else if (op2 == "false") {
-            values.push("false");
-        } else {
-            isc_throw(EvalTypeError, "Expected logical values at "
-                      << "top of stack. Got 'true' and '" << op2 << "'");
-        }
-    } else if (op1 == "false") {
-        if ((op2 == "true") || (op2 == "false")) {
-            values.push("false");
-        } else {
-            isc_throw(EvalTypeError, "Expected logical values at "
-                      << "top of stack. Got 'false' and '" << op2 << "'");
-        }
+    if (val1 && val2) {
+	values.push("true");
     } else {
-        isc_throw(EvalTypeError, "Expected logical values at top of stack. "
-                  << "Got '" << op1 << "' and '" << op2 << "'");
+	values.push("false");
     }
 }
 
@@ -246,28 +231,14 @@ TokenOr::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 
     string op1 = values.top();
     values.pop();
+    bool val1 = toBool(op1);
     string op2 = values.top();
     values.pop(); // Dammit, std::stack interface is awkward.
+    bool val2 = toBool(op2);
 
-    if (op1 == "true") {
-        if ((op2 == "true") || (op2 == "false")) {
-            values.push("true");
-        } else {
-            isc_throw(EvalTypeError, "Expected logical values at "
-                      << "top of stack. Got 'true' and '" << op2 << "'");
-        }
-    } else if (op1 == "false") {
-        if (op2 == "true") {
-            values.push("true");
-        } else if (op2 == "false") {
-            values.push("false");
-        } else {
-            isc_throw(EvalTypeError, "Expected logical values at "
-                      << "top of stack. Got 'false' and '" << op2 << "'");
-        }
+    if (val1 || val2) {
+	values.push("true");
     } else {
-        isc_throw(EvalTypeError, "Expected logical values at top of stack. "
-                  << "Got '" << op1 << "' and '" << op2 << "'");
+	values.push("false");
     }
 }
-
