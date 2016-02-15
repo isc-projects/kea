@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,14 +27,7 @@ bool evaluate(const Expression& expr, const Pkt& pkt) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected exactly "
                   "1 value at the end of evaluatuion, got " << values.size());
     }
-    if (values.top() == "false") {
-        return (false);
-    } else if (values.top() == "true") {
-        return (true);
-    } else {
-        isc_throw(EvalTypeError, "Incorrect evaluation type. Expected "
-                  "\"false\" or \"true\", got \"" << values.top() << "\"");
-    }
+    return (Token::toBool(values.top()));
 }
 
 }; // end of isc::dhcp namespace

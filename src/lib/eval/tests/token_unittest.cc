@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -105,6 +105,24 @@ public:
 
     /// @todo: Add more option types here
 };
+
+// This tests the toBool() conversions
+TEST_F(TokenTest, toBool) {
+
+    ASSERT_NO_THROW(Token::toBool("true"));
+    EXPECT_TRUE(Token::toBool("true"));
+    ASSERT_NO_THROW(Token::toBool("false"));
+    EXPECT_FALSE(Token::toBool("false"));
+
+    // Token::toBool() is case-sensitive
+    EXPECT_THROW(Token::toBool("True"), EvalTypeError);
+    EXPECT_THROW(Token::toBool("TRUE"), EvalTypeError);
+
+    // Proposed aliases
+    EXPECT_THROW(Token::toBool("1"), EvalTypeError);
+    EXPECT_THROW(Token::toBool("0"), EvalTypeError);
+    EXPECT_THROW(Token::toBool(""), EvalTypeError);
+}
 
 // This simple test checks that a TokenString, representing a constant string,
 // can be used in Pkt4 evaluation. (The actual packet is not used)
