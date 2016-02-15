@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -87,6 +87,24 @@ public:
 
     /// @brief Virtual destructor
     virtual ~Token() {}
+
+    /// @brief Coverts a (string) value to a boolean
+    ///
+    /// Only "true" and "false" are expected.
+    ///
+    /// @param the (string) value
+    /// @return the boolean represented by the value
+    /// @throw EvalTypeError when the value is not either "true" or "false".
+    static inline bool toBool(std::string value) {
+        if (value == "true") {
+            return (true);
+        } else if (value == "false") {
+            return (false);
+        } else {
+            isc_throw(EvalTypeError, "Incorrect boolean. Expected exactly "
+                      "\"false\" or \"true\", got \"" << value << "\"");
+        }
+    }
 };
 
 /// @brief Token representing a constant string

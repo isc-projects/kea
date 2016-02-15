@@ -665,7 +665,7 @@ goto find_rule; \
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
 #line 1 "lexer.ll"
-/* Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 
    Permission to use, copy, modify, and/or distribute this software for any
    purpose with or without fee is hereby granted, provided that the above
