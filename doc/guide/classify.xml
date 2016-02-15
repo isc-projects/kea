@@ -164,6 +164,7 @@
 <row><entry>Option Text</entry><entry>option[code].text</entry><entry>The value of the option with code "code" from the packet as text</entry></row>
 -->
 <row><entry>Option Hex</entry><entry>option[code].hex</entry><entry>The value of the option with code "code" from the packet as hex</entry></row>
+<row><entry>Option Exist</entry><entry>option[code].exist</entry><entry>If the option with code "code" is present in the packet "true" else "false"</entry></row>
           </tbody>
           </tgroup>
         </table>
@@ -185,6 +186,11 @@
       </para>
 
       <para>
+      "option[code].exist" checks if an option with the given code is present
+      in the incoming packet. It can be used with empty options.
+      </para>
+
+      <para>
         <table frame="all" id="classification-expressions-list">
           <title>List of Classification Expressions</title>
           <tgroup cols='3'>
@@ -200,11 +206,23 @@
           </thead>
           <tbody>
 <row><entry>Equal</entry> <entry>'foo' == 'bar'</entry><entry>Compare the two values and return "true" or "false"</entry></row>
+<row><entry>Not</entry> <entry>not ('foo' == 'bar')</entry><entry>Logical negation</entry></row>
+<row><entry>And</entry> <entry>('foo' == 'bar') and ('bar' == 'foo')</entry><entry>Logical and</entry></row>
+<row><entry>Or</entry> <entry>('foo' == 'bar') or ('bar' == 'foo')</entry><entry>Logical or</entry></row>
 <row><entry>Substring</entry><entry>substring('foobar',0,3)</entry><entry>Return the requested substring</entry></row>
           </tbody>
           </tgroup>
         </table>
       </para>
+
+      <section>
+        <title>Logical operators</title>
+        The Not, And and Or logical operators are the common operators. Not
+        has the highest precedence, Or the lowest. And and Or are (left)
+        associative, parentheses around a logical expression can be used
+        to enforce a specific grouping, for instance in "A and (B or C)"
+        ("A and B or C" means "(A and B) or C").
+      </section>
 
       <section>
         <title>Substring</title>
@@ -362,7 +380,7 @@
       </para>
 
       <para>
-     	The following example shows restricting access to a DHCPv6 subnet.  This
+        The following example shows restricting access to a DHCPv6 subnet.  This
         configuration will restrict use of the addresses 2001:db8:1::1 to
         2001:db8:1::FFFF to members of the "Client_enterprise" class.
 
