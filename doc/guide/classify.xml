@@ -221,7 +221,7 @@
         has the highest precedence, Or the lowest. And and Or are (left)
         associative, parentheses around a logical expression can be used
         to enforce a specific grouping, for instance in "A and (B or C)"
-        ("A and B or C" means "(A and B) or C").
+        (without parentheses "A and B or C" means "(A and B) or C").
       </section>
 
       <section>
