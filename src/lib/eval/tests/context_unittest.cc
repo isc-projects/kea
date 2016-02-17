@@ -291,7 +291,7 @@ TEST_F(EvalContextTest, relay4Option) {
 
     EvalContext eval(Option::V4);
     EXPECT_NO_THROW(parsed_ =
-                    eval.parseString("relay[13].hex == 'thirteen'"));
+                    eval.parseString("relay4[13].hex == 'thirteen'"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, eval.expression.size());
 
@@ -304,13 +304,13 @@ TEST_F(EvalContextTest, relay4Option) {
     checkTokenEq(tmp3);
 }
 
-// Verify that relay[13] is not usable in v6
+// Verify that relay4[13] is not usable in v6
 // There will be a separate relay accessor for v6.
 TEST_F(EvalContextTest, relay4Error) {
     universe_ = Option::V6;
 
-    checkError("relay[13].hex == 'thirteen'",
-               "<string>:1.1-5: relay support for v6 is not implemented");
+    checkError("relay4[13].hex == 'thirteen'",
+               "<string>:1.1-6: relay4 can only be used in DHCPv4.");
 }
 
 // Test some scanner error cases
