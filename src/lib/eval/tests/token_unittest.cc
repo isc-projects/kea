@@ -62,6 +62,15 @@ public:
         pkt4_->addOption(rai);
     }
 
+    /// @brief Convenience function. Removes token and values stacks.
+    void clearStack() {
+        while (!values_.empty()) {
+            values_.pop();
+        }
+
+        t_.reset();
+    }
+
     TokenPtr t_; ///< Just a convenience pointer
 
     ValueStack values_; ///< evaluated values will be stored here
@@ -651,5 +660,46 @@ TEST_F(TokenTest, relayOptionNoRai) {
 
     // The option should NOT be found (there is no sub-option 13),
     // so the expression should evaluate to ""
+    EXPECT_EQ("", values_.top());
+}
+
+// This test checks that only the RAI is searched for the requested
+// sub-option.
+TEST_F(TokenTest, relayRAIOnly) {
+
+    // Insert relay option with sub-options 1 and 13
+    insertRelay4Option();
+
+    // Add options 13 and 70 to the packet.
+    OptionPtr opt13(new OptionString(Option::V4, 13, "THIRTEEN"));
+    OptionPtr opt70(new OptionString(Option::V4, 70, "SEVENTY"));
+    pkt4_->addOption(opt13);
+
+    // The situation is as follows:
+    // Packet:
+    //  - option 13 (containing THIRTEEN)
+    //  - option 82 (rai)
+    //      - option 1 (containing "one")
+    //      - option 13 (containing "thirteen")
+
+    // Let's try to get option 13. It should get the one from RAI
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("thirteen", values_.top());
+
+    // Try to get option 1. It should get the one from RAI
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(1, TokenOption::TEXTUAL)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("one", values_.top());
+
+    // Try to get option 70. It should fail, as there's no such
+    // sub option in RAI.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(70, TokenOption::TEXTUAL)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
     EXPECT_EQ("", values_.top());
 }
