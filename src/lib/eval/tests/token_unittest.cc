@@ -677,7 +677,7 @@ TEST_F(TokenTest, relayRAIOnly) {
 
     // The situation is as follows:
     // Packet:
-    //  - option 13 (containing THIRTEEN)
+    //  - option 13 (containing "THIRTEEN")
     //  - option 82 (rai)
     //      - option 1 (containing "one")
     //      - option 13 (containing "thirteen")
