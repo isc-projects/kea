@@ -333,7 +333,7 @@ namespace isc { namespace eval {
         TOKEN_OPTION = 259,
         TOKEN_SUBSTRING = 260,
         TOKEN_TEXT = 261,
-        TOKEN_RELAY = 262,
+        TOKEN_RELAY4 = 262,
         TOKEN_HEX = 263,
         TOKEN_ALL = 264,
         TOKEN_DOT = 265,
@@ -467,7 +467,7 @@ namespace isc { namespace eval {
 
     static inline
     symbol_type
-    make_RELAY (const location_type& l);
+    make_RELAY4 (const location_type& l);
 
     static inline
     symbol_type
@@ -1039,9 +1039,9 @@ namespace isc { namespace eval {
   }
 
   EvalParser::symbol_type
-  EvalParser::make_RELAY (const location_type& l)
+  EvalParser::make_RELAY4 (const location_type& l)
   {
-    return symbol_type (token::TOKEN_RELAY, l);
+    return symbol_type (token::TOKEN_RELAY4, l);
   }
 
   EvalParser::symbol_type

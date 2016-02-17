@@ -653,82 +653,89 @@ namespace isc { namespace eval {
                          break;
                      }
                      case Option::V6:
-                         error(yystack_[5].location, "relay support for v6 is not implemented");
+                         // We will have relay6[123] for the DHCPv6.
+                         // In a very distant future we'll possibly be able
+                         // to mix both if we have DHCPv4-over-DHCPv6, so it
+                         // has some sense to make it explicit whether we
+                         // talk about DHCPv4 relay or DHCPv6 relay. However,
+                         // for the time being relay4 can be used in DHCPv4
+                         // only.
+                         error(yystack_[5].location, "relay4 can only be used in DHCPv4.");
                      }
                   }
-#line 660 "parser.cc" // lalr1.cc:847
+#line 667 "parser.cc" // lalr1.cc:847
     break;
 
   case 8:
-#line 111 "parser.yy" // lalr1.cc:847
+#line 118 "parser.yy" // lalr1.cc:847
     {
                       TokenPtr sub(new TokenSubstring());
                       ctx.expression.push_back(sub);
                   }
-#line 669 "parser.cc" // lalr1.cc:847
+#line 676 "parser.cc" // lalr1.cc:847
     break;
 
   case 10:
-#line 120 "parser.yy" // lalr1.cc:847
+#line 127 "parser.yy" // lalr1.cc:847
     {
                      yylhs.value.as< uint16_t > () = ctx.convertOptionCode(yystack_[0].value.as< std::string > (), yystack_[0].location);
                  }
-#line 677 "parser.cc" // lalr1.cc:847
+#line 684 "parser.cc" // lalr1.cc:847
     break;
 
   case 11:
-#line 124 "parser.yy" // lalr1.cc:847
+#line 131 "parser.yy" // lalr1.cc:847
     {
                      yylhs.value.as< uint16_t > () = ctx.convertOptionName(yystack_[0].value.as< std::string > (), yystack_[0].location);
                  }
-#line 685 "parser.cc" // lalr1.cc:847
+#line 692 "parser.cc" // lalr1.cc:847
     break;
 
   case 12:
-#line 130 "parser.yy" // lalr1.cc:847
+#line 137 "parser.yy" // lalr1.cc:847
     {
                           yylhs.value.as< TokenOption::RepresentationType > () = TokenOption::TEXTUAL;
                       }
-#line 693 "parser.cc" // lalr1.cc:847
+#line 700 "parser.cc" // lalr1.cc:847
     break;
 
   case 13:
-#line 134 "parser.yy" // lalr1.cc:847
+#line 141 "parser.yy" // lalr1.cc:847
     {
                           yylhs.value.as< TokenOption::RepresentationType > () = TokenOption::HEXADECIMAL;
                       }
-#line 701 "parser.cc" // lalr1.cc:847
+#line 708 "parser.cc" // lalr1.cc:847
     break;
 
   case 14:
-#line 140 "parser.yy" // lalr1.cc:847
+#line 147 "parser.yy" // lalr1.cc:847
     {
                      TokenPtr str(new TokenString(yystack_[0].value.as< std::string > ()));
                      ctx.expression.push_back(str);
                  }
-#line 710 "parser.cc" // lalr1.cc:847
+#line 717 "parser.cc" // lalr1.cc:847
     break;
 
   case 15:
-#line 147 "parser.yy" // lalr1.cc:847
+#line 154 "parser.yy" // lalr1.cc:847
     {
                       TokenPtr str(new TokenString(yystack_[0].value.as< std::string > ()));
                       ctx.expression.push_back(str);
                   }
-#line 719 "parser.cc" // lalr1.cc:847
+#line 726 "parser.cc" // lalr1.cc:847
     break;
 
   case 16:
-#line 152 "parser.yy" // lalr1.cc:847
+#line 159 "parser.yy" // lalr1.cc:847
     {
                      TokenPtr str(new TokenString("all"));
                      ctx.expression.push_back(str);
                  }
-#line 728 "parser.cc" // lalr1.cc:847
+#line 735 "parser.cc" // lalr1.cc:847
     break;
 
 
-#line 732 "parser.cc" // lalr1.cc:847
+#line 739 "parser.cc" // lalr1.cc:847
             default:
               break;
             }
@@ -1066,7 +1073,7 @@ namespace isc { namespace eval {
   const EvalParser::yytname_[] =
   {
   "\"end of file\"", "error", "$undefined", "\"==\"", "\"option\"",
-  "\"substring\"", "\"text\"", "\"relay\"", "\"hex\"", "\"all\"", "\".\"",
+  "\"substring\"", "\"text\"", "\"relay4\"", "\"hex\"", "\"all\"", "\".\"",
   "\",\"", "\"(\"", "\")\"", "\"[\"", "\"]\"", "\"constant string\"",
   "\"integer\"", "\"constant hexstring\"", "\"option name\"", "TOKEN",
   "$accept", "expression", "bool_expr", "string_expr", "option_code",
@@ -1077,8 +1084,8 @@ namespace isc { namespace eval {
   const unsigned char
   EvalParser::yyrline_[] =
   {
-       0,    72,    72,    75,    82,    87,    92,    97,   110,   115,
-     119,   123,   129,   133,   139,   146,   151
+       0,    72,    72,    75,    82,    87,    92,    97,   117,   122,
+     126,   130,   136,   140,   146,   153,   158
   };
 
   // Print the state stack on the debug stream.
@@ -1113,8 +1120,8 @@ namespace isc { namespace eval {
 
 #line 13 "parser.yy" // lalr1.cc:1155
 } } // isc::eval
-#line 1117 "parser.cc" // lalr1.cc:1155
-#line 158 "parser.yy" // lalr1.cc:1156
+#line 1124 "parser.cc" // lalr1.cc:1155
+#line 165 "parser.yy" // lalr1.cc:1156
 
 void
 isc::eval::EvalParser::error(const location_type& loc,
