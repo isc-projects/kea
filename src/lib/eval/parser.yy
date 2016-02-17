@@ -40,7 +40,7 @@ using namespace isc::eval;
   OPTION "option"
   SUBSTRING "substring"
   TEXT "text"
-  RELAY "relay"
+  RELAY4 "relay4"
   HEX "hex"
   ALL "all"
   DOT "."
@@ -94,7 +94,7 @@ string_expr : STRING
                       TokenPtr opt(new TokenOption($3, $6));
                       ctx.expression.push_back(opt);
                   }
-            | RELAY "[" option_code "]" "." option_repr_type
+            | RELAY4 "[" option_code "]" "." option_repr_type
                   {
                      switch (ctx.getUniverse()) {
                      case Option::V4:
@@ -104,7 +104,14 @@ string_expr : STRING
                          break;
                      }
                      case Option::V6:
-                         error(@1, "relay support for v6 is not implemented");
+                         // We will have relay6[123] for the DHCPv6.
+                         // In a very distant future we'll possibly be able
+                         // to mix both if we have DHCPv4-over-DHCPv6, so it
+                         // has some sense to make it explicit whether we
+                         // talk about DHCPv4 relay or DHCPv6 relay. However,
+                         // for the time being relay4 can be used in DHCPv4
+                         // only.
+                         error(@1, "relay4 can only be used in DHCPv4.");
                      }
                   }
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
