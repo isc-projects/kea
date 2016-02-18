@@ -1,3 +1,9 @@
+1078.	[func]		tomek
+	Client classification in DHCPv4 has been enhanced. It is now
+	possible to access relay sub-options using the expression
+	relay[123].hex.
+	(Trac #4264, git c13791e916ceae9a73ca44005581e0e39385a572)
+
 1077.	[func]		marcin
 	perfdhcp now accepts -f option for DHCPv4 server testing, which
 	enables lease renewals at the specified rate.
