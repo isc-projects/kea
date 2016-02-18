@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -92,7 +92,7 @@ public:
     uint16_t convertOptionCode(const std::string& option_code,
                                const isc::eval::location& loc);
 
-    /// @brief Option name convertion
+    /// @brief Option name conversion
     ///
     /// @param option_name the option name
     /// @param loc the location of the token
@@ -100,6 +100,13 @@ public:
     /// @throw calls the syntax error function if the name cannot be resolved
     uint16_t convertOptionName(const std::string& option_name,
                                const isc::eval::location& loc);
+
+    /// @brief Returns the universe (v4 or v6)
+    ///
+    /// @return universe
+    Option::Universe getUniverse() {
+        return (option_universe_);
+    }
 
  private:
     /// @brief Flag determining scanner debugging.
