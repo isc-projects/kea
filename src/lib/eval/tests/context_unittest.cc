@@ -348,6 +348,35 @@ TEST_F(EvalContextTest, logicalPrecedence) {
     EXPECT_TRUE(tor);
 }
 
+// Test parsing of logical operators with parentheses (same than
+// with precedence but using parentheses to overwrite precedence)
+TEST_F(EvalContextTest, logicalParentheses) {
+    // not precedence > and precedence
+    EvalContext evalna(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evalna.parseString("not (option[123].exists and option[123].exists)"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(4, evalna.expression.size());
+    TokenPtr token = evalna.expression.at(3);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenNot> tnot =
+        boost::dynamic_pointer_cast<TokenNot>(token);
+    EXPECT_TRUE(tnot);
+
+    // and precedence > or precedence
+    EvalContext evaloa(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evaloa.parseString("(option[123].exists or option[123].exists) "
+                         "and option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(5, evaloa.expression.size());
+    token = evaloa.expression.at(4);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenAnd> tand =
+        boost::dynamic_pointer_cast<TokenAnd>(token);
+    EXPECT_TRUE(tand);
+}
+
 // Test the parsing of a substring expression
 TEST_F(EvalContextTest, substring) {
     EvalContext eval(Option::V4);
