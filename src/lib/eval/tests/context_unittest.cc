@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -87,6 +87,18 @@ public:
         boost::shared_ptr<TokenSubstring> sub =
             boost::dynamic_pointer_cast<TokenSubstring>(token);
         EXPECT_TRUE(sub);
+    }
+
+    /// @brief check if the given token is relay4 with the expected code
+    void checkTokenRelay4(const TokenPtr& token, uint16_t code) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenRelay4Option> relay4 =
+            boost::dynamic_pointer_cast<TokenRelay4Option>(token);
+        EXPECT_TRUE(relay4);
+
+        if (relay4) {
+            EXPECT_EQ(code, relay4->getCode());
+        }
     }
 
     /// @brief checks if the given expression raises the expected message
@@ -272,6 +284,33 @@ TEST_F(EvalContextTest, substring) {
     checkTokenString(tmp2, "2");
     checkTokenString(tmp3, "all");
     checkTokenSubstring(tmp4);
+}
+
+// This test checks that the relay[code].hex can be used in expressions.
+TEST_F(EvalContextTest, relay4Option) {
+
+    EvalContext eval(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+                    eval.parseString("relay4[13].hex == 'thirteen'"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+
+    checkTokenRelay4(tmp1, 13);
+    checkTokenString(tmp2, "thirteen");
+    checkTokenEq(tmp3);
+}
+
+// Verify that relay4[13] is not usable in v6
+// There will be a separate relay accessor for v6.
+TEST_F(EvalContextTest, relay4Error) {
+    universe_ = Option::V6;
+
+    checkError("relay4[13].hex == 'thirteen'",
+               "<string>:1.1-6: relay4 can only be used in DHCPv4.");
 }
 
 // Test some scanner error cases

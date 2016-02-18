@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,6 +42,33 @@ public:
 
         pkt4_->addOption(option_str4_);
         pkt6_->addOption(option_str6_);
+    }
+
+    /// @brief Inserts RAI option with several suboptions
+    ///
+    /// The structure inserted is:
+    ///  - RAI (option 82)
+    ///      - option 1 (containing string "one")
+    ///      - option 13 (containing string "thirteen")
+    void insertRelay4Option() {
+
+        // RAI (Relay Agent Information) option
+        OptionPtr rai(new Option(Option::V4, DHO_DHCP_AGENT_OPTIONS));
+        OptionPtr sub1(new OptionString(Option::V4, 1, "one"));
+        OptionPtr sub13(new OptionString(Option::V4, 13, "thirteen"));
+
+        rai->addOption(sub1);
+        rai->addOption(sub13);
+        pkt4_->addOption(rai);
+    }
+
+    /// @brief Convenience function. Removes token and values stacks.
+    void clearStack() {
+        while (!values_.empty()) {
+            values_.pop();
+        }
+
+        t_.reset();
     }
 
     TokenPtr t_; ///< Just a convenience pointer
@@ -573,4 +600,107 @@ TEST_F(TokenTest, substringEquals) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("false", values_.top());
 
+}
+
+// This test checks that the existing relay option can be found.
+TEST_F(TokenTest, relayOption) {
+
+    // Insert relay option with sub-options 1 and 13
+    insertRelay4Option();
+
+    // Creating the token should be safe.
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
+
+    // We should be able to evaluate it.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have one value on the stack
+    ASSERT_EQ(1, values_.size());
+
+    // The option should be found and relay[13] should evaluate to the
+    // content of that sub-option, i.e. "thirteen"
+    EXPECT_EQ("thirteen", values_.top());
+}
+
+// This test checks that the code properly handles cases when
+// there is a RAI option, but there's no requested sub-option.
+TEST_F(TokenTest, relayOptionNoSuboption) {
+
+    // Insert relay option with sub-options 1 and 13
+    insertRelay4Option();
+
+    // Creating the token should be safe.
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(15, TokenOption::TEXTUAL)));
+
+    // We should be able to evaluate it.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have one value on the stack
+    ASSERT_EQ(1, values_.size());
+
+    // The option should NOT be found (there is no sub-option 15),
+    // so the expression should evaluate to ""
+    EXPECT_EQ("", values_.top());
+}
+
+// This test checks that the code properly handles cases when
+// there's no RAI option at all.
+TEST_F(TokenTest, relayOptionNoRai) {
+
+    // We didn't call insertRelay4Option(), so there's no RAI option.
+
+    // Creating the token should be safe.
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
+
+    // We should be able to evaluate it.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have one value on the stack
+    ASSERT_EQ(1, values_.size());
+
+    // The option should NOT be found (there is no sub-option 13),
+    // so the expression should evaluate to ""
+    EXPECT_EQ("", values_.top());
+}
+
+// This test checks that only the RAI is searched for the requested
+// sub-option.
+TEST_F(TokenTest, relayRAIOnly) {
+
+    // Insert relay option with sub-options 1 and 13
+    insertRelay4Option();
+
+    // Add options 13 and 70 to the packet.
+    OptionPtr opt13(new OptionString(Option::V4, 13, "THIRTEEN"));
+    OptionPtr opt70(new OptionString(Option::V4, 70, "SEVENTY"));
+    pkt4_->addOption(opt13);
+    pkt4_->addOption(opt70);
+
+    // The situation is as follows:
+    // Packet:
+    //  - option 13 (containing "THIRTEEN")
+    //  - option 82 (rai)
+    //      - option 1 (containing "one")
+    //      - option 13 (containing "thirteen")
+
+    // Let's try to get option 13. It should get the one from RAI
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("thirteen", values_.top());
+
+    // Try to get option 1. It should get the one from RAI
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(1, TokenOption::TEXTUAL)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("one", values_.top());
+
+    // Try to get option 70. It should fail, as there's no such
+    // sub option in RAI.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(70, TokenOption::TEXTUAL)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("", values_.top());
 }

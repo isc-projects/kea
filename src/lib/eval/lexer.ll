@@ -1,4 +1,4 @@
-/* Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -127,6 +127,7 @@ blank [ \t]
 "text"      return isc::eval::EvalParser::make_TEXT(loc);
 "hex"       return isc::eval::EvalParser::make_HEX(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
+"relay4"    return isc::eval::EvalParser::make_RELAY4(loc);
 "all"       return isc::eval::EvalParser::make_ALL(loc);
 "."         return isc::eval::EvalParser::make_DOT(loc);
 "("         return isc::eval::EvalParser::make_LPAREN(loc);
