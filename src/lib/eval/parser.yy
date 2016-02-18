@@ -1,4 +1,4 @@
-/* Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,6 +40,7 @@ using namespace isc::eval;
   OPTION "option"
   SUBSTRING "substring"
   TEXT "text"
+  RELAY4 "relay4"
   HEX "hex"
   ALL "all"
   DOT "."
@@ -92,6 +93,26 @@ string_expr : STRING
                   {
                       TokenPtr opt(new TokenOption($3, $6));
                       ctx.expression.push_back(opt);
+                  }
+            | RELAY4 "[" option_code "]" "." option_repr_type
+                  {
+                     switch (ctx.getUniverse()) {
+                     case Option::V4:
+                     {
+                         TokenPtr opt(new TokenRelay4Option($3, $6));
+                         ctx.expression.push_back(opt);
+                         break;
+                     }
+                     case Option::V6:
+                         // We will have relay6[123] for the DHCPv6.
+                         // In a very distant future we'll possibly be able
+                         // to mix both if we have DHCPv4-over-DHCPv6, so it
+                         // has some sense to make it explicit whether we
+                         // talk about DHCPv4 relay or DHCPv6 relay. However,
+                         // for the time being relay4 can be used in DHCPv4
+                         // only.
+                         error(@1, "relay4 can only be used in DHCPv4.");
+                     }
                   }
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
                   {
