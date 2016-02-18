@@ -674,6 +674,7 @@ TEST_F(TokenTest, relayRAIOnly) {
     OptionPtr opt13(new OptionString(Option::V4, 13, "THIRTEEN"));
     OptionPtr opt70(new OptionString(Option::V4, 70, "SEVENTY"));
     pkt4_->addOption(opt13);
+    pkt4_->addOption(opt70);
 
     // The situation is as follows:
     // Packet:
