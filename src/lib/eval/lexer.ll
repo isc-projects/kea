@@ -126,9 +126,13 @@ blank [ \t]
 "option"    return isc::eval::EvalParser::make_OPTION(loc);
 "text"      return isc::eval::EvalParser::make_TEXT(loc);
 "hex"       return isc::eval::EvalParser::make_HEX(loc);
+"exists"    return isc::eval::EvalParser::make_EXISTS(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
 "relay4"    return isc::eval::EvalParser::make_RELAY4(loc);
 "all"       return isc::eval::EvalParser::make_ALL(loc);
+"not"       return isc::eval::EvalParser::make_NOT(loc);
+"and"       return isc::eval::EvalParser::make_AND(loc);
+"or"        return isc::eval::EvalParser::make_OR(loc);
 "."         return isc::eval::EvalParser::make_DOT(loc);
 "("         return isc::eval::EvalParser::make_LPAREN(loc);
 ")"         return isc::eval::EvalParser::make_RPAREN(loc);
@@ -151,7 +155,7 @@ EvalContext::scanStringBegin()
     buffer = yy_scan_bytes(string_.c_str(), string_.size());
     if (!buffer) {
         fatal("cannot scan string");
-	// fatal() throws an exception so this can't be reached
+        // fatal() throws an exception so this can't be reached
     }
 }
 

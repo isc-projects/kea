@@ -232,6 +232,16 @@ TEST_F(EvalContextTest, optionWithName) {
     checkTokenOption(eval.expression.at(0), 12);
 }
 
+// Test parsing of an option existence
+TEST_F(EvalContextTest, optionExists) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[100].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(1, eval.expression.size());
+    checkTokenOption(eval.expression.at(0), 100);
+}
+
 // Test checking that whitespace can surround option name.
 TEST_F(EvalContextTest, optionWithNameAndWhitespace) {
     EvalContext eval(Option::V4);
@@ -263,6 +273,112 @@ TEST_F(EvalContextTest, optionHex) {
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, eval.expression.size());
     checkTokenOption(eval.expression.at(0), 123);
+}
+
+// Test parsing of logical operators
+TEST_F(EvalContextTest, logicalOps) {
+    // option.exists
+    EvalContext eval0(Option::V4);
+    EXPECT_NO_THROW(parsed_ = eval0.parseString("option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(1, eval0.expression.size());
+    TokenPtr token = eval0.expression.at(0);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenOption> opt =
+        boost::dynamic_pointer_cast<TokenOption>(token);
+    EXPECT_TRUE(opt);
+
+    // not
+    EvalContext evaln(Option::V4);
+    EXPECT_NO_THROW(parsed_ = evaln.parseString("not option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(2, evaln.expression.size());
+    token = evaln.expression.at(1);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenNot> tnot =
+        boost::dynamic_pointer_cast<TokenNot>(token);
+    EXPECT_TRUE(tnot);
+
+    // and
+    EvalContext evala(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evala.parseString("option[123].exists and option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, evala.expression.size());
+    token = evala.expression.at(2);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenAnd> tand =
+        boost::dynamic_pointer_cast<TokenAnd>(token);
+    EXPECT_TRUE(tand);
+
+    // or
+    EvalContext evalo(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evalo.parseString("option[123].exists or option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, evalo.expression.size());
+    token = evalo.expression.at(2);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenOr> tor =
+        boost::dynamic_pointer_cast<TokenOr>(token);
+    EXPECT_TRUE(tor);
+}
+
+// Test parsing of logical operators with precedence
+TEST_F(EvalContextTest, logicalPrecedence) {
+    // not precedence > and precedence
+    EvalContext evalna(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evalna.parseString("not option[123].exists and option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(4, evalna.expression.size());
+    TokenPtr token = evalna.expression.at(3);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenAnd> tand =
+        boost::dynamic_pointer_cast<TokenAnd>(token);
+    EXPECT_TRUE(tand);
+
+    // and precedence > or precedence
+    EvalContext evaloa(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evaloa.parseString("option[123].exists or option[123].exists "
+                         "and option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(5, evaloa.expression.size());
+    token = evaloa.expression.at(4);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenOr> tor =
+        boost::dynamic_pointer_cast<TokenOr>(token);
+    EXPECT_TRUE(tor);
+}
+
+// Test parsing of logical operators with parentheses (same than
+// with precedence but using parentheses to overwrite precedence)
+TEST_F(EvalContextTest, logicalParentheses) {
+    // not precedence > and precedence
+    EvalContext evalna(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evalna.parseString("not (option[123].exists and option[123].exists)"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(4, evalna.expression.size());
+    TokenPtr token = evalna.expression.at(3);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenNot> tnot =
+        boost::dynamic_pointer_cast<TokenNot>(token);
+    EXPECT_TRUE(tnot);
+
+    // and precedence > or precedence
+    EvalContext evaloa(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evaloa.parseString("(option[123].exists or option[123].exists) "
+                         "and option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(5, evaloa.expression.size());
+    token = evaloa.expression.at(4);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenAnd> tand =
+        boost::dynamic_pointer_cast<TokenAnd>(token);
+    EXPECT_TRUE(tand);
 }
 
 // Test the parsing of a substring expression
@@ -369,9 +485,45 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("'foo''bar'",
                "<string>:1.6-10: syntax error, unexpected constant string, "
                "expecting ==");
+    checkError("'foo' (",
+               "<string>:1.7: syntax error, unexpected (, expecting ==");
     checkError("== 'ab'", "<string>:1.1-2: syntax error, unexpected ==");
     checkError("'foo' ==",
                "<string>:1.9: syntax error, unexpected end of file");
+    checkError("('foo' == 'bar'",
+               "<string>:1.16: syntax error, unexpected end of file, "
+               "expecting and or or or )");
+    checkError("('foo' == 'bar') ''",
+               "<string>:1.18-19: syntax error, unexpected constant string, "
+               "expecting end of file");
+    checkError("not",
+               "<string>:1.4: syntax error, unexpected end of file");
+    checkError("not 'foo'",
+               "<string>:1.10: syntax error, unexpected end of file, "
+               "expecting ==");
+    checkError("not()",
+               "<string>:1.5: syntax error, unexpected )");
+    checkError("(not('foo' 'bar')",
+               "<string>:1.12-16: syntax error, unexpected constant string, "
+               "expecting ==");
+    checkError("and",
+               "<string>:1.1-3: syntax error, unexpected and");
+    checkError("'foo' and",
+               "<string>:1.7-9: syntax error, unexpected and, expecting ==");
+    checkError("'foo' == 'bar' and",
+               "<string>:1.19: syntax error, unexpected end of file");
+    checkError("'foo' == 'bar' and ''",
+               "<string>:1.22: syntax error, unexpected end of file, "
+               "expecting ==");
+    checkError("or",
+               "<string>:1.1-2: syntax error, unexpected or");
+    checkError("'foo' or",
+               "<string>:1.7-8: syntax error, unexpected or, expecting ==");
+    checkError("'foo' == 'bar' or",
+               "<string>:1.18: syntax error, unexpected end of file");
+    checkError("'foo' == 'bar' or ''",
+               "<string>:1.21: syntax error, unexpected end of file, "
+               "expecting ==");
     checkError("option 'ab'",
                "<string>:1.8-11: syntax error, unexpected "
                "constant string, expecting [");
@@ -390,6 +542,9 @@ TEST_F(EvalContextTest, parseErrors) {
                "expecting integer or option name");
     checkError("option[10].bin", "<string>:1.12: Invalid character: b");
     checkError("option[boot-size].bin", "<string>:1.19: Invalid character: b");
+    checkError("option[10].exists == 'foo'",
+               "<string>:1.19-20: syntax error, unexpected ==, "
+               "expecting end of file");
     checkError("substring('foobar') == 'f'",
                "<string>:1.19: syntax error, "
                "unexpected ), expecting \",\"");
@@ -402,7 +557,7 @@ TEST_F(EvalContextTest, parseErrors) {
                "<string>:1.22: Invalid character: a");
 }
 
-// Tests some type error cases (caught only by the strongly typed parser)
+// Tests some type error cases
 TEST_F(EvalContextTest, typeErrors) {
     checkError("'foobar'",
                "<string>:1.9: syntax error, unexpected end of file, "
@@ -413,6 +568,16 @@ TEST_F(EvalContextTest, typeErrors) {
     checkError("substring('foobar',0x32,1) == 'foo'",
                "<string>:1.20-23: syntax error, unexpected constant "
                "hexstring, expecting integer");
+    checkError("('foo' == 'bar') == 'false'",
+               "<string>:1.18-19: syntax error, unexpected ==, "
+               "expecting end of file");
+    checkError("not 'true'",
+               "<string>:1.11: syntax error, unexpected end of file, "
+               "expecting ==");
+    checkError("'true' and 'false'",
+               "<string>:1.8-10: syntax error, unexpected and, expecting ==");
+    checkError("'true' or 'false'",
+               "<string>:1.8-9: syntax error, unexpected or, expecting ==");
 }
 
 };
