@@ -81,14 +81,6 @@ public:
         EXPECT_EQ(expected_code, opt->getCode());
     }
 
-    /// @brief checks if the given token is a substring operator
-    void checkTokenSubstring(const TokenPtr& token) {
-        ASSERT_TRUE(token);
-        boost::shared_ptr<TokenSubstring> sub =
-            boost::dynamic_pointer_cast<TokenSubstring>(token);
-        EXPECT_TRUE(sub);
-    }
-
     /// @brief check if the given token is relay4 with the expected code
     void checkTokenRelay4(const TokenPtr& token, uint16_t code) {
         ASSERT_TRUE(token);
@@ -99,6 +91,22 @@ public:
         if (relay4) {
             EXPECT_EQ(code, relay4->getCode());
         }
+    }
+
+    /// @brief checks if the given token is a substring operator
+    void checkTokenSubstring(const TokenPtr& token) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenSubstring> sub =
+            boost::dynamic_pointer_cast<TokenSubstring>(token);
+        EXPECT_TRUE(sub);
+    }
+
+    /// @brief checks if the given token is a concat operator
+    void checkTokenConcat(const TokenPtr& token) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenConcat> conc =
+            boost::dynamic_pointer_cast<TokenConcat>(token);
+        EXPECT_TRUE(conc);
     }
 
     /// @brief checks if the given expression raises the expected message
@@ -275,6 +283,33 @@ TEST_F(EvalContextTest, optionHex) {
     checkTokenOption(eval.expression.at(0), 123);
 }
 
+// This test checks that the relay[code].hex can be used in expressions.
+TEST_F(EvalContextTest, relay4Option) {
+
+    EvalContext eval(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+                    eval.parseString("relay4[13].hex == 'thirteen'"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+
+    checkTokenRelay4(tmp1, 13);
+    checkTokenString(tmp2, "thirteen");
+    checkTokenEq(tmp3);
+}
+
+// Verify that relay4[13] is not usable in v6
+// There will be a separate relay accessor for v6.
+TEST_F(EvalContextTest, relay4Error) {
+    universe_ = Option::V6;
+
+    checkError("relay4[13].hex == 'thirteen'",
+               "<string>:1.1-6: relay4 can only be used in DHCPv4.");
+}
+
 // Test parsing of logical operators
 TEST_F(EvalContextTest, logicalOps) {
     // option.exists
@@ -402,31 +437,23 @@ TEST_F(EvalContextTest, substring) {
     checkTokenSubstring(tmp4);
 }
 
-// This test checks that the relay[code].hex can be used in expressions.
-TEST_F(EvalContextTest, relay4Option) {
-
+// Test the parsing of a concat expression
+TEST_F(EvalContextTest, concat) {
     EvalContext eval(Option::V4);
+
     EXPECT_NO_THROW(parsed_ =
-                    eval.parseString("relay4[13].hex == 'thirteen'"));
+        eval.parseString("concat('foo','bar') == 'foobar'"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, eval.expression.size());
+
+    ASSERT_EQ(5, eval.expression.size());
 
     TokenPtr tmp1 = eval.expression.at(0);
     TokenPtr tmp2 = eval.expression.at(1);
     TokenPtr tmp3 = eval.expression.at(2);
 
-    checkTokenRelay4(tmp1, 13);
-    checkTokenString(tmp2, "thirteen");
-    checkTokenEq(tmp3);
-}
-
-// Verify that relay4[13] is not usable in v6
-// There will be a separate relay accessor for v6.
-TEST_F(EvalContextTest, relay4Error) {
-    universe_ = Option::V6;
-
-    checkError("relay4[13].hex == 'thirteen'",
-               "<string>:1.1-6: relay4 can only be used in DHCPv4.");
+    checkTokenString(tmp1, "foo");
+    checkTokenString(tmp2, "bar");
+    checkTokenConcat(tmp3);
 }
 
 // Test some scanner error cases
@@ -439,6 +466,7 @@ TEST_F(EvalContextTest, scanErrors) {
     checkError("subtring", "<string>:1.1: Invalid character: s");
     checkError("foo", "<string>:1.1: Invalid character: f");
     checkError(" bar", "<string>:1.2: Invalid character: b");
+    checkError("relay[12].hex == 'foo'", "<string>:1.1: Invalid character: r");
 }
 
 // Tests some scanner/parser error cases
@@ -546,8 +574,7 @@ TEST_F(EvalContextTest, parseErrors) {
                "<string>:1.19-20: syntax error, unexpected ==, "
                "expecting end of file");
     checkError("substring('foobar') == 'f'",
-               "<string>:1.19: syntax error, "
-               "unexpected ), expecting \",\"");
+               "<string>:1.19: syntax error, unexpected ), expecting \",\"");
     checkError("substring('foobar',3) == 'bar'",
                "<string>:1.21: syntax error, unexpected ), expecting \",\"");
     checkError("substring('foobar','3',3) == 'bar'",
@@ -555,6 +582,10 @@ TEST_F(EvalContextTest, parseErrors) {
                "expecting integer");
     checkError("substring('foobar',1,a) == 'foo'",
                "<string>:1.22: Invalid character: a");
+    checkError("concat('foobar') == 'f'",
+               "<string>:1.16: syntax error, unexpected ), expecting \",\"");
+    checkError("concat('foo','bar','') == 'foobar'",
+               "<string>:1.19: syntax error, unexpected \",\", expecting )");
 }
 
 // Tests some type error cases
@@ -568,6 +599,10 @@ TEST_F(EvalContextTest, typeErrors) {
     checkError("substring('foobar',0x32,1) == 'foo'",
                "<string>:1.20-23: syntax error, unexpected constant "
                "hexstring, expecting integer");
+    checkError("concat('foo',3) == 'foo3'",
+               "<string>:1.14: syntax error, unexpected integer");
+    checkError("concat(3,'foo') == '3foo'",
+               "<string>:1.8: syntax error, unexpected integer");
     checkError("('foo' == 'bar') == 'false'",
                "<string>:1.18-19: syntax error, unexpected ==, "
                "expecting end of file");
