@@ -84,7 +84,7 @@ public:
     ///
     /// Only "true" and "false" are expected.
     ///
-    /// @param the (string) value
+    /// @param value the (string) value
     /// @return the boolean represented by the value
     /// @throw EvalTypeError when the value is not either "true" or "false".
     static inline bool toBool(std::string value) {
