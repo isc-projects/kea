@@ -224,6 +224,7 @@ sub-option with code "code" from the Relay Agent Information option
 <row><entry>And</entry> <entry>('foo' == 'bar') and ('bar' == 'foo')</entry><entry>Logical and</entry></row>
 <row><entry>Or</entry> <entry>('foo' == 'bar') or ('bar' == 'foo')</entry><entry>Logical or</entry></row>
 <row><entry>Substring</entry><entry>substring('foobar',0,3)</entry><entry>Return the requested substring</entry></row>
+<row><entry>Concat</entry><entry>concat('foo','bar')</entry><entry>Return the concatenation of the strings</entry></row>
           </tbody>
           </tgroup>
         </table>
@@ -261,6 +262,14 @@ sub-option with code "code" from the Relay Agent Information option
         substring('foobar', 10, 2) == ''
           </screen>
       </section>
+      <section>
+        <title>Concat</title>
+        The concat function "concat(string1, string2)" returns the
+        concatenation of its two arguments. For instance:
+          <screen>
+        concat('foo', 'bar') == 'foobar'
+          </screen>
+       </section>
     </section>
 
   <note>

@@ -39,6 +39,7 @@ using namespace isc::eval;
   EQUAL "=="
   OPTION "option"
   SUBSTRING "substring"
+  CONCAT "concat"
   NOT "not"
   AND "and"
   OR "or"
@@ -59,7 +60,6 @@ using namespace isc::eval;
 %token <std::string> INTEGER "integer"
 %token <std::string> HEXSTRING "constant hexstring"
 %token <std::string> OPTION_NAME "option name"
-%token <std::string> TOKEN
 
 %type <uint16_t> option_code
 %type <TokenOption::RepresentationType> option_repr_type
@@ -148,8 +148,11 @@ string_expr : STRING
                       TokenPtr sub(new TokenSubstring());
                       ctx.expression.push_back(sub);
                   }
-            | TOKEN
-                // Temporary unused token to avoid explicit but long errors
+            | CONCAT "(" string_expr "," string_expr ")"
+                  {
+                      TokenPtr conc(new TokenConcat());
+                      ctx.expression.push_back(conc);
+                  }
             ;
 
 option_code : INTEGER

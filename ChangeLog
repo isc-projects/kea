@@ -1,8 +1,13 @@
+1080.	[func]		fdupont
+	Added a concat function in classification which concatenates two
+	strings. 
+	(Trac #4233, git ...)
+
 1079.	[func]		fdupont
 	Added Not, And and Or logical operators, parentheses around
 	logical expressions and option[code].exist logical predicate
 	(to check the presence of an empty option).
-	(Trac #4231, git xxx)
+	(Trac #4231, git 8e01dbe2fe2d8c97f89c20f5bb1d03748a2432e0)
 
 1078.	[func]		tomek
 	Client classification in DHCPv4 has been enhanced. It is now

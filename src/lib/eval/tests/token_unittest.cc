@@ -341,7 +341,7 @@ TEST_F(TokenTest, optionHexString4) {
 }
 
 // This test checks if a token representing an option value is able to check
-// the existence ofthe option from an IPv4 packet.
+// the existence of the option from an IPv4 packet.
 TEST_F(TokenTest, optionExistsString4) {
     TokenPtr found;
     TokenPtr not_found;
@@ -420,7 +420,7 @@ TEST_F(TokenTest, optionHexString6) {
 }
 
 // This test checks if a token representing an option value is able to check
-// the existence ofthe option from an IPv6 packet.
+// the existence of the option from an IPv6 packet.
 TEST_F(TokenTest, optionExistsString6) {
     TokenPtr found;
     TokenPtr not_found;
@@ -439,6 +439,109 @@ TEST_F(TokenTest, optionExistsString6) {
     EXPECT_EQ("false", values_.top());
     values_.pop();
     EXPECT_EQ("true", values_.top());
+}
+
+// This test checks that the existing relay option can be found.
+TEST_F(TokenTest, relayOption) {
+
+    // Insert relay option with sub-options 1 and 13
+    insertRelay4Option();
+
+    // Creating the token should be safe.
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
+
+    // We should be able to evaluate it.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have one value on the stack
+    ASSERT_EQ(1, values_.size());
+
+    // The option should be found and relay[13] should evaluate to the
+    // content of that sub-option, i.e. "thirteen"
+    EXPECT_EQ("thirteen", values_.top());
+}
+
+// This test checks that the code properly handles cases when
+// there is a RAI option, but there's no requested sub-option.
+TEST_F(TokenTest, relayOptionNoSuboption) {
+
+    // Insert relay option with sub-options 1 and 13
+    insertRelay4Option();
+
+    // Creating the token should be safe.
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(15, TokenOption::TEXTUAL)));
+
+    // We should be able to evaluate it.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have one value on the stack
+    ASSERT_EQ(1, values_.size());
+
+    // The option should NOT be found (there is no sub-option 15),
+    // so the expression should evaluate to ""
+    EXPECT_EQ("", values_.top());
+}
+
+// This test checks that the code properly handles cases when
+// there's no RAI option at all.
+TEST_F(TokenTest, relayOptionNoRai) {
+
+    // We didn't call insertRelay4Option(), so there's no RAI option.
+
+    // Creating the token should be safe.
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
+
+    // We should be able to evaluate it.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have one value on the stack
+    ASSERT_EQ(1, values_.size());
+
+    // The option should NOT be found (there is no sub-option 13),
+    // so the expression should evaluate to ""
+    EXPECT_EQ("", values_.top());
+}
+
+// This test checks that only the RAI is searched for the requested
+// sub-option.
+TEST_F(TokenTest, relayRAIOnly) {
+
+    // Insert relay option with sub-options 1 and 13
+    insertRelay4Option();
+
+    // Add options 13 and 70 to the packet.
+    OptionPtr opt13(new OptionString(Option::V4, 13, "THIRTEEN"));
+    OptionPtr opt70(new OptionString(Option::V4, 70, "SEVENTY"));
+    pkt4_->addOption(opt13);
+    pkt4_->addOption(opt70);
+
+    // The situation is as follows:
+    // Packet:
+    //  - option 13 (containing "THIRTEEN")
+    //  - option 82 (rai)
+    //      - option 1 (containing "one")
+    //      - option 13 (containing "thirteen")
+
+    // Let's try to get option 13. It should get the one from RAI
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("thirteen", values_.top());
+
+    // Try to get option 1. It should get the one from RAI
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(1, TokenOption::TEXTUAL)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("one", values_.top());
+
+    // Try to get option 70. It should fail, as there's no such
+    // sub option in RAI.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(70, TokenOption::TEXTUAL)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("", values_.top());
 }
 
 // This test checks if a token representing an == operator is able to
@@ -490,7 +593,7 @@ TEST_F(TokenTest, optionEqualTrue) {
 
 // This test checks if a token representing a not is able to
 // negate a boolean value (with incorrectly built stack).
-TEST_F(TokenTest, optionNotInvalid) {
+TEST_F(TokenTest, operatorNotInvalid) {
 
     ASSERT_NO_THROW(t_.reset(new TokenNot()));
 
@@ -504,7 +607,7 @@ TEST_F(TokenTest, optionNotInvalid) {
 
 // This test checks if a token representing a not operator is able to
 // negate a boolean value.
-TEST_F(TokenTest, optionNot) {
+TEST_F(TokenTest, operatorNot) {
 
     ASSERT_NO_THROW(t_.reset(new TokenNot()));
 
@@ -523,7 +626,7 @@ TEST_F(TokenTest, optionNot) {
 
 // This test checks if a token representing an and is able to
 // conjugate two values (with incorrectly built stack).
-TEST_F(TokenTest, optionAndInvalid) {
+TEST_F(TokenTest, operatorAndInvalid) {
 
     ASSERT_NO_THROW(t_.reset(new TokenAnd()));
 
@@ -547,7 +650,7 @@ TEST_F(TokenTest, optionAndInvalid) {
 
 // This test checks if a token representing an and operator is able to
 // conjugate false with another logical
-TEST_F(TokenTest, optionAndFalse) {
+TEST_F(TokenTest, operatorAndFalse) {
 
     ASSERT_NO_THROW(t_.reset(new TokenAnd()));
 
@@ -574,7 +677,7 @@ TEST_F(TokenTest, optionAndFalse) {
 
 // This test checks if a token representing an and is able to
 // conjugate two true values.
-TEST_F(TokenTest, optionAndTrue) {
+TEST_F(TokenTest, operatorAndTrue) {
 
     ASSERT_NO_THROW(t_.reset(new TokenAnd()));
 
@@ -589,7 +692,7 @@ TEST_F(TokenTest, optionAndTrue) {
 
 // This test checks if a token representing an or is able to
 // combinate two values (with incorrectly built stack).
-TEST_F(TokenTest, optionOrInvalid) {
+TEST_F(TokenTest, operatorOrInvalid) {
 
     ASSERT_NO_THROW(t_.reset(new TokenOr()));
 
@@ -613,7 +716,7 @@ TEST_F(TokenTest, optionOrInvalid) {
 
 // This test checks if a token representing an or is able to
 // conjugate two false values.
-TEST_F(TokenTest, optionOrFalse) {
+TEST_F(TokenTest, operatorOrFalse) {
 
     ASSERT_NO_THROW(t_.reset(new TokenOr()));
 
@@ -628,7 +731,7 @@ TEST_F(TokenTest, optionOrFalse) {
 
 // This test checks if a token representing an == operator is able to
 // conjugate true with another logical
-TEST_F(TokenTest, optionOrTrue) {
+TEST_F(TokenTest, operatorOrTrue) {
 
     ASSERT_NO_THROW(t_.reset(new TokenOr()));
 
@@ -655,7 +758,7 @@ TEST_F(TokenTest, optionOrTrue) {
 
 };
 
-// This test checks if an a token representing a substring request
+// This test checks if a token representing a substring request
 // throws an exception if there aren't enough values on the stack.
 // The stack from the top is: length, start, string.
 // The actual packet is not used.
@@ -663,7 +766,7 @@ TEST_F(TokenTest, substringNotEnoughValues) {
     ASSERT_NO_THROW(t_.reset(new TokenSubstring()));
 
     // Subsring requires three values on the stack, try
-    // with 0, 1 and 2 all should thorw an exception
+    // with 0, 1 and 2 all should throw an exception
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
 
     values_.push("");
@@ -790,7 +893,7 @@ TEST_F(TokenTest, substringEquals) {
 
     // The substring values
     // Subsring requires three values on the stack, try
-    // with 0, 1 and 2 all should thorw an exception
+    // with 0, 1 and 2 all should throw an exception
     values_.push("foobar");
     values_.push("1");
     values_.push("4");
@@ -813,7 +916,7 @@ TEST_F(TokenTest, substringEquals) {
 
     // The substring values
     // Subsring requires three values on the stack, try
-    // with 0, 1 and 2 all should thorw an exception
+    // with 0, 1 and 2 all should throw an exception
     values_.push("foobar");
     values_.push("1");
     values_.push("4");
@@ -829,105 +932,24 @@ TEST_F(TokenTest, substringEquals) {
 
 }
 
-// This test checks that the existing relay option can be found.
-TEST_F(TokenTest, relayOption) {
+// This test checks if a token representing a concat request
+// throws an exception if there aren't enough values on the stack.
+// The actual packet is not used.
+TEST_F(TokenTest, concat) {
+    ASSERT_NO_THROW(t_.reset(new TokenConcat()));
 
-    // Insert relay option with sub-options 1 and 13
-    insertRelay4Option();
+    // Concat requires two values on the stack, try
+    // with 0 and 1 both should throw an exception
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
 
-    // Creating the token should be safe.
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
 
-    // We should be able to evaluate it.
+    // Two should work
+    values_.push("bar");
     EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
 
-    // we should have one value on the stack
+    // Check the result
     ASSERT_EQ(1, values_.size());
-
-    // The option should be found and relay[13] should evaluate to the
-    // content of that sub-option, i.e. "thirteen"
-    EXPECT_EQ("thirteen", values_.top());
-}
-
-// This test checks that the code properly handles cases when
-// there is a RAI option, but there's no requested sub-option.
-TEST_F(TokenTest, relayOptionNoSuboption) {
-
-    // Insert relay option with sub-options 1 and 13
-    insertRelay4Option();
-
-    // Creating the token should be safe.
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(15, TokenOption::TEXTUAL)));
-
-    // We should be able to evaluate it.
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-
-    // we should have one value on the stack
-    ASSERT_EQ(1, values_.size());
-
-    // The option should NOT be found (there is no sub-option 15),
-    // so the expression should evaluate to ""
-    EXPECT_EQ("", values_.top());
-}
-
-// This test checks that the code properly handles cases when
-// there's no RAI option at all.
-TEST_F(TokenTest, relayOptionNoRai) {
-
-    // We didn't call insertRelay4Option(), so there's no RAI option.
-
-    // Creating the token should be safe.
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
-
-    // We should be able to evaluate it.
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-
-    // we should have one value on the stack
-    ASSERT_EQ(1, values_.size());
-
-    // The option should NOT be found (there is no sub-option 13),
-    // so the expression should evaluate to ""
-    EXPECT_EQ("", values_.top());
-}
-
-// This test checks that only the RAI is searched for the requested
-// sub-option.
-TEST_F(TokenTest, relayRAIOnly) {
-
-    // Insert relay option with sub-options 1 and 13
-    insertRelay4Option();
-
-    // Add options 13 and 70 to the packet.
-    OptionPtr opt13(new OptionString(Option::V4, 13, "THIRTEEN"));
-    OptionPtr opt70(new OptionString(Option::V4, 70, "SEVENTY"));
-    pkt4_->addOption(opt13);
-    pkt4_->addOption(opt70);
-
-    // The situation is as follows:
-    // Packet:
-    //  - option 13 (containing "THIRTEEN")
-    //  - option 82 (rai)
-    //      - option 1 (containing "one")
-    //      - option 13 (containing "thirteen")
-
-    // Let's try to get option 13. It should get the one from RAI
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("thirteen", values_.top());
-
-    // Try to get option 1. It should get the one from RAI
-    clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(1, TokenOption::TEXTUAL)));
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("one", values_.top());
-
-    // Try to get option 70. It should fail, as there's no such
-    // sub option in RAI.
-    clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(70, TokenOption::TEXTUAL)));
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("", values_.top());
+    EXPECT_EQ("foobar", values_.top());
 }

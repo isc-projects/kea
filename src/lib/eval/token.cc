@@ -84,6 +84,23 @@ TokenOption::evaluate(const Pkt& pkt, ValueStack& values) {
     values.push(opt_str);
 }
 
+TokenRelay4Option::TokenRelay4Option(const uint16_t option_code,
+                                     const RepresentationType& rep_type)
+    :TokenOption(option_code, rep_type) {
+}
+
+OptionPtr TokenRelay4Option::getOption(const Pkt& pkt) {
+
+    // Check if there is Relay Agent Option.
+    OptionPtr rai = pkt.getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (!rai) {
+        return (OptionPtr());
+    }
+
+    // If there is, try to return its suboption
+    return (rai->getOption(option_code_));
+}
+
 void
 TokenEqual::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 
@@ -178,21 +195,21 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     values.push(string_str.substr(start_pos, length));
 }
 
-TokenRelay4Option::TokenRelay4Option(const uint16_t option_code,
-                                     const RepresentationType& rep_type)
-    :TokenOption(option_code, rep_type) {
-}
+void
+TokenConcat::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 
-OptionPtr TokenRelay4Option::getOption(const Pkt& pkt) {
-
-    // Check if there is Relay Agent Option.
-    OptionPtr rai = pkt.getOption(DHO_DHCP_AGENT_OPTIONS);
-    if (!rai) {
-        return (OptionPtr());
+    if (values.size() < 2) {
+        isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
+                  "2 values for concat, got " << values.size());
     }
 
-    // If there is, try to return its suboption
-    return (rai->getOption(option_code_));
+    string op1 = values.top();
+    values.pop();
+    string op2 = values.top();
+    values.pop(); // Dammit, std::stack interface is awkward.
+
+    // The top of the stack was evaluated last so this is the right order
+    values.push(op2 + op1);
 }
 
 void

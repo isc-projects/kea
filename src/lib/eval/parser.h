@@ -302,7 +302,6 @@ namespace isc { namespace eval {
       // "integer"
       // "constant hexstring"
       // "option name"
-      // TOKEN
       char dummy2[sizeof(std::string)];
 
       // option_code
@@ -333,25 +332,25 @@ namespace isc { namespace eval {
         TOKEN_EQUAL = 258,
         TOKEN_OPTION = 259,
         TOKEN_SUBSTRING = 260,
-        TOKEN_NOT = 261,
-        TOKEN_AND = 262,
-        TOKEN_OR = 263,
-        TOKEN_TEXT = 264,
-        TOKEN_RELAY4 = 265,
-        TOKEN_HEX = 266,
-        TOKEN_EXISTS = 267,
-        TOKEN_ALL = 268,
-        TOKEN_DOT = 269,
-        TOKEN_COMA = 270,
-        TOKEN_LPAREN = 271,
-        TOKEN_RPAREN = 272,
-        TOKEN_LBRACKET = 273,
-        TOKEN_RBRACKET = 274,
-        TOKEN_STRING = 275,
-        TOKEN_INTEGER = 276,
-        TOKEN_HEXSTRING = 277,
-        TOKEN_OPTION_NAME = 278,
-        TOKEN_TOKEN = 279
+        TOKEN_CONCAT = 261,
+        TOKEN_NOT = 262,
+        TOKEN_AND = 263,
+        TOKEN_OR = 264,
+        TOKEN_TEXT = 265,
+        TOKEN_RELAY4 = 266,
+        TOKEN_HEX = 267,
+        TOKEN_EXISTS = 268,
+        TOKEN_ALL = 269,
+        TOKEN_DOT = 270,
+        TOKEN_COMA = 271,
+        TOKEN_LPAREN = 272,
+        TOKEN_RPAREN = 273,
+        TOKEN_LBRACKET = 274,
+        TOKEN_RBRACKET = 275,
+        TOKEN_STRING = 276,
+        TOKEN_INTEGER = 277,
+        TOKEN_HEXSTRING = 278,
+        TOKEN_OPTION_NAME = 279
       };
     };
 
@@ -480,6 +479,10 @@ namespace isc { namespace eval {
 
     static inline
     symbol_type
+    make_CONCAT (const location_type& l);
+
+    static inline
+    symbol_type
     make_NOT (const location_type& l);
 
     static inline
@@ -549,10 +552,6 @@ namespace isc { namespace eval {
     static inline
     symbol_type
     make_OPTION_NAME (const std::string& v, const location_type& l);
-
-    static inline
-    symbol_type
-    make_TOKEN (const std::string& v, const location_type& l);
 
 
     /// Build a parser object.
@@ -759,9 +758,9 @@ namespace isc { namespace eval {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 57,     ///< Last index in yytable_.
+      yylast_ = 62,     ///< Last index in yytable_.
       yynnts_ = 8,  ///< Number of nonterminal symbols.
-      yyfinal_ = 17, ///< Termination state number.
+      yyfinal_ = 18, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
       yyntokens_ = 25  ///< Number of tokens.
@@ -847,11 +846,10 @@ namespace isc { namespace eval {
         value.copy< TokenOption::RepresentationType > (other.value);
         break;
 
-      case 20: // "constant string"
-      case 21: // "integer"
-      case 22: // "constant hexstring"
-      case 23: // "option name"
-      case 24: // TOKEN
+      case 21: // "constant string"
+      case 22: // "integer"
+      case 23: // "constant hexstring"
+      case 24: // "option name"
         value.copy< std::string > (other.value);
         break;
 
@@ -880,11 +878,10 @@ namespace isc { namespace eval {
         value.copy< TokenOption::RepresentationType > (v);
         break;
 
-      case 20: // "constant string"
-      case 21: // "integer"
-      case 22: // "constant hexstring"
-      case 23: // "option name"
-      case 24: // TOKEN
+      case 21: // "constant string"
+      case 22: // "integer"
+      case 23: // "constant hexstring"
+      case 24: // "option name"
         value.copy< std::string > (v);
         break;
 
@@ -958,11 +955,10 @@ namespace isc { namespace eval {
         value.template destroy< TokenOption::RepresentationType > ();
         break;
 
-      case 20: // "constant string"
-      case 21: // "integer"
-      case 22: // "constant hexstring"
-      case 23: // "option name"
-      case 24: // TOKEN
+      case 21: // "constant string"
+      case 22: // "integer"
+      case 23: // "constant hexstring"
+      case 24: // "option name"
         value.template destroy< std::string > ();
         break;
 
@@ -997,11 +993,10 @@ namespace isc { namespace eval {
         value.move< TokenOption::RepresentationType > (s.value);
         break;
 
-      case 20: // "constant string"
-      case 21: // "integer"
-      case 22: // "constant hexstring"
-      case 23: // "option name"
-      case 24: // TOKEN
+      case 21: // "constant string"
+      case 22: // "integer"
+      case 23: // "constant hexstring"
+      case 24: // "option name"
         value.move< std::string > (s.value);
         break;
 
@@ -1093,6 +1088,12 @@ namespace isc { namespace eval {
   EvalParser::make_SUBSTRING (const location_type& l)
   {
     return symbol_type (token::TOKEN_SUBSTRING, l);
+  }
+
+  EvalParser::symbol_type
+  EvalParser::make_CONCAT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CONCAT, l);
   }
 
   EvalParser::symbol_type
@@ -1203,16 +1204,10 @@ namespace isc { namespace eval {
     return symbol_type (token::TOKEN_OPTION_NAME, v, l);
   }
 
-  EvalParser::symbol_type
-  EvalParser::make_TOKEN (const std::string& v, const location_type& l)
-  {
-    return symbol_type (token::TOKEN_TOKEN, v, l);
-  }
-
 
 #line 13 "parser.yy" // lalr1.cc:392
 } } // isc::eval
-#line 1216 "parser.h" // lalr1.cc:392
+#line 1211 "parser.h" // lalr1.cc:392
 
 
 
