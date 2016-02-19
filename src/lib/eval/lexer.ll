@@ -127,9 +127,10 @@ blank [ \t]
 "text"      return isc::eval::EvalParser::make_TEXT(loc);
 "hex"       return isc::eval::EvalParser::make_HEX(loc);
 "exists"    return isc::eval::EvalParser::make_EXISTS(loc);
-"substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
 "relay4"    return isc::eval::EvalParser::make_RELAY4(loc);
+"substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
 "all"       return isc::eval::EvalParser::make_ALL(loc);
+"concat"    return isc::eval::EvalParser::make_CONCAT(loc);
 "not"       return isc::eval::EvalParser::make_NOT(loc);
 "and"       return isc::eval::EvalParser::make_AND(loc);
 "or"        return isc::eval::EvalParser::make_OR(loc);

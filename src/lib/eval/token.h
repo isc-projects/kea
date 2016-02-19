@@ -219,6 +219,34 @@ protected:
     RepresentationType representation_type_; ///< Representation type.
 };
 
+/// @brief Represents a sub-option inserted by the DHCPv4 relay.
+///
+/// DHCPv4 relays insert sub-options in option 82. This token attempts to extract
+/// such sub-options. Note in DHCPv6 it is radically different (possibly
+/// many encapsulation levels), thus there are separate classes for v4 and v6.
+///
+/// This token can represent the following expressions:
+/// relay[13].text - Textual representation of sub-option 13 in RAI (option 82)
+/// relay[13].hex  - Binary representation of sub-option 13 in RAI (option 82)
+/// relay[vendor-class].text - Text representation of sub-option X in RAI (option 82)
+/// relay[vendor-class].hex - Binary representation of sub-option X in RAI (option 82)
+class TokenRelay4Option : public TokenOption {
+public:
+
+    /// @brief Constructor for extracting sub-option from RAI (option 82)
+    ///
+    /// @param option_code code of the requested sub-option
+    /// @param rep_type code representation (currently .hex and .text are supported)
+    TokenRelay4Option(const uint16_t option_code,
+                      const RepresentationType& rep_type);
+
+protected:
+    /// @brief Attempts to obtain specified sub-option of option 82 from the packet
+    /// @param pkt DHCPv4 packet (that hopefully contains option 82)
+    /// @return found sub-option from option 82
+    virtual OptionPtr getOption(const Pkt& pkt);
+};
+
 /// @brief Token that represents equality operator (compares two other tokens)
 ///
 /// For example in the expression option[vendor-class].text == "MSFT"
@@ -300,32 +328,27 @@ public:
     void evaluate(const Pkt& pkt, ValueStack& values);
 };
 
-/// @brief Represents a sub-option inserted by the DHCPv4 relay.
+/// @brief Token that represents concat operator (concatenates two other tokens)
 ///
-/// DHCPv4 relays insert sub-options in option 82. This token attempts to extract
-/// such sub-options. Note in DHCPv6 it is radically different (possibly
-/// many encapsulation levels), thus there are separate classes for v4 and v6.
-///
-/// This token can represent the following expressions:
-/// relay[13].text - Textual representation of sub-option 13 in RAI (option 82)
-/// relay[13].hex  - Binary representation of sub-option 13 in RAI (option 82)
-/// relay[vendor-class].text - Text representation of sub-option X in RAI (option 82)
-/// relay[vendor-class].hex - Binary representation of sub-option X in RAI (option 82)
-class TokenRelay4Option : public TokenOption {
+/// For example in the sub-expression "concat('foo','bar')" the result
+/// of the evaluation is "foobar"
+class TokenConcat : public Token {
 public:
+    /// @brief Constructor (does nothing)
+    TokenConcat() {}
 
-    /// @brief Constructor for extracting sub-option from RAI (option 82)
+    /// @brief Concatenate two values.
     ///
-    /// @param option_code code of the requested sub-option
-    /// @param rep_type code representation (currently .hex and .text are supported)
-    TokenRelay4Option(const uint16_t option_code,
-                      const RepresentationType& rep_type);
-
-protected:
-    /// @brief Attempts to obtain specified sub-option of option 82 from the packet
-    /// @param pkt DHCPv4 packet (that hopefully contains option 82)
-    /// @return found sub-option from option 82
-    virtual OptionPtr getOption(const Pkt& pkt);
+    /// Evaluation does not use packet information, but rather consumes the last
+    /// two parameters. It does a simple string concatenation. It requires
+    /// at least two parameters to be present on stack.
+    ///
+    /// @throw EvalBadStack if there are less than 2 values on stack
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (2 arguments will be popped, 1 result
+    ///        will be pushed)
+    void evaluate(const Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents logical negation operator
