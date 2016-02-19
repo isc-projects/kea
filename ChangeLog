@@ -1,3 +1,9 @@
+1079.	[func]		fdupont
+	Added Not, And and Or logical operators, parentheses around
+	logical expressions and option[code].exist logical predicate
+	(to check the presence of an empty option).
+	(Trac #4231, git xxx)
+
 1078.	[func]		tomek
 	Client classification in DHCPv4 has been enhanced. It is now
 	possible to access relay sub-options using the expression

@@ -125,6 +125,24 @@ public:
     /// @todo: Add more option types here
 };
 
+// This tests the toBool() conversions
+TEST_F(TokenTest, toBool) {
+
+    ASSERT_NO_THROW(Token::toBool("true"));
+    EXPECT_TRUE(Token::toBool("true"));
+    ASSERT_NO_THROW(Token::toBool("false"));
+    EXPECT_FALSE(Token::toBool("false"));
+
+    // Token::toBool() is case-sensitive
+    EXPECT_THROW(Token::toBool("True"), EvalTypeError);
+    EXPECT_THROW(Token::toBool("TRUE"), EvalTypeError);
+
+    // Proposed aliases
+    EXPECT_THROW(Token::toBool("1"), EvalTypeError);
+    EXPECT_THROW(Token::toBool("0"), EvalTypeError);
+    EXPECT_THROW(Token::toBool(""), EvalTypeError);
+}
+
 // This simple test checks that a TokenString, representing a constant string,
 // can be used in Pkt4 evaluation. (The actual packet is not used)
 TEST_F(TokenTest, string4) {
@@ -322,6 +340,28 @@ TEST_F(TokenTest, optionHexString4) {
     EXPECT_EQ("hundred4", values_.top());
 }
 
+// This test checks if a token representing an option value is able to check
+// the existence ofthe option from an IPv4 packet.
+TEST_F(TokenTest, optionExistsString4) {
+    TokenPtr found;
+    TokenPtr not_found;
+
+    // The packets we use have option 100 with a string in them.
+    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::EXISTS)));
+
+    ASSERT_NO_THROW(found->evaluate(*pkt4_, values_));
+    ASSERT_NO_THROW(not_found->evaluate(*pkt4_, values_));
+
+    // There should be 2 values evaluated.
+    ASSERT_EQ(2, values_.size());
+
+    // This is a stack, so the pop order is inversed.
+    EXPECT_EQ("false", values_.top());
+    values_.pop();
+    EXPECT_EQ("true", values_.top());
+}
+
 // This test checks if a token representing an option value is able to extract
 // the option from an IPv6 packet and properly store the option's value.
 TEST_F(TokenTest, optionString6) {
@@ -379,6 +419,28 @@ TEST_F(TokenTest, optionHexString6) {
     EXPECT_EQ("hundred6", values_.top());
 }
 
+// This test checks if a token representing an option value is able to check
+// the existence ofthe option from an IPv6 packet.
+TEST_F(TokenTest, optionExistsString6) {
+    TokenPtr found;
+    TokenPtr not_found;
+
+    // The packets we use have option 100 with a string in them.
+    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::EXISTS)));
+
+    ASSERT_NO_THROW(found->evaluate(*pkt6_, values_));
+    ASSERT_NO_THROW(not_found->evaluate(*pkt6_, values_));
+
+    // There should be 2 values evaluated.
+    ASSERT_EQ(2, values_.size());
+
+    // This is a stack, so the pop order is inversed.
+    EXPECT_EQ("false", values_.top());
+    values_.pop();
+    EXPECT_EQ("true", values_.top());
+}
+
 // This test checks if a token representing an == operator is able to
 // compare two values (with incorrectly built stack).
 TEST_F(TokenTest, optionEqualInvalid) {
@@ -422,6 +484,171 @@ TEST_F(TokenTest, optionEqualTrue) {
 
     // After evaluation there should be a single value that represents
     // result of "foo" == "foo" comparision.
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+}
+
+// This test checks if a token representing a not is able to
+// negate a boolean value (with incorrectly built stack).
+TEST_F(TokenTest, optionNotInvalid) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenNot()));
+
+    // CASE 1: The stack is empty.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 2: The top value is not a boolean
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
+
+// This test checks if a token representing a not operator is able to
+// negate a boolean value.
+TEST_F(TokenTest, optionNot) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenNot()));
+
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be the negation of the value.
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // Double negation is identity.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+}
+
+// This test checks if a token representing an and is able to
+// conjugate two values (with incorrectly built stack).
+TEST_F(TokenTest, optionAndInvalid) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
+
+    // CASE 1: There's not enough values on the stack. and is an operator that
+    // takes two parameters. There are 0 on the stack.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 2: One value is still not enough.
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 3: The two values must be logical
+    values_.push("true");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // Swap the 2 values
+    values_.push("true");
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
+
+// This test checks if a token representing an and operator is able to
+// conjugate false with another logical
+TEST_F(TokenTest, optionAndFalse) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
+
+    values_.push("true");
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "false" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // After true and false, checks false and true
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // And false and false
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+}
+
+// This test checks if a token representing an and is able to
+// conjugate two true values.
+TEST_F(TokenTest, optionAndTrue) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
+
+    values_.push("true");
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "true" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+}
+
+// This test checks if a token representing an or is able to
+// combinate two values (with incorrectly built stack).
+TEST_F(TokenTest, optionOrInvalid) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenOr()));
+
+    // CASE 1: There's not enough values on the stack. or is an operator that
+    // takes two parameters. There are 0 on the stack.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 2: One value is still not enough.
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 3: The two values must be logical
+    values_.push("true");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // Swap the 2 values
+    values_.push("true");
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
+
+// This test checks if a token representing an or is able to
+// conjugate two false values.
+TEST_F(TokenTest, optionOrFalse) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenOr()));
+
+    values_.push("false");
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "false" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+}
+
+// This test checks if a token representing an == operator is able to
+// conjugate true with another logical
+TEST_F(TokenTest, optionOrTrue) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenOr()));
+
+    values_.push("false");
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "true" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // After false or true, checks true or false
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // And true or true
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("true", values_.top());
 }

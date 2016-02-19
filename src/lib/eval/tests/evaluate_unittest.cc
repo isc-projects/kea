@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -178,6 +178,32 @@ TEST_F(EvaluateTest, compare6) {
     ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
     e_.push_back(tequal);
 
+    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    EXPECT_FALSE(result_);
+}
+
+// A test using option existence
+TEST_F(EvaluateTest, exists) {
+    TokenPtr toption;
+
+    ASSERT_NO_THROW(toption.reset(new TokenOption(100, TokenOption::EXISTS)));
+    e_.push_back(toption);
+
+    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    EXPECT_TRUE(result_);
+    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    EXPECT_TRUE(result_);
+}
+
+// A test using option non-existence
+TEST_F(EvaluateTest, dontExists) {
+    TokenPtr toption;
+
+    ASSERT_NO_THROW(toption.reset(new TokenOption(101, TokenOption::EXISTS)));
+    e_.push_back(toption);
+
+    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    EXPECT_FALSE(result_);
     ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
     EXPECT_FALSE(result_);
 }

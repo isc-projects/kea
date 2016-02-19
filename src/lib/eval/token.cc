@@ -66,13 +66,17 @@ TokenOption::evaluate(const Pkt& pkt, ValueStack& values) {
     if (opt) {
         if (representation_type_ == TEXTUAL) {
             opt_str = opt->toString();
-        } else {
+        } else if (representation_type_ == HEXADECIMAL) {
             std::vector<uint8_t> binary = opt->toBinary();
             opt_str.resize(binary.size());
             if (!binary.empty()) {
                 memmove(&opt_str[0], &binary[0], binary.size());
             }
+        } else {
+            opt_str = "true";
         }
+    } else if (representation_type_ == EXISTS) {
+        opt_str = "false";
     }
 
     // Push value of the option or empty string if there was no such option
@@ -189,4 +193,66 @@ OptionPtr TokenRelay4Option::getOption(const Pkt& pkt) {
 
     // If there is, try to return its suboption
     return (rai->getOption(option_code_));
+}
+
+void
+TokenNot::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    values.pop();
+    bool val = toBool(op);
+
+    if (!val) {
+	values.push("true");
+    } else {
+	values.push("false");
+    }
+}
+
+void
+TokenAnd::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+
+    if (values.size() < 2) {
+        isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
+                  "2 values for and operator, got " << values.size());
+    }
+
+    string op1 = values.top();
+    values.pop();
+    bool val1 = toBool(op1);
+    string op2 = values.top();
+    values.pop(); // Dammit, std::stack interface is awkward.
+    bool val2 = toBool(op2);
+
+    if (val1 && val2) {
+	values.push("true");
+    } else {
+	values.push("false");
+    }
+}
+
+void
+TokenOr::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+
+    if (values.size() < 2) {
+        isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
+                  "2 values for or operator, got " << values.size());
+    }
+
+    string op1 = values.top();
+    values.pop();
+    bool val1 = toBool(op1);
+    string op2 = values.top();
+    values.pop(); // Dammit, std::stack interface is awkward.
+    bool val2 = toBool(op2);
+
+    if (val1 || val2) {
+	values.push("true");
+    } else {
+	values.push("false");
+    }
 }
