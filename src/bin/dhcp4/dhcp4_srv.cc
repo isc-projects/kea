@@ -420,14 +420,13 @@ Dhcpv4Srv::run() {
         } catch (const std::exception& e) {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for exceptions derived from std::exception.
-            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
+            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
                 .arg(e.what());
         } catch (...) {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for other exceptions, not derived from
             // std::exception.
-            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
-                .arg("an unknown exception not derived from std::exception");
+	    LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
         }
     }
 
