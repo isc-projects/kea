@@ -293,13 +293,12 @@ bool Dhcpv6Srv::run() {
         } catch (const std::exception& e) {
             // General catch-all standard exceptions that are not caught by more
             // specific catches.
-            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
+            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
                 .arg(e.what());
         } catch (...) {
             // General catch-all non-standard exception that are not caught
             // by more specific catches.
-            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
-                .arg("an unknown exception not derived from std::exception");
+            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
         }
     }
 
