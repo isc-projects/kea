@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -559,7 +559,11 @@ main(int argc, char* argv[]) {
         // Format with arguments
         vector<string> args(e.arguments());
         for (size_t i(0); i < args.size(); ++ i) {
-            replacePlaceholder(&text, args[i], i + 1);
+            try {
+                replacePlaceholder(&text, args[i], i + 1);
+            } catch (...) {
+                // Error in error handling: nothing right to do...
+            }
         }
 
         cerr << text << "\n";
