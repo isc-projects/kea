@@ -1,6 +1,10 @@
+1081.	[bug]		jpopelka
+	Added missing slashed in path_replacer.sh.
+	(Github #10, git 8986813825623b19fb220534434d0c13785fc14c)
+
 1080.	[func]		fdupont
 	Added a concat function in classification which concatenates two
-	strings. 
+	strings.
 	(Trac #4233, git ...)
 
 1079.	[func]		fdupont
