@@ -63,6 +63,7 @@ We have received the following contributions:
    2014-08: configure.ac update: AC_PROG_LIBTOOL => LT_INIT
    2014-08: PostgreSQL compilation fix on i686
    2015-12: compilation fix in MySQL host data source
+   2016-02: Fixed missing slashes in path_replacer.sh
 
  - Adam Osuchowski, Silesian University of Technology
    2014-09: Examples corrected in Kea ARM
