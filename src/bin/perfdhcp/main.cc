@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,7 +44,7 @@ main(int argc, char* argv[]) {
     try{
         TestControl& test_control = TestControl::instance();
         ret_code =  test_control.run();
-    } catch (isc::Exception& e) {
+    } catch (std::exception& e) {
         ret_code = 1;
         std::cerr << "Error running perfdhcp: " << e.what() << std::endl;
         if (diags.find('e') != std::string::npos) {
