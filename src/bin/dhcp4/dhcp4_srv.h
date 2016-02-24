@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -209,7 +209,7 @@ public:
     /// @brief Main server processing loop.
     ///
     /// Main server processing loop. Receives incoming packets, and calls
-    /// processPakcet for each of them.
+    /// processPacket for each of them.
     ///
     /// @return true, if being shut down gracefully, fail if experienced
     ///         critical error.
