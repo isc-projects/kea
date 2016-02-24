@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -509,7 +509,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query) {
 
     // Log reception of the packet. We need to increase it early, as any
     // failures in unpacking will cause the packet to be dropped. We
-    // will increase type specific packets further down the road.
+    // will increase type specific statistoc further down the road.
     // See processStatsReceived().
     isc::stats::StatsMgr::instance().addValue("pkt4-received",
                                               static_cast<int64_t>(1));
