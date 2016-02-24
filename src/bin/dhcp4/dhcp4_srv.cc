@@ -415,92 +415,96 @@ Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
 bool
 Dhcpv4Srv::run() {
     while (!shutdown_) {
-        // client's message and server's response
-        Pkt4Ptr query;
-
         try {
-
-        try {
-            uint32_t timeout = 1000;
-            LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT).arg(timeout);
-            query = receivePacket(timeout);
-
-            // Log if packet has arrived. We can't log the detailed information
-            // about the DHCP message because it hasn't been unpacked/parsed
-            // yet, and it can't be parsed at this point because hooks will
-            // have to process it first. The only information available at this
-            // point are: the interface, source address and destination addresses
-            // and ports.
-            if (query) {
-                LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_BUFFER_RECEIVED)
-                    .arg(query->getRemoteAddr().toText())
-                    .arg(query->getRemotePort())
-                    .arg(query->getLocalAddr().toText())
-                    .arg(query->getLocalPort())
-                    .arg(query->getIface());
-
-            } else {
-                LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_INTERRUPTED)
-                    .arg(timeout);
-            }
-
-        } catch (const SignalInterruptOnSelect&) {
-            // Packet reception interrupted because a signal has been received.
-            // This is not an error because we might have received a SIGTERM,
-            // SIGINT, SIGHUP or SIGCHILD which are handled by the server. For
-            // signals that are not handled by the server we rely on the default
-            // behavior of the system.
-            LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL,
-                      DHCP4_BUFFER_WAIT_SIGNAL)
-                .arg(signal_set_->getNext());
-        } catch (const std::exception& e) {
-            // Log all other errors.
-            LOG_ERROR(packet4_logger, DHCP4_BUFFER_RECEIVE_FAIL).arg(e.what());
-        }
-
-        // Handle next signal received by the process. It must be called after
-        // an attempt to receive a packet to properly handle server shut down.
-        // The SIGTERM or SIGINT will be received prior to, or during execution
-        // of select() (select is invoked by receivePacket()). When that
-        // happens, select will be interrupted. The signal handler will be
-        // invoked immediately after select(). The handler will set the
-        // shutdown flag and cause the process to terminate before the next
-        // select() function is called. If the function was called before
-        // receivePacket the process could wait up to the duration of timeout
-        // of select() to terminate.
-        try {
-            handleSignal();
-        } catch (const std::exception& e) {
-            // Standard exception occurred. Let's be on the safe side to
-            // catch std::exception.
-            LOG_ERROR(dhcp4_logger, DHCP4_HANDLE_SIGNAL_EXCEPTION)
-                .arg(e.what());
-        }
-
-        // Timeout may be reached or signal received, which breaks select()
-        // with no reception occurred. No need to log anything here because
-        // we have logged right after the call to receivePacket().
-        if (!query) {
-            continue;
-        }
-
-        processPacket(query);
-
+            run_one();
         } catch (const std::exception& e) {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for exceptions derived from std::exception.
-            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
+            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
                 .arg(e.what());
         } catch (...) {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for other exceptions, not derived from
             // std::exception.
-            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
-                .arg("an unknown exception not derived from std::exception");
+	    LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
         }
     }
 
     return (true);
+}
+
+void
+Dhcpv4Srv::run_one() {
+    // client's message and server's response
+    Pkt4Ptr query;
+    Pkt4Ptr rsp;
+
+    try {
+        uint32_t timeout = 1000;
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT).arg(timeout);
+        query = receivePacket(timeout);
+
+        // Log if packet has arrived. We can't log the detailed information
+        // about the DHCP message because it hasn't been unpacked/parsed
+        // yet, and it can't be parsed at this point because hooks will
+        // have to process it first. The only information available at this
+        // point are: the interface, source address and destination addresses
+        // and ports.
+        if (query) {
+            LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_BUFFER_RECEIVED)
+                .arg(query->getRemoteAddr().toText())
+                .arg(query->getRemotePort())
+                .arg(query->getLocalAddr().toText())
+                .arg(query->getLocalPort())
+                .arg(query->getIface());
+
+        } else {
+            LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_INTERRUPTED)
+                .arg(timeout);
+        }
+
+    } catch (const SignalInterruptOnSelect) {
+        // Packet reception interrupted because a signal has been received.
+        // This is not an error because we might have received a SIGTERM,
+        // SIGINT, SIGHUP or SIGCHILD which are handled by the server. For
+        // signals that are not handled by the server we rely on the default
+        // behavior of the system.
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
+            .arg(signal_set_->getNext());
+    } catch (const std::exception& e) {
+        // Log all other errors.
+        LOG_ERROR(packet4_logger, DHCP4_BUFFER_RECEIVE_FAIL).arg(e.what());
+    }
+
+    // Handle next signal received by the process. It must be called after
+    // an attempt to receive a packet to properly handle server shut down.
+    // The SIGTERM or SIGINT will be received prior to, or during execution
+    // of select() (select is invoked by receivePacket()). When that
+    // happens, select will be interrupted. The signal handler will be
+    // invoked immediately after select(). The handler will set the
+    // shutdown flag and cause the process to terminate before the next
+    // select() function is called. If the function was called before
+    // receivePacket the process could wait up to the duration of timeout
+    // of select() to terminate.
+    try {
+        handleSignal();
+    } catch (const std::exception& e) {
+        // Standard exception occurred. Let's be on the safe side to
+        // catch std::exception.
+        LOG_ERROR(dhcp4_logger, DHCP4_HANDLE_SIGNAL_EXCEPTION)
+            .arg(e.what());
+    }
+
+    // Timeout may be reached or signal received, which breaks select()
+    // with no reception occurred. No need to log anything here because
+    // we have logged right after the call to receivePacket().
+    if (!query) {
+        return;
+    }
+
+    processPacket(query);
+
+    }
 }
 
 void
@@ -509,7 +513,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query) {
 
     // Log reception of the packet. We need to increase it early, as any
     // failures in unpacking will cause the packet to be dropped. We
-    // will increase type specific statistoc further down the road.
+    // will increase type specific statistic further down the road.
     // See processStatsReceived().
     isc::stats::StatsMgr::instance().addValue("pkt4-received",
                                               static_cast<int64_t>(1));
@@ -711,9 +715,6 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query) {
 
         // Clear skip flag if it was set in previous callouts
         callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
-
-        // Also pass the corresponding query packet as argument
-        callout_handle->setArgument("query4", query);
 
         // Set our response
         callout_handle->setArgument("response4", rsp);
