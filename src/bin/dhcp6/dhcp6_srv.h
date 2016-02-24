@@ -97,10 +97,19 @@ public:
 
     /// @brief Main server processing one.
     ///
-    /// Main server processing one. Receives one incoming packet, verifies
-    /// its correctness, generates appropriate answer (if needed) and
-    /// transmits response.
+    /// Main server processing one. Receives one incoming packet, calls
+    /// the processing packet routing and (if necessary) transmits
+    /// a response.
     void run_one();
+
+    /// @brief Process a single incoming DHCPv6 packet.
+    ///
+    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// methods, generates appropriate answer.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param rsp A pointer to the response
+    void processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp);
 
     /// @brief Instructs the server to shut down.
     void shutdown();
