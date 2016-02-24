@@ -217,17 +217,18 @@ public:
     /// @brief Main server processing one.
     ///
     /// Main server processing one. Receives one incoming packet, calls
-    /// the processing packet routing,
+    /// the processing packet routing and (if necessary) transmits
+    /// a response.
     void run_one();
 
     /// @brief Process a single incoming DHCPv4 packet.
     ///
     /// It verifies correctness of the passed packet, call per-type processXXX
-    /// methods, generates appropriate answer (if needed) and (if necessary)
-    /// transmits a response.
+    /// methods, generates appropriate answer.
     ///
     /// @param query A pointer to the packet to be processed.
-    void processPacket(Pkt4Ptr& query);
+    /// @param rsp A pointer to the response
+    void processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp);
 
     /// @brief Instructs the server to shut down.
     void shutdown();
