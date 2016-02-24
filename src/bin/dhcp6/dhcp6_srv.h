@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,13 +89,18 @@ public:
 
     /// @brief Main server processing loop.
     ///
-    /// Main server processing loop. Receives incoming packets, verifies
-    /// their correctness, generates appropriate answer (if needed) and
-    /// transmits responses.
+    /// Main server processing loop. Call the processing one routine
+    /// until shut down.
     ///
-    /// @return true, if being shut down gracefully, fail if experienced
-    ///         critical error.
+    /// @return true, if being shut down gracefully, never fail.
     bool run();
+
+    /// @brief Main server processing one.
+    ///
+    /// Main server processing one. Receives one incoming packet, verifies
+    /// its correctness, generates appropriate answer (if needed) and
+    /// transmits response.
+    void run_one();
 
     /// @brief Instructs the server to shut down.
     void shutdown();

@@ -208,12 +208,17 @@ public:
  
     /// @brief Main server processing loop.
     ///
-    /// Main server processing loop. Receives incoming packets, and calls
-    /// processPacket for each of them.
+    /// Main server processing loop. Call the processing one routine
+    /// until shut down.
     ///
-    /// @return true, if being shut down gracefully, fail if experienced
-    ///         critical error.
+    /// @return true, if being shut down gracefully, never fail.
     bool run();
+
+    /// @brief Main server processing one.
+    ///
+    /// Main server processing one. Receives one incoming packet, calls
+    /// the processing packet routing,
+    void run_one();
 
     /// @brief Process a single incoming DHCPv4 packet.
     ///
