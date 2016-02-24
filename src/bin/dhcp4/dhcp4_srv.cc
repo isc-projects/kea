@@ -504,7 +504,6 @@ Dhcpv4Srv::run_one() {
 
     processPacket(query);
 
-    }
 }
 
 void
