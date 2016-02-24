@@ -376,6 +376,59 @@ void Dhcpv6Srv::run_one() {
         return;
     }
 
+    processPacket(query, rsp);
+
+    if (!rsp) {
+        return;
+    }
+
+    try {
+
+        // Now all fields and options are constructed into output wire buffer.
+        // Option objects modification does not make sense anymore. Hooks
+        // can only manipulate wire buffer at this stage.
+        // Let's execute all callouts registered for buffer6_send
+        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer6_send_)) {
+            CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+            // Delete previously set arguments
+            callout_handle->deleteAllArguments();
+
+            // Pass incoming packet as argument
+            callout_handle->setArgument("response6", rsp);
+
+            // Call callouts
+            HooksManager::callCallouts(Hooks.hook_index_buffer6_send_, *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to parse the packet, so skip at this
+            // stage means drop.
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+                LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP)
+                    .arg(rsp->getLabel());
+                return;
+            }
+
+            /// @todo: Add support for DROP status
+
+            callout_handle->getArgument("response6", rsp);
+        }
+
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_RESPONSE_DATA)
+            .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
+
+        sendPacket(rsp);
+
+        // Update statistics accordingly for sent packet.
+        processStatsSent(rsp);
+
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_SEND_FAIL).arg(e.what());
+    }
+}
+
+void
+Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     // In order to parse the DHCP options, the server needs to use some
     // configuration information such as: existing option spaces, option
     // definitions etc. This is the kind of information which is not
@@ -584,124 +637,78 @@ void Dhcpv6Srv::run_one() {
         StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
     }
 
-    if (rsp) {
+    if (!rsp) {
+        return;
+    }
 
-        // Process relay-supplied options. It is important to call this very
-        // late in the process, because we now have all the options the
-        // server wanted to send already set. This is important, because
-        // RFC6422, section 6 states:
-        //
-        //   The server SHOULD discard any options that appear in the RSOO
-        //   for which it already has one or more candidates.
-        //
-        // So we ignore any RSOO options if there's an option with the same
-        // code already present.
-        processRSOO(query, rsp);
+    // Process relay-supplied options. It is important to call this very
+    // late in the process, because we now have all the options the
+    // server wanted to send already set. This is important, because
+    // RFC6422, section 6 states:
+    //
+    //   The server SHOULD discard any options that appear in the RSOO
+    //   for which it already has one or more candidates.
+    //
+    // So we ignore any RSOO options if there's an option with the same
+    // code already present.
+    processRSOO(query, rsp);
 
-        rsp->setRemoteAddr(query->getRemoteAddr());
-        rsp->setLocalAddr(query->getLocalAddr());
+    rsp->setRemoteAddr(query->getRemoteAddr());
+    rsp->setLocalAddr(query->getLocalAddr());
 
-        if (rsp->relay_info_.empty()) {
-            // Direct traffic, send back to the client directly
-            rsp->setRemotePort(DHCP6_CLIENT_PORT);
-        } else {
-            // Relayed traffic, send back to the relay agent
-            rsp->setRemotePort(DHCP6_SERVER_PORT);
+    if (rsp->relay_info_.empty()) {
+        // Direct traffic, send back to the client directly
+        rsp->setRemotePort(DHCP6_CLIENT_PORT);
+    } else {
+        // Relayed traffic, send back to the relay agent
+        rsp->setRemotePort(DHCP6_SERVER_PORT);
+    }
+
+    rsp->setLocalPort(DHCP6_SERVER_PORT);
+    rsp->setIndex(query->getIndex());
+    rsp->setIface(query->getIface());
+
+    // Specifies if server should do the packing
+    bool skip_pack = false;
+
+    // Server's reply packet now has all options and fields set.
+    // Options are represented by individual objects, but the
+    // output wire data has not been prepared yet.
+    // Execute all callouts registered for packet6_send
+    if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_send_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Set our response
+        callout_handle->setArgument("response6", rsp);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(Hooks.hook_index_pkt6_send_, *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to pack the packet (create wire data).
+        // That step will be skipped if any callout sets skip flag.
+        // It essentially means that the callout already did packing,
+        // so the server does not have to do it again.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_SEND_SKIP)
+                .arg(rsp->getLabel());
+            skip_pack = true;
         }
 
-        rsp->setLocalPort(DHCP6_SERVER_PORT);
-        rsp->setIndex(query->getIndex());
-        rsp->setIface(query->getIface());
+        /// @todo: Add support for DROP status
+    }
 
-        // Specifies if server should do the packing
-        bool skip_pack = false;
-
-        // Server's reply packet now has all options and fields set.
-        // Options are represented by individual objects, but the
-        // output wire data has not been prepared yet.
-        // Execute all callouts registered for packet6_send
-        if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_send_)) {
-            CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-            // Delete all previous arguments
-            callout_handle->deleteAllArguments();
-
-            // Set our response
-            callout_handle->setArgument("response6", rsp);
-
-            // Call all installed callouts
-            HooksManager::callCallouts(Hooks.hook_index_pkt6_send_, *callout_handle);
-
-            // Callouts decided to skip the next processing step. The next
-            // processing step would to pack the packet (create wire data).
-            // That step will be skipped if any callout sets skip flag.
-            // It essentially means that the callout already did packing,
-            // so the server does not have to do it again.
-            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-                LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_SEND_SKIP)
-                    .arg(rsp->getLabel());
-                skip_pack = true;
-            }
-
-            /// @todo: Add support for DROP status
-        }
-
-        if (!skip_pack) {
-            try {
-                rsp->pack();
-            } catch (const std::exception& e) {
-                LOG_ERROR(options6_logger, DHCP6_PACK_FAIL)
-                    .arg(e.what());
-                return;
-            }
-
-        }
-
+    if (!skip_pack) {
         try {
-
-            // Now all fields and options are constructed into output wire buffer.
-            // Option objects modification does not make sense anymore. Hooks
-            // can only manipulate wire buffer at this stage.
-            // Let's execute all callouts registered for buffer6_send
-            if (HooksManager::calloutsPresent(Hooks.hook_index_buffer6_send_)) {
-                CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-                // Delete previously set arguments
-                callout_handle->deleteAllArguments();
-
-                // Pass incoming packet as argument
-                callout_handle->setArgument("response6", rsp);
-
-                // Call callouts
-                HooksManager::callCallouts(Hooks.hook_index_buffer6_send_, *callout_handle);
-
-                // Callouts decided to skip the next processing step. The next
-                // processing step would to parse the packet, so skip at this
-                // stage means drop.
-                if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-                    LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP)
-                        .arg(rsp->getLabel());
-                    return;
-                }
-
-                /// @todo: Add support for DROP status
-
-                callout_handle->getArgument("response6", rsp);
-            }
-
-            LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA,
-                      DHCP6_RESPONSE_DATA)
-                .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
-
-            sendPacket(rsp);
-
-            // Update statistics accordingly for sent packet.
-            processStatsSent(rsp);
-
+            rsp->pack();
         } catch (const std::exception& e) {
-            LOG_ERROR(packet6_logger, DHCP6_PACKET_SEND_FAIL)
-                .arg(e.what());
+            LOG_ERROR(options6_logger, DHCP6_PACK_FAIL).arg(e.what());
+            return;
         }
+
     }
 }
 
