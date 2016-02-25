@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -210,12 +210,10 @@ TEST(CfgOptionDefTest, overrideStdOptionDef) {
     def.reset(new OptionDefinition("routers", DHO_ROUTERS, "uint32"));
     EXPECT_THROW(cfg.add(def, DHCP4_OPTION_SPACE), isc::BadValue);
 
-    /// @todo There is no definition for the NIS Server Addr option in
-    /// libdhcp++. Once it is implemented it should be not allowed to
-    /// add a custom definition for it. At the moment, it should be ok
-    /// to add a definition for this option (using configuration mechanism)
-    /// because we haven't implemented the one in libdhcp++.
-    def.reset(new OptionDefinition("nis-server-addr", 65, "uint16"));
+    /// There is no definition for the Access Network Domain Name Option
+    /// (RFC5986, option code 213) in libdhcp++. Once it is implemented it
+    /// should be not allowed to add a custom definition for it.
+    def.reset(new OptionDefinition("access-network-domain-name", 213, "string"));
     EXPECT_NO_THROW(cfg.add(def, DHCP4_OPTION_SPACE));
 
     // It is not allowed to override the definition of the option which

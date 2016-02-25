@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -991,11 +991,44 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_NWIP_SUBOPTIONS, begin, end,
                                     typeid(Option));
 
+    LibDhcpTest::testStdOptionDefs4(DHO_NISP_DOMAIN_NAME, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NISP_SERVER_ADDR, begin, end,
+                                    typeid(Option4AddrLst));
+
     LibDhcpTest::testStdOptionDefs4(DHO_TFTP_SERVER_NAME, begin, end,
                                     typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_BOOT_FILE_NAME, begin, end,
                                     typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_HOME_AGENT_ADDRS, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_SMTP_SERVER, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_POP3_SERVER, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NNTP_SERVER, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_WWW_SERVER, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_FINGER_SERVER, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_IRC_SERVER, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_STREETTALK_SERVER, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_STDASERVER, begin, end,
+                                    typeid(Option4AddrLst));
 
     LibDhcpTest::testStdOptionDefs4(DHO_USER_CLASS, begin, end,
                                     typeid(Option));

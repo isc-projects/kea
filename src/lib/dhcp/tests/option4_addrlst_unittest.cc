@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -194,6 +194,17 @@ TEST_F(Option4AddrLstTest, assembly4) {
         opt.reset(new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS, sampleAddrs_)),
         BadValue
     );
+}
+
+// This test verifies that an option (e.g., mobile-ip-home-agent) can be empty.
+TEST_F(Option4AddrLstTest, empty) {
+
+    scoped_ptr<Option4AddrLst> opt;
+    // the mobile-ip-home-agent option can be empty
+    EXPECT_NO_THROW(opt.reset(new Option4AddrLst(DHO_HOME_AGENT_ADDRS)));
+    Option4AddrLst::AddressContainer addrs = opt->getAddresses();
+    ASSERT_EQ(0, addrs.size());
+    EXPECT_NO_THROW(opt.reset());
 }
 
 TEST_F(Option4AddrLstTest, setAddress) {
