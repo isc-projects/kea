@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -991,10 +991,10 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_NWIP_SUBOPTIONS, begin, end,
                                     typeid(Option));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_NIS_DOMAIN_NAME, begin, end,
+    LibDhcpTest::testStdOptionDefs4(DHO_NISP_DOMAIN_NAME, begin, end,
                                     typeid(OptionString));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_NIS_SERVER_ADDR, begin, end,
+    LibDhcpTest::testStdOptionDefs4(DHO_NISP_SERVER_ADDR, begin, end,
                                     typeid(Option4AddrLst));
 
     LibDhcpTest::testStdOptionDefs4(DHO_TFTP_SERVER_NAME, begin, end,
