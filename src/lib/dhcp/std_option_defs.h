@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -169,8 +169,8 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
       OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "nwip-domain-name", DHO_NWIP_DOMAIN_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "nwip-suboptions", DHO_NWIP_SUBOPTIONS, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
-    { "nisplus-domain-name", DHO_NIS_DOMAIN_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
-    { "nisplus-servers", DHO_NIS_SERVER_ADDR, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "nisplus-domain-name", DHO_NISP_DOMAIN_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "nisplus-servers", DHO_NISP_SERVER_ADDR, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "tftp-server-name", DHO_TFTP_SERVER_NAME, OPT_STRING_TYPE, false,
       NO_RECORD_DEF, "" },
     { "boot-file-name", DHO_BOOT_FILE_NAME, OPT_STRING_TYPE, false,
