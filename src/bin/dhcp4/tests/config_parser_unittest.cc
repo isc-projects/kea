@@ -1826,16 +1826,16 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
-    /// @todo The option 65 is a standard DHCPv4 option. However, at this point
-    /// there is no definition for this option in libdhcp++, so it should be
-    /// allowed to define it from the configuration interface. This test will
-    /// have to be removed once definitions for remaining standard options are
-    /// created.
+    /// @todo The option 213 is a standard DHCPv4 option. However, at
+    /// this point there is no definition for this option in
+    /// libdhcp++, so it should be allowed to define it from the
+    /// configuration interface. This test will have to be removed
+    /// once definitions for remaining standard options are created.
     config =
         "{ \"option-def\": [ {"
-        "      \"name\": \"nis-server-addr\","
-        "      \"code\": 65,"
-        "      \"type\": \"ipv4-address\","
+        "      \"name\": \"access-network-domain-name\","
+        "      \"code\": 213,"
+        "      \"type\": \"string\","
         "      \"space\": \"dhcp4\""
         "  } ]"
         "}";
@@ -1848,13 +1848,13 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     checkResult(status, 0);
 
     def = CfgMgr::instance().getStagingCfg()->
-        getCfgOptionDef()->get("dhcp4", 65);
+        getCfgOptionDef()->get("dhcp4", 213);
     ASSERT_TRUE(def);
 
     // Check the option data.
-    EXPECT_EQ("nis-server-addr", def->getName());
-    EXPECT_EQ(65, def->getCode());
-    EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def->getType());
+    EXPECT_EQ("access-network-domain-name", def->getName());
+    EXPECT_EQ(213, def->getCode());
+    EXPECT_EQ(OPT_STRING_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
 
 }
