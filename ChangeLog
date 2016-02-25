@@ -11,7 +11,7 @@
 		irc-server (74),
 		streettalk-server (75)
 		streettalk-directory-assistance-server (76)
-	(Trac #4286, git xxx)
+	(Trac #4286, git 5ed03ed5ea48334bbd16a9a8e1676f3b4cc730a0)
 
 1081.	[bug]		jpopelka
 	Added missing slashed in path_replacer.sh.
