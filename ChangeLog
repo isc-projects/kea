@@ -1,3 +1,18 @@
+1082.	[func]		fdupont
+	The following DHCPv4 options are now supported:
+		nisplus-domain-name (64),
+		nisplus-servers (65),
+		mobile-ip-home-agent (68),
+		smtp-server (69),
+		pop-server (70),
+		nntp-server (71),
+		www-server (72),
+		finger-server (73),
+		irc-server (74),
+		streettalk-server (75)
+		streettalk-directory-assistance-server (76)
+	(Trac #4286, git xxx)
+
 1081.	[bug]		jpopelka
 	Added missing slashed in path_replacer.sh.
 	(Github #10, git 8986813825623b19fb220534434d0c13785fc14c)
@@ -5,7 +20,7 @@
 1080.	[func]		fdupont
 	Added a concat function in classification which concatenates two
 	strings.
-	(Trac #4233, git ...)
+	(Trac #4233, git eec10b436b928bd5eb3139c2f98ec9a6a818f30e)
 
 1079.	[func]		fdupont
 	Added Not, And and Or logical operators, parentheses around
