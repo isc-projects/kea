@@ -441,8 +441,8 @@ TEST_F(TokenTest, optionExistsString6) {
     EXPECT_EQ("true", values_.top());
 }
 
-// This test checks that the existing relay option can be found.
-TEST_F(TokenTest, relayOption) {
+// This test checks that the existing relay4 option can be found.
+TEST_F(TokenTest, relay4Option) {
 
     // Insert relay option with sub-options 1 and 13
     insertRelay4Option();
@@ -456,14 +456,14 @@ TEST_F(TokenTest, relayOption) {
     // we should have one value on the stack
     ASSERT_EQ(1, values_.size());
 
-    // The option should be found and relay[13] should evaluate to the
+    // The option should be found and relay4[13] should evaluate to the
     // content of that sub-option, i.e. "thirteen"
     EXPECT_EQ("thirteen", values_.top());
 }
 
 // This test checks that the code properly handles cases when
 // there is a RAI option, but there's no requested sub-option.
-TEST_F(TokenTest, relayOptionNoSuboption) {
+TEST_F(TokenTest, relay4OptionNoSuboption) {
 
     // Insert relay option with sub-options 1 and 13
     insertRelay4Option();
@@ -484,7 +484,7 @@ TEST_F(TokenTest, relayOptionNoSuboption) {
 
 // This test checks that the code properly handles cases when
 // there's no RAI option at all.
-TEST_F(TokenTest, relayOptionNoRai) {
+TEST_F(TokenTest, relay4OptionNoRai) {
 
     // We didn't call insertRelay4Option(), so there's no RAI option.
 
@@ -504,7 +504,7 @@ TEST_F(TokenTest, relayOptionNoRai) {
 
 // This test checks that only the RAI is searched for the requested
 // sub-option.
-TEST_F(TokenTest, relayRAIOnly) {
+TEST_F(TokenTest, relay4RAIOnly) {
 
     // Insert relay option with sub-options 1 and 13
     insertRelay4Option();
@@ -542,6 +542,20 @@ TEST_F(TokenTest, relayRAIOnly) {
     EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("", values_.top());
+
+    // Try to check option 1. It should return "true"
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(1, TokenOption::EXISTS)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // Try to check option 70. It should return "false"
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(70, TokenOption::EXISTS)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
 }
 
 // This test checks if a token representing an == operator is able to
