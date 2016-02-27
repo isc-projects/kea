@@ -480,11 +480,11 @@ static yyconst flex_int16_t yy_acclist[128] =
        26,16390,   25,   26,16390,   25,   26,16390,    1,    2,
         3,    5,    7,16390, 8198,16390,16390,16390,16390,16390,
     16390,16390,   18,16390,16390,16390,16390,    4,   14,16390,
-       17,16390,16390,16390,   10,16390,   16,16390,16390,16390,
+       17,16390,16390,16390,   11,16390,   16,16390,16390,16390,
 
-    16390,16390,16390,16390,16390,16390,16390,    9,16390,16390,
-    16390,16390,16390,16390,   15,16390,   11,16390,    8,16390,
-       12,16390,16390,16390,16390,   13,16390
+    16390,16390,16390,16390,16390,16390,16390,   10,16390,16390,
+    16390,16390,16390,16390,   15,16390,   12,16390,    8,16390,
+        9,16390,16390,16390,16390,   13,16390
     } ;
 
 static yyconst flex_int16_t yy_accept[82] =
@@ -1203,22 +1203,22 @@ return isc::eval::EvalParser::make_OPTION(loc);
 case 9:
 YY_RULE_SETUP
 #line 127 "lexer.ll"
-return isc::eval::EvalParser::make_TEXT(loc);
+return isc::eval::EvalParser::make_RELAY4(loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
 #line 128 "lexer.ll"
-return isc::eval::EvalParser::make_HEX(loc);
+return isc::eval::EvalParser::make_TEXT(loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
 #line 129 "lexer.ll"
-return isc::eval::EvalParser::make_EXISTS(loc);
+return isc::eval::EvalParser::make_HEX(loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
 #line 130 "lexer.ll"
-return isc::eval::EvalParser::make_RELAY4(loc);
+return isc::eval::EvalParser::make_EXISTS(loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP

@@ -329,24 +329,24 @@ namespace isc { namespace eval {
       enum yytokentype
       {
         TOKEN_END = 0,
-        TOKEN_EQUAL = 258,
-        TOKEN_OPTION = 259,
-        TOKEN_SUBSTRING = 260,
-        TOKEN_CONCAT = 261,
-        TOKEN_NOT = 262,
-        TOKEN_AND = 263,
-        TOKEN_OR = 264,
-        TOKEN_TEXT = 265,
-        TOKEN_RELAY4 = 266,
-        TOKEN_HEX = 267,
-        TOKEN_EXISTS = 268,
-        TOKEN_ALL = 269,
-        TOKEN_DOT = 270,
-        TOKEN_COMA = 271,
-        TOKEN_LPAREN = 272,
-        TOKEN_RPAREN = 273,
-        TOKEN_LBRACKET = 274,
-        TOKEN_RBRACKET = 275,
+        TOKEN_LPAREN = 258,
+        TOKEN_RPAREN = 259,
+        TOKEN_NOT = 260,
+        TOKEN_AND = 261,
+        TOKEN_OR = 262,
+        TOKEN_EQUAL = 263,
+        TOKEN_OPTION = 264,
+        TOKEN_RELAY4 = 265,
+        TOKEN_LBRACKET = 266,
+        TOKEN_RBRACKET = 267,
+        TOKEN_DOT = 268,
+        TOKEN_TEXT = 269,
+        TOKEN_HEX = 270,
+        TOKEN_EXISTS = 271,
+        TOKEN_SUBSTRING = 272,
+        TOKEN_ALL = 273,
+        TOKEN_COMA = 274,
+        TOKEN_CONCAT = 275,
         TOKEN_STRING = 276,
         TOKEN_INTEGER = 277,
         TOKEN_HEXSTRING = 278,
@@ -467,19 +467,11 @@ namespace isc { namespace eval {
 
     static inline
     symbol_type
-    make_EQUAL (const location_type& l);
+    make_LPAREN (const location_type& l);
 
     static inline
     symbol_type
-    make_OPTION (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SUBSTRING (const location_type& l);
-
-    static inline
-    symbol_type
-    make_CONCAT (const location_type& l);
+    make_RPAREN (const location_type& l);
 
     static inline
     symbol_type
@@ -495,11 +487,31 @@ namespace isc { namespace eval {
 
     static inline
     symbol_type
-    make_TEXT (const location_type& l);
+    make_EQUAL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_OPTION (const location_type& l);
 
     static inline
     symbol_type
     make_RELAY4 (const location_type& l);
+
+    static inline
+    symbol_type
+    make_LBRACKET (const location_type& l);
+
+    static inline
+    symbol_type
+    make_RBRACKET (const location_type& l);
+
+    static inline
+    symbol_type
+    make_DOT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_TEXT (const location_type& l);
 
     static inline
     symbol_type
@@ -511,11 +523,11 @@ namespace isc { namespace eval {
 
     static inline
     symbol_type
-    make_ALL (const location_type& l);
+    make_SUBSTRING (const location_type& l);
 
     static inline
     symbol_type
-    make_DOT (const location_type& l);
+    make_ALL (const location_type& l);
 
     static inline
     symbol_type
@@ -523,19 +535,7 @@ namespace isc { namespace eval {
 
     static inline
     symbol_type
-    make_LPAREN (const location_type& l);
-
-    static inline
-    symbol_type
-    make_RPAREN (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LBRACKET (const location_type& l);
-
-    static inline
-    symbol_type
-    make_RBRACKET (const location_type& l);
+    make_CONCAT (const location_type& l);
 
     static inline
     symbol_type
@@ -758,7 +758,7 @@ namespace isc { namespace eval {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 62,     ///< Last index in yytable_.
+      yylast_ = 70,     ///< Last index in yytable_.
       yynnts_ = 8,  ///< Number of nonterminal symbols.
       yyfinal_ = 18, ///< Termination state number.
       yyterror_ = 1,
@@ -1073,27 +1073,15 @@ namespace isc { namespace eval {
   }
 
   EvalParser::symbol_type
-  EvalParser::make_EQUAL (const location_type& l)
+  EvalParser::make_LPAREN (const location_type& l)
   {
-    return symbol_type (token::TOKEN_EQUAL, l);
+    return symbol_type (token::TOKEN_LPAREN, l);
   }
 
   EvalParser::symbol_type
-  EvalParser::make_OPTION (const location_type& l)
+  EvalParser::make_RPAREN (const location_type& l)
   {
-    return symbol_type (token::TOKEN_OPTION, l);
-  }
-
-  EvalParser::symbol_type
-  EvalParser::make_SUBSTRING (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SUBSTRING, l);
-  }
-
-  EvalParser::symbol_type
-  EvalParser::make_CONCAT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_CONCAT, l);
+    return symbol_type (token::TOKEN_RPAREN, l);
   }
 
   EvalParser::symbol_type
@@ -1115,15 +1103,45 @@ namespace isc { namespace eval {
   }
 
   EvalParser::symbol_type
-  EvalParser::make_TEXT (const location_type& l)
+  EvalParser::make_EQUAL (const location_type& l)
   {
-    return symbol_type (token::TOKEN_TEXT, l);
+    return symbol_type (token::TOKEN_EQUAL, l);
+  }
+
+  EvalParser::symbol_type
+  EvalParser::make_OPTION (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_OPTION, l);
   }
 
   EvalParser::symbol_type
   EvalParser::make_RELAY4 (const location_type& l)
   {
     return symbol_type (token::TOKEN_RELAY4, l);
+  }
+
+  EvalParser::symbol_type
+  EvalParser::make_LBRACKET (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_LBRACKET, l);
+  }
+
+  EvalParser::symbol_type
+  EvalParser::make_RBRACKET (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_RBRACKET, l);
+  }
+
+  EvalParser::symbol_type
+  EvalParser::make_DOT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DOT, l);
+  }
+
+  EvalParser::symbol_type
+  EvalParser::make_TEXT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_TEXT, l);
   }
 
   EvalParser::symbol_type
@@ -1139,15 +1157,15 @@ namespace isc { namespace eval {
   }
 
   EvalParser::symbol_type
-  EvalParser::make_ALL (const location_type& l)
+  EvalParser::make_SUBSTRING (const location_type& l)
   {
-    return symbol_type (token::TOKEN_ALL, l);
+    return symbol_type (token::TOKEN_SUBSTRING, l);
   }
 
   EvalParser::symbol_type
-  EvalParser::make_DOT (const location_type& l)
+  EvalParser::make_ALL (const location_type& l)
   {
-    return symbol_type (token::TOKEN_DOT, l);
+    return symbol_type (token::TOKEN_ALL, l);
   }
 
   EvalParser::symbol_type
@@ -1157,27 +1175,9 @@ namespace isc { namespace eval {
   }
 
   EvalParser::symbol_type
-  EvalParser::make_LPAREN (const location_type& l)
+  EvalParser::make_CONCAT (const location_type& l)
   {
-    return symbol_type (token::TOKEN_LPAREN, l);
-  }
-
-  EvalParser::symbol_type
-  EvalParser::make_RPAREN (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_RPAREN, l);
-  }
-
-  EvalParser::symbol_type
-  EvalParser::make_LBRACKET (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_LBRACKET, l);
-  }
-
-  EvalParser::symbol_type
-  EvalParser::make_RBRACKET (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_RBRACKET, l);
+    return symbol_type (token::TOKEN_CONCAT, l);
   }
 
   EvalParser::symbol_type

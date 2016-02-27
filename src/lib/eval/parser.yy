@@ -36,24 +36,24 @@ using namespace isc::eval;
 %define api.token.prefix {TOKEN_}
 %token
   END  0  "end of file"
-  EQUAL "=="
-  OPTION "option"
-  SUBSTRING "substring"
-  CONCAT "concat"
+  LPAREN  "("
+  RPAREN  ")"
   NOT "not"
   AND "and"
   OR "or"
-  TEXT "text"
+  EQUAL "=="
+  OPTION "option"
   RELAY4 "relay4"
-  HEX "hex"
-  EXISTS "exists"
-  ALL "all"
-  DOT "."
-  COMA ","
-  LPAREN  "("
-  RPAREN  ")"
   LBRACKET "["
   RBRACKET "]"
+  DOT "."
+  TEXT "text"
+  HEX "hex"
+  EXISTS "exists"
+  SUBSTRING "substring"
+  ALL "all"
+  COMA ","
+  CONCAT "concat"
 ;
 
 %token <std::string> STRING "constant string"
@@ -105,6 +105,26 @@ bool_expr : "(" bool_expr ")"
                 {
                     TokenPtr opt(new TokenOption($3, TokenOption::EXISTS));
                     ctx.expression.push_back(opt);
+                }
+          | RELAY4 "[" option_code "]" "." EXISTS
+                {
+                   switch (ctx.getUniverse()) {
+                   case Option::V4:
+                   {
+                       TokenPtr opt(new TokenRelay4Option($3, TokenOption::EXISTS));
+                       ctx.expression.push_back(opt);
+                       break;
+                   }
+                   case Option::V6:
+                       // We will have relay6[123] for the DHCPv6.
+                       // In a very distant future we'll possibly be able
+                       // to mix both if we have DHCPv4-over-DHCPv6, so it
+                       // has some sense to make it explicit whether we
+                       // talk about DHCPv4 relay or DHCPv6 relay. However,
+                       // for the time being relay4 can be used in DHCPv4
+                       // only.
+                       error(@1, "relay4 can only be used in DHCPv4.");
+                   }
                 }
           ;
 
