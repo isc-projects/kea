@@ -60,6 +60,7 @@ using namespace isc::eval;
 %token <std::string> INTEGER "integer"
 %token <std::string> HEXSTRING "constant hexstring"
 %token <std::string> OPTION_NAME "option name"
+%token <std::string> IP_ADDRESS "ip address"
 
 %type <uint16_t> option_code
 %type <TokenOption::RepresentationType> option_repr_type
@@ -117,6 +118,11 @@ string_expr : STRING
                   {
                       TokenPtr hex(new TokenHexString($1));
                       ctx.expression.push_back(hex);
+                  }
+            | IP_ADDRESS
+                  {
+                      TokenPtr ip(new TokenIpAddress($1));
+                      ctx.expression.push_back(ip);
                   }
             | OPTION "[" option_code "]" "." option_repr_type
                   {
