@@ -283,7 +283,7 @@ TEST_F(EvalContextTest, optionHex) {
     checkTokenOption(eval.expression.at(0), 123);
 }
 
-// This test checks that the relay[code].hex can be used in expressions.
+// This test checks that the relay4[code].hex can be used in expressions.
 TEST_F(EvalContextTest, relay4Option) {
 
     EvalContext eval(Option::V4);
@@ -299,6 +299,16 @@ TEST_F(EvalContextTest, relay4Option) {
     checkTokenRelay4(tmp1, 13);
     checkTokenString(tmp2, "thirteen");
     checkTokenEq(tmp3);
+}
+
+// This test check the relay4[code].exists is supported.
+TEST_F(EvalContextTest, relay4Exists) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("relay4[13].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(1, eval.expression.size());
+    checkTokenRelay4(eval.expression.at(0), 13);
 }
 
 // Verify that relay4[13] is not usable in v6
@@ -520,7 +530,7 @@ TEST_F(EvalContextTest, parseErrors) {
                "<string>:1.9: syntax error, unexpected end of file");
     checkError("('foo' == 'bar'",
                "<string>:1.16: syntax error, unexpected end of file, "
-               "expecting and or or or )");
+               "expecting ) or and or or");
     checkError("('foo' == 'bar') ''",
                "<string>:1.18-19: syntax error, unexpected constant string, "
                "expecting end of file");
