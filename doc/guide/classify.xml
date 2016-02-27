@@ -159,6 +159,7 @@
           <tbody>
 <row><entry>String</entry><entry>'example'</entry><entry>A string</entry></row>
 <row><entry>Hex String</entry><entry>0XABCD</entry><entry>A hexadecimal string</entry></row>
+<row><entry>IP Address</entry><entry>10.0.0.1</entry><entry>An IP address</entry></row>
 <row><entry>Integer</entry><entry>123</entry><entry>An integer value</entry></row>
 <!-- Text option not fully defined yet, leave it out
 <row><entry>Option Text</entry><entry>option[code].text</entry><entry>The value of the option with code "code" from the packet as text</entry></row>
@@ -175,6 +176,10 @@ sub-option with code "code" from the DHCPv4 Relay Agent Information option
       Hex Strings are converted into a string as expected.  The starting &quot;0X&quot; or
       &quot;0x&quot; is removed and if the string is an odd number of characters a
       &quot;0&quot; is prepended to it.
+      </para>
+
+      <para>
+      IP addresses are converted into strings of length 4 or 16.
       </para>
 
       <para>
