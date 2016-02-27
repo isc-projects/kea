@@ -10,12 +10,14 @@
 #include <eval/token.h>
 #include <dhcp/option.h>
 #include <dhcp/pkt4.h>
+#include <asiolink/io_address.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 using namespace std;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 
 namespace {
@@ -61,6 +63,29 @@ public:
         ASSERT_EQ(1, values.size());
 
         EXPECT_EQ(expected, values.top());
+    }
+
+    /// @brief checks if the given token is an IP address with the expected value
+    void checkTokenIpAddress(const TokenPtr& token,
+                             const std::string& expected) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenIpAddress> ipaddr =
+            boost::dynamic_pointer_cast<TokenIpAddress>(token);
+        ASSERT_TRUE(ipaddr);
+
+        Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
+        ValueStack values;
+
+        EXPECT_NO_THROW(token->evaluate(*pkt4, values));
+
+        ASSERT_EQ(1, values.size());
+        string value = values.top();
+
+        boost::scoped_ptr<IOAddress> exp_ip;
+        ASSERT_NO_THROW(exp_ip.reset(new IOAddress(expected)));
+        vector<uint8_t> exp_addr = exp_ip->toBytes();
+        ASSERT_EQ(exp_addr.size(), value.size());
+        EXPECT_EQ(0, memcmp(&exp_addr[0], &value[0], value.size()));
     }
 
     /// @brief checks if the given token is an equal operator
@@ -200,6 +225,63 @@ TEST_F(EvalContextTest, oddHexstring) {
 
     checkTokenHexString(tmp, "\a");
 }
+
+// Test the parsing of an IPv4 address
+TEST_F(EvalContextTest, ipaddress4) {
+    EvalContext eval(Option::V6);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("10.0.0.1 == 'foo'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(3, eval.expression.size());
+
+    TokenPtr tmp = eval.expression.at(0);
+
+    checkTokenIpAddress(tmp, "10.0.0.1");
+}
+
+// Test the parsing of an IPv6 address
+TEST_F(EvalContextTest, ipaddress6) {
+    EvalContext eval(Option::V6);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("2001:db8::1 == 'foo'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(3, eval.expression.size());
+
+    TokenPtr tmp = eval.expression.at(0);
+
+    checkTokenIpAddress(tmp, "2001:db8::1");
+}
+
+// Test the parsing of an IPv4 mapped IPv6 address
+TEST_F(EvalContextTest, ipaddress46) {
+    EvalContext eval(Option::V6);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("::10.0.0.1 == 'foo'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(3, eval.expression.size());
+
+    TokenPtr tmp = eval.expression.at(0);
+
+    checkTokenIpAddress(tmp, "::10.0.0.1");
+}
+
+// Test the parsing of the unspecified IPv6 address
+TEST_F(EvalContextTest, ipaddress6unspec) {
+    EvalContext eval(Option::V6);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString(":: == 'foo'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(3, eval.expression.size());
+
+    TokenPtr tmp = eval.expression.at(0);
+
+    checkTokenIpAddress(tmp, "::");
+}
+
 
 // Test the parsing of an equal expression
 TEST_F(EvalContextTest, equal) {
@@ -462,6 +544,7 @@ TEST_F(EvalContextTest, scanErrors) {
     checkError("'\''", "<string>:1.3: Invalid character: '");
     checkError("'\n'", "<string>:1.1: Invalid character: '");
     checkError("0x123h", "<string>:1.6: Invalid character: h");
+    checkError(":1", "<string>:1.1: Invalid character: :");
     checkError("=", "<string>:1.1: Invalid character: =");
     checkError("subtring", "<string>:1.1: Invalid character: s");
     checkError("foo", "<string>:1.1: Invalid character: f");
@@ -476,6 +559,12 @@ TEST_F(EvalContextTest, scanParseErrors) {
     checkError("0x", "<string>:1.1: syntax error, unexpected integer");
     checkError("0abc",
                "<string>:1.1: syntax error, unexpected integer");
+    checkError("10.0.1", "<string>:1.1-2: syntax error, unexpected integer");
+    checkError("10.256.0.1",
+               "<string>:1.1-10: Failed to convert 10.256.0.1 to "
+               "an IP address.");
+    checkError(":::",
+               "<string>:1.1-3: Failed to convert ::: to an IP address.");
     checkError("===", "<string>:1.1-2: syntax error, unexpected ==");
     checkError("option[-1].text",
                "<string>:1.8-9: Option code has invalid "

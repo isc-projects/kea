@@ -11,6 +11,7 @@
 #include <string>
 #include <eval/eval_context.h>
 #include <eval/parser.h>
+#include <asiolink/io_address.h>
 #include <boost/lexical_cast.hpp>
 
 // Work around an incompatibility in flex (at least versions
@@ -60,6 +61,8 @@ static isc::eval::location loc;
 int   \-?[0-9]+
 hex   [0-9a-fA-F]+
 blank [ \t]
+addr4 [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+
+addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 
 %{
 // This code run each time a pattern is matched. It updates the location
@@ -120,6 +123,19 @@ blank [ \t]
     // and further containing letters, digits, hyphens and
     // underscores and finishing by letters or digits.
     return isc::eval::EvalParser::make_OPTION_NAME(yytext, loc);
+}
+
+{addr4}|{addr6} {
+    // IPv4 or IPv6 address
+    std::string tmp(yytext);
+
+    try {
+        isc::asiolink::IOAddress ip(tmp);
+    } catch (...) {
+        driver.error(loc, "Failed to convert " + tmp + " to an IP address.");
+    }
+
+    return isc::eval::EvalParser::make_IP_ADDRESS(yytext, loc);
 }
 
 "=="        return isc::eval::EvalParser::make_EQUAL(loc);
