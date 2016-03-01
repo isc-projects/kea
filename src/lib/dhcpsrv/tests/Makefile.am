@@ -105,7 +105,6 @@ libdhcpsrv_unittests_SOURCES += generic_host_data_source_unittest.cc generic_hos
 libdhcpsrv_unittests_SOURCES += memfile_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp_parsers_unittest.cc
 if HAVE_MYSQL
-libdhcpsrv_unittests_SOURCES += mysql_schema.cc mysql_schema.h
 libdhcpsrv_unittests_SOURCES += mysql_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += mysql_host_data_source_unittest.cc
 endif
@@ -116,7 +115,6 @@ if HAVE_PGSQL
 libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
 endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
-libdhcpsrv_unittests_SOURCES += schema_mysql_copy.h
 libdhcpsrv_unittests_SOURCES += schema_pgsql_copy.h
 libdhcpsrv_unittests_SOURCES += srv_config_unittest.cc
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc

@@ -777,7 +777,7 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
 
 std::string
 Memfile_LeaseMgr::getDescription() const {
-    return (std::string("In Memory Database"));
+    return (std::string("In memory database with leases stored in a CSV file."));
 }
 
 void

@@ -279,7 +279,7 @@ public:
         return (cfg_duid_);
     }
 
-    /// @brief Returns pointer to the objec holding configuration of the
+    /// @brief Returns pointer to the object holding configuration of the
     /// lease and host database connection parameters.
     CfgDbAccessPtr getCfgDbAccess() {
         return (cfg_db_access_);
