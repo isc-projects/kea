@@ -112,8 +112,7 @@ public:
     ///
     /// @param resv1 first IPv6 reservations list
     /// @param resv2 second IPv6 reservations list
-    void compareReservations6(IPv6ResrvRange resv1, IPv6ResrvRange resv2,
-                              bool expect_match);
+    void compareReservations6(IPv6ResrvRange resv1, IPv6ResrvRange resv2);
 
     /// @brief Compares two client classes
     ///
@@ -212,12 +211,12 @@ public:
     void testAddr6AndPrefix();
 
     /// @brief Tests if host with multiple IPv6 reservations can be added and then
-    ///         retrieved correctly.
-    void testMultipletReservations();
+    ///        retrieved correctly.
+    void testMultipleReservations();
 
     /// @brief Tests if compareIPv6Reservations() method treats same pool of
-    ///         reservations but added in different order as equal.
-    void testMultipletReservationsDifferentOrder();
+    ///        reservations but added in different order as equal.
+    void testMultipleReservationsDifferentOrder();
 
     /// @brief Test if host reservations made for different IPv6 subnets
     ///        are handled correctly.

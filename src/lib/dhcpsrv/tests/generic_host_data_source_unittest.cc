@@ -250,8 +250,7 @@ void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
 
     // Compare IPv6 reservations
     compareReservations6(host1->getIPv6Reservations(),
-                         host2->getIPv6Reservations(),
-                         true);
+                         host2->getIPv6Reservations());
 
     // And compare client classification details
     compareClientClasses(host1->getClientClasses4(),
@@ -282,19 +281,32 @@ GenericHostDataSourceTest::DuidToHWAddr(const DuidPtr& duid) {
 
 void
 GenericHostDataSourceTest::compareReservations6(IPv6ResrvRange resrv1,
-                                                IPv6ResrvRange resrv2,
-                                                bool expect_match) {
+                                                IPv6ResrvRange resrv2) {
 
     // Compare number of reservations for both hosts
     if (std::distance(resrv1.first, resrv1.second) !=
             std::distance(resrv2.first, resrv2.second)){
-        // Number of reservations is not equal.
-        // Let's see if it's a problem.
-        if (expect_match) {
-            ADD_FAILURE()<< "Reservation comparison failed, "
-                    "hosts got different number of reservations.";
-        }
+        ADD_FAILURE()<< "Reservation comparison failed, "
+            "hosts got different number of reservations.";
         return;
+    }
+
+    // Iterate over the range of reservations to find a match in the
+    // reference range.
+    for (IPv6ResrvIterator r1 = resrv1.first; r1 != resrv1.second; ++r1) {
+        IPv6ResrvIterator r2 = resrv2.first;
+        for (; r2 != resrv2.second; ++r2) {
+            // IPv6Resrv object implements equality operator.
+            if (r1->second == r2->second) {
+                break;
+            }
+        }
+        // If r2 iterator reached the end of the range it means that there
+        // is no match.
+        if (r2 == resrv2.second) {
+            ADD_FAILURE() << "No match found for reservation: "
+                          << resrv1.first->second.getPrefix().toText();
+        }
     }
 
     if (std::distance(resrv1.first, resrv1.second) > 0) {
@@ -307,7 +319,7 @@ GenericHostDataSourceTest::compareReservations6(IPv6ResrvRange resrv1,
                     break;
                 }
                 iter++;
-                if (iter == resrv2.second && expect_match) {
+                if (iter == resrv2.second) {
                     ADD_FAILURE()<< "Reservation comparison failed, "
                     "no match for reservation: "
                     << resrv1.first->second.getPrefix().toText();
@@ -824,10 +836,10 @@ void GenericHostDataSourceTest::testAddr6AndPrefix(){
     ASSERT_TRUE(from_hds);
 
     // Check if reservations are the same
-    compareReservations6(host->getIPv6Reservations(), from_hds->getIPv6Reservations(), true);
+    compareReservations6(host->getIPv6Reservations(), from_hds->getIPv6Reservations());
 }
 
-void GenericHostDataSourceTest::testMultipletReservations(){
+void GenericHostDataSourceTest::testMultipleReservations(){
     // Make sure we have the pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
     uint8_t len = 128;
@@ -857,7 +869,7 @@ void GenericHostDataSourceTest::testMultipletReservations(){
     compareHosts(host, from_hds);
 }
 
-void GenericHostDataSourceTest::testMultipletReservationsDifferentOrder(){
+void GenericHostDataSourceTest::testMultipleReservationsDifferentOrder(){
     // Make sure we have the pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
     uint8_t len = 128;
@@ -882,7 +894,7 @@ void GenericHostDataSourceTest::testMultipletReservationsDifferentOrder(){
     host2->addReservation(resv1);
 
     // Check if reservations are the same
-    compareReservations6(host1->getIPv6Reservations(), host2->getIPv6Reservations(), true);
+    compareReservations6(host1->getIPv6Reservations(), host2->getIPv6Reservations());
 
 }
 
