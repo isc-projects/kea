@@ -842,20 +842,11 @@ public:
 private:
     uint64_t	host_id_;        /// Host unique identifier
     uint64_t    reservation_id_; /// Reservation unique identifier
-    size_t      host_id_length_; /// Length of the host unique ID
     std::string address_;        ///< Address (or prefix)
     size_t      address_len_;    ///< Length of the textual address representation
     uint8_t     prefix_len_;     ///< Length of the prefix (128 for addresses)
     uint8_t     type_;
     uint8_t     iaid_;
-
-    uint64_t    host_id_len_;
-
-    // NULL flags for subnets id, ipv4 address, hostname and client classes
-    my_bool     host_id_null_;
-    my_bool     address_null_;
-    my_bool     prefix_len_null_;
-    my_bool     iaid_null_;
 
     IPv6Resrv   resv_;
 
@@ -999,7 +990,8 @@ MySqlHostDataSource::getIPv6ReservationCollection(StatementIndex stindex,
     // retrieve the data. mysql_stmt_fetch return value equal to 0 represents
     // successful data fetch.
     MySqlFreeResult fetch_release(conn_.statements_[stindex]);
-    while ((status = mysql_stmt_fetch(conn_.statements_[stindex])) == 0) {
+    while ((status = mysql_stmt_fetch(conn_.statements_[stindex])) ==
+           MLM_MYSQL_FETCH_SUCCESS) {
         try {
             result.insert(IPv6ResrvTuple(exchange->getIPv6ReservData().getType(),
                                             exchange->getIPv6ReservData()));
@@ -1013,9 +1005,10 @@ MySqlHostDataSource::getIPv6ReservationCollection(StatementIndex stindex,
 
     // How did the fetch end?
     // If mysql_stmt_fetch return value is equal to 1 an error occurred.
-    if (status == 1) {
+    if (status == MLM_MYSQL_FETCH_FAILURE) {
         // Error - unable to fetch results
         checkError(status, stindex, "unable to fetch results");
+
     } else if (status == MYSQL_DATA_TRUNCATED) {
         // Data truncated - throw an exception indicating what was at fault
         isc_throw(DataTruncated, conn_.text_statements_[stindex]
@@ -1106,9 +1099,10 @@ MySqlHostDataSource::getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
 
     // How did the fetch end?
     // If mysql_stmt_fetch return value is equal to 1 an error occurred.
-    if (status == 1) {
+    if (status == MLM_MYSQL_FETCH_FAILURE) {
         // Error - unable to fetch results
         checkError(status, stindex, "unable to fetch results");
+
     } else if (status == MYSQL_DATA_TRUNCATED) {
         // Data truncated - throw an exception indicating what was at fault
         isc_throw(DataTruncated, conn_.text_statements_[stindex]

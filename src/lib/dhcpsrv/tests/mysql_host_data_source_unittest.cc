@@ -322,13 +322,13 @@ TEST_F(MySqlHostDataSourceTest, addr6AndPrefix) {
 // Tests if host with multiple IPv6 reservations can be added and then
 // retrieved correctly. Test checks reservations comparing.
 TEST_F(MySqlHostDataSourceTest, multipleReservations){
-    testMultipletReservations();
+    testMultipleReservations();
 }
 
 // Tests if compareIPv6Reservations() method treats same pool of reservations
 // but added in different order as equal.
 TEST_F(MySqlHostDataSourceTest, multipleReservationsDifferentOrder){
-    testMultipletReservationsDifferentOrder();
+    testMultipleReservationsDifferentOrder();
 }
 
 // Test verifies if multiple client classes for IPv4 can be stored.

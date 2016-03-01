@@ -30,21 +30,10 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-/// @brief Maximum size of database fields
-///
-/// The following constants define buffer sizes for variable length database
-/// fields.  The values should be greater than or equal to the length set in
-/// the schema definition.
-///
-/// The exception is the length of any VARCHAR fields: buffers for these should
-/// be set greater than or equal to the length of the field plus 1: this allows
-/// for the insertion of a trailing null whatever data is returned.
-
-const my_bool MLM_FALSE = 0;                ///< False value
-const my_bool MLM_TRUE = 1;                 ///< True value
-
-///@}
-
+const my_bool MLM_FALSE = 0;
+const my_bool MLM_TRUE = 1;
+const int MLM_MYSQL_FETCH_SUCCESS = 0;
+const int MLM_MYSQL_FETCH_FAILURE = 1;
 
 // Open the database using the parameters passed to the constructor.
 
