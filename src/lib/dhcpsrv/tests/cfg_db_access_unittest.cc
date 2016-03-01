@@ -9,7 +9,7 @@
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/tests/mysql_schema.h>
+#include <dhcpsrv/testutils/mysql_schema.h>
 #include <gtest/gtest.h>
 
 using namespace isc;

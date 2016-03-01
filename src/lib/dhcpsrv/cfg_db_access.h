@@ -26,6 +26,9 @@ public:
 
     /// @brief Sets parameters which will be appended to the database
     /// access strings.
+    ///
+    /// @param appended_parameters String holding collection of parameters
+    /// in the following format: "parameter0=value0 parameter1=value1 ...".
     void setAppendedParameters(const std::string& appended_parameters) {
         appended_parameters_ = appended_parameters;
     }
