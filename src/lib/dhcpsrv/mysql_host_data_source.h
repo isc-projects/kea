@@ -354,10 +354,10 @@ private:
     /// declare them as "mutable".)
 
     /// @brief MySQL Host Reservation Exchange object
-    boost::shared_ptr<MySqlHostReservationExchange> hostExchange_;
+    boost::shared_ptr<MySqlHostReservationExchange> host_exchange_;
 
     /// @brief MySQL IPv6 Reservation Exchange object
-    boost::shared_ptr<MySqlIPv6ReservationExchange> resvExchange_;
+    boost::shared_ptr<MySqlIPv6ReservationExchange> resv_exchange_;
 
     /// @brief MySQL connection
     MySqlConnection conn_;

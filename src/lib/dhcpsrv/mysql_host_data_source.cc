@@ -880,9 +880,9 @@ MySqlHostDataSource::MySqlHostDataSource(
 
     // Create the exchange objects for use in exchanging data between the
     // program and the database.
-    hostExchange_.reset(new MySqlHostReservationExchange());
+    host_exchange_.reset(new MySqlHostReservationExchange());
 
-    resvExchange_.reset(new MySqlIPv6ReservationExchange());
+    resv_exchange_.reset(new MySqlIPv6ReservationExchange());
 }
 
 MySqlHostDataSource::~MySqlHostDataSource() {
@@ -914,7 +914,7 @@ MySqlHostDataSource::add(const HostPtr& host) {
         isc_throw(DuplicateEntry, "Host with same parameters already exists.");
     } else {
         // Create the MYSQL_BIND array for the host
-        std::vector<MYSQL_BIND> bind = hostExchange_->createBindForSend(host);
+        std::vector<MYSQL_BIND> bind = host_exchange_->createBindForSend(host);
 
         // ... and call addHost() code.
         addQuery(INSERT_HOST, bind);
@@ -936,7 +936,7 @@ MySqlHostDataSource::add(const HostPtr& host) {
 void
 MySqlHostDataSource::addResv(const IPv6Resrv& resv, HostID id) {
     std::vector<MYSQL_BIND> bind =
-        resvExchange_->createBindForSend(resv, id);
+        resv_exchange_->createBindForSend(resv, id);
 
     addQuery(INSERT_V6_RESRV, bind);
 }
@@ -1030,7 +1030,7 @@ MySqlHostDataSource::getAllReservations(HostID host_id) const{
     inbind[0].is_unsigned = MLM_TRUE;
 
     IPv6ResrvCollection result;
-    getIPv6ReservationCollection(GET_V6_RESRV, inbind, resvExchange_, result);
+    getIPv6ReservationCollection(GET_V6_RESRV, inbind, resv_exchange_, result);
 
     return (result);
 }
@@ -1078,7 +1078,8 @@ MySqlHostDataSource::getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
     MySqlFreeResult fetch_release(conn_.statements_[stindex]);
     int count = 0;
     HostPtr host;
-    while ((status = mysql_stmt_fetch(conn_.statements_[stindex])) == 0) {
+    while ((status = mysql_stmt_fetch(conn_.statements_[stindex])) ==
+           MLM_MYSQL_FETCH_SUCCESS) {
         try {
             host = exchange->getHostData();
             assignReservations(host);
@@ -1153,7 +1154,7 @@ MySqlHostDataSource::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const 
     inbind[1].is_unsigned = MLM_TRUE;
 
     ConstHostCollection result;
-    getHostCollection(GET_HOST_HWADDR_DUID, inbind, hostExchange_, result, false);
+    getHostCollection(GET_HOST_HWADDR_DUID, inbind, host_exchange_, result, false);
 
     return (result);
 }
@@ -1171,7 +1172,7 @@ MySqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
     inbind[0].is_unsigned = MLM_TRUE;
 
     ConstHostCollection result;
-    getHostCollection(GET_HOST_ADDR, inbind, hostExchange_, result, false);
+    getHostCollection(GET_HOST_ADDR, inbind, host_exchange_, result, false);
 
     return (result);
 }
@@ -1236,7 +1237,7 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
     inbind[1].is_unsigned = MLM_TRUE;
 
     ConstHostCollection collection;
-    getHostCollection(GET_HOST_SUBID4_DHCPID, inbind, hostExchange_,
+    getHostCollection(GET_HOST_SUBID4_DHCPID, inbind, host_exchange_,
                       collection, true);
 
     // Return single record if present, else clear the host.
@@ -1265,7 +1266,7 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
     inbind[1].is_unsigned = MLM_TRUE;
 
     ConstHostCollection collection;
-    getHostCollection(GET_HOST_SUBID_ADDR, inbind, hostExchange_,
+    getHostCollection(GET_HOST_SUBID_ADDR, inbind, host_exchange_,
                       collection, true);
 
     // Return single record if present, else clear the host.
@@ -1335,7 +1336,7 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id, const DuidPtr& duid,
     inbind[1].is_unsigned = MLM_TRUE;
 
     ConstHostCollection collection;
-    getHostCollection(GET_HOST_SUBID6_DHCPID, inbind, hostExchange_,
+    getHostCollection(GET_HOST_SUBID6_DHCPID, inbind, host_exchange_,
                       collection, true);
 
     // Return single record if present, else clear the host.
@@ -1372,7 +1373,7 @@ MySqlHostDataSource::get6(const asiolink::IOAddress& prefix,
 
 
     ConstHostCollection collection;
-    getHostCollection(GET_HOST_PREFIX, inbind, hostExchange_,
+    getHostCollection(GET_HOST_PREFIX, inbind, host_exchange_,
                       collection, true);
 
     // Return single record if present, else clear the host.
