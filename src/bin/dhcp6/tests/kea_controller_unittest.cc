@@ -16,6 +16,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/testutils/mysql_schema.h>
 #include <log/logger_support.h>
 #include <util/stopwatch.h>
 
@@ -35,6 +36,7 @@ using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::hooks;
 
 namespace {
@@ -43,6 +45,7 @@ class NakedControlledDhcpv6Srv: public ControlledDhcpv6Srv {
     // "Naked" DHCPv6 server, exposes internal fields
 public:
     NakedControlledDhcpv6Srv():ControlledDhcpv6Srv(0) { }
+    using ControlledDhcpv6Srv::signal_handler_;
 };
 
 
@@ -405,5 +408,149 @@ TEST_F(JSONFileBackendTest, defaultLeaseDbBackend) {
     // The backend should have been created.
     EXPECT_NO_THROW(static_cast<void>(LeaseMgrFactory::instance()));
 }
+
+// Starting tests which require MySQL backend availability. Those tests
+// will not be executed if Kea has been compiled without the
+// --with-dhcp-mysql.
+#ifdef HAVE_MYSQL
+
+/// @brief Test fixture class for the tests utilizing MySQL database
+/// backend.
+class JSONFileBackendMySQLTest : public JSONFileBackendTest {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Recreates MySQL schema for a test.
+    JSONFileBackendMySQLTest() : JSONFileBackendTest() {
+        destroyMySQLSchema();
+        createMySQLSchema();
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Destroys MySQL schema.
+    virtual ~JSONFileBackendMySQLTest() {
+        destroyMySQLSchema();
+    }
+
+    /// @brief Creates server configuration with specified backend type.
+    ///
+    /// @param backend Backend type or empty string to indicate that the
+    /// backend configuration should not be placed in the resulting
+    /// JSON configuration.
+    ///
+    /// @return Server configuration.
+    std::string createConfiguration(const std::string& backend) const;
+
+    /// @brief Test reconfiguration with a backend change.
+    ///
+    /// If any of the parameters is an empty string it indicates that the
+    /// created configuration should exclude backend configuration.
+    ///
+    /// @param backend_first Type of a backend to be used initially.
+    /// @param backend_second Type of a backend to be used after
+    /// reconfiguration.
+    void testBackendReconfiguration(const std::string& backend_first,
+                                    const std::string& backend_second);
+};
+
+std::string
+JSONFileBackendMySQLTest::createConfiguration(const std::string& backend) const {
+    // This is basic server configuration which excludes lease database
+    // backend specification. The default Memfile backend should be
+    // initialized in this case.
+    std::ostringstream config;
+    config <<
+        "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "    \"interfaces\": [ ]"
+        "},";
+
+    // For non-empty lease backend type we have to add a backend configuration
+    // section.
+    if (!backend.empty()) {
+        config <<
+        "\"lease-database\": {"
+        "     \"type\": \"" << backend << "\"";
+
+        // SQL backends require database credentials.
+        if (backend != "memfile") {
+            config <<
+                ","
+                "     \"name\": \"keatest\","
+                "     \"user\": \"keatest\","
+                "     \"password\": \"keatest\"";
+        }
+        config << "},";
+    }
+
+    // Append the rest of the configuration.
+    config <<
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "\"subnet6\": [ ],"
+        "\"preferred-lifetime\": 3000, "
+        "\"valid-lifetime\": 4000 }"
+        "}";
+
+    return (config.str());
+}
+
+void
+JSONFileBackendMySQLTest::
+testBackendReconfiguration(const std::string& backend_first,
+                           const std::string& backend_second) {
+    // This is basic server configuration which excludes lease database
+    // backend specification. The default Memfile backend should be
+    // initialized in this case.
+    writeFile(TEST_FILE, createConfiguration(backend_first));
+
+    // Create an instance of the server and intialize it.
+    boost::scoped_ptr<NakedControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedControlledDhcpv6Srv()));
+    srv->setConfigFile(TEST_FILE);
+    ASSERT_NO_THROW(srv->init(TEST_FILE));
+
+    // The backend should have been created and its type should be
+    // correct.
+    ASSERT_NO_THROW(static_cast<void>(LeaseMgrFactory::instance()));
+    EXPECT_EQ(backend_first.empty() ? "memfile" : backend_first,
+              LeaseMgrFactory::instance().getType());
+
+    // New configuration modifies the lease database backend type to MYSQL.
+    writeFile(TEST_FILE, createConfiguration(backend_second));
+
+    // Explicitly calling signal handler for SIGHUP to trigger server
+    // reconfiguration.
+    srv->signal_handler_(SIGHUP);
+
+    // The backend should have been created and its type should be
+    // correct.
+    ASSERT_NO_THROW(static_cast<void>(LeaseMgrFactory::instance()));
+    EXPECT_EQ(backend_second.empty() ? "memfile" : backend_second,
+              LeaseMgrFactory::instance().getType());
+}
+
+
+// This test verifies that backend specification can be added on
+// server reconfiguration.
+TEST_F(JSONFileBackendMySQLTest, reconfigureBackendUndefinedToMySQL) {
+    testBackendReconfiguration("", "mysql");
+}
+
+// This test verifies that when backend specification is removed the
+// default backend is used.
+TEST_F(JSONFileBackendMySQLTest, reconfigureBackendMySQLToUndefined) {
+    testBackendReconfiguration("mysql", "");
+}
+
+// This test verifies that backend type can be changed from Memfile
+// to MySQL.
+TEST_F(JSONFileBackendMySQLTest, reconfigureBackendMemfileToMySQL) {
+    testBackendReconfiguration("memfile", "mysql");
+}
+
+#endif
 
 } // End of anonymous namespace

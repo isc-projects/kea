@@ -9,7 +9,7 @@
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
-#include <dhcpsrv/tests/mysql_schema.h>
+#include <dhcpsrv/testutils/mysql_schema.h>
 #include <dhcpsrv/host_mgr.h>
 #include <log/logger_support.h>
 
