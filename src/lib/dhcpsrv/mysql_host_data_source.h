@@ -15,27 +15,20 @@
 #ifndef MYSQL_HOST_DATA_SOURCE_H
 #define MYSQL_HOST_DATA_SOURCE_H
 
-#include <dhcp/hwaddr.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/mysql_connection.h>
-
-#include <boost/scoped_ptr.hpp>
-#include <boost/utility.hpp>
-#include <mysql.h>
 
 namespace isc {
 namespace dhcp {
 
-// Forward declaration of the Host exchange objects.  These classes are defined
-// in the .cc file.
-class MySqlHostReservationExchange;
-class MySqlIPv6ReservationExchange;
+/// Forward declaration to the implementation of the @ref MySqlHostDataSource.
+class MySqlHostDataSourceImpl;
 
 /// @brief MySQL Host Data Source
 ///
-/// This class provides the @ref isc::dhcp::BaseHostDataSource interface to the MySQL
-/// database.  Use of this backend presupposes that a MySQL database is
-/// available and that the Kea schema has been created within it.
+/// This class implements the @ref isc::dhcp::BaseHostDataSource interface to
+/// the MySQL database. Use of this backend presupposes that a MySQL database
+/// is available and that the Kea schema has been created within it.
 class MySqlHostDataSource: public BaseHostDataSource {
 public:
 
@@ -63,7 +56,9 @@ public:
     ///        failed.
     MySqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);
 
-    /// @brief Destructor (closes database)
+    /// @brief Virtual destructor.
+    ///
+    /// Releases prepared MySQL statements used by the backend.
     virtual ~MySqlHostDataSource();
 
     /// @brief Return all hosts for the specified HW address or DUID.
@@ -117,7 +112,7 @@ public:
     /// @return Const @c Host object using a specified HW address or DUID.
     virtual ConstHostPtr
     get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-            const DuidPtr& duid = DuidPtr()) const;
+         const DuidPtr& duid = DuidPtr()) const;
 
     /// @brief Returns a host connected to the IPv4 subnet and having
     /// a reservation for a specified IPv4 address.
@@ -188,9 +183,9 @@ public:
 
     /// @brief Returns backend name.
     ///
-    /// Each backend have specific name, e.g. "mysql" or "sqlite".
+    /// Each backend have specific name.
     ///
-    /// @return Name of the backend.
+    /// @return "mysql".
     virtual std::string getName() const;
 
     /// @brief Returns description of the backend.
@@ -212,19 +207,13 @@ public:
 
     /// @brief Commit Transactions
     ///
-    /// Commits all pending database operations.  On databases that don't
-    /// support transactions, this is a no-op.
+    /// Commits all pending database operations.
     virtual void commit();
 
     /// @brief Rollback Transactions
     ///
-    /// Rolls back all pending database operations.  On databases that don't
-    /// support transactions, this is a no-op.
+    /// Rolls back all pending database operations.
     virtual void rollback();
-
-    MySqlConnection* getDatabaseConnection() {
-        return &conn_;
-    }
 
     /// @brief Statement Tags
     ///
@@ -243,108 +232,14 @@ public:
     };
 
 private:
-    /// @brief Add Host or IPv6 reservation Code
-    ///
-    /// This method performs adding a host or IPv6 reservation operation.
-    ///	It binds the contents of the host object to
-    /// the prepared statement and adds it to the database.
-    ///
-    /// @param stindex Index of statemnent being executed
-    /// @param bind MYSQL_BIND array that has been created for the host
-    ///
-    /// @htrow isc::dhcp::DuplicateEntry Database throws duplicate entry error
-    void addQuery(StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
 
-    /// @brief Get Host Collection Code
-    ///
-    /// This method obtains multiple hosts from the database.
-    ///
-    /// @param stindex Index of statement being executed
-    /// @param bind MYSQL_BIND array for input parameters
-    /// @param exchange Exchange object to use
-    /// @param result ConstHostCollection object returned.  Note that any hosts
-    ///        in the collection when this method is called are not erased: the
-    ///        new data is appended to the end.
-    /// @param single If true, only a single data item is to be retrieved.
-    ///        If more than one is present, a MultipleRecords exception will
-    ///        be thrown.
-    ///
-    /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
-    ///        from the database where only one was expected.
-    void getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
-            boost::shared_ptr<MySqlHostReservationExchange> exchange,
-            ConstHostCollection& result, bool single = false) const;
-
-    /// @brief Get IPv6 Reservation Collection
-    ///
-    /// This method obtains multiple IPv6 reservations from the database.
-    ///
-    /// @param stindex Index of statement being executed
-    /// @param bind MYSQL_BIND array for input parameters
-    /// @param exchange Exchange object to use
-    /// @param result IPv6ResrvCollection object returned.  Note that any
-    ///        reservations in the collection when this method is called
-    ///        are not erased: the new data is appended to the end.
-    ///
-    /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    void getIPv6ReservationCollection(StatementIndex stindex, MYSQL_BIND* bind,
-            boost::shared_ptr<MySqlIPv6ReservationExchange> exchange,
-            IPv6ResrvCollection& result) const;
-
-    /// @brief Check Error and Throw Exception
-    ///
-    /// Virtually all MySQL functions return a status which, if non-zero,
-    /// indicates an error.  This inline function conceals a lot of error
-    /// checking/exception-throwing code.
-    ///
-    /// @param status Status code: non-zero implies an error
-    /// @param index Index of statement that caused the error
-    /// @param what High-level description of the error
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database
-    ///        has failed.
-    inline void checkError(int status, StatementIndex index,
-            const char* what) const {
-        if (status != 0) {
-            isc_throw(DbOperationError, what << " for <"
-                    << conn_.text_statements_[index] << ">, reason: "
-                    << mysql_error(conn_.mysql_) << " (error code "
-                    << mysql_errno(conn_.mysql_) << ")");
-        }
-    }
-
-    /// @brief Checks if Host with same parameters already been added.
+    /// @brief Checks if the specified host already exists in the database.
     ///
     /// @param host Pointer to the new @c Host object being added.
     bool checkIfExists(const HostPtr& host);
 
-    /// @brief Adds IPv6 Reservation
-    ///
-    /// @param resv IPv6 Reservation to be added
-    /// @param id ID of a host owning this reservation
-    void addResv(const IPv6Resrv& resv, HostID id);
-    
-    // Members
-
-    /// The exchange objects are used for transfer of data to/from the database.
-    /// They are pointed-to objects as the contents may change in "const" calls,
-    /// while the rest of this object does not.  (At alternative would be to
-    /// declare them as "mutable".)
-
-    /// @brief MySQL Host Reservation Exchange object
-    boost::shared_ptr<MySqlHostReservationExchange> host_exchange_;
-
-    /// @brief MySQL IPv6 Reservation Exchange object
-    boost::shared_ptr<MySqlIPv6ReservationExchange> resv_exchange_;
-
-    /// @brief MySQL connection
-    MySqlConnection conn_;
-
+    /// @brief Pointer to the implementation of the @ref MySqlHostDataSource.
+    MySqlHostDataSourceImpl* impl_; 
 };
 
 }
