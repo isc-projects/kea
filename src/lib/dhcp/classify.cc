@@ -1,4 +1,4 @@
-// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015, 2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/constants.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <sstream>
 #include <vector>
 
 namespace isc {
@@ -35,6 +36,18 @@ ClientClasses::ClientClasses(const std::string& class_names)
             insert(ClientClass(trimmed));
         }
     }
+}
+
+std::string
+ClientClasses::toText(const std::string& separator) const {
+    std::stringstream s;
+    for (const_iterator class_it = begin(); class_it != end(); ++class_it) {
+        if (class_it != begin()) {
+            s << separator;
+        }
+        s << *class_it;
+    }
+    return (s.str());
 }
     
 } // end of namespace isc::dhcp

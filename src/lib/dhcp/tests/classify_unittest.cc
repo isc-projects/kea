@@ -115,3 +115,27 @@ TEST(ClassifyTest, ClientClassesIterator) {
     EXPECT_TRUE(seengamma);
     EXPECT_FALSE(seendelta);
 }
+
+// Check that the ClientClasses::toText function returns
+// correct values.
+TEST(ClassifyTest, ClientClassesToText) {
+    // No classes.
+    ClientClasses classes;
+    EXPECT_TRUE(classes.toText().empty());
+
+    // Insert single class name and see if it doesn't include spurious
+    // comma after it.
+    classes.insert("alpha");
+    EXPECT_EQ("alpha", classes.toText());
+
+    // Insert next class name and see that both classes are present.
+    classes.insert("gamma");
+    EXPECT_EQ("alpha, gamma", classes.toText());
+
+    // Insert third class and make sure they get ordered alphabetically.
+    classes.insert("beta");
+    EXPECT_EQ("alpha, beta, gamma", classes.toText());
+
+    // Check non-standard separator.
+    EXPECT_EQ("alpha.beta.gamma", classes.toText("."));
+}
