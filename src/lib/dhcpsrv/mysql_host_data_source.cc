@@ -39,6 +39,13 @@ using namespace isc::asiolink;
 using namespace std;
 
 namespace {
+
+/// @brief Maximum size of an IPv6 address represented as a text string.
+///
+/// This is 32 hexadecimal characters written in 8 groups of four, plus seven
+/// colon separators.
+const size_t ADDRESS6_TEXT_MAX_LEN = 39;
+
 /// @brief Maximum length of classes stored in a dhcp4/6_client_classes field
 ///
 const size_t CLIENT_CLASSES_MAX_LEN = 255;
@@ -48,7 +55,6 @@ const size_t CLIENT_CLASSES_MAX_LEN = 255;
 /// This length is restricted by the length of the domain-name carried
 /// in the Client FQDN %Option (see RFC4702 and RFC4704).
 const size_t HOSTNAME_MAX_LEN = 255;
-
 
 TaggedStatement tagged_statements[] = {
     {MySqlHostDataSource::INSERT_HOST,
@@ -60,10 +66,6 @@ TaggedStatement tagged_statements[] = {
          "INSERT INTO ipv6_reservations(address, prefix_len, type, "
             "dhcp6_iaid, host_id) "
          "VALUES (?,?,?,?,?)"},
-    {MySqlHostDataSource::GET_V6_RESRV,
-         "SELECT reservation_id, address, prefix_len, type, dhcp6_iaid, host_id "
-         "FROM ipv6_reservations "
-         "WHERE host_id = ?"},
     {MySqlHostDataSource::GET_HOST_HWADDR_DUID,
             "SELECT host_id, dhcp_identifier, dhcp_identifier_type, "
                 "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
@@ -84,12 +86,17 @@ TaggedStatement tagged_statements[] = {
             "WHERE dhcp4_subnet_id = ? AND dhcp_identifier_type = ? "
             "   AND dhcp_identifier = ?"},
     {MySqlHostDataSource::GET_HOST_SUBID6_DHCPID,
-            "SELECT host_id, dhcp_identifier, dhcp_identifier_type, "
-                "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
-                "dhcp4_client_classes, dhcp6_client_classes "
-            "FROM hosts "
+            "SELECT DISTINCT h.host_id, h.dhcp_identifier, "
+                "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+                "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+                "h.dhcp4_client_classes, h.dhcp6_client_classes, "
+                "r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+            "FROM hosts AS h "
+            "LEFT JOIN ipv6_reservations AS r "
+                "ON h.host_id = r.host_id "
             "WHERE dhcp6_subnet_id = ? AND dhcp_identifier_type = ? "
-            "   AND dhcp_identifier = ?"},
+                "AND dhcp_identifier = ? "
+            "ORDER BY h.host_id, r.prefix_len, r.address"},
     {MySqlHostDataSource::GET_HOST_SUBID_ADDR,
             "SELECT host_id, dhcp_identifier, dhcp_identifier_type, "
                 "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
@@ -97,12 +104,18 @@ TaggedStatement tagged_statements[] = {
             "FROM hosts "
             "WHERE dhcp4_subnet_id = ? AND ipv4_address = ?"},
     {MySqlHostDataSource::GET_HOST_PREFIX,
-            "SELECT h.host_id, dhcp_identifier, dhcp_identifier_type, "
-                "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
-                "dhcp4_client_classes, dhcp6_client_classes "
-            "FROM hosts h, ipv6_reservations r "
-            "WHERE h.host_id = r.host_id "
-            "AND r.address = ? AND r.prefix_len = ?"},
+            "SELECT DISTINCT h.host_id, h.dhcp_identifier, "
+                "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+                "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+                "h.dhcp4_client_classes, h.dhcp6_client_classes, "
+                "r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+            "FROM hosts AS h "
+            "LEFT JOIN ipv6_reservations AS r "
+                "ON h.host_id = r.host_id "
+            "WHERE h.host_id = "
+                "(SELECT host_id FROM ipv6_reservations "
+                 "WHERE address = ? AND prefix_len = ?) "
+            "ORDER BY h.host_id, r.prefix_len, r.address"},
     {MySqlHostDataSource::GET_VERSION,
             "SELECT version, minor FROM schema_version"},
     {MySqlHostDataSource::NUM_STATEMENTS, NULL}
@@ -116,7 +129,7 @@ namespace dhcp {
 /// @brief This class represents the exchanges related to hosts.
 class MySqlHostReservationExchange {
     /// @brief Set number of database columns for this host structure
-    static const size_t HOST_COLUMNS = 9;
+    static const size_t HOST_COLUMNS = 13;
 
 public:
 
@@ -124,13 +137,16 @@ public:
     ///
     /// The initialization of the variables here is only to satisfy cppcheck -
     /// all variables are initialized/set in the methods before they are used.
-    MySqlHostReservationExchange() : host_id_(0), dhcp_identifier_length_(0),
-        dhcp_identifier_type_(0), dhcp4_subnet_id_(0), dhcp6_subnet_id_(0),
-        ipv4_address_(0), hostname_length_(0), dhcp4_client_classes_length_(0),
-        dhcp6_client_classes_length_(0), dhcp4_subnet_id_null_(MLM_FALSE),
-        dhcp6_subnet_id_null_(MLM_FALSE), ipv4_address_null_(MLM_FALSE),
-        hostname_null_(MLM_FALSE), dhcp4_client_classes_null_(MLM_FALSE),
-        dhcp6_client_classes_null_(MLM_FALSE){
+    MySqlHostReservationExchange()
+        : host_id_(0), dhcp_identifier_length_(0),
+          dhcp_identifier_type_(0), dhcp4_subnet_id_(0), dhcp6_subnet_id_(0),
+          ipv4_address_(0), hostname_length_(0), dhcp4_client_classes_length_(0),
+          dhcp6_client_classes_length_(0), address_("::"),
+          address_len_(address_.length()), prefix_len_(0), reserv_type_(0),
+          iaid_(0), dhcp4_subnet_id_null_(MLM_FALSE),
+          dhcp6_subnet_id_null_(MLM_FALSE), ipv4_address_null_(MLM_FALSE),
+          hostname_null_(MLM_FALSE), dhcp4_client_classes_null_(MLM_FALSE),
+          dhcp6_client_classes_null_(MLM_FALSE), reserv_type_null_(MLM_FALSE) {
 
         memset(dhcp_identifier_buffer_, 0, sizeof(dhcp_identifier_buffer_));
         memset(hostname_, 0, sizeof(hostname_));
@@ -148,7 +164,25 @@ public:
         columns_[6] = "hostname";
         columns_[7] = "dhcp4_client_classes";
         columns_[8] = "dhcp6_client_classes";
-        BOOST_STATIC_ASSERT(8 < HOST_COLUMNS);
+        columns_[9] = "address";
+        columns_[10] = "prefix_len";
+        columns_[11] = "type";
+        columns_[12] = "dhcp6_iaid";
+
+        BOOST_STATIC_ASSERT(12 < HOST_COLUMNS);
+    }
+
+    /// @brief Returns value of host id.
+    uint64_t getHostId() const {
+        return (host_id_);
+    }
+
+    /// @brief Checks if a currently processed row contains IPv6 reservation.
+    ///
+    /// @return true if IPv6 reservation data is non-null for the processed
+    /// row, false otherwise.
+    bool containsIPv6Reservation() const {
+        return (reserv_type_null_ == MLM_FALSE);
     }
 
     /// @brief Set error indicators
@@ -409,11 +443,35 @@ public:
         bind_[8].length = &dhcp6_client_classes_length_;
         bind_[8].is_null = &dhcp6_client_classes_null_;
 
+        // IPv6 address/prefix VARCHAR(39)
+        address_len_ = sizeof(ipv6_address_buffer_) - 1;
+        bind_[9].buffer_type = MYSQL_TYPE_STRING;
+        bind_[9].buffer = ipv6_address_buffer_;
+        bind_[9].buffer_length = address_len_;
+        bind_[9].length = &address_len_;
+
+        // prefix_len : TINYINT
+        bind_[10].buffer_type = MYSQL_TYPE_TINY;
+        bind_[10].buffer = reinterpret_cast<char*>(&prefix_len_);
+        bind_[10].is_unsigned = MLM_TRUE;
+
+        // (reservation) type : TINYINT
+        reserv_type_null_ = MLM_FALSE;
+        bind_[11].buffer_type = MYSQL_TYPE_TINY;
+        bind_[11].buffer = reinterpret_cast<char*>(&reserv_type_);
+        bind_[11].is_unsigned = MLM_TRUE;
+        bind_[11].is_null = &reserv_type_null_;
+
+        // dhcp6_iaid INT UNSIGNED
+        bind_[12].buffer_type = MYSQL_TYPE_LONG;
+        bind_[12].buffer = reinterpret_cast<char*>(&iaid_);
+        bind_[12].is_unsigned = MLM_TRUE;
+
         // Add the error flags
         setErrorIndicators(bind_, error_, HOST_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(8 < HOST_COLUMNS);
+        BOOST_STATIC_ASSERT(12 < HOST_COLUMNS);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
@@ -492,6 +550,39 @@ public:
         return (h);
     }
 
+    /// @brief Create IPv6 reservation from the data contained in the
+    /// currently processed row.
+    ///
+    /// Called after the MYSQL_BIND array created by createBindForReceive().
+    ///
+    /// @return IPv6Resrv object (containing IPv6 address or prefix reservation)
+    IPv6Resrv getIPv6ReservData(){
+
+        // Set the IPv6 Reservation type (0 = IA_NA, 2 = IA_PD)
+        IPv6Resrv::Type type = IPv6Resrv::TYPE_NA;
+
+        switch (reserv_type_) {
+        case 0:
+            type = IPv6Resrv::TYPE_NA;
+            break;
+
+        case 2:
+            type = IPv6Resrv::TYPE_PD;
+            break;
+
+        default:
+            isc_throw(BadValue,
+                    "invalid IPv6 reservation type returned: "
+                    << static_cast<int>(reserv_type_)
+                    << ". Only 0 or 2 are allowed.");
+        }
+
+        ipv6_address_buffer_[address_len_] = '\0';
+        std::string address = ipv6_address_buffer_;
+        IPv6Resrv r(type, IOAddress(address), prefix_len_);
+        return (r);
+    }
+
     /// @brief Return columns in error
     ///
     /// If an error is returned from a fetch (in particular, a truncated
@@ -545,6 +636,14 @@ private:
     char        dhcp6_client_classes_[CLIENT_CLASSES_MAX_LEN];
                                                 /// DHCPv6 client classes
     unsigned long dhcp6_client_classes_length_; /// dhcp6_client_classes length
+
+    std::string address_;        ///< Address (or prefix)
+    char        ipv6_address_buffer_[ADDRESS6_TEXT_MAX_LEN];
+    size_t      address_len_;    ///< Length of the textual address representation
+    uint8_t     prefix_len_;     ///< Length of the prefix (128 for addresses)
+    uint8_t     reserv_type_;
+    uint8_t     iaid_;
+
     HWAddrPtr   hw_address_;                    /// Pointer to hardware address
     DuidPtr     duid_;				/// Pointer to DUID
 
@@ -555,6 +654,7 @@ private:
     my_bool     hostname_null_;
     my_bool     dhcp4_client_classes_null_;
     my_bool     dhcp6_client_classes_null_;
+    my_bool     reserv_type_null_;
 
     MYSQL_BIND  bind_[HOST_COLUMNS];
     std::string columns_[HOST_COLUMNS];	/// Column names
@@ -1017,36 +1117,6 @@ MySqlHostDataSource::getIPv6ReservationCollection(StatementIndex stindex,
     }
 }
 
-IPv6ResrvCollection
-MySqlHostDataSource::getAllReservations(HostID host_id) const{
-
-    // Set up the WHERE clause value
-    MYSQL_BIND inbind[1];
-    memset(inbind, 0, sizeof(inbind));
-
-    uint32_t id = static_cast<uint32_t>(host_id);
-    inbind[0].buffer_type = MYSQL_TYPE_LONG;
-    inbind[0].buffer = reinterpret_cast<char*>(&id);
-    inbind[0].is_unsigned = MLM_TRUE;
-
-    IPv6ResrvCollection result;
-    getIPv6ReservationCollection(GET_V6_RESRV, inbind, resv_exchange_, result);
-
-    return (result);
-}
-
-void
-MySqlHostDataSource::assignReservations(HostPtr& host) const {
-
-    IPv6ResrvCollection reservations;
-    reservations = getAllReservations(host->getHostId());
-
-    for (IPv6ResrvIterator resv = reservations.begin(); resv != reservations.end(); ++resv){
-        host->addReservation(resv->second);
-
-    }
-}
-
 void
 MySqlHostDataSource::getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
         boost::shared_ptr<MySqlHostReservationExchange> exchange,
@@ -1076,14 +1146,27 @@ MySqlHostDataSource::getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
     // retrieve the data. mysql_stmt_fetch return value equal to 0 represents
     // successful data fetch.
     MySqlFreeResult fetch_release(conn_.statements_[stindex]);
-    int count = 0;
+    uint64_t current_host_id = 0;
     HostPtr host;
     while ((status = mysql_stmt_fetch(conn_.statements_[stindex])) ==
            MLM_MYSQL_FETCH_SUCCESS) {
         try {
-            host = exchange->getHostData();
-            assignReservations(host);
-            result.push_back(host);
+            // If there are multiple IPv6 reservations for a host then multiple
+            // rows are returned for this host. If we detect that the next
+            // row contains the data for the same host we don't want to
+            // create another Host object but rather append the data to the
+            // existing one.
+            if (current_host_id != exchange->getHostId()) {
+                current_host_id = exchange->getHostId();
+                host = exchange->getHostData();
+                if (exchange->containsIPv6Reservation()) {
+                    host->addReservation(exchange->getIPv6ReservData());
+                }
+                result.push_back(host);
+
+            } else if (exchange->containsIPv6Reservation() && host) {
+                    host->addReservation(exchange->getIPv6ReservData());
+            }
 
         } catch (const isc::BadValue& ex) {
             // Rethrow the exception with a bit more data.
@@ -1091,7 +1174,7 @@ MySqlHostDataSource::getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
                     conn_.text_statements_[stindex] << ">");
         }
 
-        if (single && (++count > 1)) {
+        if (single && (result.size() > 1)) {
             isc_throw(MultipleRecords, "multiple records were found in the "
                       "database where only one was expected for query "
                       << conn_.text_statements_[stindex]);
