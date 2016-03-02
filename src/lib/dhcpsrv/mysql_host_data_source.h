@@ -232,7 +232,6 @@ public:
     enum StatementIndex {
         INSERT_HOST,		// Insert new host to collection
         INSERT_V6_RESRV,        // Insert v6 reservation
-        GET_V6_RESRV,           // Gets v6 reservations
         GET_HOST_HWADDR_DUID,   // Gets hosts by DUID and/or HW address
         GET_HOST_ADDR,		// Gets hosts by IPv4 address
         GET_HOST_SUBID4_DHCPID,	// Gets host by IPv4 SubnetID, HW address/DUID
@@ -296,22 +295,6 @@ private:
     void getIPv6ReservationCollection(StatementIndex stindex, MYSQL_BIND* bind,
             boost::shared_ptr<MySqlIPv6ReservationExchange> exchange,
             IPv6ResrvCollection& result) const;
-
-    /// @brief Returns all IPv6 reservations assigned to single host
-    ///
-    /// @param host_id ID of a host owning IPv6 reservations
-    ///
-    /// @return Collection of IPv6 reservations
-    virtual IPv6ResrvCollection
-    getAllReservations(HostID host_id) const;
-
-    /// @brief Retrieves all IPv6 reservations for a single host and then
-    ///         adds them to that host.
-    ///
-    /// @param host Pointer to a host to be populated with IPv6 reservations.
-    void
-    assignReservations(HostPtr& host) const;
-
 
     /// @brief Check Error and Throw Exception
     ///
