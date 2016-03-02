@@ -1,4 +1,4 @@
-// Copyright (C) 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014, 2015, 2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -73,6 +73,13 @@ namespace dhcp {
         contains(const ClientClass& x) const {
             return (find(x) != end());
         }
+
+        /// @brief Returns all class names as text
+        ///
+        /// @param separator Separator to be used between class names. The
+        /// default separator comprises comma sign followed by space
+        /// character.
+        std::string toText(const std::string& separator = ", ") const;
     };
 
 };
