@@ -518,9 +518,6 @@ void
 JSONFileBackendMySQLTest::
 testBackendReconfiguration(const std::string& backend_first,
                            const std::string& backend_second) {
-    // This is basic server configuration which excludes lease database
-    // backend specification. The default Memfile backend should be
-    // initialized in this case.
     writeFile(createConfiguration(backend_first));
 
     // Create an instance of the server and intialize it.
@@ -535,7 +532,7 @@ testBackendReconfiguration(const std::string& backend_first,
     EXPECT_EQ(backend_first.empty() ? "memfile" : backend_first,
               LeaseMgrFactory::instance().getType());
 
-    // New configuration modifies the lease database backend type to MYSQL.
+    // New configuration modifies the lease database backend type.
     writeFile(createConfiguration(backend_second));
 
     // Explicitly calling signal handler for SIGHUP to trigger server
