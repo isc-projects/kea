@@ -85,6 +85,7 @@ libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_log.cc alloc_engine_log.h
 libkea_dhcpsrv_la_SOURCES += base_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
+libkea_dhcpsrv_la_SOURCES += cfg_db_access.cc cfg_db_access.h
 libkea_dhcpsrv_la_SOURCES += cfg_duid.cc cfg_duid.h
 libkea_dhcpsrv_la_SOURCES += cfg_hosts.cc cfg_hosts.h
 libkea_dhcpsrv_la_SOURCES += cfg_iface.cc cfg_iface.h

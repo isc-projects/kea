@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,6 +31,21 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 namespace test {
+
+BaseServerTest::BaseServerTest()
+    : original_datadir_(CfgMgr::instance().getDataDir()) {
+    CfgMgr::instance().setDataDir(TEST_DATA_BUILDDIR);
+}
+
+BaseServerTest::~BaseServerTest() {
+    // Remove default lease file.
+    std::ostringstream s2;
+    s2 << CfgMgr::instance().getDataDir() << "/" << "kea-leases4.csv";
+    static_cast<void>(::remove(s2.str().c_str()));
+
+    // Revert to original data directory.
+    CfgMgr::instance().setDataDir(original_datadir_);
+}
 
 Dhcpv4SrvTest::Dhcpv4SrvTest()
 :rcode_(-1), srv_(0) {
