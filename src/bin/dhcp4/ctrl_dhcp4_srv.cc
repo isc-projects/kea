@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <hooks/hooks_manager.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_db_access.h>
 #include <config/command_mgr.h>
 #include <stats/stats_mgr.h>
 
@@ -165,6 +166,17 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         }
     } catch (const std::exception& ex) {
         err << "Failed to process configuration:" << ex.what();
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
+    // Re-open lease and host database with new parameters.
+    try {
+        CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+        cfg_db->setAppendedParameters("universe=4");
+        cfg_db->createManagers();
+
+    } catch (const std::exception& ex) {
+        err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
     }
 

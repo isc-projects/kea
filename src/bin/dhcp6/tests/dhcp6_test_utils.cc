@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,6 +38,12 @@ BaseServerTest::~BaseServerTest() {
     std::ostringstream s;
     s << CfgMgr::instance().getDataDir() << "/" << DUID_FILE;
     static_cast<void>(::remove(s.str().c_str()));
+
+    // Remove default lease file.
+    std::ostringstream s2;
+    s2 << CfgMgr::instance().getDataDir() << "/" << "kea-leases6.csv";
+    static_cast<void>(::remove(s2.str().c_str()));
+
     // Revert to original data directory.
     CfgMgr::instance().setDataDir(original_datadir_);
 }
