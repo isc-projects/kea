@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -682,11 +682,9 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         parser  = new StringParser(config_id,
                                    globalContext()->string_values_);
     } else if (config_id.compare("lease-database") == 0) {
-        parser = new DbAccessParser(config_id, DbAccessParser::LEASE_DB,
-                                    *globalContext());
+        parser = new DbAccessParser(config_id, DbAccessParser::LEASE_DB);
     } else if (config_id.compare("hosts-database") == 0) {
-        parser = new DbAccessParser(config_id, DbAccessParser::HOSTS_DB,
-                                    *globalContext());
+        parser = new DbAccessParser(config_id, DbAccessParser::HOSTS_DB);
     } else if (config_id.compare("hooks-libraries") == 0) {
         parser = new HooksLibrariesParser(config_id);
     } else if (config_id.compare("dhcp-ddns") == 0) {
