@@ -328,15 +328,10 @@ Pkt4::getName(const uint8_t type) {
 
 const char*
 Pkt4::getName() const {
-
-    uint8_t msg_type = 0;
-    try {
-        msg_type = getType();
-    } catch (...) {
-        // Message Type option is missing.
-    }
-
-    return (Pkt4::getName(msg_type));
+    // getType() is now exception safe. Even if there's no option 53 (message
+    // type), it now returns 0 rather than throw. getName() is able to handle
+    // 0 and unknown message types.
+    return (Pkt4::getName(getType()));
 }
 
 std::string
