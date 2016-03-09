@@ -1,3 +1,8 @@
+1084.	[bug]		fdupont
+	Removed obsolete requirement of python3 by --enable-generate-docs
+	configuration option.
+	(Trac #4315, git xxx)
+
 1083.	[bug]		marcin
 	When lease-database configuration parameter is not
 	specified the default lease database backend (memfile)
