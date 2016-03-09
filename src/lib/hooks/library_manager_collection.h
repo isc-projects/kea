@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <exceptions/exceptions.h>
 
 #include <boost/shared_ptr.hpp>
+#include <hooks/libinfo.h>
 
 #include <vector>
 
@@ -71,10 +72,9 @@ public:
     /// @brief Constructor
     ///
     /// @param libraries List of libraries that this collection will manage.
-    ///        The order of the libraries is important.
-    LibraryManagerCollection(const std::vector<std::string>& libraries)
-        : library_names_(libraries)
-    {}
+    ///        The order of the libraries is important. It holds the library
+    ///        names and its configuration parameters.
+    LibraryManagerCollection(const HookLibsCollection& libraries);
 
     /// @brief Destructor
     ///
@@ -115,6 +115,14 @@ public:
         return (library_names_);
     }
 
+    /// @brief Returns library info
+    ///
+    /// Returns a collection of libraries, each entry consisting of a library
+    /// name + all its parameters.
+    HookLibsCollection getLibraryInfo() const {
+        return (library_info_);
+    }
+
     /// @brief Get number of loaded libraries
     ///
     /// Mainly for testing, this returns the number of libraries that are
@@ -150,6 +158,10 @@ private:
 
     /// Vector of library managers
     std::vector<boost::shared_ptr<LibraryManager> > lib_managers_;
+
+    /// Vector of library information. Each piece of information
+    /// consists of a pair of (library name, library parameters)
+    HookLibsCollection                              library_info_;
 
     /// Callout manager to be associated with the libraries
     boost::shared_ptr<CalloutManager>               callout_manager_;
