@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define HOOKS_MANAGER_H
 
 #include <hooks/server_hooks.h>
+#include <hooks/libinfo.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -61,7 +62,7 @@ public:
     /// @return true if all libraries loaded without a problem, false if one or
     ///        more libraries failed to load.  In the latter case, message will
     ///        be logged that give the reason.
-    static bool loadLibraries(const std::vector<std::string>& libraries);
+    static bool loadLibraries(const HookLibsCollection& libraries);
 
     /// @brief Unload libraries
     ///
@@ -170,6 +171,13 @@ public:
     /// @return List of loaded library names.
     static std::vector<std::string> getLibraryNames();
 
+    /// @brief Return list of loaded libraries with its parameters.
+    ///
+    /// Returns the names of the loaded libraries and its parameters.
+    ///
+    /// @return List of loaded libraries (names + parameters)
+    static HookLibsCollection getLibraryInfo();
+
     /// @brief Validate library list
     ///
     /// For each library passed to it, checks that the library can be opened
@@ -224,7 +232,7 @@ private:
     /// @return true if all libraries loaded without a problem, false if one or
     ///        more libraries failed to load.  In the latter case, message will
     ///        be logged that give the reason.
-    bool loadLibrariesInternal(const std::vector<std::string>& libraries);
+    bool loadLibrariesInternal(const HookLibsCollection& libraries);
 
     /// @brief Unload libraries
     void unloadLibrariesInternal();
