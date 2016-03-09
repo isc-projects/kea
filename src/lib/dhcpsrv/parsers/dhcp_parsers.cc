@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -251,6 +251,7 @@ HooksLibrariesParser::build(ConstElementPtr value) {
     // Initialize.
     libraries_.clear();
     changed_ = false;
+    ConstElementPtr parameters;
 
     // This is the new syntax.  Iterate through it and get each map.
     BOOST_FOREACH(ConstElementPtr library_entry, value->listValue()) {
@@ -264,6 +265,13 @@ HooksLibrariesParser::build(ConstElementPtr value) {
         // Iterate iterate through each element in the map.  We check
         // whether we have found a library element.
         bool lib_found = false;
+
+        string libname = "";
+
+        // Let's explicitly reset the parameters, so we won't cover old
+        // values from the previous loop round.
+        parameters.reset();
+
         BOOST_FOREACH(ConfigPair entry_item, library_entry->mapValue()) {
             if (entry_item.first == "library") {
                 if (entry_item.second->getType() != Element::string) {
@@ -275,7 +283,7 @@ HooksLibrariesParser::build(ConstElementPtr value) {
 
                 // Get the name of the library and add it to the list after
                 // removing quotes.
-                string libname = (entry_item.second)->stringValue();
+                libname = (entry_item.second)->stringValue();
 
                 // Remove leading/trailing quotes and any leading/trailing
                 // spaces.
@@ -287,10 +295,14 @@ HooksLibrariesParser::build(ConstElementPtr value) {
                         " blank (" <<
                         entry_item.second->getPosition() << ")");
                 }
-                libraries_.push_back(libname);
 
                 // Note we have found the library name.
                 lib_found = true;
+            } else {
+                // If there are parameters, let's remember them.
+                if (entry_item.first == "parameters") {
+                    parameters = entry_item.second;
+                }
             }
         }
         if (! lib_found) {
@@ -299,19 +311,26 @@ HooksLibrariesParser::build(ConstElementPtr value) {
                 " name of the library"  <<
                 " (" << library_entry->getPosition() << ")");
         }
+
+        libraries_.push_back(make_pair(libname, parameters));
     }
 
     // Check if the list of libraries has changed.  If not, nothing is done
     // - the command "DhcpN libreload" is required to reload the same
     // libraries (this prevents needless reloads when anything else in the
     // configuration is changed).
+
+    // We no longer rely on this. Parameters can change. And even if the
+    // parameters stay the same, they could point to a files that could
+    // change.
     vector<string> current_libraries = HooksManager::getLibraryNames();
-    if (current_libraries == libraries_) {
+    if (current_libraries.empty() && libraries_.empty()) {
         return;
     }
 
     // Library list has changed, validate each of the libraries specified.
-    vector<string> error_libs = HooksManager::validateLibraries(libraries_);
+    vector<string> lib_names = isc::hooks::extractNames(libraries_);
+    vector<string> error_libs = HooksManager::validateLibraries(lib_names);
     if (!error_libs.empty()) {
 
         // Construct the list of libraries in error for the message.
@@ -334,15 +353,15 @@ HooksLibrariesParser::commit() {
     /// Commits the list of libraries to the configuration manager storage if
     /// the list of libraries has changed.
     if (changed_) {
-        // TODO Delete any stored CalloutHandles before reloading the
-        // libraries
+        /// @todo: Delete any stored CalloutHandles before reloading the
+        /// libraries
         HooksManager::loadLibraries(libraries_);
     }
 }
 
 // Method for testing
 void
-HooksLibrariesParser::getLibraries(std::vector<std::string>& libraries,
+HooksLibrariesParser::getLibraries(isc::hooks::HookLibsCollection& libraries,
                                    bool& changed) {
     libraries = libraries_;
     changed = changed_;

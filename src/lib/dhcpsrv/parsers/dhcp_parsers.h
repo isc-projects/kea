@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
+#include <hooks/libinfo.h>
 #include <exceptions/exceptions.h>
 #include <util/optional_value.h>
 
@@ -34,9 +35,6 @@ typedef OptionSpaceContainer<OptionContainer, OptionDescriptor,
                              std::string> OptionStorage;
 /// @brief Shared pointer to option storage.
 typedef boost::shared_ptr<OptionStorage> OptionStoragePtr;
-
-/// @brief Shared pointer to collection of hooks libraries.
-typedef boost::shared_ptr<std::vector<std::string> > HooksLibsStoragePtr;
 
 /// @brief A template class that stores named elements of a given data type.
 ///
@@ -218,7 +216,7 @@ public:
     /// the list of current names can be obtained from the HooksManager) or it
     /// is non-null (this is the new list of names, reload the libraries when
     /// possible).
-    HooksLibsStoragePtr hooks_libraries_;
+    isc::hooks::HookLibsCollectionPtr hooks_libraries_;
 
     /// @brief The parsing universe of this context.
     Option::Universe universe_;
@@ -508,11 +506,11 @@ public:
     ///        new configuration.
     /// @param [out] changed true if the list is different from that currently
     ///        loaded.
-    void getLibraries(std::vector<std::string>& libraries, bool& changed);
+    void getLibraries(isc::hooks::HookLibsCollection& libraries, bool& changed);
 
 private:
-    /// List of hooks libraries.
-    std::vector<std::string> libraries_;
+    /// List of hooks libraries with their configuration parameters
+    isc::hooks::HookLibsCollection libraries_;
 
     /// Indicator flagging that the list of libraries has changed.
     bool changed_;
