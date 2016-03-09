@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dhcp/classify.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/shared_ptr.hpp>
 #include <list>
@@ -409,6 +410,30 @@ public:
         return (dhcp6_client_classes_);
     }
 
+    /// @brief Returns pointer to the DHCPv4 option data configuration for
+    /// this host.
+    CfgOptionPtr getCfgOption4() {
+        return (cfg_option4_);
+    }
+
+    /// @brief Returns const pointer to the DHCPv4 option data configuration for
+    /// this host.
+    ConstCfgOptionPtr getCfgOption4() const {
+        return (cfg_option4_);
+    }
+
+    /// @brief Returns pointer to the DHCPv6 option data configuration for
+    /// this host.
+    CfgOptionPtr getCfgOption6() {
+        return (cfg_option6_);
+    }
+
+    /// @brief Returns const pointer to the DHCPv6 option data configuration for
+    /// this host.
+    ConstCfgOptionPtr getCfgOption6() const {
+        return (cfg_option6_);
+    }
+
     /// @brief Returns information about the host in the textual format.
     std::string toText() const;
 
@@ -447,6 +472,10 @@ private:
     ClientClasses dhcp4_client_classes_;
     /// @brief Collection of classes associated with a DHCPv6 client.
     ClientClasses dhcp6_client_classes_;
+    /// @brief Pointer to the DHCPv4 option data configuration for this host.
+    CfgOptionPtr cfg_option4_;
+    /// @brief Pointer to the DHCPv6 option data configuration for this host.
+    CfgOptionPtr cfg_option6_;
 };
 
 /// @brief Pointer to the @c Host object.
