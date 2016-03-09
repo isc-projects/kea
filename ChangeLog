@@ -1,7 +1,7 @@
 1084.	[bug]		fdupont
 	Removed obsolete requirement of python3 by --enable-generate-docs
 	configuration option.
-	(Trac #4315, git xxx)
+	(Trac #4315, git 2c236316d5fbac9906cf48a6e4df1649e7545e67)
 
 1083.	[bug]		marcin
 	When lease-database configuration parameter is not
