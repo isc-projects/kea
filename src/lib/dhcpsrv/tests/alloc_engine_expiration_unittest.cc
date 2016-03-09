@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -847,7 +847,7 @@ public:
             }
         }
 
-        vector<string> libraries; // no libraries at this time
+        HookLibsCollection libraries; // no libraries at this time
         HooksManager::loadLibraries(libraries);
 
         // Install a callout: lease4_expire or lease6_expire.
@@ -877,7 +877,7 @@ public:
             }
         }
 
-        vector<string> libraries; // no libraries at this time
+        HookLibsCollection libraries; // no libraries at this time
         HooksManager::loadLibraries(libraries);
 
         // Install a callout: lease4_expire or lease6_expire.
@@ -905,7 +905,7 @@ public:
             expire(i, 2000 - i);
         }
 
-        vector<string> libraries;
+        HookLibsCollection libraries;
         HooksManager::loadLibraries(libraries);
 
         // Install a callout: lease4_expire or lease6_expire. Each callout
