@@ -155,9 +155,13 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// DHCPv6 server and vice versa. Also, this approach allows for reserving
 /// common resources such as host name for DHCPv4 and DHCPv6 clients.
 ///
+/// This class also holds pointers to specific DHCP options reserved
+/// for a host. Options instances are held in @c CfgOption objects.
+/// There are two @c CfgOption objects in this class, one holding
+/// DHCPv4 options, another one holding DHCPv6 options.
+///
 /// @todo This class offers basic functionality for storing host information.
 /// It will need to be extended to allow for the following operations:
-/// - store DHCPv4 and DHCPv6 options for the host,
 /// - remove and replace IPv6 reservations
 /// - remove and replace client classes
 /// - disable IPv4 reservation without a need to set it to the 0.0.0.0 address
@@ -412,6 +416,9 @@ public:
 
     /// @brief Returns pointer to the DHCPv4 option data configuration for
     /// this host.
+    ///
+    /// Returned pointer can be used to add, remove and udate options
+    /// reserved for a host.
     CfgOptionPtr getCfgOption4() {
         return (cfg_option4_);
     }
@@ -424,6 +431,9 @@ public:
 
     /// @brief Returns pointer to the DHCPv6 option data configuration for
     /// this host.
+    ///
+    /// Returned pointer can be used to add, remove and udate options
+    /// reserved for a host.
     CfgOptionPtr getCfgOption6() {
         return (cfg_option6_);
     }
