@@ -774,7 +774,7 @@ public:
             // performance implications. Alternatively, we could store the
             // most recently added host in a class member but this would
             // make the code less readable.
-            most_recent_host = const_pointer_cast<Host>(hosts.back());
+            most_recent_host = boost::const_pointer_cast<Host>(hosts.back());
         }
 
         // If there is no existing host or the new host id doesn't match
