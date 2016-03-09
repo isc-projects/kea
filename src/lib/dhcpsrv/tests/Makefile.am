@@ -40,7 +40,7 @@ if HAVE_GTEST
 # to unexpected errors. For this reason, the --enable-static-link option is
 # ignored for unit tests built here.
 
-noinst_LTLIBRARIES = libco1.la libco2.la
+noinst_LTLIBRARIES = libco1.la libco2.la libco3.la
 
 # -rpath /nowhere is a hack to trigger libtool to not create a
 # convenience archive, resulting in shared modules
@@ -54,6 +54,11 @@ libco2_la_SOURCES  = callout_library.cc
 libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco2_la_CPPFLAGS = $(AM_CPPFLAGS)
 libco2_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
+
+libco3_la_SOURCES  = callout_params_library.cc
+libco3_la_CXXFLAGS = $(AM_CXXFLAGS)
+libco3_la_CPPFLAGS = $(AM_CPPFLAGS)
+libco3_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 TESTS += libdhcpsrv_unittests
 
