@@ -206,7 +206,7 @@ sub-option with code "code" from the DHCPv4 Relay Agent Information option
 
       <para>
        "relay4" shares the same representation types than "option", for
-       instance "relay4[code].exists".
+       instance "relay4[code].exists" is supported.
       </para>
 
       <para>
