@@ -560,6 +560,7 @@ TEST_F(LibraryManagerTest, validateLibraries) {
     EXPECT_FALSE(LibraryManager::validateLibrary(NOT_PRESENT_LIBRARY));
     EXPECT_FALSE(LibraryManager::validateLibrary(NO_VERSION_LIBRARY));
     EXPECT_TRUE(LibraryManager::validateLibrary(UNLOAD_CALLOUT_LIBRARY));
+    EXPECT_TRUE(LibraryManager::validateLibrary(CALLOUT_PARAMS_LIBRARY));
 }
 
 // Check that log messages are properly registered and unregistered.

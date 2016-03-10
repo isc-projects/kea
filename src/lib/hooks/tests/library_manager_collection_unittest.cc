@@ -213,6 +213,7 @@ TEST_F(LibraryManagerCollectionTest, validateLibraries) {
     libraries.push_back(BASIC_CALLOUT_LIBRARY);
     libraries.push_back(FULL_CALLOUT_LIBRARY);
     libraries.push_back(UNLOAD_CALLOUT_LIBRARY);
+    libraries.push_back(CALLOUT_PARAMS_LIBRARY);
 
     failed = LibraryManagerCollection::validateLibraries(libraries);
     EXPECT_TRUE(failed.empty());
