@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,6 +40,22 @@ public:
     virtual HostCollection
     getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) = 0;
 
+    /// @brief Non-const version of the @c getAll const method.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// for a specified identifier. This method may return multiple hosts
+    /// because a particular client may have reservations in multiple subnets.
+    ///
+    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return Collection of non-const @c Host objects.
+    virtual HostCollection
+    getAll(const Host::IdentifierType& identifier_type,
+           const uint8_t* identifier_begin,
+           const size_t identifier_len) = 0;
+
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
     /// This method may return multiple @c Host objects if they are connected
@@ -69,6 +85,20 @@ public:
     get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
          const DuidPtr& duid = DuidPtr()) = 0;
 
+    /// @brief Returns a host connected to the IPv4 subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return Non-const @c Host object for which reservation has been made
+    /// using the specified identifier.
+    virtual HostPtr
+    get4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len) = 0;
+
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
     /// Implementations of this method should guard against the case when
@@ -86,6 +116,20 @@ public:
     virtual HostPtr
     get6(const SubnetID& subnet_id, const DuidPtr& duid,
          const HWAddrPtr& hwaddr = HWAddrPtr()) = 0;
+
+    /// @brief Returns a host connected to the IPv6 subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return Non-const @c Host object for which reservation has been made
+    /// using the specified identifier.
+    virtual HostPtr
+    get6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len) = 0;
 
     /// @brief Returns a host using the specified IPv6 prefix.
     ///
