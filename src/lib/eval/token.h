@@ -99,6 +99,14 @@ public:
     }
 };
 
+/// The order where Token subtypes are declared should be:
+///  - literal terminals
+///  - option & co
+///  - pkt & co
+///  - ==
+///  - substring & co
+///  - not, and, or
+
 /// @brief Token representing a constant string
 ///
 /// This token holds value of a constant string, e.g. it represents
