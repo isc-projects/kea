@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,9 +99,13 @@ TEST_F(HostMgrTest, getAll) {
 
     // If there non-matching HW address is specified, nothing should be
     // returned.
-    ASSERT_TRUE(HostMgr::instance().getAll(hwaddrs_[1]).empty());
+    ASSERT_TRUE(HostMgr::instance().getAll(Host::IDENT_HWADDR,
+                                           &hwaddrs_[1]->hwaddr_[0],
+                                           hwaddrs_[1]->hwaddr_.size()).empty());
     // For the correct HW address, there should be two reservations.
-    hosts = HostMgr::instance().getAll(hwaddrs_[0]);
+    hosts = HostMgr::instance().getAll(Host::IDENT_HWADDR,
+                                       &hwaddrs_[0]->hwaddr_[0],
+                                       hwaddrs_[0]->hwaddr_.size());
     ASSERT_EQ(2, hosts.size());
 
     // We don't know the order in which the reservations are returned so
@@ -137,9 +141,8 @@ TEST_F(HostMgrTest, getAll) {
 
 // This test verifies that it is possible to gather all reservations for the
 // specified IPv4 address from the HostMgr. The reservations are specified in
-// the server's configuration. Note: this test is currently disabled because the
-// getAll4 method is not implemented in the CfgHosts object.
-TEST_F(HostMgrTest, DISABLED_getAll4) {
+// the server's configuration.
+TEST_F(HostMgrTest, getAll4) {
     ConstHostCollection hosts =
         HostMgr::instance().getAll4(IOAddress("192.0.2.5"));
     ASSERT_TRUE(hosts.empty());
@@ -156,8 +159,12 @@ TEST_F(HostMgrTest, DISABLED_getAll4) {
     hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5"));
     ASSERT_EQ(2, hosts.size());
 
-    /// @todo Extend this test to sanity check the hosts, once the test
-    /// is enabled.
+    // Make sure that IPv4 address is correct.
+    EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+    EXPECT_EQ("192.0.2.5", hosts[1]->getIPv4Reservation().toText());
+
+    // Make sure that two different hosts were returned.
+    EXPECT_NE(hosts[0]->getIPv4SubnetID(), hosts[1]->getIPv4SubnetID());
 }
 
 // This test verifies that it is possible to retrieve a reservation for the
@@ -173,7 +180,9 @@ TEST_F(HostMgrTest, get4) {
                                         IOAddress("192.0.2.5"))));
     CfgMgr::instance().commit();
 
-    host = HostMgr::instance().get4(SubnetID(1), hwaddrs_[0]);
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size());
     ASSERT_TRUE(host);
     EXPECT_EQ(1, host->getIPv4SubnetID());
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
@@ -193,17 +202,17 @@ TEST_F(HostMgrTest, get6) {
     getCfgHosts()->add(new_host);
     CfgMgr::instance().commit();
 
-    host = HostMgr::instance().get6(SubnetID(2), duids_[0]);
+    host = HostMgr::instance().get6(SubnetID(2), Host::IDENT_DUID,
+                                    &duids_[0]->getDuid()[0],
+                                    duids_[0]->getDuid().size());
     ASSERT_TRUE(host);
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                                IOAddress("2001:db8:1::1"))));
 }
 
 // This test verifies that it is possible to retrieve the reservation of the
-// particular IPv6 prefix using HostMgr. Note: this test is currently disabled
-// because the get6(prefix, prefix_len) method is not implemented in the
-// CfgHosts class.
-TEST_F(HostMgrTest, DISABLED_get6ByPrefix) {
+// particular IPv6 prefix using HostMgr.
+TEST_F(HostMgrTest, get6ByPrefix) {
     ConstHostPtr host = HostMgr::instance().get6(IOAddress("2001:db8:1::"), 64);
     ASSERT_FALSE(host);
 
