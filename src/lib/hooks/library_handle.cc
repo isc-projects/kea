@@ -6,6 +6,7 @@
 
 #include <hooks/callout_manager.h>
 #include <hooks/library_handle.h>
+#include <hooks/hooks_manager.h>
 
 namespace isc {
 namespace hooks {
@@ -62,6 +63,20 @@ LibraryHandle::deregisterAllCallouts(const std::string& name) {
     }
 
     return (status);
+}
+
+isc::data::ConstElementPtr
+LibraryHandle::getParameter(const std::string& name) {
+    HookLibsCollection libinfo = HooksManager::getHooksManager().getLibraryInfo();
+
+    if ((index_ >= libinfo.size()) || (index_ < 0)) {
+        // Something is very wrong here. However, this is user facing
+        // interface, so we should not throw here.
+        return (isc::data::ConstElementPtr());
+    }
+
+    // Try to find appropriate parameter. May return NULL
+    return (libinfo[index_].second->get(name));
 }
 
 } // namespace util
