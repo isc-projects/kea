@@ -274,6 +274,9 @@ private:
     /// @return List of loaded library names.
     std::vector<std::string> getLibraryNamesInternal() const;
 
+    /// @brief Return a collection of library names with parameters.
+    HookLibsCollection getLibraryInfoInternal() const;
+
     //@}
 
     /// @brief Initialization to No Libraries

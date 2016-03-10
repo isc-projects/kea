@@ -131,6 +131,12 @@ HooksManager::getLibraryNamesInternal() const {
                            : std::vector<std::string>());
 }
 
+HookLibsCollection
+HooksManager::getLibraryInfoInternal() const {
+    return (lm_collection_ ? lm_collection_->getLibraryInfo()
+            : HookLibsCollection());
+}
+
 std::vector<std::string>
 HooksManager::getLibraryNames() {
     return (getHooksManager().getLibraryNamesInternal());
@@ -138,7 +144,7 @@ HooksManager::getLibraryNames() {
 
 HookLibsCollection
 HooksManager::getLibraryInfo() {
-    return (getHooksManager().getLibraryInfo());
+    return (getHooksManager().getLibraryInfoInternal());
 }
 
 // Perform conditional initialization if nothing is loaded.

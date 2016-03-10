@@ -10,6 +10,7 @@
 
 #include <hooks/tests/common_test_class.h>
 #include <hooks/tests/test_libraries.h>
+#include <cc/data.h>
 
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
@@ -17,9 +18,9 @@
 #include <algorithm>
 #include <string>
 
-
 using namespace isc;
 using namespace isc::hooks;
+using namespace isc::data;
 using namespace std;
 
 namespace {
@@ -536,6 +537,32 @@ TEST_F(HooksManagerTest, validateLibraries) {
 
     failed = HooksManager::validateLibraries(libraries);
     EXPECT_TRUE(failed == expected_failures);
+}
+
+// This test verifies that the specified parameters are accessed properly.
+TEST_F(HooksManagerTest, LibraryParameters) {
+
+    // Prepare paramters for the callout parameters library.
+    ElementPtr params = Element::createMap();
+    params->set("svalue", Element::create("string value"));
+    params->set("ivalue", Element::create(42));
+    params->set("bvalue", Element::create(true));
+
+    // Set up the list of libraries to be loaded.
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(CALLOUT_PARAMS_LIBRARY),
+                                      params));
+
+    // Load the libraries. Note that callout params library checks if
+    // all mandatory parameters are there, so if anything is missing, its
+    // load() function will return error, thus causing the library to not
+    // load.
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+
+    // Try unloading the libraries.
+    EXPECT_NO_THROW(HooksManager::unloadLibraries());
 }
 
 
