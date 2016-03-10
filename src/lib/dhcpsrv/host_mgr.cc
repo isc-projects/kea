@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,6 +77,23 @@ HostMgr::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
 }
 
 ConstHostCollection
+HostMgr::getAll(const Host::IdentifierType& identifier_type,
+                const uint8_t* identifier_begin,
+                const size_t identifier_len) const {
+    ConstHostCollection hosts = getCfgHosts()->getAll(identifier_type,
+                                                      identifier_begin,
+                                                      identifier_len);
+    if (alternate_source_) {
+        ConstHostCollection hosts_plus =
+            alternate_source_->getAll(identifier_type, identifier_begin,
+                                      identifier_len);
+        hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
+    }
+    return (hosts);
+}
+
+
+ConstHostCollection
 HostMgr::getAll4(const IOAddress& address) const {
     ConstHostCollection hosts = getCfgHosts()->getAll4(address);
     if (alternate_source_) {
@@ -102,6 +119,20 @@ HostMgr::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
         if (!host && hwaddr) {
             host = alternate_source_->get4(subnet_id, hwaddr, DuidPtr());
         }
+    }
+    return (host);
+}
+
+ConstHostPtr
+HostMgr::get4(const SubnetID& subnet_id,
+              const Host::IdentifierType& identifier_type,
+              const uint8_t* identifier_begin,
+              const size_t identifier_len) const {
+    ConstHostPtr host = getCfgHosts()->get4(subnet_id, identifier_type,
+                                            identifier_begin, identifier_len);
+    if (!host && alternate_source_) {
+        host = alternate_source_->get4(subnet_id, identifier_type,
+                                       identifier_begin, identifier_len);
     }
     return (host);
 }
@@ -150,6 +181,20 @@ HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
             .arg(prefix.toText())
             .arg(static_cast<int>(prefix_len));
         host = alternate_source_->get6(prefix, prefix_len);
+    }
+    return (host);
+}
+
+ConstHostPtr
+HostMgr::get6(const SubnetID& subnet_id,
+              const Host::IdentifierType& identifier_type,
+              const uint8_t* identifier_begin,
+              const size_t identifier_len) const {
+    ConstHostPtr host = getCfgHosts()->get6(subnet_id, identifier_type,
+                                            identifier_begin, identifier_len);
+    if (!host && alternate_source_) {
+        host = alternate_source_->get6(subnet_id, identifier_type,
+                                       identifier_begin, identifier_len);
     }
     return (host);
 }

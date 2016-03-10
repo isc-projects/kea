@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,6 +30,29 @@ CfgHosts::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) {
     // the getAllInternal method.
     HostCollection collection;
     getAllInternal<HostCollection>(hwaddr, duid, collection);
+    return (collection);
+}
+
+ConstHostCollection
+CfgHosts::getAll(const Host::IdentifierType& identifier_type,
+                 const uint8_t* identifier_begin,
+                 const size_t identifier_len) const {
+    // Do not issue logging message here because it will be logged by
+    // the getAllInternal method.
+    ConstHostCollection collection;
+    getAllInternal<ConstHostCollection>(identifier_type, identifier_begin,
+                                        identifier_len, collection);
+    return (collection);
+}
+
+HostCollection
+CfgHosts::getAll(const Host::IdentifierType& identifier_type,
+                 const uint8_t* identifier_begin, const size_t identifier_len) {
+    // Do not issue logging message here because it will be logged by
+    // the getAllInternal method.
+    HostCollection collection;
+    getAllInternal<HostCollection>(identifier_type, identifier_begin,
+                                   identifier_len, collection);
     return (collection);
 }
 
@@ -71,27 +94,26 @@ CfgHosts::getAll6(const IOAddress& address) {
 
 template<typename Storage>
 void
-CfgHosts::getAllInternal(const std::vector<uint8_t>& identifier,
-                         const Host::IdentifierType& identifier_type,
+CfgHosts::getAllInternal(const Host::IdentifierType& identifier_type,
+                         const uint8_t* identifier,
+                         const size_t identifier_len,
                          Storage& storage) const {
     // We will need to transform the identifier into the textual format.
     // Until we do it, we mark it as invalid.
     std::string identifier_text = "(invalid)";
-    if (!identifier.empty()) {
-        try {
-            // Use Host object to find the textual form of the identifier.
-            // This may throw exception if the identifier is invalid.
-            Host host(&identifier[0], identifier.size(), identifier_type,
-                      SubnetID(0), SubnetID(0), IOAddress::IPV4_ZERO_ADDRESS());
-            identifier_text = host.getIdentifierAsText();
+    try {
+        // Use Host object to find the textual form of the identifier.
+        // This may throw exception if the identifier is invalid.
+        Host host(identifier, identifier_len, identifier_type,
+                  SubnetID(0), SubnetID(0), IOAddress::IPV4_ZERO_ADDRESS());
+        identifier_text = host.getIdentifierAsText();
 
-        } catch (...) {
-            // Suppress exception and keep using (invalid) as an
-            // identifier. We will log that the identifier is
-            // invalid and return.
-        }
-
+    } catch (...) {
+        // Suppress exception and keep using (invalid) as an
+        // identifier. We will log that the identifier is
+        // invalid and return.
     }
+
     // This will log that we're invoking this function with the specified
     // identifier. The identifier may also be marked as (invalid) if it
     // had 0 length or its type is unsupported.
@@ -106,10 +128,13 @@ CfgHosts::getAllInternal(const std::vector<uint8_t>& identifier,
     // Use the identifier and identifier type as a composite key.
     const HostContainerIndex0& idx = hosts_.get<0>();
     boost::tuple<const std::vector<uint8_t>, const Host::IdentifierType> t =
-        boost::make_tuple(identifier, identifier_type);
+        boost::make_tuple(std::vector<uint8_t>(identifier,
+                                               identifier + identifier_len),
+                                               identifier_type);
 
     // Append each Host object to the storage.
-    for (HostContainerIndex0::iterator host = idx.lower_bound(t); host != idx.upper_bound(t);
+    for (HostContainerIndex0::iterator host = idx.lower_bound(t);
+         host != idx.upper_bound(t);
          ++host) {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
                   HOSTS_CFG_GET_ALL_IDENTIFIER_HOST)
@@ -133,12 +158,14 @@ CfgHosts::getAllInternal(const HWAddrPtr& hwaddr, const DuidPtr& duid,
         .arg(duid ? duid->toText() : "(no-duid)");
 
     // Get hosts using HW address.
-    if (hwaddr) {
-        getAllInternal<Storage>(hwaddr->hwaddr_, Host::IDENT_HWADDR, storage);
+    if (hwaddr && !hwaddr->hwaddr_.empty()) {
+        getAllInternal<Storage>(Host::IDENT_HWADDR, &hwaddr->hwaddr_[0],
+                                hwaddr->hwaddr_.size(), storage);
     }
     // Get hosts using DUID.
-    if (duid) {
-        getAllInternal<Storage>(duid->getDuid(), Host::IDENT_DUID, storage);
+    if (duid && !duid->getDuid().empty()) {
+        getAllInternal<Storage>(Host::IDENT_DUID, &duid->getDuid()[0],
+                                duid->getDuid().size(), storage);
     }
 }
 
@@ -206,7 +233,18 @@ CfgHosts::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
                const DuidPtr& duid) const {
     // Do not log here because getHostInternal logs.
     // The false value indicates that it is an IPv4 subnet.
-    return (getHostInternal(subnet_id, false, hwaddr, duid));
+    HostPtr host;
+    if (hwaddr && !hwaddr->hwaddr_.empty()) {
+        host = getHostInternal(subnet_id, false, Host::IDENT_HWADDR,
+                               &hwaddr->hwaddr_[0],
+                               hwaddr->hwaddr_.size());
+    }
+    if (!host && duid && !duid->getDuid().empty()) {
+        host = getHostInternal(subnet_id, false, Host::IDENT_DUID,
+                               &duid->getDuid()[0],
+                               duid->getDuid().size());
+    }
+    return (host);
 }
 
 HostPtr
@@ -214,7 +252,36 @@ CfgHosts::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
                const DuidPtr& duid) {
     // Do not log here because getHostInternal logs.
     // The false value indicates that it is an IPv4 subnet.
-    return (getHostInternal(subnet_id, false, hwaddr, duid));
+    HostPtr host;
+    if (hwaddr && !hwaddr->hwaddr_.empty()) {
+        host = getHostInternal(subnet_id, false, Host::IDENT_HWADDR,
+                               &hwaddr->hwaddr_[0],
+                               hwaddr->hwaddr_.size());
+    }
+    if (!host && duid && !duid->getDuid().empty()) {
+        host = getHostInternal(subnet_id, false, Host::IDENT_DUID,
+                               &duid->getDuid()[0],
+                               duid->getDuid().size());
+    }
+    return (host);
+}
+
+ConstHostPtr
+CfgHosts::get4(const SubnetID& subnet_id,
+               const Host::IdentifierType& identifier_type,
+               const uint8_t* identifier_begin,
+               const size_t identifier_len) const {
+    return (getHostInternal(subnet_id, false, identifier_type, identifier_begin,
+                            identifier_len));
+}
+
+HostPtr
+CfgHosts::get4(const SubnetID& subnet_id,
+               const Host::IdentifierType& identifier_type,
+               const uint8_t* identifier_begin,
+               const size_t identifier_len) {
+    return (getHostInternal(subnet_id, false, identifier_type, identifier_begin,
+                            identifier_len));
 }
 
 ConstHostPtr
@@ -246,7 +313,19 @@ CfgHosts::get6(const SubnetID& subnet_id, const DuidPtr& duid,
                const HWAddrPtr& hwaddr) const {
     // Do not log here because getHostInternal logs.
     // The true value indicates that it is an IPv6 subnet.
-    return (getHostInternal(subnet_id, true, hwaddr, duid));
+    HostPtr host;
+    if (duid && !duid->getDuid().empty()) {
+        host = getHostInternal(subnet_id, true, Host::IDENT_DUID,
+                               &duid->getDuid()[0],
+                               duid->getDuid().size());
+    }
+    if (!host && hwaddr && !hwaddr->hwaddr_.empty()) {
+        host = getHostInternal(subnet_id, true, Host::IDENT_HWADDR,
+                               &hwaddr->hwaddr_[0],
+                               hwaddr->hwaddr_.size());
+    }
+
+    return (host);
 }
 
 HostPtr
@@ -254,7 +333,37 @@ CfgHosts::get6(const SubnetID& subnet_id, const DuidPtr& duid,
                const HWAddrPtr& hwaddr) {
     // Do not log here because getHostInternal logs.
     // The true value indicates that it is an IPv6 subnet.
-    return (getHostInternal(subnet_id, true, hwaddr, duid));
+    HostPtr host;
+    if (duid && !duid->getDuid().empty()) {
+        host = getHostInternal(subnet_id, true, Host::IDENT_DUID,
+                               &duid->getDuid()[0],
+                               duid->getDuid().size());
+    }
+    if (!host && hwaddr && !hwaddr->hwaddr_.empty()) {
+        host = getHostInternal(subnet_id, true, Host::IDENT_HWADDR,
+                               &hwaddr->hwaddr_[0],
+                               hwaddr->hwaddr_.size());
+    }
+
+    return (host);
+}
+
+ConstHostPtr
+CfgHosts::get6(const SubnetID& subnet_id,
+               const Host::IdentifierType& identifier_type,
+               const uint8_t* identifier_begin,
+               const size_t identifier_len) const {
+    return (getHostInternal(subnet_id, true, identifier_type, identifier_begin,
+                            identifier_len));
+}
+
+HostPtr
+CfgHosts::get6(const SubnetID& subnet_id,
+               const Host::IdentifierType& identifier_type,
+               const uint8_t* identifier_begin,
+               const size_t identifier_len) {
+    return (getHostInternal(subnet_id, true, identifier_type, identifier_begin,
+                            identifier_len));
 }
 
 ConstHostPtr
@@ -357,18 +466,22 @@ CfgHosts::getAllInternal6(const SubnetID& subnet_id,
 
 HostPtr
 CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
-                          const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
-    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ONE_SUBNET_ID_HWADDR_DUID)
+                          const Host::IdentifierType& identifier_type,
+                          const uint8_t* identifier,
+                          const size_t identifier_len) const {
+
+/*    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ONE_SUBNET_ID_HWADDR_DUID)
         .arg(subnet6 ? "IPv6" : "IPv4")
         .arg(subnet_id)
         .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
-        .arg(duid ? duid->toText() : "(no-duid)");
+        .arg(duid ? duid->toText() : "(no-duid)"); */
 
-    // Get all hosts for the HW address and DUID. This may return multiple hosts
+    // Get all hosts for a specified identifier. This may return multiple hosts
     // for different subnets, but the number of hosts returned should be low
     // because one host presumably doesn't show up in many subnets.
     HostCollection hosts;
-    getAllInternal<HostCollection>(hwaddr, duid, hosts);
+    getAllInternal<HostCollection>(identifier_type, identifier, identifier_len,
+                                   hosts);
 
     HostPtr host;
     // Iterate over the returned hosts and select those for which the
@@ -394,15 +507,15 @@ CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
                 isc_throw(DuplicateHost,  "more than one reservation found"
                           " for the host belonging to the subnet with id '"
                           << subnet_id << "' and using the HW address '"
-                          << (hwaddr ? hwaddr->toText(false) : "(null)")
-                          << "' and DUID '"
-                          << (duid ? duid->toText() : "(null)")
+//                          << (hwaddr ? hwaddr->toText(false) : "(null)")
+//                          << "' and DUID '"
+//                          << (duid ? duid->toText() : "(null)")
                           << "'");
             }
         }
     }
 
-    if (host) {
+/*    if (host) {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
                   HOSTS_CFG_GET_ONE_SUBNET_ID_HWADDR_DUID)
             .arg(subnet_id)
@@ -416,11 +529,10 @@ CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
             .arg(subnet_id)
             .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
             .arg(duid ? duid->toText() : "(no-duid)");
-    }
+    } */
 
     return (host);
 }
-
 
 void
 CfgHosts::add(const HostPtr& host) {
