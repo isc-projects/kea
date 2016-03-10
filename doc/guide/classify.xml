@@ -205,6 +205,11 @@ sub-option with code "code" from the DHCPv4 Relay Agent Information option
       </para>
 
       <para>
+       "relay4" shares the same representation types than "option", for
+       instance "relay4[code].exists".
+      </para>
+
+      <para>
         <table frame="all" id="classification-expressions-list">
           <title>List of Classification Expressions</title>
           <tgroup cols='3'>
