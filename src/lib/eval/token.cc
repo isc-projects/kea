@@ -224,9 +224,9 @@ TokenNot::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     bool val = toBool(op);
 
     if (!val) {
-	values.push("true");
+        values.push("true");
     } else {
-	values.push("false");
+        values.push("false");
     }
 }
 
@@ -246,9 +246,9 @@ TokenAnd::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     bool val2 = toBool(op2);
 
     if (val1 && val2) {
-	values.push("true");
+        values.push("true");
     } else {
-	values.push("false");
+        values.push("false");
     }
 }
 
@@ -268,8 +268,8 @@ TokenOr::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     bool val2 = toBool(op2);
 
     if (val1 || val2) {
-	values.push("true");
+        values.push("true");
     } else {
-	values.push("false");
+        values.push("false");
     }
 }
