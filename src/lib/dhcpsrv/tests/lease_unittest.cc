@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -838,6 +838,7 @@ TEST(Lease6Test, toText) {
              << "Pref life:     400\n"
              << "Valid life:    800\n"
              << "Cltt:          12345678\n"
+             << "DUID:          00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\n"
              << "Hardware addr: " << hwaddr->toText(false) << "\n"
              << "Subnet ID:     5678\n"
              << "State:         declined\n";
@@ -854,6 +855,7 @@ TEST(Lease6Test, toText) {
              << "Pref life:     400\n"
              << "Valid life:    800\n"
              << "Cltt:          12345678\n"
+             << "DUID:          00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\n"
              << "Hardware addr: (none)\n"
              << "Subnet ID:     5678\n"
              << "State:         declined\n";
