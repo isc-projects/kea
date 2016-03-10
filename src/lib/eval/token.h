@@ -211,6 +211,16 @@ public:
         return (option_code_);
     }
 
+    /// @brief Returns representation-type
+    ///
+    /// This method is used in testing to determine if the parser had
+    /// instantiated TokenOption with correct parameters.
+    ///
+    /// @return representation-type of the option this token expects to use.
+    RepresentationType getRepresentation() const {
+        return (representation_type_);
+    }
+
 protected:
     /// @brief Attempts to retrieve an option
     ///
