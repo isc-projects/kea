@@ -199,6 +199,7 @@ Dhcpv4Exchange::copyDefaultFields() {
         resp_->setRemoteHWAddr(dst_hw_addr);
     }
 
+    // Copy flags from the request to the response per RFC 2131
     resp_->setFlags(query_->getFlags());
 }
 

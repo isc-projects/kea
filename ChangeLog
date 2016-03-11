@@ -1,3 +1,8 @@
+1085.	[bug]		sar
+	Always copy the DHCPv4 flags field from a client's request to the
+	the server's resposne.
+	(Trac #4292, git <tbd>)
+
 1084.	[bug]		fdupont
 	Removed obsolete requirement of python3 by --enable-generate-docs
 	configuration option.
