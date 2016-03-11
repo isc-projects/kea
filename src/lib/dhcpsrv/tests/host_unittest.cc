@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -501,6 +501,134 @@ TEST(HostTest, addClientClasses) {
     EXPECT_TRUE(host->getClientClasses6().contains("foo"));
     EXPECT_TRUE(host->getClientClasses4().contains("bar"));
     EXPECT_TRUE(host->getClientClasses6().contains("bar"));
+}
+
+// This test checks that it is possible to add DHCPv4 options for a host.
+TEST(HostTest, addOptions4) {
+    Host host("01:02:03:04:05:06", "hw-address", SubnetID(1), SubnetID(2),
+              IOAddress("192.0.2.3"));
+
+    // Differentiate options by their codes (100-109)
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(host.getCfgOption4()->add(option, false, "dhcp4"));
+    }
+
+    // Add 7 options to another option space. The option codes partially overlap
+    // with option codes that we have added to dhcp4 option space.
+    for (uint16_t code = 105; code < 112; ++code) {
+        OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(host.getCfgOption4()->add(option, false, "isc"));
+    }
+
+    // Get options from the Subnet and check if all 10 are there.
+    OptionContainerPtr options = host.getCfgOption4()->getAll("dhcp4");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(10, options->size());
+
+    // It should be possible to retrieve DHCPv6 options but the container
+    // should be empty.
+    OptionContainerPtr options6 = host.getCfgOption6()->getAll("dhcp6");
+    ASSERT_TRUE(options6);
+    EXPECT_TRUE(options6->empty());
+
+    // Also make sure that for dhcp4 option space no DHCPv6 options are
+    // returned. This is to check that containers for DHCPv4 and DHCPv6
+    // options do not share information.
+    options6 = host.getCfgOption6()->getAll("dhcp4");
+    ASSERT_TRUE(options6);
+    EXPECT_TRUE(options6->empty());
+
+    // Validate codes of options added to dhcp4 option space.
+    uint16_t expected_code = 100;
+    for (OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
+        ++expected_code;
+    }
+
+    options = host.getCfgOption4()->getAll("isc");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(7, options->size());
+
+    // Validate codes of options added to isc option space.
+    expected_code = 105;
+    for (OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
+        ++expected_code;
+    }
+
+    // Try to get options from a non-existing option space.
+    options = host.getCfgOption4()->getAll("abcd");
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+}
+
+// This test checks that it is possible to add DHCPv6 options for a host.
+TEST(HostTest, addOptions6) {
+    Host host("01:02:03:04:05:06", "hw-address", SubnetID(1), SubnetID(2),
+              IOAddress("192.0.2.3"));
+
+    // Differentiate options by their codes (100-109)
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(host.getCfgOption6()->add(option, false, "dhcp6"));
+    }
+
+    // Add 7 options to another option space. The option codes partially overlap
+    // with option codes that we have added to dhcp6 option space.
+    for (uint16_t code = 105; code < 112; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(host.getCfgOption6()->add(option, false, "isc"));
+    }
+
+    // Get options from the Subnet and check if all 10 are there.
+    OptionContainerPtr options = host.getCfgOption6()->getAll("dhcp6");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(10, options->size());
+
+    // It should be possible to retrieve DHCPv4 options but the container
+    // should be empty.
+    OptionContainerPtr options4 = host.getCfgOption4()->getAll("dhcp4");
+    ASSERT_TRUE(options4);
+    EXPECT_TRUE(options4->empty());
+
+    // Also make sure that for dhcp6 option space no DHCPv4 options are
+    // returned. This is to check that containers for DHCPv4 and DHCPv6
+    // options do not share information.
+    options4 = host.getCfgOption4()->getAll("dhcp6");
+    ASSERT_TRUE(options4);
+    EXPECT_TRUE(options4->empty());
+
+    // Validate codes of options added to dhcp6 option space.
+    uint16_t expected_code = 100;
+    for (OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
+        ++expected_code;
+    }
+
+    options = host.getCfgOption6()->getAll("isc");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(7, options->size());
+
+    // Validate codes of options added to isc option space.
+    expected_code = 105;
+    for (OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
+        ++expected_code;
+    }
+
+    // Try to get options from a non-existing option space.
+    options = host.getCfgOption6()->getAll("abcd");
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
 }
 
 TEST(HostTest, getIdentifierAsText) {
