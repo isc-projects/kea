@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -78,7 +78,8 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
       ipv6_subnet_id_(ipv6_subnet_id),
       ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
-      dhcp6_client_classes_(dhcp6_client_classes) {
+      dhcp6_client_classes_(dhcp6_client_classes),
+      cfg_option4_(), cfg_option6_() {
 
     // Initialize HWAddr or DUID
     setIdentifier(identifier, identifier_len, identifier_type);
@@ -99,7 +100,8 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
       ipv6_subnet_id_(ipv6_subnet_id),
       ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
-      dhcp6_client_classes_(dhcp6_client_classes) {
+      dhcp6_client_classes_(dhcp6_client_classes),
+      cfg_option4_(new CfgOption()), cfg_option6_(new CfgOption()) {
 
     // Initialize HWAddr or DUID
     setIdentifier(identifier, identifier_name);
