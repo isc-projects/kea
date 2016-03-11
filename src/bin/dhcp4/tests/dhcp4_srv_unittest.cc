@@ -395,6 +395,7 @@ TEST_F(Dhcpv4SrvTest, initResponse) {
     const HWAddr& dst_hw = HWAddr::fromText("e8:ab:cd:78:9a:bc");
     HWAddrPtr dst_hw_addr(new HWAddr(dst_hw));
     query->setRemoteHWAddr(dst_hw_addr);
+    query->setFlags(BOOTP_BROADCAST);
 
     // Add options which must be copied
     // client-id echo is optional
@@ -423,6 +424,7 @@ TEST_F(Dhcpv4SrvTest, initResponse) {
     EXPECT_EQ(IOAddress("10.10.10.10"), response->getGiaddr());
     EXPECT_TRUE(src_hw == *response->getLocalHWAddr());
     EXPECT_TRUE(dst_hw == *response->getRemoteHWAddr());
+    EXPECT_TRUE(BOOTP_BROADCAST == response->getFlags());
 
     // Check options (i.e., subnet selection option)
     OptionPtr resp_sbnsel = response->getOption(DHO_SUBNET_SELECTION);
