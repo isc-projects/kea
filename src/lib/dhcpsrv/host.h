@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dhcp/classify.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/shared_ptr.hpp>
 #include <list>
@@ -154,9 +155,13 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// DHCPv6 server and vice versa. Also, this approach allows for reserving
 /// common resources such as host name for DHCPv4 and DHCPv6 clients.
 ///
+/// This class also holds pointers to specific DHCP options reserved
+/// for a host. Options instances are held in @c CfgOption objects.
+/// There are two @c CfgOption objects in this class, one holding
+/// DHCPv4 options, another one holding DHCPv6 options.
+///
 /// @todo This class offers basic functionality for storing host information.
 /// It will need to be extended to allow for the following operations:
-/// - store DHCPv4 and DHCPv6 options for the host,
 /// - remove and replace IPv6 reservations
 /// - remove and replace client classes
 /// - disable IPv4 reservation without a need to set it to the 0.0.0.0 address
@@ -409,6 +414,36 @@ public:
         return (dhcp6_client_classes_);
     }
 
+    /// @brief Returns pointer to the DHCPv4 option data configuration for
+    /// this host.
+    ///
+    /// Returned pointer can be used to add, remove and udate options
+    /// reserved for a host.
+    CfgOptionPtr getCfgOption4() {
+        return (cfg_option4_);
+    }
+
+    /// @brief Returns const pointer to the DHCPv4 option data configuration for
+    /// this host.
+    ConstCfgOptionPtr getCfgOption4() const {
+        return (cfg_option4_);
+    }
+
+    /// @brief Returns pointer to the DHCPv6 option data configuration for
+    /// this host.
+    ///
+    /// Returned pointer can be used to add, remove and udate options
+    /// reserved for a host.
+    CfgOptionPtr getCfgOption6() {
+        return (cfg_option6_);
+    }
+
+    /// @brief Returns const pointer to the DHCPv6 option data configuration for
+    /// this host.
+    ConstCfgOptionPtr getCfgOption6() const {
+        return (cfg_option6_);
+    }
+
     /// @brief Returns information about the host in the textual format.
     std::string toText() const;
 
@@ -447,6 +482,10 @@ private:
     ClientClasses dhcp4_client_classes_;
     /// @brief Collection of classes associated with a DHCPv6 client.
     ClientClasses dhcp6_client_classes_;
+    /// @brief Pointer to the DHCPv4 option data configuration for this host.
+    CfgOptionPtr cfg_option4_;
+    /// @brief Pointer to the DHCPv6 option data configuration for this host.
+    CfgOptionPtr cfg_option6_;
 };
 
 /// @brief Pointer to the @c Host object.
