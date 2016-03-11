@@ -515,7 +515,7 @@ TEST(HostTest, addOptions4) {
     }
 
     // Add 7 options to another option space. The option codes partially overlap
-    // with option codes that we have added to dhcp6 option space.
+    // with option codes that we have added to dhcp4 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
         ASSERT_NO_THROW(host.getCfgOption4()->add(option, false, "isc"));
@@ -532,14 +532,14 @@ TEST(HostTest, addOptions4) {
     ASSERT_TRUE(options6);
     EXPECT_TRUE(options6->empty());
 
-    // Also make sure that for dhcp6 option space no DHCPv4 options are
+    // Also make sure that for dhcp4 option space no DHCPv6 options are
     // returned. This is to check that containers for DHCPv4 and DHCPv6
     // options do not share information.
     options6 = host.getCfgOption6()->getAll("dhcp4");
     ASSERT_TRUE(options6);
     EXPECT_TRUE(options6->empty());
 
-    // Validate codes of options added to dhcp6 option space.
+    // Validate codes of options added to dhcp4 option space.
     uint16_t expected_code = 100;
     for (OptionContainer::const_iterator option_desc = options->begin();
          option_desc != options->end(); ++option_desc) {
@@ -590,7 +590,7 @@ TEST(HostTest, addOptions6) {
     ASSERT_TRUE(options);
     ASSERT_EQ(10, options->size());
 
-    // It should be possible to retrieve DHCPv6 options but the container
+    // It should be possible to retrieve DHCPv4 options but the container
     // should be empty.
     OptionContainerPtr options4 = host.getCfgOption4()->getAll("dhcp4");
     ASSERT_TRUE(options4);
