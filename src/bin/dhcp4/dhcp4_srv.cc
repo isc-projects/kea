@@ -198,6 +198,8 @@ Dhcpv4Exchange::copyDefaultFields() {
     if (dst_hw_addr) {
         resp_->setRemoteHWAddr(dst_hw_addr);
     }
+
+    resp_->setFlags(query_->getFlags());
 }
 
 void
