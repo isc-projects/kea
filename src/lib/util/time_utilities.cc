@@ -136,7 +136,7 @@ namespace {
 const size_t DATE_LEN = 14;      // YYYYMMDDHHmmSS
 
 inline void
-checkRange(const int min, const int max, const int value,
+checkRange(const unsigned min, const unsigned max, const unsigned value,
            const string& valname)
 {
     if ((value >= min) && (value <= max)) {
@@ -157,9 +157,9 @@ timeFromText64(const string& time_txt) {
         }
     }
 
-    int year, month, day, hour, minute, second;
+    unsigned year, month, day, hour, minute, second;
     if (time_txt.length() != DATE_LEN ||
-        sscanf(time_txt.c_str(), "%4d%2d%2d%2d%2d%2d",
+        sscanf(time_txt.c_str(), "%4u%2u%2u%2u%2u%2u",
                &year, &month, &day, &hour, &minute, &second) != 6)
     {
         isc_throw(InvalidTime, "Couldn't convert time value: " << time_txt);
@@ -173,16 +173,16 @@ timeFromText64(const string& time_txt) {
     checkRange(0, 59, minute, "minute");
     checkRange(0, 60, second, "second"); // 60 == leap second.
 
-    uint64_t timeval = second + (60 * minute) + (3600 * hour) +
-        ((day - 1) * 86400);
-    for (int m = 0; m < (month - 1); ++m) {
-            timeval += days[m] * 86400;
+    uint64_t timeval = second + (60ULL * minute) + (3600ULL * hour) +
+        ((day - 1) * 86400ULL);
+    for (unsigned m = 0; m < (month - 1); ++m) {
+            timeval += days[m] * 86400ULL;
     }
     if (isLeap(year) && month > 2) {
-            timeval += 86400;
+            timeval += 86400ULL;
     }
-    for (int y = 1970; y < year; ++y) {
-        timeval += ((isLeap(y) ? 366 : 365 ) * 86400);
+    for (unsigned y = 1970; y < year; ++y) {
+        timeval += ((isLeap(y) ? 366 : 365) * 86400ULL);
     }
 
     return (timeval);
