@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -66,7 +66,8 @@ public:
         // and the creating thread needs to release it.
         waiting_(2),
         main_(main),
-        exception_(false)
+        exception_(false),
+	tid_(0)
     {}
     // Another of the waiting events is done. If there are no more, delete
     // impl.
