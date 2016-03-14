@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -474,7 +474,7 @@ ForwardTest::checkPushAndPop(int family, int type, int protocol,
                                        false));
         setNonBlock(client_sock.fd, true);
         // This connect would "fail" due to EINPROGRESS.  Ignore it for now.
-        connect(client_sock.fd, local.first, local.second);
+        static_cast<void>(connect(client_sock.fd, local.first, local.second));
         sockaddr_storage ss;
         socklen_t salen = sizeof(ss);
         server_sock.reset(accept(sock.fd, convertSockAddr(&ss), &salen));
