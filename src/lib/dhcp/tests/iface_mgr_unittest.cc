@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -883,7 +883,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
          init_sockets_it != init_sockets.end(); ++init_sockets_it) {
         // recv() must result in error when using invalid socket.
         char buf;
-        recv(*init_sockets_it, &buf, 1, MSG_PEEK);
+        static_cast<void>(recv(*init_sockets_it, &buf, 1, MSG_PEEK));
         // EWOULDBLOCK would mean that socket is valid/open but
         // simply no data is received so we have to check for
         // other errors.
