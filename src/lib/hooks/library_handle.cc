@@ -90,7 +90,7 @@ LibraryHandle::getParameter(const std::string& name) {
     // INT_MAX post-user library callout
 
     // Try to find appropriate parameter. May return NULL
-    ConstElementPtr params = libinfo[index - 1].second;
+    isc::data::ConstElementPtr params = libinfo[index - 1].second;
     if (!params) {
         return (isc::data::ConstElementPtr());
     }
