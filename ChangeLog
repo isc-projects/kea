@@ -1,7 +1,7 @@
 1088.	[bug]		fdupont
 	Protected DHCP server main() routines against errors raised from
 	logger calls in the error handler (aka double errors).
-	(Trac #4310, git xxx)
+	(Trac #4310, git 6813e1a7520335f6920ff8de5e52ecdb24712910)
 
 1087.	[bug]		fdupont
 	Empty option specifications no longer require setting the
