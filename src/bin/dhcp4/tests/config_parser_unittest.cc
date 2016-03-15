@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -463,6 +463,27 @@ public:
         CfgMgr::instance().clear();
     }
 
+    /// @brief Retrieve an option associated with a host.
+    ///
+    /// @param host Reference to a host for which an option should be retrieved.
+    /// @param option_code Option code.
+    /// @tparam ReturnType Type of the pointer object returned.
+    ///
+    /// @return Pointer to an option or NULL if not found.
+    template<typename ReturnType>
+    ReturnType
+    retrieveOption(const Host& host, const uint16_t option_code) const {
+        ConstCfgOptionPtr cfg_option = host.getCfgOption4();
+        if (cfg_option) {
+            OptionDescriptor opt_desc = cfg_option->get(std::string("dhcp4"),
+                                                        option_code);
+            if (opt_desc.option_) {
+                return (boost::dynamic_pointer_cast<
+                        typename ReturnType::element_type>(opt_desc.option_));
+            }
+        }
+        return (ReturnType());
+    }
 
     boost::scoped_ptr<Dhcpv4Srv> srv_;  ///< DHCP4 server under test
     int rcode_;                         ///< Return code from element parsing
@@ -3364,12 +3385,32 @@ TEST_F(Dhcp4ParserTest, reservations) {
         "      {"
         "        \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
         "        \"ip-address\": \"192.0.3.112\","
-        "        \"hostname\": \"\""
+        "        \"hostname\": \"\","
+        "        \"option-data\": ["
+        "        {"
+        "          \"name\": \"name-servers\","
+        "          \"data\": \"192.0.3.15\""
+        "        },"
+        "        {"
+        "          \"name\": \"default-ip-ttl\","
+        "          \"data\": \"32\""
+        "        }"
+        "        ]"
         "      },"
         "      {"
         "        \"hw-address\": \"01:02:03:04:05:06\","
         "        \"ip-address\": \"192.0.3.120\","
-        "        \"hostname\": \"\""
+        "        \"hostname\": \"\","
+        "        \"option-data\": ["
+        "        {"
+        "          \"name\": \"name-servers\","
+        "          \"data\": \"192.0.3.95\""
+        "        },"
+        "        {"
+        "          \"name\": \"default-ip-ttl\","
+        "          \"data\": \"11\""
+        "        }"
+        "        ]"
         "      }"
         "    ],"
         "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
@@ -3384,7 +3425,17 @@ TEST_F(Dhcp4ParserTest, reservations) {
         "      {"
         "        \"duid\": \"0A:09:08:07:06:05:04:03:02:01\","
         "        \"ip-address\": \"192.0.4.101\","
-        "        \"hostname\": \"\""
+        "        \"hostname\": \"\","
+        "        \"option-data\": ["
+        "        {"
+        "          \"name\": \"name-servers\","
+        "          \"data\": \"192.0.4.11\""
+        "        },"
+        "        {"
+        "          \"name\": \"default-ip-ttl\","
+        "          \"data\": \"95\""
+        "        }"
+        "        ]"
         "      },"
         "      {"
         "        \"hw-address\": \"06:05:04:03:02:01\","
@@ -3428,6 +3479,17 @@ TEST_F(Dhcp4ParserTest, reservations) {
     // and not to other two.
     EXPECT_FALSE(hosts_cfg->get4(123, hwaddr));
     EXPECT_FALSE(hosts_cfg->get4(542, hwaddr));
+    // Check that options are assigned correctly.
+    Option4AddrLstPtr opt_dns =
+        retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    Option4AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("192.0.3.95", dns_addrs[0].toText());
+    OptionUint8Ptr opt_ttl =
+        retrieveOption<OptionUint8Ptr>(*host, DHO_DEFAULT_IP_TTL);
+    ASSERT_TRUE(opt_ttl);
+    EXPECT_EQ(11, static_cast<int>(opt_ttl->getValue()));
 
     // Do the same test for the DUID based reservation.
     std::vector<uint8_t> duid_vec;
@@ -3440,6 +3502,15 @@ TEST_F(Dhcp4ParserTest, reservations) {
     EXPECT_EQ("192.0.3.112", host->getIPv4Reservation().toText());
     EXPECT_FALSE(hosts_cfg->get4(123, HWAddrPtr(), duid));
     EXPECT_FALSE(hosts_cfg->get4(542, HWAddrPtr(), duid));
+    // Check that options are assigned correctly.
+    opt_dns = retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("192.0.3.15", dns_addrs[0].toText());
+    opt_ttl = retrieveOption<OptionUint8Ptr>(*host, DHO_DEFAULT_IP_TTL);
+    ASSERT_TRUE(opt_ttl);
+    EXPECT_EQ(32, static_cast<int>(opt_ttl->getValue()));
 
     // The HW address used for one of the reservations in the subnet 542
     // consists of numbers from 6 to 1. So, let's just reverse the order
