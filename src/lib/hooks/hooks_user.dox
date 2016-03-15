@@ -1271,4 +1271,137 @@ int load() {
 
 }
 @endcode
+
+@subsection hooksdgHooksConfig Configuring Hooks Libraries
+
+Sometimes it is useful for the hook library to have some configuration parameters.
+This capability was introduced in Kea 1.1. This is often convenient to follow
+generic Kea configuration approach rather than invent your own configuration
+logic. Consider the following example:
+
+@code
+"hooks-libraries": [
+    {
+        "library": "/opt/first.so"
+    },
+    {
+        "library": "/opt/second.so",
+        "parameters": {
+        }
+    },
+    {
+        "library": "/opt/third.so",
+        "parameters": {
+            "mail": "spam@example.com",
+            "floor": 13,
+            "debug": false,
+            "users": [ "alice", "bob", "charlie" ],
+            "languages": {
+                "french": "bonjour",
+                "klingon": "yl'el"
+            }
+        }
+    }
+]
+@endcode
+
+This example has three hook libraries configured. The first and and second have
+no parameters. Note that parameters map is optional, but it's perfectly ok to
+specify it as an empty map. The third library is more interesting. It has five
+parameters specified. The first one called 'mail' is a string. The second one
+is an integer and the third one is boolean. Fourth and fifth parameters are
+slightly more complicated as they are a list and a map respectively. JSON
+structures can be nested if necessary, e.g. you can have a list, which contains
+maps, maps that contain maps that contain other maps etc. Any valid JSON
+structure can be repesented. One important limitation here is that the top
+level "parameters" structure must either be a map or not present at all.
+
+Those parameters can be accessed in load() method. Passed isc::hooks::LibraryHandle
+object has a method called getParameter that returns an instance of
+isc::data::ConstElementPtr or NULL if there was no parameter specified. This pointer
+will point to an object derived from isc::data::Element class. For detailed
+explanation how to use those objects, see isc::data::Element class.
+
+Here's a brief overview of how to use those elements:
+
+ - x = getParameter("mail") will return instance of isc::data::StringElement. The content
+   can be accessed with x->stringValue() and will return std::string.
+ - x = getParameter("floor") will return an instance of isc::data::IntElement.
+   The content can be accessed with x->intValue() and will return int.
+ - x = getParameter("debug") will return an instance of isc::data::BoolElement.
+   Its value can be accessed with x->boolValue() and will return bool.
+ - x = getParameter("users") will return an instance of isc::data::ListElement.
+   Its content can be accessed with the following methods:
+   x->size(), x->get(index)
+ - x = getParameter("watch-list") will return an instance of isc::data::MapElement.
+   Its content can be accessed with the following methods:
+   x->find("klingon"), x->contains("french"), x->size()
+
+Keep in mind that the user can structure his config file incorrectly.
+Remember to check if the structure has expected type before using type specific
+method. For example calling stringValue on IntElement will throw an exception.
+You can do this by calling isc::data::Element::getType.
+
+Here's an example that obtains all of the parameters specified above.
+If you want to get nested elemented, Element::get(index) and Element::find(name)
+will return ElementPtr, which can be iterated in similar manner.
+
+@code
+int load(LibraryHandle& handle) {
+    ConstElementPtr mail  = handle.getParameter("mail");
+    ConstElementPtr floor = handle.getParameter("floor");
+    ConstElementPtr debug = handle.getParameter("debug");
+    ConstElementPtr users = handle.getParameter("users");
+    ConstElementPtr lang  = handle.getParameter("languages");
+
+    // String handling example
+    if (!mail) {
+        // Handle missing 'mail' parameter here.
+        return (1);
+    }
+    if (mail->getType() != Element::string) {
+        // Handle incorrect 'mail' parameter here.
+        return (1);
+    }
+    std::string mail_str = mail->stringValue();
+
+    // In the following examples safety checks are omitted for clarity.
+    // Make sure you do it properly similar to mail example above
+    // or you risk dereferencing NULL pointer or at least throwing
+    // an exception!
+
+    // Integer handling example
+    int floor_num = floor->intValue();
+
+    // Boolean handling example
+    bool debug_flag = debug->boolValue();
+
+    // List handling example
+    std::cout << "There are " << users->size() << " users defined." << std::endl;
+    for (int i = 0; i < users->size(); i++) {
+        ConstElementPtr user = users->get(i);
+        std::cout << "User " << user->stringValue() << std::endl;
+    }
+
+    // Map handling example
+    std::cout << "There are " << lang->size() << " languages defined." << std::endl;
+    if (lang->contains("french")) {
+       std::cout << "One of them is French!" << std::endl;
+    }
+    ConstElementPtr greeting = lang->find("klingon");
+    if (greeting) {
+       std::cout << "Lt. Worf says " << greeting->stringValue() << std::endl;
+    }
+
+    // All validation steps were successful. The library has all the parameters
+    // it needs, so we should report a success.
+    return (0);
+}
+@endcode
+
+A good sources of examples could be unit-tests in file src/lib/cc/tests/data_unittests.cc
+which are dedicated to isc::data::Element testing and src/lib/hooks/tests/callout_params_library.cc,
+which is an example library used in testing. This library expects exactly 3 parameters:
+svalue (which is a string), ivalue (which is an integer) and bvalue (which is a boolean).
+
 */
