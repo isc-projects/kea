@@ -57,7 +57,17 @@
             "library": "/opt/charging.so"
         },
         {
-            "library": "/opt/local/notification.so"
+            "library": "/opt/local/notification.so",
+            "parameters": {
+                "mail": "spam@example.com",
+                "floor": 13,
+                "debug": false,
+                "users": [ "alice", "bob", "charlie" ],
+                "languages": {
+                    "french": "bonjour",
+                    "klingon": "yl'el"
+                }
+            }
         }
     ]
     :
@@ -71,6 +81,32 @@
         specification of library-specific parameters, a feature that will be
         added to a future version of Kea.
       </para></note>
+
+      <note>
+        <para>
+          The library reloading behavior has changed in Kea 1.1. Libraries are
+          reloaded, even if their list hasn't changed. Kea does that, because
+          the parameters specified for the library (or the files those
+          parameters point to) may have changed.
+        </para>
+      </note>
+
+      <para>
+        Libraries may have additional parameters. Those are not mandatory in the
+        sense that there may be libraries that don't require them. However, for
+        specific library there is often specific requirement for specify certain
+        set of parameters. Please consult the documentation for your library
+        for details. In the example above, the first library has no parameters.
+        The second library has five parameters, specifying mail (string
+        parameter), floor (integer parameter), debug (boolean parameter) and
+        even lists (list of strings) and maps (containing strings). Nested
+        parameters could be used if the library supports it. This topic is
+        explained in detail in the Hooks Developer's Guide in Configuring Hooks
+        Libraries section.
+      </para>
+
+      </para>
+
       <para>
       Notes:
         <itemizedlist mark='bullet'>
