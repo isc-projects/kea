@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -175,8 +175,12 @@ main(int argc, char* argv[]) {
         // Let's also try to log it using logging system, but we're not
         // sure if it's usable (the exception may have been thrown from
         // the logger subsystem)
-        LOG_FATAL(dhcp4_logger, DHCP4_ALREADY_RUNNING)
-                  .arg(DHCP4_NAME).arg(ex.what());
+        try {
+            LOG_FATAL(dhcp4_logger, DHCP4_ALREADY_RUNNING)
+                .arg(DHCP4_NAME).arg(ex.what());
+        } catch (...) {
+            // Already logged so ignore
+        }
         ret = EXIT_FAILURE;
     } catch (const std::exception& ex) {
         // First, we print the error on stderr (that should always work)
@@ -186,7 +190,11 @@ main(int argc, char* argv[]) {
         // Let's also try to log it using logging system, but we're not
         // sure if it's usable (the exception may have been thrown from
         // the logger subsystem)
-        LOG_FATAL(dhcp4_logger, DHCP4_SERVER_FAILED).arg(ex.what());
+        try {
+            LOG_FATAL(dhcp4_logger, DHCP4_SERVER_FAILED).arg(ex.what());
+        } catch (...) {
+            // Already logged so ignore
+        }
         ret = EXIT_FAILURE;
     }
 
