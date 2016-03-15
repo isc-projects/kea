@@ -50,15 +50,17 @@ enum BOOTPTypes {
 /* Possible values for flags field... */
 static const uint16_t BOOTP_BROADCAST = 32768L;
 
-/* Possible values for hardware type (htype) field... */
+/// @brief Possible values for hardware type (htype) field.
 enum HType {
-    HTYPE_ETHER = 1,   /* Ethernet 10Mbps */
-    HTYPE_DOCSIS = 1,  /* The traffic captures we have from cable modems as well
-                          as this list by IANA: http://www.iana.org/assignments/
-                          arp-parameters/arp-parameters.xhtml suggest that
-                          Ethernet (1) should be used in DOCSIS environment. */
-    HTYPE_IEEE802 = 6, /* IEEE 802.2 Token Ring */
-    HTYPE_FDDI = 8     /* FDDI */
+    HTYPE_UNDEFINED = 0, ///< not specified or undefined
+    HTYPE_ETHER = 1,     ///< Ethernet 10Mbps
+    HTYPE_DOCSIS = 1,    ///< The traffic captures we have from cable modems as
+                         ///  well as this list by IANA:
+                         ///  http://www.iana.org/assignments/
+                         ///  arp-parameters/arp-parameters.xhtml suggest that
+                         ///  Ethernet (1) should be used in DOCSIS environment.
+    HTYPE_IEEE802 = 6,   ///< IEEE 802.2 Token Ring
+    HTYPE_FDDI = 8       ///< FDDI
     /// TODO Add infiniband here
 };
 
@@ -219,6 +221,7 @@ enum DHCPOptionType {
 
 /* DHCP message types. */
 enum DHCPMessageType {
+    DHCP_NOTYPE         =  0, ///< Message Type option missing
     DHCPDISCOVER        =  1,
     DHCPOFFER           =  2,
     DHCPREQUEST         =  3,

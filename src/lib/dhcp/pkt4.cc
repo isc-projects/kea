@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -238,7 +238,7 @@ Pkt4::unpack() {
 uint8_t Pkt4::getType() const {
     OptionPtr generic = getOption(DHO_DHCP_MESSAGE_TYPE);
     if (!generic) {
-        isc_throw(Unexpected, "Missing DHCP Message Type option");
+        return (DHCP_NOTYPE);
     }
 
     // Check if Message Type is specified as OptionInt<uint8_t>
@@ -328,6 +328,9 @@ Pkt4::getName(const uint8_t type) {
 
 const char*
 Pkt4::getName() const {
+    // getType() is now exception safe. Even if there's no option 53 (message
+    // type), it now returns 0 rather than throw. getName() is able to handle
+    // 0 and unknown message types.
     return (Pkt4::getName(getType()));
 }
 
@@ -392,14 +395,11 @@ Pkt4::toText() const {
         << ", remote_adress=" << remote_addr_
         << ":" << remote_port_ << ", msg_type=";
 
-    // Try to obtain message type. This may throw if the Message Type option is
-    // not present. Therefore we guard it with try-catch, because we don't want
-    // toText method to throw.
-    try {
-        uint8_t msg_type = getType();
+    // Try to obtain message type.
+    uint8_t msg_type = getType();
+    if (msg_type != DHCP_NOTYPE) {
         output << getName(msg_type) << " (" << static_cast<int>(msg_type) << ")";
-
-    } catch (...) {
+    } else {
         // Message Type option is missing.
         output << "(missing)";
     }
@@ -410,7 +410,11 @@ Pkt4::toText() const {
         output << "," << std::endl << "options:";
         for (isc::dhcp::OptionCollection::const_iterator opt = options_.begin();
              opt != options_.end(); ++opt) {
-            output << std::endl << opt->second->toText(2);
+            try {
+                output << std::endl << opt->second->toText(2);
+            } catch (...) {
+                output << "(unknown)" << std::endl;
+            }
         }
 
     } else {
@@ -530,7 +534,7 @@ Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
 uint8_t
 Pkt4::getHtype() const {
     if (!hwaddr_) {
-        isc_throw(InvalidOperation, "Can't get HType. HWAddr not defined");
+        return (HTYPE_UNDEFINED);
     }
     return (hwaddr_->htype_);
 }
@@ -538,7 +542,7 @@ Pkt4::getHtype() const {
 uint8_t
 Pkt4::getHlen() const {
     if (!hwaddr_) {
-        isc_throw(InvalidOperation, "Can't get HType. HWAddr not defined");
+        return (0);
     }
     uint8_t len = hwaddr_->hwaddr_.size();
     return (len <= MAX_CHADDR_LEN ? len : MAX_CHADDR_LEN);
