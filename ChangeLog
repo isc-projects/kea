@@ -1,7 +1,7 @@
 1087.	[bug]		fdupont
 	Empty option specifications no longer require setting the
 	csv-format parameter.
-	(Trac #4291, git ...)
+	(Trac #4291, git 398458f3ad4680fd5f3c032eb6c99d50c2981368)
 
 1086.	[func]		marcin
 	The Host class has been extended to store DHCP options to
