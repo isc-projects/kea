@@ -1,3 +1,8 @@
+1088.	[bug]		fdupont
+	Protected DHCP server main() routines against errors raised from
+	logger calls in the error handler (aka double errors).
+	(Trac #4310, git xxx)
+
 1087.	[bug]		fdupont
 	Empty option specifications no longer require setting the
 	csv-format parameter.
