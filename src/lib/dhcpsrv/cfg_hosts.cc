@@ -454,7 +454,9 @@ CfgHosts::add4(const HostPtr& host) {
     // address, IPv6 address or prefix.
     if (host->getHostname().empty() &&
         (host->getIPv4Reservation().isV4Zero()) &&
-        (!host->hasIPv6Reservation())) {
+        (!host->hasIPv6Reservation()) &&
+        host->getCfgOption4()->empty() &&
+        host->getCfgOption6()->empty()) {
         std::ostringstream s;
         if (hwaddr) {
             s << "for DUID: " << hwaddr->toText();
@@ -463,7 +465,8 @@ CfgHosts::add4(const HostPtr& host) {
         }
         isc_throw(BadValue, "specified reservation " << s.str()
                   << " must include at least one resource, i.e. "
-                  "hostname, IPv4 address or IPv6 address/prefix");
+                  "hostname, IPv4 address, IPv6 address/prefix, "
+                  "options");
     }
 
     // Check for duplicates for the specified IPv4 subnet.
