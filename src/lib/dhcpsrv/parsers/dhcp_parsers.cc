@@ -608,8 +608,9 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         } else if (name_param.isSpecified() && !code_param.isSpecified()) {
             isc_throw(DhcpConfigError, "definition for the option '"
                       << space_param << "." << name_param
-                      << " does not exist ("
-                      << string_values_->getPosition("name", option_data));
+                      << "' does not exist ("
+                      << string_values_->getPosition("name", option_data)
+                      << ")");
         }
     }
 

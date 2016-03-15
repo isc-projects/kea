@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,9 +7,11 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <sys/socket.h>
 #include <string>
 
 using namespace isc::asiolink;
@@ -25,7 +27,8 @@ const std::set<std::string>& getSupportedParams4() {
     static std::set<std::string> params_set;
     if (params_set.empty()) {
         const char* params[] = {
-            "duid", "hw-address", "hostname", "ip-address", NULL
+            "duid", "hw-address", "hostname", "ip-address",
+            "option-data", NULL
         };
         for (int i = 0; params[i] != NULL; ++i) {
             params_set.insert(std::string(params[i]));
@@ -42,7 +45,8 @@ const std::set<std::string>& getSupportedParams6() {
     static std::set<std::string> params_set;
     if (params_set.empty()) {
         const char* params[] = {
-            "duid", "hw-address", "hostname", "ip-addresses", "prefixes", NULL
+            "duid", "hw-address", "hostname", "ip-addresses", "prefixes",
+            "option-data", NULL
         };
         for (int i = 0; params[i] != NULL; ++i) {
             params_set.insert(std::string(params[i]));
@@ -136,16 +140,27 @@ HostReservationParser4::build(isc::data::ConstElementPtr reservation_data) {
     host_->setIPv4SubnetID(subnet_id_);
 
     BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
-        try {
-            if (element.first == "ip-address") {
-                host_->setIPv4Reservation(IOAddress(element.second->
-                                                    stringValue()));
+        // For 'option-data' element we will use another parser which
+        // already returns errors with position appended, so don't
+        // surround it with try-catch.
+        if (element.first == "option-data") {
+            CfgOptionPtr cfg_option = host_->getCfgOption4();
+            OptionDataListParser parser(element.first, cfg_option, AF_INET);
+            parser.build(element.second);
+
+       // Everything else should be surrounded with try-catch to append
+       // position.
+        } else {
+            try {
+                if (element.first == "ip-address") {
+                    host_->setIPv4Reservation(IOAddress(element.second->
+                                                        stringValue()));
+                }
+            } catch (const std::exception& ex) {
+                // Append line number where the error occurred.
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << reservation_data->getPosition() << ")");
             }
-        }
-        catch (const std::exception& ex) {
-        // Append line number where the error occurred.
-        isc_throw(DhcpConfigError, ex.what() << " ("
-                  << reservation_data->getPosition() << ")");
         }
     }
 
@@ -168,7 +183,16 @@ HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
     host_->setIPv6SubnetID(subnet_id_);
 
     BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
-        if (element.first == "ip-addresses" || element.first == "prefixes") {
+        // Parse option values. Note that the configuration option parser
+        // returns errors with position information appended, so there is no
+        // need to surround it with try-clause (and rethrow with position
+        // appended).
+        if (element.first == "option-data") {
+            CfgOptionPtr cfg_option = host_->getCfgOption6();
+            OptionDataListParser parser(element.first, cfg_option, AF_INET6);
+            parser.build(element.second);
+
+        } else if (element.first == "ip-addresses" || element.first == "prefixes") {
             BOOST_FOREACH(ConstElementPtr prefix_element,
                           element.second->listValue()) {
                 try {
