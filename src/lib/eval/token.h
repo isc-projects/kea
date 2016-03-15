@@ -149,7 +149,7 @@ protected:
 
 /// @brief Token representing an IP address as a constant string
 ///
-/// This token holds value of an IP address as a constant string,
+/// This token holds the value of an IP address as a constant string,
 /// for instance 10.0.0.1 is 0x10000001
 class TokenIpAddress : public Token {
 public:
