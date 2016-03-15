@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
+#include <dhcp/option6_addrlst.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
@@ -369,6 +370,45 @@ public:
         // Create fresh context.
         globalContext()->copyContext(ParserContext(Option::V6));
     }
+
+    /// @brief Retrieve an option associated with a host.
+    ///
+    /// The option is retrieved from the "dhcp6" option space.
+    ///
+    /// @param host Reference to a host for which an option should be retrieved.
+    /// @param option_code Option code.
+    /// @tparam ReturnType Type of the pointer object returned.
+    ///
+    /// @return Pointer to an option or NULL if not found.
+    template<typename ReturnType>
+    ReturnType
+    retrieveOption(const Host& host, const uint16_t option_code) const {
+        return (retrieveOption<ReturnType>(host, "dhcp6", option_code));
+    }
+
+    /// @brief Retrieve an option associated with a host.
+    ///
+    /// @param host Reference to a host for which an option should be retrieved.
+    /// @param space Option space from which option should be retrieved.
+    /// @param option_code Option code.
+    /// @tparam ReturnType Type of the pointer object returned.
+    ///
+    /// @return Pointer to an option or NULL if not found.
+    template<typename ReturnType>
+    ReturnType
+    retrieveOption(const Host& host, const std::string& space,
+                   const uint16_t option_code) const {
+        ConstCfgOptionPtr cfg_option = host.getCfgOption6();
+        if (cfg_option) {
+            OptionDescriptor opt_desc = cfg_option->get(space, option_code);
+            if (opt_desc.option_) {
+                return (boost::dynamic_pointer_cast<
+                        typename ReturnType::element_type>(opt_desc.option_));
+            }
+        }
+        return (ReturnType());
+    }
+
 
     /// @brief Test invalid option parameter value.
     ///
@@ -3491,12 +3531,32 @@ TEST_F(Dhcp6ParserTest, reservations) {
         "      {"
         "        \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
         "        \"ip-addresses\": [ \"2001:db8:2::1234\" ],"
-        "        \"hostname\": \"\""
+        "        \"hostname\": \"\","
+        "        \"option-data\": ["
+        "        {"
+        "          \"name\": \"dns-servers\","
+        "          \"data\": \"2001:db8:2::1111\""
+        "        },"
+        "        {"
+        "          \"name\": \"preference\","
+        "          \"data\": \"11\""
+        "        }"
+        "        ]"
         "      },"
         "      {"
         "        \"hw-address\": \"01:02:03:04:05:06\","
         "        \"ip-addresses\": [ \"2001:db8:2::abcd\" ],"
-        "        \"hostname\": \"\""
+        "        \"hostname\": \"\","
+        "        \"option-data\": ["
+        "        {"
+        "          \"name\": \"dns-servers\","
+        "          \"data\": \"2001:db8:2::abbc\""
+        "        },"
+        "        {"
+        "          \"name\": \"preference\","
+        "          \"data\": \"25\""
+        "        }"
+        "        ]"
         "      }"
         "    ],"
         "    \"pools\": [ ],"
@@ -3511,7 +3571,17 @@ TEST_F(Dhcp6ParserTest, reservations) {
         "      {"
         "        \"duid\": \"0A:09:08:07:06:05:04:03:02:01\","
         "        \"prefixes\": [ \"2001:db8:3:2::/96\" ],"
-        "        \"hostname\": \"\""
+        "        \"hostname\": \"\","
+        "        \"option-data\": ["
+        "        {"
+        "          \"name\": \"dns-servers\","
+        "          \"data\": \"2001:db8:3::3333\""
+        "        },"
+        "        {"
+        "          \"name\": \"preference\","
+        "          \"data\": \"33\""
+        "        }"
+        "        ]"
         "      },"
         "      {"
         "        \"hw-address\": \"06:05:04:03:02:01\","
@@ -3561,6 +3631,17 @@ TEST_F(Dhcp6ParserTest, reservations) {
     // and not to other two.
     EXPECT_FALSE(hosts_cfg->get6(123, DuidPtr(), hwaddr));
     EXPECT_FALSE(hosts_cfg->get6(542, DuidPtr(), hwaddr));
+    // Check that options are assigned correctly.
+    Option6AddrLstPtr opt_dns =
+        retrieveOption<Option6AddrLstPtr>(*host, D6O_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    Option6AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("2001:db8:2::abbc", dns_addrs[0].toText());
+    OptionUint8Ptr opt_prf =
+        retrieveOption<OptionUint8Ptr>(*host, D6O_PREFERENCE);
+    ASSERT_TRUE(opt_prf);
+    EXPECT_EQ(25, static_cast<int>(opt_prf->getValue()));
 
     // Do the same test for the DUID based reservation.
     std::vector<uint8_t> duid_vec;
@@ -3577,6 +3658,16 @@ TEST_F(Dhcp6ParserTest, reservations) {
                                   resrv));
     EXPECT_FALSE(hosts_cfg->get6(123, duid));
     EXPECT_FALSE(hosts_cfg->get6(542, duid));
+    // Check that options are assigned correctly.
+    opt_dns = retrieveOption<Option6AddrLstPtr>(*host, D6O_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("2001:db8:2::1111", dns_addrs[0].toText());
+    opt_prf = retrieveOption<OptionUint8Ptr>(*host, D6O_PREFERENCE);
+    ASSERT_TRUE(opt_prf);
+    EXPECT_EQ(11, static_cast<int>(opt_prf->getValue()));
+
 
     // The HW address used for one of the reservations in the subnet 542
     // consists of numbers from 6 to 1. So, let's just reverse the order
@@ -3607,6 +3698,83 @@ TEST_F(Dhcp6ParserTest, reservations) {
 
     EXPECT_FALSE(hosts_cfg->get6(123, duid));
     EXPECT_FALSE(hosts_cfg->get6(234, duid));
+    // Check that options are assigned correctly.
+    opt_dns = retrieveOption<Option6AddrLstPtr>(*host, D6O_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("2001:db8:3::3333", dns_addrs[0].toText());
+    opt_prf = retrieveOption<OptionUint8Ptr>(*host, D6O_PREFERENCE);
+    ASSERT_TRUE(opt_prf);
+    EXPECT_EQ(33, static_cast<int>(opt_prf->getValue()));
+}
+
+// This test checks that it is possible to configure option data for a
+// host using a user defined option format.
+TEST_F(Dhcp6ParserTest, reservationWithOptionDefinition) {
+    ConstElementPtr x;
+    // The following configuration contains host declaration in which
+    // a non-standard option is used. This option has option definition
+    // specified in the configuration.
+    string config = "{ " + genIfaceConfig() + ","
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"option-def\": [ {"
+        "  \"name\": \"foo\","
+        "  \"code\": 100,"
+        "  \"type\": \"uint32\","
+        "  \"space\": \"isc\""
+        "} ],"
+        "\"subnet6\": [ "
+        " {"
+        "    \"reservations\": ["
+        "      {"
+        "        \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "        \"ip-addresses\": [ \"2001:db8:2::1234\" ],"
+        "        \"hostname\": \"\","
+        "        \"option-data\": ["
+        "        {"
+        "          \"name\": \"foo\","
+        "          \"data\": \"11\","
+        "          \"space\": \"isc\""
+        "        }"
+        "        ]"
+        "      }"
+        "    ],"
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"2001:db8:2::/64\", "
+        "    \"id\": 234"
+        " }"
+        "],"
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 0);
+
+    // Hosts configuration must be available.
+    CfgHostsPtr hosts_cfg = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_TRUE(hosts_cfg);
+
+    // Let's create an object holding DUID of the host. For simplicity the
+    // address is a collection of numbers from 1 to A.
+    std::vector<uint8_t> duid_vec;
+    for (int i = 1; i < 0xB; ++i) {
+        duid_vec.push_back(static_cast<uint8_t>(i));
+    }
+    DuidPtr duid(new DUID(duid_vec));
+    // Retrieve the reservation and sanity check the address reserved.
+    ConstHostPtr host = hosts_cfg->get6(234, duid);
+    ASSERT_TRUE(host);
+
+    // Check if the option has been parsed.
+    OptionUint32Ptr opt_foo = retrieveOption<OptionUint32Ptr>(*host, "isc",
+                                                              100);
+    ASSERT_TRUE(opt_foo);
+    EXPECT_EQ(100, opt_foo->getType());
+    EXPECT_EQ(11, opt_foo->getValue());
 }
 
 // This test verifies that the bogus host reservation would trigger a
@@ -3696,6 +3864,38 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 1);
 
+    // Case 4: Broken specification of option data.
+    config = "{ " + genIfaceConfig() + ","
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"2001:db8:3::/64\", "
+        "    \"id\": 542,"
+        "    \"reservations\": ["
+        "      {"
+        "        \"duid\": \"0A:09:08:07:06:05:04:03:02:01\","
+        "        \"option-data\": ["
+        "        {"
+        "          \"name\": \"dns-servers\","
+        "          \"data\": \"invalid-ip-address\""
+        "        }"
+        "        ]"
+        "      }"
+        "    ]"
+        " } "
+        "], "
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000 }";
+
+    json = Element::fromJSON(config);
+
+    // Remove existing configuration, if any.
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 1);
 }
 
 /// The goal of this test is to verify that configuration can include
