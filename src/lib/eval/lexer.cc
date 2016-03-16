@@ -642,9 +642,9 @@ int yy_flex_debug = 1;
 
 static yyconst flex_int16_t yy_rule_linenum[27] =
     {   0,
-       81,   85,   91,  101,  107,  121,  128,  141,  142,  143,
-      144,  145,  146,  147,  148,  149,  150,  151,  152,  153,
-      154,  155,  156,  157,  158,  160
+       82,   86,   92,  102,  108,  122,  129,  143,  144,  145,
+      146,  147,  148,  149,  150,  151,  152,  153,  154,  155,
+      156,  157,  158,  159,  160,  162
     } ;
 
 static yy_state_type *yy_state_buf=0, *yy_state_ptr=0;
@@ -716,13 +716,14 @@ static isc::eval::location loc;
    useful for client classes, which typically are one-liners, but it may be
    useful in more complex cases. */
 /* These are not token expressions yet, just convenience expressions that
-   can be used during actual token definitions. */
-#line 68 "lexer.ll"
+   can be used during actual token definitions. Note some can match
+   incorrect inputs (e.g., IP addresses) which must be checked. */
+#line 69 "lexer.ll"
 // This code run each time a pattern is matched. It updates the location
 // by moving it ahead by yyleng bytes. yyleng specifies the length of the
 // currently matched token.
 #define YY_USER_ACTION  loc.columns(yyleng);
-#line 726 "lexer.cc"
+#line 727 "lexer.cc"
 
 #define INITIAL 0
 
@@ -962,7 +963,7 @@ YY_DECL
 	register int yy_act;
     
 /* %% [7.0] user's declarations go here */
-#line 74 "lexer.ll"
+#line 75 "lexer.ll"
 
 
 
@@ -970,7 +971,7 @@ YY_DECL
     loc.step();
 
 
-#line 974 "lexer.cc"
+#line 975 "lexer.cc"
 
 	if ( !(yy_init) )
 		{
@@ -1126,7 +1127,7 @@ do_action:	/* This label is used only to access EOF actions. */
 /* %% [13.0] actions go here */
 case 1:
 YY_RULE_SETUP
-#line 81 "lexer.ll"
+#line 82 "lexer.ll"
 {
     // Ok, we found a with space. Let's ignore it and update loc variable.
     loc.step();
@@ -1135,7 +1136,7 @@ YY_RULE_SETUP
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 85 "lexer.ll"
+#line 86 "lexer.ll"
 {
     // Newline found. Let's update the location and continue.
     loc.lines(yyleng);
@@ -1144,7 +1145,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 91 "lexer.ll"
+#line 92 "lexer.ll"
 {
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
@@ -1157,7 +1158,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 101 "lexer.ll"
+#line 102 "lexer.ll"
 {
     // A hex string has been matched. It contains the '0x' or '0X' header
     // followed by at least one hexadecimal digit.
@@ -1166,7 +1167,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 107 "lexer.ll"
+#line 108 "lexer.ll"
 {
     // An integer was found.
     std::string tmp(yytext);
@@ -1184,7 +1185,7 @@ YY_RULE_SETUP
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 121 "lexer.ll"
+#line 122 "lexer.ll"
 {
     // This string specifies option name starting with a letter
     // and further containing letters, digits, hyphens and
@@ -1194,11 +1195,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 128 "lexer.ll"
+#line 129 "lexer.ll"
 {
     // IPv4 or IPv6 address
     std::string tmp(yytext);
 
+    // Some incorrect addresses can match so we have to check.
     try {
         isc::asiolink::IOAddress ip(tmp);
     } catch (...) {
@@ -1210,109 +1212,109 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 141 "lexer.ll"
+#line 143 "lexer.ll"
 return isc::eval::EvalParser::make_EQUAL(loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 142 "lexer.ll"
+#line 144 "lexer.ll"
 return isc::eval::EvalParser::make_OPTION(loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 143 "lexer.ll"
+#line 145 "lexer.ll"
 return isc::eval::EvalParser::make_TEXT(loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 144 "lexer.ll"
+#line 146 "lexer.ll"
 return isc::eval::EvalParser::make_HEX(loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 145 "lexer.ll"
+#line 147 "lexer.ll"
 return isc::eval::EvalParser::make_EXISTS(loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 146 "lexer.ll"
+#line 148 "lexer.ll"
 return isc::eval::EvalParser::make_RELAY4(loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 147 "lexer.ll"
+#line 149 "lexer.ll"
 return isc::eval::EvalParser::make_SUBSTRING(loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 148 "lexer.ll"
+#line 150 "lexer.ll"
 return isc::eval::EvalParser::make_ALL(loc);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 149 "lexer.ll"
+#line 151 "lexer.ll"
 return isc::eval::EvalParser::make_CONCAT(loc);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 150 "lexer.ll"
+#line 152 "lexer.ll"
 return isc::eval::EvalParser::make_NOT(loc);
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 151 "lexer.ll"
+#line 153 "lexer.ll"
 return isc::eval::EvalParser::make_AND(loc);
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 152 "lexer.ll"
+#line 154 "lexer.ll"
 return isc::eval::EvalParser::make_OR(loc);
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 153 "lexer.ll"
+#line 155 "lexer.ll"
 return isc::eval::EvalParser::make_DOT(loc);
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 154 "lexer.ll"
+#line 156 "lexer.ll"
 return isc::eval::EvalParser::make_LPAREN(loc);
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 155 "lexer.ll"
+#line 157 "lexer.ll"
 return isc::eval::EvalParser::make_RPAREN(loc);
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 156 "lexer.ll"
+#line 158 "lexer.ll"
 return isc::eval::EvalParser::make_LBRACKET(loc);
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 157 "lexer.ll"
+#line 159 "lexer.ll"
 return isc::eval::EvalParser::make_RBRACKET(loc);
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 158 "lexer.ll"
+#line 160 "lexer.ll"
 return isc::eval::EvalParser::make_COMA(loc);
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 160 "lexer.ll"
+#line 162 "lexer.ll"
 driver.error (loc, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 161 "lexer.ll"
+#line 163 "lexer.ll"
 return isc::eval::EvalParser::make_END(loc);
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 162 "lexer.ll"
+#line 164 "lexer.ll"
 ECHO;
 	YY_BREAK
-#line 1316 "lexer.cc"
+#line 1318 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2382,7 +2384,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 162 "lexer.ll"
+#line 164 "lexer.ll"
 
 
 
