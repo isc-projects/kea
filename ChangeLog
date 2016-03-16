@@ -2,7 +2,7 @@
 	Added relay4[X].exists method in classifications that checks
 	whether a sub-option is present in theDHCPv4 RAI (Relay Agent
 	Information, 82) option.
-	(Trac #4313, git xxx)
+	(Trac #4313, git 87397fd75215b69ad79708aaa1d7505aca299fb5)
 
 1088.	[bug]		fdupont
 	Protected DHCP server main() routines against errors raised from
