@@ -72,24 +72,38 @@ public:
     }
 
     /// @brief checks if the given token is an option with the expected code
-    void checkTokenOption(const TokenPtr& token, uint16_t expected_code) {
+    /// and representation type
+    /// @param token token to be checked
+    /// @param expected_code expected option code
+    /// @param expected_repr expected representation (text, hex, exists)
+    void checkTokenOption(const TokenPtr& token,
+                          uint16_t expected_code,
+                          TokenOption::RepresentationType expected_repr) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenOption> opt =
             boost::dynamic_pointer_cast<TokenOption>(token);
         ASSERT_TRUE(opt);
 
         EXPECT_EQ(expected_code, opt->getCode());
+        EXPECT_EQ(expected_repr, opt->getRepresentation());
     }
 
     /// @brief check if the given token is relay4 with the expected code
-    void checkTokenRelay4(const TokenPtr& token, uint16_t code) {
+    /// and representation type
+    /// @param token token to be checked
+    /// @param expected_code expected option code
+    /// @param expected_repr expected representation (text, hex, exists)
+    void checkTokenRelay4(const TokenPtr& token,
+                          uint16_t expected_code,
+                          TokenOption::RepresentationType expected_repr) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenRelay4Option> relay4 =
             boost::dynamic_pointer_cast<TokenRelay4Option>(token);
         EXPECT_TRUE(relay4);
 
         if (relay4) {
-            EXPECT_EQ(code, relay4->getCode());
+            EXPECT_EQ(expected_code, relay4->getCode());
+            EXPECT_EQ(expected_repr, relay4->getRepresentation());
         }
     }
 
@@ -226,7 +240,7 @@ TEST_F(EvalContextTest, option) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].text == 'foo'"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, eval.expression.size());
-    checkTokenOption(eval.expression.at(0), 123);
+    checkTokenOption(eval.expression.at(0), 123, TokenOption::TEXTUAL);
 }
 
 // Test parsing of an option identified by name.
@@ -237,7 +251,7 @@ TEST_F(EvalContextTest, optionWithName) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[host-name].text == 'foo'"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, eval.expression.size());
-    checkTokenOption(eval.expression.at(0), 12);
+    checkTokenOption(eval.expression.at(0), 12, TokenOption::TEXTUAL);
 }
 
 // Test parsing of an option existence
@@ -247,7 +261,7 @@ TEST_F(EvalContextTest, optionExists) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[100].exists"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(1, eval.expression.size());
-    checkTokenOption(eval.expression.at(0), 100);
+    checkTokenOption(eval.expression.at(0), 100, TokenOption::EXISTS);
 }
 
 // Test checking that whitespace can surround option name.
@@ -258,7 +272,7 @@ TEST_F(EvalContextTest, optionWithNameAndWhitespace) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[  host-name  ].text == 'foo'"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, eval.expression.size());
-    checkTokenOption(eval.expression.at(0), 12);
+    checkTokenOption(eval.expression.at(0), 12, TokenOption::TEXTUAL);
 }
 
 // Test checking that newlines can surround option name.
@@ -270,7 +284,7 @@ TEST_F(EvalContextTest, optionWithNameAndNewline) {
         eval.parseString("option[\n host-name \n ].text == \n'foo'"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, eval.expression.size());
-    checkTokenOption(eval.expression.at(0), 12);
+    checkTokenOption(eval.expression.at(0), 12, TokenOption::TEXTUAL);
 }
 
 // Test parsing of an option represented as hexadecimal string.
@@ -280,10 +294,10 @@ TEST_F(EvalContextTest, optionHex) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].hex == 0x666F6F"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, eval.expression.size());
-    checkTokenOption(eval.expression.at(0), 123);
+    checkTokenOption(eval.expression.at(0), 123, TokenOption::HEXADECIMAL);
 }
 
-// This test checks that the relay[code].hex can be used in expressions.
+// This test checks that the relay4[code].hex can be used in expressions.
 TEST_F(EvalContextTest, relay4Option) {
 
     EvalContext eval(Option::V4);
@@ -296,9 +310,19 @@ TEST_F(EvalContextTest, relay4Option) {
     TokenPtr tmp2 = eval.expression.at(1);
     TokenPtr tmp3 = eval.expression.at(2);
 
-    checkTokenRelay4(tmp1, 13);
+    checkTokenRelay4(tmp1, 13, TokenOption::HEXADECIMAL);
     checkTokenString(tmp2, "thirteen");
     checkTokenEq(tmp3);
+}
+
+// This test check the relay4[code].exists is supported.
+TEST_F(EvalContextTest, relay4Exists) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("relay4[13].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(1, eval.expression.size());
+    checkTokenRelay4(eval.expression.at(0), 13, TokenOption::EXISTS);
 }
 
 // Verify that relay4[13] is not usable in v6
@@ -520,7 +544,7 @@ TEST_F(EvalContextTest, parseErrors) {
                "<string>:1.9: syntax error, unexpected end of file");
     checkError("('foo' == 'bar'",
                "<string>:1.16: syntax error, unexpected end of file, "
-               "expecting and or or or )");
+               "expecting ) or and or or");
     checkError("('foo' == 'bar') ''",
                "<string>:1.18-19: syntax error, unexpected constant string, "
                "expecting end of file");
