@@ -75,7 +75,7 @@ public:
     /// and representation type
     /// @param token token to be checked
     /// @param expected_code expected option code
-    /// @param expected_repr expected representation (text, hex, exist)
+    /// @param expected_repr expected representation (text, hex, exists)
     void checkTokenOption(const TokenPtr& token,
                           uint16_t expected_code,
                           TokenOption::RepresentationType expected_repr) {
@@ -92,7 +92,7 @@ public:
     /// and representation type
     /// @param token token to be checked
     /// @param expected_code expected option code
-    /// @param expected_repr expected representation (text, hex, exist)
+    /// @param expected_repr expected representation (text, hex, exists)
     void checkTokenRelay4(const TokenPtr& token,
                           uint16_t expected_code,
                           TokenOption::RepresentationType expected_repr) {
