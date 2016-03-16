@@ -254,7 +254,7 @@ TEST_F(EvalContextTest, ipaddress6) {
     checkTokenIpAddress(tmp, "2001:db8::1");
 }
 
-// Test the parsing of an IPv4 mapped IPv6 address
+// Test the parsing of an IPv4 compatible IPv6 address
 TEST_F(EvalContextTest, ipaddress46) {
     EvalContext eval(Option::V6);
 
@@ -280,6 +280,20 @@ TEST_F(EvalContextTest, ipaddress6unspec) {
     TokenPtr tmp = eval.expression.at(0);
 
     checkTokenIpAddress(tmp, "::");
+}
+
+// Test the parsing of an IPv6 prefix
+TEST_F(EvalContextTest, ipaddress6prefix) {
+    EvalContext eval(Option::V6);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("2001:db8:: == 'foo'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(3, eval.expression.size());
+
+    TokenPtr tmp = eval.expression.at(0);
+
+    checkTokenIpAddress(tmp, "2001:db8::");
 }
 
 

@@ -286,7 +286,7 @@ TEST_F(TokenTest, hexstring6) {
 // This test checks that a TokenIpAddress, representing an IP address as
 // a constant string, can be used in Pkt4/Pkt6 evaluation.
 // (The actual packet is not used)
-TEST_F(TokenTest, ipaddress6) {
+TEST_F(TokenTest, ipaddress) {
     TokenPtr bad4;
     TokenPtr bad6;
     TokenPtr ip4;
