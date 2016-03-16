@@ -1,3 +1,9 @@
+1089.	[func]		fdupont
+	Added relay4[X].exists method in classifications that checks
+	whether a sub-option is present in theDHCPv4 RAI (Relay Agent
+	Information, 82) option.
+	(Trac #4313, git xxx)
+
 1088.	[bug]		fdupont
 	Protected DHCP server main() routines against errors raised from
 	logger calls in the error handler (aka double errors).
