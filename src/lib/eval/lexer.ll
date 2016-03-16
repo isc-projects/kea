@@ -57,7 +57,8 @@ static isc::eval::location loc;
 %option yylineno
 
 /* These are not token expressions yet, just convenience expressions that
-   can be used during actual token definitions. */
+   can be used during actual token definitions. Note some can match
+   incorrect inputs (e.g., IP addresses) which must be checked. */
 int   \-?[0-9]+
 hex   [0-9a-fA-F]+
 blank [ \t]
@@ -129,6 +130,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
     // IPv4 or IPv6 address
     std::string tmp(yytext);
 
+    // Some incorrect addresses can match so we have to check.
     try {
         isc::asiolink::IOAddress ip(tmp);
     } catch (...) {

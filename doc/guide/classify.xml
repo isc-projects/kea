@@ -179,7 +179,8 @@ sub-option with code "code" from the DHCPv4 Relay Agent Information option
       </para>
 
       <para>
-      IP addresses are converted into strings of length 4 or 16.
+      IP addresses are converted into strings of length 4 or 16. IPv4, IPv6,
+      IPv4 embedded IPv6 (e.g., IPv4 mapped IPv6) addresses are supported.
       </para>
 
       <para>
