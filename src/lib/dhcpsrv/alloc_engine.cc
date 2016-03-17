@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1628,33 +1628,30 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
     if (!skipped) {
 
         // Generate removal name change request for D2, if required.
-        // This will return immediatelly if the DNS wasn't updated
+        // This will return immediately if the DNS wasn't updated
         // when the lease was created.
         queueNCR(CHG_REMOVE, lease);
 
         // Let's check if the lease that just expired is in DECLINED state.
-        // If it is, we need to conduct couple extra steps and also force
-        // its removal.
-        bool remove_tmp = (reclaim_mode == DB_RECLAIM_REMOVE);
+        // If it is, we need to perform a couple extra steps.
+        bool remove_lease = (reclaim_mode == DB_RECLAIM_REMOVE);
         if (lease->state_ == Lease::STATE_DECLINED) {
-            // There's no point in keeping declined lease after its
-            // reclaimation. Declined lease doesn't have any client
-            // identifying information anymore.
-            if (reclaim_mode != DB_RECLAIM_LEAVE_UNCHANGED) {
-                remove_tmp = true;
-            }
-
-            // Do extra steps required for declined lease reclaimation:
+            // Do extra steps required for declined lease reclamation:
+            // - call the recover hook
             // - bump decline-related stats
             // - log separate message
-            remove_tmp = reclaimDeclined(lease);
+            // There's no point in keeping a declined lease after its
+            // reclamation. A declined lease doesn't have any client
+            // identifying information anymore.  So we'll flag it for
+            // removal unless the hook has set the skip flag.
+            remove_lease = reclaimDeclined(lease);
         }
 
         if (reclaim_mode != DB_RECLAIM_LEAVE_UNCHANGED) {
             // Reclaim the lease - depending on the configuration, set the
             // expired-reclaimed state or simply remove it.
             LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
-            reclaimLeaseInDatabase<Lease6Ptr>(lease, remove_tmp,
+            reclaimLeaseInDatabase<Lease6Ptr>(lease, remove_lease,
                                               boost::bind(&LeaseMgr::updateLease6,
                                                           &lease_mgr, _1));
         }
@@ -1726,32 +1723,31 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
         queueNCR(CHG_REMOVE, lease);
 
         // Let's check if the lease that just expired is in DECLINED state.
-        // If it is, we need to conduct couple extra steps and also force
-        // its removal.
-        bool remove_tmp = (reclaim_mode == DB_RECLAIM_REMOVE);
+        // If it is, we need to perform a couple extra steps.
+        bool remove_lease = (reclaim_mode == DB_RECLAIM_REMOVE);
         if (lease->state_ == Lease::STATE_DECLINED) {
-            // There's no point in keeping declined lease after its
-            // reclaimation. Declined lease doesn't have any client
-            // identifying information anymore.
-            if (reclaim_mode != DB_RECLAIM_LEAVE_UNCHANGED) {
-                remove_tmp = true;
-            }
-
-            // Do extra steps required for declined lease reclaimation:
+            // Do extra steps required for declined lease reclamation:
+            // - call the recover hook
             // - bump decline-related stats
             // - log separate message
-            remove_tmp = reclaimDeclined(lease);
+            // There's no point in keeping a declined lease after its
+            // reclamation. A declined lease doesn't have any client
+            // identifying information anymore.  So we'll flag it for
+            // removal unless the hook has set the skip flag.
+            remove_lease = reclaimDeclined(lease);
         }
 
         if (reclaim_mode != DB_RECLAIM_LEAVE_UNCHANGED) {
             // Reclaim the lease - depending on the configuration, set the
             // expired-reclaimed state or simply remove it.
             LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
-            reclaimLeaseInDatabase<Lease4Ptr>(lease, remove_tmp,
+            reclaimLeaseInDatabase<Lease4Ptr>(lease, remove_lease,
                                               boost::bind(&LeaseMgr::updateLease4,
                                                           &lease_mgr, _1));
         }
     }
+
+    // Update statistics.
 
     // Decrease number of assigned addresses.
     StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
