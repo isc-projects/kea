@@ -471,7 +471,7 @@ public:
     /// @param option_code Option code.
     /// @tparam ReturnType Type of the pointer object returned.
     ///
-    /// @return Pointer to an option or NULL if not found.
+    /// @return Pointer to an option or NULL pointer if not found.
     template<typename ReturnType>
     ReturnType
     retrieveOption(const Host& host, const uint16_t option_code) const {
@@ -485,7 +485,7 @@ public:
     /// @param option_code Option code.
     /// @tparam ReturnType Type of the pointer object returned.
     ///
-    /// @return Pointer to an option or NULL if not found.
+    /// @return Pointer to an option or NULL pointer if not found.
     template<typename ReturnType>
     ReturnType
     retrieveOption(const Host& host, const std::string& space,
@@ -2911,7 +2911,7 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
             "\"hooks-libraries\": [";
 
     // Append the libraries (separated by commas if needed)
-    for (int i = 0; i < libraries.size(); ++i) {
+    for (unsigned int i = 0; i < libraries.size(); ++i) {
         if (i > 0) {
             config += string(", ");
         }
@@ -3483,7 +3483,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
     // a reservation in the subnet having id of 234. For simplicity the
     // address is a collection of numbers from 1 to 6.
     std::vector<uint8_t> hwaddr_vec;
-    for (int i = 1; i < 7; ++i) {
+    for (unsigned int i = 1; i < 7; ++i) {
         hwaddr_vec.push_back(static_cast<uint8_t>(i));
     }
     HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
@@ -3509,7 +3509,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
 
     // Do the same test for the DUID based reservation.
     std::vector<uint8_t> duid_vec;
-    for (int i = 1; i < 0xb; ++i) {
+    for (unsigned int i = 1; i < 0xb; ++i) {
         duid_vec.push_back(static_cast<uint8_t>(i));
     }
     DuidPtr duid(new DUID(duid_vec));
@@ -3608,7 +3608,7 @@ TEST_F(Dhcp4ParserTest, reservationWithOptionDefinition) {
     // Let's create an object holding DUID of the host. For simplicity the
     // address is a collection of numbers from 1 to A.
     std::vector<uint8_t> duid_vec;
-    for (int i = 1; i < 0xB; ++i) {
+    for (unsigned int i = 1; i < 0xB; ++i) {
         duid_vec.push_back(static_cast<uint8_t>(i));
     }
     DuidPtr duid(new DUID(duid_vec));
