@@ -65,8 +65,8 @@ protected:
     /// @param option_space Option space name.
     /// @param option_code Code of an option to be retrieved.
     ///
-    /// @return Pointer to the option retrieved or NULL if option hasn't been
-    /// found.
+    /// @return Pointer to the option retrieved or NULL pointer if option
+    /// hasn't been found.
     OptionPtr
     retrieveOption(const Host& host, const std::string& option_space,
                    const uint16_t option_code) const {
