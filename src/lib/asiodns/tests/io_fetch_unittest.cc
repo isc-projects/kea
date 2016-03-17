@@ -1,10 +1,27 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <asiolink/asio_wrapper.h>
+#include <asiolink/io_address.h>
+#include <asiolink/io_endpoint.h>
+#include <asiolink/io_service.h>
+#include <asiodns/io_fetch.h>
+#include <dns/question.h>
+#include <dns/message.h>
+#include <dns/messagerenderer.h>
+#include <dns/opcode.h>
+#include <dns/name.h>
+#include <dns/rcode.h>
+#include <util/buffer.h>
+#include <util/io_utilities.h>
+
+#include <gtest/gtest.h>
+#include <boost/bind.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -13,27 +30,6 @@
 #include <iomanip>
 #include <iterator>
 #include <vector>
-
-#include <gtest/gtest.h>
-#include <boost/bind.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
-
-#include <boost/asio.hpp>
-
-#include <util/buffer.h>
-#include <util/io_utilities.h>
-
-#include <dns/question.h>
-#include <dns/message.h>
-#include <dns/messagerenderer.h>
-#include <dns/opcode.h>
-#include <dns/name.h>
-#include <dns/rcode.h>
-
-#include <asiolink/io_address.h>
-#include <asiolink/io_endpoint.h>
-#include <asiolink/io_service.h>
-#include <asiodns/io_fetch.h>
 
 using namespace boost::asio;
 using namespace isc::dns;

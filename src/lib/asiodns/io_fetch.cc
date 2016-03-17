@@ -1,23 +1,11 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-
-#include <unistd.h>             // for some IPC/network system calls
-#include <netinet/in.h>
-#include <stdint.h>
-#include <sys/socket.h>
-
-#include <boost/bind.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
-
-#include <boost/asio.hpp>
-#include <boost/asio/deadline_timer.hpp>
-
+#include <asiolink/asio_wrapper.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_asio_socket.h>
 #include <asiolink/io_endpoint.h>
@@ -26,17 +14,22 @@
 #include <asiolink/tcp_socket.h>
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
-
+#include <asiodns/io_fetch.h>
+#include <asiodns/logger.h>
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
-
-#include <asiodns/io_fetch.h>
-
 #include <util/buffer.h>
 #include <util/random/qid_gen.h>
 
-#include <asiodns/logger.h>
+#include <boost/bind.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
+
+#include <unistd.h>             // for some IPC/network system calls
+#include <netinet/in.h>
+#include <stdint.h>
+#include <sys/socket.h>
 
 using namespace boost::asio;
 using namespace isc::asiolink;
