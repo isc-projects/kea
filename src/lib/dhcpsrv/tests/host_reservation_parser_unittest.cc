@@ -704,13 +704,13 @@ TEST_F(HostReservationParserTest, options6) {
 }
 
 // This test verifies that it is possible to specify an empty list of
-// options for a host declaration.
+// DHCPv4 options for a host declaration.
 TEST_F(HostReservationParserTest, options4Empty) {
     testEmptyOptionList<HostReservationParser4>();
 }
 
 // This test verifies that it is possible to specify an empty list of
-// options for a host declaration.
+// DHCPv6 options for a host declaration.
 TEST_F(HostReservationParserTest, options6Empty) {
     testEmptyOptionList<HostReservationParser6>();
 }
