@@ -1,3 +1,7 @@
+1091.	[bug]		fdupont
+	Fixed Coverity-detected exception-handling issues.
+	(Trac #4307, git xxx)
+
 1090.	[func]		fdupont
 	Added support for IP address (IPv4 and IPv6) literals in
 	classification expressions.
