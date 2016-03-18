@@ -1,3 +1,8 @@
+1092.	[func]		marcin
+	DHCP option values can be specified within host reservations
+	in the configuration file.
+	(Trac #4319, git 069dd7c248afcfcb7e4d958f20faa32e946e74ce)
+
 1091.	[bug]		fdupont
 	Fixed Coverity-detected exception-handling issues.
 	(Trac #4307, git 3e1050749d9684144e1bd17552af7e4abf3c0d17)
