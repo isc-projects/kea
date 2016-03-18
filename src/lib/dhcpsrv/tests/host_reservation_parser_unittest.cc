@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,10 +10,14 @@
 #include <cc/data.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option4_addrlst.h>
+#include <dhcp/option6_addrlst.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/testutils/config_result_check.h>
+#include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <iterator>
 #include <string>
@@ -54,9 +58,85 @@ protected:
         return (false);
     }
 
+    /// @brief Retrieves DHCP option from a host.
+    ///
+    /// @param host Reference to a host object for which an option should be
+    /// retrieved.
+    /// @param option_space Option space name.
+    /// @param option_code Code of an option to be retrieved.
+    ///
+    /// @return Pointer to the option retrieved or NULL pointer if option
+    /// hasn't been found.
+    OptionPtr
+    retrieveOption(const Host& host, const std::string& option_space,
+                   const uint16_t option_code) const {
+        if ((option_space != "dhcp6") && (option_space != "dhcp4")) {
+            return (OptionPtr());
+        }
+
+        // Retrieve a pointer to the appropriate container depending if we're
+        // interested in DHCPv4 or DHCPv6 options.
+        ConstCfgOptionPtr cfg_option = (option_space == "dhcp4" ?
+                                        host.getCfgOption4() : host.getCfgOption6());
+
+        // Retrieve options.
+        OptionContainerPtr options = cfg_option->getAll(option_space);
+        if (options) {
+            const OptionContainerTypeIndex& idx = options->get<1>();
+            OptionContainerTypeIndex::const_iterator it = idx.find(option_code);
+            if (it != idx.end()) {
+                return (it->option_);
+            }
+        }
+
+        return (OptionPtr());
+    }
+
     void
     expectFailure(const HostReservationParser& parser,
                   const std::string& config) const;
+
+    /// @brief This test verifies that it is possible to specify an empty list
+    /// of options for a host.
+    ///
+    /// @tparam ParserType Type of the parser to be tested.
+    template<typename ParserType>
+    void testEmptyOptionList() const {
+        // Create configuration with empty option list. Note that we have to
+        // add reservation for at least one resource because host declarations
+        // without any reservations are rejected. Thus, we have added hostname.
+        std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+            "\"hostname\": \"foo.isc.org\","
+            "\"option-data\": [ ]"
+            "}";
+
+        ElementPtr config_element = Element::fromJSON(config);
+
+        ParserType parser(SubnetID(10));
+        ASSERT_NO_THROW(parser.build(config_element));
+
+        // Retrieve a host.
+        HostCollection hosts;
+        CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+        ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
+        ASSERT_EQ(1, hosts.size());
+
+        // There should be no options assigned to a host.
+        EXPECT_TRUE(hosts[0]->getCfgOption4()->empty());
+        EXPECT_TRUE(hosts[0]->getCfgOption6()->empty());
+    }
+
+    /// @brief This test verfies that the parser returns an error when
+    /// configuration is invalid.
+    ///
+    /// @param config JSON configuration to be tested.
+    /// @tparam ParserType Type of the parser class to use.
+    template<typename ParserType>
+    void testInvalidConfig(const std::string& config) const {
+        ElementPtr config_element = Element::fromJSON(config);
+        ParserType parser(SubnetID(10));
+        EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    }
 
     /// @brief HW Address object used by tests.
     HWAddrPtr hwaddr_;
@@ -507,5 +587,167 @@ TEST_F(HostReservationParserTest, dhcp6invalidParameterName) {
     HostReservationParser6 parser(SubnetID(10));
     EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 }
+
+// This test verifies that it is possible to specify DHCPv4 options for
+// a host.
+TEST_F(HostReservationParserTest, options4) {
+    // Create configuration with three options for a host.
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"option-data\": ["
+        "{"
+           "\"name\": \"name-servers\","
+           "\"data\": \"172.16.15.10, 172.16.15.20\""
+        "},"
+        "{"
+           "\"name\": \"log-servers\","
+           "\"code\": 7,"
+           "\"csv-format\": true,"
+           "\"space\": \"dhcp4\","
+           "\"data\": \"172.16.15.23\""
+        "},"
+        "{"
+           "\"name\": \"default-ip-ttl\","
+           "\"data\": \"64\""
+        "} ]"
+        "}";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_));
+    ASSERT_EQ(1, hosts.size());
+
+    // Retrieve and sanity check name servers.
+    Option4AddrLstPtr opt_dns = boost::dynamic_pointer_cast<
+        Option4AddrLst>(retrieveOption(*hosts[0], "dhcp4", DHO_NAME_SERVERS));
+    ASSERT_TRUE(opt_dns);
+    Option4AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(2, dns_addrs.size());
+    EXPECT_EQ("172.16.15.10", dns_addrs[0].toText());
+    EXPECT_EQ("172.16.15.20", dns_addrs[1].toText());
+
+    // Retrieve and sanity check log servers.
+    Option4AddrLstPtr opt_log = boost::dynamic_pointer_cast<
+        Option4AddrLst>(retrieveOption(*hosts[0], "dhcp4", DHO_LOG_SERVERS));
+    ASSERT_TRUE(opt_log);
+    Option4AddrLst::AddressContainer log_addrs = opt_log->getAddresses();
+    ASSERT_EQ(1, log_addrs.size());
+    EXPECT_EQ("172.16.15.23", log_addrs[0].toText());
+
+    // Retrieve and sanity check default IP TTL.
+    OptionUint8Ptr opt_ttl = boost::dynamic_pointer_cast<
+        OptionUint8>(retrieveOption(*hosts[0], "dhcp4", DHO_DEFAULT_IP_TTL));
+    ASSERT_TRUE(opt_ttl);
+    EXPECT_EQ(64, opt_ttl->getValue());
+}
+
+// This test verifies that it is possible to specify DHCPv6 options for
+// a host.
+TEST_F(HostReservationParserTest, options6) {
+    // Create configuration with three options for a host.
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"option-data\": ["
+        "{"
+           "\"name\": \"dns-servers\","
+           "\"data\": \"2001:db8:1::1, 2001:db8:1::2\""
+        "},"
+        "{"
+           "\"name\": \"nis-servers\","
+           "\"code\": 27,"
+           "\"csv-format\": true,"
+           "\"space\": \"dhcp6\","
+           "\"data\": \"2001:db8:1::1204\""
+        "},"
+        "{"
+           "\"name\": \"preference\","
+           "\"data\": \"11\""
+        "} ]"
+        "}";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(10));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    // One host should have been added to the configuration.
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
+    ASSERT_EQ(1, hosts.size());
+
+    // Retrieve and sanity check DNS servers option.
+    Option6AddrLstPtr opt_dns = boost::dynamic_pointer_cast<
+        Option6AddrLst>(retrieveOption(*hosts[0], "dhcp6", D6O_NAME_SERVERS));
+    ASSERT_TRUE(opt_dns);
+    Option6AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(2, dns_addrs.size());
+    EXPECT_EQ("2001:db8:1::1", dns_addrs[0].toText());
+    EXPECT_EQ("2001:db8:1::2", dns_addrs[1].toText());
+
+    // Retrieve and sanity check NIS servers option.
+    Option6AddrLstPtr opt_nis = boost::dynamic_pointer_cast<
+        Option6AddrLst>(retrieveOption(*hosts[0], "dhcp6", D6O_NIS_SERVERS));
+    ASSERT_TRUE(opt_nis);
+    Option6AddrLst::AddressContainer nis_addrs = opt_nis->getAddresses();
+    ASSERT_EQ(1, nis_addrs.size());
+    EXPECT_EQ("2001:db8:1::1204", nis_addrs[0].toText());
+
+    // Retrieve and sanity check preference option.
+    OptionUint8Ptr opt_prf = boost::dynamic_pointer_cast<
+        OptionUint8>(retrieveOption(*hosts[0], "dhcp6", D6O_PREFERENCE));
+    ASSERT_TRUE(opt_prf);
+    EXPECT_EQ(11, opt_prf->getValue());
+}
+
+// This test verifies that it is possible to specify an empty list of
+// DHCPv4 options for a host declaration.
+TEST_F(HostReservationParserTest, options4Empty) {
+    testEmptyOptionList<HostReservationParser4>();
+}
+
+// This test verifies that it is possible to specify an empty list of
+// DHCPv6 options for a host declaration.
+TEST_F(HostReservationParserTest, options6Empty) {
+    testEmptyOptionList<HostReservationParser6>();
+}
+
+// This test checks that specifying DHCPv6 options for the DHCPv4 host
+// reservation parser is not allowed.
+TEST_F(HostReservationParserTest, options4InvalidOptionSpace) {
+    // Create configuration specifying DHCPv6 option for a DHCPv4 host
+    // reservation parser.
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"option-data\": ["
+        "{"
+           "\"name\": \"dns-servers\","
+           "\"space\": \"dhcp6\","
+           "\"data\": \"2001:db8:1::1, 2001:db8:1::2\""
+        "} ]"
+        "}";
+
+    testInvalidConfig<HostReservationParser4>(config);
+}
+
+// This test checks that specifying DHCPv4 options for the DHCPv6 host
+// reservation parser is not allowed.
+TEST_F(HostReservationParserTest, options6InvalidOptionSpace) {
+    // Create configuration specifying DHCPv4 option for a DHCPv6 host
+    // reservation parser.
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"option-data\": ["
+        "{"
+           "\"name\": \"name-servers\","
+           "\"space\": \"dhcp4\","
+           "\"data\": \"172.16.15.10, 172.16.15.20\""
+        "} ]"
+        "}";
+
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
 
 } // end of anonymous namespace
