@@ -5,10 +5,6 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
-if USE_STATIC_LINK
-AM_LDFLAGS = -static
-endif
-
 CLEANFILES = *.gcno *.gcda
 
 if HAVE_GTEST
@@ -26,7 +22,7 @@ libdhcpsrvtest_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 if HAVE_MYSQL
 libdhcpsrvtest_la_CPPFLAGS += $(MYSQL_CPPFLAGS)
 endif
-libdhcpsrvtest_la_LDFLAGS  = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+libdhcpsrvtest_la_LDFLAGS  = $(AM_LDFLAGS)
 if HAVE_MYSQL
 libdhcpsrvtest_la_LDFLAGS  += $(MYSQL_LIBS)
 endif
