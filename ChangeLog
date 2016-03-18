@@ -1,7 +1,7 @@
 1090.	[func]		fdupont
 	Added support for IP address (IPv4 and IPv6) literals in
 	classification expressions.
-	(Trac #4232, git xxx)
+	(Trac #4232, git b98cc019b172a4903a2121e910f3cee4eaca2d51)
 
 1089.	[func]		fdupont
 	Added relay4[X].exists method in classifications that checks
