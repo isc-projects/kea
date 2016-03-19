@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -485,13 +485,15 @@ TEST_F(Pkt4Test, sname) {
     uint8_t sname[Pkt4::MAX_SNAME_LEN];
 
     scoped_ptr<Pkt4> pkt;
-    // Let's test each sname length, from 0 till 64
-    for (size_t snameLen = 0; snameLen < Pkt4::MAX_SNAME_LEN; ++snameLen) {
+    // Let's test each sname length, from 0 till 64 (included)
+    for (size_t snameLen = 0; snameLen <= Pkt4::MAX_SNAME_LEN; ++snameLen) {
         for (size_t i = 0; i < snameLen; ++i) {
             sname[i] = i + 1;
         }
-        for (size_t i = snameLen; i < Pkt4::MAX_SNAME_LEN; ++i) {
-            sname[i] = 0;
+        if (snameLen < Pkt4::MAX_SNAME_LEN) {
+                for (size_t i = snameLen; i < Pkt4::MAX_SNAME_LEN; ++i) {
+                        sname[i] = 0;
+                }
         }
 
         // Type and transaction doesn't matter in this test
@@ -516,6 +518,10 @@ TEST_F(Pkt4Test, sname) {
     Pkt4 pkt4(DHCPOFFER, 1234);
     EXPECT_THROW(pkt4.setSname(NULL, Pkt4::MAX_SNAME_LEN), InvalidParameter);
     EXPECT_THROW(pkt4.setSname(NULL, 0), InvalidParameter);
+
+    // Check that a too long argument generates an exception.
+    uint8_t bigsname[Pkt4::MAX_SNAME_LEN + 1];
+    EXPECT_THROW(pkt4.setSname(bigsname, Pkt4::MAX_SNAME_LEN + 1), OutOfRange);
 }
 
 TEST_F(Pkt4Test, file) {
@@ -523,13 +529,15 @@ TEST_F(Pkt4Test, file) {
     uint8_t file[Pkt4::MAX_FILE_LEN];
 
     scoped_ptr<Pkt4> pkt;
-    // Let's test each file length, from 0 till 128.
-    for (size_t fileLen = 0; fileLen < Pkt4::MAX_FILE_LEN; ++fileLen) {
+    // Let's test each file length, from 0 till 128 (included).
+    for (size_t fileLen = 0; fileLen <= Pkt4::MAX_FILE_LEN; ++fileLen) {
         for (size_t i = 0; i < fileLen; ++i) {
             file[i] = i + 1;
         }
-        for (size_t i = fileLen; i < Pkt4::MAX_FILE_LEN; ++i) {
-            file[i] = 0;
+        if (fileLen < Pkt4::MAX_FILE_LEN) {
+                for (size_t i = fileLen; i < Pkt4::MAX_FILE_LEN; ++i) {
+                        file[i] = 0;
+                }
         }
 
         // Type and transaction doesn't matter in this test.
@@ -554,6 +562,10 @@ TEST_F(Pkt4Test, file) {
     Pkt4 pkt4(DHCPOFFER, 1234);
     EXPECT_THROW(pkt4.setFile(NULL, Pkt4::MAX_FILE_LEN), InvalidParameter);
     EXPECT_THROW(pkt4.setFile(NULL, 0), InvalidParameter);
+
+    // Check that a too long argument generates an exception.
+    uint8_t bigfile[Pkt4::MAX_FILE_LEN + 1];
+    EXPECT_THROW(pkt4.setFile(bigfile, Pkt4::MAX_FILE_LEN + 1), OutOfRange);
 }
 
 TEST_F(Pkt4Test, options) {
