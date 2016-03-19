@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -362,6 +362,7 @@ TEST_F(OptionDefinitionTest, ipv6AddressArray) {
         option_v6 = opt_def.optionFactory(Option::V6, D6O_NIS_SERVERS, buf);
     );
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(Option6AddrLst));
     boost::shared_ptr<Option6AddrLst> option_cast_v6 =
         boost::static_pointer_cast<Option6AddrLst>(option_v6);
@@ -418,6 +419,7 @@ TEST_F(OptionDefinitionTest, ipv6AddressArrayTokenized) {
     // should have Option6AddrLst type.
     ASSERT_TRUE(option_v6);
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(Option6AddrLst));
     // Cast to the actual option type to get IPv6 addresses from it.
     boost::shared_ptr<Option6AddrLst> option_cast_v6 =
@@ -462,6 +464,7 @@ TEST_F(OptionDefinitionTest, ipv4AddressArray) {
         option_v4 = opt_def.optionFactory(Option::V4, DHO_NAME_SERVERS, buf)
     );
     const Option* optptr = option_v4.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(Option4AddrLst));
     // Get the list of parsed addresses from the option object.
     boost::shared_ptr<Option4AddrLst> option_cast_v4 =
@@ -515,6 +518,7 @@ TEST_F(OptionDefinitionTest, ipv4AddressArrayTokenized) {
     // should have Option6AddrLst type.
     ASSERT_TRUE(option_v4);
     const Option* optptr = option_v4.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(Option4AddrLst));
     // Cast to the actual option type to get IPv4 addresses from it.
     boost::shared_ptr<Option4AddrLst> option_cast_v4 =
@@ -540,6 +544,7 @@ TEST_F(OptionDefinitionTest, empty) {
         option_v6 = opt_def.optionFactory(Option::V6, D6O_RAPID_COMMIT, OptionBuffer())
     );
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(Option));
     // Expect 'empty' DHCPv6 option.
     EXPECT_EQ(Option::V6, option_v6->getUniverse());
@@ -584,6 +589,7 @@ TEST_F(OptionDefinitionTest, emptyWithSuboptions) {
     );
     // Returned option should be of the OptionCustom type.
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
     // Sanity-check length, universe etc.
     EXPECT_EQ(Option::V6, option_v6->getUniverse());
@@ -623,6 +629,7 @@ TEST_F(OptionDefinitionTest, binary) {
     );
     // Expect base option type returned.
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(Option));
     // Sanity check on universe, length and size. These are
     // the basic parameters identifying any option.
@@ -671,6 +678,7 @@ TEST_F(OptionDefinitionTest, recordIA6) {
     OptionPtr option_v6;
     ASSERT_NO_THROW(option_v6 = opt_def.optionFactory(Option::V6, D6O_IA_NA, buf));
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(Option6IA));
     boost::shared_ptr<Option6IA> option_cast_v6 =
         boost::static_pointer_cast<Option6IA>(option_v6);
@@ -715,6 +723,7 @@ TEST_F(OptionDefinitionTest, recordIAAddr6) {
     }
     ASSERT_NO_THROW(option_v6 = opt_def.optionFactory(Option::V6, D6O_IAADDR, buf));
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(Option6IAAddr));
     boost::shared_ptr<Option6IAAddr> option_cast_v6 =
         boost::static_pointer_cast<Option6IAAddr>(option_v6);
@@ -753,6 +762,7 @@ TEST_F(OptionDefinitionTest, recordIAAddr6Tokenized) {
     ASSERT_NO_THROW(option_v6 = opt_def.optionFactory(Option::V6, D6O_IAADDR,
                                                       data_field_values));
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(Option6IAAddr));
     boost::shared_ptr<Option6IAAddr> option_cast_v6 =
         boost::static_pointer_cast<Option6IAAddr>(option_v6);
@@ -776,6 +786,7 @@ TEST_F(OptionDefinitionTest, boolValue) {
                                           OptionBuffer(1, 1));
     );
     const Option* optptr = option_v4.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
     // Validate parsed value in the received option.
     boost::shared_ptr<OptionCustom> option_cast_v4 =
@@ -816,6 +827,7 @@ TEST_F(OptionDefinitionTest, boolTokenized) {
                                           values);
     );
     const Option* optptr = option_v4.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
     // Validate the value.
     OptionCustomPtr option_cast_v4 =
@@ -829,6 +841,7 @@ TEST_F(OptionDefinitionTest, boolTokenized) {
                                           values);
     );
     optptr = option_v4.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
     // Validate the value.
     option_cast_v4 = boost::static_pointer_cast<OptionCustom>(option_v4);
@@ -841,6 +854,7 @@ TEST_F(OptionDefinitionTest, boolTokenized) {
                                           values);
     );
     optptr = option_v4.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
     // Validate the value.
     option_cast_v4 = boost::static_pointer_cast<OptionCustom>(option_v4);
@@ -853,6 +867,7 @@ TEST_F(OptionDefinitionTest, boolTokenized) {
                                           values);
     );
     optptr = option_v4.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
     // Validate the value.
     option_cast_v4 = boost::static_pointer_cast<OptionCustom>(option_v4);
@@ -885,6 +900,7 @@ TEST_F(OptionDefinitionTest, uint8) {
                                           OptionBuffer(1, 1));
     );
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionInt<uint8_t>));
     // Validate the value.
     boost::shared_ptr<OptionInt<uint8_t> > option_cast_v6 =
@@ -914,6 +930,7 @@ TEST_F(OptionDefinitionTest, uint8Tokenized) {
         option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE, values);
     );
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionInt<uint8_t>));
     // Validate the value.
     boost::shared_ptr<OptionInt<uint8_t> > option_cast_v6 =
@@ -938,6 +955,7 @@ TEST_F(OptionDefinitionTest, uint16) {
         option_v6 = opt_def.optionFactory(Option::V6, D6O_ELAPSED_TIME, buf);
     );
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionInt<uint16_t>));
     // Validate the value.
     boost::shared_ptr<OptionInt<uint16_t> > option_cast_v6 =
@@ -968,6 +986,7 @@ TEST_F(OptionDefinitionTest, uint16Tokenized) {
         option_v6 = opt_def.optionFactory(Option::V6, D6O_ELAPSED_TIME, values);
     );
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionInt<uint16_t>));
     // Validate the value.
     boost::shared_ptr<OptionInt<uint16_t> > option_cast_v6 =
@@ -994,6 +1013,7 @@ TEST_F(OptionDefinitionTest, uint32) {
         option_v6 = opt_def.optionFactory(Option::V6, D6O_CLT_TIME, buf);
     );
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionInt<uint32_t>));
     // Validate the value.
     boost::shared_ptr<OptionInt<uint32_t> > option_cast_v6 =
@@ -1023,6 +1043,7 @@ TEST_F(OptionDefinitionTest, uint32Tokenized) {
         option_v6 = opt_def.optionFactory(Option::V6, D6O_CLT_TIME, values);
     );
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionInt<uint32_t>));
     // Validate the value.
     boost::shared_ptr<OptionInt<uint32_t> > option_cast_v6 =
@@ -1053,6 +1074,7 @@ TEST_F(OptionDefinitionTest, uint16Array) {
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, buf);
     );
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionIntArray<uint16_t>));
     boost::shared_ptr<OptionIntArray<uint16_t> > option_cast_v6 =
         boost::static_pointer_cast<OptionIntArray<uint16_t> >(option_v6);
@@ -1096,6 +1118,7 @@ TEST_F(OptionDefinitionTest, uint16ArrayTokenized) {
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, str_values);
     );
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionIntArray<uint16_t>));
     boost::shared_ptr<OptionIntArray<uint16_t> > option_cast_v6 =
         boost::static_pointer_cast<OptionIntArray<uint16_t> >(option_v6);
@@ -1128,6 +1151,7 @@ TEST_F(OptionDefinitionTest, uint32Array) {
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, buf);
     );
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionIntArray<uint32_t>));
     boost::shared_ptr<OptionIntArray<uint32_t> > option_cast_v6 =
         boost::static_pointer_cast<OptionIntArray<uint32_t> >(option_v6);
@@ -1174,6 +1198,7 @@ TEST_F(OptionDefinitionTest, uint32ArrayTokenized) {
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, str_values);
     );
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionIntArray<uint32_t>));
     boost::shared_ptr<OptionIntArray<uint32_t> > option_cast_v6 =
         boost::static_pointer_cast<OptionIntArray<uint32_t> >(option_v6);
@@ -1201,6 +1226,7 @@ TEST_F(OptionDefinitionTest, utf8StringTokenized) {
     );
     ASSERT_TRUE(option_v6);
     const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionString));
     OptionStringPtr option_v6_string =
         boost::static_pointer_cast<OptionString>(option_v6);
