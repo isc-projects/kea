@@ -1,6 +1,6 @@
 1093.	[bug]		fdupont
 	Fixed Coverity-detected overflows in pkt4::setFile() and setName().
-	(Trac #4306, git xxx)
+	(Trac #4306, git 0b7388891eaab39fe727b076468d672551126796)
 
 1092.	[func]		marcin
 	DHCP option values can be specified within host reservations
