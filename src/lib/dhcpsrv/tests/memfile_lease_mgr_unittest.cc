@@ -275,21 +275,14 @@ public:
         bool fqdn_rev = false;
         uint32_t subnet_id = 1000 + rand()%16;
 
-        string hostname;
-        hostname.resize(rand()%32);
-        for (int i = 0; i < hostname.size(); i++) {
-            // this should generate random garbage consisting of
-            // printable characters from between
-            // 33 (!, first printable character after space) to
-            // 126 (~, the last surely printable character)
-            hostname[i] = static_cast<char>(33 + rand()%93);
-        }
+        std::ostringstream hostname;
+        hostname << "hostname" << (rand() % 2048);
 
         // Return created lease.
         return (Lease4Ptr(new Lease4(address, hwaddr, &clientid[0],
                                      clientid.size(), valid_lft, t1, t2,
                                      timestamp, subnet_id, fqdn_fwd,
-                                     fqdn_rev, hostname)));
+                                     fqdn_rev, hostname.str())));
     }
 
     /// @brief Generates a DHCPv6 lease with random content.
@@ -334,20 +327,14 @@ public:
         bool fqdn_rev = false;
         uint32_t subnet_id = 1000 + rand()%16;
 
-        std::string hostname;
-        hostname.resize(rand()%32);
-        for (int i = 0; i < hostname.size(); i++) {
-            // this should generate random garbage consisting of
-            // printable characters from between
-            // 33 (!, first printable character after space) to
-            // 126 (~, the last surely printable character)
-            hostname[i] = static_cast<char>(33 + rand()%93);
-        }
+        std::ostringstream hostname;
+        hostname << "hostname" << (rand() % 2048);
 
         // Return created lease.
         Lease6Ptr lease(new Lease6(lease_type, address, duid, iaid,
                                    preferred_lft, valid_lft, t1, t2,
-                                   subnet_id, fqdn_fwd, fqdn_rev, hostname));
+                                   subnet_id, fqdn_fwd, fqdn_rev,
+                                   hostname.str()));
         lease->cltt_ = timestamp;
         return (lease);
     }
