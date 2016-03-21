@@ -263,20 +263,20 @@ public:
         HWAddrPtr hwaddr(new HWAddr(mac, HTYPE_ETHER));
 
         // Let's generate clientid of random length
-        vector<uint8_t> clientid(4 + rand()%20);
+        vector<uint8_t> clientid(4 + random()%20);
         // And then fill it with random value.
         fillRandom(clientid.begin(), clientid.end());
 
         uint32_t valid_lft = 1200;
         uint32_t t1 = 600;
         uint32_t t2 = 900;
-        time_t timestamp = time(NULL) - 86400 + rand()%86400;
+        time_t timestamp = time(NULL) - 86400 + random()%86400;
         bool fqdn_fwd = false;
         bool fqdn_rev = false;
-        uint32_t subnet_id = 1000 + rand()%16;
+        uint32_t subnet_id = 1000 + random()%16;
 
         std::ostringstream hostname;
-        hostname << "hostname" << (rand() % 2048);
+        hostname << "hostname" << (random() % 2048);
 
         // Return created lease.
         return (Lease4Ptr(new Lease4(address, hwaddr, &clientid[0],
@@ -311,24 +311,24 @@ public:
     /// @return new lease with random content
     Lease6Ptr initiateRandomLease6(const IOAddress& address) {
         // Let's generate DUID of random length.
-        std::vector<uint8_t> duid_vec(8 + rand()%20);
+        std::vector<uint8_t> duid_vec(8 + random()%20);
         // And then fill it with random value.
         fillRandom(duid_vec.begin(), duid_vec.end());
         DuidPtr duid(new DUID(duid_vec));
 
         Lease::Type lease_type = Lease::TYPE_NA;
-        uint32_t iaid = 1 + rand()%100;
+        uint32_t iaid = 1 + random()%100;
         uint32_t valid_lft = 1200;
         uint32_t preferred_lft = 1000;
         uint32_t t1 = 600;
         uint32_t t2 = 900;
-        time_t timestamp = time(NULL) - 86400 + rand()%86400;
+        time_t timestamp = time(NULL) - 86400 + random()%86400;
         bool fqdn_fwd = false;
         bool fqdn_rev = false;
-        uint32_t subnet_id = 1000 + rand()%16;
+        uint32_t subnet_id = 1000 + random()%16;
 
         std::ostringstream hostname;
-        hostname << "hostname" << (rand() % 2048);
+        hostname << "hostname" << (random() % 2048);
 
         // Return created lease.
         Lease6Ptr lease(new Lease6(lease_type, address, duid, iaid,
@@ -339,7 +339,7 @@ public:
         return (lease);
     }
 
-    /// @Brief Object providing access to v4 lease IO.
+    /// @brief Object providing access to v4 lease IO.
     LeaseFileIO io4_;
 
     /// @brief Object providing access to v6 lease IO.
@@ -1663,8 +1663,8 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
     // Now, conduct updates. We call initiateRandomLease4(), so most
     // of the fields are randomly changed. The only constant field
     // is the address.
-    for (uint32_t i = 0; i < updates_cnt; i++) {
-        uint32_t offset = rand() % lease_addresses.size();
+    for (uint32_t i = 0; i < updates_cnt; ++i) {
+        uint32_t offset = random() % lease_addresses.size();
         Lease4Ptr existing(lmptr_->getLease4(lease_addresses[offset]));
         Lease4Ptr updated(initiateRandomLease4(lease_addresses[offset]));
 
@@ -1690,7 +1690,7 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
     // First, build an array of leases. Get them by address.
     // This should work in general, as we haven't updated the addresses.
     std::vector<Lease4Ptr> leases;
-    for (uint32_t i = 0; i < lease_addresses.size(); i++) {
+    for (uint32_t i = 0; i < lease_addresses.size(); ++i) {
         Lease4Ptr from_mgr = lmptr_->getLease4(lease_addresses[i]);
         ASSERT_TRUE(from_mgr) << "Lease for address " << lease_addresses[i].toText()
                               << " not found";
@@ -1802,8 +1802,8 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
     // Now, conduct updates. We call initiateRandomLease6(), so most
     // of the fields are randomly changed. The only constant field
     // is the address.
-    for (uint32_t i = 0; i < updates_cnt; i++) {
-        uint32_t offset = rand() % lease_addresses.size();
+    for (uint32_t i = 0; i < updates_cnt; ++i) {
+        uint32_t offset = random() % lease_addresses.size();
         Lease6Ptr existing(lmptr_->getLease6(Lease::TYPE_NA,
                                              lease_addresses[offset]));
         Lease6Ptr updated(initiateRandomLease6(lease_addresses[offset]));
@@ -1830,7 +1830,7 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
     // First, build an array of leases. Get them by address.
     // This should work in general, as we haven't updated the addresses.
     std::vector<Lease6Ptr> leases;
-    for (uint32_t i = 0; i < lease_addresses.size(); i++) {
+    for (uint32_t i = 0; i < lease_addresses.size(); ++i) {
         Lease6Ptr from_mgr = lmptr_->getLease6(Lease::TYPE_NA,
                                                lease_addresses[i]);
         ASSERT_TRUE(from_mgr) << "Lease for address " << lease_addresses[i].toText()
