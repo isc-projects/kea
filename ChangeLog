@@ -1,3 +1,8 @@
+1094.	[bug]		marcin
+	libdhcpsrv: Fixed issues with lease indexing in Memfile
+	database backend.
+	(Trac #4339, git a065144663ac716b1fa1c8c224a88aa176da9630)
+
 1093.	[bug]		fdupont
 	Fixed Coverity-detected overflows in pkt4::setFile() and setName().
 	(Trac #4306, git 0b7388891eaab39fe727b076468d672551126796)
