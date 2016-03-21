@@ -1668,7 +1668,7 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
         Lease4Ptr existing(lmptr_->getLease4(lease_addresses[offset]));
         Lease4Ptr updated(initiateRandomLease4(lease_addresses[offset]));
 
-        // Update a lease with new data but preserve a lease address.
+        // Update a lease with new data but preserve lease address.
         // This update should also cause lease container indexes to
         // be updated.
         ASSERT_NO_THROW(lmptr_->updateLease4(updated))
@@ -1808,7 +1808,7 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
                                              lease_addresses[offset]));
         Lease6Ptr updated(initiateRandomLease6(lease_addresses[offset]));
 
-        // Update a lease with new data but preserve a lease address.
+        // Update a lease with new data but preserve lease address.
         // This update should also cause lease container indexes to
         // be updated.
         ASSERT_NO_THROW(lmptr_->updateLease6(updated))
