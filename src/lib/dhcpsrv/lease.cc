@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -293,13 +293,14 @@ Lease6::toText() const {
 
     /// @todo: print out DUID
     stream << "Type:          " << typeToText(type_) << "("
-           << static_cast<int>(type_) << ")\n";
-    stream << "Address:       " << addr_ << "\n"
+           << static_cast<int>(type_) << ")\n"
+           << "Address:       " << addr_ << "\n"
            << "Prefix length: " << static_cast<int>(prefixlen_) << "\n"
            << "IAID:          " << iaid_ << "\n"
            << "Pref life:     " << preferred_lft_ << "\n"
            << "Valid life:    " << valid_lft_ << "\n"
            << "Cltt:          " << cltt_ << "\n"
+           << "DUID:          " << (duid_?duid_->toText():"(none)") << "\n"
            << "Hardware addr: " << (hwaddr_?hwaddr_->toText(false):"(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n"
            << "State:         " << statesToText(state_) << "\n";
