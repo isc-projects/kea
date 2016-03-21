@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,7 @@
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <util/pid_file.h>
+#include <util/range_utilities.h>
 #include <util/stopwatch.h>
 #include <gtest/gtest.h>
 
@@ -232,6 +233,111 @@ public:
         return (iterations < iterations_max);
     }
 
+    /// @brief Generates a DHCPv4 lease with random content.
+    ///
+    /// The following lease parameters are randomly generated:
+    /// - HW address,
+    /// - client identifier,
+    /// - hostname,
+    /// - subnet identifier,
+    /// - client last transmission time,
+    ///
+    /// The following lease parameters are set to constant values:
+    /// - valid lifetime = 1200,
+    /// - T1 = 600,
+    /// - T2 = 900,
+    /// - DNS update forward flag = false,
+    /// - DNS update reverse flag = false,
+    ///
+    /// The lease address is set to address passed as function
+    /// argument.
+    ///
+    /// @param address Lease address.
+    ///
+    /// @return new lease with random content
+    Lease4Ptr initiateRandomLease4(const IOAddress& address) {
+
+        // Randomize HW address.
+        vector<uint8_t> mac(6);
+        fillRandom(mac.begin(), mac.end());
+        HWAddrPtr hwaddr(new HWAddr(mac, HTYPE_ETHER));
+
+        // Let's generate clientid of random length
+        vector<uint8_t> clientid(4 + random()%20);
+        // And then fill it with random value.
+        fillRandom(clientid.begin(), clientid.end());
+
+        uint32_t valid_lft = 1200;
+        uint32_t t1 = 600;
+        uint32_t t2 = 900;
+        time_t timestamp = time(NULL) - 86400 + random()%86400;
+        bool fqdn_fwd = false;
+        bool fqdn_rev = false;
+        uint32_t subnet_id = 1000 + random()%16;
+
+        std::ostringstream hostname;
+        hostname << "hostname" << (random() % 2048);
+
+        // Return created lease.
+        return (Lease4Ptr(new Lease4(address, hwaddr, &clientid[0],
+                                     clientid.size(), valid_lft, t1, t2,
+                                     timestamp, subnet_id, fqdn_fwd,
+                                     fqdn_rev, hostname.str())));
+    }
+
+    /// @brief Generates a DHCPv6 lease with random content.
+    ///
+    /// The following lease parameters are randomly generated:
+    /// - DUID,
+    /// - IAID,
+    /// - hostname,
+    /// - subnet identifier,
+    /// - client last transmission time,
+    ///
+    /// The following lease parameters are set to constant values:
+    /// - lease type = IA_NA
+    /// - valid lifetime = 1200,
+    /// - preferred lifetime = 1000
+    /// - T1 = 600,
+    /// - T2 = 900,
+    /// - DNS update forward flag = false,
+    /// - DNS update reverse flag = false,
+    ///
+    /// The lease address is set to address passed as function
+    /// argument.
+    ///
+    /// @param address Lease address.
+    ///
+    /// @return new lease with random content
+    Lease6Ptr initiateRandomLease6(const IOAddress& address) {
+        // Let's generate DUID of random length.
+        std::vector<uint8_t> duid_vec(8 + random()%20);
+        // And then fill it with random value.
+        fillRandom(duid_vec.begin(), duid_vec.end());
+        DuidPtr duid(new DUID(duid_vec));
+
+        Lease::Type lease_type = Lease::TYPE_NA;
+        uint32_t iaid = 1 + random()%100;
+        uint32_t valid_lft = 1200;
+        uint32_t preferred_lft = 1000;
+        uint32_t t1 = 600;
+        uint32_t t2 = 900;
+        time_t timestamp = time(NULL) - 86400 + random()%86400;
+        bool fqdn_fwd = false;
+        bool fqdn_rev = false;
+        uint32_t subnet_id = 1000 + random()%16;
+
+        std::ostringstream hostname;
+        hostname << "hostname" << (random() % 2048);
+
+        // Return created lease.
+        Lease6Ptr lease(new Lease6(lease_type, address, duid, iaid,
+                                   preferred_lft, valid_lft, t1, t2,
+                                   subnet_id, fqdn_fwd, fqdn_rev,
+                                   hostname.str()));
+        lease->cltt_ = timestamp;
+        return (lease);
+    }
 
     /// @brief Object providing access to v4 lease IO.
     LeaseFileIO io4_;
@@ -1512,5 +1618,272 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
         "8,100,0,7,0,1,1,,11:22:33:44:55,0\n";
     EXPECT_EQ(result_file_contents, input_file.readFile());
 }
+
+// This test verifies that the indexes of the container holding
+// DHCPv4 leases are updated correctly when a lease is updated.
+TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
+
+    const uint32_t seed = 12345678; // Used to initialize the random generator
+    const uint32_t leases_cnt = 100; // Number of leases generated per round.
+    const uint32_t updates_cnt = 5; // Number of times existing leases are updated
+
+    const string leasefile(getLeaseFilePath("leasefile4_0.csv"));
+
+    // Parameters for the lease file. Make sure the leases are persistent, so they
+    // are written to disk.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "4";
+    pmap["name"] = leasefile;
+    pmap["persist"] = "true";
+
+    srand(seed);
+
+    IOAddress addr("10.0.0.1"); // Let's generate leases sequentially
+
+    // Recreate Memfile_LeaseMgr.
+    LeaseMgrFactory::destroy();
+    ASSERT_NO_THROW(lmptr_ = new Memfile_LeaseMgr(pmap));
+
+    // We will store addresses here, so it will be easier to randomly
+    // pick a lease.
+    std::vector<IOAddress> lease_addresses;
+
+    // Generarate random leases. We remember their addresses in
+    // lease_addresses.
+    for (uint32_t i = 0; i < leases_cnt; ++i) {
+        Lease4Ptr lease = initiateRandomLease4(addr);
+        lease_addresses.push_back(addr);
+        ASSERT_NO_THROW(lmptr_->addLease(lease));
+        addr = IOAddress::increase(addr);
+    }
+
+    // Check that we inserted correct number of leases.
+    ASSERT_EQ(leases_cnt, lease_addresses.size());
+
+    // Now, conduct updates. We call initiateRandomLease4(), so most
+    // of the fields are randomly changed. The only constant field
+    // is the address.
+    for (uint32_t i = 0; i < updates_cnt; ++i) {
+        uint32_t offset = random() % lease_addresses.size();
+        Lease4Ptr existing(lmptr_->getLease4(lease_addresses[offset]));
+        Lease4Ptr updated(initiateRandomLease4(lease_addresses[offset]));
+
+        // Update a lease with new data but preserve lease address.
+        // This update should also cause lease container indexes to
+        // be updated.
+        ASSERT_NO_THROW(lmptr_->updateLease4(updated))
+            << "Attempt " << i << " out of " << updates_cnt
+            << ":Failed to update lease for address "
+            << lease_addresses[offset];
+    }
+
+    // Re-create lease manager to cause it to reload leases
+    // from a lease file. We want to make sure that lease
+    // container is rebuilt correctly and the indexes are
+    // consistent with lease information held.
+    ASSERT_NO_THROW({
+        LeaseMgrFactory::destroy();
+        lmptr_ = new Memfile_LeaseMgr(pmap);
+    });
+
+    // Ok, let's check if the leases are really accessible.
+    // First, build an array of leases. Get them by address.
+    // This should work in general, as we haven't updated the addresses.
+    std::vector<Lease4Ptr> leases;
+    for (uint32_t i = 0; i < lease_addresses.size(); ++i) {
+        Lease4Ptr from_mgr = lmptr_->getLease4(lease_addresses[i]);
+        ASSERT_TRUE(from_mgr) << "Lease for address " << lease_addresses[i].toText()
+                              << " not found";
+        leases.push_back(from_mgr);
+    }
+
+    ASSERT_EQ(leases_cnt, leases.size());
+
+    // Now do the actual checks.
+    for (uint32_t i = 0; i < leases.size(); ++i) {
+        Lease4Ptr tested = leases[i];
+
+        // Get the lease by different access patterns.
+        // In properly working lease manager all queries should return
+        // exactly the same lease.
+
+        std::string error_desc = " which indicates that the lease indexes were"
+            " not updated correctly when the lease was updated.";
+
+        // Retrieve lease by address.
+        Lease4Ptr lease_by_address = lmptr_->getLease4(tested->addr_);
+        ASSERT_TRUE(lease_by_address)
+            << "Lease " << tested->addr_.toText()
+            << " not found by getLease4(addr)"
+            << error_desc;
+        detailCompareLease(tested, lease_by_address);
+
+        // Retrieve lease by HW address and subnet id.
+        Lease4Ptr lease_by_hwaddr_subnet = lmptr_->getLease4(*tested->hwaddr_,
+                                                             tested->subnet_id_);
+        ASSERT_TRUE(lease_by_hwaddr_subnet)
+            << "Lease " << tested->addr_.toText()
+            << " not found by getLease4(hwaddr, subnet_id)"
+            << error_desc;
+        detailCompareLease(tested, lease_by_hwaddr_subnet);
+
+        // Retrieve lease by client identifier and subnet id.
+        Lease4Ptr lease_by_clientid_subnet = lmptr_->getLease4(*tested->client_id_,
+                                                               tested->subnet_id_);
+        ASSERT_TRUE(lease_by_clientid_subnet)
+            << "Lease " << tested->addr_.toText()
+            << " not found by getLease4(clientid, subnet_id)"
+            << error_desc;
+        detailCompareLease(tested, lease_by_clientid_subnet);
+
+        // Retrieve lease by client id, HW address and subnet.
+        Lease4Ptr lease_by_clientid_hwaddr_subnet = lmptr_->getLease4(*tested->client_id_,
+                                                                      *tested->hwaddr_,
+                                                                      tested->subnet_id_);
+        ASSERT_TRUE(lease_by_clientid_hwaddr_subnet)
+            << "Lease " << tested->addr_.toText()
+            << " not found by getLease4(clientid, hwaddr, subnet_id)"
+            << error_desc;
+        detailCompareLease(tested, lease_by_clientid_hwaddr_subnet);
+
+        // Retrieve lease by HW address.
+        Lease4Collection leases_by_hwaddr = lmptr_->getLease4(*tested->hwaddr_);
+        ASSERT_EQ(1, leases_by_hwaddr.size());
+        detailCompareLease(tested, leases_by_hwaddr[0]);
+
+        // Retrieve lease by client identifier.
+        Lease4Collection leases_by_client_id = lmptr_->getLease4(*tested->client_id_);
+        ASSERT_EQ(1, leases_by_client_id.size());
+        detailCompareLease(tested, leases_by_client_id[0]);
+    }
+}
+
+// This test verifies that the indexes of the container holding
+// DHCPv4 leases are updated correctly when a lease is updated.
+TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
+
+    const uint32_t seed = 12345678; // Used to initialize the random generator
+    const uint32_t leases_cnt = 100; // Number of leases generated per round.
+    const uint32_t updates_cnt = 5; // Number of times existing leases are updated
+
+    const string leasefile(getLeaseFilePath("leasefile6_0.csv"));
+
+    // Parameters for the lease file. Make sure the leases are persistent, so they
+    // are written to disk.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "6";
+    pmap["name"] = leasefile;
+    pmap["persist"] = "true";
+
+    srand(seed);
+
+    IOAddress addr("2001:db8:1::1"); // Let's generate leases sequentially
+
+    // Recreate Memfile_LeaseMgr.
+    LeaseMgrFactory::destroy();
+    ASSERT_NO_THROW(lmptr_ = new Memfile_LeaseMgr(pmap));
+
+    // We will store addresses here, so it will be easier to randomly
+    // pick a lease.
+    std::vector<IOAddress> lease_addresses;
+
+    // Generarate random leases. We remember their addresses in
+    // lease_addresses.
+    for (uint32_t i = 0; i < leases_cnt; ++i) {
+        Lease6Ptr lease = initiateRandomLease6(addr);
+        lease_addresses.push_back(addr);
+        ASSERT_NO_THROW(lmptr_->addLease(lease));
+        addr = IOAddress::increase(addr);
+    }
+
+    // Check that we inserted correct number of leases.
+    ASSERT_EQ(leases_cnt, lease_addresses.size());
+
+    // Now, conduct updates. We call initiateRandomLease6(), so most
+    // of the fields are randomly changed. The only constant field
+    // is the address.
+    for (uint32_t i = 0; i < updates_cnt; ++i) {
+        uint32_t offset = random() % lease_addresses.size();
+        Lease6Ptr existing(lmptr_->getLease6(Lease::TYPE_NA,
+                                             lease_addresses[offset]));
+        Lease6Ptr updated(initiateRandomLease6(lease_addresses[offset]));
+
+        // Update a lease with new data but preserve lease address.
+        // This update should also cause lease container indexes to
+        // be updated.
+        ASSERT_NO_THROW(lmptr_->updateLease6(updated))
+            << "Attempt " << i << " out of " << updates_cnt
+            << ":Failed to update lease for address "
+            << lease_addresses[offset];
+    }
+
+    // Re-create lease manager to cause it to reload leases
+    // from a lease file. We want to make sure that lease
+    // container is rebuilt correctly and the indexes are
+    // consistent with lease information held.
+    ASSERT_NO_THROW({
+        LeaseMgrFactory::destroy();
+        lmptr_ = new Memfile_LeaseMgr(pmap);
+    });
+
+    // Ok, let's check if the leases are really accessible.
+    // First, build an array of leases. Get them by address.
+    // This should work in general, as we haven't updated the addresses.
+    std::vector<Lease6Ptr> leases;
+    for (uint32_t i = 0; i < lease_addresses.size(); ++i) {
+        Lease6Ptr from_mgr = lmptr_->getLease6(Lease::TYPE_NA,
+                                               lease_addresses[i]);
+        ASSERT_TRUE(from_mgr) << "Lease for address " << lease_addresses[i].toText()
+                              << " not found";
+        leases.push_back(from_mgr);
+    }
+
+    ASSERT_EQ(leases_cnt, leases.size());
+
+    // Now do the actual checks.
+    for (uint32_t i = 0; i < leases.size(); ++i) {
+        Lease6Ptr tested = leases[i];
+
+        // Get the lease by different access patterns.
+        // In properly working lease manager all queries should return
+        // exactly the same lease.
+
+        std::string error_desc = " which indicates that the lease indexes were"
+            " not updated correctly when the lease was updated.";
+
+        // Retrieve lease by address.
+        Lease6Ptr lease_by_address = lmptr_->getLease6(Lease::TYPE_NA,
+                                                       tested->addr_);
+        ASSERT_TRUE(lease_by_address)
+            << "Lease " << tested->addr_.toText()
+            << " not found by getLease6(addr)"
+            << error_desc;
+        detailCompareLease(tested, lease_by_address);
+
+        // Retrieve lease by type, DUID, IAID.
+        Lease6Collection leases_by_duid_iaid = lmptr_->getLeases6(tested->type_,
+                                                                  *tested->duid_,
+                                                                  tested->iaid_);
+        ASSERT_EQ(1, leases_by_duid_iaid.size());
+        ASSERT_TRUE(leases_by_duid_iaid[0])
+            << "Lease " << tested->addr_.toText()
+            << " not found by getLease6(type, duid, iaid)"
+            << error_desc;
+        detailCompareLease(tested, leases_by_duid_iaid[0]);
+
+        // Retrieve lease by type, DUID, IAID, subnet identifier.
+        Lease6Collection leases_by_duid_iaid_subnet =
+            lmptr_->getLeases6(tested->type_, *tested->duid_,
+                               tested->iaid_, tested->subnet_id_);
+        ASSERT_EQ(1, leases_by_duid_iaid_subnet.size());
+        ASSERT_TRUE(leases_by_duid_iaid_subnet[0])
+            << "Lease " << tested->addr_.toText()
+            << " not found by getLease6(type, duid, iaid, subnet_id)"
+            << error_desc;
+        detailCompareLease(tested, leases_by_duid_iaid_subnet[0]);
+    }
+}
+
+
 
 }; // end of anonymous namespace
