@@ -519,7 +519,8 @@ TEST_F(Pkt4Test, sname) {
     EXPECT_THROW(pkt4.setSname(NULL, Pkt4::MAX_SNAME_LEN), InvalidParameter);
     EXPECT_THROW(pkt4.setSname(NULL, 0), InvalidParameter);
 
-    // Check that a too long argument generates an exception.
+    // Check that a too long argument generates an exception
+    // (the actual content doesn't matter).
     uint8_t bigsname[Pkt4::MAX_SNAME_LEN + 1];
     EXPECT_THROW(pkt4.setSname(bigsname, Pkt4::MAX_SNAME_LEN + 1), OutOfRange);
 }
@@ -563,7 +564,8 @@ TEST_F(Pkt4Test, file) {
     EXPECT_THROW(pkt4.setFile(NULL, Pkt4::MAX_FILE_LEN), InvalidParameter);
     EXPECT_THROW(pkt4.setFile(NULL, 0), InvalidParameter);
 
-    // Check that a too long argument generates an exception.
+    // Check that a too long argument generates an exception
+    // (the actual content doesn't matter).
     uint8_t bigfile[Pkt4::MAX_FILE_LEN + 1];
     EXPECT_THROW(pkt4.setFile(bigfile, Pkt4::MAX_FILE_LEN + 1), OutOfRange);
 }
