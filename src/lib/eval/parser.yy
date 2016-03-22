@@ -55,6 +55,9 @@ using namespace isc::eval;
   ALL "all"
   COMA ","
   CONCAT "concat"
+  PKT6 "pkt6"
+  MSGTYPE "msgtype"
+  TRANSID "transid"
 ;
 
 %token <std::string> STRING "constant string"
@@ -64,6 +67,7 @@ using namespace isc::eval;
 
 %type <uint16_t> option_code
 %type <TokenOption::RepresentationType> option_repr_type
+%type <TokenPkt6::FieldType> pkt6_field
 
 %left OR
 %left AND
@@ -126,6 +130,11 @@ bool_expr : "(" bool_expr ")"
                        // only.
                        error(@1, "relay4 can only be used in DHCPv4.");
                    }
+                }
+          | PKT6 "." pkt6_field
+                {
+                    TokenPtr pkt6field(new TokenPkt6($3));
+                    ctx.expression.push_back(pkt6field);
                 }
           ;
 
@@ -214,6 +223,10 @@ length_expr : INTEGER
                      ctx.expression.push_back(str);
                  }
             ;
+
+pkt6_field:MSGTYPE { $$ = TokenPkt6::MSGTYPE; }
+          | TRANSID { $$ = TokenPkt6::TRANSID; }
+          ;
 
 %%
 void
