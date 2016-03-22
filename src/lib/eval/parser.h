@@ -778,7 +778,7 @@ namespace isc { namespace eval {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 70,     ///< Last index in yytable_.
+      yylast_ = 71,     ///< Last index in yytable_.
       yynnts_ = 9,  ///< Number of nonterminal symbols.
       yyfinal_ = 20, ///< Termination state number.
       yyterror_ = 1,
