@@ -135,6 +135,8 @@ timeToText32(const uint32_t value) {
 namespace {
 const size_t DATE_LEN = 14;      // YYYYMMDDHHmmSS
 
+inline uint64_t ull(const int c) { return (static_cast<uint64_t>(c)); }
+
 inline void
 checkRange(const unsigned min, const unsigned max, const unsigned value,
            const string& valname)
@@ -173,16 +175,16 @@ timeFromText64(const string& time_txt) {
     checkRange(0, 59, minute, "minute");
     checkRange(0, 60, second, "second"); // 60 == leap second.
 
-    uint64_t timeval = second + (60ULL * minute) + (3600ULL * hour) +
-        ((day - 1) * 86400ULL);
+    uint64_t timeval = second + (ull(60) * minute) + (ull(3600) * hour) +
+        ((day - 1) * ull(86400));
     for (unsigned m = 0; m < (month - 1); ++m) {
-            timeval += days[m] * 86400ULL;
+            timeval += days[m] * ull(86400);
     }
     if (isLeap(year) && month > 2) {
-            timeval += 86400ULL;
+            timeval += ull(86400);
     }
     for (unsigned y = 1970; y < year; ++y) {
-        timeval += ((isLeap(y) ? 366 : 365) * 86400ULL);
+        timeval += ((isLeap(y) ? 366 : 365) * ull(86400));
     }
 
     return (timeval);
