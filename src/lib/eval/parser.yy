@@ -131,11 +131,6 @@ bool_expr : "(" bool_expr ")"
                        error(@1, "relay4 can only be used in DHCPv4.");
                    }
                 }
-          | PKT6 "." pkt6_field
-                {
-                    TokenPtr pkt6field(new TokenPkt6($3));
-                    ctx.expression.push_back(pkt6field);
-                }
           ;
 
 string_expr : STRING
@@ -182,6 +177,11 @@ string_expr : STRING
                   {
                       TokenPtr conc(new TokenConcat());
                       ctx.expression.push_back(conc);
+                  }
+            | PKT6 "." pkt6_field
+                  {
+                      TokenPtr pkt6field(new TokenPkt6($3));
+                      ctx.expression.push_back(pkt6field);
                   }
             ;
 
