@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -135,8 +135,10 @@ timeToText32(const uint32_t value) {
 namespace {
 const size_t DATE_LEN = 14;      // YYYYMMDDHHmmSS
 
+inline uint64_t ull(const int c) { return (static_cast<uint64_t>(c)); }
+
 inline void
-checkRange(const int min, const int max, const int value,
+checkRange(const unsigned min, const unsigned max, const unsigned value,
            const string& valname)
 {
     if ((value >= min) && (value <= max)) {
@@ -157,9 +159,9 @@ timeFromText64(const string& time_txt) {
         }
     }
 
-    int year, month, day, hour, minute, second;
+    unsigned year, month, day, hour, minute, second;
     if (time_txt.length() != DATE_LEN ||
-        sscanf(time_txt.c_str(), "%4d%2d%2d%2d%2d%2d",
+        sscanf(time_txt.c_str(), "%4u%2u%2u%2u%2u%2u",
                &year, &month, &day, &hour, &minute, &second) != 6)
     {
         isc_throw(InvalidTime, "Couldn't convert time value: " << time_txt);
@@ -173,16 +175,16 @@ timeFromText64(const string& time_txt) {
     checkRange(0, 59, minute, "minute");
     checkRange(0, 60, second, "second"); // 60 == leap second.
 
-    uint64_t timeval = second + (60 * minute) + (3600 * hour) +
-        ((day - 1) * 86400);
-    for (int m = 0; m < (month - 1); ++m) {
-            timeval += days[m] * 86400;
+    uint64_t timeval = second + (ull(60) * minute) + (ull(3600) * hour) +
+        ((day - 1) * ull(86400));
+    for (unsigned m = 0; m < (month - 1); ++m) {
+            timeval += days[m] * ull(86400);
     }
     if (isLeap(year) && month > 2) {
-            timeval += 86400;
+            timeval += ull(86400);
     }
-    for (int y = 1970; y < year; ++y) {
-        timeval += ((isLeap(y) ? 366 : 365 ) * 86400);
+    for (unsigned y = 1970; y < year; ++y) {
+        timeval += ((isLeap(y) ? 366 : 365) * ull(86400));
     }
 
     return (timeval);

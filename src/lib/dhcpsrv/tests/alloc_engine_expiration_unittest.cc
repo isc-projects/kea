@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1854,7 +1854,7 @@ void
 ExpirationAllocEngine4Test::setUniqueClientId(const uint16_t index) {
     std::ostringstream clientid_s;
     clientid_s << "AA:BB:" << std::setw(2) << std::setfill('0')
-        << (index >> 16) << ":" << std::setw(2) << std::setfill('0')
+        << (index >> 8) << ":" << std::setw(2) << std::setfill('0')
         << (index & 0x00FF);
     ClientIdPtr client_id(ClientId::fromText(clientid_s.str()));
     leases_[index]->client_id_ = client_id;
