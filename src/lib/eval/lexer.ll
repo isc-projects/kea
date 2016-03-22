@@ -141,6 +141,10 @@ blank [ \t]
 "]"         return isc::eval::EvalParser::make_RBRACKET(loc);
 ","         return isc::eval::EvalParser::make_COMA(loc);
 
+"pkt6"      return isc::eval::EvalParser::make_PKT6(loc);
+"msgtype"   return isc::eval::EvalParser::make_MSGTYPE(loc);
+"transid"   return isc::eval::EvalParser::make_TRANSID(loc);
+
 .          driver.error (loc, "Invalid character: " + std::string(yytext));
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);
 %%
