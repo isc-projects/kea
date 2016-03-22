@@ -1,3 +1,7 @@
+1095.	[bug]		fdupont
+	Fixed some minor Coverity-detected issues.
+	(Trac #4326, git xxx)
+
 1094.	[bug]		marcin
 	libdhcpsrv: Fixed issues with lease indexing in Memfile
 	database backend.
