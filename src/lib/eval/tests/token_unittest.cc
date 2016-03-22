@@ -967,3 +967,22 @@ TEST_F(TokenTest, concat) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("foobar", values_.top());
 }
+
+// Verifies if the DHCPv6 packet fields can be extracted.
+TEST_F(TokenTest, pkt6Fields) {
+    // The default test creates a v6 DHCPV6_SOLICIT packet with a
+    // transaction id of 12345.
+
+    // Check the message type
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::MSGTYPE)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("1", values_.top());
+
+    // Check the transaction id field
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("12345", values_.top());
+}

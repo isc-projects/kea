@@ -123,6 +123,20 @@ public:
         EXPECT_TRUE(conc);
     }
 
+    /// @brief checks if the given token is Pkt6 of specified type
+    /// @param token token to be checked
+    /// @param type expected type of the Pkt6 field
+    void checkTokenPkt6(const TokenPtr& token, TokenPkt6::FieldType type) {
+        ASSERT_TRUE(token);
+
+        boost::shared_ptr<TokenPkt6> pkt =
+            boost::dynamic_pointer_cast<TokenPkt6>(token);
+
+        ASSERT_TRUE(pkt);
+
+        EXPECT_EQ(type, pkt->getType());
+    }
+
     /// @brief checks if the given expression raises the expected message
     /// when it is parsed.
     void checkError(const string& expr, const string& msg) {
@@ -145,6 +159,38 @@ public:
     /// @note the default universe is DHCPv4
     void setUniverse(const Option::Universe& universe) {
         universe_ = universe;
+    }
+
+    /// @brief Test that verifies access to the DHCPv6 packet fields.
+    ///
+    /// This test attempts to parse the expression, will check if the number
+    /// of tokens is exactly as planned and then will try to verify if the
+    /// first token represents expected the field in DHCPv6 packet.
+    ///
+    /// @param expr expression to be parsed
+    /// @param exp_type expected field type to be parsed
+    /// @param exp_tokens expected number of tokens
+    void testPkt6Field(std::string expr, TokenPkt6::FieldType exp_type,
+                       int exp_tokens) {
+        EvalContext eval(Option::V6);
+
+        // Parse the expression.
+        try {
+            parsed_ = eval.parseString(expr);
+        }
+        catch (const EvalParseError& ex) {
+            FAIL() << "Exception thrown: " << ex.what();
+            return;
+        }
+
+        // Parsing should succeed and return a token.
+        EXPECT_TRUE(parsed_);
+
+        // There should be the requested number of tokens
+        ASSERT_EQ(exp_tokens, eval.expression.size());
+
+        // Check that the first token is TokenPkt6 instance and has correct type.
+        checkTokenPkt6(eval.expression.at(0), exp_type);
     }
 
     Option::Universe universe_;
@@ -332,6 +378,16 @@ TEST_F(EvalContextTest, relay4Error) {
 
     checkError("relay4[13].hex == 'thirteen'",
                "<string>:1.1-6: relay4 can only be used in DHCPv4.");
+}
+
+// Tests whether message type field in DHCPv6 can be accessed.
+TEST_F(EvalContextTest, pkt6FieldMsgtype) {
+    testPkt6Field("pkt6.msgtype == '1'", TokenPkt6::MSGTYPE, 3);
+}
+
+// Tests whether transaction id field in DHCPv6 can be accessed.
+TEST_F(EvalContextTest, pkt6FieldTransid) {
+    testPkt6Field("pkt6.transid == '1'", TokenPkt6::TRANSID, 3);
 }
 
 // Test parsing of logical operators
