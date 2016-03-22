@@ -221,13 +221,13 @@ public:
     ///
     /// The contents of the enum are indexes into the list of SQL statements
     enum StatementIndex {
-        INSERT_HOST,		// Insert new host to collection
+        INSERT_HOST,            // Insert new host to collection
         GET_HOST_HWADDR_DUID,   // Gets hosts by DUID and/or HW address
-        GET_HOST_ADDR,		// Gets hosts by IPv4 address
-        GET_HOST_SUBID4_DHCPID,	// Gets host by IPv4 SubnetID, HW address/DUID
-        GET_HOST_SUBID6_DHCPID,	// Gets host by IPv6 SubnetID, HW address/DUID
+        GET_HOST_ADDR,          // Gets hosts by IPv4 address
+        GET_HOST_SUBID4_DHCPID, // Gets host by IPv4 SubnetID, HW address/DUID
+        GET_HOST_SUBID6_DHCPID, // Gets host by IPv6 SubnetID, HW address/DUID
         GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
-        GET_HOST_PREFIX,	// Gets host by IPv6 prefix
+        GET_HOST_PREFIX,        // Gets host by IPv6 prefix
         GET_VERSION,            // Obtain version number
         NUM_STATEMENTS          // Number of statements
     };
@@ -236,7 +236,7 @@ private:
     /// @brief Add Host Code
     ///
     /// This method performs adding a host operation.
-    ///	It binds the contents of the host object to
+    /// It binds the contents of the host object to
     /// the prepared statement and adds it to the database.
     ///
     /// @param stindex Index of statemnent being executed
