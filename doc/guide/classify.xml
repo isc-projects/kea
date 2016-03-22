@@ -169,6 +169,20 @@
 sub-option</entry><entry>relay4[code].hex</entry><entry>The value of
 sub-option with code "code" from the DHCPv4 Relay Agent Information option
 (option 82)</entry></row>
+<row>
+  <entry>Message Type in DHCPv6 packet</entry>
+  <entry>pkt6.msgtype</entry>
+<!--  <entry>'1'</entry>
+-->
+  <entry>The value of the message type field in the DHCPv6 packet.</entry>
+</row>
+<row>
+  <entry>Transaction ID in DHCPv6 packet</entry>
+  <entry>pkt6.transid</entry>
+<!--  <entry>'12345'</entry>
+-->
+  <entry>The value of the transaction id in the DHCPv6 packet.</entry>
+</row>
           </tbody>
           </tgroup>
         </table>
@@ -207,6 +221,14 @@ sub-option with code "code" from the DHCPv4 Relay Agent Information option
       <para>
        "relay4" shares the same representation types than "option", for
        instance "relay4[code].exists" is supported.
+      </para>
+
+      <para>
+       "pkt6" refers to information from the client request.  To access any
+       information from an intermediate relay use "relay6".  "pkt6.msgtype"
+       outputs the string representation of the integer value for the message
+       type, for example SOLICIT will be '1'.  "pkt6.transid" outputs the string
+       representation of the value of the transaction ID.
       </para>
 
       <para>
