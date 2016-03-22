@@ -985,4 +985,9 @@ TEST_F(TokenTest, pkt6Fields) {
     EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("12345", values_.top());
+
+    // Check that working with a v4 packet generates an error
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
 }
