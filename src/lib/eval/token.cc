@@ -8,6 +8,7 @@
 #include <eval/eval_log.h>
 #include <util/encode/hex.h>
 #include <boost/lexical_cast.hpp>
+#include <dhcp/pkt6.h>
 #include <cstring>
 #include <string>
 
@@ -273,3 +274,36 @@ TokenOr::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
         values.push("false");
     }
 }
+
+void
+TokenPkt6::evaluate(const Pkt& pkt, ValueStack& values) {
+
+    try {
+      // Check if it's a Pkt6.  If it's not the dynamic_cast will throw
+      // std::bad_cast (failed dynamic_cast returns NULL for pointers and
+      // throws for references).
+      const Pkt6& pkt6 = dynamic_cast<const Pkt6&>(pkt);
+
+      switch (type_) {
+      case MSGTYPE: {
+          // msg type is an uint8_t integer.  We need to represent it as a string.
+          stringstream tmp;
+          tmp << static_cast<int>(pkt6.getType());
+          values.push(tmp.str());
+          return;
+      }
+      case TRANSID: {
+          // transaction id is an uint32_t integer.  We need to represent it as a string.
+          stringstream tmp;
+          tmp << static_cast<int>(pkt6.getTransid());
+          values.push(tmp.str());
+          return;
+      }
+      default:
+          isc_throw(EvalTypeError, "Bad filed specified: "
+                    << static_cast<int>(type_) );
+      }
+    } catch (const std::bad_cast&) {
+        isc_throw(EvalTypeError, "Specified packet is not Pkt6");
+    }
+};
