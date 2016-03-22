@@ -67,7 +67,7 @@ public:
         waiting_(2),
         main_(main),
         exception_(false),
-	tid_(0)
+        tid_(0)
     {}
     // Another of the waiting events is done. If there are no more, delete
     // impl.
