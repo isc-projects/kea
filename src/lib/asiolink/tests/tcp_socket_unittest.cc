@@ -455,13 +455,13 @@ TEST(TCPSocket, sequenceTest) {
             }
         }
 
-	// Has the client run?
+        // Has the client run?
         if (!client_complete) {
 
-	    if (client_cb.called() != client_cb.queued()) {
-		// No. Run the service another time.
-		continue;
-	    }
+            if (client_cb.called() != client_cb.queued()) {
+                // No. Run the service another time.
+                continue;
+            }
 
             // Client callback must have run.  Check that it ran OK.
             EXPECT_EQ(TCPCallback::READ, client_cb.called());

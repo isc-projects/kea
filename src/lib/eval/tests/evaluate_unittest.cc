@@ -34,6 +34,8 @@ public:
     EvaluateTest() {
         e_.clear();
 
+        result_ = false;
+
         pkt4_.reset(new Pkt4(DHCPDISCOVER, 12345));
         pkt6_.reset(new Pkt6(DHCPV6_SOLICIT, 12345));
 
