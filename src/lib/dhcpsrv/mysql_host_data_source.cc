@@ -503,18 +503,18 @@ public:
     }
 
 private:
-    uint32_t	host_id_;			/// Host unique identifier
+    uint32_t    host_id_;                       /// Host unique identifier
     std::vector<uint8_t> dhcp_identifier_;      /// HW address (0) / DUID (1)
     uint8_t     dhcp_identifier_buffer_[DUID::MAX_DUID_LEN];
                                                 /// Buffer for dhcp identifier
     unsigned long dhcp_identifier_length_;      /// Length of dhcp identifier
-    uint8_t     dhcp_identifier_type_;		/// Type of dhcp_identifier
-    uint32_t    dhcp4_subnet_id_;		/// Subnet DHCPv4 identifier
-    uint32_t    dhcp6_subnet_id_;		/// Subnet DHCPv6 identifier
-    uint32_t    ipv4_address_;			/// Reserved IPv4 address.
-    IPv6ResrvCollection ipv6_reservations_;	/// IPv6 reservations collection
+    uint8_t     dhcp_identifier_type_;          /// Type of dhcp_identifier
+    uint32_t    dhcp4_subnet_id_;               /// Subnet DHCPv4 identifier
+    uint32_t    dhcp6_subnet_id_;               /// Subnet DHCPv6 identifier
+    uint32_t    ipv4_address_;                  /// Reserved IPv4 address.
+    IPv6ResrvCollection ipv6_reservations_;     /// IPv6 reservations collection
     char        hostname_[HOSTNAME_MAX_LEN];    /// Name reserved for the host
-    unsigned long hostname_length_;		/// hostname length
+    unsigned long hostname_length_;             /// hostname length
     char        dhcp4_client_classes_[CLIENT_CLASSES_MAX_LEN];
                                                 /// DHCPv4 client classes
     unsigned long dhcp4_client_classes_length_; /// dhcp4_client_classes length
@@ -522,7 +522,7 @@ private:
                                                 /// DHCPv6 client classes
     unsigned long dhcp6_client_classes_length_; /// dhcp6_client_classes length
     HWAddrPtr   hw_address_;                    /// Pointer to hardware address
-    DuidPtr     duid_;				/// Pointer to DUID
+    DuidPtr     duid_;                          /// Pointer to DUID
 
     // NULL flags for subnets id, ipv4 address, hostname and client classes
     my_bool     dhcp4_subnet_id_null_;
@@ -533,9 +533,9 @@ private:
     my_bool     dhcp6_client_classes_null_;
 
     MYSQL_BIND  bind_[HOST_COLUMNS];
-    std::string columns_[HOST_COLUMNS];	/// Column names
+    std::string columns_[HOST_COLUMNS]; /// Column names
     my_bool     error_[HOST_COLUMNS];   /// Error array
-    HostPtr     host_;			// Pointer to Host object
+    HostPtr     host_;                  // Pointer to Host object
 };
 
 // MySqlHostDataSource Constructor and Destructor

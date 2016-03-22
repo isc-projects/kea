@@ -958,7 +958,7 @@ status_no_config_test() {
     assert_string_contains "DHCP DDNS: inactive" "${output}" \
         "Expected keactrl status command return %s"
     assert_string_contains "Configuration file for Kea does not exist" \
-	"${output}" "Expected keactrl status command return %s"
+        "${output}" "Expected keactrl status command return %s"
 
     test_finish 0
 }
