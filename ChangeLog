@@ -1,3 +1,9 @@
+1097.	[func]		fdupont
+	Reorganized the DHCPv4 and DHCPv6 services into run() (service
+	loop), run_one() (receive, call next routine and send) and
+	processPacket() (internal core processing of an incoming packet).
+	(Trac #4108,#4266,#4267, git xxx)
+
 1096.	[func]		tmark
 	Both kea-dhcp4 and kea-dhcp6, now log the primary lease events (e.g.
 	grants, renewals, releases, declines) at the INFO log level to the
