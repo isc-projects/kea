@@ -132,6 +132,51 @@ public:
         }
     }
 
+    /// @brief checks if the given token is Pkt4 of specified type
+    /// @param token token to be checked
+    /// @param type expected type of the Pkt4 field
+    void checkTokenPkt4(const TokenPtr& token, TokenPkt4::FieldType type) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenPkt4> pkt =
+            boost::dynamic_pointer_cast<TokenPkt4>(token);
+        ASSERT_TRUE(pkt);
+
+        EXPECT_EQ(type, pkt->getType());
+    }
+
+    /// @brief Test that verifies access to the DHCPv4 packet fields.
+    ///
+    /// This test attempts to parse the expression, will check if the number
+    /// of tokens is exactly as expected and then will try to verify if the
+    /// first token represents the expected field in DHCPv4 packet.
+    ///
+    /// @param expr expression to be parsed
+    /// @param exp_type expected field type to be parsed
+    /// @param exp_tokens expected number of tokens
+    void testPkt4Field(std::string expr,
+                       TokenPkt4::FieldType exp_type,
+                       int exp_tokens) {
+        EvalContext eval(Option::V4);
+
+        // Parse the expression.
+        try {
+            parsed_ = eval.parseString(expr);
+        }
+        catch (const EvalParseError& ex) {
+            FAIL() << "Exception thrown: " << ex.what();
+            return;
+        }
+
+        // Parsing should succeed and return a token.
+        EXPECT_TRUE(parsed_);
+
+        // There should be exactly the expected number of tokens.
+        ASSERT_EQ(exp_tokens, eval.expression.size());
+
+        // Check that the first token is TokenPkt4 instance and has correct type.
+        checkTokenPkt4(eval.expression.at(0), exp_type);
+    }
+
     /// @brief checks if the given token is a substring operator
     void checkTokenSubstring(const TokenPtr& token) {
         ASSERT_TRUE(token);
@@ -430,6 +475,41 @@ TEST_F(EvalContextTest, relay4Error) {
                "<string>:1.1-6: relay4 can only be used in DHCPv4.");
 }
 
+// Tests whether chaddr field in DHCPv4 can be accessed.
+TEST_F(EvalContextTest, pkt4FieldChaddr) {
+    testPkt4Field("pkt4.mac == 0x000102030405", TokenPkt4::CHADDR, 3);
+}
+
+// Tests whether hlen field in DHCPv4 can be accessed.
+TEST_F(EvalContextTest, pkt4FieldHlen) {
+    testPkt4Field("pkt4.hlen == 0x6", TokenPkt4::HLEN, 3);
+}
+
+// Tests whether htype field in DHCPv4 can be accessed.
+TEST_F(EvalContextTest, pkt4FieldHtype) {
+    testPkt4Field("pkt4.htype == 0x1", TokenPkt4::HTYPE, 3);
+}
+
+// Tests whether ciaddr field in DHCPv4 can be accessed.
+TEST_F(EvalContextTest, pkt4FieldCiaddr) {
+    testPkt4Field("pkt4.ciaddr == 192.0.2.1", TokenPkt4::CIADDR, 3);
+}
+
+// Tests whether giaddr field in DHCPv4 can be accessed.
+TEST_F(EvalContextTest, pkt4FieldGiaddr) {
+    testPkt4Field("pkt4.giaddr == 192.0.2.1", TokenPkt4::GIADDR, 3);
+}
+
+// Tests whether yiaddr field in DHCPv4 can be accessed.
+TEST_F(EvalContextTest, pkt4FieldYiaddr) {
+    testPkt4Field("pkt4.yiaddr == 192.0.2.1", TokenPkt4::YIADDR, 3);
+}
+
+// Tests whether siaddr field in DHCPv4 can be accessed.
+TEST_F(EvalContextTest, pkt4FieldSiaddr) {
+    testPkt4Field("pkt4.siaddr == 192.0.2.1", TokenPkt4::SIADDR, 3);
+}
+
 // Test parsing of logical operators
 TEST_F(EvalContextTest, logicalOps) {
     // option.exists
@@ -588,6 +668,7 @@ TEST_F(EvalContextTest, scanErrors) {
     checkError("foo", "<string>:1.1: Invalid character: f");
     checkError(" bar", "<string>:1.2: Invalid character: b");
     checkError("relay[12].hex == 'foo'", "<string>:1.1: Invalid character: r");
+    checkError("pkt4.ziaddr", "<string>:1.6: Invalid character: z");
 }
 
 // Tests some scanner/parser error cases

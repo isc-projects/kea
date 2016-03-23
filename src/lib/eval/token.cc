@@ -8,6 +8,7 @@
 #include <eval/eval_log.h>
 #include <util/encode/hex.h>
 #include <asiolink/io_address.h>
+#include <dhcp/pkt4.h>
 #include <boost/lexical_cast.hpp>
 #include <cstring>
 #include <string>
@@ -121,6 +122,69 @@ OptionPtr TokenRelay4Option::getOption(const Pkt& pkt) {
 
     // If there is, try to return its suboption
     return (rai->getOption(option_code_));
+}
+
+void
+TokenPkt4::evaluate(const Pkt& pkt, ValueStack& values) {
+
+    vector<uint8_t> binary;
+    try {
+        // Check if it's a Pkt4. If it's not, the dynamic_cast will throw
+        // std::bad_cast (failed dynamic_cast returns NULL for pointers and
+        // throws for references).
+        const Pkt4& pkt4 = dynamic_cast<const Pkt4&>(pkt);
+
+        switch (type_) {
+        case CHADDR: {
+            HWAddrPtr hwaddr = pkt4.getHWAddr();
+            if (!hwaddr) {
+                // This should never happen. Every Pkt4 should always have
+                // a hardware address.
+                isc_throw(EvalTypeError,
+                          "Packet does not have hardware address");
+            }
+            binary = hwaddr->hwaddr_;
+            break;
+        }
+        case GIADDR:
+            binary = pkt4.getGiaddr().toBytes();
+            break;
+
+        case CIADDR:
+            binary = pkt4.getCiaddr().toBytes();
+            break;
+
+        case YIADDR:
+            binary = pkt4.getYiaddr().toBytes();
+            break;
+
+        case SIADDR:
+            binary = pkt4.getSiaddr().toBytes();
+            break;
+
+        case HLEN:
+            binary.assign(1, pkt4.getHlen());
+            break;
+
+        case HTYPE:
+            binary.assign(1, pkt4.getHtype());
+            break;
+
+        default:
+            isc_throw(EvalTypeError, "Bad field specified: "
+                      << static_cast<int>(type_) );
+        }
+
+    } catch (const std::bad_cast&) {
+        isc_throw(EvalTypeError, "Specified packet is not a Pkt4");
+    }
+
+    string value;
+    value.resize(binary.size());
+    if (!binary.empty()) {
+        memmove(&value[0], &binary[0], binary.size());
+    }
+    values.push(value);
 }
 
 void
