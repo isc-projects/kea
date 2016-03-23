@@ -208,15 +208,15 @@ public:
  
     /// @brief Main server processing loop.
     ///
-    /// Main server processing loop. Call the processing one routine
+    /// Main server processing loop. Call the processing step routine
     /// until shut down.
     ///
     /// @return true, if being shut down gracefully, never fail.
     bool run();
 
-    /// @brief Main server processing one.
+    /// @brief Main server processing step.
     ///
-    /// Main server processing one. Receives one incoming packet, calls
+    /// Main server processing step. Receives one incoming packet, calls
     /// the processing packet routing and (if necessary) transmits
     /// a response.
     void run_one();
