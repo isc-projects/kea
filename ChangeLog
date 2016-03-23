@@ -1,3 +1,10 @@
+1096.	[func]		tmark
+	Both kea-dhcp4 and kea-dhcp6, now log the primary lease events (e.g.
+	grants, renewals, releases, declines) at the INFO log level to the
+	lease4_logger and lease6_logger repsectively.  Prior to this these
+	events were logged at the DEBUG log level.
+	(Trac #4316, git 9beca27e3d76d0ccec925125f23074227db08869)
+
 1095.	[bug]		fdupont
 	Fixed some minor Coverity-detected issues.
 	(Trac #4326, git ad1f442ee4382b354dc8be84ba77785e565aa86b)
