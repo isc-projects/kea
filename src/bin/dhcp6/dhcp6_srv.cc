@@ -1316,8 +1316,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     if (lease) {
         // We have a lease! Let's wrap its content into IA_NA option
         // with IAADDR suboption.
-        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
-                  DHCP6_LEASE_ADVERT : DHCP6_LEASE_ALLOC)
+        LOG_INFO(lease6_logger, fake_allocation ? DHCP6_LEASE_ADVERT : DHCP6_LEASE_ALLOC)
             .arg(query->getLabel())
             .arg(lease->addr_.toText())
             .arg(ia->getIAID());
@@ -1434,7 +1433,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
             // We have a lease! Let's wrap its content into IA_PD option
             // with IAADDR suboption.
-            LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
+            LOG_INFO(lease6_logger, fake_allocation ?
                       DHCP6_PD_LEASE_ADVERT : DHCP6_PD_LEASE_ALLOC)
                 .arg(query->getLabel())
                 .arg((*l)->addr_.toText())
@@ -1558,6 +1557,10 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
                                 (*l)->addr_, (*l)->preferred_lft_, (*l)->valid_lft_));
         ia_rsp->addOption(iaaddr);
+        LOG_INFO(lease6_logger, DHCP6_LEASE_RENEW)
+            .arg(query->getLabel())
+            .arg((*l)->addr_.toText())
+            .arg(ia_rsp->getIAID());
 
         // Now remove this address from the hints list.
         AllocEngine::HintType tmp((*l)->addr_, 128);
@@ -1714,6 +1717,11 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                                (*l)->addr_, (*l)->prefixlen_,
                                (*l)->preferred_lft_, (*l)->valid_lft_));
         ia_rsp->addOption(prf);
+        LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
+            .arg(query->getLabel())
+            .arg((*l)->addr_.toText())
+            .arg(static_cast<int>((*l)->prefixlen_))
+            .arg(ia->getIAID());
 
         // Now remove this address from the hints list.
         AllocEngine::HintType tmp((*l)->addr_, (*l)->prefixlen_);
@@ -1988,7 +1996,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
 
         return (ia_rsp);
     } else {
-        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_RELEASE_NA)
+        LOG_INFO(lease6_logger, DHCP6_RELEASE_NA)
             .arg(query->getLabel())
             .arg(lease->addr_.toText())
             .arg(lease->iaid_);
@@ -2143,7 +2151,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
         general_status = STATUS_UnspecFail;
 
     } else {
-        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_RELEASE_PD)
+        LOG_INFO(lease6_logger, DHCP6_RELEASE_PD)
             .arg(query->getLabel())
             .arg(lease->addr_.toText())
             .arg(static_cast<int>(lease->prefixlen_))
@@ -2664,7 +2672,7 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
     LeaseMgrFactory::instance().updateLease6(lease);
 
-    LOG_INFO(dhcp6_logger, DHCP6_DECLINE_LEASE).arg(decline->getLabel())
+    LOG_INFO(lease6_logger, DHCP6_DECLINE_LEASE).arg(decline->getLabel())
         .arg(lease->addr_.toText()).arg(lease->valid_lft_);
 
     ia_rsp->addOption(createStatusCode(*decline, *ia_rsp, STATUS_Success,

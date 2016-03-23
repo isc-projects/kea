@@ -1297,7 +1297,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // and whether the client is known, i.e., has a lease.
     if (!fake_allocation && !opt_serverid && opt_requested_address) {
 
-        LOG_DEBUG(lease4_logger, DBG_DHCP4_DETAIL, DHCP4_INIT_REBOOT)
+        LOG_INFO(lease4_logger, DHCP4_INIT_REBOOT)
             .arg(query->getLabel())
             .arg(hint.toText());
 
@@ -1384,8 +1384,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     if (lease) {
         // We have a lease! Let's set it in the packet and send it back to
         // the client.
-        LOG_DEBUG(lease4_logger, DBG_DHCP4_BASIC_DATA, fake_allocation?
-                  DHCP4_LEASE_ADVERT : DHCP4_LEASE_ALLOC)
+        LOG_INFO(lease4_logger, fake_allocation ? DHCP4_LEASE_ADVERT : DHCP4_LEASE_ALLOC)
             .arg(query->getLabel())
             .arg(lease->addr_.toText());
 
@@ -1842,7 +1841,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
             if (success) {
                 // Release successful
-                LOG_DEBUG(lease4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
+                LOG_INFO(lease4_logger, DHCP4_RELEASE)
                     .arg(release->getLabel())
                     .arg(lease->addr_.toText());
 
@@ -2004,7 +2003,7 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline) {
 
     LeaseMgrFactory::instance().updateLease4(lease);
 
-    LOG_INFO(dhcp4_logger, DHCP4_DECLINE_LEASE).arg(lease->addr_.toText())
+    LOG_INFO(lease4_logger, DHCP4_DECLINE_LEASE).arg(lease->addr_.toText())
         .arg(decline->getLabel()).arg(lease->valid_lft_);
 }
 
