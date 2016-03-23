@@ -51,6 +51,14 @@ using namespace isc::eval;
   TEXT "text"
   HEX "hex"
   EXISTS "exists"
+  PKT4 "pkt4"
+  CHADDR "mac"
+  HLEN "hlen"
+  HTYPE "htype"
+  CIADDR "ciaddr"
+  GIADDR "giaddr"
+  YIADDR "yiaddr"
+  SIADDR "siaddr"
   SUBSTRING "substring"
   ALL "all"
   COMA ","
@@ -65,6 +73,7 @@ using namespace isc::eval;
 
 %type <uint16_t> option_code
 %type <TokenOption::RepresentationType> option_repr_type
+%type <TokenPkt4::FieldType> pkt4_field
 
 %left OR
 %left AND
@@ -170,6 +179,11 @@ string_expr : STRING
                          error(@1, "relay4 can only be used in DHCPv4.");
                      }
                   }
+            | PKT4 "." pkt4_field
+                  {
+                      TokenPtr pkt4field(new TokenPkt4($3));
+                      ctx.expression.push_back(pkt4field);
+                  }
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
                   {
                       TokenPtr sub(new TokenSubstring());
@@ -201,6 +215,36 @@ option_repr_type : TEXT
                           $$ = TokenOption::HEXADECIMAL;
                       }
                  ;
+
+pkt4_field : CHADDR
+                {
+                    $$ = TokenPkt4::CHADDR;
+                }
+           | HLEN
+                {
+                    $$ = TokenPkt4::HLEN;
+                }
+           | HTYPE
+                {
+                    $$ = TokenPkt4::HTYPE;
+                }
+           | CIADDR
+                {
+                    $$ = TokenPkt4::CIADDR;
+                }
+           | GIADDR
+                {
+                    $$ = TokenPkt4::GIADDR;
+                }
+           | YIADDR
+                {
+                    $$ = TokenPkt4::YIADDR;
+                }
+           | SIADDR
+                {
+                    $$ = TokenPkt4::SIADDR;
+                }
+           ;
 
 start_expr : INTEGER
                  {
