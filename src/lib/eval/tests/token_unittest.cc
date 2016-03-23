@@ -20,6 +20,7 @@
 
 using namespace std;
 using namespace isc::dhcp;
+using namespace isc::asiolink;
 
 namespace {
 
@@ -601,6 +602,84 @@ TEST_F(TokenTest, relay4RAIOnly) {
     EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("false", values_.top());
+}
+
+// Verifies if the DHCPv4 packet fields can be extracted.
+TEST_F(TokenTest, pkt4Fields) {
+    pkt4_->setGiaddr(IOAddress("192.0.2.1"));
+    pkt4_->setCiaddr(IOAddress("192.0.2.2"));
+    pkt4_->setYiaddr(IOAddress("192.0.2.3"));
+    pkt4_->setSiaddr(IOAddress("192.0.2.4"));
+
+    // We're setting hardware address to uncommon (7 bytes rather than 6 and
+    // hardware type 123) HW address. We'll use it in hlen and htype checks.
+    HWAddrPtr hw(new HWAddr(HWAddr::fromText("01:02:03:04:05:06:07", 123)));
+    pkt4_->setHWAddr(hw);
+
+    // Check hardware address field.
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::CHADDR)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    uint8_t expected_hw[] = { 1, 2, 3, 4, 5, 6, 7 };
+    ASSERT_EQ(7, values_.top().size());
+    EXPECT_EQ(0, memcmp(expected_hw, &values_.top()[0], 7));
+
+    // Check hlen value field.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::HLEN)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1, values_.top().size());
+    EXPECT_EQ(7, static_cast<uint8_t>(values_.top()[0]));
+
+    // Check htype value.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::HTYPE)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1, values_.top().size());
+    EXPECT_EQ(123, static_cast<uint8_t>(values_.top()[0]));
+
+    // Check giaddr value.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::GIADDR)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    uint8_t expected_addr[] = { 192, 0, 2, 1 };
+    ASSERT_EQ(4, values_.top().size());
+    EXPECT_EQ(0, memcmp(expected_addr, &values_.top()[0], 4));
+
+    // Check ciaddr value.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::CIADDR)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    expected_addr[3] = 2;
+    ASSERT_EQ(4, values_.top().size());
+    EXPECT_EQ(0, memcmp(expected_addr, &values_.top()[0], 4));
+
+    // Check yiaddr value.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::YIADDR)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    expected_addr[3] = 3;
+    ASSERT_EQ(4, values_.top().size());
+    EXPECT_EQ(0, memcmp(expected_addr, &values_.top()[0], 4));
+
+    // Check siaddr value.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::SIADDR)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    expected_addr[3] = 4;
+    ASSERT_EQ(4, values_.top().size());
+    EXPECT_EQ(0, memcmp(expected_addr, &values_.top()[0], 4));
+
+    // Check a DHCPv6 packet throws.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::HLEN)));
+    EXPECT_THROW(t_->evaluate(*pkt6_, values_), EvalTypeError);
 }
 
 // This test checks if a token representing an == operator is able to
