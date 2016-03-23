@@ -78,7 +78,7 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
       ipv6_subnet_id_(ipv6_subnet_id),
       ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
-      dhcp6_client_classes_(dhcp6_client_classes),
+      dhcp6_client_classes_(dhcp6_client_classes), host_id_(0),
       cfg_option4_(), cfg_option6_() {
 
     // Initialize HWAddr or DUID
@@ -100,7 +100,7 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
       ipv6_subnet_id_(ipv6_subnet_id),
       ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
-      dhcp6_client_classes_(dhcp6_client_classes),
+      dhcp6_client_classes_(dhcp6_client_classes), host_id_(0),
       cfg_option4_(new CfgOption()), cfg_option6_(new CfgOption()) {
 
     // Initialize HWAddr or DUID

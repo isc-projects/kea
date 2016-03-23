@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -106,4 +106,28 @@ TEST(ClassifyTest, ClientClassesIterator) {
     EXPECT_TRUE(seenbeta);
     EXPECT_TRUE(seengamma);
     EXPECT_FALSE(seendelta);
+}
+
+// Check that the ClientClasses::toText function returns
+// correct values.
+TEST(ClassifyTest, ClientClassesToText) {
+    // No classes.
+    ClientClasses classes;
+    EXPECT_TRUE(classes.toText().empty());
+
+    // Insert single class name and see if it doesn't include spurious
+    // comma after it.
+    classes.insert("alpha");
+    EXPECT_EQ("alpha", classes.toText());
+
+    // Insert next class name and see that both classes are present.
+    classes.insert("gamma");
+    EXPECT_EQ("alpha, gamma", classes.toText());
+
+    // Insert third class and make sure they get ordered alphabetically.
+    classes.insert("beta");
+    EXPECT_EQ("alpha, beta, gamma", classes.toText());
+
+    // Check non-standard separator.
+    EXPECT_EQ("alpha.beta.gamma", classes.toText("."));
 }
