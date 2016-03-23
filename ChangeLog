@@ -2,7 +2,7 @@
 	Reorganized the DHCPv4 and DHCPv6 services into run() (service
 	loop), run_one() (receive, call next routine and send) and
 	processPacket() (internal core processing of an incoming packet).
-	(Trac #4108,#4266,#4267, git xxx)
+	(Trac #4108,#4266,#4267, git ba24bd770d1a1791f8fdc3df7f2e41f9f0c851ec)
 
 1096.	[func]		tmark
 	Both kea-dhcp4 and kea-dhcp6, now log the primary lease events (e.g.
