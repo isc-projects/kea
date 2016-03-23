@@ -54,15 +54,24 @@ const size_t HOSTNAME_MAX_LEN = 255;
 /// @brief Prepared MySQL statements used by the backend to insert and
 /// retrieve hosts from the database.
 TaggedStatement tagged_statements[] = {
+    // Inserts a host into the 'hosts' table.
     {MySqlHostDataSource::INSERT_HOST,
          "INSERT INTO hosts(host_id, dhcp_identifier, dhcp_identifier_type, "
             "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
             "dhcp4_client_classes, dhcp6_client_classes) "
          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+
+    // Inserts a single IPv6 reservation into 'reservations' table.
     {MySqlHostDataSource::INSERT_V6_RESRV,
          "INSERT INTO ipv6_reservations(address, prefix_len, type, "
             "dhcp6_iaid, host_id) "
          "VALUES (?,?,?,?,?)"},
+
+    // Retrieves host information along with IPv6 reservations associated
+    // with this host. If the host exists in multiple subnets, all hosts
+    // having a specified identifier will be returned from those subnets.
+    // Because LEFT JOIN clause is used, the number of rows returned for
+    // a single host depends on the number of reservations.
     {MySqlHostDataSource::GET_HOST_HWADDR_DUID,
             "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, "
@@ -72,12 +81,19 @@ TaggedStatement tagged_statements[] = {
             "LEFT JOIN ipv6_reservations AS r "
                 "ON h.host_id = r.host_id "
             "WHERE dhcp_identifier = ? AND dhcp_identifier_type = ?"},
+
+    // Retrieves host information by IPv4 address. This should typically
+    // return a single host, but if we ever allow for defining subnets
+    // with overlapping address pools, multiple hosts may be returned.
     {MySqlHostDataSource::GET_HOST_ADDR,
             "SELECT host_id, dhcp_identifier, dhcp_identifier_type, "
                 "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
                 "dhcp4_client_classes, dhcp6_client_classes "
             "FROM hosts "
             "WHERE ipv4_address = ?"},
+
+    // Retrieves host information by subnet identifier and unique
+    // identifier of a client. This is expected to return a single host.
     {MySqlHostDataSource::GET_HOST_SUBID4_DHCPID,
             "SELECT host_id, dhcp_identifier, dhcp_identifier_type, "
                 "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
@@ -85,6 +101,13 @@ TaggedStatement tagged_statements[] = {
             "FROM hosts "
             "WHERE dhcp4_subnet_id = ? AND dhcp_identifier_type = ? "
             "   AND dhcp_identifier = ?"},
+
+    // Retrieves host information by subnet identifier and unique
+    // identifier of a client. This query should return information
+    // for a single host but multiple rows are returned due to
+    // use of LEFT JOIN clause. The number of rows returned for a single
+    // host dpeneds on the number of IPv6 reservations existing for
+    // this client.
     {MySqlHostDataSource::GET_HOST_SUBID6_DHCPID,
             "SELECT DISTINCT h.host_id, h.dhcp_identifier, "
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
@@ -97,12 +120,23 @@ TaggedStatement tagged_statements[] = {
             "WHERE dhcp6_subnet_id = ? AND dhcp_identifier_type = ? "
                 "AND dhcp_identifier = ? "
             "ORDER BY h.host_id, r.prefix_len, r.address"},
+
+    // Retrieves host information using subnet identifier and the
+    // IPv4 address reservation. This should return inforamation for
+    // a single host.
     {MySqlHostDataSource::GET_HOST_SUBID_ADDR,
             "SELECT host_id, dhcp_identifier, dhcp_identifier_type, "
                 "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
                 "dhcp4_client_classes, dhcp6_client_classes "
             "FROM hosts "
             "WHERE dhcp4_subnet_id = ? AND ipv4_address = ?"},
+
+    // Retrieves host information using IPv6 prefix and prefix length
+    // or IPv6 address. This query returns host information for a
+    // single host. However, multiple rows are returned by this
+    // query due to use of LEFT JOIN clause with 'ipv6_reservations'
+    // table. The number of rows returned depends on the number of
+    // reservations for a particular host.
     {MySqlHostDataSource::GET_HOST_PREFIX,
             "SELECT DISTINCT h.host_id, h.dhcp_identifier, "
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
@@ -116,8 +150,12 @@ TaggedStatement tagged_statements[] = {
                 "(SELECT host_id FROM ipv6_reservations "
                  "WHERE address = ? AND prefix_len = ?) "
             "ORDER BY h.host_id, r.prefix_len, r.address"},
+
+    // Retrieves MySQL schema version.
     {MySqlHostDataSource::GET_VERSION,
             "SELECT version, minor FROM schema_version"},
+
+    // Marks the end of the statements table.
     {MySqlHostDataSource::NUM_STATEMENTS, NULL}
 };
 
@@ -285,6 +323,11 @@ public:
                     (&(host->getHWAddress()->hwaddr_[0]));
                 bind_[1].buffer_length = dhcp_identifier_length_;
                 bind_[1].length = &dhcp_identifier_length_;
+
+            } else {
+                isc_throw(DbOperationError, "Host object doesn't contain any"
+                          " identifier which can be used to retrieve information"
+                          " from the database about its static reservations");
             }
 
             // dhcp_identifier_type : TINYINT NOT NULL
@@ -477,7 +520,7 @@ public:
         default:
             isc_throw(BadValue, "invalid dhcp identifier type returned: "
                       << static_cast<int>(dhcp_identifier_type_)
-                      << ". Only 0 or 1 are allowed.");
+                      << ". Only 0 or 1 are supported.");
         }
 
         // Set DHCPv4 subnet ID to the value returned. If NULL returned, set to 0.
@@ -681,7 +724,7 @@ public:
     /// initializes values representing IPv6 reservation information.
     MySqlHostIPv6Exchange()
         : MySqlHostExchange(), reserv_type_(0), reserv_type_null_(MLM_FALSE),
-          ipv6_address_buffer_len_(2), prefix_len_(0), iaid_(0) {
+          ipv6_address_buffer_len_(0), prefix_len_(0), iaid_(0) {
 
         // Append additional columns returned by the queries.
         columns_.push_back("address");
@@ -805,6 +848,7 @@ public:
     ///
     /// @return Vector of MYSQL_BIND objects representing data to be retrieved.
     virtual std::vector<MYSQL_BIND> createBindForReceive() {
+        // The following call sets bind_ values between 0 and 8.
         static_cast<void>(MySqlHostExchange::createBindForReceive());
 
         // IPv6 address/prefix VARCHAR(39)
@@ -851,7 +895,7 @@ private:
     my_bool reserv_type_null_;
 
     /// @brief Buffer holding IPv6 address/prefix in textual format.
-    char ipv6_address_buffer_[ADDRESS6_TEXT_MAX_LEN];
+    char ipv6_address_buffer_[ADDRESS6_TEXT_MAX_LEN + 1];
 
     /// @brief Length of the textual address representation.
     size_t ipv6_address_buffer_len_;
@@ -871,7 +915,7 @@ private:
 /// retrieve IPv6 reservation the @ref MySqlIPv6HostExchange class should be
 /// used instead.
 ///
-/// When a new IPv6 reservation is inserted to the database, an appropriate
+/// When a new IPv6 reservation is inserted into the database, an appropriate
 /// host must be defined in the hosts table. An attempt to insert IPv6
 /// reservation for non-existing host will result in failure.
 class MySqlIPv6ReservationExchange {
