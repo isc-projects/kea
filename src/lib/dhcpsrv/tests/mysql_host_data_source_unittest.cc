@@ -271,54 +271,56 @@ TEST_F(MySqlHostDataSourceTest, DISABLED_hwaddrOrClientId2) {
 
 // Test verifies that host with IPv6 address and DUID can be added and
 // later retrieved by IPv6 address.
-TEST_F(MySqlHostDataSourceTest, DISABLED_get6AddrWithDuid) {
-    /// @todo: Uncomment when IPv6 support (4212) is implemented.
+TEST_F(MySqlHostDataSourceTest, get6AddrWithDuid) {
     testGetByIPv6(BaseHostDataSource::ID_DUID, false);
 }
 
 // Test verifies that host with IPv6 address and HWAddr can be added and
 // later retrieved by IPv6 address.
-TEST_F(MySqlHostDataSourceTest, DISABLED_get6AddrWithHWAddr) {
-    /// @todo: Uncomment when IPv6 support (4212) is implemented.
+TEST_F(MySqlHostDataSourceTest, get6AddrWithHWAddr) {
     testGetByIPv6(BaseHostDataSource::ID_HWADDR, false);
 }
 
 // Test verifies that host with IPv6 prefix and DUID can be added and
 // later retrieved by IPv6 prefix.
-TEST_F(MySqlHostDataSourceTest, DISABLED_get6PrefixWithDuid) {
-    /// @todo: Uncomment when IPv6 support (4212) is implemented.
+TEST_F(MySqlHostDataSourceTest, get6PrefixWithDuid) {
     testGetByIPv6(BaseHostDataSource::ID_DUID, true);
 }
 
 // Test verifies that host with IPv6 prefix and HWAddr can be added and
 // later retrieved by IPv6 prefix.
-TEST_F(MySqlHostDataSourceTest, DISABLED_get6PrefixWithHWaddr) {
-    /// @todo: Uncomment when IPv6 support (4212) is implemented.
+TEST_F(MySqlHostDataSourceTest, get6PrefixWithHWaddr) {
     testGetByIPv6(BaseHostDataSource::ID_HWADDR, true);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by
 // hardware address.
-TEST_F(MySqlHostDataSourceTest, DISABLED_get6ByHWaddr) {
-    /// @todo: Uncomment when IPv6 support (4212) is implemented.
+TEST_F(MySqlHostDataSourceTest, get6ByHWaddr) {
     testGet6ByHWAddr();
 }
 
 // Test verifies if a host reservation can be added and later retrieved by
 // client identifier.
-TEST_F(MySqlHostDataSourceTest, DISABLED_get6ByClientId) {
-    /// @todo: Uncomment when IPv6 support (4212) is implemented.
+TEST_F(MySqlHostDataSourceTest, get6ByClientId) {
     testGet6ByClientId();
 }
 
 // Test verifies if a host reservation can be stored with both IPv6 address and
 // prefix.
-TEST_F(MySqlHostDataSourceTest, DISABLED_addr6AndPrefix) {
-    /// @todo: Implement this test as part of #4212.
+TEST_F(MySqlHostDataSourceTest, addr6AndPrefix) {
+    testAddr6AndPrefix();
+}
 
-    /// @todo: Add host reservation with an IPv6 address and IPv6 prefix,
-    /// retrieve it and verify that both v6 address and prefix are retrieved
-    /// correctly.
+// Tests if host with multiple IPv6 reservations can be added and then
+// retrieved correctly. Test checks reservations comparing.
+TEST_F(MySqlHostDataSourceTest, multipleReservations){
+    testMultipleReservations();
+}
+
+// Tests if compareIPv6Reservations() method treats same pool of reservations
+// but added in different order as equal.
+TEST_F(MySqlHostDataSourceTest, multipleReservationsDifferentOrder){
+    testMultipleReservationsDifferentOrder();
 }
 
 // Test verifies if multiple client classes for IPv4 can be stored.
@@ -339,7 +341,7 @@ TEST_F(MySqlHostDataSourceTest, DISABLED_multipleClientClasses6) {
 
 // Test verifies if multiple client classes for both IPv4 and IPv6 can be stored.
 TEST_F(MySqlHostDataSourceTest, DISABLED_multipleClientClassesBoth) {
-    /// @todo: Implement this test as part of #4213..
+    /// @todo: Implement this test as part of #4213.
 
     /// Add host reservation with a multiple v4 and v6 client-classes, retrieve
     /// it and make sure that all client classes are retrieved properly. Also,
@@ -377,8 +379,24 @@ TEST_F(MySqlHostDataSourceTest, subnetId6) {
 // Test if the duplicate host instances can't be inserted. The test logic is as
 // follows: try to add multiple instances of the same host reservation and
 // verify that the second and following attempts will throw exceptions.
-TEST_F(MySqlHostDataSourceTest, addDuplicate) {
-    testAddDuplicate();
+// Hosts with same DUID.
+TEST_F(MySqlHostDataSourceTest, addDuplicate6WithDUID) {
+    testAddDuplicate6WithSameDUID();
+}
+
+// Test if the duplicate host instances can't be inserted. The test logic is as
+// follows: try to add multiple instances of the same host reservation and
+// verify that the second and following attempts will throw exceptions.
+// Hosts with same HWAddr.
+TEST_F(MySqlHostDataSourceTest, addDuplicate6WithHWAddr) {
+    testAddDuplicate6WithSameHWAddr();
+}
+
+// Test if the duplicate IPv4 host instances can't be inserted. The test logic is as
+// follows: try to add multiple instances of the same host reservation and
+// verify that the second and following attempts will throw exceptions.
+TEST_F(MySqlHostDataSourceTest, addDuplicate4) {
+    testAddDuplicate4();
 }
 
 }; // Of anonymous namespace

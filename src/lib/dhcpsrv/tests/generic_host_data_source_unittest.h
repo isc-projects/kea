@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -104,8 +104,7 @@ public:
     ///
     /// @param resv1 first IPv6 reservations list
     /// @param resv2 second IPv6 reservations list
-    void compareReservations6(IPv6ResrvRange resv1, IPv6ResrvRange resv2,
-                              bool expect_match);
+    void compareReservations6(IPv6ResrvRange resv1, IPv6ResrvRange resv2);
 
     /// @brief Compares two client classes
     ///
@@ -198,6 +197,19 @@ public:
     /// Uses gtest macros to report failures.
     void testGet6ByClientId();
 
+    /// @brief Test verifies if a host reservation can be stored with both
+    ///         IPv6 address and prefix.
+    /// Uses gtest macros to report failures.
+    void testAddr6AndPrefix();
+
+    /// @brief Tests if host with multiple IPv6 reservations can be added and then
+    ///        retrieved correctly.
+    void testMultipleReservations();
+
+    /// @brief Tests if compareIPv6Reservations() method treats same pool of
+    ///        reservations but added in different order as equal.
+    void testMultipleReservationsDifferentOrder();
+
     /// @brief Test if host reservations made for different IPv6 subnets
     ///        are handled correctly.
     ///
@@ -207,10 +219,20 @@ public:
     /// @param id identifier type (ID_HWADDR or ID_DUID)
     void testSubnetId6(int subnets, BaseHostDataSource::IdType id);
 
-    /// @brief Test if the duplicate host instances can't be inserted.
+    /// @brief Test if the duplicate host with same DUID can't be inserted.
     ///
     /// Uses gtest macros to report failures.
-    void testAddDuplicate();
+    void testAddDuplicate6WithSameDUID();
+
+    /// @brief Test if the duplicate host with same HWAddr can't be inserted.
+    ///
+    /// Uses gtest macros to report failures.
+    void testAddDuplicate6WithSameHWAddr();
+
+    /// @brief Test if the duplicate IPv4 host with can't be inserted.
+    ///
+    /// Uses gtest macros to report failures.
+    void testAddDuplicate4();
 
     /// @brief Returns DUID with identical content as specified HW address
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -242,8 +242,7 @@ void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
 
     // Compare IPv6 reservations
     compareReservations6(host1->getIPv6Reservations(),
-                         host2->getIPv6Reservations(),
-                         true);
+                         host2->getIPv6Reservations());
 
     // And compare client classification details
     compareClientClasses(host1->getClientClasses4(),
@@ -274,25 +273,50 @@ GenericHostDataSourceTest::DuidToHWAddr(const DuidPtr& duid) {
 
 void
 GenericHostDataSourceTest::compareReservations6(IPv6ResrvRange resrv1,
-                                                IPv6ResrvRange resrv2,
-                                                bool expect_match) {
+                                                IPv6ResrvRange resrv2) {
 
     // Compare number of reservations for both hosts
     if (std::distance(resrv1.first, resrv1.second) !=
             std::distance(resrv2.first, resrv2.second)){
-        // Number of reservations is not equal.
-        // Let's see if it's a problem.
-        if (expect_match) {
-            ADD_FAILURE()<< "Reservation comparison failed, "
-                    "hosts got different number of reservations.";
-        }
+        ADD_FAILURE()<< "Reservation comparison failed, "
+            "hosts got different number of reservations.";
         return;
     }
 
+    // Iterate over the range of reservations to find a match in the
+    // reference range.
+    for (IPv6ResrvIterator r1 = resrv1.first; r1 != resrv1.second; ++r1) {
+        IPv6ResrvIterator r2 = resrv2.first;
+        for (; r2 != resrv2.second; ++r2) {
+            // IPv6Resrv object implements equality operator.
+            if (r1->second == r2->second) {
+                break;
+            }
+        }
+        // If r2 iterator reached the end of the range it means that there
+        // is no match.
+        if (r2 == resrv2.second) {
+            ADD_FAILURE() << "No match found for reservation: "
+                          << resrv1.first->second.getPrefix().toText();
+        }
+    }
+
     if (std::distance(resrv1.first, resrv1.second) > 0) {
-        if (expect_match){
-            /// @todo Compare every reservation from both hosts
-            ///       This is part of the work for #4212.
+        for (; resrv1.first != resrv1.second; resrv1.first++) {
+            IPv6ResrvIterator iter = resrv2.first;
+            while (iter != resrv2.second) {
+                if((resrv1.first->second.getType() == iter->second.getType()) &&
+                        (resrv1.first->second.getPrefixLen() == iter->second.getPrefixLen()) &&
+                        (resrv1.first->second.getPrefix() == iter->second.getPrefix())) {
+                    break;
+                }
+                iter++;
+                if (iter == resrv2.second) {
+                    ADD_FAILURE()<< "Reservation comparison failed, "
+                    "no match for reservation: "
+                    << resrv1.first->second.getPrefix().toText();
+                }
+            }
         }
     }
 }
@@ -600,8 +624,8 @@ void GenericHostDataSourceTest::testGet6ByHWAddr() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations.
-    HostPtr host1 = initializeHost6("2001:db8::0", BaseHostDataSource::ID_HWADDR, true);
-    HostPtr host2 = initializeHost6("2001:db8::1", BaseHostDataSource::ID_HWADDR, true);
+    HostPtr host1 = initializeHost6("2001:db8::1", BaseHostDataSource::ID_HWADDR, true);
+    HostPtr host2 = initializeHost6("2001:db8::2", BaseHostDataSource::ID_HWADDR, true);
 
     // Sanity check: make sure the hosts have different HW addresses.
     ASSERT_TRUE(host1->getHWAddress());
@@ -631,8 +655,8 @@ void GenericHostDataSourceTest::testGet6ByClientId() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations.
-    HostPtr host1 = initializeHost6("2001:db8::0", BaseHostDataSource::ID_DUID, true);
-    HostPtr host2 = initializeHost6("2001:db8::1", BaseHostDataSource::ID_DUID, true);
+    HostPtr host1 = initializeHost6("2001:db8::1", BaseHostDataSource::ID_DUID, true);
+    HostPtr host2 = initializeHost6("2001:db8::2", BaseHostDataSource::ID_DUID, true);
 
     // Sanity check: make sure the hosts have different HW addresses.
     ASSERT_TRUE(host1->getDuid());
@@ -741,19 +765,128 @@ void GenericHostDataSourceTest::testGetByIPv6(BaseHostDataSource::IdType id,
     EXPECT_FALSE(hdsptr_->get6(IOAddress("2001:db8::5"), len));
 }
 
-void GenericHostDataSourceTest::testAddDuplicate() {
+void GenericHostDataSourceTest::testAddDuplicate6WithSameDUID() {
     // Make sure we have the pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations.
-    HostPtr host = initializeHost6("2001:db8::1", BaseHostDataSource::ID_DUID,
-                                   true);
+    HostPtr host = initializeHost6("2001:db8::1", BaseHostDataSource::ID_DUID, true);
 
     // Add this reservation once.
     ASSERT_NO_THROW(hdsptr_->add(host));
 
     // Then try to add it again, it should throw an exception.
     ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);
+}
+
+void GenericHostDataSourceTest::testAddDuplicate6WithSameHWAddr() {
+    // Make sure we have the pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create a host reservations.
+    HostPtr host = initializeHost6("2001:db8::1", BaseHostDataSource::ID_HWADDR, true);
+
+    // Add this reservation once.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Then try to add it again, it should throw an exception.
+    ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);
+}
+
+void GenericHostDataSourceTest::testAddDuplicate4() {
+    // Make sure we have the pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create a host reservations.
+    HostPtr host = initializeHost4("192.0.2.1", false);
+
+    // Add this reservation once.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Then try to add it again, it should throw an exception.
+    ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);
+}
+
+void GenericHostDataSourceTest::testAddr6AndPrefix(){
+    // Make sure we have the pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create a host reservations with prefix reservation (prefix = true)
+    HostPtr host = initializeHost6("2001:db8::1", BaseHostDataSource::ID_DUID, true);
+
+    // Create IPv6 reservation (for an address) and add it to the host
+    IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::2"), 128);
+    host->addReservation(resv);
+
+    // Add this reservation
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Get this host by DUID
+    ConstHostPtr from_hds = hdsptr_->get6(host->getIPv6SubnetID(), host->getDuid(), HWAddrPtr());
+
+    // Make sure we got something back
+    ASSERT_TRUE(from_hds);
+
+    // Check if reservations are the same
+    compareReservations6(host->getIPv6Reservations(), from_hds->getIPv6Reservations());
+}
+
+void GenericHostDataSourceTest::testMultipleReservations(){
+    // Make sure we have the pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+    uint8_t len = 128;
+
+    HostPtr host = initializeHost6("2001:db8::1", BaseHostDataSource::ID_DUID, false);
+
+    // Add some reservations
+    IPv6Resrv resv1(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::6"), len);
+    IPv6Resrv resv2(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::7"), len);
+    IPv6Resrv resv3(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::8"), len);
+    IPv6Resrv resv4(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::9"), len);
+
+    host->addReservation(resv1);
+    host->addReservation(resv2);
+    host->addReservation(resv3);
+    host->addReservation(resv4);
+
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+
+    ConstHostPtr from_hds = hdsptr_->get6(IOAddress("2001:db8::1"), len);
+
+    // Make sure we got something back
+    ASSERT_TRUE(from_hds);
+
+    // Check if hosts are the same
+    compareHosts(host, from_hds);
+}
+
+void GenericHostDataSourceTest::testMultipleReservationsDifferentOrder(){
+    // Make sure we have the pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+    uint8_t len = 128;
+
+    HostPtr host1 = initializeHost6("2001:db8::1", BaseHostDataSource::ID_DUID, false);
+    HostPtr host2 = initializeHost6("2001:db8::1", BaseHostDataSource::ID_DUID, false);
+
+    // Add some reservations
+    IPv6Resrv resv1(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::6"), len);
+    IPv6Resrv resv2(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::7"), len);
+    IPv6Resrv resv3(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::8"), len);
+    IPv6Resrv resv4(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::9"), len);
+
+    host1->addReservation(resv1);
+    host1->addReservation(resv2);
+    host1->addReservation(resv3);
+    host1->addReservation(resv4);
+
+    host2->addReservation(resv4);
+    host2->addReservation(resv3);
+    host2->addReservation(resv2);
+    host2->addReservation(resv1);
+
+    // Check if reservations are the same
+    compareReservations6(host1->getIPv6Reservations(), host2->getIPv6Reservations());
 
 }
 
