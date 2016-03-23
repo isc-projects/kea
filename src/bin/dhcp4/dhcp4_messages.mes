@@ -293,24 +293,24 @@ was not successful, or it encountered any other critical error on startup.
 Attached error message provides more details about the issue.
 
 % DHCP4_INIT_REBOOT %1: client is in INIT-REBOOT state and requests address %2
-This debug message is issued when the client is in the INIT-REBOOT state and
-is requesting an IPv4 address it is using to be allocated for it. The first
-argument includes the client and transaction identification information. The
-second argument specifies the requested IPv4 address.
+This informational message is issued when the client is in the INIT-REBOOT
+state and is requesting an IPv4 address it is using to be allocated for it.
+The first argument includes the client and transaction identification
+information. The second argument specifies the requested IPv4 address.
 
 % DHCP4_LEASE_ADVERT %1: lease %2 will be advertised
-This debug message indicates that the server has found the lease to be
+This informational message indicates that the server has found the lease to be
 offered to the client. It is up to the client to choose one server out of
 those which offered leases and continue allocation with that server.
 The first argument specifies the client and the transaction identification
 information. The second argument specifies the IPv4 address to be offered.
 
 % DHCP4_LEASE_ALLOC %1: lease %2 has been allocated
-This debug message indicates that the server successfully granted a lease
-in response to client's DHCPREQUEST message. The lease information will
-be sent to the client in the DHCPACK message. The first argument
-contains the client and the transaction identification information. The
-second argument contains the allocated IPv4 address.
+This informational message indicates that the server successfully granted a
+lease in response to client's DHCPREQUEST message. The lease information will
+be sent to the client in the DHCPACK message. The first argument contains the
+client and the transaction identification information. The second argument
+contains the allocated IPv4 address.
 
 % DHCP4_NAME_GEN_UPDATE_FAIL %1: failed to update the lease after generating name %2 for a client: %3
 This message indicates the failure when trying to update the lease and/or
@@ -527,7 +527,7 @@ argument includes the client and the transaction identification
 information.
 
 % DHCP4_RELEASE %1: address %2 was released properly.
-This debug message indicates that an address was released properly. It
+This informational message indicates that an address was released properly. It
 is a normal operation during client shutdown. The first argument includes
 the client and transaction identification information. The second argument
 includes the released IPv4 address.
