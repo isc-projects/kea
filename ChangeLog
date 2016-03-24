@@ -1,3 +1,7 @@
+1098.	[func]		kalmus, marcin
+	Implemented IPv6 address/prefix reservations in MySQL.
+	(Trac #4212, git 79481043935789fc6898d4743bede1606f82eb75)
+
 1097.	[func]		fdupont
 	Reorganized the DHCPv4 and DHCPv6 services into run() (service
 	loop), run_one() (receive, call next routine and send) and
