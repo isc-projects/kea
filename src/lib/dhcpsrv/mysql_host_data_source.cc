@@ -1070,7 +1070,7 @@ public:
     /// @param bind Vector of MYSQL_BIND objects to be used when making the
     /// query.
     ///
-    /// @htrow isc::dhcp::DuplicateEntry Database throws duplicate entry error
+    /// @throw isc::dhcp::DuplicateEntry Database throws duplicate entry error
     void addQuery(MySqlHostDataSource::StatementIndex stindex,
                   std::vector<MYSQL_BIND>& bind);
 
@@ -1103,11 +1103,12 @@ public:
     /// the 'hosts' table. The query may also use LEFT JOIN clause to
     /// retrieve information from other tables, e.g. ipv6_reservations.
     /// Whether IPv6 reservations are assigned to the @ref Host objects
-    /// depends on the type of the @ref exchange object.
+    /// depends on the type of the exchange object.
     ///
     /// @param stindex Statement index.
-    /// @param Vector of MySQL bindings.
-    /// @param Pointer to the exchange object used for the particular query.
+    /// @param bind Pointer to an array of MySQL bindings.
+    /// @param exchange Pointer to the exchange object used for the
+    /// particular query.
     /// @param [out] result Reference to the collection of hosts returned.
     /// @param single A boolean value indicating if a single host is
     /// expected to be returned, or multiple hosts.
