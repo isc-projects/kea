@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <dhcpsrv/host.h>
+#include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <exceptions/exceptions.h>
 #include <sstream>
@@ -137,19 +138,46 @@ std::string
 Host::getIdentifierAsText() const {
     std::string txt;
     if (hw_address_) {
-        txt = "hwaddr=" + hw_address_->toText(false);
+        txt = getIdentifierAsText(IDENT_HWADDR, &hw_address_->hwaddr_[0],
+                                  hw_address_->hwaddr_.size());
+    } else if (duid_) {
+        txt = getIdentifierAsText(IDENT_DUID, &duid_->getDuid()[0],
+                                  duid_->getDuid().size());
     } else {
-        txt = "duid=";
-        if (duid_) {
-            txt += duid_->toText();
-        } else {
-            txt += "(none)";
-        }
+        txt = "(none)";
     }
 
     return (txt);
 
 }
+
+std::string
+Host::getIdentifierAsText(const IdentifierType& type, const uint8_t* value,
+                          const size_t length) {
+    // Length 0 doesn't make sense.
+    if (length == 0) {
+        isc_throw(BadValue, "invalid length 0 of the host identifier while"
+                  " converting the identifier to a textual form");
+    }
+
+    // Convert identifier into <type>=<value> form.
+    std::ostringstream s;
+    switch (type) {
+    case IDENT_HWADDR:
+        s << "hwaddr";
+        break;
+    case IDENT_DUID:
+        s << "duid";
+        break;
+    default:
+        isc_throw(BadValue, "requested conversion of the unsupported"
+                  " identifier into textual form");
+    }
+    std::vector<uint8_t> vec(value, value + length);
+    s << "=" << util::encode::encodeHex(vec);
+    return (s.str());
+}
+
 
 void
 Host::setIdentifier(const uint8_t* identifier, const size_t len,
