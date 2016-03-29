@@ -227,7 +227,6 @@ CfgHosts::getAllInternal6(const IOAddress& address, Storage& storage) const {
         .arg(storage.size());
 }
 
-
 ConstHostPtr
 CfgHosts::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
                const DuidPtr& duid) const {
@@ -367,14 +366,13 @@ CfgHosts::get6(const SubnetID& subnet_id,
 }
 
 ConstHostPtr
-CfgHosts::get6(const IOAddress&, const uint8_t) const {
-    isc_throw(isc::NotImplemented,
-              "get6(prefix, len) const is not implemented");
+CfgHosts::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
+    return (getHostInternal6<ConstHostPtr>(prefix, prefix_len));
 }
 
 HostPtr
-CfgHosts::get6(const IOAddress&, const uint8_t) {
-    isc_throw(isc::NotImplemented, "get6(prefix, len) is not implemented");
+CfgHosts::get6(const IOAddress& prefix, const uint8_t prefix_len) {
+    return (getHostInternal6<HostPtr>(prefix, prefix_len));
 }
 
 ConstHostPtr
@@ -425,6 +423,36 @@ CfgHosts::getHostInternal6(const SubnetID& subnet_id,
 
 }
 
+template<typename ReturnType>
+ReturnType
+CfgHosts::getHostInternal6(const asiolink::IOAddress& prefix,
+                           const uint8_t prefix_len) const {
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ONE_PREFIX)
+        .arg(prefix.toText()).arg(static_cast<int>(prefix_len));
+
+    // Let's get all reservations that match subnet_id, address.
+    const HostContainer6Index0& idx = hosts6_.get<0>();
+    HostContainer6Index0Range r = make_pair(idx.lower_bound(prefix),
+                                            idx.upper_bound(prefix));
+    for (HostContainer6Index0::iterator resrv = r.first; resrv != r.second;
+         ++resrv) {
+        if (resrv->resrv_.getPrefixLen() == prefix_len) {
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                      HOSTS_CFG_GET_ONE_PREFIX_HOST)
+                .arg(prefix.toText())
+                .arg(static_cast<int>(prefix_len))
+                .arg(resrv->host_->toText());
+            return (resrv->host_);
+        }
+    }
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+              HOSTS_CFG_GET_ONE_PREFIX_NULL)
+        .arg(prefix.toText())
+        .arg(static_cast<int>(prefix_len));
+    return (ReturnType());
+}
+
 template<typename Storage>
 void
 CfgHosts::getAllInternal6(const SubnetID& subnet_id,
@@ -453,7 +481,7 @@ CfgHosts::getAllInternal6(const SubnetID& subnet_id,
                   HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_HOST)
             .arg(subnet_id)
             .arg(address.toText())
-            .arg(resrv->host_);
+            .arg(resrv->host_->toText());
         storage.push_back(resrv->host_);
     }
 
@@ -470,11 +498,10 @@ CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
                           const uint8_t* identifier,
                           const size_t identifier_len) const {
 
-/*    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ONE_SUBNET_ID_HWADDR_DUID)
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER)
         .arg(subnet6 ? "IPv6" : "IPv4")
         .arg(subnet_id)
-        .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
-        .arg(duid ? duid->toText() : "(no-duid)"); */
+        .arg(Host::getIdentifierAsText(identifier_type, identifier, identifier_len));
 
     // Get all hosts for a specified identifier. This may return multiple hosts
     // for different subnets, but the number of hosts returned should be low
@@ -506,30 +533,30 @@ CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
             } else {
                 isc_throw(DuplicateHost,  "more than one reservation found"
                           " for the host belonging to the subnet with id '"
-                          << subnet_id << "' and using the HW address '"
-//                          << (hwaddr ? hwaddr->toText(false) : "(null)")
-//                          << "' and DUID '"
-//                          << (duid ? duid->toText() : "(null)")
+                          << subnet_id << "' and using the identifier '"
+                          << Host::getIdentifierAsText(identifier_type,
+                                                       identifier,
+                                                       identifier_len)
                           << "'");
             }
         }
     }
 
-/*    if (host) {
+    if (host) {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
-                  HOSTS_CFG_GET_ONE_SUBNET_ID_HWADDR_DUID)
+                  HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER_HOST)
             .arg(subnet_id)
-            .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
-            .arg(duid ? duid->toText() : "(no-duid)")
+            .arg(Host::getIdentifierAsText(identifier_type, identifier,
+                                           identifier_len))
             .arg(host->toText());
 
     } else {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
-                  HOSTS_CFG_GET_ONE_SUBNET_ID_HWADDR_DUID_NULL)
+                  HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER_NULL)
             .arg(subnet_id)
-            .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
-            .arg(duid ? duid->toText() : "(no-duid)");
-    } */
+            .arg(Host::getIdentifierAsText(identifier_type, identifier,
+                                           identifier_len));
+    }
 
     return (host);
 }

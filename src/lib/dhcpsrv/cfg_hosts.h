@@ -276,7 +276,7 @@ public:
     /// @param prefix IPv6 prefix for which the @c Host object is searched.
     /// @param prefix_len IPv6 prefix length.
     ///
-    /// @throw isc::NotImplemented
+    /// @return Const @c Host object for which specified prefix is reserved.
     virtual ConstHostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
 
@@ -285,7 +285,8 @@ public:
     /// @param prefix IPv6 prefix for which the @c Host object is searched.
     /// @param prefix_len IPv6 prefix length.
     ///
-    /// @throw isc::NotImplemented
+    /// @return Non-const @c Host object for which specified prefix is
+    /// reserved.
     virtual HostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len);
 
@@ -448,6 +449,10 @@ private:
     template<typename ReturnType, typename Storage>
     ReturnType getHostInternal6(const SubnetID& subnet_id,
                                 const asiolink::IOAddress& adddress) const;
+
+    template<typename ReturnType>
+    ReturnType getHostInternal6(const asiolink::IOAddress& prefix,
+                                const uint8_t prefix_len) const;
 
     /// @brief Adds a new host to the v4 collection.
     ///
