@@ -216,17 +216,42 @@ TEST_F(HostMgrTest, get6ByPrefix) {
     ConstHostPtr host = HostMgr::instance().get6(IOAddress("2001:db8:1::"), 64);
     ASSERT_FALSE(host);
 
+    // Add a host with a reservation for a prefix 2001:db8:1::/64.
     HostPtr new_host(new Host(duids_[0]->toText(), "duid", SubnetID(1),
                               SubnetID(2), IOAddress("0.0.0.0")));
     new_host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
                                        IOAddress("2001:db8:1::"), 64));
     getCfgHosts()->add(new_host);
+
+    // Add another host having a reservation for prefix 2001:db8:1:0:6::/72.
+    new_host.reset(new Host(duids_[1]->toText(), "duid", SubnetID(2),
+                            SubnetID(3), IOAddress::IPV4_ZERO_ADDRESS()));
+    new_host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                       IOAddress("2001:db8:1:0:6::"), 72));
+    getCfgHosts()->add(new_host);
     CfgMgr::instance().commit();
 
+    // Retrieve first reservation.
     host = HostMgr::instance().get6(IOAddress("2001:db8:1::"), 64);
     ASSERT_TRUE(host);
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
     IOAddress("2001:db8:1::"), 64)));
+
+    // Make sure the first reservation is not retrieved when the prefix
+    // length is incorrect.
+    host = HostMgr::instance().get6(IOAddress("2001:db8:1::"), 72);
+    EXPECT_FALSE(host);
+
+    // Retrieve second reservation.
+    host = HostMgr::instance().get6(IOAddress("2001:db8:1:0:6::"), 72);
+    ASSERT_TRUE(host);
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+    IOAddress("2001:db8:1:0:6::"), 72)));
+
+    // Make sure the second reservation is not retrieved when the prefix
+    // length is incorrect.
+    host = HostMgr::instance().get6(IOAddress("2001:db8:1:0:6::"), 64);
+    EXPECT_FALSE(host);
 }
 
 } // end of anonymous namespace
