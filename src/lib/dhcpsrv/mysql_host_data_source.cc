@@ -302,17 +302,23 @@ public:
             // Check which of the identifiers is used and set values accordingly
             if (host->getDuid()) {
                 dhcp_identifier_length_ = host->getDuid()->getDuid().size();
+                memcpy(static_cast<void*>(dhcp_identifier_buffer_),
+                       &(host->getDuid()->getDuid()[0]),
+                       host->getDuid()->getDuid().size());
+
                 bind_[1].buffer_type = MYSQL_TYPE_BLOB;
-                bind_[1].buffer = reinterpret_cast<char*>
-                    (const_cast<uint8_t*>(&(host->getDuid()->getDuid()[0])));
+                bind_[1].buffer = dhcp_identifier_buffer_;
                 bind_[1].buffer_length = dhcp_identifier_length_;
                 bind_[1].length = &dhcp_identifier_length_;
 
             } else if (host->getHWAddress()){
                 dhcp_identifier_length_ = host->getHWAddress()->hwaddr_.size();
+                memcpy(static_cast<void*>(dhcp_identifier_buffer_),
+                       &(host->getHWAddress()->hwaddr_[0]),
+                       host->getHWAddress()->hwaddr_.size());
+
                 bind_[1].buffer_type = MYSQL_TYPE_BLOB;
-                bind_[1].buffer = reinterpret_cast<char*>
-                    (&(host->getHWAddress()->hwaddr_[0]));
+                bind_[1].buffer = dhcp_identifier_buffer_;
                 bind_[1].buffer_length = dhcp_identifier_length_;
                 bind_[1].length = &dhcp_identifier_length_;
 

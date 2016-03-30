@@ -75,7 +75,8 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
            const std::string& hostname,
            const std::string& dhcp4_client_classes,
            const std::string& dhcp6_client_classes)
-    : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
+    : identifier_type_(identifier_type),
+      identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
       ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
@@ -97,14 +98,15 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
            const std::string& hostname,
            const std::string& dhcp4_client_classes,
            const std::string& dhcp6_client_classes)
-    : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
+    : identifier_type_(IDENT_HWADDR),
+      identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
       ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
       dhcp6_client_classes_(dhcp6_client_classes), host_id_(0),
       cfg_option4_(new CfgOption()), cfg_option6_(new CfgOption()) {
 
-    // Initialize HWAddr or DUID
+    // Initialize host identifier.
     setIdentifier(identifier, identifier_name);
 
     if (!ipv4_reservation.isV4Zero()) {
@@ -115,40 +117,31 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
 
 const std::vector<uint8_t>&
 Host::getIdentifier() const {
-    if (hw_address_) {
-        return (hw_address_->hwaddr_);
-
-    } else if (duid_) {
-        return (duid_->getDuid());
-
-    }
-    static std::vector<uint8_t> empty_vector;
-    return (empty_vector);
+    return (identifier_value_);
 }
 
 Host::IdentifierType
 Host::getIdentifierType() const {
-    if (hw_address_) {
-        return (IDENT_HWADDR);
-    }
-    return (IDENT_DUID);
+    return (identifier_type_);
 }
+
+HWAddrPtr
+Host::getHWAddress() const {
+    return ((identifier_type_ == IDENT_HWADDR) ?
+            HWAddrPtr(new HWAddr(identifier_value_, HTYPE_ETHER)) : HWAddrPtr());
+}
+
+DuidPtr
+Host::getDuid() const {
+    return ((identifier_type_ == IDENT_DUID) ?
+            DuidPtr(new DUID(identifier_value_)) : DuidPtr());
+}
+
 
 std::string
 Host::getIdentifierAsText() const {
-    std::string txt;
-    if (hw_address_) {
-        txt = getIdentifierAsText(IDENT_HWADDR, &hw_address_->hwaddr_[0],
-                                  hw_address_->hwaddr_.size());
-    } else if (duid_) {
-        txt = getIdentifierAsText(IDENT_DUID, &duid_->getDuid()[0],
-                                  duid_->getDuid().size());
-    } else {
-        txt = "(none)";
-    }
-
-    return (txt);
-
+    return (getIdentifierAsText(identifier_type_, &identifier_value_[0],
+                                identifier_value_.size()));
 }
 
 std::string
@@ -182,30 +175,26 @@ Host::getIdentifierAsText(const IdentifierType& type, const uint8_t* value,
 void
 Host::setIdentifier(const uint8_t* identifier, const size_t len,
                     const IdentifierType& type) {
-    switch (type) {
-    case IDENT_HWADDR:
-        hw_address_ = HWAddrPtr(new HWAddr(identifier, len, HTYPE_ETHER));
-        duid_.reset();
-        break;
-    case IDENT_DUID:
-        duid_ = DuidPtr(new DUID(identifier, len));
-        hw_address_.reset();
-        break;
-    default:
-        isc_throw(isc::BadValue, "invalid client identifier type '"
-                  << static_cast<int>(type) << "' when creating host "
-                  " instance");
+    if (len < 1) {
+        isc_throw(BadValue, "invalid client identifier length 0");
     }
+
+    identifier_type_ = type;
+    identifier_value_.assign(identifier, identifier + len);
 }
 
 void
 Host::setIdentifier(const std::string& identifier, const std::string& name) {
     if (name == "hw-address") {
-        hw_address_ = HWAddrPtr(new HWAddr(HWAddr::fromText(identifier)));
-        duid_.reset();
+        HWAddr hwaddr(HWAddr::fromText(identifier));
+        identifier_type_= IDENT_HWADDR;
+        identifier_value_ = hwaddr.hwaddr_;
+
     } else if (name == "duid") {
-        duid_ = DuidPtr(new DUID(DUID::fromText(identifier)));
-        hw_address_.reset();
+        identifier_type_ = IDENT_DUID;
+        DUID duid(DUID::fromText(identifier));
+        identifier_value_ = duid.getDuid();
+
     } else {
         isc_throw(isc::BadValue, "invalid client identifier type '"
                   << name << "' when creating host instance");
