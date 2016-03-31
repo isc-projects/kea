@@ -239,7 +239,7 @@ public:
     /// @param nesting_level see description above
     ///
     /// @return pointer to the option (or NULL if there is no such option)
-    OptionPtr getRelayOption(uint16_t option_code, uint8_t nesting_level);
+    OptionPtr getRelayOption(uint16_t option_code, uint8_t nesting_level) const;
 
     /// @brief Return first instance of a specified option
     ///
