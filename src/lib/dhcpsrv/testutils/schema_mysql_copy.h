@@ -35,6 +35,7 @@ const char* destroy_statement[] = {
     "DROP TABLE hosts",
     "DROP TABLE dhcp4_options",
     "DROP TABLE dhcp6_options",
+    "DROP TABLE host_identifier_type",
 
     "DROP TRIGGER host_BDEL",
     NULL
@@ -254,6 +255,36 @@ const char* create_statement[] = {
         "REFERENCES lease_hwaddr_source (hwaddr_source)",*/
 
     // Schema upgrade to 4.0 ends here.
+
+    "DROP INDEX key_dhcp4_identifier_subnet_id ON hosts",
+    "CREATE UNIQUE INDEX key_dhcp4_identifier_subnet_id "
+      "ON hosts "
+        "(dhcp_identifier ASC , dhcp_identifier_type ASC , dhcp4_subnet_id ASC)",
+
+    "DROP INDEX key_dhcp6_identifier_subnet_id ON hosts",
+    "CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id "
+      "ON hosts "
+        "(dhcp_identifier ASC , dhcp_identifier_type ASC , dhcp6_subnet_id ASC)",
+
+    "CREATE TABLE IF NOT EXISTS host_identifier_type ("
+      "type TINYINT PRIMARY KEY NOT NULL,"
+      "name VARCHAR(32)"
+    ") ENGINE = INNODB",
+
+    "START TRANSACTION",
+    "INSERT INTO host_identifier_type VALUES (0, \"hw-address\")",
+    "INSERT INTO host_identifier_type VALUES (1, \"duid\")",
+    "INSERT INTO host_identifier_type VALUES (2, \"circuit-id\")",
+    "COMMIT",
+
+    "ALTER TABLE hosts "
+    "ADD CONSTRAINT fk_host_identifier_type FOREIGN KEY (dhcp_identifier_type) "
+      "REFERENCES host_identifier_type (type)",
+
+    "UPDATE schema_version "
+      "SET version = '4', minor = '2'",
+
+    // Schema upgrade to 4.2 ends here.
 
     NULL
 };
