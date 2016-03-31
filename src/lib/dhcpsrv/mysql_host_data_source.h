@@ -269,11 +269,6 @@ public:
 
 private:
 
-    /// @brief Checks if the specified host already exists in the database.
-    ///
-    /// @param host Pointer to the new @c Host object being added.
-    bool checkIfExists(const HostPtr& host);
-
     /// @brief Pointer to the implementation of the @ref MySqlHostDataSource.
     MySqlHostDataSourceImpl* impl_; 
 };
