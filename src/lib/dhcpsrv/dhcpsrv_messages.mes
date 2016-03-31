@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -375,10 +375,11 @@ An informational message issued when the Memfile lease database backend
 starts the periodic Lease File Cleanup.
 
 % DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED failed to unregister timer 'memfile-lfc': %1
-This error message is logged when Memfile backend fails to unregister
-timer used for lease file cleanup scheduling. This is highly unlikely
-and indicates programming error. The message include the reason for this
-error.
+This debug message is logged when Memfile backend fails to unregister
+timer used for lease file cleanup scheduling. There are several reasons
+why this could occur, although the most likely cause is that the system
+is being shut down and some other component has unregistered time timer.
+The message includes the reason for this error.
 
 % DHCPSRV_MEMFILE_NEEDS_DOWNGRADING version of lease file: %1 schema is later than version %2
 A warning message issued when the schema of the lease file loaded by the server
