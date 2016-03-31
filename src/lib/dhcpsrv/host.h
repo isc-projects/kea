@@ -223,7 +223,15 @@ public:
     /// is useful in cases when the reservation is specified in the server
     /// configuration file, where:
     /// - MAC address is specified as: "01:02:03:04:05:06"
-    /// - Other identifiers are specified as: "010203040506abcd"
+    /// - DUID can be specified as: "01:02:03:04:05:06:ab:cd" or "010203040506abcd".
+    /// - Other identifiers are specified as: "010203040506abcd" or as
+    /// "'some identfier'".
+    ///
+    /// In case of identifiers other than HW address and DUID it is possible to use
+    /// textual representation, e.g. 'some identifier', which is converted to a
+    /// vector of ASCII codes represnting characters in a given string, excluding
+    /// quotes. This is useful in cases when specific identifiers, e.g. circuit-id
+    /// are manually assigned user friendly values.
     ///
     /// @param identifier Identifier in the textual format. The expected formats
     /// for the hardware address and other identifiers are provided above.

@@ -7,14 +7,23 @@
 #include <config.h>
 
 #include <dhcpsrv/host.h>
+#include <util/encode/hex.h>
+#include <util/range_utilities.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
+#include <cstdlib>
+#include <sstream>
 
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
 namespace {
+
+/// @brief Holds a type of the last identifier in @c IdentifierType enum.
+///
+/// This value must be updated when new identifiers are added to the enum.
+const Host::IdentifierType LAST_IDENTIFIER_TYPE = Host::IDENT_CIRCUIT_ID;
 
 // This test verifies that it is possible to create IPv6 address
 // reservation.
@@ -121,9 +130,70 @@ TEST(IPv6ResrvTest, equal) {
 
 }
 
+/// @brief Test fixture class for @c Host.
+class HostTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Re-initializes random number generator.
+    HostTest() {
+        srand(1);
+    }
+
+    /// @brief Checks if the reservation is in the range of reservations.
+    ///
+    /// @param resrv Reservation to be searched for.
+    /// @param range Range of reservations returned by the @c Host object
+    /// in which the reservation will be searched.
+    ///
+    /// @return true if reservation exists, false otherwise.
+    bool
+    reservationExists(const IPv6Resrv& resrv, const IPv6ResrvRange& range) {
+        for (IPv6ResrvIterator it = range.first; it != range.second;
+             ++it) {
+            if (resrv == it->second) {
+                return (true);
+            }
+        }
+        return (false);
+    }
+
+    /// @brief Converts identifier type to its name.
+    ///
+    /// @param type identifier type.
+    /// @return Identifier name as specified in a configuration file.
+    std::string identifierName(const Host::IdentifierType& type) const {
+        switch (type) {
+        case Host::IDENT_HWADDR:
+            return ("hw-address");
+        case Host::IDENT_DUID:
+            return ("duid");
+        case Host::IDENT_CIRCUIT_ID:
+            return ("circuit-id");
+        default:
+            ;
+        }
+        return ("unknown");
+    }
+
+    /// @brief Returns upper bound of the supported identifier types.
+    ///
+    /// Some unit tests verify the @c Host class behavior for all
+    /// supported identifier types. The unit test needs to iterate
+    /// over all supported identifier types and thus it must be
+    /// aware of the upper bound of the @c Host::IdentifierType
+    /// enum. The upper bound is the numeric representation of the
+    /// last identifier type plus 1.
+    unsigned int
+    identifierTypeUpperBound()  const {
+        return (static_cast<unsigned int>(LAST_IDENTIFIER_TYPE) + 1);
+    }
+};
+
 // This test verfies that it is possible to create a Host object
 // using hardware address in the textual format.
-TEST(HostTest, createFromHWAddrString) {
+TEST_F(HostTest, createFromHWAddrString) {
     boost::scoped_ptr<Host> host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
@@ -155,7 +225,7 @@ TEST(HostTest, createFromHWAddrString) {
 
 // This test verifies that it is possible to create Host object using
 // a DUID in the textual format.
-TEST(HostTest, createFromDUIDString) {
+TEST_F(HostTest, createFromDUIDString) {
     boost::scoped_ptr<Host> host;
     ASSERT_NO_THROW(host.reset(new Host("a1:b2:c3:d4:e5:06", "duid",
                                         SubnetID(10), SubnetID(20),
@@ -189,7 +259,7 @@ TEST(HostTest, createFromDUIDString) {
 
 // This test verifies that it is possible to create Host object using
 // hardware address in the binary format.
-TEST(HostTest, createFromHWAddrBinary) {
+TEST_F(HostTest, createFromHWAddrBinary) {
     boost::scoped_ptr<Host> host;
     // Prepare the hardware address in binary format.
     const uint8_t hwaddr_data[] = {
@@ -217,7 +287,7 @@ TEST(HostTest, createFromHWAddrBinary) {
 
 // This test verifies that it is possible to create a Host object using
 // DUID in the binary format.
-TEST(HostTest, createFromDuidBinary) {
+TEST_F(HostTest, createFromDuidBinary) {
     boost::scoped_ptr<Host> host;
     // Prepare DUID binary.
     const uint8_t duid_data[] = {
@@ -243,103 +313,270 @@ TEST(HostTest, createFromDuidBinary) {
     EXPECT_EQ("me.example.org", host->getHostname());
 }
 
-// Test that it is possible to replace an identifier for a particular
-// Host instance (HW address -> DUID and vice versa) with a new
-// indentifier in the textual format.
-TEST(HostTest, setIdentifierString) {
+// This test verifies that it is possible create Host instance using all
+// supported identifiers in a binary format.
+TEST_F(HostTest, createFromIdentifierBinary) {
     boost::scoped_ptr<Host> host;
-    ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
-                                        SubnetID(1), SubnetID(2),
-                                        IOAddress("192.0.2.3"),
-                                        "me.example.com")));
-    // Initially, there should be a HW address, but not a DUID set.
-    ASSERT_TRUE(host->getHWAddress());
-    ASSERT_FALSE(host->getDuid());
+    // Iterate over all supported identifier types.
+    for (unsigned int i = 0; i < identifierTypeUpperBound(); ++i) {
+        const Host::IdentifierType type = static_cast<Host::IdentifierType>(i);
+        // Create identifier of variable length and fill with random values.
+        std::vector<uint8_t> identifier(random() % 14 + 6);
+        util::fillRandom(identifier.begin(), identifier.end());
 
-    // Now, use a DUID as identifier.
-    ASSERT_NO_THROW(host->setIdentifier("aabbccddee", "duid"));
+        // Try to create a Host instance using this identifier.
+        ASSERT_NO_THROW(host.reset(new Host(&identifier[0], identifier.size(),
+                                            type, SubnetID(10), SubnetID(20),
+                                            IOAddress("192.0.2.5"),
+                                            "me.example.org")));
 
-    // Verify that the DUID is correct.
-    DuidPtr duid = host->getDuid();
-    ASSERT_TRUE(duid);
-    EXPECT_EQ("aa:bb:cc:dd:ee", duid->toText());
-    // HW address should be not set.
-    EXPECT_FALSE(host->getHWAddress());
+        // Retrieve identifier from Host instance and check if it is correct.
+        const std::vector<uint8_t>& identifier_returned = host->getIdentifier();
+        EXPECT_TRUE(identifier_returned == identifier);
+        EXPECT_EQ(type, host->getIdentifierType());
 
-    // Now, let's do another way around.
-
-    ASSERT_NO_THROW(host->setIdentifier("09:08:07:06:05:04", "hw-address"));
-
-    // Verify that HW address is correct.
-    HWAddrPtr hw_addr = host->getHWAddress();
-    ASSERT_TRUE(hw_addr);
-    EXPECT_EQ("hwtype=1 09:08:07:06:05:04", hw_addr->toText());
-    // DUID should be not set.
-    EXPECT_FALSE(host->getDuid());
-}
-
-// Test that it is possible to replace an identifier for a particular
-// Host instance (HW address -> DUID and vice versa) with the new
-// identifier in the binary format.
-TEST(HostTest, setIdentifierBinary) {
-    boost::scoped_ptr<Host> host;
-    ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
-                                        SubnetID(1), SubnetID(2),
-                                        IOAddress("192.0.2.3"),
-                                        "me.example.com")));
-    // Initially, there should be a HW address, but not a DUID set.
-    ASSERT_TRUE(host->getHWAddress());
-    ASSERT_FALSE(host->getDuid());
-
-    // Now, use a DUID as identifier.
-    const uint8_t duid_data[] = {
-        0xaa, 0xbb, 0xcc, 0xdd, 0xee
-    };
-    ASSERT_NO_THROW(host->setIdentifier(duid_data, sizeof(duid_data),
-                                        Host::IDENT_DUID));
-
-    // Verify that the DUID is correct.
-    DuidPtr duid = host->getDuid();
-    ASSERT_TRUE(duid);
-    EXPECT_EQ("aa:bb:cc:dd:ee", duid->toText());
-    // HW address should be not set.
-    EXPECT_FALSE(host->getHWAddress());
-
-    // Now, let's do another way around.
-
-    const uint8_t hwaddr_data[] = {
-        9, 8, 7, 6, 5, 4
-    };
-    ASSERT_NO_THROW(host->setIdentifier(hwaddr_data, sizeof(hwaddr_data),
-                                        Host::IDENT_HWADDR));
-
-    // Verify that HW address is correct.
-    HWAddrPtr hw_addr = host->getHWAddress();
-    ASSERT_TRUE(hw_addr);
-    EXPECT_EQ("hwtype=1 09:08:07:06:05:04", hw_addr->toText());
-    // DUID should be not set.
-    EXPECT_FALSE(host->getDuid());
-}
-
-/// @brief Checks if the reservation is in the range of reservations.
-///
-/// @param resrv Reservation to be searched for.
-/// @param range Range of reservations returned by the @c Host object
-/// in which the reservation will be searched.
-bool
-reservationExists(const IPv6Resrv& resrv, const IPv6ResrvRange& range) {
-    for (IPv6ResrvIterator it = range.first; it != range.second;
-         ++it) {
-        if (resrv == it->second) {
-            return (true);
-        }
+        EXPECT_EQ(10, host->getIPv4SubnetID());
+        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+        EXPECT_EQ("me.example.org", host->getHostname());
     }
-    return (false);
+}
+
+// This test verifies that it is possible to create Host instance using
+// all supported identifiers in hexadecimal format.
+TEST_F(HostTest, createFromIdentifierHex) {
+    boost::scoped_ptr<Host> host;
+    // Iterate over all supported identifiers.
+    for (unsigned int i = 0; i < identifierTypeUpperBound(); ++i) {
+        const Host::IdentifierType type = static_cast<Host::IdentifierType>(i);
+        // Create identifier of a variable length.
+        std::vector<uint8_t> identifier(random() % 14 + 6);
+        util::fillRandom(identifier.begin(), identifier.end());
+
+        // HW address is a special case, because it must contain colons
+        // between consecutive octets.
+        HWAddrPtr hwaddr;
+        if (type == Host::IDENT_HWADDR) {
+            hwaddr.reset(new HWAddr(identifier, HTYPE_ETHER));
+        }
+
+        // Convert identifier to hexadecimal representation.
+        const std::string identifier_hex = (hwaddr ?
+                                            hwaddr->toText(false) :
+                                            util::encode::encodeHex(identifier));
+        const std::string identifier_name = identifierName(type);
+
+        // Try to create Host instance.
+        ASSERT_NO_THROW(host.reset(new Host(identifier_hex, identifier_name,
+                                            SubnetID(10), SubnetID(20),
+                                            IOAddress("192.0.2.5"),
+                                            "me.example.org")))
+            << "test failed for " << identifier_name << "="
+            << identifier_hex;
+
+        // Retrieve the identifier from the Host instance and verify if it
+        // is correct.
+        const std::vector<uint8_t>& identifier_returned = host->getIdentifier();
+        EXPECT_TRUE(identifier_returned == identifier);
+        EXPECT_EQ(type, host->getIdentifierType());
+
+        EXPECT_EQ(10, host->getIPv4SubnetID());
+        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+        EXPECT_EQ("me.example.org", host->getHostname());
+    }
+}
+
+// This test verifies that it is possible to create Host instance using
+// identifiers specified as text in quotes.
+TEST_F(HostTest, createFromIdentifierString) {
+    boost::scoped_ptr<Host> host;
+    // It is not allowed to specify HW address or DUID as a string in quotes.
+    for (unsigned int i = 2; i < identifierTypeUpperBound(); ++i) {
+        const Host::IdentifierType type = static_cast<Host::IdentifierType>(i);
+        const std::string identifier_name = identifierName(type);
+
+        // Construct unique identifier for a host. This is a string
+        // consisting of a word "idenetifier", hyphen and the name of
+        // the identifier, e.g. "identifier-hw-address".
+        std::ostringstream identifier_without_quotes;
+        identifier_without_quotes << "identifier-" << identifier_name;
+
+        // Insert quotes to the identifier to indicate to the Host
+        // constructor that it is encoded as a text.
+        std::ostringstream identifier;
+        identifier << "'" << identifier_without_quotes.str() << "'";
+
+        ASSERT_NO_THROW(host.reset(new Host(identifier.str(), identifier_name,
+                                            SubnetID(10), SubnetID(20),
+                                            IOAddress("192.0.2.5"),
+                                            "me.example.org")))
+            << "test failed for " << identifier_name << "="
+            << identifier.str();
+
+        // Get the identifier from the Host and convert it back to the string
+        // format, so as it can be compared with the identifier used during
+        // Host object construction.
+        const std::vector<uint8_t>& identifier_returned = host->getIdentifier();
+        const std::string identifier_returned_str(identifier_returned.begin(),
+                                                  identifier_returned.end());
+        // Exclude quotes in comparison. Quotes should have been removed.
+        EXPECT_EQ(identifier_without_quotes.str(), identifier_returned_str);
+        EXPECT_EQ(type, host->getIdentifierType());
+
+        EXPECT_EQ(10, host->getIPv4SubnetID());
+        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+        EXPECT_EQ("me.example.org", host->getHostname());
+    }
+}
+
+// This test verifies that it is possible to override a host identifier
+// using setIdentifier method with an identifier specified in
+// hexadecimal format.
+TEST_F(HostTest, setIdentifierHex) {
+    boost::scoped_ptr<Host> host;
+    // Iterate over all supported identifiers.
+    for (unsigned int i = 0; i < identifierTypeUpperBound(); ++i) {
+
+        // In order to test that setIdentifier replaces an existing
+        // identifier we have to initialize Host with a different
+        // identifier first. We pick the next identifier after the
+        // one we want to set. If 'i' points to the last one, we
+        // use the first one.
+        unsigned int j = (i + 1) % identifierTypeUpperBound();
+
+        Host::IdentifierType type = static_cast<Host::IdentifierType>(j);
+        // Create identifier of a variable length.
+        std::vector<uint8_t> identifier(random() % 14 + 6);
+        util::fillRandom(identifier.begin(), identifier.end());
+
+        // HW address is a special case, because it must contain colons
+        // between consecutive octets.
+        HWAddrPtr hwaddr;
+        if (type == Host::IDENT_HWADDR) {
+            hwaddr.reset(new HWAddr(identifier, HTYPE_ETHER));
+        }
+
+        // Convert identifier to hexadecimal representation.
+        std::string identifier_hex = (hwaddr ?
+                                      hwaddr->toText(false) :
+                                      util::encode::encodeHex(identifier));
+        std::string identifier_name = identifierName(type);
+
+        // Try to create Host instance.
+        ASSERT_NO_THROW(host.reset(new Host(identifier_hex, identifier_name,
+                                            SubnetID(10), SubnetID(20),
+                                            IOAddress("192.0.2.5"),
+                                            "me.example.org")))
+            << "test failed for " << identifier_name << "="
+            << identifier_hex;
+
+        // Retrieve the identifier from the Host instance and verify if it
+        // is correct.
+        std::vector<uint8_t> identifier_returned = host->getIdentifier();
+        EXPECT_TRUE(identifier_returned == identifier);
+        EXPECT_EQ(type, host->getIdentifierType());
+
+        EXPECT_EQ(10, host->getIPv4SubnetID());
+        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+        EXPECT_EQ("me.example.org", host->getHostname());
+
+        // Now use another identifier.
+        type = static_cast<Host::IdentifierType>(i);
+        // Create identifier of a variable length.
+        identifier.resize(random() % 14 + 6);
+        util::fillRandom(identifier.begin(), identifier.end());
+
+        hwaddr.reset();
+        if (type == Host::IDENT_HWADDR) {
+            hwaddr.reset(new HWAddr(identifier, HTYPE_ETHER));
+        }
+
+        // Convert identifier to hexadecimal representation.
+        identifier_hex = (hwaddr ? hwaddr->toText(false) :
+                          util::encode::encodeHex(identifier));
+        identifier_name = identifierName(type);
+
+        // Try to replace identifier for a host.
+        ASSERT_NO_THROW(host->setIdentifier(identifier_hex, identifier_name))
+            << "test failed for " << identifier_name << "="
+            << identifier_hex;
+
+        // Retrieve the identifier from the Host instance and verify if it
+        // is correct.
+        identifier_returned = host->getIdentifier();
+        EXPECT_TRUE(identifier_returned == identifier);
+        EXPECT_EQ(type, host->getIdentifierType());
+
+        EXPECT_EQ(10, host->getIPv4SubnetID());
+        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+        EXPECT_EQ("me.example.org", host->getHostname());
+    }
+}
+
+// This test verifies that it is possible to override a host identifier
+// using setIdentifier method with an identifier specified in binary
+// format.
+TEST_F(HostTest, setIdentifierBinary) {
+    boost::scoped_ptr<Host> host;
+    // Iterate over all supported identifier types.
+    for (unsigned int i = 0; i < identifierTypeUpperBound(); ++i) {
+
+        // In order to test that setIdentifier replaces an existing
+        // identifier we have to initialize Host with a different
+        // identifier first. We pick the next identifier after the
+        // one we want to set. If 'i' points to the last one, we
+        // use the first one.
+        unsigned int j = (i + 1) % identifierTypeUpperBound();
+
+        Host::IdentifierType type = static_cast<Host::IdentifierType>(j);
+        // Create identifier of variable length and fill with random values.
+        std::vector<uint8_t> identifier(random() % 14 + 6);
+        util::fillRandom(identifier.begin(), identifier.end());
+
+        // Try to create a Host instance using this identifier.
+        ASSERT_NO_THROW(host.reset(new Host(&identifier[0], identifier.size(),
+                                            type, SubnetID(10), SubnetID(20),
+                                            IOAddress("192.0.2.5"),
+                                            "me.example.org")));
+
+        // Retrieve identifier from Host instance and check if it is correct.
+        std::vector<uint8_t> identifier_returned = host->getIdentifier();
+        EXPECT_TRUE(identifier_returned == identifier);
+        EXPECT_EQ(type, host->getIdentifierType());
+
+        EXPECT_EQ(10, host->getIPv4SubnetID());
+        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+        EXPECT_EQ("me.example.org", host->getHostname());
+
+        type = static_cast<Host::IdentifierType>(i);
+        // Create identifier of variable length and fill with random values.
+        identifier.resize(random() % 14 + 6);
+        util::fillRandom(identifier.begin(), identifier.end());
+
+        // Try to set new identifier.
+        ASSERT_NO_THROW(host->setIdentifier(&identifier[0], identifier.size(),
+                                            type));
+
+        // Retrieve identifier from Host instance and check if it is correct.
+        identifier_returned = host->getIdentifier();
+        EXPECT_TRUE(identifier_returned == identifier);
+        EXPECT_EQ(type, host->getIdentifierType());
+
+        EXPECT_EQ(10, host->getIPv4SubnetID());
+        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+        EXPECT_EQ("me.example.org", host->getHostname());
+    }
 }
 
 // This test verifies that the IPv6 reservations of a different type can
 // be added for the host.
-TEST(HostTest, addReservations) {
+TEST_F(HostTest, addReservations) {
     boost::scoped_ptr<Host> host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
@@ -397,7 +634,7 @@ TEST(HostTest, addReservations) {
 
 // This test checks that various modifiers may be used to replace the current
 // values of the Host class.
-TEST(HostTest, setValues) {
+TEST_F(HostTest, setValues) {
     boost::scoped_ptr<Host> host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
@@ -436,7 +673,7 @@ TEST(HostTest, setValues) {
 }
 
 // Test that Host constructors initialize client classes from string.
-TEST(HostTest, clientClassesFromConstructor) {
+TEST_F(HostTest, clientClassesFromConstructor) {
     boost::scoped_ptr<Host> host;
     // Prepare the hardware address in binary format.
     const uint8_t hwaddr_data[] = {
@@ -477,7 +714,7 @@ TEST(HostTest, clientClassesFromConstructor) {
 }
 
 // Test that new client classes can be added for the Host.
-TEST(HostTest, addClientClasses) {
+TEST_F(HostTest, addClientClasses) {
     boost::scoped_ptr<Host> host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
@@ -504,7 +741,7 @@ TEST(HostTest, addClientClasses) {
 }
 
 // This test checks that it is possible to add DHCPv4 options for a host.
-TEST(HostTest, addOptions4) {
+TEST_F(HostTest, addOptions4) {
     Host host("01:02:03:04:05:06", "hw-address", SubnetID(1), SubnetID(2),
               IOAddress("192.0.2.3"));
 
@@ -568,7 +805,7 @@ TEST(HostTest, addOptions4) {
 }
 
 // This test checks that it is possible to add DHCPv6 options for a host.
-TEST(HostTest, addOptions6) {
+TEST_F(HostTest, addOptions6) {
     Host host("01:02:03:04:05:06", "hw-address", SubnetID(1), SubnetID(2),
               IOAddress("192.0.2.3"));
 
@@ -633,22 +870,31 @@ TEST(HostTest, addOptions6) {
 
 // This test verifies that it is possible to retrieve a textual
 // representation of the host identifier.
-TEST(HostTest, getIdentifierAsText) {
+TEST_F(HostTest, getIdentifierAsText) {
+    // HW address
     Host host1("01:02:03:04:05:06", "hw-address",
                SubnetID(1), SubnetID(2),
                IOAddress("192.0.2.3"));
     EXPECT_EQ("hwaddr=010203040506", host1.getIdentifierAsText());
 
+    // DUID
     Host host2("0a:0b:0c:0d:0e:0f:ab:cd:ef", "duid",
                SubnetID(1), SubnetID(2),
                IOAddress("192.0.2.3"));
     EXPECT_EQ("duid=0A0B0C0D0E0FABCDEF",
               host2.getIdentifierAsText());
+
+    // Circuit id.
+    Host host3("'marcin's-home'", "circuit-id",
+               SubnetID(1), SubnetID(2),
+               IOAddress("192.0.2.3"));
+    EXPECT_EQ("circuit-id=6D617263696E27732D686F6D65",
+              host3.getIdentifierAsText());
 }
 
 // This test checks that Host object is correctly described in the
 // textual format using the toText method.
-TEST(HostTest, toText) {
+TEST_F(HostTest, toText) {
     boost::scoped_ptr<Host> host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
@@ -720,7 +966,7 @@ TEST(HostTest, toText) {
 }
 
 // Test verifies if the host can store HostId properly.
-TEST(HostTest, hostId) {
+TEST_F(HostTest, hostId) {
     boost::scoped_ptr<Host> host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
