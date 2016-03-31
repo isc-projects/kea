@@ -45,6 +45,9 @@ using namespace isc::eval;
   EQUAL "=="
   OPTION "option"
   RELAY4 "relay4"
+  RELAY6 "relay6"
+  PEERADDR "peeraddr"
+  LINKADDR "linkaddr"
   LBRACKET "["
   RBRACKET "]"
   DOT "."
@@ -65,6 +68,8 @@ using namespace isc::eval;
 
 %type <uint16_t> option_code
 %type <TokenOption::RepresentationType> option_repr_type
+%type <TokenRelay6::FieldType> relay6_field
+%type <uint8_t> nest_level
 
 %left OR
 %left AND
@@ -128,6 +133,20 @@ bool_expr : "(" bool_expr ")"
                        error(@1, "relay4 can only be used in DHCPv4.");
                    }
                 }
+          | RELAY6 "[" nest_level "]" "." OPTION "[" option_code "]" "." EXISTS
+                {
+                    switch (ctx.getUniverse()) {
+                    case Option::V6:
+                    {
+                        TokenPtr opt(new TokenRelay6Option($3, $8, TokenOption::EXISTS));
+                        ctx.expression.push_back(opt);
+                        break;
+                    }
+                    case Option::V4:
+                        // For now we only use relay6 in DHCPv6.
+                        error(@1, "relay6 can only be used in DHCPv6.");
+                    }
+                }
           ;
 
 string_expr : STRING
@@ -170,6 +189,38 @@ string_expr : STRING
                          error(@1, "relay4 can only be used in DHCPv4.");
                      }
                   }
+
+            | RELAY6 "[" nest_level "]" "." OPTION "[" option_code "]" "." option_repr_type
+                  {
+                     switch (ctx.getUniverse()) {
+                     case Option::V6:
+                     {
+                         TokenPtr opt(new TokenRelay6Option($3, $8, $11));
+                         ctx.expression.push_back(opt);
+                         break;
+                     }
+                     case Option::V4:
+                         // For now we only use relay6 in DHCPv6.
+                         error(@1, "relay6 can only be used in DHCPv6.");
+                     }
+                  }
+
+            | RELAY6 "[" nest_level "]" "." relay6_field
+                  {
+                     switch (ctx.getUniverse()) {
+                     case Option::V6:
+                     {
+                         TokenPtr relay6field(new TokenRelay6($3, $6));
+                         ctx.expression.push_back(relay6field);
+                         break;
+                     }
+                     case Option::V4:
+                         // For now we only use relay6 in DHCPv6.
+                         error(@1, "relay6 can only be used in DHCPv6.");
+                     }
+                  }
+
+
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
                   {
                       TokenPtr sub(new TokenSubstring());
@@ -220,6 +271,19 @@ length_expr : INTEGER
                      ctx.expression.push_back(str);
                  }
             ;
+
+relay6_field : PEERADDR { $$ = TokenRelay6::PEERADDR; }
+             | LINKADDR { $$ = TokenRelay6::LINKADDR; }
+             ;
+
+nest_level : INTEGER
+                 {
+		 $$ = ctx.convertNestLevelNumber($1, @1);
+                 }
+                 // Eventually we may add strings to handle different
+                 // ways of choosing from which relay we want to extract
+                 // an option or field.  
+           ;
 
 %%
 void

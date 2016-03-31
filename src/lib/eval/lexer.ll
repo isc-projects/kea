@@ -143,6 +143,9 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "=="        return isc::eval::EvalParser::make_EQUAL(loc);
 "option"    return isc::eval::EvalParser::make_OPTION(loc);
 "relay4"    return isc::eval::EvalParser::make_RELAY4(loc);
+"relay6"    return isc::eval::EvalParser::make_RELAY6(loc);
+"peeraddr"  return isc::eval::EvalParser::make_PEERADDR(loc);
+"linkaddr"  return isc::eval::EvalParser::make_LINKADDR(loc);
 "text"      return isc::eval::EvalParser::make_TEXT(loc);
 "hex"       return isc::eval::EvalParser::make_HEX(loc);
 "exists"    return isc::eval::EvalParser::make_EXISTS(loc);

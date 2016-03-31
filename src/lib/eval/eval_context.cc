@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -91,6 +91,30 @@ EvalContext::convertOptionName(const std::string& option_name,
 
     return (option_def->getCode());
 }
+
+uint8_t
+EvalContext::convertNestLevelNumber(const std::string& nest_level,
+                                    const isc::eval::location& loc)
+{
+    int n = 0;
+    try {
+        n  = boost::lexical_cast<int>(nest_level);
+    } catch (const boost::bad_lexical_cast &) {
+        // This can't happen...
+        error(loc, "Nest level has invalid value in " + nest_level);
+    }
+    if (option_universe_ == Option::V6) {
+        if (n < 0 || n > 31) {
+            error(loc, "Nest level has invalid value in "
+                      + nest_level + ". Allowed range: 0..31");
+	}
+    } else {
+        error(loc, "Nest level invalid for DHCPv4 packets");
+    }
+
+    return (static_cast<uint8_t>(n));
+}
+
 
 void
 EvalContext::fatal (const std::string& what)

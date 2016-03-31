@@ -112,18 +112,16 @@ OptionPtr Pkt6::getAnyRelayOption(uint16_t opt_type, RelaySearchOrder order) {
     return (OptionPtr());
 }
 
-OptionPtr Pkt6::getRelayOption(uint16_t opt_type, uint8_t relay_level) {
+OptionPtr Pkt6::getRelayOption(uint16_t opt_type, uint8_t relay_level) const {
     if (relay_level >= relay_info_.size()) {
         isc_throw(OutOfRange, "This message was relayed " << relay_info_.size() << " time(s)."
                   << " There is no info about " << relay_level + 1 << " relay.");
     }
 
-    for (OptionCollection::iterator it = relay_info_[relay_level].options_.begin();
-         it != relay_info_[relay_level].options_.end(); ++it) {
-        if ((*it).second->getType() == opt_type) {
-            return (it->second);
-        }
-    }
+    OptionCollection::const_iterator x = relay_info_[relay_level].options_.find(opt_type);
+    if (x != options_.end()) {
+	return (*x).second;
+      }
 
     return (OptionPtr());
 }
