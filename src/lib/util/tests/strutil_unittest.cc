@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -258,4 +258,42 @@ TEST(StringUtilTest, tokenToNum) {
     EXPECT_THROW(tokenToNumCall_16_8("-1234567890"),
                  isc::util::str::StringTokenError);
 
+}
+
+/// @brief Convenience function which calls quotedStringToBinary
+/// and converts returned vector back to string.
+///
+/// @param s Input string.
+/// @return String holding a copy of a vector returned by the
+/// quotedStringToBinary.
+std::string testQuoted(const std::string& s) {
+    std::vector<uint8_t> vec = str::quotedStringToBinary(s);
+    std::string s2(vec.begin(), vec.end());
+    return (s2);
+}
+
+TEST(StringUtilTest, quotedStringToBinary) {
+    // No opening or closing quote should result in empty string.
+    EXPECT_TRUE(str::quotedStringToBinary("'").empty());
+    EXPECT_TRUE(str::quotedStringToBinary("").empty());
+    EXPECT_TRUE(str::quotedStringToBinary("  ").empty());
+    EXPECT_TRUE(str::quotedStringToBinary("'circuit id").empty());
+    EXPECT_TRUE(str::quotedStringToBinary("circuit id'").empty());
+
+    // If there is only opening and closing quote, an empty
+    // vector should be returned.
+    EXPECT_TRUE(str::quotedStringToBinary("''").empty());
+
+    // Both opening and ending quote is present.
+    EXPECT_EQ("circuit id", testQuoted("'circuit id'"));
+    EXPECT_EQ("remote id", testQuoted("  ' remote id'"));
+    EXPECT_EQ("duid", testQuoted("  ' duid'"));
+    EXPECT_EQ("duid", testQuoted("'duid    '  "));
+    EXPECT_EQ("remote'id", testQuoted("  ' remote'id  '"));
+    EXPECT_EQ("remote id'", testQuoted("'remote id''"));
+    EXPECT_EQ("'remote id", testQuoted("''remote id'"));
+
+    // Multiple quotes.
+    EXPECT_EQ("'", testQuoted("'''"));
+    EXPECT_EQ("''", testQuoted("''''"));
 }
