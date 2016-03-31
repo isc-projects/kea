@@ -64,7 +64,7 @@ TaggedStatement tagged_statements[] = {
     // having a specified identifier will be returned from those subnets.
     // Because LEFT JOIN clause is used, the number of rows returned for
     // a single host depends on the number of reservations.
-    {MySqlHostDataSource::GET_HOST_HWADDR_DUID,
+    {MySqlHostDataSource::GET_HOST_DHCPID,
             "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, "
                 "h.hostname, h.dhcp4_client_classes, h.dhcp6_client_classes, "
@@ -1429,7 +1429,7 @@ MySqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
     inbind[0].length = &length;
 
     ConstHostCollection result;
-    impl_->getHostCollection(GET_HOST_HWADDR_DUID, inbind,
+    impl_->getHostCollection(GET_HOST_DHCPID, inbind,
                              impl_->host_ipv6_exchange_,
                              result, false);
     return (result);
