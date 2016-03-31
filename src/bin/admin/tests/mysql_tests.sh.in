@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -177,6 +177,13 @@ EOF
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "dhcp6_options table is missing or broken. (returned status code %d, expected %d)"
+
+    # Sixth table: host_identifier_type
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
+    SELECT type, name FROM host_identifier_type;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "host_identifier_type table is missing or broken. (returned status code %d, expected %d)"
 
     # Let's wipe the whole database
     mysql_wipe

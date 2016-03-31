@@ -1353,38 +1353,25 @@ MySqlHostDataSource::~MySqlHostDataSource() {
     delete impl_;
 }
 
-bool
-MySqlHostDataSource::checkIfExists(const HostPtr& host){
-    /// @todo: Implement this as a single query get(identifier_type, identifier)
-    return (get4(host->getIPv4SubnetID(), host->getHWAddress(), host->getDuid()) ||
-            get6(host->getIPv6SubnetID(), host->getDuid(), host->getHWAddress()));
-}
-
 void
 MySqlHostDataSource::add(const HostPtr& host) {
-    // Check if the host is not a duplicate
-    if (checkIfExists(host)){
-        isc_throw(DuplicateEntry, "Host with same parameters already exists.");
+    // Create the MYSQL_BIND array for the host
+    std::vector<MYSQL_BIND> bind = impl_->host_exchange_->createBindForSend(host);
 
-    } else {
-        // Create the MYSQL_BIND array for the host
-        std::vector<MYSQL_BIND> bind = impl_->host_exchange_->createBindForSend(host);
+    // ... and call addHost() code.
+    impl_->addQuery(INSERT_HOST, bind);
 
-        // ... and call addHost() code.
-        impl_->addQuery(INSERT_HOST, bind);
+    IPv6ResrvRange v6resv = host->getIPv6Reservations();
+    if (std::distance(v6resv.first, v6resv.second) == 0) {
+        // If there are no v6 reservations, we're done here.
+        return;
+    }
 
-        IPv6ResrvRange v6resv = host->getIPv6Reservations();
-        if (std::distance(v6resv.first, v6resv.second) == 0) {
-            // If there are no v6 reservations, we're done here.
-            return;
-        }
-
-        // Gets the last inserted hosts id
-        uint64_t host_id = mysql_insert_id(impl_->conn_.mysql_);
-        for (IPv6ResrvIterator resv = v6resv.first; resv != v6resv.second;
-             ++resv) {
-            impl_->addResv(resv->second, host_id);
-        }
+    // Gets the last inserted hosts id
+    uint64_t host_id = mysql_insert_id(impl_->conn_.mysql_);
+    for (IPv6ResrvIterator resv = v6resv.first; resv != v6resv.second;
+         ++resv) {
+        impl_->addResv(resv->second, host_id);
     }
 }
 
