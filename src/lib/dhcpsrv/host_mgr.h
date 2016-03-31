@@ -88,7 +88,9 @@ public:
     ///
     /// It retrieves reservations from both primary and alternate host data
     /// source as a single collection of @c Host objects, i.e. if matching
-    /// reservations are in both sources, all of them are returned.
+    /// reservations are in both sources, all of them are returned. The
+    /// reservations from the primary data source are placed before the
+    /// reservations from the alternate source.
     ///
     /// Note that returned collection may contain duplicates. It is the
     /// caller's responsibility to check for duplicates.
@@ -110,7 +112,9 @@ public:
     ///
     /// It retrieves reservations from both primary and alternate host data
     /// source as a single collection of @c Host objects, i.e. if matching
-    /// reservations are in both sources, all of them are returned.
+    /// reservations are in both sources, all of them are returned. The
+    /// reservations from the primary data source are placed before the
+    /// reservations from the alternate source.
     ///
     /// @param identifier_begin Pointer to a begining of a buffer containing
     /// an identifier.
@@ -128,7 +132,9 @@ public:
     /// different subnets.
     ///
     /// If matching reservations are both in the primary and the alternate
-    /// data source, all of them are returned.
+    /// data source, all of them are returned. The reservations from the
+    /// primary data source are placed before the reservations from the
+    /// alternate source.
     ///
     /// @param address IPv4 address for which the @c Host object is searched.
     ///
