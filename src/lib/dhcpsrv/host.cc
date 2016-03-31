@@ -162,6 +162,9 @@ Host::getIdentifierAsText(const IdentifierType& type, const uint8_t* value,
     case IDENT_DUID:
         s << "duid";
         break;
+    case IDENT_CIRCUIT_ID:
+        s << "circuit-id";
+        break;
     default:
         isc_throw(BadValue, "requested conversion of the unsupported"
                   " identifier into textual form");
@@ -185,6 +188,10 @@ Host::setIdentifier(const uint8_t* identifier, const size_t len,
 
 void
 Host::setIdentifier(const std::string& identifier, const std::string& name) {
+    // HW address and DUID are special cases because they are typically
+    // specified as values with colons between consecutive octets. Thus,
+    // we use the HWAddr and DUID classes to validate them and to
+    // convert them into binary format.
     if (name == "hw-address") {
         HWAddr hwaddr(HWAddr::fromText(identifier));
         identifier_type_= IDENT_HWADDR;
@@ -196,8 +203,38 @@ Host::setIdentifier(const std::string& identifier, const std::string& name) {
         identifier_value_ = duid.getDuid();
 
     } else {
-        isc_throw(isc::BadValue, "invalid client identifier type '"
-                  << name << "' when creating host instance");
+        if (name == "circuit-id") {
+            identifier_type_ = IDENT_CIRCUIT_ID;
+
+        } else {
+            isc_throw(isc::BadValue, "invalid client identifier type '"
+                      << name << "' when creating host instance");
+        }
+
+        // Here we're converting values other than DUID and HW address. These
+        // values can either be specified as strings of hexadecimal digits or
+        // strings in quotes. The latter are copied to a vector excluding quote
+        // characters.
+
+        // Try to convert the values in quotes into a vector of ASCII codes.
+        // If the identifier lacks opening and closing quote, this will return
+        // an empty value, in which case we'll try to decode it as a string of
+        // hexadecimal digits.
+        std::vector<uint8_t> binary = util::str::quotedStringToBinary(identifier);
+        if (binary.empty()) {
+            try {
+                util::encode::decodeHex(identifier, binary);
+
+            } catch (...) {
+                // The string doesn't match any known pattern, so we have to
+                // report an error at this point.
+                isc_throw(isc::BadValue, "invalid host identifier value '"
+                          << identifier << "'");
+            }
+        }
+
+        // Successfully decoded the identifier, so let's use it.
+        identifier_value_.swap(binary);
     }
 }
 
