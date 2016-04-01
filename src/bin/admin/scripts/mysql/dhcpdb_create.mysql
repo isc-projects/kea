@@ -413,7 +413,7 @@ CREATE UNIQUE INDEX key_dhcp4_ipv4_address_subnet_id ON hosts (ipv4_address ASC 
 
 # Create index to search for reservations using address/prefix and prefix
 # length.
-CREATE INDEX key_dhcp6_address_prefix_len ON ipv6_reservations (address ASC , prefix_len ASC);
+CREATE UNIQUE INDEX key_dhcp6_address_prefix_len ON ipv6_reservations (address ASC , prefix_len ASC);
 
 # Create a table mapping host identifiers to their names. Values in this
 # table are used as a foreign key in hosts table to guarantee that only
