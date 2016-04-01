@@ -27,7 +27,7 @@ GenericHostDataSourceTest::~GenericHostDataSourceTest() {
 }
 
 std::string
-GenericHostDataSourceTest::generateHWAddr() {
+GenericHostDataSourceTest::generateHWAddr(const bool new_identifier) {
     /// @todo: Consider moving this somewhere to lib/testutils.
 
     // Let's use something that is easily printable. That's convenient
@@ -43,18 +43,20 @@ GenericHostDataSourceTest::generateHWAddr() {
             << static_cast<unsigned int>(hwaddr[i]);
     }
 
-    // Increase the address for the next time we use it.
-    // This is primitive, but will work for 65k unique
-    // addresses.
-    hwaddr[sizeof(hwaddr) - 1]++;
-    if (hwaddr[sizeof(hwaddr) - 1] == 0) {
-        hwaddr[sizeof(hwaddr) - 2]++;
+    if (new_identifier) {
+        // Increase the address for the next time we use it.
+        // This is primitive, but will work for 65k unique
+        // addresses.
+        hwaddr[sizeof(hwaddr) - 1]++;
+        if (hwaddr[sizeof(hwaddr) - 1] == 0) {
+            hwaddr[sizeof(hwaddr) - 2]++;
+        }
     }
     return (tmp.str());
 }
 
 std::string
-GenericHostDataSourceTest::generateDuid() {
+GenericHostDataSourceTest::generateDuid(const bool new_identifier) {
     /// @todo: Consider moving this somewhere to lib/testutils.
 
     // Let's use something that is easily printable. That's convenient
@@ -70,9 +72,11 @@ GenericHostDataSourceTest::generateDuid() {
     // Increase the DUID for the next time we use it.
     // This is primitive, but will work for 65k unique
     // DUIDs.
-    duid[sizeof(duid) - 1]++;
-    if (duid[sizeof(duid) - 1] == 0) {
-        duid[sizeof(duid) - 2]++;
+    if (new_identifier) {
+        duid[sizeof(duid) - 1]++;
+        if (duid[sizeof(duid) - 1] == 0) {
+            duid[sizeof(duid) - 2]++;
+        }
     }
     return (tmp.str());
 }
@@ -106,17 +110,18 @@ HostPtr GenericHostDataSourceTest::initializeHost4(std::string address,
 
 HostPtr GenericHostDataSourceTest::initializeHost6(std::string address,
                                                    Host::IdentifierType identifier,
-                                                   bool prefix) {
+                                                   bool prefix,
+                                                   bool new_identifier) {
     string ident;
     string ident_type;
 
     switch (identifier) {
     case Host::IDENT_HWADDR:
-        ident = generateHWAddr();
+        ident = generateHWAddr(new_identifier);
         ident_type = "hw-address";
         break;
     case Host::IDENT_DUID:
-        ident = generateDuid();
+        ident = generateDuid(new_identifier);
         ident_type = "duid";
         break;
     default:
@@ -724,24 +729,32 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
-    HostPtr host = initializeHost6("2001:db8::0", id, true);
-
+    HostPtr host;
+    IOAddress current_address("2001:db8::0");
     for (int i = 0; i < subnets; ++i) {
+        // Last boolean value set to false indicates that the same identifier
+        // must be used for each generated host.
+        host = initializeHost6(current_address.toText(), id, true, false);
+
         host->setIPv4SubnetID(i + 1000);
         host->setIPv6SubnetID(i + 1000);
 
         // Check that the same host can have reservations in multiple subnets.
         EXPECT_NO_THROW(hdsptr_->add(host));
+
+        // Increase address to make sure we don't assign the same address
+        // in different subnets.
+        current_address = IOAddress::increase(current_address);
     }
 
     // Check that the reservations can be retrieved from each subnet separately.
     for (int i = 0; i < subnets; ++i) {
 
         // Try to retrieve the host
-        ConstHostPtr from_hds = hdsptr_->get6(i + 1000, host->getDuid(),
-                                              host->getHWAddress());
+        ConstHostPtr from_hds = hdsptr_->get6(i + 1000, id, &host->getIdentifier()[0],
+                                              host->getIdentifier().size());
 
-        ASSERT_TRUE(from_hds);
+        ASSERT_TRUE(from_hds) << "failed for i=" << i;
         EXPECT_EQ(i + 1000, from_hds->getIPv6SubnetID());
     }
 

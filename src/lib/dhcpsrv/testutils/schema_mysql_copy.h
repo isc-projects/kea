@@ -270,7 +270,7 @@ const char* create_statement[] = {
       "ON hosts "
         "(ipv4_address ASC, dhcp4_subnet_id ASC)",
 
-    "CREATE INDEX key_dhcp6_address_prefix_len "
+    "CREATE UNIQUE INDEX key_dhcp6_address_prefix_len "
       "ON ipv6_reservations (address ASC , prefix_len ASC)",
 
     "CREATE TABLE IF NOT EXISTS host_identifier_type ("
