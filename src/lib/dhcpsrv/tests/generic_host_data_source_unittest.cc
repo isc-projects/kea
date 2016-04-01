@@ -842,6 +842,17 @@ void GenericHostDataSourceTest::testAddDuplicate4() {
 
     // Then try to add it again, it should throw an exception.
     ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);
+
+    // This time use a different host identifier and try again.
+    // This update should be rejected because of duplicated
+    // address.
+    ASSERT_NO_THROW(host->setIdentifier("01:02:03:04:05:06", "hw-address"));
+    ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);
+
+    // Modify address to avoid its duplication and make sure
+    // we can now add the host.
+    ASSERT_NO_THROW(host->setIPv4Reservation(IOAddress("192.0.2.3")));
+    EXPECT_NO_THROW(hdsptr_->add(host));
 }
 
 void GenericHostDataSourceTest::testAddr6AndPrefix(){
