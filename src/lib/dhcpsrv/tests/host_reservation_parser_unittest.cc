@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 #include <iterator>
 #include <string>
+#include <vector>
 
 using namespace isc::asiolink;
 using namespace isc::data;
@@ -126,6 +127,40 @@ protected:
         EXPECT_TRUE(hosts[0]->getCfgOption6()->empty());
     }
 
+    /// @brief This test verfies that the parser can parse a DHCPv4
+    /// reservation configuration including a specific identifier.
+    ///
+    /// @param identifier_name Identifier name.
+    /// @param identifier_type Identifier type.
+    void testIdentifier4(const std::string& identifier_name,
+                         const std::string& identifier_value,
+                         const Host::IdentifierType& expected_identifier_type,
+                         const std::vector<uint8_t>& expected_identifier) const {
+        std::ostringstream config;
+        config << "{ \"" << identifier_name << "\": \"" << identifier_value
+               << "\","
+               << "\"ip-address\": \"192.0.2.112\","
+               << "\"hostname\": \"\" }";
+
+        ElementPtr config_element = Element::fromJSON(config.str());
+
+        HostReservationParser4 parser(SubnetID(10));
+        ASSERT_NO_THROW(parser.build(config_element));
+
+        CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+        HostCollection hosts;
+        ASSERT_NO_THROW(hosts = cfg_hosts->getAll(expected_identifier_type,
+                                                  &expected_identifier[0],
+                                                  expected_identifier.size()));
+
+        ASSERT_EQ(1, hosts.size());
+
+        EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
+        EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
+        EXPECT_EQ("192.0.2.112", hosts[0]->getIPv4Reservation().toText());
+        EXPECT_TRUE(hosts[0]->getHostname().empty());
+    }
+
     /// @brief This test verfies that the parser returns an error when
     /// configuration is invalid.
     ///
@@ -144,6 +179,8 @@ protected:
     /// @brief DUID object used by tests.
     DuidPtr duid_;
 
+    /// @brief Vector holding circuit id used by tests.
+    std::vector<uint8_t> circuit_id_;
 };
 
 void
@@ -158,6 +195,9 @@ HostReservationParserTest::SetUp() {
     const uint8_t duid_data[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
                                   0x08, 0x09, 0x0A };
     duid_ = DuidPtr(new DUID(duid_data, sizeof(duid_data)));
+
+    const std::string circuit_id_str = "howdy";
+    circuit_id_.assign(circuit_id_str.begin(), circuit_id_str.end());
 }
 
 void
@@ -211,6 +251,22 @@ TEST_F(HostReservationParserTest, dhcp4DUID) {
     EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.112", hosts[0]->getIPv4Reservation().toText());
     EXPECT_TRUE(hosts[0]->getHostname().empty());
+}
+
+// This test verifies that the parser can parse a reservation entry for
+// which circuit-id is an identifier. The circuit-id is specified as
+// a string in quotes.
+TEST_F(HostReservationParserTest, dhcp4CircuitIdStringInQuotes) {
+    testIdentifier4("circuit-id", "'howdy'", Host::IDENT_CIRCUIT_ID,
+                    circuit_id_);
+}
+
+// This test verifies that the parser can parse a reservation entry for
+// which circuit-id is an identifier. The circuit-id is specified in
+// hexadecimal format.
+TEST_F(HostReservationParserTest, dhcp4CircuitIdHex) {
+    testIdentifier4("circuit-id", "686F776479", Host::IDENT_CIRCUIT_ID,
+                    circuit_id_);
 }
 
 // This test verifies that the parser can parse the reservation entry
@@ -445,6 +501,22 @@ TEST_F(HostReservationParserTest, dhcp6DUID) {
 
     IPv6ResrvRange prefixes = hosts[0]->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(0, std::distance(prefixes.first, prefixes.second));
+}
+
+// This test verifies that host reservation parser for DHCPv6 rejects
+// "circuit-id" as a host identifier.
+TEST_F(HostReservationParserTest, dhcp6CircuitId) {
+    // Use DHCPv4 specific identifier 'circuit-id' with DHCPv6 parser.
+    std::string config = "{ \"circuit-id\": \"'howdy'\","
+        "\"ip-addresses\": [ \"2001:db8:1::100\", \"2001:db8:1::200\" ],"
+        "\"prefixes\": [ ],"
+        "\"hostname\": \"foo.example.com\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // The parser should throw exception.
+    HostReservationParser6 parser(SubnetID(12));
+    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
 }
 
 // This test verfies that the parser can parse the IPv6 reservation entry

@@ -12,6 +12,7 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <sys/socket.h>
+#include <sstream>
 #include <string>
 
 using namespace isc::asiolink;
@@ -23,36 +24,62 @@ namespace {
 ///
 /// This function returns the set of supported parameters for
 /// host reservation in DHCPv4.
-const std::set<std::string>& getSupportedParams4() {
+///
+/// @param identifiers_only Indicates if the function should only
+/// return supported host identifiers (if true) or all supported
+/// parameters (if false).
+const std::set<std::string>&
+getSupportedParams4(const bool identifiers_only = false) {
+    // Holds set of host identifiers.
+    static std::set<std::string> identifiers_set;
+    // Holds set of all supported parameters, including identifiers.
     static std::set<std::string> params_set;
-    if (params_set.empty()) {
-        const char* params[] = {
-            "duid", "hw-address", "hostname", "ip-address",
-            "option-data", NULL
-        };
-        for (int i = 0; params[i] != NULL; ++i) {
-            params_set.insert(std::string(params[i]));
-        }
+    // If this is first execution of this function, we need
+    // to initialize the set.
+    if (identifiers_set.empty()) {
+        identifiers_set.insert("duid");
+        identifiers_set.insert("hw-address");
+        identifiers_set.insert("circuit-id");
     }
-    return (params_set);
+    // Copy identifiers and add all other parameters.
+    if (params_set.empty()) {
+        params_set = identifiers_set;
+        params_set.insert("hostname");
+        params_set.insert("ip-address");
+        params_set.insert("option-data");
+    }
+    return (identifiers_only ? identifiers_set : params_set);
 }
 
-/// @brief Returns set of the supported parameters for DHCPv4.
+/// @brief Returns set of the supported parameters for DHCPv6.
 ///
 /// This function returns the set of supported parameters for
 /// host reservation in DHCPv6.
-const std::set<std::string>& getSupportedParams6() {
+///
+/// @param identifiers_only Indicates if the function should only
+/// return supported host identifiers (if true) or all supported
+/// parameters (if false).
+const std::set<std::string>&
+getSupportedParams6(const bool identifiers_only = false) {
+    // Holds set of host identifiers.
+    static std::set<std::string> identifiers_set;
+    // Holds set of all supported parameters, including identifiers.
     static std::set<std::string> params_set;
-    if (params_set.empty()) {
-        const char* params[] = {
-            "duid", "hw-address", "hostname", "ip-addresses", "prefixes",
-            "option-data", NULL
-        };
-        for (int i = 0; params[i] != NULL; ++i) {
-            params_set.insert(std::string(params[i]));
-        }
+    // If this is first execution of this function, we need
+    // to initialize the set.
+    if (identifiers_set.empty()) {
+        identifiers_set.insert("duid");
+        identifiers_set.insert("hw-address");
     }
-    return (params_set);
+    // Copy identifiers and add all other parameters.
+    if (params_set.empty()) {
+        params_set = identifiers_set;
+        params_set.insert("hostname");
+        params_set.insert("ip-addresses");
+        params_set.insert("prefixes");
+        params_set.insert("option-data");
+    }
+    return (identifiers_only ? identifiers_set : params_set);
 }
 
 }
@@ -80,10 +107,11 @@ HostReservationParser::build(isc::data::ConstElementPtr reservation_data) {
                           " parameter '" << element.first << "'");
             }
 
-            if (element.first == "hw-address" || element.first == "duid") {
-                if (!identifier_name.empty()) {
-                    isc_throw(DhcpConfigError, "the 'hw-address' and 'duid'"
-                              " parameters are mutually exclusive");
+            if (isIdentifierParameter(element.first)) {
+                if (!identifier.empty()) {
+                    isc_throw(DhcpConfigError, "the '" << element.first
+                              << "' and '" << identifier_name
+                              << "' are mutually exclusive");
                 }
                 identifier = element.second->stringValue();
                 identifier_name = element.first;
@@ -100,10 +128,22 @@ HostReservationParser::build(isc::data::ConstElementPtr reservation_data) {
     }
 
     try {
-        // hw-address or duid is a must.
+        // Host identifier is a must.
         if (identifier_name.empty()) {
-            isc_throw(DhcpConfigError, "'hw-address' or 'duid' is a required"
-                      " parameter for host reservation");
+            // If there is no identifier specified, we have to display an
+            // error message and include the information what identifiers
+            // are supported.
+            std::ostringstream s;
+            BOOST_FOREACH(std::string param_name, getSupportedParameters(true)) {
+                if (s.tellp() != std::streampos(0)) {
+                    s << ", ";
+                }
+                s << param_name;
+            }
+            isc_throw(DhcpConfigError, "one of the supported identifiers must"
+                      " be specified for host reservation: "
+                      << s.str());
+
         }
 
         // Create a host object from the basic parameters we already parsed.
@@ -127,6 +167,11 @@ HostReservationParser::addHost(isc::data::ConstElementPtr reservation_data) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << reservation_data->getPosition() << ")");
     }
+}
+
+bool
+HostReservationParser::isSupportedParameter(const std::string& param_name) const {
+    return (getSupportedParameters(false).count(param_name) > 0);
 }
 
 HostReservationParser4::HostReservationParser4(const SubnetID& subnet_id)
@@ -168,8 +213,13 @@ HostReservationParser4::build(isc::data::ConstElementPtr reservation_data) {
 }
 
 bool
-HostReservationParser4::isSupportedParameter(const std::string& param_name) const {
-    return (getSupportedParams4().count(param_name) > 0);
+HostReservationParser4::isIdentifierParameter(const std::string& param_name) const {
+    return (getSupportedParams4(true).count(param_name) > 0);
+}
+
+const std::set<std::string>&
+HostReservationParser4::getSupportedParameters(const bool identifiers_only) const {
+    return (getSupportedParams4(identifiers_only));
 }
 
 HostReservationParser6::HostReservationParser6(const SubnetID& subnet_id)
@@ -263,8 +313,13 @@ HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
 }
 
 bool
-HostReservationParser6::isSupportedParameter(const std::string& param_name) const {
-    return (getSupportedParams6().count(param_name) > 0);
+HostReservationParser6::isIdentifierParameter(const std::string& param_name) const {
+    return (getSupportedParams6(true).count(param_name) > 0);
+}
+
+const std::set<std::string>&
+HostReservationParser6::getSupportedParameters(const bool identifiers_only) const {
+    return (getSupportedParams6(identifiers_only));
 }
 
 } // end of namespace isc::dhcp
