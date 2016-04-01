@@ -266,6 +266,13 @@ const char* create_statement[] = {
       "ON hosts "
         "(dhcp_identifier ASC , dhcp_identifier_type ASC , dhcp6_subnet_id ASC)",
 
+    "CREATE UNIQUE INDEX key_dhcp4_ipv4_address_subnet_id "
+      "ON hosts "
+        "(ipv4_address ASC, dhcp4_subnet_id ASC)",
+
+    "CREATE INDEX key_dhcp6_address_prefix_len "
+      "ON ipv6_reservations (address ASC , prefix_len ASC)",
+
     "CREATE TABLE IF NOT EXISTS host_identifier_type ("
       "type TINYINT PRIMARY KEY NOT NULL,"
       "name VARCHAR(32)"
