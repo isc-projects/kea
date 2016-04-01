@@ -49,19 +49,26 @@ public:
     /// @param address IPv6 address to be reserved
     /// @param id type of identifier (IDENT_DUID or IDENT_HWADDR are supported)
     /// @param prefix reservation type (true = prefix, false = address)
+    /// @param new_identifier Boolean value indicating if new host
+    /// identifier should be generated or the same as previously.
     ///
     /// @return generated Host object
     HostPtr initializeHost6(std::string address, Host::IdentifierType id,
-                            bool prefix);
+                            bool prefix, bool new_identifier = true);
 
     /// @brief Generates a hardware address in text version.
     ///
+    /// @param increase A boolean value indicating if new address (increased)
+    /// must be generated or the same address as previously.
     /// @return HW address in textual form acceptable by Host constructor
-    std::string generateHWAddr();
+    std::string generateHWAddr(const bool new_identifier = true);
 
     /// @brief Generates a hardware address in text version.
+    ///
+    /// @param increase A boolean value indicating if new DUID (increased)
+    /// must be generated or the same DUID as previously.
     /// @return DUID in textual form acceptable by Host constructor
-    std::string generateDuid();
+    std::string generateDuid(const bool new_identifier = true);
 
     /// @brief Compares hardware addresses of the two hosts.
     ///

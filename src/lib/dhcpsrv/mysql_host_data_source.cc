@@ -718,6 +718,8 @@ public:
         : MySqlHostExchange(), reserv_type_(0), reserv_type_null_(MLM_FALSE),
           ipv6_address_buffer_len_(0), prefix_len_(0), iaid_(0) {
 
+        memset(ipv6_address_buffer_, 0, sizeof(ipv6_address_buffer_));
+
         // Append additional columns returned by the queries.
         columns_.push_back("address");
         columns_.push_back("prefix_len");
@@ -922,7 +924,7 @@ public:
     ///
     /// Initialize class members representing a single IPv6 reservation.
     MySqlIPv6ReservationExchange()
-        : host_id_(0), address_("::"), prefix_len_(0), type_(0),
+        : host_id_(0), address_("::"), address_len_(0), prefix_len_(0), type_(0),
           iaid_(0), resv_(IPv6Resrv::TYPE_NA, asiolink::IOAddress("::"), 128) {
 
         // Reset error table.
