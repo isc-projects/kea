@@ -1196,8 +1196,8 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         opt_hostname_resp->setValue(d2_mgr.qualifyName(ex.getContext()->host_->getHostname(),
                                                        false));
 
-    } else if ((d2_mgr.getD2ClientConfig()->getReplaceClientName()) ||
-               (label_count < 2)) {
+    } else if ((d2_mgr.getD2ClientConfig()->getReplaceClientNameMode()
+                != D2ClientConfig::RCM_NEVER) || (label_count < 2)) {
         // Set to root domain to signal later on that we should replace it.
         // DHO_HOST_NAME is a string option which cannot be empty.
         /// @todo We may want to reconsider whether it is appropriate for the

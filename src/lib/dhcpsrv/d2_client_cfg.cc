@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,8 @@
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <string>
 
 using namespace std;
@@ -17,19 +19,60 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-const char *D2ClientConfig::DFT_SERVER_IP = "127.0.0.1";
+const char* D2ClientConfig::DFT_SERVER_IP = "127.0.0.1";
 const size_t D2ClientConfig::DFT_SERVER_PORT = 53001;
-const char *D2ClientConfig::DFT_V4_SENDER_IP = "0.0.0.0";
-const char *D2ClientConfig::DFT_V6_SENDER_IP = "::";
+const char* D2ClientConfig::DFT_V4_SENDER_IP = "0.0.0.0";
+const char* D2ClientConfig::DFT_V6_SENDER_IP = "::";
 const size_t D2ClientConfig::DFT_SENDER_PORT = 0;
 const size_t D2ClientConfig::DFT_MAX_QUEUE_SIZE = 1024;
-const char *D2ClientConfig::DFT_NCR_PROTOCOL = "UDP";
-const char *D2ClientConfig::DFT_NCR_FORMAT = "JSON";
+const char* D2ClientConfig::DFT_NCR_PROTOCOL = "UDP";
+const char* D2ClientConfig::DFT_NCR_FORMAT = "JSON";
 const bool D2ClientConfig::DFT_ALWAYS_INCLUDE_FQDN = false;
 const bool D2ClientConfig::DFT_OVERRIDE_NO_UPDATE = false;
 const bool D2ClientConfig::DFT_OVERRIDE_CLIENT_UPDATE = false;
-const bool D2ClientConfig::DFT_REPLACE_CLIENT_NAME = false;
-const char *D2ClientConfig::DFT_GENERATED_PREFIX = "myhost";
+const char* D2ClientConfig::DFT_REPLACE_CLIENT_NAME_MODE = "NEVER";
+const char* D2ClientConfig::DFT_GENERATED_PREFIX = "myhost";
+
+
+D2ClientConfig::ReplaceClientNameMode stringToReplaceClientNameMode(const std::string& mode_str) {
+    if (boost::iequals(mode_str, "NEVER")) {
+        return (D2ClientConfig::RCM_NEVER);
+    }
+
+    if (boost::iequals(mode_str, "ALWAYS")) {
+        return (D2ClientConfig::RCM_ALWAYS);
+    }
+
+    if (boost::iequals(mode_str, "WHEN_PRESENT")) {
+        return (D2ClientConfig::RCM_WHEN_PRESENT);
+    }
+
+    if (boost::iequals(mode_str, "WHEN_NOT_PRESENT")) {
+        return (D2ClientConfig::RCM_WHEN_NOT_PRESENT);
+    }
+
+    isc_throw(BadValue,
+              "Invalid ReplaceClientNameMode: " << mode_str);
+}
+
+std::string replaceClientNameModeToString(D2ClientConfig::ReplaceClientNameMode mode) {
+    switch (mode) {
+    case D2ClientConfig::RCM_NEVER:
+        return ("NEVER");
+    case D2ClientConfig::RCM_ALWAYS:
+        return ("ALWAYS");
+    case D2ClientConfig::RCM_WHEN_PRESENT:
+        return ("WHEN_PRESENT");
+    case D2ClientConfig::RCM_WHEN_NOT_PRESENT:
+        return ("WHEN_NOT_PRESENT");
+    default:
+        break;
+    }
+
+    std::ostringstream stream;
+    stream  << "UNKNOWN(" << mode << ")";
+    return (stream.str());
+}
 
 D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                const isc::asiolink::IOAddress& server_ip,
@@ -44,7 +87,7 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                const bool always_include_fqdn,
                                const bool override_no_update,
                                const bool override_client_update,
-                               const bool replace_client_name,
+                               const ReplaceClientNameMode replace_client_name_mode,
                                const std::string& generated_prefix,
                                const std::string& qualifying_suffix)
     : enable_updates_(enable_updates),
@@ -58,7 +101,7 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
       always_include_fqdn_(always_include_fqdn),
       override_no_update_(override_no_update),
       override_client_update_(override_client_update),
-      replace_client_name_(replace_client_name),
+      replace_client_name_mode_(replace_client_name_mode),
       generated_prefix_(generated_prefix),
       qualifying_suffix_(qualifying_suffix) {
     validateContents();
@@ -76,7 +119,7 @@ D2ClientConfig::D2ClientConfig()
       always_include_fqdn_(DFT_ALWAYS_INCLUDE_FQDN),
       override_no_update_(DFT_OVERRIDE_NO_UPDATE),
       override_client_update_(DFT_OVERRIDE_CLIENT_UPDATE),
-      replace_client_name_(DFT_REPLACE_CLIENT_NAME),
+      replace_client_name_mode_(stringToReplaceClientNameMode(DFT_REPLACE_CLIENT_NAME_MODE)),
       generated_prefix_(DFT_GENERATED_PREFIX),
       qualifying_suffix_("") {
     validateContents();
@@ -134,7 +177,7 @@ D2ClientConfig::operator == (const D2ClientConfig& other) const {
             (always_include_fqdn_ == other.always_include_fqdn_) &&
             (override_no_update_ == other.override_no_update_) &&
             (override_client_update_ == other.override_client_update_) &&
-            (replace_client_name_ == other.replace_client_name_) &&
+            (replace_client_name_mode_ == other.replace_client_name_mode_) &&
             (generated_prefix_ == other.generated_prefix_) &&
             (qualifying_suffix_ == other.qualifying_suffix_));
 }
@@ -155,16 +198,16 @@ D2ClientConfig::toText() const {
                << ", sender_ip: " << sender_ip_.toText()
                << ", sender_port: " << sender_port_
                << ", max_queue_size: " << max_queue_size_
-               << ", ncr_protocol: " << ncr_protocol_
-               << ", ncr_format: " << ncr_format_
+               << ", ncr_protocol: " << ncrProtocolToString(ncr_protocol_)
+               << ", ncr_format: " << ncrFormatToString(ncr_format_)
                << ", always_include_fqdn: " << (always_include_fqdn_ ?
                                                 "yes" : "no")
                << ", override_no_update: " << (override_no_update_ ?
                                                "yes" : "no")
                << ", override_client_update: " << (override_client_update_ ?
                                                    "yes" : "no")
-               << ", replace_client_name: " << (replace_client_name_ ?
-                                                "yes" : "no")
+               << ", replace_client_name: "
+               << replaceClientNameModeToString(replace_client_name_mode_)
                << ", generated_prefix: [" << generated_prefix_ << "]"
                << ", qualifying_suffix: [" << qualifying_suffix_ << "]";
     }
