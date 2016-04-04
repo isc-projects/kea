@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -457,7 +457,7 @@ void
 D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp) {
     // If we're configured to replace it or the supplied name is blank
     // set the response name to blank.
-    if (d2_client_config_->getReplaceClientName() ||
+    if ((d2_client_config_->getReplaceClientNameMode() != D2ClientConfig::RCM_NEVER) ||
         fqdn.getDomainName().empty()) {
         fqdn_resp.setDomainName("", T::PARTIAL);
     } else {

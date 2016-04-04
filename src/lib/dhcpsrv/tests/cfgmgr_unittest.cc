@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -405,7 +405,7 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  true, true, true, true,
+                                  true, true, true, D2ClientConfig::RCM_ALWAYS,
                                   "pre-fix", "suf-fix")));
 
     // Verify that we can assign a new, non-empty configuration.
