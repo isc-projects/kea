@@ -170,6 +170,24 @@
 sub-option</entry><entry>relay4[code].hex</entry><entry>The value of
 sub-option with code "code" from the DHCPv4 Relay Agent Information option
 (option 82)</entry></row>
+<row>
+  <entry>DHCPv6 Relay Options</entry>
+  <entry>relay6[nest].option[code].hex</entry>
+<!--  <entry>Value of the option</entry> -->
+  <entry>The value of the option with code "code" from the relay encapsulation "nest"</entry>
+</row>
+<row>
+  <entry>DHCPv6 Relay Peer Address</entry>
+  <entry>relay6[nest].peeraddr</entry>
+<!-- <entry>2001:DB8::1</entry> -->n
+  <entry>The value of the peer address field from the relay encapsulation "nest"</entry>
+</row>
+<row>
+  <entry>DHCPv6 Relay Link Address</entry>
+  <entry>relay6[nest].linkaddr</entry>
+<!-- <entry>2001:DB8::1</entry> -->n
+  <entry>The value of the link address field from the relay encapsulation "nest"</entry>
+</row>
           </tbody>
           </tgroup>
         </table>
@@ -211,8 +229,22 @@ sub-option with code "code" from the DHCPv4 Relay Agent Information option
       </para>
 
       <para>
-       "relay4" shares the same representation types than "option", for
+       "relay4" shares the same representation types as "option", for
        instance "relay4[code].exists" is supported.
+      </para>
+
+      <para>
+       "relay6[nest]" allows access to the encapsulations used by any DHCPv6
+       relays that forwarded the packet.  The "nest" level specifies the relay
+       from which to extract the information, with a value of 0 indicating
+       the relay closest to the DHCPv6 server.  If the requested encapsulation
+       doesn't exist an empty string "" is returned.  This expression is
+       allowed in DHCPv6 only.
+      </para>
+
+      <para>
+       "relay6[nest].option[code]" shares the same representation types as
+       "option", for instance "relay6[nest].option[code].exists" is supported.
       </para>
 
       <para>

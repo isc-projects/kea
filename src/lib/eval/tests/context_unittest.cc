@@ -148,6 +148,114 @@ public:
         EXPECT_TRUE(conc);
     }
 
+    /// @brief checks if the given token is a TokenRelay6Option with
+    /// the correct nesting level, option code and representation.
+    /// @param token token to be checked
+    /// @param expected_level expected nesting level
+    /// @param expected_code expected option code
+    /// @param expected_repr expected representation (text, hex, exists)
+    void checkTokenRelay6Option(const TokenPtr& token,
+                                uint8_t expected_level,
+                                uint16_t expected_code,
+                                TokenOption::RepresentationType expected_repr) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenRelay6Option> opt =
+            boost::dynamic_pointer_cast<TokenRelay6Option>(token);
+        ASSERT_TRUE(opt);
+
+        EXPECT_EQ(expected_level, opt->getNest());
+        EXPECT_EQ(expected_code, opt->getCode());
+        EXPECT_EQ(expected_repr, opt->getRepresentation());
+    }
+
+    /// @brief This tests attempts to parse the expression then checks
+    /// if the number of tokens is correct and the TokenRelay6Option
+    /// is as expected.
+    ///
+    /// @param expr expression to be parsed
+    /// @param exp_level expected level to be parsed
+    /// @param exp_code expected option code to be parsed
+    /// @param exp_repr expected representation to be parsed
+    /// @param exp_tokens expected number of tokens
+    void testRelay6Option(std::string expr,
+                         uint8_t exp_level,
+                         uint16_t exp_code,
+                         TokenOption::RepresentationType exp_repr,
+                         int exp_tokens) {
+        EvalContext eval(Option::V6);
+
+        // parse the expression
+        try {
+            parsed_ = eval.parseString(expr);
+        }
+        catch (const EvalParseError& ex) {
+            FAIL() <<"Exception thrown: " << ex.what();
+            return;
+        }
+
+        // Parsing should succed and return a token.
+        EXPECT_TRUE(parsed_);
+
+        // There should be the expected number of tokens.
+        ASSERT_EQ(exp_tokens, eval.expression.size());
+
+        // checkt that the first token is TokenRelay6Option and that
+        // is has the correct attributes
+        checkTokenRelay6Option(eval.expression.at(0), exp_level, exp_code, exp_repr);
+    }
+
+    /// @brief checks if the given token is a TokenRelay with the
+    /// correct nesting level and field type.
+    /// @param token token to be checked
+    /// @param expected_level expected nesting level
+    /// @param expected_code expected option code
+    /// @param expected_repr expected representation (text, hex, exists)
+    void checkTokenRelay6(const TokenPtr& token,
+                          uint8_t expected_level,
+                          TokenRelay6::FieldType expected_type) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenRelay6> opt =
+            boost::dynamic_pointer_cast<TokenRelay6>(token);
+        ASSERT_TRUE(opt);
+
+        EXPECT_EQ(expected_level, opt->getNest());
+        EXPECT_EQ(expected_type, opt->getType());
+    }
+
+    /// @brief This tests attempts to parse the expression then checks
+    /// if the number of tokens is correct and the TokenRelay6 is as
+    /// expected.
+    ///
+    /// @param expr expression to be parsed
+    /// @param exp_level expected level to be parsed
+    /// @param exp_type expected field type to be parsed
+    /// @param exp_tokens expected number of tokens
+    void testRelay6Field(std::string expr,
+                         uint8_t exp_level,
+                         TokenRelay6::FieldType exp_type,
+                         int exp_tokens) {
+        EvalContext eval(Option::V6);
+
+        // parse the expression
+        try {
+            parsed_ = eval.parseString(expr);
+        }
+        catch (const EvalParseError& ex) {
+            FAIL() <<"Exception thrown: " << ex.what();
+            return;
+        }
+
+        // Parsing should succed and return a token.
+        EXPECT_TRUE(parsed_);
+
+        // There should be the expected number of tokens.
+        ASSERT_EQ(exp_tokens, eval.expression.size());
+
+        // checkt that the first token is TokenRelay6 and that
+        // is has the correct attributes
+        checkTokenRelay6(eval.expression.at(0), exp_level, exp_type);
+    }
+
     /// @brief checks if the given expression raises the expected message
     /// when it is parsed.
     void checkError(const string& expr, const string& msg) {
@@ -576,6 +684,43 @@ TEST_F(EvalContextTest, concat) {
     checkTokenConcat(tmp3);
 }
 
+// Test the parsing of a relay6 option
+TEST_F(EvalContextTest, relay6Option) {
+    EvalContext eval(Option::V6);
+
+    testRelay6Option("relay6[0].option[123].text == 'foo'",
+                     0, 123, TokenOption::TEXTUAL, 3);
+}
+
+// Test the parsing of existence for a relay6 option
+TEST_F(EvalContextTest, relay6OptionExists) {
+    EvalContext eval(Option::V6);
+
+    testRelay6Option("relay6[1].option[75].exists",
+                     1, 75, TokenOption::EXISTS, 1);
+}
+
+// Test the parsing of hex for a relay6 option
+TEST_F(EvalContextTest, relay6OptionHex) {
+    EvalContext eval(Option::V6);
+
+    testRelay6Option("relay6[2].option[85].hex == 'foo'",
+                     2, 85, TokenOption::HEXADECIMAL, 3);
+}
+
+// Tests if the linkaddr field in a Relay6 encapsulation can be accessed.
+TEST_F(EvalContextTest, relay6FieldLinkAddr) {
+    testRelay6Field("relay6[0].linkaddr == ::",
+                    0, TokenRelay6::LINKADDR, 3);
+}
+
+// Tests if the peeraddr field in a Relay6 encapsulation can be accessed.
+TEST_F(EvalContextTest, relay6FieldPeerAddr) {
+    testRelay6Field("relay6[1].peeraddr == ::",
+                    1, TokenRelay6::PEERADDR, 3);
+}
+
+//
 // Test some scanner error cases
 TEST_F(EvalContextTest, scanErrors) {
     checkError("'", "<string>:1.1: Invalid character: '");

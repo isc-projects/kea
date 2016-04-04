@@ -490,7 +490,7 @@ public:
     /// @param option_code code of the option.
     /// @param rep_type Token representation type.
     TokenRelay6Option(const uint8_t nest_level, const uint16_t option_code,
-		      const RepresentationType& rep_type)
+                      const RepresentationType& rep_type)
         :TokenOption(option_code, rep_type), nest_level_(nest_level) {}
 
     /// @brief Returns nest-level
@@ -529,7 +529,7 @@ protected:
 /// The nesting level can go from 0 (closest to the server) to 31.
 class TokenRelay6 : public Token {
 public:
-  
+
     /// @brief enum value that determines the field.
     enum FieldType {
         PEERADDR, ///< Peer address field (IPv6 address)
@@ -552,6 +552,17 @@ public:
     /// @param pkt fields will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
     void evaluate(const Pkt& pkt, ValueStack& values);
+
+    /// @brief Returns nest-level
+    ///
+    /// This method is used in testing to determine if the parser has
+    /// instantiated TokenRelay6 with correct parameters.
+    ///
+    /// @return nest-level of the relay block this token expects to use
+    /// for extraction.
+    uint8_t getNest() const {
+        return (nest_level_);
+    }
 
     /// @brief Returns field type
     ///

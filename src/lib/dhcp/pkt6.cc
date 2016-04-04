@@ -119,11 +119,31 @@ OptionPtr Pkt6::getRelayOption(uint16_t opt_type, uint8_t relay_level) const {
     }
 
     OptionCollection::const_iterator x = relay_info_[relay_level].options_.find(opt_type);
-    if (x != options_.end()) {
+    if (x != relay_info_[relay_level].options_.end()) {
 	return (*x).second;
       }
 
     return (OptionPtr());
+}
+
+const isc::asiolink::IOAddress&
+Pkt6::getRelay6LinkAddress(uint8_t relay_level) const {
+    if (relay_level >= relay_info_.size()) {
+        isc_throw(OutOfRange, "This message was relayed " << relay_info_.size() << " time(s)."
+                  << " There is no info about " << relay_level + 1 << " relay.");
+    }
+
+    return (relay_info_[relay_level].linkaddr_);
+}
+
+const isc::asiolink::IOAddress&
+Pkt6::getRelay6PeerAddress(uint8_t relay_level) const {
+    if (relay_level >= relay_info_.size()) {
+        isc_throw(OutOfRange, "This message was relayed " << relay_info_.size() << " time(s)."
+                  << " There is no info about " << relay_level + 1 << " relay.");
+    }
+
+    return (relay_info_[relay_level].peeraddr_);
 }
 
 uint16_t Pkt6::getRelayOverhead(const RelayInfo& relay) const {
