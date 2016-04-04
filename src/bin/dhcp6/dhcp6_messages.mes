@@ -183,6 +183,11 @@ the lease is acquired for the client.
 This debug message is logged when server includes an DHCPv6 Client FQDN Option
 in its response to the client.
 
+% DHCP6_DDNS_SUPPLY_FQDN %1: client did not send a FQDN option, will supply one for them
+This debug message is issued when the server did not receive a FQDN option
+from the client and client name replacement is enabled.  This provides a means
+to create DNS entries for unsophisticated clients.
+
 % DHCP6_DEACTIVATE_INTERFACE deactivate interface %1
 This message is printed when DHCPv6 server disables an interface from being
 used to receive DHCPv6 traffic. Sockets on this interface will not be opened
