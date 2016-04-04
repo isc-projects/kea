@@ -607,9 +607,9 @@
             },
             {
                 "item_name": "replace-client-name",
-                "item_type": "boolean",
+                "item_type": "string",
                 "item_optional": true,
-                "item_default": false,
+                "item_default": "never",
                 "item_description": "Should server replace the domain-name supplied by the client"
             },
             {
