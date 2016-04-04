@@ -253,6 +253,39 @@ public:
     /// @return option pointer (or NULL if no option matches specified criteria)
     OptionPtr getAnyRelayOption(uint16_t option_code, RelaySearchOrder order);
 
+    /// @brief return the link address field from a relay option
+    ///
+    /// As with @c Pkt6::getRelayOption this returns information from the
+    /// specified relay scope.  The relay_level specifies which relay
+    /// scope is to be used.  0 is the outermost encapsulation (relay closest
+    /// to the server).  pkt->relay_info_.size() -1 is the innermost encapsulation
+    /// (relay closest to the client).
+    ///
+    /// @throw isc::OutOfRange if relay level has an invalid value.
+    ///
+    /// @param relay_level see description above
+    ///
+    /// @return pointer to the link address field
+    const isc::asiolink::IOAddress&
+    getRelay6LinkAddress(uint8_t relay_level) const;
+
+    /// @brief return the peer address field from a relay option
+    ///
+    /// As with @c Pkt6::getRelayOption this returns information from the
+    /// specified relay scope.  The relay_level specifies which relay
+    /// scope is to be used.  0 is the outermost encapsulation (relay closest
+    /// to the server).  pkt->relay_info_.size() -1 is the innermost encapsulation
+    /// (relay closest to the client).
+    ///
+    /// @throw isc::OutOfRange if relay level has an invalid value.
+    ///
+    /// @param relay_level see description above
+    ///
+    /// @return pointer to the peer address field
+    const isc::asiolink::IOAddress&
+    getRelay6PeerAddress(uint8_t relay_level) const;
+
+    /// 
     /// @brief Returns all instances of specified type.
     ///
     /// Returns all instances of options of the specified type. DHCPv6 protocol
@@ -279,13 +312,13 @@ public:
     /// @param type DHCPv6 message type which name should be returned.
     ///
     /// @return Pointer to "const" string containing the message name. If
-    /// the message type is unknnown the "UNKNOWN" is returned. The caller
+    /// the message type is unknown the "UNKNOWN" is returned. The caller
     /// must not release the returned pointer.
     static const char* getName(const uint8_t type);
 
     /// @brief Returns name of the DHCPv6 message.
     ///
-    /// This method requires an object. There is also static version, which
+    /// This method requires an object. There is also a static version, which
     /// requires one parameter (type).
     ///
     /// @return Pointer to "const" string containing the message name. If

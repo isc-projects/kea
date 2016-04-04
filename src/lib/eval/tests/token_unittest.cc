@@ -62,6 +62,111 @@ public:
         pkt4_->addOption(rai);
     }
 
+    /// @brief Adds relay encapsulations with some suboptions
+    ///
+    /// This will add 2 relay encapsulations all will have
+    /// msg_type of RELAY_FORW
+    /// Relay 0 (closest to server) will have
+    /// linkaddr = peeraddr = 0, hop-count = 1
+    /// option 100 "hundred.zero", option 101 "hundredone.zero"
+    /// Relay 1 (closest to client) will have
+    /// linkaddr 1::1= peeraddr = 1::2, hop-count = 0
+    /// option 100 "hundred.one", option 102 "hundredtwo.one"
+    void addRelay6Encapsulations() {
+        // First relay
+        Pkt6::RelayInfo relay0;
+        relay0.msg_type_ = DHCPV6_RELAY_FORW;
+        relay0.hop_count_ = 1;
+        relay0.linkaddr_ = isc::asiolink::IOAddress("::");
+        relay0.peeraddr_ = isc::asiolink::IOAddress("::");
+        OptionPtr optRelay01(new OptionString(Option::V6, 100,
+                                              "hundred.zero"));
+        OptionPtr optRelay02(new OptionString(Option::V6, 101,
+                                              "hundredone.zero"));
+
+        relay0.options_.insert(make_pair(optRelay01->getType(), optRelay01));
+        relay0.options_.insert(make_pair(optRelay02->getType(), optRelay02));
+
+        pkt6_->addRelayInfo(relay0);
+        // Second relay
+        Pkt6::RelayInfo relay1;
+        relay1.msg_type_ = DHCPV6_RELAY_FORW;
+        relay1.hop_count_ = 0;
+        relay1.linkaddr_ = isc::asiolink::IOAddress("1::1");
+        relay1.peeraddr_ = isc::asiolink::IOAddress("1::2");
+        OptionPtr optRelay11(new OptionString(Option::V6, 100,
+                                              "hundred.one"));
+        OptionPtr optRelay12(new OptionString(Option::V6, 102,
+                                              "hundredtwo.one"));
+
+        relay1.options_.insert(make_pair(optRelay11->getType(), optRelay11));
+        relay1.options_.insert(make_pair(optRelay12->getType(), optRelay12));
+        pkt6_->addRelayInfo(relay1);
+    }
+
+    /// @brief Verify that the relay6 option evaluatiosn work properly
+    ///
+    /// Given the nesting level and option code extract the option
+    /// and compare it to the expected string.
+    ///
+    /// @param test_level The nesting level
+    /// @param test_code The code of the option to extract
+    /// @param result_addr The expected result of the address as a string
+    void verifyRelay6Option(const uint8_t test_level,
+                            const uint16_t test_code,
+                       	    const TokenOption::RepresentationType& test_rep,
+                            const std::string& result_string) {
+        // Create the token
+        ASSERT_NO_THROW(t_.reset(new TokenRelay6Option(test_level,
+                                                       test_code,
+                                                       test_rep)));
+
+        // We should be able to evaluate it
+        EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+
+        // We should have one value on the stack
+        ASSERT_EQ(1, values_.size());
+
+        // And it should match the expected result
+        // Invalid nesting levels result in a 0 length string
+        EXPECT_EQ(result_string, values_.top());
+
+        // Then we clear the stack
+        clearStack();
+    }
+
+    /// @brief Verify that the relay6 field evaluations work properly
+    ///
+    /// Given the nesting level, the field to extract and the expected
+    /// address create a token and evaluate it then compare the addresses
+    ///
+    /// @param test_level The nesting level
+    /// @param test_field The type of the field to extract
+    /// @param result_addr The expected result of the address as a string
+    void verifyRelay6Eval(const uint8_t test_level,
+                          const TokenRelay6::FieldType test_field,
+                          const int result_len,
+                          const uint8_t result_addr[]) {
+        // Create the token
+        ASSERT_NO_THROW(t_.reset(new TokenRelay6(test_level, test_field)));
+
+        // We should be able to evaluate it
+        EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+
+        // We should have one value on the stack
+        ASSERT_EQ(1, values_.size());
+
+        // And it should match the expected result
+        // Invalid nesting levels result in a 0 length string
+        EXPECT_EQ(result_len, values_.top().size());
+        if (result_len != 0) {
+            EXPECT_EQ(0, memcmp(result_addr, &values_.top()[0], result_len));
+        }
+
+        // Then we clear the stack
+        clearStack();
+    }
+
     /// @brief Convenience function. Removes token and values stacks.
     void clearStack() {
         while (!values_.empty()) {
@@ -1011,4 +1116,90 @@ TEST_F(TokenTest, concat) {
     // Check the result
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("foobar", values_.top());
+}
+
+// This test checks if we can properly extract the link and peer
+// address fields from relay encapsulations.  Our packet has
+// two relay encapsulations.  We attempt to extract the two
+// fields from both of the encapsulations and compare them.
+// We also try to extract one of the fields from an encapsulation
+// that doesn't exist (level 2), this should result in an empty
+// string.
+TEST_F(TokenTest, relay6Field) {
+    // Values for the address results
+    uint8_t zeroaddr[] = { 0, 0, 0, 0, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 0 };
+    uint8_t linkaddr[] = { 0, 1, 0, 0, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 1 };
+    uint8_t peeraddr[] = { 0, 1, 0, 0, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 2 };
+
+    // We start by adding a set of relay encapsulations to the
+    // basic v6 packet.
+    addRelay6Encapsulations();
+
+    // Then we work our way through the set of choices
+    // Level 0 both link and peer address should be 0::0
+    verifyRelay6Eval(0, TokenRelay6::LINKADDR, 16, zeroaddr);
+    verifyRelay6Eval(0, TokenRelay6::PEERADDR, 16, zeroaddr);
+
+    // Level 1 link and peer should have different non-zero addresses
+    verifyRelay6Eval(1, TokenRelay6::LINKADDR, 16, linkaddr);
+    verifyRelay6Eval(1, TokenRelay6::PEERADDR, 16, peeraddr);
+
+    // Level 2 has no encapsulation so the address should be zero length
+    verifyRelay6Eval(2, TokenRelay6::LINKADDR, 0, zeroaddr);
+
+    // Lets check that the layout of the address returned by the
+    // token matches that of the TokenIpAddress
+    TokenPtr trelay;
+    TokenPtr taddr;
+    TokenPtr tequal;
+    ASSERT_NO_THROW(trelay.reset(new TokenRelay6(1, TokenRelay6::LINKADDR)));
+    ASSERT_NO_THROW(taddr.reset(new TokenIpAddress("1::1")));
+    ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
+
+    EXPECT_NO_THROW(trelay->evaluate(*pkt6_, values_));
+    EXPECT_NO_THROW(taddr->evaluate(*pkt6_, values_));
+    EXPECT_NO_THROW(tequal->evaluate(*pkt6_, values_));
+
+    // We should have a single value on the stack and it should be "true"
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // be tidy
+    clearStack();
+}
+
+// This test checks if we can properly extract an option
+// from relay encapsulations.  Our packet has two relay
+// encapsulations.  Both include a common option with the
+// original message (option 100) and both include their
+// own option (101 and 102).  We attempt to extract the
+// options and compare them to expected values.  We also
+// try to extract an option from an encapsulation
+// that doesn't exist (level 2), this should result in an empty
+// string.
+TEST_F(TokenTest, relay6Option) {
+    // We start by adding a set of relay encapsulations to the
+    // basic v6 packet.
+    addRelay6Encapsulations();
+
+    // Then we work our way through the set of choices
+    // Level 0 both options it has and the check that
+    // the checking for an option it doesn't have results
+    // in an empty string.
+    verifyRelay6Option(0, 100, TokenOption::TEXTUAL, "hundred.zero");
+    verifyRelay6Option(0, 100, TokenOption::EXISTS, "true");
+    verifyRelay6Option(0, 101, TokenOption::TEXTUAL, "hundredone.zero");
+    verifyRelay6Option(0, 102, TokenOption::TEXTUAL, "");
+    verifyRelay6Option(0, 102, TokenOption::EXISTS, "false");
+
+    // Level 1, again both options it has and the one for level 0
+    verifyRelay6Option(1, 100, TokenOption::TEXTUAL, "hundred.one");
+    verifyRelay6Option(1, 101, TokenOption::TEXTUAL, "");
+    verifyRelay6Option(1, 102, TokenOption::TEXTUAL, "hundredtwo.one");
+
+    // Level 2, no encapsulation so no options
+    verifyRelay6Option(2, 100, TokenOption::TEXTUAL, "");
 }
