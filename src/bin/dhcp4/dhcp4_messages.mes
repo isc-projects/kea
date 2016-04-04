@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -672,3 +672,8 @@ will drop its message if the received message was DHCPDISCOVER,
 and will send DHCPNAK if the received message was DHCPREQUEST.
 The argument includes the client and the transaction identification
 information.
+
+% DHCP4_SUPPLY_HOSTNAME %1: client did not send hostname option, will supply onefor them
+This debug message is issued when the server did not receive a Hostname option
+from the client and hostname generation is enabled.  This provides a means to
+create DNS entries for unsophisticated clients.
