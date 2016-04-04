@@ -1744,7 +1744,7 @@ should include options from the isc option space:
     </section>
 
     <section id="dhcp6-ddns-config">
-      <title>Configuring DHCPv6 for DDNS</title>
+      <title>DDNS for DHCPv6</title>
       <para>
       As mentioned earlier, kea-dhcp6 can be configured to generate requests to
       the DHCP-DDNS server (referred to here as "D2") to update
@@ -1820,7 +1820,7 @@ should include options from the isc option space:
       <command>"override-client-update": false</command>
       </simpara></listitem>
       <listitem><simpara>
-      <command>"replace-client-name": false</command>
+      <command>"replace-client-name": "never"</command>
       </simpara></listitem>
       <listitem><simpara>
       <command>"generated-prefix": "myhost"</command>
@@ -2041,42 +2041,67 @@ should include options from the isc option space:
       <section id="dhcpv6-fqdn-name-generation">
       <title>kea-dhcp6 name generation for DDNS update requests</title>
 
-      <para>Each NameChangeRequest must of course include the fully qualified domain
-      name whose DNS entries are to be affected.  kea-dhcp6 can be configured to
-      supply a portion or all of that name based upon what it receives from
-      the client in the DHCP REQUEST.</para>
+      <para>Each NameChangeRequest must of course include the fully qualified
+      domain name whose DNS entries are to be affected.  kea-dhcp6 can be
+      configured to supply a portion or all of that name based upon what it
+      receives from the client in the DHCP REQUEST.</para>
+      <para>
+       The basic rules for constructing the FQDN that will be used for DNS
+       entries are:
+      <orderedlist>
+      <listitem><para>
+        If the DHCPREQUEST contains the client FQDN option, the candidate name
+        is taken from there.
+      </para></listitem>
+      <listitem><para>
+        If the candidate name is a partial (i.e. unqualified) name then add a
+        configurable suffix to the name and use the result as the FQDN.
+      </para></listitem>
+      <listitem><para>
+        If the candidate name provided is empty, generate a FQDN using a
+        configurable prefix and suffix.
+      </para></listitem>
+      <listitem><para>
+        If the client provided neither option, then no DNS action will be taken.
+      </para></listitem>
+      </orderedlist>
+        These rules can amended by setting the
+        <command>replace-client-name</command> parameter which provides the
+        following modes of behavior:
+      <itemizedlist>
+      <listitem><para>
+        <command>never</command> - Use the name the client sent.  If the client
+        sent no name, do not generate one.  This is the default mode.
+      </para></listitem>
+      <listitem><para>
+        <command>always</command> - Replace the name the client sent. If the
+        client sent no name, generate one for them.
+      </para></listitem>
+      <listitem><para>
+        <command>when_present</command> - Replace the name the client sent.
+        If the client sent no name, do not generate one.
+      </para></listitem>
+      <listitem><para>
+        <command>when_not_present</command> - Use the name the client sent.
+        Supply the name if the client did not.
+      </para></listitem>
+      </itemizedlist>
+    <note>
+    Note that formerly, this parameter was a boolean and permitted only values
+    of <command>true</command> and <command>false</command>.  Boolean values
+    will still be accepted but may eventually be deprecated. A value of
+    <command>true</command> equates to <command>when_present</command>,
+    <command>false</command> equates to <command>never</command>.
+    </note>
 
-      <para>The rules for determining the FQDN option are as follows:
-      <orderedlist>
-      <listitem><para>
-      If configured to do so ignore the REQUEST contents and generate a
-      FQDN using a configurable prefix and suffix.
-      </para></listitem>
-      <listitem><para>
-      Otherwise, using the domain name value from the client FQDN option as
-      the candidate name:
-      <orderedlist>
-      <listitem><para>
-      If the candidate name is a fully qualified domain name then use it.
-      </para></listitem>
-      <listitem><para>
-      If the candidate name is a partial (i.e. unqualified) name then
-      add a configurable suffix to the name and use the result as the FQDN.
-      </para></listitem>
-      <listitem><para>
-      If the candidate name is a empty then generate a FQDN using a
-      configurable prefix and suffix.
-      </para></listitem>
-      </orderedlist>
-      </para></listitem>
-      </orderedlist>
-      To instruct kea-dhcp6 to always generate a FQDN, set the parameter
-      "replace-client-name" to true:
+      For example, To instruct kea-dhcp6 to always generate the FQDN for a
+      client, set the parameter <command>replace-client-name</command> to
+      <command>always</command> as follows:
       </para>
 <screen>
 "Dhcp6": {
     "dhcp-ddns": {
-        <userinput>"replace-client-name": true</userinput>,
+        <userinput>"replace-client-name": "always"</userinput>,
         ...
     },
     ...
