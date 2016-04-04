@@ -1063,17 +1063,34 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
 void
 Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
                              AllocEngine::ClientContext6& ctx) {
+    D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+
     // Get Client FQDN Option from the client's message. If this option hasn't
     // been included, do nothing.
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(question->getOption(D6O_CLIENT_FQDN));
     if (!fqdn) {
-        // No FQDN so lease hostname comes from host reservation if one
-        if (ctx.host_) {
-            ctx.hostname_ = ctx.host_->getHostname();
-        }
+        D2ClientConfig::ReplaceClientNameMode replace_name_mode =
+            d2_mgr.getD2ClientConfig()->getReplaceClientNameMode();
+        if (d2_mgr.ddnsEnabled() &&
+            (replace_name_mode == D2ClientConfig::RCM_ALWAYS ||
+             replace_name_mode == D2ClientConfig::RCM_WHEN_NOT_PRESENT)) {
+            // Fabricate an empty "client" FQDN with flags requesting
+            // the server do all the updates.  The flags will get modified
+            // below according the configuration options, the name will
+            // be supplied later on.
+            fqdn.reset(new Option6ClientFqdn(Option6ClientFqdn::FLAG_S, "",
+                                             Option6ClientFqdn::PARTIAL));
+            LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_SUPPLY_FQDN)
+                .arg(question->getLabel());
+        } else {
+            // No FQDN so lease hostname comes from host reservation if one
+            if (ctx.host_) {
+                ctx.hostname_ = ctx.host_->getHostname();
+            }
 
-        return;
+            return;
+        }
     }
 
     LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_RECEIVE_FQDN)
@@ -1086,12 +1103,10 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
 
     // Set the server S, N, and O flags based on client's flags and
     // current configuration.
-    D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
     d2_mgr.adjustFqdnFlags<Option6ClientFqdn>(*fqdn, *fqdn_resp);
 
     // If there's a reservation and it has a hostname specified, use it!
     if (ctx.host_ && !ctx.host_->getHostname().empty()) {
-        D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
         // Add the qualifying suffix.
         // After #3765, this will only occur if the suffix is not empty.
         fqdn_resp->setDomainName(d2_mgr.qualifyName(ctx.host_->getHostname(),
