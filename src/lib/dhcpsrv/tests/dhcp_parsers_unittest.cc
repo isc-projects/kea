@@ -144,6 +144,24 @@ TEST_F(DhcpParserTest, stringParserTest) {
     parser.commit();
     EXPECT_NO_THROW((actual_value = storage->getParam(name)));
     EXPECT_EQ(test_value, actual_value);
+
+    // Verify that parser with accepts a boolean true element.
+    element = Element::create(true);
+    EXPECT_NO_THROW(parser.build(element));
+
+    // Verify that commit updates storage.
+    parser.commit();
+    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
+    EXPECT_EQ("true", actual_value);
+
+    // Verify that parser with accepts a boolean true element.
+    element = Element::create(false);
+    EXPECT_NO_THROW(parser.build(element));
+
+    // Verify that commit updates storage.
+    parser.commit();
+    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
+    EXPECT_EQ("false", actual_value);
 }
 
 /// @brief Check Uint32Parser basic functionality
