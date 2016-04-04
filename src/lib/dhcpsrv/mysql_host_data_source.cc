@@ -64,7 +64,7 @@ TaggedStatement tagged_statements[] = {
     // having a specified identifier will be returned from those subnets.
     // Because LEFT JOIN clause is used, the number of rows returned for
     // a single host depends on the number of reservations.
-    {MySqlHostDataSource::GET_HOST_HWADDR_DUID,
+    {MySqlHostDataSource::GET_HOST_DHCPID,
             "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, "
                 "h.hostname, h.dhcp4_client_classes, h.dhcp6_client_classes, "
@@ -718,6 +718,8 @@ public:
         : MySqlHostExchange(), reserv_type_(0), reserv_type_null_(MLM_FALSE),
           ipv6_address_buffer_len_(0), prefix_len_(0), iaid_(0) {
 
+        memset(ipv6_address_buffer_, 0, sizeof(ipv6_address_buffer_));
+
         // Append additional columns returned by the queries.
         columns_.push_back("address");
         columns_.push_back("prefix_len");
@@ -922,7 +924,7 @@ public:
     ///
     /// Initialize class members representing a single IPv6 reservation.
     MySqlIPv6ReservationExchange()
-        : host_id_(0), address_("::"), prefix_len_(0), type_(0),
+        : host_id_(0), address_("::"), address_len_(0), prefix_len_(0), type_(0),
           iaid_(0), resv_(IPv6Resrv::TYPE_NA, asiolink::IOAddress("::"), 128) {
 
         // Reset error table.
@@ -1117,6 +1119,29 @@ public:
                            boost::shared_ptr<MySqlHostExchange> exchange,
                            ConstHostCollection& result, bool single) const;
 
+    /// @brief Retrieves a host by subnet and client's unique identifier.
+    ///
+    /// This method is used by both MySqlHostDataSource::get4 and
+    /// MySqlHOstDataSource::get6 methods.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @param stindex Statement index.
+    /// @param exchange Pointer to the exchange object used for the
+    /// particular query.
+    ///
+    /// @return Pointer to const instance of Host or null pointer if
+    /// no host found.
+    ConstHostPtr getHost(const SubnetID& subnet_id,
+                         const Host::IdentifierType& identifier_type,
+                         const uint8_t* identifier_begin,
+                         const size_t identifier_len,
+                         MySqlHostDataSource::StatementIndex stindex,
+                         boost::shared_ptr<MySqlHostExchange> exchange) const;
+
     /// @brief Pointer to the object representing an exchange which
     /// can be used to retrieve DHCPv4 reservation.
     boost::shared_ptr<MySqlHostExchange> host_exchange_;
@@ -1276,6 +1301,50 @@ getHostCollection(MySqlHostDataSource::StatementIndex stindex,
     }
 }
 
+ConstHostPtr
+MySqlHostDataSourceImpl::
+getHost(const SubnetID& subnet_id,
+        const Host::IdentifierType& identifier_type,
+        const uint8_t* identifier_begin,
+        const size_t identifier_len,
+        MySqlHostDataSource::StatementIndex stindex,
+        boost::shared_ptr<MySqlHostExchange> exchange) const {
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[3];
+    memset(inbind, 0, sizeof(inbind));
+
+    uint32_t subnet_buffer = static_cast<uint32_t>(subnet_id);
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet_buffer);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Identifier value.
+    std::vector<char> identifier_vec(identifier_begin,
+                                     identifier_begin + identifier_len);
+    unsigned long length = identifier_vec.size();
+    inbind[2].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[2].buffer = &identifier_vec[0];
+    inbind[2].buffer_length = length;
+    inbind[2].length = &length;
+
+    // Identifier type.
+    char identifier_type_copy = static_cast<char>(identifier_type);
+    inbind[1].buffer_type = MYSQL_TYPE_TINY;
+    inbind[1].buffer = reinterpret_cast<char*>(&identifier_type_copy);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    ConstHostCollection collection;
+    getHostCollection(stindex, inbind, exchange, collection, true);
+
+    // Return single record if present, else clear the host.
+    ConstHostPtr result;
+    if (!collection.empty())
+        result = *collection.begin();
+
+    return (result);
+}
+
 
 MySqlHostDataSource::
 MySqlHostDataSource(const MySqlConnection::ParameterMap& parameters)
@@ -1286,86 +1355,72 @@ MySqlHostDataSource::~MySqlHostDataSource() {
     delete impl_;
 }
 
-bool
-MySqlHostDataSource::checkIfExists(const HostPtr& host){
-    /// @todo: Implement this as a single query get(identifier_type, identifier)
-    return (get4(host->getIPv4SubnetID(), host->getHWAddress(), host->getDuid()) ||
-            get6(host->getIPv6SubnetID(), host->getDuid(), host->getHWAddress()));
-}
-
 void
 MySqlHostDataSource::add(const HostPtr& host) {
-    // Check if the host is not a duplicate
-    if (checkIfExists(host)){
-        isc_throw(DuplicateEntry, "Host with same parameters already exists.");
+    // Create the MYSQL_BIND array for the host
+    std::vector<MYSQL_BIND> bind = impl_->host_exchange_->createBindForSend(host);
 
-    } else {
-        // Create the MYSQL_BIND array for the host
-        std::vector<MYSQL_BIND> bind = impl_->host_exchange_->createBindForSend(host);
+    // ... and call addHost() code.
+    impl_->addQuery(INSERT_HOST, bind);
 
-        // ... and call addHost() code.
-        impl_->addQuery(INSERT_HOST, bind);
+    IPv6ResrvRange v6resv = host->getIPv6Reservations();
+    if (std::distance(v6resv.first, v6resv.second) == 0) {
+        // If there are no v6 reservations, we're done here.
+        return;
+    }
 
-        IPv6ResrvRange v6resv = host->getIPv6Reservations();
-        if (std::distance(v6resv.first, v6resv.second) == 0) {
-            // If there are no v6 reservations, we're done here.
-            return;
-        }
-
-        // Gets the last inserted hosts id
-        uint64_t host_id = mysql_insert_id(impl_->conn_.mysql_);
-        for (IPv6ResrvIterator resv = v6resv.first; resv != v6resv.second; ++resv) {
-            impl_->addResv(resv->second, host_id);
-        }
+    // Gets the last inserted hosts id
+    uint64_t host_id = mysql_insert_id(impl_->conn_.mysql_);
+    for (IPv6ResrvIterator resv = v6resv.first; resv != v6resv.second;
+         ++resv) {
+        impl_->addResv(resv->second, host_id);
     }
 }
 
 ConstHostCollection
-MySqlHostDataSource::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
+MySqlHostDataSource::getAll(const HWAddrPtr& hwaddr,
+                            const DuidPtr& duid) const {
 
+    if (duid){
+        return (getAll(Host::IDENT_DUID, &duid->getDuid()[0],
+                       duid->getDuid().size()));
+
+    } else if (hwaddr) {
+        return (getAll(Host::IDENT_HWADDR,
+                       &hwaddr->hwaddr_[0],
+                       hwaddr->hwaddr_.size()));
+    }
+
+    return (ConstHostCollection());
+}
+
+ConstHostCollection
+MySqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
+                            const uint8_t* identifier_begin,
+                            const size_t identifier_len) const {
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
 
-    uint8_t dhcp_identifier_type = 0;
-    long unsigned int length = 0;
-    if (duid){
-        // DUID
-        // set proper dhcp_identifier_type
-        dhcp_identifier_type = BaseHostDataSource::ID_DUID; // 1
-        inbind[1].buffer = reinterpret_cast<char*>(&dhcp_identifier_type);
-
-        const vector<uint8_t>& duid_vector = duid->getDuid();
-        length = duid_vector.size();
-        inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-        inbind[0].buffer = reinterpret_cast<char*>
-            (const_cast<uint8_t*>(&duid_vector[0]));
-        inbind[0].buffer_length = length;
-        inbind[0].length = &length;
-    } else if (hwaddr) {
-        // HW Address
-        dhcp_identifier_type = BaseHostDataSource::ID_HWADDR; // 0
-        inbind[1].buffer = reinterpret_cast<char*>(&dhcp_identifier_type);
-
-        const vector<uint8_t>& hwaddr_vector = hwaddr->hwaddr_;
-        length = hwaddr_vector.size();
-        inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-        inbind[0].buffer = reinterpret_cast<char*>
-            (const_cast<uint8_t*>(&hwaddr_vector[0]));
-        inbind[0].buffer_length = length;
-        inbind[0].length = &length;
-    }
-
-    // dhcp identifier type
+    // Identifier type.
+    char identifier_type_copy = static_cast<char>(identifier_type);
+    inbind[1].buffer = &identifier_type_copy;
     inbind[1].buffer_type = MYSQL_TYPE_TINY;
-    inbind[1].buffer = reinterpret_cast<char*>(&dhcp_identifier_type);
     inbind[1].is_unsigned = MLM_TRUE;
 
+    // Identifier value.
+    std::vector<char> identifier_vec(identifier_begin,
+                                     identifier_begin + identifier_len);
+    unsigned long int length = identifier_vec.size();
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[0].buffer = &identifier_vec[0];
+    inbind[0].buffer_length = length;
+    inbind[0].length = &length;
+
     ConstHostCollection result;
-    impl_->getHostCollection(GET_HOST_HWADDR_DUID, inbind,
+    impl_->getHostCollection(GET_HOST_DHCPID, inbind,
                              impl_->host_ipv6_exchange_,
                              result, false);
-
     return (result);
 }
 
@@ -1392,15 +1447,6 @@ ConstHostPtr
 MySqlHostDataSource::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
                           const DuidPtr& duid) const {
 
-    // Set up the WHERE clause value
-    MYSQL_BIND inbind[3];
-    memset(inbind, 0, sizeof(inbind));
-
-    uint32_t subnet_buffer = static_cast<uint32_t>(subnet_id);
-    inbind[0].buffer_type = MYSQL_TYPE_LONG;
-    inbind[0].buffer = reinterpret_cast<char*>(&subnet_buffer);
-    inbind[0].is_unsigned = MLM_TRUE;
-
     /// @todo: Rethink the logic in BaseHostDataSource::get4(subnet, hwaddr, duid)
     if (hwaddr && duid) {
         isc_throw(BadValue, "MySQL host data source get4() called with both"
@@ -1411,53 +1457,28 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
                   "neither hwaddr or duid specified, one of them is required");
     }
 
-    unsigned long length = 0;
-    uint8_t dhcp_identifier_type_ = 0;
-
     // Choosing one of the identifiers
     if (hwaddr) {
-        // set identifier type
-        dhcp_identifier_type_ = BaseHostDataSource::ID_HWADDR; // 0
-
-        // set identifier value
-        const vector<uint8_t>& hwaddr_vector = hwaddr->hwaddr_;
-        length = hwaddr_vector.size();
-        inbind[2].buffer_type = MYSQL_TYPE_BLOB;
-        inbind[2].buffer = reinterpret_cast<char*>
-            (const_cast<uint8_t*>(&hwaddr_vector[0]));
-        inbind[2].buffer_length = length;
-        inbind[2].length = &length;
+        return (get4(subnet_id, Host::IDENT_HWADDR, &hwaddr->hwaddr_[0],
+                     hwaddr->hwaddr_.size()));
 
     } else if (duid) {
-        // set identifier type
-        dhcp_identifier_type_ = BaseHostDataSource::ID_DUID; // 1
-
-        // set identifier value
-        const vector<uint8_t>& duid_vector = duid->getDuid();
-        length = duid_vector.size();
-        inbind[2].buffer_type = MYSQL_TYPE_BLOB;
-        inbind[2].buffer = reinterpret_cast<char*>
-            (const_cast<uint8_t*>(&duid_vector[0]));
-        inbind[2].buffer_length = length;
-        inbind[2].length = &length;
+        return (get4(subnet_id, Host::IDENT_DUID, &duid->getDuid()[0],
+                     duid->getDuid().size()));
     }
 
-    // dhcp identifier type
-    inbind[1].buffer_type = MYSQL_TYPE_TINY;
-    inbind[1].buffer = reinterpret_cast<char*>(&dhcp_identifier_type_);
-    inbind[1].is_unsigned = MLM_TRUE;
+    return (ConstHostPtr());
+}
 
-    ConstHostCollection collection;
-    impl_->getHostCollection(GET_HOST_SUBID4_DHCPID, inbind,
-                             impl_->host_exchange_, collection,
-                             true);
+ConstHostPtr
+MySqlHostDataSource::get4(const SubnetID& subnet_id,
+                          const Host::IdentifierType& identifier_type,
+                          const uint8_t* identifier_begin,
+                          const size_t identifier_len) const {
 
-    // Return single record if present, else clear the host.
-    ConstHostPtr result;
-    if (!collection.empty())
-        result = *collection.begin();
-
-    return (result);
+    return (impl_->getHost(subnet_id, identifier_type, identifier_begin,
+                   identifier_len, GET_HOST_SUBID4_DHCPID,
+                   impl_->host_exchange_));
 }
 
 ConstHostPtr
@@ -1493,15 +1514,6 @@ ConstHostPtr
 MySqlHostDataSource::get6(const SubnetID& subnet_id, const DuidPtr& duid,
                           const HWAddrPtr& hwaddr) const {
 
-    // Set up the WHERE clause value
-    MYSQL_BIND inbind[3];
-    memset(inbind, 0, sizeof(inbind));
-
-    uint32_t subnet_buffer = static_cast<uint32_t>(subnet_id);
-    inbind[0].buffer_type = MYSQL_TYPE_LONG;
-    inbind[0].buffer = reinterpret_cast<char*>(&subnet_buffer);
-    inbind[0].is_unsigned = MLM_TRUE;
-
     /// @todo: Rethink the logic in BaseHostDataSource::get6(subnet, hwaddr, duid)
     if (hwaddr && duid) {
         isc_throw(BadValue, "MySQL host data source get6() called with both"
@@ -1512,53 +1524,27 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id, const DuidPtr& duid,
                   "neither hwaddr or duid specified, one of them is required");
     }
 
-    unsigned long length = 0;
-    uint8_t dhcp_identifier_type_ = 0;
-
     // Choosing one of the identifiers
     if (hwaddr) {
-        // set identifier type
-        dhcp_identifier_type_ = BaseHostDataSource::ID_HWADDR; // 0
-
-        // set identifier value
-        const vector<uint8_t>& hwaddr_vector = hwaddr->hwaddr_;
-        length = hwaddr_vector.size();
-        inbind[2].buffer_type = MYSQL_TYPE_BLOB;
-        inbind[2].buffer = reinterpret_cast<char*>
-            (const_cast<uint8_t*>(&hwaddr_vector[0]));
-        inbind[2].buffer_length = length;
-        inbind[2].length = &length;
+        return (get6(subnet_id, Host::IDENT_HWADDR, &hwaddr->hwaddr_[0],
+                     hwaddr->hwaddr_.size()));
     } else if (duid) {
-        // set identifier type
-        dhcp_identifier_type_ = BaseHostDataSource::ID_DUID; // 1
-
-        // set identifier value
-        const vector<uint8_t>& duid_vector = duid->getDuid();
-        length = duid_vector.size();
-        inbind[2].buffer_type = MYSQL_TYPE_BLOB;
-        inbind[2].buffer = reinterpret_cast<char*>
-            (const_cast<uint8_t*>(&duid_vector[0]));
-        inbind[2].buffer_length = length;
-        inbind[2].length = &length;
+        return (get6(subnet_id, Host::IDENT_DUID, &duid->getDuid()[0],
+                     duid->getDuid().size()));
     }
 
-    // dhcp identifier type
-    inbind[1].buffer_type = MYSQL_TYPE_TINY;
-    inbind[1].buffer = reinterpret_cast<char*>(&dhcp_identifier_type_);
-    inbind[1].is_unsigned = MLM_TRUE;
+    return (ConstHostPtr());
+}
 
-    ConstHostCollection collection;
-    impl_->getHostCollection(GET_HOST_SUBID6_DHCPID, inbind,
-                             impl_->host_ipv6_exchange_,
-                             collection, true);
+ConstHostPtr
+MySqlHostDataSource::get6(const SubnetID& subnet_id,
+                          const Host::IdentifierType& identifier_type,
+                          const uint8_t* identifier_begin,
+                          const size_t identifier_len) const {
 
-    // Return single record if present, else clear the host.
-    ConstHostPtr result;
-    if (!collection.empty()) {
-        result = *collection.begin();
-    }
-
-    return (result);
+    return (impl_->getHost(subnet_id, identifier_type, identifier_begin,
+                   identifier_len, GET_HOST_SUBID6_DHCPID,
+                   impl_->host_ipv6_exchange_));
 }
 
 ConstHostPtr

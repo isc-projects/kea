@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <exceptions/exceptions.h>
+#include <dhcpsrv/host.h>
 #include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/mysql_host_data_source.h>
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
@@ -272,25 +273,25 @@ TEST_F(MySqlHostDataSourceTest, DISABLED_hwaddrOrClientId2) {
 // Test verifies that host with IPv6 address and DUID can be added and
 // later retrieved by IPv6 address.
 TEST_F(MySqlHostDataSourceTest, get6AddrWithDuid) {
-    testGetByIPv6(BaseHostDataSource::ID_DUID, false);
+    testGetByIPv6(Host::IDENT_DUID, false);
 }
 
 // Test verifies that host with IPv6 address and HWAddr can be added and
 // later retrieved by IPv6 address.
 TEST_F(MySqlHostDataSourceTest, get6AddrWithHWAddr) {
-    testGetByIPv6(BaseHostDataSource::ID_HWADDR, false);
+    testGetByIPv6(Host::IDENT_HWADDR, false);
 }
 
 // Test verifies that host with IPv6 prefix and DUID can be added and
 // later retrieved by IPv6 prefix.
 TEST_F(MySqlHostDataSourceTest, get6PrefixWithDuid) {
-    testGetByIPv6(BaseHostDataSource::ID_DUID, true);
+    testGetByIPv6(Host::IDENT_DUID, true);
 }
 
 // Test verifies that host with IPv6 prefix and HWAddr can be added and
 // later retrieved by IPv6 prefix.
 TEST_F(MySqlHostDataSourceTest, get6PrefixWithHWaddr) {
-    testGetByIPv6(BaseHostDataSource::ID_HWADDR, true);
+    testGetByIPv6(Host::IDENT_HWADDR, true);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by
@@ -373,7 +374,7 @@ TEST_F(MySqlHostDataSourceTest, multipleSubnetsClientId) {
 // Insert 10 host reservations for different subnets. Make sure that
 // get6(subnet-id, ...) calls return correct reservation.
 TEST_F(MySqlHostDataSourceTest, subnetId6) {
-    testSubnetId6(10, BaseHostDataSource::ID_HWADDR);
+    testSubnetId6(10, Host::IDENT_HWADDR);
 }
 
 // Test if the duplicate host instances can't be inserted. The test logic is as

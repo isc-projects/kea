@@ -307,6 +307,16 @@ public:
     /// @return text form of the identifier, including (duid= or mac=).
     std::string getIdentifierAsText() const;
 
+    /// @brief Returns host identifier in textual form.
+    ///
+    /// @param type Identifier type.
+    /// @param value Pointer to a buffer holding identifier.
+    /// @param length Length of the identifier.
+    /// @return Identifier in the form of <type>=<value>.
+    static std::string getIdentifierAsText(const IdentifierType& type,
+                                           const uint8_t* value,
+                                           const size_t length);
+
     /// @brief Sets new IPv4 subnet identifier.
     ///
     /// @param ipv4_subnet_id New subnet identifier.

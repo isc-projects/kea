@@ -77,6 +77,22 @@ public:
     virtual ConstHostCollection
     getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
 
+    /// @brief Return all hosts connected to any subnet for which reservations
+    /// have been made using a specified identifier.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// for a specified identifier. This method may return multiple hosts
+    /// because a particular client may have reservations in multiple subnets.
+    ///
+    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll(const Host::IdentifierType& identifier_type,
+           const uint8_t* identifier_begin, const size_t identifier_len) const;
+
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
     /// This method may return multiple @c Host objects if they are connected
@@ -105,6 +121,20 @@ public:
     virtual ConstHostPtr
     get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
          const DuidPtr& duid = DuidPtr()) const;
+
+    /// @brief Returns a host connected to the IPv4 subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return Const @c Host object for which reservation has been made using
+    /// the specified identifier.
+    virtual ConstHostPtr
+    get4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len) const;
 
     /// @brief Returns a host connected to the IPv4 subnet and having
     /// a reservation for a specified IPv4 address.
@@ -142,6 +172,20 @@ public:
     virtual ConstHostPtr
     get6(const SubnetID& subnet_id, const DuidPtr& duid,
             const HWAddrPtr& hwaddr = HWAddrPtr()) const;
+
+    /// @brief Returns a host connected to the IPv6 subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return Const @c Host object for which reservation has been made using
+    /// the specified identifier.
+    virtual ConstHostPtr
+    get6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len) const;
 
     /// @brief Returns a host using the specified IPv6 prefix.
     ///
@@ -213,7 +257,7 @@ public:
     enum StatementIndex {
         INSERT_HOST,            // Insert new host to collection
         INSERT_V6_RESRV,        // Insert v6 reservation
-        GET_HOST_HWADDR_DUID,   // Gets hosts by DUID and/or HW address
+        GET_HOST_DHCPID,        // Gets hosts by host identifier
         GET_HOST_ADDR,          // Gets hosts by IPv4 address
         GET_HOST_SUBID4_DHCPID, // Gets host by IPv4 SubnetID, HW address/DUID
         GET_HOST_SUBID6_DHCPID, // Gets host by IPv6 SubnetID, HW address/DUID
@@ -224,11 +268,6 @@ public:
     };
 
 private:
-
-    /// @brief Checks if the specified host already exists in the database.
-    ///
-    /// @param host Pointer to the new @c Host object being added.
-    bool checkIfExists(const HostPtr& host);
 
     /// @brief Pointer to the implementation of the @ref MySqlHostDataSource.
     MySqlHostDataSourceImpl* impl_; 
