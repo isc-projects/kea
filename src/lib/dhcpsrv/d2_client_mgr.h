@@ -457,7 +457,8 @@ void
 D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp) {
     // If we're configured to replace it or the supplied name is blank
     // set the response name to blank.
-    if ((d2_client_config_->getReplaceClientNameMode() != D2ClientConfig::RCM_NEVER) ||
+    if ((d2_client_config_->getReplaceClientNameMode() == D2ClientConfig::RCM_ALWAYS ||
+         d2_client_config_->getReplaceClientNameMode() == D2ClientConfig::RCM_WHEN_PRESENT) ||
         fqdn.getDomainName().empty()) {
         fqdn_resp.setDomainName("", T::PARTIAL);
     } else {
