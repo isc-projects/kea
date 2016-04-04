@@ -1,3 +1,9 @@
+1099.	[func]		marcin
+	Updated Host Manager API to allow for retrieving host reservations
+	by any type of host identifier. Previously it was only possible
+	to retrieve host reservations by hardware address or DUID.
+	(Trac #4302, git 3979656c918164e3c39e0e8fb78b2862a2b5e95a)
+
 1098.	[func]		kalmus, marcin
 	Implemented IPv6 address/prefix reservations in MySQL.
 	(Trac #4212, git 79481043935789fc6898d4743bede1606f82eb75)
