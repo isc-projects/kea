@@ -8,6 +8,7 @@
 #define GENERIC_HOST_DATA_SOURCE_UNITTEST_H
 
 #include <dhcpsrv/base_host_data_source.h>
+#include <dhcpsrv/host.h>
 #include <dhcp/classify.h>
 #include <gtest/gtest.h>
 #include <vector>
@@ -46,21 +47,28 @@ public:
     /// @brief Creates a host reservation for specified IPv6 address.
     ///
     /// @param address IPv6 address to be reserved
-    /// @param id type of identifier (ID_DUID or ID_HWADDR are supported)
+    /// @param id type of identifier (IDENT_DUID or IDENT_HWADDR are supported)
     /// @param prefix reservation type (true = prefix, false = address)
+    /// @param new_identifier Boolean value indicating if new host
+    /// identifier should be generated or the same as previously.
     ///
     /// @return generated Host object
-    HostPtr initializeHost6(std::string address, BaseHostDataSource::IdType id,
-                            bool prefix);
+    HostPtr initializeHost6(std::string address, Host::IdentifierType id,
+                            bool prefix, bool new_identifier = true);
 
     /// @brief Generates a hardware address in text version.
     ///
+    /// @param increase A boolean value indicating if new address (increased)
+    /// must be generated or the same address as previously.
     /// @return HW address in textual form acceptable by Host constructor
-    std::string generateHWAddr();
+    std::string generateHWAddr(const bool new_identifier = true);
 
     /// @brief Generates a hardware address in text version.
+    ///
+    /// @param increase A boolean value indicating if new DUID (increased)
+    /// must be generated or the same DUID as previously.
     /// @return DUID in textual form acceptable by Host constructor
-    std::string generateDuid();
+    std::string generateDuid(const bool new_identifier = true);
 
     /// @brief Compares hardware addresses of the two hosts.
     ///
@@ -183,9 +191,9 @@ public:
     ///        checks that they can be retrieved properly.
     ///
     /// Uses gtest macros to report failures.
-    /// @param id type of the identifier to be used (HWAddr or DUID)
+    /// @param id type of the identifier to be used (IDENT_HWADDR or IDENT_DUID)
     /// @param prefix true - reserve IPv6 prefix, false - reserve IPv6 address
-    void testGetByIPv6(BaseHostDataSource::IdType id, bool prefix);
+    void testGetByIPv6(Host::IdentifierType id, bool prefix);
 
     /// @brief Test that hosts can be retrieved by hardware address.
     ///
@@ -216,8 +224,8 @@ public:
     /// Uses gtest macros to report failures.
     ///
     /// @param subnets number of subnets to test
-    /// @param id identifier type (ID_HWADDR or ID_DUID)
-    void testSubnetId6(int subnets, BaseHostDataSource::IdType id);
+    /// @param id identifier type (IDENT_HWADDR or IDENT_DUID)
+    void testSubnetId6(int subnets, Host::IdentifierType id);
 
     /// @brief Test if the duplicate host with same DUID can't be inserted.
     ///

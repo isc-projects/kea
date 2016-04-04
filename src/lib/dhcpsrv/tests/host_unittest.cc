@@ -631,16 +631,18 @@ TEST(HostTest, addOptions6) {
     EXPECT_TRUE(options->empty());
 }
 
+// This test verifies that it is possible to retrieve a textual
+// representation of the host identifier.
 TEST(HostTest, getIdentifierAsText) {
     Host host1("01:02:03:04:05:06", "hw-address",
                SubnetID(1), SubnetID(2),
                IOAddress("192.0.2.3"));
-    EXPECT_EQ("hwaddr=01:02:03:04:05:06", host1.getIdentifierAsText());
+    EXPECT_EQ("hwaddr=010203040506", host1.getIdentifierAsText());
 
     Host host2("0a:0b:0c:0d:0e:0f:ab:cd:ef", "duid",
                SubnetID(1), SubnetID(2),
                IOAddress("192.0.2.3"));
-    EXPECT_EQ("duid=0a:0b:0c:0d:0e:0f:ab:cd:ef",
+    EXPECT_EQ("duid=0A0B0C0D0E0FABCDEF",
               host2.getIdentifierAsText());
 }
 
@@ -666,7 +668,7 @@ TEST(HostTest, toText) {
     );
 
     // Make sure that the output is correct,
-    EXPECT_EQ("hwaddr=01:02:03:04:05:06 ipv4_subnet_id=1 ipv6_subnet_id=2"
+    EXPECT_EQ("hwaddr=010203040506 ipv4_subnet_id=1 ipv6_subnet_id=2"
               " hostname=myhost.example.com"
               " ipv4_reservation=192.0.2.3"
               " ipv6_reservation0=2001:db8:1::cafe"
@@ -680,7 +682,7 @@ TEST(HostTest, toText) {
     host->removeIPv4Reservation();
     host->setIPv4SubnetID(0);
 
-    EXPECT_EQ("hwaddr=01:02:03:04:05:06 ipv6_subnet_id=2"
+    EXPECT_EQ("hwaddr=010203040506 ipv6_subnet_id=2"
               " hostname=(empty) ipv4_reservation=(no)"
               " ipv6_reservation0=2001:db8:1::cafe"
               " ipv6_reservation1=2001:db8:1::1"
@@ -695,14 +697,14 @@ TEST(HostTest, toText) {
                                         IOAddress::IPV4_ZERO_ADDRESS(),
                                         "myhost")));
 
-    EXPECT_EQ("duid=11:12:13:14:15 hostname=myhost ipv4_reservation=(no)"
+    EXPECT_EQ("duid=1112131415 hostname=myhost ipv4_reservation=(no)"
               " ipv6_reservations=(none)", host->toText());
 
     // Add some classes.
     host->addClientClass4("modem");
     host->addClientClass4("router");
 
-    EXPECT_EQ("duid=11:12:13:14:15 hostname=myhost ipv4_reservation=(no)"
+    EXPECT_EQ("duid=1112131415 hostname=myhost ipv4_reservation=(no)"
               " ipv6_reservations=(none)"
               " dhcp4_class0=modem dhcp4_class1=router",
               host->toText());
@@ -710,7 +712,7 @@ TEST(HostTest, toText) {
     host->addClientClass6("hub");
     host->addClientClass6("device");
 
-    EXPECT_EQ("duid=11:12:13:14:15 hostname=myhost ipv4_reservation=(no)"
+    EXPECT_EQ("duid=1112131415 hostname=myhost ipv4_reservation=(no)"
               " ipv6_reservations=(none)"
               " dhcp4_class0=modem dhcp4_class1=router"
               " dhcp6_class0=device dhcp6_class1=hub",

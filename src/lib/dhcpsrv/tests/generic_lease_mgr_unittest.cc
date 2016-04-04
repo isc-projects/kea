@@ -2213,9 +2213,6 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
     EXPECT_NE(0, declined_state);
     EXPECT_NE(0, default_state);
 
-    // Remember expired leases returned.
-    std::vector<Lease4Ptr> saved_expired_leases = expired_leases;
-
     // Remove expired leases again.
     expired_leases.clear();
 
@@ -2365,9 +2362,6 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
     // Check that both declined and default state leases were returned.
     EXPECT_NE(0, declined_state);
     EXPECT_NE(0, default_state);
-
-    // Remember expired leases returned.
-    std::vector<Lease6Ptr> saved_expired_leases = expired_leases;
 
     // Remove expired leases again.
     expired_leases.clear();

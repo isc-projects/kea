@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -117,17 +117,19 @@ TEST_F(CfgHostsTest, getAllNonRepeatingHosts) {
     // Try to retrieve each added reservation using HW address and DUID. Do it
     // in the reverse order to make sure that the order doesn't matter.
     for (int i = 24; i >= 0; --i) {
-        // Get host identified by HW address. The DUID is non-zero but it
-        // points to a host for which the reservation hasn't been added.
-        HostCollection hosts = cfg.getAll(hwaddrs_[i], duids_[i + 25]);
+        // Get host identified by HW address.
+        HostCollection hosts = cfg.getAll(Host::IDENT_HWADDR,
+                                          &hwaddrs_[i]->hwaddr_[0],
+                                          hwaddrs_[i]->hwaddr_.size());
         ASSERT_EQ(1, hosts.size());
         EXPECT_EQ(i % 10 + 1, hosts[0]->getIPv4SubnetID());
         EXPECT_EQ(addressesa_[i].toText(),
                   hosts[0]->getIPv4Reservation().toText());
 
-        // Get host identified by DUID. The HW address is non-null but it
-        // points to a host for which the reservation hasn't been added.
-        hosts = cfg.getAll(hwaddrs_[i + 25], duids_[i]);
+        // Get host identified by DUID.
+        hosts = cfg.getAll(Host::IDENT_DUID,
+                           &duids_[i]->getDuid()[0],
+                           duids_[i]->getDuid().size());
         ASSERT_EQ(1, hosts.size());
         EXPECT_EQ(i % 5 + 1, hosts[0]->getIPv4SubnetID());
         EXPECT_EQ(addressesb_[i].toText(),
@@ -137,8 +139,10 @@ TEST_F(CfgHostsTest, getAllNonRepeatingHosts) {
     // Make sure that the reservations do not exist for the hardware addresses
     // and DUIDs from the range of 25 to 49.
     for (int i = 49; i >= 25; --i) {
-        EXPECT_TRUE(cfg.getAll(hwaddrs_[i]).empty());
-        EXPECT_TRUE(cfg.getAll(HWAddrPtr(), duids_[i]).empty());
+        EXPECT_TRUE(cfg.getAll(Host::IDENT_HWADDR, &hwaddrs_[i]->hwaddr_[0],
+                               hwaddrs_[i]->hwaddr_.size()).empty());
+        EXPECT_TRUE(cfg.getAll(Host::IDENT_DUID, &duids_[i]->getDuid()[0],
+                               duids_[i]->getDuid().size()).empty());
     }
 }
 
@@ -244,31 +248,24 @@ TEST_F(CfgHostsTest, get4) {
     }
 
     for (unsigned i = 0; i < 25; ++i) {
-        // Retrieve host by HW address. The DUID is non-null but there is no
-        // reservation made for the DUID so the reservation is returned for
-        // HW address.
-        HostPtr host = cfg.get4(SubnetID(1 + i % 2), hwaddrs_[i],
-                                duids_[i + 25]);
+        // Retrieve host by HW address.
+        HostPtr host = cfg.get4(SubnetID(1 + i % 2), Host::IDENT_HWADDR,
+                                &hwaddrs_[i]->hwaddr_[0],
+                                hwaddrs_[i]->hwaddr_.size());
         ASSERT_TRUE(host);
         EXPECT_EQ(1 + i % 2, host->getIPv4SubnetID());
         EXPECT_EQ(increase(IOAddress("192.0.2.5"), i),
                   host->getIPv4Reservation());
 
-        // Retrieve host by DUID. The HW address is non-null but there is no
-        // reservation made for the HW address so the reservation is returned
-        // for the DUID.
-        host = cfg.get4(SubnetID(1 + i % 2), hwaddrs_[i + 25], duids_[i]);
+        // Retrieve host by DUID.
+        host = cfg.get4(SubnetID(1 + i % 2), Host::IDENT_DUID,
+                        &duids_[i]->getDuid()[0], duids_[i]->getDuid().size());
         ASSERT_TRUE(host);
         EXPECT_EQ(1 + i % 2, host->getIPv4SubnetID());
         EXPECT_EQ(increase(IOAddress("192.0.2.100"), i),
                   host->getIPv4Reservation());
 
     }
-
-    // Also check that when the get4 finds multiple Host objects that fulfil
-    // search criteria, it will throw an exception. Note that the reservation
-    // exist both for hwaddrs_[0] and duids_[0].
-    EXPECT_THROW(cfg.get4(SubnetID(1), hwaddrs_[0], duids_[0]), DuplicateHost);
 }
 
 // This test checks that the reservations can be retrieved for the particular
@@ -298,11 +295,10 @@ TEST_F(CfgHostsTest, get6) {
     }
 
     for (unsigned i = 0; i < 25; ++i) {
-        // Retrieve host by HW address. The DUID is non-null but there is no
-        // reservation made for the DUID so the reservation is returned for
-        // HW address.
-        HostPtr host = cfg.get6(SubnetID(1 + i % 2), duids_[i + 25],
-                                hwaddrs_[i]);
+        // Retrieve host by HW address.
+        HostPtr host = cfg.get6(SubnetID(1 + i % 2), Host::IDENT_HWADDR,
+                                &hwaddrs_[i]->hwaddr_[0],
+                                hwaddrs_[i]->hwaddr_.size());
         ASSERT_TRUE(host);
         EXPECT_EQ(1 + i % 2, host->getIPv6SubnetID());
         IPv6ResrvRange reservations =
@@ -311,10 +307,9 @@ TEST_F(CfgHostsTest, get6) {
         EXPECT_EQ(increase(IOAddress("2001:db8:1::1"), i),
                   reservations.first->second.getPrefix());
 
-        // Retrieve host by DUID. The HW address is non-null but there is no
-        // reservation made for the HW address so the reservation is returned
-        // for the DUID.
-        host = cfg.get6(SubnetID(1 + i % 2), duids_[i], hwaddrs_[i + 25]);
+        // Retrieve host by DUID.
+        host = cfg.get6(SubnetID(1 + i % 2), Host::IDENT_DUID,
+                        &duids_[i]->getDuid()[0], duids_[i]->getDuid().size());
         ASSERT_TRUE(host);
         EXPECT_EQ(1 + i % 2, host->getIPv6SubnetID());
         reservations = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
@@ -322,11 +317,6 @@ TEST_F(CfgHostsTest, get6) {
         EXPECT_EQ(increase(IOAddress("2001:db8:2::1"), i),
                   reservations.first->second.getPrefix());
     }
-
-    // Also check that when the get6 finds multiple Host objects that fulfil
-    // search criteria, it will throw an exception. Note that the reservation
-    // exist both for hwaddrs_[0] and duids_[0].
-    EXPECT_THROW(cfg.get6(SubnetID(1), duids_[0], hwaddrs_[0]), DuplicateHost);
 }
 
 // This test checks that the IPv6 reservations can be retrieved for a particular
@@ -376,30 +366,31 @@ TEST_F(CfgHostsTest, get6MultipleAddrs) {
 
         // Generate 5 unique addresses for this host.
         for (int j = 0; j < 5; ++j) {
-            std::stringstream tmp;
-            tmp << "2001:db8:" << i << "::" << j;
-            host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, tmp.str()));
+            std::stringstream address_stream;
+            address_stream << "2001:db8:" << i << "::" << j;
+            host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                           address_stream.str()));
         }
         cfg.add(host);
     }
-
-    // We don't care about HW/MAC addresses for now.
-    HWAddrPtr hwaddr_not_used;
 
     // Now check if we can retrieve each of those 25 hosts by using each
     // of their addresses.
     for (unsigned i = 0; i < 25; ++i) {
 
         // Check that the host is there.
-        HostPtr by_duid = cfg.get6(SubnetID(1 + i % 2), duids_[i], hwaddr_not_used);
+        HostPtr by_duid = cfg.get6(SubnetID(1 + i % 2), Host::IDENT_DUID,
+                                   &duids_[i]->getDuid()[0],
+                                   duids_[i]->getDuid().size());
         ASSERT_TRUE(by_duid);
 
         for (unsigned j = 0; j < 5; ++j) {
-            std::stringstream tmp;
-            tmp << "2001:db8:" << i << "::" << j;
+            std::stringstream address_stream;
+            address_stream << "2001:db8:" << i << "::" << j;
 
             // Retrieve host by (subnet-id,address).
-            HostPtr by_addr = cfg.get6(SubnetID(1 + i % 2), tmp.str());
+            HostPtr by_addr = cfg.get6(SubnetID(1 + i % 2),
+                                       address_stream.str());
             ASSERT_TRUE(by_addr);
 
             // The pointers should match. Maybe we should compare contents
@@ -462,6 +453,8 @@ TEST_F(CfgHostsTest, add6Invalid2Hosts) {
     EXPECT_THROW(cfg.add(host2), isc::dhcp::DuplicateHost);
 }
 
+// Check that error is reported when trying to add a host with subnet
+// ids equal to zero.
 TEST_F(CfgHostsTest, zeroSubnetIDs) {
     CfgHosts cfg;
     ASSERT_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
