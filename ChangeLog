@@ -1,3 +1,8 @@
+1xxx.	[func]		sar
+	Added access to the peer address, link address and option
+	information added by relays in a DHCPv6 message.
+	(Trac $4269, git tbd)
+
 1098.	[func]		kalmus, marcin
 	Implemented IPv6 address/prefix reservations in MySQL.
 	(Trac #4212, git 79481043935789fc6898d4743bede1606f82eb75)

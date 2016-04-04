@@ -322,7 +322,39 @@ OptionPtr TokenRelay6Option::getOption(const Pkt& pkt) {
 }
 
 void
-TokenRelay6::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
-  // test routine, need to add code in pkt6 to get the proper fields
-  values.push("");
+TokenRelay6::evaluate(const Pkt& pkt, ValueStack& values) {
+
+    vector<uint8_t> binary;
+    try {
+        // Check if it's a Pkt6.  If it's not the dynamic_cast will
+        // throw std::bad_cast.
+        const Pkt6& pkt6 = dynamic_cast<const Pkt6&>(pkt);
+
+        try {
+        switch (type_) {
+            // Now that we have the right type of packet we can
+            // get the option and return it.
+            case LINKADDR:
+                binary = pkt6.getRelay6LinkAddress(nest_level_).toBytes();
+                break;
+            case PEERADDR:
+                binary = pkt6.getRelay6PeerAddress(nest_level_).toBytes();
+                break;
+            }
+        } catch (const isc::OutOfRange&) {
+            // The only exception we expect is OutOfRange if the nest
+            // level is invalid.  We push "" in that case.
+            values.push("");
+            return;
+        }
+    } catch (const std::bad_cast&) {
+        isc_throw(EvalTypeError, "Specified packet is not Pkt6");
+    }
+
+    string value;
+    value.resize(binary.size());
+    if (!binary.empty()) {
+        memmove(&value[0], &binary[0], binary.size());
+    }
+    values.push(value);
 }
