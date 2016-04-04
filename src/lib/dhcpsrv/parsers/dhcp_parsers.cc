@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1406,10 +1406,22 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
                                               D2ClientConfig::
                                               DFT_OVERRIDE_CLIENT_UPDATE);
 
-        bool replace_client_name =
-            boolean_values_->getOptionalParam("replace-client-name",
-                                              D2ClientConfig::
-                                              DFT_REPLACE_CLIENT_NAME);
+        // Formerly, replace-client-name was boolean, so for now we'll support boolean
+        // values by mapping them to the appropriate mode
+        D2ClientConfig::ReplaceClientNameMode replace_client_name_mode;
+        std::string mode_str = string_values_->getOptionalParam("replace-client-name",
+                                                                D2ClientConfig::
+                                                                DFT_REPLACE_CLIENT_NAME_MODE);
+        if (boost::iequals(mode_str, "FALSE")) {
+            // @todo add a debug log
+            replace_client_name_mode = D2ClientConfig::RCM_NEVER;
+        }
+        else if (boost::iequals(mode_str, "TRUE")) {
+            // @todo add a debug log
+            replace_client_name_mode = D2ClientConfig::RCM_WHEN_PRESENT;
+        } else {
+            replace_client_name_mode = stringToReplaceClientNameMode(mode_str);
+        }
 
         // Attempt to create the new client config.
         local_client_config_.reset(new D2ClientConfig(enable_updates,
@@ -1423,7 +1435,7 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
                                                       always_include_fqdn,
                                                       override_no_update,
                                                       override_client_update,
-                                                      replace_client_name,
+                                                      replace_client_name_mode,
                                                       generated_prefix,
                                                       qualifying_suffix));
 
@@ -1445,14 +1457,14 @@ D2ClientConfigParser::createConfigParser(const std::string& config_id) {
         (config_id.compare("ncr-format") == 0) ||
         (config_id.compare("generated-prefix") == 0) ||
         (config_id.compare("sender-ip") == 0) ||
-        (config_id.compare("qualifying-suffix") == 0)) {
+        (config_id.compare("qualifying-suffix") == 0) ||
+        (config_id.compare("replace-client-name") == 0)) {
         parser = new StringParser(config_id, string_values_);
     } else if ((config_id.compare("enable-updates") == 0) ||
         (config_id.compare("always-include-fqdn") == 0) ||
         (config_id.compare("allow-client-update") == 0) ||
         (config_id.compare("override-no-update") == 0) ||
-        (config_id.compare("override-client-update") == 0) ||
-        (config_id.compare("replace-client-name") == 0)) {
+        (config_id.compare("override-client-update") == 0)) {
         parser = new BooleanParser(config_id, boolean_values_);
     } else {
         isc_throw(NotImplemented,

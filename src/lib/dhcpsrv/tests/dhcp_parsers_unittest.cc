@@ -1391,7 +1391,7 @@ TEST_F(ParseConfigTest, validD2Config) {
         "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : true, "
+        "     \"replace-client-name\" : \"WHEN_PRESENT\", "
         "     \"generated-prefix\" : \"test.prefix\", "
         "     \"qualifying-suffix\" : \"test.suffix.\" "
         "    }"
@@ -1416,7 +1416,7 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
     EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
-    EXPECT_TRUE(d2_client_config->getReplaceClientName());
+    EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
 
@@ -1437,7 +1437,7 @@ TEST_F(ParseConfigTest, validD2Config) {
         "     \"always-include-fqdn\" : false, "
         "     \"override-no-update\" : false, "
         "     \"override-client-update\" : false, "
-        "     \"replace-client-name\" : false, "
+        "     \"replace-client-name\" : \"NEVER\", "
         "     \"generated-prefix\" : \"\", "
         "     \"qualifying-suffix\" : \"\" "
         "    }"
@@ -1461,7 +1461,7 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_FALSE(d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_FALSE(d2_client_config->getOverrideNoUpdate());
     EXPECT_FALSE(d2_client_config->getOverrideClientUpdate());
-    EXPECT_FALSE(d2_client_config->getReplaceClientName());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("", d2_client_config->getQualifyingSuffix());
 }
@@ -1533,8 +1533,8 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
               d2_client_config->getOverrideNoUpdate());
     EXPECT_EQ(D2ClientConfig::DFT_OVERRIDE_CLIENT_UPDATE,
               d2_client_config->getOverrideClientUpdate());
-    EXPECT_EQ(D2ClientConfig::DFT_REPLACE_CLIENT_NAME,
-              d2_client_config->getReplaceClientName());
+    EXPECT_EQ(stringToReplaceClientNameMode(D2ClientConfig::DFT_REPLACE_CLIENT_NAME_MODE),
+              d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ(D2ClientConfig::DFT_GENERATED_PREFIX,
               d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.",

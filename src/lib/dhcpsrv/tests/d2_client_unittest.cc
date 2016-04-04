@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,22 @@ using namespace isc::util;
 using namespace isc;
 
 namespace {
+
+/// @brief Tests conversion of NameChangeFormat between enum and strings.
+TEST(ReplaceClientNameModeTest, formatEnumConversion){
+    ASSERT_EQ(stringToReplaceClientNameMode("NEVER"), D2ClientConfig::RCM_NEVER);
+    ASSERT_EQ(stringToReplaceClientNameMode("ALWAYS"), D2ClientConfig::RCM_ALWAYS);
+    ASSERT_EQ(stringToReplaceClientNameMode("WHEN_PRESENT"), D2ClientConfig::RCM_WHEN_PRESENT);
+    ASSERT_EQ(stringToReplaceClientNameMode("WHEN_NOT_PRESENT"),
+              D2ClientConfig::RCM_WHEN_NOT_PRESENT);
+    ASSERT_THROW(stringToReplaceClientNameMode("BOGUS"), isc::BadValue);
+
+    ASSERT_EQ(replaceClientNameModeToString(D2ClientConfig::RCM_NEVER), "NEVER");
+    ASSERT_EQ(replaceClientNameModeToString(D2ClientConfig::RCM_ALWAYS), "ALWAYS");
+    ASSERT_EQ(replaceClientNameModeToString(D2ClientConfig::RCM_WHEN_PRESENT), "WHEN_PRESENT");
+    ASSERT_EQ(replaceClientNameModeToString(D2ClientConfig::RCM_WHEN_NOT_PRESENT),
+              "WHEN_NOT_PRESENT");
+}
 
 /// @brief Checks constructors and accessors of D2ClientConfig.
 TEST(D2ClientConfigTest, constructorsAndAccessors) {
@@ -47,7 +63,8 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     bool always_include_fqdn = true;
     bool override_no_update = true;
     bool override_client_update = true;
-    bool replace_client_name = true;
+    D2ClientConfig::ReplaceClientNameMode replace_client_name_mode = D2ClientConfig::
+                                                                     RCM_WHEN_PRESENT;
     std::string generated_prefix = "the_prefix";
     std::string qualifying_suffix = "the.suffix.";
 
@@ -63,8 +80,8 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                           ncr_format,
                                                           always_include_fqdn,
                                                           override_no_update,
-                                                         override_client_update,
-                                                          replace_client_name,
+                                                          override_client_update,
+                                                          replace_client_name_mode,
                                                           generated_prefix,
                                                           qualifying_suffix)));
 
@@ -84,7 +101,7 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     EXPECT_EQ(d2_client_config->getOverrideNoUpdate(), override_no_update);
     EXPECT_EQ(d2_client_config->getOverrideClientUpdate(),
               override_client_update);
-    EXPECT_EQ(d2_client_config->getReplaceClientName(), replace_client_name);
+    EXPECT_EQ(d2_client_config->getReplaceClientNameMode(), replace_client_name_mode);
     EXPECT_EQ(d2_client_config->getGeneratedPrefix(), generated_prefix);
     EXPECT_EQ(d2_client_config->getQualifyingSuffix(), qualifying_suffix);
 
@@ -106,7 +123,7 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                        always_include_fqdn,
                                                        override_no_update,
                                                        override_client_update,
-                                                       replace_client_name,
+                                                       replace_client_name_mode,
                                                        generated_prefix,
                                                        qualifying_suffix)),
                  D2ClientError);
@@ -127,7 +144,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(ref_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true,
+                    true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(ref_config);
 
@@ -135,7 +152,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true,
+                    true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_TRUE(*ref_config == *test_config);
@@ -145,7 +162,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(false,
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true,
+                    true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -155,7 +172,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     test_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true,
+                    true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -165,7 +182,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 333, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true,
+                    true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -175,7 +192,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, test_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true,
+                    true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -185,7 +202,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 333, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true,
+                    true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -195,7 +212,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 478, 2048,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true,
+                    true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -205,7 +222,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    false, true, true, true,
+                    false, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -215,7 +232,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, false, true, true,
+                    true, false, true, D2ClientConfig::RCM_WHEN_PRESENT,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -225,7 +242,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, false, true,
+                    true, true, false, D2ClientConfig::RCM_WHEN_PRESENT,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -235,7 +252,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, false,
+                    true, true, true, D2ClientConfig::RCM_NEVER,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -245,7 +262,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true,
+                    true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
                     "bogus", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -255,7 +272,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true,
+                    true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
                     "pre-fix", "bogus")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -300,7 +317,7 @@ TEST(D2ClientMgr, validConfig) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  true, true, true, true,
+                                  true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
                                   "pre-fix", "suf-fix")));
 
     // Verify that we can assign a new, non-empty configuration.
@@ -344,7 +361,7 @@ TEST(D2ClientMgr, analyzeFqdnInvalidCombination) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, false, false, false,
+                                  false, false, false, D2ClientConfig::RCM_NEVER,
                                   "pre-fix", "suf-fix")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_TRUE(mgr.ddnsEnabled());
@@ -368,7 +385,7 @@ TEST(D2ClientMgr, analyzeFqdnEnabledNoOverrides) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, false, false, false,
+                                  false, false, false, D2ClientConfig::RCM_NEVER,
                                   "pre-fix", "suf-fix")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_TRUE(mgr.ddnsEnabled());
@@ -412,7 +429,7 @@ TEST(D2ClientMgr, analyzeFqdnEnabledOverrideNoUpdate) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, true, false, false,
+                                  false, true, false, D2ClientConfig::RCM_NEVER,
                                   "pre-fix", "suf-fix")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_TRUE(mgr.ddnsEnabled());
@@ -455,7 +472,7 @@ TEST(D2ClientMgr, analyzeFqdnEnabledOverrideClientUpdate) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, false, true, false,
+                                  false, false, true, D2ClientConfig::RCM_NEVER,
                                   "pre-fix", "suf-fix")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_TRUE(mgr.ddnsEnabled());
@@ -499,7 +516,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV4) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, true, false, false,
+                                  false, true, false, D2ClientConfig::RCM_NEVER,
                                   "pre-fix", "suf-fix")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_TRUE(mgr.ddnsEnabled());
@@ -600,7 +617,7 @@ TEST(D2ClientMgr, qualifyName) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, false, true, false,
+                                  false, false, true, D2ClientConfig::RCM_NEVER,
                                   "prefix", "suffix.com")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
 
@@ -616,7 +633,7 @@ TEST(D2ClientMgr, qualifyName) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, false, true, false,
+                                  false, false, true, D2ClientConfig::RCM_NEVER,
                                   "prefix", "suffix.com")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     partial_name = "somehost";
@@ -630,7 +647,7 @@ TEST(D2ClientMgr, qualifyName) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, false, true, false,
+                                  false, false, true, D2ClientConfig::RCM_NEVER,
                                   "prefix", ""))); //empty suffix
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     partial_name = "somehost";
@@ -643,7 +660,7 @@ TEST(D2ClientMgr, qualifyName) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, false, true, false,
+                                  false, false, true, D2ClientConfig::RCM_NEVER,
                                   "prefix", "hasdot.com.")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
 
@@ -662,7 +679,7 @@ TEST(D2ClientMgr, qualifyName) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, false, true, false,
+                                  false, false, true, D2ClientConfig::RCM_NEVER,
                                   "prefix", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
 
@@ -700,7 +717,7 @@ TEST(D2ClientMgr, generateFqdn) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, false, true, false,
+                                  false, false, true, D2ClientConfig::RCM_NEVER,
                                   "prefix", "suffix.com")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
 
@@ -734,10 +751,10 @@ TEST(D2ClientMgr, adjustDomainNameV4) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, false, false, false,
+                                  false, false, false, D2ClientConfig::RCM_NEVER,
                                   "prefix", "suffix.com")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
-    ASSERT_FALSE(cfg->getReplaceClientName());
+    ASSERT_EQ(D2ClientConfig::RCM_NEVER, cfg->getReplaceClientNameMode());
 
     // replace-client-name is false, client passes in empty fqdn
     // reponse domain should be empty/partial.
@@ -777,10 +794,10 @@ TEST(D2ClientMgr, adjustDomainNameV4) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, false, false, true,
+                                  false, false, false, D2ClientConfig::RCM_WHEN_PRESENT,
                                   "prefix", "suffix.com")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
-    ASSERT_TRUE(cfg->getReplaceClientName());
+    ASSERT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, cfg->getReplaceClientNameMode());
 
     // replace-client-name is true, client passes in empty fqdn
     // reponse domain should be empty/partial.
@@ -827,10 +844,10 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, false, false, false,
+                                  false, false, false, D2ClientConfig::RCM_NEVER,
                                   "prefix", "suffix.com")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
-    ASSERT_FALSE(cfg->getReplaceClientName());
+    ASSERT_EQ(D2ClientConfig::RCM_NEVER, cfg->getReplaceClientNameMode());
 
     // replace-client-name is false, client passes in empty fqdn
     // reponse domain should be empty/partial.
@@ -867,10 +884,10 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, false, false, true,
+                                  false, false, false, D2ClientConfig::RCM_WHEN_PRESENT,
                                   "prefix", "suffix.com")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
-    ASSERT_TRUE(cfg->getReplaceClientName());
+    ASSERT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, cfg->getReplaceClientNameMode());
 
     // replace-client-name is true, client passes in empty fqdn
     // reponse domain should be empty/partial.
@@ -917,7 +934,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV6) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  false, true, false, false,
+                                  false, true, false, D2ClientConfig::RCM_NEVER,
                                   "pre-fix", "suf-fix")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_TRUE(mgr.ddnsEnabled());

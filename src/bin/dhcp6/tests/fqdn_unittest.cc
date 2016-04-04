@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -112,7 +112,8 @@ public:
                                   (mask & ALWAYS_INCLUDE_FQDN),
                                   (mask & OVERRIDE_NO_UPDATE),
                                   (mask & OVERRIDE_CLIENT_UPDATE),
-                                  (mask & REPLACE_CLIENT_NAME),
+                                  ((mask & REPLACE_CLIENT_NAME) ? D2ClientConfig::RCM_WHEN_PRESENT
+                                   : D2ClientConfig::RCM_NEVER),
                                   "myhost", "example.com")));
         ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
         ASSERT_NO_THROW(srv_->startD2());
@@ -731,7 +732,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
 }
 
 // Checks that calling queueNCR would not result in error if DDNS updates are
-// disabled. 
+// disabled.
 TEST_F(FqdnDhcpv6SrvTest, noRemovalsWhenDisabled) {
     // Disable DDNS updates.
     disableD2();
