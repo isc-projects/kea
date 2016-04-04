@@ -6,14 +6,20 @@
 #ifndef ASIO_WRAPPER_H
 #define ASIO_WRAPPER_H 1
 
+// !!! IMPORTANT !!!!
+// This file must be included anywhere one would normally have included
+// boost/asio.hpp.  Until the issue described below is resolved in some
+// other fashion  asio.hpp should not be included other than through
+// this file.
+//
 // The optimizer as of gcc 5.2.0, may not reliably ensure a single value
 // returned by boost::system::system_category() within a translation unit
 // when building the header only version of the boost error handling.
-// See Trac #4309 for more details. For now we turn off optimization for
+// See Trac #4243 for more details. For now we turn off optimization for
 // header only builds the under the suspect GCC versions.
 //
 // The issue arises from in-lining the above function, which returns a
-// reference to a local static variable, system_category_const,  This leads
+// reference to a local static variable, system_category_const.  This leads
 // to situations where a construct such as the following:
 //
 // {{{
@@ -34,6 +40,11 @@
 //
 // We're doing the test here, rather than in configure to guard against the
 // user supplying the header only flag via environment variables.
+//
+// We opened bugs with GNU and BOOST:
+//
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=69789
+// https://svn.boost.org/trac/boost/ticket/11989
 //
 // @todo Currently, 5.3.0 is the latest released versio of GCC. Version 6.0 is
 // in development and will need to be tested.
