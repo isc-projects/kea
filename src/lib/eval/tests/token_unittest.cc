@@ -114,7 +114,7 @@ public:
     /// @param result_addr The expected result of the address as a string
     void verifyRelay6Option(const uint8_t test_level,
                             const uint16_t test_code,
-                       	    const TokenOption::RepresentationType& test_rep,
+                            const TokenOption::RepresentationType& test_rep,
                             const std::string& result_string) {
         // Create the token
         ASSERT_NO_THROW(t_.reset(new TokenRelay6Option(test_level,
