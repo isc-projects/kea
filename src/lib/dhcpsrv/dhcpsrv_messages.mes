@@ -378,7 +378,7 @@ starts the periodic Lease File Cleanup.
 This debug message is logged when Memfile backend fails to unregister
 timer used for lease file cleanup scheduling. There are several reasons
 why this could occur, although the most likely cause is that the system
-is being shut down and some other component has unregistered time timer.
+is being shut down and some other component has unregistered the timer.
 The message includes the reason for this error.
 
 % DHCPSRV_MEMFILE_NEEDS_DOWNGRADING version of lease file: %1 schema is later than version %2
