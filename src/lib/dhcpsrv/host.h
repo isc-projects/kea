@@ -179,7 +179,8 @@ public:
     /// DHCPv6 client's DUID are supported.
     enum IdentifierType {
         IDENT_HWADDR,
-        IDENT_DUID
+        IDENT_DUID,
+        IDENT_CIRCUIT_ID
     };
 
     /// @brief Constructor.
@@ -222,11 +223,19 @@ public:
     /// is useful in cases when the reservation is specified in the server
     /// configuration file, where:
     /// - MAC address is specified as: "01:02:03:04:05:06"
-    /// - DUID is specified as: "010203040506abcd"
+    /// - DUID can be specified as: "01:02:03:04:05:06:ab:cd" or "010203040506abcd".
+    /// - Other identifiers are specified as: "010203040506abcd" or as
+    /// "'some identfier'".
+    ///
+    /// In case of identifiers other than HW address and DUID it is possible to use
+    /// textual representation, e.g. 'some identifier', which is converted to a
+    /// vector of ASCII codes representing characters in a given string, excluding
+    /// quotes. This is useful in cases when specific identifiers, e.g. circuit-id
+    /// are manually assigned user friendly values.
     ///
     /// @param identifier Identifier in the textual format. The expected formats
-    /// for the hardware address and DUID have been shown above.
-    /// @param identifier_name One of "hw-address" or "duid"
+    /// for the hardware address and other identifiers are provided above.
+    /// @param identifier_name One of "hw-address", "duid", "circuit-id".
     /// @param ipv4_subnet_id Identifier of the IPv4 subnet to which the host
     /// is connected.
     /// @param ipv6_subnet_id Identifier of the IPv6 subnet to which the host
@@ -251,13 +260,10 @@ public:
 
     /// @brief Replaces currently used identifier with a new identifier.
     ///
-    /// This method initializes hardware address or DUID (@c hw_address_ or
-    /// @c duid_ respectively). The other (not initialized member) is
-    /// deallocated.
-    ///
+    /// This method sets a new identifier type and value for a host.
     /// This method is called by the @c Host constructor.
     ///
-    /// @param identifier Pointer to the new identifier in the textual format.
+    /// @param identifier Pointer to a buffer holding an identifier.
     /// @param len Length of the identifier that the @c identifier points to.
     /// @param type Identifier type.
     ///
@@ -267,14 +273,11 @@ public:
 
     /// @brief Replaces currently used identifier with a new identifier.
     ///
-    /// This method initializes hardware address or DUID (@c hw_address_ or
-    /// @c duid_ respectively). The other (not initialized member) is
-    /// deallocated.
-    ///
+    /// This method sets a new identifier type and value for a host.
     /// This method is called by the @c Host constructor.
     ///
-    /// @param identifier Pointer to the new identifier in the textual format.
-    /// @param name One of "hw-address" or "duid".
+    /// @param identifier Reference to a new identifier in the textual format.
+    /// @param name One of "hw-address", "duid", "circuit-id".
     ///
     /// @throw BadValue if the identifier is invalid.
     void setIdentifier(const std::string& identifier, const std::string& name);
@@ -283,29 +286,31 @@ public:
     ///
     /// @return Pointer to the @c HWAddr structure or null if the reservation
     /// is not associated with a hardware address.
-    HWAddrPtr getHWAddress() const {
-        return (hw_address_);
-    }
+    HWAddrPtr getHWAddress() const;
 
     /// @brief Returns DUID for which the reservations are made.
     ///
     /// @return Pointer to the @c DUID structure or null if the reservation
     /// is not associated with a DUID.
-    DuidPtr getDuid() const {
-        return (duid_);
-    }
+    DuidPtr getDuid() const;
 
-    /// @brief Returns the identifier (MAC or DUID) in binary form.
-    /// @return const reference to MAC or DUID in vector<uint8_t> form
+    /// @brief Returns the identifier in a binary form.
+    ///
+    /// @return const reference to a vector<uint8_t> holding an identifier
+    /// value.
     const std::vector<uint8_t>& getIdentifier() const;
 
     /// @brief Returns the identifier type.
-    /// @return the identifier type
+    ///
     IdentifierType getIdentifierType() const;
 
-    /// @brief Returns host identifier (mac or DUID) in printer friendly form.
-    /// @return text form of the identifier, including (duid= or mac=).
+    /// @brief Returns host identifier in a textual form.
+    ///
+    /// @return Identifier in the form of <type>=<value>.
     std::string getIdentifierAsText() const;
+
+    /// @brief Returns name of the identifier of a specified type.
+    static std::string getIdentifierName(const IdentifierType& type);
 
     /// @brief Returns host identifier in textual form.
     ///
@@ -487,12 +492,10 @@ private:
     void addClientClassInternal(ClientClasses& classes,
                                 const std::string& class_name);
 
-    /// @brief Pointer to the hardware address associated with the reservations
-    /// for the host.
-    HWAddrPtr hw_address_;
-    /// @brief Pointer to the DUID associated with the reservations for the
-    /// host.
-    DuidPtr duid_;
+    /// @brief Identifier type.
+    IdentifierType identifier_type_;
+    /// @brief Vector holding identifier value.
+    std::vector<uint8_t> identifier_value_;
     /// @brief Subnet identifier for the DHCPv4 client.
     SubnetID ipv4_subnet_id_;
     /// @brief Subnet identifier for the DHCPv6 client.

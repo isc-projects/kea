@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -133,6 +133,24 @@ getToken(std::istringstream& iss) {
     return (token);
 }
 
+std::vector<uint8_t>
+quotedStringToBinary(const std::string& quoted_string) {
+    std::vector<uint8_t> binary;
+    // Remove whitespace before and after the quotes.
+    std::string trimmed_string = trim(quoted_string);
+
+    // We require two quote characters, so the length of the string must be
+    // equal to 2 at minimum, and it must start and end with quotes.
+    if ((trimmed_string.length() > 1) && ((trimmed_string[0] == '\'') &&
+        (trimmed_string[trimmed_string.length()-1] == '\''))) {
+        // Remove quotes and trim the text inside the quotes.
+        trimmed_string = trim(trimmed_string.substr(1, trimmed_string.length() - 2));
+        // Copy string contents into the vector.
+        binary.assign(trimmed_string.begin(), trimmed_string.end());
+    }
+    // Return resulting vector or empty vector.
+    return (binary);
+}
 
 } // namespace str
 } // namespace util
