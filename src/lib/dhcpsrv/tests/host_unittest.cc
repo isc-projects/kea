@@ -159,24 +159,6 @@ public:
         return (false);
     }
 
-    /// @brief Converts identifier type to its name.
-    ///
-    /// @param type identifier type.
-    /// @return Identifier name as specified in a configuration file.
-    std::string identifierName(const Host::IdentifierType& type) const {
-        switch (type) {
-        case Host::IDENT_HWADDR:
-            return ("hw-address");
-        case Host::IDENT_DUID:
-            return ("duid");
-        case Host::IDENT_CIRCUIT_ID:
-            return ("circuit-id");
-        default:
-            ;
-        }
-        return ("unknown");
-    }
-
     /// @brief Returns upper bound of the supported identifier types.
     ///
     /// Some unit tests verify the @c Host class behavior for all
@@ -364,7 +346,7 @@ TEST_F(HostTest, createFromIdentifierHex) {
         const std::string identifier_hex = (hwaddr ?
                                             hwaddr->toText(false) :
                                             util::encode::encodeHex(identifier));
-        const std::string identifier_name = identifierName(type);
+        const std::string identifier_name = Host::getIdentifierName(type);
 
         // Try to create Host instance.
         ASSERT_NO_THROW(host.reset(new Host(identifier_hex, identifier_name,
@@ -394,7 +376,7 @@ TEST_F(HostTest, createFromIdentifierString) {
     // It is not allowed to specify HW address or DUID as a string in quotes.
     for (unsigned int i = 2; i < identifierTypeUpperBound(); ++i) {
         const Host::IdentifierType type = static_cast<Host::IdentifierType>(i);
-        const std::string identifier_name = identifierName(type);
+        const std::string identifier_name = Host::getIdentifierName(type);
 
         // Construct unique identifier for a host. This is a string
         // consisting of a word "idenetifier", hyphen and the name of
@@ -462,7 +444,7 @@ TEST_F(HostTest, setIdentifierHex) {
         std::string identifier_hex = (hwaddr ?
                                       hwaddr->toText(false) :
                                       util::encode::encodeHex(identifier));
-        std::string identifier_name = identifierName(type);
+        std::string identifier_name = Host::getIdentifierName(type);
 
         // Try to create Host instance.
         ASSERT_NO_THROW(host.reset(new Host(identifier_hex, identifier_name,
@@ -497,7 +479,7 @@ TEST_F(HostTest, setIdentifierHex) {
         // Convert identifier to hexadecimal representation.
         identifier_hex = (hwaddr ? hwaddr->toText(false) :
                           util::encode::encodeHex(identifier));
-        identifier_name = identifierName(type);
+        identifier_name = Host::getIdentifierName(type);
 
         // Try to replace identifier for a host.
         ASSERT_NO_THROW(host->setIdentifier(identifier_hex, identifier_name))
@@ -890,6 +872,13 @@ TEST_F(HostTest, getIdentifierAsText) {
                IOAddress("192.0.2.3"));
     EXPECT_EQ("circuit-id=6D617263696E27732D686F6D65",
               host3.getIdentifierAsText());
+}
+
+// This test verifies that conversion of the identifier type to a
+// name works correctly.
+TEST_F(HostTest, getIdentifierName) {
+    EXPECT_EQ("hw-address", Host::getIdentifierName(Host::IDENT_HWADDR));
+
 }
 
 // This test checks that Host object is correctly described in the
