@@ -285,7 +285,7 @@ public:
     const isc::asiolink::IOAddress&
     getRelay6PeerAddress(uint8_t relay_level) const;
 
-    /// 
+    ///
     /// @brief Returns all instances of specified type.
     ///
     /// Returns all instances of options of the specified type. DHCPv6 protocol
