@@ -42,6 +42,11 @@ const size_t CLIENT_CLASSES_MAX_LEN = 255;
 /// in the Client FQDN %Option (see RFC4702 and RFC4704).
 const size_t HOSTNAME_MAX_LEN = 255;
 
+/// @brief Numeric value representing last supported identifier.
+///
+/// This value is used to validate whether the identifier type stored in
+/// a database is within bounds. of supported identifiers.
+const uint8_t MAX_IDENTIFIER_TYPE = static_cast<uint8_t>(Host::IDENT_CIRCUIT_ID);
 
 /// @brief Prepared MySQL statements used by the backend to insert and
 /// retrieve hosts from the database.
@@ -299,42 +304,21 @@ public:
             bind_[0].is_unsigned = MLM_TRUE;
 
             // dhcp_identifier : VARBINARY(128) NOT NULL
-            // Check which of the identifiers is used and set values accordingly
-            if (host->getDuid()) {
-                dhcp_identifier_length_ = host->getDuid()->getDuid().size();
-                bind_[1].buffer_type = MYSQL_TYPE_BLOB;
-                bind_[1].buffer = reinterpret_cast<char*>
-                    (const_cast<uint8_t*>(&(host->getDuid()->getDuid()[0])));
-                bind_[1].buffer_length = dhcp_identifier_length_;
-                bind_[1].length = &dhcp_identifier_length_;
+            dhcp_identifier_length_ = host->getIdentifier().size();
+            memcpy(static_cast<void*>(dhcp_identifier_buffer_),
+                   &(host->getIdentifier())[0],
+                   host->getIdentifier().size());
 
-            } else if (host->getHWAddress()){
-                dhcp_identifier_length_ = host->getHWAddress()->hwaddr_.size();
-                bind_[1].buffer_type = MYSQL_TYPE_BLOB;
-                bind_[1].buffer = reinterpret_cast<char*>
-                    (&(host->getHWAddress()->hwaddr_[0]));
-                bind_[1].buffer_length = dhcp_identifier_length_;
-                bind_[1].length = &dhcp_identifier_length_;
-
-            } else {
-                isc_throw(DbOperationError, "Host object doesn't contain any"
-                          " identifier which can be used to retrieve information"
-                          " from the database about its static reservations");
-            }
+            bind_[1].buffer_type = MYSQL_TYPE_BLOB;
+            bind_[1].buffer = dhcp_identifier_buffer_;
+            bind_[1].buffer_length = dhcp_identifier_length_;
+            bind_[1].length = &dhcp_identifier_length_;
 
             // dhcp_identifier_type : TINYINT NOT NULL
-            // Check which of the identifier types is used and set values accordingly
-            if (host->getHWAddress()) {
-                dhcp_identifier_type_ = BaseHostDataSource::ID_HWADDR; // 0
-                bind_[2].buffer_type = MYSQL_TYPE_TINY;
-                bind_[2].buffer = reinterpret_cast<char*>(&dhcp_identifier_type_);
-                bind_[2].is_unsigned = MLM_TRUE;
-            } else if (host->getDuid()) {
-                dhcp_identifier_type_ = BaseHostDataSource::ID_DUID; // 1
-                bind_[2].buffer_type = MYSQL_TYPE_TINY;
-                bind_[2].buffer = reinterpret_cast<char*>(&dhcp_identifier_type_);
-                bind_[2].is_unsigned = MLM_TRUE;
-            }
+            dhcp_identifier_type_ = static_cast<uint8_t>(host->getIdentifierType());
+            bind_[2].buffer_type = MYSQL_TYPE_TINY;
+            bind_[2].buffer = reinterpret_cast<char*>(&dhcp_identifier_type_);
+            bind_[2].is_unsigned = MLM_TRUE;
 
             // dhcp4_subnet_id : INT UNSIGNED NULL
             // Can't take an address of intermediate object, so let's store it
@@ -495,25 +479,14 @@ public:
     /// @return Host Pointer to a @ref HostPtr object holding a pointer to the
     /// @ref Host object returned.
     HostPtr retrieveHost() {
-
-        // Set the dhcp identifier type in a variable of the appropriate data type,
-        // which has been initialized with an arbitrary (but valid) value.
-        Host::IdentifierType type = Host::IDENT_HWADDR;
-
-        switch (dhcp_identifier_type_) {
-        case 0:
-            type = Host::IDENT_HWADDR;
-            break;
-
-        case 1:
-            type = Host::IDENT_DUID;
-            break;
-
-        default:
+        // Check if the identifier stored in the database is correct.
+        if (dhcp_identifier_type_ > MAX_IDENTIFIER_TYPE) {
             isc_throw(BadValue, "invalid dhcp identifier type returned: "
-                      << static_cast<int>(dhcp_identifier_type_)
-                      << ". Only 0 or 1 are supported.");
+                      << static_cast<int>(dhcp_identifier_type_));
         }
+        // Set the dhcp identifier type in a variable of the appropriate data type.
+        Host::IdentifierType type =
+            static_cast<Host::IdentifierType>(dhcp_identifier_type_);
 
         // Set DHCPv4 subnet ID to the value returned. If NULL returned, set to 0.
         SubnetID ipv4_subnet_id(0);
