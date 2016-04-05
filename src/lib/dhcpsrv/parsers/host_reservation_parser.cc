@@ -170,6 +170,11 @@ HostReservationParser::addHost(isc::data::ConstElementPtr reservation_data) {
 }
 
 bool
+HostReservationParser::isIdentifierParameter(const std::string& param_name) const {
+    return (getSupportedParameters(true).count(param_name) > 0);
+}
+
+bool
 HostReservationParser::isSupportedParameter(const std::string& param_name) const {
     return (getSupportedParameters(false).count(param_name) > 0);
 }
@@ -210,11 +215,6 @@ HostReservationParser4::build(isc::data::ConstElementPtr reservation_data) {
     }
 
     addHost(reservation_data);
-}
-
-bool
-HostReservationParser4::isIdentifierParameter(const std::string& param_name) const {
-    return (getSupportedParams4(true).count(param_name) > 0);
 }
 
 const std::set<std::string>&
@@ -310,11 +310,6 @@ HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
 
     // This may fail, but the addHost function will handle this on its own.
     addHost(reservation_data);
-}
-
-bool
-HostReservationParser6::isIdentifierParameter(const std::string& param_name) const {
-    return (getSupportedParams6(true).count(param_name) > 0);
 }
 
 const std::set<std::string>&
