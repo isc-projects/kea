@@ -282,7 +282,7 @@ nest_level : INTEGER
                  }
                  // Eventually we may add strings to handle different
                  // ways of choosing from which relay we want to extract
-                 // an option or field.  
+                 // an option or field.
            ;
 
 %%
