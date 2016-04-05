@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -193,6 +193,25 @@ tokenToNum(const std::string& num_token) {
     }
     return (num);
 }
+
+/// \brief Converts a string in quotes into vector.
+///
+/// A converted string is first trimmed. If a trimmed string is in
+/// quotes, the quotes are removed and the resulting string is copied
+/// into a vector. If the string is not in quotes, an empty vector is
+/// returned.
+///
+/// The resulting string is copied to a vector and returned.
+///
+/// This function is intended to be used by the server configuration
+/// parsers to convert string values surrounded with quotes into
+/// binary form.
+///
+/// \param quoted_string String to be converted.
+/// \return Vector containing converted string or empty string if
+/// input string didn't contain expected quote characters.
+std::vector<uint8_t>
+quotedStringToBinary(const std::string& quoted_string);
 
 } // namespace str
 } // namespace util
