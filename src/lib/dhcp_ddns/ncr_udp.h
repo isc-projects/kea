@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -98,7 +98,8 @@
 /// NameChangeListener::invokeRecvHandler in the case of the UDP listener, or
 /// NameChangeSender::invokeSendHandler in the case of UDP sender.
 ///
-#include <boost/asio.hpp>
+
+#include <asiolink/asio_wrapper.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <asiolink/udp_endpoint.h>
