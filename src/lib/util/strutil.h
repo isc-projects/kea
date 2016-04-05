@@ -9,7 +9,7 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstdint>
+#include <stdint.h>
 #include <string>
 #include <sstream>
 #include <vector>
