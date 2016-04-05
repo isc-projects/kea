@@ -18,6 +18,7 @@ lib_LTLIBRARIES = libkea-asiolink.la
 libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 2:0:0
 
 libkea_asiolink_la_SOURCES  = asiolink.h
+libkea_asiolink_la_SOURCES += asio_wrapper.h
 libkea_asiolink_la_SOURCES += dummy_io_cb.h
 libkea_asiolink_la_SOURCES += interval_timer.cc interval_timer.h
 libkea_asiolink_la_SOURCES += io_address.cc io_address.h

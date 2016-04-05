@@ -50,7 +50,6 @@
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
-#include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
