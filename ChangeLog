@@ -1,3 +1,11 @@
+1100.	[bug]		tmark
+	Wrapped asio/asio.hpp with logic to suppress optimization when building
+	under GCC 5.2.0 through 5.3.1 and BOOST_ERROR_CODE_HEADER only is defined.
+	This avoids an issue in the asio socket layer that was incorrectly
+	reporting socket read errors causing unit tests to fail and kea-dhcp-ddns
+	to loop logger calls in the error handler (aka double errors).
+	(Trac #4243, git 082f846f37cb32964c876b2bff5fcac82d1eaaf0)
+
 1099.	[func]		marcin
 	Updated Host Manager API to allow for retrieving host reservations
 	by any type of host identifier. Previously it was only possible
