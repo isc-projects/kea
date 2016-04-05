@@ -190,37 +190,43 @@ TEST(MySqlConnection, checkTimeConversion) {
 // Test verifies if a host reservation can be added and later retrieved by IPv4
 // address. Host uses hw address as identifier.
 TEST_F(MySqlHostDataSourceTest, basic4HWAddr) {
-    testBasic4(true);
+    testBasic4(Host::IDENT_HWADDR);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by IPv4
 // address. Host uses client-id (DUID) as identifier.
 TEST_F(MySqlHostDataSourceTest, basic4ClientId) {
-    testBasic4(false);
+    testBasic4(Host::IDENT_DUID);
 }
 
 // Test verifies that multiple hosts can be added and later retrieved by their
 // reserved IPv4 address. This test uses HW addresses as identifiers.
 TEST_F(MySqlHostDataSourceTest, getByIPv4HWaddr) {
-    testGetByIPv4(true);
+    testGetByIPv4(Host::IDENT_HWADDR);
 }
 
 // Test verifies that multiple hosts can be added and later retrieved by their
 // reserved IPv4 address. This test uses client-id (DUID) as identifiers.
 TEST_F(MySqlHostDataSourceTest, getByIPv4ClientId) {
-    testGetByIPv4(false);
+    testGetByIPv4(Host::IDENT_DUID);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by
 // hardware address.
 TEST_F(MySqlHostDataSourceTest, get4ByHWaddr) {
-    testGet4ByHWAddr();
+    testGet4ByIdentifier(Host::IDENT_HWADDR);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by
-// client identifier.
-TEST_F(MySqlHostDataSourceTest, get4ByClientId) {
-    testGet4ByClientId();
+// DUID.
+TEST_F(MySqlHostDataSourceTest, get4ByDUID) {
+    testGet4ByIdentifier(Host::IDENT_DUID);
+}
+
+// Test verifies if a host reservation can be added and later retrieved by
+// circuit id.
+TEST_F(MySqlHostDataSourceTest, get4ByCircuitId) {
+    testGet4ByIdentifier(Host::IDENT_CIRCUIT_ID);
 }
 
 // Test verifies if hardware address and client identifier are not confused.
@@ -355,7 +361,7 @@ TEST_F(MySqlHostDataSourceTest, DISABLED_multipleClientClassesBoth) {
 // hardware address), but for different subnets (different subnet-ids).
 // Make sure that getAll() returns them all correctly.
 TEST_F(MySqlHostDataSourceTest, multipleSubnetsHWAddr) {
-    testMultipleSubnets(10, true);
+    testMultipleSubnets(10, Host::IDENT_HWADDR);
 }
 
 // Test if the same host can have reservations in different subnets (with the
@@ -365,7 +371,7 @@ TEST_F(MySqlHostDataSourceTest, multipleSubnetsHWAddr) {
 // client-identifier), but for different subnets (different subnet-ids).
 // Make sure that getAll() returns them correctly.
 TEST_F(MySqlHostDataSourceTest, multipleSubnetsClientId) {
-    testMultipleSubnets(10, false);
+    testMultipleSubnets(10, Host::IDENT_DUID);
 }
 
 // Test if host reservations made for different IPv6 subnets are handled correctly.

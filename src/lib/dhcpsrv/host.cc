@@ -83,7 +83,7 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
       dhcp6_client_classes_(dhcp6_client_classes), host_id_(0),
       cfg_option4_(), cfg_option6_() {
 
-    // Initialize HWAddr or DUID
+    // Initialize host identifier.
     setIdentifier(identifier, identifier_len, identifier_type);
 
     if (!ipv4_reservation.isV4Zero()) {
@@ -147,12 +147,6 @@ Host::getIdentifierAsText() const {
 std::string
 Host::getIdentifierAsText(const IdentifierType& type, const uint8_t* value,
                           const size_t length) {
-    // Length 0 doesn't make sense.
-    if (length == 0) {
-        isc_throw(BadValue, "invalid length 0 of the host identifier while"
-                  " converting the identifier to a textual form");
-    }
-
     // Convert identifier into <type>=<value> form.
     std::ostringstream s;
     switch (type) {
@@ -166,12 +160,31 @@ Host::getIdentifierAsText(const IdentifierType& type, const uint8_t* value,
         s << "circuit-id";
         break;
     default:
-        isc_throw(BadValue, "requested conversion of the unsupported"
-                  " identifier into textual form");
+        // This should never happen actually, unless we add new identifier
+        // and forget to add a case for it above.
+        s << "(invalid-type)";
     }
     std::vector<uint8_t> vec(value, value + length);
-    s << "=" << util::encode::encodeHex(vec);
+    s << "=" << (length > 0 ? util::encode::encodeHex(vec) : "(null)");
     return (s.str());
+}
+
+std::string
+Host::getIdentifierName(const IdentifierType& type) {
+    switch (type) {
+    case Host::IDENT_HWADDR:
+        return ("hw-address");
+
+    case Host::IDENT_DUID:
+        return ("duid");
+
+    case Host::IDENT_CIRCUIT_ID:
+        return ("circuit-id");
+
+    default:
+        ;
+    }
+    return ("(unknown)");
 }
 
 
