@@ -5,8 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-
-#include <boost/asio.hpp>
+#include <asiolink/asio_wrapper.h>
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
@@ -21,9 +20,9 @@
 #include <util/pid_file.h>
 #include <util/range_utilities.h>
 #include <util/stopwatch.h>
-#include <gtest/gtest.h>
 
 #include <boost/bind.hpp>
+#include <gtest/gtest.h>
 
 #include <cstdlib>
 #include <iostream>
