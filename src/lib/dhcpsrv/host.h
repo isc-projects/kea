@@ -229,7 +229,7 @@ public:
     ///
     /// In case of identifiers other than HW address and DUID it is possible to use
     /// textual representation, e.g. 'some identifier', which is converted to a
-    /// vector of ASCII codes represnting characters in a given string, excluding
+    /// vector of ASCII codes representing characters in a given string, excluding
     /// quotes. This is useful in cases when specific identifiers, e.g. circuit-id
     /// are manually assigned user friendly values.
     ///
@@ -308,6 +308,9 @@ public:
     ///
     /// @return Identifier in the form of <type>=<value>.
     std::string getIdentifierAsText() const;
+
+    /// @brief Returns name of the identifier of a specified type.
+    static std::string getIdentifierName(const IdentifierType& type);
 
     /// @brief Returns host identifier in textual form.
     ///
