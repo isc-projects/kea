@@ -54,7 +54,7 @@ protected:
     ///
     /// @return true if the parameter specifies host identifier, false
     /// otherwise.
-    virtual bool isIdentifierParameter(const std::string& param_name) const = 0;
+    virtual bool isIdentifierParameter(const std::string& param_name) const;
 
     /// @brief Checks if the specified parameter is supported by the parser.
     ///
@@ -102,14 +102,6 @@ public:
 
 protected:
 
-    /// @brief Checks if the specified parameter is a host identifier.
-    ///
-    /// @param param_name Parameter name.
-    ///
-    /// @return true if the parameter specifies host identifier, false
-    /// otherwise.
-    virtual bool isIdentifierParameter(const std::string& param_name) const;
-
     /// @brief Returns set of the supported parameters for DHCPv4.
     ///
     /// @param identifiers_only Indicates if the function should only
@@ -141,14 +133,6 @@ public:
     virtual void build(isc::data::ConstElementPtr reservation_data);
 
 protected:
-
-    /// @brief Checks if the specified parameter is a host identifier.
-    ///
-    /// @param param_name Parameter name.
-    ///
-    /// @return true if the parameter specifies host identifier, false
-    /// otherwise.
-    virtual bool isIdentifierParameter(const std::string& param_name) const;
 
     /// @brief Returns set of the supported parameters for DHCPv6.
     ///
