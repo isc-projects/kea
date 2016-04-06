@@ -144,11 +144,11 @@ public:
     /// @param test_field The type of the field to extract
     /// @param result_addr The expected result of the address as a string
     void verifyRelay6Eval(const uint8_t test_level,
-                          const TokenRelay6::FieldType test_field,
+                          const TokenRelay6Field::FieldType test_field,
                           const int result_len,
                           const uint8_t result_addr[]) {
         // Create the token
-        ASSERT_NO_THROW(t_.reset(new TokenRelay6(test_level, test_field)));
+        ASSERT_NO_THROW(t_.reset(new TokenRelay6Field(test_level, test_field)));
 
         // We should be able to evaluate it
         EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
@@ -1140,22 +1140,22 @@ TEST_F(TokenTest, relay6Field) {
 
     // Then we work our way through the set of choices
     // Level 0 both link and peer address should be 0::0
-    verifyRelay6Eval(0, TokenRelay6::LINKADDR, 16, zeroaddr);
-    verifyRelay6Eval(0, TokenRelay6::PEERADDR, 16, zeroaddr);
+    verifyRelay6Eval(0, TokenRelay6Field::LINKADDR, 16, zeroaddr);
+    verifyRelay6Eval(0, TokenRelay6Field::PEERADDR, 16, zeroaddr);
 
     // Level 1 link and peer should have different non-zero addresses
-    verifyRelay6Eval(1, TokenRelay6::LINKADDR, 16, linkaddr);
-    verifyRelay6Eval(1, TokenRelay6::PEERADDR, 16, peeraddr);
+    verifyRelay6Eval(1, TokenRelay6Field::LINKADDR, 16, linkaddr);
+    verifyRelay6Eval(1, TokenRelay6Field::PEERADDR, 16, peeraddr);
 
     // Level 2 has no encapsulation so the address should be zero length
-    verifyRelay6Eval(2, TokenRelay6::LINKADDR, 0, zeroaddr);
+    verifyRelay6Eval(2, TokenRelay6Field::LINKADDR, 0, zeroaddr);
 
     // Lets check that the layout of the address returned by the
     // token matches that of the TokenIpAddress
     TokenPtr trelay;
     TokenPtr taddr;
     TokenPtr tequal;
-    ASSERT_NO_THROW(trelay.reset(new TokenRelay6(1, TokenRelay6::LINKADDR)));
+    ASSERT_NO_THROW(trelay.reset(new TokenRelay6Field(1, TokenRelay6Field::LINKADDR)));
     ASSERT_NO_THROW(taddr.reset(new TokenIpAddress("1::1")));
     ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
 
