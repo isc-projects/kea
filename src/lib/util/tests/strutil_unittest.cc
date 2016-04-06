@@ -4,17 +4,21 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <stdint.h>
-
-#include <string>
+#include <exceptions/exceptions.h>
+#include <util/strutil.h>
+#include <util/encode/hex.h>
 
 #include <gtest/gtest.h>
 
-#include <util/strutil.h>
+#include <stdint.h>
+#include <string>
 
 using namespace isc;
 using namespace isc::util;
+using namespace isc::util::str;
 using namespace std;
+
+namespace {
 
 // Check for slash replacement
 
@@ -297,3 +301,128 @@ TEST(StringUtilTest, quotedStringToBinary) {
     EXPECT_EQ("'", testQuoted("'''"));
     EXPECT_EQ("''", testQuoted("''''"));
 }
+
+/// @brief Test that hex string with colons can be decoded.
+///
+/// @param input Input string to be decoded.
+/// @param reference A string without colons representing the
+/// decoded data.
+void testColonSeparated(const std::string& input,
+                        const std::string& reference) {
+    // Create a reference vector.
+    std::vector<uint8_t> reference_vector;
+    ASSERT_NO_THROW(encode::decodeHex(reference, reference_vector));
+
+    // Fill the output vector with some garbage to make sure that
+    // the data is erased when a string is decoded successfully.
+    std::vector<uint8_t> decoded(1, 10);
+    ASSERT_NO_THROW(decodeColonSeparatedHexString(input, decoded));
+
+    // Get the string representation of the decoded data for logging
+    // purposes.
+    std::string encoded;
+    ASSERT_NO_THROW(encoded = encode::encodeHex(decoded));
+
+    // Check if the decoded data matches the reference.
+    EXPECT_TRUE(decoded == reference_vector)
+        << "decoded data don't match the reference, input='"
+        << input << "', reference='" << reference << "'"
+        ", decoded='" << encoded << "'";
+}
+
+TEST(StringUtilTest, decodeColonSeparatedHexString) {
+    // Test valid strings.
+    testColonSeparated("A1:02:C3:d4:e5:F6", "A102C3D4E5F6");
+    testColonSeparated("A:02:3:d:E5:F6", "0A02030DE5F6");
+    testColonSeparated("A:B:C:D", "0A0B0C0D");
+    testColonSeparated("1", "01");
+    testColonSeparated("1e", "1E");
+    testColonSeparated("", "");
+
+    // Test invalid strings.
+    std::vector<uint8_t> decoded;
+    // Whitespaces.
+    EXPECT_THROW(decodeColonSeparatedHexString("   ", decoded),
+                 isc::BadValue);
+    // Whitespace before digits.
+    EXPECT_THROW(decodeColonSeparatedHexString(" A1", decoded),
+                 isc::BadValue);
+    // Two consecutive colons.
+    EXPECT_THROW(decodeColonSeparatedHexString("A::01", decoded),
+                 isc::BadValue);
+    // Three consecutive colons.
+    EXPECT_THROW(decodeColonSeparatedHexString("A:::01", decoded),
+                 isc::BadValue);
+    // Whitespace within a string.
+    EXPECT_THROW(decodeColonSeparatedHexString("A :01", decoded),
+                 isc::BadValue);
+    // Terminating colon.
+    EXPECT_THROW(decodeColonSeparatedHexString("0A:01:", decoded),
+                 isc::BadValue);
+    // Opening colon.
+    EXPECT_THROW(decodeColonSeparatedHexString(":0A:01", decoded),
+                 isc::BadValue);
+    // Three digits before the colon.
+    EXPECT_THROW(decodeColonSeparatedHexString("0A1:B1", decoded),
+                 isc::BadValue);
+}
+
+void testFormatted(const std::string& input,
+                   const std::string& reference) {
+    // Create a reference vector.
+    std::vector<uint8_t> reference_vector;
+    ASSERT_NO_THROW(encode::decodeHex(reference, reference_vector));
+
+    // Fill the output vector with some garbage to make sure that
+    // the data is erased when a string is decoded successfully.
+    std::vector<uint8_t> decoded(1, 10);
+    ASSERT_NO_THROW(decodeFormattedHexString(input, decoded));
+
+    // Get the string representation of the decoded data for logging
+    // purposes.
+    std::string encoded;
+    ASSERT_NO_THROW(encoded = encode::encodeHex(decoded));
+
+    // Check if the decoded data matches the reference.
+    EXPECT_TRUE(decoded == reference_vector)
+        << "decoded data don't match the reference, input='"
+        << input << "', reference='" << reference << "'"
+        ", decoded='" << encoded << "'";
+}
+
+TEST(StringUtilTest, decodeFormattedHexString) {
+    // Colon separated.
+    testFormatted("1:A7:B5:4:23", "01A7B50423");
+    // No colons, even number of digits.
+    testFormatted("17a534", "17A534");
+    // Odd number of digits.
+    testFormatted("A3A6f78", "0A3A6F78");
+    // '0x' prefix.
+    testFormatted("0xA3A6f78", "0A3A6F78");
+    // '0x' prefix with a special value of 0.
+    testFormatted("0x0", "00");
+    // Empty string.
+    testFormatted("", "");
+
+    std::vector<uint8_t> decoded;
+    // Whitepspace.
+    EXPECT_THROW(decodeFormattedHexString("0a ", decoded),
+                 isc::BadValue);
+    // Whitespace within a string.
+    EXPECT_THROW(decodeFormattedHexString("01 02", decoded),
+                 isc::BadValue);
+    // '0x' prefix and colons.
+    EXPECT_THROW(decodeFormattedHexString("0x01:02", decoded),
+                 isc::BadValue);
+    // Missing colon.
+    EXPECT_THROW(decodeFormattedHexString("01:0203", decoded),
+                 isc::BadValue);
+    // Invalid prefix.
+    EXPECT_THROW(decodeFormattedHexString("x0102", decoded),
+                 isc::BadValue);
+    // Invalid prefix again.
+    EXPECT_THROW(decodeFormattedHexString("1x0102", decoded),
+                 isc::BadValue);
+}
+
+} // end of anonymous namespace
