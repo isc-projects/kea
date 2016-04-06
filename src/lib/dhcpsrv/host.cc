@@ -125,6 +125,23 @@ Host::getIdentifierType() const {
     return (identifier_type_);
 }
 
+Host::IdentifierType
+Host::getIdentifierType(const std::string& identifier_name) {
+    if (identifier_name == "hw-address") {
+        return (IDENT_HWADDR);
+
+    } else if (identifier_name == "duid") {
+        return (IDENT_DUID);
+
+    } else if (identifier_name == "circuit-id") {
+        return (IDENT_CIRCUIT_ID);
+
+    } else {
+        isc_throw(isc::BadValue, "invalid client identifier type '"
+                  << identifier_name << "'");
+    }
+}
+
 HWAddrPtr
 Host::getHWAddress() const {
     return ((identifier_type_ == IDENT_HWADDR) ?
@@ -201,53 +218,35 @@ Host::setIdentifier(const uint8_t* identifier, const size_t len,
 
 void
 Host::setIdentifier(const std::string& identifier, const std::string& name) {
-    // HW address and DUID are special cases because they are typically
-    // specified as values with colons between consecutive octets. Thus,
-    // we use the HWAddr and DUID classes to validate them and to
-    // convert them into binary format.
-    if (name == "hw-address") {
-        HWAddr hwaddr(HWAddr::fromText(identifier));
-        identifier_type_= IDENT_HWADDR;
-        identifier_value_ = hwaddr.hwaddr_;
+    // Empty identifier is not allowed.
+    if (identifier.empty()) {
+        isc_throw(isc::BadValue, "empty host identifier used");
+    }
 
-    } else if (name == "duid") {
-        identifier_type_ = IDENT_DUID;
-        DUID duid(DUID::fromText(identifier));
-        identifier_value_ = duid.getDuid();
+    // Set identifier type.
+    identifier_type_ = getIdentifierType(name);
 
-    } else {
-        if (name == "circuit-id") {
-            identifier_type_ = IDENT_CIRCUIT_ID;
+    // Idetifier value can either be specified as string of hexadecimal
+    // digits or a string in quotes. The latter is copied to a vector excluding
+    // quote characters.
 
-        } else {
-            isc_throw(isc::BadValue, "invalid client identifier type '"
-                      << name << "' when creating host instance");
-        }
-
-        // Here we're converting values other than DUID and HW address. These
-        // values can either be specified as strings of hexadecimal digits or
-        // strings in quotes. The latter are copied to a vector excluding quote
-        // characters.
-
-        // Try to convert the values in quotes into a vector of ASCII codes.
-        // If the identifier lacks opening and closing quote, this will return
-        // an empty value, in which case we'll try to decode it as a string of
-        // hexadecimal digits.
+    // Try to convert the values in quotes into a vector of ASCII codes.
+    // If the identifier lacks opening and closing quote, this will return
+    // an empty value, in which case we'll try to decode it as a string of
+    // hexadecimal digits.
+    try {
         std::vector<uint8_t> binary = util::str::quotedStringToBinary(identifier);
         if (binary.empty()) {
-            try {
-                util::encode::decodeHex(identifier, binary);
-
-            } catch (...) {
-                // The string doesn't match any known pattern, so we have to
-                // report an error at this point.
-                isc_throw(isc::BadValue, "invalid host identifier value '"
-                          << identifier << "'");
-            }
+            util::str::decodeFormattedHexString(identifier, binary);
         }
-
         // Successfully decoded the identifier, so let's use it.
         identifier_value_.swap(binary);
+
+    } catch (...) {
+        // The string doesn't match any known pattern, so we have to
+        // report an error at this point.
+        isc_throw(isc::BadValue, "invalid host identifier value '"
+                      << identifier << "'");
     }
 }
 

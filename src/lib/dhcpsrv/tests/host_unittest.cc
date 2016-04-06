@@ -173,6 +173,17 @@ public:
     }
 };
 
+// This test verifies that correct identifier name is returned for
+// a given identifier name and that an error is reported for an
+// unsupported identifier name.
+TEST_F(HostTest, getIdentifier) {
+    EXPECT_EQ(Host::IDENT_HWADDR, Host::getIdentifierType("hw-address"));
+    EXPECT_EQ(Host::IDENT_DUID, Host::getIdentifierType("duid"));
+    EXPECT_EQ(Host::IDENT_CIRCUIT_ID, Host::getIdentifierType("circuit-id"));
+
+    EXPECT_THROW(Host::getIdentifierType("unuspported"), isc::BadValue);
+}
+
 // This test verfies that it is possible to create a Host object
 // using hardware address in the textual format.
 TEST_F(HostTest, createFromHWAddrString) {
@@ -200,7 +211,7 @@ TEST_F(HostTest, createFromHWAddrString) {
                  isc::BadValue);
 
     // Use invalid HW address.
-    EXPECT_THROW(Host("010203040506", "hw-address", SubnetID(1), SubnetID(2),
+    EXPECT_THROW(Host("01:0203040506", "hw-address", SubnetID(1), SubnetID(2),
                       IOAddress("192.0.2.3"), "somehost.example.org"),
                  isc::BadValue);
 }
