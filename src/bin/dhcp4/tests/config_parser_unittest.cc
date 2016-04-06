@@ -3454,7 +3454,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
         "        ]"
         "      },"
         "      {"
-        "        \"hw-address\": \"06:05:04:03:02:01\","
+        "        \"circuit-id\": \"060504030201\","
         "        \"ip-address\": \"192.0.4.102\","
         "        \"hostname\": \"\""
         "      }"
@@ -3528,16 +3528,19 @@ TEST_F(Dhcp4ParserTest, reservations) {
     ASSERT_TRUE(opt_ttl);
     EXPECT_EQ(32, static_cast<int>(opt_ttl->getValue()));
 
-    // The HW address used for one of the reservations in the subnet 542
+    // The circuit-id used for one of the reservations in the subnet 542
     // consists of numbers from 6 to 1. So, let's just reverse the order
     // of the address from the previous test.
-    hwaddr->hwaddr_.assign(hwaddr_vec.rbegin(), hwaddr_vec.rend());
-    host = hosts_cfg->get4(542, hwaddr);
+    std::vector<uint8_t> circuit_id(hwaddr_vec.rbegin(), hwaddr_vec.rend());
+    host = hosts_cfg->get4(542, Host::IDENT_CIRCUIT_ID, &circuit_id[0],
+                           circuit_id.size());
     EXPECT_TRUE(host);
     EXPECT_EQ("192.0.4.102", host->getIPv4Reservation().toText());
     // This reservation must not belong to other subnets.
-    EXPECT_FALSE(hosts_cfg->get4(123, hwaddr));
-    EXPECT_FALSE(hosts_cfg->get4(234, hwaddr));
+    EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_CIRCUIT_ID,
+                                 &circuit_id[0], circuit_id.size()));
+    EXPECT_FALSE(hosts_cfg->get4(234, Host::IDENT_CIRCUIT_ID,
+                                 &circuit_id[0], circuit_id.size()));
 
     // Repeat the test for the DUID based reservation in this subnet.
     duid.reset(new DUID(std::vector<uint8_t>(duid_vec.rbegin(),

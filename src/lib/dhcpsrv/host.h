@@ -221,17 +221,18 @@ public:
     ///
     /// Creates @c Host object using an identifier in a textual format. This
     /// is useful in cases when the reservation is specified in the server
-    /// configuration file, where:
-    /// - MAC address is specified as: "01:02:03:04:05:06"
-    /// - DUID can be specified as: "01:02:03:04:05:06:ab:cd" or "010203040506abcd".
-    /// - Other identifiers are specified as: "010203040506abcd" or as
-    /// "'some identfier'".
+    /// configuration file. Identifiers can be specified in the following
+    /// formats:
+    /// - "yy:yy:yy:yy:yy:yy"
+    /// - "yyyyyyyyyy",
+    /// - "0xyyyyyyyyyy",
+    /// - "'some identfier'".
+    /// where y is a hexadecimal digit.
     ///
-    /// In case of identifiers other than HW address and DUID it is possible to use
-    /// textual representation, e.g. 'some identifier', which is converted to a
-    /// vector of ASCII codes representing characters in a given string, excluding
-    /// quotes. This is useful in cases when specific identifiers, e.g. circuit-id
-    /// are manually assigned user friendly values.
+    /// Note that it is possible to use textual representation, e.g. 'some identifier',
+    /// which is converted to a vector of ASCII codes representing characters in a
+    /// given string, excluding quotes. This is useful in cases when specific
+    /// identifiers, e.g. circuit-id are manually assigned user friendly values.
     ///
     /// @param identifier Identifier in the textual format. The expected formats
     /// for the hardware address and other identifiers are provided above.
@@ -303,6 +304,12 @@ public:
     /// @brief Returns the identifier type.
     ///
     IdentifierType getIdentifierType() const;
+
+    /// @brief Converts identifier name to identifier type.
+    ///
+    /// @param identifier_name Identifier name.
+    /// @return Identifier type.
+    static IdentifierType getIdentifierType(const std::string& identifier_name);
 
     /// @brief Returns host identifier in a textual form.
     ///

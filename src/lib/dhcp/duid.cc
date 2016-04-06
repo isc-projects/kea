@@ -6,11 +6,8 @@
 
 #include <dhcp/duid.h>
 #include <exceptions/exceptions.h>
-#include <util/encode/hex.h>
 #include <util/io_utilities.h>
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/constants.hpp>
-#include <boost/algorithm/string/split.hpp>
+#include <util/strutil.h>
 #include <iomanip>
 #include <cctype>
 #include <sstream>
@@ -42,57 +39,6 @@ DUID::DUID(const uint8_t* data, size_t len) {
     duid_ = std::vector<uint8_t>(data, data + len);
 }
 
-std::vector<uint8_t>
-DUID::decode(const std::string& text) {
-    /// @todo optimize stream operations here.
-    std::vector<std::string> split_text;
-    boost::split(split_text, text, boost::is_any_of(":"),
-                 boost::algorithm::token_compress_off);
-
-    std::ostringstream s;
-    for (size_t i = 0; i < split_text.size(); ++i) {
-        // Check that only hexadecimal digits are used.
-        size_t ch_index = 0;
-        while (ch_index < split_text[i].length()) {
-            if (!isxdigit(split_text[i][ch_index])) {
-                isc_throw(isc::BadValue, "invalid value '"
-                          << split_text[i][ch_index] << "' in"
-                          << " DUID '" << text << "'");
-            }
-            ++ch_index;
-        }
-
-        if (split_text.size() > 1) {
-            // If there are multiple tokens and the current one is empty, it
-            // means that two consecutive colons were specified. This is not
-            // allowed for client identifier.
-            if (split_text[i].empty()) {
-                isc_throw(isc::BadValue, "invalid identifier '"
-                          << text << "': tokens must be"
-                          " separated with a single colon");
-            } else if (split_text[i].size() > 2) {
-                isc_throw(isc::BadValue, "invalid identifier '"
-                          << text << "'");
-            }
-        }
-
-        if (split_text[i].size() % 2) {
-                s << "0";
-        }
-
-        s << split_text[i];
-    }
-
-    std::vector<uint8_t> binary;
-    try {
-        util::encode::decodeHex(s.str(), binary);
-    } catch (const Exception& ex) {
-        isc_throw(isc::BadValue, "failed to create identifier from text '"
-                  << text << "': " << ex.what());
-    }
-    return (binary);
-}
-
 const std::vector<uint8_t>& DUID::getDuid() const {
     return (duid_);
 }
@@ -111,8 +57,9 @@ DUID::DUIDType DUID::getType() const {
 
 DUID
 DUID::fromText(const std::string& text) {
-    std::vector<uint8_t> binary = decode(text);
-    return DUID(binary);
+    std::vector<uint8_t> binary;
+    util::str::decodeFormattedHexString(text, binary);
+    return (DUID(binary));
 }
 
 DuidPtr
@@ -185,7 +132,8 @@ std::string ClientId::toText() const {
 
 ClientIdPtr
 ClientId::fromText(const std::string& text) {
-    std::vector<uint8_t> binary = decode(text);
+    std::vector<uint8_t> binary;
+    util::str::decodeFormattedHexString(text, binary);
     return (ClientIdPtr(new ClientId(binary)));
 }
 
