@@ -210,12 +210,12 @@ public:
     /// @param expected_level expected nesting level
     /// @param expected_code expected option code
     /// @param expected_repr expected representation (text, hex, exists)
-    void checkTokenRelay6(const TokenPtr& token,
-                          uint8_t expected_level,
-                          TokenRelay6::FieldType expected_type) {
+    void checkTokenRelay6Field(const TokenPtr& token,
+                               uint8_t expected_level,
+                               TokenRelay6Field::FieldType expected_type) {
         ASSERT_TRUE(token);
-        boost::shared_ptr<TokenRelay6> opt =
-            boost::dynamic_pointer_cast<TokenRelay6>(token);
+        boost::shared_ptr<TokenRelay6Field> opt =
+            boost::dynamic_pointer_cast<TokenRelay6Field>(token);
         ASSERT_TRUE(opt);
 
         EXPECT_EQ(expected_level, opt->getNest());
@@ -223,7 +223,7 @@ public:
     }
 
     /// @brief This tests attempts to parse the expression then checks
-    /// if the number of tokens is correct and the TokenRelay6 is as
+    /// if the number of tokens is correct and the TokenRelay6Field is as
     /// expected.
     ///
     /// @param expr expression to be parsed
@@ -232,7 +232,7 @@ public:
     /// @param exp_tokens expected number of tokens
     void testRelay6Field(std::string expr,
                          uint8_t exp_level,
-                         TokenRelay6::FieldType exp_type,
+                         TokenRelay6Field::FieldType exp_type,
                          int exp_tokens) {
         EvalContext eval(Option::V6);
 
@@ -251,9 +251,9 @@ public:
         // There should be the expected number of tokens.
         ASSERT_EQ(exp_tokens, eval.expression.size());
 
-        // checkt that the first token is TokenRelay6 and that
+        // checkt that the first token is TokenRelay6Field and that
         // is has the correct attributes
-        checkTokenRelay6(eval.expression.at(0), exp_level, exp_type);
+        checkTokenRelay6Field(eval.expression.at(0), exp_level, exp_type);
     }
 
     /// @brief checks if the given expression raises the expected message
@@ -711,13 +711,13 @@ TEST_F(EvalContextTest, relay6OptionHex) {
 // Tests if the linkaddr field in a Relay6 encapsulation can be accessed.
 TEST_F(EvalContextTest, relay6FieldLinkAddr) {
     testRelay6Field("relay6[0].linkaddr == ::",
-                    0, TokenRelay6::LINKADDR, 3);
+                    0, TokenRelay6Field::LINKADDR, 3);
 }
 
 // Tests if the peeraddr field in a Relay6 encapsulation can be accessed.
 TEST_F(EvalContextTest, relay6FieldPeerAddr) {
     testRelay6Field("relay6[1].peeraddr == ::",
-                    1, TokenRelay6::PEERADDR, 3);
+                    1, TokenRelay6Field::PEERADDR, 3);
 }
 
 //
