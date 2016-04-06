@@ -1,3 +1,9 @@
+1103.	[func]		marcin
+	"circuit-id" can be specified as host identifier in host
+	host reservations. However, the server ignores the reservations
+	by "circuit-id" at this point.
+	(Trac #4301, git cf56fc2a2e0e821a17dd95de49a43755745682fb)
+
 1102.	[func]		sar
 	Added access to the peer address, link address and option
 	information added by relays in a DHCPv6 message.
