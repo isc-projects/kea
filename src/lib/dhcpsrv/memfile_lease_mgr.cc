@@ -128,23 +128,29 @@ LFCSetup::LFCSetup(asiolink::IntervalTimer::Callback callback)
 LFCSetup::~LFCSetup() {
     try {
         // If we're here it means that either the process is terminating
-        // or we're reconfiguring the server. In the latter case the
-        // thread has been stopped probably, but we need to handle the
-        // former case so we call stopThread explicitly here.
+        // or we're reconfiguring the server. In both cases the thread has
+        // probably been stopped already, but we make sure by calling
+        // stopThread explicitly here.
         timer_mgr_->stopThread();
-        // This may throw exception if the timer hasn't been registered
-        // but if the LFC Setup instance exists it means that the timer
-        // must have been registered or such registration have been
-        // attempted. The registration may fail if the duplicate timer
-        // exists or if the TimerMgr's worker thread is running but if
-        // this happens it is a programming error. In any case, we
-        // don't want exceptions being thrown from the destructor so
-        // we just log an error here.
+
+        // Remove the timer. This will throw an exception if the timer does not
+        // exist.  There are several possible reasons for this:
+        // a) It hasn't been registered (although if the LFC Setup instance
+        //    exists it means that the timer must have been registered or that
+        //    such registration has been attempted).
+        // b) The registration may fail if the duplicate timer exists or if the
+        //    TimerMgr's worker thread is running but if this happens it is a
+        //    programming error.
+        // c) The program is shutting down and the timer has been removed by
+        //    another component.
         timer_mgr_->unregisterTimer("memfile-lfc");
 
     } catch (const std::exception& ex) {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED)
-            .arg(ex.what());
+        // We don't want exceptions being thrown from the destructor so we just
+        // log a message here.  The message is logged at debug severity as
+        // we don't want an error message output during shutdown.
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                  DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED).arg(ex.what());
     }
 }
 
