@@ -1,3 +1,8 @@
+1102.	[func]		sar
+	Added access to the peer address, link address and option
+	information added by relays in a DHCPv6 message.
+	(Trac $4269, git tbd)
+
 1101.	[bug]		stephen
 	Made DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED a debug message as the
 	condition leading to it (trying to unregister a timer that is not

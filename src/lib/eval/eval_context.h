@@ -82,12 +82,12 @@ public:
     /// This is for should not happen but fatal errors
     static void fatal(const std::string& what);
 
-    /// @brief Option code convertion
+    /// @brief Option code conversion
     ///
     /// @param option_code a string representing the integer code
     /// @param loc the location of the token
     /// @result the option code
-    /// @throw calls the syntax error function if the value is no in
+    /// @throw calls the syntax error function if the value is not in
     ///        the range 0..255 or 0..65535
     uint16_t convertOptionCode(const std::string& option_code,
                                const isc::eval::location& loc);
@@ -100,6 +100,16 @@ public:
     /// @throw calls the syntax error function if the name cannot be resolved
     uint16_t convertOptionName(const std::string& option_name,
                                const isc::eval::location& loc);
+
+    /// @brief Nest level conversion
+    ///
+    /// @param nest_level a string representing the integer nesting level
+    /// @param loc the location of the token
+    /// @result the nesting level
+    /// @throw calls the syntax error function if the value is not in
+    ///        the range 0..31
+    uint8_t convertNestLevelNumber(const std::string& nest_level,
+                                    const isc::eval::location& loc);
 
     /// @brief Returns the universe (v4 or v6)
     ///
