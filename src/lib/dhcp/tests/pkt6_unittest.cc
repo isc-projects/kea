@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -763,7 +763,7 @@ TEST_F(Pkt6Test, relayPack) {
 
     Pkt6::RelayInfo relay1;
     relay1.msg_type_ = DHCPV6_RELAY_REPL;
-    relay1.hop_count_ = 17; // not very miningful, but useful for testing
+    relay1.hop_count_ = 17; // not very meaningful, but useful for testing
     relay1.linkaddr_ = IOAddress("2001:db8::1");
     relay1.peeraddr_ = IOAddress("fe80::abcd");
 
@@ -830,6 +830,16 @@ TEST_F(Pkt6Test, relayPack) {
     OptionBuffer data = opt->getData();
     ASSERT_EQ(data.size(), sizeof(relay_opt_data));
     EXPECT_EQ(0, memcmp(&data[0], relay_opt_data, sizeof(relay_opt_data)));
+
+    // As we have a nicely built relay packet we can check
+    // that the functions to get the peer and link addreses work
+    EXPECT_EQ("2001:db8::1", clone->getRelay6LinkAddress(0).toText());
+    EXPECT_EQ("fe80::abcd", clone->getRelay6PeerAddress(0).toText());
+
+    vector<uint8_t>binary = clone->getRelay6LinkAddress(0).toBytes();
+    uint8_t expected0[] = {0x20, 1, 0x0d, 0xb8, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 1};
+    EXPECT_EQ(0, memcmp(expected0, &binary[0], 16));
 }
 
 

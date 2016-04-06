@@ -9,6 +9,7 @@
 #include <util/encode/hex.h>
 #include <asiolink/io_address.h>
 #include <boost/lexical_cast.hpp>
+#include <dhcp/pkt6.h>
 #include <cstring>
 #include <string>
 
@@ -294,4 +295,68 @@ TokenOr::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     } else {
         values.push("false");
     }
+}
+
+OptionPtr TokenRelay6Option::getOption(const Pkt& pkt) {
+
+    try {
+        // Check if it's a Pkt6.  If it's not the dynamic_cast will
+        // throw std::bad_cast.
+        const Pkt6& pkt6 = dynamic_cast<const Pkt6&>(pkt);
+
+        try {
+            // Now that we have the right type of packet we can
+            // get the option and return it.
+            return(pkt6.getRelayOption(option_code_, nest_level_));
+        }
+        catch (const isc::OutOfRange&) {
+            // The only exception we expect is OutOfRange if the nest
+            // level is out of range of the encapsulations, for example
+            // if nest_level_ is 4 and there are only 2 encapsulations.
+            // We return a NULL in that case.
+           return (OptionPtr());
+        }
+
+    } catch (const std::bad_cast&) {
+        isc_throw(EvalTypeError, "Specified packet is not Pkt6");
+    }
+
+}
+
+void
+TokenRelay6Field::evaluate(const Pkt& pkt, ValueStack& values) {
+
+    vector<uint8_t> binary;
+    try {
+        // Check if it's a Pkt6.  If it's not the dynamic_cast will
+        // throw std::bad_cast.
+        const Pkt6& pkt6 = dynamic_cast<const Pkt6&>(pkt);
+
+        try {
+        switch (type_) {
+            // Now that we have the right type of packet we can
+            // get the option and return it.
+            case LINKADDR:
+                binary = pkt6.getRelay6LinkAddress(nest_level_).toBytes();
+                break;
+            case PEERADDR:
+                binary = pkt6.getRelay6PeerAddress(nest_level_).toBytes();
+                break;
+            }
+        } catch (const isc::OutOfRange&) {
+            // The only exception we expect is OutOfRange if the nest
+            // level is invalid.  We push "" in that case.
+            values.push("");
+            return;
+        }
+    } catch (const std::bad_cast&) {
+        isc_throw(EvalTypeError, "Specified packet is not Pkt6");
+    }
+
+    string value;
+    value.resize(binary.size());
+    if (!binary.empty()) {
+        memmove(&value[0], &binary[0], binary.size());
+    }
+    values.push(value);
 }
