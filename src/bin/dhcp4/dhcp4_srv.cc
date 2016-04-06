@@ -1170,7 +1170,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         if (replace_name_mode == D2ClientConfig::RCM_ALWAYS ||
             replace_name_mode == D2ClientConfig::RCM_WHEN_NOT_PRESENT) {
             LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA,
-                      DHCP4_SUPPLY_HOSTNAME)
+                      DHCP4_GENERATE_FQDN)
                 .arg(ex.getQuery()->getLabel());
             OptionStringPtr opt_hostname_resp(new OptionString(Option::V4,
                                                                DHO_HOST_NAME,

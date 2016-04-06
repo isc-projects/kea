@@ -1081,10 +1081,11 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
             // be supplied later on.
             fqdn.reset(new Option6ClientFqdn(Option6ClientFqdn::FLAG_S, "",
                                              Option6ClientFqdn::PARTIAL));
-            LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_SUPPLY_FQDN)
+            LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_GENERATE_FQDN)
                 .arg(question->getLabel());
         } else {
-            // No FQDN so lease hostname comes from host reservation if one
+            // No FQDN so get the lease hostname from the host reservation if
+            // there is one.
             if (ctx.host_) {
                 ctx.hostname_ = ctx.host_->getHostname();
             }

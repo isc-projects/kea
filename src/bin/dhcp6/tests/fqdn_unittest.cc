@@ -1334,24 +1334,24 @@ TEST_F(FqdnDhcpv6SrvTest, replaceClientNameModeTest) {
 
     // We pass mode labels in with enclosing quotes so we can also test
     // unquoted boolean literals true/false
-    testReplaceClientNameMode("\"NEVER\"",
+    testReplaceClientNameMode("\"never\"",
                               CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("\"NEVER\"",
+    testReplaceClientNameMode("\"never\"",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
 
-    testReplaceClientNameMode("\"ALWAYS\"",
+    testReplaceClientNameMode("\"always\"",
                               CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
-    testReplaceClientNameMode("\"ALWAYS\"",
+    testReplaceClientNameMode("\"always\"",
                               CLIENT_NAME_PRESENT, NAME_REPLACED);
 
-    testReplaceClientNameMode("\"WHEN_PRESENT\"",
+    testReplaceClientNameMode("\"when-present\"",
                               CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("\"WHEN_PRESENT\"",
+    testReplaceClientNameMode("\"when-present\"",
                               CLIENT_NAME_PRESENT, NAME_REPLACED);
 
-    testReplaceClientNameMode("\"WHEN_NOT_PRESENT\"",
+    testReplaceClientNameMode("\"when-not-present\"",
                               CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
-    testReplaceClientNameMode("\"WHEN_NOT_PRESENT\"",
+    testReplaceClientNameMode("\"when-not-present\"",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
 
     // Verify that boolean false produces the same result as RCM_NEVER

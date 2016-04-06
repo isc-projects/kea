@@ -404,7 +404,7 @@ public:
         // Create the configuration and configure the server
         char config_buf[1024];
         sprintf(config_buf, config_template, mode);
-        configure(config_buf, srv_);
+        ASSERT_NO_THROW(configure(config_buf, srv_)) << "configuration failed";
 
         // Build our client packet
         Pkt4Ptr query;
@@ -422,18 +422,22 @@ public:
         ASSERT_NO_THROW(
             hostname = processHostname(query,
                                        client_name_flag == CLIENT_NAME_PRESENT)
-        );
+        ) << "processHostname throw an exception";
 
         // Verify the contents (or lack thereof) of the hostname
         if (exp_replacement_flag == NAME_REPLACED) {
-            ASSERT_TRUE(hostname);
+            ASSERT_TRUE(hostname)
+                << "No host name, it should have the replacement name \".\"";
             EXPECT_EQ(".", hostname->getValue());
         } else {
             if (client_name_flag == CLIENT_NAME_PRESENT) {
-                ASSERT_TRUE(hostname);
+                ASSERT_TRUE(hostname)
+                    << "No host name, expected original from client";
                 EXPECT_EQ("my.example.com.", hostname->getValue());
             } else {
-                ASSERT_FALSE(hostname);
+                ASSERT_FALSE(hostname)
+                    << "Host name is: " << hostname
+                    << ", it should have been null";
             }
         }
     }
@@ -458,11 +462,19 @@ public:
     }
 
 
-    // Processes the Hostname option in the client's message and returns
-    // the hostname option which would be sent to the client. It will
-    // throw NULL pointer if the hostname option is not to be included
-    // in the response.
-    OptionStringPtr processHostname(const Pkt4Ptr& query, bool must_have_host = true) {
+    /// @brief  Invokes Dhcpsrv4::processHostname on the given packet
+    ///
+    /// Processes the Hostname option in the client's message and returns
+    /// the hostname option which would be sent to the client. It will
+    /// return empty if the hostname option is not to be included
+    /// server's response.
+    /// @param query - client packet to process
+    /// @param must_have_host - flag indicating whether or not the client
+    /// packet must contain the hostname option
+    ///
+    /// @return a pointer to the hostname option constructed by the server
+    OptionStringPtr processHostname(const Pkt4Ptr& query,
+                                    bool must_have_host = true) {
         if (!getHostnameOption(query) && must_have_host) {
             ADD_FAILURE() << "Hostname option not carried in the query";
         }
@@ -483,7 +495,26 @@ public:
 
     }
 
-    // Verify that NameChangeRequest holds valid values.
+    ///@brief Verify that NameChangeRequest holds valid values.
+    ///
+    /// Pulls the NCR from the top of the send queue and checks it's content
+    ///  against a number of expected parameters.
+    ///
+    /// @param type - expected NCR change type, CHG_ADD or CHG_REMOVE
+    /// @param reverse - flag indicating whether or not the NCR specifies
+    /// reverse change
+    /// @param forward - flag indication whether or not the NCR specifies
+    /// forward change
+    /// @param addr  - expected lease address in the NCR
+    /// @param fqdn  - expected FQDN in the NCR
+    /// @param dhcid - expected DHCID in the NCR (comparison is performed only
+    /// if the value supplied is not empty):w
+    /// @param cltt - cltt value from the lease the NCR for which the NCR
+    /// was generated expected value for
+    /// @param len - expected lease length in the NCR
+    /// @param not_strict_expire_check - when true the comparison of the NCR
+    /// lease expiration time is conducted as greater than or equal to rather
+    /// equal to CLTT plus lease lenght.
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -508,9 +539,9 @@ public:
         }
         // In some cases, the test doesn't have access to the last transmission
         // time for the particular client. In such cases, the test can use the
-        // current time as cltt but the it may not check the lease expiration time
-        // for equality but rather check that the lease expiration time is not
-        // greater than the current time + lease lifetime.
+        // current time as cltt but the it may not check the lease expiration
+        // time for equality but rather check that the lease expiration time
+        // is not greater than the current time + lease lifetime.
         if (not_strict_expire_check) {
             EXPECT_GE(cltt + len, ncr->getLeaseExpiresOn());
         } else {
@@ -1387,24 +1418,24 @@ TEST_F(NameDhcpv4SrvTest, replaceClientNameModeTest) {
 
     // We pass mode labels in with enclosing quotes so we can also test
     // unquoted boolean literals true/false
-    testReplaceClientNameMode("\"NEVER\"",
+    testReplaceClientNameMode("\"never\"",
                               CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("\"NEVER\"",
+    testReplaceClientNameMode("\"never\"",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
 
-    testReplaceClientNameMode("\"ALWAYS\"",
+    testReplaceClientNameMode("\"always\"",
                               CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
-    testReplaceClientNameMode("\"ALWAYS\"",
+    testReplaceClientNameMode("\"always\"",
                               CLIENT_NAME_PRESENT, NAME_REPLACED);
 
-    testReplaceClientNameMode("\"WHEN_PRESENT\"",
+    testReplaceClientNameMode("\"when-present\"",
                               CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("\"WHEN_PRESENT\"",
+    testReplaceClientNameMode("\"when-present\"",
                               CLIENT_NAME_PRESENT, NAME_REPLACED);
 
-    testReplaceClientNameMode("\"WHEN_NOT_PRESENT\"",
+    testReplaceClientNameMode("\"when-not-present\"",
                               CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
-    testReplaceClientNameMode("\"WHEN_NOT_PRESENT\"",
+    testReplaceClientNameMode("\"when-not-present\"",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
 
     // Verify that boolean false produces the same result as RCM_NEVER
