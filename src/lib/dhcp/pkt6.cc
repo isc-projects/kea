@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -447,7 +447,7 @@ Pkt6::unpackRelayMsg() {
 
 void
 Pkt6::addRelayInfo(const RelayInfo& relay) {
-    if (relay_info_.size() > 32) {
+    if (relay_info_.size() > HOP_COUNT_LIMIT) {
         isc_throw(BadValue, "Massage cannot be encapsulated more than 32 times");
     }
 

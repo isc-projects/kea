@@ -4,6 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/libdhcp++.h>
@@ -103,7 +104,7 @@ EvalContext::convertNestLevelNumber(const std::string& nest_level,
         error(loc, "Nest level has invalid value in " + nest_level);
     }
     if (option_universe_ == Option::V6) {
-        if (n < 0 || n > 31) {
+        if (n < 0 || n >= HOP_COUNT_LIMIT) {
             error(loc, "Nest level has invalid value in "
                       + nest_level + ". Allowed range: 0..31");
 	}
