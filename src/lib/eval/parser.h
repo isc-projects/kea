@@ -299,7 +299,7 @@ namespace isc { namespace eval {
       char dummy1[sizeof(TokenOption::RepresentationType)];
 
       // relay6_field
-      char dummy2[sizeof(TokenRelay6::FieldType)];
+      char dummy2[sizeof(TokenRelay6Field::FieldType)];
 
       // "constant string"
       // "integer"
@@ -401,7 +401,7 @@ namespace isc { namespace eval {
 
   basic_symbol (typename Base::kind_type t, const TokenOption::RepresentationType v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const TokenRelay6::FieldType v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const TokenRelay6Field::FieldType v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l);
 
@@ -879,7 +879,7 @@ namespace isc { namespace eval {
         break;
 
       case 37: // relay6_field
-        value.copy< TokenRelay6::FieldType > (other.value);
+        value.copy< TokenRelay6Field::FieldType > (other.value);
         break;
 
       case 24: // "constant string"
@@ -920,7 +920,7 @@ namespace isc { namespace eval {
         break;
 
       case 37: // relay6_field
-        value.copy< TokenRelay6::FieldType > (v);
+        value.copy< TokenRelay6Field::FieldType > (v);
         break;
 
       case 24: // "constant string"
@@ -962,7 +962,7 @@ namespace isc { namespace eval {
   {}
 
   template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const TokenRelay6::FieldType v, const location_type& l)
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const TokenRelay6Field::FieldType v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
@@ -1020,7 +1020,7 @@ namespace isc { namespace eval {
         break;
 
       case 37: // relay6_field
-        value.template destroy< TokenRelay6::FieldType > ();
+        value.template destroy< TokenRelay6Field::FieldType > ();
         break;
 
       case 24: // "constant string"
@@ -1067,7 +1067,7 @@ namespace isc { namespace eval {
         break;
 
       case 37: // relay6_field
-        value.move< TokenRelay6::FieldType > (s.value);
+        value.move< TokenRelay6Field::FieldType > (s.value);
         break;
 
       case 24: // "constant string"
