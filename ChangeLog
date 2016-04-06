@@ -1,3 +1,9 @@
+1101.	[bug]		stephen
+	Made DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED a debug message as the
+	condition leading to it (trying to unregister a timer that is not
+	registered) does not have an adverse effect on the operation of Kea.
+	(Trac #4293, git 06204c5d347d0df359af69974c155d0fa9725b44)
+
 1100.	[bug]		tmark
 	Wrapped asio/asio.hpp with logic to suppress optimization when building
 	under GCC 5.2.0 through 5.3.1 and BOOST_ERROR_CODE_HEADER only is defined.
