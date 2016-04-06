@@ -68,7 +68,7 @@ using namespace isc::eval;
 
 %type <uint16_t> option_code
 %type <TokenOption::RepresentationType> option_repr_type
-%type <TokenRelay6::FieldType> relay6_field
+%type <TokenRelay6Field::FieldType> relay6_field
 %type <uint8_t> nest_level
 
 %left OR
@@ -210,7 +210,7 @@ string_expr : STRING
                      switch (ctx.getUniverse()) {
                      case Option::V6:
                      {
-                         TokenPtr relay6field(new TokenRelay6($3, $6));
+                         TokenPtr relay6field(new TokenRelay6Field($3, $6));
                          ctx.expression.push_back(relay6field);
                          break;
                      }
@@ -272,8 +272,8 @@ length_expr : INTEGER
                  }
             ;
 
-relay6_field : PEERADDR { $$ = TokenRelay6::PEERADDR; }
-             | LINKADDR { $$ = TokenRelay6::LINKADDR; }
+relay6_field : PEERADDR { $$ = TokenRelay6Field::PEERADDR; }
+             | LINKADDR { $$ = TokenRelay6Field::LINKADDR; }
              ;
 
 nest_level : INTEGER

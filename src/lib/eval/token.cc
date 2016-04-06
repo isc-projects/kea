@@ -311,7 +311,9 @@ OptionPtr TokenRelay6Option::getOption(const Pkt& pkt) {
         }
         catch (const isc::OutOfRange&) {
             // The only exception we expect is OutOfRange if the nest
-            // level is invalid.  We return a NULL in that case.
+            // level is out of range of the encapsulations, for example
+            // if nest_level_ is 4 and there are only 2 encapsulations.
+            // We return a NULL in that case.
            return (OptionPtr());
         }
 
@@ -322,7 +324,7 @@ OptionPtr TokenRelay6Option::getOption(const Pkt& pkt) {
 }
 
 void
-TokenRelay6::evaluate(const Pkt& pkt, ValueStack& values) {
+TokenRelay6Field::evaluate(const Pkt& pkt, ValueStack& values) {
 
     vector<uint8_t> binary;
     try {

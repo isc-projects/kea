@@ -100,7 +100,6 @@ EvalContext::convertNestLevelNumber(const std::string& nest_level,
     try {
         n  = boost::lexical_cast<int>(nest_level);
     } catch (const boost::bad_lexical_cast &) {
-        // This can't happen...
         error(loc, "Nest level has invalid value in " + nest_level);
     }
     if (option_universe_ == Option::V6) {
