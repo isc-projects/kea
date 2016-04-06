@@ -256,7 +256,7 @@ namespace isc { namespace eval {
         break;
 
       case 37: // relay6_field
-        value.move< TokenRelay6::FieldType > (that.value);
+        value.move< TokenRelay6Field::FieldType > (that.value);
         break;
 
       case 24: // "constant string"
@@ -295,7 +295,7 @@ namespace isc { namespace eval {
         break;
 
       case 37: // relay6_field
-        value.copy< TokenRelay6::FieldType > (that.value);
+        value.copy< TokenRelay6Field::FieldType > (that.value);
         break;
 
       case 24: // "constant string"
@@ -402,7 +402,7 @@ namespace isc { namespace eval {
       case 37: // relay6_field
 
 #line 78 "parser.yy" // lalr1.cc:636
-        { yyoutput << yysym.value.template as< TokenRelay6::FieldType > (); }
+        { yyoutput << yysym.value.template as< TokenRelay6Field::FieldType > (); }
 #line 407 "parser.cc" // lalr1.cc:636
         break;
 
@@ -615,7 +615,7 @@ namespace isc { namespace eval {
         break;
 
       case 37: // relay6_field
-        yylhs.value.build< TokenRelay6::FieldType > ();
+        yylhs.value.build< TokenRelay6Field::FieldType > ();
         break;
 
       case 24: // "constant string"
@@ -822,7 +822,7 @@ namespace isc { namespace eval {
                      switch (ctx.getUniverse()) {
                      case Option::V6:
                      {
-                         TokenPtr relay6field(new TokenRelay6(yystack_[3].value.as< uint8_t > (), yystack_[0].value.as< TokenRelay6::FieldType > ()));
+                         TokenPtr relay6field(new TokenRelay6Field(yystack_[3].value.as< uint8_t > (), yystack_[0].value.as< TokenRelay6Field::FieldType > ()));
                          ctx.expression.push_back(relay6field);
                          break;
                      }
@@ -913,13 +913,13 @@ namespace isc { namespace eval {
 
   case 27:
 #line 275 "parser.yy" // lalr1.cc:859
-    { yylhs.value.as< TokenRelay6::FieldType > () = TokenRelay6::PEERADDR; }
+    { yylhs.value.as< TokenRelay6Field::FieldType > () = TokenRelay6Field::PEERADDR; }
 #line 918 "parser.cc" // lalr1.cc:859
     break;
 
   case 28:
 #line 276 "parser.yy" // lalr1.cc:859
-    { yylhs.value.as< TokenRelay6::FieldType > () = TokenRelay6::LINKADDR; }
+    { yylhs.value.as< TokenRelay6Field::FieldType > () = TokenRelay6Field::LINKADDR; }
 #line 924 "parser.cc" // lalr1.cc:859
     break;
 
