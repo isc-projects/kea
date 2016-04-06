@@ -210,6 +210,26 @@ public:
     /// @param enable boolean value to assign to the enable-updates flag
     void enableUpdates(bool enable);
 
+    /// @brief Converts labels to  ReplaceClientNameMode enum values.
+    ///
+    /// @param mode_str text to convert to an enum.
+    /// Valid string values: "never", "always", "when-present",
+    /// "when-not-present" (case insensistive)
+    ///
+    /// @return NameChangeFormat value which maps to the given string.
+    ///
+    /// @throw isc::BadValue if given a string value which does not map to an
+    /// enum value.
+    static ReplaceClientNameMode stringToReplaceClientNameMode(const std::string& mode_str);
+
+    /// @brief Converts NameChangeFormat enums to text labels.
+    ///
+    /// @param mode enum value to convert to label
+    ///
+    /// @return std:string containing the text label if the value is valid, or
+    /// "unknown" if not.
+    static std::string replaceClientNameModeToString(const ReplaceClientNameMode& mode);
+
 protected:
     /// @brief Validates member values.
     ///
@@ -267,26 +287,6 @@ private:
 
 std::ostream&
 operator<<(std::ostream& os, const D2ClientConfig& config);
-
-/// @brief Function which converts labels to  ReplaceClientNameMode enum values.
-///
-/// @param mode_str text to convert to an enum.
-/// Valid string values: "NEVER", "ALWAYS", "WHEN_PRESENT", "WHEN_NOT_PRESENT"
-///
-/// @return NameChangeFormat value which maps to the given string.
-///
-/// @throw isc::BadValue if given a string value which does not map to an
-/// enum value.
-extern D2ClientConfig::ReplaceClientNameMode stringToReplaceClientNameMode(const std::string& mode_str);
-
-/// @brief Function which converts NameChangeFormat enums to text labels.
-///
-/// @param mode enum value to convert to label
-///
-/// @return std:string containing the text label if the value is valid, or
-/// "UNKNOWN" if not.
-extern std::string replaceClientNameModeToString(D2ClientConfig::ReplaceClientNameMode mode);
-
 
 /// @brief Defines a pointer for D2ClientConfig instances.
 typedef boost::shared_ptr<D2ClientConfig> D2ClientConfigPtr;

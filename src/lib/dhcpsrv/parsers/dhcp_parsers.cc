@@ -1409,9 +1409,10 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
         // Formerly, replace-client-name was boolean, so for now we'll support boolean
         // values by mapping them to the appropriate mode
         D2ClientConfig::ReplaceClientNameMode replace_client_name_mode;
-        std::string mode_str = string_values_->getOptionalParam("replace-client-name",
-                                                                D2ClientConfig::
-                                                                DFT_REPLACE_CLIENT_NAME_MODE);
+        std::string mode_str;
+        mode_str  = string_values_->getOptionalParam("replace-client-name",
+                                                     D2ClientConfig::
+                                                     DFT_REPLACE_CLIENT_NAME_MODE);
         if (boost::iequals(mode_str, "FALSE")) {
             // @todo add a debug log
             replace_client_name_mode = D2ClientConfig::RCM_NEVER;
@@ -1420,7 +1421,8 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
             // @todo add a debug log
             replace_client_name_mode = D2ClientConfig::RCM_WHEN_PRESENT;
         } else {
-            replace_client_name_mode = stringToReplaceClientNameMode(mode_str);
+            replace_client_name_mode = D2ClientConfig::
+                                       stringToReplaceClientNameMode(mode_str);
         }
 
         // Attempt to create the new client config.

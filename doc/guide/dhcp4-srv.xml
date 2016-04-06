@@ -2078,7 +2078,7 @@ It is merely echoed by the server
       supply a portion or all of that name based upon what it receives from
       the client in the DHCP REQUEST.</para>
       <para>
-       The basic rules for constructing the FQDN that will be used for DNS
+       The default rules for constructing the FQDN that will be used for DNS
        entries are:
       <orderedlist>
       <listitem><para>
@@ -2107,15 +2107,15 @@ It is merely echoed by the server
       </para></listitem>
       <listitem><para>
         <command>always</command> - Replace the name the client sent. If the
-        client sent no name, generate one for them.
+        client sent no name, generate one for the client.
       </para></listitem>
       <listitem><para>
-        <command>when_present</command> - Replace the name the client sent.
+        <command>when-present</command> - Replace the name the client sent.
         If the client sent no name, do not generate one.
       </para></listitem>
       <listitem><para>
-        <command>when_not_present</command> - Use the name the client sent.
-        If the client sent no name, generate one for them.
+        <command>when-not-present</command> - Use the name the client sent.
+        If the client sent no name, generate one for the client.
       </para></listitem>
       </itemizedlist>
     <note>
