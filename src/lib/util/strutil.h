@@ -214,6 +214,44 @@ tokenToNum(const std::string& num_token) {
 std::vector<uint8_t>
 quotedStringToBinary(const std::string& quoted_string);
 
+/// \brief Converts a string of hexadecimal digits with colons into
+///  a vector.
+///
+/// This function supports the following formats:
+/// - yy:yy:yy:yy:yy
+/// - y:y:y:y:y
+/// - y:yy:yy:y:y
+///
+/// If the decoded string doesn't match any of the supported formats,
+/// an exception is thrown.
+///
+/// \param hex_string Input string.
+/// \param binary Vector receiving converted string into binary.
+/// \throw isc::BadValue if the format of the input string is invalid.
+void
+decodeColonSeparatedHexString(const std::string& hex_string,
+                              std::vector<uint8_t>& binary);
+
+/// \brief Converts a formatted string of hexadecimal digits into
+/// a vector.
+///
+/// This function supports formats supported by
+/// @ref decodeColonSeparatedHexString and the following additional
+/// formats:
+/// - yyyyyyyyyy
+/// - 0xyyyyyyyyyy
+///
+/// If there is an odd number of hexadecimal digits in the input
+/// string, the '0' is prepended to the string before decoding.
+///
+/// \param hex_string Input string.
+/// \param binary Vector receiving converted string into binary.
+/// \throw isc::BadValue if the format of the input string is invalid.
+void
+decodeFormattedHexString(const std::string& hex_string,
+                         std::vector<uint8_t>& binary);
+
+
 } // namespace str
 } // namespace util
 } // namespace isc
