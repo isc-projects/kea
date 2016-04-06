@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,9 @@
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <gtest/gtest.h>
+#include <sstream>
+#include <string>
+#include <vector>
 
 using namespace isc::data;
 using namespace isc::dhcp;
@@ -107,6 +110,39 @@ TEST_F(HostReservationsListParserTest, ipv4Reservations) {
     EXPECT_EQ("bar.example.com", hosts[0]->getHostname());
 }
 
+// This test verifies that an attempt to add two reservations with the
+// same identifier value will return an error.
+TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue4) {
+    std::vector<std::string> identifiers;
+    identifiers.push_back("hw-address");
+    identifiers.push_back("duid");
+    identifiers.push_back("circuit-id");
+
+    for (unsigned int i = 0; i < identifiers.size(); ++i) {
+        SCOPED_TRACE("Using identifier " + identifiers[i]);
+
+        std::ostringstream config;
+        config <<
+            "[ "
+            "  { "
+            "   \"" << identifiers[i] << "\": \"010203040506\","
+            "   \"ip-address\": \"192.0.2.134\","
+            "   \"hostname\": \"foo.example.com\""
+            "  }, "
+            "  { "
+            "   \"" << identifiers[i] << "\": \"010203040506\","
+            "   \"ip-address\": \"192.0.2.110\","
+            "   \"hostname\": \"bar.example.com\""
+            "  } "
+            "]";
+
+        ElementPtr config_element = Element::fromJSON(config.str());
+
+        HostReservationsListParser<HostReservationParser4> parser(SubnetID(1));
+        EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    }
+}
+
 // This test verifies that the parser for the list of the host reservations
 // parses IPv6 reservations correctly.
 TEST_F(HostReservationsListParserTest, ipv6Reservations) {
@@ -166,5 +202,39 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
     EXPECT_EQ("2001:db8:1:2::", prefixes.first->second.getPrefix().toText());
     EXPECT_EQ(80, prefixes.first->second.getPrefixLen());
 }
+
+// This test verifies that an attempt to add two reservations with the
+// same identifier value will return an error.
+TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue6) {
+    std::vector<std::string> identifiers;
+    identifiers.push_back("hw-address");
+    identifiers.push_back("duid");
+
+    for (unsigned int i = 0; i < identifiers.size(); ++i) {
+        SCOPED_TRACE("Using identifier " + identifiers[i]);
+
+        std::ostringstream config;
+        config <<
+            "[ "
+            "  { "
+            "   \"" << identifiers[i] << "\": \"010203040506\","
+            "   \"ip-addresses\": [ \"2001:db8:1::123\" ],"
+            "   \"hostname\": \"foo.example.com\""
+            "  }, "
+            "  { "
+            "   \"" << identifiers[i] << "\": \"010203040506\","
+            "   \"ip-addresses\": [ \"2001:db8:1::123\" ],"
+            "   \"hostname\": \"bar.example.com\""
+            "  } "
+            "]";
+
+        ElementPtr config_element = Element::fromJSON(config.str());
+
+        HostReservationsListParser<HostReservationParser6> parser(SubnetID(1));
+        EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    }
+}
+
+
 
 } // end of anonymous namespace
