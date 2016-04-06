@@ -34,20 +34,21 @@ const char* D2ClientConfig::DFT_REPLACE_CLIENT_NAME_MODE = "NEVER";
 const char* D2ClientConfig::DFT_GENERATED_PREFIX = "myhost";
 
 
-D2ClientConfig::ReplaceClientNameMode stringToReplaceClientNameMode(const std::string& mode_str) {
-    if (boost::iequals(mode_str, "NEVER")) {
+D2ClientConfig::ReplaceClientNameMode
+D2ClientConfig::stringToReplaceClientNameMode(const std::string& mode_str) {
+    if (boost::iequals(mode_str, "never")) {
         return (D2ClientConfig::RCM_NEVER);
     }
 
-    if (boost::iequals(mode_str, "ALWAYS")) {
+    if (boost::iequals(mode_str, "always")) {
         return (D2ClientConfig::RCM_ALWAYS);
     }
 
-    if (boost::iequals(mode_str, "WHEN_PRESENT")) {
+    if (boost::iequals(mode_str, "when-present")) {
         return (D2ClientConfig::RCM_WHEN_PRESENT);
     }
 
-    if (boost::iequals(mode_str, "WHEN_NOT_PRESENT")) {
+    if (boost::iequals(mode_str, "when-not-present")) {
         return (D2ClientConfig::RCM_WHEN_NOT_PRESENT);
     }
 
@@ -55,22 +56,23 @@ D2ClientConfig::ReplaceClientNameMode stringToReplaceClientNameMode(const std::s
               "Invalid ReplaceClientNameMode: " << mode_str);
 }
 
-std::string replaceClientNameModeToString(D2ClientConfig::ReplaceClientNameMode mode) {
+std::string
+D2ClientConfig::replaceClientNameModeToString(const ReplaceClientNameMode& mode) {
     switch (mode) {
     case D2ClientConfig::RCM_NEVER:
-        return ("NEVER");
+        return ("never");
     case D2ClientConfig::RCM_ALWAYS:
-        return ("ALWAYS");
+        return ("always");
     case D2ClientConfig::RCM_WHEN_PRESENT:
-        return ("WHEN_PRESENT");
+        return ("when-present");
     case D2ClientConfig::RCM_WHEN_NOT_PRESENT:
-        return ("WHEN_NOT_PRESENT");
+        return ("when-not-present");
     default:
         break;
     }
 
     std::ostringstream stream;
-    stream  << "UNKNOWN(" << mode << ")";
+    stream  << "unknown(" << mode << ")";
     return (stream.str());
 }
 

@@ -1926,14 +1926,14 @@ should include options from the isc option space:
       In general, kea-dhcp6 will generate DDNS update requests when:
       <orderedlist>
       <listitem><para>
-      A new lease is granted in response to a DHCP REQUEST
+      A new lease is granted in response to a REQUEST
       </para></listitem>
       <listitem><para>
       An existing lease is renewed but the FQDN associated with it has
       changed.
       </para></listitem>
       <listitem><para>
-      An existing lease is released in response to a DHCP RELEASE
+      An existing lease is released in response to a RELEASE
       </para></listitem>
       </orderedlist>
       In the second case, lease renewal, two  DDNS requests will be issued: one
@@ -1944,7 +1944,7 @@ should include options from the isc option space:
       discussed next.
       </para>
       <para>
-      kea-dhcp6 will generate a DDNS update request only if the DHCP REQUEST
+      kea-dhcp6 will generate a DDNS update request only if the REQUEST
       contains the FQDN option (code 39). By default kea-dhcp6 will
       respect the FQDN N and S flags specified by the client as shown in the
       following table:
@@ -2044,9 +2044,9 @@ should include options from the isc option space:
       <para>Each NameChangeRequest must of course include the fully qualified
       domain name whose DNS entries are to be affected.  kea-dhcp6 can be
       configured to supply a portion or all of that name based upon what it
-      receives from the client in the DHCP REQUEST.</para>
+      receives from the client.</para>
       <para>
-       The basic rules for constructing the FQDN that will be used for DNS
+       The default rules for constructing the FQDN that will be used for DNS
        entries are:
       <orderedlist>
       <listitem><para>
@@ -2075,15 +2075,15 @@ should include options from the isc option space:
       </para></listitem>
       <listitem><para>
         <command>always</command> - Replace the name the client sent. If the
-        client sent no name, generate one for them.
+        client sent no name, generate one for the client.
       </para></listitem>
       <listitem><para>
-        <command>when_present</command> - Replace the name the client sent.
+        <command>when-present</command> - Replace the name the client sent.
         If the client sent no name, do not generate one.
       </para></listitem>
       <listitem><para>
-        <command>when_not_present</command> - Use the name the client sent.
-        Supply the name if the client did not.
+        <command>when-not-present</command> - Use the name the client sent.
+        If the client sent no name, generate one for the client.
       </para></listitem>
       </itemizedlist>
     <note>

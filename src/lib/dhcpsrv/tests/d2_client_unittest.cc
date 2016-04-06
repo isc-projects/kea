@@ -22,18 +22,30 @@ namespace {
 
 /// @brief Tests conversion of NameChangeFormat between enum and strings.
 TEST(ReplaceClientNameModeTest, formatEnumConversion){
-    ASSERT_EQ(stringToReplaceClientNameMode("NEVER"), D2ClientConfig::RCM_NEVER);
-    ASSERT_EQ(stringToReplaceClientNameMode("ALWAYS"), D2ClientConfig::RCM_ALWAYS);
-    ASSERT_EQ(stringToReplaceClientNameMode("WHEN_PRESENT"), D2ClientConfig::RCM_WHEN_PRESENT);
-    ASSERT_EQ(stringToReplaceClientNameMode("WHEN_NOT_PRESENT"),
+    ASSERT_EQ(D2ClientConfig::stringToReplaceClientNameMode("never"),
+              D2ClientConfig::RCM_NEVER);
+    ASSERT_EQ(D2ClientConfig::stringToReplaceClientNameMode("always"),
+              D2ClientConfig::RCM_ALWAYS);
+    ASSERT_EQ(D2ClientConfig::stringToReplaceClientNameMode("when-present"),
+              D2ClientConfig::RCM_WHEN_PRESENT);
+    ASSERT_EQ(D2ClientConfig::stringToReplaceClientNameMode("when-not-present"),
               D2ClientConfig::RCM_WHEN_NOT_PRESENT);
-    ASSERT_THROW(stringToReplaceClientNameMode("BOGUS"), isc::BadValue);
+    ASSERT_THROW(D2ClientConfig::stringToReplaceClientNameMode("BOGUS"),
+                 isc::BadValue);
 
-    ASSERT_EQ(replaceClientNameModeToString(D2ClientConfig::RCM_NEVER), "NEVER");
-    ASSERT_EQ(replaceClientNameModeToString(D2ClientConfig::RCM_ALWAYS), "ALWAYS");
-    ASSERT_EQ(replaceClientNameModeToString(D2ClientConfig::RCM_WHEN_PRESENT), "WHEN_PRESENT");
-    ASSERT_EQ(replaceClientNameModeToString(D2ClientConfig::RCM_WHEN_NOT_PRESENT),
-              "WHEN_NOT_PRESENT");
+    ASSERT_EQ(D2ClientConfig::
+              replaceClientNameModeToString(D2ClientConfig::RCM_NEVER),
+              "never");
+    ASSERT_EQ(D2ClientConfig::
+              replaceClientNameModeToString(D2ClientConfig::RCM_ALWAYS),
+              "always");
+    ASSERT_EQ(D2ClientConfig::
+              replaceClientNameModeToString(D2ClientConfig::RCM_WHEN_PRESENT),
+              "when-present");
+    ASSERT_EQ(D2ClientConfig::
+              replaceClientNameModeToString(D2ClientConfig::
+                                            RCM_WHEN_NOT_PRESENT),
+              "when-not-present");
 }
 
 /// @brief Checks constructors and accessors of D2ClientConfig.

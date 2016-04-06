@@ -3176,7 +3176,7 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
         "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"WHEN_PRESENT\", "
+        "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
         "     \"qualifying-suffix\" : \"test.suffix.\" },"
         "\"valid-lifetime\": 4000 }";
@@ -3238,7 +3238,7 @@ TEST_F(Dhcp4ParserTest, invalidD2ClientConfig) {
         "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"WHEN_PRESENT\", "
+        "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
         "     \"qualifying-suffix\" : \"test.suffix.\" },"
         "\"valid-lifetime\": 4000 }";
