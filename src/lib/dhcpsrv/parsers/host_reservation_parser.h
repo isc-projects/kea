@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,12 +48,30 @@ protected:
     /// @throw DhcpConfigError When operation to add a configured host fails.
     void addHost(isc::data::ConstElementPtr reservation_data);
 
+    /// @brief Checks if the specified parameter is a host identifier.
+    ///
+    /// @param param_name Parameter name.
+    ///
+    /// @return true if the parameter specifies host identifier, false
+    /// otherwise.
+    virtual bool isIdentifierParameter(const std::string& param_name) const;
+
     /// @brief Checks if the specified parameter is supported by the parser.
     ///
     /// @param param_name Parameter name.
     ///
     /// @return true if the parameter is supported, false otherwise.
-    virtual bool isSupportedParameter(const std::string& param_name) const = 0;
+    virtual bool isSupportedParameter(const std::string& param_name) const;
+
+    /// @brief Returns set of the supported parameters.
+    ///
+    /// @param identifiers_only Indicates if the function should only
+    /// return supported host identifiers (if true) or all supported
+    /// parameters (if false).
+    ///
+    /// @return Set of supported parameter names.
+    virtual const std::set<std::string>&
+    getSupportedParameters(const bool identifiers_only) const = 0;
 
     /// @brief Identifier of the subnet that the host is connected to.
     SubnetID subnet_id_;
@@ -84,12 +102,16 @@ public:
 
 protected:
 
-    /// @brief Checks if the specified parameter is supported by the parser.
+    /// @brief Returns set of the supported parameters for DHCPv4.
     ///
-    /// @param param_name Parameter name.
+    /// @param identifiers_only Indicates if the function should only
+    /// return supported host identifiers (if true) or all supported
+    /// parameters (if false).
     ///
-    /// @return true if the parameter is supported, false otherwise.
-    virtual bool isSupportedParameter(const std::string& param_name) const;
+    /// @return Set of supported parameter names.
+    virtual const std::set<std::string>&
+    getSupportedParameters(const bool identifiers_only) const;
+
 };
 
 /// @brief Parser for a single host reservation for DHCPv6.
@@ -112,12 +134,16 @@ public:
 
 protected:
 
-    /// @brief Checks if the specified parameter is supported by the parser.
+    /// @brief Returns set of the supported parameters for DHCPv6.
     ///
-    /// @param param_name Parameter name.
+    /// @param identifiers_only Indicates if the function should only
+    /// return supported host identifiers (if true) or all supported
+    /// parameters (if false).
     ///
-    /// @return true if the parameter is supported, false otherwise.
-    virtual bool isSupportedParameter(const std::string& param_name) const;
+    /// @return Set of supported parameter names.
+    virtual const std::set<std::string>&
+    getSupportedParameters(const bool identifiers_only) const;
+
 };
 
 

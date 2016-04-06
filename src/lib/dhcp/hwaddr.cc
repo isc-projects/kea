@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,10 +7,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcp/dhcp4.h>
 #include <exceptions/exceptions.h>
-#include <util/encode/hex.h>
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/constants.hpp>
-#include <boost/algorithm/string/split.hpp>
+#include <util/strutil.h>
 #include <iomanip>
 #include <sstream>
 #include <vector>
@@ -69,37 +66,8 @@ std::string HWAddr::toText(bool include_htype) const {
 
 HWAddr
 HWAddr::fromText(const std::string& text, const uint16_t htype) {
-    /// @todo optimize stream operations here.
-    std::vector<std::string> split_text;
-    boost::split(split_text, text, boost::is_any_of(":"),
-                 boost::algorithm::token_compress_off);
-
-    std::ostringstream s;
-    for (size_t i = 0; i < split_text.size(); ++i) {
-        // If there are multiple tokens and the current one is empty, it
-        // means that two consecutive colons were specified. This is not
-        // allowed for hardware address.
-        if ((split_text.size() > 1) && split_text[i].empty()) {
-            isc_throw(isc::BadValue, "failed to create hardware address"
-                      " from text '" << text << "': tokens of the hardware"
-                      " address must be separated with a single colon");
-
-        } else  if (split_text[i].size() == 1) {
-            s << "0";
-
-        } else if (split_text[i].size() > 2) {
-            isc_throw(isc::BadValue, "invalid hwaddr '" << text << "'");
-        }
-        s << split_text[i];
-    }
-
     std::vector<uint8_t> binary;
-    try {
-        util::encode::decodeHex(s.str(), binary);
-    } catch (const Exception& ex) {
-        isc_throw(isc::BadValue, "failed to create hwaddr from text '"
-                  << text << "': " << ex.what());
-    }
+    util::str::decodeColonSeparatedHexString(text, binary);
     return (HWAddr(binary, htype));
 }
 
