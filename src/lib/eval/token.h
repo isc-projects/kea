@@ -527,7 +527,7 @@ protected:
 /// set the field it may be 0s.
 ///
 /// The nesting level can go from 0 (closest to the server) to 31.
-class TokenRelay6 : public Token {
+class TokenRelay6Field : public Token {
 public:
 
     /// @brief enum value that determines the field.
@@ -541,7 +541,7 @@ public:
     ///
     /// @param nest_level the nesting level for which relay to examine.
     /// @param type which field to extract.
-    TokenRelay6(const uint8_t nest_level, const FieldType type)
+    TokenRelay6Field(const uint8_t nest_level, const FieldType type)
       : nest_level_(nest_level), type_(type) {}
 
     /// @brief Extracts the specified field from the requested relay
@@ -556,7 +556,7 @@ public:
     /// @brief Returns nest-level
     ///
     /// This method is used in testing to determine if the parser has
-    /// instantiated TokenRelay6 with correct parameters.
+    /// instantiated TokenRelay6Field with correct parameters.
     ///
     /// @return nest-level of the relay block this token expects to use
     /// for extraction.
@@ -567,7 +567,7 @@ public:
     /// @brief Returns field type
     ///
     /// This method is used only in testing to determine if the parser has
-    /// instantiated TokenRelay6 with correct parameters.
+    /// instantiated TokenRelay6Field with correct parameters.
     ///
     /// @return type of the field.
     FieldType getType() {
