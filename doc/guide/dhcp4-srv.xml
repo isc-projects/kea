@@ -2122,7 +2122,7 @@ It is merely echoed by the server
     Note that formerly, this parameter was a boolean and permitted only values
     of <command>true</command> and <command>false</command>.  Boolean values
     will still be accepted but may eventually be deprecated. A value of
-    <command>true</command> equates to <command>when_present</command>,
+    <command>true</command> equates to <command>when-present</command>,
     <command>false</command> equates to <command>never</command>.
     </note>
 
