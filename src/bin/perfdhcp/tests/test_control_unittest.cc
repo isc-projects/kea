@@ -1402,7 +1402,7 @@ TEST_F(TestControlTest, Packet4Exchange) {
     const int received_num = 10;
     use_templates = true;
     testPkt4Exchange(iterations_num, received_num, use_templates, iterations_performed);
-    EXPECT_EQ(12, iterations_performed);
+    EXPECT_EQ(11, iterations_performed);
 }
 
 TEST_F(TestControlTest, Packet6ExchangeFromTemplate) {
