@@ -1871,7 +1871,8 @@ TestControl::sendRequest4(const TestControlSocket& socket,
 void
 TestControl::sendRequest6(const TestControlSocket& socket,
                           const Pkt6Ptr& advertise_pkt6) {
-    const uint32_t transid = generateTransid();
+    // Use the same transaction id for the duration of the session
+    const uint32_t transid = advertise_pkt6->getTransid();
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_REQUEST, transid));
     // Set elapsed time.
     OptionPtr opt_elapsed_time =
@@ -1928,8 +1929,8 @@ TestControl::sendRequest6(const TestControlSocket& socket,
     // Get the second argument if multiple the same arguments specified
     // in the command line. Second one refers to REQUEST packets.
     const uint8_t arg_idx = 1;
-    // Generate transaction id.
-    const uint32_t transid = generateTransid();
+    // Use same transid of the advertise response
+    const uint32_t transid = advertise_pkt6->getTransid();
     // Get transaction id offset.
     size_t transid_offset = getTransactionIdOffset(arg_idx);
     PerfPkt6Ptr pkt6(new PerfPkt6(&template_buf[0], template_buf.size(),
