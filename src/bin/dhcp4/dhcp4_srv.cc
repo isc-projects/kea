@@ -1073,13 +1073,10 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
             processClientFqdnOption(ex);
 
         } else {
-            OptionStringPtr hostname = boost::dynamic_pointer_cast<OptionString>
-                (ex.getQuery()->getOption(DHO_HOST_NAME));
-            if (hostname) {
-                LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_HOSTNAME_PROCESS)
+            LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_CLIENT_HOSTNAME_PROCESS)
                     .arg(ex.getQuery()->getLabel());
-                processHostnameOption(ex);
-            }
+            processHostnameOption(ex);
         }
     } catch (const Exception& e) {
         // In some rare cases it is possible that the client's name processing
@@ -1150,14 +1147,6 @@ Dhcpv4Srv::processClientFqdnOption(Dhcpv4Exchange& ex) {
 
 void
 Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
-    // Obtain the Hostname option from the client's message.
-    OptionStringPtr opt_hostname = boost::dynamic_pointer_cast<OptionString>
-        (ex.getQuery()->getOption(DHO_HOST_NAME));
-
-    LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_HOSTNAME_DATA)
-        .arg(ex.getQuery()->getLabel())
-        .arg(opt_hostname->getValue());
-
     // Fetch D2 configuration.
     D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
 
@@ -1165,6 +1154,36 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     if (!d2_mgr.ddnsEnabled()) {
         return;
     }
+
+    D2ClientConfig::ReplaceClientNameMode replace_name_mode =
+            d2_mgr.getD2ClientConfig()->getReplaceClientNameMode();
+
+    // Obtain the Hostname option from the client's message.
+    OptionStringPtr opt_hostname = boost::dynamic_pointer_cast<OptionString>
+        (ex.getQuery()->getOption(DHO_HOST_NAME));
+
+    // If we don't have a hostname then either we'll supply it or do nothing.
+    if (!opt_hostname) {
+        // If we're configured to supply it then add it to the response.
+        // Use the root domain to signal later on that we should replace it.
+        if (replace_name_mode == D2ClientConfig::RCM_ALWAYS ||
+            replace_name_mode == D2ClientConfig::RCM_WHEN_NOT_PRESENT) {
+            LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA,
+                      DHCP4_GENERATE_FQDN)
+                .arg(ex.getQuery()->getLabel());
+            OptionStringPtr opt_hostname_resp(new OptionString(Option::V4,
+                                                               DHO_HOST_NAME,
+                                                               "."));
+            ex.getResponse()->addOption(opt_hostname_resp);
+        }
+
+        return;
+    }
+
+    // Client sent us a hostname option so figure out what to do with it.
+    LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_HOSTNAME_DATA)
+        .arg(ex.getQuery()->getLabel())
+        .arg(opt_hostname->getValue());
 
     std::string hostname = isc::util::str::trim(opt_hostname->getValue());
     unsigned int label_count = OptionDataTypeUtil::getLabelCount(hostname);
@@ -1195,14 +1214,16 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         opt_hostname_resp->setValue(d2_mgr.qualifyName(ex.getContext()->host_->getHostname(),
                                                        false));
 
-    } else if ((d2_mgr.getD2ClientConfig()->getReplaceClientName()) ||
-               (label_count < 2)) {
+    } else if ((replace_name_mode == D2ClientConfig::RCM_ALWAYS ||
+               replace_name_mode == D2ClientConfig::RCM_WHEN_PRESENT)
+               || label_count < 2) {
         // Set to root domain to signal later on that we should replace it.
         // DHO_HOST_NAME is a string option which cannot be empty.
         /// @todo We may want to reconsider whether it is appropriate for the
         /// client to send a root domain name as a Hostname. There are
         /// also extensions to the auto generation of the client's name,
-        /// e.g. conversion to the puny code which may be considered at some point.
+        /// e.g. conversion to the puny code which may be considered at some
+        /// point.
         /// For now, we just remain liberal and expect that the DNS will handle
         /// conversion if needed and possible.
         opt_hostname_resp->setValue(".");
