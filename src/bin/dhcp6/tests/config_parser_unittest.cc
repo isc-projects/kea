@@ -3410,7 +3410,7 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
         "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : true, "
+        "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
         "     \"qualifying-suffix\" : \"test.suffix.\" },"
         "\"valid-lifetime\": 4000 }";
@@ -3444,7 +3444,7 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
     EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
     EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
-    EXPECT_TRUE(d2_client_config->getReplaceClientName());
+    EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
 }
@@ -3472,7 +3472,7 @@ TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
         "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : true, "
+        "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
         "     \"qualifying-suffix\" : \"test.suffix.\" },"
         "\"valid-lifetime\": 4000 }";

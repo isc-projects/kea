@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -128,6 +128,20 @@ public:
     static const uint16_t OVERRIDE_CLIENT_UPDATE = 4;
     static const uint16_t REPLACE_CLIENT_NAME = 8;
 
+    // Enum used to specify whether a client (packet) should include
+    // the hostname option
+    enum ClientNameFlag {
+        CLIENT_NAME_PRESENT,
+        CLIENT_NAME_NOT_PRESENT
+    };
+
+    // Enum used to specify whether the server should replace/supply
+    // the hostname or not
+    enum ReplacementFlag {
+        NAME_REPLACED,
+        NAME_NOT_REPLACED
+    };
+
     NameDhcpv4SrvTest()
         : Dhcpv4SrvTest(),
           d2_mgr_(CfgMgr::instance().getD2ClientMgr()),
@@ -172,7 +186,9 @@ public:
                                   (mask & ALWAYS_INCLUDE_FQDN),
                                   (mask & OVERRIDE_NO_UPDATE),
                                   (mask & OVERRIDE_CLIENT_UPDATE),
-                                  (mask & REPLACE_CLIENT_NAME),
+                                  ((mask & REPLACE_CLIENT_NAME) ?
+                                    D2ClientConfig::RCM_WHEN_PRESENT
+                                   : D2ClientConfig::RCM_NEVER),
                                   "myhost", "example.com")));
         ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
         ASSERT_NO_THROW(srv_->startD2());
@@ -184,7 +200,8 @@ public:
                           const bool fqdn_fwd,
                           const bool fqdn_rev) {
         const uint8_t hwaddr_data[] = { 0, 1, 2, 3, 4, 5, 6 };
-        HWAddrPtr hwaddr(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
+        HWAddrPtr hwaddr(new HWAddr(hwaddr_data, sizeof(hwaddr_data),
+                                    HTYPE_ETHER));
         Lease4Ptr lease(new Lease4(addr, hwaddr,
                                    &generateClientId()->getData()[0],
                                    generateClientId()->getData().size(),
@@ -309,6 +326,20 @@ public:
 
     }
 
+    // Create a message holding of a given type
+    Pkt4Ptr generatePkt(const uint8_t msg_type) {
+        Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(msg_type, 1234));
+        pkt->setRemoteAddr(IOAddress("192.0.2.3"));
+        // For DISCOVER we don't include server id, because client broadcasts
+        // the message to all servers.
+        if (msg_type != DHCPDISCOVER) {
+            pkt->addOption(srv_->getServerID());
+        }
+
+        pkt->addOption(generateClientId());
+        return (pkt);
+    }
+
     // Test that server generates the appropriate FQDN option in response to
     // client's FQDN option.
     void testProcessFqdn(const Pkt4Ptr& query, const uint8_t exp_flags,
@@ -338,6 +369,79 @@ public:
 
     }
 
+    // Test that the server's processes the hostname (or lack thereof)
+    // in a client request correctly, according to the replace-client-name
+    // mode configuration parameter.
+    //
+    // @param mode - value to use client-name-replacment parameter - for
+    // mode labels such as NEVER and ALWAYS must incluce enclosing quotes:
+    // "\"NEVER\"".  This allows us to also pass in boolean literals which
+    // are unquoted.
+    // @param client_name_flag - specifies whether or not the client request
+    // should contain a hostname option
+    // @param exp_replacement_flag - specifies whether or not the server is
+    // expected to replace (or supply) the hostname in its response
+    void testReplaceClientNameMode(const char* mode,
+                                   enum ClientNameFlag client_name_flag,
+                                   enum ReplacementFlag exp_replacement_flag) {
+        // Configuration "template" with a replaceable mode parameter
+        const char* config_template =
+            "{ \"interfaces-config\": {"
+            "      \"interfaces\": [ \"*\" ]"
+            "},"
+            "\"valid-lifetime\": 3000,"
+            "\"subnet4\": [ { "
+            "    \"subnet\": \"10.0.0.0/24\", "
+            "    \"id\": 1,"
+            "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ]"
+            " }],"
+            "\"dhcp-ddns\": {"
+            "\"enable-updates\": true,"
+            "\"qualifying-suffix\": \"fake-suffix.isc.org.\","
+            "\"replace-client-name\": %s"
+            "}}";
+
+        // Create the configuration and configure the server
+        char config_buf[1024];
+        sprintf(config_buf, config_template, mode);
+        ASSERT_NO_THROW(configure(config_buf, srv_)) << "configuration failed";
+
+        // Build our client packet
+        Pkt4Ptr query;
+        if (client_name_flag == CLIENT_NAME_PRESENT) {
+            ASSERT_NO_THROW(query = generatePktWithHostname(DHCPREQUEST,
+                                                            "my.example.com."));
+        } else {
+            ASSERT_NO_THROW(query = generatePkt(DHCPREQUEST));
+        }
+
+        // Run the packet through the server, extracting the hostname option
+        // from the response.  If the option isn't present the returned pointer
+        // will be null.
+        OptionStringPtr hostname;
+        ASSERT_NO_THROW(
+            hostname = processHostname(query,
+                                       client_name_flag == CLIENT_NAME_PRESENT)
+        ) << "processHostname throw an exception";
+
+        // Verify the contents (or lack thereof) of the hostname
+        if (exp_replacement_flag == NAME_REPLACED) {
+            ASSERT_TRUE(hostname)
+                << "No host name, it should have the replacement name \".\"";
+            EXPECT_EQ(".", hostname->getValue());
+        } else {
+            if (client_name_flag == CLIENT_NAME_PRESENT) {
+                ASSERT_TRUE(hostname)
+                    << "No host name, expected original from client";
+                EXPECT_EQ("my.example.com.", hostname->getValue());
+            } else {
+                ASSERT_FALSE(hostname)
+                    << "Host name is: " << hostname
+                    << ", it should have been null";
+            }
+        }
+    }
+
     /// @brief Checks the packet's FQDN option flags against a given mask
     ///
     /// @param pkt IPv4 packet whose FQDN flags should be checked.
@@ -358,12 +462,20 @@ public:
     }
 
 
-    // Processes the Hostname option in the client's message and returns
-    // the hostname option which would be sent to the client. It will
-    // throw NULL pointer if the hostname option is not to be included
-    // in the response.
-    OptionStringPtr processHostname(const Pkt4Ptr& query) {
-        if (!getHostnameOption(query)) {
+    /// @brief  Invokes Dhcpv4Srv::processHostname on the given packet
+    ///
+    /// Processes the Hostname option in the client's message and returns
+    /// the hostname option which would be sent to the client. It will
+    /// return empty if the hostname option is not to be included
+    /// server's response.
+    /// @param query - client packet to process
+    /// @param must_have_host - flag indicating whether or not the client
+    /// packet must contain the hostname option
+    ///
+    /// @return a pointer to the hostname option constructed by the server
+    OptionStringPtr processHostname(const Pkt4Ptr& query,
+                                    bool must_have_host = true) {
+        if (!getHostnameOption(query) && must_have_host) {
             ADD_FAILURE() << "Hostname option not carried in the query";
         }
 
@@ -383,7 +495,26 @@ public:
 
     }
 
-    // Verify that NameChangeRequest holds valid values.
+    ///@brief Verify that NameChangeRequest holds valid values.
+    ///
+    /// Pulls the NCR from the top of the send queue and checks it's content
+    ///  against a number of expected parameters.
+    ///
+    /// @param type - expected NCR change type, CHG_ADD or CHG_REMOVE
+    /// @param reverse - flag indicating whether or not the NCR specifies
+    /// reverse change
+    /// @param forward - flag indication whether or not the NCR specifies
+    /// forward change
+    /// @param addr  - expected lease address in the NCR
+    /// @param fqdn  - expected FQDN in the NCR
+    /// @param dhcid - expected DHCID in the NCR (comparison is performed only
+    /// if the value supplied is not empty):w
+    /// @param cltt - cltt value from the lease the NCR for which the NCR
+    /// was generated expected value for
+    /// @param len - expected lease length in the NCR
+    /// @param not_strict_expire_check - when true the comparison of the NCR
+    /// lease expiration time is conducted as greater than or equal to rather
+    /// equal to CLTT plus lease lenght.
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -408,9 +539,9 @@ public:
         }
         // In some cases, the test doesn't have access to the last transmission
         // time for the particular client. In such cases, the test can use the
-        // current time as cltt but the it may not check the lease expiration time
-        // for equality but rather check that the lease expiration time is not
-        // greater than the current time + lease lifetime.
+        // current time as cltt but the it may not check the lease expiration
+        // time for equality but rather check that the lease expiration time
+        // is not greater than the current time + lease lifetime.
         if (not_strict_expire_check) {
             EXPECT_GE(cltt + len, ncr->getLeaseExpiresOn());
         } else {
@@ -1279,6 +1410,45 @@ TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(expected_fqdn, lease->hostname_);
 
+}
+
+// Verifies that the replace-client-name behavior is correct for each of
+// the supported modes.
+TEST_F(NameDhcpv4SrvTest, replaceClientNameModeTest) {
+
+    // We pass mode labels in with enclosing quotes so we can also test
+    // unquoted boolean literals true/false
+    testReplaceClientNameMode("\"never\"",
+                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
+    testReplaceClientNameMode("\"never\"",
+                              CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
+
+    testReplaceClientNameMode("\"always\"",
+                              CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
+    testReplaceClientNameMode("\"always\"",
+                              CLIENT_NAME_PRESENT, NAME_REPLACED);
+
+    testReplaceClientNameMode("\"when-present\"",
+                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
+    testReplaceClientNameMode("\"when-present\"",
+                              CLIENT_NAME_PRESENT, NAME_REPLACED);
+
+    testReplaceClientNameMode("\"when-not-present\"",
+                              CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
+    testReplaceClientNameMode("\"when-not-present\"",
+                              CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
+
+    // Verify that boolean false produces the same result as RCM_NEVER
+    testReplaceClientNameMode("false",
+                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
+    testReplaceClientNameMode("false",
+                              CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
+
+    // Verify that boolean true produces the same result as RCM_WHEN_PRESENT
+    testReplaceClientNameMode("true",
+                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
+    testReplaceClientNameMode("true",
+                              CLIENT_NAME_PRESENT, NAME_REPLACED);
 }
 
 } // end of anonymous namespace

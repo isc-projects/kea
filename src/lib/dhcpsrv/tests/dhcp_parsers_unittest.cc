@@ -144,6 +144,24 @@ TEST_F(DhcpParserTest, stringParserTest) {
     parser.commit();
     EXPECT_NO_THROW((actual_value = storage->getParam(name)));
     EXPECT_EQ(test_value, actual_value);
+
+    // Verify that parser with accepts a boolean true element.
+    element = Element::create(true);
+    EXPECT_NO_THROW(parser.build(element));
+
+    // Verify that commit updates storage.
+    parser.commit();
+    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
+    EXPECT_EQ("true", actual_value);
+
+    // Verify that parser with accepts a boolean true element.
+    element = Element::create(false);
+    EXPECT_NO_THROW(parser.build(element));
+
+    // Verify that commit updates storage.
+    parser.commit();
+    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
+    EXPECT_EQ("false", actual_value);
 }
 
 /// @brief Check Uint32Parser basic functionality
@@ -1373,7 +1391,7 @@ TEST_F(ParseConfigTest, validD2Config) {
         "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : true, "
+        "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
         "     \"qualifying-suffix\" : \"test.suffix.\" "
         "    }"
@@ -1398,7 +1416,7 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
     EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
-    EXPECT_TRUE(d2_client_config->getReplaceClientName());
+    EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
 
@@ -1419,7 +1437,7 @@ TEST_F(ParseConfigTest, validD2Config) {
         "     \"always-include-fqdn\" : false, "
         "     \"override-no-update\" : false, "
         "     \"override-client-update\" : false, "
-        "     \"replace-client-name\" : false, "
+        "     \"replace-client-name\" : \"never\", "
         "     \"generated-prefix\" : \"\", "
         "     \"qualifying-suffix\" : \"\" "
         "    }"
@@ -1443,7 +1461,7 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_FALSE(d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_FALSE(d2_client_config->getOverrideNoUpdate());
     EXPECT_FALSE(d2_client_config->getOverrideClientUpdate());
-    EXPECT_FALSE(d2_client_config->getReplaceClientName());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("", d2_client_config->getQualifyingSuffix());
 }
@@ -1515,8 +1533,10 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
               d2_client_config->getOverrideNoUpdate());
     EXPECT_EQ(D2ClientConfig::DFT_OVERRIDE_CLIENT_UPDATE,
               d2_client_config->getOverrideClientUpdate());
-    EXPECT_EQ(D2ClientConfig::DFT_REPLACE_CLIENT_NAME,
-              d2_client_config->getReplaceClientName());
+    EXPECT_EQ(D2ClientConfig::
+              stringToReplaceClientNameMode(D2ClientConfig::
+                                            DFT_REPLACE_CLIENT_NAME_MODE),
+              d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ(D2ClientConfig::DFT_GENERATED_PREFIX,
               d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.",
@@ -1652,6 +1672,25 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" "
+        "    }"
+        "}",
+        // Invalid replace-client-name value
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"3001::5\", "
+        "     \"server-port\" : 3433, "
+        "     \"sender-ip\" : \"3001::5\", "
+        "     \"sender-port\" : 3434, "
+        "     \"max-queue-size\" : 2048, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : \"BOGUS\", "
         "     \"generated-prefix\" : \"test.prefix\", "
         "     \"qualifying-suffix\" : \"test.suffix.\" "
         "    }"
