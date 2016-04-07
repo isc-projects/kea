@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,6 +52,20 @@ public:
     static const uint16_t OVERRIDE_NO_UPDATE = 2;
     static const uint16_t OVERRIDE_CLIENT_UPDATE = 4;
     static const uint16_t REPLACE_CLIENT_NAME = 8;
+
+    // Enum used to specify whether a client (packet) should include
+    // the hostname option
+    enum ClientNameFlag {
+        CLIENT_NAME_PRESENT,
+        CLIENT_NAME_NOT_PRESENT
+    };
+
+    // Enum used to specify whether the server should replace/supply
+    // the hostname or not
+    enum ReplacementFlag {
+        NAME_REPLACED,
+        NAME_NOT_REPLACED
+    };
 
     // Type used to indicate whether or not forward updates are expected
     struct ExpFwd {
@@ -112,7 +126,9 @@ public:
                                   (mask & ALWAYS_INCLUDE_FQDN),
                                   (mask & OVERRIDE_NO_UPDATE),
                                   (mask & OVERRIDE_CLIENT_UPDATE),
-                                  (mask & REPLACE_CLIENT_NAME),
+                                  ((mask & REPLACE_CLIENT_NAME) ?
+                                   D2ClientConfig::RCM_WHEN_PRESENT
+                                   : D2ClientConfig::RCM_NEVER),
                                   "myhost", "example.com")));
         ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
         ASSERT_NO_THROW(srv_->startD2());
@@ -366,6 +382,84 @@ public:
             }
         }
     }
+
+    // Test that the server processes the FQDN option (or lack thereof)
+    // in a client request correctly, according to the replace-client-name
+    // mode configuration parameter.
+    //
+    // @param mode - value to use client-name-replacment parameter - for
+    // mode labels such as NEVER and ALWAYS must incluce enclosing quotes:
+    // "\"NEVER\"".  This allows us to also pass in boolean literals which
+    // are unquoted.
+    // @param client_name_flag - specifies whether or not the client request
+    // should contain a hostname option
+    // @param exp_replacement_flag - specifies whether or not the server is
+    // expected to replace (or supply) the FQDN/name in its response
+    void testReplaceClientNameMode(const char* mode,
+                                   enum ClientNameFlag client_name_flag,
+                                   enum ReplacementFlag exp_replacement_flag) {
+        // Configuration "template" with a replaceable mode parameter
+        const char* config_template =
+            "{ \"interfaces-config\": { \n"
+            "  \"interfaces\": [ \"eth0\" ] \n"
+            "}, \n"
+            "\"valid-lifetime\": 4000,  \n"
+            "\"preferred-lifetime\": 3000, \n"
+            "\"rebind-timer\": 2000,  \n"
+            "\"renew-timer\": 1000,  \n"
+            "\"subnet6\": [ {  \n"
+            "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], \n"
+            "    \"subnet\": \"2001:db8:1::/48\",  \n"
+            "    \"interface-id\": \"\", \n"
+            "    \"interface\": \"eth0\" \n"
+            " } ], \n"
+            "\"dhcp-ddns\": { \n"
+            "\"enable-updates\": true, \n"
+            "\"qualifying-suffix\": \"fake-suffix.isc.org.\", \n"
+            "\"replace-client-name\": %s \n"
+            "}} \n";
+
+        // Create the configuration and configure the server
+        char config_buf[1024];
+        sprintf(config_buf, config_template, mode);
+        configure(config_buf, *srv_);
+
+        // Build our client packet
+        Pkt6Ptr query;
+        if (client_name_flag == CLIENT_NAME_PRESENT) {
+            query = generateMessage(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S,
+                                    "my.example.com.", Option6ClientFqdn::FULL,
+                                    true);
+        } else {
+            query = generateMessageWithIds(DHCPV6_SOLICIT);
+        }
+
+        Pkt6Ptr answer = generateMessageWithIds(DHCPV6_ADVERTISE);
+
+        AllocEngine::ClientContext6 ctx;
+        ASSERT_NO_THROW(srv_->processClientFqdn(query, answer, ctx));
+
+        Option6ClientFqdnPtr answ_fqdn = boost::dynamic_pointer_cast<
+            Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
+
+        // Verify the contents (or lack thereof) of the FQDN
+        if (exp_replacement_flag == NAME_REPLACED) {
+            ASSERT_TRUE(answ_fqdn);
+            EXPECT_TRUE(answ_fqdn->getDomainName().empty());
+            EXPECT_EQ(Option6ClientFqdn::PARTIAL,
+                      answ_fqdn->getDomainNameType());
+        } else {
+            if (client_name_flag == CLIENT_NAME_PRESENT) {
+                ASSERT_TRUE(answ_fqdn);
+                EXPECT_EQ("my.example.com.", answ_fqdn->getDomainName());
+                EXPECT_EQ(Option6ClientFqdn::FULL,
+                          answ_fqdn->getDomainNameType());
+            } else {
+                ASSERT_FALSE(answ_fqdn);
+            }
+        }
+    }
+
 
     /// @brief Tests that the client's message holding an FQDN is processed
     /// and that lease is acquired.
@@ -731,7 +825,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
 }
 
 // Checks that calling queueNCR would not result in error if DDNS updates are
-// disabled. 
+// disabled.
 TEST_F(FqdnDhcpv6SrvTest, noRemovalsWhenDisabled) {
     // Disable DDNS updates.
     disableD2();
@@ -1231,6 +1325,46 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationDdnsDisabled) {
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
                        "alice.disabled.example.com.", 0,
                        IOAddress("2001:db8:1:1::babe"));
+}
+
+// Verifies that the replace-client-name behavior is correct for each of
+// the supported modes.
+TEST_F(FqdnDhcpv6SrvTest, replaceClientNameModeTest) {
+    isc::dhcp::test::IfaceMgrTestConfig test_config(true);
+
+    // We pass mode labels in with enclosing quotes so we can also test
+    // unquoted boolean literals true/false
+    testReplaceClientNameMode("\"never\"",
+                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
+    testReplaceClientNameMode("\"never\"",
+                              CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
+
+    testReplaceClientNameMode("\"always\"",
+                              CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
+    testReplaceClientNameMode("\"always\"",
+                              CLIENT_NAME_PRESENT, NAME_REPLACED);
+
+    testReplaceClientNameMode("\"when-present\"",
+                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
+    testReplaceClientNameMode("\"when-present\"",
+                              CLIENT_NAME_PRESENT, NAME_REPLACED);
+
+    testReplaceClientNameMode("\"when-not-present\"",
+                              CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
+    testReplaceClientNameMode("\"when-not-present\"",
+                              CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
+
+    // Verify that boolean false produces the same result as RCM_NEVER
+    testReplaceClientNameMode("false",
+                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
+    testReplaceClientNameMode("false",
+                              CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
+
+    // Verify that boolean true produces the same result as RCM_WHEN_PRESENT
+    testReplaceClientNameMode("true",
+                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
+    testReplaceClientNameMode("true",
+                              CLIENT_NAME_PRESENT, NAME_REPLACED);
 }
 
 }   // end of anonymous namespace

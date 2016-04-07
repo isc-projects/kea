@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -144,6 +144,12 @@ when the client doesn't provide any specific FQDN in its message
 to the server. The first argument includes the client and
 transaction identification information. The second argument includes
 the generated FQDN.
+
+% DHCP6_DDNS_GENERATE_FQDN %1: client did not send a FQDN option; FQDN will be
+generated for the client.
+This debug message is issued when the server did not receive a FQDN option
+from the client and client name replacement is enabled.  This provides a means
+to create DNS entries for unsophisticated clients.
 
 % DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL %1: failed to update the lease using address %2, after generating FQDN for a client, reason: %3
 This message indicates the failure when trying to update the lease and/or
