@@ -462,7 +462,7 @@ public:
     }
 
 
-    /// @brief  Invokes Dhcpsrv4::processHostname on the given packet
+    /// @brief  Invokes Dhcpv4Srv::processHostname on the given packet
     ///
     /// Processes the Hostname option in the client's message and returns
     /// the hostname option which would be sent to the client. It will
