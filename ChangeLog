@@ -14,7 +14,7 @@
 1102.	[func]		sar
 	Added access to the peer address, link address and option
 	information added by relays in a DHCPv6 message.
-	(Trac $4269, git tbd)
+	(Trac $4269, git bb00d9d205ee047961ba70417d7ce02c37d80ce7)
 
 1101.	[bug]		stephen
 	Made DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED a debug message as the
