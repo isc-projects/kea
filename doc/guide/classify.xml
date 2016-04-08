@@ -172,14 +172,14 @@ sub-option with code "code" from the DHCPv4 Relay Agent Information option
 <row>
   <entry>Message Type in DHCPv6 packet</entry>
   <entry>pkt6.msgtype</entry>
-<!--  <entry>'1'</entry>
+<!--  <entry>1</entry>
 -->
   <entry>The value of the message type field in the DHCPv6 packet.</entry>
 </row>
 <row>
   <entry>Transaction ID in DHCPv6 packet</entry>
   <entry>pkt6.transid</entry>
-<!--  <entry>'12345'</entry>
+<!--  <entry>12345</entry>
 -->
   <entry>The value of the transaction id in the DHCPv6 packet.</entry>
 </row>
@@ -226,9 +226,9 @@ sub-option with code "code" from the DHCPv4 Relay Agent Information option
       <para>
        "pkt6" refers to information from the client request.  To access any
        information from an intermediate relay use "relay6".  "pkt6.msgtype"
-       outputs the string representation of the integer value for the message
-       type, for example SOLICIT will be '1'.  "pkt6.transid" outputs the string
-       representation of the value of the transaction ID.
+       and "pkt6.transid" output a 4 byte binary string for the message type
+       or transaction id.  For example the message type SOLICIT will be
+       "0x00000001" or simply 1 as in "pkt6.msgtype == 1".
       </para>
 
       <para>

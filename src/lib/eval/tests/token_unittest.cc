@@ -977,14 +977,16 @@ TEST_F(TokenTest, pkt6Fields) {
     ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::MSGTYPE)));
     EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
     ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("1", values_.top());
+    uint32_t expected = htonl(1);
+    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
 
     // Check the transaction id field
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
     EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
     ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("12345", values_.top());
+    expected = htonl(12345);
+    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
 
     // Check that working with a v4 packet generates an error
     clearStack();
