@@ -10,8 +10,9 @@
 #include <dhcpsrv/mysql_connection.h>
 #include <gtest/gtest.h>
 
-// This holds statements to create and destroy the schema.
-#include "schema_mysql_copy.h"
+#include <fstream>
+#include <sstream>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -87,6 +88,28 @@ validMySQLConnectionString() {
 // tests will (should) fall over.
 void destroyMySQLSchema() {
     MySqlHolder mysql;
+    // @todo - replace this with list gleaned from create script
+    const char* destroy_statement[] = {
+        // Turning off referential integrity checks ensures tables get dropped
+        "SET SESSION FOREIGN_KEY_CHECKS = 0",
+        "DROP TABLE IF EXISTS lease4",
+        "DROP TABLE IF EXISTS lease6",
+        "DROP TABLE IF EXISTS lease6_types",
+        "DROP TABLE IF EXISTS lease_hwaddr_source",
+        "DROP TABLE IF EXISTS schema_version",
+        "DROP TABLE IF EXISTS ipv6_reservations",
+        "DROP TABLE IF EXISTS hosts",
+        "DROP TABLE IF EXISTS dhcp4_options",
+        "DROP TABLE IF EXISTS dhcp6_options",
+        "DROP TABLE IF EXISTS host_identifier_type",
+        "DROP TABLE IF EXISTS lease_state",
+        "DROP TRIGGER IF EXISTS host_BDEL",
+        "DROP PROCEDURE IF EXISTS lease4DumpHeader",
+        "DROP PROCEDURE IF EXISTS lease4DumpData",
+        "DROP PROCEDURE IF EXISTS lease6DumpHeader",
+        "DROP PROCEDURE IF EXISTS lease6DumpData",
+        NULL
+    };
 
     // Open database
     (void) mysql_real_connect(mysql, "localhost", "keatest",
@@ -100,24 +123,23 @@ void destroyMySQLSchema() {
 
 // @brief Create the Schema
 //
-// Creates all the tables in what is assumed to be an empty database.
+// Creates all the tables in what is assumed to be an empty database. If the
+// script fails, the invoking test will fail.  The output of stderr is 
+// suppressed unless the parameter, show_err is true.  The is done to 
+// suppress the mysql warning about passing the password in on the command
+// line, which otherwise mkes test output rather noisy.
 //
-// There is no error checking in this code: if it fails, one of the tests
-// will fall over.
-void createMySQLSchema() {
-    MySqlHolder mysql;
-
-    // Open database
-    (void) mysql_real_connect(mysql, "localhost", "keatest",
-                              "keatest", "keatest", 0, NULL, 0);
-
-    // Execute creation statements.
-    for (int i = 0; create_statement[i] != NULL; ++i) {
-        ASSERT_EQ(0, mysql_query(mysql, create_statement[i]))
-            << "Failed on statement " << i << ": " << create_statement[i]
-            << " error: " << mysql_error(mysql) << " (error code "
-            << mysql_errno(mysql) << ")";
+// @param show_err flag which governs whether or not stderr is suppressed.
+void createMySQLSchema(bool show_err) {
+    std::ostringstream cmd;
+    cmd << "mysql -N -B --user=keatest --password=keatest keatest";
+    if (!show_err) {
+        cmd << " 2>/dev/null ";
     }
+    cmd << " < " << TEST_ADMIN_SCRIPTS_DIR << "/mysql/dhcpdb_create.mysql";
+
+    int retval = std::system(cmd.str().c_str());
+    ASSERT_EQ(0, retval) << "createMySQLSchema failed";
 }
 
 };
