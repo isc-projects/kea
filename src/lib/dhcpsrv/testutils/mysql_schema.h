@@ -31,7 +31,7 @@ extern const char* INVALID_PASSWORD;
 ///
 /// There is no error checking in this code: if it fails, one of the tests
 /// will fall over.
-void createMySQLSchema();
+void createMySQLSchema(bool show_err=false);
 
 /// @brief Clear everything from the database
 ///

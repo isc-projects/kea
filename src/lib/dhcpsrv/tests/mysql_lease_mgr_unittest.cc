@@ -98,7 +98,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
     destroyMySQLSchema();
-    createMySQLSchema();
+    createMySQLSchema(true);
 
     // Check that lease manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
