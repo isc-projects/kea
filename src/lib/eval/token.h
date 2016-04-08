@@ -446,8 +446,10 @@ public:
 
 /// @brief Token that represents fields of DHCPv6 packet.
 ///
-/// For example in the expression pkt6.msgtype == "1"
-/// this token represents the message type of the DHCPv6 packet
+/// For example in the expression pkt6.msgtype == 1
+/// this token represents the message type of the DHCPv6 packet.
+/// The integer values are placed on the value stack as 4 byte
+/// strings.
 ///
 /// Currently supported fields are:
 /// - msgtype
