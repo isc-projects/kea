@@ -1,6 +1,7 @@
 SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS += -DTEST_ADMIN_SCRIPTS_DIR=\"$(abs_top_builddir)/src/bin/admin/scripts\"
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -14,7 +15,6 @@ noinst_LTLIBRARIES = libdhcpsrvtest.la
 libdhcpsrvtest_la_SOURCES  = config_result_check.cc config_result_check.h
 if HAVE_MYSQL
 libdhcpsrvtest_la_SOURCES += mysql_schema.cc mysql_schema.h
-libdhcpsrvtest_la_SOURCES += schema_mysql_copy.h
 endif
 
 libdhcpsrvtest_la_CXXFLAGS = $(AM_CXXFLAGS)
