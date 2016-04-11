@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,13 +34,9 @@ pgsql_wipe() {
     printf "Wiping whole database %s\n" $db_name
     export PGPASSWORD=$db_password
 
-    # Make a set of drop commands, one for each table owned by keatest
-    RESULT=`pgsql_execute "SELECT 'drop table if exists '||t.tablename || ' cascade;' as dcmd FROM pg_catalog.pg_tables t WHERE t.tableowner = 'keatest';"`
-    assert_eq 0 $? "pgsql_wipe select failed, expected exit code: %d, actual: %d"
-
-    # Now execute the set of drop commands from the result set returned
-    RESULT=`pgsql_execute "$RESULT"`
-    assert_eq 0 $? "pgsql_wipe drop failed, expected exit code: %d, actual: %d"
+    drop_script="@abs_top_srcdir@/src/bin/admin/scripts/pgsql/dhcpdb_drop.pgsql"
+    cat $drop_script | psql --set ON_ERROR_STOP=1 -A -t -q -U keatest -d keatest >/dev/null 2>&1
+    assert_eq 0 $?  "pgsql_wipe drop failed, expected exit code: %d, actual: %d"
 }
 
 pgsql_lease_init_test() {

@@ -97,7 +97,7 @@ public:
 TEST(MySqlOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
-    destroyMySQLSchema();
+    destroyMySQLSchema(true);
     createMySQLSchema(true);
 
     // Check that lease manager open the database opens correctly and tidy up.
@@ -147,7 +147,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
         NoDatabaseName);
 
     // Tidy up after the test
-    destroyMySQLSchema();
+    destroyMySQLSchema(true);
 }
 
 /// @brief Check the getType() method

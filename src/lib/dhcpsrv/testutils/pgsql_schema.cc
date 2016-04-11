@@ -30,33 +30,9 @@ validPgSQLConnectionString() {
                              VALID_USER, VALID_PASSWORD));
 }
 
-void destroyPgSQLSchema() {
-    // @todo - replace this call to run drop script once the script exists
-    const char* destroy_statement[] = {
-        "DROP TABLE lease4 CASCADE",
-        "DROP TABLE LEASE6 CASCADE",
-        "DROP TABLE lease6_types CASCADE",
-        "DROP TABLE schema_version CASCADE",
-        "DROP TABLE lease_state CASCADE",
-        "DROP FUNCTION lease4DumpHeader()",
-        "DROP FUNCTION lease4DumpData()",
-        "DROP FUNCTION lease6DumpHeader()",
-        "DROP FUNCTION lease6DumpData()",
-        NULL
-    };
-
-    // Open database
-    PGconn* conn = 0;
-    conn = PQconnectdb("host = 'localhost' user = 'keatest'"
-                       " password = 'keatest' dbname = 'keatest'");
-
-    // Get rid of everything in it.
-    for (int i = 0; destroy_statement[i] != NULL; ++i) {
-        PGresult* r = PQexec(conn, destroy_statement[i]);
-        PQclear(r);
-    }
-
-    PQfinish(conn);
+void destroyPgSQLSchema(bool show_err) {
+    runPgSQLScript(TEST_ADMIN_SCRIPTS_DIR, "pgsql/dhcpdb_drop.pgsql",
+                   show_err);
 }
 
 void createPgSQLSchema(bool show_err) {

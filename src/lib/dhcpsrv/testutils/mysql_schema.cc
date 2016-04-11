@@ -29,39 +29,8 @@ validMySQLConnectionString() {
                              VALID_USER, VALID_PASSWORD));
 }
 
-void destroyMySQLSchema() {
-    MySqlHolder mysql;
-    // @todo - replace this with call to drop script once it exists
-    const char* destroy_statement[] = {
-        // Turning off referential integrity checks ensures tables get dropped
-        "SET SESSION FOREIGN_KEY_CHECKS = 0",
-        "DROP TABLE IF EXISTS lease4",
-        "DROP TABLE IF EXISTS lease6",
-        "DROP TABLE IF EXISTS lease6_types",
-        "DROP TABLE IF EXISTS lease_hwaddr_source",
-        "DROP TABLE IF EXISTS schema_version",
-        "DROP TABLE IF EXISTS ipv6_reservations",
-        "DROP TABLE IF EXISTS hosts",
-        "DROP TABLE IF EXISTS dhcp4_options",
-        "DROP TABLE IF EXISTS dhcp6_options",
-        "DROP TABLE IF EXISTS host_identifier_type",
-        "DROP TABLE IF EXISTS lease_state",
-        "DROP TRIGGER IF EXISTS host_BDEL",
-        "DROP PROCEDURE IF EXISTS lease4DumpHeader",
-        "DROP PROCEDURE IF EXISTS lease4DumpData",
-        "DROP PROCEDURE IF EXISTS lease6DumpHeader",
-        "DROP PROCEDURE IF EXISTS lease6DumpData",
-        NULL
-    };
-
-    // Open database
-    (void) mysql_real_connect(mysql, "localhost", "keatest",
-                              "keatest", "keatest", 0, NULL, 0);
-
-    // Get rid of everything in it.
-    for (int i = 0; destroy_statement[i] != NULL; ++i) {
-        (void) mysql_query(mysql, destroy_statement[i]);
-    }
+void destroyMySQLSchema(bool show_err) {
+    runMySQLScript(TEST_ADMIN_SCRIPTS_DIR, "mysql/dhcpdb_drop.mysql", show_err);
 }
 
 void createMySQLSchema(bool show_err) {
