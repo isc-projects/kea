@@ -24,35 +24,42 @@ std::string validMySQLConnectionString();
 
 /// @brief Clear everything from the database
 ///
-/// There is no error checking in this code: if something fails, one of the
-/// tests will (should) fall over.
-void destroyMySQLSchema();
+/// Submits the current schema drop script:
+///
+///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_drop.mysql
+///
+/// to the unit test MySQL database. If the script fails, the invoking test
+/// will fail. The output of stderr is suppressed unless the parameter,
+/// show_err is true.
+///
+/// @param show_err flag which governs whether or not stderr is suppressed.
+void destroyMySQLSchema(bool show_err = false);
 
-// @brief Run a MySQL SQL script against the Postgresql unit test database
-//
-// Submits the given SQL script to MySQL via mysql CLI. The output of
-// stderr is suppressed unless the parameter, show_err is true.  The is done
-// to suppress warnings that might otherwise make test output needlessly
-// noisy.  A gtest assertion occurs if the script fails to execute.
-//
-// @param path - path (if not blank) of the script to execute
-// @param script_name - file name of the path to execute
-// @param show_err flag which governs whether or not stderr is suppressed.
+/// @brief Create the MySQL Schema
+///
+/// Submits the current schema creation script:
+///
+///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_create.mysql
+///
+/// to the unit test MySQL database. If the script fails, the invoking test
+/// will fail. The output of stderr is suppressed unless the parameter,
+/// show_err is true.
+///
+/// @param show_err flag which governs whether or not stderr is suppressed.
+void createMySQLSchema(bool show_err = false);
+
+/// @brief Run a MySQL SQL script against the Postgresql unit test database
+///
+/// Submits the given SQL script to MySQL via mysql CLI. The output of
+/// stderr is suppressed unless the parameter, show_err is true.  The is done
+/// to suppress warnings that might otherwise make test output needlessly
+/// noisy.  A gtest assertion occurs if the script fails to execute.
+///
+/// @param path - path (if not blank) of the script to execute
+/// @param script_name - file name of the path to execute
+/// @param show_err flag which governs whether or not stderr is suppressed.
 void runMySQLScript(const std::string& path, const std::string& script_name,
                     bool show_err);
-
-// @brief Create the MySQL Schema
-//
-// Submits the current schema creation script:
-//
-//  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_create.mysql
-//
-// to the unit test MySQL database. If the script fails, the invoking test
-// will fail. The output of stderr is suppressed unless the parameter,
-// show_err is true.
-//
-// @param show_err flag which governs whether or not stderr is suppressed.
-void createMySQLSchema(bool show_err = false);
 
 };
 };
