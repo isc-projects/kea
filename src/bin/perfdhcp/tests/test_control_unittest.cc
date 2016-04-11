@@ -69,6 +69,9 @@ public:
         uint32_t transid_; ///< Last generated transaction id.
     };
 
+    /// \brief Pointer to incremental generator.
+    typedef boost::shared_ptr<IncrementalGenerator> IncrementalGeneratorPtr;
+
     /// \brief Sets the due times for sending Solicit, Renew and Release.
     ///
     /// There are three class members that hold the due time for sending DHCP
@@ -475,27 +478,28 @@ public:
         // This is important because we need to simulate responses
         // from the server and use the same transaction ids as in
         // packets sent by client.
-        TestControl::NumberGeneratorPtr
+        NakedTestControl::IncrementalGeneratorPtr
             generator(new NakedTestControl::IncrementalGenerator());
         tc.setTransidGenerator(generator);
         // Socket is needed to send packets through the interface.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
         TestControl::TestControlSocket sock(sock_handle);
-        uint32_t transid = 0;
         for (int i = 0; i < iterations_num; ++i) {
+            // Get next transaction id, without actually using it. The same
+            // id wll be used by the TestControl class for DHCPDISCOVER.
+            uint32_t transid = generator->getNext();
             if (use_templates) {
                 ASSERT_NO_THROW(tc.sendDiscover4(sock, tc.getTemplateBuffer(0)));
             } else {
                 ASSERT_NO_THROW(tc.sendDiscover4(sock));
             }
-            ++transid;
+
             // Do not simulate responses for packets later
             // that specified as receive_num. This simulates
             // packet drops.
             if (i < receive_num) {
                 boost::shared_ptr<Pkt4> offer_pkt4(createOfferPkt4(transid));
                 ASSERT_NO_THROW(tc.processReceivedPacket4(sock, offer_pkt4));
-                ++transid;
             }
             if (tc.checkExitConditions()) {
                 iterations_performed = i + 1;
@@ -1387,7 +1391,7 @@ TEST_F(TestControlTest, Packet4Exchange) {
     EXPECT_EQ(10, iterations_performed);
 
     // With the following command line we restrict the maximum
-    // number of dropped packets to 20% of all.
+    // number of dropped packets to 10% of all.
     // Use templates for this test.
     processCmdLine("perfdhcp -l " + loopback_iface
                    + " -r 100 -R 20 -n 20 -D 10% -L 10547"
