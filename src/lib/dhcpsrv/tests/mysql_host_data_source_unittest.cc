@@ -125,21 +125,21 @@ TEST(MySqlHostDataSource, OpenDatabase) {
 
     // Check that invalid login data causes an exception.
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
-        VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
-        VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
-        VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
-        VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
 
     // Check for missing parameters
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
-        VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 
     // Tidy up after the test
