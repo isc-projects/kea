@@ -30,24 +30,10 @@ keaadmin=@abs_top_builddir@/src/bin/admin/kea-admin
 mysql_wipe() {
     printf "Wiping whole database %s\n" $db_name
 
-    # First we build the list of drop table commands
-    # We don't bother with "cascade" because as of MySQL
-    # 5.1 it is only there to ease porting, it doesn't
-    # actually do anything.
-    qry="\
-SELECT CONCAT('DROP TABLE ', table_schema, '.', table_name, ';') \
-FROM information_schema.tables \
-WHERE table_schema = 'keatest';"
-
-    drop_sql=`mysql_execute "${qry}"`
+    drop_script="@abs_top_srcdir@/src/bin/admin/scripts/mysql/dhcpdb_drop.mysql"
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 < $drop_script
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "mysql-wipe: table query failed, exit code %d, expected %d"
 
-    # We need to turn off referrential integrity checks so tables
-    # are dropped regardless of whether they are used in foreign keys.
-    # (This is what cascade would normally do)
-    mysql_execute "SET SESSION FOREIGN_KEY_CHECKS = 0;$drop_sql"
-    ERRCODE=$?
     assert_eq 0 $ERRCODE "mysql-wipe: drop table sql failed, exit code %d, expected %d"
 }
 

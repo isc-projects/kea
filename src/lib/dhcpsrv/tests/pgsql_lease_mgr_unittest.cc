@@ -97,8 +97,8 @@ public:
 TEST(PgSqlOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
-    destroyPgSQLSchema();
-    createPgSQLSchema();
+    destroyPgSQLSchema(true);
+    createPgSQLSchema(true);
 
     // Check that lease manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
@@ -153,7 +153,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
         NoDatabaseName);
 
     // Tidy up after the test
-    destroyPgSQLSchema();
+    destroyPgSQLSchema(true);
 }
 
 /// @brief Check the getType() method
