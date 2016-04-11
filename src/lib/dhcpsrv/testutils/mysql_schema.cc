@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #include <string>
 #include <mysql.h>
 #include <dhcpsrv/mysql_connection.h>
+#include <dhcpsrv/testutils/mysql_schema.h>
 #include <gtest/gtest.h>
 
 #include <fstream>
@@ -20,75 +21,17 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-// Connection strings.
-// Database: keatest
-// Host: localhost
-// Username: keatest
-// Password: keatest
-const char* VALID_TYPE = "type=mysql";
-const char* INVALID_TYPE = "type=unknown";
-const char* VALID_NAME = "name=keatest";
-const char* INVALID_NAME = "name=invalidname";
-const char* VALID_HOST = "host=localhost";
-const char* INVALID_HOST = "host=invalidhost";
-const char* VALID_USER = "user=keatest";
-const char* INVALID_USER = "user=invaliduser";
-const char* VALID_PASSWORD = "password=keatest";
-const char* INVALID_PASSWORD = "password=invalid";
+const char* MYSQL_VALID_TYPE = "type=mysql";
 
-string connectionString(const char* type, const char* name, const char* host,
-                        const char* user, const char* password) {
-    const string space = " ";
-    string result = "";
-
-    if (type != NULL) {
-        result += string(type);
-    }
-    if (name != NULL) {
-        if (! result.empty()) {
-            result += space;
-        }
-        result += string(name);
-    }
-
-    if (host != NULL) {
-        if (! result.empty()) {
-            result += space;
-        }
-        result += string(host);
-    }
-
-    if (user != NULL) {
-        if (! result.empty()) {
-            result += space;
-        }
-        result += string(user);
-    }
-
-    if (password != NULL) {
-        if (! result.empty()) {
-            result += space;
-        }
-        result += string(password);
-    }
-
-    return (result);
-}
-
-// Return valid connection string
 string
 validMySQLConnectionString() {
-    return (connectionString(VALID_TYPE, VALID_NAME, VALID_HOST,
+    return (connectionString(MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST,
                              VALID_USER, VALID_PASSWORD));
 }
 
-// @brief Clear everything from the database
-//
-// There is no error checking in this code: if something fails, one of the
-// tests will (should) fall over.
 void destroyMySQLSchema() {
     MySqlHolder mysql;
-    // @todo - replace this with list gleaned from create script
+    // @todo - replace this with call to drop script once it exists
     const char* destroy_statement[] = {
         // Turning off referential integrity checks ensures tables get dropped
         "SET SESSION FOREIGN_KEY_CHECKS = 0",
@@ -121,26 +64,29 @@ void destroyMySQLSchema() {
     }
 }
 
-// @brief Create the Schema
-//
-// Creates all the tables in what is assumed to be an empty database. If the
-// script fails, the invoking test will fail.  The output of stderr is 
-// suppressed unless the parameter, show_err is true.  The is done to 
-// suppress the mysql warning about passing the password in on the command
-// line, which otherwise mkes test output rather noisy.
-//
-// @param show_err flag which governs whether or not stderr is suppressed.
 void createMySQLSchema(bool show_err) {
+    runMySQLScript(TEST_ADMIN_SCRIPTS_DIR, "mysql/dhcpdb_create.mysql",
+                   show_err);
+}
+
+void runMySQLScript(const std::string& path, const std::string& script_name,
+                    bool show_err) {
     std::ostringstream cmd;
     cmd << "mysql -N -B --user=keatest --password=keatest keatest";
     if (!show_err) {
         cmd << " 2>/dev/null ";
     }
-    cmd << " < " << TEST_ADMIN_SCRIPTS_DIR << "/mysql/dhcpdb_create.mysql";
+
+    if (!path.empty()) {
+        cmd << " < " << path << "/";
+    }
+
+    cmd << script_name;
 
     int retval = std::system(cmd.str().c_str());
-    ASSERT_EQ(0, retval) << "createMySQLSchema failed";
+    ASSERT_EQ(0, retval) << "runMySQLSchema failed:" << cmd.str();
 }
+
 
 };
 };
