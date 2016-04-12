@@ -1699,7 +1699,8 @@ void
 TestControl::sendRequest4(const TestControlSocket& socket,
                           const dhcp::Pkt4Ptr& discover_pkt4,
                           const dhcp::Pkt4Ptr& offer_pkt4) {
-    const uint32_t transid = generateTransid();
+    // Use the same transaction id as the one used in the discovery packet.
+    const uint32_t transid = discover_pkt4->getTransid();
     Pkt4Ptr pkt4(new Pkt4(DHCPREQUEST, transid));
 
     // Use first flags indicates that we want to use the server
@@ -1765,8 +1766,8 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     // Get the second argument if multiple the same arguments specified
     // in the command line. Second one refers to REQUEST packets.
     const uint8_t arg_idx = 1;
-    // Generate new transaction id.
-    const uint32_t transid = generateTransid();
+    // Use the same transaction id as the one used in the discovery packet.
+    const uint32_t transid = discover_pkt4->getTransid();
     // Get transaction id offset.
     size_t transid_offset = getTransactionIdOffset(arg_idx);
     // Get the offset of MAC's last octet.
