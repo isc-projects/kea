@@ -1,4 +1,4 @@
-SUBDIRS = lib bin hooks
+SUBDIRS = share lib bin hooks
 
 EXTRA_DIST = \
 	cppcheck-suppress.lst		\

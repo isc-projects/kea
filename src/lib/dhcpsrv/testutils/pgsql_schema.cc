@@ -31,12 +31,12 @@ validPgSQLConnectionString() {
 }
 
 void destroyPgSQLSchema(bool show_err) {
-    runPgSQLScript(TEST_ADMIN_SCRIPTS_DIR, "pgsql/dhcpdb_drop.pgsql",
+    runPgSQLScript(DATABASE_SCRIPTS_DIR, "pgsql/dhcpdb_drop.pgsql",
                    show_err);
 }
 
 void createPgSQLSchema(bool show_err) {
-    runPgSQLScript(TEST_ADMIN_SCRIPTS_DIR, "pgsql/dhcpdb_create.pgsql",
+    runPgSQLScript(DATABASE_SCRIPTS_DIR, "pgsql/dhcpdb_create.pgsql",
                    show_err);
 }
 
