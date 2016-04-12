@@ -1,3 +1,8 @@
+1105.	[bug]		pallotron
+	perfdhcp uses the same transaction id throughout the DORA
+	exchange to adhere with RFC 2131.
+	(github #19, git d260a70d6aa0baecd68131bc35f58f097aa77bcc)
+
 1104.	[func]		tmark
 	The DDNS parameter, replace-client-name, has been changed from a boolean
 	to list of modes, which provides greater flexibility in when the Kea 
