@@ -30,11 +30,11 @@ validMySQLConnectionString() {
 }
 
 void destroyMySQLSchema(bool show_err) {
-    runMySQLScript(TEST_ADMIN_SCRIPTS_DIR, "mysql/dhcpdb_drop.mysql", show_err);
+    runMySQLScript(DATABASE_SCRIPTS_DIR, "mysql/dhcpdb_drop.mysql", show_err);
 }
 
 void createMySQLSchema(bool show_err) {
-    runMySQLScript(TEST_ADMIN_SCRIPTS_DIR, "mysql/dhcpdb_create.mysql",
+    runMySQLScript(DATABASE_SCRIPTS_DIR, "mysql/dhcpdb_create.mysql",
                    show_err);
 }
 
