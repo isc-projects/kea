@@ -1649,6 +1649,8 @@ TEST_F(AllocEngine4Test, findReservation) {
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("0.0.0.0"), false, false,
                                     "", false);
+    ctx.host_identifiers_[Host::IDENT_HWADDR] = hwaddr_->hwaddr_;
+    ctx.host_identifiers_[Host::IDENT_DUID] = clientid_->getDuid();
 
     // There is no reservation in the database so no host should be
     // retruned.
