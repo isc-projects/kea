@@ -309,7 +309,7 @@ AllocEngine::ClientContext6::ClientContext6()
     : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
       hints_(), fwd_dns_update_(false), rev_dns_update_(false), hostname_(""),
       callout_handle_(), fake_allocation_(false), old_leases_(), host_(),
-      query_(), ia_rsp_() {
+      query_(), ia_rsp_(), host_identifiers_() {
 }
 
 AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const DuidPtr& duid,
@@ -322,7 +322,7 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const Duid
     subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
     hints_(), fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
     hostname_(hostname), fake_allocation_(fake_allocation),
-    old_leases_(), host_(), query_(), ia_rsp_() {
+    old_leases_(), host_(), query_(), ia_rsp_(), host_identifiers_() {
 
     static asiolink::IOAddress any("::");
 
@@ -331,6 +331,11 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const Duid
     }
     // callout_handle, host pointers initiated to NULL by their
     // respective constructors.
+
+    // Initialize host identifiers.
+    if (duid) {
+        host_identifiers_[Host::IDENT_DUID] = duid->getDuid();
+    }
 }
 
 
@@ -339,6 +344,8 @@ void AllocEngine::findReservation(ClientContext6& ctx) const {
         return;
     }
 
+    ctx.host_.reset();
+
     // Check which host reservation mode is supported in this subnet.
     Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
 
@@ -346,11 +353,15 @@ void AllocEngine::findReservation(ClientContext6& ctx) const {
     // host info only if reservations are not disabled.
     if (hr_mode != Subnet::HR_DISABLED) {
 
-        ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
-                                             ctx.hwaddr_);
-        } else {
-        // Let's explicitly set it to NULL if reservations are disabled.
-        ctx.host_.reset();
+        BOOST_FOREACH(const IdentifierPair& id, ctx.host_identifiers_) {
+            ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(),
+                                                 id.first, &id.second[0],
+                                                 id.second.size());
+            // If we found matching host, return.
+            if (ctx.host_) {
+                return;
+            }
+        }
     }
 }
 
@@ -2049,7 +2060,8 @@ AllocEngine::ClientContext4::ClientContext4()
       requested_address_(IOAddress::IPV4_ZERO_ADDRESS()),
       fwd_dns_update_(false), rev_dns_update_(false),
       hostname_(""), callout_handle_(), fake_allocation_(false),
-      old_lease_(), host_(), conflicting_lease_(), query_() {
+      old_lease_(), host_(), conflicting_lease_(), query_(),
+      host_identifiers_() {
 }
 
 AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
@@ -2064,7 +2076,13 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
       requested_address_(requested_addr),
       fwd_dns_update_(fwd_dns_update), rev_dns_update_(rev_dns_update),
       hostname_(hostname), callout_handle_(),
-      fake_allocation_(fake_allocation), old_lease_(), host_() {
+      fake_allocation_(fake_allocation), old_lease_(), host_(),
+      host_identifiers_() {
+
+    // Initialize host identifiers.
+    if (hwaddr) {
+        host_identifiers_[Host::IDENT_HWADDR] = hwaddr->hwaddr_;
+    }
 }
 
 Lease4Ptr
@@ -2109,10 +2127,15 @@ AllocEngine::findReservation(ClientContext4& ctx) {
         // Check if there is a host reseravtion for this client. Attempt to
         // get host information
         if (hr_mode != Subnet::HR_DISABLED) {
-            // This method should handle the case when there is neither hwaddr
-            // nor clientid_ available and simply return NULL.
-            ctx.host_ = HostMgr::instance().get4(ctx.subnet_->getID(), ctx.hwaddr_,
-                                                 ctx.clientid_);
+            BOOST_FOREACH(const IdentifierPair& id, ctx.host_identifiers_) {
+                ctx.host_ = HostMgr::instance().get4(ctx.subnet_->getID(),
+                                                     id.first, &id.second[0],
+                                                     id.second.size());
+                // If we found matching host, return.
+                if (ctx.host_) {
+                    return;
+                }
+            }
         }
     }
 }

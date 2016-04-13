@@ -276,9 +276,20 @@ AllocEngine::ClientContext6
 Dhcpv6Srv::createContext(const Pkt6Ptr& pkt) {
     AllocEngine::ClientContext6 ctx;
     ctx.subnet_ = selectSubnet(pkt);
-    ctx.duid_ = pkt->getClientId();
-    ctx.hwaddr_ = getMAC(pkt);
     ctx.query_ = pkt;
+
+    // Collect host identifiers.
+    // DUID
+    ctx.duid_ = pkt->getClientId();
+    if (ctx.duid_) {
+        ctx.host_identifiers_[Host::IDENT_DUID] = ctx.duid_->getDuid();
+    }
+    // HW Address.
+    ctx.hwaddr_ = getMAC(pkt);
+    if (ctx.hwaddr_) {
+        ctx.host_identifiers_[Host::IDENT_HWADDR] = ctx.hwaddr_->hwaddr_;
+    }
+    // And find a host reservation using those identifiers.
     alloc_engine_->findReservation(ctx);
 
     return (ctx);
@@ -1321,6 +1332,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
     ctx.query_ = orig_ctx.query_;
+    ctx.host_identifiers_ = orig_ctx.host_identifiers_;
 
     Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 
@@ -1442,6 +1454,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
     ctx.query_ = orig_ctx.query_;
+    ctx.host_identifiers_ = orig_ctx.host_identifiers_;
 
     Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 

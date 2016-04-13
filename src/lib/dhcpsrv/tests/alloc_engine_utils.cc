@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -270,6 +270,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, hint, type,
                                     false, false, "", fake);
     ctx.hwaddr_ = hwaddr_;
+    ctx.host_identifiers_[Host::IDENT_HWADDR] = hwaddr_->hwaddr_;
     ctx.query_.reset(new Pkt6(fake ? DHCPV6_SOLICIT : DHCPV6_REQUEST, 1234));
 
     findReservation(*engine, ctx);

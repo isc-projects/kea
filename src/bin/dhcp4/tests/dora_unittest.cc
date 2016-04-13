@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -125,6 +125,14 @@ const char* DORA_CONFIGS[] = {
         "       {"
         "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
         "         \"ip-address\": \"10.0.0.7\""
+        "       },"
+        "       {"
+        "         \"duid\": \"01:02:03:04:05\","
+        "         \"ip-address\": \"10.0.0.8\""
+        "       },"
+        "       {"
+        "         \"circuit-id\": \"'charter950'\","
+        "         \"ip-address\": \"10.0.0.9\""
         "       }"
         "    ]"
         "} ]"
@@ -686,6 +694,31 @@ TEST_F(DORATest, reservation) {
     ASSERT_TRUE(subnet);
     // Make sure that the address has been allocated from the dynamic pool.
     ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, clientB.config_.lease_.addr_));
+}
+
+// This test checks that it is possible to make a reservation by
+// circuit-id inserted by the relay agent..
+TEST_F(DORATest, reservationByCircuitId) {
+    // Client A is a one which will have a reservation.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Use relay agent so as the circuit-id can be inserted.
+    client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
+    // Specify circuit-id.
+    client.setCircuitId("charter950");
+
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[2], *client.getServer());
+    // Client A performs 4-way exchange and should obtain a reserved
+    // address.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("10.0.0.9", client.config_.lease_.addr_.toText());
 }
 
 // This test checks that setting the match-client-id value to false causes
