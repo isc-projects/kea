@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -410,6 +410,13 @@ public:
     /// @param iface_name Interface name.
     void setInterface(const std::string& iface_name) {
         iface_name_ = iface_name;
+    }
+
+    /// @brief Sets link local address used by the client.
+    ///
+    /// @param link_local New link local address.
+    void setLinkLocal(const asiolink::IOAddress& link_local) {
+        link_local_ = link_local;
     }
 
     /// @brief Set an address hint to be sent to a server.

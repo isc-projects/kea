@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,6 +23,7 @@
 #include <boost/noncopyable.hpp>
 
 #include <map>
+#include <utility>
 
 namespace isc {
 namespace dhcp {
@@ -251,6 +252,12 @@ public:
     /// @brief Container for client's hints.
     typedef std::vector<HintType> HintContainer;
 
+    /// @brief A tuple holding host identifier type and value.
+    typedef std::pair<Host::IdentifierType, std::vector<uint8_t> > IdentifierPair;
+
+    /// @brief Map holding values to be used as host identifiers.
+    typedef std::map<Host::IdentifierType, std::vector<uint8_t> > IdentifierMap;
+
     /// @brief Context information for the DHCPv6 leases allocation.
     ///
     /// This structure holds a set of information provided by the DHCPv6
@@ -349,6 +356,10 @@ public:
 
         /// @brief A pointer to the IA_NA/IA_PD option to be sent in response
         Option6IAPtr ia_rsp_;
+
+        /// @brief A map holding host identifiers extracted from a message
+        /// received by the server.
+        IdentifierMap host_identifiers_;
 
         /// @brief Default constructor.
         ClientContext6();
@@ -970,6 +981,10 @@ public:
         /// This is used in logging to retrieve the client's and the
         /// transaction identification information.
         Pkt4Ptr query_;
+
+        /// @brief A map holding host identifiers extracted from a message
+        /// received by the server.
+        IdentifierMap host_identifiers_;
 
         /// @brief Default constructor.
         ClientContext4();
