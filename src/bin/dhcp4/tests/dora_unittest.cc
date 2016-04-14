@@ -57,6 +57,11 @@ namespace {
 ///   - 1 pool: 10.0.0.10-10.0.0.100
 ///   - match-client-id flag is set to false, thus the server
 ///     uses HW address for lease lookup, rather than client id
+///
+/// - Configuration 4:
+///   - The same as configuration 2, but using different values in
+///     'host-reservation-identifiers'
+///
 const char* DORA_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces-config\": {"
@@ -154,6 +159,32 @@ const char* DORA_CONFIGS[] = {
         "    } ]"
         " } ]"
     "}",
+
+// Configuration 4
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"host-reservation-identifiers\": [ \"circuit-id\", \"hw-address\" ],"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"reservations\": [ "
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"ip-address\": \"10.0.0.7\""
+        "       },"
+        "       {"
+        "         \"duid\": \"01:02:03:04:05\","
+        "         \"ip-address\": \"10.0.0.8\""
+        "       },"
+        "       {"
+        "         \"circuit-id\": \"'charter950'\","
+        "         \"ip-address\": \"10.0.0.9\""
+        "       }"
+        "    ]"
+        "} ]"
+    "}"
 };
 
 /// @brief Test fixture class for testing 4-way (DORA) exchanges.
@@ -697,9 +728,8 @@ TEST_F(DORATest, reservation) {
 }
 
 // This test checks that it is possible to make a reservation by
-// circuit-id inserted by the relay agent..
+// circuit-id inserted by the relay agent.
 TEST_F(DORATest, reservationByCircuitId) {
-    // Client A is a one which will have a reservation.
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Use relay agent so as the circuit-id can be inserted.
     client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
@@ -719,6 +749,47 @@ TEST_F(DORATest, reservationByCircuitId) {
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Make sure that the client has got the lease for the reserved address.
     ASSERT_EQ("10.0.0.9", client.config_.lease_.addr_.toText());
+}
+
+// This test verifies that order in which host identifiers are used to
+// retrieve host reservations can be controlled.
+TEST_F(DORATest, hostIdentifiersOrder) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+    // Use relay agent so as the circuit-id can be inserted.
+    client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
+    // Specify circuit-id.
+    client.setCircuitId("charter950");
+
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[2], *client.getServer());
+    // Perform 4-way exchange to obtain reserved address.
+    // The client has in fact two reserved addresses, but the one assigned
+    // should be by hw-address.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("10.0.0.7", client.config_.lease_.addr_.toText());
+
+    // Reconfigure the server to change the preference order of the
+    // host identifiers. The 'circuit-id' should now take precedence over
+    // the hw-address.
+    configure(DORA_CONFIGS[4], *client.getServer());
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("10.0.0.9", client.config_.lease_.addr_.toText());
+
 }
 
 // This test checks that setting the match-client-id value to false causes
