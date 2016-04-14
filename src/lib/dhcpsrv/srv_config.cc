@@ -25,6 +25,8 @@ SrvConfig::SrvConfig()
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
       cfg_expiration_(new CfgExpiration()), cfg_duid_(new CfgDUID()),
       cfg_db_access_(new CfgDbAccess()),
+      cfg_host_reservations4_(CfgHostReservations::createConfig4()),
+      cfg_host_reservations6_(CfgHostReservations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0) {
 }
@@ -36,6 +38,8 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
       cfg_expiration_(new CfgExpiration()), cfg_duid_(new CfgDUID()),
       cfg_db_access_(new CfgDbAccess()),
+      cfg_host_reservations4_(CfgHostReservations::createConfig4()),
+      cfg_host_reservations6_(CfgHostReservations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0) {
 }

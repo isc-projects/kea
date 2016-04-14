@@ -183,6 +183,10 @@ public:
         IDENT_CIRCUIT_ID
     };
 
+    /// @brief Constant pointing to the last identifier of the
+    /// @ref IdentifierType enumeration.
+    static const IdentifierType LAST_IDENTIFIER_TYPE = IDENT_CIRCUIT_ID;
+
     /// @brief Constructor.
     ///
     /// Creates a @c Host object using an identifier in a binary format. This
