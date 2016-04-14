@@ -23,6 +23,9 @@ namespace {
 ///   Single subnet with two reservations, one with a hostname, one without
 /// - Configuration 1:
 ///   Multiple reservations using different host identifiers.
+/// - Configuration 2:
+///   Same as configuration 1 but 'host-reservation-identifiers' specified
+///   in non-default order.
 const char* CONFIGS[] = {
     // Configuration 0:
     "{ "
@@ -76,8 +79,35 @@ const char* CONFIGS[] = {
         "        \"ip-addresses\": [ \"2001:db8:1::2\" ]"
         "    } ]"
         " } ]"
-    "}"
+    "}",
 
+    // Configuration 2:
+    "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"host-reservation-identifiers\": [ \"duid\", \"hw-address\" ],"
+        "\"valid-lifetime\": 4000, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"mac-sources\": [ \"ipv6-link-local\" ], "
+        "\"subnet6\": [ "
+        " { "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"interface\" : \"eth0\" , "
+        "    \"reservations\": ["
+        "    {"
+        "        \"hw-address\": \"38:60:77:d5:ff:ee\","
+        "        \"ip-addresses\": [ \"2001:db8:1::1\" ]"
+        "    },"
+        "    {"
+        "        \"duid\": \"01:02:03:05\","
+        "        \"ip-addresses\": [ \"2001:db8:1::2\" ]"
+        "    } ]"
+        " } ]"
+    "}"
 };
 
 /// @brief Test fixture class for testing host reservations
@@ -97,11 +127,14 @@ public:
     /// @param client Reference to a client to be used in the test.
     /// The client should be preconfigured to insert a specific identifier
     /// into the message, e.g. DUID, HW address etc.
+    /// @param config_index Index of the configuration to use in the CONFIGS
+    /// table.
     /// @param exp_ip_address Expected IPv6 address in the returned
     /// reservation.
     void testReservationByIdentifier(Dhcp6Client& client,
+                                     const unsigned int config_index,
                                      const std::string exp_ip_address) {
-        configure(CONFIGS[1], *client.getServer());
+        configure(CONFIGS[config_index], *client.getServer());
 
         const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
             getCfgSubnets6()->getAll();
@@ -315,7 +348,7 @@ TEST_F(HostTest, reservationByDUID) {
     // Set DUID matching the one used to create host reservations.
     client.setDUID("01:02:03:05");
     // Run the actual test.
-    testReservationByIdentifier(client, "2001:db8:1::2");
+    testReservationByIdentifier(client, 1, "2001:db8:1::2");
 }
 
 // This test verfies that the host reservation by HW address is found
@@ -327,9 +360,20 @@ TEST_F(HostTest, reservationByHWAddress) {
     // decoded address will be used to search for host reservations.
     client.setLinkLocal(IOAddress("fe80::3a60:77ff:fed5:ffee"));
     // Run the actual test.
-    testReservationByIdentifier(client, "2001:db8:1::1");
+    testReservationByIdentifier(client, 1, "2001:db8:1::1");
 }
 
-
+// This test verifies that order in which host identifiers are used to
+// retrieve host reservations can be controlled.
+TEST_F(HostTest, hostIdentifiersOrder) {
+    Dhcp6Client client;
+    // Set DUID matching the one used to create host reservations.
+    client.setDUID("01:02:03:05");
+    // Set link local address for the client which the server will
+    // use to decode the HW address as 38:60:77:d5:ff:ee. This
+    // decoded address will be used to search for host reservations.
+    client.setLinkLocal(IOAddress("fe80::3a60:77ff:fed5:ffee"));
+    testReservationByIdentifier(client, 2, "2001:db8:1::2");
+}
 
 } // end of anonymous namespace

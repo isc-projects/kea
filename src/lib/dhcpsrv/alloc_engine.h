@@ -13,6 +13,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
+#include <dhcpsrv/cfg_host_reservations.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -617,9 +618,32 @@ public:
     /// Attempts to find appropriate host reservation in HostMgr. If found, it
     /// will be set in ctx.host_.
     /// @param ctx Client context that contains all necessary information.
-    void findReservation(ClientContext6& ctx) const;
+    static void findReservation(ClientContext6& ctx);
 
 private:
+
+    /// @brief Type of the function used by @ref findReservationInternal to
+    /// retrieve reservations by subnet identifier and host identifier.
+    typedef boost::function<ConstHostPtr(const SubnetID&,
+                                         const Host::IdentifierType&,
+                                         const uint8_t*, const size_t)> HostGetFunc;
+
+    /// @brief Common function for searching host reservations.
+    ///
+    /// This is a common function called by variants of @ref findReservation
+    /// functions.
+    ///
+    /// @param ctx Reference to a @ref ClientContext6 or @ref ClientContext4.
+    /// @param cfg Pointer to object holding general configuration for host
+    /// reservations. It uses this object to read the desired order of
+    /// host identifiers to be used to search for reservations.
+    /// @param host_get Pointer to the @ref HostMgr functions to be used
+    /// to retrieve reservation by subnet identifier and host identifier.
+    /// @tparam ContextType Either @ref ClientContext6 or @ref ClientContext4.
+    template<typename ContextType>
+    static void findReservationInternal(ContextType& ctx,
+                                        const ConstCfgHostReservationsPtr& cfg,
+                                        const HostGetFunc& host_get);
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
     ///

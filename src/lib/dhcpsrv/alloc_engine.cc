@@ -12,6 +12,7 @@
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/alloc_engine_log.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host.h>
@@ -27,6 +28,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <algorithm>
 #include <cstring>
 #include <sstream>
 #include <limits>
@@ -301,6 +303,40 @@ AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
     return (alloc->second);
 }
 
+template<typename ContextType>
+void
+AllocEngine::findReservationInternal(ContextType& ctx,
+                                     const ConstCfgHostReservationsPtr& cfg,
+                                     const AllocEngine::HostGetFunc& host_get) {
+    ctx.host_.reset();
+
+    // We can only search for the reservation if a subnet has been selected.
+    if (ctx.subnet_) {
+        // Check which host reservation mode is supported in this subnet.
+        Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
+
+        // Check if there is a host reseravtion for this client. Attempt to
+        // get host information
+        if (hr_mode != Subnet::HR_DISABLED) {
+            // Iterate over configured identifiers in the order of preference
+            // and try to use each of them to search for the reservations.
+            BOOST_FOREACH(const Host::IdentifierType& id, cfg->getIdentifierTypes()) {
+                IdentifierMap::const_iterator id_ctx = ctx.host_identifiers_.find(id);
+                if (id_ctx != ctx.host_identifiers_.end()) {
+                    // Attempt to find a host using a specified identifier.
+                    ctx.host_ = host_get(ctx.subnet_->getID(), id,
+                                         &id_ctx->second[0], id_ctx->second.size());
+                    // If we found matching host, return.
+                    if (ctx.host_) {
+                        return;
+                    }
+                }
+            }
+        }
+    }    
+}
+
+
 // ##########################################################################
 // #    DHCPv6 lease allocation code starts here.
 // ##########################################################################
@@ -339,30 +375,12 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const Duid
 }
 
 
-void AllocEngine::findReservation(ClientContext6& ctx) const {
-    if (!ctx.subnet_ || !ctx.duid_) {
-        return;
-    }
-
-    ctx.host_.reset();
-
-    // Check which host reservation mode is supported in this subnet.
-    Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
-
-    // Check if there's a host reservation for this client. Attempt to get
-    // host info only if reservations are not disabled.
-    if (hr_mode != Subnet::HR_DISABLED) {
-
-        BOOST_FOREACH(const IdentifierPair& id, ctx.host_identifiers_) {
-            ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(),
-                                                 id.first, &id.second[0],
-                                                 id.second.size());
-            // If we found matching host, return.
-            if (ctx.host_) {
-                return;
-            }
-        }
-    }
+void AllocEngine::findReservation(ClientContext6& ctx) {
+    ConstCfgHostReservationsPtr cfg =
+        CfgMgr::instance().getCurrentCfg()->getCfgHostReservations6();
+    findReservationInternal(ctx, cfg, boost::bind(&HostMgr::get6,
+                                                  &HostMgr::instance(),
+                                                  _1, _2, _3, _4));
 }
 
 Lease6Collection
@@ -2117,27 +2135,11 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
 
 void
 AllocEngine::findReservation(ClientContext4& ctx) {
-    ctx.host_.reset();
-
-    // We can only search for the reservation if a subnet has been selected.
-    if (ctx.subnet_) {
-        // Check which host reservation mode is supported in this subnet.
-        Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
-
-        // Check if there is a host reseravtion for this client. Attempt to
-        // get host information
-        if (hr_mode != Subnet::HR_DISABLED) {
-            BOOST_FOREACH(const IdentifierPair& id, ctx.host_identifiers_) {
-                ctx.host_ = HostMgr::instance().get4(ctx.subnet_->getID(),
-                                                     id.first, &id.second[0],
-                                                     id.second.size());
-                // If we found matching host, return.
-                if (ctx.host_) {
-                    return;
-                }
-            }
-        }
-    }
+    ConstCfgHostReservationsPtr cfg =
+        CfgMgr::instance().getCurrentCfg()->getCfgHostReservations4();
+    findReservationInternal(ctx, cfg, boost::bind(&HostMgr::get4,
+                                                  &HostMgr::instance(),
+                                                  _1, _2, _3, _4));
 }
 
 Lease4Ptr
