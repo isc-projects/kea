@@ -180,8 +180,8 @@ string_expr : STRING
                   }
             | PKT6 "." pkt6_field
                   {
-                      TokenPtr pkt6field(new TokenPkt6($3));
-                      ctx.expression.push_back(pkt6field);
+                      TokenPtr pkt6_field(new TokenPkt6($3));
+                      ctx.expression.push_back(pkt6_field);
                   }
             ;
 

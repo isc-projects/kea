@@ -125,8 +125,9 @@ public:
 
     /// @brief checks if the given token is Pkt6 of specified type
     /// @param token token to be checked
-    /// @param type expected type of the Pkt6 field
-    void checkTokenPkt6(const TokenPtr& token, TokenPkt6::FieldType type) {
+    /// @param exp_type expected type of the Pkt6 field
+    void checkTokenPkt6(const TokenPtr& token,
+                        TokenPkt6::FieldType exp_type) {
         ASSERT_TRUE(token);
 
         boost::shared_ptr<TokenPkt6> pkt =
@@ -134,7 +135,7 @@ public:
 
         ASSERT_TRUE(pkt);
 
-        EXPECT_EQ(type, pkt->getType());
+        EXPECT_EQ(exp_type, pkt->getType());
     }
 
     /// @brief checks if the given expression raises the expected message
