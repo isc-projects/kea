@@ -763,8 +763,8 @@ namespace isc { namespace eval {
   case 16:
 #line 182 "parser.yy" // lalr1.cc:859
     {
-                      TokenPtr pkt6field(new TokenPkt6(yystack_[0].value.as< TokenPkt6::FieldType > ()));
-                      ctx.expression.push_back(pkt6field);
+                      TokenPtr pkt6_field(new TokenPkt6(yystack_[0].value.as< TokenPkt6::FieldType > ()));
+                      ctx.expression.push_back(pkt6_field);
                   }
 #line 770 "parser.cc" // lalr1.cc:859
     break;
