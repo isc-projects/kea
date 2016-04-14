@@ -146,6 +146,87 @@ protected:
 
 };
 
+/// @brief Parser for a list of host identifiers.
+///
+/// This is a parent parser class for parsing "host-reservation-identifiers"
+/// global configuration parmeter. The DHCPv4 and DHCPv6 specific parsers
+/// derive from this class.
+class HostReservationIdsParser : public DhcpConfigParser {
+public:
+
+    /// @brief Constructor.
+    HostReservationIdsParser();
+
+    /// @brief Parses a list of host identifiers.
+    ///
+    /// @param ids_list Data element pointing to an ordered list of host
+    /// identifier names.
+    ///
+    /// @throw DhcpConfigError If specified configuration is invalid.
+    virtual void build(isc::data::ConstElementPtr ids_list);
+
+    /// @brief Commit, unused.
+    virtual void commit() { }
+
+protected:
+
+    /// @brief Checks if specified identifier name is supported in the
+    /// context of the parser.
+    ///
+    /// This is abstract method which must be implemented in the derived
+    /// parser classes for DHCPv4 and DHCPv6.
+    ///
+    /// @param id_name Identifier name.
+    /// @return true if the specified identifier is supported, false
+    /// otherwise.
+    virtual bool isSupportedIdentifier(const std::string& id_name) const = 0;
+
+    /// @brief Pointer to the object holding configuration.
+    CfgHostReservationsPtr staging_cfg_;
+
+};
+
+/// @brief Parser for a list of host identifiers for DHCPv4.
+class HostReservationIdsParser4 : public HostReservationIdsParser {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Initializes staging configuration pointer to the one used for DHCPv4
+    /// configuration.
+    HostReservationIdsParser4();
+
+protected:
+
+    /// @brief Checks if specified identifier name is supported for DHCPv4.
+    ///
+    /// @param id_name Identifier name.
+    /// @return true if the specified identifier is supported, false
+    /// otherwise.
+    virtual bool isSupportedIdentifier(const std::string& id_name) const;
+
+};
+
+/// @brief Parser for a list of host identifiers for DHCPv6.
+class HostReservationIdsParser6 : public HostReservationIdsParser {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Initializes staging configuration pointer to the one used for DHCPv6
+    /// configuration.
+    HostReservationIdsParser6();
+
+protected:
+
+    /// @brief Checks if specified identifier name is supported for DHCPv6.
+    ///
+    /// @param id_name Identifier name.
+    /// @return true if the specified identifier is supported, false
+    /// otherwise.
+    virtual bool isSupportedIdentifier(const std::string& id_name) const;
+};
+
 
 }
 } // end of namespace isc

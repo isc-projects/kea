@@ -60,4 +60,24 @@ TEST(CfgHostReservationsTest, addIdentifier) {
     EXPECT_TRUE(cfg.getIdentifierTypes().empty());
 }
 
+// This test verfies that the default DHCPv4 configuration is created
+// as expected.
+TEST(CfgHostReservationsTest, createConfig4) {
+    CfgHostReservationsPtr cfg = CfgHostReservations::createConfig4();
+
+    EXPECT_TRUE(identifierAdded(*cfg, Host::IDENT_HWADDR));
+    EXPECT_TRUE(identifierAdded(*cfg, Host::IDENT_DUID));
+    EXPECT_TRUE(identifierAdded(*cfg, Host::IDENT_CIRCUIT_ID));
+}
+
+// This test verfies that the default DHCPv6 configuration is created
+// as expected.
+TEST(CfgHostReservationsTest, createConfig6) {
+    CfgHostReservationsPtr cfg = CfgHostReservations::createConfig6();
+
+    EXPECT_TRUE(identifierAdded(*cfg, Host::IDENT_HWADDR));
+    EXPECT_TRUE(identifierAdded(*cfg, Host::IDENT_DUID));
+    EXPECT_FALSE(identifierAdded(*cfg, Host::IDENT_CIRCUIT_ID));
+}
+
 } // end of anonymous namespace
