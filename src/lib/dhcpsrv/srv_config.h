@@ -10,6 +10,7 @@
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfg_duid.h>
 #include <dhcpsrv/cfg_expiration.h>
+#include <dhcpsrv/cfg_host_reservations.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
@@ -291,6 +292,30 @@ public:
         return (cfg_db_access_);
     }
 
+    /// @brief Returns pointer to the object holding general configuration
+    /// for host reservations in DHCPv4.
+    CfgHostReservationsPtr getCfgHostReservations4() {
+        return (cfg_host_reservations4_);
+    }
+
+    /// @brief Returns const pointer to the object holding general
+    /// configuration for host reservations in DHCPv4
+    ConstCfgHostReservationsPtr getCfgHostReservations4() const {
+        return (cfg_host_reservations4_);
+    }
+
+    /// @brief Returns pointer to the object holding general configuration
+    /// for host reservations in DHCPv6.
+    CfgHostReservationsPtr getCfgHostReservations6() {
+        return (cfg_host_reservations6_);
+    }
+
+    /// @brief Returns const pointer to the object holding general
+    /// configuration for host reservations in DHCPv6
+    ConstCfgHostReservationsPtr getCfgHostReservations6() const {
+        return (cfg_host_reservations6_);
+    }
+
     //@}
 
     /// @brief Returns non-const reference to an array that stores
@@ -501,6 +526,14 @@ private:
     /// @brief Pointer to the configuration of the lease and host database
     /// connection parameters.
     CfgDbAccessPtr cfg_db_access_;
+
+    /// @brief Pointer to the general configuration for host reservations in
+    /// DHCPv4.
+    CfgHostReservationsPtr cfg_host_reservations4_;
+
+    /// @brief Pointer to the general configuration for host reservations in
+    /// DHCPv6.
+    CfgHostReservationsPtr cfg_host_reservations6_;
 
     /// @brief Pointer to the control-socket information
     isc::data::ConstElementPtr control_socket_;

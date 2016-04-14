@@ -15,6 +15,20 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Forward declaration of the @ref CfgHostReservations.
+class CfgHostReservations;
+
+/// @name Pointers to the @ref CfgHostReservations objects.
+//@{
+/// @brief Pointer to the Non-const object.
+typedef boost::shared_ptr<CfgHostReservations> CfgHostReservationsPtr;
+
+/// @brief Pointer to the const object.
+typedef boost::shared_ptr<const CfgHostReservations>
+ConstCfgHostReservationsPtr;
+
+//@}
+
 /// @brief Represents global configuration for host reservations.
 ///
 /// This class represents server configuration pertaining to host
@@ -36,6 +50,15 @@ public:
     /// The default confguration:
     /// - no identifiers selected for host reservations searches.
     CfgHostReservations();
+
+    /// @name Factory functions for creating default configurations.
+    //@{
+    /// @brief Factory function for DHCPv4.
+    static CfgHostReservationsPtr createConfig4();
+
+    /// @brief Factory function for DHCPv6.
+    static CfgHostReservationsPtr createConfig6();
+    //@}
 
     /// @brief Adds new identifier type to a collection of identifiers
     /// to be used by the server to search for host reservations.
@@ -61,17 +84,6 @@ private:
     IdentifierTypes identifier_types_;
 
 };
-
-/// @name Pointers to the @ref CfgHostReservations objects.
-//@{
-/// @brief Pointer to the Non-const object.
-typedef boost::shared_ptr<CfgHostReservations> CfgHostReservationsPtr;
-
-/// @brief Pointer to the const object.
-typedef boost::shared_ptr<const CfgHostReservations>
-ConstCfgHostReservationsPtr;
-
-//@}
 
 }
 }

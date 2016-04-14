@@ -15,12 +15,29 @@ CfgHostReservations::CfgHostReservations()
     : identifier_types_() {
 }
 
+CfgHostReservationsPtr
+CfgHostReservations::createConfig4() {
+    CfgHostReservationsPtr cfg(new CfgHostReservations());
+    cfg->addIdentifierType("hw-address");
+    cfg->addIdentifierType("duid");
+    cfg->addIdentifierType("circuit-id");
+    return (cfg);
+}
+
+CfgHostReservationsPtr
+CfgHostReservations::createConfig6() {
+    CfgHostReservationsPtr cfg(new CfgHostReservations());
+    cfg->addIdentifierType("hw-address");
+    cfg->addIdentifierType("duid");
+    return (cfg);
+}
+
 void
 CfgHostReservations::addIdentifierType(const std::string& identifier_name) {
     Host::IdentifierType identifier_type = Host::getIdentifierType(identifier_name);
     if (std::find(identifier_types_.begin(), identifier_types_.end(),
                   identifier_type) != identifier_types_.end()) {
-        isc_throw(isc::BadValue, "invalid host identifier name '"
+        isc_throw(isc::BadValue, "duplicate host identifier '"
                   << identifier_name << "'");
     }
     identifier_types_.push_back(identifier_type);
