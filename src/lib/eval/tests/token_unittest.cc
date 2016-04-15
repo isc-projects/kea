@@ -1203,3 +1203,29 @@ TEST_F(TokenTest, relay6Option) {
     // Level 2, no encapsulation so no options
     verifyRelay6Option(2, 100, TokenOption::TEXTUAL, "");
 }
+
+// Verifies if the DHCPv6 packet fields can be extracted.
+TEST_F(TokenTest, pkt6Fields) {
+    // The default test creates a v6 DHCPV6_SOLICIT packet with a
+    // transaction id of 12345.
+
+    // Check the message type
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::MSGTYPE)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    uint32_t expected = htonl(1);
+    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
+
+    // Check the transaction id field
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    expected = htonl(12345);
+    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
+
+    // Check that working with a v4 packet generates an error
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}

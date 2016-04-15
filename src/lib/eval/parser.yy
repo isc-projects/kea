@@ -58,6 +58,9 @@ using namespace isc::eval;
   ALL "all"
   COMA ","
   CONCAT "concat"
+  PKT6 "pkt6"
+  MSGTYPE "msgtype"
+  TRANSID "transid"
 ;
 
 %token <std::string> STRING "constant string"
@@ -70,6 +73,7 @@ using namespace isc::eval;
 %type <TokenOption::RepresentationType> option_repr_type
 %type <TokenRelay6Field::FieldType> relay6_field
 %type <uint8_t> nest_level
+%type <TokenPkt6::FieldType> pkt6_field
 
 %left OR
 %left AND
@@ -231,6 +235,11 @@ string_expr : STRING
                       TokenPtr conc(new TokenConcat());
                       ctx.expression.push_back(conc);
                   }
+            | PKT6 "." pkt6_field
+                  {
+                      TokenPtr pkt6_field(new TokenPkt6($3));
+                      ctx.expression.push_back(pkt6_field);
+                  }
             ;
 
 option_code : INTEGER
@@ -284,6 +293,10 @@ nest_level : INTEGER
                  // ways of choosing from which relay we want to extract
                  // an option or field.
            ;
+
+pkt6_field:MSGTYPE { $$ = TokenPkt6::MSGTYPE; }
+          | TRANSID { $$ = TokenPkt6::TRANSID; }
+          ;
 
 %%
 void

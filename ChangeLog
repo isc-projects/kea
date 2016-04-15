@@ -1,3 +1,8 @@
+1106.	[func]		sar
+	Added support for accessing DHCPv6 packet fields message type
+	and transaction id in a classification expression.
+	(Trac #4269, git <tbd>)
+
 1105.	[bug]		pallotron
 	perfdhcp uses the same transaction id throughout the DORA
 	exchange to adhere with RFC 2131.
@@ -5,7 +10,7 @@
 
 1104.	[func]		tmark
 	The DDNS parameter, replace-client-name, has been changed from a boolean
-	to list of modes, which provides greater flexibility in when the Kea 
+	to list of modes, which provides greater flexibility in when the Kea
 	servers replace or supply DNS names for clients.  This is supported both
 	kea-dhcp4 and kea-dhcp6.
 	(Trac #4529, git 45e56d7aa0d4a6224a1a28941f6cb11575391222)
@@ -19,7 +24,7 @@
 1102.	[func]		sar
 	Added access to the peer address, link address and option
 	information added by relays in a DHCPv6 message.
-	(Trac $4269, git bb00d9d205ee047961ba70417d7ce02c37d80ce7)
+	(Trac $4265, git bb00d9d205ee047961ba70417d7ce02c37d80ce7)
 
 1101.	[bug]		stephen
 	Made DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED a debug message as the
