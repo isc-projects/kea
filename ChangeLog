@@ -1,7 +1,7 @@
 1106.	[func]		sar
 	Added support for accessing DHCPv6 packet fields message type
 	and transaction id in a classification expression.
-	(Trac #4269, git <tbd>)
+	(Trac #4269, git 48be5f5ceaba6b0d0a2b31465e8a5904524e894c)
 
 1105.	[bug]		pallotron
 	perfdhcp uses the same transaction id throughout the DORA
@@ -24,7 +24,7 @@
 1102.	[func]		sar
 	Added access to the peer address, link address and option
 	information added by relays in a DHCPv6 message.
-	(Trac $4265, git bb00d9d205ee047961ba70417d7ce02c37d80ce7)
+	(Trac #4265, git bb00d9d205ee047961ba70417d7ce02c37d80ce7)
 
 1101.	[bug]		stephen
 	Made DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED a debug message as the
