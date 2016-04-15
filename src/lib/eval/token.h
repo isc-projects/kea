@@ -580,6 +580,52 @@ protected:
     FieldType type_; ///< field to get
 };
 
+/// @brief Token that represents fields of DHCPv6 packet.
+///
+/// For example in the expression pkt6.msgtype == 1
+/// this token represents the message type of the DHCPv6 packet.
+/// The integer values are placed on the value stack as 4 byte
+/// strings.
+///
+/// Currently supported fields are:
+/// - msgtype
+/// - transid
+class TokenPkt6 : public Token {
+public:
+    /// @brief enum value that determines the field.
+    enum FieldType {
+        MSGTYPE, ///< msg type
+        TRANSID  ///< transaction id (integer but manipulated as as string)
+    };
+
+    /// @brief Constructor (does nothing)
+    TokenPkt6(const FieldType type)
+        : type_(type) {}
+
+    /// @brief Gets a value of the specified packet.
+    ///
+    /// The evaluation uses fields that are availabe in the packet.  It does not
+    /// require any values to be present on the stack.
+    ///
+    /// @throw EvalTypeError when called for a DHCPv4 packet
+    ///
+    /// @param pkt - packet from which to extract the fields
+    /// @param values - stack of values, 1 result will be pushed
+    void evaluate(const Pkt& pkt, ValueStack& values);
+
+    /// @brief Returns field type
+    ///
+    /// This method is used only in tests.
+    /// @return type of the field.
+    FieldType getType() {
+        return(type_);
+    }
+
+private:
+    /// @brief Specifies field of the DHCPv6 packet to get
+    FieldType type_;
+};
+
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 

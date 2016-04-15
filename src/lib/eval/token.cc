@@ -360,3 +360,46 @@ TokenRelay6Field::evaluate(const Pkt& pkt, ValueStack& values) {
     }
     values.push(value);
 }
+
+void
+TokenPkt6::evaluate(const Pkt& pkt, ValueStack& values) {
+
+    vector<uint8_t> binary;
+    try {
+      // Check if it's a Pkt6.  If it's not the dynamic_cast will throw
+      // std::bad_cast (failed dynamic_cast returns NULL for pointers and
+      // throws for references).
+      const Pkt6& pkt6 = dynamic_cast<const Pkt6&>(pkt);
+
+      switch (type_) {
+      case MSGTYPE: {
+          // msg type is an uint8_t integer.  We want a 4 byte string so 0 pad.
+          binary.push_back(0);
+          binary.push_back(0);
+          binary.push_back(0);
+          binary.push_back(pkt6.getType());
+          break;
+      }
+      case TRANSID: {
+          // transaction id is an uint32_t integer.  We want a 4 byte string so copy
+          uint32_t transid = pkt6.getTransid();
+          binary.push_back(transid >> 24);
+          binary.push_back((transid >> 16) & 0xFF);
+          binary.push_back((transid >> 8) & 0xFF);
+          binary.push_back(transid & 0xFF);
+          break;
+      }
+      default:
+          isc_throw(EvalTypeError, "Bad field specified: "
+                    << static_cast<int>(type_) );
+      }
+
+    } catch (const std::bad_cast&) {
+        isc_throw(EvalTypeError, "Specified packet is not Pkt6");
+    }
+
+    string value;
+    value.resize(binary.size());
+    memmove(&value[0], &binary[0], binary.size());
+    values.push(value);
+}
