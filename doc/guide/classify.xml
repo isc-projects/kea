@@ -188,6 +188,20 @@ sub-option with code "code" from the DHCPv4 Relay Agent Information option
 <!-- <entry>2001:DB8::1</entry> -->n
   <entry>The value of the link address field from the relay encapsulation "nest"</entry>
 </row>
+<row>
+  <entry>Message Type in DHCPv6 packet</entry>
+  <entry>pkt6.msgtype</entry>
+<!--  <entry>1</entry>
+-->
+  <entry>The value of the message type field in the DHCPv6 packet.</entry>
+</row>
+<row>
+  <entry>Transaction ID in DHCPv6 packet</entry>
+  <entry>pkt6.transid</entry>
+<!--  <entry>12345</entry>
+-->
+  <entry>The value of the transaction id in the DHCPv6 packet.</entry>
+</row>
           </tbody>
           </tgroup>
         </table>
@@ -245,6 +259,14 @@ sub-option with code "code" from the DHCPv4 Relay Agent Information option
       <para>
        "relay6[nest].option[code]" shares the same representation types as
        "option", for instance "relay6[nest].option[code].exists" is supported.
+      </para>
+
+      <para>
+       "pkt6" refers to information from the client request.  To access any
+       information from an intermediate relay use "relay6".  "pkt6.msgtype"
+       and "pkt6.transid" output a 4 byte binary string for the message type
+       or transaction id.  For example the message type SOLICIT will be
+       "0x00000001" or simply 1 as in "pkt6.msgtype == 1".
       </para>
 
       <para>
