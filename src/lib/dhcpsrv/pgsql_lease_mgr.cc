@@ -417,7 +417,7 @@ public:
         return (value);
     }
 
-    /// @brief Converts a column in a row in a result set to a boolean.
+    /// @brief Fetches boolean text ('t' or 'f') as a bool.
     ///
     /// @param r the result set containing the query results
     /// @param row the row number within the result set
@@ -440,7 +440,7 @@ public:
         }
     }
 
-    /// @brief Converts a column in a row in a result set to a uint32_t.
+    /// @brief Fetches an integer text column as a uint32_t.
     ///
     /// @param r the result set containing the query results
     /// @param row the row number within the result set
@@ -461,7 +461,7 @@ public:
         }
     }
 
-    /// @brief Converts a column in a row in a result set to a int32_t.
+    /// @brief Fetches an integer text column as a int32_t.
     ///
     /// @param r the result set containing the query results
     /// @param row the row number within the result set
@@ -482,7 +482,7 @@ public:
         }
     }
 
-    /// @brief Converts a column in a row in a result set to a uint8_t.
+    /// @brief Fetches an integer text column as a uint8_t.
     ///
     /// @param r the result set containing the query results
     /// @param row the row number within the result set
@@ -505,7 +505,7 @@ public:
         }
     }
 
-    /// @brief Converts a column in a row in a result set to a Lease6::Type
+    /// @brief Fetches an integer text column as a Lease6::Type
     ///
     /// @param r the result set containing the query results
     /// @param row the row number within the result set
@@ -1014,6 +1014,12 @@ private:
     vector<uint8_t> duid_;
     uint8_t         duid_buffer_[DUID::MAX_DUID_LEN];
 
+    /// @brief Union for marshalling IAID into and out of the database
+    /// IAID is defined in the RFC as 4 octets, which Kea code handles as
+    /// a uint32_t.  Postgresql however, offers only signed integer types
+    /// of sizes 2, 4, and 8 bytes (SMALLINT, INT, and BIGINT respectively).
+    /// IAID is used in several indexes so rather than use the BIGINT, we
+    /// use this union to safely move the value into and out of an INT column.
     union Uiaid {
         Uiaid(uint32_t val) : uval_(val){};
         Uiaid(int32_t val) : ival_(val){};
