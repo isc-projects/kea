@@ -299,8 +299,8 @@ protected:
 /// - ciaddr (client IP address, 4 octets)
 /// - yiaddr ('your' (client) IP address, 4 octets)
 /// - siaddr (next server IP address, 4 octets)
-/// - hlen   (hardware address length, 1 octet)
-/// - htype  (hardware address type, 1 octet)
+/// - hlen   (hardware address length, padded to 4 octets)
+/// - htype  (hardware address type, padded to 4 octets)
 class TokenPkt4 : public Token {
 public:
 
