@@ -224,37 +224,37 @@
               <entry>Hardware length in DHCPv4 packet</entry>
               <entry>pkt4.hlen</entry>
               <entry>0x00000006</entry>
-              <entry>The value of the hlen field of the DHCPv4 packet padded to 4 bytes.</entry>
+              <entry>The value of the hlen field of the DHCPv4 packet padded to 4 bytes</entry>
             </row>
             <row>
               <entry>Hardware type in DHCPv4 packet</entry>
               <entry>pkt4.htype</entry>
               <entry>0x0000007b</entry>
-              <entry>The value of the htype field of the DHCPv4 packet padded to 4 bytes.</entry>
+              <entry>The value of the htype field of the DHCPv4 packet padded to 4 bytes</entry>
             </row>
             <row>
               <entry>ciaddr field in DHCPv4 packet</entry>
               <entry>pkt4.ciaddr</entry>
               <entry>192.0.2.1</entry>
-              <entry>The value of the ciaddr field of the DHCPv4 packet (IPv4 address on 4 bytes).</entry>
+              <entry>The value of the ciaddr field of the DHCPv4 packet (IPv4 address on 4 bytes)</entry>
             </row>
             <row>
               <entry>giaddr field in DHCPv4 packet</entry>
               <entry>pkt4.giaddr</entry>
               <entry>192.0.2.1</entry>
-              <entry>The value of the giaddr field of the DHCPv4 packet (IPv4 address on 4 bytes).</entry>
+              <entry>The value of the giaddr field of the DHCPv4 packet (IPv4 address on 4 bytes)</entry>
             </row>
             <row>
               <entry>yiaddr field in DHCPv4 packet</entry>
               <entry>pkt4.yiaddr</entry>
               <entry>192.0.2.1</entry>
-              <entry>The value of the yiaddr field of the DHCPv4 packet (IPv4 address on 4 bytes).</entry>
+              <entry>The value of the yiaddr field of the DHCPv4 packet (IPv4 address on 4 bytes)</entry>
             </row>
             <row>
               <entry>siaddr field in DHCPv4 packet</entry>
               <entry>pkt4.siaddr</entry>
               <entry>192.0.2.1</entry>
-              <entry>The value of the siaddr field of the DHCPv4 packet (IPv4 address on 4 bytes).</entry>
+              <entry>The value of the siaddr field of the DHCPv4 packet (IPv4 address on 4 bytes)</entry>
             </row>
           </tbody>
           </tgroup>
