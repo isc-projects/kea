@@ -629,16 +629,18 @@ TEST_F(TokenTest, pkt4Fields) {
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::HLEN)));
     EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
     ASSERT_EQ(1, values_.size());
-    ASSERT_EQ(1, values_.top().size());
-    EXPECT_EQ(7, static_cast<uint8_t>(values_.top()[0]));
+    ASSERT_EQ(4, values_.top().size());
+    uint32_t expected_hlen = htonl(7);
+    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
 
     // Check htype value.
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::HTYPE)));
     EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
     ASSERT_EQ(1, values_.size());
-    ASSERT_EQ(1, values_.top().size());
-    EXPECT_EQ(123, static_cast<uint8_t>(values_.top()[0]));
+    ASSERT_EQ(4, values_.top().size());
+    uint32_t expected_htype = htonl(123);
+    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
 
     // Check giaddr value.
     clearStack();
