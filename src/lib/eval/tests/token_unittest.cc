@@ -631,7 +631,7 @@ TEST_F(TokenTest, pkt4Fields) {
     ASSERT_EQ(1, values_.size());
     ASSERT_EQ(4, values_.top().size());
     uint32_t expected_hlen = htonl(7);
-    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
+    EXPECT_EQ(0, memcmp(&expected_hlen, &values_.top()[0], 4));
 
     // Check htype value.
     clearStack();
@@ -640,7 +640,7 @@ TEST_F(TokenTest, pkt4Fields) {
     ASSERT_EQ(1, values_.size());
     ASSERT_EQ(4, values_.top().size());
     uint32_t expected_htype = htonl(123);
-    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
+    EXPECT_EQ(0, memcmp(&expected_htype, &values_.top()[0], 4));
 
     // Check giaddr value.
     clearStack();
