@@ -163,11 +163,19 @@ TokenPkt4::evaluate(const Pkt& pkt, ValueStack& values) {
             break;
 
         case HLEN:
-            binary.assign(1, pkt4.getHlen());
+            // Pad the uint8_t field to 4 bytes.
+            binary.push_back(0);
+            binary.push_back(0);
+            binary.push_back(0);
+            binary.push_back(pkt4.getHlen());
             break;
 
         case HTYPE:
-            binary.assign(1, pkt4.getHtype());
+            // Pad the uint8_t field to 4 bytes.
+            binary.push_back(0);
+            binary.push_back(0);
+            binary.push_back(0);
+            binary.push_back(pkt4.getHtype());
             break;
 
         default:
