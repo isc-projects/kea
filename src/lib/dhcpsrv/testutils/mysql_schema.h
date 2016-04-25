@@ -48,7 +48,7 @@ void destroyMySQLSchema(bool show_err = false);
 /// @param show_err flag which governs whether or not stderr is suppressed.
 void createMySQLSchema(bool show_err = false);
 
-/// @brief Run a MySQL SQL script against the Postgresql unit test database
+/// @brief Run a MySQL SQL script against the MySQL unit test database
 ///
 /// Submits the given SQL script to MySQL via mysql CLI. The output of
 /// stderr is suppressed unless the parameter, show_err is true.  The is done

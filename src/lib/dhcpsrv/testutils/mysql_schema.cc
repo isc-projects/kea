@@ -52,7 +52,7 @@ void runMySQLScript(const std::string& path, const std::string& script_name,
 
     cmd << script_name;
 
-    int retval = std::system(cmd.str().c_str());
+    int retval = ::system(cmd.str().c_str());
     ASSERT_EQ(0, retval) << "runMySQLSchema failed:" << cmd.str();
 }
 

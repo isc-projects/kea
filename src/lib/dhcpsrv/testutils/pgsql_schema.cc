@@ -6,7 +6,6 @@
 
 #include <config.h>
 #include <string>
-#include <mysql.h>
 #include <dhcpsrv/testutils/pgsql_schema.h>
 
 #include <gtest/gtest.h>
@@ -56,7 +55,7 @@ void runPgSQLScript(const std::string& path, const std::string& script_name,
         cmd << " 2>/dev/null ";
     }
 
-    int retval = std::system(cmd.str().c_str());
+    int retval = ::system(cmd.str().c_str());
     ASSERT_EQ(0, retval) << "runPgSQLSchema failed:" << cmd.str();
 }
 
