@@ -183,7 +183,7 @@
               <entry>'123'</entry>
               <entry>An integer value</entry>
             </row>
-	    <row></row>
+            <row></row>
             <row>
               <entry>Binary content of the option</entry>
               <entry>option[123].hex</entry>
