@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef CFG_HOST_RESERVATIONS_H
-#define CFG_HOST_RESERVATIONS_H
+#ifndef CFG_HOST_OPERATIONS_H
+#define CFG_HOST_OPERATIONS_H
 
 #include <dhcpsrv/host.h>
 #include <boost/shared_ptr.hpp>
@@ -15,17 +15,17 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Forward declaration of the @ref CfgHostReservations.
-class CfgHostReservations;
+/// @brief Forward declaration of the @ref CfgHostOperations.
+class CfgHostOperations;
 
-/// @name Pointers to the @ref CfgHostReservations objects.
+/// @name Pointers to the @ref CfgHostOperations objects.
 //@{
 /// @brief Pointer to the Non-const object.
-typedef boost::shared_ptr<CfgHostReservations> CfgHostReservationsPtr;
+typedef boost::shared_ptr<CfgHostOperations> CfgHostOperationsPtr;
 
 /// @brief Pointer to the const object.
-typedef boost::shared_ptr<const CfgHostReservations>
-ConstCfgHostReservationsPtr;
+typedef boost::shared_ptr<const CfgHostOperations>
+ConstCfgHostOperationsPtr;
 
 //@}
 
@@ -39,7 +39,7 @@ ConstCfgHostReservationsPtr;
 /// An administrator selects which identifiers the server should
 /// use and in which order to search for host reservations to
 /// optimize performance of the server.
-class CfgHostReservations {
+class CfgHostOperations {
 public:
 
     /// @brief Type of the container holding ordered list of identifiers.
@@ -49,15 +49,15 @@ public:
     ///
     /// The default confguration:
     /// - no identifiers selected for host reservations searches.
-    CfgHostReservations();
+    CfgHostOperations();
 
     /// @name Factory functions for creating default configurations.
     //@{
     /// @brief Factory function for DHCPv4.
-    static CfgHostReservationsPtr createConfig4();
+    static CfgHostOperationsPtr createConfig4();
 
     /// @brief Factory function for DHCPv6.
-    static CfgHostReservationsPtr createConfig6();
+    static CfgHostOperationsPtr createConfig6();
     //@}
 
     /// @brief Adds new identifier type to a collection of identifiers
@@ -88,4 +88,4 @@ private:
 }
 }
 
-#endif // CFG_HOST_RESERVATIONS_H
+#endif // CFG_HOST_OPERATIONS_H

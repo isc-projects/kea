@@ -13,7 +13,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
-#include <dhcpsrv/cfg_host_reservations.h>
+#include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -642,7 +642,7 @@ private:
     /// @tparam ContextType Either @ref ClientContext6 or @ref ClientContext4.
     template<typename ContextType>
     static void findReservationInternal(ContextType& ctx,
-                                        const ConstCfgHostReservationsPtr& cfg,
+                                        const ConstCfgHostOperationsPtr& cfg,
                                         const HostGetFunc& host_get);
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary

@@ -182,7 +182,7 @@ protected:
     virtual bool isSupportedIdentifier(const std::string& id_name) const = 0;
 
     /// @brief Pointer to the object holding configuration.
-    CfgHostReservationsPtr staging_cfg_;
+    CfgHostOperationsPtr staging_cfg_;
 
 };
 

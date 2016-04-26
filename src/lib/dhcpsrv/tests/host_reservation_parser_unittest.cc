@@ -825,12 +825,12 @@ TEST_F(HostReservationIdsParserTest, dhcp4Identifiers) {
     HostReservationIdsParser4 parser;
     ASSERT_NO_THROW(parser.build(config_element));
 
-    ConstCfgHostReservationsPtr cfg = CfgMgr::instance().getStagingCfg()->
-        getCfgHostReservations4();
-    const CfgHostReservations::IdentifierTypes& ids = cfg->getIdentifierTypes();
+    ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
+        getCfgHostOperations4();
+    const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
     ASSERT_EQ(3, ids.size());
 
-    CfgHostReservations::IdentifierTypes::const_iterator id = ids.begin();
+    CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_CIRCUIT_ID);
     EXPECT_EQ(*id++, Host::IDENT_DUID);
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
@@ -846,12 +846,12 @@ TEST_F(HostReservationIdsParserTest, dhcp6Identifiers) {
     HostReservationIdsParser6 parser;
     ASSERT_NO_THROW(parser.build(config_element));
 
-    ConstCfgHostReservationsPtr cfg = CfgMgr::instance().getStagingCfg()->
-        getCfgHostReservations6();
-    const CfgHostReservations::IdentifierTypes& ids = cfg->getIdentifierTypes();
+    ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
+        getCfgHostOperations6();
+    const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
     ASSERT_EQ(2, ids.size());
 
-    CfgHostReservations::IdentifierTypes::const_iterator id = ids.begin();
+    CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_DUID);
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
 }
@@ -880,12 +880,12 @@ TEST_F(HostReservationIdsParserTest, dhcp4AutoIdentifiers) {
     HostReservationIdsParser4 parser;
     ASSERT_NO_THROW(parser.build(config_element));
 
-    ConstCfgHostReservationsPtr cfg = CfgMgr::instance().getStagingCfg()->
-        getCfgHostReservations4();
-    const CfgHostReservations::IdentifierTypes& ids = cfg->getIdentifierTypes();
+    ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
+        getCfgHostOperations4();
+    const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
     ASSERT_EQ(3, ids.size());
 
-    CfgHostReservations::IdentifierTypes::const_iterator id = ids.begin();
+    CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
     EXPECT_EQ(*id++, Host::IDENT_DUID);
     EXPECT_EQ(*id++, Host::IDENT_CIRCUIT_ID);
@@ -922,12 +922,12 @@ TEST_F(HostReservationIdsParserTest, dhcp6AutoIdentifiers) {
     HostReservationIdsParser6 parser;
     ASSERT_NO_THROW(parser.build(config_element));
 
-    ConstCfgHostReservationsPtr cfg = CfgMgr::instance().getStagingCfg()->
-        getCfgHostReservations6();
-    const CfgHostReservations::IdentifierTypes& ids = cfg->getIdentifierTypes();
+    ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
+        getCfgHostOperations6();
+    const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
     ASSERT_EQ(2, ids.size());
 
-    CfgHostReservations::IdentifierTypes::const_iterator id = ids.begin();
+    CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
     EXPECT_EQ(*id++, Host::IDENT_DUID);
 }

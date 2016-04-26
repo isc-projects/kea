@@ -377,7 +377,7 @@ HostReservationIdsParser::build(isc::data::ConstElementPtr ids_list) {
 
 HostReservationIdsParser4::HostReservationIdsParser4()
     : HostReservationIdsParser() {
-    staging_cfg_ = CfgMgr::instance().getStagingCfg()->getCfgHostReservations4();
+    staging_cfg_ = CfgMgr::instance().getStagingCfg()->getCfgHostOperations4();
 }
 
 bool
@@ -387,7 +387,7 @@ HostReservationIdsParser4::isSupportedIdentifier(const std::string& id_name) con
 
 HostReservationIdsParser6::HostReservationIdsParser6()
     : HostReservationIdsParser() {
-    staging_cfg_ = CfgMgr::instance().getStagingCfg()->getCfgHostReservations6();
+    staging_cfg_ = CfgMgr::instance().getStagingCfg()->getCfgHostOperations6();
 }
 
 bool

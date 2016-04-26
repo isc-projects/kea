@@ -6,7 +6,7 @@
 
 #include <config.h>
 #include <dhcp/dhcp6.h>
-#include <dhcpsrv/cfg_host_reservations.h>
+#include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/host.h>
 #include <gtest/gtest.h>
 #include <algorithm>
@@ -21,21 +21,21 @@ namespace {
 /// @param cfg Object holding current configuration.
 /// @param id Identifier type which presence should be checked.
 bool
-identifierAdded(const CfgHostReservations& cfg, const Host::IdentifierType& id) {
-    CfgHostReservations::IdentifierTypes types = cfg.getIdentifierTypes();
+identifierAdded(const CfgHostOperations& cfg, const Host::IdentifierType& id) {
+    CfgHostOperations::IdentifierTypes types = cfg.getIdentifierTypes();
     return (std::find(types.begin(), types.end(), id) != types.end());
 }
 
 // This test checks default configuration.
-TEST(CfgHostReservationsTest, defaults) {
-    CfgHostReservations cfg;
+TEST(CfgHostOperationsTest, defaults) {
+    CfgHostOperations cfg;
     EXPECT_TRUE(cfg.getIdentifierTypes().empty());
 }
 
 // This test verifies that identifier types can be added into an
 // ordered collection and then removed.
-TEST(CfgHostReservationsTest, addIdentifier) {
-    CfgHostReservations cfg;
+TEST(CfgHostOperationsTest, addIdentifier) {
+    CfgHostOperations cfg;
 
     // Only HW address added.
     ASSERT_NO_THROW(cfg.addIdentifierType("hw-address"));
@@ -62,8 +62,8 @@ TEST(CfgHostReservationsTest, addIdentifier) {
 
 // This test verfies that the default DHCPv4 configuration is created
 // as expected.
-TEST(CfgHostReservationsTest, createConfig4) {
-    CfgHostReservationsPtr cfg = CfgHostReservations::createConfig4();
+TEST(CfgHostOperationsTest, createConfig4) {
+    CfgHostOperationsPtr cfg = CfgHostOperations::createConfig4();
 
     EXPECT_TRUE(identifierAdded(*cfg, Host::IDENT_HWADDR));
     EXPECT_TRUE(identifierAdded(*cfg, Host::IDENT_DUID));
@@ -72,8 +72,8 @@ TEST(CfgHostReservationsTest, createConfig4) {
 
 // This test verfies that the default DHCPv6 configuration is created
 // as expected.
-TEST(CfgHostReservationsTest, createConfig6) {
-    CfgHostReservationsPtr cfg = CfgHostReservations::createConfig6();
+TEST(CfgHostOperationsTest, createConfig6) {
+    CfgHostOperationsPtr cfg = CfgHostOperations::createConfig6();
 
     EXPECT_TRUE(identifierAdded(*cfg, Host::IDENT_HWADDR));
     EXPECT_TRUE(identifierAdded(*cfg, Host::IDENT_DUID));
