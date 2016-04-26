@@ -306,7 +306,7 @@ AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
 template<typename ContextType>
 void
 AllocEngine::findReservationInternal(ContextType& ctx,
-                                     const ConstCfgHostReservationsPtr& cfg,
+                                     const ConstCfgHostOperationsPtr& cfg,
                                      const AllocEngine::HostGetFunc& host_get) {
     ctx.host_.reset();
 
@@ -376,8 +376,8 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const Duid
 
 
 void AllocEngine::findReservation(ClientContext6& ctx) {
-    ConstCfgHostReservationsPtr cfg =
-        CfgMgr::instance().getCurrentCfg()->getCfgHostReservations6();
+    ConstCfgHostOperationsPtr cfg =
+        CfgMgr::instance().getCurrentCfg()->getCfgHostOperations6();
     findReservationInternal(ctx, cfg, boost::bind(&HostMgr::get6,
                                                   &HostMgr::instance(),
                                                   _1, _2, _3, _4));
@@ -2135,8 +2135,8 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
 
 void
 AllocEngine::findReservation(ClientContext4& ctx) {
-    ConstCfgHostReservationsPtr cfg =
-        CfgMgr::instance().getCurrentCfg()->getCfgHostReservations4();
+    ConstCfgHostOperationsPtr cfg =
+        CfgMgr::instance().getCurrentCfg()->getCfgHostOperations4();
     findReservationInternal(ctx, cfg, boost::bind(&HostMgr::get4,
                                                   &HostMgr::instance(),
                                                   _1, _2, _3, _4));

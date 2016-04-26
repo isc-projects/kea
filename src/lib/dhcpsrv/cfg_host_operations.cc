@@ -5,35 +5,35 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <exceptions/exceptions.h>
-#include <dhcpsrv/cfg_host_reservations.h>
+#include <dhcpsrv/cfg_host_operations.h>
 #include <algorithm>
 
 namespace isc {
 namespace dhcp {
 
-CfgHostReservations::CfgHostReservations()
+CfgHostOperations::CfgHostOperations()
     : identifier_types_() {
 }
 
-CfgHostReservationsPtr
-CfgHostReservations::createConfig4() {
-    CfgHostReservationsPtr cfg(new CfgHostReservations());
+CfgHostOperationsPtr
+CfgHostOperations::createConfig4() {
+    CfgHostOperationsPtr cfg(new CfgHostOperations());
     cfg->addIdentifierType("hw-address");
     cfg->addIdentifierType("duid");
     cfg->addIdentifierType("circuit-id");
     return (cfg);
 }
 
-CfgHostReservationsPtr
-CfgHostReservations::createConfig6() {
-    CfgHostReservationsPtr cfg(new CfgHostReservations());
+CfgHostOperationsPtr
+CfgHostOperations::createConfig6() {
+    CfgHostOperationsPtr cfg(new CfgHostOperations());
     cfg->addIdentifierType("hw-address");
     cfg->addIdentifierType("duid");
     return (cfg);
 }
 
 void
-CfgHostReservations::addIdentifierType(const std::string& identifier_name) {
+CfgHostOperations::addIdentifierType(const std::string& identifier_name) {
     Host::IdentifierType identifier_type = Host::getIdentifierType(identifier_name);
     if (std::find(identifier_types_.begin(), identifier_types_.end(),
                   identifier_type) != identifier_types_.end()) {
@@ -44,7 +44,7 @@ CfgHostReservations::addIdentifierType(const std::string& identifier_name) {
 }
 
 void
-CfgHostReservations::clear() {
+CfgHostOperations::clear() {
     identifier_types_.clear();
 }
 
