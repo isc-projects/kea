@@ -68,6 +68,7 @@ libdhcpsrv_unittests_SOURCES += callout_handle_store_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_db_access_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_duid_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_expiration_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfg_host_operations_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_hosts_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_iface_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_mac_source_unittest.cc

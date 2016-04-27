@@ -11,6 +11,7 @@
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <algorithm>
 #include <sys/socket.h>
 #include <sstream>
 #include <string>
@@ -37,8 +38,8 @@ getSupportedParams4(const bool identifiers_only = false) {
     // If this is first execution of this function, we need
     // to initialize the set.
     if (identifiers_set.empty()) {
-        identifiers_set.insert("duid");
         identifiers_set.insert("hw-address");
+        identifiers_set.insert("duid");
         identifiers_set.insert("circuit-id");
     }
     // Copy identifiers and add all other parameters.
@@ -68,8 +69,8 @@ getSupportedParams6(const bool identifiers_only = false) {
     // If this is first execution of this function, we need
     // to initialize the set.
     if (identifiers_set.empty()) {
-        identifiers_set.insert("duid");
         identifiers_set.insert("hw-address");
+        identifiers_set.insert("duid");
     }
     // Copy identifiers and add all other parameters.
     if (params_set.empty()) {
@@ -315,6 +316,83 @@ HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
 const std::set<std::string>&
 HostReservationParser6::getSupportedParameters(const bool identifiers_only) const {
     return (getSupportedParams6(identifiers_only));
+}
+
+HostReservationIdsParser::HostReservationIdsParser()
+    : staging_cfg_() {
+}
+
+void
+HostReservationIdsParser::build(isc::data::ConstElementPtr ids_list) {
+    // Remove existing identifier types.
+    staging_cfg_->clearIdentifierTypes();
+
+    BOOST_FOREACH(ConstElementPtr element, ids_list->listValue()) {
+        std::string id_name = element->stringValue();
+        try {
+            if (id_name != "auto") {
+                if (!isSupportedIdentifier(id_name)) {
+                    isc_throw(isc::BadValue, "unsupported identifier '"
+                              << id_name << "'");
+                }
+                staging_cfg_->addIdentifierType(id_name);
+
+            } else {
+                // 'auto' is mutually exclusive with other values. If there
+                // are any values in the configuration already it means that
+                // some other values have already been specified.
+                if (!staging_cfg_->getIdentifierTypes().empty()) {
+                    isc_throw(isc::BadValue, "if 'auto' keyword is used,"
+                              " no other values can be specified within '"
+                              "host-reservation-identifiers' list");
+                }
+                // Iterate over all identifier types and for those supported
+                // in a given context (DHCPv4 or DHCPv6) add the identifier type
+                // to the configuration.
+                for (unsigned int i = 0;
+                     i <= static_cast<unsigned int>(Host::LAST_IDENTIFIER_TYPE);
+                     ++i) {
+                    std::string supported_id_name =
+                        Host::getIdentifierName(static_cast<Host::IdentifierType>(i));
+                    if (isSupportedIdentifier(supported_id_name)) {
+                        staging_cfg_->addIdentifierType(supported_id_name);
+                    }
+                }
+            }
+
+        } catch (const std::exception& ex) {
+            // Append line number where the error occurred.
+            isc_throw(DhcpConfigError, ex.what() << " ("
+                      << element->getPosition() << ")");
+        }
+    }
+
+    // The parsed list must not be empty.
+    if (staging_cfg_->getIdentifierTypes().empty()) {
+        isc_throw(DhcpConfigError, "'host-reservation-identifiers' list must not"
+                  " be empty (" << ids_list->getPosition() << ")");
+    }
+
+}
+
+HostReservationIdsParser4::HostReservationIdsParser4()
+    : HostReservationIdsParser() {
+    staging_cfg_ = CfgMgr::instance().getStagingCfg()->getCfgHostOperations4();
+}
+
+bool
+HostReservationIdsParser4::isSupportedIdentifier(const std::string& id_name) const {
+    return (getSupportedParams4(true).count(id_name) > 0);
+}
+
+HostReservationIdsParser6::HostReservationIdsParser6()
+    : HostReservationIdsParser() {
+    staging_cfg_ = CfgMgr::instance().getStagingCfg()->getCfgHostOperations6();
+}
+
+bool
+HostReservationIdsParser6::isSupportedIdentifier(const std::string& id_name) const {
+    return (getSupportedParams6(true).count(id_name) > 0);
 }
 
 } // end of namespace isc::dhcp
