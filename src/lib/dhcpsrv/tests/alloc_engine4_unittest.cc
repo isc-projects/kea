@@ -1669,12 +1669,12 @@ TEST_F(AllocEngine4Test, findReservation) {
     EXPECT_TRUE(ctx.host_);
     EXPECT_EQ(ctx.host_->getIPv4Reservation(), host->getIPv4Reservation());
 
-    // If the host reservation mode for the subnet is disabled, the
-    // host should not be returned, even though it exists in the
-    // host database.
+    // Regardless of the host reservation mode, the host should be
+    // always returned when findReservation() is called.
     subnet_->setHostReservationMode(Subnet::HR_DISABLED);
     ASSERT_NO_THROW(engine.findReservation(ctx));
-    EXPECT_FALSE(ctx.host_);
+    EXPECT_TRUE(ctx.host_);
+    EXPECT_EQ(ctx.host_->getIPv4Reservation(), host->getIPv4Reservation());
 
     // Check the third possible reservation mode.
     subnet_->setHostReservationMode(Subnet::HR_OUT_OF_POOL);

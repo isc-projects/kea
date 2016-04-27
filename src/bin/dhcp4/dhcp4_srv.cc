@@ -245,6 +245,8 @@ void
 Dhcpv4Exchange::setHostIdentifiers() {
     const ConstCfgHostOperationsPtr cfg =
         CfgMgr::instance().getCurrentCfg()->getCfgHostOperations4();
+    // Collect host identifiers. The identifiers are stored in order of preference.
+    // The server will use them in that order to search for host reservations.
     BOOST_FOREACH(const Host::IdentifierType& id_type,
                   cfg->getIdentifierTypes()) {
         switch (id_type) {
