@@ -1,3 +1,9 @@
+1108.	[func]		tmark
+	Schema scripts have been relocated from src/bin/admin/scripts to
+	src/share/database/scripts and are now shared by both kea-admin
+	and unit testing.
+	(Trac #4239, git 131fcf52f2a65cedb53975f99114296366fb0199)
+
 1107.	[func]		fdupont
 	Added support for extracting constant length fields from a DHCPv4
 	packet.
