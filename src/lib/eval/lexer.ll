@@ -149,6 +149,14 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "text"      return isc::eval::EvalParser::make_TEXT(loc);
 "hex"       return isc::eval::EvalParser::make_HEX(loc);
 "exists"    return isc::eval::EvalParser::make_EXISTS(loc);
+"pkt4"      return isc::eval::EvalParser::make_PKT4(loc);
+"mac"       return isc::eval::EvalParser::make_CHADDR(loc);
+"hlen"      return isc::eval::EvalParser::make_HLEN(loc);
+"htype"     return isc::eval::EvalParser::make_HTYPE(loc);
+"ciaddr"    return isc::eval::EvalParser::make_CIADDR(loc);
+"giaddr"    return isc::eval::EvalParser::make_GIADDR(loc);
+"yiaddr"    return isc::eval::EvalParser::make_YIADDR(loc);
+"siaddr"    return isc::eval::EvalParser::make_SIADDR(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
 "all"       return isc::eval::EvalParser::make_ALL(loc);
 "concat"    return isc::eval::EvalParser::make_CONCAT(loc);
