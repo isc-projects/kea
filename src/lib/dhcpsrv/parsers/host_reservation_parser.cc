@@ -324,8 +324,8 @@ HostReservationIdsParser::HostReservationIdsParser()
 
 void
 HostReservationIdsParser::build(isc::data::ConstElementPtr ids_list) {
-    // Remove any default configuration.
-    staging_cfg_->clear();
+    // Remove existing identifier types.
+    staging_cfg_->clearIdentifierTypes();
 
     BOOST_FOREACH(ConstElementPtr element, ids_list->listValue()) {
         std::string id_name = element->stringValue();

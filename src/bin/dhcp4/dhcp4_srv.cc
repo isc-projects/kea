@@ -22,6 +22,7 @@
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -137,47 +138,17 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
                 .arg(query->getLabel())
                 .arg(subnet->getID());
         }
-    }
 
-    // Before we can check for static reservations, we need to prepare a set
-    // of identifiers to be used for this.
+        // Find static reservations if not disabled for our subnet.
+        if (subnet->getHostReservationMode() != Subnet::HR_DISABLED) {
+            // Before we can check for static reservations, we need to prepare a set
+            // of identifiers to be used for this.
+            setHostIdentifiers();
 
-    // HW address.
-    if (context_->hwaddr_ && !context_->hwaddr_->hwaddr_.empty()) {
-        context_->host_identifiers_[Host::IDENT_HWADDR] = context_->hwaddr_->hwaddr_;
-    }
-
-    // Client identifier
-    if (context_->clientid_) {
-        const std::vector<uint8_t>& vec = context_->clientid_->getDuid();
-        if (!vec.empty()) {
-            // Client identifier type = DUID? Client identifier holding a DUID
-            // comprises Type (1 byte), IAID (4 bytes), followed by the actual
-            // DUID. Thus, the minimal length is 6.
-            if ((vec[0] == CLIENT_ID_OPTION_TYPE_DUID) && (vec.size() > 5)) {
-                // Extract DUID, skip IAID.
-                context_->host_identifiers_.insert(
-                        AllocEngine::IdentifierPair(Host::IDENT_DUID,
-                                                    std::vector<uint8_t>(vec.begin() + 5,
-                                                                         vec.end())));
-            }
-            /// @todo Add support for other client identifiers (see #4317).
+            // Check for static reservations.
+            alloc_engine->findReservation(*context_);
         }
     }
-    // Circuit id
-    OptionPtr rai = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
-    if (rai) {
-        OptionPtr circuit_id_opt = rai->getOption(RAI_OPTION_AGENT_CIRCUIT_ID);
-        if (circuit_id_opt) {
-            const OptionBuffer& circuit_id_vec = circuit_id_opt->getData();
-            if (!circuit_id_vec.empty()) {
-                context_->host_identifiers_[Host::IDENT_CIRCUIT_ID] = circuit_id_vec;
-            }
-        }
-    }
-
-    // Check for static reservations.
-    alloc_engine->findReservation(*context_);
 };
 
 void
@@ -267,6 +238,58 @@ Dhcpv4Exchange::copyDefaultOptions() {
     OptionPtr subnet_sel = query_->getOption(DHO_SUBNET_SELECTION);
     if (subnet_sel) {
         resp_->addOption(subnet_sel);
+    }
+}
+
+void
+Dhcpv4Exchange::setHostIdentifiers() {
+    const ConstCfgHostOperationsPtr cfg =
+        CfgMgr::instance().getCurrentCfg()->getCfgHostOperations4();
+    BOOST_FOREACH(const Host::IdentifierType& id_type,
+                  cfg->getIdentifierTypes()) {
+        switch (id_type) {
+        case Host::IDENT_HWADDR:
+            if (context_->hwaddr_ && !context_->hwaddr_->hwaddr_.empty()) {
+                context_->addHostIdentifier(id_type, context_->hwaddr_->hwaddr_);
+            }
+            break;
+
+        case Host::IDENT_DUID:
+            if (context_->clientid_) {
+                const std::vector<uint8_t>& vec = context_->clientid_->getDuid();
+                if (!vec.empty()) {
+                    // Client identifier type = DUID? Client identifier holding a DUID
+                    // comprises Type (1 byte), IAID (4 bytes), followed by the actual
+                    // DUID. Thus, the minimal length is 6.
+                    if ((vec[0] == CLIENT_ID_OPTION_TYPE_DUID) && (vec.size() > 5)) {
+                        // Extract DUID, skip IAID.
+                        context_->addHostIdentifier(id_type,
+                                                    std::vector<uint8_t>(vec.begin() + 5,
+                                                                         vec.end()));
+                    }
+                    /// @todo Add support for other client identifiers (see #4317).
+                }
+            }
+            break;
+
+        case Host::IDENT_CIRCUIT_ID:
+            {
+                OptionPtr rai = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+                if (rai) {
+                    OptionPtr circuit_id_opt = rai->getOption(RAI_OPTION_AGENT_CIRCUIT_ID);
+                    if (circuit_id_opt) {
+                        const OptionBuffer& circuit_id_vec = circuit_id_opt->getData();
+                        if (!circuit_id_vec.empty()) {
+                            context_->addHostIdentifier(id_type, circuit_id_vec);
+                        }
+                    }
+                }
+            }
+            break;
+
+        default:
+            ;
+        }
     }
 }
 

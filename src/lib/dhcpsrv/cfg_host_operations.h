@@ -74,8 +74,8 @@ public:
         return (identifier_types_);
     }
 
-    /// @brief Restores default configuration.
-    void clear();
+    /// @brief Removes existing identifier types.
+    void clearIdentifierTypes();
 
 private:
 

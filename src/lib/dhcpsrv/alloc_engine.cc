@@ -306,7 +306,6 @@ AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
 template<typename ContextType>
 void
 AllocEngine::findReservationInternal(ContextType& ctx,
-                                     const ConstCfgHostOperationsPtr& cfg,
                                      const AllocEngine::HostGetFunc& host_get) {
     ctx.host_.reset();
 
@@ -320,20 +319,17 @@ AllocEngine::findReservationInternal(ContextType& ctx,
         if (hr_mode != Subnet::HR_DISABLED) {
             // Iterate over configured identifiers in the order of preference
             // and try to use each of them to search for the reservations.
-            BOOST_FOREACH(const Host::IdentifierType& id, cfg->getIdentifierTypes()) {
-                IdentifierMap::const_iterator id_ctx = ctx.host_identifiers_.find(id);
-                if (id_ctx != ctx.host_identifiers_.end()) {
-                    // Attempt to find a host using a specified identifier.
-                    ctx.host_ = host_get(ctx.subnet_->getID(), id,
-                                         &id_ctx->second[0], id_ctx->second.size());
-                    // If we found matching host, return.
-                    if (ctx.host_) {
-                        return;
-                    }
+            BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
+                // Attempt to find a host using a specified identifier.
+                ctx.host_ = host_get(ctx.subnet_->getID(), id_pair.first,
+                                     &id_pair.second[0], id_pair.second.size());
+                // If we found matching host, return.
+                if (ctx.host_) {
+                    return;
                 }
             }
         }
-    }    
+    }
 }
 
 
@@ -370,17 +366,15 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const Duid
 
     // Initialize host identifiers.
     if (duid) {
-        host_identifiers_[Host::IDENT_DUID] = duid->getDuid();
+        addHostIdentifier(Host::IDENT_DUID, duid->getDuid());
     }
 }
 
 
 void AllocEngine::findReservation(ClientContext6& ctx) {
-    ConstCfgHostOperationsPtr cfg =
-        CfgMgr::instance().getCurrentCfg()->getCfgHostOperations6();
-    findReservationInternal(ctx, cfg, boost::bind(&HostMgr::get6,
-                                                  &HostMgr::instance(),
-                                                  _1, _2, _3, _4));
+    findReservationInternal(ctx, boost::bind(&HostMgr::get6,
+                                             &HostMgr::instance(),
+                                             _1, _2, _3, _4));
 }
 
 Lease6Collection
@@ -2099,7 +2093,7 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
 
     // Initialize host identifiers.
     if (hwaddr) {
-        host_identifiers_[Host::IDENT_HWADDR] = hwaddr->hwaddr_;
+        addHostIdentifier(Host::IDENT_HWADDR, hwaddr->hwaddr_);
     }
 }
 
@@ -2135,11 +2129,9 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
 
 void
 AllocEngine::findReservation(ClientContext4& ctx) {
-    ConstCfgHostOperationsPtr cfg =
-        CfgMgr::instance().getCurrentCfg()->getCfgHostOperations4();
-    findReservationInternal(ctx, cfg, boost::bind(&HostMgr::get4,
-                                                  &HostMgr::instance(),
-                                                  _1, _2, _3, _4));
+    findReservationInternal(ctx, boost::bind(&HostMgr::get4,
+                                             &HostMgr::instance(),
+                                             _1, _2, _3, _4));
 }
 
 Lease4Ptr
