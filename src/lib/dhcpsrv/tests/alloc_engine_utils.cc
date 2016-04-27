@@ -270,7 +270,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, hint, type,
                                     false, false, "", fake);
     ctx.hwaddr_ = hwaddr_;
-    ctx.host_identifiers_[Host::IDENT_HWADDR] = hwaddr_->hwaddr_;
+    ctx.addHostIdentifier(Host::IDENT_HWADDR, hwaddr_->hwaddr_);
     ctx.query_.reset(new Pkt6(fake ? DHCPV6_SOLICIT : DHCPV6_REQUEST, 1234));
 
     findReservation(*engine, ctx);

@@ -28,6 +28,7 @@
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/callout_handle_store.h>
+#include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -277,20 +278,37 @@ Dhcpv6Srv::createContext(const Pkt6Ptr& pkt) {
     AllocEngine::ClientContext6 ctx;
     ctx.subnet_ = selectSubnet(pkt);
     ctx.query_ = pkt;
-
-    // Collect host identifiers.
-    // DUID
     ctx.duid_ = pkt->getClientId();
-    if (ctx.duid_) {
-        ctx.host_identifiers_[Host::IDENT_DUID] = ctx.duid_->getDuid();
-    }
-    // HW Address.
     ctx.hwaddr_ = getMAC(pkt);
-    if (ctx.hwaddr_) {
-        ctx.host_identifiers_[Host::IDENT_HWADDR] = ctx.hwaddr_->hwaddr_;
+
+    // Collect host identifiers if host reservations enabled.
+    if (ctx.subnet_ &&
+        (ctx.subnet_->getHostReservationMode() != Subnet::HR_DISABLED)) {
+        const ConstCfgHostOperationsPtr cfg =
+            CfgMgr::instance().getCurrentCfg()->getCfgHostOperations6();
+        BOOST_FOREACH(const Host::IdentifierType& id_type,
+                      cfg->getIdentifierTypes()) {
+            switch (id_type) {
+            case Host::IDENT_DUID:
+                if (ctx.duid_) {
+                    ctx.addHostIdentifier(id_type, ctx.duid_->getDuid());
+                }
+                break;
+
+            case Host::IDENT_HWADDR:
+                if (ctx.hwaddr_) {
+                    ctx.addHostIdentifier(id_type, ctx.hwaddr_->hwaddr_);
+                }
+                break;
+
+            default:
+                ;
+            }
+        }
+
+        // Find host reservations using specified identifiers.
+        alloc_engine_->findReservation(ctx);
     }
-    // And find a host reservation using those identifiers.
-    alloc_engine_->findReservation(ctx);
 
     return (ctx);
 }

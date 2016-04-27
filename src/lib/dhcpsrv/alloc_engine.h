@@ -13,7 +13,6 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
-#include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -23,6 +22,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
+#include <list>
 #include <map>
 #include <utility>
 
@@ -257,7 +257,7 @@ public:
     typedef std::pair<Host::IdentifierType, std::vector<uint8_t> > IdentifierPair;
 
     /// @brief Map holding values to be used as host identifiers.
-    typedef std::map<Host::IdentifierType, std::vector<uint8_t> > IdentifierMap;
+    typedef std::list<IdentifierPair> IdentifierList;
 
     /// @brief Context information for the DHCPv6 leases allocation.
     ///
@@ -358,9 +358,19 @@ public:
         /// @brief A pointer to the IA_NA/IA_PD option to be sent in response
         Option6IAPtr ia_rsp_;
 
-        /// @brief A map holding host identifiers extracted from a message
+        /// @brief A list holding host identifiers extracted from a message
         /// received by the server.
-        IdentifierMap host_identifiers_;
+        IdentifierList host_identifiers_;
+
+        /// @brief Conveniece function adding host identifier into
+        /// @ref host_identifiers_ list.
+        ///
+        /// @param id_type Identifier type.
+        /// @param identifier Identifier value.
+        void addHostIdentifier(const Host::IdentifierType& id_type,
+                               const std::vector<uint8_t>& identifier) {
+            host_identifiers_.push_back(IdentifierPair(id_type, identifier));
+        }
 
         /// @brief Default constructor.
         ClientContext6();
@@ -634,15 +644,11 @@ private:
     /// functions.
     ///
     /// @param ctx Reference to a @ref ClientContext6 or @ref ClientContext4.
-    /// @param cfg Pointer to object holding general configuration for host
-    /// reservations. It uses this object to read the desired order of
-    /// host identifiers to be used to search for reservations.
     /// @param host_get Pointer to the @ref HostMgr functions to be used
     /// to retrieve reservation by subnet identifier and host identifier.
     /// @tparam ContextType Either @ref ClientContext6 or @ref ClientContext4.
     template<typename ContextType>
     static void findReservationInternal(ContextType& ctx,
-                                        const ConstCfgHostOperationsPtr& cfg,
                                         const HostGetFunc& host_get);
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
@@ -1006,9 +1012,19 @@ public:
         /// transaction identification information.
         Pkt4Ptr query_;
 
-        /// @brief A map holding host identifiers extracted from a message
+        /// @brief A list holding host identifiers extracted from a message
         /// received by the server.
-        IdentifierMap host_identifiers_;
+        IdentifierList host_identifiers_;
+
+        /// @brief Conveniece function adding host identifier into
+        /// @ref host_identifiers_ list.
+        ///
+        /// @param id_type Identifier type.
+        /// @param identifier Identifier value.
+        void addHostIdentifier(const Host::IdentifierType& id_type,
+                               const std::vector<uint8_t>& identifier) {
+            host_identifiers_.push_back(IdentifierPair(id_type, identifier));
+        }
 
         /// @brief Default constructor.
         ClientContext4();
