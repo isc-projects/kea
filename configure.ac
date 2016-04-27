@@ -1404,19 +1404,11 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/perfdhcp/tests/testdata/Makefile
                  src/bin/admin/Makefile
                  src/bin/admin/kea-admin
-                 src/bin/admin/scripts/Makefile
                  src/bin/admin/tests/Makefile
                  src/bin/admin/tests/data/Makefile
                  src/bin/admin/tests/memfile_tests.sh
                  src/bin/admin/tests/mysql_tests.sh
                  src/bin/admin/tests/pgsql_tests.sh
-                 src/bin/admin/scripts/mysql/Makefile
-                 src/bin/admin/scripts/mysql/upgrade_1.0_to_2.0.sh
-                 src/bin/admin/scripts/mysql/upgrade_2.0_to_3.0.sh
-                 src/bin/admin/scripts/mysql/upgrade_3.0_to_4.0.sh
-                 src/bin/admin/scripts/mysql/upgrade_4.0_to_4.1.sh
-                 src/bin/admin/scripts/pgsql/Makefile
-                 src/bin/admin/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile
@@ -1483,6 +1475,16 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/util/unittests/Makefile
                  src/lib/eval/Makefile
                  src/lib/eval/tests/Makefile
+                 src/share/Makefile
+                 src/share/database/Makefile
+                 src/share/database/scripts/Makefile
+                 src/share/database/scripts/mysql/Makefile
+                 src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh
+                 src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh
+                 src/share/database/scripts/mysql/upgrade_3.0_to_4.0.sh
+                 src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh
+                 src/share/database/scripts/pgsql/Makefile
+                 src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  tools/Makefile
                  tools/path_replacer.sh
 ])

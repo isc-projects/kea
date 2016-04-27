@@ -1,4 +1,4 @@
-SUBDIRS = . scripts tests
+SUBDIRS = . tests
 
 # Install kea-admin in sbin.
 sbin_SCRIPTS  = kea-admin

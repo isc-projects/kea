@@ -97,8 +97,8 @@ public:
 TEST(MySqlOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
-    destroyMySQLSchema();
-    createMySQLSchema();
+    destroyMySQLSchema(true);
+    createMySQLSchema(true);
 
     // Check that lease manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
@@ -129,25 +129,25 @@ TEST(MySqlOpenTest, OpenDatabase) {
 
     // Check that invalid login data causes an exception.
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
 
     // Check for missing parameters
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 
     // Tidy up after the test
-    destroyMySQLSchema();
+    destroyMySQLSchema(true);
 }
 
 /// @brief Check the getType() method

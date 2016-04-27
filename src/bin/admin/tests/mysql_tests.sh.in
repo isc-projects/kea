@@ -9,15 +9,11 @@
 # Include common test library.
 . @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
 
-# If the code is installed, include admin-utils.sh from the destination
-# directory. If not, include it from the sources.
-prefix=@prefix@
+# Include admin utilities
+. @abs_top_srcdir@/src/bin/admin/admin-utils.sh
 
-if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
-    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
-else
-    . @abs_top_srcdir@/src/bin/admin/admin-utils.sh
-fi
+# Set path to the production schema scripts
+db_scripts_dir=@abs_top_srcdir@/src/share/database/scripts
 
 db_user="keatest"
 db_password="keatest"
@@ -30,24 +26,9 @@ keaadmin=@abs_top_builddir@/src/bin/admin/kea-admin
 mysql_wipe() {
     printf "Wiping whole database %s\n" $db_name
 
-    # First we build the list of drop table commands
-    # We don't bother with "cascade" because as of MySQL
-    # 5.1 it is only there to ease porting, it doesn't
-    # actually do anything.
-    qry="\
-SELECT CONCAT('DROP TABLE ', table_schema, '.', table_name, ';') \
-FROM information_schema.tables \
-WHERE table_schema = 'keatest';"
-
-    drop_sql=`mysql_execute "${qry}"`
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 < $db_scripts_dir/mysql/dhcpdb_drop.mysql
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "mysql-wipe: table query failed, exit code %d, expected %d"
 
-    # We need to turn off referrential integrity checks so tables
-    # are dropped regardless of whether they are used in foreign keys.
-    # (This is what cascade would normally do)
-    mysql_execute "SET SESSION FOREIGN_KEY_CHECKS = 0;$drop_sql"
-    ERRCODE=$?
     assert_eq 0 $ERRCODE "mysql-wipe: drop table sql failed, exit code %d, expected %d"
 }
 
@@ -58,7 +39,7 @@ mysql_lease_init_test() {
     mysql_wipe
 
     # Ok, now let's initalize the database
-    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts
+    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
     assert_eq 0 $ERRCODE "kea-admin lease-init mysql returned non-zero status code %d, expected %d"
@@ -137,7 +118,7 @@ mysql_host_reservation_init_test() {
     mysql_wipe
 
     # Ok, now let's initalize the database
-    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts
+    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
     assert_eq 0 $ERRCODE "kea-admin lease-init mysql returned non-zero status code %d, expected %d"
@@ -202,12 +183,12 @@ mysql_upgrade_test() {
     mysql -u$db_user -p$db_password $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql
 
     # Sanity check - verify that it reports version 1.0.
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts)
+    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir) 
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Ok, we have a 1.0 database. Let's upgrade it to 4.1
-    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts
+    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir 
     ERRCODE=$?
 
     assert_eq 0 $ERRCODE "kea-admin lease-upgrade mysql returned non-zero status code %d, expected %d"
@@ -309,7 +290,7 @@ EOF
     assert_eq 1 $count "lease6DumpData doesn't have order by clause. (returned count %d, expected %d)"
 
     # Verify upgraded schemd reports version 4.1.
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d @abs_top_srcdir@/src/bin/admin/scripts)
+    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir) 
     assert_str_eq "4.1" ${version} "Expected kea-admin to return %s, returned value was %s"
 
 
@@ -346,7 +327,7 @@ mysql_lease4_dump_test() {
     mysql_wipe
 
     # Ok, now let's initalize the database
-    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $script_dir
+    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
     assert_eq 0 $ERRCODE "could not create database, expected exit code %d, actual %d"
 
@@ -361,7 +342,7 @@ insert into lease4 values(12,22,NULL,40,\"2015-03-03 11:01:07\",50,1,1,\"three.e
     assert_eq 0 $ERRCODE "insert into lease4 failed, expected exit code %d, actual %d"
 
     # Dump lease4 to output_file
-    ${keaadmin} lease-dump mysql -4 -u $db_user -p $db_password -n $db_name -d $script_dir -o $output_file
+    ${keaadmin} lease-dump mysql -4 -u $db_user -p $db_password -n $db_name -d $db_scripts_dir -o $output_file
     ERRCODE=$?
     assert_eq 0 $ERRCODE "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
 
@@ -406,7 +387,7 @@ mysql_lease6_dump_test() {
     mysql_wipe
 
     # Ok, now let's initalize the database
-    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $script_dir
+    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
     assert_eq 0 $ERRCODE "could not create database, expected exit code %d, actual %d"
 
@@ -421,7 +402,7 @@ insert into lease6 values(12,21,30,\"2015-06-06 11:01:07\",40,50,1,60,70,1,1,\"t
     assert_eq 0 $ERRCODE "insert into lease6 failed, expected exit code %d, actual %d"
 
     # Dump lease4 to output_file
-    ${keaadmin} lease-dump mysql -6 -u $db_user -p $db_password -n $db_name -d $script_dir -o $output_file
+    ${keaadmin} lease-dump mysql -6 -u $db_user -p $db_password -n $db_name -d $db_scripts_dir -o $output_file
     ERRCODE=$?
     assert_eq 0 $ERRCODE "kea-admin lease-dump -6 failed, status code %d"
 

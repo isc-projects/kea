@@ -115,7 +115,6 @@ if HAVE_PGSQL
 libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
 endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
-libdhcpsrv_unittests_SOURCES += schema_pgsql_copy.h
 libdhcpsrv_unittests_SOURCES += srv_config_unittest.cc
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_get_callout_handle.cc test_get_callout_handle.h
