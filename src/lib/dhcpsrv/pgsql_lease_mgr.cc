@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -417,7 +417,7 @@ public:
         return (value);
     }
 
-    /// @brief Converts a column in a row in a result set to a boolean.
+    /// @brief Fetches boolean text ('t' or 'f') as a bool.
     ///
     /// @param r the result set containing the query results
     /// @param row the row number within the result set
@@ -440,7 +440,7 @@ public:
         }
     }
 
-    /// @brief Converts a column in a row in a result set to a uint32_t.
+    /// @brief Fetches an integer text column as a uint32_t.
     ///
     /// @param r the result set containing the query results
     /// @param row the row number within the result set
@@ -461,7 +461,28 @@ public:
         }
     }
 
-    /// @brief Converts a column in a row in a result set to a uint8_t.
+    /// @brief Fetches an integer text column as a int32_t.
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    /// @param[out] value parameter to receive the converted value
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
+    void getColumnValue(PGresult*& r, const int row, const size_t col,
+                        int32_t &value) const {
+        const char* data = getRawColumnValue(r, row, col);
+        try {
+            value = boost::lexical_cast<int32_t>(data);
+        } catch (const std::exception& ex) {
+            isc_throw(DbOperationError, "Invalid int32_t data: " << data
+                      << " for: " << getColumnLabel(col) << " row:" << row
+                      << " : " << ex.what());
+        }
+    }
+
+    /// @brief Fetches an integer text column as a uint8_t.
     ///
     /// @param r the result set containing the query results
     /// @param row the row number within the result set
@@ -484,7 +505,7 @@ public:
         }
     }
 
-    /// @brief Converts a column in a row in a result set to a Lease6::Type
+    /// @brief Fetches an integer text column as a Lease6::Type
     ///
     /// @param r the result set containing the query results
     /// @param row the row number within the result set
@@ -807,7 +828,7 @@ private:
 
 public:
     PgSqlLease6Exchange()
-        : lease_(), duid_length_(0), duid_(), iaid_(0), iaid_str_(""),
+        : lease_(), duid_length_(0), duid_(), iaid_u_(0), iaid_str_(""),
           lease_type_(Lease6::TYPE_NA), lease_type_str_(""), prefix_len_(0),
           prefix_len_str_(""), pref_lifetime_(0), preferred_lft_str_("") {
 
@@ -878,7 +899,11 @@ public:
             lease_type_str_ = boost::lexical_cast<std::string>(lease_->type_);
             bind_array.add(lease_type_str_);
 
-            iaid_str_ = boost::lexical_cast<std::string>(lease_->iaid_);
+            // The iaid is stored as an INT in lease6 table, so we must
+            // lexically cast from an integer version to avoid out of range
+            // exception failure upon insert.
+            iaid_u_.uval_ = lease_->iaid_;
+            iaid_str_ = boost::lexical_cast<std::string>(iaid_u_.ival_);
             bind_array.add(iaid_str_);
 
             prefix_len_str_ = boost::lexical_cast<std::string>
@@ -930,7 +955,7 @@ public:
 
             getColumnValue(r, row, LEASE_TYPE_COL, lease_type_);
 
-            getColumnValue(r, row , IAID_COL, iaid_);
+            getColumnValue(r, row , IAID_COL, iaid_u_.ival_);
 
             getColumnValue(r, row , PREFIX_LEN_COL, prefix_len_);
 
@@ -942,8 +967,9 @@ public:
             /// @todo: implement this in #3557.
             HWAddrPtr hwaddr;
 
-            Lease6Ptr result(new Lease6(lease_type_, addr, duid_ptr, iaid_,
-                                        pref_lifetime_, valid_lifetime_, 0, 0,
+            Lease6Ptr result(new Lease6(lease_type_, addr, duid_ptr,
+                                        iaid_u_.uval_, pref_lifetime_,
+                                        valid_lifetime_, 0, 0,
                                         subnet_id_, fqdn_fwd_, fqdn_rev_,
                                         hostname_, hwaddr, prefix_len_));
             result->cltt_ = cltt_;
@@ -987,7 +1013,20 @@ private:
     size_t          duid_length_;
     vector<uint8_t> duid_;
     uint8_t         duid_buffer_[DUID::MAX_DUID_LEN];
-    uint32_t        iaid_;
+
+    /// @brief Union for marshalling IAID into and out of the database
+    /// IAID is defined in the RFC as 4 octets, which Kea code handles as
+    /// a uint32_t.  Postgresql however, offers only signed integer types
+    /// of sizes 2, 4, and 8 bytes (SMALLINT, INT, and BIGINT respectively).
+    /// IAID is used in several indexes so rather than use the BIGINT, we
+    /// use this union to safely move the value into and out of an INT column.
+    union Uiaid {
+        Uiaid(uint32_t val) : uval_(val){};
+        Uiaid(int32_t val) : ival_(val){};
+        uint32_t uval_;
+        int32_t ival_;
+    } iaid_u_;
+
     std::string iaid_str_;
     Lease6::Type    lease_type_;
     std::string lease_type_str_;
