@@ -149,7 +149,7 @@ public:
     /// - x = getParameter("users") will return an instance of ListElement.
     ///   Its content can be accessed with the following methods:
     ///   x->size(), x->get(index)
-    /// - x = getParameter("watch-list") will return an instance of isc::data::MapElement.
+    /// - x = getParameter("header") will return an instance of isc::data::MapElement.
     ///   Its content can be accessed with the following methods:
     ///   x->find("klingon"), x->contains("french"), x->size()
     ///
@@ -166,6 +166,8 @@ public:
     /// unittests in data_unittests.cc.
     ///
     /// @param name text name of the parameter.
+    /// @return ElementPtr representing requested parameter (may be null, if
+    ///         there is no such parameter.)
     isc::data::ConstElementPtr
     getParameter(const std::string& name);
 
