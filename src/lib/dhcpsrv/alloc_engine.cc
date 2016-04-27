@@ -311,9 +311,6 @@ AllocEngine::findReservationInternal(ContextType& ctx,
 
     // We can only search for the reservation if a subnet has been selected.
     if (ctx.subnet_) {
-        // Check which host reservation mode is supported in this subnet.
-        Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
-
         // Iterate over configured identifiers in the order of preference
         // and try to use each of them to search for the reservations.
         BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
