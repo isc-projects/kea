@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,15 +9,11 @@
 # Include common test library.
 . @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
 
-# If the code is installed, include admin-utils.sh from the destination
-# directory. If not, include it from the sources.
-prefix=@prefix@
+# Include admin utilities
+. @abs_top_srcdir@/src/bin/admin/admin-utils.sh
 
-if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
-    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
-else
-    . @abs_top_srcdir@/src/bin/admin/admin-utils.sh
-fi
+# Set path to the production schema scripts
+db_scripts_dir=@abs_top_srcdir@/src/share/database/scripts
 
 db_user="keatest"
 db_password="keatest"
@@ -26,21 +22,13 @@ db_name="keatest"
 # Set location of the kea-admin.
 keaadmin=@abs_top_builddir@/src/bin/admin/kea-admin
 
-# Set location of scripts directory
-scripts_dir=@abs_top_srcdir@/src/bin/admin/scripts
-
 # Wipe all tables from the DB:
 pgsql_wipe() {
     printf "Wiping whole database %s\n" $db_name
     export PGPASSWORD=$db_password
 
-    # Make a set of drop commands, one for each table owned by keatest
-    RESULT=`pgsql_execute "SELECT 'drop table if exists '||t.tablename || ' cascade;' as dcmd FROM pg_catalog.pg_tables t WHERE t.tableowner = 'keatest';"`
-    assert_eq 0 $? "pgsql_wipe select failed, expected exit code: %d, actual: %d"
-
-    # Now execute the set of drop commands from the result set returned
-    RESULT=`pgsql_execute "$RESULT"`
-    assert_eq 0 $? "pgsql_wipe drop failed, expected exit code: %d, actual: %d"
+    cat $db_scripts_dir/pgsql/dhcpdb_drop.pgsql | psql --set ON_ERROR_STOP=1 -A -t -q -U keatest -d keatest >/dev/null 2>&1
+    assert_eq 0 $?  "pgsql_wipe drop failed, expected exit code: %d, actual: %d"
 }
 
 pgsql_lease_init_test() {
@@ -50,7 +38,7 @@ pgsql_lease_init_test() {
     pgsql_wipe
 
     # Create the database
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $scripts_dir
+    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     assert_eq 0 $? "kea-admin lease-init pgsql failed, expected exit code: %d, actual: %d"
 
     # Verify that all the expected tables exist
@@ -79,7 +67,7 @@ pgsql_lease_init_test() {
     # check
     echo ""
     echo "DB created successfully, make sure we aren't allowed to try it again:"
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $scripts_dir
+    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     assert_eq 2 $? "kea-admin failed to deny lease-init, expected exit code: %d, actual: %d"
 
     # Let's wipe the whole database
@@ -95,7 +83,7 @@ pgsql_lease_version_test() {
     pgsql_wipe
 
     # Create the database
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $scripts_dir
+    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     assert_eq 0 $? "cannot initialize the database, expected exit code: %d, actual: %d"
 
     # Verfiy that kea-admin lease-version returns the correct version
@@ -118,7 +106,7 @@ pgsql_upgrade_test() {
     pgsql_execute_script @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql
     assert_eq 0 $? "cannot initialize the database, expected exit code: %d, actual: %d"
 
-    ${keaadmin} lease-upgrade pgsql -u $db_user -p $db_password -n $db_name -d $scripts_dir
+    ${keaadmin} lease-upgrade pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     assert_eq 0 $? "lease-upgrade failed, expected exit code: %d, actual: %d"
 
     #table: state column added to lease4 (upgrade 1.0 -> 2.0)
@@ -204,7 +192,7 @@ pgsql_lease4_dump_test() {
     pgsql_wipe
 
     # Ok, now let's initalize the database
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $script_dir
+    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
     assert_eq 0 $ERRCODE "could not create database, expected exit code %d, actual %d"
 
@@ -223,7 +211,7 @@ insert into lease4 values(12,E'\\x22','',40,'$timestamp3',50,'t','t','three.exam
     assert_eq 0 $ERRCODE "insert into lease4 failed, expected exit code %d, actual %d"
 
     # Dump lease4 to output_file
-    ${keaadmin} lease-dump pgsql -4 -u $db_user -p $db_password -n $db_name -d $script_dir -o $output_file
+    ${keaadmin} lease-dump pgsql -4 -u $db_user -p $db_password -n $db_name -d $db_scripts_dir -o $output_file
     ERRCODE=$?
     assert_eq 0 $ERRCODE "kea-admin lease-dump -4 failed,  status code %d"
 
@@ -299,7 +287,7 @@ pgsql_lease6_dump_test() {
     pgsql_wipe
 
     # Ok, now let's initalize the database
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $script_dir
+    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
     assert_eq 0 $ERRCODE "could not create database,  status code %d"
 
@@ -318,7 +306,7 @@ insert into lease6 values(12,E'\\x21',30,'$timestamp3',40,50,1,60,70,'t','t','th
     assert_eq 0 $ERRCODE "insert into lease6 failed, status code %d"
 
     # Dump lease6 to output_file
-    ${keaadmin} lease-dump pgsql -6 -u $db_user -p $db_password -n $db_name -d $script_dir -o $output_file
+    ${keaadmin} lease-dump pgsql -6 -u $db_user -p $db_password -n $db_name -d $db_scripts_dir -o $output_file
     ERRCODE=$?
     assert_eq 0 $ERRCODE "kea-admin lease-dump -6 failed, status code %d"
 
