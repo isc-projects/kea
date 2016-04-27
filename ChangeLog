@@ -1,3 +1,10 @@
+1109.	[func]		marcin
+	"host-reservation-identifiers" configuration parameter has been
+	implemented. It allows for specifying an ordered list of
+	host identifiers that DHCPv4 and DHCPv6 servers use to
+	retrieve static host reservations for a client.
+	(Trac #4303, git 942808400e7116d95acfd53b0dc1ecad1c45c598)
+
 1108.	[func]		tmark
 	Schema scripts have been relocated from src/bin/admin/scripts to
 	src/share/database/scripts and are now shared by both kea-admin
