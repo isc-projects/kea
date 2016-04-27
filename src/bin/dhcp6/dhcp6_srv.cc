@@ -281,7 +281,9 @@ Dhcpv6Srv::createContext(const Pkt6Ptr& pkt) {
     ctx.duid_ = pkt->getClientId();
     ctx.hwaddr_ = getMAC(pkt);
 
-    // Collect host identifiers if host reservations enabled.
+    // Collect host identifiers if host reservations enabled. The identifiers
+    // are stored in order of preference. The server will use them in that
+    // order to search for host reservations.
     if (ctx.subnet_ &&
         (ctx.subnet_->getHostReservationMode() != Subnet::HR_DISABLED)) {
         const ConstCfgHostOperationsPtr cfg =

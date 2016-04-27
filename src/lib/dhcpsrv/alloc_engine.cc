@@ -314,19 +314,15 @@ AllocEngine::findReservationInternal(ContextType& ctx,
         // Check which host reservation mode is supported in this subnet.
         Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
 
-        // Check if there is a host reseravtion for this client. Attempt to
-        // get host information
-        if (hr_mode != Subnet::HR_DISABLED) {
-            // Iterate over configured identifiers in the order of preference
-            // and try to use each of them to search for the reservations.
-            BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
-                // Attempt to find a host using a specified identifier.
-                ctx.host_ = host_get(ctx.subnet_->getID(), id_pair.first,
-                                     &id_pair.second[0], id_pair.second.size());
-                // If we found matching host, return.
-                if (ctx.host_) {
-                    return;
-                }
+        // Iterate over configured identifiers in the order of preference
+        // and try to use each of them to search for the reservations.
+        BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
+            // Attempt to find a host using a specified identifier.
+            ctx.host_ = host_get(ctx.subnet_->getID(), id_pair.first,
+                                 &id_pair.second[0], id_pair.second.size());
+            // If we found matching host, return.
+            if (ctx.host_) {
+                return;
             }
         }
     }
