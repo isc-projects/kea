@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -49,7 +49,8 @@ Dhcp4Client::Dhcp4Client(const Dhcp4Client::State& state) :
     server_facing_relay_addr_("10.0.0.2"),
     srv_(boost::shared_ptr<NakedDhcpv4Srv>(new NakedDhcpv4Srv(0))),
     state_(state),
-    use_relay_(false) {
+    use_relay_(false),
+    circuit_id_() {
 }
 
 Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv> srv,
@@ -67,7 +68,8 @@ Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv> srv,
     server_facing_relay_addr_("10.0.0.2"),
     srv_(srv),
     state_(state),
-    use_relay_(false) {
+    use_relay_(false),
+    circuit_id_() {
 }
 
 void
@@ -468,6 +470,15 @@ Dhcp4Client::sendMsg(const Pkt4Ptr& msg) {
         msg->setHops(1);
         msg->setGiaddr(relay_addr_);
         msg->setLocalAddr(server_facing_relay_addr_);
+        // Insert RAI
+        OptionPtr rai(new Option(Option::V4, DHO_DHCP_AGENT_OPTIONS));
+        // Insert circuit id, if specified.
+        if (!circuit_id_.empty()) {
+            rai->addOption(OptionPtr(new Option(Option::V4, RAI_OPTION_AGENT_CIRCUIT_ID,
+                                                OptionBuffer(circuit_id_.begin(),
+                                                             circuit_id_.end()))));
+        }
+        msg->addOption(rai);
     }
     // Repack the message to simulate wire-data parsing.
     msg->pack();

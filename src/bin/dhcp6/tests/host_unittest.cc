@@ -1,15 +1,17 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <asiolink/io_address.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
@@ -19,6 +21,11 @@ namespace {
 ///
 /// - Configuration 0:
 ///   Single subnet with two reservations, one with a hostname, one without
+/// - Configuration 1:
+///   Multiple reservations using different host identifiers.
+/// - Configuration 2:
+///   Same as configuration 1 but 'host-reservation-identifiers' specified
+///   in non-default order.
 const char* CONFIGS[] = {
     // Configuration 0:
     "{ "
@@ -45,6 +52,61 @@ const char* CONFIGS[] = {
         "        \"ip-addresses\": [ \"2001:db8:1:1::babf\" ]"
         "    } ]"
         " } ]"
+    "}",
+
+    // Configuration 1:
+    "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 4000, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"mac-sources\": [ \"ipv6-link-local\" ], "
+        "\"subnet6\": [ "
+        " { "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"interface\" : \"eth0\" , "
+        "    \"reservations\": ["
+        "    {"
+        "        \"hw-address\": \"38:60:77:d5:ff:ee\","
+        "        \"ip-addresses\": [ \"2001:db8:1::1\" ]"
+        "    },"
+        "    {"
+        "        \"duid\": \"01:02:03:05\","
+        "        \"ip-addresses\": [ \"2001:db8:1::2\" ]"
+        "    } ]"
+        " } ]"
+    "}",
+
+    // Configuration 2:
+    "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"host-reservation-identifiers\": [ \"duid\", \"hw-address\" ],"
+        "\"valid-lifetime\": 4000, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"mac-sources\": [ \"ipv6-link-local\" ], "
+        "\"subnet6\": [ "
+        " { "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"interface\" : \"eth0\" , "
+        "    \"reservations\": ["
+        "    {"
+        "        \"hw-address\": \"38:60:77:d5:ff:ee\","
+        "        \"ip-addresses\": [ \"2001:db8:1::1\" ]"
+        "    },"
+        "    {"
+        "        \"duid\": \"01:02:03:05\","
+        "        \"ip-addresses\": [ \"2001:db8:1::2\" ]"
+        "    } ]"
+        " } ]"
     "}"
 };
 
@@ -57,6 +119,39 @@ public:
     HostTest()
         : Dhcpv6SrvTest(),
           iface_mgr_test_config_(true) {
+    }
+
+    /// @brief Verifies that the reservation is retrieved by the server
+    /// using one of the host identifiers.
+    ///
+    /// @param client Reference to a client to be used in the test.
+    /// The client should be preconfigured to insert a specific identifier
+    /// into the message, e.g. DUID, HW address etc.
+    /// @param config_index Index of the configuration to use in the CONFIGS
+    /// table.
+    /// @param exp_ip_address Expected IPv6 address in the returned
+    /// reservation.
+    void testReservationByIdentifier(Dhcp6Client& client,
+                                     const unsigned int config_index,
+                                     const std::string exp_ip_address) {
+        configure(CONFIGS[config_index], *client.getServer());
+
+        const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+            getCfgSubnets6()->getAll();
+        ASSERT_EQ(1, subnets->size());
+
+        // Configure client to request IA_NA and append IA_NA option
+        //  to the client's message.
+        client.useNA();
+        ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
+
+        // Perform 4-way exchange.
+        ASSERT_NO_THROW(client.doSARR());
+
+        // Verify that the client we got the reserved address
+        ASSERT_EQ(1, client.getLeaseNum());
+        Lease6 lease_client = client.getLease(0);
+        EXPECT_EQ(exp_ip_address, lease_client.addr_.toText());
     }
 
     /// @brief Interface Manager's fake configuration control.
@@ -244,6 +339,41 @@ TEST_F(HostTest, sarrAndRebind) {
     Lease6Ptr lease_server2 = checkLease(lease_client2);
     EXPECT_TRUE(lease_server2);
     EXPECT_EQ("alice", lease_server2->hostname_);
+}
+
+// This test verfies that the host reservation by DUID is found by the
+// server.
+TEST_F(HostTest, reservationByDUID) {
+    Dhcp6Client client;
+    // Set DUID matching the one used to create host reservations.
+    client.setDUID("01:02:03:05");
+    // Run the actual test.
+    testReservationByIdentifier(client, 1, "2001:db8:1::2");
+}
+
+// This test verfies that the host reservation by HW address is found
+// by the server.
+TEST_F(HostTest, reservationByHWAddress) {
+    Dhcp6Client client;
+    // Set link local address for the client which the server will
+    // use to decode the HW address as 38:60:77:d5:ff:ee. This
+    // decoded address will be used to search for host reservations.
+    client.setLinkLocal(IOAddress("fe80::3a60:77ff:fed5:ffee"));
+    // Run the actual test.
+    testReservationByIdentifier(client, 1, "2001:db8:1::1");
+}
+
+// This test verifies that order in which host identifiers are used to
+// retrieve host reservations can be controlled.
+TEST_F(HostTest, hostIdentifiersOrder) {
+    Dhcp6Client client;
+    // Set DUID matching the one used to create host reservations.
+    client.setDUID("01:02:03:05");
+    // Set link local address for the client which the server will
+    // use to decode the HW address as 38:60:77:d5:ff:ee. This
+    // decoded address will be used to search for host reservations.
+    client.setLinkLocal(IOAddress("fe80::3a60:77ff:fed5:ffee"));
+    testReservationByIdentifier(client, 2, "2001:db8:1::2");
 }
 
 } // end of anonymous namespace
