@@ -139,8 +139,10 @@ private:
 
     /// @brief Set host identifiers within a context.
     ///
-    /// This method sets an order list of host identifier types and
+    /// This method sets an ordered list of host identifier types and
     /// values which the server should use to find host reservations.
+    /// The order of the set is determined by the configuration parameter,
+    /// host-reservation-identifiers
     void setHostIdentifiers();
 
     /// @brief Pointer to the allocation engine used by the server.
