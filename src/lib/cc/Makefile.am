@@ -13,4 +13,9 @@ libkea_cc_la_LIBADD += $(BOOST_LIBS)
 
 libkea_cc_la_LDFLAGS = -no-undefined -version-info 1:0:0
 
+# Since data.h is now used in the hooks interface, it needs to be
+# installed on target system.
+libkea_cc_includedir = $(pkgincludedir)
+libkea_cc_include_HEADERS = data.h
+
 CLEANFILES = *.gcno *.gcda

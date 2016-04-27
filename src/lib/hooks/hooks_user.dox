@@ -168,7 +168,7 @@ to namespaces.
 As the names suggest, "load" is called when a library is loaded and
 "unload" called when it is unloaded.  (It is always guaranteed that
 "load" is called: "unload" may not be called in some circumstances,
-e.g. if the system shuts down abnormally.)  These functions are the
+e.g., if the system shuts down abnormally.)  These functions are the
 places where any library-wide resources are allocated and deallocated.
 "load" is also the place where any callouts with non-standard names
 (names that are not hook point names) can be registered:
@@ -344,7 +344,7 @@ an argument as an @c int and the callout attempted to retrieve it as a
 @c long, an exception would be thrown even though any value that can
 be stored in an @c int will fit into a @c long.  This restriction also
 applies the "const" attribute but only as applied to data pointed to by
-pointers, e.g. if an argument is defined as a @c char*, an exception will
+pointers, e.g., if an argument is defined as a @c char*, an exception will
 be thrown if an attempt is made to retrieve it into a variable of type
 @c const @c char*.  (However, if an argument is set as a @c const @c int,
 it can be retrieved into an @c int.)  The documentation of each hook
@@ -434,7 +434,7 @@ status (see @ref hooksdgNextStep) was provided by
 a boolean flag called "Skip". However, since it only allowed to either continue
 or skip the next processing step and was not extensible to other decisions,
 setSkip(bool) call was replaced with a setStatus(enum) in Kea 1.0. This
-new approach is extensible. If we decide to add new results (e.g. WAIT
+new approach is extensible. If we decide to add new results (e.g., WAIT
 or RATELIMIT), we will be able to do so without changing the API again.
 
 If you have your hooks libraries that take advantage of skip flag, migrating
@@ -473,7 +473,7 @@ if (status == CalloutHandle::NEXT_STEP_SKIP) {
 @subsubsection hooksdgCalloutContext Per-Request Context
 
 Although the Kea modules can be characterized as handling a single
-packet at a time - e.g. the DHCPv4 server receives a DHCPDISCOVER packet,
+packet at a time - e.g., the DHCPv4 server receives a DHCPDISCOVER packet,
 processes it and responds with an DHCPOFFER, this may not always be true.
 Future developments may have the server processing multiple packets
 simultaneously, or to suspend processing on a packet and resume it at
@@ -962,7 +962,7 @@ only shared pointers have the correct behavior for the copy operation.)
 As briefly mentioned in @ref hooksdgExampleCallouts, the standard is for
 callouts in the user library to have the same name as the name of the
 hook to which they are being attached.  This convention was followed
-in the tutorial, e.g.  the callout that needed to be attached to the
+in the tutorial, e.g.,  the callout that needed to be attached to the
 "pkt4_receive" hook was named pkt4_receive.
 
 The reason for this convention is that when the library is loaded, the
@@ -1026,7 +1026,7 @@ a hook point.  Although it is likely to be rare for user code to need to
 do this, there may be instances where it make sense.
 
 To register multiple callouts on a hook, just call
-@c LibraryHandle::registerCallout multiple times on the same hook, e.g.
+@c LibraryHandle::registerCallout multiple times on the same hook, e.g.,
 
 @code
     libhandle.registerCallout("pkt4_receive", classify);
@@ -1184,7 +1184,7 @@ may be present, but will not affect the context values set by a library's
 callouts.
 
 Configuring multiple libraries just requires listing the libraries
-as separate elements of the hooks-libraries configuration element, e.g.
+as separate elements of the hooks-libraries configuration element, e.g.,
 
 @code
 "Dhcp4": {
@@ -1311,14 +1311,14 @@ specify it as an empty map. The third library is more interesting. It has five
 parameters specified. The first one called 'mail' is a string. The second one
 is an integer and the third one is boolean. Fourth and fifth parameters are
 slightly more complicated as they are a list and a map respectively. JSON
-structures can be nested if necessary, e.g. you can have a list, which contains
+structures can be nested if necessary, e.g., you can have a list, which contains
 maps, maps that contain maps that contain other maps etc. Any valid JSON
-structure can be repesented. One important limitation here is that the top
+structure can be represented. One important limitation here is that the top
 level "parameters" structure must either be a map or not present at all.
 
 Those parameters can be accessed in load() method. Passed isc::hooks::LibraryHandle
 object has a method called getParameter that returns an instance of
-isc::data::ConstElementPtr or NULL if there was no parameter specified. This pointer
+isc::data::ConstElementPtr or null pointer if there was no parameter specified. This pointer
 will point to an object derived from isc::data::Element class. For detailed
 explanation how to use those objects, see isc::data::Element class.
 
@@ -1338,12 +1338,12 @@ Here's a brief overview of how to use those elements:
    x->find("klingon"), x->contains("french"), x->size()
 
 Keep in mind that the user can structure his config file incorrectly.
-Remember to check if the structure has expected type before using type specific
+Remember to check if the structure has the expected type before using type specific
 method. For example calling stringValue on IntElement will throw an exception.
 You can do this by calling isc::data::Element::getType.
 
 Here's an example that obtains all of the parameters specified above.
-If you want to get nested elemented, Element::get(index) and Element::find(name)
+If you want to get nested elements, Element::get(index) and Element::find(name)
 will return ElementPtr, which can be iterated in similar manner.
 
 @code
@@ -1367,7 +1367,7 @@ int load(LibraryHandle& handle) {
 
     // In the following examples safety checks are omitted for clarity.
     // Make sure you do it properly similar to mail example above
-    // or you risk dereferencing NULL pointer or at least throwing
+    // or you risk dereferencing null pointer or at least throwing
     // an exception!
 
     // Integer handling example

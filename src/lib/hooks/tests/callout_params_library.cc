@@ -48,7 +48,7 @@ int load(LibraryHandle& handle) {
 
     if (string_elem->getType() != Element::string) {
         // Parameter is specified, but it's not a string.
-        return (1);
+        return (2);
     }
 
     std::string str = string_elem->stringValue();
@@ -58,43 +58,43 @@ int load(LibraryHandle& handle) {
         // This library is used for testing, so it expects exact value of the
         // parameter. Normal library would likely use whatever value user
         // specified.
-        return (1);
+        return (3);
     }
 
     // Integer handling example
     if (!int_elem) {
         // Parameter was not specified at all.
-        return (1);
+        return (4);
     }
 
     if (int_elem->getType() != Element::integer) {
         // Parameter is specified, but it's not an integer.
-        return (1);
+        return (5);
     }
 
     int int_value = int_elem->intValue();
     if (int_value != 42) {
         // Parameter specified, is an integer, but has a value different than
         // expected.
-        return (1);
+        return (6);
     }
 
     // Boolean handling example
     if (!bool_elem) {
         // Parameter was not specified at all.
-        return (1);
+        return (7);
     }
 
     if (bool_elem->getType() != Element::boolean) {
         // Parameter is specified, but it's not a boolean.
-        return (1);
+        return (8);
     }
 
     bool flag = bool_elem->boolValue();
     if (flag != true) {
         // Parameter specified, is a boolean, but has a value different than
         // expected.
-        return (1);
+        return (9);
     }
 
     // All validation steps were successful. The library has all the parameters

@@ -85,17 +85,17 @@ LibraryHandle::getParameter(const std::string& name) {
     }
 
     // Some indexes have special meaning:
-    // - 0 - pre-user library callout
-    // - 1..numlib - indexes for actual libraries
-    // INT_MAX post-user library callout
+    // * 0 - pre-user library callout
+    // * 1..numlib - indexes for actual libraries
+    // * INT_MAX - post-user library callout
 
-    // Try to find appropriate parameter. May return NULL
+    // Try to find appropriate parameter. May return null pointer
     isc::data::ConstElementPtr params = libinfo[index - 1].second;
     if (!params) {
         return (isc::data::ConstElementPtr());
     }
 
-    // May return NULL if there's no parameter.
+    // May return null pointer if there's no parameter.
     return (params->get(name));
 }
 
