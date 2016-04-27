@@ -44,7 +44,7 @@ CfgHostOperations::addIdentifierType(const std::string& identifier_name) {
 }
 
 void
-CfgHostOperations::clear() {
+CfgHostOperations::clearIdentifierTypes() {
     identifier_types_.clear();
 }
 
