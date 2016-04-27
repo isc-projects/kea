@@ -702,6 +702,8 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         parser = new ClientClassDefListParser(config_id, globalContext());
     } else if (config_id.compare("server-id") == 0) {
         parser = new DUIDConfigParser();
+    } else if (config_id.compare("host-reservation-identifiers") == 0) {
+        parser = new HostReservationIdsParser6();
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "

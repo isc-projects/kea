@@ -448,6 +448,8 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
         parser = new ExpirationConfigParser();
     } else if (config_id.compare("client-classes") == 0) {
         parser = new ClientClassDefListParser(config_id, globalContext());
+    } else if (config_id.compare("host-reservation-identifiers") == 0) {
+        parser = new HostReservationIdsParser4();
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "

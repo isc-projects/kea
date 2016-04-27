@@ -783,5 +783,175 @@ TEST_F(HostReservationParserTest, mutuallyExclusiveIdentifiers6) {
     }
 }
 
+/// @brief Test fixture class for @ref HostReservationIdsParser.
+class HostReservationIdsParserTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Clears current configuration.
+    HostReservationIdsParserTest() {
+        CfgMgr::instance().clear();
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Clears current configuration.
+    virtual ~HostReservationIdsParserTest() {
+        CfgMgr::instance().clear();
+    }
+
+    /// @brief Test verifies that invalid configuration causes an error.
+    ///
+    /// @param config Configuration string.
+    /// @tparam ParserType @ref HostReservationIdsParser4 or
+    /// @ref HostReservationIdsParser6
+    template<typename ParserType>
+    void testInvalidConfig(const std::string& config) const {
+        ElementPtr config_element = Element::fromJSON(config);
+        ParserType parser;
+        EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    }
+
+};
+
+// Test that list of supported DHCPv4 identifiers list is correctly
+// parsed.
+TEST_F(HostReservationIdsParserTest, dhcp4Identifiers) {
+    std::string config = "[ \"circuit-id\", \"duid\", \"hw-address\" ]";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationIdsParser4 parser;
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
+        getCfgHostOperations4();
+    const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
+    ASSERT_EQ(3, ids.size());
+
+    CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
+    EXPECT_EQ(*id++, Host::IDENT_CIRCUIT_ID);
+    EXPECT_EQ(*id++, Host::IDENT_DUID);
+    EXPECT_EQ(*id++, Host::IDENT_HWADDR);
+}
+
+// Test that list of supported DHCPv6 identifiers list is correctly
+// parsed.
+TEST_F(HostReservationIdsParserTest, dhcp6Identifiers) {
+    std::string config = "[ \"duid\", \"hw-address\" ]";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationIdsParser6 parser;
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
+        getCfgHostOperations6();
+    const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
+    ASSERT_EQ(2, ids.size());
+
+    CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
+    EXPECT_EQ(*id++, Host::IDENT_DUID);
+    EXPECT_EQ(*id++, Host::IDENT_HWADDR);
+}
+
+// Test that invalid DHCPv4 identifier causes error.
+TEST_F(HostReservationIdsParserTest, dhcp4InvalidIdentifier) {
+    // Create configuration including unsupported identifier.
+    std::string config = "[ \"unsupported-id\" ]";
+    testInvalidConfig<HostReservationIdsParser4>(config);
+}
+
+// Test that invalid DHCPv6 identifier causes error.
+TEST_F(HostReservationIdsParserTest, dhcp6InvalidIdentifier) {
+    // Create configuration including unsupported identifier for DHCPv6.
+    // The circuit-id is only supported in DHCPv4.
+    std::string config = "[ \"circuit-id\" ]";
+    testInvalidConfig<HostReservationIdsParser6>(config);
+}
+
+// Check that all supported identifiers are used when 'auto' keyword
+// is specified for DHCPv4 case.
+TEST_F(HostReservationIdsParserTest, dhcp4AutoIdentifiers) {
+    std::string config = "[ \"auto\" ]";
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationIdsParser4 parser;
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
+        getCfgHostOperations4();
+    const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
+    ASSERT_EQ(3, ids.size());
+
+    CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
+    EXPECT_EQ(*id++, Host::IDENT_HWADDR);
+    EXPECT_EQ(*id++, Host::IDENT_DUID);
+    EXPECT_EQ(*id++, Host::IDENT_CIRCUIT_ID);
+}
+
+// This test verifies that use of "auto" together with an explicit
+// identifier causes an error. "auto" is placed before the explicit
+// identifier.
+TEST_F(HostReservationIdsParserTest, dhcp4AutoBeforeIdentifier) {
+    std::string config = "[ \"auto\", \"duid\" ]";
+    testInvalidConfig<HostReservationIdsParser4>(config);
+}
+
+// This test verifies that use of "auto" together with an explicit
+// identifier causes an error. "auto" is placed after the explicit
+// identifier.
+TEST_F(HostReservationIdsParserTest, dhcp4AutoAfterIdentifier) {
+    std::string config = "[ \"duid\", \"auto\" ]";
+    testInvalidConfig<HostReservationIdsParser4>(config);
+}
+
+// Test that empty list of identifier types is not allowed.
+TEST_F(HostReservationIdsParserTest, dhcp4EmptyList) {
+    std::string config = "[ ]";
+    testInvalidConfig<HostReservationIdsParser4>(config);
+}
+
+// Check that all supported identifiers are used when 'auto' keyword
+// is specified for DHCPv6 case.
+TEST_F(HostReservationIdsParserTest, dhcp6AutoIdentifiers) {
+    std::string config = "[ \"auto\" ]";
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationIdsParser6 parser;
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
+        getCfgHostOperations6();
+    const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
+    ASSERT_EQ(2, ids.size());
+
+    CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
+    EXPECT_EQ(*id++, Host::IDENT_HWADDR);
+    EXPECT_EQ(*id++, Host::IDENT_DUID);
+}
+
+// This test verifies that use of "auto" together with an explicit
+// identifier causes an error. "auto" is placed before the explicit
+// identifier.
+TEST_F(HostReservationIdsParserTest, dhcp6AutoBeforeIdentifier) {
+    std::string config = "[ \"auto\", \"duid\" ]";
+    testInvalidConfig<HostReservationIdsParser6>(config);
+}
+
+// This test verifies that use of "auto" together with an explicit
+// identifier causes an error. "auto" is placed after the explicit
+// identifier.
+TEST_F(HostReservationIdsParserTest, dhcp6AutoAfterIdentifier) {
+    std::string config = "[ \"duid\", \"auto\" ]";
+    testInvalidConfig<HostReservationIdsParser6>(config);
+}
+
+// Test that empty list of identifier types is not allowed.
+TEST_F(HostReservationIdsParserTest, dhcp6EmptyList) {
+    std::string config = "[ ]";
+    testInvalidConfig<HostReservationIdsParser6>(config);
+}
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
+#include <list>
 #include <map>
+#include <utility>
 
 namespace isc {
 namespace dhcp {
@@ -251,6 +253,12 @@ public:
     /// @brief Container for client's hints.
     typedef std::vector<HintType> HintContainer;
 
+    /// @brief A tuple holding host identifier type and value.
+    typedef std::pair<Host::IdentifierType, std::vector<uint8_t> > IdentifierPair;
+
+    /// @brief Map holding values to be used as host identifiers.
+    typedef std::list<IdentifierPair> IdentifierList;
+
     /// @brief Context information for the DHCPv6 leases allocation.
     ///
     /// This structure holds a set of information provided by the DHCPv6
@@ -349,6 +357,20 @@ public:
 
         /// @brief A pointer to the IA_NA/IA_PD option to be sent in response
         Option6IAPtr ia_rsp_;
+
+        /// @brief A list holding host identifiers extracted from a message
+        /// received by the server.
+        IdentifierList host_identifiers_;
+
+        /// @brief Conveniece function adding host identifier into
+        /// @ref host_identifiers_ list.
+        ///
+        /// @param id_type Identifier type.
+        /// @param identifier Identifier value.
+        void addHostIdentifier(const Host::IdentifierType& id_type,
+                               const std::vector<uint8_t>& identifier) {
+            host_identifiers_.push_back(IdentifierPair(id_type, identifier));
+        }
 
         /// @brief Default constructor.
         ClientContext6();
@@ -606,9 +628,28 @@ public:
     /// Attempts to find appropriate host reservation in HostMgr. If found, it
     /// will be set in ctx.host_.
     /// @param ctx Client context that contains all necessary information.
-    void findReservation(ClientContext6& ctx) const;
+    static void findReservation(ClientContext6& ctx);
 
 private:
+
+    /// @brief Type of the function used by @ref findReservationInternal to
+    /// retrieve reservations by subnet identifier and host identifier.
+    typedef boost::function<ConstHostPtr(const SubnetID&,
+                                         const Host::IdentifierType&,
+                                         const uint8_t*, const size_t)> HostGetFunc;
+
+    /// @brief Common function for searching host reservations.
+    ///
+    /// This is a common function called by variants of @ref findReservation
+    /// functions.
+    ///
+    /// @param ctx Reference to a @ref ClientContext6 or @ref ClientContext4.
+    /// @param host_get Pointer to the @ref HostMgr functions to be used
+    /// to retrieve reservation by subnet identifier and host identifier.
+    /// @tparam ContextType Either @ref ClientContext6 or @ref ClientContext4.
+    template<typename ContextType>
+    static void findReservationInternal(ContextType& ctx,
+                                        const HostGetFunc& host_get);
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
     ///
@@ -970,6 +1011,20 @@ public:
         /// This is used in logging to retrieve the client's and the
         /// transaction identification information.
         Pkt4Ptr query_;
+
+        /// @brief A list holding host identifiers extracted from a message
+        /// received by the server.
+        IdentifierList host_identifiers_;
+
+        /// @brief Conveniece function adding host identifier into
+        /// @ref host_identifiers_ list.
+        ///
+        /// @param id_type Identifier type.
+        /// @param identifier Identifier value.
+        void addHostIdentifier(const Host::IdentifierType& id_type,
+                               const std::vector<uint8_t>& identifier) {
+            host_identifiers_.push_back(IdentifierPair(id_type, identifier));
+        }
 
         /// @brief Default constructor.
         ClientContext4();

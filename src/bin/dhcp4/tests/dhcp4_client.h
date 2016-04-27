@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -284,6 +284,14 @@ public:
                         const uint8_t option2 = 0,
                         const uint8_t option3 = 0);
 
+    /// @brief Sets circuit-id value to be included in the circuit-id
+    /// sub option of the RAI option.
+    ///
+    /// @param circuit_id New circuit-id value.
+    void setCircuitId(const std::string& circuit_id) {
+        circuit_id_ = circuit_id;
+    }
+
     /// @brief Sets destination address for the messages being sent by the
     /// client.
     ///
@@ -467,6 +475,10 @@ private:
 
     /// @brief Enable relaying messages to the server.
     bool use_relay_;
+
+    /// @brief Specifies value to be inserted into circuit-id sub option
+    /// of the RAI option.
+    std::string circuit_id_;
 
     /// @brief Extra options the client will send.
     OptionCollection extra_options_;
