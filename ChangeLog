@@ -1,7 +1,7 @@
 1107.	[func]		fdupont
 	Added support for extracting constant length fields from a DHCPv4
 	packet.
-	(Trac #4268, git xxx)
+	(Trac #4268a, git 5d1397efc05802b72e86785528870b7154307ff0)
 
 1106.	[func]		sar
 	Added support for accessing DHCPv6 packet fields message type
