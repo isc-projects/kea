@@ -468,6 +468,13 @@ be followed by a comma and another object definition.</para>
 </screen>
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
+  <note>
+    <para>To add a host reservation in the table in MySQL:
+      <screen>
+        INSERT INTO hosts (dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_address, hostname) VALUES (UNHEX('361330a0bb5e'), 0, 500, INET_ATON('10.0.0.2') ,"client_pc1");
+      </screen>
+    </para>
+  </note>
 </section>
 </section>
 
