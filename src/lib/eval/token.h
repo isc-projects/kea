@@ -288,6 +288,61 @@ protected:
     virtual OptionPtr getOption(const Pkt& pkt);
 };
 
+/// @brief Token that represents fields of a DHCPv4 packet.
+///
+/// For example in the expression pkt4.chaddr == 0x0102030405
+/// this token represents the pkt4.chaddr expression.
+///
+/// Currently supported fields are:
+/// - chaddr (client hardware address, hlen [0..16] octets)
+/// - giaddr (relay agent IP address, 4 octets)
+/// - ciaddr (client IP address, 4 octets)
+/// - yiaddr ('your' (client) IP address, 4 octets)
+/// - siaddr (next server IP address, 4 octets)
+/// - hlen   (hardware address length, padded to 4 octets)
+/// - htype  (hardware address type, padded to 4 octets)
+class TokenPkt4 : public Token {
+public:
+
+    /// @brief enum value that determines the field.
+    enum FieldType {
+        CHADDR, ///< chaddr field (up to 16 bytes link-layer address)
+        GIADDR, ///< giaddr (IPv4 address)
+        CIADDR, ///< ciaddr (IPv4 address)
+        YIADDR, ///< yiaddr (IPv4 address)
+        SIADDR, ///< siaddr (IPv4 address)
+        HLEN,   ///< hlen (hardware address length)
+        HTYPE   ///< htype (hardware address type)
+    };
+
+    /// @brief Constructor (does nothing)
+    TokenPkt4(const FieldType type)
+        : type_(type) {}
+
+    /// @brief Gets a value from the specified packet.
+    ///
+    /// Evaluation uses fields available in the packet. It does not require
+    /// any values to be present on the stack.
+    ///
+    /// @throw EvalTypeError when called for DHCPv6 packet
+    ///
+    /// @param pkt - fields will be extracted from here
+    /// @param values - stack of values (1 result will be pushed)
+    void evaluate(const Pkt& pkt, ValueStack& values);
+
+    /// @brief Returns field type
+    ///
+    /// This method is used only in tests.
+    /// @return type of the field.
+    FieldType getType() {
+        return (type_);
+    }
+
+private:
+    /// @brief Specifies field of the DHCPv4 packet
+    FieldType type_;
+};
+
 /// @brief Token that represents equality operator (compares two other tokens)
 ///
 /// For example in the expression option[vendor-class].text == "MSFT"

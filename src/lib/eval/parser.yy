@@ -54,6 +54,14 @@ using namespace isc::eval;
   TEXT "text"
   HEX "hex"
   EXISTS "exists"
+  PKT4 "pkt4"
+  CHADDR "mac"
+  HLEN "hlen"
+  HTYPE "htype"
+  CIADDR "ciaddr"
+  GIADDR "giaddr"
+  YIADDR "yiaddr"
+  SIADDR "siaddr"
   SUBSTRING "substring"
   ALL "all"
   COMA ","
@@ -73,6 +81,7 @@ using namespace isc::eval;
 %type <TokenOption::RepresentationType> option_repr_type
 %type <TokenRelay6Field::FieldType> relay6_field
 %type <uint8_t> nest_level
+%type <TokenPkt4::FieldType> pkt4_field
 %type <TokenPkt6::FieldType> pkt6_field
 
 %left OR
@@ -224,7 +233,16 @@ string_expr : STRING
                      }
                   }
 
-
+            | PKT4 "." pkt4_field
+                  {
+                      TokenPtr pkt4_field(new TokenPkt4($3));
+                      ctx.expression.push_back(pkt4_field);
+                  }
+            | PKT6 "." pkt6_field
+                  {
+                      TokenPtr pkt6_field(new TokenPkt6($3));
+                      ctx.expression.push_back(pkt6_field);
+                  }
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
                   {
                       TokenPtr sub(new TokenSubstring());
@@ -234,11 +252,6 @@ string_expr : STRING
                   {
                       TokenPtr conc(new TokenConcat());
                       ctx.expression.push_back(conc);
-                  }
-            | PKT6 "." pkt6_field
-                  {
-                      TokenPtr pkt6_field(new TokenPkt6($3));
-                      ctx.expression.push_back(pkt6_field);
                   }
             ;
 
@@ -261,6 +274,36 @@ option_repr_type : TEXT
                           $$ = TokenOption::HEXADECIMAL;
                       }
                  ;
+
+pkt4_field : CHADDR
+                {
+                    $$ = TokenPkt4::CHADDR;
+                }
+           | HLEN
+                {
+                    $$ = TokenPkt4::HLEN;
+                }
+           | HTYPE
+                {
+                    $$ = TokenPkt4::HTYPE;
+                }
+           | CIADDR
+                {
+                    $$ = TokenPkt4::CIADDR;
+                }
+           | GIADDR
+                {
+                    $$ = TokenPkt4::GIADDR;
+                }
+           | YIADDR
+                {
+                    $$ = TokenPkt4::YIADDR;
+                }
+           | SIADDR
+                {
+                    $$ = TokenPkt4::SIADDR;
+                }
+           ;
 
 start_expr : INTEGER
                  {
