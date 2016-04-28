@@ -1371,7 +1371,7 @@ TEST_F(ParseConfigTest, HooksLibrariesParameters) {
     EXPECT_TRUE(libraries[1].second);
     ASSERT_TRUE(libraries[2].second);
 
-    // Ok, get the partameter for the third library.
+    // Ok, get the parameter for the third library.
     ConstElementPtr params = libraries[2].second;
 
     // It must be a map.
