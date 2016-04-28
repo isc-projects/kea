@@ -468,6 +468,20 @@ be followed by a comma and another object definition.</para>
 </screen>
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
+Also supported for MySQL database backends are the following ssl parameters which directly apply to the corresponding parameters in
+<ulink url="https://dev.mysql.com/doc/refman/5.6/en/mysql-ssl-set.html"/>:
+<screen>
+"Dhcp4": {
+  "lease-database": {
+    <userinput>"ssl_key": <replaceable>/etc/ssl/private/some.key</replaceable></userinput>,
+    <userinput>"ssl_cert": <replaceable>/etc/ssl/some.cert</replaceable></userinput>,
+    <userinput>"ssl_ca": <replaceable>/etc/ssl/certs/ca.pem</replaceable></userinput>,
+    <userinput>"ssl_capath": <replaceable>/etc/ssl/certs/</replaceable></userinput>,
+    <userinput>"ssl_cipher": <replaceable>some cipher string</replaceable></userinput>,
+     ... },
+... }
+</screen>
+SSL behavior is opt-in and the default values are <replaceable>NULL</replaceable>. So if none of the above is set, the connection is done in plain.
 </section>
 </section>
 
