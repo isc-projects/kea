@@ -1,0 +1,28 @@
+# Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+% LEGAL_LOG_HOOK_FILE_CLOSED  Legal file closed: %1
+This is an informational message issued when the LegalLogHook library
+has successfully closed the legal file.
+
+% LEGAL_LOG_HOOK_FILE_CLOSE_ERROR  An error occurred closing the file: %1, error: %2
+This is an error message issued when the  LegalLogHook library experienced an
+error attempting to close a legal file.  This is highly unlikely to occur and
+should not affect the file content or subsequent legal file operations.
+
+% LEGAL_LOG_HOOK_FILE_OPENED  Legal file opened: %1
+This is an informational message issued when the LegalLogHook library
+has successfully opened the legal file.
+
+% LEGAL_LOG_HOOK_LOAD_ERROR LEGAL LOGGING DISABLED! An error occurred loading the library: %1
+This is an error message issued when the DHCP LegalLogHook library could not
+be loaded.  The exact cause should be explained in the log message. No existing
+files will be altered, nor any legal logging entries emitted.
+
+% LEGAL_LOG_HOOK_UNLOAD_ERROR  An error occurred unloading the library: %1
+This is an error message issued when an error occurs while unloading the
+LegalLogHook library.  This is unlikely to occur and normal operations of the
+library will likely resume when it is next loaded.

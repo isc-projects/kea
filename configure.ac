@@ -1498,6 +1498,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/admin/tests/cql_tests.sh
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
+                 src/hooks/dhcp/legal_log/Makefile
+                 src/hooks/dhcp/legal_log/tests/Makefile
                  src/hooks/dhcp/user_chk/Makefile
                  src/hooks/dhcp/user_chk/tests/Makefile
                  src/hooks/dhcp/user_chk/tests/test_data_files_config.h

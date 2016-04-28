@@ -15,7 +15,8 @@
 #include <fstream>
 #include <errno.h>
 
-using namespace isc::hooks;
+using namespace isc;
+using namespace hooks;
 using namespace legal_log;
 
 // Functions accessed by the hooks framework use C linkage to avoid the name

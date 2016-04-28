@@ -29,29 +29,24 @@ CLEANFILES = *.gcno *.gcda legal_log_messages.h legal_log_messages.cc s-messages
 
 # convenience archive
 
-noinst_LTLIBRARIES = libduc.la
+noinst_LTLIBRARIES = liblegl.la
 
-libduc_la_SOURCES  =
-libduc_la_SOURCES += load_unload.cc
-libduc_la_SOURCES += pkt_receive_co.cc
-libduc_la_SOURCES += pkt_send_co.cc
-libduc_la_SOURCES += subnet_select_co.cc
-libduc_la_SOURCES += user.cc user.h
-libduc_la_SOURCES += legal_log.h
-libduc_la_SOURCES += legal_log_log.cc legal_log_log.h
-libduc_la_SOURCES += user_data_source.h
-libduc_la_SOURCES += user_file.cc user_file.h
-libduc_la_SOURCES += user_registry.cc user_registry.h
-libduc_la_SOURCES += version.cc
+liblegl_la_SOURCES  =
+liblegl_la_SOURCES += load_unload.cc
+#liblegl_la_SOURCES += pkt_receive_co.cc
+#liblegl_la_SOURCES += legal_log.h
+liblegl_la_SOURCES += legal_file.cc legal_file.h
+liblegl_la_SOURCES += legal_log_log.cc legal_log_log.h
+liblegl_la_SOURCES += version.cc
 
-nodist_libduc_la_SOURCES = legal_log_messages.cc legal_log_messages.h
+nodist_liblegl_la_SOURCES = legal_log_messages.cc legal_log_messages.h
 
-libduc_la_CXXFLAGS = $(AM_CXXFLAGS)
-libduc_la_CPPFLAGS = $(AM_CPPFLAGS)
+liblegl_la_CXXFLAGS = $(AM_CXXFLAGS)
+liblegl_la_CPPFLAGS = $(AM_CPPFLAGS)
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
 # Boost headers when compiling with clang.
-libduc_la_CXXFLAGS += -Wno-unused-parameter
+liblegl_la_CXXFLAGS += -Wno-unused-parameter
 endif
 
 noinst_LTLIBRARIES += libdhcp_legal_log.la
@@ -62,7 +57,7 @@ libdhcp_legal_log_la_LDFLAGS  += -avoid-version -export-dynamic -module
 # -rpath /nowhere is a hack to trigger libtool to not create a
 # convenience archive, resulting in shared modules
 libdhcp_legal_log_la_LDFLAGS  += -rpath /nowhere
-libdhcp_legal_log_la_LIBADD  = libduc.la
+libdhcp_legal_log_la_LIBADD  = liblegl.la
 libdhcp_legal_log_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_legal_log_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp_legal_log_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
