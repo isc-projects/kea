@@ -145,7 +145,7 @@ PID ${_pid}, PID file: ${_pid_file}."
     else
         log_info "Starting ${binary_name} ${args}"
         # Start the process.
-        ${binary_path} ${args} &
+        exec 1>&-; exec 2>&-; ${binary_path} ${args} &
     fi
 }
 
