@@ -436,6 +436,13 @@ ALTER TABLE hosts
     ADD CONSTRAINT fk_host_identifier_type FOREIGN KEY (dhcp_identifier_type)
     REFERENCES host_identifier_type (type);
 
+# Store DHCPv6 option code as 16-bit unsigned integer.
+ALTER TABLE dhcp6_options MODIFY code SMALLINT UNSIGNED NOT NULL;
+
+# Subnet identifier is unsigned.
+ALTER TABLE dhcp4_options MODIFY dhcp4_subnet_id INT UNSIGNED NULL;
+ALTER TABLE dhcp6_options MODIFY dhcp6_subnet_id INT UNSIGNED NULL;
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '4', minor = '2';
