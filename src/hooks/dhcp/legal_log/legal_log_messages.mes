@@ -4,16 +4,60 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-% LEGAL_LOG_HOOK_FILE_CLOSED  Legal file closed: %1
+% LEGAL_FILE_HOOK_LEASE4_RENEW_NO_LEGAL_FILE LegalFile instance is null
+This is an error message issued when the LegalLogHook library attempted to
+write a IPv4 lease renewal notice to the legal file and the file instance
+has not been created.  This is a programmatic error and should not occur.
+
+% LEGAL_FILE_HOOK_LEASE4_RENEW_WRITE_ERROR Could not write to the legal file: %1
+This is an error message issued when the LegalLogHook library attempted to
+write a IPv4 lease assignement notice to the legal file and the write failed.
+The message content should include the phsycial file name and the nature of the
+error.
+
+% LEGAL_FILE_HOOK_LEASE4_SELECT_NO_LEGAL_FILE LegalFile instance is null
+This is an error message issued when the LegalLogHook library attempted to
+write a IPv4 lease assignement notice to the legal file and the file instance
+has not been created.  This is a programmatic error and should not occur.
+
+% LEGAL_FILE_HOOK_LEASE4_SELECT_WRITE_ERROR Could not write to the legal file: %1
+This is an error message issued when the LegalLogHook library attempted to
+write a IPv4 lease assignement notice to the legal file and the write failed.
+The message content should include the phsycial file name and the nature of the
+error.
+
+% LEGAL_FILE_HOOK_LEASE6_RENEW_NO_LEGAL_FILE LegalFile instance is null
+This is an error message issued when the LegalLogHook library attempted to
+write a IPv6 lease renewal notice to the legal file and the file instance
+has not been created.  This is a programmatic error and should not occur.
+
+% LEGAL_FILE_HOOK_LEASE6_RENEW_WRITE_ERROR Could not write to the legal file: %1
+This is an error message issued when the LegalLogHook library attempted to
+write a IPv6 lease assignement notice to the legal file and the write failed.
+The message content should include the phsycial file name and the nature of the
+error.
+
+% LEGAL_FILE_HOOK_LEASE6_SELECT_NO_LEGAL_FILE LegalFile instance is null
+This is an error message issued when the LegalLogHook library attempted to
+write a IPv6 lease assignement notice to the legal file and the file instance
+has not been created.  This is a programmatic error and should not occur.
+
+% LEGAL_FILE_HOOK_LEASE6_SELECT_WRITE_ERROR Could not write to the legal file: %1
+This is an error message issued when the LegalLogHook library attempted to
+write a IPv4 lease assignement notice to the legal file and the write failed.
+The message content should include the phsycial file name and the nature of the
+error.
+
+% LEGAL_LOG_HOOK_FILE_CLOSED Legal file closed: %1
 This is an informational message issued when the LegalLogHook library
 has successfully closed the legal file.
 
-% LEGAL_LOG_HOOK_FILE_CLOSE_ERROR  An error occurred closing the file: %1, error: %2
+% LEGAL_LOG_HOOK_FILE_CLOSE_ERROR An error occurred closing the file: %1, error: %2
 This is an error message issued when the  LegalLogHook library experienced an
 error attempting to close a legal file.  This is highly unlikely to occur and
 should not affect the file content or subsequent legal file operations.
 
-% LEGAL_LOG_HOOK_FILE_OPENED  Legal file opened: %1
+% LEGAL_LOG_HOOK_FILE_OPENED Legal file opened: %1
 This is an informational message issued when the LegalLogHook library
 has successfully opened the legal file.
 
@@ -22,7 +66,7 @@ This is an error message issued when the DHCP LegalLogHook library could not
 be loaded.  The exact cause should be explained in the log message. No existing
 files will be altered, nor any legal logging entries emitted.
 
-% LEGAL_LOG_HOOK_UNLOAD_ERROR  An error occurred unloading the library: %1
+% LEGAL_LOG_HOOK_UNLOAD_ERROR An error occurred unloading the library: %1
 This is an error message issued when an error occurs while unloading the
 LegalLogHook library.  This is unlikely to occur and normal operations of the
 library will likely resume when it is next loaded.
