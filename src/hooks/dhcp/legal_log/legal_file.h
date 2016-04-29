@@ -34,7 +34,7 @@ public:
 ///
 /// Forms the current file name from:
 ///
-///    <path>/<base_name>/<date>.txt
+///    <path>/<base_name>.<date>.txt
 ///
 /// where:
 ///     path - is the pathname supplied via the constructor. The path
@@ -42,8 +42,8 @@ public:
 ///
 ///     base_name - an arbitrary text label supplied via the constructor
 ///
-///     date - is the system date, at the time the file is opened, in local time.
-///     The format of the value is CCYYMMDD (century,year,month,day)
+///     date - is the system date, at the time the file is opened, in local
+///     time.  The format of the value is CCYYMMDD (century,year,month,day)
 ///     
 /// Prior to each write, the system date is compared to the current file date
 /// to determine if rotation is necessary (i.e. day boundary has been crossed
@@ -72,7 +72,7 @@ public:
     ///
     /// Forms the current file name from:
     ///
-    ///    path_/base_name_/<CCYYMMDD>.txt
+    ///    <path_>/<base_name_>.<CCYYMMDD>.txt
     ///
     /// where CCYYMMDD is the current date in local time.
     ///

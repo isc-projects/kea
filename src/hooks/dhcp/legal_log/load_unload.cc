@@ -9,6 +9,7 @@
 #include <config.h>
 
 #include <hooks/hooks.h>
+#include <legal_file.h>
 #include <legal_log_log.h>
 
 #include <iostream>
@@ -19,6 +20,15 @@ using namespace isc;
 using namespace hooks;
 using namespace legal_log;
 
+/// @brief Pointer to the legal output file instance
+LegalFilePtr legal_file;
+
+/// @brief Default path name
+const char* default_legal_path = "/tmp";
+
+/// @brief Default base name
+const char* default_legal_base = "kea-legal";
+
 // Functions accessed by the hooks framework use C linkage to avoid the name
 // mangling that accompanies use of the C++ compiler as well as to avoid
 // issues related to namespaces.
@@ -26,8 +36,11 @@ extern "C" {
 
 /// @brief Called by the Hooks library manager when the library is loaded.
 ///
-/// TODO 
-/// Failure in either results in a failed return code.
+/// Instantiates the LegalFile and then opens it.
+/// @todo once 4297 is completed this needs to be modified to get the
+/// path and base name from the library's parameters.
+///
+/// If the file cannot be opened, the load will fail.
 ///
 /// @return Returns 0 upon success, non-zero upon failure.
 int load(LibraryHandle&) {
@@ -35,7 +48,10 @@ int load(LibraryHandle&) {
     int ret_val = 0;
 
     try {
-        // TODO
+        // @todo  get path and base name from parameters
+        legal_file.reset(new LegalFile(default_legal_path,
+                                       default_legal_base));
+        legal_file->open();
     }
     catch (const std::exception& ex) {
         // Log the error and return failure.
@@ -49,12 +65,16 @@ int load(LibraryHandle&) {
 
 /// @brief Called by the Hooks library manager when the library is unloaded.
 ///
-/// TOFO
+/// Explicitly destroys the LegalFile instance. Any errors are logged but
+/// swallowed.
 ///
 /// @return Always returns 0.
 int unload() {
     try {
-        // TODO
+        // Since it's "global" Let's explicitly destroy it now rather
+        // than indeterminately. Note, LegalFile destructor will close
+        // the file.
+        legal_file.reset();
     } catch (const std::exception& ex) {
         // On the off chance something goes awry, catch it and log it.
         // @todo Not sure if we should return a non-zero result or not.
