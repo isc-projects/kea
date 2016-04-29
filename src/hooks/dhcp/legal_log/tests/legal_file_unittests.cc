@@ -116,7 +116,7 @@ public:
     std::string genName(const boost::gregorian::date& day)  {
         boost::gregorian::date::ymd_type ymd = day.year_month_day();
         std::ostringstream stream;
-        stream << TEST_DATA_BUILDDIR << "/" << "legal" << ymd.year
+        stream << TEST_DATA_BUILDDIR << "/" << "legal" << "." << ymd.year
                << std::right << std::setfill('0') << std::setw(2)
                << ymd.month.as_number()
                << ymd.day << ".txt";

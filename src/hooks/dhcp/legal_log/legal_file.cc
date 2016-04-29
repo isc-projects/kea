@@ -14,7 +14,7 @@
 namespace isc {
 namespace legal_log {
 
-LegalFile::LegalFile(const std::string& path, const std::string& base_name) 
+LegalFile::LegalFile(const std::string& path, const std::string& base_name)
     : path_(path), base_name_(base_name), file_day_(), file_name_(), file_() {
 
     if (path_.empty()) {
@@ -32,7 +32,7 @@ LegalFile::~LegalFile(){
 
 boost::gregorian::date
 LegalFile::today() {
-    return (boost::gregorian::day_clock::local_day()); 
+    return (boost::gregorian::day_clock::local_day());
 }
 
 void
@@ -46,12 +46,12 @@ LegalFile::open() {
     boost::gregorian::date::ymd_type ymd = file_day_.year_month_day();
     std::ostringstream stream;
 
-    stream << path_ << "/" << base_name_ << ymd.year 
-           << std::right << std::setfill('0') << std::setw(2) 
-           << ymd.month.as_number() 
+    stream << path_ << "/" << base_name_ << "." << ymd.year
+           << std::right << std::setfill('0') << std::setw(2)
+           << ymd.month.as_number()
            << ymd.day << ".txt";
 
-    file_name_ = stream.str(); 
+    file_name_ = stream.str();
 
     // Open the file
     file_.open(file_name_.c_str(), std::ofstream::app);
