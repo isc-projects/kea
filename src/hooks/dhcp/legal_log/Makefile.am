@@ -33,8 +33,8 @@ noinst_LTLIBRARIES = liblegl.la
 
 liblegl_la_SOURCES  =
 liblegl_la_SOURCES += load_unload.cc
-#liblegl_la_SOURCES += pkt_receive_co.cc
-#liblegl_la_SOURCES += legal_log.h
+liblegl_la_SOURCES += lease4_cos.cc
+liblegl_la_SOURCES += lease6_cos.cc
 liblegl_la_SOURCES += legal_file.cc legal_file.h
 liblegl_la_SOURCES += legal_log_log.cc legal_log_log.h
 liblegl_la_SOURCES += version.cc
