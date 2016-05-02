@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -137,7 +137,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager
-    vector<string> libraries; // no libraries at this time
+    HookLibsCollection libraries; // no libraries at this time
     HooksManager::loadLibraries(libraries);
 
     // Install pkt6_receive_callout
@@ -207,7 +207,7 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager
-    vector<string> libraries; // no libraries at this time
+    HookLibsCollection libraries; // no libraries at this time
     HooksManager::loadLibraries(libraries);
 
     // Install a callout
@@ -368,7 +368,7 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager
-    vector<string> libraries; // no libraries at this time
+    HookLibsCollection libraries; // no libraries at this time
     HooksManager::loadLibraries(libraries);
 
     // Install pkt4_receive_callout
@@ -435,7 +435,7 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager
-    vector<string> libraries; // no libraries at this time
+    HookLibsCollection libraries; // no libraries at this time
     HooksManager::loadLibraries(libraries);
 
     // Install a callout

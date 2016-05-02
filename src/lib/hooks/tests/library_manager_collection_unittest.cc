@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #include <hooks/callout_manager.h>
 #include <hooks/library_manager.h>
 #include <hooks/library_manager_collection.h>
+#include <hooks/libinfo.h>
 
 #include <hooks/tests/common_test_class.h>
 #include <hooks/tests/test_libraries.h>
@@ -30,6 +31,7 @@ namespace {
 class LibraryManagerCollectionTest : public ::testing::Test,
                                      public HooksCommonTestClass {
 private:
+
     /// To avoid unused variable errors
     std::string dummy(int i) {
         if (i == 0) {
@@ -54,7 +56,7 @@ public:
     ///
     /// @param List of libraries that this collection will manage.  The order
     ///        of the libraries is important.
-    PublicLibraryManagerCollection(const std::vector<std::string>& libraries)
+    PublicLibraryManagerCollection(const HookLibsCollection& libraries)
         : LibraryManagerCollection(libraries)
     {}
 
@@ -69,9 +71,11 @@ public:
 TEST_F(LibraryManagerCollectionTest, LoadLibraries) {
 
     // Set up the list of libraries to be loaded.
-    std::vector<std::string> library_names;
-    library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
-    library_names.push_back(std::string(BASIC_CALLOUT_LIBRARY));
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
 
     // Set up the library manager collection and get the callout manager we'll
     // be using.
@@ -118,10 +122,13 @@ TEST_F(LibraryManagerCollectionTest, LoadLibraries) {
 TEST_F(LibraryManagerCollectionTest, LoadLibrariesWithError) {
 
     // Set up the list of libraries to be loaded.
-    std::vector<std::string> library_names;
-    library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
-    library_names.push_back(std::string(INCORRECT_VERSION_LIBRARY));
-    library_names.push_back(std::string(BASIC_CALLOUT_LIBRARY));
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                       data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(INCORRECT_VERSION_LIBRARY),
+                                      data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
 
     // Set up the library manager collection and get the callout manager we'll
     // be using.
@@ -139,7 +146,7 @@ TEST_F(LibraryManagerCollectionTest, LoadLibrariesWithError) {
 
 TEST_F(LibraryManagerCollectionTest, NoLibrariesLoaded) {
     // Set up the list of libraries to be loaded.
-    std::vector<std::string> library_names;
+    HookLibsCollection library_names;
 
     // Set up the library manager collection and get the callout manager we'll
     // be using.
@@ -159,23 +166,25 @@ TEST_F(LibraryManagerCollectionTest, NoLibrariesLoaded) {
 TEST_F(LibraryManagerCollectionTest, LibraryNames) {
 
     // Set up the list of libraries to be loaded.
-    std::vector<std::string> library_names;
-    library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
-    library_names.push_back(std::string(BASIC_CALLOUT_LIBRARY));
+    HookLibsCollection libraries;
+    libraries.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                  data::ConstElementPtr()));
+    libraries.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
+                                  data::ConstElementPtr()));
 
     // Set up the library manager collection and get the callout manager we'll
     // be using.
-    PublicLibraryManagerCollection lm_collection(library_names);
+    PublicLibraryManagerCollection lm_collection(libraries);
 
     // Check the names before the libraries are loaded.
     std::vector<std::string> collection_names = lm_collection.getLibraryNames();
-    EXPECT_TRUE(library_names == collection_names);
+    EXPECT_TRUE(extractNames(libraries) == collection_names);
 
     // Load the libraries and check the names again.
     EXPECT_TRUE(lm_collection.loadLibraries());
     EXPECT_EQ(2, lm_collection.getLoadedLibraryCount());
     collection_names = lm_collection.getLibraryNames();
-    EXPECT_TRUE(library_names == collection_names);
+    EXPECT_TRUE(extractNames(libraries) == collection_names);
 }
 
 // Test the library validation function.
@@ -204,6 +213,7 @@ TEST_F(LibraryManagerCollectionTest, validateLibraries) {
     libraries.push_back(BASIC_CALLOUT_LIBRARY);
     libraries.push_back(FULL_CALLOUT_LIBRARY);
     libraries.push_back(UNLOAD_CALLOUT_LIBRARY);
+    libraries.push_back(CALLOUT_PARAMS_LIBRARY);
 
     failed = LibraryManagerCollection::validateLibraries(libraries);
     EXPECT_TRUE(failed.empty());
@@ -249,6 +259,48 @@ TEST_F(LibraryManagerCollectionTest, validateLibraries) {
 
     failed = LibraryManagerCollection::validateLibraries(libraries);
     EXPECT_TRUE(failed == expected_failures);
+}
+
+// This test verifies if getLibraryNames and getLibraryInfo are returning
+// expected values if there are no libraries configured.
+TEST_F(LibraryManagerCollectionTest, libraryGetEmpty) {
+
+    HookLibsCollection empty;
+    boost::shared_ptr<LibraryManagerCollection> mgr;
+
+    // Instantiate library manager collection with no libraries
+    EXPECT_NO_THROW(mgr.reset(new LibraryManagerCollection(empty)));
+
+    // Check that getLibraryInfo returns empty list properly.
+    HookLibsCollection returned = mgr->getLibraryInfo();
+    EXPECT_TRUE(returned.empty());
+
+    // Check that getLibraryNames return empty list, too.
+    vector<string> names(3, "rubbish"); // just put something in it.
+    EXPECT_NO_THROW(names = mgr->getLibraryNames());
+    EXPECT_TRUE(names.empty());
+}
+
+// This test verifies if getLibraryNames and getLibraryInfo are returning
+// expected values when there are libraries configured.
+TEST_F(LibraryManagerCollectionTest, libraryGet) {
+    using namespace data;
+
+    HookLibsCollection libs;
+    ElementPtr param1(Element::fromJSON("{ \"param1\": \"foo\" }"));
+    ElementPtr param2(Element::fromJSON("{ \"param2\": \"bar\" }"));
+    libs.push_back(make_pair("libone", param1));
+    libs.push_back(make_pair("libtwo", param2));
+
+    boost::shared_ptr<LibraryManagerCollection> mgr;
+    EXPECT_NO_THROW(mgr.reset(new LibraryManagerCollection(libs)));
+    EXPECT_TRUE(libs == mgr->getLibraryInfo());
+
+    vector<string> exp_names;
+    exp_names.push_back("libone");
+    exp_names.push_back("libtwo");
+
+    EXPECT_TRUE(exp_names == mgr->getLibraryNames());
 }
 
 } // Anonymous namespace

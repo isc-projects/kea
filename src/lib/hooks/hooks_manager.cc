@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,7 +65,7 @@ HooksManager::callCallouts(int index, CalloutHandle& handle) {
 // (if present) and load new ones.
 
 bool
-HooksManager::loadLibrariesInternal(const std::vector<std::string>& libraries) {
+HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries) {
     // Unload current set of libraries (if any are loaded).
     unloadLibrariesInternal();
 
@@ -87,7 +87,7 @@ HooksManager::loadLibrariesInternal(const std::vector<std::string>& libraries) {
 }
 
 bool
-HooksManager::loadLibraries(const std::vector<std::string>& libraries) {
+HooksManager::loadLibraries(const HookLibsCollection& libraries) {
     return (getHooksManager().loadLibrariesInternal(libraries));
 }
 
@@ -131,9 +131,20 @@ HooksManager::getLibraryNamesInternal() const {
                            : std::vector<std::string>());
 }
 
+HookLibsCollection
+HooksManager::getLibraryInfoInternal() const {
+    return (lm_collection_ ? lm_collection_->getLibraryInfo()
+            : HookLibsCollection());
+}
+
 std::vector<std::string>
 HooksManager::getLibraryNames() {
     return (getHooksManager().getLibraryNamesInternal());
+}
+
+HookLibsCollection
+HooksManager::getLibraryInfo() {
+    return (getHooksManager().getLibraryInfoInternal());
 }
 
 // Perform conditional initialization if nothing is loaded.
@@ -143,7 +154,7 @@ HooksManager::performConditionalInitialization() {
 
     // Nothing present, so create the collection with any empty set of
     // libraries, and get the CalloutManager.
-    vector<string> libraries;
+    HookLibsCollection libraries;
     lm_collection_.reset(new LibraryManagerCollection(libraries));
     lm_collection_->loadLibraries();
 

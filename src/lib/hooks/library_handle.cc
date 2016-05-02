@@ -6,6 +6,7 @@
 
 #include <hooks/callout_manager.h>
 #include <hooks/library_handle.h>
+#include <hooks/hooks_manager.h>
 
 namespace isc {
 namespace hooks {
@@ -62,6 +63,40 @@ LibraryHandle::deregisterAllCallouts(const std::string& name) {
     }
 
     return (status);
+}
+
+isc::data::ConstElementPtr
+LibraryHandle::getParameter(const std::string& name) {
+    HookLibsCollection libinfo = HooksManager::getHooksManager().getLibraryInfo();
+
+    int index = index_;
+
+    if (index == -1) {
+        // -1 means that current index is stored in CalloutManager.
+        // So let's get the index from there. See comment for
+        // LibraryHandle::index_.
+        index = callout_manager_->getLibraryIndex();
+    }
+
+    if ((index > libinfo.size()) || (index <= 0)) {
+        // Something is very wrong here. The library index is out of bounds.
+        // However, this is user facing interface, so we should not throw here.
+        return (isc::data::ConstElementPtr());
+    }
+
+    // Some indexes have special meaning:
+    // * 0 - pre-user library callout
+    // * 1..numlib - indexes for actual libraries
+    // * INT_MAX - post-user library callout
+
+    // Try to find appropriate parameter. May return null pointer
+    isc::data::ConstElementPtr params = libinfo[index - 1].second;
+    if (!params) {
+        return (isc::data::ConstElementPtr());
+    }
+
+    // May return null pointer if there's no parameter.
+    return (params->get(name));
 }
 
 } // namespace util

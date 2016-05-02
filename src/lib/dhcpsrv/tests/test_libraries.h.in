@@ -20,6 +20,12 @@ namespace {
 static const char* CALLOUT_LIBRARY_1 = "@abs_builddir@/.libs/libco1.so";
 static const char* CALLOUT_LIBRARY_2 = "@abs_builddir@/.libs/libco2.so";
 
+// This library will try to get the following parameters:
+// - svalue (and will expect its value to be "string value")
+// - ivalue (and will expect its value to be 42)
+// - bvalue (and will expect its value to be true)
+static const char* CALLOUT_PARAMS_LIBRARY = "@abs_builddir@/.libs/libco3.so";
+
 // Name of a library which is not present.
 static const char* NOT_PRESENT_LIBRARY = "@abs_builddir@/.libs/libnothere.so";
 
