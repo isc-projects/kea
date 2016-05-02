@@ -4,15 +4,30 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <dhcp/dhcp6.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option4_addrlst.h>
+#include <dhcp/option6_addrlst.h>
+#include <dhcp/option_space.h>
+#include <dhcp/option_string.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option_vendor.h>
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/database_connection.h>
 #include <asiolink/io_address.h>
+#include <util/buffer.h>
+#include <boost/foreach.hpp>
 #include <gtest/gtest.h>
+#include <cstring>
+#include <list>
+#include <string>
 #include <sstream>
+#include <typeinfo>
 
 using namespace std;
 using namespace isc::asiolink;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -20,10 +35,11 @@ namespace test {
 
 GenericHostDataSourceTest::GenericHostDataSourceTest()
     :hdsptr_() {
-
+    LibDHCP::clearRuntimeOptionDefs();
 }
 
 GenericHostDataSourceTest::~GenericHostDataSourceTest() {
+    LibDHCP::clearRuntimeOptionDefs();
 }
 
 std::vector<uint8_t>
@@ -229,12 +245,15 @@ void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
     compareReservations6(host1->getIPv6Reservations(),
                          host2->getIPv6Reservations());
 
-    // And compare client classification details
+    // Compare client classification details
     compareClientClasses(host1->getClientClasses4(),
                          host2->getClientClasses4());
 
     compareClientClasses(host1->getClientClasses6(),
                          host2->getClientClasses6());
+
+    compareOptions(host1->getCfgOption4(), host2->getCfgOption4());
+    compareOptions(host1->getCfgOption6(), host2->getCfgOption6());
 }
 
 DuidPtr
@@ -311,6 +330,125 @@ GenericHostDataSourceTest::compareClientClasses(const ClientClasses& /*classes1*
                                                 const ClientClasses& /*classes2*/) {
     /// @todo: Implement client classes comparison.
     ///        This is part of the work for #4213.
+}
+
+void
+GenericHostDataSourceTest::compareOptions(const ConstCfgOptionPtr& cfg1,
+                                          const ConstCfgOptionPtr& cfg2) const {
+    ASSERT_TRUE(cfg1);
+    ASSERT_TRUE(cfg2);
+
+    std::list<std::string> option_spaces = cfg2->getOptionSpaceNames();
+    std::list<std::string> vendor_spaces = cfg2->getVendorIdsSpaceNames();
+    option_spaces.insert(option_spaces.end(), vendor_spaces.begin(),
+                         vendor_spaces.end());
+
+    BOOST_FOREACH(std::string space, option_spaces) {
+        OptionContainerPtr options1 = cfg1->getAll(space);
+        OptionContainerPtr options2 = cfg2->getAll(space);
+        ASSERT_TRUE(options1);
+        ASSERT_TRUE(options2);
+
+        ASSERT_EQ(options1->size(), options2->size());
+
+        BOOST_FOREACH(OptionDescriptor desc1, *options1) {
+            OptionDescriptor desc2 = cfg2->get(space, desc1.option_->getType());
+            ASSERT_EQ(desc1.persistent_, desc2.persistent_);
+            Option* option1 = desc1.option_.get();
+            Option* option2 = desc2.option_.get();
+
+            ASSERT_TRUE(typeid(*option1) == typeid(*option2))
+                << "Comapared DHCP options, having option code "
+                << desc1.option_->getType() << " and belonging to the "
+                << space << " option space, are represented "
+                "by different C++ classes: "
+                << typeid(*option1).name() << " vs "
+                << typeid(*option2).name();
+
+            OutputBuffer buf1(option1->len());
+            ASSERT_NO_THROW(option1->pack(buf1));
+            OutputBuffer buf2(option2->len());
+            ASSERT_NO_THROW(option2->pack(buf2));
+
+            ASSERT_EQ(buf1.getLength(), buf2.getLength());
+            ASSERT_EQ(0, memcmp(buf1.getData(), buf2.getData(), buf1.getLength()));
+        }
+    }
+}
+
+
+OptionDescriptor
+GenericHostDataSourceTest::createVendorOption(const Option::Universe& universe,
+                                              const bool persist,
+                                              const uint32_t vendor_id) const {
+    OptionVendorPtr option(new OptionVendor(universe, vendor_id));
+    OptionDescriptor desc(option, persist);
+    return (desc);
+}
+
+void
+GenericHostDataSourceTest::addTestOptions(const HostPtr& host) const {
+    // Add DHCPv4 options.
+    CfgOptionPtr opts = host->getCfgOption4();
+    opts->add(createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
+                                         true, "my-boot-file"),
+              DHCP4_OPTION_SPACE);
+    opts->add(createOption<OptionUint8>(Option::V4, DHO_DEFAULT_IP_TTL,
+                                        false, 64),
+              DHCP4_OPTION_SPACE);
+    opts->add(createOption<OptionUint32>(Option::V4, 1, false, 312131),
+              "vendor-encapsulated-options");
+    opts->add(createAddressOption<Option4AddrLst>(254, false, "192.0.2.3"),
+              DHCP4_OPTION_SPACE);
+    opts->add(createOption<Option>(Option::V4, 1, true, OptionBuffer()),
+              "isc");
+    opts->add(createAddressOption<Option4AddrLst>(2, false, "10.0.0.5",
+                                                  "10.0.0.3", "10.0.3.4"),
+              "isc");
+
+    OptionDefSpaceContainer defs;
+
+    // Add definitions for DHCPv4 non-standard options.
+    defs.addItem(OptionDefinitionPtr(new OptionDefinition("vendor-encapsulated-1",
+                                                          1, "uint32")),
+                 "vendor-encapsulated-options");
+    defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-254", 254,
+                                                          "ipv4-address", true)),
+                 DHCP4_OPTION_SPACE);
+    defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "empty")),
+                 "isc");
+    defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-2", 2,
+                                                          "ipv4-address", true)),
+                 "isc");
+
+    // Add DHCPv6 options.
+    opts = host->getCfgOption6();
+    opts->add(createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL,
+                                         true, "my-boot-file"),
+              DHCP6_OPTION_SPACE);
+    opts->add(createOption<OptionUint32>(Option::V6, D6O_INFORMATION_REFRESH_TIME,
+                                         false, 3600),
+              DHCP6_OPTION_SPACE);
+    opts->add(createVendorOption(Option::V6, false, 2495), DHCP6_OPTION_SPACE);
+    opts->add(createAddressOption<Option6AddrLst>(1024, false, "2001:db8:1::1"),
+              DHCP6_OPTION_SPACE);
+    opts->add(createOption<Option>(Option::V6, 1, true, OptionBuffer()),
+              "isc2");
+    opts->add(createAddressOption<Option6AddrLst>(2, false, "3000::1", "3000::2",
+                                                  "3000::3"),
+              "isc2");
+
+    // Add definitions for DHCPv6 non-standard options.
+    defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-1024", 1024,
+                                                          "ipv6-address", true)),
+                 DHCP6_OPTION_SPACE);
+    defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-1", 1, "empty")),
+                 "isc2");
+    defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-2", 2,
+                                                          "ipv6-address", true)),
+                 "isc2");
+
+    LibDHCP::setRuntimeOptionDefs(defs);
 }
 
 void GenericHostDataSourceTest::testBasic4(const Host::IdentifierType& id) {
@@ -897,6 +1035,73 @@ void GenericHostDataSourceTest::testMultipleReservationsDifferentOrder(){
     compareReservations6(host1->getIPv6Reservations(), host2->getIPv6Reservations());
 
 }
+
+void GenericHostDataSourceTest::testOptionsReservations4() {
+    HostPtr host = initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
+    // Add a bunch of DHCPv4 and DHCPv6 options for the host.
+    ASSERT_NO_THROW(addTestOptions(host));
+    // Insert host and the options into respective tables.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+    // Subnet id will be used in quries to the database.
+    SubnetID subnet_id = host->getIPv4SubnetID();
+
+    // getAll4(address)
+    ConstHostCollection hosts_by_addr = hdsptr_->getAll4(host->getIPv4Reservation());
+    ASSERT_EQ(1, hosts_by_addr.size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_addr.begin()));
+
+    // get4(subnet_id, identifier_type, identifier, identifier_size)
+    ConstHostPtr host_by_id = hdsptr_->get4(subnet_id,
+                                            host->getIdentifierType(),
+                                            &host->getIdentifier()[0],
+                                            host->getIdentifier().size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_id));
+
+    // get4(subnet_id, address)
+    ConstHostPtr host_by_addr = hdsptr_->get4(subnet_id, IOAddress("192.0.2.5"));
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_addr));
+
+    hdsptr_->get4(subnet_id, IOAddress("192.0.2.5"));
+}
+
+void GenericHostDataSourceTest::testOptionsReservations6() {
+    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    // Add a bunch of DHCPv4 and DHCPv6 options for the host.
+    ASSERT_NO_THROW(addTestOptions(host));
+    // Insert host, options and IPv6 reservations into respective tables.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+    // Subnet id will be used in queries to the database.
+    SubnetID subnet_id = host->getIPv6SubnetID();
+
+    // get6(subnet_id, identifier_type, identifier, identifier_size)
+    ConstHostPtr host_by_id = hdsptr_->get6(subnet_id, host->getIdentifierType(),
+                                            &host->getIdentifier()[0],
+                                            host->getIdentifier().size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_id));
+
+    // get6(address, prefix_len)
+    ConstHostPtr host_by_addr = hdsptr_->get6(IOAddress("2001:db8::1"), 128);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_addr));
+}
+
+void GenericHostDataSourceTest::testOptionsReservations46() {
+    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
+
+    // Add a bunch of DHCPv4 and DHCPv6 options for the host.
+    ASSERT_NO_THROW(addTestOptions(host));
+    // Insert host, options and IPv6 reservations into respective tables.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+    // Subnet id will be used in queries to the database.
+    SubnetID subnet_id = host->getIPv6SubnetID();
+
+    // getAll(identifier_type, identifier, identifier_size)
+    ConstHostCollection hosts_by_id = hdsptr_->getAll(host->getIdentifierType(),
+                                                      &host->getIdentifier()[0],
+                                                      host->getIdentifier().size());
+    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+}
+
 
 }; // namespace test
 }; // namespace dhcp
