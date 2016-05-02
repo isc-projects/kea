@@ -211,7 +211,7 @@ public:
             }
             ASSERT_NO_THROW(
                 stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
-            );
+            )  << "failure for transaction id " << transid[i];
         }
 
         // Create a server response for one of the packets sent.
@@ -231,6 +231,34 @@ public:
             EXPECT_EQ(TEST_COLLECTED_PKT_NUM / 2,
                       stats_mgr->getCollectedNum(StatsMgr4::XCHG_DO));
         }
+
+        // Make sure that we can still use the StatsMgr. It is possible
+        // that the pointer to 'next sent' packet was invalidated
+        // during packet removal.
+        for (unsigned int i = 0; i < TEST_COLLECTED_PKT_NUM; ++i) {
+            // Increase transaction ids by 1 so as they don't duplicate
+            // with transaction ids of already sent packets.
+            Pkt4ModifiablePtr sent_packet(createPacket4(DHCPDISCOVER,
+                                                    transid[i] + 1));
+            Pkt4ModifiablePtr rcvd_packet(createPacket4(DHCPOFFER,
+                                                        transid[i] + 1));
+            ASSERT_NO_THROW(
+                stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+            ) << "failure for transaction id " << transid[i];
+
+            ASSERT_NO_THROW(
+                stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet);
+            ) << "failure for transaction id " << transid[i];
+        }
+
+        // We should have processed TEST_COLLECTED_PKT_NUM but it is possible
+        // that one of them we couldn't match (orphan packet), because
+        // the matched packet had to be collected because of the transaction
+        // timeout. Therefore, we have to count both received packets and
+        // orhpans.
+        EXPECT_EQ(TEST_COLLECTED_PKT_NUM + 1,
+                  stats_mgr->getRcvdPacketsNum(StatsMgr4::XCHG_DO) +
+                  stats_mgr->getOrphans(StatsMgr4::XCHG_DO));
     }
 };
 
