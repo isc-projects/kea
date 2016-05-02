@@ -9,6 +9,8 @@
 
 #include <gtest/gtest.h>
 
+#include "boost/date_time/posix_time/posix_time.hpp"
+#include <locale>
 #include <sys/stat.h>
 
 using namespace std;
@@ -38,18 +40,24 @@ public:
     /// The destructor does call the close method.
     virtual ~TestableLegalFile() {};
 
-    /// @brief Overrides LegalFile::today() 
+    /// @brief Overrides LegalFile::today()
     /// @return value of member variable today_
     virtual boost::gregorian::date today() {
         return (today_);
     }
 
+    /// @brief Overrides LegalFile::now()
+    /// @return
+    virtual time_t now() {
+        struct tm now_tm = boost::gregorian::to_tm(today_);
+        return (mktime(&now_tm));
+    }
+
     /// @brief Sets the override date value
-    /// @param - new value for the override date       
+    /// @param - new value for the override date
     void setToday(boost::gregorian::date day) {
         today_ = day;
     }
-
     /// @brief Override date value
     boost::gregorian::date today_;
 };
@@ -85,24 +93,24 @@ public:
     boost::gregorian::date adjustDay(const boost::gregorian::date& org_day,
                                        int days) {
         boost::gregorian::date_duration dd(days);
-        return (org_day + dd); 
+        return (org_day + dd);
     }
 
-    /// @brief Checks if the given file exists    
+    /// @brief Checks if the given file exists
     ///
     /// @return true if the file exists, false if it does not
     bool fileExists(const std::string& filename) {
         struct stat statbuf;
         if (stat(filename.c_str(), &statbuf) == 0) {
             return (true);
-        } 
+        }
 
         int sav_error = errno;
         if (errno == ENOENT) {
             return (false);
         }
 
-        ADD_FAILURE() << "fileExists error - filename: " << filename 
+        ADD_FAILURE() << "fileExists error - filename: " << filename
             << " error: " << strerror(sav_error);
         return (false);
     }
@@ -130,10 +138,11 @@ public:
     /// @param file_name - name of the file to read
     /// @param expected_lines - a vector of the lines expected to be found
     /// in the file (entries DO NOT include EOL)
-    void checkFileLines(const std::string& file_name, 
+    void checkFileLines(const std::string& file_name,
+                        const std::string& now_string,
                         const std::vector<std::string>& expected_lines) {
         std::ifstream is;
-        is.open(file_name); 
+        is.open(file_name);
         ASSERT_TRUE(is.good()) << "Could not open file: " << file_name;
 
         int i = 0;
@@ -142,11 +151,12 @@ public:
 
             is.getline(buf, sizeof(buf));
             if (is.gcount() > 0) {
-                ASSERT_TRUE(i < expected_lines.size()) 
+                ASSERT_TRUE(i < expected_lines.size())
                         << "Too many entries in file: " << file_name;
 
-                ASSERT_EQ(expected_lines[i], buf) 
-                        << "line mismatch in: " << file_name 
+                std::string cmp_line = now_string + " " + expected_lines[i];
+                ASSERT_EQ(cmp_line, buf)
+                        << "line mismatch in: " << file_name
                         << " at line:" << i;
 
                 ++i;
@@ -155,6 +165,18 @@ public:
 
         ASSERT_EQ(i, expected_lines.size())
                     << "Not enough entries in file: " << file_name;
+    }
+
+    /// @brief Returns the current timezone abbreviate as a string
+    std::string getTimezone()  {
+        char buffer[16];
+        time_t curtime;
+        time(&curtime);
+        struct tm* timeinfo;
+        timeinfo = localtime(&curtime);
+
+        strftime(buffer, sizeof(buffer), "%Z", timeinfo);
+        return (std::string(buffer));
     }
 
     /// @brief The current date
@@ -186,7 +208,7 @@ TEST_F(LegalFileTest, openFile) {
     std::string exp_name = genName(today_);
     EXPECT_FALSE(fileExists(exp_name));
 
-    // Open the file 
+    // Open the file
     ASSERT_NO_THROW(legal_file->open());
 
     // Verify that the name is correct, the physcial file exists, and
@@ -219,17 +241,43 @@ TEST_F(LegalFileTest, rotateFile) {
     // Call rotate
     ASSERT_NO_THROW(legal_file->rotate());
 
-    // Verify that we change files 
+    // Verify that we change files
     std::string exp_name = genName(tomorrow);
     EXPECT_EQ(exp_name, legal_file->getFileName());
     EXPECT_TRUE(fileExists(legal_file->getFileName()));
     EXPECT_TRUE(legal_file->isOpen());
 }
 
+/// @brief Verifies that the timestamp string generator works properly
+TEST_F(LegalFileTest, nowString) {
+    TestableLegalFilePtr legal_file;
+
+    // Construct the legal file
+    boost::gregorian::date test_day(2016, boost::gregorian::May, 02);
+    ASSERT_NO_THROW(legal_file.reset(new TestableLegalFile(today_)));
+
+    // Should be the same as "%Y-%m-%d %H:%M:%S %Z"
+    std::string  expected_string = "2016-05-02 00:00:00 " + getTimezone();
+    std::string now_string;
+    ASSERT_NO_THROW(now_string = legal_file->getNowString());
+    EXPECT_EQ(expected_string, now_string);
+
+    // Try with an alternative format
+    ASSERT_NO_THROW(now_string = legal_file->getNowString("%d%m%Y"));
+    EXPECT_EQ("02052016",  now_string);
+
+    // Try with one that's too long. This should throw.
+    char buf[256];
+    memset(buf, '-', sizeof(buf));
+    std::string format("%Y%m%d");
+    format += buf;
+    ASSERT_THROW(legal_file->getNowString(format), LegalFileError);
+}
+
 /// @brief Tests writing to a file
 TEST_F(LegalFileTest, writeFile) {
     TestableLegalFilePtr legal_file;
-    
+
     // Construct the legal file
     ASSERT_NO_THROW(legal_file.reset(new TestableLegalFile(today_)));
 
@@ -237,6 +285,7 @@ TEST_F(LegalFileTest, writeFile) {
     ASSERT_NO_THROW(legal_file->open());
 
     // Write to the file
+    std::string today_now_string = legal_file->getNowString();
     std::vector<std::string> today_lines;
     today_lines.push_back("one");
     today_lines.push_back("two");
@@ -251,6 +300,7 @@ TEST_F(LegalFileTest, writeFile) {
     legal_file->setToday(tomorrow);
 
     // Write to the file
+    std::string tomorrow_now_string = legal_file->getNowString();
     std::vector<std::string> tomorrow_lines;
     tomorrow_lines.push_back("three");
     tomorrow_lines.push_back("four");
@@ -259,11 +309,11 @@ TEST_F(LegalFileTest, writeFile) {
     }
 
     // Close the file to flush writes
-    ASSERT_NO_THROW(legal_file->close()); 
+    ASSERT_NO_THROW(legal_file->close());
 
     // Make we have the correct content in both files.
-    checkFileLines(genName(today_), today_lines);
-    checkFileLines(genName(tomorrow), tomorrow_lines);
+    checkFileLines(genName(today_), today_now_string, today_lines);
+    checkFileLines(genName(tomorrow), tomorrow_now_string, tomorrow_lines);
 }
 
 } // end of anonymous namespace

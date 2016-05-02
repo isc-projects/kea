@@ -70,3 +70,18 @@ files will be altered, nor any legal logging entries emitted.
 This is an error message issued when an error occurs while unloading the
 LegalLogHook library.  This is unlikely to occur and normal operations of the
 library will likely resume when it is next loaded.
+
+% LEGAL_FILE_HOOK_PKT4_RECEIVE_ERROR Unexpected error occurred: %1
+This is an error message issued when an expected error occurs during the
+LegalLogHook callout for pkt4_receive.  This is programmatic error and
+should not occur.
+
+% LEGAL_FILE_HOOK_LEASE4_SELECT_NO_QRY Context contained no packet
+This is an error message issued when the context passed to the LegalLogHook
+lease4_select callout does not containt the client packet. This is
+programmatic error and should not occur.
+
+% LEGAL_FILE_HOOK_LEASE4_RENEW_NO_QRY Context contained no packet
+This is an error message issued when the context passed to the LegalLogHook
+lease4_select callout does not containt the client packet. This is
+programmatic error and should not occur.

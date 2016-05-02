@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <iostream>
 #include <sstream>
+#include <time.h>
 
 namespace isc {
 namespace legal_log {
@@ -33,6 +34,29 @@ LegalFile::~LegalFile(){
 boost::gregorian::date
 LegalFile::today() {
     return (boost::gregorian::day_clock::local_day());
+}
+
+time_t
+LegalFile::now() {
+    time_t curtime;
+    return(time(&curtime));
+}
+
+std::string
+LegalFile::getNowString(const std::string& format) {
+    // Get a text representation of the current time.
+    char buffer[128];
+    time_t curtime = now();
+    struct tm* timeinfo;
+    timeinfo = localtime(&curtime);
+
+    if (!strftime(buffer, sizeof(buffer), format.c_str(), timeinfo)) {
+        isc_throw(LegalFileError,
+                    "Timestamp format format: " << format
+                    << " result is too long, maximum allowed: "
+                    << sizeof(buffer));
+    }
+    return (std::string(buffer));
 }
 
 void
@@ -80,7 +104,7 @@ LegalFile::writeln(const std::string& text) {
     // Call rotate in case we've crossed days since we last wrote.
     rotate();
 
-    file_ << text << std::endl;
+    file_ << getNowString() << " " << text << std::endl;
     int sav_error = errno;
     if (!file_.good()) {
         isc_throw(LegalFileError, "error writing to file:" << file_name_

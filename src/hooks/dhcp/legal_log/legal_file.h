@@ -44,14 +44,14 @@ public:
 ///
 ///     date - is the system date, at the time the file is opened, in local
 ///     time.  The format of the value is CCYYMMDD (century,year,month,day)
-///     
+///
 /// Prior to each write, the system date is compared to the current file date
 /// to determine if rotation is necessary (i.e. day boundary has been crossed
 /// since the last write).  If so, the current file is closed, and the new
-/// file is created. 
+/// file is created.
 ///
-///The file does not impose any 
-/// particular format constraints upon content.  
+///The file does not impose any
+/// particular format constraints upon content.
 class LegalFile {
 public:
     /// @brief Constructor
@@ -104,7 +104,7 @@ public:
     ///
     /// Invokes rotate() and then attempts to add the given string
     /// followed by EOL to the end of the file.
-    /// 
+    ///
     /// @param text the string to append
     ///
     /// @throw LegalFileError if the write fails
@@ -114,7 +114,23 @@ public:
     /// This is exposed primarily to simplify testing.
     virtual boost::gregorian::date today();
 
-    /// @brief Returns the current file name 
+    /// @brief Returns the current system time
+    /// This is exposed primarily to simplify testing.
+    virtual time_t now();
+
+    /// @brief Returns the current date and time as string
+    ///
+    /// Returns the current local date and time as a string based on the
+    /// given format.  Maximum length of the result is 128 bytes.
+    ///
+    /// @param format - desired format for the string. Permissable formatting is
+    /// that supported by strftime.  The default is: "%Y-%m-%d %H:%M:%S %Z"
+    ///
+    /// @return std::string containg the formatted current date and time
+    /// @throw LegalFileError if the result string is larger than 128 bytes.
+    virtual std::string getNowString(const std::string& format="%Y-%m-%d %H:%M:%S %Z");
+
+    /// @brief Returns the current file name
     std::string getFileName() {
         return(file_name_);
     }
@@ -144,7 +160,7 @@ private:
 /// @brief Defines a smart pointer to a LegalFile.
 typedef boost::shared_ptr<LegalFile> LegalFilePtr;
 
-} // namespace legal_file 
+} // namespace legal_file
 } // namespace isc
 
 #endif
