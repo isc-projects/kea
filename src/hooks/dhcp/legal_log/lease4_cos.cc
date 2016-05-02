@@ -28,6 +28,34 @@ extern LegalFilePtr legal_file;
 // issues related to namespaces.
 extern "C" {
 
+/// @brief  This callout is called at the "pkt4_receive" hook.
+///
+/// If the inbound packet is a DHCP REQUEST, we push the packet
+/// to the context, so we can retrieve necessary info in lease4_select
+/// or lease4_renew to generate the legal log.  Currently those
+/// callouts do not receive the packet as an argument.
+///
+/// @param handle CalloutHandle which provides access to context.
+///
+/// @return 0 upon success, non-zero otherwise.
+int pkt4_receive(CalloutHandle& handle) {
+
+    try {
+        Pkt4Ptr query;
+        handle.getArgument("query4", query);
+        if (query->getType() == DHCPREQUEST) {
+            handle.setContext("query4", query);
+        }
+    } catch (const std::exception& ex) {
+        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_PKT4_RECEIVE_ERROR)
+                  .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
+
+
 /// @brief  This callout is called at the "lease4_select" hook.
 ///
 /// @param handle CalloutHandle which provides access to context.
@@ -36,6 +64,13 @@ extern "C" {
 int lease4_select(CalloutHandle& handle) {
     if (!legal_file) {
         LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_SELECT_NO_LEGAL_FILE);
+        return (1);
+    }
+
+    Pkt4Ptr query;
+    handle.getContext("query4", query);
+    if (!query) {
+        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_SELECT_NO_QRY);
         return (1);
     }
 
@@ -60,6 +95,13 @@ int lease4_select(CalloutHandle& handle) {
 int lease4_renew(CalloutHandle& handle) {
     if (!legal_file) {
         LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_RENEW_NO_LEGAL_FILE);
+        return (1);
+    }
+
+    Pkt4Ptr query;
+    handle.getContext("query4", query);
+    if (!query) {
+        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_RENEW_NO_QRY);
         return (1);
     }
 
