@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,6 +32,16 @@ LibraryManagerCollection::getCalloutManager() const {
     }
 
     return (callout_manager_);
+}
+
+LibraryManagerCollection::LibraryManagerCollection(const HookLibsCollection& libraries)
+    :library_info_(libraries) {
+
+    // We need to split hook libs into library names and library parameters.
+    for (HookLibsCollection::const_iterator it = libraries.begin();
+         it != libraries.end(); ++it) {
+        library_names_.push_back(it->first);
+    }
 }
 
 // Load a set of libraries

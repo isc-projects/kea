@@ -47,7 +47,7 @@ if HAVE_GTEST
 # ignored for unit tests built here.
 
 noinst_LTLIBRARIES = libnvl.la  libivl.la libfxl.la libbcl.la liblcl.la \
-                     liblecl.la libucl.la libfcl.la
+                     liblecl.la libucl.la libfcl.la libpcl.la
 
 # -rpath /nowhere is a hack to trigger libtool to not create a
 # convenience archive, resulting in shared modules
@@ -102,6 +102,13 @@ libfcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libfcl_la_CPPFLAGS = $(AM_CPPFLAGS)
 libfcl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
+# The parameters checking callout library - expects
+libpcl_la_SOURCES  = callout_params_library.cc
+libpcl_la_CXXFLAGS = $(AM_CXXFLAGS)
+libpcl_la_CPPFLAGS = $(AM_CPPFLAGS)
+libpcl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
+libpcl_la_LDFLAGS += $(top_builddir)/src/lib/util/libkea-util.la
+
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += callout_handle_unittest.cc
@@ -126,6 +133,7 @@ endif
 run_unittests_LDADD     = $(AM_LDADD)
 run_unittests_LDADD    += $(ALL_LIBS)
 run_unittests_LDADD    += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+run_unittests_LDADD    += $(top_builddir)/src/lib/cc/libkea-cc.la
 run_unittests_LDADD    += $(GTEST_LDADD)
 # As noted in configure.ac, libtool doesn't work perfectly with Darwin: it
 # embeds the final install path in dynamic libraries and loadable modules refer

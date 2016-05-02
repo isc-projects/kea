@@ -8,6 +8,7 @@
 #define LIBRARY_HANDLE_H
 
 #include <string>
+#include <cc/data.h>
 
 namespace isc {
 namespace hooks {
@@ -106,6 +107,69 @@ public:
     ///
     /// @throw NoSuchHook Thrown if the hook name is unrecognized.
     bool deregisterAllCallouts(const std::string& name);
+
+
+    /// @brief Returns configuration parameter for the library.
+    ///
+    /// This method returns configuration parameters specified in the
+    /// configuration file. Here's the example. Let's assume that there
+    /// are two hook libraries configured:
+    ///
+    /// "hooks-libraries": [
+    ///     {
+    ///        "library": "/opt/charging.so",
+    ///        "parameters": {}
+    ///    },
+    ///    {
+    ///        "library": "/opt/local/notification.so",
+    ///        "parameters": {
+    ///            "mail": "alarm@example.com",
+    ///            "floor": 42,
+    ///            "debug": false,
+    ///            "users": [ "alice", "bob", "charlie" ],
+    ///            "header": {
+    ///                "french": "bonjour",
+    ///                "klingon": "yl'el"
+    ///            }
+    ///        }
+    ///    }
+    ///]
+    ///
+    /// The first library has no parameters, so regardles of the name
+    /// specified, for that library getParameter will always return NULL.
+    ///
+    /// For the second paramter, depending the following calls will return:
+    /// - x = getParameter("mail") will return instance of
+    ///   isc::data::StringElement. The content can be accessed with
+    ///   x->stringValue() and will return std::string.
+    /// - x = getParameter("floor") will return an instance of isc::data::IntElement.
+    ///   The content can be accessed with x->intValue() and will return int.
+    /// - x = getParameter("debug") will return an instance of isc::data::BoolElement.
+    ///   Its value can be accessed with x->boolValue() and will return bool.
+    /// - x = getParameter("users") will return an instance of ListElement.
+    ///   Its content can be accessed with the following methods:
+    ///   x->size(), x->get(index)
+    /// - x = getParameter("header") will return an instance of isc::data::MapElement.
+    ///   Its content can be accessed with the following methods:
+    ///   x->find("klingon"), x->contains("french"), x->size()
+    ///
+    /// For more examples and complete API, see documentation for
+    /// @ref isc::data::Element class and its derivatives:
+    /// - @ref isc::data::IntElement
+    /// - @ref isc::data::DoubleElement
+    /// - @ref isc::data::BoolElement
+    /// - @ref isc::data::StringElement
+    /// - @ref isc::data::ListElement
+    /// - @ref isc::data::MapElement
+    ///
+    /// Another good way to learn how to use Element interface is to look at the
+    /// unittests in data_unittests.cc.
+    ///
+    /// @param name text name of the parameter.
+    /// @return ElementPtr representing requested parameter (may be null, if
+    ///         there is no such parameter.)
+    isc::data::ConstElementPtr
+    getParameter(const std::string& name);
 
 private:
     /// @brief Copy constructor
