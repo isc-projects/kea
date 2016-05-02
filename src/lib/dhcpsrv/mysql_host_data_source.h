@@ -257,6 +257,8 @@ public:
     enum StatementIndex {
         INSERT_HOST,            // Insert new host to collection
         INSERT_V6_RESRV,        // Insert v6 reservation
+        INSERT_V4_OPTION,       // Insert DHCPv4 option
+        INSERT_V6_OPTION,       // Insert DHCPv6 option
         GET_HOST_DHCPID,        // Gets hosts by host identifier
         GET_HOST_ADDR,          // Gets hosts by IPv4 address
         GET_HOST_SUBID4_DHCPID, // Gets host by IPv4 SubnetID, HW address/DUID

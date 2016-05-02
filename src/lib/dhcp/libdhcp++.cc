@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,9 +21,11 @@
 #include <util/buffer.h>
 #include <dhcp/option_definition.h>
 
+#include <boost/lexical_cast.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <limits>
 #include <list>
 
 using namespace std;
@@ -842,6 +844,45 @@ void
 LibDHCP::initVendorOptsIsc6() {
     vendor6_defs_[ENTERPRISE_ID_ISC] = OptionDefContainer();
     initOptionSpace(vendor6_defs_[ENTERPRISE_ID_ISC], ISC_V6_DEFS, ISC_V6_DEFS_SIZE);
+}
+
+uint32_t
+LibDHCP::optionSpaceToVendorId(const std::string& option_space) {
+    if (option_space.size() < 8) {
+        // 8 is a minimal length of "vendor-X" format
+        return (0);
+    }
+    if (option_space.substr(0,7) != "vendor-") {
+        return (0);
+    }
+
+    // text after "vendor-", supposedly numbers only
+    std::string x = option_space.substr(7);
+
+    int64_t check;
+    try {
+        check = boost::lexical_cast<int64_t>(x);
+    } catch (const boost::bad_lexical_cast &) {
+        /// @todo: Should we throw here?
+        // isc_throw(BadValue, "Failed to parse vendor-X value (" << x
+        //           << ") as unsigned 32-bit integer.");
+        return (0);
+    }
+    if (check > std::numeric_limits<uint32_t>::max()) {
+        /// @todo: Should we throw here?
+        //isc_throw(BadValue, "Value " << x << "is too large"
+        //          << " for unsigned 32-bit integer.");
+        return (0);
+    }
+    if (check < 0) {
+        /// @todo: Should we throw here?
+        // isc_throw(BadValue, "Value " << x << "is negative."
+        //       << " Only 0 or larger are allowed for unsigned 32-bit integer.");
+        return (0);
+    }
+
+    // value is small enough to fit
+    return (static_cast<uint32_t>(check));
 }
 
 void initOptionSpace(OptionDefContainer& defs,

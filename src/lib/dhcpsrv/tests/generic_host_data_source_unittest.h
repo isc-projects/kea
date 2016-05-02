@@ -7,9 +7,12 @@
 #ifndef GENERIC_HOST_DATA_SOURCE_UNITTEST_H
 #define GENERIC_HOST_DATA_SOURCE_UNITTEST_H
 
+#include <asiolink/io_address.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/host.h>
 #include <dhcp/classify.h>
+#include <dhcp/option.h>
+#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -122,7 +125,71 @@ public:
     /// @param classes1 first list of client classes
     /// @param classes2 second list of client classes
     void compareClientClasses(const ClientClasses& classes1,
-                              const ClientClasses& classes2);
+                              const ClientClasses& classes2);                           
+
+    /// @brief Compares options within two configurations.
+    ///
+    /// @param cfg1 First configuration.
+    /// @param cfg2 Second configuration.
+    void compareOptions(const ConstCfgOptionPtr& cfg1,
+                        const ConstCfgOptionPtr& cfg2) const;
+
+    /// @brief Creates an instance of the option for which it is possible to
+    /// specify universe, option type and value in the constructor.
+    ///
+    /// Examples of options that can be created using this function are:
+    /// - @ref OptionString
+    /// - different variants of @ref OptionInt.
+    ///
+    /// @param encapsulated_space 
+    /// @return Instance of the option created.
+    template<typename OptionType, typename DataType>
+    OptionDescriptor createOption(const Option::Universe& universe,
+                                  const uint16_t option_type,
+                                  const bool persist,
+                                  const DataType& value) const {
+        boost::shared_ptr<OptionType> option(new OptionType(universe, option_type,
+                                                            value));
+        OptionDescriptor desc(option, persist);
+        return (desc);
+    }
+
+    template<typename OptionType, typename DataType>
+    OptionDescriptor createOption(const uint16_t option_type,
+                                  const bool persist,
+                                  const DataType& value) const {
+        boost::shared_ptr<OptionType> option(new OptionType(option_type, value));
+        OptionDescriptor desc(option, persist);
+        return (desc);
+    }
+
+    template<typename OptionType>
+    OptionDescriptor
+    createAddressOption(const uint16_t option_type,
+                        const bool persist,
+                        const std::string& address1 = "",
+                        const std::string& address2 = "",
+                        const std::string& address3 = "") const {
+        typename OptionType::AddressContainer addresses;
+        if (!address1.empty()) {
+            addresses.push_back(asiolink::IOAddress(address1));
+        }
+        if (!address2.empty()) {
+            addresses.push_back(asiolink::IOAddress(address2));
+        }
+        if (!address3.empty()) {
+            addresses.push_back(asiolink::IOAddress(address3));
+        }
+        boost::shared_ptr<OptionType> option(new OptionType(option_type, addresses));
+        OptionDescriptor desc(option, persist);
+        return (desc);
+    }
+
+    OptionDescriptor createVendorOption(const Option::Universe& universe,
+                                        const bool persist,
+                                        const uint32_t vendor_id) const;
+
+    void addTestOptions(const HostPtr& host) const;
 
     /// @brief Pointer to the host data source
     HostDataSourcePtr hdsptr_;
@@ -238,6 +305,24 @@ public:
     /// Uses gtest macros to report failures.
     void testAddDuplicate4();
 
+    /// @brief Test that DHCPv4 options can be inserted and retrieved from
+    /// the database.
+    ///
+    /// Uses gtest macros to report failures.
+    void testOptionsReservations4();
+
+    /// @brief Test that DHCPv6 options can be inserted and retrieved from
+    /// the database.
+    ///
+    /// Uses gtest macros to report failures.
+    void testOptionsReservations6();
+
+    /// @brief Test that DHCPv4 and DHCPv6 options can be inserted and retrieved
+    /// with a single query to the database.
+    ///
+    /// Uses gtest macros to report failures.
+    void testOptionsReservations46();
+
     /// @brief Returns DUID with identical content as specified HW address
     ///
     /// This method does not have any sense in real life and is only useful
@@ -257,6 +342,7 @@ public:
     /// @param duid DUID to be copied
     /// @return HW address with the same value as specified DUID
     HWAddrPtr DuidToHWAddr(const DuidPtr& duid);
+
 };
 
 }; // namespace test

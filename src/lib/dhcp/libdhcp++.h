@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 #include <util/staged_value.h>
 
 #include <iostream>
+#include <stdint.h>
 #include <string>
 
 namespace isc {
@@ -320,6 +321,21 @@ public:
 
     /// @brief Commits runtime option definitions.
     static void commitRuntimeOptionDefs();
+
+    /// @brief Converts option space name to vendor id.
+    ///
+    /// If the option space name is specified in the following format:
+    /// "vendor-X" where X is an uint32_t number, it is assumed to be
+    /// a vendor space and the uint32_t number is returned by this function.
+    /// If the option space name is invalid this method will return 0, which
+    /// is not a valid vendor-id, to signal an error.
+    ///
+    /// @todo remove this function once when the conversion is dealt by the
+    /// appropriate functions returning options by option space names.
+    ///
+    /// @param option_space Option space name.
+    /// @return vendor id.
+    static uint32_t optionSpaceToVendorId(const std::string& option_space);
 
 private:
 

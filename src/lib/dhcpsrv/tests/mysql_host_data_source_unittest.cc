@@ -406,4 +406,23 @@ TEST_F(MySqlHostDataSourceTest, addDuplicate4) {
     testAddDuplicate4();
 }
 
+// This test verifies that DHCPv4 options can be inserted and retrieved from
+// the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, optionsReservations4) {
+    testOptionsReservations4();
+}
+
+// This test verifies that DHCPv6 options can be inserted and retrieved from
+// the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, optionsReservations6) {
+    testOptionsReservations6();
+}
+
+// This test verifies that DHCPv4 and DHCPv6 options can be inserted and
+// retrieved with a single query to the database.
+TEST_F(MySqlHostDataSourceTest, optionsReservations46) {
+    testOptionsReservations46();
+}
+
+
 }; // Of anonymous namespace
