@@ -1,14 +1,13 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <dhcp/libdhcp++.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
-#include <boost/lexical_cast.hpp>
 #include <dhcp/dhcp6.h>
-#include <limits>
 #include <string>
 
 namespace isc {
@@ -37,7 +36,12 @@ CfgOption::equals(const CfgOption& other) const {
 void
 CfgOption::add(const OptionPtr& option, const bool persistent,
                const std::string& option_space) {
-    if (!option) {
+    add(OptionDescriptor(option, persistent), option_space);
+}
+
+void
+CfgOption::add(const OptionDescriptor& desc, const std::string& option_space) {
+    if (!desc.option_) {
         isc_throw(isc::BadValue, "option being configured must not be NULL");
 
     } else  if (!OptionSpace::validateName(option_space)) {
@@ -45,13 +49,25 @@ CfgOption::add(const OptionPtr& option, const bool persistent,
                   << option_space << "'");
     }
 
-    const uint32_t vendor_id = optionSpaceToVendorId(option_space);
+    const uint32_t vendor_id = LibDHCP::optionSpaceToVendorId(option_space);
     if (vendor_id) {
-        vendor_options_.addItem(OptionDescriptor(option, persistent),
-                                vendor_id);
+        vendor_options_.addItem(desc, vendor_id);
     } else {
-        options_.addItem(OptionDescriptor(option, persistent), option_space);
+        options_.addItem(desc, option_space);
     }
+}
+
+std::list<std::string>
+CfgOption::getVendorIdsSpaceNames() const {
+    std::list<uint32_t> ids = getVendorIds();
+    std::list<std::string> names;
+    for (std::list<uint32_t>::const_iterator id = ids.begin();
+         id != ids.end(); ++id) {
+        std::ostringstream s;
+        s << "vendor-" << *id;
+        names.push_back(s.str());
+    }
+    return (names);
 }
 
 void
@@ -150,45 +166,6 @@ CfgOption::getAll(const std::string& option_space) const {
 OptionContainerPtr
 CfgOption::getAll(const uint32_t vendor_id) const {
     return (vendor_options_.getItems(vendor_id));
-}
-
-uint32_t
-CfgOption::optionSpaceToVendorId(const std::string& option_space) {
-    if (option_space.size() < 8) {
-        // 8 is a minimal length of "vendor-X" format
-        return (0);
-    }
-    if (option_space.substr(0,7) != "vendor-") {
-        return (0);
-    }
-
-    // text after "vendor-", supposedly numbers only
-    std::string x = option_space.substr(7);
-
-    int64_t check;
-    try {
-        check = boost::lexical_cast<int64_t>(x);
-    } catch (const boost::bad_lexical_cast &) {
-        /// @todo: Should we throw here?
-        // isc_throw(BadValue, "Failed to parse vendor-X value (" << x
-        //           << ") as unsigned 32-bit integer.");
-        return (0);
-    }
-    if (check > std::numeric_limits<uint32_t>::max()) {
-        /// @todo: Should we throw here?
-        //isc_throw(BadValue, "Value " << x << "is too large"
-        //          << " for unsigned 32-bit integer.");
-        return (0);
-    }
-    if (check < 0) {
-        /// @todo: Should we throw here?
-        // isc_throw(BadValue, "Value " << x << "is negative."
-        //       << " Only 0 or larger are allowed for unsigned 32-bit integer.");
-        return (0);
-    }
-
-    // value is small enough to fit
-    return (static_cast<uint32_t>(check));
 }
 
 } // end of namespace isc::dhcp
