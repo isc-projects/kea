@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -249,14 +249,14 @@ TEST_F(CtrlDhcpv6SrvTest, libreload) {
     ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
     // Load two libraries
-    std::vector<std::string> libraries;
-    libraries.push_back(CALLOUT_LIBRARY_1);
-    libraries.push_back(CALLOUT_LIBRARY_2);
+    HookLibsCollection libraries;
+    libraries.push_back(make_pair(CALLOUT_LIBRARY_1, ConstElementPtr()));
+    libraries.push_back(make_pair(CALLOUT_LIBRARY_2, ConstElementPtr()));
     HooksManager::loadLibraries(libraries);
 
     // Check they are loaded.
-    std::vector<std::string> loaded_libraries =
-        HooksManager::getLibraryNames();
+    HookLibsCollection loaded_libraries =
+        HooksManager::getLibraryInfo();
     ASSERT_TRUE(libraries == loaded_libraries);
 
     // ... which also included checking that the marker file created by the

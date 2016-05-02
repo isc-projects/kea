@@ -46,6 +46,9 @@ static const char* NO_VERSION_LIBRARY = "@abs_builddir@/.libs/libnvl.so";
 // Library where there is an unload() function.
 static const char* UNLOAD_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libucl.so";
 
+// Library where parameters are checked.
+static const char* CALLOUT_PARAMS_LIBRARY = "@abs_builddir@/.libs/libpcl.so";
+
 } // anonymous namespace
 
 

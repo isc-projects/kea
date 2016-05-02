@@ -10,6 +10,7 @@
 
 #include <hooks/tests/common_test_class.h>
 #include <hooks/tests/test_libraries.h>
+#include <cc/data.h>
 
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
@@ -17,9 +18,9 @@
 #include <algorithm>
 #include <string>
 
-
 using namespace isc;
 using namespace isc::hooks;
+using namespace isc::data;
 using namespace std;
 
 namespace {
@@ -110,9 +111,11 @@ private:
 TEST_F(HooksManagerTest, LoadLibraries) {
 
     // Set up the list of libraries to be loaded.
-    std::vector<std::string> library_names;
-    library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
-    library_names.push_back(std::string(BASIC_CALLOUT_LIBRARY));
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
 
     // Load the libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
@@ -152,10 +155,13 @@ TEST_F(HooksManagerTest, LoadLibraries) {
 TEST_F(HooksManagerTest, LoadLibrariesWithError) {
 
     // Set up the list of libraries to be loaded.
-    std::vector<std::string> library_names;
-    library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
-    library_names.push_back(std::string(INCORRECT_VERSION_LIBRARY));
-    library_names.push_back(std::string(BASIC_CALLOUT_LIBRARY));
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(INCORRECT_VERSION_LIBRARY),
+                                      data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
 
     // Load the libraries.  We expect a failure return because one of the
     // libraries fails to load.
@@ -168,8 +174,9 @@ TEST_F(HooksManagerTest, LoadLibrariesWithError) {
 TEST_F(HooksManagerTest, CalloutHandleUnloadLibrary) {
 
     // Set up the list of libraries to be loaded.
-    std::vector<std::string> library_names;
-    library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
 
     // Load the libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
@@ -202,8 +209,9 @@ TEST_F(HooksManagerTest, CalloutHandleUnloadLibrary) {
 TEST_F(HooksManagerTest, CalloutHandleLoadLibrary) {
 
     // Set up the list of libraries to be loaded.
-    std::vector<std::string> library_names;
-    library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
 
     // Load the libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
@@ -225,8 +233,9 @@ TEST_F(HooksManagerTest, CalloutHandleLoadLibrary) {
     // Load a new library that implements the calculation
     //
     // r3 = (10 + d1) * d2 - d3
-    std::vector<std::string> new_library_names;
-    new_library_names.push_back(std::string(BASIC_CALLOUT_LIBRARY));
+    HookLibsCollection new_library_names;
+    new_library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
+                                          data::ConstElementPtr()));
 
     // Load the libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(new_library_names));
@@ -247,9 +256,11 @@ TEST_F(HooksManagerTest, CalloutHandleLoadLibrary) {
 TEST_F(HooksManagerTest, ReloadSameLibraries) {
 
     // Set up the list of libraries to be loaded.
-    std::vector<std::string> library_names;
-    library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
-    library_names.push_back(std::string(BASIC_CALLOUT_LIBRARY));
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
 
     // Load the libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
@@ -273,9 +284,11 @@ TEST_F(HooksManagerTest, ReloadSameLibraries) {
 TEST_F(HooksManagerTest, ReloadLibrariesReverseOrder) {
 
     // Set up the list of libraries to be loaded and load them.
-    std::vector<std::string> library_names;
-    library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
-    library_names.push_back(std::string(BASIC_CALLOUT_LIBRARY));
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
     // Execute the callouts.  The first library implements the calculation.
@@ -335,8 +348,9 @@ testPostCallout(CalloutHandle& handle) {
 TEST_F(HooksManagerTest, PrePostCalloutTest) {
 
     // Load a single library.
-    std::vector<std::string> library_names;
-    library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
     // Load the pre- and post- callouts.
@@ -431,9 +445,11 @@ TEST_F(HooksManagerTest, RegisterHooks) {
 TEST_F(HooksManagerTest, LibraryNames) {
 
     // Set up the list of libraries to be loaded.
-    std::vector<std::string> library_names;
-    library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
-    library_names.push_back(std::string(BASIC_CALLOUT_LIBRARY));
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
 
     // Check the names before the libraries are loaded.
     std::vector<std::string> loaded_names = HooksManager::getLibraryNames();
@@ -442,7 +458,7 @@ TEST_F(HooksManagerTest, LibraryNames) {
     // Load the libraries and check the names again.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
     loaded_names = HooksManager::getLibraryNames();
-    EXPECT_TRUE(library_names == loaded_names);
+    EXPECT_TRUE(extractNames(library_names) == loaded_names);
 
     // Unload the libraries and check again.
     EXPECT_NO_THROW(HooksManager::unloadLibraries());
@@ -521,6 +537,32 @@ TEST_F(HooksManagerTest, validateLibraries) {
 
     failed = HooksManager::validateLibraries(libraries);
     EXPECT_TRUE(failed == expected_failures);
+}
+
+// This test verifies that the specified parameters are accessed properly.
+TEST_F(HooksManagerTest, LibraryParameters) {
+
+    // Prepare paramters for the callout parameters library.
+    ElementPtr params = Element::createMap();
+    params->set("svalue", Element::create("string value"));
+    params->set("ivalue", Element::create(42));
+    params->set("bvalue", Element::create(true));
+
+    // Set up the list of libraries to be loaded.
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(CALLOUT_PARAMS_LIBRARY),
+                                      params));
+
+    // Load the libraries. Note that callout params library checks if
+    // all mandatory parameters are there, so if anything is missing, its
+    // load() function will return error, thus causing the library to not
+    // load.
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+
+    // Try unloading the libraries.
+    EXPECT_NO_THROW(HooksManager::unloadLibraries());
 }
 
 
