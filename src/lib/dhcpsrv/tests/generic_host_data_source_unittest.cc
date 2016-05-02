@@ -599,8 +599,8 @@ void GenericHostDataSourceTest::testGet6ByHWAddr() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations.
-    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, "hw-address");
-    HostPtr host2 = initializeHost6("2001:db8::2", Host::IDENT_HWADDR, "hw-address");
+    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
+    HostPtr host2 = initializeHost6("2001:db8::2", Host::IDENT_HWADDR, false);
 
     // Sanity check: make sure the hosts have different HW addresses.
     ASSERT_TRUE(host1->getHWAddress());
@@ -635,8 +635,8 @@ void GenericHostDataSourceTest::testGet6ByClientId() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations.
-    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_DUID, "hw-address");
-    HostPtr host2 = initializeHost6("2001:db8::2", Host::IDENT_DUID, "hw-address");
+    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    HostPtr host2 = initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
 
     // Sanity check: make sure the hosts have different HW addresses.
     ASSERT_TRUE(host1->getDuid());
