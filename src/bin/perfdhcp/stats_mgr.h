@@ -446,12 +446,19 @@ public:
                 PktListRemovalQueue to_remove;
                 for (PktListTransidHashIterator it = p.first; it != p.second;
                      ++it) {
+                    // If transaction id is matching, we found the original
+                    // packet sent to the server. Therefore, we reset the
+                    // 'next sent' pointer to point to this location. We
+                    // also indicate that the matching packet is found.
+                    // Even though the packet has been found, we continue
+                    // iterating over the bucket to remove all those packets
+                    // that are timed out.
                     if ((*it)->getTransid() == rcvd_packet->getTransid()) {
                         packet_found = true;
-                        next_sent_ =
-                            sent_packets_.template project<0>(it);
-                        break;
+                        next_sent_ = sent_packets_.template project<0>(it);
                     }
+                    // Check if the packet should be removed due to timeout.
+                    // This includes the packet matching the received one.
                     ptime now = microsec_clock::universal_time();
                     ptime packet_time = (*it)->getTimestamp();
                     time_period packet_period(packet_time, now);
@@ -468,20 +475,23 @@ public:
                     }
                 }
 
-                // Deal with the removal queue
+                // Deal with the removal queue.
                 while (!to_remove.empty()) {
                     PktListTransidHashIterator it = to_remove.front();
                     to_remove.pop();
-                    // The packet pointed to by 'it' is timed out so
-                    // we have to remove it. 
-                    if (packet_found || !to_remove.empty()) {
+                    // If timed out packet is not the one matching server response,
+                    // we simply remove it and keep the pointer to the 'next sent'
+                    // packet as it was. If the timed out packet appears to be the
+                    // one that is matching the server response, we still want to
+                    // remove it, but we need to update the 'next sent' pointer to
+                    // point to a valid location.
+                    if (sent_packets_.template project<0>(it) != next_sent_) {
                         eraseSent(sent_packets_.template project<0>(it));
                     } else {
-                        // Removal may invalidate the next_sent_
-                        // pointer if it points to the packet being
-                        // removed. So, we set the next_sent_ to point
-                        // to the next packet after removed one.
                         next_sent_ = eraseSent(sent_packets_.template project<0>(it));
+                        // We removed the matching packet because of the timeout. It
+                        // means that there is no match anymore.
+                        packet_found = false;
                     }
                     ++collected_;
                 }
