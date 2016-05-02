@@ -1,3 +1,7 @@
+1110.	[func]		tomek
+	It is now possible to specify parameters for hook libraries.
+	(Trac 4297, git f45d0b5d297f6ad522eb8b7e6f6a0de1064b8569)
+
 1109.	[func]		marcin
 	"host-reservation-identifiers" configuration parameter has been
 	implemented. It allows for specifying an ordered list of
