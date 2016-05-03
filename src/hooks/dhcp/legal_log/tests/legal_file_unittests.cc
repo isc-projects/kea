@@ -254,7 +254,7 @@ TEST_F(LegalFileTest, nowString) {
 
     // Construct the legal file
     boost::gregorian::date test_day(2016, boost::gregorian::May, 02);
-    ASSERT_NO_THROW(legal_file.reset(new TestableLegalFile(today_)));
+    ASSERT_NO_THROW(legal_file.reset(new TestableLegalFile(test_day)));
 
     // Should be the same as "%Y-%m-%d %H:%M:%S %Z"
     std::string  expected_string = "2016-05-02 00:00:00 " + getTimezone();
@@ -314,6 +314,57 @@ TEST_F(LegalFileTest, writeFile) {
     // Make we have the correct content in both files.
     checkFileLines(genName(today_), today_now_string, today_lines);
     checkFileLines(genName(tomorrow), tomorrow_now_string, tomorrow_lines);
+}
+
+TEST_F(LegalFileTest, genDurationString) {
+#if 0
+    std::stringstream stream;
+
+    LegalFile::genDurationString(stream, 0); 
+    EXPECT_EQ("0 hrs 0 min 0 secs", stream.str());
+    stream.str("");
+
+    LegalFile::genDurationString(stream, 1); 
+    EXPECT_EQ("0 hrs 0 min 1 secs", stream.str());
+    stream.str("");
+
+    LegalFile::genDurationString(stream, 61); 
+    EXPECT_EQ("0 hrs 1 min 1 secs", stream.str());
+    stream.str("");
+
+    LegalFile::genDurationString(stream, 3661); 
+    EXPECT_EQ("1 hrs 1 min 1 secs", stream.str());
+    stream.str("");
+
+    LegalFile::genDurationString(stream, 24*60*60); 
+    EXPECT_EQ("1 day 0 hrs 0 min 0 secs", stream.str());
+    stream.str("");
+
+    LegalFile::genDurationString(stream, 24*60*60 + 3661); 
+    EXPECT_EQ("1 day 1 hrs 1 min 1 secs", stream.str());
+    stream.str("");
+
+    LegalFile::genDurationString(stream, 15783671 + 3600); 
+    EXPECT_EQ("182 days 17 hrs 21 min 11 secs", stream.str());
+    stream.str("");
+
+    LegalFile::genDurationString(stream, 0xFFFFFFFE); 
+    EXPECT_EQ("49710 days 6 hrs 28 min 14 secs", stream.str());
+    stream.str("");
+
+    LegalFile::genDurationString(stream, 0xFFFFFFFF); 
+    EXPECT_EQ("infinite duration", stream.str());
+#else
+    EXPECT_EQ("0 hrs 0 min 0 secs", LegalFile::genDurationString(0)); 
+    EXPECT_EQ("0 hrs 0 min 1 secs", LegalFile::genDurationString(1)); 
+    EXPECT_EQ("0 hrs 1 min 1 secs", LegalFile::genDurationString(61)); 
+    EXPECT_EQ("1 hrs 1 min 1 secs", LegalFile::genDurationString(3661)); 
+    EXPECT_EQ("1 day 0 hrs 0 min 0 secs", LegalFile::genDurationString(24*60*60)); 
+    EXPECT_EQ("1 day 1 hrs 1 min 1 secs", LegalFile::genDurationString(24*60*60 + 3661)); 
+    EXPECT_EQ("182 days 17 hrs 21 min 11 secs", LegalFile::genDurationString(15783671 + 3600)); 
+    EXPECT_EQ("49710 days 6 hrs 28 min 14 secs", LegalFile::genDurationString(0xFFFFFFFE)); 
+    EXPECT_EQ("infinite duration", LegalFile::genDurationString(0xFFFFFFFF)); 
+#endif
 }
 
 } // end of anonymous namespace

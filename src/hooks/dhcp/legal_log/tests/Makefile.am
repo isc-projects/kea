@@ -34,6 +34,7 @@ TESTS += libdhcp_legal_log_unittests
 
 libdhcp_legal_log_unittests_SOURCES = run_unittests.cc
 libdhcp_legal_log_unittests_SOURCES += legal_file_unittests.cc
+libdhcp_legal_log_unittests_SOURCES += legal_log_unittests.cc
 
 libdhcp_legal_log_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 
@@ -48,6 +49,7 @@ libdhcp_legal_log_unittests_CXXFLAGS += -Wno-unused-parameter
 endif
 
 libdhcp_legal_log_unittests_LDADD = $(top_builddir)/src/hooks/dhcp/legal_log/liblegl.la
+libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
