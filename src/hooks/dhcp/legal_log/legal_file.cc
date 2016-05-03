@@ -7,6 +7,8 @@
 #include <legal_log_log.h>
 #include <legal_file.h>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include <errno.h>
 #include <iostream>
 #include <sstream>
@@ -131,6 +133,37 @@ LegalFile::close() {
         LOG_ERROR(legal_log_logger, LEGAL_LOG_HOOK_FILE_CLOSE_ERROR)
                   .arg(file_name_).arg(ex.what());
     }
+}
+
+std::string
+LegalFile::genDurationString(uint32_t secs) {
+    // In case Kea decides to support the notion of infinite lease
+    // we'll emit it as such.
+    if (secs == 0xFFFFFFFF) {
+        return ("infinite duration");
+    }
+
+    // Because Kea handles lease lifetimes as uint32_t, we can't use things
+    // boost:posix_time::time_duration as they work on longs.  Therefore
+    // we'll figure it out ourselves.  Besides, the math ain't that hard.
+    uint32_t seconds = secs % 60;
+    secs /= 60;
+    uint32_t minutes = secs % 60;
+    secs /= 60;
+    uint32_t hours = secs % 24;
+    uint32_t days = secs / 24;
+
+    std::ostringstream os;
+    // Only spit out days if we have em.
+    if (days) {
+        os << days << (days > 1 ? " days " : " day ");
+    }
+
+    os << hours << " hrs "
+        << minutes << " min "
+        << seconds << " secs";
+
+    return (os.str());
 }
 
 } // namespace legal_log

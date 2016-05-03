@@ -50,8 +50,9 @@ public:
 /// since the last write).  If so, the current file is closed, and the new
 /// file is created.
 ///
-///The file does not impose any
-/// particular format constraints upon content.
+/// Content is added to the file by passing the desired line text into
+/// the method, writeln().  This method prepends the content  with the current
+/// date and time and appends an EOL.
 class LegalFile {
 public:
     /// @brief Constructor
@@ -102,8 +103,19 @@ public:
 
     /// @brief Appends a string to the current file
     ///
-    /// Invokes rotate() and then attempts to add the given string
-    /// followed by EOL to the end of the file.
+    /// Invokes rotate() and then attempts to add the new line
+    /// followed by EOL to the end of the file. The content of
+    /// new line will be:
+    ///
+    ///     <timestamp> <text><EOL>
+    ///
+    /// where:
+    ///     timestamp - current local date and time as given by the
+    ///     strftime format "%Y-%m-%d %H:%M:%S %Z"
+    ///
+    ///     text - text supplied by the parameter
+    ///
+    ///     EOL - the character(s) generated std::endl
     ///
     /// @param text the string to append
     ///
@@ -139,6 +151,8 @@ public:
     boost::gregorian::date getFileDay() {
         return(file_day_);
     }
+
+    static std::string genDurationString(uint32_t secs);
 
 private:
     /// @brief Directory in which the file(s) will be created
