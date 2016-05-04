@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sstream>
 #include <sys/wait.h>
 
 using namespace std;
@@ -970,22 +971,37 @@ void
 TestControl::printRate() const {
     double rate = 0;
     CommandOptions& options = CommandOptions::instance();
+    std::string exchange_name = "4-way exchanges";
     if (options.getIpVersion() == 4) {
+        StatsMgr4::ExchangeType xchg_type =
+            options.getExchangeMode() == CommandOptions::DO_SA ?
+            StatsMgr4::XCHG_DO : StatsMgr4::XCHG_RA;
+        if (xchg_type == StatsMgr4::XCHG_DO) {
+            exchange_name = "DISCOVER-OFFER";
+        }
         double duration =
             stats_mgr4_->getTestPeriod().length().total_nanoseconds() / 1e9;
-        rate = stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_DO) / duration;
+        rate = stats_mgr4_->getRcvdPacketsNum(xchg_type) / duration;
     } else if (options.getIpVersion() == 6) {
+        StatsMgr6::ExchangeType xchg_type =
+            options.getExchangeMode() == CommandOptions::DO_SA ?
+            StatsMgr6::XCHG_SA : StatsMgr6::XCHG_RR;
+        if (xchg_type == StatsMgr6::XCHG_SA) {
+            exchange_name = options.isRapidCommit() ? "Solicit-Reply" :
+                "Solicit-Advertise";
+        }
         double duration =
             stats_mgr6_->getTestPeriod().length().total_nanoseconds() / 1e9;
-        rate = stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_SA) / duration;
+        rate = stats_mgr6_->getRcvdPacketsNum(xchg_type) / duration;
     }
-    std::cout << "***Rate statistics***" << std::endl;
+    std::ostringstream s;
+    s << "***Rate statistics***" << std::endl;
+    s << "Rate: " << rate << " " << exchange_name << "/second";
     if (options.getRate() > 0) {
-        std::cout << "Rate: " << rate << " exchanges/second, expected rate: "
-                  << options.getRate() << " exchanges/second" <<  std::endl << std::endl;
-    } else {
-        std::cout << "Rate: " << rate << std::endl << std::endl;
+        s << ", expected rate: " << options.getRate() << std::endl;
     }
+
+    std::cout << s.str() << std::endl;
 }
 
 void
