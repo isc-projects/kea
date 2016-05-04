@@ -85,3 +85,18 @@ programmatic error and should not occur.
 This is an error message issued when the context passed to the LegalLogHook
 lease4_select callout does not containt the client packet. This is
 programmatic error and should not occur.
+
+% LEGAL_FILE_HOOK_PKT6_RECEIVE_ERROR Unexpected error occurred: %1
+This is an error message issued when an expected error occurs during the
+LegalLogHook callout for pkt6_receive.  This is programmatic error and
+should not occur.
+
+% LEGAL_FILE_HOOK_LEASE6_SELECT_NO_QRY Context contained no packet
+This is an error message issued when the context passed to the LegalLogHook
+lease6_select callout does not containt the client packet. This is
+programmatic error and should not occur.
+
+% LEGAL_FILE_HOOK_LEASE6_RENEW_NO_QRY Context contained no packet
+This is an error message issued when the context passed to the LegalLogHook
+lease6_select callout does not containt the client packet. This is
+programmatic error and should not occur.

@@ -137,12 +137,6 @@ LegalFile::close() {
 
 std::string
 LegalFile::genDurationString(uint32_t secs) {
-    // In case Kea decides to support the notion of infinite lease
-    // we'll emit it as such.
-    if (secs == 0xFFFFFFFF) {
-        return ("infinite duration");
-    }
-
     // Because Kea handles lease lifetimes as uint32_t, we can't use things
     // boost:posix_time::time_duration as they work on longs.  Therefore
     // we'll figure it out ourselves.  Besides, the math ain't that hard.
@@ -164,6 +158,23 @@ LegalFile::genDurationString(uint32_t secs) {
         << seconds << " secs";
 
     return (os.str());
+}
+
+std::string
+LegalFile::vectorHexDump(const std::vector<uint8_t>& bytes,
+                         const std::string& delimiter) {
+    std::stringstream tmp;
+    tmp << std::hex;
+    bool delim = false;
+    for (std::vector<uint8_t>::const_iterator it = bytes.begin();
+         it != bytes.end(); ++it) {
+        if (delim) {
+            tmp << delimiter;
+        }
+        tmp << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(*it);
+        delim = true;
+    }
+    return (tmp.str());
 }
 
 } // namespace legal_log

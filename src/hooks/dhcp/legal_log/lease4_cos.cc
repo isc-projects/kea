@@ -14,7 +14,6 @@
 #include <legal_log_log.h>
 
 #include <sstream>
-#include <locale>
 
 using namespace isc;
 using namespace dhcp;
@@ -25,26 +24,6 @@ using namespace std;
 /// @brief Pointer to the registry instance.
 extern LegalFilePtr legal_file;
 
-/// @brief Creates a string of hex digit pairs from a vector of bytes
-///
-/// @param bytes - vector of bytes to convert
-/// @param delimiter - string to use a delimiter, defaults to ":"
-/// @return std::string containing the hex output
-std::string vectorHexDump(const std::vector<uint8_t>& bytes, const std::string& delimiter = ":") {
-    std::stringstream tmp;
-    tmp << std::hex;
-    bool delim = false;
-    for (std::vector<uint8_t>::const_iterator it = bytes.begin();
-         it != bytes.end(); ++it) {
-        if (delim) {
-            tmp << delimiter;
-        }
-        tmp << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(*it);
-        delim = true;
-    }
-    return (tmp.str());
-}
-
 /// @brief Creates legal file entry for a DHCPv4 Lease
 ///
 /// Creates an entry based on the given DHCPv4 DHCPREQUEST and corresponding
@@ -54,8 +33,8 @@ std::string vectorHexDump(const std::vector<uint8_t>& bytes, const std::string& 
 ///  <address><duration><device-id>{client-info}{relay-info}
 ///
 /// Where:
-///     # address - the leased IPv4 address given out and whether it was assigned
-///     or renewed.
+///     # address - the leased IPv4 address given out and whether it was
+///     assigned or renewed.
 ///     # duration - the lease lifetime expressed as in days (if present),
 ///     hours, minutes and seconds.  A lease lifetime of 0xFFFFFFFF will be
 ///     denoted with the text "infinite duration".
@@ -101,24 +80,26 @@ std::string genLease4Entry(Pkt4Ptr query, Lease4Ptr lease, bool renewal) {
         // Look for relay agent information option
         OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
         if (rai) {
+            // Look for circuit-id
             std::stringstream idstream;
-            OptionPtr circuit_id_opt = rai->getOption(RAI_OPTION_AGENT_CIRCUIT_ID);
-            if (circuit_id_opt) {
-                const OptionBuffer& circuit_id_vec = circuit_id_opt->getData();
-                if (!circuit_id_vec.empty()) {
-                    idstream << "circuit-id: " << vectorHexDump(circuit_id_vec);
+            OptionPtr opt = rai->getOption(RAI_OPTION_AGENT_CIRCUIT_ID);
+            if (opt) {
+                const OptionBuffer& id = opt->getData();
+                if (!id.empty()) {
+                    idstream << "circuit-id: " << LegalFile::vectorHexDump(id);
                 }
             }
 
-            OptionPtr remote_id_opt = rai->getOption(RAI_OPTION_REMOTE_ID);
-            if (remote_id_opt) {
-                const OptionBuffer& remote_id_vec = remote_id_opt->getData();
-                if (!remote_id_vec.empty()) {
+            // Look for remote-id
+            opt = rai->getOption(RAI_OPTION_REMOTE_ID);
+            if (opt) {
+                const OptionBuffer& id = opt->getData();
+                if (!id.empty()) {
                     if (!idstream.str().empty()) {
                         idstream << " and ";
                     }
 
-                    idstream << "remote-id: " << vectorHexDump(remote_id_vec);
+                    idstream << "remote-id: " << LegalFile::vectorHexDump(id);
                 }
             }
 
