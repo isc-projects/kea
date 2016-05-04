@@ -1,6 +1,12 @@
+1111.	[bug]		marcin
+	perfdhcp: Improved algorithm for dropping timed out transactions.
+	This prevents growing memory consumption due to storing timed
+	out transactions when the DHCP server drops many messages.
+	(Trac #4493, git 9757a93110afb82c5379643f2f48e223d497efae)
+
 1110.	[func]		tomek
 	It is now possible to specify parameters for hook libraries.
-	(Trac 4297, git f45d0b5d297f6ad522eb8b7e6f6a0de1064b8569)
+	(Trac #4297, git f45d0b5d297f6ad522eb8b7e6f6a0de1064b8569)
 
 1109.	[func]		marcin
 	"host-reservation-identifiers" configuration parameter has been
