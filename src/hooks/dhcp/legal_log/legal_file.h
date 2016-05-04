@@ -140,7 +140,8 @@ public:
     ///
     /// @return std::string containg the formatted current date and time
     /// @throw LegalFileError if the result string is larger than 128 bytes.
-    virtual std::string getNowString(const std::string& format="%Y-%m-%d %H:%M:%S %Z");
+    virtual std::string getNowString(const std::string&
+                                     format="%Y-%m-%d %H:%M:%S %Z");
 
     /// @brief Returns the current file name
     std::string getFileName() {
@@ -152,8 +153,31 @@ public:
         return(file_day_);
     }
 
+    /// @brief Creates seconds into a text string of days, hours, minutes
+    /// and seconds
+    ///
+    /// The output string will have the following format:
+    ///
+    ///    {<d> day(s) }<h> hrs <m> min <s> secs
+    /// Examples:
+    ///
+    ///     0 hrs 0 min 30 secs
+    ///     2 hrs 11 min 50 secs
+    ///     1 day 1 hrs 0 min 0 secs
+    ///     60 days 0 hrs 0 min 10 secs
+    ///
+    /// @param secs - number of seconds to convert
+    /// @return string containing the duration text
     static std::string genDurationString(uint32_t secs);
 
+    /// @brief Creates a string of hex digit pairs from a vector of bytes
+    ///
+    /// @param bytes - vector of bytes to convert
+    /// @param delimiter - string to use a delimiter, defaults to ":"
+    ///
+    /// @return std::string containing the hex output
+    static std::string vectorHexDump(const std::vector<uint8_t>& bytes,
+                                     const std::string& delimiter = ":");
 private:
     /// @brief Directory in which the file(s) will be created
     std::string path_;
