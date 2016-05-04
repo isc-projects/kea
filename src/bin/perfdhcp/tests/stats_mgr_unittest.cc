@@ -13,12 +13,12 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include "../stats_mgr.h"
 
 #include <gtest/gtest.h>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/scoped_ptr.hpp>
-
-#include "../stats_mgr.h"
 
 using namespace std;
 using namespace isc;
@@ -32,6 +32,37 @@ typedef StatsMgr<dhcp::Pkt6> StatsMgr6;
 
 const uint32_t common_transid = 123;
 
+/// @brief Number of packets to be used for testing packets collecting.
+const size_t TEST_COLLECTED_PKT_NUM = 10;
+
+/// @brief DHCPv4 packet with modifiable internal values.
+///
+/// Currently the only additional modifiable value is a packet
+/// timestamp.
+class Pkt4Modifiable : public Pkt4 {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param msg_type DHCPv4 message type.
+    /// @param transid Transaction id.
+    Pkt4Modifiable(const uint8_t msg_type, const uint32_t transid)
+        : Pkt4(msg_type, transid) {
+    }
+
+    /// @brief Modifies packet timestamp.
+    ///
+    /// @param delta Number of seconds to be added to the current
+    /// packet time. If this number is negative, the new timestamp
+    /// will point to earlier time than the original timestamp.
+    void modifyTimestamp(const long delta) {
+        timestamp_ += boost::posix_time::seconds(delta);
+    }
+};
+
+/// @brief Pointer to the Pkt4Modifiable.
+typedef boost::shared_ptr<Pkt4Modifiable> Pkt4ModifiablePtr;
+
 class StatsMgrTest : public ::testing::Test {
 public:
     StatsMgrTest() {
@@ -44,15 +75,15 @@ public:
     /// \param msg_type DHCPv4 message type.
     /// \param transid transaction id for the packet.
     /// \return DHCPv4 packet.
-    Pkt4* createPacket4(const uint8_t msg_type,
-                        const uint32_t transid) {
-        Pkt4* pkt = new Pkt4(msg_type, transid);
+    Pkt4Modifiable* createPacket4(const uint8_t msg_type,
+                                  const uint32_t transid) {
+        Pkt4Modifiable* pkt = new Pkt4Modifiable(msg_type, transid);
         // Packet timestamp is normally updated by interface
         // manager on packets reception or send. Unit tests
         // do not use interface manager so we need to do it
         // ourselves.
         pkt->updateTimestamp();
-        return pkt;
+        return (pkt);
     }
 
     /// \brief Create DHCPv6 packet.
@@ -151,6 +182,83 @@ public:
         ASSERT_FALSE(rcvd_time.is_not_a_date_time());
     }
 
+    /// @brief This test verifies that timed out packets are collected.
+    ///
+    /// @param transid_index Index in the table of transaction ids which
+    /// points to the transaction id to be selected for the DHCPOFFER.
+    void testSendReceiveCollected(const size_t transid_index) {
+        boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
+        // The second parameter indicates that transactions older than
+        // 2 seconds should be removed and respective packets collected.
+        stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO, 2);
+
+        // Transaction ids of packets to be sent. All transaction ids
+        // belong to the same bucket (match the transid & 1023 hashing
+        // function).
+        uint32_t transid[TEST_COLLECTED_PKT_NUM] =
+            { 1, 1025, 2049, 3073, 4097, 5121, 6145, 7169, 8193, 9217 };
+
+        // Simulate sending a number of packets.
+        for (unsigned int i = 0; i < TEST_COLLECTED_PKT_NUM; ++i) {
+            Pkt4ModifiablePtr sent_packet(createPacket4(DHCPDISCOVER,
+                                                    transid[i]));
+            // For packets with low indexes we set the timestamps to
+            // 10s in the past. When DHCPOFFER is processed, the
+            // packets with timestamps older than 2s should be collected.
+            if (i < TEST_COLLECTED_PKT_NUM / 2) {
+                sent_packet->modifyTimestamp(-10);
+            }
+            ASSERT_NO_THROW(
+                stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+            )  << "failure for transaction id " << transid[i];
+        }
+
+        // Create a server response for one of the packets sent.
+        Pkt4ModifiablePtr rcvd_packet(createPacket4(DHCPOFFER,
+                                                    transid[transid_index]));
+        ASSERT_NO_THROW(
+            stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet);
+        );
+
+        // There is exactly one case (transaction id) for which perfdhcp
+        // will find a packet using ordered lookup. In this case, no
+        // packets will be collected. Otherwise, for any unordered lookup
+        // all packets from a bucket should be collected.
+        if (stats_mgr->getUnorderedLookups(StatsMgr4::XCHG_DO) > 0) {
+            // All packets in the bucket having transaction id
+            // index below TEST_COLLECTED_PKT_NUM / 2 should be removed.
+            EXPECT_EQ(TEST_COLLECTED_PKT_NUM / 2,
+                      stats_mgr->getCollectedNum(StatsMgr4::XCHG_DO));
+        }
+
+        // Make sure that we can still use the StatsMgr. It is possible
+        // that the pointer to 'next sent' packet was invalidated
+        // during packet removal.
+        for (unsigned int i = 0; i < TEST_COLLECTED_PKT_NUM; ++i) {
+            // Increase transaction ids by 1 so as they don't duplicate
+            // with transaction ids of already sent packets.
+            Pkt4ModifiablePtr sent_packet(createPacket4(DHCPDISCOVER,
+                                                    transid[i] + 1));
+            Pkt4ModifiablePtr rcvd_packet(createPacket4(DHCPOFFER,
+                                                        transid[i] + 1));
+            ASSERT_NO_THROW(
+                stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+            ) << "failure for transaction id " << transid[i];
+
+            ASSERT_NO_THROW(
+                stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet);
+            ) << "failure for transaction id " << transid[i];
+        }
+
+        // We should have processed TEST_COLLECTED_PKT_NUM but it is possible
+        // that one of them we couldn't match (orphan packet), because
+        // the matched packet had to be collected because of the transaction
+        // timeout. Therefore, we have to count both received packets and
+        // orphans.
+        EXPECT_EQ(TEST_COLLECTED_PKT_NUM + 1,
+                  stats_mgr->getRcvdPacketsNum(StatsMgr4::XCHG_DO) +
+                  stats_mgr->getOrphans(StatsMgr4::XCHG_DO));
+    }
 };
 
 TEST_F(StatsMgrTest, Constructor) {
@@ -337,6 +445,14 @@ TEST_F(StatsMgrTest, SendReceiveUnordered) {
     // is pointing to. This is counted as ordered lookup.
     EXPECT_EQ(1, stats_mgr->getOrderedLookups(StatsMgr4::XCHG_DO));
     EXPECT_EQ(9, stats_mgr->getUnorderedLookups(StatsMgr4::XCHG_DO));
+}
+
+TEST_F(StatsMgrTest, SendReceiveCollected) {
+    // Check that the packet collection mechanism works fine
+    // for any packet returned by the server.
+    for (unsigned int i = 0; i < TEST_COLLECTED_PKT_NUM; ++i) {
+        testSendReceiveCollected(i);
+    }
 }
 
 TEST_F(StatsMgrTest, Orphans) {
