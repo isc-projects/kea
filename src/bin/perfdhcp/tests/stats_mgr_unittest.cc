@@ -202,11 +202,10 @@ public:
         for (unsigned int i = 0; i < TEST_COLLECTED_PKT_NUM; ++i) {
             Pkt4ModifiablePtr sent_packet(createPacket4(DHCPDISCOVER,
                                                     transid[i]));
-            // For packets with even index of the transaction id we set
-            // the packet timestamp to 10s in the past. When DHCPOFFER
-            // is processed, the packets with timestamps older than
-            // 2s should be collected.
-            if (i % 2 == 0) {
+            // For packets with low indexes we set the timestamps to
+            // 10s in the past. When DHCPOFFER is processed, the
+            // packets with timestamps older than 2s should be collected.
+            if (i < TEST_COLLECTED_PKT_NUM / 2) {
                 sent_packet->modifyTimestamp(-10);
             }
             ASSERT_NO_THROW(
@@ -226,8 +225,8 @@ public:
         // packets will be collected. Otherwise, for any unordered lookup
         // all packets from a bucket should be collected.
         if (stats_mgr->getUnorderedLookups(StatsMgr4::XCHG_DO) > 0) {
-            // All packets in the bucket having even transaction id
-            // indexes should be removed.
+            // All packets in the bucket having transaction id
+            // index below TEST_COLLECTED_PKT_NUM / 2 should be removed.
             EXPECT_EQ(TEST_COLLECTED_PKT_NUM / 2,
                       stats_mgr->getCollectedNum(StatsMgr4::XCHG_DO));
         }
@@ -255,7 +254,7 @@ public:
         // that one of them we couldn't match (orphan packet), because
         // the matched packet had to be collected because of the transaction
         // timeout. Therefore, we have to count both received packets and
-        // orhpans.
+        // orphans.
         EXPECT_EQ(TEST_COLLECTED_PKT_NUM + 1,
                   stats_mgr->getRcvdPacketsNum(StatsMgr4::XCHG_DO) +
                   stats_mgr->getOrphans(StatsMgr4::XCHG_DO));
@@ -448,7 +447,7 @@ TEST_F(StatsMgrTest, SendReceiveUnordered) {
     EXPECT_EQ(9, stats_mgr->getUnorderedLookups(StatsMgr4::XCHG_DO));
 }
 
-TEST_F(StatsMgrTest, SendReceiveCollectedHighTransid) {
+TEST_F(StatsMgrTest, SendReceiveCollected) {
     // Check that the packet collection mechanism works fine
     // for any packet returned by the server.
     for (unsigned int i = 0; i < TEST_COLLECTED_PKT_NUM; ++i) {
