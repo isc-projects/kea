@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <gtest/gtest.h>
+#include <vector>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -319,7 +320,7 @@ TEST(CfgSubnets4Test, duplication) {
 }
 
 // This test checks if the IPv4 subnet can be selected based on the IPv6 address.
-TEST(CfgSubnets4Test, 4o6subnet) {
+TEST(CfgSubnets4Test, 4o6subnetMatchByAddress) {
     CfgSubnets4 cfg;
 
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 123));
@@ -338,6 +339,66 @@ TEST(CfgSubnets4Test, 4o6subnet) {
     selector.dhcp4o6_ = true;
     selector.remote_address_ = IOAddress("2001:db8:1::dead:beef");
 
+    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+}
+
+// This test checks if the IPv4 subnet can be selected based on the value of
+// interface-id option.
+TEST(CfgSubnets4Test, 4o6subnetMatchByInterfaceId) {
+    CfgSubnets4 cfg;
+
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 123));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3, 124));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 125));
+
+    const uint8_t dummyPayload1[] = { 1, 2, 3, 4};
+    const uint8_t dummyPayload2[] = { 1, 2, 3, 5};
+    std::vector<uint8_t> data1(dummyPayload1, dummyPayload1 + sizeof(dummyPayload1));
+    std::vector<uint8_t> data2(dummyPayload2, dummyPayload2 + sizeof(dummyPayload2));
+
+    OptionPtr interfaceId1(new Option(Option::V6, D6O_INTERFACE_ID, data1));
+    OptionPtr interfaceId2(new Option(Option::V6, D6O_INTERFACE_ID, data2));
+
+    subnet2->get4o6().setInterfaceId(interfaceId1);
+
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    SubnetSelector selector;
+    selector.dhcp4o6_ = true;
+    selector.interface_id_ = interfaceId2;
+    // We have mismatched interface-id options (data1 vs data2). Should not match.
+    EXPECT_FALSE(cfg.selectSubnet(selector));
+
+    // This time we have correct interface-id. Should match.
+    selector.interface_id_ = interfaceId1;
+    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+}
+
+// This test checks if the IPv4 subnet can be selected based on the value of
+// interface name option.
+TEST(CfgSubnets4Test, 4o6subnetMatchByInterfaceName) {
+    CfgSubnets4 cfg;
+
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 123));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3, 124));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 125));
+
+    subnet2->get4o6().setIface4o6("eth7");
+
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    SubnetSelector selector;
+    selector.dhcp4o6_ = true;
+    selector.iface_name_ = "eth5";
+    // We have mismatched interface names. Should not match.
+    EXPECT_FALSE(cfg.selectSubnet(selector));
+
+    // This time we have correct names. Should match.
+    selector.iface_name_ = "eth7";
     EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
 }
 
