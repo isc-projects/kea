@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,21 +22,10 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-/// @brief Maximum size of database fields
-///
-/// The following constants define buffer sizes for variable length database
-/// fields.  The values should be greater than or equal to the length set in
-/// the schema definition.
-///
-/// The exception is the length of any VARCHAR fields: buffers for these should
-/// be set greater than or equal to the length of the field plus 1: this allows
-/// for the insertion of a trailing null whatever data is returned.
-
-const my_bool MLM_FALSE = 0;                ///< False value
-const my_bool MLM_TRUE = 1;                 ///< True value
-
-///@}
-
+const my_bool MLM_FALSE = 0;
+const my_bool MLM_TRUE = 1;
+const int MLM_MYSQL_FETCH_SUCCESS = 0;
+const int MLM_MYSQL_FETCH_FAILURE = 1;
 
 // Open the database using the parameters passed to the constructor.
 

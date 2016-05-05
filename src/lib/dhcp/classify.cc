@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/constants.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <sstream>
 #include <vector>
 
 namespace isc {
@@ -27,6 +28,18 @@ ClientClasses::ClientClasses(const std::string& class_names)
             insert(ClientClass(trimmed));
         }
     }
+}
+
+std::string
+ClientClasses::toText(const std::string& separator) const {
+    std::stringstream s;
+    for (const_iterator class_it = begin(); class_it != end(); ++class_it) {
+        if (class_it != begin()) {
+            s << separator;
+        }
+        s << *class_it;
+    }
+    return (s.str());
 }
     
 } // end of namespace isc::dhcp

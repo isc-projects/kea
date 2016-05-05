@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,32 +11,26 @@
 /// work.
 
 #include <config.h>
+#include <asiolink/asio_wrapper.h>
+#include <asiolink/io_service.h>
+#include <asiolink/tcp_endpoint.h>
+#include <asiolink/tcp_socket.h>
+#include <util/buffer.h>
+#include <util/io_utilities.h>
+
+#include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
+#include <gtest/gtest.h>
 
 #include <string>
-
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-
 #include <algorithm>
 #include <cstdlib>
 #include <cstddef>
 #include <vector>
-
-#include <gtest/gtest.h>
-
-#include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
-
-#include <util/buffer.h>
-#include <util/io_utilities.h>
-
-#include <boost/asio.hpp>
-
-#include <asiolink/io_service.h>
-#include <asiolink/tcp_endpoint.h>
-#include <asiolink/tcp_socket.h>
 
 using namespace boost::asio;
 using namespace boost::asio::ip;
@@ -455,13 +449,13 @@ TEST(TCPSocket, sequenceTest) {
             }
         }
 
-	// Has the client run?
+        // Has the client run?
         if (!client_complete) {
 
-	    if (client_cb.called() != client_cb.queued()) {
-		// No. Run the service another time.
-		continue;
-	    }
+            if (client_cb.called() != client_cb.queued()) {
+                // No. Run the service another time.
+                continue;
+            }
 
             // Client callback must have run.  Check that it ran OK.
             EXPECT_EQ(TCPCallback::READ, client_cb.called());

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -239,7 +239,7 @@ public:
     /// @param nesting_level see description above
     ///
     /// @return pointer to the option (or NULL if there is no such option)
-    OptionPtr getRelayOption(uint16_t option_code, uint8_t nesting_level);
+    OptionPtr getRelayOption(uint16_t option_code, uint8_t nesting_level) const;
 
     /// @brief Return first instance of a specified option
     ///
@@ -253,6 +253,39 @@ public:
     /// @return option pointer (or NULL if no option matches specified criteria)
     OptionPtr getAnyRelayOption(uint16_t option_code, RelaySearchOrder order);
 
+    /// @brief return the link address field from a relay option
+    ///
+    /// As with @c Pkt6::getRelayOption this returns information from the
+    /// specified relay scope.  The relay_level specifies which relay
+    /// scope is to be used.  0 is the outermost encapsulation (relay closest
+    /// to the server).  pkt->relay_info_.size() -1 is the innermost encapsulation
+    /// (relay closest to the client).
+    ///
+    /// @throw isc::OutOfRange if relay level has an invalid value.
+    ///
+    /// @param relay_level see description above
+    ///
+    /// @return pointer to the link address field
+    const isc::asiolink::IOAddress&
+    getRelay6LinkAddress(uint8_t relay_level) const;
+
+    /// @brief return the peer address field from a relay option
+    ///
+    /// As with @c Pkt6::getRelayOption this returns information from the
+    /// specified relay scope.  The relay_level specifies which relay
+    /// scope is to be used.  0 is the outermost encapsulation (relay closest
+    /// to the server).  pkt->relay_info_.size() -1 is the innermost encapsulation
+    /// (relay closest to the client).
+    ///
+    /// @throw isc::OutOfRange if relay level has an invalid value.
+    ///
+    /// @param relay_level see description above
+    ///
+    /// @return pointer to the peer address field
+    const isc::asiolink::IOAddress&
+    getRelay6PeerAddress(uint8_t relay_level) const;
+
+    ///
     /// @brief Returns all instances of specified type.
     ///
     /// Returns all instances of options of the specified type. DHCPv6 protocol
@@ -279,13 +312,13 @@ public:
     /// @param type DHCPv6 message type which name should be returned.
     ///
     /// @return Pointer to "const" string containing the message name. If
-    /// the message type is unknnown the "UNKNOWN" is returned. The caller
+    /// the message type is unknown the "UNKNOWN" is returned. The caller
     /// must not release the returned pointer.
     static const char* getName(const uint8_t type);
 
     /// @brief Returns name of the DHCPv6 message.
     ///
-    /// This method requires an object. There is also static version, which
+    /// This method requires an object. There is also a static version, which
     /// requires one parameter (type).
     ///
     /// @return Pointer to "const" string containing the message name. If

@@ -59,7 +59,7 @@ public:
         host_db_access_ = host_db_access;
     }
 
-    /// @brief Creates instance of @ref LeaseMgr @ref HostDataSource
+    /// @brief Creates instance of lease manager and host data source
     /// according to the configuration specified.
     void createManagers() const;
 

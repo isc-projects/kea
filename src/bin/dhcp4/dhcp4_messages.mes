@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -217,6 +217,11 @@ from a client. Server does not process empty Hostname options and therefore
 option is skipped. The argument holds the client and transaction identification
 information.
 
+% DHCP4_GENERATE_FQDN %1: client did not send a FQDN or hostname; FQDN will be be generated for the client
+This debug message is issued when the server did not receive a Hostname option
+from the client and hostname generation is enabled.  This provides a means to
+create DNS entries for unsophisticated clients.
+
 % DHCP4_HANDLE_SIGNAL_EXCEPTION An exception was thrown while handing signal: %1
 This error message is printed when an ISC or standard exception was raised during signal
 processing. This likely indicates a coding error and should be reported to ISC.
@@ -293,24 +298,24 @@ was not successful, or it encountered any other critical error on startup.
 Attached error message provides more details about the issue.
 
 % DHCP4_INIT_REBOOT %1: client is in INIT-REBOOT state and requests address %2
-This debug message is issued when the client is in the INIT-REBOOT state and
-is requesting an IPv4 address it is using to be allocated for it. The first
-argument includes the client and transaction identification information. The
-second argument specifies the requested IPv4 address.
+This informational message is issued when the client is in the INIT-REBOOT
+state and is requesting an IPv4 address it is using to be allocated for it.
+The first argument includes the client and transaction identification
+information. The second argument specifies the requested IPv4 address.
 
 % DHCP4_LEASE_ADVERT %1: lease %2 will be advertised
-This debug message indicates that the server has found the lease to be
+This informational message indicates that the server has found the lease to be
 offered to the client. It is up to the client to choose one server out of
 those which offered leases and continue allocation with that server.
 The first argument specifies the client and the transaction identification
 information. The second argument specifies the IPv4 address to be offered.
 
 % DHCP4_LEASE_ALLOC %1: lease %2 has been allocated
-This debug message indicates that the server successfully granted a lease
-in response to client's DHCPREQUEST message. The lease information will
-be sent to the client in the DHCPACK message. The first argument
-contains the client and the transaction identification information. The
-second argument contains the allocated IPv4 address.
+This informational message indicates that the server successfully granted a
+lease in response to client's DHCPREQUEST message. The lease information will
+be sent to the client in the DHCPACK message. The first argument contains the
+client and the transaction identification information. The second argument
+contains the allocated IPv4 address.
 
 % DHCP4_NAME_GEN_UPDATE_FAIL %1: failed to update the lease after generating name %2 for a client: %3
 This message indicates the failure when trying to update the lease and/or
@@ -449,10 +454,17 @@ This error message is issued when preparing an on-wire format of the packet
 has failed. The first argument identifies the client and the DHCP transaction.
 The second argument includes the error string.
 
-% DHCP4_PACKET_PROCESS_EXCEPTION exception occurred during packet processing: %1
-This error message indicates that an exception was raised during packet processing
-that was not caught by other, more specific exception handlers. This packet will
-be dropped and the server will continue operation.
+% DHCP4_PACKET_PROCESS_EXCEPTION exception occurred during packet processing
+This error message indicates that a non-standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation.
+
+% DHCP4_PACKET_PROCESS_STD_EXCEPTION exception occurred during packet processing: %1
+This error message indicates that a standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation.
 
 % DHCP4_PACKET_RECEIVED %1: %2 (type %3) received from %4 to %5 on interface %6
 A debug message noting that the server has received the specified type of
@@ -527,7 +539,7 @@ argument includes the client and the transaction identification
 information.
 
 % DHCP4_RELEASE %1: address %2 was released properly.
-This debug message indicates that an address was released properly. It
+This informational message indicates that an address was released properly. It
 is a normal operation during client shutdown. The first argument includes
 the client and transaction identification information. The second argument
 includes the released IPv4 address.

@@ -27,6 +27,7 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 CLEANFILES  = $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
+CLEANFILES += $(builddir)/test_leases.csv.*
 CLEANFILES += *.json *.log
 
 DISTCLEANFILES = dhcp6_process_tests.sh

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,9 +7,12 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <sys/socket.h>
+#include <sstream>
 #include <string>
 
 using namespace isc::asiolink;
@@ -21,34 +24,62 @@ namespace {
 ///
 /// This function returns the set of supported parameters for
 /// host reservation in DHCPv4.
-const std::set<std::string>& getSupportedParams4() {
+///
+/// @param identifiers_only Indicates if the function should only
+/// return supported host identifiers (if true) or all supported
+/// parameters (if false).
+const std::set<std::string>&
+getSupportedParams4(const bool identifiers_only = false) {
+    // Holds set of host identifiers.
+    static std::set<std::string> identifiers_set;
+    // Holds set of all supported parameters, including identifiers.
     static std::set<std::string> params_set;
-    if (params_set.empty()) {
-        const char* params[] = {
-            "duid", "hw-address", "hostname", "ip-address", NULL
-        };
-        for (int i = 0; params[i] != NULL; ++i) {
-            params_set.insert(std::string(params[i]));
-        }
+    // If this is first execution of this function, we need
+    // to initialize the set.
+    if (identifiers_set.empty()) {
+        identifiers_set.insert("duid");
+        identifiers_set.insert("hw-address");
+        identifiers_set.insert("circuit-id");
     }
-    return (params_set);
+    // Copy identifiers and add all other parameters.
+    if (params_set.empty()) {
+        params_set = identifiers_set;
+        params_set.insert("hostname");
+        params_set.insert("ip-address");
+        params_set.insert("option-data");
+    }
+    return (identifiers_only ? identifiers_set : params_set);
 }
 
-/// @brief Returns set of the supported parameters for DHCPv4.
+/// @brief Returns set of the supported parameters for DHCPv6.
 ///
 /// This function returns the set of supported parameters for
 /// host reservation in DHCPv6.
-const std::set<std::string>& getSupportedParams6() {
+///
+/// @param identifiers_only Indicates if the function should only
+/// return supported host identifiers (if true) or all supported
+/// parameters (if false).
+const std::set<std::string>&
+getSupportedParams6(const bool identifiers_only = false) {
+    // Holds set of host identifiers.
+    static std::set<std::string> identifiers_set;
+    // Holds set of all supported parameters, including identifiers.
     static std::set<std::string> params_set;
-    if (params_set.empty()) {
-        const char* params[] = {
-            "duid", "hw-address", "hostname", "ip-addresses", "prefixes", NULL
-        };
-        for (int i = 0; params[i] != NULL; ++i) {
-            params_set.insert(std::string(params[i]));
-        }
+    // If this is first execution of this function, we need
+    // to initialize the set.
+    if (identifiers_set.empty()) {
+        identifiers_set.insert("duid");
+        identifiers_set.insert("hw-address");
     }
-    return (params_set);
+    // Copy identifiers and add all other parameters.
+    if (params_set.empty()) {
+        params_set = identifiers_set;
+        params_set.insert("hostname");
+        params_set.insert("ip-addresses");
+        params_set.insert("prefixes");
+        params_set.insert("option-data");
+    }
+    return (identifiers_only ? identifiers_set : params_set);
 }
 
 }
@@ -76,10 +107,11 @@ HostReservationParser::build(isc::data::ConstElementPtr reservation_data) {
                           " parameter '" << element.first << "'");
             }
 
-            if (element.first == "hw-address" || element.first == "duid") {
-                if (!identifier_name.empty()) {
-                    isc_throw(DhcpConfigError, "the 'hw-address' and 'duid'"
-                              " parameters are mutually exclusive");
+            if (isIdentifierParameter(element.first)) {
+                if (!identifier.empty()) {
+                    isc_throw(DhcpConfigError, "the '" << element.first
+                              << "' and '" << identifier_name
+                              << "' are mutually exclusive");
                 }
                 identifier = element.second->stringValue();
                 identifier_name = element.first;
@@ -96,10 +128,22 @@ HostReservationParser::build(isc::data::ConstElementPtr reservation_data) {
     }
 
     try {
-        // hw-address or duid is a must.
+        // Host identifier is a must.
         if (identifier_name.empty()) {
-            isc_throw(DhcpConfigError, "'hw-address' or 'duid' is a required"
-                      " parameter for host reservation");
+            // If there is no identifier specified, we have to display an
+            // error message and include the information what identifiers
+            // are supported.
+            std::ostringstream s;
+            BOOST_FOREACH(std::string param_name, getSupportedParameters(true)) {
+                if (s.tellp() != std::streampos(0)) {
+                    s << ", ";
+                }
+                s << param_name;
+            }
+            isc_throw(DhcpConfigError, "one of the supported identifiers must"
+                      " be specified for host reservation: "
+                      << s.str());
+
         }
 
         // Create a host object from the basic parameters we already parsed.
@@ -125,6 +169,16 @@ HostReservationParser::addHost(isc::data::ConstElementPtr reservation_data) {
     }
 }
 
+bool
+HostReservationParser::isIdentifierParameter(const std::string& param_name) const {
+    return (getSupportedParameters(true).count(param_name) > 0);
+}
+
+bool
+HostReservationParser::isSupportedParameter(const std::string& param_name) const {
+    return (getSupportedParameters(false).count(param_name) > 0);
+}
+
 HostReservationParser4::HostReservationParser4(const SubnetID& subnet_id)
     : HostReservationParser(subnet_id) {
 }
@@ -136,25 +190,36 @@ HostReservationParser4::build(isc::data::ConstElementPtr reservation_data) {
     host_->setIPv4SubnetID(subnet_id_);
 
     BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
-        try {
-            if (element.first == "ip-address") {
-                host_->setIPv4Reservation(IOAddress(element.second->
-                                                    stringValue()));
+        // For 'option-data' element we will use another parser which
+        // already returns errors with position appended, so don't
+        // surround it with try-catch.
+        if (element.first == "option-data") {
+            CfgOptionPtr cfg_option = host_->getCfgOption4();
+            OptionDataListParser parser(element.first, cfg_option, AF_INET);
+            parser.build(element.second);
+
+       // Everything else should be surrounded with try-catch to append
+       // position.
+        } else {
+            try {
+                if (element.first == "ip-address") {
+                    host_->setIPv4Reservation(IOAddress(element.second->
+                                                        stringValue()));
+                }
+            } catch (const std::exception& ex) {
+                // Append line number where the error occurred.
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << reservation_data->getPosition() << ")");
             }
-        }
-        catch (const std::exception& ex) {
-        // Append line number where the error occurred.
-        isc_throw(DhcpConfigError, ex.what() << " ("
-                  << reservation_data->getPosition() << ")");
         }
     }
 
     addHost(reservation_data);
 }
 
-bool
-HostReservationParser4::isSupportedParameter(const std::string& param_name) const {
-    return (getSupportedParams4().count(param_name) > 0);
+const std::set<std::string>&
+HostReservationParser4::getSupportedParameters(const bool identifiers_only) const {
+    return (getSupportedParams4(identifiers_only));
 }
 
 HostReservationParser6::HostReservationParser6(const SubnetID& subnet_id)
@@ -168,7 +233,16 @@ HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
     host_->setIPv6SubnetID(subnet_id_);
 
     BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
-        if (element.first == "ip-addresses" || element.first == "prefixes") {
+        // Parse option values. Note that the configuration option parser
+        // returns errors with position information appended, so there is no
+        // need to surround it with try-clause (and rethrow with position
+        // appended).
+        if (element.first == "option-data") {
+            CfgOptionPtr cfg_option = host_->getCfgOption6();
+            OptionDataListParser parser(element.first, cfg_option, AF_INET6);
+            parser.build(element.second);
+
+        } else if (element.first == "ip-addresses" || element.first == "prefixes") {
             BOOST_FOREACH(ConstElementPtr prefix_element,
                           element.second->listValue()) {
                 try {
@@ -238,9 +312,9 @@ HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
     addHost(reservation_data);
 }
 
-bool
-HostReservationParser6::isSupportedParameter(const std::string& param_name) const {
-    return (getSupportedParams6().count(param_name) > 0);
+const std::set<std::string>&
+HostReservationParser6::getSupportedParameters(const bool identifiers_only) const {
+    return (getSupportedParams6(identifiers_only));
 }
 
 } // end of namespace isc::dhcp

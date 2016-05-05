@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dhcp/classify.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/shared_ptr.hpp>
 #include <list>
@@ -20,6 +21,9 @@
 
 namespace isc {
 namespace dhcp {
+
+/// @brief HostID (used only when storing in MySQL or Postgres)
+typedef uint64_t HostID;
 
 /// @brief IPv6 reservation for a host.
 ///
@@ -154,9 +158,13 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// DHCPv6 server and vice versa. Also, this approach allows for reserving
 /// common resources such as host name for DHCPv4 and DHCPv6 clients.
 ///
+/// This class also holds pointers to specific DHCP options reserved
+/// for a host. Options instances are held in @c CfgOption objects.
+/// There are two @c CfgOption objects in this class, one holding
+/// DHCPv4 options, another one holding DHCPv6 options.
+///
 /// @todo This class offers basic functionality for storing host information.
 /// It will need to be extended to allow for the following operations:
-/// - store DHCPv4 and DHCPv6 options for the host,
 /// - remove and replace IPv6 reservations
 /// - remove and replace client classes
 /// - disable IPv4 reservation without a need to set it to the 0.0.0.0 address
@@ -171,7 +179,8 @@ public:
     /// DHCPv6 client's DUID are supported.
     enum IdentifierType {
         IDENT_HWADDR,
-        IDENT_DUID
+        IDENT_DUID,
+        IDENT_CIRCUIT_ID
     };
 
     /// @brief Constructor.
@@ -212,13 +221,22 @@ public:
     ///
     /// Creates @c Host object using an identifier in a textual format. This
     /// is useful in cases when the reservation is specified in the server
-    /// configuration file, where:
-    /// - MAC address is specified as: "01:02:03:04:05:06"
-    /// - DUID is specified as: "010203040506abcd"
+    /// configuration file. Identifiers can be specified in the following
+    /// formats:
+    /// - "yy:yy:yy:yy:yy:yy"
+    /// - "yyyyyyyyyy",
+    /// - "0xyyyyyyyyyy",
+    /// - "'some identfier'".
+    /// where y is a hexadecimal digit.
+    ///
+    /// Note that it is possible to use textual representation, e.g. 'some identifier',
+    /// which is converted to a vector of ASCII codes representing characters in a
+    /// given string, excluding quotes. This is useful in cases when specific
+    /// identifiers, e.g. circuit-id are manually assigned user friendly values.
     ///
     /// @param identifier Identifier in the textual format. The expected formats
-    /// for the hardware address and DUID have been shown above.
-    /// @param identifier_name One of "hw-address" or "duid"
+    /// for the hardware address and other identifiers are provided above.
+    /// @param identifier_name One of "hw-address", "duid", "circuit-id".
     /// @param ipv4_subnet_id Identifier of the IPv4 subnet to which the host
     /// is connected.
     /// @param ipv6_subnet_id Identifier of the IPv6 subnet to which the host
@@ -243,13 +261,10 @@ public:
 
     /// @brief Replaces currently used identifier with a new identifier.
     ///
-    /// This method initializes hardware address or DUID (@c hw_address_ or
-    /// @c duid_ respectively). The other (not initialized member) is
-    /// deallocated.
-    ///
+    /// This method sets a new identifier type and value for a host.
     /// This method is called by the @c Host constructor.
     ///
-    /// @param identifier Pointer to the new identifier in the textual format.
+    /// @param identifier Pointer to a buffer holding an identifier.
     /// @param len Length of the identifier that the @c identifier points to.
     /// @param type Identifier type.
     ///
@@ -259,14 +274,11 @@ public:
 
     /// @brief Replaces currently used identifier with a new identifier.
     ///
-    /// This method initializes hardware address or DUID (@c hw_address_ or
-    /// @c duid_ respectively). The other (not initialized member) is
-    /// deallocated.
-    ///
+    /// This method sets a new identifier type and value for a host.
     /// This method is called by the @c Host constructor.
     ///
-    /// @param identifier Pointer to the new identifier in the textual format.
-    /// @param name One of "hw-address" or "duid".
+    /// @param identifier Reference to a new identifier in the textual format.
+    /// @param name One of "hw-address", "duid", "circuit-id".
     ///
     /// @throw BadValue if the identifier is invalid.
     void setIdentifier(const std::string& identifier, const std::string& name);
@@ -275,29 +287,47 @@ public:
     ///
     /// @return Pointer to the @c HWAddr structure or null if the reservation
     /// is not associated with a hardware address.
-    HWAddrPtr getHWAddress() const {
-        return (hw_address_);
-    }
+    HWAddrPtr getHWAddress() const;
 
     /// @brief Returns DUID for which the reservations are made.
     ///
     /// @return Pointer to the @c DUID structure or null if the reservation
     /// is not associated with a DUID.
-    DuidPtr getDuid() const {
-        return (duid_);
-    }
+    DuidPtr getDuid() const;
 
-    /// @brief Returns the identifier (MAC or DUID) in binary form.
-    /// @return const reference to MAC or DUID in vector<uint8_t> form
+    /// @brief Returns the identifier in a binary form.
+    ///
+    /// @return const reference to a vector<uint8_t> holding an identifier
+    /// value.
     const std::vector<uint8_t>& getIdentifier() const;
 
     /// @brief Returns the identifier type.
-    /// @return the identifier type
+    ///
     IdentifierType getIdentifierType() const;
 
-    /// @brief Returns host identifier (mac or DUID) in printer friendly form.
-    /// @return text form of the identifier, including (duid= or mac=).
+    /// @brief Converts identifier name to identifier type.
+    ///
+    /// @param identifier_name Identifier name.
+    /// @return Identifier type.
+    static IdentifierType getIdentifierType(const std::string& identifier_name);
+
+    /// @brief Returns host identifier in a textual form.
+    ///
+    /// @return Identifier in the form of <type>=<value>.
     std::string getIdentifierAsText() const;
+
+    /// @brief Returns name of the identifier of a specified type.
+    static std::string getIdentifierName(const IdentifierType& type);
+
+    /// @brief Returns host identifier in textual form.
+    ///
+    /// @param type Identifier type.
+    /// @param value Pointer to a buffer holding identifier.
+    /// @param length Length of the identifier.
+    /// @return Identifier in the form of <type>=<value>.
+    static std::string getIdentifierAsText(const IdentifierType& type,
+                                           const uint8_t* value,
+                                           const size_t length);
 
     /// @brief Sets new IPv4 subnet identifier.
     ///
@@ -409,8 +439,50 @@ public:
         return (dhcp6_client_classes_);
     }
 
+    /// @brief Returns pointer to the DHCPv4 option data configuration for
+    /// this host.
+    ///
+    /// Returned pointer can be used to add, remove and udate options
+    /// reserved for a host.
+    CfgOptionPtr getCfgOption4() {
+        return (cfg_option4_);
+    }
+
+    /// @brief Returns const pointer to the DHCPv4 option data configuration for
+    /// this host.
+    ConstCfgOptionPtr getCfgOption4() const {
+        return (cfg_option4_);
+    }
+
+    /// @brief Returns pointer to the DHCPv6 option data configuration for
+    /// this host.
+    ///
+    /// Returned pointer can be used to add, remove and udate options
+    /// reserved for a host.
+    CfgOptionPtr getCfgOption6() {
+        return (cfg_option6_);
+    }
+
+    /// @brief Returns const pointer to the DHCPv6 option data configuration for
+    /// this host.
+    ConstCfgOptionPtr getCfgOption6() const {
+        return (cfg_option6_);
+    }
+
     /// @brief Returns information about the host in the textual format.
     std::string toText() const;
+
+    /// @brief Sets Host ID (primary key in MySQL and Postgres backends)
+    /// @param id HostId value
+    void setHostId(HostID id) {
+        host_id_ = id;
+    }
+
+    /// @brief Returns Host ID (primary key in MySQL and Postgres backends)
+    /// @return id HostId value (or 0 if not set)
+    HostID getHostId() const {
+        return (host_id_);
+    }
 
 private:
 
@@ -427,12 +499,10 @@ private:
     void addClientClassInternal(ClientClasses& classes,
                                 const std::string& class_name);
 
-    /// @brief Pointer to the hardware address associated with the reservations
-    /// for the host.
-    HWAddrPtr hw_address_;
-    /// @brief Pointer to the DUID associated with the reservations for the
-    /// host.
-    DuidPtr duid_;
+    /// @brief Identifier type.
+    IdentifierType identifier_type_;
+    /// @brief Vector holding identifier value.
+    std::vector<uint8_t> identifier_value_;
     /// @brief Subnet identifier for the DHCPv4 client.
     SubnetID ipv4_subnet_id_;
     /// @brief Subnet identifier for the DHCPv6 client.
@@ -447,6 +517,15 @@ private:
     ClientClasses dhcp4_client_classes_;
     /// @brief Collection of classes associated with a DHCPv6 client.
     ClientClasses dhcp6_client_classes_;
+
+    /// @brief HostID (a unique identifier assigned when the host is stored in
+    ///                MySQL or Pgsql)
+    uint64_t host_id_;
+
+    /// @brief Pointer to the DHCPv4 option data configuration for this host.
+    CfgOptionPtr cfg_option4_;
+    /// @brief Pointer to the DHCPv6 option data configuration for this host.
+    CfgOptionPtr cfg_option6_;
 };
 
 /// @brief Pointer to the @c Host object.

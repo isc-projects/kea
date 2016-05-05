@@ -1,3 +1,126 @@
+1106.	[func]		sar
+	Added support for accessing DHCPv6 packet fields message type
+	and transaction id in a classification expression.
+	(Trac #4269, git 48be5f5ceaba6b0d0a2b31465e8a5904524e894c)
+
+1105.	[bug]		pallotron
+	perfdhcp uses the same transaction id throughout the DORA
+	exchange to adhere with RFC 2131.
+	(github #19, git d260a70d6aa0baecd68131bc35f58f097aa77bcc)
+
+1104.	[func]		tmark
+	The DDNS parameter, replace-client-name, has been changed from a boolean
+	to list of modes, which provides greater flexibility in when the Kea
+	servers replace or supply DNS names for clients.  This is supported both
+	kea-dhcp4 and kea-dhcp6.
+	(Trac #4529, git 45e56d7aa0d4a6224a1a28941f6cb11575391222)
+
+1103.	[func]		marcin
+	"circuit-id" can be specified as host identifier in host
+	host reservations. However, the server ignores the reservations
+	by "circuit-id" at this point.
+	(Trac #4301, git cf56fc2a2e0e821a17dd95de49a43755745682fb)
+
+1102.	[func]		sar
+	Added access to the peer address, link address and option
+	information added by relays in a DHCPv6 message.
+	(Trac #4265, git bb00d9d205ee047961ba70417d7ce02c37d80ce7)
+
+1101.	[bug]		stephen
+	Made DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED a debug message as the
+	condition leading to it (trying to unregister a timer that is not
+	registered) does not have an adverse effect on the operation of Kea.
+	(Trac #4293, git 06204c5d347d0df359af69974c155d0fa9725b44)
+
+1100.	[bug]		tmark
+	Wrapped asio/asio.hpp with logic to suppress optimization when building
+	under GCC 5.2.0 through 5.3.1 and BOOST_ERROR_CODE_HEADER only is defined.
+	This avoids an issue in the asio socket layer that was incorrectly
+	reporting socket read errors causing unit tests to fail and kea-dhcp-ddns
+	to loop logger calls in the error handler (aka double errors).
+	(Trac #4243, git 082f846f37cb32964c876b2bff5fcac82d1eaaf0)
+
+1099.	[func]		marcin
+	Updated Host Manager API to allow for retrieving host reservations
+	by any type of host identifier. Previously it was only possible
+	to retrieve host reservations by hardware address or DUID.
+	(Trac #4302, git 3979656c918164e3c39e0e8fb78b2862a2b5e95a)
+
+1098.	[func]		kalmus, marcin
+	Implemented IPv6 address/prefix reservations in MySQL.
+	(Trac #4212, git 79481043935789fc6898d4743bede1606f82eb75)
+
+1097.	[func]		fdupont
+	Reorganized the DHCPv4 and DHCPv6 services into run() (service
+	loop), run_one() (receive, call next routine and send) and
+	processPacket() (internal core processing of an incoming packet).
+	(Trac #4108,#4266,#4267, git ba24bd770d1a1791f8fdc3df7f2e41f9f0c851ec)
+
+1096.	[func]		tmark
+	Both kea-dhcp4 and kea-dhcp6, now log the primary lease events (e.g.
+	grants, renewals, releases, declines) at the INFO log level to the
+	lease4_logger and lease6_logger repsectively.  Prior to this these
+	events were logged at the DEBUG log level.
+	(Trac #4316, git 9beca27e3d76d0ccec925125f23074227db08869)
+
+1095.	[bug]		fdupont
+	Fixed some minor Coverity-detected issues.
+	(Trac #4326, git ad1f442ee4382b354dc8be84ba77785e565aa86b)
+
+1094.	[bug]		marcin
+	libdhcpsrv: Fixed issues with lease indexing in Memfile
+	database backend.
+	(Trac #4339, git a065144663ac716b1fa1c8c224a88aa176da9630)
+
+1093.	[bug]		fdupont
+	Fixed Coverity-detected overflows in pkt4::setFile() and setName().
+	(Trac #4306, git 0b7388891eaab39fe727b076468d672551126796)
+
+1092.	[func]		marcin
+	DHCP option values can be specified within host reservations
+	in the configuration file.
+	(Trac #4319, git 069dd7c248afcfcb7e4d958f20faa32e946e74ce)
+
+1091.	[bug]		fdupont
+	Fixed Coverity-detected exception-handling issues.
+	(Trac #4307, git 3e1050749d9684144e1bd17552af7e4abf3c0d17)
+
+1090.	[func]		fdupont
+	Added support for IP address (IPv4 and IPv6) literals in
+	classification expressions.
+	(Trac #4232, git b98cc019b172a4903a2121e910f3cee4eaca2d51)
+
+1089.	[func]		fdupont
+	Added relay4[X].exists method in classifications that checks
+	whether a sub-option is present in theDHCPv4 RAI (Relay Agent
+	Information, 82) option.
+	(Trac #4313, git 87397fd75215b69ad79708aaa1d7505aca299fb5)
+
+1088.	[bug]		fdupont
+	Protected DHCP server main() routines against errors raised from
+	logger calls in the error handler (aka double errors).
+	(Trac #4310, git 6813e1a7520335f6920ff8de5e52ecdb24712910)
+
+1087.	[bug]		fdupont
+	Empty option specifications no longer require setting the
+	csv-format parameter.
+	(Trac #4291, git 398458f3ad4680fd5f3c032eb6c99d50c2981368)
+
+1086.	[func]		marcin
+	The Host class has been extended to store DHCP options to
+	be assigned to a client.
+	(Trac #3571, git 9d434f28cc4683eccbcca1ba0d1e45bceb5230d2)
+
+1085.	[bug]		sar
+	Always copy the DHCPv4 flags field from a client's request to the
+	the server's resposne.
+	(Trac #4292, git 8b7182abdc7ff47eb9b68451e7507b7e4b9872e0)
+
+1084.	[bug]		fdupont
+	Removed obsolete requirement of python3 by --enable-generate-docs
+	configuration option.
+	(Trac #4315, git 2c236316d5fbac9906cf48a6e4df1649e7545e67)
+
 1083.	[bug]		marcin
 	When lease-database configuration parameter is not
 	specified the default lease database backend (memfile)

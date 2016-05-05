@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define GENERIC_HOST_DATA_SOURCE_UNITTEST_H
 
 #include <dhcpsrv/base_host_data_source.h>
+#include <dhcpsrv/host.h>
 #include <dhcp/classify.h>
 #include <gtest/gtest.h>
 #include <vector>
@@ -38,29 +39,37 @@ public:
     /// @brief Creates a host reservation for specified IPv4 address.
     ///
     /// @param address IPv4 address to be set
-    /// @param hwaddr type of identifier (true = hwaddr, false = client-id)
+    /// @param id Identifier type.
     ///
     /// @return generated Host object
-    HostPtr initializeHost4(std::string address, bool hwaddr);
+    HostPtr initializeHost4(const std::string& address,
+                            const Host::IdentifierType& id);
 
     /// @brief Creates a host reservation for specified IPv6 address.
     ///
     /// @param address IPv6 address to be reserved
-    /// @param id type of identifier (ID_DUID or ID_HWADDR are supported)
+    /// @param id type of identifier (IDENT_DUID or IDENT_HWADDR are supported)
     /// @param prefix reservation type (true = prefix, false = address)
+    /// @param new_identifier Boolean value indicating if new host
+    /// identifier should be generated or the same as previously.
     ///
     /// @return generated Host object
-    HostPtr initializeHost6(std::string address, BaseHostDataSource::IdType id,
-                            bool prefix);
+    HostPtr initializeHost6(std::string address, Host::IdentifierType id,
+                            bool prefix, bool new_identifier = true);
 
     /// @brief Generates a hardware address in text version.
     ///
+    /// @param increase A boolean value indicating if new address (increased)
+    /// must be generated or the same address as previously.
     /// @return HW address in textual form acceptable by Host constructor
-    std::string generateHWAddr();
+    std::vector<uint8_t> generateHWAddr(const bool new_identifier = true);
 
-    /// @brief Generates a hardware address in text version.
-    /// @return DUID in textual form acceptable by Host constructor
-    std::string generateDuid();
+    /// @brief Generates a host identifier in a textual form..
+    ///
+    /// @param increase A boolean value indicating if new identifier (increased)
+    /// must be generated or the same identifier as previously.
+    /// @return Identifier in textual form acceptable by Host constructor
+    std::vector<uint8_t> generateIdentifier(const bool new_identifier = true);
 
     /// @brief Compares hardware addresses of the two hosts.
     ///
@@ -104,8 +113,7 @@ public:
     ///
     /// @param resv1 first IPv6 reservations list
     /// @param resv2 second IPv6 reservations list
-    void compareReservations6(IPv6ResrvRange resv1, IPv6ResrvRange resv2,
-                              bool expect_match);
+    void compareReservations6(IPv6ResrvRange resv1, IPv6ResrvRange resv2);
 
     /// @brief Compares two client classes
     ///
@@ -123,25 +131,20 @@ public:
     ///        can be inserted and later retrieved.
     ///
     /// Uses gtest macros to report failures.
-    /// @param hwaddr true = use HW address as identifier, false = use client-id(DUID)
-    void testBasic4(bool hwaddr);
+    /// @param id Identifier type.
+    void testBasic4(const Host::IdentifierType& id);
 
     /// @brief Test inserts several hosts with unique IPv4 address and
     ///        checks that they can be retrieved properly.
     ///
     /// Uses gtest macros to report failures.
-    /// @param hwaddr true = use HW address as identifier, false = use client-id(DUID)
-    void testGetByIPv4(bool hwaddr);
+    /// @param id Identifier type.
+    void testGetByIPv4(const Host::IdentifierType& id);
 
-    /// @brief Test that hosts can be retrieved by hardware address.
+    /// @brief Test that hosts can be retrieved by host identifier.
     ///
     /// Uses gtest macros to report failures.
-    void testGet4ByHWAddr();
-
-    /// @brief Test that hosts can be retrieved by client-id
-    ///
-    /// Uses gtest macros to report failures.
-    void testGet4ByClientId();
+    void testGet4ByIdentifier(const Host::IdentifierType& identifier_type);
 
     /// @brief Test that clients with stored HW address can't be retrieved
     ///        by DUID with the same value.
@@ -177,16 +180,16 @@ public:
     /// Uses gtest macros to report failures.
     ///
     /// @param subnets number of subnets to test
-    /// @param hwaddr true = use HW address, false = use client-id
-    void testMultipleSubnets(int subnets, bool hwaddr);
+    /// @param id Host identifier type.
+    void testMultipleSubnets(int subnets, const Host::IdentifierType& id);
 
     /// @brief Test inserts several hosts with unique IPv6 addresses and
     ///        checks that they can be retrieved properly.
     ///
     /// Uses gtest macros to report failures.
-    /// @param id type of the identifier to be used (HWAddr or DUID)
+    /// @param id type of the identifier to be used (IDENT_HWADDR or IDENT_DUID)
     /// @param prefix true - reserve IPv6 prefix, false - reserve IPv6 address
-    void testGetByIPv6(BaseHostDataSource::IdType id, bool prefix);
+    void testGetByIPv6(Host::IdentifierType id, bool prefix);
 
     /// @brief Test that hosts can be retrieved by hardware address.
     ///
@@ -198,19 +201,42 @@ public:
     /// Uses gtest macros to report failures.
     void testGet6ByClientId();
 
+    /// @brief Test verifies if a host reservation can be stored with both
+    ///         IPv6 address and prefix.
+    /// Uses gtest macros to report failures.
+    void testAddr6AndPrefix();
+
+    /// @brief Tests if host with multiple IPv6 reservations can be added and then
+    ///        retrieved correctly.
+    void testMultipleReservations();
+
+    /// @brief Tests if compareIPv6Reservations() method treats same pool of
+    ///        reservations but added in different order as equal.
+    void testMultipleReservationsDifferentOrder();
+
     /// @brief Test if host reservations made for different IPv6 subnets
     ///        are handled correctly.
     ///
     /// Uses gtest macros to report failures.
     ///
     /// @param subnets number of subnets to test
-    /// @param id identifier type (ID_HWADDR or ID_DUID)
-    void testSubnetId6(int subnets, BaseHostDataSource::IdType id);
+    /// @param id identifier type (IDENT_HWADDR or IDENT_DUID)
+    void testSubnetId6(int subnets, Host::IdentifierType id);
 
-    /// @brief Test if the duplicate host instances can't be inserted.
+    /// @brief Test if the duplicate host with same DUID can't be inserted.
     ///
     /// Uses gtest macros to report failures.
-    void testAddDuplicate();
+    void testAddDuplicate6WithSameDUID();
+
+    /// @brief Test if the duplicate host with same HWAddr can't be inserted.
+    ///
+    /// Uses gtest macros to report failures.
+    void testAddDuplicate6WithSameHWAddr();
+
+    /// @brief Test if the duplicate IPv4 host with can't be inserted.
+    ///
+    /// Uses gtest macros to report failures.
+    void testAddDuplicate4();
 
     /// @brief Returns DUID with identical content as specified HW address
     ///

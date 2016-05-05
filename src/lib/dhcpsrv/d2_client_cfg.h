@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,6 +39,7 @@ public:
         : isc::Exception(file, line, what) {}
 };
 
+
 /// @brief Acts as a storage vault for D2 client configuration
 ///
 /// A simple container class for storing and retrieving the configuration
@@ -47,24 +48,30 @@ public:
 ///
 class D2ClientConfig {
 public:
-
-
     /// @brief Default configuration constants.
     /// @todo For now these are hard-coded as configuraiton layer cannot
     /// readily provide them (see Trac #3358).
-    static const char *DFT_SERVER_IP;
+    static const char* DFT_SERVER_IP;
     static const size_t DFT_SERVER_PORT;
-    static const char *DFT_V4_SENDER_IP;
-    static const char *DFT_V6_SENDER_IP;
+    static const char* DFT_V4_SENDER_IP;
+    static const char* DFT_V6_SENDER_IP;
     static const size_t DFT_SENDER_PORT;
     static const size_t DFT_MAX_QUEUE_SIZE;
-    static const char *DFT_NCR_PROTOCOL;
-    static const char *DFT_NCR_FORMAT;
+    static const char* DFT_NCR_PROTOCOL;
+    static const char* DFT_NCR_FORMAT;
     static const bool DFT_ALWAYS_INCLUDE_FQDN;
     static const bool DFT_OVERRIDE_NO_UPDATE;
     static const bool DFT_OVERRIDE_CLIENT_UPDATE;
-    static const bool DFT_REPLACE_CLIENT_NAME;
-    static const char *DFT_GENERATED_PREFIX;
+    static const char* DFT_REPLACE_CLIENT_NAME_MODE;
+    static const char* DFT_GENERATED_PREFIX;
+
+    /// @brief Defines the client name replacement modes.
+    enum ReplaceClientNameMode  {
+        RCM_NEVER,
+        RCM_ALWAYS,
+        RCM_WHEN_PRESENT,
+        RCM_WHEN_NOT_PRESENT
+    };
 
     /// @brief Constructor
     ///
@@ -84,7 +91,7 @@ public:
     /// updates.
     /// @param override_client_update Perform updates, even if client requested
     /// delegation.
-    /// @param replace_client_name enables replacement of the domain-name
+    /// @param replace_client_name_mode enables replacement of the domain-name
     /// supplied by the client with a generated name.
     /// @param generated_prefix Prefix to use when generating domain-names.
     /// @param qualifying_suffix Suffix to use to qualify partial domain-names.
@@ -104,7 +111,7 @@ public:
                    const bool always_include_fqdn,
                    const bool override_no_update,
                    const bool override_client_update,
-                   const bool replace_client_name,
+                   const ReplaceClientNameMode replace_client_name_mode,
                    const std::string& generated_prefix,
                    const std::string& qualifying_suffix);
 
@@ -170,9 +177,9 @@ public:
         return(override_client_update_);
     }
 
-    /// @brief Return whether or not client's domain-name is always replaced.
-    bool getReplaceClientName() const {
-        return(replace_client_name_);
+    /// @brief Return mode of replacement to use regarding client's client's domain-name
+    ReplaceClientNameMode getReplaceClientNameMode() const {
+        return(replace_client_name_mode_);
     }
 
     /// @brief Return the prefix to use when generating domain-names.
@@ -202,6 +209,26 @@ public:
     ///
     /// @param enable boolean value to assign to the enable-updates flag
     void enableUpdates(bool enable);
+
+    /// @brief Converts labels to  ReplaceClientNameMode enum values.
+    ///
+    /// @param mode_str text to convert to an enum.
+    /// Valid string values: "never", "always", "when-present",
+    /// "when-not-present" (case insensistive)
+    ///
+    /// @return NameChangeFormat value which maps to the given string.
+    ///
+    /// @throw isc::BadValue if given a string value which does not map to an
+    /// enum value.
+    static ReplaceClientNameMode stringToReplaceClientNameMode(const std::string& mode_str);
+
+    /// @brief Converts NameChangeFormat enums to text labels.
+    ///
+    /// @param mode enum value to convert to label
+    ///
+    /// @return std:string containing the text label if the value is valid, or
+    /// "unknown" if not.
+    static std::string replaceClientNameModeToString(const ReplaceClientNameMode& mode);
 
 protected:
     /// @brief Validates member values.
@@ -248,8 +275,8 @@ private:
     /// @brief Should Kea perform updates, even if client requested delegation.
     bool override_client_update_;
 
-    /// @brief Should Kea replace the domain-name supplied by the client.
-    bool replace_client_name_;
+    /// @brief How Kea should handle the domain-name supplied by the client.
+    ReplaceClientNameMode replace_client_name_mode_;
 
     /// @brief Prefix Kea should use when generating domain-names.
     std::string generated_prefix_;

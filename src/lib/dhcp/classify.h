@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,6 +65,13 @@ namespace dhcp {
         contains(const ClientClass& x) const {
             return (find(x) != end());
         }
+
+        /// @brief Returns all class names as text
+        ///
+        /// @param separator Separator to be used between class names. The
+        /// default separator comprises comma sign followed by space
+        /// character.
+        std::string toText(const std::string& separator = ", ") const;
     };
 
 };

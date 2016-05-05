@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -144,6 +144,12 @@ when the client doesn't provide any specific FQDN in its message
 to the server. The first argument includes the client and
 transaction identification information. The second argument includes
 the generated FQDN.
+
+% DHCP6_DDNS_GENERATE_FQDN %1: client did not send a FQDN option; FQDN will be
+generated for the client.
+This debug message is issued when the server did not receive a FQDN option
+from the client and client name replacement is enabled.  This provides a means
+to create DNS entries for unsophisticated clients.
 
 % DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL %1: failed to update the lease using address %2, after generating FQDN for a client, reason: %3
 This message indicates the failure when trying to update the lease and/or
@@ -327,7 +333,7 @@ issue that prevents it from starting up properly. Attached error message
 provides more details about the issue.
 
 % DHCP6_LEASE_ADVERT %1: lease for address %2 and iaid=%3 will be advertised
-This debug message indicates that the server will advertise an
+This informational message indicates that the server will advertise an
 address to the client in the ADVERTISE message. The client will
 request allocation of this address with the REQUEST message sent
 in the next message exchange. The first argument includes the client
@@ -342,8 +348,8 @@ log entry. The first argument holds the client and transaction identification
 information. The second argument holds the IAID.
 
 % DHCP6_LEASE_ALLOC %1: lease for address %2 and iaid=%3 has been allocated
-This debug message indicates that in response to a client's REQUEST
-message, the server successfully granted an non-temporary address
+This informational message indicates that in response to a client's REQUEST
+message, the server successfully granted a non-temporary address
 lease. This is a normal behavior and indicates successful operation.
 The first argument includes the client and transaction identification
 information. The remaining arguments hold the allocated address and
@@ -355,6 +361,14 @@ failed to grant a non-temporary address lease for the client. There may
 be many reasons for such failure. Each failure is logged in a separate
 log entry. The first argument holds the client and transaction identification
 information. The second argument holds the IAID.
+
+% DHCP6_LEASE_RENEW %1: lease for address %2 and iaid=%3 has been allocated
+This informational message indicates that in response to a client's REQUEST
+message, the server successfully renewed a non-temporary address
+lease. This is a normal behavior and indicates successful operation.
+The first argument includes the client and transaction identification
+information. The remaining arguments hold the allocated address and
+IAID.
 
 % DHCP6_LEASE_DATA %1: detailed lease information for iaid=%2: %3
 This debug message is used to print the detailed information about the
@@ -417,15 +431,22 @@ because packets of this type must be sent to multicast. The first argument
 specifies the client and transaction identification information, the
 second argument specifies packet type.
 
-% DHCP6_PACKET_PROCESS_EXCEPTION exception occurred during packet processing: %1
-This error message indicates that an exception was raised during packet processing
-that was not caught by other, more specific exception handlers. This packet will
-be dropped and the server will continue operation.
+% DHCP6_PACKET_PROCESS_EXCEPTION exception occurred during packet processing
+This error message indicates that a non-standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation.
 
 % DHCP6_PACKET_PROCESS_FAIL processing of %1 message received from %2 failed: %3
 This is a general catch-all message indicating that the processing of the
 specified packet type from the indicated address failed.  The reason is given in the
 message.  The server will not send a response but will instead ignore the packet.
+
+% DHCP6_PACKET_PROCESS_STD_EXCEPTION exception occurred during packet processing: %1
+This error message indicates that a standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation.
 
 % DHCP6_PACKET_RECEIVED %1: %2 (type %3) received from %4 to %5 on interface %6
 A debug message noting that the server has received the specified type of
@@ -489,7 +510,7 @@ parsing actions and committal of changes failed.  The reason for the
 failure is given in the message.
 
 % DHCP6_PD_LEASE_ADVERT %1: lease for prefix %2/%3 and iaid=%4 will be advertised
-This debug message indicates that the server will advertise a
+This informational message indicates that the server will advertise a
 prefix to the client in the ADVERTISE message. The client will
 request allocation of this prefix with the REQUEST message sent
 in the next message exchange. The first argument includes the client
@@ -504,9 +525,9 @@ log entry. The first argument holds the client and transaction identification
 information. The second argument holds the IAID.
 
 % DHCP6_PD_LEASE_ALLOC %1: lease for prefix %2/%3 and iaid=%4 has been allocated
-This debug message indicates that in response to a client's REQUEST
-message, the server successfully granted an non-temporary address
-lease. This is a normal behavior and indicates successful operation.
+This informational message indicates that in response to a client's REQUEST
+message, the server successfully granted a prefix lease.
+This is a normal behavior and indicates successful operation.
 The first argument includes the client and transaction identification
 information. The remaining arguments hold the allocated prefix,
 prefix length and and IAID.
@@ -517,6 +538,14 @@ failed to grant a prefix lease for the client. There may be many reasons
 for such failure. Each failure is logged in a separate log entry. The first
 argument holds the client and transaction identification information.
 The second argument holds the IAID.
+
+% DHCP6_PD_LEASE_RENEW %1: lease for prefix %2/%3 and iaid=%4 has been allocated
+This informational message indicates that in response to a client's REQUEST
+message, the server successfully renewed a prefix lease.
+This is a normal behavior and indicates successful operation.
+The first argument includes the client and transaction identification
+information. The remaining arguments hold the allocated prefix,
+prefix length and and IAID.
 
 % DHCP6_PROCESS_IA_NA_EXTEND %1: extending lease lifetime for IA_NA option with iaid=%2
 This message is logged when the server is starting to extend the lifetime
@@ -566,7 +595,7 @@ server for the subnet on which the client is connected. The argument
 specifies the client and transaction identification information.
 
 % DHCP6_RELEASE_NA %1: binding for address %2 and iaid=%3 was released properly
-This debug message indicates that an address was released properly. It
+This informational message indicates that an address was released properly. It
 is a normal operation during client shutdown.
 
 % DHCP6_RELEASE_NA_FAIL %1: failed to remove address lease for address %2 and iaid=%3
@@ -594,7 +623,7 @@ IA (identity association) container. This probably means that the client's
 support for multiple addresses is flawed.
 
 % DHCP6_RELEASE_PD %1: prefix %2/%3 for iaid=%4 was released properly
-This debug message indicates that a prefix was released properly. It
+This informational message indicates that a prefix was released properly. It
 is a normal operation during client shutdown. The first argument holds
 the client and transaction identification information. The second and
 third argument define the prefix and its length. The fourth argument

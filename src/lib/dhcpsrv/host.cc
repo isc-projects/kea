@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <dhcpsrv/host.h>
+#include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <exceptions/exceptions.h>
 #include <sstream>
@@ -74,13 +75,15 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
            const std::string& hostname,
            const std::string& dhcp4_client_classes,
            const std::string& dhcp6_client_classes)
-    : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
+    : identifier_type_(identifier_type),
+      identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
       ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
-      dhcp6_client_classes_(dhcp6_client_classes) {
+      dhcp6_client_classes_(dhcp6_client_classes), host_id_(0),
+      cfg_option4_(), cfg_option6_() {
 
-    // Initialize HWAddr or DUID
+    // Initialize host identifier.
     setIdentifier(identifier, identifier_len, identifier_type);
 
     if (!ipv4_reservation.isV4Zero()) {
@@ -95,13 +98,15 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
            const std::string& hostname,
            const std::string& dhcp4_client_classes,
            const std::string& dhcp6_client_classes)
-    : hw_address_(), duid_(), ipv4_subnet_id_(ipv4_subnet_id),
+    : identifier_type_(IDENT_HWADDR),
+      identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
       ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
-      dhcp6_client_classes_(dhcp6_client_classes) {
+      dhcp6_client_classes_(dhcp6_client_classes), host_id_(0),
+      cfg_option4_(new CfgOption()), cfg_option6_(new CfgOption()) {
 
-    // Initialize HWAddr or DUID
+    // Initialize host identifier.
     setIdentifier(identifier, identifier_name);
 
     if (!ipv4_reservation.isV4Zero()) {
@@ -112,73 +117,136 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
 
 const std::vector<uint8_t>&
 Host::getIdentifier() const {
-    if (hw_address_) {
-        return (hw_address_->hwaddr_);
-
-    } else if (duid_) {
-        return (duid_->getDuid());
-
-    }
-    static std::vector<uint8_t> empty_vector;
-    return (empty_vector);
+    return (identifier_value_);
 }
 
 Host::IdentifierType
 Host::getIdentifierType() const {
-    if (hw_address_) {
-        return (IDENT_HWADDR);
-    }
-    return (IDENT_DUID);
+    return (identifier_type_);
 }
+
+Host::IdentifierType
+Host::getIdentifierType(const std::string& identifier_name) {
+    if (identifier_name == "hw-address") {
+        return (IDENT_HWADDR);
+
+    } else if (identifier_name == "duid") {
+        return (IDENT_DUID);
+
+    } else if (identifier_name == "circuit-id") {
+        return (IDENT_CIRCUIT_ID);
+
+    } else {
+        isc_throw(isc::BadValue, "invalid client identifier type '"
+                  << identifier_name << "'");
+    }
+}
+
+HWAddrPtr
+Host::getHWAddress() const {
+    return ((identifier_type_ == IDENT_HWADDR) ?
+            HWAddrPtr(new HWAddr(identifier_value_, HTYPE_ETHER)) : HWAddrPtr());
+}
+
+DuidPtr
+Host::getDuid() const {
+    return ((identifier_type_ == IDENT_DUID) ?
+            DuidPtr(new DUID(identifier_value_)) : DuidPtr());
+}
+
 
 std::string
 Host::getIdentifierAsText() const {
-    std::string txt;
-    if (hw_address_) {
-        txt = "hwaddr=" + hw_address_->toText(false);
-    } else {
-        txt = "duid=";
-        if (duid_) {
-            txt += duid_->toText();
-        } else {
-            txt += "(none)";
-        }
-    }
-
-    return (txt);
-
+    return (getIdentifierAsText(identifier_type_, &identifier_value_[0],
+                                identifier_value_.size()));
 }
+
+std::string
+Host::getIdentifierAsText(const IdentifierType& type, const uint8_t* value,
+                          const size_t length) {
+    // Convert identifier into <type>=<value> form.
+    std::ostringstream s;
+    switch (type) {
+    case IDENT_HWADDR:
+        s << "hwaddr";
+        break;
+    case IDENT_DUID:
+        s << "duid";
+        break;
+    case IDENT_CIRCUIT_ID:
+        s << "circuit-id";
+        break;
+    default:
+        // This should never happen actually, unless we add new identifier
+        // and forget to add a case for it above.
+        s << "(invalid-type)";
+    }
+    std::vector<uint8_t> vec(value, value + length);
+    s << "=" << (length > 0 ? util::encode::encodeHex(vec) : "(null)");
+    return (s.str());
+}
+
+std::string
+Host::getIdentifierName(const IdentifierType& type) {
+    switch (type) {
+    case Host::IDENT_HWADDR:
+        return ("hw-address");
+
+    case Host::IDENT_DUID:
+        return ("duid");
+
+    case Host::IDENT_CIRCUIT_ID:
+        return ("circuit-id");
+
+    default:
+        ;
+    }
+    return ("(unknown)");
+}
+
 
 void
 Host::setIdentifier(const uint8_t* identifier, const size_t len,
                     const IdentifierType& type) {
-    switch (type) {
-    case IDENT_HWADDR:
-        hw_address_ = HWAddrPtr(new HWAddr(identifier, len, HTYPE_ETHER));
-        duid_.reset();
-        break;
-    case IDENT_DUID:
-        duid_ = DuidPtr(new DUID(identifier, len));
-        hw_address_.reset();
-        break;
-    default:
-        isc_throw(isc::BadValue, "invalid client identifier type '"
-                  << static_cast<int>(type) << "' when creating host "
-                  " instance");
+    if (len < 1) {
+        isc_throw(BadValue, "invalid client identifier length 0");
     }
+
+    identifier_type_ = type;
+    identifier_value_.assign(identifier, identifier + len);
 }
 
 void
 Host::setIdentifier(const std::string& identifier, const std::string& name) {
-    if (name == "hw-address") {
-        hw_address_ = HWAddrPtr(new HWAddr(HWAddr::fromText(identifier)));
-        duid_.reset();
-    } else if (name == "duid") {
-        duid_ = DuidPtr(new DUID(DUID::fromText(identifier)));
-        hw_address_.reset();
-    } else {
-        isc_throw(isc::BadValue, "invalid client identifier type '"
-                  << name << "' when creating host instance");
+    // Empty identifier is not allowed.
+    if (identifier.empty()) {
+        isc_throw(isc::BadValue, "empty host identifier used");
+    }
+
+    // Set identifier type.
+    identifier_type_ = getIdentifierType(name);
+
+    // Idetifier value can either be specified as string of hexadecimal
+    // digits or a string in quotes. The latter is copied to a vector excluding
+    // quote characters.
+
+    // Try to convert the values in quotes into a vector of ASCII codes.
+    // If the identifier lacks opening and closing quote, this will return
+    // an empty value, in which case we'll try to decode it as a string of
+    // hexadecimal digits.
+    try {
+        std::vector<uint8_t> binary = util::str::quotedStringToBinary(identifier);
+        if (binary.empty()) {
+            util::str::decodeFormattedHexString(identifier, binary);
+        }
+        // Successfully decoded the identifier, so let's use it.
+        identifier_value_.swap(binary);
+
+    } catch (...) {
+        // The string doesn't match any known pattern, so we have to
+        // report an error at this point.
+        isc_throw(isc::BadValue, "invalid host identifier value '"
+                      << identifier << "'");
     }
 }
 

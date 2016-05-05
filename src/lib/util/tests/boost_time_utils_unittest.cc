@@ -31,7 +31,7 @@ TEST(BoostTimeUtilsTest, epoch) {
 // The 2015 Bastille day
 TEST(BoostTimeUtilsTest, bastilleDay) {
     time_duration tdbast =
-	hours(12) + minutes(13) + seconds(14) + milliseconds(500);
+        hours(12) + minutes(13) + seconds(14) + milliseconds(500);
     ptime pbast(date(2015, Jul, 14), tdbast);
     string sbast = ptimeToText(pbast);
     EXPECT_EQ("2015-07-14 12:13:14.500", sbast.substr(0, 23));

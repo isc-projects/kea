@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,16 +8,15 @@
 /// Note these tests are not intended to verify the actual send and receive
 /// across UDP sockets.  This level of testing is done in libdhcp-ddns.
 
-#include <boost/asio.hpp>
-#include <asiolink/io_service.h>
 #include <config.h>
+#include <asiolink/asio_wrapper.h>
+#include <asiolink/io_service.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
-
 #include <gtest/gtest.h>
 
 #include <sys/select.h>
@@ -76,7 +75,7 @@ public:
                                   sender_ip, D2ClientConfig::DFT_SENDER_PORT,
                                   D2ClientConfig::DFT_MAX_QUEUE_SIZE,
                                   protocol, dhcp_ddns::FMT_JSON,
-                                  true, true, true, true,
+                                  true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
                                   "myhost", ".example.com.")));
 
         ASSERT_NO_THROW(setD2ClientConfig(new_cfg));

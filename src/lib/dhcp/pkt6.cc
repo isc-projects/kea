@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -112,20 +112,38 @@ OptionPtr Pkt6::getAnyRelayOption(uint16_t opt_type, RelaySearchOrder order) {
     return (OptionPtr());
 }
 
-OptionPtr Pkt6::getRelayOption(uint16_t opt_type, uint8_t relay_level) {
+OptionPtr Pkt6::getRelayOption(uint16_t opt_type, uint8_t relay_level) const {
     if (relay_level >= relay_info_.size()) {
         isc_throw(OutOfRange, "This message was relayed " << relay_info_.size() << " time(s)."
                   << " There is no info about " << relay_level + 1 << " relay.");
     }
 
-    for (OptionCollection::iterator it = relay_info_[relay_level].options_.begin();
-         it != relay_info_[relay_level].options_.end(); ++it) {
-        if ((*it).second->getType() == opt_type) {
-            return (it->second);
-        }
-    }
+    OptionCollection::const_iterator x = relay_info_[relay_level].options_.find(opt_type);
+    if (x != relay_info_[relay_level].options_.end()) {
+	return (*x).second;
+      }
 
     return (OptionPtr());
+}
+
+const isc::asiolink::IOAddress&
+Pkt6::getRelay6LinkAddress(uint8_t relay_level) const {
+    if (relay_level >= relay_info_.size()) {
+        isc_throw(OutOfRange, "This message was relayed " << relay_info_.size() << " time(s)."
+                  << " There is no info about " << relay_level + 1 << " relay.");
+    }
+
+    return (relay_info_[relay_level].linkaddr_);
+}
+
+const isc::asiolink::IOAddress&
+Pkt6::getRelay6PeerAddress(uint8_t relay_level) const {
+    if (relay_level >= relay_info_.size()) {
+        isc_throw(OutOfRange, "This message was relayed " << relay_info_.size() << " time(s)."
+                  << " There is no info about " << relay_level + 1 << " relay.");
+    }
+
+    return (relay_info_[relay_level].peeraddr_);
 }
 
 uint16_t Pkt6::getRelayOverhead(const RelayInfo& relay) const {
@@ -429,7 +447,7 @@ Pkt6::unpackRelayMsg() {
 
 void
 Pkt6::addRelayInfo(const RelayInfo& relay) {
-    if (relay_info_.size() > 32) {
+    if (relay_info_.size() > HOP_COUNT_LIMIT) {
         isc_throw(BadValue, "Massage cannot be encapsulated more than 32 times");
     }
 

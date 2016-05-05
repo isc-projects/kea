@@ -99,6 +99,14 @@ public:
     }
 };
 
+/// The order where Token subtypes are declared should be:
+///  - literal terminals
+///  - option & co
+///  - pkt & co
+///  - ==
+///  - substring & co
+///  - not, and, or
+
 /// @brief Token representing a constant string
 ///
 /// This token holds value of a constant string, e.g. it represents
@@ -145,6 +153,29 @@ public:
 
 protected:
     std::string value_; ///< Constant value
+};
+
+/// @brief Token representing an IP address as a constant string
+///
+/// This token holds the value of an IP address as a constant string,
+/// for instance 10.0.0.1 is 0x10000001
+class TokenIpAddress : public Token {
+public:
+    /// Value is set during token construction.
+    ///
+    /// @param addr IP address to be represented as a constant string
+    TokenIpAddress(const std::string& addr);
+
+    /// @brief Token evaluation (puts value of the constant string on
+    /// the stack after decoding)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented IP address will be pushed here)
+    void evaluate(const Pkt& pkt, ValueStack& values);
+
+protected:
+    ///< Constant value (empty string if the IP address cannot be converted)
+    std::string value_;
 };
 
 /// @brief Token that represents a value of an option
@@ -201,6 +232,16 @@ public:
     /// @return option-code of the option this token expects to extract.
     uint16_t getCode() const {
         return (option_code_);
+    }
+
+    /// @brief Returns representation-type
+    ///
+    /// This method is used in testing to determine if the parser had
+    /// instantiated TokenOption with correct parameters.
+    ///
+    /// @return representation-type of the option this token expects to use.
+    RepresentationType getRepresentation() const {
+        return (representation_type_);
     }
 
 protected:
@@ -424,6 +465,165 @@ public:
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
     void evaluate(const Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token that represents a value of an option within a DHCPv6 relay
+/// encapsulation
+///
+/// This represents a reference to a given option similar to TokenOption
+/// but from within the information from a relay.  In the expresssion
+/// relay6[nest-level].option[option-code], nest-level indicates which
+/// of the relays to examine and option-code which option to extract.
+///
+/// During the evaluation it tries to extract the value of the specified
+/// option from the requested relay block.  If the relay block doesn't
+/// exist or the option is not found an empty string ("") is returned
+/// (or "false" when the representation is EXISTS).
+///
+/// The nesting level can go from 0 (closest to the server) to 31
+class TokenRelay6Option : public TokenOption {
+public:
+    /// @brief Constructor that takes a nesting level and an option
+    /// code as paramaters.
+    ///
+    /// @param nest_level the nesting for which relay to examine.
+    /// @param option_code code of the option.
+    /// @param rep_type Token representation type.
+    TokenRelay6Option(const uint8_t nest_level, const uint16_t option_code,
+                      const RepresentationType& rep_type)
+        :TokenOption(option_code, rep_type), nest_level_(nest_level) {}
+
+    /// @brief Returns nest-level
+    ///
+    /// This method is used in testing to determine if the parser has
+    /// instantiated TokenRelay6Option with correct parameters.
+    ///
+    /// @return nest-level of the relay block this token expects to use
+    /// for extraction.
+    uint8_t getNest() const {
+        return (nest_level_);
+    }
+
+protected:
+    /// @brief Attempts to obtain specified option from the specified relay block
+    /// @param pkt DHCPv6 packet that hopefully contains the proper relay block
+    /// @return option instance if available
+    virtual OptionPtr getOption(const Pkt& pkt);
+
+    uint8_t nest_level_; ///< nesting level of the relay block to use
+};
+
+/// @breif Token that represents a value of a field within a DHCPv6 relay
+/// encapsulation
+///
+/// This represents a reference to a field with a given DHCPv6 relay encapsulation.
+/// In the expression relay6[nest-level].field-name, nest-level indicates which of
+/// the relays to examine and field-name which of the fields to extract.
+///
+/// During the evaluation it tries to extract the value of the specified
+/// field from the requested relay block.  If the relay block doesn't exist
+/// an empty string ("") is returned.  If the relay block does exist the field
+/// is always returned as a 16 byte IPv6 address.  As the relay may not have
+/// set the field it may be 0s.
+///
+/// The nesting level can go from 0 (closest to the server) to 31.
+class TokenRelay6Field : public Token {
+public:
+
+    /// @brief enum value that determines the field.
+    enum FieldType {
+        PEERADDR, ///< Peer address field (IPv6 address)
+        LINKADDR  ///< Link address field (IPv6 address)
+    };
+
+    /// @brief Constructor that takes a nesting level and field type
+    /// as parameters.
+    ///
+    /// @param nest_level the nesting level for which relay to examine.
+    /// @param type which field to extract.
+    TokenRelay6Field(const uint8_t nest_level, const FieldType type)
+      : nest_level_(nest_level), type_(type) {}
+
+    /// @brief Extracts the specified field from the requested relay
+    ///
+    /// Evaluation uses fields available in the packet.  It does not require
+    /// any values to be present on the stack.
+    ///
+    /// @param pkt fields will be extracted from here
+    /// @param values - stack of values (1 result will be pushed)
+    void evaluate(const Pkt& pkt, ValueStack& values);
+
+    /// @brief Returns nest-level
+    ///
+    /// This method is used in testing to determine if the parser has
+    /// instantiated TokenRelay6Field with correct parameters.
+    ///
+    /// @return nest-level of the relay block this token expects to use
+    /// for extraction.
+    uint8_t getNest() const {
+        return (nest_level_);
+    }
+
+    /// @brief Returns field type
+    ///
+    /// This method is used only in testing to determine if the parser has
+    /// instantiated TokenRelay6Field with correct parameters.
+    ///
+    /// @return type of the field.
+    FieldType getType() {
+        return (type_);
+    }
+
+protected:
+    /// @brief Specifies field of the DHCPv6 relay option to get
+    uint8_t nest_level_; ///< nesting level of the relay block to use
+    FieldType type_; ///< field to get
+};
+
+/// @brief Token that represents fields of DHCPv6 packet.
+///
+/// For example in the expression pkt6.msgtype == 1
+/// this token represents the message type of the DHCPv6 packet.
+/// The integer values are placed on the value stack as 4 byte
+/// strings.
+///
+/// Currently supported fields are:
+/// - msgtype
+/// - transid
+class TokenPkt6 : public Token {
+public:
+    /// @brief enum value that determines the field.
+    enum FieldType {
+        MSGTYPE, ///< msg type
+        TRANSID  ///< transaction id (integer but manipulated as as string)
+    };
+
+    /// @brief Constructor (does nothing)
+    TokenPkt6(const FieldType type)
+        : type_(type) {}
+
+    /// @brief Gets a value of the specified packet.
+    ///
+    /// The evaluation uses fields that are availabe in the packet.  It does not
+    /// require any values to be present on the stack.
+    ///
+    /// @throw EvalTypeError when called for a DHCPv4 packet
+    ///
+    /// @param pkt - packet from which to extract the fields
+    /// @param values - stack of values, 1 result will be pushed
+    void evaluate(const Pkt& pkt, ValueStack& values);
+
+    /// @brief Returns field type
+    ///
+    /// This method is used only in tests.
+    /// @return type of the field.
+    FieldType getType() {
+        return(type_);
+    }
+
+private:
+    /// @brief Specifies field of the DHCPv6 packet to get
+    FieldType type_;
 };
 
 }; // end of isc::dhcp namespace

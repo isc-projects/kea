@@ -11,6 +11,7 @@
 #include <string>
 #include <eval/eval_context.h>
 #include <eval/parser.h>
+#include <asiolink/io_address.h>
 #include <boost/lexical_cast.hpp>
 
 // Work around an incompatibility in flex (at least versions
@@ -56,10 +57,13 @@ static isc::eval::location loc;
 %option yylineno
 
 /* These are not token expressions yet, just convenience expressions that
-   can be used during actual token definitions. */
+   can be used during actual token definitions. Note some can match
+   incorrect inputs (e.g., IP addresses) which must be checked. */
 int   \-?[0-9]+
 hex   [0-9a-fA-F]+
 blank [ \t]
+addr4 [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+
+addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 
 %{
 // This code run each time a pattern is matched. It updates the location
@@ -122,12 +126,29 @@ blank [ \t]
     return isc::eval::EvalParser::make_OPTION_NAME(yytext, loc);
 }
 
+{addr4}|{addr6} {
+    // IPv4 or IPv6 address
+    std::string tmp(yytext);
+
+    // Some incorrect addresses can match so we have to check.
+    try {
+        isc::asiolink::IOAddress ip(tmp);
+    } catch (...) {
+        driver.error(loc, "Failed to convert " + tmp + " to an IP address.");
+    }
+
+    return isc::eval::EvalParser::make_IP_ADDRESS(yytext, loc);
+}
+
 "=="        return isc::eval::EvalParser::make_EQUAL(loc);
 "option"    return isc::eval::EvalParser::make_OPTION(loc);
+"relay4"    return isc::eval::EvalParser::make_RELAY4(loc);
+"relay6"    return isc::eval::EvalParser::make_RELAY6(loc);
+"peeraddr"  return isc::eval::EvalParser::make_PEERADDR(loc);
+"linkaddr"  return isc::eval::EvalParser::make_LINKADDR(loc);
 "text"      return isc::eval::EvalParser::make_TEXT(loc);
 "hex"       return isc::eval::EvalParser::make_HEX(loc);
 "exists"    return isc::eval::EvalParser::make_EXISTS(loc);
-"relay4"    return isc::eval::EvalParser::make_RELAY4(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
 "all"       return isc::eval::EvalParser::make_ALL(loc);
 "concat"    return isc::eval::EvalParser::make_CONCAT(loc);
@@ -140,6 +161,10 @@ blank [ \t]
 "["         return isc::eval::EvalParser::make_LBRACKET(loc);
 "]"         return isc::eval::EvalParser::make_RBRACKET(loc);
 ","         return isc::eval::EvalParser::make_COMA(loc);
+
+"pkt6"      return isc::eval::EvalParser::make_PKT6(loc);
+"msgtype"   return isc::eval::EvalParser::make_MSGTYPE(loc);
+"transid"   return isc::eval::EvalParser::make_TRANSID(loc);
 
 .          driver.error (loc, "Invalid character: " + std::string(yytext));
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);

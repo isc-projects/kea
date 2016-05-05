@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <stdint.h>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -193,6 +194,63 @@ tokenToNum(const std::string& num_token) {
     }
     return (num);
 }
+
+/// \brief Converts a string in quotes into vector.
+///
+/// A converted string is first trimmed. If a trimmed string is in
+/// quotes, the quotes are removed and the resulting string is copied
+/// into a vector. If the string is not in quotes, an empty vector is
+/// returned.
+///
+/// The resulting string is copied to a vector and returned.
+///
+/// This function is intended to be used by the server configuration
+/// parsers to convert string values surrounded with quotes into
+/// binary form.
+///
+/// \param quoted_string String to be converted.
+/// \return Vector containing converted string or empty string if
+/// input string didn't contain expected quote characters.
+std::vector<uint8_t>
+quotedStringToBinary(const std::string& quoted_string);
+
+/// \brief Converts a string of hexadecimal digits with colons into
+///  a vector.
+///
+/// This function supports the following formats:
+/// - yy:yy:yy:yy:yy
+/// - y:y:y:y:y
+/// - y:yy:yy:y:y
+///
+/// If the decoded string doesn't match any of the supported formats,
+/// an exception is thrown.
+///
+/// \param hex_string Input string.
+/// \param binary Vector receiving converted string into binary.
+/// \throw isc::BadValue if the format of the input string is invalid.
+void
+decodeColonSeparatedHexString(const std::string& hex_string,
+                              std::vector<uint8_t>& binary);
+
+/// \brief Converts a formatted string of hexadecimal digits into
+/// a vector.
+///
+/// This function supports formats supported by
+/// @ref decodeColonSeparatedHexString and the following additional
+/// formats:
+/// - yyyyyyyyyy
+/// - 0xyyyyyyyyyy
+///
+/// If there is an odd number of hexadecimal digits in the input
+/// string, the '0' is prepended to the string before decoding.
+///
+/// \param hex_string Input string.
+/// \param binary Vector receiving converted string into binary.
+/// \throw isc::BadValue if the format of the input string is invalid.
+void
+decodeFormattedHexString(const std::string& hex_string,
+                         std::vector<uint8_t>& binary);
+
 
 } // namespace str
 } // namespace util

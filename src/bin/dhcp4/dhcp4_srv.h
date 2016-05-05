@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -208,13 +208,27 @@ public:
  
     /// @brief Main server processing loop.
     ///
-    /// Main server processing loop. Receives incoming packets, verifies
-    /// their correctness, generates appropriate answer (if needed) and
-    /// transmits responses.
+    /// Main server processing loop. Call the processing step routine
+    /// until shut down.
     ///
-    /// @return true, if being shut down gracefully, fail if experienced
-    ///         critical error.
+    /// @return true, if being shut down gracefully, never fail.
     bool run();
+
+    /// @brief Main server processing step.
+    ///
+    /// Main server processing step. Receives one incoming packet, calls
+    /// the processing packet routing and (if necessary) transmits
+    /// a response.
+    void run_one();
+
+    /// @brief Process a single incoming DHCPv4 packet.
+    ///
+    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// methods, generates appropriate answer.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param rsp A pointer to the response
+    void processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp);
 
     /// @brief Instructs the server to shut down.
     void shutdown();

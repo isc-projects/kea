@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,19 +10,29 @@
 #include <cc/data.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option4_addrlst.h>
+#include <dhcp/option6_addrlst.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/testutils/config_result_check.h>
+#include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <iterator>
 #include <string>
+#include <vector>
 
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 
 namespace {
+
+/// @brief Holds a type of the last identifier in @c IdentifierType enum.
+///
+/// This value must be updated when new identifiers are added to the enum.
+const Host::IdentifierType LAST_IDENTIFIER_TYPE = Host::IDENT_CIRCUIT_ID;
 
 /// @brief Test fixture class for @c HostReservationParser.
 class HostReservationParserTest : public ::testing::Test {
@@ -54,9 +64,115 @@ protected:
         return (false);
     }
 
-    void
-    expectFailure(const HostReservationParser& parser,
-                  const std::string& config) const;
+    /// @brief Retrieves DHCP option from a host.
+    ///
+    /// @param host Reference to a host object for which an option should be
+    /// retrieved.
+    /// @param option_space Option space name.
+    /// @param option_code Code of an option to be retrieved.
+    ///
+    /// @return Pointer to the option retrieved or NULL pointer if option
+    /// hasn't been found.
+    OptionPtr
+    retrieveOption(const Host& host, const std::string& option_space,
+                   const uint16_t option_code) const {
+        if ((option_space != "dhcp6") && (option_space != "dhcp4")) {
+            return (OptionPtr());
+        }
+
+        // Retrieve a pointer to the appropriate container depending if we're
+        // interested in DHCPv4 or DHCPv6 options.
+        ConstCfgOptionPtr cfg_option = (option_space == "dhcp4" ?
+                                        host.getCfgOption4() : host.getCfgOption6());
+
+        // Retrieve options.
+        OptionContainerPtr options = cfg_option->getAll(option_space);
+        if (options) {
+            const OptionContainerTypeIndex& idx = options->get<1>();
+            OptionContainerTypeIndex::const_iterator it = idx.find(option_code);
+            if (it != idx.end()) {
+                return (it->option_);
+            }
+        }
+
+        return (OptionPtr());
+    }
+
+    /// @brief This test verifies that it is possible to specify an empty list
+    /// of options for a host.
+    ///
+    /// @tparam ParserType Type of the parser to be tested.
+    template<typename ParserType>
+    void testEmptyOptionList() const {
+        // Create configuration with empty option list. Note that we have to
+        // add reservation for at least one resource because host declarations
+        // without any reservations are rejected. Thus, we have added hostname.
+        std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+            "\"hostname\": \"foo.isc.org\","
+            "\"option-data\": [ ]"
+            "}";
+
+        ElementPtr config_element = Element::fromJSON(config);
+
+        ParserType parser(SubnetID(10));
+        ASSERT_NO_THROW(parser.build(config_element));
+
+        // Retrieve a host.
+        HostCollection hosts;
+        CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+        ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
+        ASSERT_EQ(1, hosts.size());
+
+        // There should be no options assigned to a host.
+        EXPECT_TRUE(hosts[0]->getCfgOption4()->empty());
+        EXPECT_TRUE(hosts[0]->getCfgOption6()->empty());
+    }
+
+    /// @brief This test verfies that the parser can parse a DHCPv4
+    /// reservation configuration including a specific identifier.
+    ///
+    /// @param identifier_name Identifier name.
+    /// @param identifier_type Identifier type.
+    void testIdentifier4(const std::string& identifier_name,
+                         const std::string& identifier_value,
+                         const Host::IdentifierType& expected_identifier_type,
+                         const std::vector<uint8_t>& expected_identifier) const {
+        std::ostringstream config;
+        config << "{ \"" << identifier_name << "\": \"" << identifier_value
+               << "\","
+               << "\"ip-address\": \"192.0.2.112\","
+               << "\"hostname\": \"\" }";
+
+        ElementPtr config_element = Element::fromJSON(config.str());
+
+        HostReservationParser4 parser(SubnetID(10));
+        ASSERT_NO_THROW(parser.build(config_element));
+
+        CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+        HostCollection hosts;
+        ASSERT_NO_THROW(hosts = cfg_hosts->getAll(expected_identifier_type,
+                                                  &expected_identifier[0],
+                                                  expected_identifier.size()));
+
+        ASSERT_EQ(1, hosts.size());
+
+        EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
+        EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
+        EXPECT_EQ("192.0.2.112", hosts[0]->getIPv4Reservation().toText());
+        EXPECT_TRUE(hosts[0]->getHostname().empty());
+    }
+
+    /// @brief This test verfies that the parser returns an error when
+    /// configuration is invalid.
+    ///
+    /// @param config JSON configuration to be tested.
+    /// @tparam ParserType Type of the parser class to use.
+    template<typename ParserType>
+    void testInvalidConfig(const std::string& config) const {
+        ElementPtr config_element = Element::fromJSON(config);
+        ParserType parser(SubnetID(10));
+        EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    }
 
     /// @brief HW Address object used by tests.
     HWAddrPtr hwaddr_;
@@ -64,6 +180,8 @@ protected:
     /// @brief DUID object used by tests.
     DuidPtr duid_;
 
+    /// @brief Vector holding circuit id used by tests.
+    std::vector<uint8_t> circuit_id_;
 };
 
 void
@@ -78,6 +196,9 @@ HostReservationParserTest::SetUp() {
     const uint8_t duid_data[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
                                   0x08, 0x09, 0x0A };
     duid_ = DuidPtr(new DUID(duid_data, sizeof(duid_data)));
+
+    const std::string circuit_id_str = "howdy";
+    circuit_id_.assign(circuit_id_str.begin(), circuit_id_str.end());
 }
 
 void
@@ -88,49 +209,47 @@ HostReservationParserTest::TearDown() {
 // This test verfies that the parser can parse the reservation entry for
 // which hw-address is a host identifier.
 TEST_F(HostReservationParserTest, dhcp4HWaddr) {
-    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
-        "\"ip-address\": \"192.0.2.134\","
-        "\"hostname\": \"foo.example.com\" }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser4 parser(SubnetID(1));
-    ASSERT_NO_THROW(parser.build(config_element));
-
-    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
-    HostCollection hosts;
-    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_, DuidPtr()));
-
-    ASSERT_EQ(1, hosts.size());
-
-    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
-    EXPECT_EQ("192.0.2.134", hosts[0]->getIPv4Reservation().toText());
-    EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
+    testIdentifier4("hw-address", "1:2:3:4:5:6", Host::IDENT_HWADDR,
+                    hwaddr_->hwaddr_);
 }
 
-// This test verfies that the parser can parse the reservation entry for
+// This test verifies that the parser can parse the reservation entry for
 // which DUID is a host identifier.
 TEST_F(HostReservationParserTest, dhcp4DUID) {
-    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
-        "\"ip-address\": \"192.0.2.112\","
-        "\"hostname\": \"\" }";
+    testIdentifier4("duid", "01:02:03:04:05:06:07:08:09:0A",
+                    Host::IDENT_DUID, duid_->getDuid());
+}
 
-    ElementPtr config_element = Element::fromJSON(config);
+// This test verifies that the parser can parse the reservation entry for
+// which DUID specified as a string of hexadecimal digits with '0x' prefix
+// is a host identifier
+TEST_F(HostReservationParserTest, dhcp4DUIDWithPrefix) {
+    testIdentifier4("duid", "0x0102030405060708090A",
+                    Host::IDENT_DUID, duid_->getDuid());
+}
 
-    HostReservationParser4 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+// This test verifies that the parser can parse a reservation entry for
+// which circuit-id is an identifier. The circuit-id is specified as
+// a string in quotes.
+TEST_F(HostReservationParserTest, dhcp4CircuitIdStringInQuotes) {
+    testIdentifier4("circuit-id", "'howdy'", Host::IDENT_CIRCUIT_ID,
+                    circuit_id_);
+}
 
-    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
-    HostCollection hosts;
-    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
+// This test verifies that the parser can parse a reservation entry for
+// which circuit-id is an identifier. The circuit-id is specified in
+// hexadecimal format.
+TEST_F(HostReservationParserTest, dhcp4CircuitIdHex) {
+    testIdentifier4("circuit-id", "686F776479", Host::IDENT_CIRCUIT_ID,
+                    circuit_id_);
+}
 
-    ASSERT_EQ(1, hosts.size());
-
-    EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
-    EXPECT_EQ("192.0.2.112", hosts[0]->getIPv4Reservation().toText());
-    EXPECT_TRUE(hosts[0]->getHostname().empty());
+// This test verifies that the parser can parse a reservation entry for
+// which circuit-id is an identifier. The circuit-id is specified in
+// hexadecimal format with a '0x' prefix.
+TEST_F(HostReservationParserTest, dhcp4CircuitIdHexWithPrefix) {
+    testIdentifier4("circuit-id", "0x686F776479", Host::IDENT_CIRCUIT_ID,
+                    circuit_id_);
 }
 
 // This test verifies that the parser can parse the reservation entry
@@ -163,11 +282,7 @@ TEST_F(HostReservationParserTest, dhcp4NoHostname) {
 TEST_F(HostReservationParserTest, dhcp4IPv6Address) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"ip-address\": \"2001:db8:1::1\" }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser4 parser(SubnetID(10));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser4>(config);
 }
 
 // This test verifies that the configuration parser for host reservations
@@ -175,22 +290,14 @@ TEST_F(HostReservationParserTest, dhcp4IPv6Address) {
 TEST_F(HostReservationParserTest, noIdentifier) {
     std::string config = "{ \"ip-address\": \"192.0.2.112\","
         "\"hostname\": \"\" }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser4 parser(SubnetID(10));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser4>(config);
 }
 
 // This test verifies  that the configuration parser for host reservations
 // throws an exception when neither ip address nor hostname is specified.
 TEST_F(HostReservationParserTest, noResource) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\" }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser4 parser(SubnetID(10));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser4>(config);
 }
 
 // This test verifies that the parser can parse the reservation entry
@@ -222,11 +329,7 @@ TEST_F(HostReservationParserTest, noIPAddress) {
 TEST_F(HostReservationParserTest, emptyHostname) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"hostname\": \"\" }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser4 parser(SubnetID(10));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser4>(config);
 }
 
 // This test verifies that the configuration parser for host reservations
@@ -234,11 +337,7 @@ TEST_F(HostReservationParserTest, emptyHostname) {
 TEST_F(HostReservationParserTest, malformedAddress) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"ip-address\": \"192.0.2.bogus\" }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser4 parser(SubnetID(10));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser4>(config);
 }
 
 // This test verifies that the configuration parser for host reservations
@@ -246,11 +345,7 @@ TEST_F(HostReservationParserTest, malformedAddress) {
 TEST_F(HostReservationParserTest, zeroAddress) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"ip-address\": \"0.0.0.0\" }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser4 parser(SubnetID(10));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser4>(config);
 }
 
 // This test verifies that the configuration parser for host reservations
@@ -258,11 +353,7 @@ TEST_F(HostReservationParserTest, zeroAddress) {
 TEST_F(HostReservationParserTest, bcastAddress) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"ip-address\": \"255.255.255.255\" }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser4 parser(SubnetID(10));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser4>(config);
 }
 
 // This test verifies that the configuration parser for host reservations
@@ -274,11 +365,7 @@ TEST_F(HostReservationParserTest, invalidParameterName) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"hostname\": \"foo.bar.isc.org\","
         "\"ip-addresses\": \"2001:db8:1::1\" }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser4 parser(SubnetID(10));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser4>(config);
 }
 
 // This test verfies that the parser can parse the IPv6 reservation entry for
@@ -367,6 +454,17 @@ TEST_F(HostReservationParserTest, dhcp6DUID) {
     ASSERT_EQ(0, std::distance(prefixes.first, prefixes.second));
 }
 
+// This test verifies that host reservation parser for DHCPv6 rejects
+// "circuit-id" as a host identifier.
+TEST_F(HostReservationParserTest, dhcp6CircuitId) {
+    // Use DHCPv4 specific identifier 'circuit-id' with DHCPv6 parser.
+    std::string config = "{ \"circuit-id\": \"'howdy'\","
+        "\"ip-addresses\": [ \"2001:db8:1::100\", \"2001:db8:1::200\" ],"
+        "\"prefixes\": [ ],"
+        "\"hostname\": \"foo.example.com\" }";
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
 // This test verfies that the parser can parse the IPv6 reservation entry
 // which lacks hostname parameter.
 TEST_F(HostReservationParserTest, dhcp6NoHostname) {
@@ -411,11 +509,7 @@ TEST_F(HostReservationParserTest, dhcp6IPv4Address) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
         "\"ip-addresses\": [ \"192.0.2.3\", \"2001:db8:1::200\" ],"
         "\"prefixes\": [ ] }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser6 parser(SubnetID(12));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser6>(config);
 }
 
 // This test verifies that the configuration parser throws an exception
@@ -424,11 +518,7 @@ TEST_F(HostReservationParserTest, dhcp6NullAddress) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
         "\"ip-addresses\": [ \"\" ],"
         "\"prefixes\": [ ] }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser6 parser(SubnetID(12));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser6>(config);
 }
 
 // This test verifies that the configuration parser throws an exception
@@ -436,11 +526,7 @@ TEST_F(HostReservationParserTest, dhcp6NullAddress) {
 TEST_F(HostReservationParserTest, dhcp6InvalidPrefixLength) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
         "\"prefixes\": [ \"2001:db8:1::/abc\" ] }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser6 parser(SubnetID(12));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser6>(config);
 }
 
 // This test verifies that the configuration parser throws an exception
@@ -448,11 +534,7 @@ TEST_F(HostReservationParserTest, dhcp6InvalidPrefixLength) {
 TEST_F(HostReservationParserTest, dhcp6NullPrefix) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
         "\"prefixes\": [ \"/64\" ] }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser6 parser(SubnetID(12));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser6>(config);
 }
 
 // This test verifies that the configuration parser throws an exception
@@ -460,11 +542,7 @@ TEST_F(HostReservationParserTest, dhcp6NullPrefix) {
 TEST_F(HostReservationParserTest, dhcp6NullPrefix2) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
         "\"prefixes\": [ \"/\" ] }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser6 parser(SubnetID(12));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser6>(config);
 }
 
 // This test verifies that the configuration parser throws an exception
@@ -472,11 +550,7 @@ TEST_F(HostReservationParserTest, dhcp6NullPrefix2) {
 TEST_F(HostReservationParserTest, dhcp6DuplicatedAddress) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
         "\"ip-addresses\": [ \"2001:db8:1::1\", \"2001:db8:1::1\" ] }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser6 parser(SubnetID(12));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser6>(config);
 }
 
 // This test verifies that the configuration parser throws an exception
@@ -484,13 +558,8 @@ TEST_F(HostReservationParserTest, dhcp6DuplicatedAddress) {
 TEST_F(HostReservationParserTest, dhcp6DuplicatedPrefix) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
         "\"prefixes\": [ \"2001:db8:0101::/64\", \"2001:db8:0101::/64\" ] }";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    HostReservationParser6 parser(SubnetID(12));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    testInvalidConfig<HostReservationParser6>(config);
 }
-
 
 // This test verifies that the configuration parser for host reservations
 // throws an exception when unsupported parameter is specified.
@@ -501,11 +570,218 @@ TEST_F(HostReservationParserTest, dhcp6invalidParameterName) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"hostname\": \"foo.bar.isc.org\","
         "\"ip-address\": \"192.0.2.3\" }";
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
+// This test verifies that it is possible to specify DHCPv4 options for
+// a host.
+TEST_F(HostReservationParserTest, options4) {
+    // Create configuration with three options for a host.
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"option-data\": ["
+        "{"
+           "\"name\": \"name-servers\","
+           "\"data\": \"172.16.15.10, 172.16.15.20\""
+        "},"
+        "{"
+           "\"name\": \"log-servers\","
+           "\"code\": 7,"
+           "\"csv-format\": true,"
+           "\"space\": \"dhcp4\","
+           "\"data\": \"172.16.15.23\""
+        "},"
+        "{"
+           "\"name\": \"default-ip-ttl\","
+           "\"data\": \"64\""
+        "} ]"
+        "}";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_));
+    ASSERT_EQ(1, hosts.size());
+
+    // Retrieve and sanity check name servers.
+    Option4AddrLstPtr opt_dns = boost::dynamic_pointer_cast<
+        Option4AddrLst>(retrieveOption(*hosts[0], "dhcp4", DHO_NAME_SERVERS));
+    ASSERT_TRUE(opt_dns);
+    Option4AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(2, dns_addrs.size());
+    EXPECT_EQ("172.16.15.10", dns_addrs[0].toText());
+    EXPECT_EQ("172.16.15.20", dns_addrs[1].toText());
+
+    // Retrieve and sanity check log servers.
+    Option4AddrLstPtr opt_log = boost::dynamic_pointer_cast<
+        Option4AddrLst>(retrieveOption(*hosts[0], "dhcp4", DHO_LOG_SERVERS));
+    ASSERT_TRUE(opt_log);
+    Option4AddrLst::AddressContainer log_addrs = opt_log->getAddresses();
+    ASSERT_EQ(1, log_addrs.size());
+    EXPECT_EQ("172.16.15.23", log_addrs[0].toText());
+
+    // Retrieve and sanity check default IP TTL.
+    OptionUint8Ptr opt_ttl = boost::dynamic_pointer_cast<
+        OptionUint8>(retrieveOption(*hosts[0], "dhcp4", DHO_DEFAULT_IP_TTL));
+    ASSERT_TRUE(opt_ttl);
+    EXPECT_EQ(64, opt_ttl->getValue());
+}
+
+// This test verifies that it is possible to specify DHCPv6 options for
+// a host.
+TEST_F(HostReservationParserTest, options6) {
+    // Create configuration with three options for a host.
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"option-data\": ["
+        "{"
+           "\"name\": \"dns-servers\","
+           "\"data\": \"2001:db8:1::1, 2001:db8:1::2\""
+        "},"
+        "{"
+           "\"name\": \"nis-servers\","
+           "\"code\": 27,"
+           "\"csv-format\": true,"
+           "\"space\": \"dhcp6\","
+           "\"data\": \"2001:db8:1::1204\""
+        "},"
+        "{"
+           "\"name\": \"preference\","
+           "\"data\": \"11\""
+        "} ]"
+        "}";
 
     ElementPtr config_element = Element::fromJSON(config);
 
     HostReservationParser6 parser(SubnetID(10));
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    // One host should have been added to the configuration.
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
+    ASSERT_EQ(1, hosts.size());
+
+    // Retrieve and sanity check DNS servers option.
+    Option6AddrLstPtr opt_dns = boost::dynamic_pointer_cast<
+        Option6AddrLst>(retrieveOption(*hosts[0], "dhcp6", D6O_NAME_SERVERS));
+    ASSERT_TRUE(opt_dns);
+    Option6AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(2, dns_addrs.size());
+    EXPECT_EQ("2001:db8:1::1", dns_addrs[0].toText());
+    EXPECT_EQ("2001:db8:1::2", dns_addrs[1].toText());
+
+    // Retrieve and sanity check NIS servers option.
+    Option6AddrLstPtr opt_nis = boost::dynamic_pointer_cast<
+        Option6AddrLst>(retrieveOption(*hosts[0], "dhcp6", D6O_NIS_SERVERS));
+    ASSERT_TRUE(opt_nis);
+    Option6AddrLst::AddressContainer nis_addrs = opt_nis->getAddresses();
+    ASSERT_EQ(1, nis_addrs.size());
+    EXPECT_EQ("2001:db8:1::1204", nis_addrs[0].toText());
+
+    // Retrieve and sanity check preference option.
+    OptionUint8Ptr opt_prf = boost::dynamic_pointer_cast<
+        OptionUint8>(retrieveOption(*hosts[0], "dhcp6", D6O_PREFERENCE));
+    ASSERT_TRUE(opt_prf);
+    EXPECT_EQ(11, opt_prf->getValue());
 }
+
+// This test verifies that it is possible to specify an empty list of
+// DHCPv4 options for a host declaration.
+TEST_F(HostReservationParserTest, options4Empty) {
+    testEmptyOptionList<HostReservationParser4>();
+}
+
+// This test verifies that it is possible to specify an empty list of
+// DHCPv6 options for a host declaration.
+TEST_F(HostReservationParserTest, options6Empty) {
+    testEmptyOptionList<HostReservationParser6>();
+}
+
+// This test checks that specifying DHCPv6 options for the DHCPv4 host
+// reservation parser is not allowed.
+TEST_F(HostReservationParserTest, options4InvalidOptionSpace) {
+    // Create configuration specifying DHCPv6 option for a DHCPv4 host
+    // reservation parser.
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"option-data\": ["
+        "{"
+           "\"name\": \"dns-servers\","
+           "\"space\": \"dhcp6\","
+           "\"data\": \"2001:db8:1::1, 2001:db8:1::2\""
+        "} ]"
+        "}";
+
+    testInvalidConfig<HostReservationParser4>(config);
+}
+
+// This test checks that specifying DHCPv4 options for the DHCPv6 host
+// reservation parser is not allowed.
+TEST_F(HostReservationParserTest, options6InvalidOptionSpace) {
+    // Create configuration specifying DHCPv4 option for a DHCPv6 host
+    // reservation parser.
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"option-data\": ["
+        "{"
+           "\"name\": \"name-servers\","
+           "\"space\": \"dhcp4\","
+           "\"data\": \"172.16.15.10, 172.16.15.20\""
+        "} ]"
+        "}";
+
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
+// This test verifies that host identifiers for DHCPv4 are mutually exclusive.
+TEST_F(HostReservationParserTest, mutuallyExclusiveIdentifiers4) {
+    std::vector<std::string> identifiers;
+    identifiers.push_back("hw-address");
+    identifiers.push_back("duid");
+    identifiers.push_back("circuit-id");
+
+    for (unsigned int i = 0; i < identifiers.size(); ++i) {
+        // j points to an index of the next identifier. If it
+        // overflows, we set it to 0.
+        unsigned int j = (i + 1) % (identifiers.size());
+        Host::IdentifierType first = static_cast<Host::IdentifierType>(i);
+        Host::IdentifierType second = static_cast<Host::IdentifierType>(j);
+
+        SCOPED_TRACE("Using identifiers " + Host::getIdentifierName(first)
+                     + " and " + Host::getIdentifierName(second));
+
+        // Create configuration with two different identifiers.
+        std::ostringstream config;
+        config << "{ \"" << Host::getIdentifierName(first) << "\": \"121314151617\","
+            "\"" << Host::getIdentifierName(second) << "\": \"0A0B0C0D0E0F\","
+            "\"ip-address\": \"192.0.2.3\" }";
+        testInvalidConfig<HostReservationParser4>(config.str());
+    }
+}
+
+// This test verifies that host identifiers for DHCPv6 are mutually exclusive.
+TEST_F(HostReservationParserTest, mutuallyExclusiveIdentifiers6) {
+    std::vector<std::string> identifiers;
+    identifiers.push_back("hw-address");
+    identifiers.push_back("duid");
+
+    for (unsigned int i = 0; i < identifiers.size(); ++i) {
+        // j points to an index of the next identifier. If it
+        // overflows, we set it to 0.
+        unsigned int j = (i + 1) % (identifiers.size());
+
+        SCOPED_TRACE("Using identifiers " + identifiers[i] + " and "
+                     + identifiers[j]);
+
+        // Create configuration with two different identifiers.
+        std::ostringstream config;
+        config << "{ \"" << identifiers[i] << "\": \"121314151617\","
+            "\"" << identifiers[j] << "\": \"0A0B0C0D0E0F\","
+            "\"ip-addresses\": \"2001:db8:1::1\" }";
+        testInvalidConfig<HostReservationParser6>(config.str());
+    }
+}
+
 
 } // end of anonymous namespace

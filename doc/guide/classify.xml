@@ -159,6 +159,7 @@
           <tbody>
 <row><entry>String</entry><entry>'example'</entry><entry>A string</entry></row>
 <row><entry>Hex String</entry><entry>0XABCD</entry><entry>A hexadecimal string</entry></row>
+<row><entry>IP Address</entry><entry>10.0.0.1</entry><entry>An IP address</entry></row>
 <row><entry>Integer</entry><entry>123</entry><entry>An integer value</entry></row>
 <!-- Text option not fully defined yet, leave it out
 <row><entry>Option Text</entry><entry>option[code].text</entry><entry>The value of the option with code "code" from the packet as text</entry></row>
@@ -169,12 +170,49 @@
 sub-option</entry><entry>relay4[code].hex</entry><entry>The value of
 sub-option with code "code" from the DHCPv4 Relay Agent Information option
 (option 82)</entry></row>
+<row>
+  <entry>DHCPv6 Relay Options</entry>
+  <entry>relay6[nest].option[code].hex</entry>
+<!--  <entry>Value of the option</entry> -->
+  <entry>The value of the option with code "code" from the relay encapsulation "nest"</entry>
+</row>
+<row>
+  <entry>DHCPv6 Relay Peer Address</entry>
+  <entry>relay6[nest].peeraddr</entry>
+<!-- <entry>2001:DB8::1</entry> -->n
+  <entry>The value of the peer address field from the relay encapsulation "nest"</entry>
+</row>
+<row>
+  <entry>DHCPv6 Relay Link Address</entry>
+  <entry>relay6[nest].linkaddr</entry>
+<!-- <entry>2001:DB8::1</entry> -->n
+  <entry>The value of the link address field from the relay encapsulation "nest"</entry>
+</row>
+<row>
+  <entry>Message Type in DHCPv6 packet</entry>
+  <entry>pkt6.msgtype</entry>
+<!--  <entry>1</entry>
+-->
+  <entry>The value of the message type field in the DHCPv6 packet.</entry>
+</row>
+<row>
+  <entry>Transaction ID in DHCPv6 packet</entry>
+  <entry>pkt6.transid</entry>
+<!--  <entry>12345</entry>
+-->
+  <entry>The value of the transaction id in the DHCPv6 packet.</entry>
+</row>
           </tbody>
           </tgroup>
         </table>
       Hex Strings are converted into a string as expected.  The starting &quot;0X&quot; or
       &quot;0x&quot; is removed and if the string is an odd number of characters a
       &quot;0&quot; is prepended to it.
+      </para>
+
+      <para>
+      IP addresses are converted into strings of length 4 or 16. IPv4, IPv6,
+      and IPv4 embedded IPv6 (e.g., IPv4 mapped IPv6) addresses are supported.
       </para>
 
       <para>
@@ -202,6 +240,33 @@ sub-option with code "code" from the DHCPv4 Relay Agent Information option
         an empty string. The string is presented as a byte string of the
         option payload without the type code or length fields. This
         expression is allowed in DHCPv4 only.
+      </para>
+
+      <para>
+       "relay4" shares the same representation types as "option", for
+       instance "relay4[code].exists" is supported.
+      </para>
+
+      <para>
+       "relay6[nest]" allows access to the encapsulations used by any DHCPv6
+       relays that forwarded the packet.  The "nest" level specifies the relay
+       from which to extract the information, with a value of 0 indicating
+       the relay closest to the DHCPv6 server.  If the requested encapsulation
+       doesn't exist an empty string "" is returned.  This expression is
+       allowed in DHCPv6 only.
+      </para>
+
+      <para>
+       "relay6[nest].option[code]" shares the same representation types as
+       "option", for instance "relay6[nest].option[code].exists" is supported.
+      </para>
+
+      <para>
+       "pkt6" refers to information from the client request.  To access any
+       information from an intermediate relay use "relay6".  "pkt6.msgtype"
+       and "pkt6.transid" output a 4 byte binary string for the message type
+       or transaction id.  For example the message type SOLICIT will be
+       "0x00000001" or simply 1 as in "pkt6.msgtype == 1".
       </para>
 
       <para>

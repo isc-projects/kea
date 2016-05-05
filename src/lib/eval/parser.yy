@@ -34,35 +34,46 @@ using namespace isc::eval;
 }
 
 %define api.token.prefix {TOKEN_}
+// Tokens in an order which makes sense and related to the intented use.
 %token
   END  0  "end of file"
-  EQUAL "=="
-  OPTION "option"
-  SUBSTRING "substring"
-  CONCAT "concat"
+  LPAREN  "("
+  RPAREN  ")"
   NOT "not"
   AND "and"
   OR "or"
-  TEXT "text"
+  EQUAL "=="
+  OPTION "option"
   RELAY4 "relay4"
-  HEX "hex"
-  EXISTS "exists"
-  ALL "all"
-  DOT "."
-  COMA ","
-  LPAREN  "("
-  RPAREN  ")"
+  RELAY6 "relay6"
+  PEERADDR "peeraddr"
+  LINKADDR "linkaddr"
   LBRACKET "["
   RBRACKET "]"
+  DOT "."
+  TEXT "text"
+  HEX "hex"
+  EXISTS "exists"
+  SUBSTRING "substring"
+  ALL "all"
+  COMA ","
+  CONCAT "concat"
+  PKT6 "pkt6"
+  MSGTYPE "msgtype"
+  TRANSID "transid"
 ;
 
 %token <std::string> STRING "constant string"
 %token <std::string> INTEGER "integer"
 %token <std::string> HEXSTRING "constant hexstring"
 %token <std::string> OPTION_NAME "option name"
+%token <std::string> IP_ADDRESS "ip address"
 
 %type <uint16_t> option_code
 %type <TokenOption::RepresentationType> option_repr_type
+%type <TokenRelay6Field::FieldType> relay6_field
+%type <uint8_t> nest_level
+%type <TokenPkt6::FieldType> pkt6_field
 
 %left OR
 %left AND
@@ -106,6 +117,40 @@ bool_expr : "(" bool_expr ")"
                     TokenPtr opt(new TokenOption($3, TokenOption::EXISTS));
                     ctx.expression.push_back(opt);
                 }
+          | RELAY4 "[" option_code "]" "." EXISTS
+                {
+                   switch (ctx.getUniverse()) {
+                   case Option::V4:
+                   {
+                       TokenPtr opt(new TokenRelay4Option($3, TokenOption::EXISTS));
+                       ctx.expression.push_back(opt);
+                       break;
+                   }
+                   case Option::V6:
+                       // We will have relay6[123] for the DHCPv6.
+                       // In a very distant future we'll possibly be able
+                       // to mix both if we have DHCPv4-over-DHCPv6, so it
+                       // has some sense to make it explicit whether we
+                       // talk about DHCPv4 relay or DHCPv6 relay. However,
+                       // for the time being relay4 can be used in DHCPv4
+                       // only.
+                       error(@1, "relay4 can only be used in DHCPv4.");
+                   }
+                }
+          | RELAY6 "[" nest_level "]" "." OPTION "[" option_code "]" "." EXISTS
+                {
+                    switch (ctx.getUniverse()) {
+                    case Option::V6:
+                    {
+                        TokenPtr opt(new TokenRelay6Option($3, $8, TokenOption::EXISTS));
+                        ctx.expression.push_back(opt);
+                        break;
+                    }
+                    case Option::V4:
+                        // For now we only use relay6 in DHCPv6.
+                        error(@1, "relay6 can only be used in DHCPv6.");
+                    }
+                }
           ;
 
 string_expr : STRING
@@ -117,6 +162,11 @@ string_expr : STRING
                   {
                       TokenPtr hex(new TokenHexString($1));
                       ctx.expression.push_back(hex);
+                  }
+            | IP_ADDRESS
+                  {
+                      TokenPtr ip(new TokenIpAddress($1));
+                      ctx.expression.push_back(ip);
                   }
             | OPTION "[" option_code "]" "." option_repr_type
                   {
@@ -143,6 +193,38 @@ string_expr : STRING
                          error(@1, "relay4 can only be used in DHCPv4.");
                      }
                   }
+
+            | RELAY6 "[" nest_level "]" "." OPTION "[" option_code "]" "." option_repr_type
+                  {
+                     switch (ctx.getUniverse()) {
+                     case Option::V6:
+                     {
+                         TokenPtr opt(new TokenRelay6Option($3, $8, $11));
+                         ctx.expression.push_back(opt);
+                         break;
+                     }
+                     case Option::V4:
+                         // For now we only use relay6 in DHCPv6.
+                         error(@1, "relay6 can only be used in DHCPv6.");
+                     }
+                  }
+
+            | RELAY6 "[" nest_level "]" "." relay6_field
+                  {
+                     switch (ctx.getUniverse()) {
+                     case Option::V6:
+                     {
+                         TokenPtr relay6field(new TokenRelay6Field($3, $6));
+                         ctx.expression.push_back(relay6field);
+                         break;
+                     }
+                     case Option::V4:
+                         // For now we only use relay6 in DHCPv6.
+                         error(@1, "relay6 can only be used in DHCPv6.");
+                     }
+                  }
+
+
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
                   {
                       TokenPtr sub(new TokenSubstring());
@@ -152,6 +234,11 @@ string_expr : STRING
                   {
                       TokenPtr conc(new TokenConcat());
                       ctx.expression.push_back(conc);
+                  }
+            | PKT6 "." pkt6_field
+                  {
+                      TokenPtr pkt6_field(new TokenPkt6($3));
+                      ctx.expression.push_back(pkt6_field);
                   }
             ;
 
@@ -193,6 +280,23 @@ length_expr : INTEGER
                      ctx.expression.push_back(str);
                  }
             ;
+
+relay6_field : PEERADDR { $$ = TokenRelay6Field::PEERADDR; }
+             | LINKADDR { $$ = TokenRelay6Field::LINKADDR; }
+             ;
+
+nest_level : INTEGER
+                 {
+		 $$ = ctx.convertNestLevelNumber($1, @1);
+                 }
+                 // Eventually we may add strings to handle different
+                 // ways of choosing from which relay we want to extract
+                 // an option or field.
+           ;
+
+pkt6_field:MSGTYPE { $$ = TokenPkt6::MSGTYPE; }
+          | TRANSID { $$ = TokenPkt6::TRANSID; }
+          ;
 
 %%
 void

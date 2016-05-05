@@ -7,7 +7,9 @@
 #include <eval/token.h>
 #include <eval/eval_log.h>
 #include <util/encode/hex.h>
+#include <asiolink/io_address.h>
 #include <boost/lexical_cast.hpp>
+#include <dhcp/pkt6.h>
 #include <cstring>
 #include <string>
 
@@ -50,6 +52,27 @@ TokenHexString::TokenHexString(const string& str) : value_("") {
 
 void
 TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+    // Literals only push, nothing to pop
+    values.push(value_);
+}
+
+TokenIpAddress::TokenIpAddress(const string& addr) : value_("") {
+    // Transform IP address into binary format
+    vector<uint8_t> binary;
+    try {
+        asiolink::IOAddress ip(addr);
+        binary = ip.toBytes();
+    } catch (...) {
+        return;
+    }
+
+    // Convert to a string (note that binary.size() is 4 or 16, so not 0)
+    value_.resize(binary.size());
+    memmove(&value_[0], &binary[0], binary.size());
+}
+
+void
+TokenIpAddress::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
 }
@@ -224,9 +247,9 @@ TokenNot::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     bool val = toBool(op);
 
     if (!val) {
-	values.push("true");
+        values.push("true");
     } else {
-	values.push("false");
+        values.push("false");
     }
 }
 
@@ -246,9 +269,9 @@ TokenAnd::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     bool val2 = toBool(op2);
 
     if (val1 && val2) {
-	values.push("true");
+        values.push("true");
     } else {
-	values.push("false");
+        values.push("false");
     }
 }
 
@@ -268,8 +291,115 @@ TokenOr::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     bool val2 = toBool(op2);
 
     if (val1 || val2) {
-	values.push("true");
+        values.push("true");
     } else {
-	values.push("false");
+        values.push("false");
     }
+}
+
+OptionPtr TokenRelay6Option::getOption(const Pkt& pkt) {
+
+    try {
+        // Check if it's a Pkt6.  If it's not the dynamic_cast will
+        // throw std::bad_cast.
+        const Pkt6& pkt6 = dynamic_cast<const Pkt6&>(pkt);
+
+        try {
+            // Now that we have the right type of packet we can
+            // get the option and return it.
+            return(pkt6.getRelayOption(option_code_, nest_level_));
+        }
+        catch (const isc::OutOfRange&) {
+            // The only exception we expect is OutOfRange if the nest
+            // level is out of range of the encapsulations, for example
+            // if nest_level_ is 4 and there are only 2 encapsulations.
+            // We return a NULL in that case.
+           return (OptionPtr());
+        }
+
+    } catch (const std::bad_cast&) {
+        isc_throw(EvalTypeError, "Specified packet is not Pkt6");
+    }
+
+}
+
+void
+TokenRelay6Field::evaluate(const Pkt& pkt, ValueStack& values) {
+
+    vector<uint8_t> binary;
+    try {
+        // Check if it's a Pkt6.  If it's not the dynamic_cast will
+        // throw std::bad_cast.
+        const Pkt6& pkt6 = dynamic_cast<const Pkt6&>(pkt);
+
+        try {
+        switch (type_) {
+            // Now that we have the right type of packet we can
+            // get the option and return it.
+            case LINKADDR:
+                binary = pkt6.getRelay6LinkAddress(nest_level_).toBytes();
+                break;
+            case PEERADDR:
+                binary = pkt6.getRelay6PeerAddress(nest_level_).toBytes();
+                break;
+            }
+        } catch (const isc::OutOfRange&) {
+            // The only exception we expect is OutOfRange if the nest
+            // level is invalid.  We push "" in that case.
+            values.push("");
+            return;
+        }
+    } catch (const std::bad_cast&) {
+        isc_throw(EvalTypeError, "Specified packet is not Pkt6");
+    }
+
+    string value;
+    value.resize(binary.size());
+    if (!binary.empty()) {
+        memmove(&value[0], &binary[0], binary.size());
+    }
+    values.push(value);
+}
+
+void
+TokenPkt6::evaluate(const Pkt& pkt, ValueStack& values) {
+
+    vector<uint8_t> binary;
+    try {
+      // Check if it's a Pkt6.  If it's not the dynamic_cast will throw
+      // std::bad_cast (failed dynamic_cast returns NULL for pointers and
+      // throws for references).
+      const Pkt6& pkt6 = dynamic_cast<const Pkt6&>(pkt);
+
+      switch (type_) {
+      case MSGTYPE: {
+          // msg type is an uint8_t integer.  We want a 4 byte string so 0 pad.
+          binary.push_back(0);
+          binary.push_back(0);
+          binary.push_back(0);
+          binary.push_back(pkt6.getType());
+          break;
+      }
+      case TRANSID: {
+          // transaction id is an uint32_t integer.  We want a 4 byte string so copy
+          uint32_t transid = pkt6.getTransid();
+          binary.push_back(transid >> 24);
+          binary.push_back((transid >> 16) & 0xFF);
+          binary.push_back((transid >> 8) & 0xFF);
+          binary.push_back(transid & 0xFF);
+          break;
+      }
+      default:
+          isc_throw(EvalTypeError, "Bad field specified: "
+                    << static_cast<int>(type_) );
+      }
+
+    } catch (const std::bad_cast&) {
+        isc_throw(EvalTypeError, "Specified packet is not Pkt6");
+    }
+
+    string value;
+    value.resize(binary.size());
+    memmove(&value[0], &binary[0], binary.size());
+    values.push(value);
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -463,6 +463,43 @@ public:
         CfgMgr::instance().clear();
     }
 
+    /// @brief Retrieve an option associated with a host.
+    ///
+    /// The option is retrieved from the "dhcp4" option space.
+    ///
+    /// @param host Reference to a host for which an option should be retrieved.
+    /// @param option_code Option code.
+    /// @tparam ReturnType Type of the pointer object returned.
+    ///
+    /// @return Pointer to an option or NULL pointer if not found.
+    template<typename ReturnType>
+    ReturnType
+    retrieveOption(const Host& host, const uint16_t option_code) const {
+        return (retrieveOption<ReturnType>(host, "dhcp4", option_code));
+    }
+
+    /// @brief Retrieve an option associated with a host.
+    ///
+    /// @param host Reference to a host for which an option should be retrieved.
+    /// @param space Option space from which option should be retrieved.
+    /// @param option_code Option code.
+    /// @tparam ReturnType Type of the pointer object returned.
+    ///
+    /// @return Pointer to an option or NULL pointer if not found.
+    template<typename ReturnType>
+    ReturnType
+    retrieveOption(const Host& host, const std::string& space,
+                   const uint16_t option_code) const {
+        ConstCfgOptionPtr cfg_option = host.getCfgOption4();
+        if (cfg_option) {
+            OptionDescriptor opt_desc = cfg_option->get(space, option_code);
+            if (opt_desc.option_) {
+                return (boost::dynamic_pointer_cast<
+                        typename ReturnType::element_type>(opt_desc.option_));
+            }
+        }
+        return (ReturnType());
+    }
 
     boost::scoped_ptr<Dhcpv4Srv> srv_;  ///< DHCP4 server under test
     int rcode_;                         ///< Return code from element parsing
@@ -2874,7 +2911,7 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
             "\"hooks-libraries\": [";
 
     // Append the libraries (separated by commas if needed)
-    for (int i = 0; i < libraries.size(); ++i) {
+    for (unsigned int i = 0; i < libraries.size(); ++i) {
         if (i > 0) {
             config += string(", ");
         }
@@ -3139,7 +3176,7 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
         "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : true, "
+        "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
         "     \"qualifying-suffix\" : \"test.suffix.\" },"
         "\"valid-lifetime\": 4000 }";
@@ -3173,7 +3210,7 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
     EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
     EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
-    EXPECT_TRUE(d2_client_config->getReplaceClientName());
+    EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
 }
@@ -3201,7 +3238,7 @@ TEST_F(Dhcp4ParserTest, invalidD2ClientConfig) {
         "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : true, "
+        "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
         "     \"qualifying-suffix\" : \"test.suffix.\" },"
         "\"valid-lifetime\": 4000 }";
@@ -3364,12 +3401,32 @@ TEST_F(Dhcp4ParserTest, reservations) {
         "      {"
         "        \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
         "        \"ip-address\": \"192.0.3.112\","
-        "        \"hostname\": \"\""
+        "        \"hostname\": \"\","
+        "        \"option-data\": ["
+        "        {"
+        "          \"name\": \"name-servers\","
+        "          \"data\": \"192.0.3.15\""
+        "        },"
+        "        {"
+        "          \"name\": \"default-ip-ttl\","
+        "          \"data\": \"32\""
+        "        }"
+        "        ]"
         "      },"
         "      {"
         "        \"hw-address\": \"01:02:03:04:05:06\","
         "        \"ip-address\": \"192.0.3.120\","
-        "        \"hostname\": \"\""
+        "        \"hostname\": \"\","
+        "        \"option-data\": ["
+        "        {"
+        "          \"name\": \"name-servers\","
+        "          \"data\": \"192.0.3.95\""
+        "        },"
+        "        {"
+        "          \"name\": \"default-ip-ttl\","
+        "          \"data\": \"11\""
+        "        }"
+        "        ]"
         "      }"
         "    ],"
         "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
@@ -3384,10 +3441,20 @@ TEST_F(Dhcp4ParserTest, reservations) {
         "      {"
         "        \"duid\": \"0A:09:08:07:06:05:04:03:02:01\","
         "        \"ip-address\": \"192.0.4.101\","
-        "        \"hostname\": \"\""
+        "        \"hostname\": \"\","
+        "        \"option-data\": ["
+        "        {"
+        "          \"name\": \"name-servers\","
+        "          \"data\": \"192.0.4.11\""
+        "        },"
+        "        {"
+        "          \"name\": \"default-ip-ttl\","
+        "          \"data\": \"95\""
+        "        }"
+        "        ]"
         "      },"
         "      {"
-        "        \"hw-address\": \"06:05:04:03:02:01\","
+        "        \"circuit-id\": \"060504030201\","
         "        \"ip-address\": \"192.0.4.102\","
         "        \"hostname\": \"\""
         "      }"
@@ -3416,7 +3483,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
     // a reservation in the subnet having id of 234. For simplicity the
     // address is a collection of numbers from 1 to 6.
     std::vector<uint8_t> hwaddr_vec;
-    for (int i = 1; i < 7; ++i) {
+    for (unsigned int i = 1; i < 7; ++i) {
         hwaddr_vec.push_back(static_cast<uint8_t>(i));
     }
     HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
@@ -3428,10 +3495,21 @@ TEST_F(Dhcp4ParserTest, reservations) {
     // and not to other two.
     EXPECT_FALSE(hosts_cfg->get4(123, hwaddr));
     EXPECT_FALSE(hosts_cfg->get4(542, hwaddr));
+    // Check that options are assigned correctly.
+    Option4AddrLstPtr opt_dns =
+        retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    Option4AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("192.0.3.95", dns_addrs[0].toText());
+    OptionUint8Ptr opt_ttl =
+        retrieveOption<OptionUint8Ptr>(*host, DHO_DEFAULT_IP_TTL);
+    ASSERT_TRUE(opt_ttl);
+    EXPECT_EQ(11, static_cast<int>(opt_ttl->getValue()));
 
     // Do the same test for the DUID based reservation.
     std::vector<uint8_t> duid_vec;
-    for (int i = 1; i < 0xb; ++i) {
+    for (unsigned int i = 1; i < 0xb; ++i) {
         duid_vec.push_back(static_cast<uint8_t>(i));
     }
     DuidPtr duid(new DUID(duid_vec));
@@ -3440,17 +3518,29 @@ TEST_F(Dhcp4ParserTest, reservations) {
     EXPECT_EQ("192.0.3.112", host->getIPv4Reservation().toText());
     EXPECT_FALSE(hosts_cfg->get4(123, HWAddrPtr(), duid));
     EXPECT_FALSE(hosts_cfg->get4(542, HWAddrPtr(), duid));
+    // Check that options are assigned correctly.
+    opt_dns = retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("192.0.3.15", dns_addrs[0].toText());
+    opt_ttl = retrieveOption<OptionUint8Ptr>(*host, DHO_DEFAULT_IP_TTL);
+    ASSERT_TRUE(opt_ttl);
+    EXPECT_EQ(32, static_cast<int>(opt_ttl->getValue()));
 
-    // The HW address used for one of the reservations in the subnet 542
+    // The circuit-id used for one of the reservations in the subnet 542
     // consists of numbers from 6 to 1. So, let's just reverse the order
     // of the address from the previous test.
-    hwaddr->hwaddr_.assign(hwaddr_vec.rbegin(), hwaddr_vec.rend());
-    host = hosts_cfg->get4(542, hwaddr);
+    std::vector<uint8_t> circuit_id(hwaddr_vec.rbegin(), hwaddr_vec.rend());
+    host = hosts_cfg->get4(542, Host::IDENT_CIRCUIT_ID, &circuit_id[0],
+                           circuit_id.size());
     EXPECT_TRUE(host);
     EXPECT_EQ("192.0.4.102", host->getIPv4Reservation().toText());
     // This reservation must not belong to other subnets.
-    EXPECT_FALSE(hosts_cfg->get4(123, hwaddr));
-    EXPECT_FALSE(hosts_cfg->get4(234, hwaddr));
+    EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_CIRCUIT_ID,
+                                 &circuit_id[0], circuit_id.size()));
+    EXPECT_FALSE(hosts_cfg->get4(234, Host::IDENT_CIRCUIT_ID,
+                                 &circuit_id[0], circuit_id.size()));
 
     // Repeat the test for the DUID based reservation in this subnet.
     duid.reset(new DUID(std::vector<uint8_t>(duid_vec.rbegin(),
@@ -3460,7 +3550,82 @@ TEST_F(Dhcp4ParserTest, reservations) {
     EXPECT_EQ("192.0.4.101", host->getIPv4Reservation().toText());
     EXPECT_FALSE(hosts_cfg->get4(123, HWAddrPtr(), duid));
     EXPECT_FALSE(hosts_cfg->get4(234, HWAddrPtr(), duid));
+    // Check that options are assigned correctly.
+    opt_dns = retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("192.0.4.11", dns_addrs[0].toText());
+    opt_ttl = retrieveOption<OptionUint8Ptr>(*host, DHO_DEFAULT_IP_TTL);
+    ASSERT_TRUE(opt_ttl);
+    EXPECT_EQ(95, static_cast<int>(opt_ttl->getValue()));
+}
 
+// This test checks that it is possible to configure option data for a
+// host using a user defined option format.
+TEST_F(Dhcp4ParserTest, reservationWithOptionDefinition) {
+    ConstElementPtr x;
+    // The following configuration contains host declaration in which
+    // a non-standard option is used. This option has option definition
+    // specified in the configuration.
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"option-def\": [ {"
+        "  \"name\": \"foo\","
+        "  \"code\": 100,"
+        "  \"type\": \"uint32\","
+        "  \"space\": \"isc\""
+        "} ],"
+        "\"subnet4\": [ "
+        " {"
+        "    \"reservations\": ["
+        "      {"
+        "        \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "        \"ip-address\": \"192.0.3.112\","
+        "        \"option-data\": ["
+        "        {"
+        "          \"name\": \"foo\","
+        "          \"data\": \"123\","
+        "          \"space\": \"isc\""
+        "        }"
+        "        ]"
+        "      },"
+        "    ],"
+        "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
+        "    \"subnet\": \"192.0.3.0/24\", "
+        "    \"id\": 234"
+        " } ],"
+        "\"valid-lifetime\": 4000"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 0);
+
+    // Hosts configuration must be available.
+    CfgHostsPtr hosts_cfg = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_TRUE(hosts_cfg);
+
+    // Let's create an object holding DUID of the host. For simplicity the
+    // address is a collection of numbers from 1 to A.
+    std::vector<uint8_t> duid_vec;
+    for (unsigned int i = 1; i < 0xB; ++i) {
+        duid_vec.push_back(static_cast<uint8_t>(i));
+    }
+    DuidPtr duid(new DUID(duid_vec));
+    // Retrieve the reservation and sanity check the address reserved.
+    ConstHostPtr host = hosts_cfg->get4(234, HWAddrPtr(), duid);
+    ASSERT_TRUE(host);
+    EXPECT_EQ("192.0.3.112", host->getIPv4Reservation().toText());
+
+    // Check if the option has been parsed.
+    OptionUint32Ptr opt_foo = retrieveOption<OptionUint32Ptr>(*host, "isc",
+                                                              100);
+    ASSERT_TRUE(opt_foo);
+    EXPECT_EQ(100, opt_foo->getType());
+    EXPECT_EQ(123, opt_foo->getValue());
 }
 
 // This test verifies that the bogus host reservation would trigger a
@@ -3533,6 +3698,37 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
         "    \"reservations\": ["
         "      {"
         "        \"hw-address\": \"06:05:04:03:02:01\""
+        "      }"
+        "    ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    json = Element::fromJSON(config);
+
+    // Remove existing configuration, if any.
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 1);
+
+    // Case 4: Broken specification of option data.
+    config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ "
+        " { "
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
+        "    \"subnet\": \"192.0.4.0/24\","
+        "    \"id\": 542,"
+        "    \"reservations\": ["
+        "      {"
+        "        \"hw-address\": \"06:05:04:03:02:01\","
+        "        \"option-data\": ["
+        "        {"
+        "          \"name\": \"name-servers\","
+        "          \"data\": \"bogus-ip-address\""
+        "        }"
+        "        ]"
         "      }"
         "    ]"
         " } ],"

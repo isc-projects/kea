@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,19 +16,30 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief MySQL True/False constants
+/// @name MySQL constants.
 ///
-/// Declare typed values so as to avoid problems of data conversion.  These
-/// are local to the file but are given the prefix MLM (MySql Lease Manager) to
-/// avoid any likely conflicts with variables in header files named TRUE or
-/// FALSE.
+//@{
+
+/// @brief MySQL false value.
 extern const my_bool MLM_FALSE;
+
+/// @brief MySQL true value.
 extern const my_bool MLM_TRUE;
 
-// Define the current database schema values
+/// @brief MySQL fetch success code.
+extern const int MLM_MYSQL_FETCH_SUCCESS;
 
-const uint32_t CURRENT_VERSION_VERSION = 3;
-const uint32_t CURRENT_VERSION_MINOR = 0;
+/// @brief MySQL fetch failure code.
+extern const int MLM_MYSQL_FETCH_FAILURE;
+
+//@}
+
+/// @name Current database schema version values.
+//@{
+const uint32_t CURRENT_VERSION_VERSION = 4;
+const uint32_t CURRENT_VERSION_MINOR = 2;
+
+//@}
 
 /// @brief Fetch and Release MySQL Results
 ///
