@@ -159,7 +159,13 @@ int lease4_select(CalloutHandle& handle) {
     // Fetch the client's packet from the callout context. It should be
     // there since we pushed it into the context in pkt4_receive().
     Pkt4Ptr query;
-    handle.getContext("query4", query);
+    try {
+        handle.getContext("query4", query);
+    } catch(...) {
+        // If the context hasn't been set, get() will throw. We'll
+        // swallow it and report it the same as packet there but null.
+    }
+
     if (!query) {
         LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_SELECT_NO_QRY);
         return (1);
@@ -192,7 +198,13 @@ int lease4_renew(CalloutHandle& handle) {
     // Fetch the client's packet from the callout context. It should be
     // there since we pushed it into the context in pkt4_receive().
     Pkt4Ptr query;
-    handle.getContext("query4", query);
+    try {
+        handle.getContext("query4", query);
+    } catch(...) {
+        // If the context hasn't been set, get() will throw. We'll
+        // swallow it and report it the same as packet there but null.
+    }
+
     if (!query) {
         LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_RENEW_NO_QRY);
         return (1);

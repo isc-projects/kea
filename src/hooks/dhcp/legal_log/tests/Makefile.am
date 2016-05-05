@@ -36,6 +36,7 @@ libdhcp_legal_log_unittests_SOURCES = run_unittests.cc
 libdhcp_legal_log_unittests_SOURCES += legal_file_unittests.cc
 libdhcp_legal_log_unittests_SOURCES += legal_log4_unittests.cc
 libdhcp_legal_log_unittests_SOURCES += legal_log6_unittests.cc
+libdhcp_legal_log_unittests_SOURCES += test_utils.h
 
 libdhcp_legal_log_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 
