@@ -316,6 +316,7 @@ TEST_F(LegalFileTest, writeFile) {
     checkFileLines(genName(tomorrow), tomorrow_now_string, tomorrow_lines);
 }
 
+// Verifies output of genDurationString()
 TEST_F(LegalFileTest, genDurationString) {
     EXPECT_EQ("0 hrs 0 min 0 secs", LegalFile::genDurationString(0));
     EXPECT_EQ("0 hrs 0 min 1 secs", LegalFile::genDurationString(1));
