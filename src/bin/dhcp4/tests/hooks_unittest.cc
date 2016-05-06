@@ -17,6 +17,9 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/option.h>
 #include <asiolink/io_address.h>
+#include "marker_file.h"
+#include "test_libraries.h"
+
 #include <vector>
 
 using namespace std;
@@ -554,6 +557,39 @@ ClientIdPtr HooksDhcpv4SrvTest::callback_clientid_;
 Lease4Ptr HooksDhcpv4SrvTest::callback_lease4_;
 const Subnet4Collection* HooksDhcpv4SrvTest::callback_subnet4collection_;
 vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
+
+/// @brief Fixture class used to do basic library load/unload tests
+class LoadUnloadDhcpv4SrvTest : public ::testing::Test {
+public:
+    /// @brief Pointer to the tested server object
+    boost::shared_ptr<NakedDhcpv4Srv> server_;
+
+    LoadUnloadDhcpv4SrvTest() {
+        reset();
+    }
+
+    /// @brief Destructor
+    ~LoadUnloadDhcpv4SrvTest() {
+        server_.reset();
+        reset();
+    };
+
+    /// @brief Reset hooks data
+    ///
+    /// Resets the data for the hooks-related portion of the test by ensuring
+    /// that no libraries are loaded and that any marker files are deleted.
+    void reset() {
+        // Unload any previously-loaded libraries.
+        HooksManager::unloadLibraries();
+
+        // Get rid of any marker files.
+        static_cast<void>(remove(LOAD_MARKER_FILE));
+        static_cast<void>(remove(UNLOAD_MARKER_FILE));
+
+        IfaceMgr::instance().deleteAllExternalSockets();
+        CfgMgr::instance().clear();
+    }
+};
 
 // Checks if callouts installed on pkt4_receive are indeed called and the
 // all necessary parameters are passed.
@@ -1572,4 +1608,44 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     // lease returned and lease from the lease manager) all match.
     EXPECT_EQ(addr, from_mgr->addr_);
     EXPECT_EQ(addr, callback_lease4_->addr_);
+}
+
+
+// Verifies that libraries are unloaded by server destruction
+// The callout libraries write their library index number to a marker
+// file upon load and unload, making it simple to test whether or not
+// the load and unload callouts have been invoked.
+TEST_F(LoadUnloadDhcpv4SrvTest, unloadLibaries) {
+
+    ASSERT_NO_THROW(server_.reset(new NakedDhcpv4Srv()));
+
+    // Ensure no marker files to start with.
+    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Load two libraries
+    std::vector<std::string> libraries;
+    libraries.push_back(CALLOUT_LIBRARY_1);
+    libraries.push_back(CALLOUT_LIBRARY_2);
+    HooksManager::loadLibraries(libraries);
+
+    // Check they are loaded.
+    std::vector<std::string> loaded_libraries =
+        HooksManager::getLibraryNames();
+    ASSERT_TRUE(libraries == loaded_libraries);
+
+    // ... which also included checking that the marker file created by the
+    // load functions exists and holds the correct value (of "12" - the
+    // first library appends "1" to the file, the second appends "2"). Also
+    // check that the unload marker file does not yet exist.
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    server_.reset();
+
+    // Check that the libraries have unloaded and reloaded.  The libraries are
+    // unloaded in the reverse order to which they are loaded.  When they load,
+    // they should append information to the loading marker file.
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
 }
