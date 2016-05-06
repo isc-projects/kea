@@ -3,7 +3,8 @@ SUBDIRS = .
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/legal_log -I$(top_srcdir)/src/hooks/dhcp/legal_log
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/hooks/dhcp/legal_log/tests\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/hooks/dhcp/legal_log/libloadtests\"
+AM_CPPFLAGS += -DLEGAL_LOG_LIB_SO=\"$(abs_top_builddir)/src/hooks/dhcp/legal_log/.libs/libdhcp_legal_log.so\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -31,10 +32,7 @@ if HAVE_GTEST
 TESTS += libdhcp_legal_log_unittests
 
 libdhcp_legal_log_unittests_SOURCES = run_unittests.cc
-libdhcp_legal_log_unittests_SOURCES += legal_file_unittests.cc
-libdhcp_legal_log_unittests_SOURCES += legal_log4_unittests.cc
-libdhcp_legal_log_unittests_SOURCES += legal_log6_unittests.cc
-libdhcp_legal_log_unittests_SOURCES += test_utils.h
+libdhcp_legal_log_unittests_SOURCES += load_unload_unittests.cc
 
 libdhcp_legal_log_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 
@@ -48,8 +46,7 @@ if USE_CLANGPP
 libdhcp_legal_log_unittests_CXXFLAGS += -Wno-unused-parameter
 endif
 
-libdhcp_legal_log_unittests_LDADD = $(top_builddir)/src/hooks/dhcp/legal_log/liblegl.la
-libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+libdhcp_legal_log_unittests_LDADD = $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la

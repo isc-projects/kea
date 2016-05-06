@@ -1499,6 +1499,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/legal_log/Makefile
+                 src/hooks/dhcp/legal_log/libloadtests/Makefile
                  src/hooks/dhcp/legal_log/tests/Makefile
                  src/hooks/dhcp/user_chk/Makefile
                  src/hooks/dhcp/user_chk/tests/Makefile
