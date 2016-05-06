@@ -1,7 +1,10 @@
-SUBDIRS = . tests
+SUBDIRS = . tests libloadtests
+
+legal_log_dir = @localstatedir@/@PACKAGE@/var
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS +=  -DLEGAL_LOG_DIR="\"$(legal_log_dir)\""
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Some versions of GCC warn about some versions of Boost regarding

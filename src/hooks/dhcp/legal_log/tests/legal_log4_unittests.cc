@@ -5,14 +5,21 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /// @file This file contains tests which verify DHCPv4 legal file entry
-/// generation as well as tests which exercise the v4 callouts, themselves.
-#include <exceptions/exceptions.h>
+/// generation as well as tests which exercise v4 callouts: pkt4_receive
+/// lease4_select, lease4_renew.  These tests assume the legal log library
+/// is linked in, not loaded.  This allows a great deal more flexiblity
+/// in testing, such as overriding and accessing the legal_file instance.
+/// The load and unload callouts are excercised in ../libloadtests, which
+/// actually uses the HooksManager to load and unload the library.
 
+#include <exceptions/exceptions.h>
+#include <cc/data.h>
 #include <dhcp/pkt4.h>
 #include <dhcpsrv/lease.h>
 #include <hooks/callout_manager.h>
 #include <hooks/library_handle.h>
 #include <hooks/hooks.h>
+#include <hooks/hooks_manager.h>
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int_array.h>
@@ -31,8 +38,6 @@ extern LegalFilePtr legal_file;
 extern std::string genLease4Entry(Pkt4Ptr query, Lease4Ptr lease, bool renewal);
 
 extern "C" {
-extern int load(LibraryHandle& handle);
-extern int unload();
 extern int pkt4_receive(CalloutHandle& handle);
 extern int lease4_select(CalloutHandle& handle);
 extern int lease4_renew(CalloutHandle& handle);
@@ -226,34 +231,6 @@ TEST(Lease4EntryTest, relayedClient) {
               " connected via relay at address: 192.2.16.33"
               ", identified by remote-id: 87:f6:79:77:ef",
               entry);
-}
-
-// Verifies that the load callout instantiates and opens the LegalFile and
-// that unload() resets it.
-// @todo When 4297 is complete, will need to expand this based on
-// parameters for path, basename, etc.  NOTE THAT once 4297 is done this
-// test must not use the default values (default_legal_path and default_legal_base)
-// as we do not want to risk altering a LIVE file.
-TEST_F(CalloutTest, loadAndUnload) {
-    LibraryHandle library(getCalloutManager().get());
-
-    // Invoke the callout.  It should succeed.
-    int ret;
-    EXPECT_NO_THROW(ret = load(library));
-    EXPECT_EQ(0, ret);
-
-    // Verify the legal_file was created and is open
-    ASSERT_TRUE(legal_file);
-    EXPECT_TRUE(legal_file->isOpen());
-
-    // Save the filename so we can remove it after unload.
-    std::string fname = legal_file->getFileName();
-
-    EXPECT_NO_THROW(ret = unload());
-    EXPECT_EQ(0, ret);
-    EXPECT_FALSE(legal_file);
-
-    ::remove(fname.c_str());
 }
 
 // Verifies that the pkt4_receive callout caches DHCPREQUEST packets

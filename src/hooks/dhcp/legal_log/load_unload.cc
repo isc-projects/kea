@@ -8,6 +8,7 @@
 
 #include <config.h>
 
+#include <cc/data.h>
 #include <hooks/hooks.h>
 #include <legal_file.h>
 #include <legal_log_log.h>
@@ -24,7 +25,7 @@ using namespace legal_log;
 LegalFilePtr legal_file;
 
 /// @brief Default path name
-const char* default_legal_path = "/tmp";
+const char* default_legal_path = LEGAL_LOG_DIR;
 
 /// @brief Default base name
 const char* default_legal_base = "kea-legal";
@@ -36,21 +37,39 @@ extern "C" {
 
 /// @brief Called by the Hooks library manager when the library is loaded.
 ///
-/// Instantiates the LegalFile and then opens it.
-/// @todo once 4297 is completed this needs to be modified to get the
-/// path and base name from the library's parameters.
+/// Instantiates the LegalFile and then opens it.  It supports the following
+/// parameters via the Hook Library Parameter mechanism::
 ///
-/// If the file cannot be opened, the load will fail.
+/// "path" - Directory in which the legal file(s) will be written.  The default
+/// value is <prefix>/kea/var.  The directory must exist.
 ///
-/// @return Returns 0 upon success, non-zero upon failure.
-int load(LibraryHandle&) {
+/// "base-name" - An arbitrary value which is used in conjunction with current
+/// system date to form the current legal file name.  It defaults to "kea-legal".
+///
+/// Legal file names will have the form:
+///
+///     <path>/<base-name>.<CCYYMMDD>.txt
+///
+/// @return Returns 0 upon success, non-zero if the legal file cannot be opened
+int load(LibraryHandle& handle) {
     // non-zero indicates an error.
     int ret_val = 0;
 
     try {
-        // @todo  get path and base name from parameters
-        legal_file.reset(new LegalFile(default_legal_path,
-                                       default_legal_base));
+        std::string path(LEGAL_LOG_DIR);
+        std::string base(default_legal_base);
+
+        data::ConstElementPtr param = handle.getParameter("path");
+        if (param && !param->stringValue().empty()) {
+            path = param->stringValue();
+        }
+
+        param = handle.getParameter("base-name");
+        if (param && !param->stringValue().empty()) {
+            base = param->stringValue();
+        }
+
+        legal_file.reset(new LegalFile(path, base));
         legal_file->open();
     }
     catch (const std::exception& ex) {
