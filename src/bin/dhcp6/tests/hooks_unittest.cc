@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,9 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <cc/command_interpreter.h>
+#include <dhcp6/tests/marker_file.h>
+#include <dhcp6/tests/test_libraries.h>
+
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -543,6 +546,38 @@ const Subnet6Collection* HooksDhcpv6SrvTest::callback_subnet6collection_;
 vector<string> HooksDhcpv6SrvTest::callback_argument_names_;
 Lease6Ptr HooksDhcpv6SrvTest::callback_lease6_;
 boost::shared_ptr<Option6IA> HooksDhcpv6SrvTest::callback_ia_na_;
+
+/// @brief Fixture class used to do basic library load/unload tests
+class LoadUnloadDhcpv6SrvTest : public ::testing::Test {
+public:
+    /// @brief Pointer to the tested server object
+    boost::shared_ptr<NakedDhcpv6Srv> server_;
+
+    LoadUnloadDhcpv6SrvTest() {
+        reset();
+    }
+
+    /// @brief Destructor
+    ~LoadUnloadDhcpv6SrvTest() {
+        server_.reset();
+        reset();
+    };
+
+    /// @brief Reset hooks data
+    ///
+    /// Resets the data for the hooks-related portion of the test by ensuring
+    /// that no libraries are loaded and that any marker files are deleted.
+    void reset() {
+        // Unload any previously-loaded libraries.
+        HooksManager::unloadLibraries();
+
+        // Get rid of any marker files.
+        static_cast<void>(remove(LOAD_MARKER_FILE));
+        static_cast<void>(remove(UNLOAD_MARKER_FILE));
+
+        CfgMgr::instance().clear();
+    }
+};
 
 // Checks if callouts installed on pkt6_receive are indeed called and the
 // all necessary parameters are passed.
@@ -1612,6 +1647,45 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
     ASSERT_TRUE(from_mgr);
     // Now check that it's NOT declined.
     EXPECT_EQ(Lease::STATE_DEFAULT, from_mgr->state_);
+}
+
+// Verifies that libraries are unloaded by server destruction
+// The callout libraries write their library index number to a marker
+// file upon load and unload, making it simple to test whether or not
+// the load and unload callouts have been invoked.
+TEST_F(LoadUnloadDhcpv6SrvTest, unloadLibaries) {
+
+    ASSERT_NO_THROW(server_.reset(new NakedDhcpv6Srv(0)));
+
+    // Ensure no marker files to start with.
+    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Load two libraries
+    std::vector<std::string> libraries;
+    libraries.push_back(CALLOUT_LIBRARY_1);
+    libraries.push_back(CALLOUT_LIBRARY_2);
+    HooksManager::loadLibraries(libraries);
+
+    // Check they are loaded.
+    std::vector<std::string> loaded_libraries =
+        HooksManager::getLibraryNames();
+    ASSERT_TRUE(libraries == loaded_libraries);
+
+    // ... which also included checking that the marker file created by the
+    // load functions exists and holds the correct value (of "12" - the
+    // first library appends "1" to the file, the second appends "2"). Also
+    // check that the unload marker file does not yet exist.
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    server_.reset();
+
+    // Check that the libraries have unloaded and reloaded.  The libraries are
+    // unloaded in the reverse order to which they are loaded.  When they load,
+    // they should append information to the loading marker file.
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
 }
 
 }   // end of anonymous namespace
