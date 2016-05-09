@@ -1661,31 +1661,31 @@ TEST_F(LoadUnloadDhcpv6SrvTest, unloadLibaries) {
     ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
     ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
-    // Load two libraries
-    std::vector<std::string> libraries;
-    libraries.push_back(CALLOUT_LIBRARY_1);
-    libraries.push_back(CALLOUT_LIBRARY_2);
-    HooksManager::loadLibraries(libraries);
+    // Load the test libraries
+    HookLibsCollection libraries;
+    libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_1),
+                                  ConstElementPtr()));
+    libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_2),
 
-    // Check they are loaded.
-    std::vector<std::string> loaded_libraries =
-        HooksManager::getLibraryNames();
-    ASSERT_TRUE(libraries == loaded_libraries);
+                                  ConstElementPtr()));
+    ASSERT_TRUE(HooksManager::loadLibraries(libraries));
 
-    // ... which also included checking that the marker file created by the
-    // load functions exists and holds the correct value (of "12" - the
-    // first library appends "1" to the file, the second appends "2"). Also
+    // Verify that they load functions created the LOAD_MARKER_FILE
+    // and that it's contents are correct: "12" - the first library
+    // appends "1" to the file, the second appends "2"). Also
     // check that the unload marker file does not yet exist.
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
+    // Destroy the server, instance which should unload the libraries.
     server_.reset();
 
-    // Check that the libraries have unloaded and reloaded.  The libraries are
-    // unloaded in the reverse order to which they are loaded.  When they load,
-    // they should append information to the loading marker file.
+    // Check that the libraries were unloaded. The libraries are
+    // unloaded in the reverse order to which they are loaded, and
+    // this should be reflected in the unload file.
     EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+
 }
 
 }   // end of anonymous namespace
