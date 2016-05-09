@@ -214,6 +214,9 @@ Dhcpv6Srv::~Dhcpv6Srv() {
     IfaceMgr::instance().closeSockets();
 
     LeaseMgrFactory::destroy();
+
+    // Explicitly unload hooks
+    HooksManager::getHooksManager().unloadLibraries();
 }
 
 void Dhcpv6Srv::shutdown() {
