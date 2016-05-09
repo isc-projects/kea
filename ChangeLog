@@ -1,3 +1,10 @@
+1112.   [bug]       tmark
+	An explicit call to unload the hook libraries prior to server
+	exit was added to both kea-dhcp6 and kea-dhcp4.  This corrects
+	an issue where loggging components were being destroyed prior
+	to hook librarires being unloaded.
+	(Trac #4492, git 2a4792b3551cce2fb9147f33f032ae7e71791d21)
+
 1111.	[bug]		marcin
 	perfdhcp: Improved algorithm for dropping timed out transactions.
 	This prevents growing memory consumption due to storing timed
