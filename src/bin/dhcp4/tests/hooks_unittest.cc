@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,8 +17,8 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/option.h>
 #include <asiolink/io_address.h>
-#include "marker_file.h"
-#include "test_libraries.h"
+#include <dhcp4/tests/marker_file.h>
+#include <dhcp4/tests/test_libraries.h>
 
 #include <vector>
 
@@ -585,8 +585,6 @@ public:
         // Get rid of any marker files.
         static_cast<void>(remove(LOAD_MARKER_FILE));
         static_cast<void>(remove(UNLOAD_MARKER_FILE));
-
-        IfaceMgr::instance().deleteAllExternalSockets();
         CfgMgr::instance().clear();
     }
 };
