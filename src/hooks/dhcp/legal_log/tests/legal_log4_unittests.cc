@@ -17,9 +17,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcpsrv/lease.h>
 #include <hooks/callout_manager.h>
-#include <hooks/library_handle.h>
 #include <hooks/hooks.h>
-#include <hooks/hooks_manager.h>
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int_array.h>
@@ -236,32 +234,38 @@ TEST(Lease4EntryTest, relayedClient) {
 // Verifies that the pkt4_receive callout caches DHCPREQUEST packets
 TEST_F(CalloutTest, pkt4_receive) {
     CalloutHandle handle(getCalloutManager());
+    for (int i = 1; i <= DHCPLEASEQUERYDONE; i++) {
+        // Create a v4 packet with current type.
+        Pkt4Ptr pkt4;
+        try {
+            pkt4.reset(new Pkt4(i, 0x77));
+        } catch (...) {
+            // invalid types won't construct, skip em
+            continue;
+        }
 
-    // Create a DHCPDISCOVER and use it as the callout query4 argument.
-    Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 0x77));
-    handle.setArgument("query4", pkt4);
+        // Set callout argment to the "inbound" packet
+        handle.setArgument("query4", pkt4);
 
-    // Invoke the callout. It should succeed but not cache the packet.
-    int ret;
-    ASSERT_NO_THROW(ret = pkt4_receive(handle));
-    EXPECT_EQ(0, ret);
+        // Invoke the callout which should always succeed.
+        int ret;
+        ASSERT_NO_THROW(ret = pkt4_receive(handle));
+        EXPECT_EQ(0, ret);
 
-    // Verify the context does NOT contain the discover.
-    Pkt4Ptr from_context;
-    ASSERT_THROW(handle.getContext("query4", from_context), NoSuchCalloutContext);
-
-    // Create a DHCPREQUEST and use it as the callout query4 argument.
-    pkt4.reset(new Pkt4(DHCPREQUEST, 0x77));
-    handle.setArgument("query4", pkt4);
-
-    // Invoke the callout. It should succeed and cache the packet.
-    ASSERT_NO_THROW(ret = pkt4_receive(handle));
-    EXPECT_EQ(0, ret);
-
-    // Verify the request was cached.
-    ASSERT_NO_THROW(handle.getContext("query4", from_context));
-    ASSERT_TRUE(from_context);
-    EXPECT_EQ(pkt4, from_context);
+        Pkt4Ptr from_context;
+        if (i == DHCPREQUEST) {
+            // Verify the packet was cached in the call context.
+            ASSERT_NO_THROW(handle.getContext("query4", from_context));
+            ASSERT_TRUE(from_context);
+            EXPECT_EQ(pkt4, from_context);
+            handle.deleteContext("query4");
+        } else {
+            // Verify the context does NOT contain the discover.
+            ASSERT_THROW(handle.getContext("query4", from_context),
+                         NoSuchCalloutContext)
+                         << " packet cached for type:" << i << "?";
+        }
+    }
 }
 
 // Verifies that the lease4_select callout
