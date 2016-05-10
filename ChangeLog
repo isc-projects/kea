@@ -1,4 +1,10 @@
-1112.   [bug]       tmark
+1113.	[func]		tomek
+	DHCPv4 subnet selection can now be selected based on IPv6
+	information. This is part of ongoing effort to support RFC7341:
+	DHCPv4-over-DHCPv6.
+	(Trac #4112, git 3352685981ec8ca9a90f7405ff56cd31af6fb0d9)
+
+1112.   [bug]		tmark
 	An explicit call to unload the hook libraries prior to server
 	exit was added to both kea-dhcp6 and kea-dhcp4.  This corrects
 	an issue where loggging components were being destroyed prior
