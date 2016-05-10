@@ -600,7 +600,7 @@ private:
     uint8_t dhcp_identifier_buffer_[DUID::MAX_DUID_LEN];
 
     /// Length of a data in the dhcp_identifier_buffer_.
-    size_t dhcp_identifier_length_;
+    unsigned long dhcp_identifier_length_;
 
     /// Type of the identifier in the dhcp_identifier_buffer_. This
     /// value corresponds to the @ref Host::IdentifierType value.
@@ -865,7 +865,7 @@ private:
     char ipv6_address_buffer_[ADDRESS6_TEXT_MAX_LEN + 1];
 
     /// @brief Length of the textual address representation.
-    size_t ipv6_address_buffer_len_;
+    unsigned long ipv6_address_buffer_len_;
 
     /// @brief Length of the prefix (128 for addresses)
     uint8_t prefix_len_;
@@ -996,7 +996,7 @@ private:
     std::string address_;
 
     /// @brief Length of the textual address representation.
-    size_t address_len_;
+    unsigned long address_len_;
 
      /// @brief Length of the prefix (128 for addresses).
     uint8_t prefix_len_;
