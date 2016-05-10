@@ -4,49 +4,37 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-% LEGAL_FILE_HOOK_LEASE4_RENEW_NO_LEGAL_FILE LegalFile instance is null
+% LEGAL_FILE_HOOK_LEASE4_NO_LEGAL_FILE LegalFile instance is null
 This is an error message issued when the LegalLogHook library attempted to
 write a IPv4 lease renewal notice to the legal file and the file instance
 has not been created.  This is a programmatic error and should not occur.
 
-% LEGAL_FILE_HOOK_LEASE4_RENEW_WRITE_ERROR Could not write to the legal file: %1
+% LEGAL_FILE_HOOK_LEASE4_WRITE_ERROR Could not write to the legal file: %1
 This is an error message issued when the LegalLogHook library attempted to
 write a IPv4 lease assignement notice to the legal file and the write failed.
 The message content should include the phsycial file name and the nature of the
 error.
 
-% LEGAL_FILE_HOOK_LEASE4_SELECT_NO_LEGAL_FILE LegalFile instance is null
+% LEGAL_FILE_HOOK_LEASE6_NO_LEGAL_FILE LegalFile instance is null
 This is an error message issued when the LegalLogHook library attempted to
-write a IPv4 lease assignement notice to the legal file and the file instance
-has not been created.  This is a programmatic error and should not occur.
+write a IPv6 lease entry to the legal file and the file instance has not been
+created.  This is a programmatic error and should not occur.
 
-% LEGAL_FILE_HOOK_LEASE4_SELECT_WRITE_ERROR Could not write to the legal file: %1
+% LEGAL_FILE_HOOK_LEASE6_WRITE_ERROR Could not write to the legal file: %1
 This is an error message issued when the LegalLogHook library attempted to
-write a IPv4 lease assignement notice to the legal file and the write failed.
+write a IPv6 lease entry to the legal file and the write failed.
 The message content should include the phsycial file name and the nature of the
 error.
 
-% LEGAL_FILE_HOOK_LEASE6_RENEW_NO_LEGAL_FILE LegalFile instance is null
-This is an error message issued when the LegalLogHook library attempted to
-write a IPv6 lease renewal notice to the legal file and the file instance
-has not been created.  This is a programmatic error and should not occur.
+% LEGAL_FILE_HOOK_PKT4_RECEIVE_ERROR Unexpected error occurred: %1
+This is an error message issued when an expected error occurs during the
+LegalLogHook callout for pkt4_receive.  This is programmatic error and
+should not occur.
 
-% LEGAL_FILE_HOOK_LEASE6_RENEW_WRITE_ERROR Could not write to the legal file: %1
-This is an error message issued when the LegalLogHook library attempted to
-write a IPv6 lease assignement notice to the legal file and the write failed.
-The message content should include the phsycial file name and the nature of the
-error.
-
-% LEGAL_FILE_HOOK_LEASE6_SELECT_NO_LEGAL_FILE LegalFile instance is null
-This is an error message issued when the LegalLogHook library attempted to
-write a IPv6 lease assignement notice to the legal file and the file instance
-has not been created.  This is a programmatic error and should not occur.
-
-% LEGAL_FILE_HOOK_LEASE6_SELECT_WRITE_ERROR Could not write to the legal file: %1
-This is an error message issued when the LegalLogHook library attempted to
-write a IPv4 lease assignement notice to the legal file and the write failed.
-The message content should include the phsycial file name and the nature of the
-error.
+% LEGAL_FILE_HOOK_PKT6_RECEIVE_ERROR Unexpected error occurred: %1
+This is an error message issued when an expected error occurs during the
+LegalLogHook callout for pkt6_receive.  This is programmatic error and
+should not occur.
 
 % LEGAL_LOG_HOOK_FILE_CLOSED Legal file closed: %1
 This is an informational message issued when the LegalLogHook library
@@ -70,33 +58,3 @@ files will be altered, nor any legal logging entries emitted.
 This is an error message issued when an error occurs while unloading the
 LegalLogHook library.  This is unlikely to occur and normal operations of the
 library will likely resume when it is next loaded.
-
-% LEGAL_FILE_HOOK_PKT4_RECEIVE_ERROR Unexpected error occurred: %1
-This is an error message issued when an expected error occurs during the
-LegalLogHook callout for pkt4_receive.  This is programmatic error and
-should not occur.
-
-% LEGAL_FILE_HOOK_LEASE4_SELECT_NO_QRY Context contained no packet
-This is an error message issued when the context passed to the LegalLogHook
-lease4_select callout does not containt the client packet. This is
-programmatic error and should not occur.
-
-% LEGAL_FILE_HOOK_LEASE4_RENEW_NO_QRY Context contained no packet
-This is an error message issued when the context passed to the LegalLogHook
-lease4_select callout does not containt the client packet. This is
-programmatic error and should not occur.
-
-% LEGAL_FILE_HOOK_PKT6_RECEIVE_ERROR Unexpected error occurred: %1
-This is an error message issued when an expected error occurs during the
-LegalLogHook callout for pkt6_receive.  This is programmatic error and
-should not occur.
-
-% LEGAL_FILE_HOOK_LEASE6_SELECT_NO_QRY Context contained no packet
-This is an error message issued when the context passed to the LegalLogHook
-lease6_select callout does not containt the client packet. This is
-programmatic error and should not occur.
-
-% LEGAL_FILE_HOOK_LEASE6_RENEW_NO_QRY Context contained no packet
-This is an error message issued when the context passed to the LegalLogHook
-lease6_select callout does not containt the client packet. This is
-programmatic error and should not occur.

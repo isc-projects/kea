@@ -112,6 +112,46 @@ std::string genLease4Entry(Pkt4Ptr query, Lease4Ptr lease, bool renewal) {
     return(stream.str());
 }
 
+/// @brief Produces an DHCPv4 legal log entry from a callout handle
+///
+/// Extracts the inbound packet and lease from the Callout, generates the
+/// log entry text and writes it to the legal file.  If the callout context
+/// packet is an empty pointer it simply returns.  If the the legal file
+/// has not been instantiated or writing to it fails, the function log the
+/// error and return failure.
+///
+/// @param handle CalloutHandle which provides access to context.
+/// @param renewal - indicates whether or not the lease is a renewal.
+///
+/// @return - returns 0 upon success, non-zero otherwise
+int legallog4_handler(CalloutHandle& handle, bool renewal) {
+    // Fetch the client's packet from the callout context.
+    Pkt4Ptr query;
+    handle.getContext("query4", query);
+    if (!query) {
+        return (0);
+    }
+
+    if (!legal_file) {
+        LOG_ERROR(legal_log_logger,
+                  LEGAL_FILE_HOOK_LEASE4_NO_LEGAL_FILE);
+        return (1);
+    }
+
+    Lease4Ptr lease;
+    handle.getArgument("lease4", lease);
+    try {
+        legal_file->writeln(genLease4Entry(query,lease, renewal));
+    } catch (const std::exception& ex) {
+        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_WRITE_ERROR)
+                  .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
+
+
 // Functions accessed by the hooks framework use C linkage to avoid the name
 // mangling that accompanies use of the C++ compiler as well as to avoid
 // issues related to namespaces.
@@ -119,21 +159,24 @@ extern "C" {
 
 /// @brief  This callout is called at the "pkt4_receive" hook.
 ///
-/// If the inbound packet is a DHCP REQUEST, we push the packet
-/// to the context, so we can retrieve necessary info in lease4_select
-/// or lease4_renew to generate the legal log.  Currently those
-/// callouts do not receive the packet as an argument.
+/// We need the inbound packet to create the log entries and currently,
+/// neither the lease4_select or lease4_renew callouts have access to it.
+/// This callout will retrieve the inbound packet from the callout arguments
+/// and add it to the callout context as "query4", making it available to
+/// subsequent callouts.  If the packet is not a DHCPREQUEST, the callout will
+/// add an empty Pkt4Ptr.
 ///
 /// @param handle CalloutHandle which provides access to context.
 ///
 /// @return 0 upon success, non-zero otherwise.
 int pkt4_receive(CalloutHandle& handle) {
-
     try {
         Pkt4Ptr query;
         handle.getArgument("query4", query);
         if (query->getType() == DHCPREQUEST) {
             handle.setContext("query4", query);
+        } else {
+            handle.setContext("query4", Pkt4Ptr());
         }
     } catch (const std::exception& ex) {
         LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_PKT4_RECEIVE_ERROR)
@@ -147,80 +190,26 @@ int pkt4_receive(CalloutHandle& handle) {
 
 /// @brief  This callout is called at the "lease4_select" hook.
 ///
+/// Generates an entry in the legal log for a lease assignment if
+/// the callout context value "query4" is not an empty pointer.
+///
 /// @param handle CalloutHandle which provides access to context.
 ///
 /// @return 0 upon success, non-zero otherwise.
 int lease4_select(CalloutHandle& handle) {
-    if (!legal_file) {
-        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_SELECT_NO_LEGAL_FILE);
-        return (1);
-    }
-
-    // Fetch the client's packet from the callout context. It should be
-    // there since we pushed it into the context in pkt4_receive().
-    Pkt4Ptr query;
-    try {
-        handle.getContext("query4", query);
-    } catch(...) {
-        // If the context hasn't been set, get() will throw. We'll
-        // swallow it and report it the same as packet there but null.
-    }
-
-    if (!query) {
-        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_SELECT_NO_QRY);
-        return (1);
-    }
-
-    Lease4Ptr lease;
-    handle.getArgument("lease4", lease);
-    try {
-        legal_file->writeln(genLease4Entry(query,lease, false));
-    } catch (const std::exception& ex) {
-        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_SELECT_WRITE_ERROR)
-                  .arg(ex.what());
-        return (1);
-    }
-
-    return (0);
+    return(legallog4_handler(handle, false));
 }
 
 /// @brief  This callout is called at the "lease4_renew" hook.
+///
+/// Generates an entry in the legal log for a lease renewal if
+/// the callout context value "query4" is not an empty pointer.
 ///
 /// @param handle CalloutHandle which provides access to context.
 ///
 /// @return 0 upon success, non-zero otherwise.
 int lease4_renew(CalloutHandle& handle) {
-    if (!legal_file) {
-        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_RENEW_NO_LEGAL_FILE);
-        return (1);
-    }
-
-    // Fetch the client's packet from the callout context. It should be
-    // there since we pushed it into the context in pkt4_receive().
-    Pkt4Ptr query;
-    try {
-        handle.getContext("query4", query);
-    } catch(...) {
-        // If the context hasn't been set, get() will throw. We'll
-        // swallow it and report it the same as packet there but null.
-    }
-
-    if (!query) {
-        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_RENEW_NO_QRY);
-        return (1);
-    }
-
-    Lease4Ptr lease;
-    handle.getArgument("lease4", lease);
-    try {
-        legal_file->writeln(genLease4Entry(query,lease, true));
-    } catch (const std::exception& ex) {
-        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_RENEW_WRITE_ERROR)
-                  .arg(ex.what());
-        return (1);
-    }
-
-    return (0);
+    return(legallog4_handler(handle, true));
 }
 
 } // end extern "C"
