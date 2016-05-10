@@ -12,6 +12,7 @@
 #include <dhcp/classify.h>
 #include <dhcp/option_space_container.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/cfg_4o6.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/triplet.h>
 #include <dhcpsrv/lease.h>
@@ -499,82 +500,6 @@ private:
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
 typedef boost::shared_ptr<Subnet> SubnetPtr;
 
-/// @brief This structure contains information about DHCP4o6 (RFC7341)
-///
-/// DHCP4o6 is completely optional. If it is not enabled, this structure
-/// does not contain any information.
-struct Cfg4o6 {
-
-    /// the default constructor.
-    ///
-    /// Initializes fields to their default value.
-    Cfg4o6()
-    :enabled_(false), subnet4o6_(std::make_pair(asiolink::IOAddress("::"), 128u)) {
-    }
-
-    /// @brief Returns whether the DHCP4o6 is enabled or not.
-    /// @return true if enabled
-    bool enabled() const {
-        return (enabled_);
-    }
-
-    /// @brief Sets the DHCP4o6 enabled status.
-    /// @param enabled specifies if the DHCP4o6 should be enabled or not
-    void enabled(bool enabled) {
-        enabled_ = enabled;
-    }
-
-    /// @brief Returns the DHCP4o6 interface.
-    /// @return value of the 4o6-interface parameter.
-    std::string getIface4o6() const {
-        return (iface4o6_);
-    }
-
-    /// @brief Sets the 4o6-interface.
-    /// @param iface name of the network interface the 4o6 traffic is received on
-    void setIface4o6(const std::string& iface) {
-        iface4o6_ = iface;
-    }
-
-    /// @brief Returns prefix/len for the IPv6 subnet.
-    /// @return prefix/length pair
-    std::pair<asiolink::IOAddress, uint8_t> getSubnet4o6() const {
-        return (subnet4o6_);
-    }
-
-    /// @brief Sets the prefix/length information (content of the 4o6-subnet).
-    /// @param subnet IOAddress that represents a prefix
-    /// @param prefix specifies prefix length
-    void setSubnet4o6(const asiolink::IOAddress& subnet, uint8_t prefix) {
-        subnet4o6_ = std::make_pair(subnet, prefix);
-    }
-
-    /// @brief Returns the interface-id.
-    /// @return the option representing interface-id (or NULL)
-    OptionPtr getInterfaceId() const {
-        return (interface_id_);
-    }
-
-    /// @brief Sets the interface-id
-    /// @param opt option to be used as interface-id match
-    void setInterfaceId(const OptionPtr& opt) {
-        interface_id_ = opt;
-    }
-
-private:
-
-    /// Specifies if 4o6 is enabled on this subnet.
-    bool enabled_;
-
-    /// Specifies the network interface used as v4 subnet selector.
-    std::string iface4o6_;
-
-    /// Specifies the IPv6 subnet used for v4 subnet selection.
-    std::pair<asiolink::IOAddress, uint8_t> subnet4o6_;
-
-    /// Specifies the v6 interface-id used for v4 subnet selection.
-    OptionPtr interface_id_;
-};
 
 /// @brief A configuration holder for IPv4 subnet.
 ///
