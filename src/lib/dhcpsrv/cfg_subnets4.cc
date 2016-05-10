@@ -45,7 +45,7 @@ CfgSubnets4::selectSubnet4o6(const SubnetSelector& selector) const {
 
         // First match criteria: check if we have a prefix/len defined.
         std::pair<asiolink::IOAddress, uint8_t> pref = cfg4o6.getSubnet4o6();
-        if (!IOAddress::isV6Zero(pref.first)) {
+        if (!pref.first.isV6Zero()) {
 
             // Let's check if the IPv6 address is in range
             IOAddress first = firstAddrInPrefix(pref.first, pref.second);
