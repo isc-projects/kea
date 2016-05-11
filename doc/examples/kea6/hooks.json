@@ -15,6 +15,12 @@
     "type": "memfile"
   },
 
+# Set values to mandatory timers
+  "renew-timer": 900,
+  "rebind-timer": 1200,
+  "preferred-lifetime": 1800,
+  "valid-lifetime": 2700,
+
 # Define a single subnet.
   "subnet6": [
     {
