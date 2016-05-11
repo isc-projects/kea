@@ -991,6 +991,10 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         ctx.callout_handle_->deleteAllArguments();
 
         // Pass necessary arguments
+
+        // Pass the original packet
+        ctx.callout_handle_->setArgument("query6", ctx.query_);
+
         // Subnet from which we do the allocation
         ctx.callout_handle_->setArgument("subnet6", ctx.subnet_);
 
@@ -1056,6 +1060,9 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         ctx.callout_handle_->deleteAllArguments();
 
         // Pass necessary arguments
+
+        // Pass the original packet
+        ctx.callout_handle_->setArgument("query6", ctx.query_);
 
         // Subnet from which we do the allocation
         ctx.callout_handle_->setArgument("subnet6", ctx.subnet_);
@@ -2447,6 +2454,8 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
         ctx.callout_handle_->deleteAllArguments();
 
         // Pass necessary arguments
+        // Pass the original client query
+        ctx.callout_handle_->setArgument("query4", ctx.query_);
 
         // Subnet from which we do the allocation (That's as far as we can go
         // with using SubnetPtr to point to Subnet4 object. Users should not
@@ -2556,6 +2565,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(ctx.subnet_);
 
         // Pass the parameters
+        ctx.callout_handle_->setArgument("query4", ctx.query_);
         ctx.callout_handle_->setArgument("subnet4", subnet4);
         ctx.callout_handle_->setArgument("clientid", ctx.clientid_);
         ctx.callout_handle_->setArgument("hwaddr", ctx.hwaddr_);
@@ -2626,6 +2636,8 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         ctx.callout_handle_->deleteAllArguments();
 
         // Pass necessary arguments
+        // Pass the original client query
+        ctx.callout_handle_->setArgument("query4", ctx.query_);
 
         // Subnet from which we do the allocation. Convert the general subnet
         // pointer to a pointer to a Subnet4.  Note that because we are using

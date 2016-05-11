@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -207,6 +207,7 @@ packet processing. Hook points that are not specific to packet processing
 @subsection dhcpv6HooksPkt6Send pkt6_send
 
  - @b Arguments:
+   - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
    - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
 
  - @b Description: This callout is executed when server's response
