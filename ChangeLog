@@ -1,3 +1,8 @@
+1114.	[bug]		stephen
+	Adjusted variable type in a MySQL-related file to overcome a
+	type mismatch problem reported by one particular compiler.
+	(Trac #4485, git 4c6fb189b5d12ffdf4ab171c9154366e70e6082c)
+
 1113.	[func]		tomek
 	DHCPv4 subnet selection can now be selected based on IPv6
 	information. This is part of ongoing effort to support RFC7341:
