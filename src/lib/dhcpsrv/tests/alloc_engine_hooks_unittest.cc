@@ -44,6 +44,7 @@ public:
         callback_argument_names_.clear();
         callback_addr_original_ = IOAddress("::");
         callback_addr_updated_ = IOAddress("::");
+        callback_qry_pkt6_.reset();
     }
 
     /// callback that stores received callout name and received values
@@ -52,6 +53,7 @@ public:
 
         callback_name_ = string("lease6_select");
 
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
         callout_handle.getArgument("subnet6", callback_subnet6_);
         callout_handle.getArgument("fake_allocation", callback_fake_allocation_);
         callout_handle.getArgument("lease6", callback_lease6_);
@@ -99,6 +101,7 @@ public:
     static Lease6Ptr callback_lease6_;
     static bool callback_fake_allocation_;
     static vector<string> callback_argument_names_;
+    static Pkt6Ptr callback_qry_pkt6_;
 };
 
 // For some reason intialization within a class makes the linker confused.
@@ -118,6 +121,7 @@ Subnet6Ptr HookAllocEngine6Test::callback_subnet6_;
 Lease6Ptr HookAllocEngine6Test::callback_lease6_;
 bool HookAllocEngine6Test::callback_fake_allocation_;
 vector<string> HookAllocEngine6Test::callback_argument_names_;
+Pkt6Ptr HookAllocEngine6Test::callback_qry_pkt6_;
 
 // This test checks if the lease6_select callout is executed and expected
 // parameters as passed.
@@ -166,6 +170,10 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     // Check that callouts were indeed called
     EXPECT_EQ("lease6_select", callback_name_);
 
+    // Check that query6 argument was set correctly
+    ASSERT_TRUE(callback_qry_pkt6_);
+    EXPECT_EQ(callback_qry_pkt6_.get(), ctx.query_.get());
+
     // Now check that the lease in LeaseMgr has the same parameters
     ASSERT_TRUE(callback_lease6_);
     detailCompareLease(callback_lease6_, from_mgr);
@@ -175,12 +183,13 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
 
     EXPECT_FALSE(callback_fake_allocation_);
 
-    // Check if all expected parameters are reported. It's a bit tricky, because
-    // order may be different. If the test starts failing, because someone tweaked
-    // hooks engine, we'll have to implement proper vector matching (ignoring order)
+    // Check if all expected parameters are reported.  The order needs to be
+    // alphapbetical to match the order returned by
+    // CallbackHandle::getAgrumentNames()
     vector<string> expected_argument_names;
     expected_argument_names.push_back("fake_allocation");
     expected_argument_names.push_back("lease6");
+    expected_argument_names.push_back("query6");
     expected_argument_names.push_back("subnet6");
 
     sort(callback_argument_names_.begin(), callback_argument_names_.end());
@@ -277,6 +286,7 @@ public:
         callback_argument_names_.clear();
         callback_addr_original_ = IOAddress("::");
         callback_addr_updated_ = IOAddress("::");
+        callback_qry_pkt4_.reset();
     }
 
     /// callback that stores received callout name and received values
@@ -285,6 +295,7 @@ public:
 
         callback_name_ = string("lease4_select");
 
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
         callout_handle.getArgument("subnet4", callback_subnet4_);
         callout_handle.getArgument("fake_allocation", callback_fake_allocation_);
         callout_handle.getArgument("lease4", callback_lease4_);
@@ -330,6 +341,7 @@ public:
     static Lease4Ptr callback_lease4_;
     static bool callback_fake_allocation_;
     static vector<string> callback_argument_names_;
+    static Pkt4Ptr callback_qry_pkt4_;
 };
 
 // For some reason intialization within a class makes the linker confused.
@@ -348,6 +360,7 @@ Subnet4Ptr HookAllocEngine4Test::callback_subnet4_;
 Lease4Ptr HookAllocEngine4Test::callback_lease4_;
 bool HookAllocEngine4Test::callback_fake_allocation_;
 vector<string> HookAllocEngine4Test::callback_argument_names_;
+Pkt4Ptr HookAllocEngine4Test::callback_qry_pkt4_;
 
 // This test checks if the lease4_select callout is executed and expected
 // parameters as passed.
@@ -398,6 +411,10 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
     // Check that callouts were indeed called
     EXPECT_EQ("lease4_select", callback_name_);
 
+    // Check that query4 argument was set correctly
+    ASSERT_TRUE(callback_qry_pkt4_);
+    EXPECT_EQ(callback_qry_pkt4_.get(), ctx.query_.get());
+
     // Now check that the lease in LeaseMgr has the same parameters
     ASSERT_TRUE(callback_lease4_);
     detailCompareLease(callback_lease4_, from_mgr);
@@ -407,12 +424,13 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
 
     EXPECT_EQ(callback_fake_allocation_, false);
 
-    // Check if all expected parameters are reported. It's a bit tricky, because
-    // order may be different. If the test starts failing, because someone tweaked
-    // hooks engine, we'll have to implement proper vector matching (ignoring order)
+    // Check if all expected parameters are reported.  The order needs to be
+    // alphapbetical to match the order returned by
+    // CallbackHandle::getAgrumentNames()
     vector<string> expected_argument_names;
     expected_argument_names.push_back("fake_allocation");
     expected_argument_names.push_back("lease4");
+    expected_argument_names.push_back("query4");
     expected_argument_names.push_back("subnet4");
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
 }
