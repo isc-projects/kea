@@ -189,24 +189,24 @@ void Dhcp4o6IpcBase::send(Pkt6Ptr pkt) {
     }
 
     // Check if vendor option exists.
-    OptionVendorPtr option_vendor = boost::dynamic_pointer_cast<
+    OptionVendorPtr vendor_opt = boost::dynamic_pointer_cast<
         OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
 
     // If vendor option doesn't exist or its enterprise id is not ISC's
     // enterprise id, let's create it.
-    if (!option_vendor || (option_vendor->getVendorId() != ENTERPRISE_ID_ISC)) {
-        option_vendor.reset(new OptionVendor(Option::V6, ENTERPRISE_ID_ISC));
-        pkt->addOption(option_vendor);
+    if (!vendor_opt || (vendor_opt->getVendorId() != ENTERPRISE_ID_ISC)) {
+        vendor_opt.reset(new OptionVendor(Option::V6, ENTERPRISE_ID_ISC));
+        pkt->addOption(vendor_opt);
 
     }
 
     // Push interface name and source address in it
-    vendor->addOption(OptionPtr(new OptionString(Option::V6,
-                                                 ISC_V6_4O6_INTERFACE,
-                                                 pkt->getIface())));
-    vendor->addOption(OptionPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
-                                                   pkt->getRemoteAddr())));
-    pkt->addOption(vendor);
+    vendor_opt->addOption(OptionPtr(new OptionString(Option::V6,
+                                                     ISC_V6_4O6_INTERFACE,
+                                                     pkt->getIface())));
+    vendor_opt->addOption(OptionPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
+                                                       pkt->getRemoteAddr())));
+    pkt->addOption(vendor_opt);
 
     // Get packet content
     OutputBuffer& buf = pkt->getBuffer();
