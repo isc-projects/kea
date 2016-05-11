@@ -112,6 +112,22 @@ TEST(PgSqlOpenTest, OpenDatabase) {
                << "*** The test environment is broken and must be fixed\n"
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
+
+    // Check that lease manager open the database opens correctly with a longer
+    // timeout.  If it fails, print the error message.
+    try {
+	string connection_string = validPgSQLConnectionString() + string(" ") +
+                                   string(VALID_TIMEOUT);
+        LeaseMgrFactory::create(connection_string);
+        EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
+        LeaseMgrFactory::destroy();
+    } catch (const isc::Exception& ex) {
+        FAIL() << "*** ERROR: unable to open database, reason:\n"
+               << "    " << ex.what() << "\n"
+               << "*** The test environment is broken and must be fixed\n"
+               << "*** before the MySQL tests will run correctly.\n";
+    }
+
     // Check that attempting to get an instance of the lease manager when
     // none is set throws an exception.
     EXPECT_THROW(LeaseMgrFactory::instance(), NoLeaseManager);
@@ -146,6 +162,14 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
+
+    // Check for invalid timeouts
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
+        DbInvalidTimeout);
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
+        DbInvalidTimeout);
 
     // Check for missing parameters
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(

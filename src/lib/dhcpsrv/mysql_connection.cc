@@ -9,8 +9,9 @@
 #include <dhcpsrv/mysql_connection.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/lexical_cast.hpp>
+
 #include <algorithm>
-#include <iostream>
 #include <iterator>
 #include <stdint.h>
 #include <string>
@@ -26,6 +27,8 @@ const my_bool MLM_FALSE = 0;
 const my_bool MLM_TRUE = 1;
 const int MLM_MYSQL_FETCH_SUCCESS = 0;
 const int MLM_MYSQL_FETCH_FAILURE = 1;
+
+const int MYSQL_DEFAULT_CONNECTION_TIMEOUT = 5;	// seconds
 
 // Open the database using the parameters passed to the constructor.
 
@@ -67,7 +70,33 @@ MySqlConnection::openDatabase() {
         name = sname.c_str();
     } catch (...) {
         // No database name.  Throw a "NoName" exception
-        isc_throw(NoDatabaseName, "must specified a name for the database");
+        isc_throw(NoDatabaseName, "must specify a name for the database");
+    }
+
+    int connect_timeout = MYSQL_DEFAULT_CONNECTION_TIMEOUT;
+    string stimeout;
+    try {
+        stimeout = getParameter("connect-timeout");
+    } catch (...) {
+        // No timeout parameter, we are going to use the default timeout.
+        stimeout = "";
+    }
+
+    if (stimeout.size() > 0) {
+        // Timeout was given, so try to convert it to an integer.
+        try {
+            connect_timeout = boost::lexical_cast<int>(stimeout);
+        } catch (...) {
+            // Timeout given but invalid.
+            isc_throw(DbInvalidTimeout, "database connection timeout (" << stimeout <<
+                      ") must be numeric");
+        }
+
+        // ... and check the range.
+        if (connect_timeout <= 0) {
+            isc_throw(DbInvalidTimeout, "database connection timeout (" << connect_timeout <<
+                      ") must be an integer greater than 0");
+        }
     }
 
     // Set options for the connection:
@@ -90,6 +119,14 @@ MySqlConnection::openDatabase() {
     result = mysql_options(mysql_, MYSQL_INIT_COMMAND, sql_mode);
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set SQL mode options: " <<
+                  mysql_error(mysql_));
+    }
+
+    // Connection timeout, the amount of time taken for the client to drop
+    // the connection if the server is not responding.
+    result = mysql_options(mysql_, MYSQL_OPT_CONNECT_TIMEOUT, &connect_timeout);
+    if (result != 0) {
+        isc_throw(DbOpenError, "unable to set database connection timeout: " <<
                   mysql_error(mysql_));
     }
 
