@@ -14,7 +14,6 @@
 
 #include <boost/static_assert.hpp>
 
-#include <iostream>
 #include <iomanip>
 #include <limits>
 #include <sstream>
@@ -40,6 +39,9 @@ using namespace isc::dhcp;
 using namespace std;
 
 namespace {
+
+// Default connection timeout
+const int PGSQL_DEFAULT_CONNECTION_TIMEOUT = 5;	// seconds
 
 // Maximum number of parameters used in any single query
 const size_t MAX_PARAMETERS_IN_QUERY = 14;
@@ -1099,7 +1101,6 @@ PgSqlLeaseMgr::openDatabase() {
     } catch(...) {
         // No host. Fine, we'll use "localhost"
     }
-
     dbconnparameters += "host = '" + shost + "'" ;
 
     string suser;
@@ -1126,6 +1127,36 @@ PgSqlLeaseMgr::openDatabase() {
         // No database name.  Throw a "NoDatabaseName" exception
         isc_throw(NoDatabaseName, "must specify a name for the database");
     }
+
+    int connect_timeout = PGSQL_DEFAULT_CONNECTION_TIMEOUT;
+    string stimeout;
+    try {
+        stimeout = dbconn_.getParameter("connect-timeout");
+    } catch (...) {
+        // No timeout parameter, we are going to use the default timeout.
+        stimeout = "";
+    }
+
+    if (stimeout.size() > 0) {
+        // Timeout was given, so try to convert it to an integer.
+        try {
+            connect_timeout = boost::lexical_cast<int>(stimeout);
+        } catch (...) {
+            // Timeout given but invalid.
+            isc_throw(DbInvalidTimeout, "database connection timeout (" << stimeout <<
+                      ") must be numeric");
+        }
+
+        // ... and check the range.
+        if (connect_timeout <= 0) {
+            isc_throw(DbInvalidTimeout, "database connection timeout (" << connect_timeout <<
+                      ") must be an integer greater than 0");
+        }
+    }
+
+    std::ostringstream oss;
+    oss << connect_timeout;
+    dbconnparameters += " connect_timeout = " + oss.str();
 
     conn_ = PQconnectdb(dbconnparameters.c_str());
     if (conn_ == NULL) {
