@@ -47,7 +47,7 @@
 # http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#options-relay-supplied
 # However, it is possible to allow the server to echo back additional options.
 # This entry marks options 110, 120 and 130 as RSOO-enabled.
-   "relay-supplied-options": [ "110", "120", "130" ],"
+   "relay-supplied-options": [ "110", "120", "130" ],
 
 # Addresses will be assigned with preferred and valid lifetimes
 # being 3000 and 4000, respectively. Client is told to start
