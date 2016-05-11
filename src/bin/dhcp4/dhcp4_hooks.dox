@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -110,6 +110,7 @@ packet processing. Hook points that are not specific to packet processing
 @subsection dhcpv4HooksLeaseSelect lease4_select
 
  - @b Arguments:
+   - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
    - name: @b subnet4, type: isc::dhcp::Subnet4Ptr, direction: <b>in</b>
    - name: @b fake_allocation, type: bool, direction: <b>in</b>
    - name: @b lease4, type: isc::dhcp::Lease4Ptr, direction: <b>in/out</b>
@@ -137,6 +138,7 @@ packet processing. Hook points that are not specific to packet processing
 @subsection dhcpv4HooksLeaseRenew lease4_renew
 
  - @b Arguments:
+   - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
    - name: @b subnet4, type: isc::dhcp::Subnet4Ptr, direction: <b>in</b>
    - name: @b clientid, type: isc::dhcp::ClientId, direction: <b>in</b>
    - name: @b hwaddr, type: isc::dhcp::HWAddr, direction: <b>in</b>
