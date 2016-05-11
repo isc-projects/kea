@@ -8,6 +8,7 @@
 #define SCHEMA_H
 
 #include <config.h>
+#include <cstdlib>
 #include <string>
 
 namespace isc {
@@ -23,17 +24,21 @@ extern const char* VALID_USER;
 extern const char* INVALID_USER;
 extern const char* VALID_PASSWORD;
 extern const char* INVALID_PASSWORD;
+extern const char* VALID_TIMEOUT;
+extern const char* INVALID_TIMEOUT_1;
+extern const char* INVALID_TIMEOUT_2;
 /// @brief Given a combination of strings above, produce a connection string.
 ///
 /// @param type type of the database
 /// @param name name of the database to connect to
 /// @param host hostname
-/// @param user username used to authendicate during connection attempt
-/// @param password password used to authendicate during connection attempt
+/// @param user username used to authenticate during connection attempt
+/// @param password password used to authenticate during connection attempt
+/// @param timeout timeout used during connection attempt
 /// @return string containing all specified parameters
-std::string connectionString(const char* type, const char* name,
-                             const char* host, const char* user,
-                             const char* password);
+std::string connectionString(const char* type, const char* name = NULL,
+                             const char* host = NULL, const char* user = NULL,
+                             const char* password = NULL, const char* timeout = NULL);
 };
 };
 };
