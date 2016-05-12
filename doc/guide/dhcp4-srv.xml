@@ -460,7 +460,7 @@ be followed by a comma and another object definition.</para>
   Should the database be located on a different system, you may need to specify a longer interval
   for the connection timeout:
 <screen>
-"Dhcp4": { "lease-database": { <userinput>"connect-timeout" : <replaceable>tomeout-in-seconds</replaceable></userinput>, ... }, ... }
+"Dhcp4": { "lease-database": { <userinput>"connect-timeout" : <replaceable>timeout-in-seconds</replaceable></userinput>, ... }, ... }
 </screen>
 The default value of five seconds should be more than adequate for local connections.
   </para>
