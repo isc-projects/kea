@@ -1,3 +1,10 @@
+1115.	[func]		tmark
+	The "query4" argument, containing the client packet received, has been
+	added to the DHCPv4 hook points: lease4_select and lease4_renew.  The
+	"query6" argument, containing the client packet received, has been
+	added to the DHCPv6 hook points: lease6_select and pkt6_send.
+	(Trac #4481, git c0af94c47bda85eb1caa3a78a46280b63990672a)
+
 1114.	[bug]		stephen
 	Adjusted variable type in a MySQL-related file to overcome a
 	type mismatch problem reported by one particular compiler.
