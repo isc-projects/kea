@@ -31,24 +31,46 @@ namespace dhcp {
 /// to DHCP client only on request (persistent = false) or always
 /// (persistent = true).
 struct OptionDescriptor {
-    /// Option instance.
+    /// @brief Option instance.
     OptionPtr option_;
-    /// Persistent flag, if true option is always sent to the client,
-    /// if false option is sent to the client on request.
+
+    /// @briefPersistence flag.
+    ///
+    /// If true option is always sent to the client, if false option is
+    /// sent to the client on request.
     bool persistent_;
+
+    /// @brief Option value in textual (CSV) format.
+    ///
+    /// This field is used to convey option value in human readable format,
+    /// the same as used to specify option value in the server configuration.
+    /// This value is optional and can be held in the host reservations
+    /// database instead of the binary format.
+    ///
+    /// Note that this value is carried in the option descriptor, rather than
+    /// @c Option instance because it is a server specific value.
+    ///
+    /// An example of the formatted value is: 2001:db8:1::1, 23, some text
+    /// for the option which carries IPv6 address, a number and a text.
+    std::string formatted_value_;
 
     /// @brief Constructor.
     ///
     /// @param opt option
     /// @param persist if true option is always sent.
-    OptionDescriptor(const OptionPtr& opt, bool persist)
-        : option_(opt), persistent_(persist) {};
+    /// @param formatted_value option value in the textual format. Default
+    /// value is empty indicating that the value is not set.
+    OptionDescriptor(const OptionPtr& opt, bool persist,
+                     const std::string& formatted_value = "")
+        : option_(opt), persistent_(persist),
+          formatted_value_(formatted_value) {};
 
     /// @brief Constructor
     ///
     /// @param persist if true option is always sent.
     OptionDescriptor(bool persist)
-        : option_(OptionPtr()), persistent_(persist) {};
+        : option_(OptionPtr()), persistent_(persist),
+          formatted_value_() {};
 
     /// @brief Checks if the one descriptor is equal to another.
     ///

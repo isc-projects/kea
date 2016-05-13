@@ -16,6 +16,7 @@ namespace dhcp {
 bool
 OptionDescriptor::equals(const OptionDescriptor& other) const {
     return (persistent_ == other.persistent_ &&
+            formatted_value_ == other.formatted_value_ &&
             option_->equals(other.option_));
 }
 

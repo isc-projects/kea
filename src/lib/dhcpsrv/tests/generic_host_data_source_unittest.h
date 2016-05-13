@@ -12,8 +12,10 @@
 #include <dhcpsrv/host.h>
 #include <dhcp/classify.h>
 #include <dhcp/option.h>
+#include <boost/algorithm/string/join.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
+#include <sstream>
 #include <vector>
 
 namespace isc {
@@ -134,6 +136,10 @@ public:
     void compareOptions(const ConstCfgOptionPtr& cfg1,
                         const ConstCfgOptionPtr& cfg2) const;
 
+    OptionDescriptor createEmptyOption(const Option::Universe& universe,
+                                       const uint16_t option_type,
+                                       const bool persist) const;
+
     /// @brief Creates an instance of the option for which it is possible to
     /// specify universe, option type and value in the constructor.
     ///
@@ -147,19 +153,31 @@ public:
     OptionDescriptor createOption(const Option::Universe& universe,
                                   const uint16_t option_type,
                                   const bool persist,
+                                  const bool formatted,
                                   const DataType& value) const {
         boost::shared_ptr<OptionType> option(new OptionType(universe, option_type,
                                                             value));
-        OptionDescriptor desc(option, persist);
+        std::ostringstream s;
+        if (formatted) {
+            s << value;
+        }
+        OptionDescriptor desc(option, persist, s.str());
         return (desc);
     }
 
     template<typename OptionType, typename DataType>
     OptionDescriptor createOption(const uint16_t option_type,
                                   const bool persist,
+                                  const bool formatted,
                                   const DataType& value) const {
         boost::shared_ptr<OptionType> option(new OptionType(option_type, value));
-        OptionDescriptor desc(option, persist);
+
+        std::ostringstream s;
+        if (formatted) {
+            s << value;
+        }
+
+        OptionDescriptor desc(option, persist, s.str());
         return (desc);
     }
 
@@ -167,29 +185,48 @@ public:
     OptionDescriptor
     createAddressOption(const uint16_t option_type,
                         const bool persist,
+                        const bool formatted,
                         const std::string& address1 = "",
                         const std::string& address2 = "",
                         const std::string& address3 = "") const {
+        std::ostringstream s;
         typename OptionType::AddressContainer addresses;
         if (!address1.empty()) {
             addresses.push_back(asiolink::IOAddress(address1));
+            if (formatted) {
+                s << address1;
+            }
         }
         if (!address2.empty()) {
             addresses.push_back(asiolink::IOAddress(address2));
+            if (formatted) {
+                if (s.tellp() != std::streampos(0)) {
+                    s << ",";
+                }
+                s << address2;
+            }
         }
         if (!address3.empty()) {
             addresses.push_back(asiolink::IOAddress(address3));
+            if (formatted) {
+                if (s.tellp() != std::streampos(0)) {
+                    s << ",";
+                }
+                s << address3;
+            }
         }
+
         boost::shared_ptr<OptionType> option(new OptionType(option_type, addresses));
-        OptionDescriptor desc(option, persist);
+        OptionDescriptor desc(option, persist, s.str());
         return (desc);
     }
 
     OptionDescriptor createVendorOption(const Option::Universe& universe,
                                         const bool persist,
+                                        const bool formatted,
                                         const uint32_t vendor_id) const;
 
-    void addTestOptions(const HostPtr& host) const;
+    void addTestOptions(const HostPtr& host, const bool formatted) const;
 
     /// @brief Pointer to the host data source
     HostDataSourcePtr hdsptr_;
@@ -309,19 +346,28 @@ public:
     /// the database.
     ///
     /// Uses gtest macros to report failures.
-    void testOptionsReservations4();
+    ///
+    /// @param formatted Boolean value indicating if the option values
+    /// should be stored in the textual format in the database.
+    void testOptionsReservations4(const bool formatted);
 
     /// @brief Test that DHCPv6 options can be inserted and retrieved from
     /// the database.
     ///
     /// Uses gtest macros to report failures.
-    void testOptionsReservations6();
+    ///
+    /// @param formatted Boolean value indicating if the option values
+    /// should be stored in the textual format in the database.
+    void testOptionsReservations6(const bool formatted);
 
     /// @brief Test that DHCPv4 and DHCPv6 options can be inserted and retrieved
     /// with a single query to the database.
     ///
     /// Uses gtest macros to report failures.
-    void testOptionsReservations46();
+    ///
+    /// @param formatted Boolean value indicating if the option values
+    /// should be stored in the textual format in the database.
+    void testOptionsReservations46(const bool formatted);
 
     /// @brief Returns DUID with identical content as specified HW address
     ///
