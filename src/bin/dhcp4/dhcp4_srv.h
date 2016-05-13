@@ -137,6 +137,14 @@ private:
     /// not NULL.
     void copyDefaultOptions();
 
+    /// @brief Set host identifiers within a context.
+    ///
+    /// This method sets an ordered list of host identifier types and
+    /// values which the server should use to find host reservations.
+    /// The order of the set is determined by the configuration parameter,
+    /// host-reservation-identifiers
+    void setHostIdentifiers();
+
     /// @brief Pointer to the allocation engine used by the server.
     AllocEnginePtr alloc_engine_;
     /// @brief Pointer to the DHCPv4 message sent by the client.

@@ -28,6 +28,7 @@
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/callout_handle_store.h>
+#include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -213,6 +214,9 @@ Dhcpv6Srv::~Dhcpv6Srv() {
     IfaceMgr::instance().closeSockets();
 
     LeaseMgrFactory::destroy();
+
+    // Explicitly unload hooks
+    HooksManager::getHooksManager().unloadLibraries();
 }
 
 void Dhcpv6Srv::shutdown() {
@@ -276,10 +280,40 @@ AllocEngine::ClientContext6
 Dhcpv6Srv::createContext(const Pkt6Ptr& pkt) {
     AllocEngine::ClientContext6 ctx;
     ctx.subnet_ = selectSubnet(pkt);
+    ctx.query_ = pkt;
     ctx.duid_ = pkt->getClientId();
     ctx.hwaddr_ = getMAC(pkt);
-    ctx.query_ = pkt;
-    alloc_engine_->findReservation(ctx);
+
+    // Collect host identifiers if host reservations enabled. The identifiers
+    // are stored in order of preference. The server will use them in that
+    // order to search for host reservations.
+    if (ctx.subnet_ &&
+        (ctx.subnet_->getHostReservationMode() != Subnet::HR_DISABLED)) {
+        const ConstCfgHostOperationsPtr cfg =
+            CfgMgr::instance().getCurrentCfg()->getCfgHostOperations6();
+        BOOST_FOREACH(const Host::IdentifierType& id_type,
+                      cfg->getIdentifierTypes()) {
+            switch (id_type) {
+            case Host::IDENT_DUID:
+                if (ctx.duid_) {
+                    ctx.addHostIdentifier(id_type, ctx.duid_->getDuid());
+                }
+                break;
+
+            case Host::IDENT_HWADDR:
+                if (ctx.hwaddr_) {
+                    ctx.addHostIdentifier(id_type, ctx.hwaddr_->hwaddr_);
+                }
+                break;
+
+            default:
+                ;
+            }
+        }
+
+        // Find host reservations using specified identifiers.
+        alloc_engine_->findReservation(ctx);
+    }
 
     return (ctx);
 }
@@ -678,6 +712,9 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
         // Delete all previous arguments
         callout_handle->deleteAllArguments();
+
+        // Pass incoming packet as argument
+        callout_handle->setArgument("query6", query);
 
         // Set our response
         callout_handle->setArgument("response6", rsp);
@@ -1321,6 +1358,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
     ctx.query_ = orig_ctx.query_;
+    ctx.host_identifiers_ = orig_ctx.host_identifiers_;
 
     Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 
@@ -1442,6 +1480,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     ctx.hwaddr_ = orig_ctx.hwaddr_;
     ctx.host_ = orig_ctx.host_;
     ctx.query_ = orig_ctx.query_;
+    ctx.host_identifiers_ = orig_ctx.host_identifiers_;
 
     Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 

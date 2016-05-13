@@ -1374,6 +1374,71 @@ TEST_F(ParseConfigTest, invalidSyntaxHooksLibraries) {
         "Error text returned from parse failure is " << error_text_;
 }
 
+// Check that some parameters may have configuration parameters configured.
+TEST_F(ParseConfigTest, HooksLibrariesParameters) {
+    // Check that no libraries are currently loaded
+    vector<string> hooks_libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(hooks_libraries.empty());
+
+    // Configuration string.  This contains an invalid library which should
+    // trigger an error in the "build" stage.
+    const std::string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1,
+                                                       CALLOUT_LIBRARY_2,
+                                                       CALLOUT_PARAMS_LIBRARY);
+
+    // Verify that the configuration fails to parse. (Syntactically it's OK,
+    // but the library is invalid).
+    const int rcode = parseConfiguration(config);
+    ASSERT_EQ(0, rcode);
+
+    // Check that the parser recorded the names.
+    HookLibsCollection libraries;
+    bool changed = false;
+    hooks_libraries_parser_->getLibraries(libraries, changed);
+    EXPECT_TRUE(changed);
+    ASSERT_EQ(3, libraries.size());
+    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
+    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);
+    EXPECT_EQ(CALLOUT_PARAMS_LIBRARY, libraries[2].first);
+
+    // Also, check that the third library has its parameters specified.
+    // They were set by setHooksLibrariesConfig. The first has no
+    // parameters, the second one has an empty map and the third
+    // one has actual parameters.
+    EXPECT_FALSE(libraries[0].second);
+    EXPECT_TRUE(libraries[1].second);
+    ASSERT_TRUE(libraries[2].second);
+
+    // Ok, get the parameter for the third library.
+    ConstElementPtr params = libraries[2].second;
+
+    // It must be a map.
+    ASSERT_EQ(Element::map, params->getType());
+
+    // This map should have 3 parameters:
+    // - svalue (and will expect its value to be "string value")
+    // - ivalue (and will expect its value to be 42)
+    // - bvalue (and will expect its value to be true)
+    ConstElementPtr svalue = params->get("svalue");
+    ConstElementPtr ivalue = params->get("ivalue");
+    ConstElementPtr bvalue = params->get("bvalue");
+
+    // There should be no extra parameters.
+    EXPECT_FALSE(params->get("nonexistent"));
+
+    ASSERT_TRUE(svalue);
+    ASSERT_TRUE(ivalue);
+    ASSERT_TRUE(bvalue);
+
+    ASSERT_EQ(Element::string, svalue->getType());
+    ASSERT_EQ(Element::integer, ivalue->getType());
+    ASSERT_EQ(Element::boolean, bvalue->getType());
+
+    EXPECT_EQ("string value", svalue->stringValue());
+    EXPECT_EQ(42, ivalue->intValue());
+    EXPECT_EQ(true, bvalue->boolValue());
+}
+
 /// @brief Checks that a valid, enabled D2 client configuration works correctly.
 TEST_F(ParseConfigTest, validD2Config) {
 
@@ -2214,72 +2279,6 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
     // Unparseable text that looks like IPv6 address, but has too many colons
     EXPECT_THROW(parser->build(json_bogus2), DhcpConfigError);
 }
-
-// Check that some parameters may have configuration parameters configured.
-TEST_F(ParseConfigTest, HooksLibrariesParameters) {
-    // Check that no libraries are currently loaded
-    vector<string> hooks_libraries = HooksManager::getLibraryNames();
-    EXPECT_TRUE(hooks_libraries.empty());
-
-    // Configuration string.  This contains an invalid library which should
-    // trigger an error in the "build" stage.
-    const std::string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1,
-                                                       CALLOUT_LIBRARY_2,
-                                                       CALLOUT_PARAMS_LIBRARY);
-
-    // Verify that the configuration fails to parse. (Syntactically it's OK,
-    // but the library is invalid).
-    const int rcode = parseConfiguration(config);
-    ASSERT_EQ(0, rcode);
-
-    // Check that the parser recorded the names.
-    HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_TRUE(changed);
-    ASSERT_EQ(3, libraries.size());
-    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
-    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);
-    EXPECT_EQ(CALLOUT_PARAMS_LIBRARY, libraries[2].first);
-
-    // Also, check that the third library has its parameters specified.
-    // They were set by setHooksLibrariesConfig. The first has no
-    // no parameters, the second one has an empty map and the third
-    // one has actual parameters.
-    EXPECT_FALSE(libraries[0].second);
-    EXPECT_TRUE(libraries[1].second);
-    ASSERT_TRUE(libraries[2].second);
-
-    // Ok, get the partameter for the third library.
-    ConstElementPtr params = libraries[2].second;
-
-    // It must be a map.
-    ASSERT_EQ(Element::map, params->getType());
-
-    // This map should have 3 parameters:
-    // - svalue (and will expect its value to be "string value")
-    // - ivalue (and will expect its value to be 42)
-    // - bvalue (and will expect its value to be true)
-    ConstElementPtr svalue = params->get("svalue");
-    ConstElementPtr ivalue = params->get("ivalue");
-    ConstElementPtr bvalue = params->get("bvalue");
-
-    // There should be no extra parameters.
-    EXPECT_FALSE(params->get("nonexistent"));
-
-    ASSERT_TRUE(svalue);
-    ASSERT_TRUE(ivalue);
-    ASSERT_TRUE(bvalue);
-
-    ASSERT_EQ(Element::string, svalue->getType());
-    ASSERT_EQ(Element::integer, ivalue->getType());
-    ASSERT_EQ(Element::boolean, bvalue->getType());
-
-    EXPECT_EQ("string value", svalue->stringValue());
-    EXPECT_EQ(42, ivalue->intValue());
-    EXPECT_EQ(true, bvalue->boolValue());
-}
-
 
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code
 // (see CtrlDhcpv4SrvTest.commandSocketBasic in

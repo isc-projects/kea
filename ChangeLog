@@ -1,3 +1,56 @@
+1115.	[func]		tmark
+	The "query4" argument, containing the client packet received, has been
+	added to the DHCPv4 hook points: lease4_select and lease4_renew.  The
+	"query6" argument, containing the client packet received, has been
+	added to the DHCPv6 hook points: lease6_select and pkt6_send.
+	(Trac #4481, git c0af94c47bda85eb1caa3a78a46280b63990672a)
+
+1114.	[bug]		stephen
+	Adjusted variable type in a MySQL-related file to overcome a
+	type mismatch problem reported by one particular compiler.
+	(Trac #4485, git 4c6fb189b5d12ffdf4ab171c9154366e70e6082c)
+
+1113.	[func]		tomek
+	DHCPv4 subnet selection can now be selected based on IPv6
+	information. This is part of ongoing effort to support RFC7341:
+	DHCPv4-over-DHCPv6.
+	(Trac #4112, git 3352685981ec8ca9a90f7405ff56cd31af6fb0d9)
+
+1112.   [bug]		tmark
+	An explicit call to unload the hook libraries prior to server
+	exit was added to both kea-dhcp6 and kea-dhcp4.  This corrects
+	an issue where loggging components were being destroyed prior
+	to hook librarires being unloaded.
+	(Trac #4492, git 2a4792b3551cce2fb9147f33f032ae7e71791d21)
+
+1111.	[bug]		marcin
+	perfdhcp: Improved algorithm for dropping timed out transactions.
+	This prevents growing memory consumption due to storing timed
+	out transactions when the DHCP server drops many messages.
+	(Trac #4493, git 9757a93110afb82c5379643f2f48e223d497efae)
+
+1110.	[func]		tomek
+	It is now possible to specify parameters for hook libraries.
+	(Trac #4297, git f45d0b5d297f6ad522eb8b7e6f6a0de1064b8569)
+
+1109.	[func]		marcin
+	"host-reservation-identifiers" configuration parameter has been
+	implemented. It allows for specifying an ordered list of
+	host identifiers that DHCPv4 and DHCPv6 servers use to
+	retrieve static host reservations for a client.
+	(Trac #4303, git 942808400e7116d95acfd53b0dc1ecad1c45c598)
+
+1108.	[func]		tmark
+	Schema scripts have been relocated from src/bin/admin/scripts to
+	src/share/database/scripts and are now shared by both kea-admin
+	and unit testing.
+	(Trac #4239, git 131fcf52f2a65cedb53975f99114296366fb0199)
+
+1107.	[func]		fdupont
+	Added support for extracting constant length fields from a DHCPv4
+	packet.
+	(Trac #4268a, git 5d1397efc05802b72e86785528870b7154307ff0)
+
 1106.	[func]		sar
 	Added support for accessing DHCPv6 packet fields message type
 	and transaction id in a classification expression.

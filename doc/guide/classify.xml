@@ -152,56 +152,145 @@
           <thead>
             <row>
               <entry>Name</entry>
-              <entry>Example</entry>
+              <entry>Example expression</entry>
+              <entry>Example value</entry>
               <entry>Description</entry>
             </row>
           </thead>
+
           <tbody>
-<row><entry>String</entry><entry>'example'</entry><entry>A string</entry></row>
-<row><entry>Hex String</entry><entry>0XABCD</entry><entry>A hexadecimal string</entry></row>
-<row><entry>IP Address</entry><entry>10.0.0.1</entry><entry>An IP address</entry></row>
-<row><entry>Integer</entry><entry>123</entry><entry>An integer value</entry></row>
+            <row>
+              <entry>String literal</entry>
+              <entry>'example'</entry>
+              <entry>'example'</entry>
+              <entry>A string</entry>
+            </row>
+            <row>
+              <entry>Hexadecimal string literal</entry>
+              <entry>0x5a7d</entry>
+              <entry>'Z}'</entry>
+              <entry>A hexadecimal string</entry>
+            </row>
+            <row>
+              <entry>IP address literal</entry>
+              <entry>10.0.0.1</entry>
+              <entry>0x0a000001</entry>
+              <entry>An IP address</entry>
+            </row>
+            <row>
+              <entry>Integer literal</entry>
+              <entry>123</entry>
+              <entry>'123'</entry>
+              <entry>An integer value</entry>
+            </row>
+            <row></row>
+            <row>
+              <entry>Binary content of the option</entry>
+              <entry>option[123].hex</entry>
+              <entry>'(content of the option)'</entry>
+              <entry>The value of the option with given code from the
+              packet as hex</entry>
+            </row>
 <!-- Text option not fully defined yet, leave it out
-<row><entry>Option Text</entry><entry>option[code].text</entry><entry>The value of the option with code "code" from the packet as text</entry></row>
+            <row>
+              <entry>Option Text</entry>
+              <entry>option[123].text</entry>
+              <entry>'foobar'</entry>
+              <entry>The value of the option with given code from the
+              packet as text</entry>
+            </row>
 -->
-<row><entry>Option Hex</entry><entry>option[code].hex</entry><entry>The value of the option with code "code" from the packet as hex</entry></row>
-<row><entry>Option Exist</entry><entry>option[code].exist</entry><entry>If the option with code "code" is present in the packet "true" else "false"</entry></row>
-<row><entry>DHCPv4 Relay Agent
-sub-option</entry><entry>relay4[code].hex</entry><entry>The value of
-sub-option with code "code" from the DHCPv4 Relay Agent Information option
-(option 82)</entry></row>
-<row>
-  <entry>DHCPv6 Relay Options</entry>
-  <entry>relay6[nest].option[code].hex</entry>
-<!--  <entry>Value of the option</entry> -->
-  <entry>The value of the option with code "code" from the relay encapsulation "nest"</entry>
-</row>
-<row>
-  <entry>DHCPv6 Relay Peer Address</entry>
-  <entry>relay6[nest].peeraddr</entry>
-<!-- <entry>2001:DB8::1</entry> -->n
-  <entry>The value of the peer address field from the relay encapsulation "nest"</entry>
-</row>
-<row>
-  <entry>DHCPv6 Relay Link Address</entry>
-  <entry>relay6[nest].linkaddr</entry>
-<!-- <entry>2001:DB8::1</entry> -->n
-  <entry>The value of the link address field from the relay encapsulation "nest"</entry>
-</row>
-<row>
-  <entry>Message Type in DHCPv6 packet</entry>
-  <entry>pkt6.msgtype</entry>
-<!--  <entry>1</entry>
--->
-  <entry>The value of the message type field in the DHCPv6 packet.</entry>
-</row>
-<row>
-  <entry>Transaction ID in DHCPv6 packet</entry>
-  <entry>pkt6.transid</entry>
-<!--  <entry>12345</entry>
--->
-  <entry>The value of the transaction id in the DHCPv6 packet.</entry>
-</row>
+            <row>
+              <entry>Option existence</entry>
+              <entry>option[123].exist</entry>
+              <entry>'true'</entry>
+              <entry>If the option with given code is present in the
+              packet "true" else "false"</entry>
+            </row>
+            <row>
+              <entry>DHCPv4 relay agent sub-option</entry>
+              <entry>relay4[123].hex</entry>
+              <entry>'(content of the RAI sub-option)'</entry>
+              <entry>The value of sub-option with given code from the
+              DHCPv4 Relay Agent Information option (option 82)</entry>
+            </row>
+            <row>
+              <entry>DHCPv6 Relay Options</entry>
+              <entry>relay6[nest].option[code].hex</entry>
+              <!--  <entry>Value of the option</entry> -->
+              <entry>The value of the option with code "code" from the
+              relay encapsulation "nest"</entry>
+            </row>
+            <row>
+              <entry>DHCPv6 Relay Peer Address</entry>
+              <entry>relay6[nest].peeraddr</entry>
+              <!-- <entry>2001:DB8::1</entry> -->n
+              <entry>The value of the peer address field from the
+              relay encapsulation "nest"</entry>
+            </row>
+            <row>
+              <entry>DHCPv6 Relay Link Address</entry>
+              <entry>relay6[nest].linkaddr</entry>
+              <!-- <entry>2001:DB8::1</entry> -->n
+              <entry>The value of the link address field from the
+              relay encapsulation "nest"</entry>
+            </row>
+            <row>
+              <entry>Hardware address in DHCPv4 packet</entry>
+              <entry>pkt4.mac</entry>
+              <entry>0x010203040506</entry>
+              <entry>The value of the chaddr field of the DHCPv4 packet, hlen (0 to 16) bytes</entry>
+            </row>
+            <row>
+              <entry>Hardware length in DHCPv4 packet</entry>
+              <entry>pkt4.hlen</entry>
+              <entry>0x00000006</entry>
+              <entry>The value of the hlen field of the DHCPv4 packet padded to 4 bytes</entry>
+            </row>
+            <row>
+              <entry>Hardware type in DHCPv4 packet</entry>
+              <entry>pkt4.htype</entry>
+              <entry>0x0000007b</entry>
+              <entry>The value of the htype field of the DHCPv4 packet padded to 4 bytes</entry>
+            </row>
+            <row>
+              <entry>ciaddr field in DHCPv4 packet</entry>
+              <entry>pkt4.ciaddr</entry>
+              <entry>192.0.2.1</entry>
+              <entry>The value of the ciaddr field of the DHCPv4 packet (IPv4 address, 4 bytes)</entry>
+            </row>
+            <row>
+              <entry>giaddr field in DHCPv4 packet</entry>
+              <entry>pkt4.giaddr</entry>
+              <entry>192.0.2.1</entry>
+              <entry>The value of the giaddr field of the DHCPv4 packet (IPv4 address, 4 bytes)</entry>
+            </row>
+            <row>
+              <entry>yiaddr field in DHCPv4 packet</entry>
+              <entry>pkt4.yiaddr</entry>
+              <entry>192.0.2.1</entry>
+              <entry>The value of the yiaddr field of the DHCPv4 packet (IPv4 address, 4 bytes)</entry>
+            </row>
+            <row>
+              <entry>siaddr field in DHCPv4 packet</entry>
+              <entry>pkt4.siaddr</entry>
+              <entry>192.0.2.1</entry>
+              <entry>The value of the siaddr field of the DHCPv4 packet (IPv4 address, 4 bytes)</entry>
+            </row>
+            <row>
+              <entry>Message Type in DHCPv6 packet</entry>
+              <entry>pkt6.msgtype</entry>
+              <!--  <entry>1</entry> -->
+              <entry>The value of the message type field in the DHCPv6
+              packet.</entry>
+            </row>
+            <row>
+              <entry>Transaction ID in DHCPv6 packet</entry>
+              <entry>pkt6.transid</entry>
+              <!--  <entry>12345</entry> -->
+              <entry>The value of the transaction id in the DHCPv6
+              packet.</entry>
+            </row>
           </tbody>
           </tgroup>
         </table>
@@ -221,14 +310,14 @@ sub-option with code "code" from the DHCPv4 Relay Agent Information option
       </para>
 
       <para>
-      "option[code].hex" extracts the value of the option with the given code
+      "option[code].hex" extracts the value of the option with the code "code"
       from the incoming packet. If the packet doesn't contain the option, it
       returns the empty string. The string is presented as a byte string of
       the option payload without the type code or length fields.
       </para>
 
       <para>
-      "option[code].exist" checks if an option with the given code is present
+      "option[code].exist" checks if an option with the code "code" is present
       in the incoming packet. It can be used with empty options.
       </para>
 
@@ -259,6 +348,10 @@ sub-option with code "code" from the DHCPv4 Relay Agent Information option
       <para>
        "relay6[nest].option[code]" shares the same representation types as
        "option", for instance "relay6[nest].option[code].exists" is supported.
+      </para>
+
+      <para>
+        Expressions starting with pkt4 can be used only in DHCPv4.
       </para>
 
       <para>

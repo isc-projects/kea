@@ -120,6 +120,28 @@ public:
                             const ClientClasses& client_classes
                             = ClientClasses()) const;
 
+    /// @brief Attempts to do subnet selection based on DHCP4o6 information
+    ///
+    /// The algorithm implemented is as follows:
+    ///
+    /// - First: try to match IPv6 subnet (4o6-subnet parameter) with the
+    ///   remote IPv6 address of the incoming packet
+    /// - Second: try to match interface-id (4o6-interface-id parameter)
+    ///   with the interface-id option in the incoming 4o6 packet
+    /// - Third: try to match interface-name (4o6-interface parameter)
+    ///   with the name of the interface the incoming 4o6 packet was
+    ///   received over.
+    ///
+    /// @todo: Add additional selection criteria. See
+    ///  http://kea.isc.org/wiki/ISC-DHCP4o6-Design for details.
+    ///
+    /// @param selector Const reference to the selector structure which holds
+    /// various information extracted from the client's packet which are used
+    /// to find appropriate subnet.
+    /// @return Pointer to the selected subnet or NULL if no subnet found.
+    Subnet4Ptr
+    selectSubnet4o6(const SubnetSelector& selector) const;
+
     /// @brief Updates statistics.
     ///
     /// This method updates statistics that are affected by the newly committed

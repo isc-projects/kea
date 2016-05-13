@@ -251,10 +251,11 @@ HooksLibrariesParser::build(ConstElementPtr value) {
     // Initialize.
     libraries_.clear();
     changed_ = false;
-    ConstElementPtr parameters;
 
     // This is the new syntax.  Iterate through it and get each map.
     BOOST_FOREACH(ConstElementPtr library_entry, value->listValue()) {
+        ConstElementPtr parameters;
+
         // Is it a map?
         if (library_entry->getType() != Element::map) {
             isc_throw(DhcpConfigError, "hooks library configuration error:"
@@ -321,7 +322,7 @@ HooksLibrariesParser::build(ConstElementPtr value) {
     // configuration is changed).
 
     // We no longer rely on this. Parameters can change. And even if the
-    // parameters stay the same, they could point to a files that could
+    // parameters stay the same, they could point to files that could
     // change.
     vector<string> current_libraries = HooksManager::getLibraryNames();
     if (current_libraries.empty() && libraries_.empty()) {

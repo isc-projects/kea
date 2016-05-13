@@ -13,6 +13,7 @@
 
 #include <string>
 #include <vector>
+#include <utility>
 
 namespace isc {
 namespace hooks {

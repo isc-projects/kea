@@ -173,7 +173,7 @@ public:
 
     /// @brief Return list of loaded libraries with its parameters.
     ///
-    /// Returns the names of the loaded libraries and its parameters.
+    /// Returns the names of the loaded libraries and their parameters.
     ///
     /// @return List of loaded libraries (names + parameters)
     static HookLibsCollection getLibraryInfo();

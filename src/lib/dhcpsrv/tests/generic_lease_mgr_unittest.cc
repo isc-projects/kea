@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -916,8 +916,8 @@ GenericLeaseMgrTest::testLease6HWTypeAndSource() {
 
     // Those should use defines from Pkt::HWADDR_SOURCE_*, but let's
     // test an uncommon value (and 0 which means unknown).
-    hwaddr1->source_ = 123456u;
-    hwaddr2->source_ = 0;
+    hwaddr1->source_ = HWAddr::HWADDR_SOURCE_RAW;
+    hwaddr2->source_ = HWAddr::HWADDR_SOURCE_DUID;
 
     leases[1]->hwaddr_ = hwaddr1;     // Add hardware address to leases 1 and 2
     leases[2]->hwaddr_ = hwaddr2;
@@ -938,14 +938,14 @@ GenericLeaseMgrTest::testLease6HWTypeAndSource() {
     ASSERT_TRUE(stored1);
     ASSERT_TRUE(stored1->hwaddr_);
     EXPECT_EQ(123, stored1->hwaddr_->htype_);
-    EXPECT_EQ(123456, stored1->hwaddr_->source_);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_RAW, stored1->hwaddr_->source_);
 
     // Second lease should have a hardware address in it
     Lease6Ptr stored2 = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
     ASSERT_TRUE(stored2);
     ASSERT_TRUE(stored2->hwaddr_);
     EXPECT_EQ(456, stored2->hwaddr_->htype_);
-    EXPECT_EQ(0, stored2->hwaddr_->source_);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_DUID, stored2->hwaddr_->source_);
 
     // Third lease should NOT have any hardware address.
     Lease6Ptr stored3 = lmptr_->getLease6(leasetype6_[3], ioaddress6_[3]);

@@ -283,6 +283,9 @@ static const uint16_t RAI_OPTION_VIRTUAL_SUBNET_SELECT_CTRL = 152; //RFC6607
 
 #endif
 
+/* Client identifier types */
+static const uint8_t CLIENT_ID_OPTION_TYPE_DUID = 255;
+
 } // end of isc::dhcp namespace
 } // end of isc namespace
 

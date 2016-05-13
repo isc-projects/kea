@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,52 +8,59 @@
 #define TEST_MYSQL_SCHEMA_H
 
 #include <config.h>
+#include <dhcpsrv/testutils/schema.h>
 #include <string>
 
 namespace isc {
 namespace dhcp {
 namespace test {
 
-extern const char* VALID_TYPE;
-extern const char* INVALID_TYPE;
-extern const char* VALID_NAME;
-extern const char* INVALID_NAME;
-extern const char* VALID_HOST;
-extern const char* INVALID_HOST;
-extern const char* VALID_USER;
-extern const char* INVALID_USER;
-extern const char* VALID_PASSWORD;
-extern const char* INVALID_PASSWORD;
-
-/// @brief Create the Schema
-///
-/// Creates all the tables in what is assumed to be an empty database.
-///
-/// There is no error checking in this code: if it fails, one of the tests
-/// will fall over.
-void createMySQLSchema();
-
-/// @brief Clear everything from the database
-///
-/// There is no error checking in this code: if something fails, one of the
-/// tests will (should) fall over.
-void destroyMySQLSchema();
+extern const char* MYSQL_VALID_TYPE;
 
 /// Return valid connection string
 ///
 /// @return valid MySQL connection string.
 std::string validMySQLConnectionString();
 
-/// @brief Given a combination of strings above, produce a connection string.
+/// @brief Clear everything from the database
 ///
-/// @param type type of the database
-/// @param name name of the database to connect to
-/// @param host hostname
-/// @param user username used to authendicate during connection attempt
-/// @param password password used to authendicate during connection attempt
-/// @return string containing all specified parameters
-std::string connectionString(const char* type, const char* name, const char* host,
-                             const char* user, const char* password);
+/// Submits the current schema drop script:
+///
+///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_drop.mysql
+///
+/// to the unit test MySQL database. If the script fails, the invoking test
+/// will fail. The output of stderr is suppressed unless the parameter,
+/// show_err is true.
+///
+/// @param show_err flag which governs whether or not stderr is suppressed.
+void destroyMySQLSchema(bool show_err = false);
+
+/// @brief Create the MySQL Schema
+///
+/// Submits the current schema creation script:
+///
+///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_create.mysql
+///
+/// to the unit test MySQL database. If the script fails, the invoking test
+/// will fail. The output of stderr is suppressed unless the parameter,
+/// show_err is true.
+///
+/// @param show_err flag which governs whether or not stderr is suppressed.
+void createMySQLSchema(bool show_err = false);
+
+/// @brief Run a MySQL SQL script against the MySQL unit test database
+///
+/// Submits the given SQL script to MySQL via mysql CLI. The output of
+/// stderr is suppressed unless the parameter, show_err is true.  The is done
+/// to suppress warnings that might otherwise make test output needlessly
+/// noisy.  A gtest assertion occurs if the script fails to execute.
+///
+/// @param path - path (if not blank) of the script to execute
+/// @param script_name - file name of the path to execute
+/// @param show_err flag which governs whether or not stderr is suppressed.
+void runMySQLScript(const std::string& path, const std::string& script_name,
+                    bool show_err);
+
 };
 };
 };

@@ -12,6 +12,7 @@
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/alloc_engine_log.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host.h>
@@ -27,6 +28,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <algorithm>
 #include <cstring>
 #include <sstream>
 #include <limits>
@@ -301,6 +303,29 @@ AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
     return (alloc->second);
 }
 
+template<typename ContextType>
+void
+AllocEngine::findReservationInternal(ContextType& ctx,
+                                     const AllocEngine::HostGetFunc& host_get) {
+    ctx.host_.reset();
+
+    // We can only search for the reservation if a subnet has been selected.
+    if (ctx.subnet_) {
+        // Iterate over configured identifiers in the order of preference
+        // and try to use each of them to search for the reservations.
+        BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
+            // Attempt to find a host using a specified identifier.
+            ctx.host_ = host_get(ctx.subnet_->getID(), id_pair.first,
+                                 &id_pair.second[0], id_pair.second.size());
+            // If we found matching host, return.
+            if (ctx.host_) {
+                return;
+            }
+        }
+    }
+}
+
+
 // ##########################################################################
 // #    DHCPv6 lease allocation code starts here.
 // ##########################################################################
@@ -309,7 +334,7 @@ AllocEngine::ClientContext6::ClientContext6()
     : subnet_(), duid_(), iaid_(0), type_(Lease::TYPE_NA), hwaddr_(),
       hints_(), fwd_dns_update_(false), rev_dns_update_(false), hostname_(""),
       callout_handle_(), fake_allocation_(false), old_leases_(), host_(),
-      query_(), ia_rsp_() {
+      query_(), ia_rsp_(), host_identifiers_() {
 }
 
 AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const DuidPtr& duid,
@@ -322,7 +347,7 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const Duid
     subnet_(subnet), duid_(duid), iaid_(iaid), type_(type), hwaddr_(),
     hints_(), fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
     hostname_(hostname), fake_allocation_(fake_allocation),
-    old_leases_(), host_(), query_(), ia_rsp_() {
+    old_leases_(), host_(), query_(), ia_rsp_(), host_identifiers_() {
 
     static asiolink::IOAddress any("::");
 
@@ -331,27 +356,18 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet, const Duid
     }
     // callout_handle, host pointers initiated to NULL by their
     // respective constructors.
+
+    // Initialize host identifiers.
+    if (duid) {
+        addHostIdentifier(Host::IDENT_DUID, duid->getDuid());
+    }
 }
 
 
-void AllocEngine::findReservation(ClientContext6& ctx) const {
-    if (!ctx.subnet_ || !ctx.duid_) {
-        return;
-    }
-
-    // Check which host reservation mode is supported in this subnet.
-    Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
-
-    // Check if there's a host reservation for this client. Attempt to get
-    // host info only if reservations are not disabled.
-    if (hr_mode != Subnet::HR_DISABLED) {
-
-        ctx.host_ = HostMgr::instance().get6(ctx.subnet_->getID(), ctx.duid_,
-                                             ctx.hwaddr_);
-        } else {
-        // Let's explicitly set it to NULL if reservations are disabled.
-        ctx.host_.reset();
-    }
+void AllocEngine::findReservation(ClientContext6& ctx) {
+    findReservationInternal(ctx, boost::bind(&HostMgr::get6,
+                                             &HostMgr::instance(),
+                                             _1, _2, _3, _4));
 }
 
 Lease6Collection
@@ -975,6 +991,10 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         ctx.callout_handle_->deleteAllArguments();
 
         // Pass necessary arguments
+
+        // Pass the original packet
+        ctx.callout_handle_->setArgument("query6", ctx.query_);
+
         // Subnet from which we do the allocation
         ctx.callout_handle_->setArgument("subnet6", ctx.subnet_);
 
@@ -1040,6 +1060,9 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         ctx.callout_handle_->deleteAllArguments();
 
         // Pass necessary arguments
+
+        // Pass the original packet
+        ctx.callout_handle_->setArgument("query6", ctx.query_);
 
         // Subnet from which we do the allocation
         ctx.callout_handle_->setArgument("subnet6", ctx.subnet_);
@@ -2049,7 +2072,8 @@ AllocEngine::ClientContext4::ClientContext4()
       requested_address_(IOAddress::IPV4_ZERO_ADDRESS()),
       fwd_dns_update_(false), rev_dns_update_(false),
       hostname_(""), callout_handle_(), fake_allocation_(false),
-      old_lease_(), host_(), conflicting_lease_(), query_() {
+      old_lease_(), host_(), conflicting_lease_(), query_(),
+      host_identifiers_() {
 }
 
 AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
@@ -2064,7 +2088,13 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
       requested_address_(requested_addr),
       fwd_dns_update_(fwd_dns_update), rev_dns_update_(rev_dns_update),
       hostname_(hostname), callout_handle_(),
-      fake_allocation_(fake_allocation), old_lease_(), host_() {
+      fake_allocation_(fake_allocation), old_lease_(), host_(),
+      host_identifiers_() {
+
+    // Initialize host identifiers.
+    if (hwaddr) {
+        addHostIdentifier(Host::IDENT_HWADDR, hwaddr->hwaddr_);
+    }
 }
 
 Lease4Ptr
@@ -2099,22 +2129,9 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
 
 void
 AllocEngine::findReservation(ClientContext4& ctx) {
-    ctx.host_.reset();
-
-    // We can only search for the reservation if a subnet has been selected.
-    if (ctx.subnet_) {
-        // Check which host reservation mode is supported in this subnet.
-        Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
-
-        // Check if there is a host reseravtion for this client. Attempt to
-        // get host information
-        if (hr_mode != Subnet::HR_DISABLED) {
-            // This method should handle the case when there is neither hwaddr
-            // nor clientid_ available and simply return NULL.
-            ctx.host_ = HostMgr::instance().get4(ctx.subnet_->getID(), ctx.hwaddr_,
-                                                 ctx.clientid_);
-        }
-    }
+    findReservationInternal(ctx, boost::bind(&HostMgr::get4,
+                                             &HostMgr::instance(),
+                                             _1, _2, _3, _4));
 }
 
 Lease4Ptr
@@ -2437,6 +2454,8 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
         ctx.callout_handle_->deleteAllArguments();
 
         // Pass necessary arguments
+        // Pass the original client query
+        ctx.callout_handle_->setArgument("query4", ctx.query_);
 
         // Subnet from which we do the allocation (That's as far as we can go
         // with using SubnetPtr to point to Subnet4 object. Users should not
@@ -2546,6 +2565,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(ctx.subnet_);
 
         // Pass the parameters
+        ctx.callout_handle_->setArgument("query4", ctx.query_);
         ctx.callout_handle_->setArgument("subnet4", subnet4);
         ctx.callout_handle_->setArgument("clientid", ctx.clientid_);
         ctx.callout_handle_->setArgument("hwaddr", ctx.hwaddr_);
@@ -2616,6 +2636,8 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         ctx.callout_handle_->deleteAllArguments();
 
         // Pass necessary arguments
+        // Pass the original client query
+        ctx.callout_handle_->setArgument("query4", ctx.query_);
 
         // Subnet from which we do the allocation. Convert the general subnet
         // pointer to a pointer to a Subnet4.  Note that because we are using

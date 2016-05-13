@@ -15,10 +15,12 @@
     "type": "memfile"
   },
 
+  "valid-lifetime": 1800,
+
 # Define a single subnet.
   "subnet4": [
     {
-      "pools": [ { "pool": "192.0.2.1 - 19.2.0.2.200" } ],
+      "pools": [ { "pool": "192.0.2.1 - 192.0.2.200" } ],
       "subnet": "192.0.2.0/24",
       "interface": "ethX"
     }

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +11,8 @@
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
+#include <dhcpsrv/testutils/pgsql_schema.h>
 #include <exceptions/exceptions.h>
-
 
 #include <gtest/gtest.h>
 
@@ -22,6 +22,8 @@
 #include <string>
 #include <utility>
 
+#include <stdlib.h>
+
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -29,112 +31,6 @@ using namespace isc::dhcp::test;
 using namespace std;
 
 namespace {
-
-// This holds statements to create and destroy the schema.
-#include "schema_pgsql_copy.h"
-
-// Connection strings.
-// Database: keatest
-// Host: localhost
-// Username: keatest
-// Password: keatest
-const char* VALID_TYPE = "type=postgresql";
-const char* INVALID_TYPE = "type=unknown";
-const char* VALID_NAME = "name=keatest";
-const char* INVALID_NAME = "name=invalidname";
-const char* VALID_HOST = "host=localhost";
-const char* INVALID_HOST = "host=invalidhost";
-const char* VALID_USER = "user=keatest";
-const char* INVALID_USER = "user=invaliduser";
-const char* VALID_PASSWORD = "password=keatest";
-const char* INVALID_PASSWORD = "password=invalid";
-
-// Given a combination of strings above, produce a connection string.
-string connectionString(const char* type, const char* name, const char* host,
-                        const char* user, const char* password) {
-    const string space = " ";
-    string result = "";
-
-    if (type != NULL) {
-        result += string(type);
-    }
-    if (name != NULL) {
-        if (! result.empty()) {
-            result += space;
-        }
-        result += string(name);
-    }
-
-    if (host != NULL) {
-        if (! result.empty()) {
-            result += space;
-        }
-        result += string(host);
-    }
-
-    if (user != NULL) {
-        if (! result.empty()) {
-            result += space;
-        }
-        result += string(user);
-    }
-
-    if (password != NULL) {
-        if (! result.empty()) {
-            result += space;
-        }
-        result += string(password);
-    }
-
-    return (result);
-}
-
-// Return valid connection string
-string
-validConnectionString() {
-    return (connectionString(VALID_TYPE, VALID_NAME, VALID_HOST,
-                             VALID_USER, VALID_PASSWORD));
-}
-
-// @brief Clear everything from the database
-//
-// There is no error checking in this code: if something fails, one of the
-// tests will (should) fall over.
-void destroySchema() {
-    // Open database
-    PGconn* conn = 0;
-    conn = PQconnectdb("host = 'localhost' user = 'keatest'"
-                       " password = 'keatest' dbname = 'keatest'");
-
-    // Get rid of everything in it.
-    for (int i = 0; destroy_statement[i] != NULL; ++i) {
-        PGresult* r = PQexec(conn, destroy_statement[i]);
-        PQclear(r);
-    }
-
-    PQfinish(conn);
-}
-
-// @brief Create the Schema
-//
-// Creates all the tables in what is assumed to be an empty database.
-//
-// There is no error checking in this code: if it fails, one of the tests
-// will fall over.
-void createSchema() {
-    // Open database
-    PGconn* conn = 0;
-    conn = PQconnectdb("host = 'localhost' user = 'keatest'"
-                       " password = 'keatest' dbname = 'keatest'");
-
-    // Get rid of everything in it.
-    for (int i = 0; create_statement[i] != NULL; ++i) {
-        PGresult* r = PQexec(conn, create_statement[i]);
-        PQclear(r);
-    }
-
-    PQfinish(conn);
-}
 
 /// @brief Test fixture class for testing PostgreSQL Lease Manager
 ///
@@ -149,12 +45,12 @@ public:
     PgSqlLeaseMgrTest() {
 
         // Ensure schema is the correct one.
-        destroySchema();
-        createSchema();
+        destroyPgSQLSchema();
+        createPgSQLSchema();
 
         // Connect to the database
         try {
-            LeaseMgrFactory::create(validConnectionString());
+            LeaseMgrFactory::create(validPgSQLConnectionString());
         } catch (...) {
             std::cerr << "*** ERROR: unable to open database. The test\n"
                          "*** environment is broken and must be fixed before\n"
@@ -173,7 +69,7 @@ public:
     virtual ~PgSqlLeaseMgrTest() {
         lmptr_->rollback();
         LeaseMgrFactory::destroy();
-        destroySchema();
+        destroyPgSQLSchema();
     }
 
     /// @brief Reopen the database
@@ -185,7 +81,7 @@ public:
     /// the same database.
     void reopen(Universe) {
         LeaseMgrFactory::destroy();
-        LeaseMgrFactory::create(validConnectionString());
+        LeaseMgrFactory::create(validPgSQLConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
     }
 
@@ -201,13 +97,13 @@ public:
 TEST(PgSqlOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
-    destroySchema();
-    createSchema();
+    destroyPgSQLSchema(true);
+    createPgSQLSchema(true);
 
     // Check that lease manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
     try {
-        LeaseMgrFactory::create(validConnectionString());
+        LeaseMgrFactory::create(validPgSQLConnectionString());
         EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
         LeaseMgrFactory::destroy();
     } catch (const isc::Exception& ex) {
@@ -233,31 +129,31 @@ TEST(PgSqlOpenTest, OpenDatabase) {
 
     // Check that invalid login data causes an exception.
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
+        PGSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
 
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
+        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
 
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
 
     // This test might fail if 'auth-method' in PostgresSQL host-based authentication
     // file (/var/lib/pgsql/9.4/data/pg_hba.conf) is set to 'trust',
     // which allows logging without password. 'Auth-method' should be changed to 'password'.
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
 
     // Check for missing parameters
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        PGSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 
     // Tidy up after the test
-    destroySchema();
+    destroyPgSQLSchema(true);
 }
 
 /// @brief Check the getType() method
@@ -488,11 +384,6 @@ TEST_F(PgSqlLeaseMgrTest, nullDuid) {
 /// which is marked as 'reclaimed' is not returned.
 TEST_F(PgSqlLeaseMgrTest, getExpiredLeases6) {
     testGetExpiredLeases6();
-}
-
-/// @brief Check that expired reclaimed DHCPv6 leases are removed.
-TEST_F(PgSqlLeaseMgrTest, deleteExpiredReclaimedLeases6) {
-    testDeleteExpiredReclaimedLeases6();
 }
 
 };

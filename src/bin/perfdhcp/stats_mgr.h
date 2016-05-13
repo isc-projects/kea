@@ -14,7 +14,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_index_container.hpp>
-#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index/global_fun.hpp>
 #include <boost/multi_index/mem_fun.hpp>
@@ -202,7 +202,7 @@ public:
         ///      }
         /// \endcode
         ///
-        /// Example 3: Access elements through hashed index
+        /// Example 3: Access elements through ordered index by hash
         /// \code
         /// // Get the instance of the second search index.
         /// PktListTransidHashIndex& idx = sent_packets_.template get<1>();
@@ -226,7 +226,10 @@ public:
                 // in the same way as std::list.
                 boost::multi_index::sequenced<>,
                 // The other index keeps products of transaction id.
-                boost::multi_index::hashed_non_unique<
+                // Elements with the same hash value are grouped together
+                // into buckets and transactions are ordered from the
+                // oldest to latest within a bucket.
+                boost::multi_index::ordered_non_unique<
                     // Specify hash function to get the product of
                     // transaction id. This product is obtained by calling
                     // hashTransid() function.
@@ -442,46 +445,72 @@ public:
                 // bucket size the better. If bucket sizes appear to big we
                 // might want to increase number of buckets.
                 unordered_lookup_size_sum_ += std::distance(p.first, p.second);
+                bool non_expired_found = false;
                 // Removal can be done only after the loop
                 PktListRemovalQueue to_remove;
                 for (PktListTransidHashIterator it = p.first; it != p.second;
                      ++it) {
-                    if ((*it)->getTransid() == rcvd_packet->getTransid()) {
+                    // If transaction id is matching, we found the original
+                    // packet sent to the server. Therefore, we reset the
+                    // 'next sent' pointer to point to this location. We
+                    // also indicate that the matching packet is found.
+                    // Even though the packet has been found, we continue
+                    // iterating over the bucket to remove all those packets
+                    // that are timed out.
+                    if (!packet_found && ((*it)->getTransid() == rcvd_packet->getTransid())) {
                         packet_found = true;
-                        next_sent_ =
-                            sent_packets_.template project<0>(it);
-                        break;
+                        next_sent_ = sent_packets_.template project<0>(it);
                     }
-                    ptime now = microsec_clock::universal_time();
-                    ptime packet_time = (*it)->getTimestamp();
-                    time_period packet_period(packet_time, now);
-                    if (!packet_period.is_null()) {
-                        double period_fractional =
-                            packet_period.length().total_seconds() +
-                            (static_cast<double>(packet_period.length().fractional_seconds())
-                             / packet_period.length().ticks_per_second());
-                        if (drop_time_ > 0 && (period_fractional > drop_time_)) {
-                            // Push the iterator on the removal queue.
-                            to_remove.push(it);
 
+                    if (!non_expired_found) {
+                        // Check if the packet should be removed due to timeout.
+                        // This includes the packet matching the received one.
+                        ptime now = microsec_clock::universal_time();
+                        ptime packet_time = (*it)->getTimestamp();
+                        time_period packet_period(packet_time, now);
+                        if (!packet_period.is_null()) {
+                            double period_fractional =
+                                packet_period.length().total_seconds() +
+                                (static_cast<double>(packet_period.length().fractional_seconds())
+                                 / packet_period.length().ticks_per_second());
+                            if (drop_time_ > 0 && (period_fractional > drop_time_)) {
+                                // Push the iterator on the removal queue.
+                                to_remove.push(it);
+
+                            } else {
+                                // We found first non-expired transaction. All other
+                                // transactions within this bucket are considered
+                                // non-expired because packets are held in the
+                                // order of addition within the bucket.
+                                non_expired_found = true;
+                            }
                         }
+                    }
+
+                    // If we found the packet and all expired transactions,
+                    // there is nothing more to do.
+                    if (non_expired_found && packet_found) {
+                        break;
                     }
                 }
 
-                // Deal with the removal queue
+                // Deal with the removal queue.
                 while (!to_remove.empty()) {
                     PktListTransidHashIterator it = to_remove.front();
                     to_remove.pop();
-                    // The packet pointed to by 'it' is timed out so
-                    // we have to remove it. 
-                    if (packet_found || !to_remove.empty()) {
+                    // If timed out packet is not the one matching server response,
+                    // we simply remove it and keep the pointer to the 'next sent'
+                    // packet as it was. If the timed out packet appears to be the
+                    // one that is matching the server response, we still want to
+                    // remove it, but we need to update the 'next sent' pointer to
+                    // point to a valid location.
+                    if (sent_packets_.template project<0>(it) != next_sent_) {
                         eraseSent(sent_packets_.template project<0>(it));
                     } else {
-                        // Removal may invalidate the next_sent_
-                        // pointer if it points to the packet being
-                        // removed. So, we set the next_sent_ to point
-                        // to the next packet after removed one.
                         next_sent_ = eraseSent(sent_packets_.template project<0>(it));
+                        // We removed the matching packet because of the timeout. It
+                        // means that there is no match anymore.
+                        packet_found = false;
                     }
                     ++collected_;
                 }

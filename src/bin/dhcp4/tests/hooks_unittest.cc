@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,9 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/option.h>
 #include <asiolink/io_address.h>
+#include <dhcp4/tests/marker_file.h>
+#include <dhcp4/tests/test_libraries.h>
+
 #include <vector>
 
 using namespace std;
@@ -194,7 +197,7 @@ public:
     buffer4_receive_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("buffer4_receive");
 
-        callout_handle.getArgument("query4", callback_pkt4_);
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
         return (0);
@@ -239,7 +242,7 @@ public:
     pkt4_receive_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("pkt4_receive");
 
-        callout_handle.getArgument("query4", callback_pkt4_);
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
         return (0);
@@ -304,9 +307,9 @@ public:
     pkt4_send_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("pkt4_send");
 
-        callout_handle.getArgument("response4", callback_pkt4_);
+        callout_handle.getArgument("response4", callback_resp_pkt4_);
 
-        callout_handle.getArgument("query4", callback_pkt4_query_);
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
         return (0);
@@ -369,7 +372,7 @@ public:
     buffer4_send_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("buffer4_send");
 
-        callout_handle.getArgument("response4", callback_pkt4_);
+        callout_handle.getArgument("response4", callback_resp_pkt4_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
         return (0);
@@ -409,7 +412,7 @@ public:
     subnet4_select_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("subnet4_select");
 
-        callout_handle.getArgument("query4", callback_pkt4_);
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
         callout_handle.getArgument("subnet4", callback_subnet4_);
         callout_handle.getArgument("subnet4collection", callback_subnet4collection_);
 
@@ -447,7 +450,7 @@ public:
     lease4_release_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease4_release");
 
-        callout_handle.getArgument("query4", callback_pkt4_);
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
         callout_handle.getArgument("lease4", callback_lease4_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
@@ -461,6 +464,7 @@ public:
     lease4_renew_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease4_renew");
 
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
         callout_handle.getArgument("subnet4", callback_subnet4_);
         callout_handle.getArgument("lease4", callback_lease4_);
         callout_handle.getArgument("hwaddr", callback_hwaddr_);
@@ -477,7 +481,7 @@ public:
     static int
     lease4_decline_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease4_decline");
-        callout_handle.getArgument("query4", callback_pkt4_);
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
         callout_handle.getArgument("lease4", callback_lease4_);
 
         return (0);
@@ -497,8 +501,8 @@ public:
     /// resets buffers used to store data received by callouts
     void resetCalloutBuffers() {
         callback_name_ = string("");
-        callback_pkt4_.reset();
-        callback_pkt4_query_.reset();
+        callback_qry_pkt4_.reset();
+        callback_qry_pkt4_.reset();
         callback_lease4_.reset();
         callback_hwaddr_.reset();
         callback_clientid_.reset();
@@ -515,14 +519,11 @@ public:
     /// String name of the received callout
     static string callback_name_;
 
-    /// Pkt4 structure returned in the callout
-    static Pkt4Ptr callback_pkt4_;
+    /// Client/query Pkt4 structure returned in the callout
+    static Pkt4Ptr callback_qry_pkt4_;
 
-    /// @brief Pkt4 structure returned in the callout
-    ///
-    /// pkt4_send hook now passes both the query and the response,
-    /// so we actually need two fields.
-    static Pkt4Ptr callback_pkt4_query_;
+    /// Server/response Pkt4 structure returned in the callout
+    static Pkt4Ptr callback_resp_pkt4_;
 
     /// Lease4 structure returned in the callout
     static Lease4Ptr callback_lease4_;
@@ -546,14 +547,45 @@ public:
 // The following fields are used in testing pkt4_receive_callout.
 // See fields description in the class for details
 string HooksDhcpv4SrvTest::callback_name_;
-Pkt4Ptr HooksDhcpv4SrvTest::callback_pkt4_;
-Pkt4Ptr HooksDhcpv4SrvTest::callback_pkt4_query_;
+Pkt4Ptr HooksDhcpv4SrvTest::callback_qry_pkt4_;
+Pkt4Ptr HooksDhcpv4SrvTest::callback_resp_pkt4_;
 Subnet4Ptr HooksDhcpv4SrvTest::callback_subnet4_;
 HWAddrPtr HooksDhcpv4SrvTest::callback_hwaddr_;
 ClientIdPtr HooksDhcpv4SrvTest::callback_clientid_;
 Lease4Ptr HooksDhcpv4SrvTest::callback_lease4_;
 const Subnet4Collection* HooksDhcpv4SrvTest::callback_subnet4collection_;
 vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
+
+/// @brief Fixture class used to do basic library load/unload tests
+class LoadUnloadDhcpv4SrvTest : public ::testing::Test {
+public:
+    /// @brief Pointer to the tested server object
+    boost::shared_ptr<NakedDhcpv4Srv> server_;
+
+    LoadUnloadDhcpv4SrvTest() {
+        reset();
+    }
+
+    /// @brief Destructor
+    ~LoadUnloadDhcpv4SrvTest() {
+        server_.reset();
+        reset();
+    };
+
+    /// @brief Reset hooks data
+    ///
+    /// Resets the data for the hooks-related portion of the test by ensuring
+    /// that no libraries are loaded and that any marker files are deleted.
+    void reset() {
+        // Unload any previously-loaded libraries.
+        HooksManager::unloadLibraries();
+
+        // Get rid of any marker files.
+        static_cast<void>(remove(LOAD_MARKER_FILE));
+        static_cast<void>(remove(UNLOAD_MARKER_FILE));
+        CfgMgr::instance().clear();
+    }
+};
 
 // Checks if callouts installed on pkt4_receive are indeed called and the
 // all necessary parameters are passed.
@@ -584,7 +616,7 @@ TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
     EXPECT_EQ("buffer4_receive", callback_name_);
 
     // Check that pkt4 argument passing was successful and returned proper value
-    EXPECT_TRUE(callback_pkt4_.get() == dis.get());
+    EXPECT_TRUE(callback_qry_pkt4_.get() == dis.get());
 
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
@@ -689,7 +721,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSimple) {
     EXPECT_EQ("pkt4_receive", callback_name_);
 
     // check that pkt4 argument passing was successful and returned proper value
-    EXPECT_TRUE(callback_pkt4_.get() == sol.get());
+    EXPECT_TRUE(callback_qry_pkt4_.get() == sol.get());
 
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
@@ -819,12 +851,12 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
     Pkt4Ptr adv = srv_->fake_sent_.front();
 
     // Check that pkt4 argument passing was successful and returned proper value
-    ASSERT_TRUE(callback_pkt4_);
-    EXPECT_TRUE(callback_pkt4_.get() == adv.get());
+    ASSERT_TRUE(callback_resp_pkt4_);
+    EXPECT_TRUE(callback_resp_pkt4_.get() == adv.get());
 
     // That that the query4 argument was correctly set to the Discover we sent.
-    ASSERT_TRUE(callback_pkt4_query_);
-    EXPECT_TRUE(callback_pkt4_query_.get() == sol.get());
+    ASSERT_TRUE(callback_qry_pkt4_);
+    EXPECT_TRUE(callback_qry_pkt4_.get() == sol.get());
 
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
@@ -968,7 +1000,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSimple) {
     Pkt4Ptr adv = srv_->fake_sent_.front();
 
     // Check that pkt4 argument passing was successful and returned proper value
-    EXPECT_TRUE(callback_pkt4_.get() == adv.get());
+    EXPECT_TRUE(callback_resp_pkt4_.get() == adv.get());
 
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
@@ -1090,7 +1122,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
     EXPECT_EQ("subnet4_select", callback_name_);
 
     // Check that pkt4 argument passing was successful and returned proper value
-    EXPECT_TRUE(callback_pkt4_.get() == sol.get());
+    EXPECT_TRUE(callback_qry_pkt4_.get() == sol.get());
 
     const Subnet4Collection* exp_subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
@@ -1240,6 +1272,10 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     // Check that the callback called is indeed the one we installed
     EXPECT_EQ("lease4_renew", callback_name_);
 
+    // Check that query4 argument passing was successful and
+    // returned proper value
+    EXPECT_TRUE(callback_qry_pkt4_.get() == req.get());
+
     // Check that hwaddr parameter is passed properly
     ASSERT_TRUE(callback_hwaddr_);
     EXPECT_TRUE(*callback_hwaddr_ == *req->getHWAddr());
@@ -1254,6 +1290,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
 
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
     expected_argument_names.push_back("subnet4");
     expected_argument_names.push_back("clientid");
     expected_argument_names.push_back("hwaddr");
@@ -1410,7 +1447,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     EXPECT_EQ("lease4_release", callback_name_);
 
     // Check that pkt4 argument passing was successful and returned proper value
-    EXPECT_TRUE(callback_pkt4_.get() == rel.get());
+    EXPECT_TRUE(callback_qry_pkt4_.get() == rel.get());
 
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
@@ -1506,15 +1543,15 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
     // Verifying DHCPDECLINE is a bit tricky, as it is created somewhere in
     // acquireAndDecline. We'll just verify that it's really a DECLINE
     // and that its address is equal to what we have in LeaseMgr.
-    ASSERT_TRUE(callback_pkt4_);
+    ASSERT_TRUE(callback_qry_pkt4_);
     ASSERT_TRUE(callback_lease4_);
 
     // Check that it's the proper packet that was reported.
-    EXPECT_EQ(DHCPDECLINE, callback_pkt4_->getType());
+    EXPECT_EQ(DHCPDECLINE, callback_qry_pkt4_->getType());
 
     // Extract the address being declined.
     OptionCustomPtr opt_declined_addr = boost::dynamic_pointer_cast<
-        OptionCustom>(callback_pkt4_->getOption(DHO_DHCP_REQUESTED_ADDRESS));
+        OptionCustom>(callback_qry_pkt4_->getOption(DHO_DHCP_REQUESTED_ADDRESS));
     ASSERT_TRUE(opt_declined_addr);
     IOAddress addr(opt_declined_addr->readAddress());
 
@@ -1550,15 +1587,15 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     // Verifying DHCPDECLINE is a bit tricky, as it is created somewhere in
     // acquireAndDecline. We'll just verify that it's really a DECLINE
     // and that its address is equal to what we have in LeaseMgr.
-    ASSERT_TRUE(callback_pkt4_);
+    ASSERT_TRUE(callback_qry_pkt4_);
     ASSERT_TRUE(callback_lease4_);
 
     // Check that it's the proper packet that was reported.
-    EXPECT_EQ(DHCPDECLINE, callback_pkt4_->getType());
+    EXPECT_EQ(DHCPDECLINE, callback_qry_pkt4_->getType());
 
     // Extract the address being declined.
     OptionCustomPtr opt_declined_addr = boost::dynamic_pointer_cast<
-        OptionCustom>(callback_pkt4_->getOption(DHO_DHCP_REQUESTED_ADDRESS));
+        OptionCustom>(callback_qry_pkt4_->getOption(DHO_DHCP_REQUESTED_ADDRESS));
     ASSERT_TRUE(opt_declined_addr);
     IOAddress addr(opt_declined_addr->readAddress());
 
@@ -1572,4 +1609,43 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     // lease returned and lease from the lease manager) all match.
     EXPECT_EQ(addr, from_mgr->addr_);
     EXPECT_EQ(addr, callback_lease4_->addr_);
+}
+
+
+// Verifies that libraries are unloaded by server destruction
+// The callout libraries write their library index number to a marker
+// file upon load and unload, making it simple to test whether or not
+// the load and unload callouts have been invoked.
+TEST_F(LoadUnloadDhcpv4SrvTest, unloadLibaries) {
+
+    ASSERT_NO_THROW(server_.reset(new NakedDhcpv4Srv()));
+
+    // Ensure no marker files to start with.
+    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Load the test libraries
+    HookLibsCollection libraries;
+    libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_1),
+                                  ConstElementPtr()));
+    libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_2),
+
+                                  ConstElementPtr()));
+    ASSERT_TRUE(HooksManager::loadLibraries(libraries));
+
+    // Verify that they load functions created the LOAD_MARKER_FILE
+    // and that it's contents are correct: "12" - the first library
+    // appends "1" to the file, the second appends "2"). Also
+    // check that the unload marker file does not yet exist.
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Destroy the server, instance which should unload the libraries.
+    server_.reset();
+
+    // Check that the libraries were unloaded. The libraries are
+    // unloaded in the reverse order to which they are loaded, and
+    // this should be reflected in the unload file.
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
 }

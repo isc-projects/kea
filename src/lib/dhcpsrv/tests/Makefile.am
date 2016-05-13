@@ -73,6 +73,7 @@ libdhcpsrv_unittests_SOURCES += callout_handle_store_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_db_access_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_duid_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_expiration_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfg_host_operations_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_hosts_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_iface_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_mac_source_unittest.cc
@@ -120,7 +121,6 @@ if HAVE_PGSQL
 libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
 endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
-libdhcpsrv_unittests_SOURCES += schema_pgsql_copy.h
 libdhcpsrv_unittests_SOURCES += srv_config_unittest.cc
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_get_callout_handle.cc test_get_callout_handle.h
