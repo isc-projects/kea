@@ -125,18 +125,15 @@ std::string genLease4Entry(Pkt4Ptr query, Lease4Ptr lease, bool renewal) {
 ///
 /// @return - returns 0 upon success, non-zero otherwise
 int legallog4_handler(CalloutHandle& handle, bool renewal) {
-    // Fetch the client's packet from the callout context.
-    Pkt4Ptr query;
-    handle.getContext("query4", query);
-    if (!query) {
-        return (0);
-    }
-
     if (!legal_file) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_FILE_HOOK_LEASE4_NO_LEGAL_FILE);
         return (1);
     }
+
+    // Fetch the client's packet and the lease callout arguments.
+    Pkt4Ptr query;
+    handle.getArgument("query4", query);
 
     Lease4Ptr lease;
     handle.getArgument("lease4", lease);
@@ -157,46 +154,21 @@ int legallog4_handler(CalloutHandle& handle, bool renewal) {
 // issues related to namespaces.
 extern "C" {
 
-/// @brief  This callout is called at the "pkt4_receive" hook.
-///
-/// We need the inbound packet to create the log entries and currently,
-/// neither the lease4_select or lease4_renew callouts have access to it.
-/// This callout will retrieve the inbound packet from the callout arguments
-/// and add it to the callout context as "query4", making it available to
-/// subsequent callouts.  If the packet is not a DHCPREQUEST, the callout will
-/// add an empty Pkt4Ptr.
-///
-/// @param handle CalloutHandle which provides access to context.
-///
-/// @return 0 upon success, non-zero otherwise.
-int pkt4_receive(CalloutHandle& handle) {
-    try {
-        Pkt4Ptr query;
-        handle.getArgument("query4", query);
-        if (query->getType() == DHCPREQUEST) {
-            handle.setContext("query4", query);
-        } else {
-            handle.setContext("query4", Pkt4Ptr());
-        }
-    } catch (const std::exception& ex) {
-        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_PKT4_RECEIVE_ERROR)
-                  .arg(ex.what());
-        return (1);
-    }
-
-    return (0);
-}
-
-
 /// @brief  This callout is called at the "lease4_select" hook.
 ///
 /// Generates an entry in the legal log for a lease assignment if
-/// the callout context value "query4" is not an empty pointer.
+/// the fake_allocation argument is false.
 ///
 /// @param handle CalloutHandle which provides access to context.
 ///
 /// @return 0 upon success, non-zero otherwise.
 int lease4_select(CalloutHandle& handle) {
+    bool fake_allocation;
+    handle.getArgument("fake_allocation", fake_allocation);
+    if (fake_allocation) {
+        return (0);
+    }
+
     return(legallog4_handler(handle, false));
 }
 
