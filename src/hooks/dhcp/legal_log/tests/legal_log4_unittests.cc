@@ -5,8 +5,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /// @file This file contains tests which verify DHCPv4 legal file entry
-/// generation as well as tests which exercise v4 callouts: pkt4_receive
-/// lease4_select, lease4_renew.  These tests assume the legal log library
+/// generation as well as tests which exercise v4 callouts: lease4_select
+/// and lease4_renew.  These tests assume the legal log library
 /// is linked in, not loaded.  This allows a great deal more flexiblity
 /// in testing, such as overriding and accessing the legal_file instance.
 /// The load and unload callouts are excercised in ../libloadtests, which
@@ -34,9 +34,9 @@ using namespace legal_log;
 extern LegalFilePtr legal_file;
 
 extern std::string genLease4Entry(Pkt4Ptr query, Lease4Ptr lease, bool renewal);
+extern int legallog4_handler(CalloutHandle& handle, bool renewal);
 
 extern "C" {
-extern int pkt4_receive(CalloutHandle& handle);
 extern int lease4_select(CalloutHandle& handle);
 extern int lease4_renew(CalloutHandle& handle);
 }
@@ -231,82 +231,65 @@ TEST(Lease4EntryTest, relayedClient) {
               entry);
 }
 
-// Verifies that the pkt4_receive callout caches DHCPREQUEST packets
-TEST_F(CalloutTest, pkt4_receive) {
-    CalloutHandle handle(getCalloutManager());
-    for (int i = 1; i <= DHCPLEASEQUERYDONE; i++) {
-        // Create a v4 packet with current type.
-        Pkt4Ptr pkt4;
-        try {
-            pkt4.reset(new Pkt4(i, 0x77));
-        } catch (...) {
-            // invalid types won't construct, skip em
-            continue;
-        }
-
-        // Set callout argment to the "inbound" packet
-        handle.setArgument("query4", pkt4);
-
-        // Invoke the callout which should always succeed.
-        int ret;
-        ASSERT_NO_THROW(ret = pkt4_receive(handle));
-        EXPECT_EQ(0, ret);
-
-        // Get the packet pointer from the context
-        Pkt4Ptr from_context;
-        ASSERT_NO_THROW(handle.getContext("query4", from_context));
-        if (i == DHCPREQUEST) {
-            ASSERT_TRUE(pkt4);
-            EXPECT_EQ(pkt4, from_context);
-        } else {
-            ASSERT_FALSE(from_context) << " packet cached for type:"
-                                       << i << "?";
-        }
-
-        handle.deleteContext("query4");
-    }
-}
-
-// Verifies that the lease4_select callout
-// -# Detects no LegalFile instance
-// -# Does not generate an entry when given an empty packet pointer
-// -# Generates the correct entry in the legal file given a Pkt4 and Lease4
-// Note we don't bother testing multple entries or rotation as this is done
-// during LegalFile testing.
-TEST_F(CalloutTest, lease4_select) {
+// Verifies that legallog4_handler() detects an unitliazed legal_file
+TEST_F(CalloutTest, noLegalFileTest) {
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
 
-    // Make a lease and add it to the call argument
+    // Make a lease and add it to the call arguments
     HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
     Lease4Ptr lease4 = createLease4("192.2.1.100", 6735, hwaddr, ClientIdPtr());
     handle.setArgument("lease4", lease4);
 
-    // Make a packet and add it to the context for now.  We need a non-null
-    // packet to verify the legal file check.
+    // Make a packet and add it to the context for now.
     Pkt4Ptr pkt4(new Pkt4(DHCPREQUEST, 0x77));
-    handle.setContext("query4", pkt4);
+    handle.setArgument("query4", pkt4);
 
-    // The callout should fail when there's no legal_file.
+    // The function should fail when there's no legal_file.
     int ret;
-    ASSERT_NO_THROW(ret = lease4_select(handle));
+    ASSERT_NO_THROW(ret = legallog4_handler(handle, false));
     EXPECT_EQ(1, ret);
+}
 
+// Verifies that the lease4_select callout
+// -# Does not generate an entry when fake_allocation arugment is true
+// -# Generates the correct entry in the legal file given a Pkt4 and Lease4
+// Note we don't bother testing multple entries or rotation as this is done
+// during LegalFile testing.
+TEST_F(CalloutTest, lease4_select) {
     // Create the legal file
     TestableLegalFilePtr tfile;
     ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
     legal_file = tfile;
 
-    // Now set context packet to an empty pointer.
-    handle.setContext("query4", Pkt4Ptr());
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
 
-    // The callout should succeed but with an empty packet, no entry
-    // should be generated. We'll check file content later.
+    // Make a lease and add it to the callout arguments.
+    HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
+    Lease4Ptr lease4 = createLease4("192.2.1.100", 6735, hwaddr, ClientIdPtr());
+    handle.setArgument("lease4", lease4);
+
+    // Make a packet and add it to the callout arugments.
+    Pkt4Ptr pkt4(new Pkt4(DHCPREQUEST, 0x77));
+    handle.setArgument("query4", pkt4);
+
+    // Set fake allocation arugment to true.
+    bool fake_allocation = true;
+    handle.setArgument("fake_allocation", fake_allocation);
+
+    // The callout should succeed but with fake allocation set
+    // to true, no entry should be generated. We'll check file
+    //  content later.
+    int ret;
     ASSERT_NO_THROW(ret = lease4_select(handle));
     EXPECT_EQ(0, ret);
 
-    // Now add the packet.  We'll also change the lease address
-    // to make sure the entry is from this invocation.
+    // Set fake allocation arugment to false and change the
+    // lease address so we'll know that the next invocation is
+    // the one which generated the entry.
+    fake_allocation = false;
+    handle.setArgument("fake_allocation", fake_allocation);
     handle.setContext("query4", pkt4);
     lease4->addr_ = isc::asiolink::IOAddress("192.2.1.111");
 
@@ -329,13 +312,14 @@ TEST_F(CalloutTest, lease4_select) {
     checkFileLines(genName(today_), today_now_string, lines);
 }
 
-// Verifies that the lease4_renew callout
-// -# Detects no LegalFile instance
-// -# Does not generate an entry when given an empty packet pointer
-// -# Generates the correct entry in the legal file given a Pkt4 and Lease4
-// Note we don't bother testing multple entries or rotation as this is done
-// during LegalFile testing.
+// Verifies that the lease4_renew callout generates the correct entry
+// in the legal file given a Pkt4 and Lease4
 TEST_F(CalloutTest, lease4_renew) {
+    // Create the legal file
+    TestableLegalFilePtr tfile;
+    ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
+    legal_file = tfile;
+
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
 
@@ -344,45 +328,21 @@ TEST_F(CalloutTest, lease4_renew) {
     Lease4Ptr lease4 = createLease4("192.2.1.100", 6735, hwaddr, ClientIdPtr());
     handle.setArgument("lease4", lease4);
 
-    // Make a packet and add it to the context for now.  We need a non-null
-    // packet to verify the legal file check.
+    // Make a packet and add it to the callout arugments.
     Pkt4Ptr pkt4(new Pkt4(DHCPREQUEST, 0x77));
-    handle.setContext("query4", pkt4);
+    handle.setArgument("query4", pkt4);
 
-    // The callout should fail when there's no legal_file.
+    // Callout should succeed and generate an entry for 192.2.1.100.
     int ret;
-    ASSERT_NO_THROW(ret = lease4_renew(handle));
-    EXPECT_EQ(1, ret);
-
-    // Create the legal file
-    TestableLegalFilePtr tfile;
-    ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
-    legal_file = tfile;
-
-    // Now set context packet to an empty pointer.
-    handle.setContext("query4", Pkt4Ptr());
-
-    // The callout should succeed but with an empty packet, no entry
-    // should be generated. We'll check file content later.
-    ASSERT_NO_THROW(ret = lease4_renew(handle));
-    EXPECT_EQ(0, ret);
-
-    // Now add the packet.  We'll also change the lease address
-    // to make sure the entry is from this invocation.
-    handle.setContext("query4", pkt4);
-    lease4->addr_ = isc::asiolink::IOAddress("192.2.1.111");
-
-    // Callout should succeed and generate an entry for 192.2.1.111.
     ASSERT_NO_THROW(ret = lease4_renew(handle));
     EXPECT_EQ(0, ret);
 
     // Close it to flush any unwritten data
     tfile->close();
 
-    // Verify that the file content is correct. We should have only
-    // the one entry for address 192.2.1.111.
+    // Verify that the file content is correct.
     std::vector<std::string>lines;
-    lines.push_back("Address: 192.2.1.111 has been renewed"
+    lines.push_back("Address: 192.2.1.100 has been renewed"
                     " for 1 hrs 52 min 15 secs"
                     " to a device with hardware address:"
                     " hwtype=1 08:00:2b:02:3f:4e");
