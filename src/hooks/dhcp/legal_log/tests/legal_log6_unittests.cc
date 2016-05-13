@@ -31,6 +31,7 @@ using namespace dhcp;
 
 extern std::string genLease6Entry(Pkt6Ptr query, Lease6Ptr lease, bool renewal);
 extern std::string hwaddrSourceToString(uint32_t source);
+extern int legallog6_handler(CalloutHandle& handle, bool renewal);
 
 extern LegalFilePtr legal_file;
 
@@ -211,48 +212,40 @@ TEST(Lease6EntryTest, relayedClient) {
               entry);
 }
 
-// Verifies that the pkt6_receive callout caches DHCPREQUEST packets
-TEST_F(CalloutTest, pkt6_receive) {
-
+// Verifies that legallog6_handler() detects a null legal_file
+TEST_F(CalloutTest, noLegalFileTest) {
+    // Make a callout handle
     CalloutHandle handle(getCalloutManager());
-    for (int i = 0; i < 23; i++) {
-        // Create a v6 packet with current type.
-        Pkt6Ptr pkt6;
-        try {
-            pkt6.reset(new Pkt6(i, 0x77));
-        } catch (...) {
-            // invalid types won't construct, skip em
-            continue;
-        }
-        handle.setArgument("query6", pkt6);
 
-        // Invoke the callout which should always succeed.
-        int ret;
-        ASSERT_NO_THROW(ret = pkt6_receive(handle));
-        EXPECT_EQ(0, ret);
+    // Make a lease and add it to the callout arguments
+    DuidPtr duid1(new DUID(DUID1, sizeof(DUID1)));
+    HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
+    hwaddr->source_ = HWAddr::HWADDR_SOURCE_RAW;
+    Lease6Ptr lease6 = createLease6(duid1, Lease::TYPE_NA, "2001:db8:1::", 0,
+                                    713, HWAddrPtr());
+    handle.setArgument("lease6", lease6);
 
-        Pkt6Ptr from_context;
-        // Fetch the inbound packet pointer from the context.
-        ASSERT_NO_THROW(handle.getContext("query6", from_context));
+    // Make a packet and add it to the callout arugments
+    Pkt6Ptr pkt6(new Pkt6(DHCPV6_REQUEST, 0x77));
+    handle.setArgument("query6", pkt6);
 
-        if (i == DHCPV6_REQUEST || i == DHCPV6_RENEW || i == DHCPV6_REBIND) {
-            ASSERT_TRUE(from_context) << " packet null for type: " << i;
-            EXPECT_EQ(pkt6, from_context) << " packet mismatch fro type: " << i;
-        } else {
-            ASSERT_FALSE(from_context) << " packet not null for type: " << i;
-        }
-
-        handle.deleteContext("query6");
-    }
+    // The function should fail when there's no legal_file.
+    int ret;
+    ASSERT_NO_THROW(ret = legallog6_handler(handle, false));
+    EXPECT_EQ(1, ret);
 }
 
 // Verifies that the lease6_select callout
-// -# Detects no LegalFile instance
-// -# Does not generate an entry when given an empty packet pointer
+// -# Does not generate an entry when fake_allocation is true
 // -# Generates the correct entry in the legal file given a Pkt6 and Lease6
 // Note we don't bother testing multple entries or rotation as this is done
 // during LegalFile testing.
 TEST_F(CalloutTest, lease6_select) {
+    // Create the legal file
+    TestableLegalFilePtr tfile;
+    ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
+    legal_file = tfile;
+
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
 
@@ -267,29 +260,24 @@ TEST_F(CalloutTest, lease6_select) {
     // Make a packet and add it to the context for now.  We need a non-null
     // packet to verify the legal file check.
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_REQUEST, 0x77));
-    handle.setContext("query6", pkt6);
+    handle.setArgument("query6", pkt6);
 
-    // The callout should fail if there's no legal_file
+    // Set fake allocation arugment to true.
+    bool fake_allocation = true;
+    handle.setArgument("fake_allocation", fake_allocation);
+
+    // The callout should succeed but with fake allocation set
+    // to true, no entry should be generated. We'll check file
+    //  content later.
     int ret;
-    ASSERT_NO_THROW(ret = lease6_select(handle));
-    EXPECT_EQ(1, ret);
-
-    // Create the legal file
-    TestableLegalFilePtr tfile;
-    ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
-    legal_file = tfile;
-
-    // Now set context packet to an empty pointer.
-    handle.setContext("query6", Pkt6Ptr());
-
-    // The callout should succeed but with an empty packet, no entry
-    // should be generated. We'll check file content later.
     ASSERT_NO_THROW(ret = lease6_select(handle));
     EXPECT_EQ(0, ret);
 
-    // Now add the packet.  We'll also change the lease address
-    // to make sure the entry is from this invocation.
-    handle.setContext("query6", pkt6);
+    // Set fake allocation arugment to false and change the
+    // lease address so we'll know that the next invocation is
+    // the one which generated the entry.
+    fake_allocation = false;
+    handle.setArgument("fake_allocation", fake_allocation);
     lease6->addr_ = isc::asiolink::IOAddress("2001:db8:1::111");
 
     // The callout should succeed and generate an entry for 2001:db8:1::111
@@ -310,11 +298,15 @@ TEST_F(CalloutTest, lease6_select) {
 
 // Verifies that the lease6_renew callout
 // -# Detects no LegalFile instance
-// -# Does not generate an entry when given an empty packet pointer
 // -# Generates the correct entry in the legal file given a Pkt6 and Lease6
 // Note we don't bother testing multple entries or rotation as this is done
 // during LegalFile testing.
 TEST_F(CalloutTest, lease6_renew) {
+    // Create the legal file
+    TestableLegalFilePtr tfile;
+    ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
+    legal_file = tfile;
+
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
 
@@ -326,35 +318,12 @@ TEST_F(CalloutTest, lease6_renew) {
                                     713, HWAddrPtr());
     handle.setArgument("lease6", lease6);
 
-    // Make a packet and add it to the context for now.  We need a non-null
-    // packet to verify the legal file check.
+    // Make a packet and add it to the arugments.
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_RENEW, 0x77));
-    handle.setContext("query6", pkt6);
-
-    // The callout should fail if there's no legal_file
-    int ret;
-    ASSERT_NO_THROW(ret = lease6_renew(handle));
-    EXPECT_EQ(1, ret);
-
-    // Create the legal file
-    TestableLegalFilePtr tfile;
-    ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
-    legal_file = tfile;
-
-    // Now set context packet to an empty pointer.
-    handle.setContext("query6", Pkt6Ptr());
-
-    // The callout should succeed but with an empty packet, no entry
-    // should be generated. We'll check file content later.
-    ASSERT_NO_THROW(ret = lease6_renew(handle));
-    EXPECT_EQ(0, ret);
-
-    // Now add the packet.  We'll also change the lease address
-    // to make sure the entry is from this invocation.
-    handle.setContext("query6", pkt6);
-    lease6->addr_ = isc::asiolink::IOAddress("2001:db8:1::111");
+    handle.setArgument("query6", pkt6);
 
     // The callout should succeed and generate an entry for 2001:db8:1::111
+    int ret;
     ASSERT_NO_THROW(ret = lease6_renew(handle));
     EXPECT_EQ(0, ret);
 
@@ -363,7 +332,7 @@ TEST_F(CalloutTest, lease6_renew) {
 
     // Verify that the file content.
     std::vector<std::string>lines;
-    lines.push_back("Address:2001:db8:1::111 has been renewed"
+    lines.push_back("Address:2001:db8:1:: has been renewed"
                     " for 0 hrs 11 min 53 secs"
                     " to a device with DUID: 17:34:e2:ff:09:92:54");
     std::string today_now_string = legal_file->getNowString();
@@ -371,12 +340,15 @@ TEST_F(CalloutTest, lease6_renew) {
 }
 
 // Verifies that the lease6_rebind callout
-// -# Detects no LegalFile instance
-// -# Does not generate an entry when given an empty packet pointer
 // -# Generates the correct entry in the legal file given a Pkt6 and Lease6
 // Note we don't bother testing multple entries or rotation as this is done
 // during LegalFile testing.
 TEST_F(CalloutTest, lease6_rebind) {
+    // Create the legal file
+    TestableLegalFilePtr tfile;
+    ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
+    legal_file = tfile;
+
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
 
@@ -388,35 +360,12 @@ TEST_F(CalloutTest, lease6_rebind) {
                                     713, HWAddrPtr());
     handle.setArgument("lease6", lease6);
 
-    // Make a packet and add it to the context for now.  We need a non-null
-    // packet to verify the legal file check.
+    // Make a packet and add it to the arugments.
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_REBIND, 0x77));
-    handle.setContext("query6", pkt6);
-
-    // The callout should fail if there's no legal_file
-    int ret;
-    ASSERT_NO_THROW(ret = lease6_rebind(handle));
-    EXPECT_EQ(1, ret);
-
-    // Create the legal file
-    TestableLegalFilePtr tfile;
-    ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
-    legal_file = tfile;
-
-    // Now set context packet to an empty pointer.
-    handle.setContext("query6", Pkt6Ptr());
-
-    // The callout should succeed but with an empty packet, no entry
-    // should be generated. We'll check file content later.
-    ASSERT_NO_THROW(ret = lease6_rebind(handle));
-    EXPECT_EQ(0, ret);
-
-    // Now add the packet.  We'll also change the lease address
-    // to make sure the entry is from this invocation.
-    handle.setContext("query6", pkt6);
-    lease6->addr_ = isc::asiolink::IOAddress("2001:db8:1::111");
+    handle.setArgument("query6", pkt6);
 
     // The callout should succeed and generate an entry for 2001:db8:1::111
+    int ret;
     ASSERT_NO_THROW(ret = lease6_rebind(handle));
     EXPECT_EQ(0, ret);
 
@@ -425,13 +374,11 @@ TEST_F(CalloutTest, lease6_rebind) {
 
     // Verify that the file content.
     std::vector<std::string>lines;
-    lines.push_back("Address:2001:db8:1::111 has been renewed"
+    lines.push_back("Address:2001:db8:1:: has been renewed"
                     " for 0 hrs 11 min 53 secs"
                     " to a device with DUID: 17:34:e2:ff:09:92:54");
     std::string today_now_string = legal_file->getNowString();
     checkFileLines(genName(today_), today_now_string, lines);
 }
-
-
 
 } // end of anonymous namespace
