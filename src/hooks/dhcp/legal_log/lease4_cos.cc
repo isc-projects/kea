@@ -115,8 +115,7 @@ std::string genLease4Entry(Pkt4Ptr query, Lease4Ptr lease, bool renewal) {
 /// @brief Produces an DHCPv4 legal log entry from a callout handle
 ///
 /// Extracts the inbound packet and lease from the Callout, generates the
-/// log entry text and writes it to the legal file.  If the callout context
-/// packet is an empty pointer it simply returns.  If the the legal file
+/// log entry text and writes it to the legal file.  If the the legal file
 /// has not been instantiated or writing to it fails, the function log the
 /// error and return failure.
 ///

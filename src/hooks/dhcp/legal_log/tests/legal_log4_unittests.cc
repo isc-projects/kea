@@ -231,17 +231,17 @@ TEST(Lease4EntryTest, relayedClient) {
               entry);
 }
 
-// Verifies that legallog4_handler() detects an unitliazed legal_file
+// Verifies that legallog4_handler() detects a null legal_file
 TEST_F(CalloutTest, noLegalFileTest) {
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
 
-    // Make a lease and add it to the call arguments
+    // Make a lease and add it to the callout arguments
     HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
     Lease4Ptr lease4 = createLease4("192.2.1.100", 6735, hwaddr, ClientIdPtr());
     handle.setArgument("lease4", lease4);
 
-    // Make a packet and add it to the context for now.
+    // Make a packet and add it to the cllout arguments
     Pkt4Ptr pkt4(new Pkt4(DHCPREQUEST, 0x77));
     handle.setArgument("query4", pkt4);
 
@@ -290,7 +290,6 @@ TEST_F(CalloutTest, lease4_select) {
     // the one which generated the entry.
     fake_allocation = false;
     handle.setArgument("fake_allocation", fake_allocation);
-    handle.setContext("query4", pkt4);
     lease4->addr_ = isc::asiolink::IOAddress("192.2.1.111");
 
     // Callout should succeed and generate an entry for 192.2.1.111.

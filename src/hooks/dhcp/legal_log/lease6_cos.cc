@@ -156,8 +156,7 @@ std::string genLease6Entry(Pkt6Ptr query, Lease6Ptr lease, bool renewal) {
 /// @brief Produces an DHCPv6 legal log entry from a callout handle
 ///
 /// Extracts the inbound packet and lease from the Callout, generates the
-/// log entry text and writes it to the legal file.  If the callout context
-/// packet is an empty pointer it simply returns.  If the the legal file
+/// log entry text and writes it to the legal file.  If the the legal file
 /// has not been instantiated or writing to it fails, the function log the
 /// error and return failure.
 ///
@@ -166,18 +165,14 @@ std::string genLease6Entry(Pkt6Ptr query, Lease6Ptr lease, bool renewal) {
 ///
 /// @return - returns 0 upon success, non-zero otherwise
 int legallog6_handler(CalloutHandle& handle, bool renewal) {
-    // Fetch the client's packet from the callout context.  If it's empty,
-    // then there's nothing to do, so punt.
-    Pkt6Ptr query;
-    handle.getContext("query6", query);
-    if (!query) {
-        return (0);
-    }
-
     if (!legal_file) {
         LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE6_NO_LEGAL_FILE);
         return (1);
     }
+
+    // Fetch the client's packet and the lease callout arguments.
+    Pkt6Ptr query;
+    handle.getArgument("query6", query);
 
     Lease6Ptr lease;
     handle.getArgument("lease6", lease);
@@ -198,53 +193,22 @@ int legallog6_handler(CalloutHandle& handle, bool renewal) {
 // issues related to namespaces.
 extern "C" {
 
-/// @brief  This callout is called at the "pkt6_receive" hook.
-///
-/// If the inbound packet is a REQUEST, RENEW, or REBIND we push the packet
-/// We need the inbound packet to create the log entries and currently,
-/// neither the lease6_select or lease6_renew callouts have access to it.
-/// This callout will retrieve the inbound packet from the callout arguments
-/// and add it to the callout context as "query6", making it available to
-/// subsequent callouts.  If the packet is not a REQUEST, RENEW, or REBIND, it
-/// will add an empty Pkt6Ptr.
-
-/// @param handle CalloutHandle which provides access to context.
-///
-/// @return 0 upon success, non-zero otherwise.
-int pkt6_receive(CalloutHandle& handle) {
-
-    try {
-        Pkt6Ptr query;
-        handle.getArgument("query6", query);
-        switch(query->getType()) {
-            case  DHCPV6_REQUEST:
-            case  DHCPV6_RENEW:
-            case  DHCPV6_REBIND:
-                handle.setContext("query6", query);
-                break;
-            default:
-                handle.setContext("query6", Pkt6Ptr());
-        }
-    } catch (const std::exception& ex) {
-        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_PKT6_RECEIVE_ERROR)
-                  .arg(ex.what());
-        return (1);
-    }
-
-    return (0);
-}
-
-
 /// @brief  This callout is called at the "lease6_select" hook.
 ///
 /// Generates an entry in the legal log for a lease assignment if
-/// the callout context value "query6" is not an empty pointer.
+/// the fake_allocation argument is false.
 ///
 /// @param handle CalloutHandle which provides access to context.
 ///
 /// @return 0 upon success, non-zero otherwise.
 int lease6_select(CalloutHandle& handle) {
-  return(legallog6_handler(handle, false));
+    bool fake_allocation;
+    handle.getArgument("fake_allocation", fake_allocation);
+    if (fake_allocation) {
+        return (0);
+    }
+
+    return(legallog6_handler(handle, false));
 }
 
 /// @brief  This callout is called at the "lease6_renew" hook.
@@ -256,7 +220,7 @@ int lease6_select(CalloutHandle& handle) {
 ///
 /// @return 0 upon success, non-zero otherwise.
 int lease6_renew(CalloutHandle& handle) {
-  return(legallog6_handler(handle, true));
+    return(legallog6_handler(handle, true));
 }
 
 /// @brief  This callout is called at the "lease6_rebind" hook.
@@ -268,7 +232,7 @@ int lease6_renew(CalloutHandle& handle) {
 ///
 /// @return 0 upon success, non-zero otherwise.
 int lease6_rebind(CalloutHandle& handle) {
-  return(legallog6_handler(handle, true));
+    return(legallog6_handler(handle, true));
 }
 
 } // end extern "C"
