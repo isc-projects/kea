@@ -713,6 +713,9 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         // Delete all previous arguments
         callout_handle->deleteAllArguments();
 
+        // Pass incoming packet as argument
+        callout_handle->setArgument("query6", query);
+
         // Set our response
         callout_handle->setArgument("response6", rsp);
 

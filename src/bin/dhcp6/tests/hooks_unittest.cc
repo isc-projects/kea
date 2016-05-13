@@ -136,7 +136,7 @@ public:
     pkt6_receive_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("pkt6_receive");
 
-        callout_handle.getArgument("query6", callback_pkt6_);
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
         return (0);
@@ -199,7 +199,7 @@ public:
     buffer6_receive_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("buffer6_receive");
 
-        callout_handle.getArgument("query6", callback_pkt6_);
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
         return (0);
@@ -271,7 +271,9 @@ public:
     pkt6_send_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("pkt6_send");
 
-        callout_handle.getArgument("response6", callback_pkt6_);
+        callout_handle.getArgument("response6", callback_resp_pkt6_);
+
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
         return (0);
@@ -334,7 +336,7 @@ public:
     subnet6_select_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("subnet6_select");
 
-        callout_handle.getArgument("query6", callback_pkt6_);
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
         callout_handle.getArgument("subnet6", callback_subnet6_);
         callout_handle.getArgument("subnet6collection", callback_subnet6collection_);
 
@@ -372,13 +374,29 @@ public:
     lease6_renew_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease6_renew");
 
-        callout_handle.getArgument("query6", callback_pkt6_);
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
         callout_handle.getArgument("lease6", callback_lease6_);
         callout_handle.getArgument("ia_na", callback_ia_na_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
         return (0);
     }
+
+    /// Test callback that stores received callout name and pkt6 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease6_rebind_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease6_rebind");
+
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
+        callout_handle.getArgument("lease6", callback_lease6_);
+        callout_handle.getArgument("ia_na", callback_ia_na_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
 
     /// The following values are used by the callout to override
     /// renewed lease parameters
@@ -396,7 +414,7 @@ public:
     lease6_renew_update_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease6_renew");
 
-        callout_handle.getArgument("query6", callback_pkt6_);
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
         callout_handle.getArgument("lease6", callback_lease6_);
         callout_handle.getArgument("ia_na", callback_ia_na_);
 
@@ -435,7 +453,7 @@ public:
     lease6_release_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease6_release");
 
-        callout_handle.getArgument("query6", callback_pkt6_);
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
         callout_handle.getArgument("lease6", callback_lease6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
@@ -463,7 +481,7 @@ public:
     static int
     lease6_decline_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease6_decline");
-        callout_handle.getArgument("query6", callback_pkt6_);
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
         callout_handle.getArgument("lease6", callback_lease6_);
 
         return (0);
@@ -494,7 +512,8 @@ public:
     /// Resets buffers used to store data received by callouts
     void resetCalloutBuffers() {
         callback_name_ = string("");
-        callback_pkt6_.reset();
+        callback_qry_pkt6_.reset();
+        callback_resp_pkt6_.reset();
         callback_subnet6_.reset();
         callback_lease6_.reset();
         callback_ia_na_.reset();
@@ -510,8 +529,11 @@ public:
     /// String name of the received callout
     static string callback_name_;
 
-    /// Pkt6 structure returned in the callout
-    static Pkt6Ptr callback_pkt6_;
+    /// Client's query Pkt6 structure returned in the callout
+    static Pkt6Ptr callback_qry_pkt6_;
+
+    /// Server's response Pkt6 structure returned in the callout
+    static Pkt6Ptr callback_resp_pkt6_;
 
     /// Pointer to lease6
     static Lease6Ptr callback_lease6_;
@@ -540,7 +562,8 @@ const uint32_t HooksDhcpv6SrvTest::override_valid_ = 1004;
 // The following fields are used in testing pkt6_receive_callout.
 // See fields description in the class for details
 string HooksDhcpv6SrvTest::callback_name_;
-Pkt6Ptr HooksDhcpv6SrvTest::callback_pkt6_;
+Pkt6Ptr HooksDhcpv6SrvTest::callback_qry_pkt6_;
+Pkt6Ptr HooksDhcpv6SrvTest::callback_resp_pkt6_;
 Subnet6Ptr HooksDhcpv6SrvTest::callback_subnet6_;
 const Subnet6Collection* HooksDhcpv6SrvTest::callback_subnet6collection_;
 vector<string> HooksDhcpv6SrvTest::callback_argument_names_;
@@ -606,7 +629,7 @@ TEST_F(HooksDhcpv6SrvTest, simpleBuffer6Receive) {
     EXPECT_EQ("buffer6_receive", callback_name_);
 
     // Check that pkt6 argument passing was successful and returned proper value
-    EXPECT_TRUE(callback_pkt6_.get() == sol.get());
+    EXPECT_TRUE(callback_qry_pkt6_.get() == sol.get());
 
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
@@ -727,7 +750,7 @@ TEST_F(HooksDhcpv6SrvTest, simplePkt6Receive) {
     EXPECT_EQ("pkt6_receive", callback_name_);
 
     // Check that pkt6 argument passing was successful and returned proper value
-    EXPECT_TRUE(callback_pkt6_.get() == sol.get());
+    EXPECT_TRUE(callback_qry_pkt6_.get() == sol.get());
 
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
@@ -848,11 +871,14 @@ TEST_F(HooksDhcpv6SrvTest, simplePkt6Send) {
     ASSERT_EQ(1, srv_->fake_sent_.size());
     Pkt6Ptr adv = srv_->fake_sent_.front();
 
-    // Check that pkt6 argument passing was successful and returned proper value
-    EXPECT_TRUE(callback_pkt6_.get() == adv.get());
+    // Check that pkt6 argument passing was successful and returned proper
+    // values
+    EXPECT_TRUE(callback_qry_pkt6_.get() == sol.get());
+    EXPECT_TRUE(callback_resp_pkt6_.get() == adv.get());
 
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
+    expected_argument_names.push_back(string("query6"));
     expected_argument_names.push_back(string("response6"));
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
 }
@@ -1011,7 +1037,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6Select) {
     EXPECT_EQ("subnet6_select", callback_name_);
 
     // Check that pkt6 argument passing was successful and returned proper value
-    EXPECT_TRUE(callback_pkt6_.get() == sol.get());
+    EXPECT_TRUE(callback_qry_pkt6_.get() == sol.get());
 
     const Subnet6Collection* exp_subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
@@ -1163,7 +1189,7 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Renew) {
     EXPECT_EQ("lease6_renew", callback_name_);
 
     // Check that appropriate parameters are passed to the callouts
-    EXPECT_TRUE(callback_pkt6_);
+    EXPECT_TRUE(callback_qry_pkt6_);
     EXPECT_TRUE(callback_lease6_);
     EXPECT_TRUE(callback_ia_na_);
 
@@ -1425,7 +1451,7 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Release) {
     EXPECT_EQ("lease6_release", callback_name_);
 
     // Check that appropriate parameters are passed to the callouts
-    EXPECT_TRUE(callback_pkt6_);
+    EXPECT_TRUE(callback_qry_pkt6_);
     EXPECT_TRUE(callback_lease6_);
 
     // Check if all expected parameters were really received
@@ -1537,14 +1563,14 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
     EXPECT_EQ("lease6_decline", callback_name_);
 
     // And valid parameters were passed.
-    ASSERT_TRUE(callback_pkt6_);
+    ASSERT_TRUE(callback_qry_pkt6_);
     ASSERT_TRUE(callback_lease6_);
 
     // Test sanity check - it was a decline, right?
-    EXPECT_EQ(DHCPV6_DECLINE, callback_pkt6_->getType());
+    EXPECT_EQ(DHCPV6_DECLINE, callback_qry_pkt6_->getType());
 
     // Get the address from this decline.
-    OptionPtr ia = callback_pkt6_->getOption(D6O_IA_NA);
+    OptionPtr ia = callback_qry_pkt6_->getOption(D6O_IA_NA);
     ASSERT_TRUE(ia);
     boost::shared_ptr<Option6IAAddr> addr_opt =
         boost::dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
@@ -1581,14 +1607,14 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineSkip) {
     EXPECT_EQ("lease6_decline", callback_name_);
 
     // And valid parameters were passed.
-    ASSERT_TRUE(callback_pkt6_);
+    ASSERT_TRUE(callback_qry_pkt6_);
     ASSERT_TRUE(callback_lease6_);
 
     // Test sanity check - it was a decline, right?
-    EXPECT_EQ(DHCPV6_DECLINE, callback_pkt6_->getType());
+    EXPECT_EQ(DHCPV6_DECLINE, callback_qry_pkt6_->getType());
 
     // Get the address from this decline.
-    OptionPtr ia = callback_pkt6_->getOption(D6O_IA_NA);
+    OptionPtr ia = callback_qry_pkt6_->getOption(D6O_IA_NA);
     ASSERT_TRUE(ia);
     boost::shared_ptr<Option6IAAddr> addr_opt =
         boost::dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
@@ -1627,14 +1653,14 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
     EXPECT_EQ("lease6_decline", callback_name_);
 
     // And valid parameters were passed.
-    ASSERT_TRUE(callback_pkt6_);
+    ASSERT_TRUE(callback_qry_pkt6_);
     ASSERT_TRUE(callback_lease6_);
 
     // Test sanity check - it was a decline, right?
-    EXPECT_EQ(DHCPV6_DECLINE, callback_pkt6_->getType());
+    EXPECT_EQ(DHCPV6_DECLINE, callback_qry_pkt6_->getType());
 
     // Get the address from this decline.
-    OptionPtr ia = callback_pkt6_->getOption(D6O_IA_NA);
+    OptionPtr ia = callback_qry_pkt6_->getOption(D6O_IA_NA);
     ASSERT_TRUE(ia);
     boost::shared_ptr<Option6IAAddr> addr_opt =
         boost::dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
