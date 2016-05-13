@@ -17,6 +17,8 @@
 #include <util/buffer.h>
 #include <util/optional_value.h>
 
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/static_assert.hpp>
 
@@ -83,15 +85,15 @@ TaggedStatement tagged_statements[] = {
 
     // Inserts a single DHCPv4 option into 'dhcp4_options' table.
     {MySqlHostDataSource::INSERT_V4_OPTION,
-         "INSERT INTO dhcp4_options(option_id, code, value, space, persistent, "
-            "dhcp_client_class, dhcp4_subnet_id, host_id) "
-         " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"},
+         "INSERT INTO dhcp4_options(option_id, code, value, formatted_value, space, "
+            "persistent, dhcp_client_class, dhcp4_subnet_id, host_id) "
+         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
 
     // Inserts a single DHCPv6 option into 'dhcp6_options' table.
     {MySqlHostDataSource::INSERT_V6_OPTION,
-         "INSERT INTO dhcp6_options(option_id, code, value, space, persistent, "
-            "dhcp_client_class, dhcp6_subnet_id, host_id) "
-         " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"},
+         "INSERT INTO dhcp6_options(option_id, code, value, formatted_value, space, "
+            "persistent, dhcp_client_class, dhcp6_subnet_id, host_id) "
+         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
 
     // Retrieves host information along with IPv6 reservations associated
     // with this host. If the host exists in multiple subnets, all hosts
@@ -789,8 +791,17 @@ private:
             if (most_recent_option_id_ < option_id_) {
                 most_recent_option_id_ = option_id_;
 
-                space_[space_length_] = '\0';
-                std::string space(space_);
+                std::string space;
+                if (space_null_ == MLM_FALSE) {
+                    space_[space_length_] = '\0';
+                    space.assign(space_);
+                }
+
+                std::string formatted_value;
+                if (formatted_value_null_ == MLM_FALSE) {
+                    formatted_value_[formatted_value_length_] = '\0';
+                    formatted_value.assign(formatted_value_);
+                }
 
                 OptionDefinitionPtr def;
                 if ((space == DHCP4_OPTION_SPACE) || (space == DHCP6_OPTION_SPACE)) {
@@ -809,17 +820,26 @@ private:
                     def = LibDHCP::getRuntimeOptionDef(space, code_);
                 }
 
+
                 OptionPtr option;
-                OptionBuffer buf(value_, value_ + value_length_);
-                if (def) {
-                    option = def->optionFactory(universe_, code_, buf.begin(),
-                                                buf.end());
-                } else {
+
+                if (!def) {
+                    OptionBuffer buf(value_, value_ + value_length_);
                     option.reset(new Option(universe_, code_, buf.begin(),
                                             buf.end()));
+                } else {
+                    if (formatted_value.empty()) {
+                        OptionBuffer buf(value_, value_ + value_length_);
+                        option = def->optionFactory(universe_, code_, buf.begin(),
+                                                    buf.end());
+                    } else {
+                        std::vector<std::string> split_vec;
+                        boost::split(split_vec, formatted_value, boost::is_any_of(","));
+                        option = def->optionFactory(universe_, code_, split_vec);
+                    }
                 }
 
-                OptionDescriptor desc(option, persistent_);
+                OptionDescriptor desc(option, persistent_, formatted_value);
                 cfg->add(desc, space);
             }
         }
@@ -1442,16 +1462,16 @@ private:
 class MySqlOptionExchange {
 private:
 
-    static const size_t OPTION_COLUMNS = 8;
+    static const size_t OPTION_COLUMNS = 9;
 
 public:
 
     MySqlOptionExchange()
-        : type_(0), value_len_(0), space_(), space_len_(0),
+        : type_(0), value_len_(0), formatted_value_len_(0), space_(), space_len_(0),
           persistent_(false), client_class_(), client_class_len_(0),
           subnet_id_(0), host_id_(0), option_() {
 
-        BOOST_STATIC_ASSERT(7 < OPTION_COLUMNS);
+        BOOST_STATIC_ASSERT(8 < OPTION_COLUMNS);
     }
 
 
@@ -1482,7 +1502,8 @@ public:
             // value: BLOB NULL
             OutputBuffer buf(opt_desc.option_->len());
             opt_desc.option_->pack(buf);
-            if (buf.getLength() > opt_desc.option_->getHeaderLen()) {
+            if ((buf.getLength() > opt_desc.option_->getHeaderLen()) &&
+                 opt_desc.formatted_value_.empty()) {
                 const char* buf_ptr = static_cast<const char*>(buf.getData());
                 value_.assign(buf_ptr + opt_desc.option_->getHeaderLen(),
                               buf_ptr + buf.getLength());
@@ -1497,44 +1518,56 @@ public:
                 bind_[2].buffer_type = MYSQL_TYPE_NULL;
             }
 
+            // formatted_value: TEXT NULL,
+            if (!opt_desc.formatted_value_.empty()) {
+                formatted_value_len_ = opt_desc.formatted_value_.size();
+                bind_[3].buffer_type = MYSQL_TYPE_STRING;
+                bind_[3].buffer = const_cast<char*>(opt_desc.formatted_value_.c_str());
+                bind_[3].buffer_length = formatted_value_len_;
+                bind_[3].length = &formatted_value_len_;
+
+            } else {
+                bind_[3].buffer_type = MYSQL_TYPE_NULL;
+            }
+
             // space: VARCHAR(128) NULL
             space_ = opt_space;
             space_len_ = space_.size();
-            bind_[3].buffer_type = MYSQL_TYPE_STRING;
-            bind_[3].buffer = const_cast<char*>(space_.c_str());
-            bind_[3].buffer_length = space_len_;
-            bind_[3].length = &space_len_;
+            bind_[4].buffer_type = MYSQL_TYPE_STRING;
+            bind_[4].buffer = const_cast<char*>(space_.c_str());
+            bind_[4].buffer_length = space_len_;
+            bind_[4].length = &space_len_;
 
             // persistent: TINYINT(1) NOT NULL DEFAULT 0
             persistent_ = opt_desc.persistent_;
-            bind_[4].buffer_type = MYSQL_TYPE_TINY;
-            bind_[4].buffer = reinterpret_cast<char*>(&persistent_);
-            bind_[4].is_unsigned = MLM_TRUE;
+            bind_[5].buffer_type = MYSQL_TYPE_TINY;
+            bind_[5].buffer = reinterpret_cast<char*>(&persistent_);
+            bind_[5].is_unsigned = MLM_TRUE;
 
             // dhcp_client_class: VARCHAR(128) NULL
             /// @todo Assign actual value to client class string.
             client_class_len_ = client_class_.size();
-            bind_[5].buffer_type = MYSQL_TYPE_STRING;
-            bind_[5].buffer = const_cast<char*>(client_class_.c_str());
-            bind_[5].buffer_length = client_class_len_;
-            bind_[5].length = &client_class_len_;
+            bind_[6].buffer_type = MYSQL_TYPE_STRING;
+            bind_[6].buffer = const_cast<char*>(client_class_.c_str());
+            bind_[6].buffer_length = client_class_len_;
+            bind_[6].length = &client_class_len_;
 
             // dhcp4_subnet_id: INT UNSIGNED NULL
             if (subnet_id.isSpecified()) {
                 subnet_id_ = subnet_id;
-                bind_[6].buffer_type = MYSQL_TYPE_LONG;
-                bind_[6].buffer = reinterpret_cast<char*>(subnet_id_);
-                bind_[6].is_unsigned = MLM_TRUE;
+                bind_[7].buffer_type = MYSQL_TYPE_LONG;
+                bind_[7].buffer = reinterpret_cast<char*>(subnet_id_);
+                bind_[7].is_unsigned = MLM_TRUE;
 
             } else {
-                bind_[6].buffer_type = MYSQL_TYPE_NULL;
+                bind_[7].buffer_type = MYSQL_TYPE_NULL;
             }
 
             // host_id: INT UNSIGNED NOT NULL
             host_id_ = host_id;
-            bind_[7].buffer_type = MYSQL_TYPE_LONG;
-            bind_[7].buffer = reinterpret_cast<char*>(&host_id_);
-            bind_[7].is_unsigned = MLM_TRUE;
+            bind_[8].buffer_type = MYSQL_TYPE_LONG;
+            bind_[8].buffer = reinterpret_cast<char*>(&host_id_);
+            bind_[8].is_unsigned = MLM_TRUE;
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -1553,6 +1586,9 @@ private:
     std::vector<uint8_t> value_;
 
     size_t value_len_;
+
+    /// Formatted option value length.
+    unsigned long formatted_value_len_;
 
     std::string space_;
 
