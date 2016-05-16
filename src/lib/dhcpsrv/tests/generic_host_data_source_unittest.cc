@@ -12,6 +12,7 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_vendor.h>
+#include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/database_connection.h>
@@ -965,6 +966,37 @@ void GenericHostDataSourceTest::testAddDuplicate4() {
     // we can now add the host.
     ASSERT_NO_THROW(host->setIPv4Reservation(IOAddress("192.0.2.3")));
     EXPECT_NO_THROW(hdsptr_->add(host));
+}
+
+void GenericHostDataSourceTest::testAddRollback() {
+    // Make sure we have the pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    MySqlConnection::ParameterMap params;
+    params["name"] = "keatest";
+    params["user"] = "keatest";
+    params["password"] = "keatest";
+    MySqlConnection conn(params);
+    ASSERT_NO_THROW(conn.openDatabase());
+    int status = mysql_query(conn.mysql_, "DROP TABLE IF EXISTS ipv6_reservations");
+    ASSERT_EQ(0, status) << mysql_error(conn.mysql_);
+
+    // Create a host reservations.
+    HostPtr host = initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
+
+    host->setIPv4SubnetID(SubnetID(4));
+
+    // Create IPv6 reservation (for an address) and add it to the host
+    IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::2"), 128);
+    host->addReservation(resv);
+
+    ASSERT_THROW(hdsptr_->add(host), DbOperationError);
+
+    ConstHostPtr from_hds = hdsptr_->get4(host->getIPv4SubnetID(),
+                                          host->getIdentifierType(),
+                                          &host->getIdentifier()[0],
+                                          host->getIdentifier().size());
+    ASSERT_FALSE(from_hds);
 }
 
 void GenericHostDataSourceTest::testAddr6AndPrefix(){

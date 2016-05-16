@@ -140,6 +140,26 @@ private:
     MYSQL* mysql_;      ///< Initialization context
 };
 
+class MySqlConnection;
+
+class MySqlTransaction : public boost::noncopyable {
+public:
+
+    MySqlTransaction(MySqlConnection& conn);
+
+    ~MySqlTransaction();
+
+    void commit();
+
+private:
+
+    MySqlConnection& conn_;
+
+    bool committed_;
+
+};
+
+
 /// @brief Common MySQL Connector Pool
 ///
 /// This class provides common operations for MySQL database connection
@@ -293,8 +313,6 @@ public:
     /// and will be from MySqlHostDataSource.
     MySqlHolder mysql_;
 };
-
-
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
