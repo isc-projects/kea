@@ -442,4 +442,8 @@ TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations46) {
     testOptionsReservations46(true);
 }
 
+TEST_F(MySqlHostDataSourceTest, testAddRollback) {
+    testAddRollback();
+}
+
 }; // Of anonymous namespace

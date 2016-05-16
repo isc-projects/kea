@@ -342,6 +342,8 @@ public:
     /// Uses gtest macros to report failures.
     void testAddDuplicate4();
 
+    void testAddRollback();
+
     /// @brief Test that DHCPv4 options can be inserted and retrieved from
     /// the database.
     ///

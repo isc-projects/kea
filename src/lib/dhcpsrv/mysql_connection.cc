@@ -27,6 +27,29 @@ const my_bool MLM_TRUE = 1;
 const int MLM_MYSQL_FETCH_SUCCESS = 0;
 const int MLM_MYSQL_FETCH_FAILURE = 1;
 
+
+MySqlTransaction::MySqlTransaction(MySqlConnection& conn)
+    : conn_(conn), committed_(false) {
+    int status = mysql_query(conn_.mysql_, "START TRANSACTION");
+    if (status != 0) {
+        isc_throw(DbOperationError, "unable to start transaction, "
+                  "reason: " << mysql_error(conn_.mysql_));
+    }
+}
+
+MySqlTransaction::~MySqlTransaction() {
+    if (!committed_) {
+        conn_.rollback();
+    }
+}
+
+void
+MySqlTransaction::commit() {
+    conn_.commit();
+    committed_ = true;
+}
+
+
 // Open the database using the parameters passed to the constructor.
 
 void
