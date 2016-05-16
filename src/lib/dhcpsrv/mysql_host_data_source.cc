@@ -1982,6 +1982,8 @@ MySqlHostDataSource::~MySqlHostDataSource() {
 
 void
 MySqlHostDataSource::add(const HostPtr& host) {
+    MySqlTransaction transaction(impl_->conn_);
+
     // Create the MYSQL_BIND array for the host
     std::vector<MYSQL_BIND> bind = impl_->host_exchange_->createBindForSend(host);
 
@@ -2009,6 +2011,8 @@ MySqlHostDataSource::add(const HostPtr& host) {
     if (cfg_option6) {
         impl_->addOptions(INSERT_V6_OPTION, cfg_option6, host_id);
     }
+
+    transaction.commit();
 }
 
 ConstHostCollection
