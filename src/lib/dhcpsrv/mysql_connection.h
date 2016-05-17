@@ -140,23 +140,60 @@ private:
     MYSQL* mysql_;      ///< Initialization context
 };
 
+/// @brief Forward declaration to @ref MySqlConnection.
 class MySqlConnection;
 
+/// @brief RAII object representing MySQL transaction.
+///
+/// An instance of this class should be created in a scope where multiple
+/// INSERT statements should be executed within a single transaction. The
+/// transaction is started when the constructor of this class is invoked.
+/// The transaction is ended when the @ref MySqlTransaction::commit is
+/// explicitly called or when the instance of this class is destroyed.
+/// The @ref MySqlTransaction::commit commits changes to the database
+/// and the changes remain in the database when the instance of the
+/// class is destroyed. If the class instance is destroyed before the
+/// @ref MySqlTransaction::commit is called, the transaction is rolled
+/// back. The rollback on destruction guarantees that partial data is
+/// not stored in the database when there is an error during any
+/// of the operations belonging to a transaction.
+///
+/// The default MySQL backend configuration enables 'autocommit'.
+/// Starting a transaction overrides 'autocommit' setting for this
+/// particular transaction only. It does not affect the global 'autocommit'
+/// setting for the database connection, i.e. all modifications to the
+/// database which don't use transactions will still be auto committed.
 class MySqlTransaction : public boost::noncopyable {
 public:
 
+    /// @brief Constructor.
+    ///
+    /// Starts transaction by making a "START TRANSACTION" query.
+    ///
+    /// @param conn MySQL connection to use for the transaction. This
+    /// connection will be later used to commit or rollback changes.
+    ///
+    /// @throw DbOperationError if "START TRANSACTION" query fails.
     MySqlTransaction(MySqlConnection& conn);
 
+    /// @brief Destructor.
+    ///
+    /// Rolls back the transaction if changes haven't been committed.
     ~MySqlTransaction();
 
+    /// @brief Commits transaction.
     void commit();
 
 private:
 
+    /// @brief Holds reference to the MySQL database connection.
     MySqlConnection& conn_;
 
+    /// @brief Boolean flag indicating if the transaction has been committed.
+    ///
+    /// This flag is used in the class destructor to assess if the
+    /// transaction should be rolled back.
     bool committed_;
-
 };
 
 

@@ -863,21 +863,12 @@ LibDHCP::optionSpaceToVendorId(const std::string& option_space) {
     try {
         check = boost::lexical_cast<int64_t>(x);
     } catch (const boost::bad_lexical_cast &) {
-        /// @todo: Should we throw here?
-        // isc_throw(BadValue, "Failed to parse vendor-X value (" << x
-        //           << ") as unsigned 32-bit integer.");
         return (0);
     }
     if (check > std::numeric_limits<uint32_t>::max()) {
-        /// @todo: Should we throw here?
-        //isc_throw(BadValue, "Value " << x << "is too large"
-        //          << " for unsigned 32-bit integer.");
         return (0);
     }
     if (check < 0) {
-        /// @todo: Should we throw here?
-        // isc_throw(BadValue, "Value " << x << "is negative."
-        //       << " Only 0 or larger are allowed for unsigned 32-bit integer.");
         return (0);
     }
 
