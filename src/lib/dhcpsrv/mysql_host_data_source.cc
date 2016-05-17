@@ -95,11 +95,10 @@ TaggedStatement tagged_statements[] = {
             "persistent, dhcp_client_class, dhcp6_subnet_id, host_id) "
          " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
 
-    // Retrieves host information along with IPv6 reservations associated
-    // with this host. If the host exists in multiple subnets, all hosts
-    // having a specified identifier will be returned from those subnets.
-    // Because LEFT JOIN clause is used, the number of rows returned for
-    // a single host depends on the number of reservations.
+    // Retrieves host information, IPv6 reservations and both DHCPv4 and
+    // DHCPv6 options associated with the host. The LEFT JOIN clause is used
+    // to retrieve information from 4 different tables using a single query.
+    // Hence, this query returns multiple rows for a single host.
     {MySqlHostDataSource::GET_HOST_DHCPID,
             "SELECT DISTINCT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, "
@@ -120,9 +119,9 @@ TaggedStatement tagged_statements[] = {
             "WHERE dhcp_identifier = ? AND dhcp_identifier_type = ? "
             "ORDER BY h.host_id, o4.option_id, o6.option_id, r.reservation_id"},
 
-    // Retrieves host information by IPv4 address. This should typically
-    // return a single host, but if we ever allow for defining subnets
-    // with overlapping address pools, multiple hosts may be returned.
+    // Retrieves host information along with the DHCPv4 options associated with
+    // it. Left joining the dhcp4_options table results in multiple rows being
+    // returned for the same host. The host is retrieved by IPv4 address.
     {MySqlHostDataSource::GET_HOST_ADDR,
             "SELECT DISTINCT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
@@ -135,8 +134,9 @@ TaggedStatement tagged_statements[] = {
             "WHERE ipv4_address = ? "
             "ORDER BY h.host_id, o.option_id"},
 
-    // Retrieves host information by subnet identifier and unique
-    // identifier of a client. This is expected to return a single host.
+    // Retrieves host information and DHCPv4 options using subnet identifier
+    // and client's identifier. Left joining the dhcp4_options table results in
+    // multiple rows being returned for the same host.
     {MySqlHostDataSource::GET_HOST_SUBID4_DHCPID,
             "SELECT DISTINCT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
@@ -150,12 +150,9 @@ TaggedStatement tagged_statements[] = {
             "   AND h.dhcp_identifier = ? "
             "ORDER BY h.host_id, o.option_id"},
 
-    // Retrieves host information by subnet identifier and unique
-    // identifier of a client. This query should return information
-    // for a single host but multiple rows are returned due to
-    // use of LEFT JOIN clause. The number of rows returned for a single
-    // host dpeneds on the number of IPv6 reservations existing for
-    // this client.
+    // Retrieves host information, IPv6 reservations and DHCPv6 options
+    // associated with a host. The number of rows returned is a multiplication
+    // of number of IPv6 reservations and DHCPv6 options.
     {MySqlHostDataSource::GET_HOST_SUBID6_DHCPID,
             "SELECT DISTINCT h.host_id, h.dhcp_identifier, "
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
@@ -174,9 +171,10 @@ TaggedStatement tagged_statements[] = {
                 "AND h.dhcp_identifier = ? "
             "ORDER BY h.host_id, o.option_id, r.reservation_id"},
 
-    // Retrieves host information using subnet identifier and the
-    // IPv4 address reservation. This should return inforamation for
-    // a single host.
+    // Retrieves host information and DHCPv4 options for the host using subnet
+    // identifier and IPv4 reservation. Left joining the dhcp4_options table
+    // results in multiple rows being returned for the host. The number of
+    // rows depends on the number of options defined for the host.
     {MySqlHostDataSource::GET_HOST_SUBID_ADDR,
             "SELECT DISTINCT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
@@ -189,12 +187,12 @@ TaggedStatement tagged_statements[] = {
             "WHERE h.dhcp4_subnet_id = ? AND h.ipv4_address = ? "
             "ORDER BY h.host_id, o.option_id"},
 
-    // Retrieves host information using IPv6 prefix and prefix length
-    // or IPv6 address. This query returns host information for a
-    // single host. However, multiple rows are returned by this
-    // query due to use of LEFT JOIN clause with 'ipv6_reservations'
-    // table. The number of rows returned depends on the number of
-    // reservations for a particular host.
+    // Retrieves host information, IPv6 reservations and DHCPv6 options
+    // associated with a host using prefix and prefix length. This query
+    // returns host information for a single host. However, multiple rows
+    // are returned due to left joining IPv6 reservations and DHCPv6 options.
+    // The number of rows returned is multiplication of number of existing
+    // IPv6 reservations and DHCPv6 options.
     {MySqlHostDataSource::GET_HOST_PREFIX,
             "SELECT DISTINCT h.host_id, h.dhcp_identifier, "
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
@@ -225,29 +223,25 @@ TaggedStatement tagged_statements[] = {
 /// @brief This class provides mechanisms for sending and retrieving
 /// information from the 'hosts' table.
 ///
-/// This class should be used to create new entries in the 'hosts'
-/// table and to retrieve DHCPv4 reservations from this table. The
-/// queries used with this class do not retrieve IPv6 reservations for
-/// the hosts to minimize negative impact on performance.
-///
-/// The derived class MySqlHostIPv6Exchange extends this class to facilitate
-/// retrieving IPv6 reservations along with the host information.
+/// This class is used to insert and retrieve entries from the 'hosts' table.
+/// The queries used with this class do not retrieve IPv6 reservations or
+/// options associated with a host to minimize impact on performance. Other
+/// classes derived from @ref MySqlHostExchange should be used to retrieve
+/// information about IPv6 reservations and options.
 class MySqlHostExchange {
 private:
 
-    /// @brief Number of columns returned for queries used with this class.
+    /// @brief Number of columns returned for SELECT queries send by this class.
     static const size_t HOST_COLUMNS = 9;
 
 public:
 
     /// @brief Constructor
     ///
-    /// The initialization of the variables here is only to satisfy cppcheck -
-    /// all variables are initialized/set in the methods before they are used.
-    ///
-    /// @param additional_columns_num Additional number of columns to standard
-    /// set of columns used by this class, for which resources should be
-    /// allocated.
+    /// @param additional_columns_num This value is set by the derived classes
+    /// to indicate how many additional columns will be returned by SELECT
+    /// queries performed by the derived class. This constructor will allocate
+    /// resources for these columns, e.g. binding table, error indicators.
     MySqlHostExchange(const size_t additional_columns_num = 0)
         : columns_num_(HOST_COLUMNS + additional_columns_num),
           bind_(columns_num_), columns_(columns_num_),
@@ -268,7 +262,9 @@ public:
         memset(dhcp4_client_classes_, 0, sizeof(dhcp4_client_classes_));
         memset(dhcp6_client_classes_, 0, sizeof(dhcp6_client_classes_));
 
-        // Set the column names (for error messages)
+        // Set the column names for use by this class. This only comprises
+        // names used by the MySqlHostExchange class. Derived classes will
+        // need to set names for the columns they use.
         columns_[0] = "host_id";
         columns_[1] = "dhcp_identifier";
         columns_[2] = "dhcp_identifier_type";
@@ -286,6 +282,20 @@ public:
     virtual ~MySqlHostExchange() {
     }
 
+    /// @brief Returns index of the first uninitialized column name.
+    ///
+    /// This method is called by the derived classes to determine which
+    /// column indexes are available for the derived classes within a
+    /// binding array, error array and column names. This method
+    /// determines the first available index by searching the first
+    /// empty value within the columns_ vector. Previously we relied on
+    /// the fixed values set for each class, but this was hard to maintain
+    /// when new columns were added to the SELECT queries. It required
+    /// modifying indexes in all derived classes.
+    ///
+    /// Derived classes must call this method in their constructors and
+    /// use returned value as an index for the first column used by the
+    /// derived class and increment this value for each subsequent column.
     size_t findAvailColumn() const {
         std::vector<std::string>::const_iterator empty_column =
             std::find(columns_.begin(), columns_.end(), std::string());
@@ -627,8 +637,8 @@ public:
     /// adding duplicated hosts to the collection, assuming that processed
     /// rows are primarily ordered by host id column.
     ///
-    /// @todo This method will need to be extended to process options
-    /// associated with hosts.
+    /// This method must be overriden in the derived classes to also
+    /// retrieve IPv6 reservations and DHCP options associated with a host.
     ///
     /// @param [out] hosts Collection of hosts to which a new host created
     ///        from the processed data should be inserted.
@@ -749,14 +759,44 @@ private:
 
 };
 
+/// @brief Extends base exchange class with ability to retrieve DHCP options
+/// from the 'dhcp4_options' and 'dhcp6_options' tables.
+///
+/// This class provides means to retrieve both DHCPv4 and DHCPv6 options
+/// along with the host information. It is not used to retrieve IPv6
+/// reservations. The following types of queries are supported:
+/// - SELECT ? FROM hosts LEFT JOIN dhcp4_options LEFT JOIN dhcp6_options ...
+/// - SELECT ? FROM hosts LEFT JOIN dhcp4_options ...
+/// - SELECT ? FROM hosts LEFT JOIN dhcp6_options ...
 class MySqlHostExchangeOpts : public MySqlHostExchange {
 private:
 
-    /// @brief Number of columns holding option information.
+    /// @brief Number of columns holding DHCPv4  or DHCPv6 option information.
     static const size_t OPTION_COLUMNS = 6;
 
+    /// @brief Receives DHCPv4 or DHCPv6 options information from the
+    /// dhcp4_options or dhcp6_options tables respectively.
+    ///
+    /// The MySqlHostExchangeOpts class holds two respective instances of this
+    /// class, one for receiving DHCPv4 options, one for receiving DHCPv6
+    /// options.
+    ///
+    /// The following are the basic functions of this class:
+    /// - bind class members to specific columns in MySQL binding tables,
+    /// - set DHCP options specific column names,
+    /// - create instances of options retrieved from the database.
+    ///
+    /// The reason for isolating those functions in a separate C++ class is
+    /// to prevent code duplication for handling DHCPv4 and DHCPv6 options.
     class OptionProcessor {
     public:
+
+        /// @brief Constructor.
+        ///
+        /// @param universe V4 or V6. The type of the options' instances
+        /// created by this class depends on this parameter.
+        /// @param start_column Index of the first column to be used by this
+        /// class.
         OptionProcessor(const Option::Universe& universe,
                         const size_t start_column)
         : universe_(universe), start_column_(start_column), option_id_(0),
@@ -776,6 +816,7 @@ private:
             memset(space_, 0, sizeof(space_));
         }
 
+        /// @brief Returns identifier of the currently processed option.
         uint64_t getOptionId() const {
             if (option_id_null_ == MLM_FALSE) {
                 return (option_id_);
@@ -783,67 +824,112 @@ private:
             return (0);
         }
 
+        /// @brief Creates instance of the currently processed option.
+        ///
+        /// This method detects if the currently processed option is a new
+        /// instance. It makes it determination by comparing the identifier
+        /// of the currently processed option, with the most recently processed
+        /// option. If the current value is greater than the id of the recently
+        /// processed option it is assumed that the processed row holds new
+        /// option information. In such case the option instance is created and
+        /// inserted into the configuration passed as argument.
+        ///
+        /// @param cfg Pointer to the configuration object into which new
+        /// option instances should be inserted.
         void retrieveOption(const CfgOptionPtr& cfg) {
-            if (option_id_ == 0) {
+            // option_id may be NULL if dhcp4_options or dhcp6_options table
+            // doesn't contain any options for the particular host. Also, the
+            // current option id must be greater than id if the most recent
+            // option because options are ordered by option id. Otherwise
+            // we assume that this is already processed option.
+            if ((option_id_null_ == MLM_TRUE) ||
+                (most_recent_option_id_ >= option_id_)) {
                 return;
             }
 
-            if (most_recent_option_id_ < option_id_) {
-                most_recent_option_id_ = option_id_;
+            // Remember current option id as the most recent processed one. We
+            // will be comparing it with option ids in subsequent rows.
+            most_recent_option_id_ = option_id_;
 
-                std::string space;
-                if (space_null_ == MLM_FALSE) {
-                    space_[space_length_] = '\0';
-                    space.assign(space_);
-                }
-
-                std::string formatted_value;
-                if (formatted_value_null_ == MLM_FALSE) {
-                    formatted_value_[formatted_value_length_] = '\0';
-                    formatted_value.assign(formatted_value_);
-                }
-
-                OptionDefinitionPtr def;
-                if ((space == DHCP4_OPTION_SPACE) || (space == DHCP6_OPTION_SPACE)) {
-                    def = LibDHCP::getOptionDef(universe_, code_);
-                }
-
-                if (!def && (space != DHCP4_OPTION_SPACE) &&
-                    (space != DHCP6_OPTION_SPACE)) {
-                    uint32_t vendor_id = LibDHCP::optionSpaceToVendorId(space);
-                    if (vendor_id > 0) {
-                        def = LibDHCP::getVendorOptionDef(universe_, vendor_id, code_);
-                    }
-                }
-
-                if (!def) {
-                    def = LibDHCP::getRuntimeOptionDef(space, code_);
-                }
-
-
-                OptionPtr option;
-
-                if (!def) {
-                    OptionBuffer buf(value_, value_ + value_length_);
-                    option.reset(new Option(universe_, code_, buf.begin(),
-                                            buf.end()));
-                } else {
-                    if (formatted_value.empty()) {
-                        OptionBuffer buf(value_, value_ + value_length_);
-                        option = def->optionFactory(universe_, code_, buf.begin(),
-                                                    buf.end());
-                    } else {
-                        std::vector<std::string> split_vec;
-                        boost::split(split_vec, formatted_value, boost::is_any_of(","));
-                        option = def->optionFactory(universe_, code_, split_vec);
-                    }
-                }
-
-                OptionDescriptor desc(option, persistent_, formatted_value);
-                cfg->add(desc, space);
+            // Convert it to string object for easier comparison.
+            std::string space;
+            if (space_null_ == MLM_FALSE) {
+                // Typically, the string values returned by the database are not
+                // NULL terminated.
+                space_[space_length_] = '\0';
+                space.assign(space_);
             }
+
+            // Convert formatted_value to string as well.
+            std::string formatted_value;
+            if (formatted_value_null_ == MLM_FALSE) {
+                formatted_value_[formatted_value_length_] = '\0';
+                formatted_value.assign(formatted_value_);
+            }
+
+            // Options are held in a binary or textual format in the database.
+            // This is similar to having an option specified in a server
+            // configuration file. Such option is converted to appropriate C++
+            // class, using option definition. Thus, we need to find the
+            // option definition for this option code and option space.
+
+            // If the option space is a standard DHCPv4 or DHCPv6 option space,
+            // this is most likely a standard option, for which we have a
+            // definition created within libdhcp++.
+            OptionDefinitionPtr def;
+            if ((space == DHCP4_OPTION_SPACE) || (space == DHCP6_OPTION_SPACE)) {
+                def = LibDHCP::getOptionDef(universe_, code_);
+            }
+
+            // Otherwise, we may check if this an option encapsulated within the
+            // vendor space.
+            if (!def && (space != DHCP4_OPTION_SPACE) &&
+                (space != DHCP6_OPTION_SPACE)) {
+                uint32_t vendor_id = LibDHCP::optionSpaceToVendorId(space);
+                if (vendor_id > 0) {
+                    def = LibDHCP::getVendorOptionDef(universe_, vendor_id, code_);
+                }
+            }
+
+            // In all other cases, we use runtime option definitions, which
+            // should be also registered within the libdhcp++.
+            if (!def) {
+                def = LibDHCP::getRuntimeOptionDef(space, code_);
+            }
+
+            OptionPtr option;
+
+            if (!def) {
+                // If no definition found, we use generic option type.
+                OptionBuffer buf(value_, value_ + value_length_);
+                option.reset(new Option(universe_, code_, buf.begin(),
+                                        buf.end()));
+            } else {
+                // The option value may be specified in textual or binary format
+                // in the database. If formatted_value is empty, the binary
+                // format is used. Depending on the format we use a different
+                // variant of the optionFactory function.
+                if (formatted_value.empty()) {
+                    OptionBuffer buf(value_, value_ + value_length_);
+                    option = def->optionFactory(universe_, code_, buf.begin(),
+                                                buf.end());
+                } else {
+                    // Spit the value specified in comma separated values
+                    // format.
+                    std::vector<std::string> split_vec;
+                    boost::split(split_vec, formatted_value, boost::is_any_of(","));
+                    option = def->optionFactory(universe_, code_, split_vec);
+                }
+            }
+
+            OptionDescriptor desc(option, persistent_, formatted_value);
+            cfg->add(desc, space);
         }
 
+        /// @brief Specify column names.
+        ///
+        /// @param [out] columns Reference to a vector holding names of option
+        /// specific columns.
         void setColumnNames(std::vector<std::string>& columns) {
             columns[option_id_index_] = "option_id";
             columns[code_index_] = "code";
@@ -853,7 +939,15 @@ private:
             columns[persistent_index_] = "persistent";
         }
 
+        /// @brief Initialize binding table fields for options.
+        ///
+        /// Resets most_recent_option_id_ value to 0.
+        ///
+        /// @param [out] bind Binding table.
         void setBindFields(std::vector<MYSQL_BIND>& bind) {
+            // This method is called just before making a new query, so we
+            // reset the most_recent_option_id_ to start over with options
+            // processing.
             most_recent_option_id_ = 0;
 
             // option_id : INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -899,76 +993,79 @@ private:
 
     private:
 
+        /// @brief Universe: V4 or V6.
         Option::Universe universe_;
 
+        /// @brief Index of first column used by this class.
         size_t start_column_;
 
-        /// Option id.
+        /// @brief Option id.
         uint64_t option_id_;
 
-        /// Option code.
+        /// @brief Option code.
         uint16_t code_;
 
-        /// Buffer holding binary value of an option.
+        /// @brief Buffer holding binary value of an option.
         uint8_t value_[OPTION_VALUE_MAX_LEN];
 
-        /// Option value length.
+        /// @brief Option value length.
         unsigned long value_length_;
 
-        /// Buffer holding textual value of an option.
+        /// @brief Buffer holding textual value of an option.
         char formatted_value_[OPTION_FORMATTED_VALUE_MAX_LEN];
 
-        /// Formatted option value length.
+        /// @brief Formatted option value length.
         unsigned long formatted_value_length_;
 
-        /// Buffer holding option space name.
+        /// @brief Buffer holding option space name.
         char space_[OPTION_SPACE_MAX_LEN];
 
-        /// Option space length.
+        /// @brief Option space length.
         unsigned long space_length_;
 
-        /// Flag indicating if option is always sent or only if requested.
+        /// @brief Flag indicating if option is always sent or only if
+        /// requested.
         bool persistent_;
 
         /// @name Boolean values indicating if values of specific columns in
         /// the database are NULL.
         //@{
-        /// Boolean flag indicating if the DHCPv4 option id is NULL.
+        /// @brief Boolean flag indicating if the DHCPv4 option id is NULL.
         my_bool option_id_null_;
 
-        /// Boolean flag indicating if the DHCPv4 option code is NULL.
+        /// @brief Boolean flag indicating if the DHCPv4 option code is NULL.
         my_bool code_null_;
 
-        /// Boolean flag indicating if the DHCPv4 option value is NULL.
+        /// @brief Boolean flag indicating if the DHCPv4 option value is NULL.
         my_bool value_null_;
 
-        /// Boolean flag indicating if the DHCPv4 formatted option value
+        /// @brief Boolean flag indicating if the DHCPv4 formatted option value
         /// is NULL.
         my_bool formatted_value_null_;
 
-        /// Boolean flag indicating if the DHCPv4 option space is NULL.
+        /// @brief Boolean flag indicating if the DHCPv4 option space is NULL.
         my_bool space_null_;
 
         //@}
 
         /// @name Indexes of the specific columns
         //@{
-        /// Option id
+        /// @brief Option id
         size_t option_id_index_;
 
-        /// Code
+        /// @brief Code
         size_t code_index_;
 
-        /// Value
+        /// @brief Value
         size_t value_index_;
 
-        /// Formatted value
+        /// @brief Formatted value
         size_t formatted_value_index_;
 
-        /// Space
+        /// @brief Space
         size_t space_index_;
 
-        /// Persistent
+        /// @brief Persistent
         size_t persistent_index_;
         //@}
 
@@ -976,22 +1073,38 @@ private:
         uint64_t most_recent_option_id_;
     };
 
+    /// @brief Pointer to the @ref OptionProcessor class.
     typedef boost::shared_ptr<OptionProcessor> OptionProcessorPtr;
 
 public:
 
+    /// @brief DHCP option types to be fetched from the database.
+    ///
+    /// Supported types are:
+    /// - Only DHCPv4 options,
+    /// - Only DHCPv6 options,
+    /// - Both DHCPv4 and DHCPv6 options.
     enum FetchedOptions {
         DHCP4_ONLY,
         DHCP6_ONLY,
         DHCP4_AND_DHCP6
     };
 
+    /// @brief Constructor.
+    ///
+    /// @param fetched_options Specifies if DHCPv4, DHCPv6 or both should
+    /// be fetched from the database for a host.
+    /// @param additional_columns_num Number of additional columns for which
+    /// resources should be allocated, e.g. binding table, column names etc.
+    /// This parameter should be set to a non zero value by derived classes to
+    /// allocate resources for the columns supported by derived classes.
     MySqlHostExchangeOpts(const FetchedOptions& fetched_options,
                           const size_t additional_columns_num = 0)
         : MySqlHostExchange(getRequiredColumnsNum(fetched_options)
                             + additional_columns_num),
           opt_proc4_(), opt_proc6_() {
 
+        // Create option processor for DHCPv4 options, if required.
         if ((fetched_options == DHCP4_ONLY) ||
             (fetched_options == DHCP4_AND_DHCP6)) {
             opt_proc4_.reset(new OptionProcessor(Option::V4,
@@ -999,6 +1112,7 @@ public:
             opt_proc4_->setColumnNames(columns_);
         }
 
+        // Create option processor for DHCPv6 options, if required.
         if ((fetched_options == DHCP6_ONLY) ||
             (fetched_options == DHCP4_AND_DHCP6)) {
             opt_proc6_.reset(new OptionProcessor(Option::V6,
@@ -1007,10 +1121,17 @@ public:
         }
     }
 
+    /// @brief Processes the current row.
+    ///
+    /// The processed row includes both host information and DHCP option
+    /// information. Because used SELECT query use LEFT JOIN clause, the
+    /// some rows contain duplicated host or options entries. This method
+    /// detects duplicated information and discards such entries.
+    ///
+    /// @param [out] hosts Container holding parsed hosts and options.
     virtual void processFetchedData(ConstHostCollection& hosts) {
-        HostPtr host;
+        // Holds pointer to the previously parsed host.
         HostPtr most_recent_host;
-
         if (!hosts.empty()) {
             // Const cast is not very elegant way to deal with it, but
             // there is a good reason to use it here. This method is called
@@ -1021,34 +1142,43 @@ public:
             // most recently added host in a class member but this would
             // make the code less readable.
             most_recent_host = boost::const_pointer_cast<Host>(hosts.back());
-
         }
 
-        if (!most_recent_host || (most_recent_host->getHostId() != getHostId())) {
-            host = retrieveHost();
+        // If no host has been parsed yet or we're at the row holding next
+        // host, we create a new host object and put it at the end of the
+        // list.
+        if (!most_recent_host || (most_recent_host->getHostId() < getHostId())) {
+            HostPtr host = retrieveHost();
             hosts.push_back(host);
             most_recent_host = host;
         }
 
+        // Parse DHCPv4 options if required to do so.
         if (opt_proc4_) {
             CfgOptionPtr cfg = most_recent_host->getCfgOption4();
             opt_proc4_->retrieveOption(cfg);
         }
 
+        // Parse DHCPv6 options if required to do so.
         if (opt_proc6_) {
             CfgOptionPtr cfg = most_recent_host->getCfgOption6();
             opt_proc6_->retrieveOption(cfg);
         }
     }
 
+    /// @brief Bind variables for receiving option data.
+    ///
+    /// @return Vector of MYSQL_BIND object representing data to be retrieved.
     virtual std::vector<MYSQL_BIND> createBindForReceive() {
         // The following call sets bind_ values between 0 and 8.
         static_cast<void>(MySqlHostExchange::createBindForReceive());
 
+        // Bind variables for DHCPv4 options.
         if (opt_proc4_) {
             opt_proc4_->setBindFields(bind_);
         }
 
+        // Bind variables for DHCPv6 options.
         if (opt_proc6_) {
             opt_proc6_->setBindFields(bind_);
         }
@@ -1056,13 +1186,22 @@ public:
         // Add the error flags
         setErrorIndicators(bind_, error_);
 
-        // Add the data to the vector.  Note the end element is one after the
-        // end of the array.
         return (bind_);
     };
 
 private:
 
+    /// @brief Returns a number of columns required to retrieve option data.
+    ///
+    /// Depending if we need DHCPv4/DHCPv6 options only, or both DHCPv4 and
+    /// DHCPv6 a different number of columns is required in the binding array.
+    /// This method returns the number of required columns, according to the
+    /// value of @c fetched_columns passed in the constructor.
+    ///
+    /// @param fetched_columns A value which specifies whether DHCPv4, DHCPv6 or
+    /// both types of options should be retrieved.
+    ///
+    /// @return Number of required columns.
     static size_t getRequiredColumnsNum(const FetchedOptions& fetched_options) {
         return (fetched_options == DHCP4_AND_DHCP6 ? 2 * OPTION_COLUMNS :
                 OPTION_COLUMNS);
@@ -1079,18 +1218,18 @@ private:
     OptionProcessorPtr opt_proc6_;
 };
 
-/// @Brief This class provides mechanisms for sending and retrieving
-/// host information and associated IPv6 reservations.
+/// @brief This class provides mechanisms for sending and retrieving
+/// host information, DHCPv4 options, DHCPv6 options and IPv6 reservations.
 ///
-/// This class extends the @ref MySqlHostExchange class with the
-/// mechanisms to retrieve IPv6 reservations along with host
-/// information. It is assumed that both host data and IPv6
-/// reservations are retrieved with a single query (using LEFT JOIN
-/// MySQL clause). Because the host to IPv6 reservation is a 1-to-many
-/// relation, the same row from the Host table is returned many times
-/// (for each IPv6 reservation). This class is responsible for
-/// converting those multiple host instances into a single Host
-/// object with multiple IPv6 reservations.
+/// This class extends the @ref MySqlHostExchangeOpts class with the
+/// mechanisms to retrieve IPv6 reservations. This class is used in sitations
+/// when it is desired to retrieve DHCPv6 specific information about the host
+/// (DHCPv6 options and reservations), or entire information about the host
+/// (DHCPv4 options, DHCPv6 options and reservations). The following are the
+/// queries used with this class:
+/// - SELECT ? FROM hosts LEFT JOIN dhcp4_options LEFT JOIN dhcp6_options
+///   LEFT JOIN ipv6_reservations ...
+/// - SELECT ? FROM hosts LEFT JOIN dhcp6_options LEFT JOIN ipv6_reservations ..
 class MySqlHostIPv6Exchange : public MySqlHostExchangeOpts {
 private:
 
@@ -1117,7 +1256,7 @@ public:
 
         memset(ipv6_address_buffer_, 0, sizeof(ipv6_address_buffer_));
 
-        // Append additional columns returned by the queries.
+        // Provide names of additional columns returned by the queries.
         columns_[reservation_id_index_] = "reservation_id";
         columns_[address_index_] = "address";
         columns_[prefix_len_index_] = "prefix_len";
@@ -1135,7 +1274,7 @@ public:
         return (0);
     };
 
-    /// @brief Create IPv6 reservation from the data contained in the
+    /// @brief Creates IPv6 reservation from the data contained in the
     /// currently processed row.
     ///
     /// Called after the MYSQL_BIND array created by createBindForReceive().
@@ -1175,12 +1314,14 @@ public:
     /// adding duplicated hosts to the collection, assuming that processed
     /// rows are primarily ordered by host id column.
     ///
-    /// For any returned row which contains IPv6 reservation information it
-    /// creates a @ref IPv6Resrv and appends it to the collection of the
-    /// IPv6 reservations in a Host object.
+    /// Depending on the value of the @c fetched_options specified in the
+    /// constructor, this method also parses options returned as a result
+    /// of SELECT queries.
     ///
-    /// @todo This method will need to be extended to process DHCPv6 options
-    /// associated with hosts.
+    /// For any returned row which contains IPv6 reservation information it
+    /// checks if the reservation is not a duplicate of previously parsed
+    /// reservation and appends the IPv6Resrv object into the host object
+    /// if the parsed row contains new reservation information.
     ///
     /// @param [out] hosts Collection of hosts to which a new host created
     ///        from the processed data should be inserted.
@@ -1223,7 +1364,7 @@ public:
         // a new SELECT query.
         most_recent_reservation_id_ = 0;
 
-        // The following call sets bind_ values between 0 and 8.
+        // Bind values supported by parent classes.
         static_cast<void>(MySqlHostExchangeOpts::createBindForReceive());
 
         // reservation_id : INT UNSIGNED NOT NULL AUTO_INCREMENT
@@ -1258,8 +1399,6 @@ public:
         // Add the error flags
         setErrorIndicators(bind_, error_);
 
-        // Add the data to the vector.  Note the end element is one after the
-        // end of the array.
         return (bind_);
     };
 
@@ -1459,13 +1598,18 @@ private:
     my_bool error_[RESRV_COLUMNS];
 };
 
+/// @brief This class is used for inserting options into a database.
+///
+/// This class supports inserting both DHCPv4 and DHCPv6 options.
 class MySqlOptionExchange {
 private:
 
+    /// @brief Number of columns in the tables holding options.
     static const size_t OPTION_COLUMNS = 9;
 
 public:
 
+    /// @brief Constructor.
     MySqlOptionExchange()
         : type_(0), value_len_(0), formatted_value_len_(0), space_(), space_len_(0),
           persistent_(false), client_class_(), client_class_len_(0),
@@ -1474,7 +1618,9 @@ public:
         BOOST_STATIC_ASSERT(8 < OPTION_COLUMNS);
     }
 
-
+    /// @brief Creates binding array to insert option data into database.
+    ///
+    /// @return Vector of MYSQL_BIND object representing an option.
     std::vector<MYSQL_BIND>
     createBindForSend(const OptionDescriptor& opt_desc,
                       const std::string& opt_space,
@@ -1482,7 +1628,7 @@ public:
                       const HostID& host_id) {
 
         // Hold pointer to the option to make sure it remains valid until
-        // we make a query.
+        // we complete a query.
         option_ = opt_desc.option_;
 
         memset(bind_, 0, sizeof(bind_));
@@ -1494,16 +1640,19 @@ public:
             bind_[0].buffer_type = MYSQL_TYPE_NULL;
 
             // code: SMALLINT UNSIGNED NOT NULL
-            type_ = option_->getType();
+            type_  = option_->getType();
             bind_[1].buffer_type = MYSQL_TYPE_SHORT;
             bind_[1].buffer = reinterpret_cast<char*>(&type_);
             bind_[1].is_unsigned = MLM_TRUE;
 
             // value: BLOB NULL
-            OutputBuffer buf(opt_desc.option_->len());
-            opt_desc.option_->pack(buf);
-            if ((buf.getLength() > opt_desc.option_->getHeaderLen()) &&
-                 opt_desc.formatted_value_.empty()) {
+            if (opt_desc.formatted_value_.empty() &&
+                (opt_desc.option_->len() > opt_desc.option_->getHeaderLen())) {
+                // The formatted_value is empty and the option value is
+                // non-empty so we need to prepare on-wire format for the
+                // option and store it in the database as a blob.
+                OutputBuffer buf(opt_desc.option_->len());
+                opt_desc.option_->pack(buf);
                 const char* buf_ptr = static_cast<const char*>(buf.getData());
                 value_.assign(buf_ptr + opt_desc.option_->getHeaderLen(),
                               buf_ptr + buf.getLength());
@@ -1514,6 +1663,8 @@ public:
                 bind_[2].length = &value_len_;
 
             } else {
+                // No value or formatted_value specified. In this case, the
+                // value blob is NULL.
                 value_.clear();
                 bind_[2].buffer_type = MYSQL_TYPE_NULL;
             }
@@ -1581,33 +1732,45 @@ public:
 
 private:
 
+    /// @brief Option type.
     uint16_t type_;
 
+    /// @brief Option value as binary.
     std::vector<uint8_t> value_;
 
+    /// @brief Option value length.
     size_t value_len_;
 
-    /// Formatted option value length.
+    /// @brief Formatted option value length.
     unsigned long formatted_value_len_;
 
+    /// @brief Option space name.
     std::string space_;
 
+    /// @brief Option space name length.
     size_t space_len_;
 
+    /// @brief Boolean flag indicating if the option is always returned to
+    /// a client or only when requested.
     bool persistent_;
 
+    /// @brief Client classes for the option.
     std::string client_class_;
 
+    /// @brief Length of the string holding client classes for the option.
     size_t client_class_len_;
 
+    /// @brief Subnet identifier.
     uint32_t subnet_id_;
 
+    /// @brief Host identifier.
     uint32_t host_id_;
 
+    /// @brief Pointer to currently parsed option.
     OptionPtr option_;
 
+    /// @brief Array of MYSQL_BIND elements representing inserted data.
     MYSQL_BIND bind_[OPTION_COLUMNS];
-
 };
 
 } // end of anonymous namespace
@@ -1644,12 +1807,29 @@ public:
     /// @param id ID of a host owning this reservation
     void addResv(const IPv6Resrv& resv, const HostID& id);
 
+    /// @brief Inserts a single DHCP option into the database.
+    ///
+    /// @param stindex Index of a statement being executed.
+    /// @param opt_desc Option descriptor holding information about an option
+    /// to be inserted into the database.
+    /// @param opt_space Option space name.
+    /// @param subnet_id Subnet identifier.
+    /// @param host_id Host identifier.
     void addOption(const MySqlHostDataSource::StatementIndex& stindex,
                    const OptionDescriptor& opt_desc,
                    const std::string& opt_space,
                    const OptionalValue<SubnetID>& subnet_id,
-                   const HostID& id);
+                   const HostID& host_id);
 
+    /// @brief Inserts multiple options into the database.
+    ///
+    /// @param stindex Index of a statement being executed.
+    /// @param options_cfg An object holding a collection of options to be
+    /// inserted into the database.
+    /// @param host_id Host identifier reference to a value to which
+    /// host identifier will be assigned if the current host_id value is 0.
+    /// The host identifier is retrieve from the database using the
+    /// mysql_insert_id function.
     void addOptions(const MySqlHostDataSource::StatementIndex& stindex,
                     const ConstCfgOptionPtr& options_cfg,
                     uint64_t& host_id);
@@ -1671,13 +1851,14 @@ public:
                     const char* what) const;
 
     /// @brief Creates collection of @ref Host objects with associated
-    /// information such as IPv6 reservations.
+    /// information such as IPv6 reservations and/or DHCP options..
     ///
     /// This method performs a query which returns host information from
     /// the 'hosts' table. The query may also use LEFT JOIN clause to
-    /// retrieve information from other tables, e.g. ipv6_reservations.
-    /// Whether IPv6 reservations are assigned to the @ref Host objects
-    /// depends on the type of the exchange object.
+    /// retrieve information from other tables, e.g. ipv6_reservations,
+    /// dhcp4_options and dhcp6_options.
+    /// Whether IPv6 reservations and/or options are assigned to the
+    /// @ref Host objects depends on the type of the exchange object.
     ///
     /// @param stindex Statement index.
     /// @param bind Pointer to an array of MySQL bindings.
@@ -1715,16 +1896,16 @@ public:
                          boost::shared_ptr<MySqlHostExchange> exchange) const;
 
     /// @brief Pointer to the object representing an exchange which
-    /// can be used to retrieve DHCPv4 reservation.
+    /// can be used to retrieve hosts and DHCPv4 options.
     boost::shared_ptr<MySqlHostExchangeOpts> host_exchange_;
 
     /// @brief Pointer to an object representing an exchange which can
-    /// be used to retrieve DHCPv6 reservations.
+    /// be used to retrieve hosts, DHCPv6 options and IPv6 reservations.
     boost::shared_ptr<MySqlHostIPv6Exchange> host_ipv6_exchange_;
 
     /// @brief Pointer to an object representing an exchange which can
-    /// be used to retrieve DHCPv4 and DHCPv6 reservations using a
-    /// single query.
+    /// be used to retrieve hosts, DHCPv4 and DHCPv6 options, and
+    /// IPv6 reservations using a single query.
     boost::shared_ptr<MySqlHostIPv6Exchange> host_ipv46_exchange_;
 
     /// @brief Pointer to an object representing an exchange which can
@@ -1732,8 +1913,9 @@ public:
     boost::shared_ptr<MySqlIPv6ReservationExchange> host_ipv6_reservation_exchange_;
 
     /// @brief Pointer to an object representing an exchange which can
-    /// be used to insert DHCPv4 option into 'dhcp4_options' table.
-    boost::shared_ptr<MySqlOptionExchange> host_ipv4_option_exchange_;
+    /// be used to insert DHCPv4 or DHCPv6 option into dhcp4_options
+    /// or dhcp6_options table.
+    boost::shared_ptr<MySqlOptionExchange> host_option_exchange_;
 
     /// @brief MySQL connection
     MySqlConnection conn_;
@@ -1747,7 +1929,7 @@ MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
       host_ipv46_exchange_(new MySqlHostIPv6Exchange(MySqlHostExchangeOpts::
                                                      DHCP4_AND_DHCP6)),
       host_ipv6_reservation_exchange_(new MySqlIPv6ReservationExchange()),
-      host_ipv4_option_exchange_(new MySqlOptionExchange()),
+      host_option_exchange_(new MySqlOptionExchange()),
       conn_(parameters) {
 
     // Open the database.
@@ -1819,8 +2001,8 @@ MySqlHostDataSourceImpl::addOption(const MySqlHostDataSource::StatementIndex& st
                                    const OptionalValue<SubnetID>& subnet_id,
                                    const HostID& id) {
     std::vector<MYSQL_BIND> bind =
-        host_ipv4_option_exchange_->createBindForSend(opt_desc, opt_space,
-                                                      subnet_id, id);
+        host_option_exchange_->createBindForSend(opt_desc, opt_space,
+                                                 subnet_id, id);
 
     addQuery(stindex, bind);
 }
@@ -1829,6 +2011,8 @@ void
 MySqlHostDataSourceImpl::addOptions(const MySqlHostDataSource::StatementIndex& stindex,
                                     const ConstCfgOptionPtr& options_cfg,
                                     uint64_t& host_id) {
+    // Get option space names and vendor space names and combine them within a
+    // single list.
     std::list<std::string> option_spaces = options_cfg->getOptionSpaceNames();
     std::list<std::string> vendor_spaces = options_cfg->getVendorIdsSpaceNames();
     option_spaces.insert(option_spaces.end(), vendor_spaces.begin(),
@@ -1839,6 +2023,9 @@ MySqlHostDataSourceImpl::addOptions(const MySqlHostDataSource::StatementIndex& s
     if ((host_id == 0) && !option_spaces.empty()) {
         host_id = mysql_insert_id(conn_.mysql_);
     }
+
+    // For each option space retrieve all options and insert them into the
+    // database.
     for (std::list<std::string>::const_iterator space = option_spaces.begin();
          space != option_spaces.end(); ++space) {
         OptionContainerPtr options = options_cfg->getAll(*space);
@@ -1982,6 +2169,10 @@ MySqlHostDataSource::~MySqlHostDataSource() {
 
 void
 MySqlHostDataSource::add(const HostPtr& host) {
+    // Initiate MySQL transaction as we will have to make multiple queries
+    // to insert host information into multiple tables. If that fails on
+    // any stage, the transaction will be rolled back by the destructor of
+    // the MySqlTransaction class.
     MySqlTransaction transaction(impl_->conn_);
 
     // Create the MYSQL_BIND array for the host
@@ -1993,6 +2184,7 @@ MySqlHostDataSource::add(const HostPtr& host) {
     // Gets the last inserted hosts id
     uint64_t host_id = 0;
 
+    // Insert IPv6 reservations.
     IPv6ResrvRange v6resv = host->getIPv6Reservations();
     if (std::distance(v6resv.first, v6resv.second) > 0) {
         host_id = mysql_insert_id(impl_->conn_.mysql_);
@@ -2002,16 +2194,19 @@ MySqlHostDataSource::add(const HostPtr& host) {
         }
     }
 
+    // Insert DHCPv4 options.
     ConstCfgOptionPtr cfg_option4 = host->getCfgOption4();
     if (cfg_option4) {
         impl_->addOptions(INSERT_V4_OPTION, cfg_option4, host_id);
     }
 
+    // Insert DHCPv6 options.
     ConstCfgOptionPtr cfg_option6 = host->getCfgOption6();
     if (cfg_option6) {
         impl_->addOptions(INSERT_V6_OPTION, cfg_option6, host_id);
     }
 
+    // Everything went fine, so explicitly commit the transaction.
     transaction.commit();
 }
 

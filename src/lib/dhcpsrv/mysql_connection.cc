@@ -30,6 +30,8 @@ const int MLM_MYSQL_FETCH_FAILURE = 1;
 
 MySqlTransaction::MySqlTransaction(MySqlConnection& conn)
     : conn_(conn), committed_(false) {
+    // We create prepared statements for all other queries, but MySQL
+    // don't support prepared statements for START TRANSACTION.
     int status = mysql_query(conn_.mysql_, "START TRANSACTION");
     if (status != 0) {
         isc_throw(DbOperationError, "unable to start transaction, "
@@ -38,6 +40,8 @@ MySqlTransaction::MySqlTransaction(MySqlConnection& conn)
 }
 
 MySqlTransaction::~MySqlTransaction() {
+    // Rollback if the MySqlTransaction::commit wasn't explicitly
+    // called.
     if (!committed_) {
         conn_.rollback();
     }

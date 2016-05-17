@@ -18,7 +18,6 @@
 #include <boost/shared_ptr.hpp>
 #include <stdint.h>
 #include <string>
-#include <set>
 #include <list>
 
 namespace isc {
@@ -34,10 +33,10 @@ struct OptionDescriptor {
     /// @brief Option instance.
     OptionPtr option_;
 
-    /// @briefPersistence flag.
+    /// @brief Persistence flag.
     ///
-    /// If true option is always sent to the client, if false option is
-    /// sent to the client on request.
+    /// If true, option is always sent to the client. If false, option is
+    /// sent to the client when requested using ORO or PRL option.
     bool persistent_;
 
     /// @brief Option value in textual (CSV) format.
@@ -48,9 +47,10 @@ struct OptionDescriptor {
     /// database instead of the binary format.
     ///
     /// Note that this value is carried in the option descriptor, rather than
-    /// @c Option instance because it is a server specific value.
+    /// @c Option instance because it is a server specific value (same as
+    /// persistence flag).
     ///
-    /// An example of the formatted value is: 2001:db8:1::1, 23, some text
+    /// An example of the formatted value is: "2001:db8:1::1, 23, some text"
     /// for the option which carries IPv6 address, a number and a text.
     std::string formatted_value_;
 
@@ -276,14 +276,11 @@ public:
     void add(const OptionPtr& option, const bool persistent,
              const std::string& option_space);
 
-    /// @brief A variant of the method which takes option descriptor as an
-    /// argument.
-    ///
-    /// This method works exactly the same as the other variant, but it takes
-    /// option descriptor as an argument.
+    /// @brief A variant of the @ref CfgOption::add method which takes option
+    /// descriptor as an argument.
     ///
     /// @param desc Option descriptor holding option instance and other
-    /// parameters pertaining to this option.
+    /// parameters pertaining to the option.
     /// @param option_space Option space name.
     ///
     /// @throw isc::BadValue if the option space is invalid.
@@ -372,7 +369,13 @@ public:
         return (*od_itr);
     }
 
-    /// @brief Returns a list of all configured option space names.
+    /// @brief Returns a list of configured option space names.
+    ///
+    /// The returned option space names exclude vendor option spaces,
+    /// such as "vendor-1234". These are returned by the
+    /// @ref getVendorIdsSpaceNames.
+    ///
+    /// @return List comprising option space names.
     std::list<std::string> getOptionSpaceNames() const {
         return (options_.getOptionSpaceNames());
     }
@@ -385,7 +388,10 @@ public:
     /// @brief Returns a list of option space names for configured vendor ids.
     ///
     /// For each vendor-id the option space name returned is constructed
-    /// as "vendor-<vendor-id>".
+    /// as "vendor-XYZ" where XYZ is a @c uint32_t value without leading
+    /// zeros.
+    ///
+    /// @return List comprising option space names for vendor options.
     std::list<std::string> getVendorIdsSpaceNames() const;
 
 private:
