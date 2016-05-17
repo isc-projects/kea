@@ -276,9 +276,8 @@ void Pkt4::setType(uint8_t dhcp_type) {
         }
     } else {
         // There is no message type option yet, add it
-        std::vector<uint8_t> tmp(1, dhcp_type);
-        opt = OptionPtr(new OptionInt<uint8_t>(Option::V4, DHO_DHCP_MESSAGE_TYPE,
-                                               tmp.begin(), tmp.end()));
+        opt.reset(new OptionInt<uint8_t>(Option::V4, DHO_DHCP_MESSAGE_TYPE,
+                                         dhcp_type));
         addOption(opt);
     }
 }
