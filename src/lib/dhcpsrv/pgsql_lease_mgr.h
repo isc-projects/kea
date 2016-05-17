@@ -9,10 +9,10 @@
 
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/database_connection.h>
+#include <dhcpsrv/pgsql_connection.h>
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
-#include <libpq-fe.h>
 
 #include <vector>
 
@@ -440,15 +440,6 @@ public:
     /// @throw DbOperationError If the rollback failed.
     virtual void rollback();
 
-    /// @brief Checks a result set's SQL state against an error state.
-    ///
-    /// @param r result set to check
-    /// @param error_state error state to compare against
-    ///
-    /// @return True if the result set's SQL state equals the error_state,
-    /// false otherwise.
-    bool compareError(PGresult*& r, const char* error_state);
-
     /// @brief Statement Tags
     ///
     /// The contents of the enum are indexes into the list of compiled SQL
@@ -700,14 +691,8 @@ private:
     boost::scoped_ptr<PgSqlLease4Exchange> exchange4_; ///< Exchange object
     boost::scoped_ptr<PgSqlLease6Exchange> exchange6_; ///< Exchange object
 
-    /// Database connection object
-    ///
-    /// @todo: Implement PgSQLConnection object and collapse
-    /// dbconn_ and conn_ into a single object.
-    DatabaseConnection dbconn_;
-
     /// PostgreSQL connection handle
-    PGconn* conn_;
+    PgSqlConnection conn_;
 };
 
 }; // end of isc::dhcp namespace

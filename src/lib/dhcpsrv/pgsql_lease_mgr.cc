@@ -21,64 +21,16 @@
 #include <string>
 #include <time.h>
 
-// PostgreSQL errors should be tested based on the SQL state code.  Each state
-// code is 5 decimal, ASCII, digits, the first two define the category of
-// error, the last three are the specific error.  PostgreSQL makes the state
-// code as a char[5].  Macros for each code are defined in PostgreSQL's
-// errorcodes.h, although they require a second macro, MAKE_SQLSTATE for
-// completion.  PostgreSQL deliberately omits this macro from errocodes.h
-// so callers can supply their own.
-#define MAKE_SQLSTATE(ch1,ch2,ch3,ch4,ch5) {ch1,ch2,ch3,ch4,ch5}
-#include <utils/errcodes.h>
-const size_t STATECODE_LEN = 5;
-
-// Currently the only one we care to look for is duplicate key.
-const char DUPLICATE_KEY[] = ERRCODE_UNIQUE_VIOLATION;
-
 using namespace isc;
 using namespace isc::dhcp;
 using namespace std;
 
 namespace {
 
-// Maximum number of parameters used in any single query
-const size_t MAX_PARAMETERS_IN_QUERY = 14;
-
-/// @brief  Defines a single query
-struct TaggedStatement {
-
-    /// Number of parameters for a given query
-    int nbparams;
-
-    /// @brief OID types
-    ///
-    /// Specify parameter types. See /usr/include/postgresql/catalog/pg_type.h.
-    /// For some reason that header does not export those parameters.
-    /// Those OIDs must match both input and output parameters.
-    const Oid types[MAX_PARAMETERS_IN_QUERY];
-
-    /// Short name of the query.
-    const char* name;
-
-    /// Text representation of the actual query.
-    const char* text;
-};
-
-/// @brief Constants for PostgreSQL data types
-/// This are defined by PostreSQL in <catalog/pg_type.h>, but including
-/// this file is extrordinarily convoluted, so we'll use these to fill-in.
-const size_t OID_NONE = 0;   // PostgreSQL infers proper type
-const size_t OID_BOOL = 16;
-const size_t OID_BYTEA = 17;
-const size_t OID_INT8 = 20;  // 8 byte int
-const size_t OID_INT2 = 21;  // 2 byte int
-const size_t OID_TIMESTAMP = 1114;
-const size_t OID_VARCHAR = 1043;
-
 /// @brief Catalog of all the SQL statements currently supported.  Note
 /// that the order columns appear in statement body must match the order they
 /// that the occur in the table.  This does not apply to the where clause.
-TaggedStatement tagged_statements[] = {
+PgSqlTaggedStatement tagged_statements[] = {
     // DELETE_LEASE4
     { 1, { OID_INT8 },
       "delete_lease4",
@@ -1039,25 +991,12 @@ private:
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : LeaseMgr(), exchange4_(new PgSqlLease4Exchange()),
-    exchange6_(new PgSqlLease6Exchange()), dbconn_(parameters), conn_(NULL) {
-    openDatabase();
+    exchange6_(new PgSqlLease6Exchange()), conn_(parameters) {
+    conn_.openDatabase();
     prepareStatements();
 }
 
 PgSqlLeaseMgr::~PgSqlLeaseMgr() {
-    if (conn_) {
-        // Deallocate the prepared queries.
-        PGresult* r = PQexec(conn_, "DEALLOCATE all");
-        if(PQresultStatus(r) != PGRES_COMMAND_OK) {
-            // Highly unlikely but we'll log it and go on.
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_DEALLOC_ERROR)
-                      .arg(PQerrorMessage(conn_));
-        }
-
-        PQclear(r);
-        PQfinish(conn_);
-        conn_ = NULL;
-    }
 }
 
 std::string
@@ -1072,73 +1011,7 @@ PgSqlLeaseMgr::getDBVersion() {
 void
 PgSqlLeaseMgr::prepareStatements() {
     for(int i = 0; tagged_statements[i].text != NULL; ++ i) {
-        // Prepare all statements queries with all known fields datatype
-        PGresult* r = PQprepare(conn_, tagged_statements[i].name,
-                                tagged_statements[i].text,
-                                tagged_statements[i].nbparams,
-                                tagged_statements[i].types);
-
-        if(PQresultStatus(r) != PGRES_COMMAND_OK) {
-            PQclear(r);
-            isc_throw(DbOperationError,
-                      "unable to prepare PostgreSQL statement: "
-                      << tagged_statements[i].text << ", reason: "
-                      << PQerrorMessage(conn_));
-        }
-
-        PQclear(r);
-    }
-}
-
-void
-PgSqlLeaseMgr::openDatabase() {
-    string dbconnparameters;
-    string shost = "localhost";
-    try {
-        shost = dbconn_.getParameter("host");
-    } catch(...) {
-        // No host. Fine, we'll use "localhost"
-    }
-
-    dbconnparameters += "host = '" + shost + "'" ;
-
-    string suser;
-    try {
-        suser = dbconn_.getParameter("user");
-        dbconnparameters += " user = '" + suser + "'";
-    } catch(...) {
-        // No user. Fine, we'll use NULL
-    }
-
-    string spassword;
-    try {
-        spassword = dbconn_.getParameter("password");
-        dbconnparameters += " password = '" + spassword + "'";
-    } catch(...) {
-        // No password. Fine, we'll use NULL
-    }
-
-    string sname;
-    try {
-        sname= dbconn_.getParameter("name");
-        dbconnparameters += " dbname = '" + sname + "'";
-    } catch(...) {
-        // No database name.  Throw a "NoDatabaseName" exception
-        isc_throw(NoDatabaseName, "must specify a name for the database");
-    }
-
-    conn_ = PQconnectdb(dbconnparameters.c_str());
-    if (conn_ == NULL) {
-        isc_throw(DbOpenError, "could not allocate connection object");
-    }
-
-    if (PQstatus(conn_) != CONNECTION_OK) {
-        // If we have a connection object, we have to call finish
-        // to release it, but grab the error message first.
-        std::string error_message = PQerrorMessage(conn_);
-        PQfinish(conn_);
-        conn_ = NULL;
-        isc_throw(DbOpenError, error_message);
+        conn_.prepareStatement(tagged_statements[i]);
     }
 }
 
@@ -1157,24 +1030,17 @@ PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
         // Failure: check for the special case of duplicate entry.  If this is
         // the case, we return false to indicate that the row was not added.
         // Otherwise we throw an exception.
-        if (compareError(r, DUPLICATE_KEY)) {
+        if (conn_.compareError(r, PgSqlConnection::DUPLICATE_KEY)) {
             PQclear(r);
             return (false);
         }
 
-        checkStatementError(r, stindex);
+        conn_.checkStatementError(r, tagged_statements[stindex]);
     }
 
     PQclear(r);
 
     return (true);
-}
-
-bool PgSqlLeaseMgr::compareError(PGresult*& r, const char* error_state) {
-    const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
-    // PostgreSQL garuantees it will always be 5 characters long
-    return ((sqlstate != NULL) &&
-            (memcmp(sqlstate, error_state, STATECODE_LEN) == 0));
 }
 
 bool
@@ -1212,7 +1078,7 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
                        &bind_array.lengths_[0],
                        &bind_array.formats_[0], 0);
 
-    checkStatementError(r, stindex);
+    conn_.checkStatementError(r, tagged_statements[stindex]);
 
     int rows = PQntuples(r);
     if (single && rows > 1) {
@@ -1530,7 +1396,7 @@ PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
                                   &bind_array.lengths_[0],
                                   &bind_array.formats_[0], 0);
 
-    checkStatementError(r, stindex);
+    conn_.checkStatementError(r, tagged_statements[stindex]);
 
     int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
     PQclear(r);
@@ -1601,7 +1467,7 @@ PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
                                   &bind_array.lengths_[0],
                                   &bind_array.formats_[0], 0);
 
-    checkStatementError(r, stindex);
+    conn_.checkStatementError(r, tagged_statements[stindex]);
     int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
     PQclear(r);
 
@@ -1666,41 +1532,11 @@ string
 PgSqlLeaseMgr::getName() const {
     string name = "";
     try {
-        name = dbconn_.getParameter("name");
+        name = conn_.getParameter("name");
     } catch (...) {
         // Return an empty name
     }
     return (name);
-}
-
-void
-PgSqlLeaseMgr::checkStatementError(PGresult*& r, StatementIndex index) const {
-    int s = PQresultStatus(r);
-    if (s != PGRES_COMMAND_OK && s != PGRES_TUPLES_OK) {
-        // We're testing the first two chars of SQLSTATE, as this is the
-        // error class. Note, there is a severity field, but it can be
-        // misleadingly returned as fatal.
-        const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
-        if ((sqlstate != NULL) &&
-            ((memcmp(sqlstate, "08", 2) == 0) ||  // Connection Exception
-             (memcmp(sqlstate, "53", 2) == 0) ||  // Insufficient resources
-             (memcmp(sqlstate, "54", 2) == 0) ||  // Program Limit exceeded
-             (memcmp(sqlstate, "57", 2) == 0) ||  // Operator intervention
-             (memcmp(sqlstate, "58", 2) == 0))) { // System error
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_FATAL_ERROR)
-                         .arg(tagged_statements[index].name)
-                         .arg(PQerrorMessage(conn_))
-                         .arg(sqlstate);
-            PQclear(r);
-            exit (-1);
-        }
-
-        const char* error_message = PQerrorMessage(conn_);
-        PQclear(r);
-        isc_throw(DbOperationError, "Statement exec faild:" << " for: "
-                  << tagged_statements[index].name << ", reason: "
-                  << error_message);
-    }
 }
 
 string
@@ -1714,7 +1550,7 @@ PgSqlLeaseMgr::getVersion() const {
               DHCPSRV_PGSQL_GET_VERSION);
 
     PGresult* r = PQexecPrepared(conn_, "get_version", 0, NULL, NULL, NULL, 0);
-    checkStatementError(r, GET_VERSION);
+    conn_.checkStatementError(r, tagged_statements[GET_VERSION]);
 
     istringstream tmp;
     uint32_t version;
@@ -1734,28 +1570,12 @@ PgSqlLeaseMgr::getVersion() const {
 
 void
 PgSqlLeaseMgr::commit() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_COMMIT);
-    PGresult* r = PQexec(conn_, "COMMIT");
-    if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        const char* error_message = PQerrorMessage(conn_);
-        PQclear(r);
-        isc_throw(DbOperationError, "commit failed: " << error_message);
-    }
-
-    PQclear(r);
+    conn_.commit();
 }
 
 void
 PgSqlLeaseMgr::rollback() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_ROLLBACK);
-    PGresult* r = PQexec(conn_, "ROLLBACK");
-    if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        const char* error_message = PQerrorMessage(conn_);
-        PQclear(r);
-        isc_throw(DbOperationError, "rollback failed: " << error_message);
-    }
-
-    PQclear(r);
+    conn_.rollback();
 }
 
 }; // end of isc::dhcp namespace
