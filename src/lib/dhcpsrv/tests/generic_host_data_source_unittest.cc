@@ -253,6 +253,7 @@ void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
     compareClientClasses(host1->getClientClasses6(),
                          host2->getClientClasses6());
 
+    // Compare DHCPv4 and DHCPv6 options.
     compareOptions(host1->getCfgOption4(), host2->getCfgOption4());
     compareOptions(host1->getCfgOption6(), host2->getCfgOption6());
 }
@@ -339,27 +340,41 @@ GenericHostDataSourceTest::compareOptions(const ConstCfgOptionPtr& cfg1,
     ASSERT_TRUE(cfg1);
     ASSERT_TRUE(cfg2);
 
+    // Combine option space names with vendor space names in a single list.
     std::list<std::string> option_spaces = cfg2->getOptionSpaceNames();
     std::list<std::string> vendor_spaces = cfg2->getVendorIdsSpaceNames();
     option_spaces.insert(option_spaces.end(), vendor_spaces.begin(),
                          vendor_spaces.end());
 
+    // Iterate over all option spaces existing in cfg2.
     BOOST_FOREACH(std::string space, option_spaces) {
+        // Retrieve options belonging to the current option space.
         OptionContainerPtr options1 = cfg1->getAll(space);
         OptionContainerPtr options2 = cfg2->getAll(space);
-        ASSERT_TRUE(options1);
-        ASSERT_TRUE(options2);
+        ASSERT_TRUE(options1) << "failed for option space " << space;
+        ASSERT_TRUE(options2) << "failed for option space " << space;
 
-        ASSERT_EQ(options1->size(), options2->size());
+        // If number of options doesn't match, the test fails.
+        ASSERT_EQ(options1->size(), options2->size())
+            << "failed for option space " << space;
 
+        // Iterate over all options within this option space.
         BOOST_FOREACH(OptionDescriptor desc1, *options1) {
             OptionDescriptor desc2 = cfg2->get(space, desc1.option_->getType());
-            ASSERT_EQ(desc1.persistent_, desc2.persistent_);
-            ASSERT_EQ(desc1.formatted_value_, desc2.formatted_value_);
+            // Compare persistent flag.
+            EXPECT_EQ(desc1.persistent_, desc2.persistent_)
+                << "failed for option " << space << "." << desc1.option_->getType();
+            // Compare formatted value.
+            EXPECT_EQ(desc1.formatted_value_, desc2.formatted_value_)
+                << "failed for option " << space << "." << desc1.option_->getType();
+
+            // Retrieve options.
             Option* option1 = desc1.option_.get();
             Option* option2 = desc2.option_.get();
 
-            ASSERT_TRUE(typeid(*option1) == typeid(*option2))
+            // Options must be represented by the same C++ class derived from
+            // the Option class.
+            EXPECT_TRUE(typeid(*option1) == typeid(*option2))
                 << "Comapared DHCP options, having option code "
                 << desc1.option_->getType() << " and belonging to the "
                 << space << " option space, are represented "
@@ -367,13 +382,18 @@ GenericHostDataSourceTest::compareOptions(const ConstCfgOptionPtr& cfg1,
                 << typeid(*option1).name() << " vs "
                 << typeid(*option2).name();
 
+            // Because we use different C++ classes to represent different
+            // options, the simplest way to make sure that the options are
+            // equal is to simply compare them in wire format.
             OutputBuffer buf1(option1->len());
             ASSERT_NO_THROW(option1->pack(buf1));
             OutputBuffer buf2(option2->len());
             ASSERT_NO_THROW(option2->pack(buf2));
 
-            ASSERT_EQ(buf1.getLength(), buf2.getLength());
-            ASSERT_EQ(0, memcmp(buf1.getData(), buf2.getData(), buf1.getLength()));
+            ASSERT_EQ(buf1.getLength(), buf2.getLength())
+                 << "failed for option " << space << "." << desc1.option_->getType();
+            EXPECT_EQ(0, memcmp(buf1.getData(), buf2.getData(), buf1.getLength()))
+                << "failed for option " << space << "." << desc1.option_->getType();
         }
     }
 }
@@ -397,6 +417,8 @@ GenericHostDataSourceTest::createVendorOption(const Option::Universe& universe,
 
     std::ostringstream s;
     if (formatted) {
+        // Vendor id comprises vendor-id field, for which we need to
+        // assign a value in the textual (formatted) format.
         s << vendor_id;
     }
 
@@ -467,6 +489,9 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
                                                           "ipv6-address", true)),
                  "isc2");
 
+    // Register created "runtime" option definitions. They will be used by a
+    // host data source to convert option data into the appropriate option
+    // classes when the options are retrieved.
     LibDHCP::setRuntimeOptionDefs(defs);
 }
 
@@ -966,37 +991,6 @@ void GenericHostDataSourceTest::testAddDuplicate4() {
     // we can now add the host.
     ASSERT_NO_THROW(host->setIPv4Reservation(IOAddress("192.0.2.3")));
     EXPECT_NO_THROW(hdsptr_->add(host));
-}
-
-void GenericHostDataSourceTest::testAddRollback() {
-    // Make sure we have the pointer to the host data source.
-    ASSERT_TRUE(hdsptr_);
-
-    MySqlConnection::ParameterMap params;
-    params["name"] = "keatest";
-    params["user"] = "keatest";
-    params["password"] = "keatest";
-    MySqlConnection conn(params);
-    ASSERT_NO_THROW(conn.openDatabase());
-    int status = mysql_query(conn.mysql_, "DROP TABLE IF EXISTS ipv6_reservations");
-    ASSERT_EQ(0, status) << mysql_error(conn.mysql_);
-
-    // Create a host reservations.
-    HostPtr host = initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
-
-    host->setIPv4SubnetID(SubnetID(4));
-
-    // Create IPv6 reservation (for an address) and add it to the host
-    IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::2"), 128);
-    host->addReservation(resv);
-
-    ASSERT_THROW(hdsptr_->add(host), DbOperationError);
-
-    ConstHostPtr from_hds = hdsptr_->get4(host->getIPv4SubnetID(),
-                                          host->getIdentifierType(),
-                                          &host->getIdentifier()[0],
-                                          host->getIdentifier().size());
-    ASSERT_FALSE(from_hds);
 }
 
 void GenericHostDataSourceTest::testAddr6AndPrefix(){

@@ -65,6 +65,8 @@ CfgOption::getVendorIdsSpaceNames() const {
     for (std::list<uint32_t>::const_iterator id = ids.begin();
          id != ids.end(); ++id) {
         std::ostringstream s;
+        // Vendor space name is constructed as "vendor-XYZ" where XYZ is an
+        // uint32_t value, without leading zeros.
         s << "vendor-" << *id;
         names.push_back(s.str());
     }
