@@ -768,7 +768,7 @@ private:
 /// - SELECT ? FROM hosts LEFT JOIN dhcp4_options LEFT JOIN dhcp6_options ...
 /// - SELECT ? FROM hosts LEFT JOIN dhcp4_options ...
 /// - SELECT ? FROM hosts LEFT JOIN dhcp6_options ...
-class MySqlHostExchangeOpts : public MySqlHostExchange {
+class MySqlHostWithOptionsExchange : public MySqlHostExchange {
 private:
 
     /// @brief Number of columns holding DHCPv4  or DHCPv6 option information.
@@ -777,9 +777,9 @@ private:
     /// @brief Receives DHCPv4 or DHCPv6 options information from the
     /// dhcp4_options or dhcp6_options tables respectively.
     ///
-    /// The MySqlHostExchangeOpts class holds two respective instances of this
-    /// class, one for receiving DHCPv4 options, one for receiving DHCPv6
-    /// options.
+    /// The MySqlHostWithOptionsExchange class holds two respective instances
+    /// of this class, one for receiving DHCPv4 options, one for receiving
+    /// DHCPv6 options.
     ///
     /// The following are the basic functions of this class:
     /// - bind class members to specific columns in MySQL binding tables,
@@ -1098,8 +1098,8 @@ public:
     /// resources should be allocated, e.g. binding table, column names etc.
     /// This parameter should be set to a non zero value by derived classes to
     /// allocate resources for the columns supported by derived classes.
-    MySqlHostExchangeOpts(const FetchedOptions& fetched_options,
-                          const size_t additional_columns_num = 0)
+    MySqlHostWithOptionsExchange(const FetchedOptions& fetched_options,
+                                 const size_t additional_columns_num = 0)
         : MySqlHostExchange(getRequiredColumnsNum(fetched_options)
                             + additional_columns_num),
           opt_proc4_(), opt_proc6_() {
@@ -1221,7 +1221,7 @@ private:
 /// @brief This class provides mechanisms for sending and retrieving
 /// host information, DHCPv4 options, DHCPv6 options and IPv6 reservations.
 ///
-/// This class extends the @ref MySqlHostExchangeOpts class with the
+/// This class extends the @ref MySqlHostWithOptionsExchange class with the
 /// mechanisms to retrieve IPv6 reservations. This class is used in sitations
 /// when it is desired to retrieve DHCPv6 specific information about the host
 /// (DHCPv6 options and reservations), or entire information about the host
@@ -1230,7 +1230,7 @@ private:
 /// - SELECT ? FROM hosts LEFT JOIN dhcp4_options LEFT JOIN dhcp6_options
 ///   LEFT JOIN ipv6_reservations ...
 /// - SELECT ? FROM hosts LEFT JOIN dhcp6_options LEFT JOIN ipv6_reservations ..
-class MySqlHostIPv6Exchange : public MySqlHostExchangeOpts {
+class MySqlHostIPv6Exchange : public MySqlHostWithOptionsExchange {
 private:
 
     /// @brief Number of columns holding IPv6 reservation information.
@@ -1243,7 +1243,7 @@ public:
     /// Apart from initializing the base class data structures it also
     /// initializes values representing IPv6 reservation information.
     MySqlHostIPv6Exchange(const FetchedOptions& fetched_options)
-        : MySqlHostExchangeOpts(fetched_options, RESERVATION_COLUMNS),
+        : MySqlHostWithOptionsExchange(fetched_options, RESERVATION_COLUMNS),
           reservation_id_(0),
           reserv_type_(0), reserv_type_null_(MLM_FALSE),
           ipv6_address_buffer_len_(0), prefix_len_(0), iaid_(0),
@@ -1328,7 +1328,7 @@ public:
     virtual void processFetchedData(ConstHostCollection& hosts) {
 
         // Call parent class to fetch host information and options.
-        MySqlHostExchangeOpts::processFetchedData(hosts);
+        MySqlHostWithOptionsExchange::processFetchedData(hosts);
 
         if (getReservationId() == 0) {
             return;
@@ -1365,7 +1365,7 @@ public:
         most_recent_reservation_id_ = 0;
 
         // Bind values supported by parent classes.
-        static_cast<void>(MySqlHostExchangeOpts::createBindForReceive());
+        static_cast<void>(MySqlHostWithOptionsExchange::createBindForReceive());
 
         // reservation_id : INT UNSIGNED NOT NULL AUTO_INCREMENT
         bind_[reservation_id_index_].buffer_type = MYSQL_TYPE_LONG;
@@ -1897,7 +1897,7 @@ public:
 
     /// @brief Pointer to the object representing an exchange which
     /// can be used to retrieve hosts and DHCPv4 options.
-    boost::shared_ptr<MySqlHostExchangeOpts> host_exchange_;
+    boost::shared_ptr<MySqlHostWithOptionsExchange> host_exchange_;
 
     /// @brief Pointer to an object representing an exchange which can
     /// be used to retrieve hosts, DHCPv6 options and IPv6 reservations.
@@ -1924,9 +1924,9 @@ public:
 
 MySqlHostDataSourceImpl::
 MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
-    : host_exchange_(new MySqlHostExchangeOpts(MySqlHostExchangeOpts::DHCP4_ONLY)),
-      host_ipv6_exchange_(new MySqlHostIPv6Exchange(MySqlHostExchangeOpts::DHCP6_ONLY)),
-      host_ipv46_exchange_(new MySqlHostIPv6Exchange(MySqlHostExchangeOpts::
+    : host_exchange_(new MySqlHostWithOptionsExchange(MySqlHostWithOptionsExchange::DHCP4_ONLY)),
+      host_ipv6_exchange_(new MySqlHostIPv6Exchange(MySqlHostWithOptionsExchange::DHCP6_ONLY)),
+      host_ipv46_exchange_(new MySqlHostIPv6Exchange(MySqlHostWithOptionsExchange::
                                                      DHCP4_AND_DHCP6)),
       host_ipv6_reservation_exchange_(new MySqlIPv6ReservationExchange()),
       host_option_exchange_(new MySqlOptionExchange()),
