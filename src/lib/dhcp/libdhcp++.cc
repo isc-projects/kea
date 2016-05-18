@@ -38,10 +38,10 @@ std::map<unsigned short, Option::Factory*> LibDHCP::v4factories_;
 std::map<unsigned short, Option::Factory*> LibDHCP::v6factories_;
 
 // Static container with DHCPv4 option definitions.
-OptionDefContainer LibDHCP::v4option_defs_;
+OptionDefContainerPtr LibDHCP::v4option_defs_(new OptionDefContainer());
 
 // Static container with DHCPv6 option definitions.
-OptionDefContainer LibDHCP::v6option_defs_;
+OptionDefContainerPtr LibDHCP::v6option_defs_(new OptionDefContainer());
 
 VendorOptionDefContainers LibDHCP::vendor4_defs_;
 
@@ -65,17 +65,17 @@ void initOptionSpace(OptionDefContainer& defs,
                      const OptionDefParams* params,
                      size_t params_size);
 
-const OptionDefContainer&
+const OptionDefContainerPtr&
 LibDHCP::getOptionDefs(const Option::Universe u) {
     switch (u) {
     case Option::V4:
-        if (v4option_defs_.empty()) {
+        if (v4option_defs_->empty()) {
             initStdOptionDefs4();
             initVendorOptsDocsis4();
         }
         return (v4option_defs_);
     case Option::V6:
-        if (v6option_defs_.empty()) {
+        if (v6option_defs_->empty()) {
             initStdOptionDefs6();
             initVendorOptsDocsis6();
         }
@@ -124,8 +124,8 @@ LibDHCP::getVendorOption6Defs(const uint32_t vendor_id) {
 
 OptionDefinitionPtr
 LibDHCP::getOptionDef(const Option::Universe u, const uint16_t code) {
-    const OptionDefContainer& defs = getOptionDefs(u);
-    const OptionDefContainerTypeIndex& idx = defs.get<1>();
+    const OptionDefContainerPtr& defs = getOptionDefs(u);
+    const OptionDefContainerTypeIndex& idx = defs->get<1>();
     const OptionDefContainerTypeRange& range = idx.equal_range(code);
     if (range.first != range.second) {
         return (*range.first);
@@ -135,8 +135,8 @@ LibDHCP::getOptionDef(const Option::Universe u, const uint16_t code) {
 
 OptionDefinitionPtr
 LibDHCP::getOptionDef(const Option::Universe u, const std::string& name) {
-    const OptionDefContainer& defs = getOptionDefs(u);
-    const OptionDefContainerNameIndex& idx = defs.get<2>();
+    const OptionDefContainerPtr defs = getOptionDefs(u);
+    const OptionDefContainerNameIndex& idx = defs->get<2>();
     const OptionDefContainerNameRange& range = idx.equal_range(name);
     if (range.first != range.second) {
         return (*range.first);
@@ -316,24 +316,19 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
     size_t last_offset = 0;
 
     // Get the list of standard option definitions.
-    OptionDefContainer option_defs;
-    if (option_space == "dhcp6") {
-        option_defs = LibDHCP::getOptionDefs(Option::V6);
-    } else {
-        OptionDefContainerPtr option_defs_ptr =
-            LibDHCP::getRuntimeOptionDefs(option_space);
-        if (option_defs_ptr) {
-            option_defs = *option_defs_ptr;
-        }
-    }
+    const OptionDefContainerPtr& option_defs = LibDHCP::getOptionDefs(Option::V6);
+    // Runtime option definitions for non standard option space and if
+    // the definition doesn't exist within the standard option definitions.
+    const OptionDefContainerPtr& runtime_option_defs = LibDHCP::getRuntimeOptionDefs(option_space);
 
     // @todo Once we implement other option spaces we should add else clause
     // here and gather option definitions for them. For now leaving option_defs
     // empty will imply creation of generic Option.
 
-    // Get the search index #1. It allows to search for option definitions
+    // Get the search indexes #1. It allows to search for option definitions
     // using option code.
-    const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
+    const OptionDefContainerTypeIndex& idx = option_defs->get<1>();
+    const OptionDefContainerTypeIndex& runtime_idx = runtime_option_defs->get<1>();
 
     // The buffer being read comprises a set of options, each starting with
     // a two-byte type code and a two-byte length field.
@@ -398,9 +393,21 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
         // however at this point we expect to get one option
         // definition with the particular code. If more are returned
         // we report an error.
-        const OptionDefContainerTypeRange& range = idx.equal_range(opt_type);
-        // Get the number of returned option definitions for the option code.
-        size_t num_defs = distance(range.first, range.second);
+        OptionDefContainerTypeRange range;
+        // Number of option definitions returned.
+        size_t num_defs = 0;
+        if (option_space == DHCP6_OPTION_SPACE) {
+            range = idx.equal_range(opt_type);
+            num_defs = distance(range.first, range.second);
+        }
+
+        // Standard option definitions do not include the definition for
+        // out option or we're searching for non-standard option. Try to
+        // find the definition among runtime option definitions.
+        if (num_defs == 0) {
+            range = runtime_idx.equal_range(opt_type);
+            num_defs = distance(range.first, range.second);
+        }
 
         OptionPtr opt;
         if (num_defs > 1) {
@@ -445,24 +452,15 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
     size_t last_offset = 0;
 
     // Get the list of standard option definitions.
-    OptionDefContainer option_defs;
-    if (option_space == "dhcp4") {
-        option_defs = LibDHCP::getOptionDefs(Option::V4);
-    } else {
-        OptionDefContainerPtr option_defs_ptr =
-            LibDHCP::getRuntimeOptionDefs(option_space);
-        if (option_defs_ptr) {
-            option_defs = *option_defs_ptr;
-        }
-    }
+    const OptionDefContainerPtr& option_defs = LibDHCP::getOptionDefs(Option::V4);
+    // Runtime option definitions for non standard option space and if
+    // the definition doesn't exist within the standard option definitions.
+    const OptionDefContainerPtr& runtime_option_defs = LibDHCP::getRuntimeOptionDefs(option_space);
 
-    // @todo Once we implement other option spaces we should add else clause
-    // here and gather option definitions for them. For now leaving option_defs
-    // empty will imply creation of generic Option.
-
-    // Get the search index #1. It allows to search for option definitions
+    // Get the search indexes #1. It allows to search for option definitions
     // using option code.
-    const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
+    const OptionDefContainerTypeIndex& idx = option_defs->get<1>();
+    const OptionDefContainerTypeIndex& runtime_idx = runtime_option_defs->get<1>();
 
     // The buffer being read comprises a set of options, each starting with
     // a one-byte type code and a one-byte length field.
@@ -511,9 +509,21 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
         // however at this point we expect to get one option
         // definition with the particular code. If more are returned
         // we report an error.
-        const OptionDefContainerTypeRange& range = idx.equal_range(opt_type);
-        // Get the number of returned option definitions for the option code.
-        size_t num_defs = distance(range.first, range.second);
+        OptionDefContainerTypeRange range;
+        // Number of option definitions returned.
+        size_t num_defs = 0;
+        if (option_space == DHCP4_OPTION_SPACE) {
+            range = idx.equal_range(opt_type);
+            num_defs = distance(range.first, range.second);
+        }
+
+        // Standard option definitions do not include the definition for
+        // out option or we're searching for non-standard option. Try to
+        // find the definition among runtime option definitions.
+        if (num_defs == 0) {
+            range = runtime_idx.equal_range(opt_type);
+            num_defs = distance(range.first, range.second);
+        }
 
         OptionPtr opt;
         if (num_defs > 1) {
@@ -828,12 +838,12 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
 
 void
 LibDHCP::initStdOptionDefs4() {
-    initOptionSpace(v4option_defs_, OPTION_DEF_PARAMS4, OPTION_DEF_PARAMS_SIZE4);
+    initOptionSpace(*v4option_defs_, OPTION_DEF_PARAMS4, OPTION_DEF_PARAMS_SIZE4);
 }
 
 void
 LibDHCP::initStdOptionDefs6() {
-    initOptionSpace(v6option_defs_, OPTION_DEF_PARAMS6, OPTION_DEF_PARAMS_SIZE6);
+    initOptionSpace(*v6option_defs_, OPTION_DEF_PARAMS6, OPTION_DEF_PARAMS_SIZE6);
 }
 
 void
