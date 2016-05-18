@@ -138,7 +138,16 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
                       << " doesn't exist and therefore it is impossible"
                       " to find a suitable subnet for its IPv4 address");
         }
-        iface->getAddress4(address);
+
+        // Attempt to select subnet based on the interface name.
+        Subnet4Ptr subnet = selectSubnet(selector.iface_name_,
+                                         selector.client_classes_);
+
+        // If it matches - great. If not, we'll try to use a different
+        // selection criteria below.
+        if (subnet) {
+            return (subnet);
+        }
     }
 
     // Unable to find a suitable address to use for subnet selection.
@@ -149,6 +158,34 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     // We have identified an address in the client's packet that can be
     // used for subnet selection. Match this packet with the subnets.
     return (selectSubnet(address, selector.client_classes_));
+}
+
+Subnet4Ptr
+CfgSubnets4::selectSubnet(const std::string& iface,
+                 const ClientClasses& client_classes) const {
+    for (Subnet4Collection::const_iterator subnet = subnets_.begin();
+         subnet != subnets_.end(); ++subnet) {
+
+        // If there's no interface specified for this subnet, proceed to
+        // the next subnet.
+        if ((*subnet)->getIface().empty()) {
+            continue;
+        }
+
+        // If it's specified, but does not match, proceed to the next
+        // subnet.
+        if ((*subnet)->getIface() != iface) {
+            continue;
+        }
+
+        // Eliminate those subnets that do not meet client class criteria.
+        if ((*subnet)->clientSupported(client_classes)) {
+            return (*subnet);
+        }
+    }
+
+    // Failed to find a subnet.
+    return (Subnet4Ptr());
 }
 
 Subnet4Ptr
@@ -171,6 +208,7 @@ CfgSubnets4::selectSubnet(const IOAddress& address,
     // Failed to find a subnet.
     return (Subnet4Ptr());
 }
+
 
 bool
 CfgSubnets4::isDuplicate(const Subnet4& subnet) const {

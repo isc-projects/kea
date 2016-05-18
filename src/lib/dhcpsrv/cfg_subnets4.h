@@ -120,6 +120,30 @@ public:
                             const ClientClasses& client_classes
                             = ClientClasses()) const;
 
+    /// @brief Returns pointer to a subnet if provided interface name matches.
+    ///
+    /// This method returns a pointer to the subnet if the interface name passed
+    /// in parameter matches that of a subnet. This is mainly used for matching
+    /// local incoming traffic, even when the addresses on local interfaces do
+    /// not match subnet definition. This method is also called by the
+    /// @c selectSubnet(SubnetSelector).
+    ///
+    /// @todo This method requires performance improvement! It currently
+    /// iterates over all existing subnets to find the one which fulfils
+    /// the search criteria. The subnet storage is implemented as a simple
+    /// STL vector which precludes fast searches using specific keys.
+    /// Hence, full scan is required. To improve the search performance a
+    /// different container type is required, e.g. multi-index container,
+    /// or something of a similar functionality.
+    ///
+    /// @param iface name of the interface to be matched.
+    /// @param client_classes Optional parameter specifying the classes that
+    /// the client belongs to.
+    ///
+    /// @return Pointer to the selected subnet or NULL if no subnet found.
+    Subnet4Ptr selectSubnet(const std::string& iface,
+                            const ClientClasses& client_classes) const;
+
     /// @brief Attempts to do subnet selection based on DHCP4o6 information
     ///
     /// The algorithm implemented is as follows:
