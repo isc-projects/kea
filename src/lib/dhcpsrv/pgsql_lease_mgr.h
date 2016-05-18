@@ -10,6 +10,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/pgsql_connection.h>
+#include <dhcpsrv/pgsql_exchange.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
@@ -18,86 +19,6 @@
 
 namespace isc {
 namespace dhcp {
-
-/// @brief Structure used to bind C++ input values to dynamic SQL parameters
-/// The structure contains three vectors which store the input values,
-/// data lengths, and formats.  These vectors are passed directly into the
-/// PostgreSQL execute call.
-///
-/// Note that the data values are stored as pointers. These pointers need to
-/// valid for the duration of the PostgreSQL statement execution.  In other
-/// words populating them with pointers to values that go out of scope before
-/// statement is executed is a bad idea.
-struct PsqlBindArray {
-    /// @brief Vector of pointers to the data values.
-    std::vector<const char *> values_;
-    /// @brief Vector of data lengths for each value.
-    std::vector<int> lengths_;
-    /// @brief Vector of "format" for each value. A value of 0 means the
-    /// value is text, 1 means the value is binary.
-    std::vector<int> formats_;
-
-    /// @brief Format value for text data.
-    static const int TEXT_FMT;
-    /// @brief Format value for binary data.
-    static const int BINARY_FMT;
-
-    /// @brief Constant string passed to DB for boolean true values.
-    static const char* TRUE_STR;
-    /// @brief Constant string passed to DB for boolean false values.
-    static const char* FALSE_STR;
-
-    /// @brief Fetches the number of entries in the array.
-    /// @return Returns size_t containing the number of entries.
-    size_t size() {
-        return (values_.size());
-    }
-
-    /// @brief Indicates it the array is empty.
-    /// @return Returns true if there are no entries in the array, false
-    /// otherwise.
-    bool empty() {
-
-        return (values_.empty());
-    }
-
-    /// @brief Adds a char array to bind array based
-    ///
-    /// Adds a TEXT_FMT value to the end of the bind array, using the given
-    /// char* as the data source. Note that value is expected to be NULL
-    /// terminated.
-    ///
-    /// @param value char array containing the null-terminated text to add.
-    void add(const char* value);
-
-    /// @brief Adds an string value to the bind array
-    ///
-    /// Adds a TEXT formatted value to the end of the bind array using the
-    /// given string as the data source.
-    ///
-    /// @param value std::string containing the value to add.
-    void add(const std::string& value);
-
-    /// @brief Adds a binary value to the bind array.
-    ///
-    /// Adds a BINARY_FMT value to the end of the bind array using the
-    /// given vector as the data source.
-    ///
-    /// @param data vector of binary bytes.
-    void add(const std::vector<uint8_t>& data);
-
-    /// @brief Adds a boolean value to the bind array.
-    ///
-    /// Converts the given boolean value to its corresponding to PostgreSQL
-    /// string value and adds it as a TEXT_FMT value to the bind array.
-    ///
-    /// @param value bool value to add.
-    void add(const bool& value);
-
-    /// @brief Dumps the contents of the array to a string.
-    /// @return std::string containing the dump
-    std::string toText();
-};
 
 // Forward definitions (needed for shared_ptr definitions)
 // See pgsql_lease_mgr.cc file for actual class definitions
@@ -468,26 +389,6 @@ public:
     };
 
 private:
-
-    /// @brief Prepare statements
-    ///
-    /// Creates the prepared statements for all of the SQL statements used
-    /// by the PostgreSQL backend.
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    /// @throw isc::InvalidParameter 'index' is not valid for the vector.  This
-    ///        represents an internal error within the code.
-    void prepareStatements();
-
-    /// @brief Open Database
-    ///
-    /// Opens the database using the information supplied in the parameters
-    /// passed to the constructor.
-    ///
-    /// @throw NoDatabaseName Mandatory database name not given
-    /// @throw DbOpenError Error opening the database
-    void openDatabase();
 
     /// @brief Add Lease Common Code
     ///
