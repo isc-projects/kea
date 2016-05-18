@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_space.h>
 #include <dhcp/std_option_defs.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <exceptions/exceptions.h>
@@ -447,7 +448,14 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
     OptionDefContainer option_defs;
     if (option_space == "dhcp4") {
         option_defs = LibDHCP::getOptionDefs(Option::V4);
+    } else {
+        OptionDefContainerPtr option_defs_ptr =
+            LibDHCP::getRuntimeOptionDefs(option_space);
+        if (option_defs_ptr) {
+            option_defs = *option_defs_ptr;
+        }
     }
+
     // @todo Once we implement other option spaces we should add else clause
     // here and gather option definitions for them. For now leaving option_defs
     // empty will imply creation of generic Option.
@@ -521,6 +529,7 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
             opt = OptionPtr(new Option(Option::V4, opt_type,
                                        buf.begin() + offset,
                                        buf.begin() + offset + opt_len));
+            opt->setEncapsulatedSpace(DHCP4_OPTION_SPACE);
         } else {
             // The option definition has been found. Use it to create
             // the option instance from the provided buffer chunk.
