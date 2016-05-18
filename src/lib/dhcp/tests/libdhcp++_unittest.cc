@@ -23,6 +23,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_opaque_data_tuples.h>
+#include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
@@ -233,10 +234,10 @@ private:
         // the definition for a particular option code.
         // We don't have to initialize option definitions here because they
         // are initialized in the class's constructor.
-        OptionDefContainer options = LibDHCP::getOptionDefs(u);
+        OptionDefContainerPtr options = LibDHCP::getOptionDefs(u);
         // Get the container index #1. This one allows for searching
         // option definitions using option code.
-        const OptionDefContainerTypeIndex& idx = options.get<1>();
+        const OptionDefContainerTypeIndex& idx = options->get<1>();
         // Get 'all' option definitions for a particular option code.
         // For standard options we expect that the range returned
         // will contain single option as their codes are unique.
@@ -516,6 +517,42 @@ TEST_F(LibDhcpTest, unpackOptions6) {
 
     x = options.find(32000);
     EXPECT_TRUE(x == options.end()); // option 32000 not found */
+}
+
+// Check parsing of an empty DHCPv6 option.
+TEST_F(LibDhcpTest, unpackEmptyOption6) {
+    // Create option definition for the option code 1024 without fields.
+    OptionDefinitionPtr opt_def(new OptionDefinition("option-empty", 1024,
+                                                     "empty", false));
+
+    // Use it as runtime option definition within standard options space.
+    // The tested code should find this option definition within runtime
+    // option definitions set when it detects that this definition is
+    // not a standard definition.
+    OptionDefSpaceContainer defs;
+    defs.addItem(opt_def, DHCP6_OPTION_SPACE);
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    // Create the buffer holding the structure of the empty option.
+    const uint8_t raw_data[] = {
+      0x04, 0x00,                // option code = 1024
+      0x00, 0x00                 // option length = 0
+    };
+    size_t raw_data_len = sizeof(raw_data) / sizeof(uint8_t);
+    OptionBuffer buf(raw_data, raw_data + raw_data_len);
+
+    // Parse options.
+    OptionCollection options;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions6(buf, DHCP6_OPTION_SPACE,
+                                            options));
+
+    // There should be one option.
+    ASSERT_EQ(1, options.size());
+    OptionPtr option_empty = options.begin()->second;
+    ASSERT_TRUE(option_empty);
+    EXPECT_EQ(1024, option_empty->getType());
+    EXPECT_EQ(4, option_empty->len());
 }
 
 // This test verifies that the following option structure can be parsed:
@@ -864,21 +901,24 @@ TEST_F(LibDhcpTest, unpackOptions4) {
 
 }
 
-// Check parsing of an empty option
+// Check parsing of an empty option.
 TEST_F(LibDhcpTest, unpackEmptyOption) {
-    // Create option definition for the option code 1 without fields.
-    OptionDefinitionPtr opt_def(new OptionDefinition("option-empty", 1,
+    // Create option definition for the option code 254 without fields.
+    OptionDefinitionPtr opt_def(new OptionDefinition("option-empty", 254,
                                                      "empty", false));
 
-    // Use it as runtime option definition.
+    // Use it as runtime option definition within standard options space.
+    // The tested code should find this option definition within runtime
+    // option definitions set when it detects that this definition is
+    // not a standard definition.
     OptionDefSpaceContainer defs;
-    defs.addItem(opt_def, "space-empty");
+    defs.addItem(opt_def, DHCP4_OPTION_SPACE);
     LibDHCP::setRuntimeOptionDefs(defs);
     LibDHCP::commitRuntimeOptionDefs();
 
     // Create the buffer holding the structure of the empty option.
     const uint8_t raw_data[] = {
-      0x01,                     // option code = 1
+      0xFE,                     // option code = 254
       0x00                      // option length = 0
     };
     size_t raw_data_len = sizeof(raw_data) / sizeof(uint8_t);
@@ -886,14 +926,14 @@ TEST_F(LibDhcpTest, unpackEmptyOption) {
 
     // Parse options.
     OptionCollection options;
-    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, "space-empty",
+    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE,
                                             options));
 
     // There should be one option.
     ASSERT_EQ(1, options.size());
     OptionPtr option_empty = options.begin()->second;
     ASSERT_TRUE(option_empty);
-    EXPECT_EQ(1, option_empty->getType());
+    EXPECT_EQ(254, option_empty->getType());
     EXPECT_EQ(2, option_empty->len());
 }
 
@@ -1584,10 +1624,10 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 // an option name.
 TEST_F(LibDhcpTest, getOptionDefByName6) {
     // Get all definitions.
-    const OptionDefContainer& defs = LibDHCP::getOptionDefs(Option::V6);
+    const OptionDefContainerPtr defs = LibDHCP::getOptionDefs(Option::V6);
     // For each definition try to find it using option name.
-    for (OptionDefContainer::const_iterator def = defs.begin();
-         def != defs.end(); ++def) {
+    for (OptionDefContainer::const_iterator def = defs->begin();
+         def != defs->end(); ++def) {
         OptionDefinitionPtr def_by_name =
             LibDHCP::getOptionDef(Option::V6, (*def)->getName());
         ASSERT_TRUE(def_by_name);
@@ -1600,10 +1640,10 @@ TEST_F(LibDhcpTest, getOptionDefByName6) {
 // an option name.
 TEST_F(LibDhcpTest, getOptionDefByName4) {
     // Get all definitions.
-    const OptionDefContainer& defs = LibDHCP::getOptionDefs(Option::V4);
+    const OptionDefContainerPtr defs = LibDHCP::getOptionDefs(Option::V4);
     // For each definition try to find it using option name.
-    for (OptionDefContainer::const_iterator def = defs.begin();
-         def != defs.end(); ++def) {
+    for (OptionDefContainer::const_iterator def = defs->begin();
+         def != defs->end(); ++def) {
         OptionDefinitionPtr def_by_name =
             LibDHCP::getOptionDef(Option::V4, (*def)->getName());
         ASSERT_TRUE(def_by_name);

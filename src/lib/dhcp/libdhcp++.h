@@ -36,8 +36,8 @@ public:
     ///
     /// @param u universe of the options (V4 or V6).
     ///
-    /// @return collection of option definitions.
-    static const OptionDefContainer& getOptionDefs(const Option::Universe u);
+    /// @return Pointer to a collection of option definitions.
+    static const OptionDefContainerPtr& getOptionDefs(const Option::Universe u);
 
     /// @brief Return the first option definition matching a
     /// particular option code.
@@ -356,10 +356,10 @@ private:
     static FactoryMap v6factories_;
 
     /// Container with DHCPv4 option definitions.
-    static OptionDefContainer v4option_defs_;
+    static OptionDefContainerPtr v4option_defs_;
 
     /// Container with DHCPv6 option definitions.
-    static OptionDefContainer v6option_defs_;
+    static OptionDefContainerPtr v6option_defs_;
 
     /// Container for v4 vendor option definitions
     static VendorOptionDefContainers vendor4_defs_;

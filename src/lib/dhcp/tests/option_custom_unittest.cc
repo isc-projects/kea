@@ -170,6 +170,7 @@ TEST_F(OptionCustomTest, emptyData) {
         option.reset(new OptionCustom(opt_def, Option::V4, buf.begin(),
                                       buf.end()));
     );
+
     ASSERT_TRUE(option);
 
     // Option is 'empty' so no data fields are expected.
