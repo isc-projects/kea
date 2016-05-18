@@ -371,7 +371,7 @@ public:
     ///
     /// @return Lease4Ptr to the newly created Lease4 object
     /// @throw DbOperationError if the lease cannot be created.
-    Lease4Ptr convertFromDatabase(PGresult*& r, int row) {
+    Lease4Ptr convertFromDatabase(const PgSqlResult& r, int row) {
         try {
             getColumnValue(r, row, ADDRESS_COL, addr4_);
 
@@ -559,7 +559,7 @@ public:
     ///
     /// @return Lease6Ptr to the newly created Lease4 object
     /// @throw DbOperationError if the lease cannot be created.
-    Lease6Ptr convertFromDatabase(PGresult*& r, int row) {
+    Lease6Ptr convertFromDatabase(const PgSqlResult& r, int row) {
         try {
             isc::asiolink::IOAddress addr(getIPv6Value(r, row, ADDRESS_COL));
 
@@ -618,8 +618,8 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void getLeaseTypeColumnValue(PGresult*& r, const int row, const size_t col,
-                        Lease6::Type& value) const {
+    void getLeaseTypeColumnValue(const PgSqlResult& r, const int row,
+                                 const size_t col, Lease6::Type& value) const {
         uint32_t raw_value = 0;
         getColumnValue(r, row , col, raw_value);
         switch (raw_value) {
@@ -644,7 +644,7 @@ public:
     /// @return isc::asiolink::IOAddress containing the IPv6 address.
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    isc::asiolink::IOAddress getIPv6Value(PGresult*& r, const int row,
+    isc::asiolink::IOAddress getIPv6Value(const PgSqlResult& r, const int row,
                                           const size_t col) const {
         const char* data = getRawColumnValue(r, row, col);
         try {
@@ -722,11 +722,11 @@ PgSqlLeaseMgr::getDBVersion() {
 bool
 PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
                               PsqlBindArray& bind_array) {
-    PGresult* r = PQexecPrepared(conn_, tagged_statements[stindex].name,
-                                  tagged_statements[stindex].nbparams,
-                                  &bind_array.values_[0],
-                                  &bind_array.lengths_[0],
-                                  &bind_array.formats_[0], 0);
+    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
 
     int s = PQresultStatus(r);
 
@@ -735,14 +735,11 @@ PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
         // the case, we return false to indicate that the row was not added.
         // Otherwise we throw an exception.
         if (conn_.compareError(r, PgSqlConnection::DUPLICATE_KEY)) {
-            PQclear(r);
             return (false);
         }
 
         conn_.checkStatementError(r, tagged_statements[stindex]);
     }
-
-    PQclear(r);
 
     return (true);
 }
@@ -776,17 +773,16 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_ADDR4).arg(tagged_statements[stindex].name);
 
-    PGresult* r = PQexecPrepared(conn_, tagged_statements[stindex].name,
-                       tagged_statements[stindex].nbparams,
-                       &bind_array.values_[0],
-                       &bind_array.lengths_[0],
-                       &bind_array.formats_[0], 0);
+    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
 
     conn_.checkStatementError(r, tagged_statements[stindex]);
 
     int rows = PQntuples(r);
     if (single && rows > 1) {
-        PQclear(r);
         isc_throw(MultipleRecords, "multiple records were found in the "
                       "database where only one was expected for query "
                       << tagged_statements[stindex].name);
@@ -795,8 +791,6 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     for(int i = 0; i < rows; ++ i) {
         result.push_back(exchange->convertFromDatabase(r, i));
     }
-
-    PQclear(r);
 }
 
 
@@ -1094,16 +1088,15 @@ PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR4).arg(tagged_statements[stindex].name);
 
-    PGresult* r = PQexecPrepared(conn_, tagged_statements[stindex].name,
-                                  tagged_statements[stindex].nbparams,
-                                  &bind_array.values_[0],
-                                  &bind_array.lengths_[0],
-                                  &bind_array.formats_[0], 0);
+    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
 
     conn_.checkStatementError(r, tagged_statements[stindex]);
 
     int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
-    PQclear(r);
 
     // Check success case first as it is the most likely outcome.
     if (affected_rows == 1) {
@@ -1165,15 +1158,14 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 uint64_t
 PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
                                  PsqlBindArray& bind_array) {
-    PGresult* r = PQexecPrepared(conn_, tagged_statements[stindex].name,
-                                  tagged_statements[stindex].nbparams,
-                                  &bind_array.values_[0],
-                                  &bind_array.lengths_[0],
-                                  &bind_array.formats_[0], 0);
+    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
 
     conn_.checkStatementError(r, tagged_statements[stindex]);
     int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
-    PQclear(r);
 
     return (affected_rows);
 }
@@ -1253,7 +1245,7 @@ PgSqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_VERSION);
 
-    PGresult* r = PQexecPrepared(conn_, "get_version", 0, NULL, NULL, NULL, 0);
+    PgSqlResult r(PQexecPrepared(conn_, "get_version", 0, NULL, NULL, NULL, 0));
     conn_.checkStatementError(r, tagged_statements[GET_VERSION]);
 
     istringstream tmp;
@@ -1266,8 +1258,6 @@ PgSqlLeaseMgr::getVersion() const {
     uint32_t minor;
     tmp.str(PQgetvalue(r, 0, 1));
     tmp >> minor;
-
-    PQclear(r);
 
     return make_pair<uint32_t, uint32_t>(version, minor);
 }

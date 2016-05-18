@@ -18,8 +18,9 @@ namespace isc {
 namespace dhcp {
 
 // Maximum number of parameters that can be used a statement
-// @todo This allows us to use an initializer list (since we don't
-// require C++11).  It's unlikely we'd go past in a single statement.
+// @todo This allows us to use an initializer list (since we can't
+// require C++11).  It's unlikely we'd go past this many a single
+// statement.
 const size_t PGSQL_MAX_PARAMETERS_IN_QUERY = 32;
 
 /// @brief  Defines a Postgresql SQL statement
@@ -95,7 +96,7 @@ public:
 
     /// @brief Conversion Operator
     ///
-    /// Allows the PgSqlResult object to be passed as the context argument to
+    /// Allows the PgSqlResult object to be passed as the result set argument to
     /// PQxxxx functions.
     operator PGresult*() const {
         return (result_);
@@ -108,13 +109,12 @@ public:
         return (result_);
     }
 
-
 private:
     PGresult*     result_;     ///< Result set to be freed
 };
 
 
-/// @brief PgSql Handle Holder
+/// @brief Postgresql connection handle Holder
 ///
 /// Small RAII object for safer initialization, will close the database
 /// connection upon destruction.  This means that if an exception is thrown
@@ -241,7 +241,7 @@ public:
     ///
     /// @return True if the result set's SQL state equals the error_state,
     /// false otherwise.
-    bool compareError(PGresult*& r, const char* error_state);
+    bool compareError(const PgSqlResult& r, const char* error_state);
 
     /// @brief Checks result of the r object
     ///
@@ -263,7 +263,8 @@ public:
     /// @param statement - tagged statement that was executed
     ///
     /// @throw isc::dhcp::DbOperationError Detailed PostgreSQL failure
-    void checkStatementError(PGresult*& r, PgSqlTaggedStatement& statement) const;
+    void checkStatementError(const PgSqlResult& r,
+                             PgSqlTaggedStatement& statement) const;
 
     /// @brief PgSql connection handle
     ///
