@@ -516,6 +516,77 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     EXPECT_TRUE(x == options.end()); // option 32000 not found */
 }
 
+// This test verifies that the following option structure can be parsed:
+// - option (option space 'foobar')
+//   - sub option (option space 'foo')
+//      - sub option (option space 'bar')
+TEST_F(LibDhcpTest, unpackSubOptions6) {
+    // Create option definition for each level of encapsulation. Each option
+    // definition is for the option code 1. Options may have the same
+    // option code because they belong to different option spaces.
+
+    // Top level option encapsulates options which belong to 'space-foo'.
+    OptionDefinitionPtr opt_def(new OptionDefinition("option-foobar", 1, "uint32",
+                                                      "space-foo"));\
+    // Middle option encapsulates options which belong to 'space-bar'
+    OptionDefinitionPtr opt_def2(new OptionDefinition("option-foo", 1, "uint16",
+                                                      "space-bar"));
+    // Low level option doesn't encapsulate any option space.
+    OptionDefinitionPtr opt_def3(new OptionDefinition("option-bar", 1,
+                                                      "uint8"));
+
+    // Register created option definitions as runtime option definitions.
+    OptionDefSpaceContainer defs;
+    ASSERT_NO_THROW(defs.addItem(opt_def, "space-foobar"));
+    ASSERT_NO_THROW(defs.addItem(opt_def2, "space-foo"));
+    ASSERT_NO_THROW(defs.addItem(opt_def3, "space-bar"));
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    // Create the buffer holding the structure of options.
+    const char raw_data[] = {
+        // First option starts here.
+        0x00, 0x01,   // option code = 1
+        0x00, 0x0F,   // option length = 15
+        0x00, 0x01, 0x02, 0x03, // This option carries uint32 value
+        // Sub option starts here.
+        0x00, 0x01,  // option code = 1
+        0x00, 0x07,  // option length = 7
+        0x01, 0x02,  // this option carries uint16 value
+        // Last option starts here.
+        0x00, 0x01,  // option code = 1
+        0x00, 0x01,  // option length = 1
+        0x00 // This option carries a single uint8 value and has no sub options.
+    };
+    OptionBuffer buf(raw_data, raw_data + sizeof(raw_data));
+
+    // Parse options.
+    OptionCollection options;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions6(buf, "space-foobar", options, 0, 0));
+
+    // There should be one top level option.
+    ASSERT_EQ(1, options.size());
+    boost::shared_ptr<OptionInt<uint32_t> > option_foobar =
+        boost::dynamic_pointer_cast<OptionInt<uint32_t> >(options.begin()->
+                                                          second);
+    ASSERT_TRUE(option_foobar);
+    EXPECT_EQ(1, option_foobar->getType());
+    EXPECT_EQ(0x00010203, option_foobar->getValue());
+    // There should be a middle level option held in option_foobar.
+    boost::shared_ptr<OptionInt<uint16_t> > option_foo =
+        boost::dynamic_pointer_cast<OptionInt<uint16_t> >(option_foobar->
+                                                          getOption(1));
+    ASSERT_TRUE(option_foo);
+    EXPECT_EQ(1, option_foo->getType());
+    EXPECT_EQ(0x0102, option_foo->getValue());
+    // Finally, there should be a low level option under option_foo.
+    boost::shared_ptr<OptionInt<uint8_t> > option_bar =
+        boost::dynamic_pointer_cast<OptionInt<uint8_t> >(option_foo->getOption(1));
+    ASSERT_TRUE(option_bar);
+    EXPECT_EQ(1, option_bar->getType());
+    EXPECT_EQ(0x0, option_bar->getValue());
+}
+
 /// V4 Options being used to test pack/unpack operations.
 /// These are variable length options only so as there
 /// is no restriction on the data length being carried by them.
