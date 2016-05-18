@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -473,28 +473,6 @@ private:
         getLeaseCollection(stindex, bind_array, exchange6_, result);
     }
 
-    /// @brief Checks result of the r object
-    ///
-    /// This function is used to determine whether or not the SQL statement
-    /// execution succeeded, and in the event of failures, decide whether or
-    /// not the failures are recoverable.
-    ///
-    /// If the error is recoverable, the method will throw a DbOperationError.
-    /// In the error is deemed unrecoverable, such as a loss of connectivity
-    /// with the server, this method will log the error and call exit(-1);
-    ///
-    /// @todo Calling exit() is viewed as a short term solution for Kea 1.0.
-    /// Two tickets are likely to alter this behavior, first is #3639, which
-    /// calls for the ability to attempt to reconnect to the database. The
-    /// second ticket, #4087 which calls for the implementation of a generic,
-    /// FatalException class which will propagate outward.
-    ///
-    /// @param r result of the last PostgreSQL operation
-    /// @param index will be used to print out compiled statement name
-    ///
-    /// @throw isc::dhcp::DbOperationError Detailed PostgreSQL failure
-    void checkStatementError(PGresult*& r, StatementIndex index) const;
-
     /// @brief Get Lease4 Common Code
     ///
     /// This method performs the common actions for the various getLease4()
@@ -571,7 +549,8 @@ private:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    uint64_t deleteLeaseCommon(StatementIndex stindex, PsqlBindArray& bind_array);
+    uint64_t deleteLeaseCommon(StatementIndex stindex,
+                               PsqlBindArray& bind_array);
 
     /// @brief Delete expired-reclaimed leases.
     ///

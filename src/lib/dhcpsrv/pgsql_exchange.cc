@@ -55,8 +55,8 @@ std::string PsqlBindArray::toText() {
             } else {
                 stream << "0x";
                 for (int i = 0; i < lengths_[i]; ++i) {
-                    stream << std::setfill('0') << std::setw(2) 
-                           << std::setbase(16) 
+                    stream << std::setfill('0') << std::setw(2)
+                           << std::setbase(16)
                            << static_cast<unsigned int>(data[i]);
                 }
                 stream << std::endl;
@@ -67,7 +67,7 @@ std::string PsqlBindArray::toText() {
     return (stream.str());
 }
 
-std::string 
+std::string
 PgSqlExchange::convertToDatabaseTime(const time_t input_time) {
     struct tm tinfo;
     char buffer[20];
@@ -77,9 +77,9 @@ PgSqlExchange::convertToDatabaseTime(const time_t input_time) {
 }
 
 std::string
-PgSqlExchange::convertToDatabaseTime(const time_t cltt, 
+PgSqlExchange::convertToDatabaseTime(const time_t cltt,
                                      const uint32_t valid_lifetime) {
-    // Calculate expiry time. Store it in the 64-bit value so as we can 
+    // Calculate expiry time. Store it in the 64-bit value so as we can
     // detect overflows.
     int64_t expire_time_64 = static_cast<int64_t>(cltt)
                              + static_cast<int64_t>(valid_lifetime);
@@ -96,7 +96,7 @@ PgSqlExchange::convertToDatabaseTime(const time_t cltt,
     return (convertToDatabaseTime(static_cast<time_t>(expire_time_64)));
 }
 
-time_t 
+time_t
 PgSqlExchange::convertFromDatabaseTime(const std::string& db_time_val) {
     // Convert string time value to time_t
     time_t new_time;
@@ -110,7 +110,7 @@ PgSqlExchange::convertFromDatabaseTime(const std::string& db_time_val) {
 }
 
 const char*
-PgSqlExchange::getRawColumnValue(PGresult*& r, const int row, 
+PgSqlExchange::getRawColumnValue(const PgSqlResult& r, const int row,
                                  const size_t col) const {
     const char* value = PQgetvalue(r, row, col);
     if (!value) {
@@ -120,9 +120,9 @@ PgSqlExchange::getRawColumnValue(PGresult*& r, const int row,
     return (value);
 }
 
-void 
-PgSqlExchange::getColumnValue(PGresult*& r, const int row, const size_t col,
-                              bool &value) const {
+void
+PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
+                              const size_t col, bool &value) const {
     const char* data = getRawColumnValue(r, row, col);
     if (!strlen(data) || *data == 'f') {
         value = false;
@@ -135,9 +135,9 @@ PgSqlExchange::getColumnValue(PGresult*& r, const int row, const size_t col,
     }
 }
 
-void 
-PgSqlExchange::getColumnValue(PGresult*& r, const int row, const size_t col,
-                              uint32_t &value) const {
+void
+PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
+                              const size_t col, uint32_t &value) const {
     const char* data = getRawColumnValue(r, row, col);
     try {
         value = boost::lexical_cast<uint32_t>(data);
@@ -148,9 +148,9 @@ PgSqlExchange::getColumnValue(PGresult*& r, const int row, const size_t col,
     }
 }
 
-void 
-PgSqlExchange::getColumnValue(PGresult*& r, const int row, const size_t col,
-                              int32_t &value) const {
+void
+PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
+                              const size_t col, int32_t &value) const {
     const char* data = getRawColumnValue(r, row, col);
     try {
         value = boost::lexical_cast<int32_t>(data);
@@ -161,9 +161,9 @@ PgSqlExchange::getColumnValue(PGresult*& r, const int row, const size_t col,
     }
 }
 
-void 
-PgSqlExchange::getColumnValue(PGresult*& r, const int row, const size_t col,
-                              uint8_t &value) const {
+void
+PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
+                              const size_t col, uint8_t &value) const {
     const char* data = getRawColumnValue(r, row, col);
     try {
         // lexically casting as uint8_t doesn't convert from char
@@ -176,9 +176,10 @@ PgSqlExchange::getColumnValue(PGresult*& r, const int row, const size_t col,
     }
 }
 
-void 
-PgSqlExchange::convertFromBytea(PGresult*& r, const int row, const size_t col,
-                                uint8_t* buffer, const size_t buffer_size,
+void
+PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
+                                const size_t col, uint8_t* buffer,
+                                const size_t buffer_size,
                                 size_t &bytes_converted) const {
     // Returns converted bytes in a dynamically allocated buffer, and
     // sets bytes_converted.
