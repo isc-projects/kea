@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/docsis3_option_defs.h>
@@ -39,6 +40,7 @@
 
 using namespace std;
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
 
@@ -593,16 +595,16 @@ TEST_F(LibDhcpTest, unpackSubOptions6) {
 /// For simplicity, we assign data of the length 3 for each
 /// of them.
 static uint8_t v4_opts[] = {
-    12,  3, 0,   1,  2,    // Hostname
-    60,  3, 10, 11, 12,    // Class Id
-    14,  3, 20, 21, 22,    // Merit Dump File
-    254, 3, 30, 31, 32,    // Reserved
-    128, 3, 40, 41, 42,    // Vendor specific
-    125, 7, 0, 0, 9, 0xBF, // V-I Vendor-Specific Information
-    2, 0xDC, 0,            // Suboption of VIVSI
-    43, 2,                 // Vendor Specific Information
-    0xDC, 0,               // VSI suboption
-    0x52, 0x19,            // RAI
+    12,  3, 0,   1,  2,        // Hostname
+    60,  3, 10, 11, 12,        // Class Id
+    14,  3, 20, 21, 22,        // Merit Dump File
+    254, 3, 30, 31, 32,        // Reserved
+    128, 3, 40, 41, 42,        // Vendor specific
+    125, 11, 0, 0, 0x11, 0x8B, // V-I Vendor-Specific Information (Cable Labs)
+    6, 2, 4, 10, 0, 0, 10,     // TFTP servers suboption (2)
+    43, 2,                     // Vendor Specific Information
+    0xDC, 0,                   // VSI suboption
+    0x52, 0x19,                // RAI
     0x01, 0x04, 0x20, 0x00, 0x00, 0x02, // Agent Circuit ID
     0x02, 0x06, 0x20, 0xE5, 0x2A, 0xB8, 0x15, 0x14, // Agent Remote ID
     0x09, 0x09, 0x00, 0x00, 0x11, 0x8B, 0x04, // Vendor Specific Information
@@ -626,8 +628,10 @@ TEST_F(LibDhcpTest, packOptions4) {
     OptionPtr opt4(new Option(Option::V4,254, payload[3]));
     OptionPtr opt5(new Option(Option::V4,128, payload[4]));
 
-    OptionVendorPtr vivsi(new OptionVendor(Option::V4, 0x9BF));
-    vivsi->addOption(OptionPtr(new Option(Option::V4, 0xDC, OptionBuffer())));
+    // Create vendor option instance with DOCSIS3.0 enterprise id.
+    OptionVendorPtr vivsi(new OptionVendor(Option::V4, 4491));
+    vivsi->addOption(OptionPtr(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS,
+                                                  IOAddress("10.0.0.10"))));
 
     OptionPtr vsi(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS,
                               OptionBuffer()));
@@ -650,18 +654,18 @@ TEST_F(LibDhcpTest, packOptions4) {
 
     // Create Ciruit ID sub-option and add to RAI.
     OptionPtr circuit_id(new Option(Option::V4, RAI_OPTION_AGENT_CIRCUIT_ID,
-                                    OptionBuffer(v4_opts + 42,
-                                                 v4_opts + 46)));
+                                    OptionBuffer(v4_opts + 46,
+                                                 v4_opts + 50)));
     rai->addOption(circuit_id);
 
     // Create Remote ID option and add to RAI.
     OptionPtr remote_id(new Option(Option::V4, RAI_OPTION_REMOTE_ID,
-                                   OptionBuffer(v4_opts + 48, v4_opts + 54)));
+                                   OptionBuffer(v4_opts + 52, v4_opts + 58)));
     rai->addOption(remote_id);
 
     // Create Vendor Specific Information and add to RAI.
     OptionPtr rai_vsi(new Option(Option::V4, RAI_OPTION_VSI,
-                                 OptionBuffer(v4_opts + 56, v4_opts + 65)));
+                                 OptionBuffer(v4_opts + 60, v4_opts + 69)));
     rai->addOption(rai_vsi);
 
     isc::dhcp::OptionCollection opts; // list of options
@@ -774,15 +778,23 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     OptionVendorPtr vivsi = boost::dynamic_pointer_cast<OptionVendor>(x->second);
     ASSERT_TRUE(vivsi);
     EXPECT_EQ(DHO_VIVSO_SUBOPTIONS, vivsi->getType());
-    EXPECT_EQ(2495, vivsi->getVendorId());
+    EXPECT_EQ(4491, vivsi->getVendorId());
     OptionCollection suboptions = vivsi->getOptions();
 
     // There should be one suboption of V-I VSI.
     ASSERT_EQ(1, suboptions.size());
-    OptionPtr eso = suboptions.begin()->second;
-    ASSERT_TRUE(eso);
-    EXPECT_EQ(0xdc, eso->getType());
-    EXPECT_EQ(2, eso->len());
+    // This vendor option has a standard definition and thus should be
+    // converted to appropriate class, i.e. Option4AddrLst. If this cast
+    // fails, it means that its definition was not used while it was
+    // parsed.
+    Option4AddrLstPtr tftp =
+        boost::dynamic_pointer_cast<Option4AddrLst>(suboptions.begin()->second);
+    ASSERT_TRUE(tftp);
+    EXPECT_EQ(DOCSIS3_V4_TFTP_SERVERS, tftp->getType());
+    EXPECT_EQ(6, tftp->len());
+    Option4AddrLst::AddressContainer addresses = tftp->getAddresses();
+    ASSERT_EQ(1, addresses.size());
+    EXPECT_EQ("10.0.0.10", addresses[0].toText());
 
     // Vendor Specific Information option
     x = options.find(43);
@@ -794,7 +806,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
 
     // There should be one suboption of VSI.
     ASSERT_EQ(1, suboptions.size());
-    eso = suboptions.begin()->second;
+    OptionPtr eso = suboptions.begin()->second;
     ASSERT_TRUE(eso);
     EXPECT_EQ(0xdc, eso->getType());
     EXPECT_EQ(2, eso->len());
@@ -821,21 +833,21 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     ASSERT_TRUE(rai_option);
     EXPECT_EQ(RAI_OPTION_AGENT_CIRCUIT_ID, rai_option->getType());
     ASSERT_EQ(6, rai_option->len());
-    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 42, 4));
+    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 46, 4));
 
     // Check that Remote ID option is among parsed options.
     rai_option = rai->getOption(RAI_OPTION_REMOTE_ID);
     ASSERT_TRUE(rai_option);
     EXPECT_EQ(RAI_OPTION_REMOTE_ID, rai_option->getType());
     ASSERT_EQ(8, rai_option->len());
-    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 48, 6));
+    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 52, 6));
 
     // Check that Vendor Specific Information option is among parsed options.
     rai_option = rai->getOption(RAI_OPTION_VSI);
     ASSERT_TRUE(rai_option);
     EXPECT_EQ(RAI_OPTION_VSI, rai_option->getType());
     ASSERT_EQ(11, rai_option->len());
-    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 56, 9));
+    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 60, 9));
 
     // Make sure, that option other than those above is not present.
     EXPECT_FALSE(rai->getOption(10));
