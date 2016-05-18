@@ -22,15 +22,15 @@
 // code is 5 decimal, ASCII, digits, the first two define the category of
 // error, the last three are the specific error.  PostgreSQL makes the state
 // code as a char[5].  Macros for each code are defined in PostgreSQL's
-// server/utils/errcodes.h, although they require a second macro, 
+// server/utils/errcodes.h, although they require a second macro,
 // MAKE_SQLSTATE for completion.  For example, duplicate key error as:
 //
 // #define ERRCODE_UNIQUE_VIOLATION MAKE_SQLSTATE('2','3','5','0','5')
-// 
-// PostgreSQL deliberately omits the MAKE_SQLSTATE macro so callers can/must 
+//
+// PostgreSQL deliberately omits the MAKE_SQLSTATE macro so callers can/must
 // supply their own.  We'll define it as an initlizer_list:
 #define MAKE_SQLSTATE(ch1,ch2,ch3,ch4,ch5) {ch1,ch2,ch3,ch4,ch5}
-// So we can use it like this: const char some_error[] = ERRCODE_xxxx; 
+// So we can use it like this: const char some_error[] = ERRCODE_xxxx;
 #define PGSQL_STATECODE_LEN 5
 #include <utils/errcodes.h>
 
@@ -101,7 +101,7 @@ PgSqlConnection::openDatabase() {
         isc_throw(NoDatabaseName, "must specify a name for the database");
     }
 
-    // Connect to Postgres, saving the low level connection pointer 
+    // Connect to Postgres, saving the low level connection pointer
     // in the holder object
     PGconn* new_conn = PQconnectdb(dbconnparameters.c_str());
     if (!new_conn) {
@@ -120,8 +120,8 @@ PgSqlConnection::openDatabase() {
     conn_.setConnection(new_conn);
 }
 
-bool 
-PgSqlConnection::compareError(PGresult*& r, const char* error_state) {
+bool
+PgSqlConnection::compareError(const PgSqlResult& r, const char* error_state) {
     const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
     // PostgreSQL garuantees it will always be 5 characters long
     return ((sqlstate != NULL) &&
@@ -129,7 +129,7 @@ PgSqlConnection::compareError(PGresult*& r, const char* error_state) {
 }
 
 void
-PgSqlConnection::checkStatementError(PGresult*& r, 
+PgSqlConnection::checkStatementError(const PgSqlResult& r,
                                      PgSqlTaggedStatement& statement) const {
     int s = PQresultStatus(r);
     if (s != PGRES_COMMAND_OK && s != PGRES_TUPLES_OK) {

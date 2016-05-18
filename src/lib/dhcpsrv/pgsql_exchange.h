@@ -157,7 +157,7 @@ public:
     ///
     /// @return a const char* pointer to the column's raw data
     /// @throw  DbOperationError if the value cannot be fetched.
-    const char* getRawColumnValue(PGresult*& r, const int row,
+    const char* getRawColumnValue(const PgSqlResult& r, const int row,
                                   const size_t col) const;
 
     /// @brief Fetches boolean text ('t' or 'f') as a bool.
@@ -169,7 +169,7 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void getColumnValue(PGresult*& r, const int row, const size_t col,
+    void getColumnValue(const PgSqlResult& r, const int row, const size_t col,
                         bool &value) const;
 
     /// @brief Fetches an integer text column as a uint32_t.
@@ -181,7 +181,7 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void getColumnValue(PGresult*& r, const int row, const size_t col,
+    void getColumnValue(const PgSqlResult& r, const int row, const size_t col,
                         uint32_t &value) const;
 
     /// @brief Fetches an integer text column as a int32_t.
@@ -193,7 +193,7 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void getColumnValue(PGresult*& r, const int row, const size_t col,
+    void getColumnValue(const PgSqlResult& r, const int row, const size_t col,
                         int32_t &value) const;
 
     /// @brief Fetches an integer text column as a uint8_t.
@@ -205,7 +205,7 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void getColumnValue(PGresult*& r, const int row, const size_t col,
+    void getColumnValue(const PgSqlResult& r, const int row, const size_t col,
                         uint8_t &value) const;
 
     /// @brief Converts a column in a row in a result set to a binary bytes
@@ -224,7 +224,7 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void convertFromBytea(PGresult*& r, const int row, const size_t col,
+    void convertFromBytea(const PgSqlResult& r, const int row, const size_t col,
                           uint8_t* buffer, const size_t buffer_size,
                           size_t &bytes_converted) const;
 
