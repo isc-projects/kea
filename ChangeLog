@@ -1,3 +1,8 @@
+1117.	[bug]		marcin
+	Performance improvement in libdhcp++: improved efficiency of the
+	DHCPv4 Message Type option creation.
+	(Trac #4495, git 41c43a2a9e34931fc3ebf58c459f10ad08575d19)
+
 1116.	[bug]		marcin
 	Performance improvement in hosts reservation: removed
 	inefficient conversion of the host identifier to text
