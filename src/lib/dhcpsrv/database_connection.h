@@ -45,6 +45,16 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Invalid Timeout
+///
+/// Thrown when the timeout specified for the database connection is invalid.
+class DbInvalidTimeout : public Exception {
+public:
+    DbInvalidTimeout(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+
 /// @brief Common database connection class.
 ///
 /// This class provides functions that are common for establishing
