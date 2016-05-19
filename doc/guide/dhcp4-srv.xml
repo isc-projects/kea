@@ -463,6 +463,7 @@ be followed by a comma and another object definition.</para>
 "Dhcp4": { "lease-database": { <userinput>"connect-timeout" : <replaceable>timeout-in-seconds</replaceable></userinput>, ... }, ... }
 </screen>
 The default value of five seconds should be more than adequate for local connections.
+If a timeout is given though, it should be an integer greater than zero.
   </para>
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:

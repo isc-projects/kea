@@ -15,6 +15,7 @@
 #include <iterator>
 #include <stdint.h>
 #include <string>
+#include <limits>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -73,7 +74,7 @@ MySqlConnection::openDatabase() {
         isc_throw(NoDatabaseName, "must specify a name for the database");
     }
 
-    int connect_timeout = MYSQL_DEFAULT_CONNECTION_TIMEOUT;
+    unsigned int connect_timeout = MYSQL_DEFAULT_CONNECTION_TIMEOUT;
     string stimeout;
     try {
         stimeout = getParameter("connect-timeout");
@@ -84,18 +85,29 @@ MySqlConnection::openDatabase() {
 
     if (stimeout.size() > 0) {
         // Timeout was given, so try to convert it to an integer.
+
         try {
-            connect_timeout = boost::lexical_cast<int>(stimeout);
+            connect_timeout = boost::lexical_cast<unsigned int>(stimeout);
         } catch (...) {
-            // Timeout given but invalid.
-            isc_throw(DbInvalidTimeout, "database connection timeout (" << stimeout <<
-                      ") must be numeric");
+            // Timeout given but could not be converted to an unsigned int. Set
+            // the connection timeout to an invalid value to trigger throwing
+            // of an exception.
+            connect_timeout = 0;
         }
 
-        // ... and check the range.
-        if (connect_timeout <= 0) {
-            isc_throw(DbInvalidTimeout, "database connection timeout (" << connect_timeout <<
-                      ") must be an integer greater than 0");
+        // The timeout is only valid if greater than zero, as depending on the
+        // database, a zero timeout might signify someting like "wait
+        // indefinitely".
+        //
+        // The check below also rejects a value greater than the maximum
+        // integer value.  The lexical_cast operation used to obtain a numeric
+        // value from a string can get confused if trying to convert a negative
+        // integer to an unsigned int: instead of throwing an exception, it may
+        // produce a large positive value.
+        if ((connect_timeout == 0) ||
+            (connect_timeout > numeric_limits<int>::max())) {
+            isc_throw(DbInvalidTimeout, "database connection timeout (" <<
+                      stimeout << ") must be an integer greater than 0");
         }
     }
 
