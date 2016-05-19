@@ -1,3 +1,8 @@
+1118.	[func]		stephen
+	Make the database connection timeout a configurable parameter with
+	a default value of five seconds.
+	(Trac #3164, git 3332ad17523c6fcc1e735e4297169ebb2de95118)
+
 1117.	[bug]		marcin
 	Performance improvement in libdhcp++: improved efficiency of the
 	DHCPv4 Message Type option creation.
