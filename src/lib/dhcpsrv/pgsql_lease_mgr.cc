@@ -14,7 +14,6 @@
 
 #include <boost/static_assert.hpp>
 
-#include <iostream>
 #include <iomanip>
 #include <limits>
 #include <sstream>
@@ -40,6 +39,9 @@ using namespace isc::dhcp;
 using namespace std;
 
 namespace {
+
+// Default connection timeout
+const int PGSQL_DEFAULT_CONNECTION_TIMEOUT = 5;	// seconds
 
 // Maximum number of parameters used in any single query
 const size_t MAX_PARAMETERS_IN_QUERY = 14;
@@ -1099,7 +1101,6 @@ PgSqlLeaseMgr::openDatabase() {
     } catch(...) {
         // No host. Fine, we'll use "localhost"
     }
-
     dbconnparameters += "host = '" + shost + "'" ;
 
     string suser;
@@ -1126,6 +1127,47 @@ PgSqlLeaseMgr::openDatabase() {
         // No database name.  Throw a "NoDatabaseName" exception
         isc_throw(NoDatabaseName, "must specify a name for the database");
     }
+
+    unsigned int connect_timeout = PGSQL_DEFAULT_CONNECTION_TIMEOUT;
+    string stimeout;
+    try {
+        stimeout = dbconn_.getParameter("connect-timeout");
+    } catch (...) {
+        // No timeout parameter, we are going to use the default timeout.
+        stimeout = "";
+    }
+
+    if (stimeout.size() > 0) {
+        // Timeout was given, so try to convert it to an integer.
+
+        try {
+            connect_timeout = boost::lexical_cast<unsigned int>(stimeout);
+        } catch (...) {
+            // Timeout given but could not be converted to an unsigned int. Set
+            // the connection timeout to an invalid value to trigger throwing
+            // of an exception.
+            connect_timeout = 0;
+        }
+
+        // The timeout is only valid if greater than zero, as depending on the
+        // database, a zero timeout might signify someting like "wait
+        // indefinitely".
+        //
+        // The check below also rejects a value greater than the maximum
+        // integer value.  The lexical_cast operation used to obtain a numeric
+        // value from a string can get confused if trying to convert a negative
+        // integer to an unsigned int: instead of throwing an exception, it may
+        // produce a large positive value.
+        if ((connect_timeout == 0) ||
+            (connect_timeout > numeric_limits<int>::max())) {
+            isc_throw(DbInvalidTimeout, "database connection timeout (" <<
+                      stimeout << ") must be an integer greater than 0");
+        }
+    }
+
+    std::ostringstream oss;
+    oss << connect_timeout;
+    dbconnparameters += " connect_timeout = " + oss.str();
 
     conn_ = PQconnectdb(dbconnparameters.c_str());
     if (conn_ == NULL) {

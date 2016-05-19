@@ -68,6 +68,7 @@ public:
     ///
     /// - "type" is "memfile", "mysql" or "postgresql"
     /// - "lfc-interval" is a number from the range of 0 to 4294967295.
+    /// - "timeout" is a number from the range of 0 to 4294967295.
     ///
     /// Once all has been validated, constructs the database access string
     /// expected by the lease manager.
