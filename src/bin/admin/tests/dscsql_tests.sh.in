@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Include common test library.
+. @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+
+dscsql_init_test() {
+    test_start "dscsql.init"
+    
+    # @todo: Implement this
+
+    test_finish 0
+}
+
+dscsql_version_test() {
+    test_start "dscsql.version"
+    
+    # @todo: Implement this
+
+    test_finish 0
+}
+
+dscsql_upgrade_test() {
+    test_start "dscsql.upgrade"
+    
+    # @todo: Implement this
+
+    test_finish 0
+}
+
+dscsql_init_test
+dscsql_version_test
+dscsql_upgrade_test
