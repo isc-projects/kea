@@ -50,6 +50,8 @@ VendorOptionDefContainers LibDHCP::vendor6_defs_;
 // Static container with option definitions created in runtime.
 StagedValue<OptionDefSpaceContainer> LibDHCP::runtime_option_defs_;
 
+// Null container.
+const OptionDefContainerPtr null_option_def_container_(new OptionDefContainer());
 
 // Those two vendor classes are used for cable modems:
 
@@ -61,7 +63,7 @@ const char* isc::dhcp::DOCSIS3_CLASS_EROUTER = "eRouter1.0";
 
 // Let's keep it in .cc file. Moving it to .h would require including optionDefParams
 // definitions there
-void initOptionSpace(OptionDefContainer& defs,
+void initOptionSpace(OptionDefContainerPtr& defs,
                      const OptionDefParams* params,
                      size_t params_size);
 
@@ -85,7 +87,7 @@ LibDHCP::getOptionDefs(const Option::Universe u) {
     }
 }
 
-const OptionDefContainer*
+const OptionDefContainerPtr&
 LibDHCP::getVendorOption4Defs(const uint32_t vendor_id) {
 
     if (vendor_id == VENDOR_ID_CABLE_LABS &&
@@ -96,12 +98,12 @@ LibDHCP::getVendorOption4Defs(const uint32_t vendor_id) {
     VendorOptionDefContainers::const_iterator def = vendor4_defs_.find(vendor_id);
     if (def == vendor4_defs_.end()) {
         // No such vendor-id space
-        return (NULL);
+        return (null_option_def_container_);
     }
-    return (&(def->second));
+    return (def->second);
 }
 
-const OptionDefContainer*
+const OptionDefContainerPtr&
 LibDHCP::getVendorOption6Defs(const uint32_t vendor_id) {
 
     if (vendor_id == VENDOR_ID_CABLE_LABS &&
@@ -117,9 +119,9 @@ LibDHCP::getVendorOption6Defs(const uint32_t vendor_id) {
     VendorOptionDefContainers::const_iterator def = vendor6_defs_.find(vendor_id);
     if (def == vendor6_defs_.end()) {
         // No such vendor-id space
-        return (NULL);
+        return (null_option_def_container_);
     }
-    return (&(def->second));
+    return (def->second);
 }
 
 OptionDefinitionPtr
@@ -149,12 +151,8 @@ LibDHCP::getOptionDef(const Option::Universe u, const std::string& name) {
 OptionDefinitionPtr
 LibDHCP::getVendorOptionDef(const Option::Universe u, const uint32_t vendor_id,
                             const std::string& name) {
-    const OptionDefContainer* defs = NULL;
-    if (u == Option::V4) {
-        defs = getVendorOption4Defs(vendor_id);
-    } else if (u == Option::V6) {
-        defs = getVendorOption6Defs(vendor_id);
-    }
+    OptionDefContainerPtr defs = (u == Option::V4 ? getVendorOption4Defs(vendor_id) :
+                                  getVendorOption6Defs(vendor_id));
 
     if (!defs) {
         return (OptionDefinitionPtr());
@@ -171,12 +169,8 @@ LibDHCP::getVendorOptionDef(const Option::Universe u, const uint32_t vendor_id,
 OptionDefinitionPtr
 LibDHCP::getVendorOptionDef(const Option::Universe u, const uint32_t vendor_id,
                             const uint16_t code) {
-    const OptionDefContainer* defs = NULL;
-    if (u == Option::V4) {
-        defs = getVendorOption4Defs(vendor_id);
-    } else if (u == Option::V6) {
-        defs = getVendorOption6Defs(vendor_id);
-    }
+    OptionDefContainerPtr defs = (u == Option::V4 ? getVendorOption4Defs(vendor_id) :
+                                  getVendorOption6Defs(vendor_id));
 
     if (!defs) {
         // Weird universe or unknown vendor_id. We don't care. No definitions
@@ -564,8 +558,7 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
     size_t length = buf.size();
 
     // Get the list of option definitions for this particular vendor-id
-    const OptionDefContainer* option_defs =
-        LibDHCP::getVendorOption6Defs(vendor_id);
+    const OptionDefContainerPtr& option_defs = LibDHCP::getVendorOption6Defs(vendor_id);
 
     // Get the search index #1. It allows to search for option definitions
     // using option code. If there's no such vendor-id space, we're out of luck
@@ -657,8 +650,7 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
     size_t offset = 0;
 
     // Get the list of stdandard option definitions.
-    const OptionDefContainer* option_defs =
-        LibDHCP::getVendorOption4Defs(vendor_id);
+    const OptionDefContainerPtr& option_defs = LibDHCP::getVendorOption4Defs(vendor_id);
     // Get the search index #1. It allows to search for option definitions
     // using option code.
     const OptionDefContainerTypeIndex* idx = NULL;
@@ -838,12 +830,12 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
 
 void
 LibDHCP::initStdOptionDefs4() {
-    initOptionSpace(*v4option_defs_, OPTION_DEF_PARAMS4, OPTION_DEF_PARAMS_SIZE4);
+    initOptionSpace(v4option_defs_, OPTION_DEF_PARAMS4, OPTION_DEF_PARAMS_SIZE4);
 }
 
 void
 LibDHCP::initStdOptionDefs6() {
-    initOptionSpace(*v6option_defs_, OPTION_DEF_PARAMS6, OPTION_DEF_PARAMS_SIZE6);
+    initOptionSpace(v6option_defs_, OPTION_DEF_PARAMS6, OPTION_DEF_PARAMS_SIZE6);
 }
 
 void
@@ -853,20 +845,26 @@ LibDHCP::initVendorOptsDocsis4() {
 
 void
 LibDHCP::initVendorOptsDocsis6() {
-    vendor6_defs_[VENDOR_ID_CABLE_LABS] = OptionDefContainer();
     initOptionSpace(vendor6_defs_[VENDOR_ID_CABLE_LABS], DOCSIS3_V6_DEFS, DOCSIS3_V6_DEFS_SIZE);
 }
 
 void
 LibDHCP::initVendorOptsIsc6() {
-    vendor6_defs_[ENTERPRISE_ID_ISC] = OptionDefContainer();
     initOptionSpace(vendor6_defs_[ENTERPRISE_ID_ISC], ISC_V6_DEFS, ISC_V6_DEFS_SIZE);
 }
 
-void initOptionSpace(OptionDefContainer& defs,
+void initOptionSpace(OptionDefContainerPtr& defs,
                      const OptionDefParams* params,
                      size_t params_size) {
-    defs.clear();
+    // Container holding vendor options is typically not initialized, as it
+    // is held in map of null pointers. We need to initialize here in this
+    // case.
+    if (!defs) {
+        defs.reset(new OptionDefContainer());
+
+    } else {
+        defs->clear();
+    }
 
     for (size_t i = 0; i < params_size; ++i) {
         std::string encapsulates(params[i].encapsulates);
@@ -909,9 +907,9 @@ void initOptionSpace(OptionDefContainer& defs,
             // be only caused by programming error. To guarantee the
             // data consistency we clear all option definitions that
             // have been added so far and pass the exception forward.
-            defs.clear();
+            defs->clear();
             throw;
         }
-        defs.push_back(definition);
+        defs->push_back(definition);
     }
 }

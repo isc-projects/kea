@@ -1654,9 +1654,9 @@ TEST_F(LibDhcpTest, getOptionDefByName4) {
 // This test checks if the definition of the DHCPv6 vendor option can
 // be searched by option name.
 TEST_F(LibDhcpTest, getVendorOptionDefByName6) {
-    const OptionDefContainer* defs =
+    const OptionDefContainerPtr& defs =
         LibDHCP::getVendorOption6Defs(VENDOR_ID_CABLE_LABS);
-    ASSERT_TRUE(defs != NULL);
+    ASSERT_TRUE(defs);
     for (OptionDefContainer::const_iterator def = defs->begin();
          def != defs->end(); ++def) {
         OptionDefinitionPtr def_by_name =
@@ -1670,9 +1670,9 @@ TEST_F(LibDhcpTest, getVendorOptionDefByName6) {
 // This test checks if the definition of the DHCPv4 vendor option can
 // be searched by option name.
 TEST_F(LibDhcpTest, getVendorOptionDefByName4) {
-    const OptionDefContainer* defs =
+    const OptionDefContainerPtr& defs =
         LibDHCP::getVendorOption4Defs(VENDOR_ID_CABLE_LABS);
-    ASSERT_TRUE(defs != NULL);
+    ASSERT_TRUE(defs);
     for (OptionDefContainer::const_iterator def = defs->begin();
          def != defs->end(); ++def) {
         OptionDefinitionPtr def_by_name =
