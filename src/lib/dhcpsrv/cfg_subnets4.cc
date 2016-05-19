@@ -147,6 +147,10 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
         // selection criteria below.
         if (subnet) {
             return (subnet);
+        } else {
+            // Let's try to get an address from the local interface and
+            // try to match it to defined subnet.
+            iface->getAddress4(address);
         }
     }
 
@@ -180,6 +184,9 @@ CfgSubnets4::selectSubnet(const std::string& iface,
 
         // Eliminate those subnets that do not meet client class criteria.
         if ((*subnet)->clientSupported(client_classes)) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_CFGMGR_SUBNET4_IFACE)
+                .arg((*subnet)->toText()).arg(iface);
             return (*subnet);
         }
     }
@@ -201,6 +208,9 @@ CfgSubnets4::selectSubnet(const IOAddress& address,
 
         // Eliminate those subnets that do not meet client class criteria.
         if ((*subnet)->clientSupported(client_classes)) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_SUBNET4_ADDR)
+                .arg((*subnet)->toText()).arg(address.toText());
+
             return (*subnet);
         }
     }
