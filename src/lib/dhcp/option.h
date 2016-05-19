@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,32 +41,6 @@ typedef boost::shared_ptr<Option> OptionPtr;
 typedef std::multimap<unsigned int, OptionPtr> OptionCollection;
 /// A pointer to an OptionCollection
 typedef boost::shared_ptr<OptionCollection> OptionCollectionPtr;
-
-/// @brief This type describes a callback function to parse options from buffer.
-///
-/// @note The last two parameters should be specified in the callback function
-/// parameters list only if DHCPv6 options are parsed. Exclude these parameters
-/// from the callback function defined to parse DHCPv4 options.
-///
-/// @param buffer A buffer holding options to be parsed.
-/// @param encapsulated_space A name of the option space to which options being
-/// parsed belong.
-/// @param [out] options A container to which parsed options should be appended.
-/// @param relay_msg_offset A pointer to a size_t value. It indicates the
-/// offset to beginning of relay_msg option. This parameter should be specified
-/// for DHCPv6 options only.
-/// @param relay_msg_len A pointer to a size_t value. It holds the length of
-/// of the relay_msg option. This parameter should be specified for DHCPv6
-/// options only.
-///
-/// @return An offset to the first byte after last parsed option.
-typedef boost::function< size_t(const OptionBuffer& buffer,
-                                const std::string encapsulated_space,
-                                OptionCollection& options,
-                                size_t* relay_msg_offset,
-                                size_t* relay_msg_len)
-                         > UnpackOptionsCallback;
-
 
 class Option {
 public:
@@ -361,14 +335,6 @@ public:
         return (encapsulated_space_);
     }
 
-    /// @brief Set callback function to be used to parse options.
-    ///
-    /// @param callback An instance of the callback function or NULL to
-    /// uninstall callback.
-    void setCallback(UnpackOptionsCallback callback) {
-        callback_ = callback;
-    }
-
     /// just to force that every option has virtual dtor
     virtual ~Option();
 
@@ -491,9 +457,6 @@ protected:
 
     /// Name of the option space being encapsulated by this option.
     std::string encapsulated_space_;
-
-    /// A callback to be called to unpack options from the packet.
-    UnpackOptionsCallback callback_;
 
     /// @todo probably 2 different containers have to be used for v4 (unique
     /// options) and v6 (options with the same type can repeat)
