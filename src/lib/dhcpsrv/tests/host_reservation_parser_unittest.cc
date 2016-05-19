@@ -182,6 +182,9 @@ protected:
 
     /// @brief Vector holding circuit id used by tests.
     std::vector<uint8_t> circuit_id_;
+
+    /// @brief Vector holding client id used by tests.
+    std::vector<uint8_t> client_id_;
 };
 
 void
@@ -199,6 +202,11 @@ HostReservationParserTest::SetUp() {
 
     const std::string circuit_id_str = "howdy";
     circuit_id_.assign(circuit_id_str.begin(), circuit_id_str.end());
+
+    client_id_.push_back(0x01); // Client identifier type.
+    // Often client id comprises HW address.
+    client_id_.insert(client_id_.end(), hwaddr_->hwaddr_.begin(),
+                      hwaddr_->hwaddr_.end());
 }
 
 void
@@ -250,6 +258,22 @@ TEST_F(HostReservationParserTest, dhcp4CircuitIdHex) {
 TEST_F(HostReservationParserTest, dhcp4CircuitIdHexWithPrefix) {
     testIdentifier4("circuit-id", "0x686F776479", Host::IDENT_CIRCUIT_ID,
                     circuit_id_);
+}
+
+// This test verifies that the parser can parse a reservation entry for
+// which client-id is an identifier. The client-id is specified in
+// hexadecimal format.
+TEST_F(HostReservationParserTest, dhcp4ClientIdHex) {
+    testIdentifier4("client-id", "01010203040506", Host::IDENT_CLIENT_ID,
+                    client_id_);
+}
+
+// This test verifies that the parser can parse a reservation entry for
+// which client-id is an identifier. The client-id is specified in
+// hexadecimal format with a '0x' prefix.
+TEST_F(HostReservationParserTest, dhcp4ClientIdHexWithPrefix) {
+    testIdentifier4("client-id", "0x01010203040506", Host::IDENT_CLIENT_ID,
+                    client_id_);
 }
 
 // This test verifies that the parser can parse the reservation entry
@@ -459,6 +483,17 @@ TEST_F(HostReservationParserTest, dhcp6DUID) {
 TEST_F(HostReservationParserTest, dhcp6CircuitId) {
     // Use DHCPv4 specific identifier 'circuit-id' with DHCPv6 parser.
     std::string config = "{ \"circuit-id\": \"'howdy'\","
+        "\"ip-addresses\": [ \"2001:db8:1::100\", \"2001:db8:1::200\" ],"
+        "\"prefixes\": [ ],"
+        "\"hostname\": \"foo.example.com\" }";
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
+// This test verifies that host reservation parser for DHCPv6 rejects
+// "client-id" as a host identifier.
+TEST_F(HostReservationParserTest, dhcp6ClientId) {
+    // Use DHCPv4 specific identifier 'circuit-id' with DHCPv6 parser.
+    std::string config = "{ \"client-id\": \"01010203040506\","
         "\"ip-addresses\": [ \"2001:db8:1::100\", \"2001:db8:1::200\" ],"
         "\"prefixes\": [ ],"
         "\"hostname\": \"foo.example.com\" }";
