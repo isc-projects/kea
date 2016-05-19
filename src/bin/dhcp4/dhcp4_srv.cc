@@ -49,6 +49,9 @@
 #ifdef HAVE_PGSQL
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #endif
+#ifdef HAVE_DSCSQL
+#include <dhcpsrv/dscsql_lease_mgr.h>
+#endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
 #include <boost/bind.hpp>
@@ -2623,6 +2626,9 @@ Dhcpv4Srv::getVersion(bool extended) {
 #endif
 #ifdef HAVE_PGSQL
         tmp << PgSqlLeaseMgr::getDBVersion() << endl;
+#endif
+#ifdef HAVE_DSCSQL
+        tmp << DSCSqlLeaseMgr::getDBVersion() << endl;
 #endif
         tmp << Memfile_LeaseMgr::getDBVersion();
 

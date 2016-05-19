@@ -68,6 +68,13 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
     }
 #endif
 
+#ifdef HAVE_DSCSQL
+    if (db_type == "dscsql") {
+        isc_throw(NotImplemented, "Sorry, DSCSQL backend for host reservations "
+                  "is not implemented yet.");
+    }
+#endif
+
     // Get here on no match.
     isc_throw(InvalidType, "Hosts database access parameter 'type': " <<
                            db_type << " is invalid");
