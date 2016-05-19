@@ -739,7 +739,7 @@ typedef boost::multi_index_container<
 typedef boost::shared_ptr<OptionDefContainer> OptionDefContainerPtr;
 
 /// Container that holds various vendor option containers
-typedef std::map<uint32_t, OptionDefContainer> VendorOptionDefContainers;
+typedef std::map<uint32_t, OptionDefContainerPtr> VendorOptionDefContainers;
 
 /// Type of the index #1 - option type.
 typedef OptionDefContainer::nth_index<1>::type OptionDefContainerTypeIndex;

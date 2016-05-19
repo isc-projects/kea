@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -250,17 +250,17 @@ public:
     /// @brief Returns v4 option definitions for a given vendor
     ///
     /// @param vendor_id enterprise-id of a given vendor
-    /// @return a container for a given vendor (or NULL if not option
+    /// @return a container for a given vendor (or NULL if no option
     ///         definitions are defined)
-    static const OptionDefContainer*
+    static const OptionDefContainerPtr&
     getVendorOption4Defs(const uint32_t vendor_id);
 
     /// @brief Returns v6 option definitions for a given vendor
     ///
     /// @param vendor_id enterprise-id of a given vendor
-    /// @return a container for a given vendor (or NULL if not option
+    /// @return a container for a given vendor (or NULL if no option
     ///         definitions are defined)
-    static const OptionDefContainer*
+    static const OptionDefContainerPtr&
     getVendorOption6Defs(const uint32_t vendor_id);
 
     /// @brief Parses provided buffer as DHCPv6 vendor options and creates
