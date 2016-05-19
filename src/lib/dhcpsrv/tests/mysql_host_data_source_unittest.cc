@@ -109,6 +109,21 @@ TEST(MySqlHostDataSource, OpenDatabase) {
                << "*** before the MySQL tests will run correctly.\n";
     }
 
+    // Check that lease manager open the database opens correctly with a longer
+    // timeout.  If it fails, print the error message.
+    try {
+        string connection_string = validMySQLConnectionString() + string(" ") +
+                                   string(VALID_TIMEOUT);
+        HostDataSourceFactory::create(connection_string);
+        EXPECT_NO_THROW((void) HostDataSourceFactory::getHostDataSourcePtr());
+        HostDataSourceFactory::destroy();
+    } catch (const isc::Exception& ex) {
+        FAIL() << "*** ERROR: unable to open database, reason:\n"
+               << "    " << ex.what() << "\n"
+               << "*** The test environment is broken and must be fixed\n"
+               << "*** before the MySQL tests will run correctly.\n";
+    }
+
     // Check that attempting to get an instance of the lease manager when
     // none is set throws an exception.
     EXPECT_FALSE(HostDataSourceFactory::getHostDataSourcePtr());
@@ -136,6 +151,12 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
+    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
+        DbInvalidTimeout);
+    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
+        DbInvalidTimeout);
 
     // Check for missing parameters
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(

@@ -9,11 +9,13 @@
 #include <dhcpsrv/mysql_connection.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/lexical_cast.hpp>
+
 #include <algorithm>
-#include <iostream>
 #include <iterator>
 #include <stdint.h>
 #include <string>
+#include <limits>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -26,6 +28,8 @@ const my_bool MLM_FALSE = 0;
 const my_bool MLM_TRUE = 1;
 const int MLM_MYSQL_FETCH_SUCCESS = 0;
 const int MLM_MYSQL_FETCH_FAILURE = 1;
+
+const int MYSQL_DEFAULT_CONNECTION_TIMEOUT = 5;	// seconds
 
 // Open the database using the parameters passed to the constructor.
 
@@ -67,7 +71,44 @@ MySqlConnection::openDatabase() {
         name = sname.c_str();
     } catch (...) {
         // No database name.  Throw a "NoName" exception
-        isc_throw(NoDatabaseName, "must specified a name for the database");
+        isc_throw(NoDatabaseName, "must specify a name for the database");
+    }
+
+    unsigned int connect_timeout = MYSQL_DEFAULT_CONNECTION_TIMEOUT;
+    string stimeout;
+    try {
+        stimeout = getParameter("connect-timeout");
+    } catch (...) {
+        // No timeout parameter, we are going to use the default timeout.
+        stimeout = "";
+    }
+
+    if (stimeout.size() > 0) {
+        // Timeout was given, so try to convert it to an integer.
+
+        try {
+            connect_timeout = boost::lexical_cast<unsigned int>(stimeout);
+        } catch (...) {
+            // Timeout given but could not be converted to an unsigned int. Set
+            // the connection timeout to an invalid value to trigger throwing
+            // of an exception.
+            connect_timeout = 0;
+        }
+
+        // The timeout is only valid if greater than zero, as depending on the
+        // database, a zero timeout might signify someting like "wait
+        // indefinitely".
+        //
+        // The check below also rejects a value greater than the maximum
+        // integer value.  The lexical_cast operation used to obtain a numeric
+        // value from a string can get confused if trying to convert a negative
+        // integer to an unsigned int: instead of throwing an exception, it may
+        // produce a large positive value.
+        if ((connect_timeout == 0) ||
+            (connect_timeout > numeric_limits<int>::max())) {
+            isc_throw(DbInvalidTimeout, "database connection timeout (" <<
+                      stimeout << ") must be an integer greater than 0");
+        }
     }
 
     // Set options for the connection:
@@ -90,6 +131,14 @@ MySqlConnection::openDatabase() {
     result = mysql_options(mysql_, MYSQL_INIT_COMMAND, sql_mode);
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set SQL mode options: " <<
+                  mysql_error(mysql_));
+    }
+
+    // Connection timeout, the amount of time taken for the client to drop
+    // the connection if the server is not responding.
+    result = mysql_options(mysql_, MYSQL_OPT_CONNECT_TIMEOUT, &connect_timeout);
+    if (result != 0) {
+        isc_throw(DbOpenError, "unable to set database connection timeout: " <<
                   mysql_error(mysql_));
     }
 
