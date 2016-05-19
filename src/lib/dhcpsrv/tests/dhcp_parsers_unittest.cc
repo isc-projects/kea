@@ -655,6 +655,50 @@ TEST_F(ParseConfigTest, minimalOptionDataTest) {
     EXPECT_EQ(val, opt_ptr->toText());
 }
 
+/// @brief Check parsing of options with escape characters.
+///
+/// Note that this tests basic operation of the OptionDataListParser and
+/// OptionDataParser.  It uses a simple configuration consisting of one
+/// one definition and matching option data.  It verifies that the option
+/// is parsed and committed to storage correctly and that its content
+/// has the actual character (e.g. an actual backslash, not double backslash).
+TEST_F(ParseConfigTest, escapedOptionDataTest) {
+
+    parser_context_->universe_ = Option::V4;
+
+    // We need to use double escapes here. The first backslash will
+    // be consumed by C++ preprocessor, so the actual string will
+    // have two backslash characters: \\SMSBoot\\x64\\wdsnbp.com.
+    //
+    std::string config =
+        "{\"option-data\": [ {"
+        "    \"name\": \"boot-file-name\","
+        "    \"data\": \"\\\\SMSBoot\\\\x64\\\\wdsnbp.com\""
+        " } ]"
+        "}";
+    std::cout << config << std::endl;
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionPtr opt = getOptionPtr("dhcp4", DHO_BOOT_FILE_NAME);
+    ASSERT_TRUE(opt);
+
+    util::OutputBuffer buf(100);
+
+    uint8_t exp[] = { DHO_BOOT_FILE_NAME, 23, '\\', 'S', 'M', 'S', 'B', 'o', 'o',
+                      't', '\\', 'x', '6', '4', '\\', 'w', 'd', 's', 'n', 'b',
+                      'p', '.', 'c', 'o', 'm' };
+    ASSERT_EQ(25, sizeof(exp));
+
+    opt->pack(buf);
+    EXPECT_EQ(Option::OPTION4_HDR_LEN + 23, buf.getLength());
+
+    EXPECT_TRUE(0 == memcmp(buf.getData(), exp, 25));
+}
+
 // This test checks behavior of the configuration parser for option data
 // for different values of csv-format parameter and when there is an option
 // definition present.
