@@ -52,6 +52,9 @@ endif
 if HAVE_PGSQL
 lfc_unittests_LDFLAGS += $(PGSQL_LIBS)
 endif
+if HAVE_DSCSQL
+lfc_unittests_LDFLAGS += $(DSCSQL_LIBS)
+endif
 lfc_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 
 lfc_unittests_LDADD = $(top_builddir)/src/bin/lfc/liblfc.la

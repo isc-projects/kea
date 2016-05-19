@@ -107,6 +107,9 @@ endif
 if HAVE_PGSQL
 dhcp6_unittests_LDFLAGS += $(PGSQL_LIBS)
 endif
+if HAVE_DSCSQL
+dhcp6_unittests_LDFLAGS += $(DSCSQL_LIBS)
+endif
 dhcp6_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 
 dhcp6_unittests_LDADD = $(top_builddir)/src/bin/dhcp6/libdhcp6.la
