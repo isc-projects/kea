@@ -10,6 +10,9 @@ endif
 if HAVE_PGSQL
 AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
+if HAVE_DSCSQL
+AM_CPPFLAGS += $(DSCSQL_CPPFLAGS)
+endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 if USE_CLANGPP
@@ -99,6 +102,9 @@ kea_dhcp6_LDFLAGS += $(MYSQL_LIBS)
 endif
 if HAVE_PGSQL
 kea_dhcp6_LDFLAGS += $(PGSQL_LIBS)
+endif
+if HAVE_DSCSQL
+kea_dhcp6_LDFLAGS += $(DSCSQL_LIBS)
 endif
 
 kea_dhcp6dir = $(pkgdatadir)

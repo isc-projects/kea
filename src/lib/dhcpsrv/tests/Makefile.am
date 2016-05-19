@@ -122,6 +122,9 @@ if HAVE_PGSQL
 libdhcpsrv_unittests_SOURCES += pgsql_exchange_unittest.cc
 libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
 endif
+if HAVE_DSCSQL
+libdhcpsrv_unittests_SOURCES += dscsql_lease_mgr_unittest.cc
+endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
 libdhcpsrv_unittests_SOURCES += srv_config_unittest.cc
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc
@@ -137,6 +140,9 @@ endif
 if HAVE_PGSQL
 libdhcpsrv_unittests_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
+if HAVE_DSCSQL
+libdhcpsrv_unittests_CPPFLAGS += $(DSCSQL_CPPFLAGS)
+endif
 
 libdhcpsrv_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 if HAVE_MYSQL
@@ -144,6 +150,9 @@ libdhcpsrv_unittests_LDFLAGS  += $(MYSQL_LIBS)
 endif
 if HAVE_PGSQL
 libdhcpsrv_unittests_LDFLAGS  += $(PGSQL_LIBS)
+endif
+if HAVE_DSCSQL
+libdhcpsrv_unittests_LDFLAGS  += $(DSCSQL_LIBS)
 endif
 
 libdhcpsrv_unittests_CXXFLAGS = $(AM_CXXFLAGS)

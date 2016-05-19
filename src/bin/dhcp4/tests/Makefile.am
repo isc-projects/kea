@@ -106,6 +106,9 @@ endif
 if HAVE_PGSQL
 dhcp4_unittests_LDFLAGS += $(PGSQL_LIBS)
 endif
+if HAVE_DSCSQL
+dhcp4_unittests_LDFLAGS += $(DSCSQL_LIBS)
+endif
 dhcp4_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 
 dhcp4_unittests_LDADD = $(top_builddir)/src/bin/dhcp4/libdhcp4.la

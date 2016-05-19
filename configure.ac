@@ -995,6 +995,58 @@ fi
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_PGSQL, test "$PG_CONFIG" != "")
 
+dsc_config="no"
+AC_ARG_WITH([dhcp-dscsql],
+  AC_HELP_STRING([--with-dhcp-dscsql=PATH],
+    [path to the DataStaxCassandraSQL 'dsc_config' script]),
+    [dsc_config="$withval"])
+
+if test "${dsc_config}" = "yes" ; then
+    DSC_CONFIG="/usr/bin/dsc_config"
+elif test "${dsc_config}" != "no" ; then
+    DSC_CONFIG="${withval}"
+fi
+
+if test "$DSC_CONFIG" != "" ; then
+    if test -d "$DSC_CONFIG" -o ! -x "$DSC_CONFIG" ; then
+        AC_MSG_ERROR([--with-dhcp-dscsql should point to a dsc_config program])
+    fi
+
+    DSCSQL_CPPFLAGS=`$DSC_CONFIG --cppflags`
+    DSCSQL_INCLUDEDIR=`$DSC_CONFIG --includedir`
+    DSCSQL_CPPFLAGS="$DSCSQL_CPPFLAGS -I$DSCSQL_INCLUDEDIR"
+    DSCSQL_LIBS=`$DSC_CONFIG --libdir`
+    DSCSQL_LIBS="-L$DSCSQL_LIBS -lcassandra_static -luv"
+    DSCSQL_VERSION=`$DSC_CONFIG --version`
+
+    AC_SUBST(DSCSQL_CPPFLAGS)
+    AC_SUBST(DSCSQL_LIBS)
+
+    # Check that a simple program using DSCSQL functions can compile and link.
+    CPPFLAGS_SAVED="$CPPFLAGS"
+    LIBS_SAVED="$LIBS"
+
+    CPPFLAGS="$DSCSQL_CPPFLAGS $CPPFLAGS"
+    LIBS="$DSCSQL_LIBS $LIBS"
+
+    AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([#include <cassandra.h>],
+                             [CassCluster* cluster = cass_cluster_new();
+                              cass_cluster_free(cluster);])],
+            [AC_MSG_RESULT([checking for DataStax Cassandra SQL headers and library... yes])],
+            [AC_MSG_RESULT([checking for DataStax Cassandra SQL headers and library... no])
+             AC_MSG_ERROR([Needs DataStax Cassandra SQL library])]
+    )
+    CPPFLAGS=$CPPFLAGS_SAVED
+    LIBS=$LIBS_SAVED
+
+    # Note that DSCSQL is present in the config.h file
+    AC_DEFINE([HAVE_DSCSQL], [1], [DSCSQL is present])
+fi
+
+# ... and at the shell level, so Makefile.am can take action depending on this.
+AM_CONDITIONAL(HAVE_DSCSQL, test "$DSC_CONFIG" != "")
+
 # Check for log4cplus
 log4cplus_path="yes"
 AC_ARG_WITH([log4cplus],
@@ -1409,6 +1461,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/admin/tests/memfile_tests.sh
                  src/bin/admin/tests/mysql_tests.sh
                  src/bin/admin/tests/pgsql_tests.sh
+                 src/bin/admin/tests/dscsql_tests.sh
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile
@@ -1486,6 +1539,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
+                 src/share/database/scripts/dscsql/Makefile
                  tools/Makefile
                  tools/path_replacer.sh
 ])
@@ -1615,6 +1669,22 @@ else
 cat >> config.report << END
 
 PostgreSQL:
+  no
+END
+fi
+
+if test "$DSCSQL_CPPFLAGS" != "" ; then
+cat >> config.report << END
+
+DataStax Cassandra SQL:
+  DSCSQL_VERSION:   ${DSCSQL_VERSION}
+  DSCSQL_CPPFLAGS:  ${DSCSQL_CPPFLAGS}
+  DSCSQL_LIBS:      ${DSCSQL_LIBS}
+END
+else
+cat >> config.report << END
+
+DataStax Cassandra SQL:
   no
 END
 fi
