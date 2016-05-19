@@ -561,13 +561,24 @@ TEST(Element, escape) {
     EXPECT_NO_THROW(Element::fromJSON("\"  \n  \r \t \f  \n \n    \t\""));
 }
 
-// This test verifies if a backslash can be defined properly.
-TEST(Element, backslash) {
-    string input = "SMSBoot\\\\x64"; // Two slashes put in the config file...
-    string exp = "SMSBoot\\x64"; // ... should result in one slash in the actual option.
+// This test verifies that a backslash can be used in element content
+// when the element is created using constructor.
+TEST(Element, backslash1) {
+    string input = "SMSBoot\\x64";// One slash passed to elem constructor...
+    string exp = "SMSBoot\\x64";  // ... should result in one slash in the actual option.
 
     StringElement elem(input);
     EXPECT_EQ(exp, elem.stringValue());
+}
+
+// This test verifies that a backslash can be used in element content
+// when the element is created using fromJSON.
+TEST(Element, backslash2) {
+    string input = "\"SMSBoot\\\\x64\""; // Two slashes put in the config file...
+    string exp = "SMSBoot\\x64"; // ... should result in one slash in the actual option.
+
+    ElementPtr elem = Element::fromJSON(input);
+    EXPECT_EQ(exp, elem->stringValue());
 }
 
 TEST(Element, ListElement) {
