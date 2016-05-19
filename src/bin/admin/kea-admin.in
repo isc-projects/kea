@@ -55,7 +55,7 @@ usage() {
     printf " - lease-upgrade: Upgrades your lease database scheme\n"
     printf " - lease-dump: Dump current leases to a CSV file\n"
     printf "\n"
-    printf "BACKEND - one of the supported backends: memfile|mysql|pgsql\n"
+    printf "BACKEND - one of the supported backends: memfile|mysql|pgsql|dscsql\n"
     printf "\n"
     printf "PARAMETERS: Parameters are optional in general, but may be required\n"
     printf "            for specific operation.\n"
@@ -148,7 +148,7 @@ mysql_init() {
     if [ $COUNT -gt 0 ]; then
         # Let't start with a new line. mysql could have printed something out.
         printf "\n"
-        log_error "Expected empty database $db_name, but there are $COUNT tables: \n$_RESULT. Aborting."
+        log_error "Expected empty database $db_name, but there are $COUNT tables: \n$RESULT. Aborting."
         exit 1
     fi
 
@@ -198,6 +198,47 @@ pgsql_init() {
     version=`pgsql_version`
     printf "Lease DB version reported after initialization: $version\n"
     exit 0
+}
+
+dscsql_init() {
+    printf "Checking if there is a database initialized already. Please ignore errors.\n"
+
+    # Let's try to count the number of tables. Anything above 0 means that there
+    # is some database in place. If there is anything, we abort. Note that
+    # dsc sql may spit out connection or access errors to stderr, we ignore those.
+    # We should not hide them as they may give hints to user what is wrong with
+    # his setup.
+    #
+    RESULT=`echo "DESCRIBE keyspaces;" | cqlsh`
+    ERRCODE=$?
+    if [ $ERRCODE -ne  0 ]
+    then
+        log_error "dscsql_init table query failed, cqlsh status = $ERRCODE"
+        exit 1
+    fi
+
+    COUNT=`echo $RESULT | grep $db_name | wc -w`
+    if [ $COUNT -gt 0 ]; then
+        # Let't start with a new line. cqlsh could have printed something out.
+        printf "\n"
+        log_error "Expected empty database $db_name, but there are $COUNT tables: \n$RESULT. Aborting."
+        exit 1
+    fi
+
+    printf "Initializing database using script %s\n" $scripts_dir/dscsql/dhcpdb_create.cql
+    cqlsh -u $db_user -p $db_password -e "CREATE KEYSPACE $db_name WITH replication = {'class' : 'SimpleStrategy','replication_factor' : 1};"
+    cqlsh -u $db_user -p $db_password -k $db_name -f $scripts_dir/dscsql/dhcpdb_create.cql
+    ERRCODE=$?
+
+    printf "cqlsh returned status code $ERRCODE\n"
+
+    if [ "$ERRCODE" -eq 0 ]; then
+        printf "Lease DB version reported after initialization: "
+        dscsql_version
+        printf "\n"
+    fi
+
+    exit $ERRCODE
 }
 
 ### Functions that implement database version checking commands
@@ -282,6 +323,34 @@ pgsql_upgrade() {
     exit 0
 }
 
+dscsql_upgrade() {
+    version=`dscsql_version`
+    printf "Lease DB version reported before upgrade: $version\n"
+
+    # Check if the scripts directory exists at all.
+    if [ ! -d ${scripts_dir}/dscsql ]; then
+        log_error "Invalid scripts directory: ${scripts_dir}/dscsql"
+        exit 1
+    fi
+
+    # Check if there are any files in it
+    num_files=$(find ${scripts_dir}/dscsql/upgrade*.sh -type f | wc -l)
+    if [ $num_files -eq 0 ]; then
+        log_error "No scripts in ${scripts_dir}/dscsql or the directory is not readable or does not have any upgrade* scripts."
+        exit 1
+    fi
+
+    for script in ${scripts_dir}/dscsql/upgrade*.sh
+    do
+        echo "Processing $script file..."
+        sh ${script} -u ${db_user} -p ${db_password} -k ${db_name}
+    done
+
+    version=`dscsql_version`
+    printf "Lease DB version reported after upgrade: $version\n"
+    exit 0
+}
+
 # Utility function which tests if the given file exists and
 # if so notifies the user and provides them the opportunity
 # to abort the current command.
@@ -313,6 +382,9 @@ get_dump_query() {
         invoke="call"
         ;;
     pgsql)
+        invoke="select * from"
+        ;;
+    dscsql)
         invoke="select * from"
         ;;
     *)
@@ -419,6 +491,61 @@ pgsql_dump() {
     exit 0
 }
 
+dscsql_dump() {
+
+    # get the correct dump query
+    version=`dscsql_version`
+    retcode=$?
+    if [ $retcode -ne 0 ]
+    then
+        log_error "lease-dump: dscsql_version failed, exit code $retcode"
+        exit 1;
+    fi
+
+    # Fetch the correct SQL text. Note this function will exit
+    # if it fails.
+    get_dump_query $version
+
+    # Make sure they specified a file
+    if [ "$dump_file" = "" ]; then
+        log_error "you must specify an output file for lease-dump"
+        usage
+        exit 1
+
+    fi
+
+    # If output file exists, notify user, allow them a chance to bail
+    check_file_overwrite $dump_file
+
+    # Check the temp file too
+    tmp_file="$dump_file.tmp"
+    check_file_overwrite $tmp_file
+
+    # Run the sql to output tab-delimited lease data to a temp file.
+    # By using a temp file we can check for MySQL errors before using
+    # 'tr' to translate tabs to commas.  We do not use MySQL's output
+    # to file as that requires linux superuser privileges to execute
+    # the select.
+    dscsql_execute "${dump_qry}" > $tmp_file
+    retcode=$?
+    if [ $retcode -ne 0 ]; then
+        log_error "lease-dump: dscsql_execute failed, exit code $retcode";
+        exit 1
+    fi
+
+    # Now translate tabs to commas.
+    cat $tmp_file | tr '\t' ',' >$dump_file
+    if [ $? -ne 0 ]; then
+        log_error "lease-dump: reformatting failed";
+        exit 1
+    fi
+
+    # delete the tmp file on success
+    rm $tmp_file
+    echo lease$dump_type successfully dumped to $dump_file
+    exit 0
+}
+
 ### Script starts here ###
 
 # First, find what the command is
@@ -442,7 +569,7 @@ if [ -z ${backend} ]; then
     usage
     exit 1
 fi
-is_in_list "${backend}" "memfile mysql pgsql"
+is_in_list "${backend}" "memfile mysql pgsql dscsql"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid backend: ${backend}"
     exit 1
@@ -542,6 +669,9 @@ case ${command} in
             pgsql)
                 pgsql_init
                 ;;
+            dscsql)
+                dscsql_init
+                ;;
             esac
         ;;
     lease-version)
@@ -556,6 +686,9 @@ case ${command} in
             pgsql)
                 pgsql_version
                 ;;
+            dscsql)
+                dscsql_version
+                ;;
             esac
         ;;
     lease-upgrade)
@@ -569,6 +702,9 @@ case ${command} in
             pgsql)
                 pgsql_upgrade
                 ;;
+            dscsql)
+                dscsql_upgrade
+                ;;
             esac
         ;;
     lease-dump)
@@ -581,6 +717,9 @@ case ${command} in
                 ;;
             pgsql)
                 pgsql_dump
+                ;;
+            dscsql)
+                dscsql_dump
                 ;;
             esac
         ;;
