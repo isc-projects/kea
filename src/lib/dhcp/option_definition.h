@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -382,17 +382,12 @@ public:
     /// @param type option type.
     /// @param begin beginning of the option buffer.
     /// @param end end of the option buffer.
-    /// @param callback An instance of the function which parses packet options.
-    /// If this is set to non NULL value this function will be used instead of
-    /// @c isc::dhcp::LibDHCP::unpackOptions6 and
-    /// isc::dhcp::LibDHCP::unpackOptions4.
     ///
     /// @return instance of the DHCP option.
     /// @throw InvalidOptionValue if data for the option is invalid.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
                             OptionBufferConstIter begin,
-                            OptionBufferConstIter end,
-                            UnpackOptionsCallback callback = NULL) const;
+                            OptionBufferConstIter end) const;
 
     /// @brief Option factory.
     ///
@@ -407,16 +402,11 @@ public:
     /// @param u option universe (V4 or V6).
     /// @param type option type.
     /// @param buf option buffer.
-    /// @param callback An instance of the function which parses packet options.
-    /// If this is set to non NULL value this function will be used instead of
-    /// @c isc::dhcp::LibDHCP::unpackOptions6 and
-    /// isc::dhcp::LibDHCP::unpackOptions4.
     ///
     /// @return instance of the DHCP option.
     /// @throw InvalidOptionValue if data for the option is invalid.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
-                            const OptionBuffer& buf = OptionBuffer(),
-                            UnpackOptionsCallback callback = NULL) const;
+                            const OptionBuffer& buf = OptionBuffer()) const;
 
     /// @brief Option factory.
     ///
@@ -534,10 +524,6 @@ public:
     /// encapsulated option space are sub options of this option.
     /// @param begin iterator pointing to the beginning of the buffer.
     /// @param end iterator pointing to the end of the buffer.
-    /// @param callback An instance of the function which parses packet options.
-    /// If this is set to non NULL value this function will be used instead of
-    /// @c isc::dhcp::LibDHCP::unpackOptions6 and
-    /// isc::dhcp::LibDHCP::unpackOptions4.
     /// @tparam T type of the data field (must be one of the uintX_t or intX_t).
     ///
     /// @throw isc::OutOfRange if provided option buffer length is invalid.
@@ -545,11 +531,9 @@ public:
     static OptionPtr factoryInteger(Option::Universe u, uint16_t type,
                                     const std::string& encapsulated_space,
                                     OptionBufferConstIter begin,
-                                    OptionBufferConstIter end,
-                                    UnpackOptionsCallback callback) {
+                                    OptionBufferConstIter end) {
         OptionPtr option(new OptionInt<T>(u, type, 0));
         option->setEncapsulatedSpace(encapsulated_space);
-        option->setCallback(callback);
         option->unpack(begin, end);
         return (option);
     }
@@ -586,18 +570,13 @@ private:
     /// @param u A universe (V4 or V6).
     /// @param begin beginning of the option buffer.
     /// @param end end of the option buffer.
-    /// @param callback An instance of the function which parses packet options.
-    /// If this is set to non NULL value this function will be used instead of
-    /// @c isc::dhcp::LibDHCP::unpackOptions6 and
-    /// isc::dhcp::LibDHCP::unpackOptions4.
     ///
     /// @return An instance of the option having special format or NULL if
     /// such an option can't be created because an option with the given
     /// option code hasn't got the special format.
     OptionPtr factorySpecialFormatOption(Option::Universe u,
                                          OptionBufferConstIter begin,
-                                         OptionBufferConstIter end,
-                                         UnpackOptionsCallback callback) const;
+                                         OptionBufferConstIter end) const;
 
     /// @brief Check if specified option format is a record with 3 fields
     /// where first one is custom, and two others are uint32.

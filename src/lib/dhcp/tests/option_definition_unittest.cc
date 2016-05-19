@@ -1242,7 +1242,7 @@ TEST_F(OptionDefinitionTest, integerInvalidType) {
     OptionBuffer buf(1);
     EXPECT_THROW(
         OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE, "dhcp6",
-                                               buf.begin(), buf.end(), NULL),
+                                               buf.begin(), buf.end()),
         isc::dhcp::InvalidDataType
     );
 }
