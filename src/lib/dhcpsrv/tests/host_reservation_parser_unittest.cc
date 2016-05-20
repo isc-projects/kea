@@ -853,7 +853,8 @@ public:
 // Test that list of supported DHCPv4 identifiers list is correctly
 // parsed.
 TEST_F(HostReservationIdsParserTest, dhcp4Identifiers) {
-    std::string config = "[ \"circuit-id\", \"duid\", \"hw-address\" ]";
+    std::string config =
+        "[ \"circuit-id\", \"duid\", \"hw-address\", \"client-id\" ]";
 
     ElementPtr config_element = Element::fromJSON(config);
 
@@ -869,6 +870,7 @@ TEST_F(HostReservationIdsParserTest, dhcp4Identifiers) {
     EXPECT_EQ(*id++, Host::IDENT_CIRCUIT_ID);
     EXPECT_EQ(*id++, Host::IDENT_DUID);
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
+    EXPECT_EQ(*id++, Host::IDENT_CLIENT_ID);
 }
 
 // Test that list of supported DHCPv6 identifiers list is correctly
@@ -924,6 +926,7 @@ TEST_F(HostReservationIdsParserTest, dhcp4AutoIdentifiers) {
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
     EXPECT_EQ(*id++, Host::IDENT_DUID);
     EXPECT_EQ(*id++, Host::IDENT_CIRCUIT_ID);
+    EXPECT_EQ(*id++, Host::IDENT_CLIENT_ID);
 }
 
 // This test verifies that use of "auto" together with an explicit
