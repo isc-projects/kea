@@ -163,13 +163,13 @@ Dhcp4Client::applyConfiguration() {
     Option4AddrLstPtr opt_log_servers = boost::dynamic_pointer_cast<
         Option4AddrLst>(resp->getOption(DHO_LOG_SERVERS));
     if (opt_log_servers) {
-        config_.log_servers_ = opt_routers->getAddresses();
+        config_.log_servers_ = opt_log_servers->getAddresses();
     }
     // Quotes Servers
     Option4AddrLstPtr opt_quotes_servers = boost::dynamic_pointer_cast<
         Option4AddrLst>(resp->getOption(DHO_COOKIE_SERVERS));
     if (opt_quotes_servers) {
-        config_.quotes_servers_ = opt_dns_servers->getAddresses();
+        config_.quotes_servers_ = opt_quotes_servers->getAddresses();
     }
     // Server Identifier
     OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<
