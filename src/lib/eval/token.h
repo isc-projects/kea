@@ -650,7 +650,7 @@ public:
     /// @brief enum value that determines the field.
     enum FieldType {
         MSGTYPE, ///< msg type
-        TRANSID  ///< transaction id (integer but manipulated as as string)
+        TRANSID  ///< transaction id (integer but manipulated as a string)
     };
 
     /// @brief Constructor (does nothing)

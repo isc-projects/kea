@@ -1,3 +1,7 @@
+11XX.	[func]		sar
+	Add debug logging to the classification tokens.
+	(Trac #4480, git TBD)
+
 1114.	[bug]		stephen
 	Adjusted variable type in a MySQL-related file to overcome a
 	type mismatch problem reported by one particular compiler.
