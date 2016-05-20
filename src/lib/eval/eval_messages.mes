@@ -1,10 +1,111 @@
-# Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 $NAMESPACE isc::dhcp
+
+
+# For use with TokenAnd
+% EVAL_DEBUG_AND Popping %1 and %2 pushing %3
+This debug message indicates that two values are popped from
+the value stack.  Then are then combined via logical and and
+the result is pushed onto the value stack.
+
+# For use with TokenConcat
+% EVAL_DEBUG_CONCAT Popping %1 and %2 pushing %3
+This debug message indicates that the two strings are being popped off
+of the stack.  They are then concatenated and the resulting string is
+pushed onto the stack.  The strings are displayed in hex.
+
+# For use with TokenEqual
+# Start with binary for the inputs for now, we may add text in the future.
+% EVAL_DEBUG_EQUAL Popping %1 and %2 pushing result %3
+This debug message indicates that the two strings are being popped off
+of the value stack and the result of comparing them is being pushed onto
+the value stack.  The strings are displayed in hex.
+
+# For use with TokenHexString
+% EVAL_DEBUG_HEXSTRING Pushing hex string %1
+This debug message indicates that the given binary string is being pushed
+onto the value stack.  The string is displayed in hex.
+
+# For use with TokenIpAddress
+% EVAL_DEBUG_IPADDRESS Pushing IPAddress %1
+This debug message indicates that the given binary string is being pushed
+onto the value stack.  This represents either an IPv4 or IPv6 address.
+The string is displayed in hex.
+
+# For use with TokenNot
+% EVAL_DEBUG_NOT Popping %1 pushing %2
+This debug message indicates that the first value is popped from
+the value stack, negated and then pushed onto the value stack.
+The string is displayed in text.
+
+# For use with TokenOption based classes.  These include TokenOpton,
+# TokenRelay4Option and TokenRelay6Option.
+% EVAL_DEBUG_OPTION Pushing option %1 with value %2
+This debug message indicates that the given string representing the
+value of the requested option is being pushed onto the value stack.
+The string may be the text or binary value of the string based on the
+representation type requested (.text or .hex) or "true" or "false" if
+the requested type is .exists.  The option code may be for either an
+option or a sub-option as requested in the classification statement.
+
+# For use with TokenOr
+% EVAL_DEBUG_OR Popping %1 and %2 pushing %3
+This debug message indicates that two values are popped from
+the value stack.  Then are then combined via logical or and
+the result is pushed onto the value stack. The string is displayed
+in text.
+
+# For use with TokenPkt4
+% EVAL_DEBUG_PKT4 Pushing PKT4 field %1 with value %2
+This debug message indicates that the given binary string representing
+the value of the requested fied is being pushed onto the value stack.
+The string is displayed in hex.
+
+# For use with TokenPkt6
+% EVAL_DEBUG_PKT6 Pushing PKT6 field %1 with value %2
+This debug message indicates that the given binary string representing
+the value of the requested fied is being pushed onto the value stack.
+The string is displayed in hex.
+
+# For use with TokenRelay6Field
+% EVAL_DEBUG_RELAY6 Pushing PKT6 relay field %1 nest %2 with value %3
+This debug message indicates that the given binary string representing
+the value of the requested fied is being pushed onto the value stack.
+The string is displayed in hex.
+
+% EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field %1 nest %2 with value %3
+This debug message is generated if the nest field is out of range.  The
+empty string will always be the value pushed onto the stack.
+
+# For use with TokenString
+% EVAL_DEBUG_STRING Pushing text string %1
+This debug message indicates that the given text string is being pushed
+onto the value stack.  The string is displayed in text.
+
+# For use with TokenSubstring
+# Start with binary for the strings for now, we may add text in the future.
+% EVAL_DEBUG_SUBSTRING Popping length %1, start %2, string %3 pushing result %4
+This debug message indicates that three values are being popped from
+the value stack and a result is being pushed onto the value stack.  The
+values being popped are the starting point and length of a substring to
+extract from the given string.  The resulting string is pushed onto
+the stack.  The strings are displayed in hex.
+
+% EVAL_DEBUG_SUBSTRING_EMPTY Popping length %1, start %2, string %3 pushing result %4
+This debug message indicates that the string popped from the stack was empty
+and so the result will also be empty.  The start, length and string are
+still popped from the stack and the result is still pushed.
+
+% EVAL_DEBUG_SUBSTRING_RANGE Popping length %1, start %2, string %3 pushing result %4
+This debug message indicates that the value of start is outside of the
+string and an empty result will be pushed onto the stack.  The start,
+length and string are still popped from the stack and the result is
+still pushed.  The strings are displayed in hex.
 
 % EVAL_RESULT Expression %1 evaluated to %2
 This debug message indicates that the expression has been evaluated
