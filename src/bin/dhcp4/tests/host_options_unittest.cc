@@ -6,6 +6,9 @@
 
 #include <config.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/docsis3_option_defs.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
@@ -21,13 +24,50 @@ namespace {
 /// @brief Set of JSON configurations used throughout the tests.
 ///
 /// - Configuration 0:
-///   - Used for testing direct traffic
-///   - 1 subnet: 10.0.0.0/24
-///   - 1 pool: 10.0.0.10-10.0.0.100
-///   - Router option present: 10.0.0.200 and 10.0.0.201
-///   - Domain Name Server option present: 10.0.0.202, 10.0.0.203.
-///   - Log Servers option present: 192.0.2.200 and 192.0.2.201
-///   - Quotes Servers option present: 192.0.2.202, 192.0.2.203.
+///   - Used to test that host specific options override subnet specific
+///     options when these options are requested with PRL option.
+///   - Single subnet 10.0.0.0/24 with a pool of 10.0.0.10-10.0.0.100
+///   - 4 options configured within subnet scope
+///     - routers: 10.0.0.200,10.0.0.201,
+///     - domain-name-servers: 10.0.0.202,10.0.0.203,
+///     - log-servers: 10.0.0.200,10.0.0.201,
+///     - cookie-servers: 10.0.0.202,10.0.0.203
+///   - Single reservation within the subnet:
+///     - HW address: aa:bb:cc:dd:ee:ff
+///     - ip-address: 10.0.0.7
+///     - Two options overriding subnet specific options:
+///       - cookie-servers: 10.1.1.202, 10.1.1.203
+///       - log-servers: 10.1.1.200, 10.1.1.201
+///
+/// - Configuration 1:
+///   - Used to test that host specific options override subnet specific
+///     default options. Default options are those that are sent even when
+///     not requested by a client.
+///   - Single subnet 10.0.0.0/24 with a pool of 10.0.0.10-10.0.0.100
+///   - 4 options configured within subnet scope
+///     - routers: 10.0.0.200,10.0.0.201,
+///     - domain-name-servers: 10.0.0.202,10.0.0.203,
+///     - log-servers: 10.0.0.200,10.0.0.201,
+///     - cookie-servers: 10.0.0.202,10.0.0.203
+///   - Single reservation within the subnet:
+///     - HW address: aa:bb:cc:dd:ee:ff
+///     - ip-address: 10.0.0.7
+///     - Two options overriding subnet specific default options:
+///       - routers: 10.1.1.200, 10.1.1.201
+///       - domain-name-servers: 10.1.1.202, 10.1.1.203
+///
+/// - Configuration 2:
+///   - Used to test that host specific vendor options override globally
+///     specified vendor options.
+///   - Globally specified option 125 with Cable Labs vendor id.
+///     - TFTP servers sub option: 10.0.0.202,10.0.0.203
+///   - Single subnet 10.0.0.0/24 with a pool of 10.0.0.10-10.0.0.100
+///   - Single reservation within the subnet:
+///     - HW address: aa:bb:cc:dd:ee:ff
+///     - ip-adress 10.0.0.7
+///     - Vendor option for Cable Labs vendor id specified for the reservation:
+///       - TFTP servers suboption overriding globally spececified suboption:
+///         10.1.1.202,10.1.1.203
 ///
 const char* HOST_CONFIGS[] = {
 // Configuration 0
@@ -110,6 +150,41 @@ const char* HOST_CONFIGS[] = {
         "        } ]"
         "    } ]"
         " } ]"
+    "}",
+
+// Configuration 2
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"option-data\": [ {"
+        "    \"name\": \"vivso-suboptions\","
+        "    \"data\": 4491"
+        "},"
+        "{"
+        "    \"name\": \"tftp-servers\","
+        "    \"space\": \"vendor-4491\","
+        "    \"data\": \"10.0.0.202,10.0.0.203\""
+        "} ],"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"reservations\": [ "
+        "    {"
+        "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "        \"ip-address\": \"10.0.0.7\","
+        "        \"option-data\": [ {"
+        "            \"name\": \"vivso-suboptions\","
+        "            \"data\": 4491"
+        "        },"
+        "        {"
+        "            \"name\": \"tftp-servers\","
+        "            \"space\": \"vendor-4491\","
+        "            \"data\": \"10.1.1.202,10.1.1.203\""
+        "        } ]"
+        "    } ]"
+        " } ]"
     "}"
 };
 
@@ -142,6 +217,9 @@ public:
 
 };
 
+// This test checks that host specific options override subnet specific
+// options. Overridden options are requested with Parameter Request List
+// option.
 TEST_F(HostOptionsTest, overrideRequestedOptions) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
@@ -160,10 +238,7 @@ TEST_F(HostOptionsTest, overrideRequestedOptions) {
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-    // Response must not be relayed.
-    EXPECT_FALSE(resp->isRelayed());
-    // Make sure that the server id is present.
-    EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
+
     // Make sure that the client has got the lease for the reserved
     // address.
     ASSERT_EQ("10.0.0.7", client.config_.lease_.addr_.toText());
@@ -185,6 +260,10 @@ TEST_F(HostOptionsTest, overrideRequestedOptions) {
     EXPECT_EQ("10.1.1.201", client.config_.log_servers_[1].toText());
 }
 
+// This test checks that host specific options override subnet specific
+// options. Overridden options are the options which server sends
+// regardless if they are requested with Parameter Request List option
+// or not.
 TEST_F(HostOptionsTest, overrideDefaultOptions) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
@@ -203,10 +282,7 @@ TEST_F(HostOptionsTest, overrideDefaultOptions) {
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-    // Response must not be relayed.
-    EXPECT_FALSE(resp->isRelayed());
-    // Make sure that the server id is present.
-    EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
+
     // Make sure that the client has got the lease for the reserved
     // address.
     ASSERT_EQ("10.0.0.7", client.config_.lease_.addr_.toText());
@@ -226,6 +302,54 @@ TEST_F(HostOptionsTest, overrideDefaultOptions) {
     ASSERT_EQ(2, client.config_.log_servers_.size());
     EXPECT_EQ("10.0.0.200", client.config_.log_servers_[0].toText());
     EXPECT_EQ("10.0.0.201", client.config_.log_servers_[1].toText());
+}
+
+// This test checks that host specific vendor options override vendor
+// options defined in the global scope.
+TEST_F(HostOptionsTest, overrideVendorOptions) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+
+    // Client needs to include V-I Vendor Specific Information option
+    // to include ORO suboption, which the server will use to determine
+    // which suboptions should be returned to the client.
+    OptionVendorPtr opt_vendor(new OptionVendor(Option::V4,
+                                                VENDOR_ID_CABLE_LABS));
+    // Include ORO with TFTP servers suboption code being requested.
+    opt_vendor->addOption(OptionPtr(new OptionUint8(Option::V4, DOCSIS3_V4_ORO,
+                                                    DOCSIS3_V4_TFTP_SERVERS)));
+    client.addExtraOption(opt_vendor);
+
+    // Configure DHCP server.
+    configure(HOST_CONFIGS[2], *client.getServer());
+
+    // Perform 4-way exchange with the server.
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Make sure that the client has got the lease for the reserved
+    // address.
+    ASSERT_EQ("10.0.0.7", client.config_.lease_.addr_.toText());
+
+    // Make sure the server has responded with a V-I Vendor Specific
+    // Information option with exactly one suboption.
+    ASSERT_EQ(1, client.config_.vendor_suboptions_.size());
+    // Assume this suboption is a TFTP servers suboption.
+    std::multimap<unsigned int, OptionPtr>::const_iterator opt =
+        client.config_.vendor_suboptions_.find(DOCSIS3_V4_TFTP_SERVERS);
+    Option4AddrLstPtr opt_tftp = boost::dynamic_pointer_cast<
+        Option4AddrLst>(opt->second);
+    ASSERT_TRUE(opt_tftp);
+    // TFTP servers suboption should contain addresses specified on host level.
+    const Option4AddrLst::AddressContainer& tftps = opt_tftp->getAddresses();
+    ASSERT_EQ(2, tftps.size());
+    EXPECT_EQ("10.1.1.202", tftps[0].toText());
+    EXPECT_EQ("10.1.1.203", tftps[1].toText());
 }
 
 
