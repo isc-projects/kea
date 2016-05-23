@@ -14,6 +14,8 @@
 #include <dhcpsrv/testutils/pgsql_schema.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/lexical_cast.hpp>
+
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -386,4 +388,49 @@ TEST_F(PgSqlLeaseMgrTest, getExpiredLeases6) {
     testGetExpiredLeases6();
 }
 
-};
+/// @brief Basic checks on time conversion functions in PgSqlExchange
+/// We input timestamps as date/time strings and we output them as
+/// an integer string of seconds since the epoch.  There is no meangingful
+/// way to test them round-trip without Postgres involved.
+TEST(PgSqlExchange, convertTimeTest) {
+    // Get a reference time and time string
+    time_t ref_time;
+    struct tm tinfo;
+    char buffer[20];
+
+    time(&ref_time);
+    localtime_r(&ref_time, &tinfo);
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tinfo);
+    std::string ref_time_str(buffer);
+
+    // Verify convertToDatabaseTime gives us the expected localtime string
+    std::string time_str = PgSqlExchange::convertToDatabaseTime(ref_time);
+    EXPECT_EQ(ref_time_str, time_str);
+
+    // Verify convertToDatabaseTime with valid_lifetime = 0  gives us the
+    // expected localtime string
+    time_str = PgSqlExchange::convertToDatabaseTime(ref_time, 0);
+    EXPECT_EQ(time_str, ref_time_str);
+
+    // Add a day, we should get a string that's greater than the reference
+    // string. Ok, maybe not the most exacting test, but you want I should
+    // parse this?
+    std::string time_str2;
+    ASSERT_NO_THROW(time_str2 = PgSqlExchange::convertToDatabaseTime(ref_time,
+                                                                     24*3600));
+    EXPECT_GT(time_str2, ref_time_str);
+
+    // Verify too large of a value is detected.
+    ASSERT_THROW(PgSqlExchange::convertToDatabaseTime(DatabaseConnection::
+                                                      MAX_DB_TIME, 24*3600),
+                 isc::BadValue);
+
+    // Make sure Conversion "from" database time functions
+    std::string ref_secs_str = boost::lexical_cast<std::string>(ref_time);
+    time_t from_time = PgSqlExchange::convertFromDatabaseTime(ref_secs_str);
+    from_time = PgSqlExchange::convertFromDatabaseTime(ref_secs_str);
+    EXPECT_EQ(ref_time, from_time);
+}
+
+}; // namespace
+

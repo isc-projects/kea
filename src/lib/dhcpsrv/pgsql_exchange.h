@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef PGSQL_EXCHANGE_MGR_H
-#define PGSQL_EXCHANGE_MGR_H
+#ifndef PGSQL_EXCHANGE_H
+#define PGSQL_EXCHANGE_H
 
 #include <dhcpsrv/pgsql_connection.h>
 
@@ -20,7 +20,7 @@ namespace dhcp {
 /// PostgreSQL execute call.
 ///
 /// Note that the data values are stored as pointers. These pointers need to
-/// valid for the duration of the PostgreSQL statement execution.  In other
+/// be valid for the duration of the PostgreSQL statement execution.  In other
 /// words populating them with pointers to values that go out of scope before
 /// statement is executed is a bad idea.
 struct PsqlBindArray {
@@ -44,14 +44,14 @@ struct PsqlBindArray {
 
     /// @brief Fetches the number of entries in the array.
     /// @return Returns size_t containing the number of entries.
-    size_t size() {
+    size_t size() const {
         return (values_.size());
     }
 
     /// @brief Indicates it the array is empty.
     /// @return Returns true if there are no entries in the array, false
     /// otherwise.
-    bool empty() {
+    bool empty() const {
 
         return (values_.empty());
     }
@@ -91,7 +91,7 @@ struct PsqlBindArray {
 
     /// @brief Dumps the contents of the array to a string.
     /// @return std::string containing the dump
-    std::string toText();
+    std::string toText() const;
 };
 
 /// @brief Base class for marshalling data to and from PostgreSQL.
@@ -126,6 +126,9 @@ public:
     /// when stored.  Likewise, these columns are automatically adjusted
     /// upon retrieval unless fetched via "extract(epoch from <column>))".
     ///
+    /// Unless we start using binary input, timestamp columns must be input as
+    /// date/time strings.
+    ///
     /// @param cltt Client last transmit time
     /// @param valid_lifetime Valid lifetime
     ///
@@ -136,6 +139,9 @@ public:
                                              const uint32_t valid_lifetime);
 
     /// @brief Converts time stamp from the database to a time_t
+    ///
+    /// We're fetching timestamps as an integer string of seconds since the
+    /// epoch.  This method converts such a string int a time_t.
     ///
     /// @param db_time_val timestamp to be converted.  This value
     /// is expected to be the number of seconds since the epoch
@@ -240,4 +246,4 @@ protected:
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 
-#endif // PGSQL_EXCHANGE_MGR_H
+#endif // PGSQL_EXCHANGE_H
