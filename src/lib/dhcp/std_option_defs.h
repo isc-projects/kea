@@ -211,7 +211,7 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "domain-search", DHO_DOMAIN_SEARCH, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "vivco-suboptions", DHO_VIVCO_SUBOPTIONS, OPT_RECORD_TYPE,
       false, RECORD_DEF(VIVCO_RECORDS), "" },
-    { "vivso-suboptions", DHO_VIVSO_SUBOPTIONS, OPT_BINARY_TYPE,
+    { "vivso-suboptions", DHO_VIVSO_SUBOPTIONS, OPT_UINT32_TYPE,
       false, NO_RECORD_DEF, "" }
 
         // @todo add definitions for all remaning options.

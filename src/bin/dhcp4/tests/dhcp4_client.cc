@@ -8,6 +8,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/option.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
 #include <dhcpsrv/lease.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <util/range_utilities.h>
@@ -171,6 +172,12 @@ Dhcp4Client::applyConfiguration() {
     if (opt_quotes_servers) {
         config_.quotes_servers_ = opt_quotes_servers->getAddresses();
     }
+    // Vendor Specific options
+    OptionVendorPtr opt_vendor = boost::dynamic_pointer_cast<
+        OptionVendor>(resp->getOption(DHO_VIVSO_SUBOPTIONS));
+    if (opt_vendor) {
+        config_.vendor_suboptions_ = opt_vendor->getOptions();
+    }
     // Server Identifier
     OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<
         OptionCustom>(resp->getOption(DHO_DHCP_SERVER_IDENTIFIER));
@@ -254,6 +261,8 @@ Dhcp4Client::doInform(const bool set_ciaddr) {
     context_.query_ = createMsg(DHCPINFORM);
     // Request options if any.
     appendPRL();
+    // Any other options to be sent by a client.
+    appendExtraOptions();
     // The client sending a DHCPINFORM message has an IP address obtained
     // by some other means, e.g. static configuration. The lease which we
     // are using here is most likely set by the createLease method.
@@ -368,6 +377,8 @@ Dhcp4Client::doRequest() {
     appendName();
     // Include Client Identifier
     appendClientId();
+    // Any other options to be sent by a client.
+    appendExtraOptions();
     // Send the message to the server.
     sendMsg(context_.query_);
     // Expect response.
