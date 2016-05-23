@@ -42,7 +42,7 @@ void PsqlBindArray::add(const bool& value)  {
     add(value ? TRUE_STR : FALSE_STR);
 }
 
-std::string PsqlBindArray::toText() {
+std::string PsqlBindArray::toText() const {
     std::ostringstream stream;
     for (int i = 0; i < values_.size(); ++i) {
         stream << i << " : ";
