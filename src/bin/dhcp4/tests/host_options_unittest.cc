@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option_int.h>
@@ -20,6 +21,12 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
 namespace {
+
+/// @brief Boolean value used to signal stateless configuration test.
+const bool STATELESS = true;
+
+/// @brief Boolean value used to signal stateful configuration test.
+const bool STATEFUL = false;
 
 /// @brief Set of JSON configurations used throughout the tests.
 ///
@@ -57,6 +64,16 @@ namespace {
 ///       - domain-name-servers: 10.1.1.202, 10.1.1.203
 ///
 /// - Configuration 2:
+///   - Used to test that client receives options solely specified in a
+///     host scope.
+///   - Single reservation within the subnet:
+///     - HW address: aa:bb:cc:dd:ee:ff
+///     - ip-address: 10.0.0.7
+///     - Two options:
+///       - routers: 10.1.1.200, 10.1.1.201
+///       - cookie-servers: 10.1.1.202, 10.1.1.203
+///
+/// - Configuration 3:
 ///   - Used to test that host specific vendor options override globally
 ///     specified vendor options.
 ///   - Globally specified option 125 with Cable Labs vendor id.
@@ -78,6 +95,7 @@ const char* HOST_CONFIGS[] = {
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"id\": 1,"
+        "    \"relay\": { \"ip-address\": \"10.0.0.233\" },"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"option-data\": [ {"
         "        \"name\": \"routers\","
@@ -119,6 +137,7 @@ const char* HOST_CONFIGS[] = {
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"id\": 1,"
+        "    \"relay\": { \"ip-address\": \"10.0.0.233\" },"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"option-data\": [ {"
         "        \"name\": \"routers\","
@@ -157,6 +176,31 @@ const char* HOST_CONFIGS[] = {
         "      \"interfaces\": [ \"*\" ]"
         "},"
         "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"relay\": { \"ip-address\": \"10.0.0.233\" },"
+        "    \"reservations\": [ "
+        "    {"
+        "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "        \"ip-address\": \"10.0.0.7\","
+        "        \"option-data\": [ {"
+        "            \"name\": \"routers\","
+        "            \"data\": \"10.1.1.200,10.1.1.201\""
+        "        },"
+        "        {"
+        "            \"name\": \"cookie-servers\","
+        "            \"data\": \"10.1.1.202,10.1.1.203\""
+        "        } ]"
+        "    } ]"
+        " } ]"
+    "}",
+
+// Configuration 3
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
         "\"option-data\": [ {"
         "    \"name\": \"vivso-suboptions\","
         "    \"data\": 4491"
@@ -169,6 +213,7 @@ const char* HOST_CONFIGS[] = {
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"id\": 1,"
+        "    \"relay\": { \"ip-address\": \"10.0.0.233\" },"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"reservations\": [ "
         "    {"
@@ -212,15 +257,47 @@ public:
         isc::stats::StatsMgr::instance().removeAll();
     }
 
+    /// @brief Verifies that host specific options override subnet specific
+    /// options.
+    ///
+    /// Overridden options are requested with Parameter Request List
+    /// option.
+    ///
+    /// @param stateless Boolean value indicating if statless or stateful
+    /// configuration should be performed.
+    void testOverrideRequestedOptions(const bool stateless);
+
+    /// @brief Verifies that host specific options override subnet specific
+    /// options.
+    ///
+    /// Overridden options are the options which server sends regardless
+    /// if they are requested with Parameter Request List option or not.
+    ///
+    /// @param stateless Boolean value indicating if statless or stateful
+    /// configuration should be performed.
+    void testOverrideDefaultOptions(const bool stateless);
+
+    /// @brief Verifies that client receives options when they are solely
+    /// defined in the host scope (and not in the global or subnet scope).
+    ///
+    /// @param stateless Boolean value indicating if statless or stateful
+    /// configuration should be performed.
+    void testHostOnlyOptions(const bool stateless);
+
+    /// @brief Verifies that host specific vendor options override vendor
+    /// options defined in the global scope.
+    ///
+    /// @param stateless Boolean value indicating if statless or stateful
+    /// configuration should be performed.
+    void testOverrideVendorOptions(const bool stateless);
+
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
 
 };
 
-// This test checks that host specific options override subnet specific
-// options. Overridden options are requested with Parameter Request List
-// option.
-TEST_F(HostOptionsTest, overrideRequestedOptions) {
+void
+HostOptionsTest::testOverrideRequestedOptions(const bool stateless) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     client.requestOptions(DHO_DOMAIN_NAME_SERVERS, DHO_LOG_SERVERS,
@@ -229,9 +306,17 @@ TEST_F(HostOptionsTest, overrideRequestedOptions) {
     // Configure DHCP server.
     configure(HOST_CONFIGS[0], *client.getServer());
 
-    // Perform 4-way exchange with the server but to not request any
-    // specific address in the DHCPDISCOVER message.
-    ASSERT_NO_THROW(client.doDORA());
+    if (stateless) {
+        // Need to relay the message from a specific address which can
+        // be matched with a configured subnet.
+        client.useRelay(true, IOAddress("10.0.0.233"));
+        ASSERT_NO_THROW(client.doInform());
+
+    } else {
+        // Perform 4-way exchange with the server but to not request any
+        // specific address in the DHCPDISCOVER message.
+        ASSERT_NO_THROW(client.doDORA());
+    }
 
     // Make sure that the server responded.
     ASSERT_TRUE(client.getContext().response_);
@@ -239,9 +324,11 @@ TEST_F(HostOptionsTest, overrideRequestedOptions) {
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
 
-    // Make sure that the client has got the lease for the reserved
-    // address.
-    ASSERT_EQ("10.0.0.7", client.config_.lease_.addr_.toText());
+    if (!stateless) {
+        // Make sure that the client has got the lease for the reserved
+        // address.
+        ASSERT_EQ("10.0.0.7", client.config_.lease_.addr_.toText());
+    }
 
     ASSERT_EQ(2, client.config_.routers_.size());
     EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
@@ -260,11 +347,8 @@ TEST_F(HostOptionsTest, overrideRequestedOptions) {
     EXPECT_EQ("10.1.1.201", client.config_.log_servers_[1].toText());
 }
 
-// This test checks that host specific options override subnet specific
-// options. Overridden options are the options which server sends
-// regardless if they are requested with Parameter Request List option
-// or not.
-TEST_F(HostOptionsTest, overrideDefaultOptions) {
+void
+HostOptionsTest::testOverrideDefaultOptions(const bool stateless) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
 
@@ -272,6 +356,18 @@ TEST_F(HostOptionsTest, overrideDefaultOptions) {
 
     // Configure DHCP server.
     configure(HOST_CONFIGS[1], *client.getServer());
+
+    if (stateless) {
+        // Need to relay the message from a specific address which can
+        // be matched with a configured subnet.
+        client.useRelay(true, IOAddress("10.0.0.233"));
+        ASSERT_NO_THROW(client.doInform());
+
+    } else {
+        // Perform 4-way exchange with the server but to not request any
+        // specific address in the DHCPDISCOVER message.
+        ASSERT_NO_THROW(client.doDORA());
+    }
 
     // Perform 4-way exchange with the server but to not request any
     // specific address in the DHCPDISCOVER message.
@@ -283,9 +379,11 @@ TEST_F(HostOptionsTest, overrideDefaultOptions) {
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
 
-    // Make sure that the client has got the lease for the reserved
-    // address.
-    ASSERT_EQ("10.0.0.7", client.config_.lease_.addr_.toText());
+    if (!stateless) {
+        // Make sure that the client has got the lease for the reserved
+        // address.
+        ASSERT_EQ("10.0.0.7", client.config_.lease_.addr_.toText());
+    }
 
     ASSERT_EQ(2, client.config_.routers_.size());
     EXPECT_EQ("10.1.1.200", client.config_.routers_[0].toText());
@@ -304,9 +402,55 @@ TEST_F(HostOptionsTest, overrideDefaultOptions) {
     EXPECT_EQ("10.0.0.201", client.config_.log_servers_[1].toText());
 }
 
-// This test checks that host specific vendor options override vendor
-// options defined in the global scope.
-TEST_F(HostOptionsTest, overrideVendorOptions) {
+void
+HostOptionsTest::testHostOnlyOptions(const bool stateless) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+    client.requestOptions(DHO_COOKIE_SERVERS);
+
+    // Configure DHCP server.
+    configure(HOST_CONFIGS[2], *client.getServer());
+
+    if (stateless) {
+        // Need to relay the message from a specific address which can
+        // be matched with a configured subnet.
+        client.useRelay(true, IOAddress("10.0.0.233"));
+        ASSERT_NO_THROW(client.doInform());
+
+    } else {
+        // Perform 4-way exchange with the server but to not request any
+        // specific address in the DHCPDISCOVER message.
+        ASSERT_NO_THROW(client.doDORA());
+    }
+
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    if (!stateless) {
+        // Make sure that the client has got the lease for the reserved
+        // address.
+        ASSERT_EQ("10.0.0.7", client.config_.lease_.addr_.toText());
+    }
+
+    // Make sure that the Routers options has been received.
+    ASSERT_EQ(2, client.config_.routers_.size());
+    EXPECT_EQ("10.1.1.200", client.config_.routers_[0].toText());
+    EXPECT_EQ("10.1.1.201", client.config_.routers_[1].toText());
+    // Make sure that the Quotes Servers option has been received.
+    ASSERT_EQ(2, client.config_.quotes_servers_.size());
+    EXPECT_EQ("10.1.1.202", client.config_.quotes_servers_[0].toText());
+    EXPECT_EQ("10.1.1.203", client.config_.quotes_servers_[1].toText());
+
+    // Other options are not configured and should not be delivered.
+    EXPECT_EQ(0, client.config_.dns_servers_.size());
+    EXPECT_EQ(0, client.config_.log_servers_.size());
+}
+
+void
+HostOptionsTest::testOverrideVendorOptions(const bool stateless) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
 
@@ -321,10 +465,18 @@ TEST_F(HostOptionsTest, overrideVendorOptions) {
     client.addExtraOption(opt_vendor);
 
     // Configure DHCP server.
-    configure(HOST_CONFIGS[2], *client.getServer());
+    configure(HOST_CONFIGS[3], *client.getServer());
 
-    // Perform 4-way exchange with the server.
-    ASSERT_NO_THROW(client.doDORA());
+    if (stateless) {
+        // Need to relay the message from a specific address which can
+        // be matched with a configured subnet.
+        client.useRelay(true, IOAddress("10.0.0.233"));
+        ASSERT_NO_THROW(client.doInform());
+
+    } else {
+        // Perform 4-way exchange with the server.
+        ASSERT_NO_THROW(client.doDORA());
+    }
 
     // Make sure that the server responded.
     ASSERT_TRUE(client.getContext().response_);
@@ -332,9 +484,11 @@ TEST_F(HostOptionsTest, overrideVendorOptions) {
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
 
-    // Make sure that the client has got the lease for the reserved
-    // address.
-    ASSERT_EQ("10.0.0.7", client.config_.lease_.addr_.toText());
+    if (!stateless) {
+        // Make sure that the client has got the lease for the reserved
+        // address.
+        ASSERT_EQ("10.0.0.7", client.config_.lease_.addr_.toText());
+    }
 
     // Make sure the server has responded with a V-I Vendor Specific
     // Information option with exactly one suboption.
@@ -352,5 +506,60 @@ TEST_F(HostOptionsTest, overrideVendorOptions) {
     EXPECT_EQ("10.1.1.203", tftps[1].toText());
 }
 
+// This test checks that host specific options override subnet specific
+// options. Overridden options are requested with Parameter Request List
+// option (stateless case).
+TEST_F(HostOptionsTest, overrideRequestedOptionsStateless) {
+    testOverrideRequestedOptions(STATELESS);
+}
+
+// This test checks that host specific options override subnet specific
+// options. Overridden options are requested with Parameter Request List
+// option (stateful case).
+TEST_F(HostOptionsTest, overrideRequestedOptionsStateful) {
+    testOverrideRequestedOptions(STATEFUL);
+}
+
+// This test checks that host specific options override subnet specific
+// options. Overridden options are the options which server sends
+// regardless if they are requested with Parameter Request List option
+// or not (stateless case).
+TEST_F(HostOptionsTest, overrideDefaultOptionsStateless) {
+    testOverrideDefaultOptions(STATELESS);
+}
+
+// This test checks that host specific options override subnet specific
+// options. Overridden options are the options which server sends
+// regardless if they are requested with Parameter Request List option
+// or not (stateful case).
+TEST_F(HostOptionsTest, overrideDefaultOptionsStateful) {
+    testOverrideDefaultOptions(STATEFUL);
+}
+
+// This test checks that client receives options when they are
+// solely defined in the host scope and not in the global or subnet
+// scope (stateless case).
+TEST_F(HostOptionsTest, hostOnlyOptionsStateless) {
+    testHostOnlyOptions(STATELESS);
+}
+
+// This test checks that client receives options when they are
+// solely defined in the host scope and not in the global or subnet
+// scope (stateful case).
+TEST_F(HostOptionsTest, hostOnlyOptionsStateful) {
+    testHostOnlyOptions(STATEFUL);
+}
+
+// This test checks that host specific vendor options override vendor
+// options defined in the global scope (stateless case).
+TEST_F(HostOptionsTest, overrideVendorOptionsStateless) {
+    testOverrideVendorOptions(STATELESS);
+}
+
+// This test checks that host specific vendor options override vendor
+// options defined in the global scope (stateful case).
+TEST_F(HostOptionsTest, overrideVendorOptionsStateful) {
+    testOverrideVendorOptions(STATEFUL);
+}
 
 } // end of anonymous namespace
