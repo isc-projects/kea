@@ -76,7 +76,7 @@ const size_t OID_VARCHAR = 1043;
 /// guarantees that the resources are released even if the an exception is
 /// thrown.
 
-class PgSqlResult {
+class PgSqlResult : public boost::noncopyable {
 public:
     /// @brief Constructor
     ///
@@ -130,7 +130,7 @@ public:
 
     /// @brief Constructor
     ///
-    /// Initialize PgSql
+    /// Sets the Postgresql API connector handle to NULL.
     ///
     PgSqlHolder() : pgconn_(NULL) {
     }
@@ -144,6 +144,9 @@ public:
         }
     }
 
+    /// @brief Sets the connection to the value given
+    ///
+    /// @param connection - pointer to the Postgresql connection instance
     void setConnection(PGconn* connection) {
         if (pgconn_ != NULL) {
             // Already set? Release the current connection first.

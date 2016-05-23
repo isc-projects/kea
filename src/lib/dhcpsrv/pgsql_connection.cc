@@ -9,15 +9,6 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/pgsql_connection.h>
 
-#include <boost/static_assert.hpp>
-
-#include <iostream>
-#include <iomanip>
-#include <limits>
-#include <sstream>
-#include <string>
-#include <time.h>
-
 // PostgreSQL errors should be tested based on the SQL state code.  Each state
 // code is 5 decimal, ASCII, digits, the first two define the category of
 // error, the last three are the specific error.  PostgreSQL makes the state
