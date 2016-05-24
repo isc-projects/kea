@@ -31,9 +31,9 @@ if HAVE_GTEST
 TESTS += libdhcp_legal_log_unittests
 
 libdhcp_legal_log_unittests_SOURCES = run_unittests.cc
-libdhcp_legal_log_unittests_SOURCES += legal_file_unittests.cc
 libdhcp_legal_log_unittests_SOURCES += legal_log4_unittests.cc
 libdhcp_legal_log_unittests_SOURCES += legal_log6_unittests.cc
+libdhcp_legal_log_unittests_SOURCES += rotating_file_unittests.cc
 libdhcp_legal_log_unittests_SOURCES += test_utils.h
 
 libdhcp_legal_log_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
@@ -53,11 +53,8 @@ libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcp
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
-libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
-libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcp_legal_log_unittests_LDADD += $(LOG4CPLUS_LIBS)

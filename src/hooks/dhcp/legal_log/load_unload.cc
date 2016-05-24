@@ -10,19 +10,15 @@
 
 #include <cc/data.h>
 #include <hooks/hooks.h>
-#include <legal_file.h>
 #include <legal_log_log.h>
-
-#include <iostream>
-#include <fstream>
-#include <errno.h>
+#include <rotating_file.h>
 
 using namespace isc;
 using namespace hooks;
 using namespace legal_log;
 
 /// @brief Pointer to the legal output file instance
-LegalFilePtr legal_file;
+RotatingFilePtr legal_file;
 
 /// @brief Default path name
 const char* default_legal_path = LEGAL_LOG_DIR;
@@ -37,7 +33,7 @@ extern "C" {
 
 /// @brief Called by the Hooks library manager when the library is loaded.
 ///
-/// Instantiates the LegalFile and then opens it.  It supports the following
+/// Instantiates the RotatingFile and then opens it.  It supports the following
 /// parameters via the Hook Library Parameter mechanism::
 ///
 /// "path" - Directory in which the legal file(s) will be written.  The default
@@ -69,12 +65,12 @@ int load(LibraryHandle& handle) {
             base = param->stringValue();
         }
 
-        legal_file.reset(new LegalFile(path, base));
+        legal_file.reset(new RotatingFile(path, base));
         legal_file->open();
     }
     catch (const std::exception& ex) {
         // Log the error and return failure.
-        LOG_ERROR(legal_log_logger, LEGAL_LOG_HOOK_LOAD_ERROR)
+        LOG_ERROR(legal_log_logger, LEGAL_LOG_LOAD_ERROR)
             .arg(ex.what());
         ret_val = 1;
     }
@@ -84,20 +80,20 @@ int load(LibraryHandle& handle) {
 
 /// @brief Called by the Hooks library manager when the library is unloaded.
 ///
-/// Explicitly destroys the LegalFile instance. Any errors are logged but
+/// Explicitly destroys the RotatingFile instance. Any errors are logged but
 /// swallowed.
 ///
 /// @return Always returns 0.
 int unload() {
     try {
         // Since it's "global" Let's explicitly destroy it now rather
-        // than indeterminately. Note, LegalFile destructor will close
+        // than indeterminately. Note, RotatingFile destructor will close
         // the file.
         legal_file.reset();
     } catch (const std::exception& ex) {
         // On the off chance something goes awry, catch it and log it.
         // @todo Not sure if we should return a non-zero result or not.
-        LOG_ERROR(legal_log_logger, LEGAL_LOG_HOOK_UNLOAD_ERROR)
+        LOG_ERROR(legal_log_logger, LEGAL_LOG_UNLOAD_ERROR)
             .arg(ex.what());
     }
 

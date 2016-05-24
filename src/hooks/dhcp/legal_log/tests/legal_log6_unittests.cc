@@ -29,14 +29,13 @@ using namespace std;
 using namespace isc;
 using namespace dhcp;
 
-extern std::string genLease6Entry(Pkt6Ptr query, Lease6Ptr lease, bool renewal);
+extern std::string genLease6Entry(const Pkt6Ptr& query, const Lease6Ptr& lease, const bool renewal);
 extern std::string hwaddrSourceToString(uint32_t source);
-extern int legallog6_handler(CalloutHandle& handle, bool renewal);
+extern int legalLog6Handler(CalloutHandle& handle, bool renewal);
 
-extern LegalFilePtr legal_file;
+extern RotatingFilePtr legal_file;
 
 extern "C" {
-extern int pkt6_receive(CalloutHandle& handle);
 extern int lease6_select(CalloutHandle& handle);
 extern int lease6_renew(CalloutHandle& handle);
 extern int lease6_rebind(CalloutHandle& handle);
@@ -55,21 +54,21 @@ const uint8_t DUID1[] = {0x17, 0x34, 0xe2, 0xff, 0x09, 0x92, 0x54};
 /// Factory for creating leases which defaults values that are not of
 /// interest during legal entry formation.
 ///
-/// @param duid - pointer to the lease DUID
-/// @param type - type of the lease (TYPE_IA, TYPE_NA, TYPE_PD)
-/// @param addr_str - IPv6 lease address/ prefix as a string
-/// @param prefix_len - prefix length
-/// @param valid_lifetime - lifetime of the lease in seconds
-/// @param hwaddr - pointer to the lease hardware address (may be null)
+/// @param duid Pointer to the lease DUID
+/// @param type Type of the lease (TYPE_IA, TYPE_NA, TYPE_PD)
+/// @param addr_str IPv6 lease address/ prefix as a string
+/// @param prefix_len Prefix length
+/// @param valid_lifetime Lifetime of the lease in seconds
+/// @param hwaddr Pointer to the lease hardware address (may be null)
 ///
-/// @return pointer to the newly created Lease6 instance
+/// @return Pointer to the newly created Lease6 instance
 Lease6Ptr createLease6(const DuidPtr& duid, const Lease::Type& type,
                        const std::string& addr_str, uint8_t prefix_len,
                        uint32_t valid_lifetime, const HWAddrPtr& hwaddr) {
     Lease6Ptr lease(new Lease6(type, isc::asiolink::IOAddress(addr_str),
                                duid, 0, 0, valid_lifetime, 0, 0, 0,
                                hwaddr, prefix_len));
-    return(lease);
+    return (lease);
 };
 
 // Verifies that the function hwaddrSourceToString() properly converts
@@ -109,13 +108,13 @@ TEST(Lease6EntryTest, directClient) {
 
     // Verify address and duration for an assignment
     ASSERT_NO_THROW(entry = genLease6Entry(pkt6, lease6, false));
-    EXPECT_EQ("Address:2001:db8:1:: has been assigned for 0 hrs 11 min 53 secs"
+    EXPECT_EQ("Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address and duration for a renewal
     ASSERT_NO_THROW(entry = genLease6Entry(pkt6, lease6, true));
-    EXPECT_EQ("Address:2001:db8:1:: has been renewed for 0 hrs 11 min 53 secs"
+    EXPECT_EQ("Address:2001:db8:1:: has been renewed for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
@@ -124,7 +123,7 @@ TEST(Lease6EntryTest, directClient) {
     // is tested explicitly.
     lease6->hwaddr_ = hwaddr;
     ASSERT_NO_THROW(entry = genLease6Entry(pkt6, lease6, false));
-    EXPECT_EQ("Address:2001:db8:1:: has been assigned for 0 hrs 11 min 53 secs"
+    EXPECT_EQ("Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54 and hardware"
               " address: hwtype=1 08:00:2b:02:3f:4e (from Raw Socket)",
               entry);
@@ -146,7 +145,7 @@ TEST(Lease6EntryTest, relayedClient) {
     // Verify server level relay basic info, no options
     std::string entry;
     ASSERT_NO_THROW(entry = genLease6Entry(pkt6, lease6, false));
-    EXPECT_EQ("Address:2001:db8:1:: has been assigned for 0 hrs 11 min 53 secs"
+    EXPECT_EQ("Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
               " for client on link address: 3001::1, hop count: 1",
@@ -167,7 +166,7 @@ TEST(Lease6EntryTest, relayedClient) {
 
     // Verify relay info with REMOTE_ID
     ASSERT_NO_THROW(entry = genLease6Entry(pkt6, lease6, false));
-    EXPECT_EQ("Address:2001:db8:1:: has been assigned for 0 hrs 11 min 53 secs"
+    EXPECT_EQ("Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
               " for client on link address: 3001::1, hop count: 1"
@@ -188,7 +187,7 @@ TEST(Lease6EntryTest, relayedClient) {
 
     // Verify relay info with REMOTE_ID and SUBSCRIBER_ID
     ASSERT_NO_THROW(entry = genLease6Entry(pkt6, lease6, false));
-    EXPECT_EQ("Address:2001:db8:1:: has been assigned for 0 hrs 11 min 53 secs"
+    EXPECT_EQ("Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
               " for client on link address: 3001::1, hop count: 1"
@@ -204,7 +203,7 @@ TEST(Lease6EntryTest, relayedClient) {
 
     // Verify address and duration for an assignment
     ASSERT_NO_THROW(entry = genLease6Entry(pkt6, lease6, false));
-    EXPECT_EQ("Address:2001:db8:1:: has been assigned for 0 hrs 11 min 53 secs"
+    EXPECT_EQ("Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
               " for client on link address: 3001::1, hop count: 1"
@@ -212,8 +211,8 @@ TEST(Lease6EntryTest, relayedClient) {
               entry);
 }
 
-// Verifies that legallog6_handler() detects a null legal_file
-TEST_F(CalloutTest, noLegalFileTest) {
+// Verifies that legalLog6Handler() detects a null legal_file
+TEST_F(CalloutTest, noRotatingFileTest) {
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
 
@@ -231,7 +230,7 @@ TEST_F(CalloutTest, noLegalFileTest) {
 
     // The function should fail when there's no legal_file.
     int ret;
-    ASSERT_NO_THROW(ret = legallog6_handler(handle, false));
+    ASSERT_NO_THROW(ret = legalLog6Handler(handle, false));
     EXPECT_EQ(1, ret);
 }
 
@@ -239,11 +238,11 @@ TEST_F(CalloutTest, noLegalFileTest) {
 // -# Does not generate an entry when fake_allocation is true
 // -# Generates the correct entry in the legal file given a Pkt6 and Lease6
 // Note we don't bother testing multple entries or rotation as this is done
-// during LegalFile testing.
+// during RotatingFile testing.
 TEST_F(CalloutTest, lease6_select) {
     // Create the legal file
-    TestableLegalFilePtr tfile;
-    ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
+    TestableRotatingFilePtr tfile;
+    ASSERT_NO_THROW(tfile.reset(new TestableRotatingFile(today_)));
     legal_file = tfile;
 
     // Make a callout handle
@@ -290,21 +289,21 @@ TEST_F(CalloutTest, lease6_select) {
     // Verify that the file content.
     std::vector<std::string>lines;
     lines.push_back("Address:2001:db8:1::111 has been assigned"
-                    " for 0 hrs 11 min 53 secs"
+                    " for 0 hrs 11 mins 53 secs"
                     " to a device with DUID: 17:34:e2:ff:09:92:54");
     std::string today_now_string = legal_file->getNowString();
     checkFileLines(genName(today_), today_now_string, lines);
 }
 
 // Verifies that the lease6_renew callout
-// -# Detects no LegalFile instance
+// -# Detects no RotatingFile instance
 // -# Generates the correct entry in the legal file given a Pkt6 and Lease6
 // Note we don't bother testing multple entries or rotation as this is done
-// during LegalFile testing.
+// during RotatingFile testing.
 TEST_F(CalloutTest, lease6_renew) {
     // Create the legal file
-    TestableLegalFilePtr tfile;
-    ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
+    TestableRotatingFilePtr tfile;
+    ASSERT_NO_THROW(tfile.reset(new TestableRotatingFile(today_)));
     legal_file = tfile;
 
     // Make a callout handle
@@ -333,7 +332,7 @@ TEST_F(CalloutTest, lease6_renew) {
     // Verify that the file content.
     std::vector<std::string>lines;
     lines.push_back("Address:2001:db8:1:: has been renewed"
-                    " for 0 hrs 11 min 53 secs"
+                    " for 0 hrs 11 mins 53 secs"
                     " to a device with DUID: 17:34:e2:ff:09:92:54");
     std::string today_now_string = legal_file->getNowString();
     checkFileLines(genName(today_), today_now_string, lines);
@@ -342,11 +341,11 @@ TEST_F(CalloutTest, lease6_renew) {
 // Verifies that the lease6_rebind callout
 // -# Generates the correct entry in the legal file given a Pkt6 and Lease6
 // Note we don't bother testing multple entries or rotation as this is done
-// during LegalFile testing.
+// during RotatingFile testing.
 TEST_F(CalloutTest, lease6_rebind) {
     // Create the legal file
-    TestableLegalFilePtr tfile;
-    ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
+    TestableRotatingFilePtr tfile;
+    ASSERT_NO_THROW(tfile.reset(new TestableRotatingFile(today_)));
     legal_file = tfile;
 
     // Make a callout handle
@@ -375,7 +374,7 @@ TEST_F(CalloutTest, lease6_rebind) {
     // Verify that the file content.
     std::vector<std::string>lines;
     lines.push_back("Address:2001:db8:1:: has been renewed"
-                    " for 0 hrs 11 min 53 secs"
+                    " for 0 hrs 11 mins 53 secs"
                     " to a device with DUID: 17:34:e2:ff:09:92:54");
     std::string today_now_string = legal_file->getNowString();
     checkFileLines(genName(today_), today_now_string, lines);

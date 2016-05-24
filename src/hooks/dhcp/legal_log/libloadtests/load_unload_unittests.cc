@@ -27,21 +27,21 @@ using namespace hooks;
 
 namespace {
 
-/// @brief Test fixture for testing LegalFile.
+/// @brief Test fixture for testing loading and unloading the legal log library
 /// It provides tools for erasing test files, altering date values,
-/// generating file names, checking file existance and content.
-class LibLoadTest : public ::testing::Test {
+/// generating file names and checking file existance.
+class LegalLibLoadTest : public ::testing::Test {
 public:
     /// @brief Constructor
     /// Fetches the current day and removes files that may be left
     /// over from previous tests
-    LibLoadTest() {
+    LegalLibLoadTest() {
         reset();
     }
 
     /// @brief Destructor
     /// Removes files that may be left over from previous tests
-    virtual ~LibLoadTest() {
+    virtual ~LegalLibLoadTest() {
         reset();
     }
 
@@ -74,7 +74,7 @@ public:
 
     /// @brief Generate a file name based on the given date
     ///
-    /// Uses the same formatting as LegalFile to build file names
+    /// Uses the same formatting as RotatingFile to build file names
     ///
     /// @param day - date to use in the file name
     /// @return - the generated file name
@@ -90,12 +90,12 @@ public:
 };
 
 // Verifies that the load callout, given a viable path and base name,
-// instantiates and opens the LegalFile.
+// instantiates and opens the RotatingFile.
 // WARNING!!!  Even though the load() function can supply default values
 // for both path and base-name, it is ill-advised to conduct such a test as
 // one runs the risk of harming a legal file opened with default values
 // by a live instance of Kea.
-TEST_F(LibLoadTest, validLoad) {
+TEST_F(LegalLibLoadTest, validLoad) {
 
     // Prepare paramters for the callout parameters library.
     data::ElementPtr params = data::Element::createMap();
@@ -127,14 +127,11 @@ TEST_F(LibLoadTest, validLoad) {
 
     // File should still exist.
     EXPECT_TRUE(fileExists(expected_filename));
-
-    // Clean up
-    ::remove(expected_filename.c_str());
 }
 
 // Verifies that the load callout, given an inaccessible path fails to
 // to load.
-TEST_F(LibLoadTest, invalidLoad) {
+TEST_F(LegalLibLoadTest, invalidLoad) {
     // Prepare paramters for the callout parameters library.
     data::ElementPtr params = data::Element::createMap();
     std::string bogus_path(TEST_DATA_BUILDDIR);
@@ -145,7 +142,7 @@ TEST_F(LibLoadTest, invalidLoad) {
     HookLibsCollection libraries;
     libraries.push_back(make_pair(LEGAL_LOG_LIB_SO, params));
 
-    // Load the library.  This should create the expected file name.
+    // Attemptng to Load the library should fail.
     EXPECT_FALSE(HooksManager::loadLibraries(libraries));
 }
 

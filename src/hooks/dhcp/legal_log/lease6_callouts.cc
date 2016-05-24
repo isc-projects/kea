@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-/// @file lease6_co.cc Defines lease6_select and lease6_renew callout functions.
+/// @file lease6_callouts.cc Defines lease6_select and lease6_renew callout functions.
 
 #include <config.h>
 #include <dhcp/dhcp6.h>
@@ -12,8 +12,8 @@
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
 #include <hooks/hooks.h>
-#include <legal_file.h>
 #include <legal_log_log.h>
+#include <rotating_file.h>
 
 #include <sstream>
 
@@ -24,12 +24,12 @@ using namespace legal_log;
 using namespace std;
 
 /// @brief Pointer to the registry instance.
-extern LegalFilePtr legal_file;
+extern RotatingFilePtr legal_file;
 
 /// @brief Function which converts hardware address source to a string
 ///
-/// @param source - integer value to convert
-/// @return - string label for the value or "UNKNOWN" if not recognized.
+/// @param source integer value to convert
+/// @return string label for the value or "UNKNOWN" if not recognized.
 std::string hwaddrSourceToString(uint32_t source) {
     if (source == HWAddr::HWADDR_SOURCE_RAW) {
         return ("Raw Socket");
@@ -85,10 +85,10 @@ std::string hwaddrSourceToString(uint32_t source) {
 ///  "Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs to a device with hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33, identified by circuit-id: 68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
 /// }}}
 ///
-/// @param query - DHCPREQUEST packet for which the lease was generated
-/// @param lease - DHCPv4 lease for which the entry should be created
-/// @param renewal - indicates whether or not the lease is a renewal.
-std::string genLease6Entry(Pkt6Ptr query, Lease6Ptr lease, bool renewal) {
+/// @param query DHCPREQUEST packet for which the lease was generated
+/// @param lease DHCPv4 lease for which the entry should be created
+/// @param renewal indicates whether or not the lease is a renewal.
+std::string genLease6Entry(const Pkt6Ptr& query, const Lease6Ptr& lease, const bool renewal) {
     std::stringstream stream;
     // <address>
 
@@ -101,7 +101,7 @@ std::string genLease6Entry(Pkt6Ptr query, Lease6Ptr lease, bool renewal) {
     stream << " has been " << (renewal ? "renewed" : "assigned");
 
     // <duration>
-    stream << " for " << LegalFile::genDurationString(lease->valid_lft_);
+    stream << " for " << RotatingFile::genDurationString(lease->valid_lft_);
 
     // <device-id>
     stream << " to a device with DUID: " << lease->duid_->toText();
@@ -128,7 +128,7 @@ std::string genLease6Entry(Pkt6Ptr query, Lease6Ptr lease, bool renewal) {
         if (opt) {
             const OptionBuffer id = opt->getData();
             if (!id.empty()) {
-                idstream << "remote-id: " << LegalFile::vectorHexDump(id);
+                idstream << "remote-id: " << RotatingFile::vectorHexDump(id);
             }
         }
 
@@ -141,7 +141,7 @@ std::string genLease6Entry(Pkt6Ptr query, Lease6Ptr lease, bool renewal) {
                 if (!idstream.str().empty()) {
                         idstream << " and ";
                 }
-                idstream << "subscriber-id: " << LegalFile::vectorHexDump(id);
+                idstream << "subscriber-id: " << RotatingFile::vectorHexDump(id);
             }
         }
 
@@ -150,7 +150,7 @@ std::string genLease6Entry(Pkt6Ptr query, Lease6Ptr lease, bool renewal) {
         }
     }
 
-    return(stream.str());
+    return (stream.str());
 }
 
 /// @brief Produces an DHCPv6 legal log entry from a callout handle
@@ -161,12 +161,12 @@ std::string genLease6Entry(Pkt6Ptr query, Lease6Ptr lease, bool renewal) {
 /// error and return failure.
 ///
 /// @param handle CalloutHandle which provides access to context.
-/// @param renewal - indicates whether or not the lease is a renewal.
+/// @param renewal indicates whether or not the lease is a renewal.
 ///
-/// @return - returns 0 upon success, non-zero otherwise
-int legallog6_handler(CalloutHandle& handle, bool renewal) {
+/// @return returns 0 upon success, non-zero otherwise
+int legalLog6Handler(CalloutHandle& handle, bool renewal) {
     if (!legal_file) {
-        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE6_NO_LEGAL_FILE);
+        LOG_ERROR(legal_log_logger, LEGAL_LOG_LEASE6_NO_LEGAL_FILE);
         return (1);
     }
 
@@ -179,7 +179,7 @@ int legallog6_handler(CalloutHandle& handle, bool renewal) {
     try {
         legal_file->writeln(genLease6Entry(query, lease, renewal));
     } catch (const std::exception& ex) {
-        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE6_WRITE_ERROR)
+        LOG_ERROR(legal_log_logger, LEGAL_LOG_LEASE6_WRITE_ERROR)
                   .arg(ex.what());
         return (1);
     }
@@ -204,11 +204,7 @@ extern "C" {
 int lease6_select(CalloutHandle& handle) {
     bool fake_allocation;
     handle.getArgument("fake_allocation", fake_allocation);
-    if (fake_allocation) {
-        return (0);
-    }
-
-    return(legallog6_handler(handle, false));
+    return (fake_allocation ? 0 : legalLog6Handler(handle, false));
 }
 
 /// @brief  This callout is called at the "lease6_renew" hook.
@@ -220,7 +216,7 @@ int lease6_select(CalloutHandle& handle) {
 ///
 /// @return 0 upon success, non-zero otherwise.
 int lease6_renew(CalloutHandle& handle) {
-    return(legallog6_handler(handle, true));
+    return (legalLog6Handler(handle, true));
 }
 
 /// @brief  This callout is called at the "lease6_rebind" hook.
@@ -232,7 +228,7 @@ int lease6_renew(CalloutHandle& handle) {
 ///
 /// @return 0 upon success, non-zero otherwise.
 int lease6_rebind(CalloutHandle& handle) {
-    return(legallog6_handler(handle, true));
+    return (legalLog6Handler(handle, true));
 }
 
 } // end extern "C"

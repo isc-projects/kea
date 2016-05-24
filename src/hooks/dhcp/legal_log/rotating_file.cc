@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <legal_log_log.h>
-#include <legal_file.h>
+#include <rotating_file.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -17,35 +17,35 @@
 namespace isc {
 namespace legal_log {
 
-LegalFile::LegalFile(const std::string& path, const std::string& base_name)
+RotatingFile::RotatingFile(const std::string& path, const std::string& base_name)
     : path_(path), base_name_(base_name), file_day_(), file_name_(), file_() {
 
     if (path_.empty()) {
-        isc_throw(LegalFileError, "path cannot be blank");
+        isc_throw(RotatingFileError, "path cannot be blank");
     }
 
     if (base_name_.empty()) {
-        isc_throw(LegalFileError, "file name cannot be blank");
+        isc_throw(RotatingFileError, "file name cannot be blank");
     }
 }
 
-LegalFile::~LegalFile(){
+RotatingFile::~RotatingFile(){
     close();
 };
 
 boost::gregorian::date
-LegalFile::today() {
+RotatingFile::today() const {
     return (boost::gregorian::day_clock::local_day());
 }
 
 time_t
-LegalFile::now() {
+RotatingFile::now() const {
     time_t curtime;
-    return(time(&curtime));
+    return (time(&curtime));
 }
 
 std::string
-LegalFile::getNowString(const std::string& format) {
+RotatingFile::getNowString(const std::string& format) const {
     // Get a text representation of the current time.
     char buffer[128];
     time_t curtime = now();
@@ -53,7 +53,7 @@ LegalFile::getNowString(const std::string& format) {
     timeinfo = localtime(&curtime);
 
     if (!strftime(buffer, sizeof(buffer), format.c_str(), timeinfo)) {
-        isc_throw(LegalFileError,
+        isc_throw(RotatingFileError,
                     "Timestamp format format: " << format
                     << " result is too long, maximum allowed: "
                     << sizeof(buffer));
@@ -62,7 +62,7 @@ LegalFile::getNowString(const std::string& format) {
 }
 
 void
-LegalFile::open() {
+RotatingFile::open() {
     if (isOpen()) {
         return;
     }
@@ -83,16 +83,16 @@ LegalFile::open() {
     file_.open(file_name_.c_str(), std::ofstream::app);
     int sav_error = errno;
     if (!file_.is_open()) {
-        isc_throw(LegalFileError, "cannot open file:" << file_name_
+        isc_throw(RotatingFileError, "cannot open file:" << file_name_
                                   << " reason: " << strerror(sav_error));
     }
 
-    LOG_INFO(legal_log_logger, LEGAL_LOG_HOOK_FILE_OPENED)
+    LOG_INFO(legal_log_logger, LEGAL_LOG_FILE_OPENED)
              .arg(file_name_);
 }
 
 void
-LegalFile::rotate() {
+RotatingFile::rotate() {
     if (file_day_ < today()) {
         close();
     }
@@ -102,66 +102,67 @@ LegalFile::rotate() {
 }
 
 void
-LegalFile::writeln(const std::string& text) {
+RotatingFile::writeln(const std::string& text) {
     // Call rotate in case we've crossed days since we last wrote.
     rotate();
 
     file_ << getNowString() << " " << text << std::endl;
     int sav_error = errno;
     if (!file_.good()) {
-        isc_throw(LegalFileError, "error writing to file:" << file_name_
+        isc_throw(RotatingFileError, "error writing to file:" << file_name_
                                  << " reason: " << strerror(sav_error));
     }
 }
 
 bool
-LegalFile::isOpen() const {
+RotatingFile::isOpen() const {
     return (file_.is_open());
 }
 
 void
-LegalFile::close() {
+RotatingFile::close() {
     try {
         if (file_.is_open()) {
-            LOG_INFO(legal_log_logger, LEGAL_LOG_HOOK_FILE_CLOSED)
+            LOG_INFO(legal_log_logger, LEGAL_LOG_FILE_CLOSED)
                      .arg(file_name_);
             file_.close();
         }
     } catch (const std::exception& ex) {
         // Highly unlikely to occur but let's at least spit out an error.
         // Beyond that we swallow it for tidiness.
-        LOG_ERROR(legal_log_logger, LEGAL_LOG_HOOK_FILE_CLOSE_ERROR)
+        LOG_ERROR(legal_log_logger, LEGAL_LOG_FILE_CLOSE_ERROR)
                   .arg(file_name_).arg(ex.what());
     }
 }
 
 std::string
-LegalFile::genDurationString(uint32_t secs) {
-    // Because Kea handles lease lifetimes as uint32_t, we can't use things
+RotatingFile::genDurationString(const uint32_t secs) {
+    // Because Kea handles lease lifetimes as uint32_t and supports
+    // a value of 0xFFFFFFFF (infinite lifetime), we don't use things like
     // boost:posix_time::time_duration as they work on longs.  Therefore
     // we'll figure it out ourselves.  Besides, the math ain't that hard.
     uint32_t seconds = secs % 60;
-    secs /= 60;
-    uint32_t minutes = secs % 60;
-    secs /= 60;
-    uint32_t hours = secs % 24;
-    uint32_t days = secs / 24;
+    uint32_t remainder = secs / 60;
+    uint32_t minutes = remainder % 60;
+    remainder /= 60;
+    uint32_t hours = remainder % 24;
+    uint32_t days = remainder / 24;
 
     std::ostringstream os;
     // Only spit out days if we have em.
     if (days) {
-        os << days << (days > 1 ? " days " : " day ");
+        os << days << " days ";
     }
 
     os << hours << " hrs "
-        << minutes << " min "
+        << minutes << " mins "
         << seconds << " secs";
 
     return (os.str());
 }
 
 std::string
-LegalFile::vectorHexDump(const std::vector<uint8_t>& bytes,
+RotatingFile::vectorHexDump(const std::vector<uint8_t>& bytes,
                          const std::string& delimiter) {
     std::stringstream tmp;
     tmp << std::hex;
