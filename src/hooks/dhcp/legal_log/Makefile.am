@@ -23,7 +23,10 @@ s-messages: legal_log_messages.mes
 # (so that they are built before the main library is built).
 BUILT_SOURCES = legal_log_messages.h legal_log_messages.cc
 
-EXTRA_DIST = libdhcp_legal_log.dox
+# @todo #4511 calls for the creation of user documentation
+# EXTRA_DIST = libdhcp_legal_log.dox
+EXTRA_DIST =
+
 # Ensure that the message file is included in the distribution
 EXTRA_DIST += legal_log_messages.mes
 
@@ -36,10 +39,10 @@ noinst_LTLIBRARIES = liblegl.la
 
 liblegl_la_SOURCES  =
 liblegl_la_SOURCES += load_unload.cc
-liblegl_la_SOURCES += lease4_cos.cc
-liblegl_la_SOURCES += lease6_cos.cc
-liblegl_la_SOURCES += legal_file.cc legal_file.h
+liblegl_la_SOURCES += lease4_callouts.cc
+liblegl_la_SOURCES += lease6_callouts.cc
 liblegl_la_SOURCES += legal_log_log.cc legal_log_log.h
+liblegl_la_SOURCES += rotating_file.cc rotating_file.h
 liblegl_la_SOURCES += version.cc
 
 nodist_liblegl_la_SOURCES = legal_log_messages.cc legal_log_messages.h

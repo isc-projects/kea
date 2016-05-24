@@ -3,10 +3,12 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#ifndef TEST_UTILS_H
+#define TEST_UTILS_H
 
 #include <exceptions/exceptions.h>
 #include <hooks/callout_manager.h>
-#include <legal_file.h>
+#include <rotating_file.h>
 
 #include <gtest/gtest.h>
 
@@ -18,47 +20,47 @@ using namespace isc;
 using namespace hooks;
 using namespace legal_log;
 
-extern LegalFilePtr legal_file;
+extern RotatingFilePtr legal_file;
 
 namespace isc {
 namespace legal_log {
 
-/// @brief Derivation of LegalFile which provides an overridden date mechanism
-/// This class overrides LegalFile::today() with an implementation that returns
+/// @brief Derivation of RotatingFile which provides an overridden date mechanism
+/// This class overrides RotatingFile::today() with an implementation that returns
 /// fixed value, rather than based on the actual system time.  This simplifies
 /// testing file rotation.
-class TestableLegalFile : public LegalFile {
+class TestableRotatingFile : public RotatingFile {
 public:
     /// @brief Constructor
     ///
-    /// Create a LegalFile for the given file name without opening the file.
-    /// @param today - The date with which to override LegalFile::today()
+    /// Create a RotatingFile for the given file name without opening the file.
+    /// @param today The date with which to override RotatingFile::today()
     ///
-    /// @throw LegalFileError if given file name is empty.
-    TestableLegalFile(boost::gregorian::date today)
-        : LegalFile(TEST_DATA_BUILDDIR, "legal"), today_(today) {
+    /// @throw RotatingFileError if given file name is empty.
+    TestableRotatingFile(boost::gregorian::date today)
+        : RotatingFile(TEST_DATA_BUILDDIR, "legal"), today_(today) {
     }
 
     /// @brief Destructor.
     ////
     /// The destructor does call the close method.
-    virtual ~TestableLegalFile() {};
+    virtual ~TestableRotatingFile() {};
 
-    /// @brief Overrides LegalFile::today()
+    /// @brief Overrides RotatingFile::today()
     /// @return value of member variable today_
-    virtual boost::gregorian::date today() {
+    virtual boost::gregorian::date today() const {
         return (today_);
     }
 
-    /// @brief Overrides LegalFile::now()
+    /// @brief Overrides RotatingFile::now()
     /// @return
-    virtual time_t now() {
+    virtual time_t now() const {
         struct tm now_tm = boost::gregorian::to_tm(today_);
         return (mktime(&now_tm));
     }
 
     /// @brief Sets the override date value
-    /// @param - new value for the override date
+    /// @param new value for the override date
     void setToday(boost::gregorian::date day) {
         today_ = day;
     }
@@ -66,24 +68,24 @@ public:
     boost::gregorian::date today_;
 };
 
-/// @brief Defines a pointer to a TestableLegalFile
-typedef boost::shared_ptr<TestableLegalFile> TestableLegalFilePtr;
+/// @brief Defines a pointer to a TestableRotatingFile
+typedef boost::shared_ptr<TestableRotatingFile> TestableRotatingFilePtr;
 
-/// @brief Test fixture for testing LegalFile.
+/// @brief Test fixture for testing RotatingFile.
 /// It provides tools for erasing test files, altering date values,
 /// generating file names, checking file existance and content.
-class LegalFileTest : public ::testing::Test {
+class RotatingFileTest : public ::testing::Test {
 public:
     /// @brief Constructor
     /// Fetches the current day and removes files that may be left
     /// over from previous tests
-    LegalFileTest() : today_(boost::gregorian::day_clock::local_day()) {
+    RotatingFileTest() : today_(boost::gregorian::day_clock::local_day()) {
         wipeFiles();
     }
 
     /// @brief Destructor
     /// Removes files that may be left over from previous tests
-    virtual ~LegalFileTest() {
+    virtual ~RotatingFileTest() {
         wipeFiles();
     }
 
@@ -94,9 +96,9 @@ public:
     }
 
     /// @brief Returns a new date by adding given days to a given date
-    /// @param org_day - date to adjust
-    /// @param days - the number of days to add (may be negative)
-    /// @return - the new date
+    /// @param org_day date to adjust
+    /// @param days the number of days to add (may be negative)
+    /// @return the new date
     boost::gregorian::date adjustDay(const boost::gregorian::date& org_day,
                                        int days) {
         boost::gregorian::date_duration dd(days);
@@ -124,10 +126,10 @@ public:
 
     /// @brief Generate a file name based on the given date
     ///
-    /// Uses the same formatting as LegalFile to build file names
+    /// Uses the same formatting as RotatingFile to build file names
     ///
-    /// @param day - date to use in the file name
-    /// @return - the generated file name
+    /// @param day date to use in the file name
+    /// @return the generated file name
     std::string genName(const boost::gregorian::date& day)  {
         boost::gregorian::date::ymd_type ymd = day.year_month_day();
         std::ostringstream stream;
@@ -142,8 +144,8 @@ public:
     ///
     /// Passes if the given file's content matches. Fails otherwise.
     ///
-    /// @param file_name - name of the file to read
-    /// @param expected_lines - a vector of the lines expected to be found
+    /// @param file_name name of the file to read
+    /// @param expected_lines a vector of the lines expected to be found
     /// in the file (entries DO NOT include EOL)
     void checkFileLines(const std::string& file_name,
                         const std::string& now_string,
@@ -190,15 +192,15 @@ public:
     boost::gregorian::date today_;
 };
 
-/// @brief Test fixture for testing LegalFile.
-/// It provides tools for erasing test files, altering date values,
-/// generating file names, checking file existance and content.
-class CalloutTest : public LegalFileTest {
+/// @brief Test fixture for exercising Legal library callouts
+/// It fetches the CalloutManager and cleans up any legal files
+/// that may be created.
+class CalloutTest : public RotatingFileTest {
 public:
     /// @brief Constructor
     /// Fetches the current day and removes files that may be left
     /// over from previous tests
-    CalloutTest() : LegalFileTest(),
+    CalloutTest() : RotatingFileTest(),
         co_manager_(new CalloutManager(1)) {
         legal_file.reset();
     }
@@ -209,6 +211,7 @@ public:
         legal_file.reset();
     }
 
+    /// @brief Fetches the callout manager instance
     boost::shared_ptr<CalloutManager>getCalloutManager() {
         return(co_manager_);
     }
@@ -220,3 +223,5 @@ private:
 
 }; // namespace legal_log
 }; // namespace isc
+
+#endif // TEST_UTILS_H

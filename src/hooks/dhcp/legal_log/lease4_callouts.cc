@@ -4,14 +4,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-/// @file lease4_co.cc Defines lease4_select and lease4_renew callout functions.
+/// @file lease4_callouts.cc Defines lease4_select and lease4_renew callout functions.
 
 #include <config.h>
 #include <dhcp/pkt4.h>
 #include <dhcpsrv/lease.h>
 #include <hooks/hooks.h>
-#include <legal_file.h>
 #include <legal_log_log.h>
+#include <rotating_file.h>
 
 #include <sstream>
 
@@ -22,11 +22,11 @@ using namespace legal_log;
 using namespace std;
 
 /// @brief Pointer to the registry instance.
-extern LegalFilePtr legal_file;
+extern RotatingFilePtr legal_file;
 
 /// @brief Creates legal file entry for a DHCPv4 Lease
 ///
-/// Creates an entry based on the given DHCPv4 DHCPREQUEST and corresponding
+/// Creates an entry based on the given DHCPREQUEST and corresponding
 /// DHCPv4 lease.  The entry is returned as a single string with no embedded
 /// EOL markers and has the following sections:
 ///
@@ -53,7 +53,7 @@ extern LegalFilePtr legal_file;
 /// @param query - DHCPREQUEST packet for which the lease was generated
 /// @param lease - DHCPv4 lease for which the entry should be created
 /// @param renewal - indicates whether or not the lease is a renewal.
-std::string genLease4Entry(Pkt4Ptr query, Lease4Ptr lease, bool renewal) {
+std::string genLease4Entry(const Pkt4Ptr& query, const Lease4Ptr& lease, const bool renewal) {
     std::stringstream stream;
 
     // <address>
@@ -61,7 +61,7 @@ std::string genLease4Entry(Pkt4Ptr query, Lease4Ptr lease, bool renewal) {
         << " has been " << (renewal ? "renewed" : "assigned");
 
     // <duration>
-    stream << " for " << LegalFile::genDurationString(lease->valid_lft_);
+    stream << " for " << RotatingFile::genDurationString(lease->valid_lft_);
 
     // <device-id>
     stream << " to a device with hardware address: "
@@ -86,7 +86,7 @@ std::string genLease4Entry(Pkt4Ptr query, Lease4Ptr lease, bool renewal) {
             if (opt) {
                 const OptionBuffer& id = opt->getData();
                 if (!id.empty()) {
-                    idstream << "circuit-id: " << LegalFile::vectorHexDump(id);
+                    idstream << "circuit-id: " << RotatingFile::vectorHexDump(id);
                 }
             }
 
@@ -99,7 +99,7 @@ std::string genLease4Entry(Pkt4Ptr query, Lease4Ptr lease, bool renewal) {
                         idstream << " and ";
                     }
 
-                    idstream << "remote-id: " << LegalFile::vectorHexDump(id);
+                    idstream << "remote-id: " << RotatingFile::vectorHexDump(id);
                 }
             }
 
@@ -120,13 +120,13 @@ std::string genLease4Entry(Pkt4Ptr query, Lease4Ptr lease, bool renewal) {
 /// error and return failure.
 ///
 /// @param handle CalloutHandle which provides access to context.
-/// @param renewal - indicates whether or not the lease is a renewal.
+/// @param renewal indicates whether or not the lease is a renewal.
 ///
-/// @return - returns 0 upon success, non-zero otherwise
-int legallog4_handler(CalloutHandle& handle, bool renewal) {
+/// @return returns 0 upon success, non-zero otherwise
+int legalLog4Handler(CalloutHandle& handle, bool renewal) {
     if (!legal_file) {
         LOG_ERROR(legal_log_logger,
-                  LEGAL_FILE_HOOK_LEASE4_NO_LEGAL_FILE);
+                  LEGAL_LOG_LEASE4_NO_LEGAL_FILE);
         return (1);
     }
 
@@ -139,7 +139,7 @@ int legallog4_handler(CalloutHandle& handle, bool renewal) {
     try {
         legal_file->writeln(genLease4Entry(query,lease, renewal));
     } catch (const std::exception& ex) {
-        LOG_ERROR(legal_log_logger, LEGAL_FILE_HOOK_LEASE4_WRITE_ERROR)
+        LOG_ERROR(legal_log_logger, LEGAL_LOG_LEASE4_WRITE_ERROR)
                   .arg(ex.what());
         return (1);
     }
@@ -164,11 +164,7 @@ extern "C" {
 int lease4_select(CalloutHandle& handle) {
     bool fake_allocation;
     handle.getArgument("fake_allocation", fake_allocation);
-    if (fake_allocation) {
-        return (0);
-    }
-
-    return(legallog4_handler(handle, false));
+    return(fake_allocation ? 0 : legalLog4Handler(handle, false));
 }
 
 /// @brief  This callout is called at the "lease4_renew" hook.
@@ -180,7 +176,7 @@ int lease4_select(CalloutHandle& handle) {
 ///
 /// @return 0 upon success, non-zero otherwise.
 int lease4_renew(CalloutHandle& handle) {
-    return(legallog4_handler(handle, true));
+    return(legalLog4Handler(handle, true));
 }
 
 } // end extern "C"

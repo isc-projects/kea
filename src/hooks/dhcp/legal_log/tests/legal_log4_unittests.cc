@@ -31,10 +31,10 @@ using namespace dhcp;
 using namespace hooks;
 using namespace legal_log;
 
-extern LegalFilePtr legal_file;
+extern RotatingFilePtr legal_file;
 
-extern std::string genLease4Entry(Pkt4Ptr query, Lease4Ptr lease, bool renewal);
-extern int legallog4_handler(CalloutHandle& handle, bool renewal);
+extern std::string genLease4Entry(const Pkt4Ptr& query, const Lease4Ptr& lease, const bool renewal);
+extern int legalLog4Handler(CalloutHandle& handle, bool renewal);
 
 extern "C" {
 extern int lease4_select(CalloutHandle& handle);
@@ -53,19 +53,19 @@ const uint8_t CLIENTID[] = {0x17, 0x34, 0xe2, 0xff, 0x09, 0x92, 0x54};
 /// Factory for creating leases which defaults values that are not of
 /// interest during legal entry formation.
 ///
-/// @param addr_str - IPv4 lease address as a string
-/// @param valid_lifetime - lifetime of the lease in seconds
-/// @param hwaddr - pointer to the lease hardware address
-/// @param client_id - pointer to the lease client id (may be null)
+/// @param addr_str IPv4 lease address as a string
+/// @param valid_lifetime Lifetime of the lease in seconds
+/// @param hwaddr Pointer to the lease hardware address
+/// @param client_id Pointer to the lease client id (may be null)
 ///
-/// @return pointer to the newly created Lease4 instance
+/// @return Pointer to the newly created Lease4 instance
 Lease4Ptr createLease4(const std::string& addr_str, uint32_t valid_lifetime,
                        const HWAddrPtr& hwaddr, const ClientIdPtr& client_id) {
     Lease4Ptr lease(new Lease4(isc::asiolink::IOAddress(addr_str),
                                hwaddr, client_id, valid_lifetime,
                                0, 0, 0, 0, false, false, ""));
 
-    return(lease);
+    return (lease);
 };
 
 // Verifies legal entry content for directly connected clients
@@ -77,14 +77,14 @@ TEST(Lease4EntryTest, directClient) {
 
     // Verify address and duration for an assignment (no client id)
     ASSERT_NO_THROW(entry = genLease4Entry(pkt4, lease4, false));
-    EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 min 15 secs"
+    EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
               entry);
 
     // Verify address and duration for a renewal (no client id)
     ASSERT_NO_THROW(entry = genLease4Entry(pkt4, lease4, true));
-    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs"
+    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
               entry);
@@ -92,7 +92,7 @@ TEST(Lease4EntryTest, directClient) {
     // Verify with a client id
     lease4->client_id_.reset(new ClientId(CLIENTID, sizeof(CLIENTID)));
     ASSERT_NO_THROW(entry = genLease4Entry(pkt4, lease4, false));
-    EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 min 15 secs"
+    EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54",
               entry);
@@ -100,7 +100,7 @@ TEST(Lease4EntryTest, directClient) {
     // Verify a relayed request (no RAI)
     pkt4->setGiaddr(isc::asiolink::IOAddress("192.2.16.33"));
     ASSERT_NO_THROW(entry = genLease4Entry(pkt4, lease4, true));
-    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs"
+    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
               " connected via relay at address: 192.2.16.33",
@@ -123,7 +123,7 @@ TEST(Lease4EntryTest, directClient) {
 
     pkt4->addOption(rai);
     ASSERT_NO_THROW(entry = genLease4Entry(pkt4, lease4, true));
-    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs"
+    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
               " connected via relay at address: 192.2.16.33"
@@ -136,7 +136,7 @@ TEST(Lease4EntryTest, directClient) {
                                        remote_id + sizeof(remote_id))));
     rai->addOption(remote_id_opt);
     ASSERT_NO_THROW(entry = genLease4Entry(pkt4, lease4, true));
-    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs"
+    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
               " connected via relay at address: 192.2.16.33"
@@ -156,7 +156,7 @@ TEST(Lease4EntryTest, relayedClient) {
     // Verify a relayed request without client id or RAI
     pkt4->setGiaddr(isc::asiolink::IOAddress("192.2.16.33"));
     ASSERT_NO_THROW(entry = genLease4Entry(pkt4, lease4, true));
-    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs"
+    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e"
               " connected via relay at address: 192.2.16.33",
@@ -165,7 +165,7 @@ TEST(Lease4EntryTest, relayedClient) {
     // Verify a relayed request with client id, but no RAI
     lease4->client_id_.reset(new ClientId(CLIENTID, sizeof(CLIENTID)));
     ASSERT_NO_THROW(entry = genLease4Entry(pkt4, lease4, true));
-    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs"
+    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
               " connected via relay at address: 192.2.16.33",
@@ -182,7 +182,7 @@ TEST(Lease4EntryTest, relayedClient) {
     // Verify a relayed request with RAI but has neither circuit id or remote id
     pkt4->setGiaddr(isc::asiolink::IOAddress("192.2.16.33"));
     ASSERT_NO_THROW(entry = genLease4Entry(pkt4, lease4, true));
-    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs"
+    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
               " connected via relay at address: 192.2.16.33",
@@ -197,7 +197,7 @@ TEST(Lease4EntryTest, relayedClient) {
     // Verify a relayed request with RAI with only circuit id
     rai->addOption(circuit_id_opt);
     ASSERT_NO_THROW(entry = genLease4Entry(pkt4, lease4, true));
-    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs"
+    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
               " connected via relay at address: 192.2.16.33"
@@ -212,7 +212,7 @@ TEST(Lease4EntryTest, relayedClient) {
                                                     + sizeof(remote_id))));
     rai->addOption(remote_id_opt);
     ASSERT_NO_THROW(entry = genLease4Entry(pkt4, lease4, true));
-    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs"
+    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
               " connected via relay at address: 192.2.16.33"
@@ -223,7 +223,7 @@ TEST(Lease4EntryTest, relayedClient) {
     // Verify a relayed request with RAI with only remote id
     rai->delOption(RAI_OPTION_AGENT_CIRCUIT_ID);
     ASSERT_NO_THROW(entry = genLease4Entry(pkt4, lease4, true));
-    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs"
+    EXPECT_EQ("Address: 192.2.1.100 has been renewed for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
               " connected via relay at address: 192.2.16.33"
@@ -231,8 +231,8 @@ TEST(Lease4EntryTest, relayedClient) {
               entry);
 }
 
-// Verifies that legallog4_handler() detects a null legal_file
-TEST_F(CalloutTest, noLegalFileTest) {
+// Verifies that legalLog4Handler() detects a null legal_file
+TEST_F(CalloutTest, noRotatingFileTest) {
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
 
@@ -247,7 +247,7 @@ TEST_F(CalloutTest, noLegalFileTest) {
 
     // The function should fail when there's no legal_file.
     int ret;
-    ASSERT_NO_THROW(ret = legallog4_handler(handle, false));
+    ASSERT_NO_THROW(ret = legalLog4Handler(handle, false));
     EXPECT_EQ(1, ret);
 }
 
@@ -255,11 +255,11 @@ TEST_F(CalloutTest, noLegalFileTest) {
 // -# Does not generate an entry when fake_allocation arugment is true
 // -# Generates the correct entry in the legal file given a Pkt4 and Lease4
 // Note we don't bother testing multple entries or rotation as this is done
-// during LegalFile testing.
+// during RotatingFile testing.
 TEST_F(CalloutTest, lease4_select) {
     // Create the legal file
-    TestableLegalFilePtr tfile;
-    ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
+    TestableRotatingFilePtr tfile;
+    ASSERT_NO_THROW(tfile.reset(new TestableRotatingFile(today_)));
     legal_file = tfile;
 
     // Make a callout handle
@@ -303,7 +303,7 @@ TEST_F(CalloutTest, lease4_select) {
     // the one entry for address 192.2.1.111.
     std::vector<std::string>lines;
     lines.push_back("Address: 192.2.1.111 has been assigned"
-                    " for 1 hrs 52 min 15 secs"
+                    " for 1 hrs 52 mins 15 secs"
                     " to a device with hardware address:"
                     " hwtype=1 08:00:2b:02:3f:4e");
 
@@ -315,8 +315,8 @@ TEST_F(CalloutTest, lease4_select) {
 // in the legal file given a Pkt4 and Lease4
 TEST_F(CalloutTest, lease4_renew) {
     // Create the legal file
-    TestableLegalFilePtr tfile;
-    ASSERT_NO_THROW(tfile.reset(new TestableLegalFile(today_)));
+    TestableRotatingFilePtr tfile;
+    ASSERT_NO_THROW(tfile.reset(new TestableRotatingFile(today_)));
     legal_file = tfile;
 
     // Make a callout handle
@@ -342,7 +342,7 @@ TEST_F(CalloutTest, lease4_renew) {
     // Verify that the file content is correct.
     std::vector<std::string>lines;
     lines.push_back("Address: 192.2.1.100 has been renewed"
-                    " for 1 hrs 52 min 15 secs"
+                    " for 1 hrs 52 mins 15 secs"
                     " to a device with hardware address:"
                     " hwtype=1 08:00:2b:02:3f:4e");
 
