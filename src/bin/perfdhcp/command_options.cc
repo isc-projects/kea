@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <fstream>
 
 
 using namespace std;
@@ -117,6 +118,8 @@ CommandOptions::reset() {
     mac_template_.assign(mac, mac + 6);
     duid_template_.clear();
     base_.clear();
+    mac_list_file_.clear();
+    mac_list_.clear();
     num_request_.clear();
     period_ = 0;
     drop_time_set_ = 0;
@@ -205,10 +208,11 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
     std::ostringstream stream;
     stream << "perfdhcp";
+    int num_mac_list_files = 0;
 
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
-    while((opt = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:"
+    while((opt = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:M:"
                         "s:iBc1T:X:O:E:S:I:x:w:e:f:F:")) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
@@ -338,6 +342,13 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                    static_cast<int>(std::numeric_limits<uint16_t>::max()),
                   "local-port must be lower than " +
                   boost::lexical_cast<std::string>(std::numeric_limits<uint16_t>::max()));
+            break;
+
+        case 'M':
+            check(num_mac_list_files >= 1, "only -M option can be specified");
+            num_mac_list_files++;
+            mac_list_file_ = std::string(optarg);
+            loadMacs();
             break;
 
         case 'n':
@@ -685,6 +696,37 @@ CommandOptions::convertHexString(const std::string& text) const {
     return ui;
 }
 
+void CommandOptions::loadMacs() {
+  std::string line;
+  std::ifstream infile(mac_list_file_.c_str());
+  while (std::getline(infile, line)) {
+    check(validateMac(line), "invalid mac in input");
+  }
+}
+
+bool CommandOptions::validateMac(std::string& line) {
+  // decode mac string into a vector of uint8_t returns true in case of error.
+  std::istringstream s(line);
+  std::string token;
+  std::vector<uint8_t> mac;
+  while(std::getline(s, token, ':')) {
+    // Convert token to byte value using std::istringstream
+    if (token.length() > 0) {
+      unsigned int ui = 0;
+      try {
+        // Do actual conversion
+        ui = convertHexString(token);
+      } catch (isc::InvalidParameter&) {
+        return true;
+      }
+      // If conversion succeeded store byte value
+      mac.push_back(ui);
+    }
+  }
+  mac_list_.push_back(mac);
+  return false;
+}
+
 void
 CommandOptions::validate() const {
     check((getIpVersion() != 4) && (isBroadcast() != 0),
@@ -757,7 +799,8 @@ CommandOptions::validate() const {
     check((getTemplateFiles().size() < 2) && (getRequestedIpOffset() >= 0),
           "second/request -T<template-file> must be set to "
           "use -I<ip-offset>");
-
+    check((!getMacListFile().empty() && base_.size() > 0),
+          "Can't use -b with -M option");
 }
 
 void
@@ -871,6 +914,9 @@ CommandOptions::printCommandLine() const {
     if (use_first_) {
         std::cout << "use-first" << std::endl;
     }
+    if (!mac_list_file_.empty()) {
+        std::cout << "mac-file-list=" << mac_list_file_ << std::endl;
+    }
     for (size_t i = 0; i < template_file_.size(); ++i) {
         std::cout << "template-file[" << i << "]=" << template_file_[i] << std::endl;
     }
@@ -915,10 +961,10 @@ CommandOptions::usage() const {
         "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
         "         [-D<max-drop>] [-l<local-addr|interface>] [-P<preload>]\n"
         "         [-a<aggressivity>] [-L<local-port>] [-s<seed>] [-i] [-B]\n"
-        "         [-c] [-1] [-T<template-file>] [-X<xid-offset>]\n"
-        "         [-O<random-offset] [-E<time-offset>] [-S<srvid-offset>]\n"
-        "         [-I<ip-offset>] [-x<diagnostic-selector>] [-w<wrapped>]\n"
-        "         [server]\n"
+        "         [-c] [-1] [-M<mac_list_file>] [-T<template-file>]\n"
+        "         [-X<xid-offset>] [-O<random-offset] [-E<time-offset>]\n"
+        "         [-S<srvid-offset>] [-I<ip-offset>] [-x<diagnostic-selector>]\n"
+        "         [-w<wrapped>] [server]\n"
         "\n"
         "The [server] argument is the name/address of the DHCP server to\n"
         "contact.  For DHCPv4 operation, exchanges are initiated by\n"
@@ -979,6 +1025,8 @@ CommandOptions::usage() const {
         "    via which exchanges are initiated.\n"
         "-L<local-port>: Specify the local port to use\n"
         "    (the value 0 means to use the default).\n"
+        "-M<mac-file-list>: A text file containing a list of macs, one per line.\n"
+        "   If provided a random mac will be choosen for every exchange.\n"
         "-O<random-offset>: Offset of the last octet to randomize in the template.\n"
         "-P<preload>: Initiate first <preload> exchanges back to back at startup.\n"
         "-r<rate>: Initiate <rate> DORA/SARR (or if -i is given, DO/SA)\n"

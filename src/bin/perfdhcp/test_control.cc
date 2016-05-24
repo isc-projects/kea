@@ -79,8 +79,9 @@ TestControl::instance() {
     return (test_control);
 }
 
-TestControl::TestControl() {
-    reset();
+TestControl::TestControl()
+    : number_generator_(0, CommandOptions::instance().getAllMacs().size()) {
+  reset();
 }
 
 void
@@ -464,38 +465,51 @@ TestControl::factoryRequestList4(Option::Universe u,
 }
 
 std::vector<uint8_t>
-TestControl::generateMacAddress(uint8_t& randomized) const {
+TestControl::generateMacAddress(uint8_t& randomized) {
     CommandOptions& options = CommandOptions::instance();
-    uint32_t clients_num = options.getClientsNum();
-    if (clients_num < 2) {
-        return (options.getMacTemplate());
+
+    vector<vector<uint8_t> > macs = options.getAllMacs();
+    // if we are using the -M option return a random one from the list...
+    if (macs.size() > 0) {
+      uint16_t r = number_generator_();
+      if (r >= macs.size()) {
+        r = 0;
+      }
+      return macs[r];
+
+    } else {
+      // ... otherwise use the standard behavior
+      uint32_t clients_num = options.getClientsNum();
+      if (clients_num < 2) {
+          return (options.getMacTemplate());
+      }
+      // Get the base MAC address. We are going to randomize part of it.
+      std::vector<uint8_t> mac_addr(options.getMacTemplate());
+      if (mac_addr.size() != HW_ETHER_LEN) {
+          isc_throw(BadValue, "invalid MAC address template specified");
+      }
+      uint32_t r = macaddr_gen_->generate();
+      randomized = 0;
+      // Randomize MAC address octets.
+      for (std::vector<uint8_t>::iterator it = mac_addr.end() - 1;
+           it >= mac_addr.begin();
+           --it) {
+          // Add the random value to the current octet.
+          (*it) += r;
+          ++randomized;
+          if (r < 256) {
+              // If we are here it means that there is no sense
+              // to randomize the remaining octets of MAC address
+              // because the following bytes of random value
+              // are zero and it will have no effect.
+              break;
+          }
+          // Randomize the next octet with the following
+          // byte of random value.
+          r >>= 8;
+      }
+      return (mac_addr);
     }
-    // Get the base MAC address. We are going to randomize part of it.
-    std::vector<uint8_t> mac_addr(options.getMacTemplate());
-    if (mac_addr.size() != HW_ETHER_LEN) {
-        isc_throw(BadValue, "invalid MAC address template specified");
-    }
-    uint32_t r = macaddr_gen_->generate();
-    randomized = 0;
-    // Randomize MAC address octets.
-    for (std::vector<uint8_t>::iterator it = mac_addr.end() - 1;
-         it >= mac_addr.begin();
-         --it) {
-        // Add the random value to the current octet.
-        (*it) += r;
-        ++randomized;
-        if (r < 256) {
-            // If we are here it means that there is no sense
-            // to randomize the remaining octets of MAC address
-            // because the following bytes of random value
-            // are zero and it will have no effect.
-            break;
-        }
-        // Randomize the next octet with the following
-        // byte of random value.
-        r >>= 8;
-    }
-    return (mac_addr);
 }
 
 OptionPtr
@@ -508,7 +522,7 @@ TestControl::generateClientId(const dhcp::HWAddrPtr& hwaddr) const {
 }
 
 std::vector<uint8_t>
-TestControl::generateDuid(uint8_t& randomized) const {
+TestControl::generateDuid(uint8_t& randomized) {
     CommandOptions& options = CommandOptions::instance();
     uint32_t clients_num = options.getClientsNum();
     if ((clients_num == 0) || (clients_num == 1)) {
@@ -518,6 +532,7 @@ TestControl::generateDuid(uint8_t& randomized) const {
     std::vector<uint8_t> duid(options.getDuidTemplate());
     // @todo: add support for DUIDs of different sizes.
     std::vector<uint8_t> mac_addr(generateMacAddress(randomized));
+    // TODO: if duid_ll option is set assume DUID_LL
     duid.resize(duid.size());
     std::copy(mac_addr.begin(), mac_addr.end(),
               duid.begin() + duid.size() - mac_addr.size());

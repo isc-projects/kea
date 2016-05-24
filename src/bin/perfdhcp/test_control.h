@@ -15,6 +15,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <util/random/random_number_generator.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -281,6 +282,8 @@ protected:
     /// only via \ref instance method.
     TestControl();
 
+    isc::util::random::UniformRandomIntegerGenerator number_generator_;
+
     /// \brief Check if test exit conditions fulfilled.
     ///
     /// Method checks if the test exit conditions are fulfilled.
@@ -465,7 +468,7 @@ protected:
     /// is ignored).
     /// \throw isc::BadValue if \ref generateMacAddress throws.
     /// \return vector representing DUID.
-    std::vector<uint8_t> generateDuid(uint8_t& randomized) const;
+    std::vector<uint8_t> generateDuid(uint8_t& randomized);
 
     /// \brief Generate MAC address.
     ///
@@ -481,7 +484,7 @@ protected:
     /// \throw isc::BadValue if MAC address template (default or specified
     /// from the command line) has invalid size (expected 6 octets).
     /// \return generated MAC address.
-    std::vector<uint8_t> generateMacAddress(uint8_t& randomized) const;
+    std::vector<uint8_t> generateMacAddress(uint8_t& randomized);
 
     /// \brief generate transaction id.
     ///
