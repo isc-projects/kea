@@ -75,7 +75,7 @@ BufferAppender::append(const log4cplus::spi::InternalLoggingEvent& event) {
                   "Internal log buffer has been flushed already");
     }
     // get a clone, and put the pointer in a shared_ptr in the list
-    std::auto_ptr<log4cplus::spi::InternalLoggingEvent> event_aptr =
+    std::unique_ptr<log4cplus::spi::InternalLoggingEvent> event_aptr =
         event.clone();
     // Also store the string representation of the log level, to be
     // used in flushStdout if necessary

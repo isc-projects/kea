@@ -95,10 +95,7 @@ CAA::constructFromLexer(MasterLexer& lexer) {
 CAA::CAA(const string& caa_str) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the CAAImpl that constructFromLexer() returns.
-    std::auto_ptr<CAAImpl> impl_ptr(NULL);
+    std::unique_ptr<CAAImpl> impl_ptr;
 
     try {
         std::istringstream ss(caa_str);

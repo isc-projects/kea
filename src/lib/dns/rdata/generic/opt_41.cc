@@ -86,7 +86,7 @@ OPT::OPT(MasterLexer&, const Name*,
 OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
     impl_(NULL)
 {
-    std::auto_ptr<OPTImpl> impl_ptr(new OPTImpl);
+    std::unique_ptr<OPTImpl> impl_ptr(new OPTImpl);
 
     while (true) {
         if (rdata_len == 0) {

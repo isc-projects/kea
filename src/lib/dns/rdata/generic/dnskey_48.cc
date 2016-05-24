@@ -70,10 +70,7 @@ struct DNSKEYImpl {
 DNSKEY::DNSKEY(const std::string& dnskey_str) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the DNSKEYImpl that constructFromLexer() returns.
-    std::auto_ptr<DNSKEYImpl> impl_ptr(NULL);
+    std::unique_ptr<DNSKEYImpl> impl_ptr;
 
     try {
         std::istringstream ss(dnskey_str);
