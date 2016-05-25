@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS dhcp4_options;
 DROP TABLE IF EXISTS dhcp6_options;
 DROP TABLE IF EXISTS host_identifier_type;
 DROP TABLE IF EXISTS lease_state;
+DROP TABLE IF EXISTS dhcp_option_scope;
 DROP TRIGGER IF EXISTS host_BDEL;
 DROP PROCEDURE IF EXISTS lease4DumpHeader;
 DROP PROCEDURE IF EXISTS lease4DumpData;
