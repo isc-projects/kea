@@ -316,6 +316,9 @@ public:
             uint32_t valid_lifetime, time_t& cltt);
     ///@}
 
+    /// @brief Starts Transaction
+    void startTransaction();
+
     /// @brief Commit Transactions
     ///
     /// Commits all pending database operations. On databases that don't
