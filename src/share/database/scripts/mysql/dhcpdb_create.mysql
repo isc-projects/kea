@@ -443,6 +443,33 @@ ALTER TABLE dhcp6_options MODIFY code SMALLINT UNSIGNED NOT NULL;
 ALTER TABLE dhcp4_options MODIFY dhcp4_subnet_id INT UNSIGNED NULL;
 ALTER TABLE dhcp6_options MODIFY dhcp6_subnet_id INT UNSIGNED NULL;
 
+# Scopes associate DHCP options stored in dhcp4_options and
+# dhcp6_options tables with hosts, subnets, classes or indicate
+# that they are global options.
+CREATE TABLE IF NOT EXISTS dhcp_option_scope (
+    scope_id TINYINT UNSIGNED PRIMARY KEY NOT NULL,
+    scope_name VARCHAR(32)
+) ENGINE = INNODB;
+
+START TRANSACTION;
+INSERT INTO dhcp_option_scope VALUES (0, "global");
+INSERT INTO dhcp_option_scope VALUES (1, "subnet");
+INSERT INTO dhcp_option_scope VALUES (2, "client-class");
+INSERT INTO dhcp_option_scope VALUES (3, "host");
+COMMIT;
+
+# Add scopes into table holding DHCPv4 options
+ALTER TABLE dhcp4_options ADD COLUMN scope_id TINYINT UNSIGNED NOT NULL;
+ALTER TABLE dhcp4_options
+    ADD CONSTRAINT fk_dhcp4_option_scope FOREIGN KEY (scope_id)
+    REFERENCES dhcp_option_scope (scope_id);
+
+# Add scopes into table holding DHCPv6 options
+ALTER TABLE dhcp6_options ADD COLUMN scope_id TINYINT UNSIGNED NOT NULL;
+ALTER TABLE dhcp6_options
+    ADD CONSTRAINT fk_dhcp6_option_scope FOREIGN KEY (scope_id)
+    REFERENCES dhcp_option_scope (scope_id);
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '4', minor = '2';
