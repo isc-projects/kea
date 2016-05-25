@@ -524,19 +524,53 @@ TestControl::generateClientId(const dhcp::HWAddrPtr& hwaddr) const {
 std::vector<uint8_t>
 TestControl::generateDuid(uint8_t& randomized) {
     CommandOptions& options = CommandOptions::instance();
-    uint32_t clients_num = options.getClientsNum();
-    if ((clients_num == 0) || (clients_num == 1)) {
-        return (options.getDuidTemplate());
-    }
-    // Get the base DUID. We are going to randomize part of it.
-    std::vector<uint8_t> duid(options.getDuidTemplate());
-    // @todo: add support for DUIDs of different sizes.
     std::vector<uint8_t> mac_addr(generateMacAddress(randomized));
-    // TODO: if duid_ll option is set assume DUID_LL
-    duid.resize(duid.size());
-    std::copy(mac_addr.begin(), mac_addr.end(),
-              duid.begin() + duid.size() - mac_addr.size());
-    return (duid);
+    vector<vector<uint8_t> > macs = options.getAllMacs();
+    // pick a random mac address if we are using option -M..
+    if (macs.size() > 0) {
+      uint16_t r = number_generator_();
+      if (r >= macs.size()) {
+        r = 0;
+      }
+      std::vector<uint8_t> mac = macs[r];
+      // DUID_LL is in this format
+      //  0                   1                   2                   3
+      //  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      // |               3               |    hardware type (16 bits)    |
+      // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      // .                                                               .
+      // .             link-layer address (variable length)              .
+      // .                                                               .
+      // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      // No C++11 so initializer list support, building a vector<uint8_t> is a
+      // pain...
+      uint8_t duid_ll[] = {0, 3, 0, 1, 0, 0, 0, 0, 0, 0};
+      // copy duid_ll array into the vector
+      std::vector<uint8_t> duid(duid_ll,
+                                duid_ll + sizeof(duid_ll) / sizeof(duid_ll[0]));
+      // put the mac address bytes at the end
+      duid[4] = mac[0];
+      duid[5] = mac[1];
+      duid[6] = mac[2];
+      duid[7] = mac[3];
+      duid[8] = mac[4];
+      duid[9] = mac[5];
+      return (duid);
+    } else {
+      uint32_t clients_num = options.getClientsNum();
+      if ((clients_num == 0) || (clients_num == 1)) {
+          return (options.getDuidTemplate());
+      }
+      // Get the base DUID. We are going to randomize part of it.
+      std::vector<uint8_t> duid(options.getDuidTemplate());
+      // @todo: add support for DUIDs of different sizes.
+      duid.resize(duid.size());
+      std::copy(mac_addr.begin(), mac_addr.end(),
+                duid.begin() + duid.size() - mac_addr.size());
+      return (duid);
+    }
 }
 
 uint32_t
