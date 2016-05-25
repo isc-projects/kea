@@ -109,7 +109,7 @@ std::string genLease4Entry(const Pkt4Ptr& query, const Lease4Ptr& lease, const b
         }
     }
 
-    return(stream.str());
+    return (stream.str());
 }
 
 /// @brief Produces an DHCPv4 legal log entry from a callout handle
@@ -164,7 +164,7 @@ extern "C" {
 int lease4_select(CalloutHandle& handle) {
     bool fake_allocation;
     handle.getArgument("fake_allocation", fake_allocation);
-    return(fake_allocation ? 0 : legalLog4Handler(handle, false));
+    return (fake_allocation ? 0 : legalLog4Handler(handle, false));
 }
 
 /// @brief  This callout is called at the "lease4_renew" hook.
@@ -176,7 +176,7 @@ int lease4_select(CalloutHandle& handle) {
 ///
 /// @return 0 upon success, non-zero otherwise.
 int lease4_renew(CalloutHandle& handle) {
-    return(legalLog4Handler(handle, true));
+    return (legalLog4Handler(handle, true));
 }
 
 } // end extern "C"
