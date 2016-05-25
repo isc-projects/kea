@@ -35,6 +35,16 @@ public:
         V6
     };
 
+    /// @brief Options to be inserted into a host.
+    ///
+    /// Parameter of this type is passed to the @ref addTestOptions to
+    /// control which option types should be inserted into a host.
+    enum AddedOptions {
+        DHCP4_ONLY,
+        DHCP6_ONLY,
+        DHCP4_AND_DHCP6
+    };
+
     /// @brief Default constructor.
     GenericHostDataSourceTest();
 
@@ -319,7 +329,10 @@ public:
     /// @param host Host object into which options should be added.
     /// @param formatted A boolean value selecting if the formatted option
     /// value should be used (if true), or binary value (if false).
-    void addTestOptions(const HostPtr& host, const bool formatted) const;
+    /// @param added_options Controls which options should be inserted into
+    /// a host: DHCPv4, DHCPv6 options or both.
+    void addTestOptions(const HostPtr& host, const bool formatted,
+                        const AddedOptions& added_options) const;
 
     /// @brief Pointer to the host data source
     HostDataSourcePtr hdsptr_;

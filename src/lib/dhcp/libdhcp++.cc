@@ -848,27 +848,23 @@ LibDHCP::initVendorOptsIsc6() {
 
 uint32_t
 LibDHCP::optionSpaceToVendorId(const std::string& option_space) {
-    if (option_space.size() < 8) {
-        // 8 is a minimal length of "vendor-X" format
+    // 8 is a minimal length of "vendor-X" format
+    if ((option_space.size() < 8) || (option_space.substr(0,7) != "vendor-")) {
         return (0);
     }
-    if (option_space.substr(0,7) != "vendor-") {
-        return (0);
-    }
-
-    // text after "vendor-", supposedly numbers only
-    std::string x = option_space.substr(7);
 
     int64_t check;
     try {
+        // text after "vendor-", supposedly numbers only
+        std::string x = option_space.substr(7);
+
         check = boost::lexical_cast<int64_t>(x);
+
     } catch (const boost::bad_lexical_cast &) {
         return (0);
     }
-    if (check > std::numeric_limits<uint32_t>::max()) {
-        return (0);
-    }
-    if (check < 0) {
+
+    if ((check < 0) || (check > std::numeric_limits<uint32_t>::max())) {
         return (0);
     }
 

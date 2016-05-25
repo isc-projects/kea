@@ -1791,15 +1791,15 @@ public:
     /// @brief Destructor.
     ~MySqlHostDataSourceImpl();
 
-    /// @brief Executes query which inserts a row into one of the tables.
+    /// @brief Executes statements which inserts a row into one of the tables.
     ///
     /// @param stindex Index of a statement being executed.
     /// @param bind Vector of MYSQL_BIND objects to be used when making the
     /// query.
     ///
     /// @throw isc::dhcp::DuplicateEntry Database throws duplicate entry error
-    void addQuery(MySqlHostDataSource::StatementIndex stindex,
-                  std::vector<MYSQL_BIND>& bind);
+    void addStatement(MySqlHostDataSource::StatementIndex stindex,
+                      std::vector<MYSQL_BIND>& bind);
 
     /// @brief Inserts IPv6 Reservation into ipv6_reservation table.
     ///
@@ -1935,12 +1935,12 @@ MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
     // Open the database.
     conn_.openDatabase();
 
-    // Enable autocommit.  To avoid a flush to disk on every commit, the global
+    // Disable autocommit.  To avoid a flush to disk on every commit, the global
     // parameter innodb_flush_log_at_trx_commit should be set to 2.  This will
     // cause the changes to be written to the log, but flushed to disk in the
     // background every second.  Setting the parameter to that value will speed
     // up the system, but at the risk of losing data if the system crashes.
-    my_bool result = mysql_autocommit(conn_.mysql_, 1);
+    my_bool result = mysql_autocommit(conn_.mysql_, 0);
     if (result != 0) {
         isc_throw(DbOperationError, mysql_error(conn_.mysql_));
     }
@@ -1966,8 +1966,8 @@ MySqlHostDataSourceImpl::~MySqlHostDataSourceImpl() {
 }
 
 void
-MySqlHostDataSourceImpl::addQuery(MySqlHostDataSource::StatementIndex stindex,
-                                  std::vector<MYSQL_BIND>& bind) {
+MySqlHostDataSourceImpl::addStatement(MySqlHostDataSource::StatementIndex stindex,
+                                      std::vector<MYSQL_BIND>& bind) {
 
     // Bind the parameters to the statement
     int status = mysql_stmt_bind_param(conn_.statements_[stindex], &bind[0]);
@@ -1991,7 +1991,7 @@ MySqlHostDataSourceImpl::addResv(const IPv6Resrv& resv,
     std::vector<MYSQL_BIND> bind =
         host_ipv6_reservation_exchange_->createBindForSend(resv, id);
 
-    addQuery(MySqlHostDataSource::INSERT_V6_RESRV, bind);
+    addStatement(MySqlHostDataSource::INSERT_V6_RESRV, bind);
 }
 
 void
@@ -2004,7 +2004,7 @@ MySqlHostDataSourceImpl::addOption(const MySqlHostDataSource::StatementIndex& st
         host_option_exchange_->createBindForSend(opt_desc, opt_space,
                                                  subnet_id, id);
 
-    addQuery(stindex, bind);
+    addStatement(stindex, bind);
 }
 
 void
@@ -2178,21 +2178,11 @@ MySqlHostDataSource::add(const HostPtr& host) {
     // Create the MYSQL_BIND array for the host
     std::vector<MYSQL_BIND> bind = impl_->host_exchange_->createBindForSend(host);
 
-    // ... and call addHost() code.
-    impl_->addQuery(INSERT_HOST, bind);
+    // ... and insert the host.
+    impl_->addStatement(INSERT_HOST, bind);
 
     // Gets the last inserted hosts id
     uint64_t host_id = 0;
-
-    // Insert IPv6 reservations.
-    IPv6ResrvRange v6resv = host->getIPv6Reservations();
-    if (std::distance(v6resv.first, v6resv.second) > 0) {
-        host_id = mysql_insert_id(impl_->conn_.mysql_);
-        for (IPv6ResrvIterator resv = v6resv.first; resv != v6resv.second;
-             ++resv) {
-            impl_->addResv(resv->second, host_id);
-        }
-    }
 
     // Insert DHCPv4 options.
     ConstCfgOptionPtr cfg_option4 = host->getCfgOption4();
@@ -2204,6 +2194,19 @@ MySqlHostDataSource::add(const HostPtr& host) {
     ConstCfgOptionPtr cfg_option6 = host->getCfgOption6();
     if (cfg_option6) {
         impl_->addOptions(INSERT_V6_OPTION, cfg_option6, host_id);
+    }
+
+    // Insert IPv6 reservations.
+    IPv6ResrvRange v6resv = host->getIPv6Reservations();
+    if (std::distance(v6resv.first, v6resv.second) > 0) {
+        // Set host_id if it wasn't set when we inserted options.
+        if (host_id == 0) {
+            host_id = mysql_insert_id(impl_->conn_.mysql_);
+        }
+        for (IPv6ResrvIterator resv = v6resv.first; resv != v6resv.second;
+             ++resv) {
+            impl_->addResv(resv->second, host_id);
+        }
     }
 
     // Everything went fine, so explicitly commit the transaction.
