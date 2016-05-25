@@ -251,24 +251,6 @@ public:
     /// Rolls back all pending database operations.
     virtual void rollback();
 
-    /// @brief Statement Tags
-    ///
-    /// The contents of the enum are indexes into the list of SQL statements
-    enum StatementIndex {
-        INSERT_HOST,            // Insert new host to collection
-        INSERT_V6_RESRV,        // Insert v6 reservation
-        INSERT_V4_OPTION,       // Insert DHCPv4 option
-        INSERT_V6_OPTION,       // Insert DHCPv6 option
-        GET_HOST_DHCPID,        // Gets hosts by host identifier
-        GET_HOST_ADDR,          // Gets hosts by IPv4 address
-        GET_HOST_SUBID4_DHCPID, // Gets host by IPv4 SubnetID, HW address/DUID
-        GET_HOST_SUBID6_DHCPID, // Gets host by IPv6 SubnetID, HW address/DUID
-        GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
-        GET_HOST_PREFIX,        // Gets host by IPv6 prefix
-        GET_VERSION,            // Obtain version number
-        NUM_STATEMENTS          // Number of statements
-    };
-
 private:
 
     /// @brief Pointer to the implementation of the @ref MySqlHostDataSource.
