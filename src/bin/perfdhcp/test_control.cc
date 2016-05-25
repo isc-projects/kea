@@ -794,7 +794,8 @@ TestControl::openSocket() const {
 
     if (port == 0) {
         if (family == AF_INET6) {
-            port = DHCP6_CLIENT_PORT;
+            // need server port (547) because the server is acting as a relayer
+            port = DHCP6_SERVER_PORT;
         } else if (options.getIpVersion() == 4) {
             port = 67; //  TODO: find out why port 68 is wrong here.
         }
@@ -2241,6 +2242,13 @@ TestControl::setDefaults6(const TestControlSocket& socket,
     pkt->setLocalAddr(socket.addr_);
     // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
+
+    Pkt6::RelayInfo relay_info;
+    relay_info.msg_type_ = DHCPV6_RELAY_FORW;
+    relay_info.hop_count_ = 1;
+    relay_info.linkaddr_ = IOAddress(socket.addr_);
+    relay_info.peeraddr_ = IOAddress(socket.addr_);
+    pkt->addRelayInfo(relay_info);
 }
 
 bool
