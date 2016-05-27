@@ -21,12 +21,9 @@ namespace dhcp {
 // The first level traces normal operations,
 const int EVAL_DBG_TRACE = DBGLVL_TRACE_BASIC;
 
-// The next level traces each call to eval code.
-const int EVAL_DBG_CALLS = DBGLVL_TRACE_BASIC_DATA;
-
 // Additional information on the calls.  Report the values that were
 // popped from or pushed to the value stack.
-const int EVAL_DBG_EXTENDED_CALLS = DBGLVL_TRACE_DETAIL_DATA;
+const int EVAL_DBG_STACK = DBGLVL_TRACE_DETAIL_DATA;
 
 /// @brief Eval Logger
 ///
