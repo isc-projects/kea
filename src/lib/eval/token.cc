@@ -23,8 +23,8 @@ TokenString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     values.push(value_);
 
     // Log what we pushed
-    LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_STRING)
-        .arg('"' + value_ + '"');
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_STRING)
+        .arg('\'' + value_ + '\'');
 }
 
 TokenHexString::TokenHexString(const string& str) : value_("") {
@@ -61,7 +61,7 @@ TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     values.push(value_);
 
     // Log what we pushed
-    LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_HEXSTRING)
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_HEXSTRING)
         .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value_.begin(),
 								 value_.end())));
 }
@@ -87,7 +87,7 @@ TokenIpAddress::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     values.push(value_);
 
     // Log what we pushed
-    LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_IPADDRESS)
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_IPADDRESS)
         .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value_.begin(),
 								 value_.end())));
 }
@@ -125,14 +125,14 @@ TokenOption::evaluate(const Pkt& pkt, ValueStack& values) {
     // and can be output directly.  We also include the code number
     // of the requested option.
     if (representation_type_ == HEXADECIMAL) {
-        LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_OPTION)
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OPTION)
             .arg(option_code_)
             .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(opt_str.begin(),
-								     opt_str.end())));
+                                                                     opt_str.end())));
     } else {
-        LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_OPTION)
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OPTION)
             .arg(option_code_)
-            .arg('"' + opt_str + '"');
+            .arg('\'' + opt_str + '\'');
     }
 }
 
@@ -232,10 +232,10 @@ TokenPkt4::evaluate(const Pkt& pkt, ValueStack& values) {
     values.push(value);
 
     // Log what we pushed
-    LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_PKT4)
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT4)
         .arg(type_str)
         .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value.begin(),
-								 value.end())));
+                                                                 value.end())));
 }
 
 void
@@ -251,21 +251,18 @@ TokenEqual::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     string op2 = values.top();
     values.pop(); // Dammit, std::stack interface is awkward.
 
-    string result;
     if (op1 == op2)
-        result = "true";
+        values.push("true");
     else
-        result = "false";
-
-    values.push(result);
+        values.push("false");
 
     // Log what we popped and pushed
-    LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_EQUAL)
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_EQUAL)
         .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(op1.begin(),
                                                                  op1.end())))
         .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(op2.begin(),
                                                                  op2.end())))
-        .arg('"' + result + '"');
+        .arg('\'' + values.top() + '\'');
 }
 
 void
@@ -288,7 +285,7 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
         values.push("");
 
         // Log what we popped and pushed
-        LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_SUBSTRING_EMPTY)
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUBSTRING_EMPTY)
             .arg(len_str)
             .arg(start_str)
             .arg("0x")
@@ -328,7 +325,7 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
         values.push("");
 
         // Log what we popped and pushed
-        LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_SUBSTRING_RANGE)
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUBSTRING_RANGE)
             .arg(len_str)
             .arg(start_str)
             .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(string_str.begin(),
@@ -354,19 +351,17 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
         }
     }
 
-
     // and finally get the substring
-    string result = string_str.substr(start_pos, length);
-    values.push(result);
+    values.push(string_str.substr(start_pos, length));
 
     // Log what we popped and pushed
-    LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_SUBSTRING)
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUBSTRING)
         .arg(len_str)
         .arg(start_str)
         .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(string_str.begin(),
                                                                  string_str.end())))
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(result.begin(),
-                                                                 result.end())));
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(values.top().begin(),
+                                                                 values.top().end())));
 }
 
 void
@@ -383,17 +378,16 @@ TokenConcat::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     values.pop(); // Dammit, std::stack interface is awkward.
 
     // The top of the stack was evaluated last so this is the right order
-    string result = op2 + op1;
-    values.push(result);
+    values.push(op2 + op1);
 
     // Log what we popped and pushed
-    LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_CONCAT)
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_CONCAT)
         .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(op1.begin(),
                                                                  op1.end())))
         .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(op2.begin(),
                                                                  op2.end())))
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(result.begin(),
-                                                                 result.end())));
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(values.top().begin(),
+                                                                 values.top().end())));
 }
 
 void
@@ -407,18 +401,16 @@ TokenNot::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     values.pop();
     bool val = toBool(op);
 
-    string result;
     if (!val) {
-        result = "true";
+        values.push("true");
     } else {
-        result = "false";
+        values.push("false");
     }
-    values.push(result);
 
     // Log what we popped and pushed
-    LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_NOT)
-        .arg('"' + op + '"') 
-        .arg('"' + result + '"');
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_NOT)
+        .arg('\'' + op + '\'')
+        .arg('\'' + values.top() + '\'');
 }
 
 void
@@ -436,19 +428,17 @@ TokenAnd::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     values.pop(); // Dammit, std::stack interface is awkward.
     bool val2 = toBool(op2);
 
-    string result;
     if (val1 && val2) {
-        result = "true";
+        values.push("true");
     } else {
-        result = "false";
+        values.push("false");
     }
-    values.push(result);
 
     // Log what we popped and pushed
-    LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_AND)
-        .arg('"' + op1 + '"')
-        .arg("\"" + op2 + "\"")
-        .arg("\"" + result + "\"");
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_AND)
+        .arg('\'' + op1 + '\'')
+        .arg('\'' + op2 + '\'')
+        .arg('\'' + values.top() + '\'');
 }
 
 void
@@ -466,19 +456,17 @@ TokenOr::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     values.pop(); // Dammit, std::stack interface is awkward.
     bool val2 = toBool(op2);
 
-    string result;
     if (val1 || val2) {
-        result = "true";
+        values.push("true");
     } else {
-        result = "false";
+        values.push("false");
     }
-    values.push(result);
 
     // Log what we popped and pushed
-    LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_OR)
-        .arg('"' + op1 + '"')
-        .arg('"' + op2 + '"')
-        .arg('"' + result + '"');
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OR)
+        .arg('\'' + op1 + '\'')
+        .arg('\'' + op2 + '\'')
+        .arg('\'' + values.top() + '\'');
 }
 
 OptionPtr TokenRelay6Option::getOption(const Pkt& pkt) {
@@ -535,7 +523,7 @@ TokenRelay6Field::evaluate(const Pkt& pkt, ValueStack& values) {
             // level is invalid.  We push "" in that case.
             values.push("");
             // Log what we pushed
-            LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_RELAY6_RANGE)
+            LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_RELAY6_RANGE)
               .arg(type_str)
               .arg(unsigned(nest_level_))
               .arg("0x");
@@ -553,7 +541,7 @@ TokenRelay6Field::evaluate(const Pkt& pkt, ValueStack& values) {
     values.push(value);
 
     // Log what we pushed
-    LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_RELAY6)
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_RELAY6)
         .arg(type_str)
         .arg(unsigned(nest_level_))
         .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value.begin(),
@@ -606,7 +594,7 @@ TokenPkt6::evaluate(const Pkt& pkt, ValueStack& values) {
     values.push(value);
 
     // Log what we pushed
-    LOG_DEBUG(eval_logger, EVAL_DBG_EXTENDED_CALLS, EVAL_DEBUG_PKT6)
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT6)
         .arg(type_str)
         .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value.begin(),
                                                                  value.end())));
