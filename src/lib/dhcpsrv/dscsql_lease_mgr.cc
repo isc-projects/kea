@@ -92,12 +92,14 @@ static const char* delete_lease4_params[] = {
         NULL };
 static const char* delete_expired_lease4_params[] = {
         static_cast<const char*>("state"),
+        static_cast<const char*>("expire"),
         NULL };
 static const char* delete_lease6_params[] = {
         static_cast<const char*>("address"),
         NULL };
 static const char* delete_expired_lease6_params[] = {
         static_cast<const char*>("state"),
+        static_cast<const char*>("expire"),
         NULL };
 static const char* get_lease4_addr_params[] = {
         static_cast<const char*>("address"),
@@ -118,6 +120,7 @@ static const char* get_lease4_hwaddr_subid_params[] = {
         NULL };
 static const char* get_lease4_expired_params[] = {
         static_cast<const char*>("state"),
+        static_cast<const char*>("expire"),
         static_cast<const char*>("limit"),
         NULL };
 static const char* get_lease6_addr_params[] = {
@@ -137,6 +140,7 @@ static const char* get_lease6_duid_iaid_subid_params[] = {
         NULL };
 static const char* get_lease6_expired_params[] = {
         static_cast<const char*>("state"),
+        static_cast<const char*>("expire"),
         static_cast<const char*>("limit"),
         NULL };
 static const char* get_version_params[] = {
@@ -218,12 +222,11 @@ DSCSqlTaggedStatement DSCSqlLeaseMgr::tagged_statements_[] = {
     // DELETE_LEASE4_STATE_EXPIRED
     { delete_expired_lease4_params,
       "delete_lease4_expired",
-      //"WHERE state = ? AND expire < ? ALLOW FILTERING"
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, expire, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
-      "WHERE state = ? ALLOW FILTERING" },
+      "WHERE state = ? AND expire < ? ALLOW FILTERING" },
 
     // DELETE_LEASE6
     { delete_lease6_params,
@@ -233,13 +236,12 @@ DSCSqlTaggedStatement DSCSqlLeaseMgr::tagged_statements_[] = {
     // DELETE_LEASE6_STATE_EXPIRED
     { delete_expired_lease6_params,
       "delete_lease6_expired",
-      //"WHERE state = ? AND expire < ? ALLOW FILTERING"
       "SELECT address, duid, valid_lifetime, "
         "expire, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, state "
       "FROM lease6 "
-      "WHERE state = ? ALLOW FILTERING" },
+      "WHERE state = ? AND expire < ? ALLOW FILTERING" },
 
     // GET_LEASE4_ADDR
     { get_lease4_addr_params,
@@ -294,7 +296,7 @@ DSCSqlTaggedStatement DSCSqlLeaseMgr::tagged_statements_[] = {
         "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
       //"WHERE state != ? AND expire < ? ORDER BY expire ASC "
-      "WHERE state = ? "
+      "WHERE state = ? AND expire < ? "
       "LIMIT ? ALLOW FILTERING" },
 
     // GET_LEASE6_ADDR
@@ -327,7 +329,7 @@ DSCSqlTaggedStatement DSCSqlLeaseMgr::tagged_statements_[] = {
       "FROM lease6 "
       "WHERE duid = ? AND iaid = ? AND subnet_id = ? AND lease_type = ? ALLOW FILTERING" },
 
-      // GET_LEASE6_EXPIRE
+    // GET_LEASE6_EXPIRE
     { get_lease6_expired_params,
       "get_lease6_expired",
       "SELECT address, duid, valid_lifetime, "
@@ -336,7 +338,7 @@ DSCSqlTaggedStatement DSCSqlLeaseMgr::tagged_statements_[] = {
         "hwaddr, hwtype, hwaddr_source, state "
       "FROM lease6 "
       //"WHERE state != ? AND expire < ? ORDER BY expire ASC "
-      "WHERE state = ? "
+      "WHERE state = ? AND expire < ? "
       "LIMIT ? ALLOW FILTERING" },
 
     // GET_VERSION
@@ -1567,6 +1569,7 @@ DSCSqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
         DSCSqlBindArray bind_array;
 
         bind_array.add(&state);
+        bind_array.add(&timestamp);
         bind_array.add(&limit);
 
         // Retrieve leases from the database.
@@ -1575,9 +1578,7 @@ DSCSqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
         typedef typename LeaseCollection::iterator LeaseCollectionIt;
 
         for (LeaseCollectionIt it = tempCollection.begin(); it != tempCollection.end(); ++it) {
-            if ((*it)->getExpirationTime() < timestamp) {
-                expired_leases.push_back((*it));
-            }
+            expired_leases.push_back((*it));
         }
     }
 }
@@ -1788,6 +1789,7 @@ DSCSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs, Statemen
 
     // Expiration timestamp.
     uint64_t expiration = static_cast<int64_t>(time(NULL) - static_cast<time_t>(secs));
+    bind_array.add(&expiration);
 
     // Get the data
     Lease4Collection result4Leases;
@@ -1803,17 +1805,13 @@ DSCSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs, Statemen
         break;
     }
     for (Lease4Collection::iterator it = result4Leases.begin(); it != result4Leases.end(); ++it) {
-        if ((*it)->getExpirationTime() < expiration) {
-            if(deleteLease((*it)->addr_)) {
-                result++;
-            }
+        if (deleteLease((*it)->addr_)) {
+            result++;
         }
     }
     for (Lease6Collection::iterator it = result6Leases.begin(); it != result6Leases.end(); ++it) {
-        if ((*it)->getExpirationTime() < expiration) {
-            if(deleteLease((*it)->addr_)) {
-                result++;
-            }
+        if (deleteLease((*it)->addr_)) {
+            result++;
         }
     }
     return (result);
