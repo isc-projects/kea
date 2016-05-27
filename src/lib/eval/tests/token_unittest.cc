@@ -15,6 +15,7 @@
 #include <log/logger_manager.h>
 #include <log/logger_name.h>
 #include <log/logger_support.h>
+#include <testutils/log_utils.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -26,6 +27,7 @@ using namespace std;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::log;
+using namespace isc::dhcp::test;
 
 namespace {
 
@@ -34,7 +36,7 @@ namespace {
 /// This class provides several convenience objects to be used during testing
 /// of the Token family of classes.
 
-class TokenTest : public ::testing::Test {
+class TokenTest : public LogContentTest {
 public:
 
     /// @brief Initializes Pkt4,Pkt6 and options that can be useful for
@@ -49,54 +51,6 @@ public:
 
         pkt4_->addOption(option_str4_);
         pkt6_->addOption(option_str6_);
-
-        // Set up the logger for use in checking the debug statements.
-        // We send the debug statements to a file which we can
-        // check after the evaluations have completed.  We also
-        // set the log severity and debug levels so that the log
-        // statements are executed.
-        LoggerSpecification spec(getRootLoggerName(),
-                                 keaLoggerSeverity(isc::log::DEBUG),
-                                 keaLoggerDbglevel(isc::log::MAX_DEBUG_LEVEL));
-        OutputOption option;
-        option.destination = OutputOption::DEST_FILE;
-        option.filename = string(TokenTest::LOG_FILE);
-        spec.addOutputOption(option);
-        LoggerManager manager;
-        manager.process(spec);
-    }
-
-    /// @brief check that the requested strings are in the
-    /// test log file in the requested order.
-    ///
-    /// @param exp_strings vector of strings to match
-    /// @return true if all of the strings match
-    bool checkFile(const vector<string>& exp_strings) {
-        ifstream file(LOG_FILE);
-        EXPECT_TRUE(file.is_open());
-        string line, exp_line;
-        int i = 0;
-        bool found = true;
-
-        while (getline(file, line) && (i != exp_strings.size())) {
-            exp_line = exp_strings[i];
-            i++;
-            if (string::npos == line.find(exp_line)) {
-                found = false;
-            }
-        }
-
-        file.close();
-
-        if ((i != exp_strings.size()) || (found == false))
-            return (false);
-
-        return (true);
-    }
-
-    /// @brief remove the test log file
-    void remFile() {
-      static_cast<void>(remove(LOG_FILE));
     }
 
     /// @brief Inserts RAI option with several suboptions
@@ -284,13 +238,7 @@ public:
 
     /// @todo: Add more option types here
 
-    /// Name of the log file used during tests
-    static const char * LOG_FILE;
 };
-
-// Set up the name of the LOG_FILE for use in checking
-// the debug statements
-const char *TokenTest::LOG_FILE = "test.log";
 
 // This tests the toBool() conversions
 TEST_F(TokenTest, toBool) {
@@ -324,13 +272,11 @@ TEST_F(TokenTest, string4) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("foo", values_.top());
 
-    // Check that the debug output was correct, we create a vector
-    // of all the strings we expect (in this case only 1) and send
-    // it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_STRING Pushing text string \"foo\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_STRING Pushing text string 'foo'");
+    EXPECT_TRUE(checkFile());
 }
 
 // This simple test checks that a TokenString, representing a constant string,
@@ -347,13 +293,11 @@ TEST_F(TokenTest, string6) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("foo", values_.top());
 
-    // Check that the debug output was correct, we create a vector
-    // of all the strings we expect (in this case only 1) and send
-    // it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_STRING Pushing text string \"foo\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_STRING Pushing text string 'foo'");
+    EXPECT_TRUE(checkFile());
 }
 
 // This simple test checks that a TokenHexString, representing a constant
@@ -411,18 +355,17 @@ TEST_F(TokenTest, hexstring4) {
     values_.pop();
     EXPECT_EQ("", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x07");
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x666F6F");
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x63825363");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x07");
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x666F6F");
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x63825363");
+    EXPECT_TRUE(checkFile());
 }
 
 // This simple test checks that a TokenHexString, representing a constant
@@ -479,18 +422,17 @@ TEST_F(TokenTest, hexstring6) {
     values_.pop();
     EXPECT_EQ("", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x07");
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x666F6F");
-    exp_strings.push_back("EVAL_DEBUG_HEXSTRING Pushing hex string 0x63825363");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x");
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x07");
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x666F6F");
+    addString("EVAL_DEBUG_HEXSTRING Pushing hex string 0x63825363");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks that a TokenIpAddress, representing an IP address as
@@ -537,16 +479,15 @@ TEST_F(TokenTest, ipaddress) {
     EXPECT_EQ(4, values_.top().size());
     EXPECT_EQ(0, memcmp(expected4, &values_.top()[0], 4));
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_IPADDRESS Pushing IPAddress 0x0A000001");
-    exp_strings.push_back("EVAL_DEBUG_IPADDRESS Pushing IPAddress "
-                          "0x20010DB8000000000000000000000001");
-    exp_strings.push_back("EVAL_DEBUG_IPADDRESS Pushing IPAddress 0x");
-    exp_strings.push_back("EVAL_DEBUG_IPADDRESS Pushing IPAddress 0x");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_IPADDRESS Pushing IPAddress 0x0A000001");
+    addString("EVAL_DEBUG_IPADDRESS Pushing IPAddress "
+              "0x20010DB8000000000000000000000001");
+    addString("EVAL_DEBUG_IPADDRESS Pushing IPAddress 0x");
+    addString("EVAL_DEBUG_IPADDRESS Pushing IPAddress 0x");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing an option value is able to extract
@@ -576,13 +517,12 @@ TEST_F(TokenTest, optionString4) {
     // Then the content of the option 100.
     EXPECT_EQ("hundred4", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 100 with value \"hundred4\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 101 with value \"\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred4'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value ''");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing option value is able to extract
@@ -613,14 +553,12 @@ TEST_F(TokenTest, optionHexString4) {
     // Then the content of the option 100.
     EXPECT_EQ("hundred4", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 100 with value "
-                          "0x68756E6472656434");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 101 with value 0x");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 0x68756E6472656434");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value 0x");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing an option value is able to check
@@ -644,13 +582,12 @@ TEST_F(TokenTest, optionExistsString4) {
     values_.pop();
     EXPECT_EQ("true", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 100 with value \"true\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 101 with value \"false\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'true'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value 'false'");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing an option value is able to extract
@@ -680,13 +617,12 @@ TEST_F(TokenTest, optionString6) {
     // Then the content of the option 100.
     EXPECT_EQ("hundred6", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 100 with value \"hundred6\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 101 with value \"\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred6'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value ''");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing an option value is able to extract
@@ -717,14 +653,12 @@ TEST_F(TokenTest, optionHexString6) {
     // Then the content of the option 100.
     EXPECT_EQ("hundred6", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 100 with value "
-                          "0x68756E6472656436");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 101 with value 0x");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 0x68756E6472656436");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value 0x");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing an option value is able to check
@@ -748,13 +682,12 @@ TEST_F(TokenTest, optionExistsString6) {
     values_.pop();
     EXPECT_EQ("true", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 100 with value \"true\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 101 with value \"false\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'true'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value 'false'");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks that the existing relay4 option can be found.
@@ -776,12 +709,11 @@ TEST_F(TokenTest, relay4Option) {
     // content of that sub-option, i.e. "thirteen"
     EXPECT_EQ("thirteen", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 13 with value \"thirteen\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION Pushing option 13 with value 'thirteen'");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks that the code properly handles cases when
@@ -804,12 +736,11 @@ TEST_F(TokenTest, relay4OptionNoSuboption) {
     // so the expression should evaluate to ""
     EXPECT_EQ("", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 15 with value \"\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION Pushing option 15 with value ''");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks that the code properly handles cases when
@@ -831,12 +762,11 @@ TEST_F(TokenTest, relay4OptionNoRai) {
     // so the expression should evaluate to ""
     EXPECT_EQ("", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 13 with value \"\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION Pushing option 13 with value ''");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks that only the RAI is searched for the requested
@@ -894,16 +824,15 @@ TEST_F(TokenTest, relay4RAIOnly) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("false", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 13 with value \"thirteen\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 1 with value \"one\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 70 with value \"\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 1 with value \"true\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 70 with value \"false\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION Pushing option 13 with value 'thirteen'");
+    addString("EVAL_DEBUG_OPTION Pushing option 1 with value 'one'");
+    addString("EVAL_DEBUG_OPTION Pushing option 70 with value ''");
+    addString("EVAL_DEBUG_OPTION Pushing option 1 with value 'true'");
+    addString("EVAL_DEBUG_OPTION Pushing option 70 with value 'false'");
+    EXPECT_TRUE(checkFile());
 }
 
 // Verifies if the DHCPv4 packet fields can be extracted.
@@ -985,25 +914,17 @@ TEST_F(TokenTest, pkt4Fields) {
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::HLEN)));
     EXPECT_THROW(t_->evaluate(*pkt6_, values_), EvalTypeError);
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_PKT4 Pushing PKT4 field mac "
-                          "with value 0x01020304050607");
-    exp_strings.push_back("EVAL_DEBUG_PKT4 Pushing PKT4 field hlen "
-                          "with value 0x00000007");
-    exp_strings.push_back("EVAL_DEBUG_PKT4 Pushing PKT4 field htype "
-                          "with value 0x0000007B");
-    exp_strings.push_back("EVAL_DEBUG_PKT4 Pushing PKT4 field giaddr "
-                          "with value 0xC0000201");
-    exp_strings.push_back("EVAL_DEBUG_PKT4 Pushing PKT4 field ciaddr "
-                          "with value 0xC0000202");
-    exp_strings.push_back("EVAL_DEBUG_PKT4 Pushing PKT4 field yiaddr "
-                          "with value 0xC0000203");
-    exp_strings.push_back("EVAL_DEBUG_PKT4 Pushing PKT4 field siaddr "
-                          "with value 0xC0000204");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_PKT4 Pushing PKT4 field mac with value 0x01020304050607");
+    addString("EVAL_DEBUG_PKT4 Pushing PKT4 field hlen with value 0x00000007");
+    addString("EVAL_DEBUG_PKT4 Pushing PKT4 field htype with value 0x0000007B");
+    addString("EVAL_DEBUG_PKT4 Pushing PKT4 field giaddr with value 0xC0000201");
+    addString("EVAL_DEBUG_PKT4 Pushing PKT4 field ciaddr with value 0xC0000202");
+    addString("EVAL_DEBUG_PKT4 Pushing PKT4 field yiaddr with value 0xC0000203");
+    addString("EVAL_DEBUG_PKT4 Pushing PKT4 field siaddr with value 0xC0000204");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing an == operator is able to
@@ -1036,13 +957,12 @@ TEST_F(TokenTest, optionEqualFalse) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("false", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_EQUAL Popping 0x626172 and 0x666F6F "
-                          "pushing result \"false\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_EQUAL Popping 0x626172 and 0x666F6F "
+              "pushing result 'false'");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing an == operator is able to
@@ -1060,13 +980,12 @@ TEST_F(TokenTest, optionEqualTrue) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("true", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_EQUAL Popping 0x666F6F and 0x666F6F "
-                          "pushing result \"true\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_EQUAL Popping 0x666F6F and 0x666F6F "
+              "pushing result 'true'");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing a not is able to
@@ -1101,13 +1020,12 @@ TEST_F(TokenTest, operatorNot) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("true", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_NOT Popping \"true\" pushing \"false\"");
-    exp_strings.push_back("EVAL_DEBUG_NOT Popping \"false\" pushing \"true\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_NOT Popping 'true' pushing 'false'");
+    addString("EVAL_DEBUG_NOT Popping 'false' pushing 'true'");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing an and is able to
@@ -1160,14 +1078,13 @@ TEST_F(TokenTest, operatorAndFalse) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("false", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_AND Popping \"false\" and \"true\" pushing \"false\""); 
-    exp_strings.push_back("EVAL_DEBUG_AND Popping \"true\" and \"false\" pushing \"false\"");
-    exp_strings.push_back("EVAL_DEBUG_AND Popping \"false\" and \"false\" pushing \"false\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_AND Popping 'false' and 'true' pushing 'false'");
+    addString("EVAL_DEBUG_AND Popping 'true' and 'false' pushing 'false'");
+    addString("EVAL_DEBUG_AND Popping 'false' and 'false' pushing 'false'");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing an and is able to
@@ -1184,12 +1101,11 @@ TEST_F(TokenTest, operatorAndTrue) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("true", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_AND Popping \"true\" and \"true\" pushing \"true\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_AND Popping 'true' and 'true' pushing 'true'");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing an or is able to
@@ -1230,12 +1146,11 @@ TEST_F(TokenTest, operatorOrFalse) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("false", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_OR Popping \"false\" and \"false\" pushing \"false\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OR Popping 'false' and 'false' pushing 'false'");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing an == operator is able to
@@ -1264,14 +1179,13 @@ TEST_F(TokenTest, operatorOrTrue) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("true", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_OR Popping \"true\" and \"false\" pushing \"true\"");
-    exp_strings.push_back("EVAL_DEBUG_OR Popping \"false\" and \"true\" pushing \"true\"");
-    exp_strings.push_back("EVAL_DEBUG_OR Popping \"true\" and \"true\" pushing \"true\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OR Popping 'true' and 'false' pushing 'true'");
+    addString("EVAL_DEBUG_OR Popping 'false' and 'true' pushing 'true'");
+    addString("EVAL_DEBUG_OR Popping 'true' and 'true' pushing 'true'");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing a substring request
@@ -1300,13 +1214,12 @@ TEST_F(TokenTest, substringNotEnoughValues) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING_EMPTY Popping length 0, start 0, "
-                          "string 0x pushing result 0x");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SUBSTRING_EMPTY Popping length 0, start 0, "
+              "string 0x pushing result 0x");
+    EXPECT_TRUE(checkFile());
 }
 
 // Test getting the whole string in different ways
@@ -1323,19 +1236,18 @@ TEST_F(TokenTest, substringWholeString) {
     // Get the whole string counting from the back
     verifySubstringEval("foobar", "-6", "all", "foobar");
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 6, start 0, "
-                          "string 0x666F6F626172 pushing result 0x666F6F626172");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length all, start 0, "
-                          "string 0x666F6F626172 pushing result 0x666F6F626172");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 123456, start 0, "
-                          "string 0x666F6F626172 pushing result 0x666F6F626172");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length all, start -6, "
-                          "string 0x666F6F626172 pushing result 0x666F6F626172");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SUBSTRING Popping length 6, start 0, "
+              "string 0x666F6F626172 pushing result 0x666F6F626172");
+    addString("EVAL_DEBUG_SUBSTRING Popping length all, start 0, "
+              "string 0x666F6F626172 pushing result 0x666F6F626172");
+    addString("EVAL_DEBUG_SUBSTRING Popping length 123456, start 0, "
+              "string 0x666F6F626172 pushing result 0x666F6F626172");
+    addString("EVAL_DEBUG_SUBSTRING Popping length all, start -6, "
+              "string 0x666F6F626172 pushing result 0x666F6F626172");
+    EXPECT_TRUE(checkFile());
 }
 
 // Test getting a suffix, in this case the last 3 characters
@@ -1345,19 +1257,18 @@ TEST_F(TokenTest, substringTrailer) {
     verifySubstringEval("foobar", "-3", "all", "bar");
     verifySubstringEval("foobar", "-3", "123", "bar");
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 3, start 3, "
-                          "string 0x666F6F626172 pushing result 0x626172");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length all, start 3, "
-                          "string 0x666F6F626172 pushing result 0x626172");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length all, start -3, "
-                          "string 0x666F6F626172 pushing result 0x626172");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 123, start -3, "
-                          "string 0x666F6F626172 pushing result 0x626172");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SUBSTRING Popping length 3, start 3, "
+              "string 0x666F6F626172 pushing result 0x626172");
+    addString("EVAL_DEBUG_SUBSTRING Popping length all, start 3, "
+              "string 0x666F6F626172 pushing result 0x626172");
+    addString("EVAL_DEBUG_SUBSTRING Popping length all, start -3, "
+              "string 0x666F6F626172 pushing result 0x626172");
+    addString("EVAL_DEBUG_SUBSTRING Popping length 123, start -3, "
+              "string 0x666F6F626172 pushing result 0x626172");
+    EXPECT_TRUE(checkFile());
 }
 
 // Test getting the middle of the string in different ways
@@ -1367,19 +1278,18 @@ TEST_F(TokenTest, substringMiddle) {
     verifySubstringEval("foobar", "-1", "-4", "ooba");
     verifySubstringEval("foobar", "5", "-4", "ooba");
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 4, start 1, "
-                          "string 0x666F6F626172 pushing result 0x6F6F6261");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 4, start -5, "
-                          "string 0x666F6F626172 pushing result 0x6F6F6261");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length -4, start -1, "
-                          "string 0x666F6F626172 pushing result 0x6F6F6261");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length -4, start 5, "
-                          "string 0x666F6F626172 pushing result 0x6F6F6261");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SUBSTRING Popping length 4, start 1, "
+              "string 0x666F6F626172 pushing result 0x6F6F6261");
+    addString("EVAL_DEBUG_SUBSTRING Popping length 4, start -5, "
+              "string 0x666F6F626172 pushing result 0x6F6F6261");
+    addString("EVAL_DEBUG_SUBSTRING Popping length -4, start -1, "
+              "string 0x666F6F626172 pushing result 0x6F6F6261");
+    addString("EVAL_DEBUG_SUBSTRING Popping length -4, start 5, "
+              "string 0x666F6F626172 pushing result 0x6F6F6261");
+    EXPECT_TRUE(checkFile());
 }
 
 // Test getting the last letter in different ways
@@ -1391,23 +1301,22 @@ TEST_F(TokenTest, substringLastLetter) {
     verifySubstringEval("foobar", "-1", "1", "r");
     verifySubstringEval("foobar", "-1", "5", "r");
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length all, start 5, "
-                          "string 0x666F6F626172 pushing result 0x72");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 1, start 5, "
-                          "string 0x666F6F626172 pushing result 0x72");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 5, start 5, "
-                          "string 0x666F6F626172 pushing result 0x72");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length all, start -1, "
-                          "string 0x666F6F626172 pushing result 0x72");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 1, start -1, "
-                          "string 0x666F6F626172 pushing result 0x72");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 5, start -1, "
-                          "string 0x666F6F626172 pushing result 0x72");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SUBSTRING Popping length all, start 5, "
+              "string 0x666F6F626172 pushing result 0x72");
+    addString("EVAL_DEBUG_SUBSTRING Popping length 1, start 5, "
+              "string 0x666F6F626172 pushing result 0x72");
+    addString("EVAL_DEBUG_SUBSTRING Popping length 5, start 5, "
+              "string 0x666F6F626172 pushing result 0x72");
+    addString("EVAL_DEBUG_SUBSTRING Popping length all, start -1, "
+              "string 0x666F6F626172 pushing result 0x72");
+    addString("EVAL_DEBUG_SUBSTRING Popping length 1, start -1, "
+              "string 0x666F6F626172 pushing result 0x72");
+    addString("EVAL_DEBUG_SUBSTRING Popping length 5, start -1, "
+              "string 0x666F6F626172 pushing result 0x72");
+    EXPECT_TRUE(checkFile());
 }
 
 // Test we get only what is available if we ask for a longer string
@@ -1424,27 +1333,26 @@ TEST_F(TokenTest, substringLength) {
     verifySubstringEval("foobar", "5", "4", "r");
     verifySubstringEval("foobar", "6", "4", "");
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length -4, start 0, "
-                          "string 0x666F6F626172 pushing result 0x");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length -4, start 1, "
-                          "string 0x666F6F626172 pushing result 0x66");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length -4, start 2, "
-                          "string 0x666F6F626172 pushing result 0x666F");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length -4, start 3, "
-                          "string 0x666F6F626172 pushing result 0x666F6F");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 4, start 3, "
-                          "string 0x666F6F626172 pushing result 0x626172");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 4, start 4, "
-                          "string 0x666F6F626172 pushing result 0x6172");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 4, start 5, "
-                          "string 0x666F6F626172 pushing result 0x72");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING_RANGE Popping length 4, start 6, "
-                          "string 0x666F6F626172 pushing result 0x");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SUBSTRING Popping length -4, start 0, "
+              "string 0x666F6F626172 pushing result 0x");
+    addString("EVAL_DEBUG_SUBSTRING Popping length -4, start 1, "
+              "string 0x666F6F626172 pushing result 0x66");
+    addString("EVAL_DEBUG_SUBSTRING Popping length -4, start 2, "
+              "string 0x666F6F626172 pushing result 0x666F");
+    addString("EVAL_DEBUG_SUBSTRING Popping length -4, start 3, "
+              "string 0x666F6F626172 pushing result 0x666F6F");
+    addString("EVAL_DEBUG_SUBSTRING Popping length 4, start 3, "
+              "string 0x666F6F626172 pushing result 0x626172");
+    addString("EVAL_DEBUG_SUBSTRING Popping length 4, start 4, "
+              "string 0x666F6F626172 pushing result 0x6172");
+    addString("EVAL_DEBUG_SUBSTRING Popping length 4, start 5, "
+              "string 0x666F6F626172 pushing result 0x72");
+    addString("EVAL_DEBUG_SUBSTRING_RANGE Popping length 4, start 6, "
+              "string 0x666F6F626172 pushing result 0x");
+    EXPECT_TRUE(checkFile());
 }
 
 // Test that we get nothing if the starting postion is out of the string
@@ -1459,23 +1367,22 @@ TEST_F(TokenTest, substringStartingPosition) {
     verifySubstringEval("foobar", "6", "-11", "");
     verifySubstringEval("foobar", "6", "all", "");
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING_RANGE Popping length 1, start -7, "
-                          "string 0x666F6F626172 pushing result 0x");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING_RANGE Popping length -11, start -7, "
-                          "string 0x666F6F626172 pushing result 0x");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING_RANGE Popping length all, start -7, "
-                          "string 0x666F6F626172 pushing result 0x");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING_RANGE Popping length 1, start 6, "
-                          "string 0x666F6F626172 pushing result 0x");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING_RANGE Popping length -11, start 6, "
-                          "string 0x666F6F626172 pushing result 0x");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING_RANGE Popping length all, start 6, "
-                          "string 0x666F6F626172 pushing result 0x");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SUBSTRING_RANGE Popping length 1, start -7, "
+              "string 0x666F6F626172 pushing result 0x");
+    addString("EVAL_DEBUG_SUBSTRING_RANGE Popping length -11, start -7, "
+              "string 0x666F6F626172 pushing result 0x");
+    addString("EVAL_DEBUG_SUBSTRING_RANGE Popping length all, start -7, "
+              "string 0x666F6F626172 pushing result 0x");
+    addString("EVAL_DEBUG_SUBSTRING_RANGE Popping length 1, start 6, "
+              "string 0x666F6F626172 pushing result 0x");
+    addString("EVAL_DEBUG_SUBSTRING_RANGE Popping length -11, start 6, "
+              "string 0x666F6F626172 pushing result 0x");
+    addString("EVAL_DEBUG_SUBSTRING_RANGE Popping length all, start 6, "
+              "string 0x666F6F626172 pushing result 0x");
+    EXPECT_TRUE(checkFile());
 }
 
 // Check what happens if we use strings that aren't numbers for start or length
@@ -1491,7 +1398,6 @@ TEST_F(TokenTest, substringBadParams) {
 
     // These should result in a throw which should generate it's own
     // log entry
-    remFile();
 }
 
 // lastly check that we don't get anything if the string is empty or
@@ -1500,15 +1406,14 @@ TEST_F(TokenTest, substringReturnEmpty) {
     verifySubstringEval("", "0", "all", "");
     verifySubstringEval("foobar", "0", "0", "");
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING_EMPTY Popping length all, start 0, "
-                          "string 0x pushing result 0x");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 0, start 0, "
-                          "string 0x666F6F626172 pushing result 0x");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SUBSTRING_EMPTY Popping length all, start 0, "
+              "string 0x pushing result 0x");
+    addString("EVAL_DEBUG_SUBSTRING Popping length 0, start 0, "
+              "string 0x666F6F626172 pushing result 0x");
+    EXPECT_TRUE(checkFile());
 }
 
 // Check if we can use the substring and equal tokens together
@@ -1564,19 +1469,18 @@ TEST_F(TokenTest, substringEquals) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("false", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 4, start 1, "
-                          "string 0x666F6F626172 pushing result 0x6F6F6261");
-    exp_strings.push_back("EVAL_DEBUG_EQUAL Popping 0x6F6F6261 and 0x6F6F6261 "
-                          "pushing result \"true\"");
-    exp_strings.push_back("EVAL_DEBUG_SUBSTRING Popping length 4, start 1, "
-                          "string 0x666F6F626172 pushing result 0x6F6F6261");
-    exp_strings.push_back("EVAL_DEBUG_EQUAL Popping 0x6F6F6261 and 0x666F6F62 "
-                          "pushing result \"false\"");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SUBSTRING Popping length 4, start 1, "
+              "string 0x666F6F626172 pushing result 0x6F6F6261");
+    addString("EVAL_DEBUG_EQUAL Popping 0x6F6F6261 and 0x6F6F6261 "
+              "pushing result 'true'");
+    addString("EVAL_DEBUG_SUBSTRING Popping length 4, start 1, "
+              "string 0x666F6F626172 pushing result 0x6F6F6261");
+    addString("EVAL_DEBUG_EQUAL Popping 0x6F6F6261 and 0x666F6F62 "
+              "pushing result 'false'");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if a token representing a concat request
@@ -1600,13 +1504,12 @@ TEST_F(TokenTest, concat) {
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("foobar", values_.top());
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_CONCAT Popping 0x626172 and 0x666F6F "
-                          "pushing 0x666F6F626172");
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_CONCAT Popping 0x626172 and 0x666F6F "
+              "pushing 0x666F6F626172");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if we can properly extract the link and peer
@@ -1661,29 +1564,28 @@ TEST_F(TokenTest, relay6Field) {
     // be tidy
     clearStack();
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 0 "
-                          "with value 0x00000000000000000000000000000000");
-    exp_strings.push_back("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 0 "
-                          "with value 0x00000000000000000000000000000000");
-    exp_strings.push_back("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
-                          "with value 0x00010000000000000000000000000001");
-    exp_strings.push_back("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 1 "
-                          "with value 0x00010000000000000000000000000002");
-    exp_strings.push_back("EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field linkaddr nest 2 "
-                          "with value 0x");
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 0 "
+              "with value 0x00000000000000000000000000000000");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 0 "
+              "with value 0x00000000000000000000000000000000");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
+              "with value 0x00010000000000000000000000000001");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 1 "
+              "with value 0x00010000000000000000000000000002");
+    addString("EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field linkaddr nest 2 "
+              "with value 0x");
 
-    exp_strings.push_back("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
-                          "with value 0x00010000000000000000000000000001");
-    exp_strings.push_back("EVAL_DEBUG_IPADDRESS Pushing IPAddress "
-                          "0x00010000000000000000000000000001");
-    exp_strings.push_back("EVAL_DEBUG_EQUAL Popping 0x00010000000000000000000000000001 "
-                          "and 0x00010000000000000000000000000001 pushing result \"true\"");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
+              "with value 0x00010000000000000000000000000001");
+    addString("EVAL_DEBUG_IPADDRESS Pushing IPAddress "
+              "0x00010000000000000000000000000001");
+    addString("EVAL_DEBUG_EQUAL Popping 0x00010000000000000000000000000001 "
+              "and 0x00010000000000000000000000000001 pushing result 'true'");
 
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    EXPECT_TRUE(checkFile());
 }
 
 // This test checks if we can properly extract an option
@@ -1718,23 +1620,22 @@ TEST_F(TokenTest, relay6Option) {
     // Level 2, no encapsulation so no options
     verifyRelay6Option(2, 100, TokenOption::TEXTUAL, "");
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 100 with value \"hundred.zero\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 100 with value \"true\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 101 with value \"hundredone.zero\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 102 with value \"\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 102 with value \"false\"");
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.zero'");
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'true'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value 'hundredone.zero'");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value ''");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'false'");
 
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 100 with value \"hundred.one\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 101 with value \"\"");
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 102 with value \"hundredtwo.one\"");
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.one'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value ''");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'hundredtwo.one'");
 
-    exp_strings.push_back("EVAL_DEBUG_OPTION Pushing option 100 with value \"\"");
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value ''");
 
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    EXPECT_TRUE(checkFile());
 }
 
 // Verifies if the DHCPv6 packet fields can be extracted.
@@ -1762,15 +1663,12 @@ TEST_F(TokenTest, pkt6Fields) {
     ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
 
-    // Check that the debug output was correct, we create a vector of all
-    // the strings we expect and send it to checkFile for comparison.
-    vector<string> exp_strings;
-    exp_strings.push_back("EVAL_DEBUG_PKT6 Pushing PKT6 field msgtype "
-                          "with value 0x00000001");
-    exp_strings.push_back("EVAL_DEBUG_PKT6 Pushing PKT6 field transid "
-                          "with value 0x00003039");
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_PKT6 Pushing PKT6 field msgtype with value 0x00000001");
+    addString("EVAL_DEBUG_PKT6 Pushing PKT6 field transid with value 0x00003039");
 
-    EXPECT_TRUE(checkFile(exp_strings));
-    remFile();
+    EXPECT_TRUE(checkFile());
 }
 };

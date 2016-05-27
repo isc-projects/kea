@@ -43,6 +43,7 @@ libeval_unittests_LDADD   += $(top_builddir)/src/lib/log/libkea-log.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/util/libkea-util.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libeval_unittests_LDADD   += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 libeval_unittests_LDADD   += $(CRYPTO_LIBS) $(LOG4CPLUS_LIBS)
 libeval_unittests_LDADD   += $(BOOST_LIBS) $(GTEST_LDADD)
 
