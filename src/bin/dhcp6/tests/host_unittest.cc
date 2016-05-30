@@ -7,6 +7,7 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/option6_addrlst.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 
@@ -17,15 +18,26 @@ using namespace isc::dhcp::test;
 
 namespace {
 
+/// @brief Boolean value used to signal stateless configuration test.
+const bool STATELESS = true;
+
+/// @brief Boolean value used to signal stateful configuration test.
+const bool STATEFUL = false;
+
 /// @brief Set of JSON configurations used by the Host reservation unit tests.
 ///
 /// - Configuration 0:
 ///   Single subnet with two reservations, one with a hostname, one without
+///
 /// - Configuration 1:
 ///   Multiple reservations using different host identifiers.
 /// - Configuration 2:
 ///   Same as configuration 1 but 'host-reservation-identifiers' specified
 ///   in non-default order.
+///
+/// - Configuration 2:
+///   - Used to test that host specific options override subnet specific
+///     options and global options.
 const char* CONFIGS[] = {
     // Configuration 0:
     "{ "
@@ -107,7 +119,55 @@ const char* CONFIGS[] = {
         "        \"ip-addresses\": [ \"2001:db8:1::2\" ]"
         "    } ]"
         " } ]"
-    "}"
+    "}",
+
+    // Configuration 3:
+    "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"host-reservation-identifiers\": [ \"duid\" ],"
+        "\"valid-lifetime\": 4000, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"option-data\": [ {"
+        "    \"name\": \"nisp-servers\","
+        "    \"data\": \"3001:3::123\""
+        "} ],"
+        "\"subnet6\": [ "
+        " { "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"interface\" : \"eth0\","
+        "    \"option-data\": [ {"
+        "        \"name\": \"dns-servers\","
+        "        \"data\": \"3001:2::123\""
+        "    },"
+        "    {"
+        "        \"name\": \"nis-servers\","
+        "        \"data\": \"3001:2::123\""
+        "    },"
+        "    {"
+        "        \"name\": \"sntp-servers\","
+        "        \"data\": \"3001:2::123\""
+        "    } ],"
+        "    \"reservations\": ["
+        "    {"
+        "        \"duid\": \"01:02:03:05\","
+        "        \"ip-addresses\": [ \"2001:db8:1::2\" ],"
+        "        \"option-data\": [ {"
+        "            \"name\": \"dns-servers\","
+        "            \"data\": \"3001:1::234\""
+        "        },"
+        "        {"
+        "            \"name\": \"nis-servers\","
+        "            \"data\": \"3001:1::234\""
+        "        } ]"
+        "    } ]"
+        " } ]"
+    "}",
+
 };
 
 /// @brief Test fixture class for testing host reservations
@@ -119,6 +179,18 @@ public:
     HostTest()
         : Dhcpv6SrvTest(),
           iface_mgr_test_config_(true) {
+    }
+
+    void verifyAddressOption(const uint16_t option_type,
+                             const std::string& expected_addr,
+                             const Dhcp6Client::Configuration& config) const {
+        Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
+            Option6AddrLst>(config.findOption(option_type));
+        ASSERT_TRUE(opt) << "option " << option_type << " not found";
+        Option6AddrLst::AddressContainer addrs = opt->getAddresses();
+        ASSERT_GE(addrs.size(), 1) << "test failed for option type " << option_type;
+        EXPECT_EQ(expected_addr, addrs[0].toText())
+            << "test failed for option type " << option_type;
     }
 
     /// @brief Verifies that the reservation is retrieved by the server
@@ -154,9 +226,58 @@ public:
         EXPECT_EQ(exp_ip_address, lease_client.addr_.toText());
     }
 
+    /// @brief Verifies that host specific options override subnet specific
+    /// options.
+    ///
+    /// Overriden options are requested with Option Request option.
+    ///
+    /// @param stateless Boolean value indicating if stateless or stateful
+    /// configuration should be performed.
+    void testOverrideRequestedOptions(const bool stateless);
+
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
 };
+
+void
+HostTest::testOverrideRequestedOptions(const bool stateless) {
+    Dhcp6Client client;
+    client.setDUID("01:02:03:05");
+    client.requestOption(D6O_NAME_SERVERS);
+    client.requestOption(D6O_NIS_SERVERS);
+    client.requestOption(D6O_NISP_SERVERS);
+    client.requestOption(D6O_SNTP_SERVERS);
+
+    configure(CONFIGS[3], *client.getServer());
+
+    if (stateless) {
+        ASSERT_NO_THROW(client.doInfRequest());
+
+    } else {
+        client.useNA();
+        ASSERT_NO_THROW(client.doSARR());
+    }
+
+    {
+        SCOPED_TRACE("host specific dns-servers");
+        verifyAddressOption(D6O_NAME_SERVERS, "3000:1::234", client.config_);
+    }
+
+    {
+        SCOPED_TRACE("host specific nis-servers");
+        verifyAddressOption(D6O_NIS_SERVERS, "3000:1::234", client.config_);
+    }
+
+    {
+        SCOPED_TRACE("subnet specific sntp-servers");
+        verifyAddressOption(D6O_SNTP_SERVERS, "3000:2::123", client.config_);
+    }
+
+    {
+        SCOPED_TRACE("global nisp-servers");
+        verifyAddressOption(D6O_NISP_SERVERS, "3000:3::123", client.config_);
+    }
+}
 
 // Test basic SARR scenarios against a server configured with one subnet
 // containing two reservations.  One reservation with a hostname, one
@@ -179,8 +300,8 @@ TEST_F(HostTest, basicSarrs) {
         getCfgSubnets6()->getAll();
     ASSERT_EQ(1, subnets->size());
 
-    // Configure client to request IA_NA and aAppend IA_NA option
-    //  to the client's message.
+    // Configure client to request IA_NA and append IA_NA option
+    // to the client's message.
     client.setDUID("01:02:03:04");
     client.useNA();
     ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
@@ -374,6 +495,20 @@ TEST_F(HostTest, hostIdentifiersOrder) {
     // decoded address will be used to search for host reservations.
     client.setLinkLocal(IOAddress("fe80::3a60:77ff:fed5:ffee"));
     testReservationByIdentifier(client, 2, "2001:db8:1::2");
+}
+
+// This test checks that host specific options override subnet specific
+// options. Overridden options are requested with Option Request
+// option (stateless case).
+TEST_F(HostTest, overrideRequestedOptionsStateless) {
+    testOverrideRequestedOptions(STATELESS);
+}
+
+// This test checks that host specific options override subnet specific
+// options. Overridden options are requested with Option Request
+// option (stateful case).
+TEST_F(HostTest, overrideRequestedOptionsStateful) {
+    testOverrideRequestedOptions(STATEFUL);
 }
 
 } // end of anonymous namespace
