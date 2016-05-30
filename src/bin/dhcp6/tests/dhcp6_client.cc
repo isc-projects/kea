@@ -469,6 +469,11 @@ Dhcp6Client::doInfRequest() {
 
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
+    // Apply new configuration only if the server has responded.
+    if (context_.response_) {
+        config_.clear();
+        applyRcvdConfiguration(context_.response_);
+    }
 }
 
 void
