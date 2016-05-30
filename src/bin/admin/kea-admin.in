@@ -217,11 +217,11 @@ dscsql_init() {
         exit 1
     fi
 
-    COUNT=`echo $RESULT | grep $db_name | wc -w`
+    COUNT=`echo $RESULT | tr " " "\n" | grep $db_name | wc -w`
     if [ $COUNT -gt 0 ]; then
         # Let't start with a new line. cqlsh could have printed something out.
         printf "\n"
-        log_error "Expected empty database $db_name, but there are $COUNT tables: \n$RESULT. Aborting."
+        log_error "Expected no database $db_name, but there are $COUNT databases: \n$RESULT. Aborting."
         exit 1
     fi
 
