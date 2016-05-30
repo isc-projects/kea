@@ -1691,25 +1691,20 @@ public:
     /// @param stindex Index of a statement being executed.
     /// @param options_cfg An object holding a collection of options to be
     /// inserted into the database.
-    /// @param host_id Host identifier reference to a value to which
-    /// host identifier will be assigned if the current host_id value is 0.
-    /// The host identifier is retrieve from the database using the
-    /// mysql_insert_id function.
+    /// @param host_id Host identifier retrieved using @c mysql_insert_id.
     void addOptions(const StatementIndex& stindex, const ConstCfgOptionPtr& options_cfg,
-                    uint64_t& host_id);
+                    const uint64_t host_id);
 
     /// @brief Check Error and Throw Exception
     ///
-    /// Virtually all MySQL functions return a status which, if non-zero,
-    /// indicates an error.  This inline function conceals a lot of error
-    /// checking/exception-throwing code.
+    /// This method invokes @ref MySqlConnection::checkError.
     ///
     /// @param status Status code: non-zero implies an error
     /// @param index Index of statement that caused the error
     /// @param what High-level description of the error
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database
-    ///        has failed.
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     void checkError(const int status, const StatementIndex index,
                     const char* what) const;
 
@@ -2026,19 +2021,13 @@ MySqlHostDataSourceImpl::addOption(const StatementIndex& stindex,
 void
 MySqlHostDataSourceImpl::addOptions(const StatementIndex& stindex,
                                     const ConstCfgOptionPtr& options_cfg,
-                                    uint64_t& host_id) {
+                                    const uint64_t host_id) {
     // Get option space names and vendor space names and combine them within a
     // single list.
     std::list<std::string> option_spaces = options_cfg->getOptionSpaceNames();
     std::list<std::string> vendor_spaces = options_cfg->getVendorIdsSpaceNames();
     option_spaces.insert(option_spaces.end(), vendor_spaces.begin(),
                          vendor_spaces.end());
-
-    // Retrieve host id only if there are any options to be added and the
-    // host id hasn't been retrieved yet.
-    if ((host_id == 0) && !option_spaces.empty()) {
-        host_id = mysql_insert_id(conn_.mysql_);
-    }
 
     // For each option space retrieve all options and insert them into the
     // database.
@@ -2059,12 +2048,7 @@ void
 MySqlHostDataSourceImpl::
 checkError(const int status, const StatementIndex index,
            const char* what) const {
-    if (status != 0) {
-        isc_throw(DbOperationError, what << " for <"
-                  << conn_.text_statements_[index] << ">, reason: "
-                  << mysql_error(conn_.mysql_) << " (error code "
-                  << mysql_errno(conn_.mysql_) << ")");
-    }
+    conn_.checkError(status, index, what);
 }
 
 void
@@ -2198,7 +2182,7 @@ MySqlHostDataSource::add(const HostPtr& host) {
     impl_->addStatement(MySqlHostDataSourceImpl::INSERT_HOST, bind);
 
     // Gets the last inserted hosts id
-    uint64_t host_id = 0;
+    uint64_t host_id = mysql_insert_id(impl_->conn_.mysql_);
 
     // Insert DHCPv4 options.
     ConstCfgOptionPtr cfg_option4 = host->getCfgOption4();
@@ -2217,10 +2201,6 @@ MySqlHostDataSource::add(const HostPtr& host) {
     // Insert IPv6 reservations.
     IPv6ResrvRange v6resv = host->getIPv6Reservations();
     if (std::distance(v6resv.first, v6resv.second) > 0) {
-        // Set host_id if it wasn't set when we inserted options.
-        if (host_id == 0) {
-            host_id = mysql_insert_id(impl_->conn_.mysql_);
-        }
         for (IPv6ResrvIterator resv = v6resv.first; resv != v6resv.second;
              ++resv) {
             impl_->addResv(resv->second, host_id);

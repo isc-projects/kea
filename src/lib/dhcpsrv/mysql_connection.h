@@ -8,8 +8,12 @@
 #define MYSQL_CONNECTION_H
 
 #include <dhcpsrv/database_connection.h>
+#include <dhcpsrv/dhcpsrv_log.h>
+#include <exceptions/exceptions.h>
 #include <boost/scoped_ptr.hpp>
 #include <mysql.h>
+#include <mysqld_error.h>
+#include <errmsg.h>
 #include <vector>
 #include <stdint.h>
 
@@ -334,6 +338,69 @@ public:
     ///
     /// @throw DbOperationError If the rollback failed.
     void rollback();
+
+    /// @brief Check Error and Throw Exception
+    ///
+    /// Virtually all MySQL functions return a status which, if non-zero,
+    /// indicates an error.  This function centralizes the error checking
+    /// code.
+    ///
+    /// It is used to determine whether or not the function succeeded, and
+    /// in the event of failures, decide whether or not those failures are
+    /// recoverable.
+    ///
+    /// If the error is recoverable, the method will throw a DbOperationError.
+    /// In the error is deemed unrecoverable, such as a loss of connectivity
+    /// with the server, this method will log the error and call exit(-1);
+    ///
+    /// @todo Calling exit() is viewed as a short term solution for Kea 1.0.
+    /// Two tickets are likely to alter this behavior, first is #3639, which
+    /// calls for the ability to attempt to reconnect to the database. The
+    /// second ticket, #4087 which calls for the implementation of a generic,
+    /// FatalException class which will propagate outward.
+    ///
+    /// @param status Status code: non-zero implies an error
+    /// @param index Index of statement that caused the error
+    /// @param what High-level description of the error
+    ///
+    /// @tparam Enumeration representing index of a statement to which an
+    /// error pertains.
+    ///
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    template<typename StatementIndex>
+    void checkError(const int status, const StatementIndex& index,
+                    const char* what) const {
+        if (status != 0) {
+            switch(mysql_errno(mysql_)) {
+                // These are the ones we consider fatal. Remember this method is
+                // used to check errors of API calls made subsequent to successfully
+                // connecting.  Errors occuring while attempting to connect are
+                // checked in the connection code. An alternative would be to call
+                // mysql_ping() - assuming autoreconnect is off. If that fails
+                // then we know connection is toast.
+            case CR_SERVER_GONE_ERROR:
+            case CR_SERVER_LOST:
+            case CR_OUT_OF_MEMORY:
+            case CR_CONNECTION_ERROR:
+                // We're exiting on fatal
+                LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_FATAL_ERROR)
+                         .arg(what)
+                         .arg(text_statements_[static_cast<int>(index)])
+                         .arg(mysql_error(mysql_))
+                         .arg(mysql_errno(mysql_));
+                exit (-1);
+
+            default:
+                // Connection is ok, so it must be an SQL error
+                isc_throw(DbOperationError, what << " for <"
+                          << text_statements_[static_cast<int>(index)]
+                          << ">, reason: "
+                          << mysql_error(mysql_) << " (error code "
+                          << mysql_errno(mysql_) << ")");
+            }
+        }
+    }
 
     /// @brief Prepared statements
     ///
