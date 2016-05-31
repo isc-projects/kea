@@ -81,7 +81,7 @@ public:
     /// the same database.
     void reopen(Universe) {
         LeaseMgrFactory::destroy();
-        LeaseMgrFactory::create(validConnectionString());
+        LeaseMgrFactory::create(validDSCSQLConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
     }
 
@@ -185,8 +185,8 @@ TEST_F(DSCSqlLeaseMgrTest, checkVersion) {
     // Check version
     pair<uint32_t, uint32_t> version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
-    EXPECT_EQ(CURRENT_VERSION_VERSION, version.first);
-    EXPECT_EQ(CURRENT_VERSION_MINOR, version.second);
+    EXPECT_EQ(DSCSQL_CURRENT_VERSION, version.first);
+    EXPECT_EQ(DSCSQL_CURRENT_MINOR, version.second);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -19,8 +19,17 @@ libdhcpsrvtest_la_SOURCES += schema.cc schema.h
 else
 if HAVE_PGSQL
 libdhcpsrvtest_la_SOURCES += schema.cc schema.h
+else
+if HAVE_DSCSQL
+libdhcpsrvtest_la_SOURCES += schema.cc schema.h
 endif
 endif
+endif
+
+if HAVE_DSCSQL
+libdhcpsrvtest_la_SOURCES += dscsql_schema.cc dscsql_schema.h
+endif
+
 
 if HAVE_MYSQL
 libdhcpsrvtest_la_SOURCES += mysql_schema.cc mysql_schema.h
@@ -38,12 +47,21 @@ if HAVE_PGSQL
 libdhcpsrvtest_la_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
 
+if HAVE_DSCSQL
+libdhcpsrvtest_la_CPPFLAGS += $(DSCSQL_CPPFLAGS)
+endif
+
+
 libdhcpsrvtest_la_LDFLAGS  = $(AM_LDFLAGS)
 if HAVE_MYSQL
 libdhcpsrvtest_la_LDFLAGS  += $(MYSQL_LIBS)
 endif
 if HAVE_PGSQL
 libdhcpsrvtest_la_LDFLAGS  += $(PGSQL_LIBS)
+endif
+
+if HAVE_DSCSQL
+libdhcpsrvtest_la_LDFLAGS  += $(DSCSQL_LIBS)
 endif
 
 libdhcpsrvtest_la_LIBADD   = $(top_builddir)/src/lib/cc/libkea-cc.la
