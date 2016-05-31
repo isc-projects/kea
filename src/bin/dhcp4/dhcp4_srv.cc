@@ -926,7 +926,7 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
 
     // Firstly, host specific options.
     const ConstHostPtr& host = ex.getContext()->host_;
-    if (host) {
+    if (host && !host->getCfgOption4()->empty()) {
         co_list.push_back(host->getCfgOption4());
     }
 
