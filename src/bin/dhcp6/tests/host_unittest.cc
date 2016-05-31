@@ -6,8 +6,11 @@
 
 #include <config.h>
 #include <asiolink/io_address.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option6_addrlst.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option_vendor.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 
@@ -18,12 +21,6 @@ using namespace isc::dhcp::test;
 
 namespace {
 
-/// @brief Boolean value used to signal stateless configuration test.
-const bool STATELESS = true;
-
-/// @brief Boolean value used to signal stateful configuration test.
-const bool STATEFUL = false;
-
 /// @brief Set of JSON configurations used by the Host reservation unit tests.
 ///
 /// - Configuration 0:
@@ -31,13 +28,22 @@ const bool STATEFUL = false;
 ///
 /// - Configuration 1:
 ///   Multiple reservations using different host identifiers.
+///
 /// - Configuration 2:
 ///   Same as configuration 1 but 'host-reservation-identifiers' specified
 ///   in non-default order.
 ///
-/// - Configuration 2:
+/// - Configuration 3:
 ///   - Used to test that host specific options override subnet specific
 ///     options and global options.
+///
+/// - Configuration 4:
+///   - Used to test that client receives options solely specified in a
+///     host scope.
+///
+/// - Configuration 5:
+///   - Used to test that host specific vendor options override globally
+///     specified vendor options.
 const char* CONFIGS[] = {
     // Configuration 0:
     "{ "
@@ -168,6 +174,78 @@ const char* CONFIGS[] = {
         " } ]"
     "}",
 
+    // Configuration 4:
+    "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"host-reservation-identifiers\": [ \"duid\" ],"
+        "\"valid-lifetime\": 4000, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"interface\" : \"eth0\","
+        "    \"reservations\": ["
+        "    {"
+        "        \"duid\": \"01:02:03:05\","
+        "        \"ip-addresses\": [ \"2001:db8:1::2\" ],"
+        "        \"option-data\": [ {"
+        "            \"name\": \"dns-servers\","
+        "            \"data\": \"3001:1::234\""
+        "        },"
+        "        {"
+        "            \"name\": \"nis-servers\","
+        "            \"data\": \"3001:1::234\""
+        "        } ]"
+        "    } ]"
+        " } ]"
+    "}",
+
+    // Configuration 5:
+    "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"host-reservation-identifiers\": [ \"duid\" ],"
+        "\"valid-lifetime\": 4000, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"option-data\": [ {"
+        "    \"name\": \"vendor-opts\","
+        "    \"data\": 4491"
+        "},"
+        "{"
+        "    \"name\": \"tftp-servers\","
+        "    \"space\": \"vendor-4491\","
+        "    \"data\": \"3001:3::123\""
+        "} ],"
+        "\"subnet6\": [ "
+        " { "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"interface\" : \"eth0\","
+        "    \"reservations\": ["
+        "    {"
+        "        \"duid\": \"01:02:03:05\","
+        "        \"ip-addresses\": [ \"2001:db8:1::2\" ],"
+        "        \"option-data\": [ {"
+        "            \"name\": \"vendor-opts\","
+        "            \"data\": 4491"
+        "        },"
+        "        {"
+        "            \"name\": \"tftp-servers\","
+        "            \"space\": \"vendor-4491\","
+        "            \"data\": \"3001:1::234\""
+        "        } ]"
+        "    } ]"
+        " } ]"
+    "}"
+
 };
 
 /// @brief Test fixture class for testing host reservations
@@ -181,6 +259,15 @@ public:
           iface_mgr_test_config_(true) {
     }
 
+    /// @brief Checks that specified option contains a desired address.
+    ///
+    /// The option must cast to the @ref Option6AddrLst type. The function
+    /// expects that this option contains at least one address and checks
+    /// first address for equality with @ref expected_addr.
+    ///
+    /// @param option_type Option type.
+    /// @param expected_addr Desired address.
+    /// @param config Configuration obtained from the server.
     void verifyAddressOption(const uint16_t option_type,
                              const std::string& expected_addr,
                              const Dhcp6Client::Configuration& config) const {
@@ -226,23 +313,90 @@ public:
         EXPECT_EQ(exp_ip_address, lease_client.addr_.toText());
     }
 
+    /// @brief Initiate exchange with DHCPv6 server.
+    ///
+    /// This method initiates DHCPv6 message exchange between a specified
+    /// client a the server. The msg_type is used to indicate what kind
+    /// of exchange should be initiated. If the message type is a Renew
+    /// or Rebind, the 4-way handshake is made first. If the message type
+    /// is a Request, the Solicit-Advertise is done prior to this.
+    ///
+    /// @param msg_type Message type to be sent to the server.
+    /// @param client Reference to a client to be used to initiate the
+    /// exchange with the server.
+    void doExchange(const uint16_t msg_type, Dhcp6Client& client);
+
     /// @brief Verifies that host specific options override subnet specific
     /// options.
     ///
     /// Overriden options are requested with Option Request option.
     ///
-    /// @param stateless Boolean value indicating if stateless or stateful
-    /// configuration should be performed.
-    void testOverrideRequestedOptions(const bool stateless);
+    /// @param msg_type DHCPv6 message type to be sent to the server. If the
+    /// message type is Renew or Rebind, the 4-way exchange is made prior to
+    /// sending a Renew or Rebind. For a Request case, the Solicit-Advertise
+    /// is also performed.
+    void testOverrideRequestedOptions(const uint16_t msg_type);
+
+    /// @brief Verifies that client receives options when they are solely
+    /// defined in the host scope (and not in the global or subnet scope).
+    ///
+    /// @param msg_type DHCPv6 message type to be sent to the server. If the
+    /// message type is Renew or Rebind, the 4-way exchange is made prior to
+    /// sending a Renew or Rebind. For a Request case, the Solicit-Advertise
+    /// is also performed.
+    void testHostOnlyOptions(const uint16_t msg_type);
+
+    /// @brief Verifies that host specific vendor options override vendor
+    /// options defined in the global scope.
+    ///
+    /// @param msg_type DHCPv6 message type to be sent to the server. If the
+    /// message type is Renew or Rebind, the 4-way exchange is made prior to
+    /// sending a Renew or Rebind. For a Request case, the Solicit-Advertise
+    /// is also performed.
+    void testOverrideVendorOptions(const uint16_t msg_type);
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
 };
 
 void
-HostTest::testOverrideRequestedOptions(const bool stateless) {
+HostTest::doExchange(const uint16_t msg_type, Dhcp6Client& client) {
+    switch (msg_type) {
+    case DHCPV6_INFORMATION_REQUEST:
+        ASSERT_NO_THROW(client.doInfRequest());
+        break;
+    case DHCPV6_REQUEST:
+        ASSERT_NO_THROW(client.doSARR());
+        break;
+    case DHCPV6_SOLICIT:
+        ASSERT_NO_THROW(client.doSolicit());
+        break;
+    case DHCPV6_RENEW:
+        ASSERT_NO_THROW(client.doSARR());
+        ASSERT_NO_THROW(client.doRenew());
+        break;
+    case DHCPV6_REBIND:
+        ASSERT_NO_THROW(client.doSARR());
+        ASSERT_NO_THROW(client.doRebind());
+        break;
+    default:
+        ;
+    }
+
+    // Make sure that the server has responded with a Reply.
+    ASSERT_TRUE(client.getContext().response_);
+    ASSERT_EQ(DHCPV6_REPLY, client.getContext().response_->getType());
+
+}
+
+
+void
+HostTest::testOverrideRequestedOptions(const uint16_t msg_type) {
     Dhcp6Client client;
+    // Reservation has been made for a client with this DUID.
     client.setDUID("01:02:03:05");
+
+    // Request all options specified in the configuration.
     client.requestOption(D6O_NAME_SERVERS);
     client.requestOption(D6O_NIS_SERVERS);
     client.requestOption(D6O_NISP_SERVERS);
@@ -250,33 +404,93 @@ HostTest::testOverrideRequestedOptions(const bool stateless) {
 
     configure(CONFIGS[3], *client.getServer());
 
-    if (stateless) {
-        ASSERT_NO_THROW(client.doInfRequest());
-
-    } else {
-        client.useNA();
-        ASSERT_NO_THROW(client.doSARR());
-    }
+    ASSERT_NO_FATAL_FAILURE(doExchange(msg_type, client));
 
     {
         SCOPED_TRACE("host specific dns-servers");
+        // Host specific DNS server should be used.
         verifyAddressOption(D6O_NAME_SERVERS, "3000:1::234", client.config_);
     }
 
     {
         SCOPED_TRACE("host specific nis-servers");
+        // Host specific NIS server should be used.
         verifyAddressOption(D6O_NIS_SERVERS, "3000:1::234", client.config_);
     }
 
     {
         SCOPED_TRACE("subnet specific sntp-servers");
+        // Subnet specific SNTP server should be used as it is not specified
+        // in a host scope.
         verifyAddressOption(D6O_SNTP_SERVERS, "3000:2::123", client.config_);
     }
 
     {
         SCOPED_TRACE("global nisp-servers");
+        // Globally specified NISP server should be used as it is not
+        // specified in a host scope.
         verifyAddressOption(D6O_NISP_SERVERS, "3000:3::123", client.config_);
     }
+}
+
+void
+HostTest::testHostOnlyOptions(const uint16_t msg_type) {
+    Dhcp6Client client;
+    client.setDUID("01:02:03:05");
+    client.requestOption(D6O_NAME_SERVERS);
+    client.requestOption(D6O_NIS_SERVERS);
+
+    configure(CONFIGS[3], *client.getServer());
+
+    ASSERT_NO_FATAL_FAILURE(doExchange(msg_type, client));
+
+    {
+        SCOPED_TRACE("host specific dns-servers");
+        // DNS servers are specified only in a host scope.
+        verifyAddressOption(D6O_NAME_SERVERS, "3000:1::234", client.config_);
+    }
+
+    {
+        SCOPED_TRACE("host specific nis-servers");
+        // NIS servers are specified only in a host scope.
+        verifyAddressOption(D6O_NIS_SERVERS, "3000:1::234", client.config_);
+    }
+}
+
+void
+HostTest::testOverrideVendorOptions(const uint16_t msg_type) {
+    Dhcp6Client client;
+    client.setDUID("01:02:03:05");
+
+    // Client needs to include Vendor Specific Information option
+    // with ORO suboption, which the server will use to determine
+    // which suboptions should be returned to the client.
+    OptionVendorPtr opt_vendor(new OptionVendor(Option::V6,
+                                                VENDOR_ID_CABLE_LABS));
+    // Include ORO with TFTP servers suboption code being requested.
+    opt_vendor->addOption(OptionPtr(new OptionUint16(Option::V6, DOCSIS3_V6_ORO,
+                                                     DOCSIS3_V6_TFTP_SERVERS)));
+    client.addExtraOption(opt_vendor);
+
+    configure(CONFIGS[5], *client.getServer());
+
+    ASSERT_NO_FATAL_FAILURE(doExchange(msg_type, client));
+
+    // Vendor Specific Information option should be returned by the server.
+    OptionVendorPtr vendor_opt = boost::dynamic_pointer_cast<
+        OptionVendor>(client.config_.findOption(D6O_VENDOR_OPTS));
+    ASSERT_TRUE(vendor_opt);
+
+    // TFTP server suboption should be returned because it was requested
+    // with Option Request suboption.
+    Option6AddrLstPtr tftp = boost::dynamic_pointer_cast<
+        Option6AddrLst>(vendor_opt->getOption(DOCSIS3_V6_TFTP_SERVERS));
+    ASSERT_TRUE(tftp);
+
+    // Address specified in the host scope should be used.
+    Option6AddrLst::AddressContainer addrs = tftp->getAddresses();
+    ASSERT_EQ(addrs.size(), 1);
+    EXPECT_EQ("3001:1::234", addrs[0].toText());
 }
 
 // Test basic SARR scenarios against a server configured with one subnet
@@ -499,16 +713,77 @@ TEST_F(HostTest, hostIdentifiersOrder) {
 
 // This test checks that host specific options override subnet specific
 // options. Overridden options are requested with Option Request
-// option (stateless case).
-TEST_F(HostTest, overrideRequestedOptionsStateless) {
-    testOverrideRequestedOptions(STATELESS);
+// option (Information-request case).
+TEST_F(HostTest, overrideRequestedOptionsInformationRequest) {
+    testOverrideRequestedOptions(DHCPV6_INFORMATION_REQUEST);
 }
 
 // This test checks that host specific options override subnet specific
 // options. Overridden options are requested with Option Request
-// option (stateful case).
-TEST_F(HostTest, overrideRequestedOptionsStateful) {
-    testOverrideRequestedOptions(STATEFUL);
+// option (Reuqest case).
+TEST_F(HostTest, overrideRequestedOptionsRequest) {
+    testOverrideRequestedOptions(DHCPV6_REQUEST);
 }
+
+// This test checks that host specific options override subnet specific
+// options. Overridden options are requested with Option Request
+// option (Renew case).
+TEST_F(HostTest, overrideRequestedOptionsRenew) {
+    testOverrideRequestedOptions(DHCPV6_RENEW);
+}
+
+// This test checks that host specific options override subnet specific
+// options. Overridden options are requested with Option Request
+// option (Rebind case).
+TEST_F(HostTest, overrideRequestedOptionsRebind) {
+    testOverrideRequestedOptions(DHCPV6_REBIND);
+}
+
+// This test checks that client receives options when they are
+// solely defined in the host scope and not in the global or subnet
+// scope (Information-request case).
+TEST_F(HostTest, testHostOnlyOptionsInformationRequest) {
+    testHostOnlyOptions(DHCPV6_INFORMATION_REQUEST);
+}
+
+// This test checks that client receives options when they are
+// solely defined in the host scope and not in the global or subnet
+// scope (Reuqest case).
+TEST_F(HostTest, testHostOnlyOptionsRequest) {
+    testHostOnlyOptions(DHCPV6_REQUEST);
+}
+
+// This test checks that client receives options when they are
+// solely defined in the host scope and not in the global or subnet
+// scope (Renew case).
+TEST_F(HostTest, testHostOnlyOptionsRenew) {
+    testHostOnlyOptions(DHCPV6_RENEW);
+}
+
+// This test checks that client receives options when they are
+// solely defined in the host scope and not in the global or subnet
+// scope (Rebind case).
+TEST_F(HostTest, testHostOnlyOptionsRebind) {
+    testHostOnlyOptions(DHCPV6_REBIND);
+}
+
+// This test checks that host specific vendor options override vendor
+// options defined in the global scope (Reuqest case).
+TEST_F(HostTest, overrideVendorOptionsRequest) {
+    testOverrideVendorOptions(DHCPV6_REQUEST);
+}
+
+// This test checks that host specific vendor options override vendor
+// options defined in the global scope (Renew case).
+TEST_F(HostTest, overrideVendorOptionsRenew) {
+    testOverrideVendorOptions(DHCPV6_RENEW);
+}
+
+// This test checks that host specific vendor options override vendor
+// options defined in the global scope (Rebind case).
+TEST_F(HostTest, overrideVendorOptionsRebind) {
+    testOverrideVendorOptions(DHCPV6_REBIND);
+}
+
 
 } // end of anonymous namespace
