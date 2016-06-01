@@ -9,6 +9,7 @@
 
 #include <dhcpsrv/pgsql_connection.h>
 
+#include <stdint.h>
 #include <vector>
 
 namespace isc {
