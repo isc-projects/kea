@@ -1143,8 +1143,6 @@ void GenericHostDataSourceTest::testOptionsReservations46(const bool formatted) 
     ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP4_AND_DHCP6));
     // Insert host, options and IPv6 reservations into respective tables.
     ASSERT_NO_THROW(hdsptr_->add(host));
-    // Subnet id will be used in queries to the database.
-    SubnetID subnet_id = host->getIPv6SubnetID();
 
     // getAll(identifier_type, identifier, identifier_size)
     ConstHostCollection hosts_by_id = hdsptr_->getAll(host->getIdentifierType(),
