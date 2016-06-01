@@ -1709,7 +1709,7 @@ public:
                     const char* what) const;
 
     /// @brief Creates collection of @ref Host objects with associated
-    /// information such as IPv6 reservations and/or DHCP options..
+    /// information such as IPv6 reservations and/or DHCP options.
     ///
     /// This method performs a query which returns host information from
     /// the 'hosts' table. The query may also use LEFT JOIN clause to
