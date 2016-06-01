@@ -643,7 +643,7 @@
      In order to understand the logging statements one must understand a
      bit about how expressions are evaluated, for a more complete description
      refer to the design document at <ulink url="http://kea.isc.org/wiki/KeaDesigns"/>.
-     In brief there are two structures used during the evaluation of an expression
+     In brief there are two structures used during the evaluation of an expression:
      a list of tokens which represent the expressions and a value stack which
      represents the values being manipulated.
      </para>
@@ -651,7 +651,7 @@
      <para>
      The list of tokens is created when the configuration file is processed with
      most expressions and values being converted to a token.  The list is organized
-     in reverse polish notation.  During execution the list will be traversed
+     in reverse Polish notation.  During execution the list will be traversed
      in order.  As each token is executed it will be able to pop values
      from the top of the stack and eventually push its result on the top of the
      stack.  Imagine the following expression:
