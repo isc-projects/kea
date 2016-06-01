@@ -12,7 +12,7 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_vendor.h>
-#include <dhcpsrv/mysql_connection.h>
+//#include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/database_connection.h>

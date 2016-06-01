@@ -568,7 +568,7 @@ protected:
     uint8_t nest_level_; ///< nesting level of the relay block to use
 };
 
-/// @breif Token that represents a value of a field within a DHCPv6 relay
+/// @brief Token that represents a value of a field within a DHCPv6 relay
 /// encapsulation
 ///
 /// This represents a reference to a field with a given DHCPv6 relay encapsulation.

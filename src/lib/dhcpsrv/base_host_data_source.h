@@ -105,6 +105,7 @@ public:
     /// for a specified identifier. This method may return multiple hosts
     /// because a particular client may have reservations in multiple subnets.
     ///
+    /// @param identifier_type Identifier type.
     /// @param identifier_begin Pointer to a begining of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.

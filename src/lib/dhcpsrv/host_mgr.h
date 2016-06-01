@@ -116,6 +116,7 @@ public:
     /// reservations from the primary data source are placed before the
     /// reservations from the alternate source.
     ///
+    /// @param identifier_type Identifier type.
     /// @param identifier_begin Pointer to a begining of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
