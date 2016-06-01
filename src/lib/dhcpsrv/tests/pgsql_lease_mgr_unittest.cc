@@ -16,14 +16,6 @@
 
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <utility>
-
-#include <stdlib.h>
-
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -410,4 +402,5 @@ TEST_F(PgSqlLeaseMgrTest, getExpiredLeases6) {
     testGetExpiredLeases6();
 }
 
-};
+}; // namespace
+
