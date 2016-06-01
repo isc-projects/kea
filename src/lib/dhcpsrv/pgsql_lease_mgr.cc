@@ -20,67 +20,16 @@
 #include <string>
 #include <time.h>
 
-// PostgreSQL errors should be tested based on the SQL state code.  Each state
-// code is 5 decimal, ASCII, digits, the first two define the category of
-// error, the last three are the specific error.  PostgreSQL makes the state
-// code as a char[5].  Macros for each code are defined in PostgreSQL's
-// errorcodes.h, although they require a second macro, MAKE_SQLSTATE for
-// completion.  PostgreSQL deliberately omits this macro from errocodes.h
-// so callers can supply their own.
-#define MAKE_SQLSTATE(ch1,ch2,ch3,ch4,ch5) {ch1,ch2,ch3,ch4,ch5}
-#include <utils/errcodes.h>
-const size_t STATECODE_LEN = 5;
-
-// Currently the only one we care to look for is duplicate key.
-const char DUPLICATE_KEY[] = ERRCODE_UNIQUE_VIOLATION;
-
 using namespace isc;
 using namespace isc::dhcp;
 using namespace std;
 
 namespace {
 
-// Default connection timeout
-const int PGSQL_DEFAULT_CONNECTION_TIMEOUT = 5;	// seconds
-
-// Maximum number of parameters used in any single query
-const size_t MAX_PARAMETERS_IN_QUERY = 14;
-
-/// @brief  Defines a single query
-struct TaggedStatement {
-
-    /// Number of parameters for a given query
-    int nbparams;
-
-    /// @brief OID types
-    ///
-    /// Specify parameter types. See /usr/include/postgresql/catalog/pg_type.h.
-    /// For some reason that header does not export those parameters.
-    /// Those OIDs must match both input and output parameters.
-    const Oid types[MAX_PARAMETERS_IN_QUERY];
-
-    /// Short name of the query.
-    const char* name;
-
-    /// Text representation of the actual query.
-    const char* text;
-};
-
-/// @brief Constants for PostgreSQL data types
-/// This are defined by PostreSQL in <catalog/pg_type.h>, but including
-/// this file is extrordinarily convoluted, so we'll use these to fill-in.
-const size_t OID_NONE = 0;   // PostgreSQL infers proper type
-const size_t OID_BOOL = 16;
-const size_t OID_BYTEA = 17;
-const size_t OID_INT8 = 20;  // 8 byte int
-const size_t OID_INT2 = 21;  // 2 byte int
-const size_t OID_TIMESTAMP = 1114;
-const size_t OID_VARCHAR = 1043;
-
 /// @brief Catalog of all the SQL statements currently supported.  Note
 /// that the order columns appear in statement body must match the order they
 /// that the occur in the table.  This does not apply to the where clause.
-TaggedStatement tagged_statements[] = {
+PgSqlTaggedStatement tagged_statements[] = {
     // DELETE_LEASE4
     { 1, { OID_INT8 },
       "delete_lease4",
@@ -258,65 +207,13 @@ TaggedStatement tagged_statements[] = {
 namespace isc {
 namespace dhcp {
 
-const int PsqlBindArray::TEXT_FMT = 0;
-const int PsqlBindArray::BINARY_FMT = 1;
-const char* PsqlBindArray::TRUE_STR = "TRUE";
-const char* PsqlBindArray::FALSE_STR = "FALSE";
-
-void PsqlBindArray::add(const char* value) {
-    values_.push_back(value);
-    lengths_.push_back(strlen(value));
-    formats_.push_back(TEXT_FMT);
-}
-
-void PsqlBindArray::add(const std::string& value) {
-    values_.push_back(value.c_str());
-    lengths_.push_back(value.size());
-    formats_.push_back(TEXT_FMT);
-}
-
-void PsqlBindArray::add(const std::vector<uint8_t>& data) {
-    values_.push_back(reinterpret_cast<const char*>(&(data[0])));
-    lengths_.push_back(data.size());
-    formats_.push_back(BINARY_FMT);
-}
-
-void PsqlBindArray::add(const bool& value)  {
-    add(value ? TRUE_STR : FALSE_STR);
-}
-
-std::string PsqlBindArray::toText() {
-    std::ostringstream stream;
-    for (int i = 0; i < values_.size(); ++i) {
-        stream << i << " : ";
-        if (formats_[i] == TEXT_FMT) {
-            stream << "\"" << values_[i] << "\"" << std::endl;
-        } else {
-            const char *data = values_[i];
-            if (lengths_[i] == 0) {
-                stream << "empty" << std::endl;
-            } else {
-                stream << "0x";
-                for (int i = 0; i < lengths_[i]; ++i) {
-                    stream << setfill('0') << setw(2) << setbase(16)
-                         << static_cast<unsigned int>(data[i]);
-                }
-                stream << std::endl;
-            }
-        }
-    }
-
-    return (stream.str());
-}
-
 /// @brief Base class for marshalling leases to and from PostgreSQL.
 ///
 /// Provides the common functionality to set up binding information between
 /// lease objects in the program and their database representation in the
 /// database.
-class PgSqlLeaseExchange {
+class PgSqlLeaseExchange : public PgSqlExchange {
 public:
-
 
     PgSqlLeaseExchange()
         : addr_str_(""), valid_lifetime_(0), valid_lft_str_(""),
@@ -327,282 +224,7 @@ public:
 
     virtual ~PgSqlLeaseExchange(){}
 
-    /// @brief Converts time_t value to a text representation in local time.
-    ///
-    /// @param input_time A time_t value representing time.
-    /// @return std::string containing stringified time.
-    static std::string
-    convertToDatabaseTime(const time_t input_time) {
-        struct tm tinfo;
-        char buffer[20];
-        localtime_r(&input_time, &tinfo);
-        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tinfo);
-        return (std::string(buffer));
-    }
-
-    /// @brief Converts lease expiration time to a text representation in
-    /// local time.
-    ///
-    /// The expiration time is calculated as a sum of the cltt (client last
-    /// transmit time) and the valid lifetime.
-    ///
-    /// The format of the output string is "%Y-%m-%d %H:%M:%S".  Database
-    /// table columns using this value should be typed as TIMESTAMP WITH
-    /// TIME ZONE. For such columns PostgreSQL assumes input strings without
-    /// timezones should be treated as in local time and are converted to UTC
-    /// when stored.  Likewise, these columns are automatically adjusted
-    /// upon retrieval unless fetched via "extract(epoch from <column>))".
-    ///
-    /// @param cltt Client last transmit time
-    /// @param valid_lifetime Valid lifetime
-    ///
-    /// @return std::string containing the stringified time
-    /// @throw isc::BadValue if the sum of the calculated expiration time is
-    /// greater than the value of @c DataSource::MAX_DB_TIME.
-    static std::string
-    convertToDatabaseTime(const time_t cltt, const uint32_t valid_lifetime) {
-        // Calculate expiry time. Store it in the 64-bit value so as we can detect
-        // overflows.
-        int64_t expire_time_64 = static_cast<int64_t>(cltt) +
-            static_cast<int64_t>(valid_lifetime);
-
-        // It has been observed that the PostgreSQL doesn't deal well with the
-        // timestamp values beyond the DataSource::MAX_DB_TIME seconds since the
-        // beginning of the epoch (around year 2038). The value is often
-        // stored in the database but it is invalid when read back (overflow?).
-        // Hence, the maximum timestamp value is restricted here.
-        if (expire_time_64 > DatabaseConnection::MAX_DB_TIME) {
-            isc_throw(isc::BadValue, "Time value is too large: " << expire_time_64);
-        }
-
-        return (convertToDatabaseTime(static_cast<time_t>(expire_time_64)));
-    }
-
-    /// @brief Converts time stamp from the database to a time_t
-    ///
-    /// @param db_time_val timestamp to be converted.  This value
-    /// is expected to be the number of seconds since the epoch
-    /// expressed as base-10 integer string.
-    /// @return Converted timestamp as time_t value.
-    static time_t convertFromDatabaseTime(const std::string& db_time_val) {
-        // Convert string time value to time_t
-        try  {
-            return (boost::lexical_cast<time_t>(db_time_val));
-        } catch (const std::exception& ex) {
-            isc_throw(BadValue, "Database time value is invalid: "
-                                << db_time_val);
-        }
-    }
-
-    /// @brief Gets a pointer to the raw column value in a result set row
-    ///
-    /// Given a result set, row, and column return a const char* pointer to
-    /// the data value in the result set.  The pointer is valid as long as
-    /// the result set has not been freed.  It may point to text or binary
-    /// data depending on how query was structured.  You should not attempt
-    /// to free this pointer.
-    ///
-    /// @param r the result set containing the query results
-    /// @param row the row number within the result set
-    /// @param col the column number within the row
-    ///
-    /// @return a const char* pointer to the column's raw data
-    /// @throw  DbOperationError if the value cannot be fetched.
-    const char* getRawColumnValue(PGresult*& r, const int row,
-                                  const size_t col) const {
-        const char* value = PQgetvalue(r, row, col);
-        if (!value) {
-            isc_throw(DbOperationError, "getRawColumnValue no data for :"
-                      << getColumnLabel(col) << " row:" << row);
-        }
-
-        return (value);
-    }
-
-    /// @brief Fetches boolean text ('t' or 'f') as a bool.
-    ///
-    /// @param r the result set containing the query results
-    /// @param row the row number within the result set
-    /// @param col the column number within the row
-    /// @param[out] value parameter to receive the converted value
-    ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
-    /// invalid.
-    void getColumnValue(PGresult*& r, const int row, const size_t col,
-                        bool &value) const {
-        const char* data = getRawColumnValue(r, row, col);
-        if (!strlen(data) || *data == 'f') {
-            value = false;
-        } else if (*data == 't') {
-            value = true;
-        } else {
-            isc_throw(DbOperationError, "Invalid boolean data: " << data
-                      << " for: " << getColumnLabel(col) << " row:" << row
-                      << " : must be 't' or 'f'");
-        }
-    }
-
-    /// @brief Fetches an integer text column as a uint32_t.
-    ///
-    /// @param r the result set containing the query results
-    /// @param row the row number within the result set
-    /// @param col the column number within the row
-    /// @param[out] value parameter to receive the converted value
-    ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
-    /// invalid.
-    void getColumnValue(PGresult*& r, const int row, const size_t col,
-                        uint32_t &value) const {
-        const char* data = getRawColumnValue(r, row, col);
-        try {
-            value = boost::lexical_cast<uint32_t>(data);
-        } catch (const std::exception& ex) {
-            isc_throw(DbOperationError, "Invalid uint32_t data: " << data
-                      << " for: " << getColumnLabel(col) << " row:" << row
-                      << " : " << ex.what());
-        }
-    }
-
-    /// @brief Fetches an integer text column as a int32_t.
-    ///
-    /// @param r the result set containing the query results
-    /// @param row the row number within the result set
-    /// @param col the column number within the row
-    /// @param[out] value parameter to receive the converted value
-    ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
-    /// invalid.
-    void getColumnValue(PGresult*& r, const int row, const size_t col,
-                        int32_t &value) const {
-        const char* data = getRawColumnValue(r, row, col);
-        try {
-            value = boost::lexical_cast<int32_t>(data);
-        } catch (const std::exception& ex) {
-            isc_throw(DbOperationError, "Invalid int32_t data: " << data
-                      << " for: " << getColumnLabel(col) << " row:" << row
-                      << " : " << ex.what());
-        }
-    }
-
-    /// @brief Fetches an integer text column as a uint8_t.
-    ///
-    /// @param r the result set containing the query results
-    /// @param row the row number within the result set
-    /// @param col the column number within the row
-    /// @param[out] value parameter to receive the converted value
-    ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
-    /// invalid.
-    void getColumnValue(PGresult*& r, const int row, const size_t col,
-                        uint8_t &value) const {
-        const char* data = getRawColumnValue(r, row, col);
-        try {
-            // lexically casting as uint8_t doesn't convert from char
-            // so we use uint16_t and implicitly convert.
-            value = boost::lexical_cast<uint16_t>(data);
-        } catch (const std::exception& ex) {
-            isc_throw(DbOperationError, "Invalid uint8_t data: " << data
-                      << " for: " << getColumnLabel(col) << " row:" << row
-                      << " : " << ex.what());
-        }
-    }
-
-    /// @brief Fetches an integer text column as a Lease6::Type
-    ///
-    /// @param r the result set containing the query results
-    /// @param row the row number within the result set
-    /// @param col the column number within the row
-    /// @param[out] value parameter to receive the converted value
-    ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
-    /// invalid.
-    void getColumnValue(PGresult*& r, const int row, const size_t col,
-                        Lease6::Type& value) const {
-        uint32_t raw_value = 0;
-        getColumnValue(r, row , col, raw_value);
-        switch (raw_value) {
-            case Lease6::TYPE_NA:
-                value = Lease6::TYPE_NA;
-                break;
-
-            case Lease6::TYPE_TA:
-                value = Lease6::TYPE_TA;
-                break;
-
-            case Lease6::TYPE_PD:
-                value = Lease6::TYPE_PD;
-                break;
-
-            default:
-                isc_throw(DbOperationError, "Invalid lease type: " << raw_value
-                      << " for: " << getColumnLabel(col) << " row:" << row);
-        }
-    }
-
-    /// @brief Converts a column in a row in a result set to a binary bytes
-    ///
-    /// Method is used to convert columns stored as BYTEA into a buffer of
-    /// binary bytes, (uint8_t).  It uses PQunescapeBytea to do the conversion.
-    ///
-    /// @param r the result set containing the query results
-    /// @param row the row number within the result set
-    /// @param col the column number within the row
-    /// @param[out] buffer pre-allocated buffer to which the converted bytes
-    /// will be stored.
-    /// @param buffer_size size of the output buffer
-    /// @param[out] bytes_converted number of bytes converted
-    /// value
-    ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
-    /// invalid.
-    void convertFromBytea(PGresult*& r, const int row, const size_t col,
-                          uint8_t* buffer,
-                          const size_t buffer_size,
-                          size_t &bytes_converted) const {
-
-        // Returns converted bytes in a dynamically allocated buffer, and
-        // sets bytes_converted.
-        unsigned char* bytes = PQunescapeBytea((const unsigned char*)
-                                               (getRawColumnValue(r, row, col)),
-                                               &bytes_converted);
-
-        // Unlikely it couldn't allocate it but you never know.
-        if (!bytes) {
-            isc_throw (DbOperationError, "PQunescapeBytea failed for:"
-                       << getColumnLabel(col) << " row:" << row);
-        }
-
-        // Make sure it's not larger than expected.
-        if (bytes_converted > buffer_size) {
-            // Free the allocated buffer first!
-            PQfreemem(bytes);
-            isc_throw (DbOperationError, "Converted data size: "
-                       << bytes_converted << " is too large for: "
-                       << getColumnLabel(col) << " row:" << row);
-        }
-
-        // Copy from the allocated buffer to caller's buffer the free up
-        // the allocated buffer.
-        memcpy(buffer, bytes, bytes_converted);
-        PQfreemem(bytes);
-    }
-
-    /// @brief Returns column label given a column number
-    std::string getColumnLabel(const size_t column) const {
-        if (column > column_labels_.size()) {
-            ostringstream os;
-            os << "Unknown column:" << column;
-            return (os.str());
-        }
-
-        return (column_labels_[column]);
-    }
-
 protected:
-    /// @brief Stores text labels for columns, currently only used for
-    /// logging and errors.
-    std::vector<std::string>column_labels_;
-
     /// @brief Common Instance members used for binding and conversion
     //@{
     std::string addr_str_;
@@ -748,7 +370,7 @@ public:
     ///
     /// @return Lease4Ptr to the newly created Lease4 object
     /// @throw DbOperationError if the lease cannot be created.
-    Lease4Ptr convertFromDatabase(PGresult*& r, int row) {
+    Lease4Ptr convertFromDatabase(const PgSqlResult& r, int row) {
         try {
             getColumnValue(r, row, ADDRESS_COL, addr4_);
 
@@ -936,7 +558,7 @@ public:
     ///
     /// @return Lease6Ptr to the newly created Lease4 object
     /// @throw DbOperationError if the lease cannot be created.
-    Lease6Ptr convertFromDatabase(PGresult*& r, int row) {
+    Lease6Ptr convertFromDatabase(const PgSqlResult& r, int row) {
         try {
             isc::asiolink::IOAddress addr(getIPv6Value(r, row, ADDRESS_COL));
 
@@ -955,7 +577,7 @@ public:
 
             getColumnValue(r, row , PREF_LIFETIME_COL, pref_lifetime_);
 
-            getColumnValue(r, row, LEASE_TYPE_COL, lease_type_);
+            getLeaseTypeColumnValue(r, row, LEASE_TYPE_COL, lease_type_);
 
             getColumnValue(r, row , IAID_COL, iaid_u_.ival_);
 
@@ -983,6 +605,35 @@ public:
         }
     }
 
+    /// @brief Fetches an integer text column as a Lease6::Type
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    /// @param[out] value parameter to receive the converted value
+    ///
+    /// Note we depart from overloading getColumnValue to avoid ambiguity
+    /// with base class methods for integers.
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
+    void getLeaseTypeColumnValue(const PgSqlResult& r, const int row,
+                                 const size_t col, Lease6::Type& value) const {
+        uint32_t raw_value = 0;
+        getColumnValue(r, row , col, raw_value);
+        switch (raw_value) {
+            case Lease6::TYPE_NA:
+            case Lease6::TYPE_TA:
+            case Lease6::TYPE_PD:
+                value = static_cast<Lease6::Type>(raw_value);
+                break;
+
+            default:
+                isc_throw(DbOperationError, "Invalid lease type: " << raw_value
+                      << " for: " << getColumnLabel(col) << " row:" << row);
+        }
+    }
+
     /// @brief Converts a column in a row in a result set into IPv6 address.
     ///
     /// @param r the result set containing the query results
@@ -992,7 +643,7 @@ public:
     /// @return isc::asiolink::IOAddress containing the IPv6 address.
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    isc::asiolink::IOAddress getIPv6Value(PGresult*& r, const int row,
+    isc::asiolink::IOAddress getIPv6Value(const PgSqlResult& r, const int row,
                                           const size_t col) const {
         const char* data = getRawColumnValue(r, row, col);
         try {
@@ -1041,25 +692,21 @@ private:
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : LeaseMgr(), exchange4_(new PgSqlLease4Exchange()),
-    exchange6_(new PgSqlLease6Exchange()), dbconn_(parameters), conn_(NULL) {
-    openDatabase();
-    prepareStatements();
+    exchange6_(new PgSqlLease6Exchange()), conn_(parameters) {
+    conn_.openDatabase();
+    int i = 0;
+    for( ; tagged_statements[i].text != NULL ; ++i) {
+        conn_.prepareStatement(tagged_statements[i]);
+    }
+
+    // Just in case somebody foo-barred things
+    if (i != NUM_STATEMENTS) {
+        isc_throw(DbOpenError, "Number of statements prepared: " << i
+                  << " does not match expected count:" << NUM_STATEMENTS);
+    }
 }
 
 PgSqlLeaseMgr::~PgSqlLeaseMgr() {
-    if (conn_) {
-        // Deallocate the prepared queries.
-        PGresult* r = PQexec(conn_, "DEALLOCATE all");
-        if(PQresultStatus(r) != PGRES_COMMAND_OK) {
-            // Highly unlikely but we'll log it and go on.
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_DEALLOC_ERROR)
-                      .arg(PQerrorMessage(conn_));
-        }
-
-        PQclear(r);
-        PQfinish(conn_);
-        conn_ = NULL;
-    }
 }
 
 std::string
@@ -1071,127 +718,14 @@ PgSqlLeaseMgr::getDBVersion() {
     return (tmp.str());
 }
 
-void
-PgSqlLeaseMgr::prepareStatements() {
-    for(int i = 0; tagged_statements[i].text != NULL; ++ i) {
-        // Prepare all statements queries with all known fields datatype
-        PGresult* r = PQprepare(conn_, tagged_statements[i].name,
-                                tagged_statements[i].text,
-                                tagged_statements[i].nbparams,
-                                tagged_statements[i].types);
-
-        if(PQresultStatus(r) != PGRES_COMMAND_OK) {
-            PQclear(r);
-            isc_throw(DbOperationError,
-                      "unable to prepare PostgreSQL statement: "
-                      << tagged_statements[i].text << ", reason: "
-                      << PQerrorMessage(conn_));
-        }
-
-        PQclear(r);
-    }
-}
-
-void
-PgSqlLeaseMgr::openDatabase() {
-    string dbconnparameters;
-    string shost = "localhost";
-    try {
-        shost = dbconn_.getParameter("host");
-    } catch(...) {
-        // No host. Fine, we'll use "localhost"
-    }
-    dbconnparameters += "host = '" + shost + "'" ;
-
-    string suser;
-    try {
-        suser = dbconn_.getParameter("user");
-        dbconnparameters += " user = '" + suser + "'";
-    } catch(...) {
-        // No user. Fine, we'll use NULL
-    }
-
-    string spassword;
-    try {
-        spassword = dbconn_.getParameter("password");
-        dbconnparameters += " password = '" + spassword + "'";
-    } catch(...) {
-        // No password. Fine, we'll use NULL
-    }
-
-    string sname;
-    try {
-        sname= dbconn_.getParameter("name");
-        dbconnparameters += " dbname = '" + sname + "'";
-    } catch(...) {
-        // No database name.  Throw a "NoDatabaseName" exception
-        isc_throw(NoDatabaseName, "must specify a name for the database");
-    }
-
-    unsigned int connect_timeout = PGSQL_DEFAULT_CONNECTION_TIMEOUT;
-    string stimeout;
-    try {
-        stimeout = dbconn_.getParameter("connect-timeout");
-    } catch (...) {
-        // No timeout parameter, we are going to use the default timeout.
-        stimeout = "";
-    }
-
-    if (stimeout.size() > 0) {
-        // Timeout was given, so try to convert it to an integer.
-
-        try {
-            connect_timeout = boost::lexical_cast<unsigned int>(stimeout);
-        } catch (...) {
-            // Timeout given but could not be converted to an unsigned int. Set
-            // the connection timeout to an invalid value to trigger throwing
-            // of an exception.
-            connect_timeout = 0;
-        }
-
-        // The timeout is only valid if greater than zero, as depending on the
-        // database, a zero timeout might signify someting like "wait
-        // indefinitely".
-        //
-        // The check below also rejects a value greater than the maximum
-        // integer value.  The lexical_cast operation used to obtain a numeric
-        // value from a string can get confused if trying to convert a negative
-        // integer to an unsigned int: instead of throwing an exception, it may
-        // produce a large positive value.
-        if ((connect_timeout == 0) ||
-            (connect_timeout > numeric_limits<int>::max())) {
-            isc_throw(DbInvalidTimeout, "database connection timeout (" <<
-                      stimeout << ") must be an integer greater than 0");
-        }
-    }
-
-    std::ostringstream oss;
-    oss << connect_timeout;
-    dbconnparameters += " connect_timeout = " + oss.str();
-
-    conn_ = PQconnectdb(dbconnparameters.c_str());
-    if (conn_ == NULL) {
-        isc_throw(DbOpenError, "could not allocate connection object");
-    }
-
-    if (PQstatus(conn_) != CONNECTION_OK) {
-        // If we have a connection object, we have to call finish
-        // to release it, but grab the error message first.
-        std::string error_message = PQerrorMessage(conn_);
-        PQfinish(conn_);
-        conn_ = NULL;
-        isc_throw(DbOpenError, error_message);
-    }
-}
-
 bool
 PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
                               PsqlBindArray& bind_array) {
-    PGresult* r = PQexecPrepared(conn_, tagged_statements[stindex].name,
-                                  tagged_statements[stindex].nbparams,
-                                  &bind_array.values_[0],
-                                  &bind_array.lengths_[0],
-                                  &bind_array.formats_[0], 0);
+    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
 
     int s = PQresultStatus(r);
 
@@ -1199,24 +733,14 @@ PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
         // Failure: check for the special case of duplicate entry.  If this is
         // the case, we return false to indicate that the row was not added.
         // Otherwise we throw an exception.
-        if (compareError(r, DUPLICATE_KEY)) {
-            PQclear(r);
+        if (conn_.compareError(r, PgSqlConnection::DUPLICATE_KEY)) {
             return (false);
         }
 
-        checkStatementError(r, stindex);
+        conn_.checkStatementError(r, tagged_statements[stindex]);
     }
 
-    PQclear(r);
-
     return (true);
-}
-
-bool PgSqlLeaseMgr::compareError(PGresult*& r, const char* error_state) {
-    const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
-    // PostgreSQL garuantees it will always be 5 characters long
-    return ((sqlstate != NULL) &&
-            (memcmp(sqlstate, error_state, STATECODE_LEN) == 0));
 }
 
 bool
@@ -1248,17 +772,16 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_ADDR4).arg(tagged_statements[stindex].name);
 
-    PGresult* r = PQexecPrepared(conn_, tagged_statements[stindex].name,
-                       tagged_statements[stindex].nbparams,
-                       &bind_array.values_[0],
-                       &bind_array.lengths_[0],
-                       &bind_array.formats_[0], 0);
+    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
 
-    checkStatementError(r, stindex);
+    conn_.checkStatementError(r, tagged_statements[stindex]);
 
     int rows = PQntuples(r);
     if (single && rows > 1) {
-        PQclear(r);
         isc_throw(MultipleRecords, "multiple records were found in the "
                       "database where only one was expected for query "
                       << tagged_statements[stindex].name);
@@ -1267,8 +790,6 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     for(int i = 0; i < rows; ++ i) {
         result.push_back(exchange->convertFromDatabase(r, i));
     }
-
-    PQclear(r);
 }
 
 
@@ -1566,16 +1087,15 @@ PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR4).arg(tagged_statements[stindex].name);
 
-    PGresult* r = PQexecPrepared(conn_, tagged_statements[stindex].name,
-                                  tagged_statements[stindex].nbparams,
-                                  &bind_array.values_[0],
-                                  &bind_array.lengths_[0],
-                                  &bind_array.formats_[0], 0);
+    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
 
-    checkStatementError(r, stindex);
+    conn_.checkStatementError(r, tagged_statements[stindex]);
 
     int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
-    PQclear(r);
 
     // Check success case first as it is the most likely outcome.
     if (affected_rows == 1) {
@@ -1637,15 +1157,14 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 uint64_t
 PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
                                  PsqlBindArray& bind_array) {
-    PGresult* r = PQexecPrepared(conn_, tagged_statements[stindex].name,
-                                  tagged_statements[stindex].nbparams,
-                                  &bind_array.values_[0],
-                                  &bind_array.lengths_[0],
-                                  &bind_array.formats_[0], 0);
+    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array.values_[0],
+                                 &bind_array.lengths_[0],
+                                 &bind_array.formats_[0], 0));
 
-    checkStatementError(r, stindex);
+    conn_.checkStatementError(r, tagged_statements[stindex]);
     int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
-    PQclear(r);
 
     return (affected_rows);
 }
@@ -1708,41 +1227,11 @@ string
 PgSqlLeaseMgr::getName() const {
     string name = "";
     try {
-        name = dbconn_.getParameter("name");
+        name = conn_.getParameter("name");
     } catch (...) {
         // Return an empty name
     }
     return (name);
-}
-
-void
-PgSqlLeaseMgr::checkStatementError(PGresult*& r, StatementIndex index) const {
-    int s = PQresultStatus(r);
-    if (s != PGRES_COMMAND_OK && s != PGRES_TUPLES_OK) {
-        // We're testing the first two chars of SQLSTATE, as this is the
-        // error class. Note, there is a severity field, but it can be
-        // misleadingly returned as fatal.
-        const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
-        if ((sqlstate != NULL) &&
-            ((memcmp(sqlstate, "08", 2) == 0) ||  // Connection Exception
-             (memcmp(sqlstate, "53", 2) == 0) ||  // Insufficient resources
-             (memcmp(sqlstate, "54", 2) == 0) ||  // Program Limit exceeded
-             (memcmp(sqlstate, "57", 2) == 0) ||  // Operator intervention
-             (memcmp(sqlstate, "58", 2) == 0))) { // System error
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_FATAL_ERROR)
-                         .arg(tagged_statements[index].name)
-                         .arg(PQerrorMessage(conn_))
-                         .arg(sqlstate);
-            PQclear(r);
-            exit (-1);
-        }
-
-        const char* error_message = PQerrorMessage(conn_);
-        PQclear(r);
-        isc_throw(DbOperationError, "Statement exec faild:" << " for: "
-                  << tagged_statements[index].name << ", reason: "
-                  << error_message);
-    }
 }
 
 string
@@ -1755,8 +1244,8 @@ PgSqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_VERSION);
 
-    PGresult* r = PQexecPrepared(conn_, "get_version", 0, NULL, NULL, NULL, 0);
-    checkStatementError(r, GET_VERSION);
+    PgSqlResult r(PQexecPrepared(conn_, "get_version", 0, NULL, NULL, NULL, 0));
+    conn_.checkStatementError(r, tagged_statements[GET_VERSION]);
 
     istringstream tmp;
     uint32_t version;
@@ -1769,35 +1258,17 @@ PgSqlLeaseMgr::getVersion() const {
     tmp.str(PQgetvalue(r, 0, 1));
     tmp >> minor;
 
-    PQclear(r);
-
     return make_pair<uint32_t, uint32_t>(version, minor);
 }
 
 void
 PgSqlLeaseMgr::commit() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_COMMIT);
-    PGresult* r = PQexec(conn_, "COMMIT");
-    if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        const char* error_message = PQerrorMessage(conn_);
-        PQclear(r);
-        isc_throw(DbOperationError, "commit failed: " << error_message);
-    }
-
-    PQclear(r);
+    conn_.commit();
 }
 
 void
 PgSqlLeaseMgr::rollback() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_ROLLBACK);
-    PGresult* r = PQexec(conn_, "ROLLBACK");
-    if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        const char* error_message = PQerrorMessage(conn_);
-        PQclear(r);
-        isc_throw(DbOperationError, "rollback failed: " << error_message);
-    }
-
-    PQclear(r);
+    conn_.rollback();
 }
 
 }; // end of isc::dhcp namespace
