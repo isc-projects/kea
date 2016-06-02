@@ -59,12 +59,18 @@ namespace {
 ///     uses HW address for lease lookup, rather than client id
 ///
 /// - Configuration 4:
-///   - The same as configuration 2, but using different values in
-///     'host-reservation-identifiers'
+///   - Used for testing host reservations where circuit-id takes precedence
+///     over hw-address, and the hw-address takes precedence over duid.
+///   - 1 subnet: 10.0.0.0/24
+///   - 3 reservations for this subnet:
+///     - IP address 10.0.0.7 for HW address aa:bb:cc:dd:ee:ff
+///     - IP address 10.0.0.8 for DUID 01:02:03:04:05
+///     - IP address 10.0.0.9 for circuit-id 'charter950'
 ///
 /// - Configuration 5:
-///   - The same as configuration 4, but using different values in
-///     'host-reservation-identifiers'
+///   - The same as configuration 4, but using the following order of
+///     host-reservation-identifiers: duid, circuit-id, hw-address.
+///
 const char* DORA_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces-config\": {"
