@@ -317,7 +317,7 @@ public:
 
     /// @brief Returns host identifier in a textual form.
     ///
-    /// @return Identifier in the form of <type>=<value>.
+    /// @return Identifier in the form of type=value.
     std::string getIdentifierAsText() const;
 
     /// @brief Returns name of the identifier of a specified type.
@@ -328,7 +328,7 @@ public:
     /// @param type Identifier type.
     /// @param value Pointer to a buffer holding identifier.
     /// @param length Length of the identifier.
-    /// @return Identifier in the form of <type>=<value>.
+    /// @return Identifier in the form of type=value.
     static std::string getIdentifierAsText(const IdentifierType& type,
                                            const uint8_t* value,
                                            const size_t length);

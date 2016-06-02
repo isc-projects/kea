@@ -7,10 +7,15 @@
 #ifndef GENERIC_HOST_DATA_SOURCE_UNITTEST_H
 #define GENERIC_HOST_DATA_SOURCE_UNITTEST_H
 
+#include <asiolink/io_address.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/host.h>
 #include <dhcp/classify.h>
+#include <dhcp/option.h>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
+#include <sstream>
 #include <vector>
 
 namespace isc {
@@ -28,6 +33,16 @@ public:
     enum Universe {
         V4,
         V6
+    };
+
+    /// @brief Options to be inserted into a host.
+    ///
+    /// Parameter of this type is passed to the @ref addTestOptions to
+    /// control which option types should be inserted into a host.
+    enum AddedOptions {
+        DHCP4_ONLY,
+        DHCP6_ONLY,
+        DHCP4_AND_DHCP6
     };
 
     /// @brief Default constructor.
@@ -122,7 +137,202 @@ public:
     /// @param classes1 first list of client classes
     /// @param classes2 second list of client classes
     void compareClientClasses(const ClientClasses& classes1,
-                              const ClientClasses& classes2);
+                              const ClientClasses& classes2);                           
+
+    /// @brief Compares options within two configurations.
+    ///
+    /// This method uses gtest macros to signal errors.
+    ///
+    /// @param cfg1 First configuration.
+    /// @param cfg2 Second configuration.
+    void compareOptions(const ConstCfgOptionPtr& cfg1,
+                        const ConstCfgOptionPtr& cfg2) const;
+
+    /// @brief Creates an opton descriptor holding an empty option.
+    ///
+    /// @param universe V4 or V6.
+    /// @param option_type Option type.
+    /// @param persist A boolean flag indicating if the option is always
+    /// returned to the client or only when requested.
+    ///
+    /// @return Descriptor holding an empty option.
+    OptionDescriptor createEmptyOption(const Option::Universe& universe,
+                                       const uint16_t option_type,
+                                       const bool persist) const;
+
+    /// @brief Creates an instance of the option for which it is possible to
+    /// specify universe, option type, persistence flag  and value in
+    /// the constructor.
+    ///
+    /// Examples of options that can be created using this function are:
+    /// - @ref OptionString
+    /// - different variants of @ref OptionInt.
+    ///
+    /// @param universe V4 or V6.
+    /// @param option_type Option type.
+    /// @param persist A boolean flag indicating if the option is always
+    /// returned to the client or only when requested.
+    /// @param formatted A boolean value selecting if the formatted option
+    /// value should be used (if true), or binary value (if false).
+    /// @param value Option value to be assigned to the option.
+    /// @tparam OptionType Class encapsulating the option.
+    /// @tparam DataType Option value data type.
+    ///
+    /// @return Descriptor holding an instance of the option created.
+    template<typename OptionType, typename DataType>
+    OptionDescriptor createOption(const Option::Universe& universe,
+                                  const uint16_t option_type,
+                                  const bool persist,
+                                  const bool formatted,
+                                  const DataType& value) const {
+        boost::shared_ptr<OptionType> option(new OptionType(universe, option_type,
+                                                            value));
+        std::ostringstream s;
+        if (formatted) {
+            // Using formatted option value. Convert option value to a
+            // textual format.
+            s << value;
+        }
+        OptionDescriptor desc(option, persist, s.str());
+        return (desc);
+    }
+
+    /// @brief Creates an instance of the option for which it is possible to
+    /// specify option type, persistence flag  and value in the constructor.
+    ///
+    /// Examples of options that can be created using this function are:
+    /// - @ref Option4AddrLst
+    /// - @ref Option6AddrLst
+    ///
+    /// @param option_type Option type.
+    /// @param persist A boolean flag indicating if the option is always
+    /// returned to the client or only when requested.
+    /// @param formatted A boolean value selecting if the formatted option
+    /// value should be used (if true), or binary value (if false).
+    /// @param value Option value to be assigned to the option.
+    /// @tparam OptionType Class encapsulating the option.
+    /// @tparam DataType Option value data type.
+    ///
+    /// @return Descriptor holding an instance of the option created.
+    template<typename OptionType, typename DataType>
+    OptionDescriptor createOption(const uint16_t option_type,
+                                  const bool persist,
+                                  const bool formatted,
+                                  const DataType& value) const {
+        boost::shared_ptr<OptionType> option(new OptionType(option_type, value));
+
+        std::ostringstream s;
+        if (formatted) {
+            // Using formatted option value. Convert option value to a
+            // textual format.
+            s << value;
+        }
+
+        OptionDescriptor desc(option, persist, s.str());
+        return (desc);
+    }
+
+    /// @brief Creates an instance of the option holding list of IP addresses.
+    ///
+    /// @param option_type Option type.
+    /// @param persist A boolean flag indicating if the option is always
+    /// returned to the client or only when requested.
+    /// @param formatted A boolean value selecting if the formatted option
+    /// value should be used (if true), or binary value (if false).
+    /// @param address1 First address to be included. If address is empty, it is
+    /// not included.
+    /// @param address2 Second address to be included. If address is empty, it
+    /// is not included.
+    /// @param address3 Third address to be included. If address is empty, it
+    /// is not included.
+    /// @tparam OptionType Class encapsulating the option.
+    ///
+    /// @return Descriptor holding an instance of the option created.
+    template<typename OptionType>
+    OptionDescriptor
+    createAddressOption(const uint16_t option_type,
+                        const bool persist,
+                        const bool formatted,
+                        const std::string& address1 = "",
+                        const std::string& address2 = "",
+                        const std::string& address3 = "") const {
+        std::ostringstream s;
+        // First address.
+        typename OptionType::AddressContainer addresses;
+        if (!address1.empty()) {
+            addresses.push_back(asiolink::IOAddress(address1));
+            if (formatted) {
+                s << address1;
+            }
+        }
+        // Second address.
+        if (!address2.empty()) {
+            addresses.push_back(asiolink::IOAddress(address2));
+            if (formatted) {
+                if (s.tellp() != std::streampos(0)) {
+                    s << ",";
+                }
+                s << address2;
+            }
+        }
+        // Third address.
+        if (!address3.empty()) {
+            addresses.push_back(asiolink::IOAddress(address3));
+            if (formatted) {
+                if (s.tellp() != std::streampos(0)) {
+                    s << ",";
+                }
+                s << address3;
+            }
+        }
+
+        boost::shared_ptr<OptionType> option(new OptionType(option_type,
+                                                            addresses));
+        OptionDescriptor desc(option, persist, s.str());
+        return (desc);
+    }
+
+    /// @brief Creates an instance of the vendor option.
+    ///
+    /// @param universe V4 or V6.
+    /// @param persist A boolean flag indicating if the option is always
+    /// returned to the client or only when requested.
+    /// @param formatted A boolean value selecting if the formatted option
+    /// value should be used (if true), or binary value (if false).
+    /// @param vendor_id Vendor identifier.
+    ///
+    /// @return Descriptor holding an instance of the option created.
+    OptionDescriptor createVendorOption(const Option::Universe& universe,
+                                        const bool persist,
+                                        const bool formatted,
+                                        const uint32_t vendor_id) const;
+
+    /// @brief Adds multiple options into the host.
+    ///
+    /// This method creates the following options into the host object:
+    /// - DHCPv4 boot file name option,
+    /// - DHCPv4 default ip ttl option,
+    /// - DHCPv4 option 1 within vendor-encapsulated-options space,
+    /// - DHCPv4 option 254 with a single IPv4 address,
+    /// - DHCPv4 option 1 within isc option space,
+    /// - DHCPv6 boot file url option,
+    /// - DHCPv6 information refresh time option,
+    /// - DHCPv6 vendor option with vendor id 2495,
+    /// - DHCPv6 option 1024, with a sigle IPv6 address,
+    /// - DHCPv6 empty option 1, within isc2 option space,
+    /// - DHCPv6 option 2, within isc2 option space with 3 IPv6 addresses,
+    ///
+    /// This method also creates option definitions for the non-standard
+    /// options and registers them in the LibDHCP as runtime option
+    /// definitions.
+    ///
+    /// @param host Host object into which options should be added.
+    /// @param formatted A boolean value selecting if the formatted option
+    /// value should be used (if true), or binary value (if false).
+    /// @param added_options Controls which options should be inserted into
+    /// a host: DHCPv4, DHCPv6 options or both.
+    void addTestOptions(const HostPtr& host, const bool formatted,
+                        const AddedOptions& added_options) const;
 
     /// @brief Pointer to the host data source
     HostDataSourcePtr hdsptr_;
@@ -238,6 +448,33 @@ public:
     /// Uses gtest macros to report failures.
     void testAddDuplicate4();
 
+    /// @brief Test that DHCPv4 options can be inserted and retrieved from
+    /// the database.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    /// @param formatted Boolean value indicating if the option values
+    /// should be stored in the textual format in the database.
+    void testOptionsReservations4(const bool formatted);
+
+    /// @brief Test that DHCPv6 options can be inserted and retrieved from
+    /// the database.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    /// @param formatted Boolean value indicating if the option values
+    /// should be stored in the textual format in the database.
+    void testOptionsReservations6(const bool formatted);
+
+    /// @brief Test that DHCPv4 and DHCPv6 options can be inserted and retrieved
+    /// with a single query to the database.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    /// @param formatted Boolean value indicating if the option values
+    /// should be stored in the textual format in the database.
+    void testOptionsReservations46(const bool formatted);
+
     /// @brief Returns DUID with identical content as specified HW address
     ///
     /// This method does not have any sense in real life and is only useful
@@ -257,6 +494,7 @@ public:
     /// @param duid DUID to be copied
     /// @return HW address with the same value as specified DUID
     HWAddrPtr DuidToHWAddr(const DuidPtr& duid);
+
 };
 
 }; // namespace test
