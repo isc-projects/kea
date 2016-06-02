@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,12 +21,9 @@ namespace dhcp {
 // The first level traces normal operations,
 const int EVAL_DBG_TRACE = DBGLVL_TRACE_BASIC;
 
-// The next level traces each call to hook code.
-const int EVAL_DBG_CALLS = DBGLVL_TRACE_BASIC_DATA;
-
-// Additional information on the calls.  Report each call to a callout (even
-// if there are multiple callouts on a hook) and each status return.
-const int EVAL_DBG_EXTENDED_CALLS = DBGLVL_TRACE_DETAIL_DATA;
+// Additional information on the calls.  Report the values that were
+// popped from or pushed to the value stack.
+const int EVAL_DBG_STACK = DBGLVL_TRACE_DETAIL_DATA;
 
 /// @brief Eval Logger
 ///
