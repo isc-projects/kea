@@ -571,7 +571,7 @@ OptionDataParser::findOptionDefinition(const std::string& option_space,
     if (!def) {
         // Check if this is a vendor-option. If it is, get vendor-specific
         // definition.
-        uint32_t vendor_id = CfgOption::optionSpaceToVendorId(option_space);
+        uint32_t vendor_id = LibDHCP::optionSpaceToVendorId(option_space);
         if (vendor_id) {
             def = LibDHCP::getVendorOptionDef(u, vendor_id, search_key);
         }

@@ -15,7 +15,6 @@
 
 #include <boost/static_assert.hpp>
 #include <mysqld_error.h>
-#include <errmsg.h>
 
 #include <iostream>
 #include <iomanip>
@@ -2047,34 +2046,7 @@ MySqlLeaseMgr::rollback() {
 void
 MySqlLeaseMgr::checkError(int status, StatementIndex index,
                            const char* what) const {
-    if (status != 0) {
-        switch(mysql_errno(conn_.mysql_)) {
-            // These are the ones we consider fatal. Remember this method is
-            // used to check errors of API calls made subsequent to successfully
-            // connecting.  Errors occuring while attempting to connect are
-            // checked in the connection code. An alternative would be to call
-            // mysql_ping() - assuming autoreconnect is off. If that fails
-            // then we know connection is toast.
-            case CR_SERVER_GONE_ERROR:
-            case CR_SERVER_LOST:
-            case CR_OUT_OF_MEMORY:
-            case CR_CONNECTION_ERROR:
-                // We're exiting on fatal
-                LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_FATAL_ERROR)
-                         .arg(what)
-                         .arg(conn_.text_statements_[index])
-                         .arg(mysql_error(conn_.mysql_))
-                         .arg(mysql_errno(conn_.mysql_));
-                exit (-1);
-
-            default:
-                // Connection is ok, so it must be an SQL error
-                isc_throw(DbOperationError, what << " for <"
-                          << conn_.text_statements_[index] << ">, reason: "
-                          << mysql_error(conn_.mysql_) << " (error code "
-                          << mysql_errno(conn_.mysql_) << ")");
-        }
-    }
+    conn_.checkError(status, index, what);
 }
 
 }; // end of isc::dhcp namespace
