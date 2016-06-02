@@ -21,6 +21,10 @@ void
 TokenString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_STRING)
+        .arg('\'' + value_ + '\'');
 }
 
 TokenHexString::TokenHexString(const string& str) : value_("") {
@@ -55,6 +59,11 @@ void
 TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_HEXSTRING)
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value_.begin(),
+								 value_.end())));
 }
 
 TokenIpAddress::TokenIpAddress(const string& addr) : value_("") {
@@ -76,6 +85,11 @@ void
 TokenIpAddress::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_IPADDRESS)
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value_.begin(),
+								 value_.end())));
 }
 
 OptionPtr
@@ -106,6 +120,20 @@ TokenOption::evaluate(const Pkt& pkt, ValueStack& values) {
     // Push value of the option or empty string if there was no such option
     // in the packet.
     values.push(opt_str);
+
+    // Log what we pushed, both exists and textual are simple text
+    // and can be output directly.  We also include the code number
+    // of the requested option.
+    if (representation_type_ == HEXADECIMAL) {
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OPTION)
+            .arg(option_code_)
+            .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(opt_str.begin(),
+                                                                     opt_str.end())));
+    } else {
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OPTION)
+            .arg(option_code_)
+            .arg('\'' + opt_str + '\'');
+    }
 }
 
 TokenRelay4Option::TokenRelay4Option(const uint16_t option_code,
@@ -129,6 +157,7 @@ void
 TokenPkt4::evaluate(const Pkt& pkt, ValueStack& values) {
 
     vector<uint8_t> binary;
+    string type_str;
     try {
         // Check if it's a Pkt4. If it's not, the dynamic_cast will throw
         // std::bad_cast (failed dynamic_cast returns NULL for pointers and
@@ -145,22 +174,27 @@ TokenPkt4::evaluate(const Pkt& pkt, ValueStack& values) {
                           "Packet does not have hardware address");
             }
             binary = hwaddr->hwaddr_;
+            type_str = "mac";
             break;
         }
         case GIADDR:
             binary = pkt4.getGiaddr().toBytes();
+            type_str = "giaddr";
             break;
 
         case CIADDR:
             binary = pkt4.getCiaddr().toBytes();
+            type_str = "ciaddr";
             break;
 
         case YIADDR:
             binary = pkt4.getYiaddr().toBytes();
+            type_str = "yiaddr";
             break;
 
         case SIADDR:
             binary = pkt4.getSiaddr().toBytes();
+            type_str = "siaddr";
             break;
 
         case HLEN:
@@ -169,6 +203,7 @@ TokenPkt4::evaluate(const Pkt& pkt, ValueStack& values) {
             binary.push_back(0);
             binary.push_back(0);
             binary.push_back(pkt4.getHlen());
+            type_str = "hlen";
             break;
 
         case HTYPE:
@@ -177,6 +212,7 @@ TokenPkt4::evaluate(const Pkt& pkt, ValueStack& values) {
             binary.push_back(0);
             binary.push_back(0);
             binary.push_back(pkt4.getHtype());
+            type_str = "htype";
             break;
 
         default:
@@ -194,6 +230,12 @@ TokenPkt4::evaluate(const Pkt& pkt, ValueStack& values) {
         memmove(&value[0], &binary[0], binary.size());
     }
     values.push(value);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT4)
+        .arg(type_str)
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value.begin(),
+                                                                 value.end())));
 }
 
 void
@@ -213,6 +255,14 @@ TokenEqual::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
         values.push("true");
     else
         values.push("false");
+
+    // Log what we popped and pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_EQUAL)
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(op1.begin(),
+                                                                 op1.end())))
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(op2.begin(),
+                                                                 op2.end())))
+        .arg('\'' + values.top() + '\'');
 }
 
 void
@@ -233,6 +283,13 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     // If we have no string to start with we push an empty string and leave
     if (string_str.empty()) {
         values.push("");
+
+        // Log what we popped and pushed
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUBSTRING_EMPTY)
+            .arg(len_str)
+            .arg(start_str)
+            .arg("0x")
+            .arg("0x");
         return;
     }
 
@@ -266,6 +323,14 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     // empty string and leave
     if ((start_pos < -string_length) || (start_pos >= string_length)) {
         values.push("");
+
+        // Log what we popped and pushed
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUBSTRING_RANGE)
+            .arg(len_str)
+            .arg(start_str)
+            .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(string_str.begin(),
+                                                                     string_str.end())))
+            .arg("0x");
         return;
     }
 
@@ -288,6 +353,15 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 
     // and finally get the substring
     values.push(string_str.substr(start_pos, length));
+
+    // Log what we popped and pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUBSTRING)
+        .arg(len_str)
+        .arg(start_str)
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(string_str.begin(),
+                                                                 string_str.end())))
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(values.top().begin(),
+                                                                 values.top().end())));
 }
 
 void
@@ -305,6 +379,15 @@ TokenConcat::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 
     // The top of the stack was evaluated last so this is the right order
     values.push(op2 + op1);
+
+    // Log what we popped and pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_CONCAT)
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(op1.begin(),
+                                                                 op1.end())))
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(op2.begin(),
+                                                                 op2.end())))
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(values.top().begin(),
+                                                                 values.top().end())));
 }
 
 void
@@ -323,6 +406,11 @@ TokenNot::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     } else {
         values.push("false");
     }
+
+    // Log what we popped and pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_NOT)
+        .arg('\'' + op + '\'')
+        .arg('\'' + values.top() + '\'');
 }
 
 void
@@ -345,6 +433,12 @@ TokenAnd::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     } else {
         values.push("false");
     }
+
+    // Log what we popped and pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_AND)
+        .arg('\'' + op1 + '\'')
+        .arg('\'' + op2 + '\'')
+        .arg('\'' + values.top() + '\'');
 }
 
 void
@@ -367,6 +461,12 @@ TokenOr::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     } else {
         values.push("false");
     }
+
+    // Log what we popped and pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OR)
+        .arg('\'' + op1 + '\'')
+        .arg('\'' + op2 + '\'')
+        .arg('\'' + values.top() + '\'');
 }
 
 OptionPtr TokenRelay6Option::getOption(const Pkt& pkt) {
@@ -399,6 +499,7 @@ void
 TokenRelay6Field::evaluate(const Pkt& pkt, ValueStack& values) {
 
     vector<uint8_t> binary;
+    string type_str;
     try {
         // Check if it's a Pkt6.  If it's not the dynamic_cast will
         // throw std::bad_cast.
@@ -409,9 +510,11 @@ TokenRelay6Field::evaluate(const Pkt& pkt, ValueStack& values) {
             // Now that we have the right type of packet we can
             // get the option and return it.
             case LINKADDR:
+                type_str = "linkaddr";
                 binary = pkt6.getRelay6LinkAddress(nest_level_).toBytes();
                 break;
             case PEERADDR:
+                type_str = "peeraddr";
                 binary = pkt6.getRelay6PeerAddress(nest_level_).toBytes();
                 break;
             }
@@ -419,6 +522,11 @@ TokenRelay6Field::evaluate(const Pkt& pkt, ValueStack& values) {
             // The only exception we expect is OutOfRange if the nest
             // level is invalid.  We push "" in that case.
             values.push("");
+            // Log what we pushed
+            LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_RELAY6_RANGE)
+              .arg(type_str)
+              .arg(unsigned(nest_level_))
+              .arg("0x");
             return;
         }
     } catch (const std::bad_cast&) {
@@ -431,12 +539,20 @@ TokenRelay6Field::evaluate(const Pkt& pkt, ValueStack& values) {
         memmove(&value[0], &binary[0], binary.size());
     }
     values.push(value);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_RELAY6)
+        .arg(type_str)
+        .arg(unsigned(nest_level_))
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value.begin(),
+                                                                 value.end())));
 }
 
 void
 TokenPkt6::evaluate(const Pkt& pkt, ValueStack& values) {
 
     vector<uint8_t> binary;
+    string type_str;
     try {
       // Check if it's a Pkt6.  If it's not the dynamic_cast will throw
       // std::bad_cast (failed dynamic_cast returns NULL for pointers and
@@ -450,6 +566,7 @@ TokenPkt6::evaluate(const Pkt& pkt, ValueStack& values) {
           binary.push_back(0);
           binary.push_back(0);
           binary.push_back(pkt6.getType());
+          type_str = "msgtype";
           break;
       }
       case TRANSID: {
@@ -459,6 +576,7 @@ TokenPkt6::evaluate(const Pkt& pkt, ValueStack& values) {
           binary.push_back((transid >> 16) & 0xFF);
           binary.push_back((transid >> 8) & 0xFF);
           binary.push_back(transid & 0xFF);
+          type_str = "transid";
           break;
       }
       default:
@@ -474,4 +592,10 @@ TokenPkt6::evaluate(const Pkt& pkt, ValueStack& values) {
     value.resize(binary.size());
     memmove(&value[0], &binary[0], binary.size());
     values.push(value);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT6)
+        .arg(type_str)
+        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value.begin(),
+                                                                 value.end())));
 }
