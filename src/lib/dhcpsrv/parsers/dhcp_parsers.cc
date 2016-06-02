@@ -164,7 +164,14 @@ template <> void ValueParser<std::string>::build(ConstElementPtr value) {
     // Invoke common code for all specializations of build().
     buildCommon(value);
 
-    value_ = value->str();
+    // For strings we need to use stringValue() rather than str().
+    // str() returns fully escaped special characters, so
+    // single backslash would be misrepresented as "\\".
+    if (value->getType() == Element::string) {
+        value_ = value->stringValue();
+    } else {
+        value_ = value->str();
+    }
     boost::erase_all(value_, "\"");
 }
 
