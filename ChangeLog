@@ -1,3 +1,9 @@
+1119.	[func]		sar
+	Add debug logging to the classification tokens.  This uses
+	the loggers "kea-dhcp4.eval" and "kea-dhcp6.eval" to capture
+	details of the classification expression evaluations.
+	(Trac #4480, git TBD)
+
 1118.	[func]		stephen
 	Make the database connection timeout a configurable parameter with
 	a default value of five seconds.
