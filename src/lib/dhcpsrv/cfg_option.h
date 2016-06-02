@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,6 @@
 #include <boost/shared_ptr.hpp>
 #include <stdint.h>
 #include <string>
-#include <set>
 #include <list>
 
 namespace isc {
@@ -31,24 +30,47 @@ namespace dhcp {
 /// to DHCP client only on request (persistent = false) or always
 /// (persistent = true).
 struct OptionDescriptor {
-    /// Option instance.
+    /// @brief Option instance.
     OptionPtr option_;
-    /// Persistent flag, if true option is always sent to the client,
-    /// if false option is sent to the client on request.
+
+    /// @brief Persistence flag.
+    ///
+    /// If true, option is always sent to the client. If false, option is
+    /// sent to the client when requested using ORO or PRL option.
     bool persistent_;
+
+    /// @brief Option value in textual (CSV) format.
+    ///
+    /// This field is used to convey option value in human readable format,
+    /// the same as used to specify option value in the server configuration.
+    /// This value is optional and can be held in the host reservations
+    /// database instead of the binary format.
+    ///
+    /// Note that this value is carried in the option descriptor, rather than
+    /// @c Option instance because it is a server specific value (same as
+    /// persistence flag).
+    ///
+    /// An example of the formatted value is: "2001:db8:1::1, 23, some text"
+    /// for the option which carries IPv6 address, a number and a text.
+    std::string formatted_value_;
 
     /// @brief Constructor.
     ///
     /// @param opt option
     /// @param persist if true option is always sent.
-    OptionDescriptor(const OptionPtr& opt, bool persist)
-        : option_(opt), persistent_(persist) {};
+    /// @param formatted_value option value in the textual format. Default
+    /// value is empty indicating that the value is not set.
+    OptionDescriptor(const OptionPtr& opt, bool persist,
+                     const std::string& formatted_value = "")
+        : option_(opt), persistent_(persist),
+          formatted_value_(formatted_value) {};
 
     /// @brief Constructor
     ///
     /// @param persist if true option is always sent.
     OptionDescriptor(bool persist)
-        : option_(OptionPtr()), persistent_(persist) {};
+        : option_(OptionPtr()), persistent_(persist),
+          formatted_value_() {};
 
     /// @brief Checks if the one descriptor is equal to another.
     ///
@@ -254,6 +276,16 @@ public:
     void add(const OptionPtr& option, const bool persistent,
              const std::string& option_space);
 
+    /// @brief A variant of the @ref CfgOption::add method which takes option
+    /// descriptor as an argument.
+    ///
+    /// @param desc Option descriptor holding option instance and other
+    /// parameters pertaining to the option.
+    /// @param option_space Option space name.
+    ///
+    /// @throw isc::BadValue if the option space is invalid.
+    void add(const OptionDescriptor& desc, const std::string& option_space);
+
     /// @brief Merges this configuration to another configuration.
     ///
     /// This method iterates over the configuration items held in this
@@ -337,20 +369,30 @@ public:
         return (*od_itr);
     }
 
-    /// @brief Converts option space name to vendor id.
+    /// @brief Returns a list of configured option space names.
     ///
-    /// If the option space name is specified in the following format:
-    /// "vendor-X" where X is an uint32_t number, it is assumed to be
-    /// a vendor space and the uint32_t number is returned by this function.
-    /// If the option space name is invalid this method will return 0, which
-    /// is not a valid vendor-id, to signal an error.
+    /// The returned option space names exclude vendor option spaces,
+    /// such as "vendor-1234". These are returned by the
+    /// @ref getVendorIdsSpaceNames.
     ///
-    /// @todo remove this function once when the conversion is dealt by the
-    /// appropriate functions returning options by option space names.
+    /// @return List comprising option space names.
+    std::list<std::string> getOptionSpaceNames() const {
+        return (options_.getOptionSpaceNames());
+    }
+
+    /// @brief Returns a list of all configured  vendor identifiers.
+    std::list<uint32_t> getVendorIds() const {
+        return (vendor_options_.getOptionSpaceNames());
+    }
+
+    /// @brief Returns a list of option space names for configured vendor ids.
     ///
-    /// @param option_space Option space name.
-    /// @return vendor id.
-    static uint32_t optionSpaceToVendorId(const std::string& option_space);
+    /// For each vendor-id the option space name returned is constructed
+    /// as "vendor-XYZ" where XYZ is a @c uint32_t value without leading
+    /// zeros.
+    ///
+    /// @return List comprising option space names for vendor options.
+    std::list<std::string> getVendorIdsSpaceNames() const;
 
 private:
 
