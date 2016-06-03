@@ -307,13 +307,13 @@ protected:
     /// @param answer server's response to the client's message. This
     /// message should contain Client FQDN option being sent by the server
     /// to the client (if the client sent this option to the server).
-    /// @param orig_ctx client context (contains subnet, duid and other parameters)
+    /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param ia pointer to client's IA_NA option (client's request)
     ///
     /// @return IA_NA option (server's response)
     OptionPtr assignIA_NA(const isc::dhcp::Pkt6Ptr& query,
                           const isc::dhcp::Pkt6Ptr& answer,
-                          AllocEngine::ClientContext6& orig_ctx,
+                          AllocEngine::ClientContext6& ctx,
                           Option6IAPtr ia);
 
     /// @brief Processes IA_PD option (and assigns prefixes if necessary).
@@ -326,12 +326,12 @@ protected:
     ///
     /// @param query client's message (typically SOLICIT or REQUEST)
     /// @param answer server's response to the client's message.
-    /// @param orig_ctx client context (contains subnet, duid and other parameters)
+    /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param ia pointer to client's IA_PD option (client's request)
     /// @return IA_PD option (server's response)
     OptionPtr assignIA_PD(const Pkt6Ptr& query,
                           const isc::dhcp::Pkt6Ptr& answer,
-                          AllocEngine::ClientContext6& orig_ctx,
+                          AllocEngine::ClientContext6& ctx,
                           boost::shared_ptr<Option6IA> ia);
 
     /// @brief Extends lifetime of the specific IA_NA option.
@@ -357,12 +357,12 @@ protected:
     /// @param answer server's response to the client's message. This
     /// message should contain Client FQDN option being sent by the server
     /// to the client (if the client sent this option to the server).
-    /// @param orig_ctx client context (contains subnet, duid and other parameters)
+    /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param ia IA_NA option which carries address for which lease lifetime
     /// will be extended.
     /// @return IA_NA option (server's response)
     OptionPtr extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
-                          AllocEngine::ClientContext6& orig_ctx,
+                          AllocEngine::ClientContext6& ctx,
                           Option6IAPtr ia);
 
     /// @brief Extends lifetime of the prefix.
@@ -377,14 +377,14 @@ protected:
     /// (see RFC3633, section 12.2. for details).
     ///
     /// @param query client's message
-    /// @param orig_ctx client context (contains subnet, duid and other parameters)
+    /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param ia IA_PD option that is being renewed
     /// @return IA_PD option (server's response)
     /// @throw DHCPv6DiscardMessageError when the message being processed should
     /// be discarded by the server, i.e. there is no binding for the client doing
     /// Rebind.
     OptionPtr extendIA_PD(const Pkt6Ptr& query,
-                          AllocEngine::ClientContext6& orig_ctx,
+                          AllocEngine::ClientContext6& ctx,
                           Option6IAPtr ia);
 
     /// @brief Releases specific IA_NA option
@@ -656,9 +656,9 @@ protected:
     /// - there is no such option provided by the server)
     void processRSOO(const Pkt6Ptr& query, const Pkt6Ptr& rsp);
 
-    /// @brief Creates client context for specified packet
+    /// @brief Initializes client context for specified packet
     ///
-    /// Instantiates the ClientContext6 and then:
+    /// This method:
     /// - Performs the subnet selection and stores the result in context
     /// - Extracts the duid from the packet and saves it to the context
     /// - Extracts the hardware address from the packet and saves it to
@@ -666,8 +666,9 @@ protected:
     /// - Performs host reservation lookup and stores the result in the
     /// context
     ///
-    /// @return client context
-    AllocEngine::ClientContext6 createContext(const Pkt6Ptr& pkt);
+    /// @param pkt pointer to a packet for which context will be created.
+    /// @param [out] ctx reference to context object to be initialized.
+    void initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
 
     /// @brief this is a prefix added to the contend of vendor-class option
     ///

@@ -131,7 +131,7 @@ public:
     using Dhcpv6Srv::shutdown_;
     using Dhcpv6Srv::name_change_reqs_;
     using Dhcpv6Srv::VENDOR_CLASS_PREFIX;
-    using Dhcpv6Srv::createContext;
+    using Dhcpv6Srv::initContext;
 
     /// @brief packets we pretend to receive
     ///
