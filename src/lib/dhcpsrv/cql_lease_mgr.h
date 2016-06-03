@@ -14,12 +14,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DSCSQL_LEASE_MGR_H
-#define DSCSQL_LEASE_MGR_H
+#ifndef CQL_LEASE_MGR_H
+#define CQL_LEASE_MGR_H
 
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/dscsql_connection.h>
+#include <dhcpsrv/cql_connection.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
 #include <cassandra.h>
@@ -31,14 +31,14 @@ namespace dhcp {
 /// @brief Structure used to bind C++ input values to dynamic SQL parameters
 /// The structure contains a vector which store the input values,
 /// This vector is passed directly into the
-/// DSC SQL execute call.
+/// CQL execute call.
 ///
 /// Note that the data values are stored as pointers. These pointers need to
-/// valid for the duration of the DSC SQL statement execution.  In other
+/// valid for the duration of the CQL statement execution.  In other
 /// words populating them with pointers to values that go out of scope before
 /// statement is executed is a bad idea.
 
-struct DSCSqlBindArray {
+struct CqlBindArray {
     /// @brief Vector of pointers to the data values.
     std::vector<void*> values_;
     void add(void* value) {
@@ -49,26 +49,26 @@ struct DSCSqlBindArray {
     }
 };
 
-class DSCSqlLeaseExchange;
-class DSCSqlLease4Exchange;
-class DSCSqlLease6Exchange;
+class CqlLeaseExchange;
+class CqlLease4Exchange;
+class CqlLease6Exchange;
 
-enum DSCSqlDataType {
-    DSCSQL_DATA_TYPE_NONE,
-    DSCSQL_DATA_TYPE_BOOL,
-    DSCSQL_DATA_TYPE_INT32,
-    DSCSQL_DATA_TYPE_INT64,
-    DSCSQL_DATA_TYPE_TIMESTAMP,
-    DSCSQL_DATA_TYPE_STRING,
-    DSCSQL_DATA_TYPE_BYTES
+enum CqlDataType {
+    CQL_DATA_TYPE_NONE,
+    CQL_DATA_TYPE_BOOL,
+    CQL_DATA_TYPE_INT32,
+    CQL_DATA_TYPE_INT64,
+    CQL_DATA_TYPE_TIMESTAMP,
+    CQL_DATA_TYPE_STRING,
+    CQL_DATA_TYPE_BYTES
 };
 
-/// @brief DataStax Cassandra Lease Manager
+/// @brief Cassandra Lease Manager
 ///
-/// This class provides the \ref isc::dhcp::LeaseMgr interface to the DSC - DataStax Cassandra
-/// database.  Use of this backend presupposes that a DSC database is
+/// This class provides the \ref isc::dhcp::LeaseMgr interface to the CQL - Cassandra
+/// database.  Use of this backend presupposes that a CQL database is
 /// available and that the Kea schema has been created within it.
-class DSCSqlLeaseMgr : public LeaseMgr {
+class CqlLeaseMgr : public LeaseMgr {
 public:
 
     /// @brief Constructor
@@ -93,10 +93,10 @@ public:
     /// @throw isc::dhcp::DbOpenError Error opening the database
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    DSCSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
+    CqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
-    virtual ~DSCSqlLeaseMgr();
+    virtual ~CqlLeaseMgr();
 
     /// @brief Local version of getDBVersion() class method
     static std::string getDBVersion();
@@ -384,7 +384,7 @@ public:
     ///
     /// Commits all pending database operations.
     ///
-    /// @throw DbOperationError Iif the commit failed.
+    /// @throw DbOperationError If the commit failed.
     virtual void commit();
 
     /// @brief Rollback Transactions
@@ -460,7 +460,7 @@ private:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool addLeaseCommon(StatementIndex stindex, DSCSqlBindArray& bind_array, DSCSqlLeaseExchange& exchange);
+    bool addLeaseCommon(StatementIndex stindex, CqlBindArray& bind_array, CqlLeaseExchange& exchange);
 
     /// @brief Get Lease Collection Common Code
     ///
@@ -483,7 +483,7 @@ private:
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
-    void getLeaseCollection(StatementIndex stindex, DSCSqlBindArray& bind_array,
+    void getLeaseCollection(StatementIndex stindex, CqlBindArray& bind_array,
                             Exchange& exchange, LeaseCollection& result,
                             bool single = false) const;
 
@@ -503,7 +503,7 @@ private:
     ///        failed.
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, DSCSqlBindArray& bind_array,
+    void getLeaseCollection(StatementIndex stindex, CqlBindArray& bind_array,
                             Lease4Collection& result) const {
         getLeaseCollection(stindex, bind_array, exchange4_, result);
     }
@@ -523,7 +523,7 @@ private:
     ///        failed.
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, DSCSqlBindArray& bind_array,
+    void getLeaseCollection(StatementIndex stindex, CqlBindArray& bind_array,
                             Lease6Collection& result) const {
         getLeaseCollection(stindex, bind_array, exchange6_, result);
     }
@@ -537,7 +537,7 @@ private:
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query
     /// @param lease Lease4 object returned
-    void getLease(StatementIndex stindex, DSCSqlBindArray& bind_array,
+    void getLease(StatementIndex stindex, CqlBindArray& bind_array,
                   Lease4Ptr& result) const;
 
     /// @brief Get Lease6 Common Code
@@ -549,7 +549,7 @@ private:
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query
     /// @param lease Lease6 object returned
-    void getLease(StatementIndex stindex, DSCSqlBindArray& bind_array,
+    void getLease(StatementIndex stindex, CqlBindArray& bind_array,
                   Lease6Ptr& result) const;
 
     /// @brief Get expired leases common code.
@@ -587,8 +587,8 @@ private:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     template <typename LeasePtr>
-    void updateLeaseCommon(StatementIndex stindex, DSCSqlBindArray& bind_array,
-                           const LeasePtr& lease, DSCSqlLeaseExchange& exchange);
+    void updateLeaseCommon(StatementIndex stindex, CqlBindArray& bind_array,
+                           const LeasePtr& lease, CqlLeaseExchange& exchange);
 
     /// @brief Delete lease common code
     ///
@@ -604,7 +604,7 @@ private:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool deleteLeaseCommon(StatementIndex stindex, DSCSqlBindArray& bind_array, DSCSqlLeaseExchange& exchange);
+    bool deleteLeaseCommon(StatementIndex stindex, CqlBindArray& bind_array, CqlLeaseExchange& exchange);
 
     /// @brief Delete expired-reclaimed leases.
     ///
@@ -618,23 +618,23 @@ private:
     uint64_t deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
                                                 StatementIndex statement_index);
 
-    static void bindData(CassStatement* statement, const StatementIndex stindex, DSCSqlBindArray& bind_array, const DSCSqlLeaseExchange& exchange);
+    static void bindData(CassStatement* statement, const StatementIndex stindex, CqlBindArray& bind_array, const CqlLeaseExchange& exchange);
 
-    static void getDataType(const StatementIndex stindex, int param, const DSCSqlLeaseExchange& exchange, DSCSqlDataType& type);
+    static void getDataType(const StatementIndex stindex, int param, const CqlLeaseExchange& exchange, CqlDataType& type);
 
-    static DSCSqlTaggedStatement tagged_statements_[];
+    static CqlTaggedStatement tagged_statements_[];
     /// Database connection object
-    DSCSqlConnection dbconn_;
+    CqlConnection dbconn_;
 
     /// The exchange objects are used for transfer of data to/from the database.
     /// They are pointed-to objects as the contents may change in "const" calls,
     /// while the rest of this object does not.  (At alternative would be to
     /// declare them as "mutable".)
-    boost::scoped_ptr<DSCSqlLease4Exchange> exchange4_; ///< Exchange object
-    boost::scoped_ptr<DSCSqlLease6Exchange> exchange6_; ///< Exchange object
+    boost::scoped_ptr<CqlLease4Exchange> exchange4_; ///< Exchange object
+    boost::scoped_ptr<CqlLease6Exchange> exchange6_; ///< Exchange object
 };
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 
-#endif // DSCSQL_LEASE_MGR_H
+#endif // CQL_LEASE_MGR_H

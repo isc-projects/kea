@@ -68,9 +68,9 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
     }
 #endif
 
-#ifdef HAVE_DSCSQL
-    if (db_type == "dscsql") {
-        isc_throw(NotImplemented, "Sorry, DSCSQL backend for host reservations "
+#ifdef HAVE_CQL
+    if (db_type == "cql") {
+        isc_throw(NotImplemented, "Sorry, CQL backend for host reservations "
                   "is not implemented yet.");
     }
 #endif

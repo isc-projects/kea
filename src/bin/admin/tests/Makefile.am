@@ -10,8 +10,8 @@ if HAVE_PGSQL
 SHTESTS += pgsql_tests.sh
 endif
 
-if HAVE_DSCSQL
-SHTESTS += dscsql_tests.sh
+if HAVE_CQL
+SHTESTS += cql_tests.sh
 endif
 noinst_SCRIPTS = $(SHTESTS)
 
@@ -20,7 +20,7 @@ EXTRA_DIST += dhcpdb_create_1.0.pgsql
 EXTRA_DIST += dhcpdb_create_1.0.cql
 
 CLEANFILES = *.log
-DISTCLEANFILES = memfile_tests.sh mysql_tests.sh pgsql_tests.sh dscsql_tests.sh
+DISTCLEANFILES = memfile_tests.sh mysql_tests.sh pgsql_tests.sh cql_tests.sh
 
 # Execute all test scripts.
 check-local:

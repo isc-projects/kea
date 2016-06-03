@@ -19,7 +19,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
-#include <dhcpsrv/dscsql_lease_mgr.h>
+#include <dhcpsrv/cql_lease_mgr.h>
 #include <boost/static_assert.hpp>
 #include <iostream>
 #include <iomanip>
@@ -37,50 +37,50 @@ namespace dhcp {
 static const size_t HOSTNAME_MAX_LEN = 255;
 static const size_t ADDRESS6_TEXT_MAX_LEN = 39;
 
-static CassError DSCSqlBindNone(CassStatement* statement, size_t index, void*) {
+static CassError CqlBindNone(CassStatement* statement, size_t index, void*) {
     return cass_statement_bind_null(statement, index);
 }
 
-static CassError DSCSqlBindBool(CassStatement* statement, size_t index, void* value) {
+static CassError CqlBindBool(CassStatement* statement, size_t index, void* value) {
     return cass_statement_bind_bool(statement, index, *(static_cast<cass_bool_t*>(value)));
 }
 
-static CassError DSCSqlBindInt32(CassStatement* statement, size_t index, void* value) {
+static CassError CqlBindInt32(CassStatement* statement, size_t index, void* value) {
     return cass_statement_bind_int32(statement, index, *(static_cast<cass_int32_t*>(value)));
 }
 
-static CassError DSCSqlBindInt64(CassStatement* statement, size_t index, void* value) {
+static CassError CqlBindInt64(CassStatement* statement, size_t index, void* value) {
     return cass_statement_bind_int64(statement, index, *(static_cast<cass_int64_t*>(value)));
 }
 
-static CassError DSCSqlBindTimestamp(CassStatement* statement, size_t index, void* value) {
+static CassError CqlBindTimestamp(CassStatement* statement, size_t index, void* value) {
     return cass_statement_bind_int64(statement, index, *(static_cast<cass_int64_t*>(value)));
 }
 
-static CassError DSCSqlBindString(CassStatement* statement, size_t index, void* value) {
+static CassError CqlBindString(CassStatement* statement, size_t index, void* value) {
     return cass_statement_bind_string(statement, index, (static_cast<const char*>(value)));
 }
 
-static CassError DSCSqlBindBytes(CassStatement* statement, size_t index, void* value) {
+static CassError CqlBindBytes(CassStatement* statement, size_t index, void* value) {
     return cass_statement_bind_bytes(statement, index, &(*(static_cast<std::vector<cass_byte_t>*>(value)))[0],
             static_cast<std::vector<cass_byte_t>*>(value)->size());
 }
 
-static CassError (*DSCSqlBindFunctions[])(CassStatement* statement, size_t index, void* value) = {
-    DSCSqlBindNone,
-    DSCSqlBindBool,
-    DSCSqlBindInt32,
-    DSCSqlBindInt64,
-    DSCSqlBindTimestamp,
-    DSCSqlBindString,
-    DSCSqlBindBytes
+static CassError (*CqlBindFunctions[])(CassStatement* statement, size_t index, void* value) = {
+    CqlBindNone,
+    CqlBindBool,
+    CqlBindInt32,
+    CqlBindInt64,
+    CqlBindTimestamp,
+    CqlBindString,
+    CqlBindBytes
 };
 
 struct ColumnInfo {
-    ColumnInfo () : column_(NULL), type_(DSCSQL_DATA_TYPE_NONE) {}
-    ColumnInfo (const char *column, DSCSqlDataType type) : column_(column), type_(type) {}
+    ColumnInfo () : column_(NULL), type_(CQL_DATA_TYPE_NONE) {}
+    ColumnInfo (const char *column, CqlDataType type) : column_(column), type_(type) {}
     const char* column_;
-    DSCSqlDataType type_;
+    CqlDataType type_;
 };
 
 /// @brief Catalog of all the SQL statements currently supported.  Note
@@ -213,7 +213,7 @@ static const char* update_lease6_params[] = {
 #endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
         NULL };
 
-DSCSqlTaggedStatement DSCSqlLeaseMgr::tagged_statements_[] = {
+CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
     // DELETE_LEASE4
     { delete_lease4_params,
       "delete_lease4",
@@ -400,16 +400,16 @@ DSCSqlTaggedStatement DSCSqlLeaseMgr::tagged_statements_[] = {
 };
 
 
-/// @brief Common DSC and Lease Data Methods
+/// @brief Common CQL and Lease Data Methods
 ///
-/// The DSCSqlLease4Exchange and DSCSqlLease6Exchange classes provide the
+/// The CqlLease4Exchange and CqlLease6Exchange classes provide the
 /// functionality to set up binding information between variables in the
 /// program and data extracted from the database.  This class is the common
 /// base to both of them, containing some common methods.
 
-class DSCSqlLeaseExchange {
+class CqlLeaseExchange {
 public:
-    DSCSqlLeaseExchange() : hwaddr_length_(0), expire_(0),
+    CqlLeaseExchange() : hwaddr_length_(0), expire_(0),
                             subnet_id_(0), valid_lifetime_(0),
                             fqdn_fwd_(false), fqdn_rev_(false), hostname_length_(0), state_(0) {
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
@@ -460,26 +460,26 @@ protected:
 };
 
 
-/// @brief Exchange DSC and Lease4 Data
+/// @brief Exchange CQL and Lease4 Data
 ///
-/// On any DSC SQL operation, arrays of DSC SQL BIND structures must be built to
+/// On any CQL operation, arrays of CQL BIND structures must be built to
 /// describe the parameters in the prepared statements.  Where information is
 /// inserted or retrieved - INSERT, UPDATE, SELECT - a large amount of that
 /// structure is identical.  This class handles the creation of that array.
 ///
-/// Owing to the DSC SQL API, the process requires some intermediate variables
+/// Owing to the CQL API, the process requires some intermediate variables
 /// to hold things like data length etc.  This object holds those variables.
 ///
 /// @note There are no unit tests for this class.  It is tested indirectly
-/// in all DSCSqlLeaseMgr::xxx4() calls where it is used.
+/// in all CqlLeaseMgr::xxx4() calls where it is used.
 
-class DSCSqlLease4Exchange : public DSCSqlLeaseExchange {
+class CqlLease4Exchange : public CqlLeaseExchange {
 public:
     /// @brief Constructor
     ///
     /// The initialization of the variables here is only to satisfy cppcheck -
     /// all variables are initialized/set in the methods before they are used.
-    DSCSqlLease4Exchange() : addr4_(0), client_id_length_(0),
+    CqlLease4Exchange() : addr4_(0), client_id_length_(0),
                             client_id_null_(false) {
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
 
@@ -488,25 +488,25 @@ public:
         uint32_t offset = 0;
         size = 12;
         columns_.resize(size);
-        columns_[offset++] = ColumnInfo("address", DSCSQL_DATA_TYPE_INT32);
-        columns_[offset++] = ColumnInfo("hwaddr", DSCSQL_DATA_TYPE_BYTES);
-        columns_[offset++] = ColumnInfo("client_id", DSCSQL_DATA_TYPE_BYTES);
-        columns_[offset++] = ColumnInfo("valid_lifetime", DSCSQL_DATA_TYPE_INT64);
-        columns_[offset++] = ColumnInfo("expire", DSCSQL_DATA_TYPE_TIMESTAMP);
-        columns_[offset++] = ColumnInfo("subnet_id", DSCSQL_DATA_TYPE_INT32);
-        columns_[offset++] = ColumnInfo("fqdn_fwd", DSCSQL_DATA_TYPE_BOOL);
-        columns_[offset++] = ColumnInfo("fqdn_rev", DSCSQL_DATA_TYPE_BOOL);
-        columns_[offset++] = ColumnInfo("hostname", DSCSQL_DATA_TYPE_STRING);
-        columns_[offset++] = ColumnInfo("state", DSCSQL_DATA_TYPE_INT32);
-        columns_[offset++] = ColumnInfo("limit", DSCSQL_DATA_TYPE_INT32);
-        columns_[offset++] = ColumnInfo("version", DSCSQL_DATA_TYPE_NONE);
+        columns_[offset++] = ColumnInfo("address", CQL_DATA_TYPE_INT32);
+        columns_[offset++] = ColumnInfo("hwaddr", CQL_DATA_TYPE_BYTES);
+        columns_[offset++] = ColumnInfo("client_id", CQL_DATA_TYPE_BYTES);
+        columns_[offset++] = ColumnInfo("valid_lifetime", CQL_DATA_TYPE_INT64);
+        columns_[offset++] = ColumnInfo("expire", CQL_DATA_TYPE_TIMESTAMP);
+        columns_[offset++] = ColumnInfo("subnet_id", CQL_DATA_TYPE_INT32);
+        columns_[offset++] = ColumnInfo("fqdn_fwd", CQL_DATA_TYPE_BOOL);
+        columns_[offset++] = ColumnInfo("fqdn_rev", CQL_DATA_TYPE_BOOL);
+        columns_[offset++] = ColumnInfo("hostname", CQL_DATA_TYPE_STRING);
+        columns_[offset++] = ColumnInfo("state", CQL_DATA_TYPE_INT32);
+        columns_[offset++] = ColumnInfo("limit", CQL_DATA_TYPE_INT32);
+        columns_[offset++] = ColumnInfo("version", CQL_DATA_TYPE_NONE);
     }
 
-    /// @brief Create DSCSQL_BIND objects for Lease4 Pointer
+    /// @brief Create CQL_BIND objects for Lease4 Pointer
     ///
-    /// Fills in the DSCSQL_BIND array for sending data in the Lease4 object to
+    /// Fills in the CQL_BIND array for sending data in the Lease4 object to
     /// the database.
-    void createBindForSend(const Lease4Ptr& lease, DSCSqlBindArray& bind_array) {
+    void createBindForSend(const Lease4Ptr& lease, CqlBindArray& bind_array) {
         if (!lease) {
             isc_throw(BadValue, "createBindForSend:: Lease4 object is NULL");
         }
@@ -544,7 +544,7 @@ public:
             // expiry time (expire).  The relationship is given by:
             //
             // expire = cltt_ + valid_lft_
-            DSCSqlLeaseExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
+            CqlLeaseExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
             bind_array.add(&expire_);
 
             // subnet_id: unsigned int
@@ -584,7 +584,7 @@ public:
 
     /// @brief Create BIND array to receive data
     ///
-    /// Creates a DSCSQL_BIND array to receive Lease4 data from the database.
+    /// Creates a CQL_BIND array to receive Lease4 data from the database.
     Lease4Ptr createBindForReceive(const CassRow* row) {
         try {
             const CassValue* value;
@@ -604,6 +604,13 @@ public:
             value = cass_row_get_column_by_name(row, columns_[2].column_);
             cass_value_get_string(value, &text_buffer, &client_id_length_);
             client_id_.assign(text_buffer, text_buffer + client_id_length_);
+            if (client_id_length_ >= sizeof(client_id_buffer_)) {
+                isc_throw(BadValue, "client_id value is too large: " << text_buffer);
+            }
+            if (client_id_length_) {
+                memcpy(client_id_buffer_, text_buffer, client_id_length_);
+            }
+            client_id_buffer_[client_id_length_] = '\0';
 
             // lease_time: unsigned int
             value = cass_row_get_column_by_name(row, columns_[3].column_);
@@ -641,7 +648,7 @@ public:
             cass_value_get_int32(value, reinterpret_cast<cass_int32_t*>(&state_));
 
             time_t cltt = 0;
-            DSCSqlLeaseExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+            CqlLeaseExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
 
             // Recreate the hardware address.
             HWAddrPtr hwaddr(new HWAddr(hwaddr_, HTYPE_ETHER));
@@ -682,26 +689,26 @@ private:
 
 
 
-/// @brief Exchange DSC and Lease6 Data
+/// @brief Exchange CQL and Lease6 Data
 ///
-/// On any DSC SQL operation, arrays of DSC SQL BIND structures must be built to
+/// On any CQL operation, arrays of CQL BIND structures must be built to
 /// describe the parameters in the prepared statements.  Where information is
 /// inserted or retrieved - INSERT, UPDATE, SELECT - a large amount of that
 /// structure is identical.  This class handles the creation of that array.
 ///
-/// Owing to the DSC SQL API, the process requires some intermediate variables
+/// Owing to the CQL API, the process requires some intermediate variables
 /// to hold things like data length etc.  This object holds those variables.
 ///
 /// @note There are no unit tests for this class.  It is tested indirectly
-/// in all DSCSqlLeaseMgr::xxx6() calls where it is used.
+/// in all CqlLeaseMgr::xxx6() calls where it is used.
 
-class DSCSqlLease6Exchange : public DSCSqlLeaseExchange {
+class CqlLease6Exchange : public CqlLeaseExchange {
 public:
     /// @brief Constructor
     ///
     /// The initialization of the variables here is nonly to satisfy cppcheck -
     /// all variables are initialized/set in the methods before they are used.
-    DSCSqlLease6Exchange() : addr6_length_(0), duid_length_(0),
+    CqlLease6Exchange() : addr6_length_(0), duid_length_(0),
                             iaid_(0), lease_type_(0), prefixlen_(0),
                             pref_lifetime_(0), hwaddr_null_(false), hwtype_(0),
                             hwaddr_source_(0) {
@@ -713,31 +720,31 @@ public:
         uint32_t offset = 0;
         size = 18;
         columns_.resize(size);
-        columns_[offset++] = ColumnInfo("address", DSCSQL_DATA_TYPE_STRING);
-        columns_[offset++] = ColumnInfo("duid", DSCSQL_DATA_TYPE_BYTES);
-        columns_[offset++] = ColumnInfo("valid_lifetime", DSCSQL_DATA_TYPE_INT64);
-        columns_[offset++] = ColumnInfo("expire", DSCSQL_DATA_TYPE_TIMESTAMP);
-        columns_[offset++] = ColumnInfo("subnet_id", DSCSQL_DATA_TYPE_INT32);
-        columns_[offset++] = ColumnInfo("pref_lifetime", DSCSQL_DATA_TYPE_INT64);
-        columns_[offset++] = ColumnInfo("lease_type", DSCSQL_DATA_TYPE_INT32);
-        columns_[offset++] = ColumnInfo("iaid", DSCSQL_DATA_TYPE_INT32);
-        columns_[offset++] = ColumnInfo("prefix_len", DSCSQL_DATA_TYPE_INT32);
-        columns_[offset++] = ColumnInfo("fqdn_fwd", DSCSQL_DATA_TYPE_BOOL);
-        columns_[offset++] = ColumnInfo("fqdn_rev", DSCSQL_DATA_TYPE_BOOL);
-        columns_[offset++] = ColumnInfo("hostname", DSCSQL_DATA_TYPE_STRING);
-        columns_[offset++] = ColumnInfo("hwaddr", DSCSQL_DATA_TYPE_BYTES);
-        columns_[offset++] = ColumnInfo("hwtype", DSCSQL_DATA_TYPE_INT32);
-        columns_[offset++] = ColumnInfo("hwaddr_source", DSCSQL_DATA_TYPE_INT32);
-        columns_[offset++] = ColumnInfo("state", DSCSQL_DATA_TYPE_INT32);
-        columns_[offset++] = ColumnInfo("limit", DSCSQL_DATA_TYPE_INT32);
-        columns_[offset++] = ColumnInfo("version", DSCSQL_DATA_TYPE_NONE);
+        columns_[offset++] = ColumnInfo("address", CQL_DATA_TYPE_STRING);
+        columns_[offset++] = ColumnInfo("duid", CQL_DATA_TYPE_BYTES);
+        columns_[offset++] = ColumnInfo("valid_lifetime", CQL_DATA_TYPE_INT64);
+        columns_[offset++] = ColumnInfo("expire", CQL_DATA_TYPE_TIMESTAMP);
+        columns_[offset++] = ColumnInfo("subnet_id", CQL_DATA_TYPE_INT32);
+        columns_[offset++] = ColumnInfo("pref_lifetime", CQL_DATA_TYPE_INT64);
+        columns_[offset++] = ColumnInfo("lease_type", CQL_DATA_TYPE_INT32);
+        columns_[offset++] = ColumnInfo("iaid", CQL_DATA_TYPE_INT32);
+        columns_[offset++] = ColumnInfo("prefix_len", CQL_DATA_TYPE_INT32);
+        columns_[offset++] = ColumnInfo("fqdn_fwd", CQL_DATA_TYPE_BOOL);
+        columns_[offset++] = ColumnInfo("fqdn_rev", CQL_DATA_TYPE_BOOL);
+        columns_[offset++] = ColumnInfo("hostname", CQL_DATA_TYPE_STRING);
+        columns_[offset++] = ColumnInfo("hwaddr", CQL_DATA_TYPE_BYTES);
+        columns_[offset++] = ColumnInfo("hwtype", CQL_DATA_TYPE_INT32);
+        columns_[offset++] = ColumnInfo("hwaddr_source", CQL_DATA_TYPE_INT32);
+        columns_[offset++] = ColumnInfo("state", CQL_DATA_TYPE_INT32);
+        columns_[offset++] = ColumnInfo("limit", CQL_DATA_TYPE_INT32);
+        columns_[offset++] = ColumnInfo("version", CQL_DATA_TYPE_NONE);
     }
 
-    /// @brief Create DSCSQL_BIND objects for Lease6 Pointer
+    /// @brief Create CQL_BIND objects for Lease6 Pointer
     ///
-    /// Fills in the DSCSQL_BIND array for sending data in the Lease6 object to
+    /// Fills in the CQL_BIND array for sending data in the Lease6 object to
     /// the database.
-    void createBindForSend(const Lease6Ptr& lease, DSCSqlBindArray& bind_array) {
+    void createBindForSend(const Lease6Ptr& lease, CqlBindArray& bind_array) {
         if (!lease) {
             isc_throw(BadValue, "createBindForSend:: Lease6 object is NULL");
         }
@@ -778,7 +785,7 @@ public:
             // expiry time (expire).  The relationship is given by:
             //
             // expire = cltt_ + valid_lft_
-            DSCSqlLeaseExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
+            CqlLeaseExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
             bind_array.add(&expire_);
 
             // subnet_id: unsigned int
@@ -864,14 +871,14 @@ public:
 
     /// @brief Create BIND array to receive data
     ///
-    /// Creates a DSCSQL_BIND array to receive Lease6 data from the database.
+    /// Creates a CQL_BIND array to receive Lease6 data from the database.
     Lease6Ptr createBindForReceive(const CassRow* row) {
         try {
             const CassValue* value;
             unsigned char* buffer = NULL;
             const char* text_buffer = NULL;
 
-            // address:  uint32_t
+            // address: varchar(39)
             value = cass_row_get_column_by_name(row, columns_[0].column_);
             cass_value_get_string(value, &text_buffer, &addr6_length_);
             if (addr6_length_ >= sizeof(addr6_buffer_)) {
@@ -882,7 +889,7 @@ public:
             }
             addr6_buffer_[addr6_length_] = '\0';
 
-            // client_id: varbinary(128)
+            // duid: varbinary(128)
             value = cass_row_get_column_by_name(row, columns_[1].column_);
             cass_value_get_bytes(value, const_cast<const cass_byte_t**>(&buffer), &duid_length_);
             duid_.assign(buffer, buffer + duid_length_);
@@ -979,7 +986,7 @@ public:
                                         hostname, hwaddr, prefixlen_));
 
             time_t cltt = 0;
-            DSCSqlLeaseExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+            CqlLeaseExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
             result->cltt_ = cltt;
 #ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
             result->old_cltt_ = cltt;
@@ -1017,10 +1024,10 @@ private:
 };
 
 #ifdef TERASTREAM_DB_LOGIC
-class DSCSqlCustomLeaseExchange : public virtual SqlLeaseExchange {
+class CqlCustomLeaseExchange : public virtual SqlLeaseExchange {
 public:
-    DSCSqlCustomLeaseExchange() {}
-    virtual ~DSCSqlCustomLeaseExchange() {}
+    CqlCustomLeaseExchange() {}
+    virtual ~CqlCustomLeaseExchange() {}
     virtual void executeInternal(LeaseExchangeData& exchange, bool has_allocated_ip, bool has_requested_ip, bool has_reserved_ip) {
         if (has_allocated_ip) {
         }
@@ -1033,10 +1040,10 @@ public:
     }
 };
 
-class DSCSqlLease4DiscoverNoReqNoResExchange : public SqlLease4DiscoverNoReqNoResExchange, public DSCSqlCustomLeaseExchange {
+class CqlLease4DiscoverNoReqNoResExchange : public SqlLease4DiscoverNoReqNoResExchange, public CqlCustomLeaseExchange {
 public:
-    DSCSqlLease4DiscoverNoReqNoResExchange() : DSCSqlCustomLeaseExchange() {}
-    virtual ~DSCSqlLease4DiscoverNoReqNoResExchange() {}
+    CqlLease4DiscoverNoReqNoResExchange() : CqlCustomLeaseExchange() {}
+    virtual ~CqlLease4DiscoverNoReqNoResExchange() {}
     virtual void execute(LeaseExchangeData& exchange) {
         executeInternal(exchange, true, false, false);
     }
@@ -1044,10 +1051,10 @@ private:
 };
 
 /// @brief Supports exchanging IPv4 leases with SQL for discover.
-class DSCSqlLease4DiscoverNoReqResExchange : public SqlLease4DiscoverNoReqResExchange, public DSCSqlCustomLeaseExchange {
+class CqlLease4DiscoverNoReqResExchange : public SqlLease4DiscoverNoReqResExchange, public CqlCustomLeaseExchange {
 public:
-    DSCSqlLease4DiscoverNoReqResExchange() : DSCSqlCustomLeaseExchange() {}
-    virtual ~DSCSqlLease4DiscoverNoReqResExchange() {}
+    CqlLease4DiscoverNoReqResExchange() : CqlCustomLeaseExchange() {}
+    virtual ~CqlLease4DiscoverNoReqResExchange() {}
     virtual void execute(LeaseExchangeData& exchange) {
         executeInternal(exchange, true, false, true);
     }
@@ -1055,10 +1062,10 @@ private:
 };
 
 /// @brief Supports exchanging IPv4 leases with SQL for discover.
-class DSCSqlLease4DiscoverReqNoResExchange : public SqlLease4DiscoverReqNoResExchange, public DSCSqlCustomLeaseExchange {
+class CqlLease4DiscoverReqNoResExchange : public SqlLease4DiscoverReqNoResExchange, public CqlCustomLeaseExchange {
 public:
-    DSCSqlLease4DiscoverReqNoResExchange() : DSCSqlCustomLeaseExchange() {}
-    virtual ~DSCSqlLease4DiscoverReqNoResExchange() {}
+    CqlLease4DiscoverReqNoResExchange() : CqlCustomLeaseExchange() {}
+    virtual ~CqlLease4DiscoverReqNoResExchange() {}
     virtual void execute(LeaseExchangeData& exchange) {
         executeInternal(exchange, true, true, false);
     }
@@ -1066,10 +1073,10 @@ private:
 };
 
 /// @brief Supports exchanging IPv4 leases with SQL for discover.
-class DSCSqlLease4DiscoverReqResExchange : public SqlLease4DiscoverReqResExchange, public DSCSqlCustomLeaseExchange {
+class CqlLease4DiscoverReqResExchange : public SqlLease4DiscoverReqResExchange, public CqlCustomLeaseExchange {
 public:
-    DSCSqlLease4DiscoverReqResExchange() : DSCSqlCustomLeaseExchange() {}
-    virtual ~DSCSqlLease4DiscoverReqResExchange() {}
+    CqlLease4DiscoverReqResExchange() : CqlCustomLeaseExchange() {}
+    virtual ~CqlLease4DiscoverReqResExchange() {}
     virtual void execute(LeaseExchangeData& exchange) {
         executeInternal(exchange, true, true, true);
     }
@@ -1077,10 +1084,10 @@ private:
 };
 
 /// @brief Supports exchanging IPv4 leases with SQL for request.
-class DSCSqlLease4RequestNoReqNoResExchange : public SqlLease4RequestNoReqNoResExchange, public DSCSqlCustomLeaseExchange {
+class CqlLease4RequestNoReqNoResExchange : public SqlLease4RequestNoReqNoResExchange, public CqlCustomLeaseExchange {
 public:
-    DSCSqlLease4RequestNoReqNoResExchange() : DSCSqlCustomLeaseExchange() {}
-    virtual ~DSCSqlLease4RequestNoReqNoResExchange() {}
+    CqlLease4RequestNoReqNoResExchange() : CqlCustomLeaseExchange() {}
+    virtual ~CqlLease4RequestNoReqNoResExchange() {}
     virtual void execute(LeaseExchangeData& exchange) {
         executeInternal(exchange, true, false, false);
     }
@@ -1088,10 +1095,10 @@ private:
 };
 
 /// @brief Supports exchanging IPv4 leases with SQL for request.
-class DSCSqlLease4RequestNoReqResExchange : public SqlLease4RequestNoReqResExchange, public DSCSqlCustomLeaseExchange {
+class CqlLease4RequestNoReqResExchange : public SqlLease4RequestNoReqResExchange, public CqlCustomLeaseExchange {
 public:
-    DSCSqlLease4RequestNoReqResExchange() : DSCSqlCustomLeaseExchange() {}
-    virtual ~DSCSqlLease4RequestNoReqResExchange() {}
+    CqlLease4RequestNoReqResExchange() : CqlCustomLeaseExchange() {}
+    virtual ~CqlLease4RequestNoReqResExchange() {}
     virtual void execute(LeaseExchangeData& exchange) {
         executeInternal(exchange, false, false, true);
     }
@@ -1099,10 +1106,10 @@ private:
 };
 
 /// @brief Supports exchanging IPv4 leases with SQL for request.
-class DSCSqlLease4RequestReqNoResExchange : public SqlLease4RequestReqNoResExchange, public DSCSqlCustomLeaseExchange {
+class CqlLease4RequestReqNoResExchange : public SqlLease4RequestReqNoResExchange, public CqlCustomLeaseExchange {
 public:
-    DSCSqlLease4RequestReqNoResExchange() : DSCSqlCustomLeaseExchange() {}
-    virtual ~DSCSqlLease4RequestReqNoResExchange() {}
+    CqlLease4RequestReqNoResExchange() : CqlCustomLeaseExchange() {}
+    virtual ~CqlLease4RequestReqNoResExchange() {}
     virtual void execute(LeaseExchangeData& exchange) {
         executeInternal(exchange, false, true, false);
     }
@@ -1110,10 +1117,10 @@ private:
 };
 
 /// @brief Supports exchanging IPv4 leases with SQL for request.
-class DSCSqlLease4RequestReqResExchange : public SqlLease4RequestReqResExchange, public DSCSqlCustomLeaseExchange {
+class CqlLease4RequestReqResExchange : public SqlLease4RequestReqResExchange, public CqlCustomLeaseExchange {
 public:
-    DSCSqlLease4RequestReqResExchange() : DSCSqlCustomLeaseExchange() {}
-    virtual ~DSCSqlLease4RequestReqResExchange() {}
+    CqlLease4RequestReqResExchange() : CqlCustomLeaseExchange() {}
+    virtual ~CqlLease4RequestReqResExchange() {}
     virtual void execute(LeaseExchangeData& exchange) {
         executeInternal(exchange, false, true, true);
     }
@@ -1121,62 +1128,62 @@ private:
 };
 #endif // TERASTREAM_DB_LOGIC
 
-DSCSqlLeaseMgr::DSCSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-    : LeaseMgr(), dbconn_(parameters), exchange4_(new DSCSqlLease4Exchange()),
-    exchange6_(new DSCSqlLease6Exchange()) {
+CqlLeaseMgr::CqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
+    : LeaseMgr(), dbconn_(parameters), exchange4_(new CqlLease4Exchange()),
+    exchange6_(new CqlLease6Exchange()) {
     dbconn_.openDatabase();
-    dbconn_.prepareStatements(DSCSqlLeaseMgr::tagged_statements_);
+    dbconn_.prepareStatements(CqlLeaseMgr::tagged_statements_);
 }
 
-DSCSqlLeaseMgr::~DSCSqlLeaseMgr() {
+CqlLeaseMgr::~CqlLeaseMgr() {
 }
 
 std::string
-DSCSqlLeaseMgr::getDBVersion() {
+CqlLeaseMgr::getDBVersion() {
     std::stringstream tmp;
-    tmp << "DSC SQL backend " << DSCSQL_CURRENT_VERSION;
-    tmp << "." << DSCSQL_CURRENT_MINOR;
+    tmp << "CQL backend " << CQL_CURRENT_VERSION;
+    tmp << "." << CQL_CURRENT_MINOR;
     tmp << ", library " << "cassandra_static";
     return (tmp.str());
 }
 
 
 void
-DSCSqlLeaseMgr::getDataType(const StatementIndex stindex, int pindex, const DSCSqlLeaseExchange& exchange, DSCSqlDataType& type) {
-    if (DSCSqlLeaseMgr::tagged_statements_[stindex].params_ &&
-            DSCSqlLeaseMgr::tagged_statements_[stindex].params_[pindex]) {
+CqlLeaseMgr::getDataType(const StatementIndex stindex, int pindex, const CqlLeaseExchange& exchange, CqlDataType& type) {
+    if (CqlLeaseMgr::tagged_statements_[stindex].params_ &&
+            CqlLeaseMgr::tagged_statements_[stindex].params_[pindex]) {
         for (int i = 0; exchange.columns_.size(); i++) {
-            if (!strcmp(DSCSqlLeaseMgr::tagged_statements_[stindex].params_[pindex], exchange.columns_[i].column_)) {
+            if (!strcmp(CqlLeaseMgr::tagged_statements_[stindex].params_[pindex], exchange.columns_[i].column_)) {
                 type = exchange.columns_[i].type_;
                 return;
             }
         }
     }
-    type = DSCSQL_DATA_TYPE_NONE;
+    type = CQL_DATA_TYPE_NONE;
 }
 
 void
-DSCSqlLeaseMgr::bindData(CassStatement* statement, const StatementIndex stindex, DSCSqlBindArray& bind_array, const DSCSqlLeaseExchange& exchange) {
-    if (DSCSqlLeaseMgr::tagged_statements_[stindex].params_ == NULL) {
+CqlLeaseMgr::bindData(CassStatement* statement, const StatementIndex stindex, CqlBindArray& bind_array, const CqlLeaseExchange& exchange) {
+    if (CqlLeaseMgr::tagged_statements_[stindex].params_ == NULL) {
         return;
     }
-    for (int i = 0; DSCSqlLeaseMgr::tagged_statements_[stindex].params_[i]; i++) {
-        DSCSqlDataType type;
-        DSCSqlLeaseMgr::getDataType(stindex, i, exchange, type);
-        DSCSqlBindFunctions[type](statement, i, bind_array.values_[i]);
+    for (int i = 0; CqlLeaseMgr::tagged_statements_[stindex].params_[i]; i++) {
+        CqlDataType type;
+        CqlLeaseMgr::getDataType(stindex, i, exchange, type);
+        CqlBindFunctions[type](statement, i, bind_array.values_[i]);
     }
 }
 
 bool
-DSCSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
-                              DSCSqlBindArray& bind_array, DSCSqlLeaseExchange& exchange) {
+CqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
+                              CqlBindArray& bind_array, CqlLeaseExchange& exchange) {
     CassError rc;
     CassStatement* statement = NULL;
     CassFuture* future = NULL;
 
     statement = cass_prepared_bind(dbconn_.statements_[stindex]);
 
-    DSCSqlLeaseMgr::bindData(statement, stindex, bind_array, exchange);
+    CqlLeaseMgr::bindData(statement, stindex, bind_array, exchange);
 
     future = cass_session_execute(dbconn_.session_, statement);
     cass_future_wait(future);
@@ -1209,42 +1216,42 @@ DSCSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
 }
 
 bool
-DSCSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
+CqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_ADD_ADDR4).arg(lease->addr_.toText());
+              DHCPSRV_CQL_ADD_ADDR4).arg(lease->addr_.toText());
 
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
     exchange4_->createBindForSend(lease, bind_array);
     return (addLeaseCommon(INSERT_LEASE4, bind_array, *exchange4_));
 }
 
 bool
-DSCSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
+CqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_ADD_ADDR6).arg(lease->addr_.toText());
+              DHCPSRV_CQL_ADD_ADDR6).arg(lease->addr_.toText());
 
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
     exchange6_->createBindForSend(lease, bind_array);
     return (addLeaseCommon(INSERT_LEASE6, bind_array, *exchange6_));
 }
 
 template <typename Exchange, typename LeaseCollection>
-void DSCSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
-                                       DSCSqlBindArray& bind_array,
+void CqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
+                                       CqlBindArray& bind_array,
                                        Exchange& exchange,
                                        LeaseCollection& result,
                                        bool single) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_GET_ADDR4).arg(dbconn_.tagged_statements_[stindex].name_);
+              DHCPSRV_CQL_GET_ADDR4).arg(dbconn_.tagged_statements_[stindex].name_);
 
     CassError rc;
     CassStatement* statement = NULL;
     CassFuture* future = NULL;
-    const DSCSqlLeaseExchange& leaseExchange = static_cast<DSCSqlLeaseExchange>(*exchange);
+    const CqlLeaseExchange& leaseExchange = static_cast<CqlLeaseExchange>(*exchange);
 
     statement = cass_prepared_bind(dbconn_.statements_[stindex]);
 
-    DSCSqlLeaseMgr::bindData(statement, stindex, bind_array, leaseExchange);
+    CqlLeaseMgr::bindData(statement, stindex, bind_array, leaseExchange);
 
     future = cass_session_execute(dbconn_.session_, statement);
     cass_future_wait(future);
@@ -1284,7 +1291,7 @@ void DSCSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
 }
 
 void
-DSCSqlLeaseMgr::getLease(StatementIndex stindex, DSCSqlBindArray& bind_array,
+CqlLeaseMgr::getLease(StatementIndex stindex, CqlBindArray& bind_array,
                              Lease4Ptr& result) const {
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" parameter is true to indicate
@@ -1304,7 +1311,7 @@ DSCSqlLeaseMgr::getLease(StatementIndex stindex, DSCSqlBindArray& bind_array,
 
 
 void
-DSCSqlLeaseMgr::getLease(StatementIndex stindex, DSCSqlBindArray& bind_array,
+CqlLeaseMgr::getLease(StatementIndex stindex, CqlBindArray& bind_array,
                              Lease6Ptr& result) const {
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" parameter is true to indicate
@@ -1326,12 +1333,12 @@ DSCSqlLeaseMgr::getLease(StatementIndex stindex, DSCSqlBindArray& bind_array,
 // criteria.
 
 Lease4Ptr
-DSCSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
+CqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_GET_ADDR4).arg(addr.toText());
+              DHCPSRV_CQL_GET_ADDR4).arg(addr.toText());
 
     // Set up the WHERE clause value
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
 
     uint32_t addr4_data = static_cast<uint32_t>(addr);
     bind_array.add(&addr4_data);
@@ -1345,12 +1352,12 @@ DSCSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
 
 
 Lease4Collection
-DSCSqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
+CqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_GET_HWADDR).arg(hwaddr.toText());
+              DHCPSRV_CQL_GET_HWADDR).arg(hwaddr.toText());
 
     // Set up the WHERE clause value
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
 
     std::vector<uint8_t>hwaddr_data = hwaddr.hwaddr_;
     bind_array.add(&hwaddr_data);
@@ -1364,13 +1371,13 @@ DSCSqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
 
 
 Lease4Ptr
-DSCSqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
+CqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_GET_SUBID_HWADDR)
+              DHCPSRV_CQL_GET_SUBID_HWADDR)
               .arg(subnet_id).arg(hwaddr.toText());
 
     // Set up the WHERE clause value
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
 
     std::vector<uint8_t>hwaddr_data = hwaddr.hwaddr_;
     bind_array.add(&hwaddr_data);
@@ -1387,12 +1394,12 @@ DSCSqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
 
 
 Lease4Collection
-DSCSqlLeaseMgr::getLease4(const ClientId& clientid) const {
+CqlLeaseMgr::getLease4(const ClientId& clientid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_GET_CLIENTID).arg(clientid.toText());
+              DHCPSRV_CQL_GET_CLIENTID).arg(clientid.toText());
 
     // Set up the WHERE clause value
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
 
     std::vector<uint8_t> client_id_data = clientid.getClientId();
     bind_array.add(&client_id_data);
@@ -1405,27 +1412,27 @@ DSCSqlLeaseMgr::getLease4(const ClientId& clientid) const {
 }
 
 Lease4Ptr
-DSCSqlLeaseMgr::getLease4(const ClientId& clientid, const HWAddr& hwaddr, SubnetID subnet_id) const {
+CqlLeaseMgr::getLease4(const ClientId& clientid, const HWAddr& hwaddr, SubnetID subnet_id) const {
     /// This function is currently not implemented because allocation engine
     /// searches for the lease using HW address or client identifier.
     /// It never uses both parameters in the same time. We need to
     /// consider if this function is needed at all.
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_GET_CLIENTID_HWADDR_SUBID).arg(clientid.toText())
+              DHCPSRV_CQL_GET_CLIENTID_HWADDR_SUBID).arg(clientid.toText())
               .arg(hwaddr.toText()).arg(subnet_id);
 
-    isc_throw(NotImplemented, "The DSCSqlLeaseMgr::getLease4 function was"
+    isc_throw(NotImplemented, "The CqlLeaseMgr::getLease4 function was"
               " called, but it is not implemented");
 }
 
 Lease4Ptr
-DSCSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
+CqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_GET_SUBID_CLIENTID)
+              DHCPSRV_CQL_GET_SUBID_CLIENTID)
               .arg(subnet_id).arg(clientid.toText());
 
     // Set up the WHERE clause value
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
 
     std::vector<uint8_t> client_id_data = clientid.getClientId();
     bind_array.add(&client_id_data);
@@ -1442,14 +1449,14 @@ DSCSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
 
 
 Lease6Ptr
-DSCSqlLeaseMgr::getLease6(Lease::Type lease_type,
+CqlLeaseMgr::getLease6(Lease::Type lease_type,
                          const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_GET_ADDR6).arg(addr.toText())
+              DHCPSRV_CQL_GET_ADDR6).arg(addr.toText())
               .arg(lease_type);
 
     // Set up the WHERE clause value
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
 
     std::string text_buffer = addr.toText();
     uint32_t addr6_length = text_buffer.size();
@@ -1474,14 +1481,14 @@ DSCSqlLeaseMgr::getLease6(Lease::Type lease_type,
 
 
 Lease6Collection
-DSCSqlLeaseMgr::getLeases6(Lease::Type lease_type,
+CqlLeaseMgr::getLeases6(Lease::Type lease_type,
                           const DUID& duid, uint32_t iaid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_GET_IAID_DUID).arg(iaid).arg(duid.toText())
+              DHCPSRV_CQL_GET_IAID_DUID).arg(iaid).arg(duid.toText())
               .arg(lease_type);
 
     // Set up the WHERE clause value
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
 
     std::vector<uint8_t> duid_data = duid.getDuid();
     bind_array.add(&duid_data);
@@ -1500,16 +1507,16 @@ DSCSqlLeaseMgr::getLeases6(Lease::Type lease_type,
 }
 
 Lease6Collection
-DSCSqlLeaseMgr::getLeases6(Lease::Type lease_type,
+CqlLeaseMgr::getLeases6(Lease::Type lease_type,
                           const DUID& duid, uint32_t iaid,
                           SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_GET_IAID_SUBID_DUID)
+              DHCPSRV_CQL_GET_IAID_SUBID_DUID)
               .arg(iaid).arg(subnet_id).arg(duid.toText())
               .arg(lease_type);
 
     // Set up the WHERE clause value
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
 
     std::vector<uint8_t> duid_data = duid.getDuid();
     bind_array.add(&duid_data);
@@ -1531,24 +1538,24 @@ DSCSqlLeaseMgr::getLeases6(Lease::Type lease_type,
 }
 
 void
-DSCSqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
+CqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
                                  const size_t max_leases) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_DSCSQL_GET_EXPIRED6)
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_EXPIRED6)
         .arg(max_leases);
     getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE6_EXPIRE);
 }
 
 void
-DSCSqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
+CqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                  const size_t max_leases) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_DSCSQL_GET_EXPIRED4)
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_EXPIRED4)
         .arg(max_leases);
     getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE4_EXPIRE);
 }
 
 template<typename LeaseCollection>
 void
-DSCSqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
+CqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
                                        const size_t max_leases,
                                        StatementIndex statement_index) const {
     // Set up the WHERE clause value
@@ -1566,7 +1573,7 @@ DSCSqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
             continue;
         }
         LeaseCollection tempCollection;
-        DSCSqlBindArray bind_array;
+        CqlBindArray bind_array;
 
         bind_array.add(&state);
         bind_array.add(&timestamp);
@@ -1585,11 +1592,11 @@ DSCSqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
 
 template <typename LeasePtr>
 void
-DSCSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
-                                 DSCSqlBindArray& bind_array,
-                                 const LeasePtr& lease, DSCSqlLeaseExchange& exchange) {
+CqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
+                                 CqlBindArray& bind_array,
+                                 const LeasePtr& lease, CqlLeaseExchange& exchange) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_ADD_ADDR4).arg(dbconn_.tagged_statements_[stindex].name_);
+              DHCPSRV_CQL_ADD_ADDR4).arg(dbconn_.tagged_statements_[stindex].name_);
 
     CassError rc;
     CassStatement* statement = NULL;
@@ -1597,7 +1604,7 @@ DSCSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
 
     statement = cass_prepared_bind(dbconn_.statements_[stindex]);
 
-    DSCSqlLeaseMgr::bindData(statement, stindex, bind_array, exchange);
+    CqlLeaseMgr::bindData(statement, stindex, bind_array, exchange);
 
     future = cass_session_execute(dbconn_.session_, statement);
     cass_future_wait(future);
@@ -1646,14 +1653,14 @@ DSCSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
 
 
 void
-DSCSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
+CqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE4;
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_UPDATE_ADDR4).arg(lease->addr_.toText());
+              DHCPSRV_CQL_UPDATE_ADDR4).arg(lease->addr_.toText());
 
     // Create the BIND array for the data being updated
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
     exchange4_->createBindForSend(lease, bind_array);
     bind_array.remove(0);
 
@@ -1663,7 +1670,7 @@ DSCSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
 #ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
     uint64_t old_expire;
-    DSCSqlLeaseExchange::convertToDatabaseTime(lease->old_cltt_, lease->old_valid_lft_, old_expire);
+    CqlLeaseExchange::convertToDatabaseTime(lease->old_cltt_, lease->old_valid_lft_, old_expire);
     bind_array.add(&old_expire);
 #endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
 
@@ -1672,14 +1679,14 @@ DSCSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 }
 
 void
-DSCSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
+CqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE6;
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_UPDATE_ADDR6).arg(lease->addr_.toText());
+              DHCPSRV_CQL_UPDATE_ADDR6).arg(lease->addr_.toText());
 
     // Create the BIND array for the data being updated
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
     exchange6_->createBindForSend(lease, bind_array);
     bind_array.remove(0);
 
@@ -1698,7 +1705,7 @@ DSCSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 
 #ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
     uint64_t old_expire;
-    DSCSqlLeaseExchange::convertToDatabaseTime(lease->old_cltt_, lease->old_valid_lft_, old_expire);
+    CqlLeaseExchange::convertToDatabaseTime(lease->old_cltt_, lease->old_valid_lft_, old_expire);
     bind_array.add(&old_expire);
 #endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
 
@@ -1707,15 +1714,15 @@ DSCSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 }
 
 bool
-DSCSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
-                                 DSCSqlBindArray& bind_array, DSCSqlLeaseExchange& exchange) {
+CqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
+                                 CqlBindArray& bind_array, CqlLeaseExchange& exchange) {
     CassError rc;
     CassStatement* statement = NULL;
     CassFuture* future = NULL;
 
     statement = cass_prepared_bind(dbconn_.statements_[stindex]);
 
-    DSCSqlLeaseMgr::bindData(statement, stindex, bind_array, exchange);
+    CqlLeaseMgr::bindData(statement, stindex, bind_array, exchange);
 
     future = cass_session_execute(dbconn_.session_, statement);
     cass_future_wait(future);
@@ -1732,12 +1739,12 @@ DSCSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
 }
 
 bool
-DSCSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
+CqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_DELETE_ADDR).arg(addr.toText());
+              DHCPSRV_CQL_DELETE_ADDR).arg(addr.toText());
 
     // Set up the WHERE clause value
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
 
     if (addr.isV4()) {
         uint32_t addr4_data = static_cast<uint32_t>(addr);
@@ -1760,27 +1767,27 @@ DSCSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
 }
 
 uint64_t
-DSCSqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
+CqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_DELETE_EXPIRED_RECLAIMED4)
+              DHCPSRV_CQL_DELETE_EXPIRED_RECLAIMED4)
         .arg(secs);
     return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE4_STATE_EXPIRED));
 }
 
 uint64_t
-DSCSqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
+CqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_DELETE_EXPIRED_RECLAIMED6)
+              DHCPSRV_CQL_DELETE_EXPIRED_RECLAIMED6)
         .arg(secs);
     return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE6_STATE_EXPIRED));
 }
 
 uint64_t
-DSCSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs, StatementIndex statement_index) {
+CqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs, StatementIndex statement_index) {
     // Set up the WHERE clause value
     //"WHERE state = ? AND expire < ? ALLOW FILTERING"
 
-    DSCSqlBindArray bind_array;
+    CqlBindArray bind_array;
     uint32_t result = 0;
 
     // State is reclaimed.
@@ -1818,7 +1825,7 @@ DSCSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs, Statemen
 }
 
 string
-DSCSqlLeaseMgr::getName() const {
+CqlLeaseMgr::getName() const {
     string name = "";
     try {
         name = dbconn_.getParameter("name");
@@ -1829,14 +1836,14 @@ DSCSqlLeaseMgr::getName() const {
 }
 
 string
-DSCSqlLeaseMgr::getDescription() const {
-    return (string("DataStax Cassandra Database"));
+CqlLeaseMgr::getDescription() const {
+    return (string("Cassandra Database"));
 }
 
 pair<uint32_t, uint32_t>
-DSCSqlLeaseMgr::getVersion() const {
+CqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_GET_VERSION);
+              DHCPSRV_CQL_GET_VERSION);
 
     uint32_t version = CASS_VERSION_MAJOR;
     uint32_t minor = CASS_VERSION_MINOR;
@@ -1845,61 +1852,61 @@ DSCSqlLeaseMgr::getVersion() const {
 }
 
 void
-DSCSqlLeaseMgr::commit() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_DSCSQL_COMMIT);
+CqlLeaseMgr::commit() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_COMMIT);
 }
 
 void
-DSCSqlLeaseMgr::rollback() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_DSCSQL_ROLLBACK);
+CqlLeaseMgr::rollback() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_ROLLBACK);
 }
 
 #ifdef TERASTREAM_DB_LOGIC
 void
-DSCSqlLeaseMgr::discoverLease4NoReqNoRes(LeaseExchangeData &data) {
-    DSCSqlLease4DiscoverNoReqNoResExchange exchange;
+CqlLeaseMgr::discoverLease4NoReqNoRes(LeaseExchangeData &data) {
+    CqlLease4DiscoverNoReqNoResExchange exchange;
     exchange.execute(data);
 }
 
 void
-DSCSqlLeaseMgr::discoverLease4NoReqRes(LeaseExchangeData &data) {
-    DSCSqlLease4DiscoverNoReqResExchange exchange;
+CqlLeaseMgr::discoverLease4NoReqRes(LeaseExchangeData &data) {
+    CqlLease4DiscoverNoReqResExchange exchange;
     exchange.execute(data);
 }
 
 void
-DSCSqlLeaseMgr::discoverLease4ReqNoRes(LeaseExchangeData &data) {
-    DSCSqlLease4DiscoverReqNoResExchange exchange;
+CqlLeaseMgr::discoverLease4ReqNoRes(LeaseExchangeData &data) {
+    CqlLease4DiscoverReqNoResExchange exchange;
     exchange.execute(data);
 }
 
 void
-DSCSqlLeaseMgr::discoverLease4ReqRes(LeaseExchangeData &data) {
-    DSCSqlLease4DiscoverReqResExchange exchange;
+CqlLeaseMgr::discoverLease4ReqRes(LeaseExchangeData &data) {
+    CqlLease4DiscoverReqResExchange exchange;
     exchange.execute(data);
 }
 
 void
-DSCSqlLeaseMgr::requestLease4NoReqNoRes(LeaseExchangeData &data) {
-    DSCSqlLease4RequestNoReqNoResExchange exchange;
+CqlLeaseMgr::requestLease4NoReqNoRes(LeaseExchangeData &data) {
+    CqlLease4RequestNoReqNoResExchange exchange;
     exchange.execute(data);
 }
 
 void
-DSCSqlLeaseMgr::requestLease4NoReqRes(LeaseExchangeData &data) {
-    DSCSqlLease4RequestNoReqResExchange exchange;
+CqlLeaseMgr::requestLease4NoReqRes(LeaseExchangeData &data) {
+    CqlLease4RequestNoReqResExchange exchange;
     exchange.execute(data);
 }
 
 void
-DSCSqlLeaseMgr::requestLease4ReqNoRes(LeaseExchangeData &data) {
-    DSCSqlLease4RequestReqNoResExchange exchange;
+CqlLeaseMgr::requestLease4ReqNoRes(LeaseExchangeData &data) {
+    CqlLease4RequestReqNoResExchange exchange;
     exchange.execute(data);
 }
 
 void
-DSCSqlLeaseMgr::requestLease4ReqRes(LeaseExchangeData &data) {
-    DSCSqlLease4RequestReqResExchange exchange;
+CqlLeaseMgr::requestLease4ReqRes(LeaseExchangeData &data) {
+    CqlLease4RequestReqResExchange exchange;
     exchange.execute(data);
 }
 #endif // TERASTREAM_DB_LOGIC

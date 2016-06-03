@@ -21,8 +21,8 @@
 #ifdef HAVE_PGSQL
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #endif
-#ifdef HAVE_DSCSQL
-#include <dhcpsrv/dscsql_lease_mgr.h>
+#ifdef HAVE_CQL
+#include <dhcpsrv/cql_lease_mgr.h>
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
@@ -488,8 +488,8 @@ DControllerBase::getVersion(bool extended) {
 #ifdef HAVE_PGSQL
         tmp << isc::dhcp::PgSqlLeaseMgr::getDBVersion() << std::endl;
 #endif
-#ifdef HAVE_DSCSQL
-        tmp << isc::dhcp::DSCSqlLeaseMgr::getDBVersion() << std::endl;
+#ifdef HAVE_CQL
+        tmp << isc::dhcp::CqlLeaseMgr::getDBVersion() << std::endl;
 #endif
         tmp << isc::dhcp::Memfile_LeaseMgr::getDBVersion();
 

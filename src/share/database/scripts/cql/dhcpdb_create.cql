@@ -14,22 +14,22 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
--- This is the Kea schema specification for DataStax Cassandra SQL.
+-- This is the Kea schema specification for Cassandra CQL.
 
 -- The schema is reasonably portable (with the exception of the engine
--- specification, which is Datastax Cassandra SQL-specific).  Minor changes might be needed for
+-- specification, which is Cassandra CQL-specific).  Minor changes might be needed for
 -- other databases.
 
 -- To create the schema, either type the command:
 
 -- cqlsh -u <user> -p <password> -k <database> -f dhcpdb_create.cql
 
--- ... at the command prompt, or log in to the DSC SQL database and at the "cqlsh>"
+-- ... at the command prompt, or log in to the CQL database and at the "cqlsh>"
 -- prompt, issue the command:
 
 -- SOURCE dhcpdb_create.cql
 
--- This script is also called from kea-admin, see kea-admin init dscsql
+-- This script is also called from kea-admin, see kea-admin init cql
 
 -- Over time, Kea database schema will evolve. Each version is marked with
 -- major.minor version. This file is organized sequentially, i.e. database
