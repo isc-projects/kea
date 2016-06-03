@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DSCSQL_CONNECTION_H
-#define DSCSQL_CONNECTION_H
+#ifndef CQL_CONNECTION_H
+#define CQL_CONNECTION_H
 
 #include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/dhcpsrv_log.h>
@@ -27,7 +27,7 @@ namespace isc {
 namespace dhcp {
 
 /// @brief  Defines a single query
-struct DSCSqlTaggedStatement {
+struct CqlTaggedStatement {
     /// Param name.
     const char** params_;
 
@@ -38,31 +38,31 @@ struct DSCSqlTaggedStatement {
     const char* text_;
 };
 
-/// Defines DSC SQL backend version: 1.0
-const uint32_t DSCSQL_CURRENT_VERSION = 1;
-const uint32_t DSCSQL_CURRENT_MINOR = 0;
+/// Defines CQL backend version: 1.0
+const uint32_t CQL_CURRENT_VERSION = 1;
+const uint32_t CQL_CURRENT_MINOR = 0;
 
-class DSCSqlConnection : public DatabaseConnection {
+class CqlConnection : public DatabaseConnection {
 public:
 
     /// @brief Constructor
     ///
-    /// Initialize DSCSqlConnection object with parameters needed for connection.
-    DSCSqlConnection(const ParameterMap& parameters);
+    /// Initialize CqlConnection object with parameters needed for connection.
+    CqlConnection(const ParameterMap& parameters);
 
     /// @brief Destructor
-    virtual ~DSCSqlConnection();
+    virtual ~CqlConnection();
 
     /// @brief Prepare statements
     ///
     /// Creates the prepared statements for all of the SQL statements used
-    /// by the PostgreSQL backend.
+    /// by the CQL backend.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     /// @throw isc::InvalidParameter 'index' is not valid for the vector.  This
     ///        represents an internal error within the code.
-    void prepareStatements(DSCSqlTaggedStatement *statements);
+    void prepareStatements(CqlTaggedStatement *statements);
 
     /// @brief Open Database
     ///
@@ -107,7 +107,7 @@ public:
     ///
     /// Commits all pending database operations.
     ///
-    /// @throw DbOperationError Iif the commit failed.
+    /// @throw DbOperationError If the commit failed.
     virtual void commit();
 
     /// @brief Rollback Transactions
@@ -120,21 +120,23 @@ public:
     /// @brief Check Error
     ///
     /// Chech error for current database operation.
-    void checkStatementError(std::string& error, CassFuture* future, uint32_t stindex, const char* what) const;
+    void checkStatementError(std::string& error, CassFuture* future,
+        uint32_t stindex, const char* what) const;
 
     /// @brief Check Error
     ///
     /// Chech error for current database operation.
-    void checkStatementError(std::string& error, CassFuture* future, const char* what) const;
+    void checkStatementError(std::string& error, CassFuture* future,
+        const char* what) const;
 
-    /// DSC SQL connection handle
+    /// CQL connection handle
     CassCluster* cluster_;
     CassSession* session_;
     std::vector<const CassPrepared*> statements_;       ///< Prepared statements
-    DSCSqlTaggedStatement *tagged_statements_;
+    CqlTaggedStatement *tagged_statements_;
 };
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 
-#endif // DSCSQL_CONNECTION_H
+#endif // CQL_CONNECTION_H

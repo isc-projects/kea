@@ -15,8 +15,8 @@
 #ifdef HAVE_PGSQL
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #endif
-#ifdef HAVE_DSCSQL
-#include <dhcpsrv/dscsql_lease_mgr.h>
+#ifdef HAVE_CQL
+#include <dhcpsrv/cql_lease_mgr.h>
 #endif
 
 #include <boost/algorithm/string.hpp>
@@ -71,10 +71,10 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
         return;
     }
 #endif
-#ifdef HAVE_DSCSQL
-    if (parameters[type] == string("dscsql")) {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_DSCSQL_DB).arg(redacted);
-        getLeaseMgrPtr().reset(new DSCSqlLeaseMgr(parameters));
+#ifdef HAVE_CQL
+    if (parameters[type] == string("cql")) {
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_CQL_DB).arg(redacted);
+        getLeaseMgrPtr().reset(new CQLLeaseMgr(parameters));
         return;
     }
 #endif
