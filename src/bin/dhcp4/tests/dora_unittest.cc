@@ -147,6 +147,10 @@ const char* DORA_CONFIGS[] = {
         "       {"
         "         \"circuit-id\": \"'charter950'\","
         "         \"ip-address\": \"10.0.0.9\""
+        "       },"
+        "       {"
+        "         \"client-id\": \"01:11:22:33:44:55:66\","
+        "         \"ip-address\": \"10.0.0.1\""
         "       }"
         "    ]"
         "} ]"
@@ -173,7 +177,8 @@ const char* DORA_CONFIGS[] = {
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
-        "\"host-reservation-identifiers\": [ \"circuit-id\", \"hw-address\", \"duid\" ],"
+        "\"host-reservation-identifiers\": [ \"circuit-id\", \"hw-address\","
+        "                                    \"duid\", \"client-id\" ],"
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
@@ -190,6 +195,10 @@ const char* DORA_CONFIGS[] = {
         "       {"
         "         \"circuit-id\": \"'charter950'\","
         "         \"ip-address\": \"10.0.0.9\""
+        "       },"
+        "       {"
+        "         \"client-id\": \"01:11:22:33:44:55:66\","
+        "         \"ip-address\": \"10.0.0.1\""
         "       }"
         "    ]"
         "} ]"
@@ -199,7 +208,8 @@ const char* DORA_CONFIGS[] = {
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
-        "\"host-reservation-identifiers\": [ \"duid\", \"circuit-id\", \"hw-address\" ],"
+        "\"host-reservation-identifiers\": [ \"duid\", \"client-id\","
+        "                                    \"circuit-id\", \"hw-address\" ],"
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
@@ -216,6 +226,10 @@ const char* DORA_CONFIGS[] = {
         "       {"
         "         \"circuit-id\": \"'charter950'\","
         "         \"ip-address\": \"10.0.0.9\""
+        "       },"
+        "       {"
+        "         \"client-id\": \"01:11:22:33:44:55:66\","
+        "         \"ip-address\": \"10.0.0.1\""
         "       }"
         "    ]"
         "} ]"
@@ -852,7 +866,7 @@ TEST_F(DORATest, hostIdentifiersOrder) {
 
     // Reconfigure the server to change the preference order of the
     // host identifiers. The 'circuit-id' should now take precedence over
-    // the hw-address and duid.
+    // the hw-address, duid and client-id.
     configure(DORA_CONFIGS[4], *client.getServer());
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("0.0.0.0"))));
@@ -866,7 +880,7 @@ TEST_F(DORATest, hostIdentifiersOrder) {
 
     // Reconfigure the server to change the preference order of the
     // host identifiers. The 'duid' should now take precedence over
-    // the hw-address and circuit-id
+    // the client-id, hw-address and circuit-id
     configure(DORA_CONFIGS[5], *client.getServer());
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("0.0.0.0"))));
@@ -877,6 +891,23 @@ TEST_F(DORATest, hostIdentifiersOrder) {
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Make sure that the client has got the lease for the reserved address.
     ASSERT_EQ("10.0.0.8", client.config_.lease_.addr_.toText());
+
+    // Replace the client identifier with the one for which address
+    // 10.0.0.1 is reserved. Because the DUID is a special type of
+    // client identifier, this change effectively removes the association
+    // of the client with the DUID for which address 10.0.0.8 is reserved.
+    // The next identifier type to be used by the server (after DUID) is
+    // client-id and thus the server should assign address 10.0.0.1.
+    client.includeClientId("01:11:22:33:44:55:66");
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("10.0.0.1", client.config_.lease_.addr_.toText());
 }
 
 // This test checks that setting the match-client-id value to false causes

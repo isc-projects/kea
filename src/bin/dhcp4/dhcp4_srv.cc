@@ -269,7 +269,6 @@ Dhcpv4Exchange::setHostIdentifiers() {
                                                     std::vector<uint8_t>(vec.begin() + 5,
                                                                          vec.end()));
                     }
-                    /// @todo Add support for other client identifiers (see #4317).
                 }
             }
             break;
@@ -285,6 +284,15 @@ Dhcpv4Exchange::setHostIdentifiers() {
                             context_->addHostIdentifier(id_type, circuit_id_vec);
                         }
                     }
+                }
+            }
+            break;
+
+        case Host::IDENT_CLIENT_ID:
+            if (context_->clientid_) {
+                const std::vector<uint8_t>& vec = context_->clientid_->getDuid();
+                if (!vec.empty()) {
+                    context_->addHostIdentifier(id_type, vec);
                 }
             }
             break;

@@ -864,7 +864,7 @@ TEST_F(HostReservationIdsParserTest, dhcp4Identifiers) {
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations4();
     const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
-    ASSERT_EQ(3, ids.size());
+    ASSERT_EQ(4, ids.size());
 
     CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_CIRCUIT_ID);
@@ -920,7 +920,7 @@ TEST_F(HostReservationIdsParserTest, dhcp4AutoIdentifiers) {
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations4();
     const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
-    ASSERT_EQ(3, ids.size());
+    ASSERT_EQ(4, ids.size());
 
     CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
