@@ -164,7 +164,14 @@ template <> void ValueParser<std::string>::build(ConstElementPtr value) {
     // Invoke common code for all specializations of build().
     buildCommon(value);
 
-    value_ = value->str();
+    // For strings we need to use stringValue() rather than str().
+    // str() returns fully escaped special characters, so
+    // single backslash would be misrepresented as "\\".
+    if (value->getType() == Element::string) {
+        value_ = value->stringValue();
+    } else {
+        value_ = value->str();
+    }
     boost::erase_all(value_, "\"");
 }
 
@@ -571,7 +578,7 @@ OptionDataParser::findOptionDefinition(const std::string& option_space,
     if (!def) {
         // Check if this is a vendor-option. If it is, get vendor-specific
         // definition.
-        uint32_t vendor_id = CfgOption::optionSpaceToVendorId(option_space);
+        uint32_t vendor_id = LibDHCP::optionSpaceToVendorId(option_space);
         if (vendor_id) {
             def = LibDHCP::getVendorOptionDef(u, vendor_id, search_key);
         }
