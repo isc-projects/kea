@@ -72,7 +72,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     }
 #endif
 #ifdef HAVE_DSCSQL
-    if (parameters[type] == string("dscsql")) {
+    if (parameters[type] == string("cassandra")) {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_DSCSQL_DB).arg(redacted);
         getLeaseMgrPtr().reset(new DSCSqlLeaseMgr(parameters));
         return;
@@ -87,7 +87,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     // Get here on no match
     LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(parameters[type]);
     isc_throw(InvalidType, "Database access parameter 'type' does "
-              "not specify a supported database backend");
+              "not specify a supported database backend:" << parameters[type]);
 }
 
 void
