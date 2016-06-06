@@ -190,20 +190,15 @@ public:
         /// @todo: check cltt
     }
 
-    /// @brief Checks if context has been updated with allocated addresses
-    /// or prefixes.
+    /// @brief Checks if specified address or prefix has been recorded as
+    /// allocated to the client.
     ///
     /// @param lease Allocated lease.
     /// @param ctx Context structure in which this function should check if
     /// leased address is stored as allocated resource.
-    /// @param lease_index Index of the lease within IA.
     void checkAllocatedResources(const Lease6Ptr& lease,
-                                 AllocEngine::ClientContext6& ctx,
-                                 const size_t lease_index) {
-        ASSERT_GE(ctx.currentIA().allocated_resources_.size(), lease_index + 1);
-        EXPECT_EQ(lease->addr_, ctx.currentIA().allocated_resources_[lease_index].first);
-        EXPECT_EQ(static_cast<int>(lease->prefixlen_),
-                  static_cast<int>(ctx.currentIA().allocated_resources_[lease_index].second));
+                                 AllocEngine::ClientContext6& ctx) {
+        EXPECT_TRUE(ctx.isAllocated(lease->addr_, lease->prefixlen_));
     }
 
     /// @brief Checks if specified address is increased properly

@@ -349,7 +349,8 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
     : query_(query), fake_allocation_(fake_allocation), subnet_(subnet),
       duid_(duid), hwaddr_(), host_identifiers_(), host_(),
       fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
-      hostname_(hostname), callout_handle_(callout_handle), ias_() {
+      hostname_(hostname), callout_handle_(callout_handle),
+      allocated_resources_(), ias_() {
 
     // Initialize host identifiers.
     if (duid) {
@@ -358,8 +359,8 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
 }
 
 AllocEngine::ClientContext6::IAContext::IAContext()
-    : iaid_(0), type_(Lease::TYPE_NA), hints_(), allocated_resources_(),
-      old_leases_(), changed_leases_(), ia_rsp_() {
+    : iaid_(0), type_(Lease::TYPE_NA), hints_(), old_leases_(),
+      changed_leases_(), ia_rsp_() {
 }
 
 void
@@ -371,9 +372,17 @@ IAContext::addHint(const asiolink::IOAddress& prefix,
 
 void
 AllocEngine::ClientContext6::
-IAContext::addAllocatedResource(const asiolink::IOAddress& prefix,
-                                const uint8_t prefix_len) {
-    allocated_resources_.push_back(std::make_pair(prefix, prefix_len));
+addAllocatedResource(const asiolink::IOAddress& prefix,
+                     const uint8_t prefix_len) {
+    static_cast<void>(allocated_resources_.insert(std::make_pair(prefix,
+                                                                 prefix_len)));
+}
+
+bool
+AllocEngine::ClientContext6::
+isAllocated(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const {
+    return (static_cast<bool>
+            (allocated_resources_.count(std::make_pair(prefix, prefix_len))));
 }
 
 
@@ -534,8 +543,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             // IA context so as they are available when we process subsequent
             // IAs.
             BOOST_FOREACH(Lease6Ptr lease, leases) {
-                ctx.currentIA().addAllocatedResource(lease->addr_,
-                                                     lease->prefixlen_);
+                ctx.addAllocatedResource(lease->addr_, lease->prefixlen_);
             }
             return (leases);
         }
@@ -1212,8 +1220,7 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
             // IA context so as they are available when we process subsequent
             // IAs.
             BOOST_FOREACH(Lease6Ptr lease, leases) {
-                ctx.currentIA().addAllocatedResource(lease->addr_,
-                                                     lease->prefixlen_);
+                ctx.addAllocatedResource(lease->addr_, lease->prefixlen_);
             }
         }
 

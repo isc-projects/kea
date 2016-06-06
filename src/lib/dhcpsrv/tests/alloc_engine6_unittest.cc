@@ -32,15 +32,15 @@ TEST(ClientContext6Test, addHint) {
 }
 
 // Test convenience method adding allocated prefixes and addresses to
-// IA context.
+// a context.
 TEST(ClientContext6Test, addAllocatedResource) {
    AllocEngine::ClientContext6 ctx;
-   ctx.currentIA().addAllocatedResource(IOAddress("2001:db8:1::1"));
-   ctx.currentIA().addAllocatedResource(IOAddress("3000:1::"), 64);
+   ctx.addAllocatedResource(IOAddress("2001:db8:1::1"));
+   ctx.addAllocatedResource(IOAddress("3000:1::"), 64);
 
-   ASSERT_EQ(2, ctx.currentIA().allocated_resources_.size());
-   EXPECT_EQ("2001:db8:1::1", ctx.currentIA().allocated_resources_[0].first.toText());
-   EXPECT_EQ("3000:1::", ctx.currentIA().allocated_resources_[1].first.toText());
+   ASSERT_EQ(2, ctx.allocated_resources_.size());
+   EXPECT_TRUE(ctx.isAllocated(IOAddress("2001:db8:1::1")));
+   EXPECT_TRUE(ctx.isAllocated(IOAddress("3000:1::"), 64));
 }
 
 // This test checks if the v6 Allocation Engine can be instantiated, parses

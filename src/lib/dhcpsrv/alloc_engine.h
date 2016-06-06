@@ -254,6 +254,9 @@ public:
     /// @brief Container for client's hints.
     typedef std::vector<ResourceType> HintContainer;
 
+    /// @brief Container holding allocated prefixes or addresses.
+    typedef std::set<ResourceType> ResourceContainer;
+
     /// @brief A tuple holding host identifier type and value.
     typedef std::pair<Host::IdentifierType, std::vector<uint8_t> > IdentifierPair;
 
@@ -336,6 +339,9 @@ public:
         /// @brief Callout handle associated with the client's message.
         hooks::CalloutHandlePtr callout_handle_;
 
+        /// @brief Holds addresses and prefixes allocated for all IAs.
+        ResourceContainer allocated_resources_;
+
         //@}
 
         /// @brief Parameters pertaining to individual IAs.
@@ -353,9 +359,6 @@ public:
             /// There will typically be just one address, but the protocol
             /// allows more than one address or prefix for each IA container.
             HintContainer hints_;
-
-            /// @brief Holds addresses or prefixes allocated for this IA.
-            HintContainer allocated_resources_;
 
             /// @brief A pointer to any old leases that the client had before
             /// update but are no longer valid after the update/allocation.
@@ -389,18 +392,24 @@ public:
             /// @param prefix_len Prefix length. Default is 128 for addresses.
             void addHint(const asiolink::IOAddress& prefix,
                          const uint8_t prefix_len = 128);
-
-            /// @brief Convenience method adding allocated prefix or address.
-            ///
-            /// @param prefix Prefix or address.
-            /// @param prefix_len Prefix length. Default is 128 for addresses.
-            void addAllocatedResource(const asiolink::IOAddress& prefix,
-                                      const uint8_t prefix_len = 128);
-
         };
 
         /// @brief Container holding IA specific contexts.
         std::vector<IAContext> ias_;
+
+        /// @brief Convenience method adding allocated prefix or address.
+        ///
+        /// @param prefix Prefix or address.
+        /// @param prefix_len Prefix length. Default is 128 for addresses.
+        void addAllocatedResource(const asiolink::IOAddress& prefix,
+                                  const uint8_t prefix_len = 128);
+
+        /// @brief Checks if specified address or prefix was allocated.
+        ///
+        /// @param prefix Prefix or address.
+        /// @param prefix_len Prefix length. Default is 128 for addresses.
+        bool isAllocated(const asiolink::IOAddress& prefix,
+                         const uint8_t prefix_len = 128) const;
 
         /// @brief Conveniece function adding host identifier into
         /// @ref host_identifiers_ list.
