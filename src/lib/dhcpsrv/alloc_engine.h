@@ -388,6 +388,7 @@ public:
 
         };
 
+        /// @brief Container holding IA specific contexts.
         std::vector<IAContext> ias_;
 
         /// @brief Conveniece function adding host identifier into
@@ -400,6 +401,11 @@ public:
             host_identifiers_.push_back(IdentifierPair(id_type, identifier));
         }
 
+        /// @brief Returns IA specific context for the currently processed IA.
+        ///
+        /// If IA specific context doesn't exist, it is created.
+        ///
+        /// @return Reference to IA specific context.
         IAContext& currentIA() {
             if (ias_.empty()) {
                 createIAContext();
@@ -407,6 +413,10 @@ public:
             return (ias_.back());
         }
 
+        /// @brief Creates new IA context.
+        ///
+        /// This method should be invoked prior to processing a next IA included
+        /// in the client's message.
         void createIAContext() {
             ias_.push_back(IAContext());
         };
