@@ -20,6 +20,7 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcpsrv/dhcp4o6_ipc.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 
 #include <netinet/in.h>
 #include <sys/fcntl.h>
@@ -147,25 +148,46 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     pkt->unpack();
     OptionVendorPtr vendor =
         boost::dynamic_pointer_cast<OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
-    if (!vendor || vendor->getVendorId() != ENTERPRISE_ID_ISC) {
+    if (!vendor) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
+            .arg("no vendor option");
+        return (Pkt6Ptr());
+    }
+    if (vendor->getVendorId() != ENTERPRISE_ID_ISC) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
+            .arg("vendor option enterprise ID is not ISC");
         return (Pkt6Ptr());
     }
     OptionStringPtr ifname =
         boost::dynamic_pointer_cast<OptionString>(vendor->getOption(ISC_V6_4O6_INTERFACE));
     if (!ifname) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
+            .arg("no interface suboption");
         return (Pkt6Ptr());
     }
     IfacePtr iface = IfaceMgr::instance().getIface(ifname->getValue());
     if (!iface) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
+            .arg("can't get interface");
         return (Pkt6Ptr());
     }
     Option6AddrLstPtr srcs =
         boost::dynamic_pointer_cast<Option6AddrLst>(vendor->getOption(ISC_V6_4O6_SRC_ADDRESS));
     if (!srcs) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
+            .arg("no source address suboption");
         return (Pkt6Ptr());
     }
     Option6AddrLst::AddressContainer addrs = srcs->getAddresses();
     if (addrs.size() != 1) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
+            .arg("bad source address suboption");
         return (Pkt6Ptr());
     }
 
@@ -196,7 +218,6 @@ void Dhcp4o6IpcBase::send(Pkt6Ptr pkt) {
     // enterprise id, let's create it.
     if (!vendor_opt || (vendor_opt->getVendorId() != ENTERPRISE_ID_ISC)) {
         vendor_opt.reset(new OptionVendor(Option::V6, ENTERPRISE_ID_ISC));
-        pkt->addOption(vendor_opt);
 
     }
 
