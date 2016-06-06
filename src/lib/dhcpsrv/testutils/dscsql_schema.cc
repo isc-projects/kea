@@ -29,28 +29,53 @@ validDSCSQLConnectionString() {
                              VALID_USER, VALID_PASSWORD));
 }
 
-void destroyDSCSQLSchema(bool show_err) {
-    runDSCSQLScript(DATABASE_SCRIPTS_DIR, "dscsql/dhcpdb_drop.cql", show_err);
+bool softWipeEnabled() {
+    const char* const env = getenv("KEA_TEST_CASSANDRA_WIPE");
+    if (env && (string(env) == string("soft"))) {
+        return (true);
+    }
+
+    return (false);
 }
 
-void createDSCSQLSchema(bool show_err) {
-    runDSCSQLScript(DATABASE_SCRIPTS_DIR, "dscsql/dhcpdb_create.cql",
-                   show_err);
+void destroyDSCSQLSchema(bool force_wipe, bool show_err) {
+    if (force_wipe || !softWipeEnabled()) {
+        // Do full wipe
+        runDSCSQLScript(DATABASE_SCRIPTS_DIR, "dscsql/dhcpdb_drop.cql", show_err);
+    } else {
+
+        // do soft wipe (just remove the data, not the structures)
+        runDSCSQLScript(DATABASE_SCRIPTS_DIR, "dscsql/soft_wipe.cql", show_err);
+    }
+}
+
+void createDSCSQLSchema(bool force_wipe, bool show_err) {
+    if (force_wipe || !softWipeEnabled()) {
+        runDSCSQLScript(DATABASE_SCRIPTS_DIR, "dscsql/dhcpdb_create.cql",
+                        show_err);
+    }
 }
 
 void runDSCSQLScript(const std::string& path, const std::string& script_name,
                     bool show_err) {
     std::ostringstream cmd;
-    cmd << "cqlsh -u keatest -p keatest -k keatest -f";
+    cmd << "cqlsh -u keatest -p keatest -k keatest";
     if (!show_err) {
         cmd << " 2>/dev/null ";
     }
 
-    if (!path.empty()) {
-        cmd << " < " << path << "/";
-    }
+    cmd << " -f ";
 
+    if (!path.empty()) {
+        cmd << path << "/";
+    }
     cmd << script_name;
+
+    /// @todo: Remove this once the unit-tests are in better shape.
+    ///
+    /// This print is here only temporary. We will remove it once all of the
+    /// Cassandra unit-tests will be passing.
+    std::cout << "cmdline:" << cmd.str() << endl;
 
     int retval = ::system(cmd.str().c_str());
     ASSERT_EQ(0, retval) << "runDSCSQLSchema failed:" << cmd.str();

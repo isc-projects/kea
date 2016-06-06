@@ -32,8 +32,10 @@ std::string validDSCSQLConnectionString();
 /// will fail. The output of stderr is suppressed unless the parameter,
 /// show_err is true.
 ///
+/// @param force_wipe forces wipe of the database, even if KEA_TEST_CASSANDRA_WIPE
+///                   is set.
 /// @param show_err flag which governs whether or not stderr is suppressed.
-void destroyDSCSQLSchema(bool show_err = false);
+void destroyDSCSQLSchema(bool force_wipe, bool show_err = false);
 
 /// @brief Create the DSCSQL Schema
 ///
@@ -45,8 +47,10 @@ void destroyDSCSQLSchema(bool show_err = false);
 /// will fail. The output of stderr is suppressed unless the parameter,
 /// show_err is true.
 ///
+/// @param force_wipe forces wipe of the database, even if KEA_TEST_CASSANDRA_WIPE
+///                   is set.
 /// @param show_err flag which governs whether or not stderr is suppressed.
-void createDSCSQLSchema(bool show_err = false);
+void createDSCSQLSchema(bool force_wipe, bool show_err = false);
 
 /// @brief Run a DSCSQL SQL script against the DSCSQL unit test database
 ///
@@ -61,6 +65,29 @@ void createDSCSQLSchema(bool show_err = false);
 void runDSCSQLScript(const std::string& path, const std::string& script_name,
                     bool show_err);
 
+/// @brief Returns status if the soft-wipe is enabled or not.
+///
+/// In some deployments (In case of Tomek's dev system) Cassandra tests take
+/// a very long time to execute. This was traced back to slow table/indexes
+/// creation/deletion. With full wipe and recreation of all structures, it
+/// took over 60 seconds for each test to execute. To avoid this problem, a
+/// feature called soft-wipe has been implemented. If enabled, it does not
+/// remove the structures, just the data from essential tables. To enable
+/// it set KEA_TEST_CASSANDRA_WIPE environment variable to 'soft'. Make sure
+/// that the database schema is set up properly before running in soft-wipe
+/// mode.
+///
+/// For example to use soft-wipe mode, you can:
+///
+/// $ cqlsh -u keatest -p keatest -k keatest
+///         -f src/share/database/scripts/dscsql/dhcpdb_create.cql
+/// $ export KEA_TEST_CASSANDRA_WIPE=soft
+/// $ cd src/lib/dhcpsrv
+/// $ make -j9
+/// $ tests/libdhcpsrv_unittests --gtest_filter=DSCSqlLeaseMgrTest.*
+///
+/// @return true if soft-wipe is enabled, false otherwise
+bool softWipeEnabled();
 };
 };
 };

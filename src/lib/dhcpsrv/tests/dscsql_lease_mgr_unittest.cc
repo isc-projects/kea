@@ -45,8 +45,8 @@ public:
     DSCSqlLeaseMgrTest() {
 
         // Ensure schema is the correct one.
-        destroyDSCSQLSchema();
-        createDSCSQLSchema();
+        destroyDSCSQLSchema(false, true);
+        createDSCSQLSchema(false, true);
 
         // Connect to the database
         try {
@@ -69,7 +69,7 @@ public:
     virtual ~DSCSqlLeaseMgrTest() {
         lmptr_->rollback();
         LeaseMgrFactory::destroy();
-        destroyDSCSQLSchema();
+        destroyDSCSQLSchema(false, true);
     }
 
     /// @brief Reopen the database
@@ -97,8 +97,8 @@ public:
 TEST(DSCSqlOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
-    destroyDSCSQLSchema();
-    createDSCSQLSchema();
+    destroyDSCSQLSchema(true, true);
+    createDSCSQLSchema(true, true);
 
     // Check that lease manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
@@ -147,7 +147,7 @@ TEST(DSCSqlOpenTest, OpenDatabase) {
         NoDatabaseName);
 
     // Tidy up after the test
-    destroyDSCSQLSchema();
+    destroyDSCSQLSchema(true, true);
 }
 
 /// @brief Check the getType() method
