@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -260,7 +260,7 @@ public:
     /// @param in_pool specifies whether the lease is expected to be in pool
     /// @return allocated lease(s) (may be empty)
     Lease6Collection renewTest(AllocEngine& engine, const Pool6Ptr& pool,
-                               AllocEngine::HintContainer& hints,
+                               AllocEngine::ResourceContainer& hints,
                                bool in_pool = true);
 
     /// @brief Checks if the address allocation with a hint that is in range,

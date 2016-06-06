@@ -1493,7 +1493,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
             // We have a lease! Let's wrap its content into IA_PD option
             // with IAADDR suboption.
-            LOG_INFO(lease6_logger, ctx.fake_allocation ?
+            LOG_INFO(lease6_logger, ctx.fake_allocation_ ?
                       DHCP6_PD_LEASE_ADVERT : DHCP6_PD_LEASE_ALLOC)
                 .arg(query->getLabel())
                 .arg((*l)->addr_.toText())
@@ -1516,7 +1516,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         // cause of that failure. The only thing left is to insert
         // status code to pass the sad news to the client.
 
-        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, ctx.fake_allocation ?
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, ctx.fake_allocation_ ?
                   DHCP6_PD_LEASE_ADVERT_FAIL : DHCP6_PD_LEASE_ALLOC_FAIL)
             .arg(query->getLabel())
             .arg(ia->getIAID());
@@ -1615,7 +1615,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // those prefixes and remove those that we have already processed. We
     // don't want to remove them from the context, so we need to copy them
     // into temporary container.
-    AllocEngine::HintContainer hints = ctx.currentIA().hints_;
+    AllocEngine::ResourceContainer hints = ctx.currentIA().hints_;
 
     // For all leases we have now, add the IAADDR with non-zero lifetimes.
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
@@ -1628,7 +1628,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
             .arg(ia_rsp->getIAID());
 
         // Now remove this address from the hints list.
-        AllocEngine::HintType hint_type((*l)->addr_, 128);
+        AllocEngine::ResourceType hint_type((*l)->addr_, 128);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type),
                     hints.end());
     }
@@ -1641,7 +1641,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         ia_rsp->addOption(iaaddr);
 
         // Now remove this address from the hints list.
-        AllocEngine::HintType hint_type((*l)->addr_, 128);
+        AllocEngine::ResourceType hint_type((*l)->addr_, 128);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type), hints.end());
 
         // If the new FQDN settings have changed for the lease, we need to
@@ -1662,7 +1662,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
     // Finally, if there are any addresses requested that we haven't dealt with
     // already, inform the client that he can't have them.
-    for (AllocEngine::HintContainer::const_iterator hint = hints.begin();
+    for (AllocEngine::ResourceContainer::const_iterator hint = hints.begin();
          hint != hints.end(); ++hint) {
         Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
                                                   hint->first, 0, 0));
@@ -1775,7 +1775,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // those prefixes and remove those that we have already processed. We
     // don't want to remove them from the context, so we need to copy them
     // into temporary container.
-    AllocEngine::HintContainer hints = ctx.currentIA().hints_;
+    AllocEngine::ResourceContainer hints = ctx.currentIA().hints_;
 
     // For all the leases we have now, add the IAPPREFIX with non-zero lifetimes
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
@@ -1790,7 +1790,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
             .arg(ia->getIAID());
 
         // Now remove this address from the hints list.
-        AllocEngine::HintType hint_type((*l)->addr_, (*l)->prefixlen_);
+        AllocEngine::ResourceType hint_type((*l)->addr_, (*l)->prefixlen_);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type),
                     hints.end());
     }
@@ -1802,7 +1802,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // zero lifetimes
     // Finally, if there are any addresses requested that we haven't dealt with
     // already, inform the client that he can't have them.
-    for (AllocEngine::HintContainer::const_iterator prefix = hints.begin();
+    for (AllocEngine::ResourceContainer::const_iterator prefix = hints.begin();
          prefix != hints.end(); ++prefix) {
         // Send the prefix with the zero lifetimes only if the prefix
         // contains non-zero value. A zero value indicates that the hint was

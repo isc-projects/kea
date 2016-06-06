@@ -358,8 +358,8 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
 }
 
 AllocEngine::ClientContext6::IAContext::IAContext()
-    : iaid_(0), type_(Lease::TYPE_NA), hints_(), old_leases_(),
-      changed_leases_(), ia_rsp_() {
+    : iaid_(0), type_(Lease::TYPE_NA), hints_(), allocated_resources_(),
+      old_leases_(), changed_leases_(), ia_rsp_() {
 }
 
 void
@@ -368,6 +368,14 @@ IAContext::addHint(const asiolink::IOAddress& prefix,
                    const uint8_t prefix_len) {
     hints_.push_back(std::make_pair(prefix, prefix_len));
 }
+
+void
+AllocEngine::ClientContext6::
+IAContext::addAllocatedResource(const asiolink::IOAddress& prefix,
+                                const uint8_t prefix_len) {
+    allocated_resources_.push_back(std::make_pair(prefix, prefix_len));
+}
+
 
 void AllocEngine::findReservation(ClientContext6& ctx) {
     findReservationInternal(ctx, boost::bind(&HostMgr::get6,

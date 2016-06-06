@@ -248,10 +248,10 @@ public:
     /// This is an entry that represents what the client had requested,
     /// either an address or a prefix. Prefix length is 128 for regular
     /// addresses.
-    typedef std::pair<isc::asiolink::IOAddress, uint8_t> HintType;
+    typedef std::pair<isc::asiolink::IOAddress, uint8_t> ResourceType;
 
     /// @brief Container for client's hints.
-    typedef std::vector<HintType> HintContainer;
+    typedef std::vector<ResourceType> ResourceContainer;
 
     /// @brief A tuple holding host identifier type and value.
     typedef std::pair<Host::IdentifierType, std::vector<uint8_t> > IdentifierPair;
@@ -351,7 +351,10 @@ public:
             ///
             /// There will typically be just one address, but the protocol
             /// allows more than one address or prefix for each IA container.
-            HintContainer hints_;
+            ResourceContainer hints_;
+
+            /// @brief Holds addresses or prefixes allocated for this IA.
+            ResourceContainer allocated_resources_;
 
             /// @brief A pointer to any old leases that the client had before
             /// update but are no longer valid after the update/allocation.
@@ -385,6 +388,13 @@ public:
             /// @param prefix_len Prefix length. Default is 128 for addresses.
             void addHint(const asiolink::IOAddress& prefix,
                          const uint8_t prefix_len = 128);
+
+            /// @brief Convenience method adding allocated prefix or address.
+            ///
+            /// @param prefix Prefix or address.
+            /// @param prefix_len Prefix length. Default is 128 for addresses.
+            void addAllocatedResource(const asiolink::IOAddress& prefix,
+                                      const uint8_t prefix_len = 128);
 
         };
 
