@@ -666,6 +666,13 @@ protected:
     /// - Performs host reservation lookup and stores the result in the
     /// context
     ///
+    /// Even though the incoming packet type is known to this method, it
+    /// doesn't set the @c fake_allocation flag, because of a possibility
+    /// that the Rapid Commit option is in use. The @c fake_allocation
+    /// flag is set appropriately after it has been determined whether
+    /// the Rapid Commit option was included and that the server respects
+    /// it.
+    ///
     /// @param pkt pointer to a packet for which context will be created.
     /// @param [out] ctx reference to context object to be initialized.
     void initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);

@@ -282,7 +282,6 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
     ctx.duid_ = pkt->getClientId(),
     ctx.fwd_dns_update_ = false;
     ctx.rev_dns_update_ = false;
-    ctx.fake_allocation_ = false;
     ctx.hostname_ = "";
     ctx.query_ = pkt;
     ctx.callout_handle_ = getCalloutHandle(pkt);
@@ -1348,18 +1347,21 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                                                                 do_rev);
     }
 
-    // Use allocation engine to pick a lease for this client. Allocation engine
-    // will try to honor the hint, but it is just a hint - some other address
-    // may be used instead. If fake_allocation is set to false, the lease will
-    // be inserted into the LeaseMgr as well.
-    ctx.createIAContext();
+    // Update per-packet context values.
     ctx.fwd_dns_update_ = do_fwd;
     ctx.rev_dns_update_ = do_rev;
     ctx.fake_allocation_ = fake_allocation;
+
+    // Set per-IA context values.
+    ctx.createIAContext();
     ctx.currentIA().iaid_ = ia->getIAID();
     ctx.currentIA().addHint(hint);
     ctx.currentIA().type_ = Lease::TYPE_NA;
 
+    // Use allocation engine to pick a lease for this client. Allocation engine
+    // will try to honor the hint, but it is just a hint - some other address
+    // may be used instead. If fake_allocation is set to false, the lease will
+    // be inserted into the LeaseMgr as well.
     Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 
     /// @todo: Handle more than one lease
@@ -1467,20 +1469,18 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // Reply message it means that it is committing leases. Other message
     // type (Advertise) means that server is not committing leases (fake
     // allocation).
-    bool fake_allocation = (answer->getType() != DHCPV6_REPLY);
+    ctx.fake_allocation_ = (answer->getType() != DHCPV6_REPLY);
+
+    // Set per-IA context values.
+    ctx.createIAContext();
+    ctx.currentIA().iaid_ = ia->getIAID();
+    ctx.currentIA().addHint(hint);
+    ctx.currentIA().type_ = Lease::TYPE_PD;
 
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honor the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
     // be inserted into the LeaseMgr as well.
-
-    ctx.createIAContext();
-    ctx.fake_allocation_ = fake_allocation;
-    ctx.currentIA().iaid_ = ia->getIAID();
-    ctx.currentIA().addHint(hint);
-    ctx.currentIA().type_ = Lease::TYPE_PD;
-
-
     Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 
     if (!leases.empty()) {
@@ -1493,7 +1493,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
             // We have a lease! Let's wrap its content into IA_PD option
             // with IAADDR suboption.
-            LOG_INFO(lease6_logger, fake_allocation ?
+            LOG_INFO(lease6_logger, ctx.fake_allocation ?
                       DHCP6_PD_LEASE_ADVERT : DHCP6_PD_LEASE_ALLOC)
                 .arg(query->getLabel())
                 .arg((*l)->addr_.toText())
@@ -1516,7 +1516,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         // cause of that failure. The only thing left is to insert
         // status code to pass the sad news to the client.
 
-        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, ctx.fake_allocation ?
                   DHCP6_PD_LEASE_ADVERT_FAIL : DHCP6_PD_LEASE_ALLOC_FAIL)
             .arg(query->getLabel())
             .arg(ia->getIAID());
@@ -1573,9 +1573,12 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                                                                 do_fwd, do_rev);
     }
 
-    ctx.createIAContext();
+    // Set per-packet context values.
     ctx.fwd_dns_update_ = do_fwd;
     ctx.rev_dns_update_ = do_rev;
+
+    // Set per-IA context values.
+    ctx.createIAContext();
     ctx.currentIA().iaid_ = ia->getIAID();
     ctx.currentIA().type_ = Lease::TYPE_NA;
     ctx.currentIA().ia_rsp_ = ia_rsp;
@@ -1607,6 +1610,11 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // - what we actually assigned in leases
     // - old leases that are no longer valid in ctx.old_leases_
 
+    // For each IA inserted by the client we have to determine what to do
+    // about included addresses and notify the client. We will iterate over
+    // those prefixes and remove those that we have already processed. We
+    // don't want to remove them from the context, so we need to copy them
+    // into temporary container.
     AllocEngine::HintContainer hints = ctx.currentIA().hints_;
 
     // For all leases we have now, add the IAADDR with non-zero lifetimes.
@@ -1724,6 +1732,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     ia_rsp->setT1(subnet->getT1());
     ia_rsp->setT2(subnet->getT2());
 
+    // Set per-IA context values.
     ctx.createIAContext();
     ctx.currentIA().iaid_ = ia->getIAID();
     ctx.currentIA().type_ = Lease::TYPE_PD;
@@ -1761,6 +1770,11 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     //                    in PD context)
     Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
 
+    // For each IA inserted by the client we have to determine what to do
+    // about included prefixes and notify the client. We will iterate over
+    // those prefixes and remove those that we have already processed. We
+    // don't want to remove them from the context, so we need to copy them
+    // into temporary container.
     AllocEngine::HintContainer hints = ctx.currentIA().hints_;
 
     // For all the leases we have now, add the IAPPREFIX with non-zero lifetimes
