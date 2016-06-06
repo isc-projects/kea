@@ -25,6 +25,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>
+#include <iterator>
 #include <sstream>
 #include <algorithm>
 #include <set>
@@ -226,6 +227,8 @@ AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
         // Do all checks on the lease
         checkLease6(*it, type, expected_len, in_pool, in_pool);
 
+        checkAllocatedResources(*it, ctx, std::distance(leases.begin(), it));
+
         // Check that the lease is indeed in LeaseMgr
         Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(type,
                                                                    (*it)->addr_);
@@ -336,6 +339,10 @@ AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
 
         // Do all checks on the lease
         checkLease6(*it, type, expected_len, in_pool, in_pool);
+
+        // Check that context has been updated with allocated addresses or
+        // prefixes.
+        checkAllocatedResources(*it, ctx, std::distance(leases.begin(), it));
 
         // Check that the lease is indeed in LeaseMgr
         Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(type,
