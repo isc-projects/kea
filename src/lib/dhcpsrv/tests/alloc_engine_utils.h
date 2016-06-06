@@ -276,7 +276,7 @@ public:
     /// @param in_pool specifies whether the lease is expected to be in pool
     /// @return allocated lease(s) (may be empty)
     Lease6Collection renewTest(AllocEngine& engine, const Pool6Ptr& pool,
-                               AllocEngine::ResourceContainer& hints,
+                               AllocEngine::HintContainer& hints,
                                bool in_pool = true);
 
     /// @brief Checks if the address allocation with a hint that is in range,

@@ -1615,7 +1615,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // those prefixes and remove those that we have already processed. We
     // don't want to remove them from the context, so we need to copy them
     // into temporary container.
-    AllocEngine::ResourceContainer hints = ctx.currentIA().hints_;
+    AllocEngine::HintContainer hints = ctx.currentIA().hints_;
 
     // For all leases we have now, add the IAADDR with non-zero lifetimes.
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
@@ -1662,7 +1662,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
     // Finally, if there are any addresses requested that we haven't dealt with
     // already, inform the client that he can't have them.
-    for (AllocEngine::ResourceContainer::const_iterator hint = hints.begin();
+    for (AllocEngine::HintContainer::const_iterator hint = hints.begin();
          hint != hints.end(); ++hint) {
         Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
                                                   hint->first, 0, 0));
@@ -1775,7 +1775,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // those prefixes and remove those that we have already processed. We
     // don't want to remove them from the context, so we need to copy them
     // into temporary container.
-    AllocEngine::ResourceContainer hints = ctx.currentIA().hints_;
+    AllocEngine::HintContainer hints = ctx.currentIA().hints_;
 
     // For all the leases we have now, add the IAPPREFIX with non-zero lifetimes
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
@@ -1802,7 +1802,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // zero lifetimes
     // Finally, if there are any addresses requested that we haven't dealt with
     // already, inform the client that he can't have them.
-    for (AllocEngine::ResourceContainer::const_iterator prefix = hints.begin();
+    for (AllocEngine::HintContainer::const_iterator prefix = hints.begin();
          prefix != hints.end(); ++prefix) {
         // Send the prefix with the zero lifetimes only if the prefix
         // contains non-zero value. A zero value indicates that the hint was
