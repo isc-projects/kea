@@ -316,7 +316,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
 
 Lease6Collection
 AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
-                            AllocEngine::HintContainer& hints,
+                            AllocEngine::ResourceContainer& hints,
                             bool in_pool) {
 
     Lease::Type type = pool->getType();

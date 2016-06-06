@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,29 @@ using namespace isc::stats;
 namespace isc {
 namespace dhcp {
 namespace test {
+
+// Test convenience method adding hints to IA context.
+TEST(ClientContext6Test, addHint) {
+   AllocEngine::ClientContext6 ctx;
+   ctx.currentIA().addHint(IOAddress("2001:db8:1::1"));
+   ctx.currentIA().addHint(IOAddress("3000:1::"), 64);
+
+   ASSERT_EQ(2, ctx.currentIA().hints_.size());
+   EXPECT_EQ("2001:db8:1::1", ctx.currentIA().hints_[0].first.toText());
+   EXPECT_EQ("3000:1::", ctx.currentIA().hints_[1].first.toText());
+}
+
+// Test convenience method adding allocated prefixes and addresses to
+// IA context.
+TEST(ClientContext6Test, addAllocatedResource) {
+   AllocEngine::ClientContext6 ctx;
+   ctx.currentIA().addAllocatedResource(IOAddress("2001:db8:1::1"));
+   ctx.currentIA().addAllocatedResource(IOAddress("3000:1::"), 64);
+
+   ASSERT_EQ(2, ctx.currentIA().allocated_resources_.size());
+   EXPECT_EQ("2001:db8:1::1", ctx.currentIA().allocated_resources_[0].first.toText());
+   EXPECT_EQ("3000:1::", ctx.currentIA().allocated_resources_[1].first.toText());
+}
 
 // This test checks if the v6 Allocation Engine can be instantiated, parses
 // parameters string and allocators are created.
@@ -667,7 +690,7 @@ TEST_F(AllocEngine6Test, renewExtendLeaseLifetime) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
 
     // This is what the client will send in his renew message.
-    AllocEngine::HintContainer hints;
+    AllocEngine::ResourceContainer hints;
     hints.push_back(make_pair(IOAddress("2001:db8:1::15"), 128));
 
     // Client should receive a lease.
@@ -700,7 +723,7 @@ TEST_F(AllocEngine6Test, renewExtendLeaseLifetimeForReservation) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
 
     // This is what the client will send in his renew message.
-    AllocEngine::HintContainer hints;
+    AllocEngine::ResourceContainer hints;
     hints.push_back(make_pair(IOAddress("2001:db8:1::15"), 128));
 
     // Client should receive a lease.
@@ -1250,7 +1273,7 @@ TEST_F(AllocEngine6Test, addressRenewal) {
     ASSERT_EQ(1, leases.size());
 
     // This is what the client will send in his renew message.
-    AllocEngine::HintContainer hints;
+    AllocEngine::ResourceContainer hints;
     hints.push_back(make_pair(leases[0]->addr_, 128));
 
     Lease6Collection renewed = renewTest(engine, pool_, hints, true);
@@ -1281,7 +1304,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
     ASSERT_EQ("2001:db8:1::1c", leases[0]->addr_.toText());
 
     // This is what the client will send in his renew message.
-    AllocEngine::HintContainer hints;
+    AllocEngine::ResourceContainer hints;
     hints.push_back(make_pair(leases[0]->addr_, 128));
 
     Lease6Collection renewed = renewTest(engine, pool_, hints, true);
@@ -1417,7 +1440,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewChange) {
     ASSERT_NE("2001:db8:1::1c", leases[0]->addr_.toText());
 
     // This is what the client will send in his renew message.
-    AllocEngine::HintContainer hints;
+    AllocEngine::ResourceContainer hints;
     hints.push_back(make_pair(leases[0]->addr_, 128));
 
     // Create reservation for the client. This is in-pool reservation,
@@ -1441,7 +1464,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewReserved) {
     ASSERT_EQ(1, leases.size());
 
     // This is what the client will send in his renew message.
-    AllocEngine::HintContainer hints;
+    AllocEngine::ResourceContainer hints;
     hints.push_back(make_pair(leases[0]->addr_, 128));
 
     // Create reservation for this address, but for another client.
