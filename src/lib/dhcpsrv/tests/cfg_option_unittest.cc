@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,9 @@
 #include <dhcpsrv/cfg_option.h>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
+#include <iterator>
 #include <limits>
+#include <list>
 #include <sstream>
 
 using namespace isc;
@@ -488,6 +490,35 @@ TEST(CfgOptionTest, addVendorOptions) {
     options = cfg.getAll(1111111);
     ASSERT_TRUE(options);
     EXPECT_TRUE(options->empty());
+}
+
+// This test verifies that option space names for the vendor options are
+// correct.
+TEST(CfgOptionTest, getVendorIdsSpaceNames) {
+    CfgOption cfg;
+
+    // Create 10 options, each goes under a different vendor id.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        // Generate space name for a unique vendor id.
+        std::ostringstream s;
+        s << "vendor-" << code;
+        ASSERT_NO_THROW(cfg.add(option, false, s.str()));
+    }
+
+    // We should now have 10 different vendor ids.
+    std::list<std::string> space_names = cfg.getVendorIdsSpaceNames();
+    ASSERT_EQ(10, space_names.size());
+
+    // Check that the option space names for those vendor ids are correct.
+    for (std::list<std::string>::iterator name = space_names.begin();
+         name != space_names.end(); ++name) {
+        uint16_t id = static_cast<uint16_t>(std::distance(space_names.begin(),
+                                                          name));
+        std::ostringstream s;
+        s << "vendor-" << (100 + id);
+        EXPECT_EQ(s.str(), *name);
+    }
 }
 
 

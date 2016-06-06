@@ -1,7 +1,12 @@
-1120.	[bug]		sar
+1121.	[bug]		sar
 	Update the classification document to match the output from
 	the debug statements.
 	(Trac NA, git TBD)
+
+1120.	[func]		marcin
+	Extended MySQL host data source to retrieve DHCPv4 and DHCPv6
+	options associated with hosts from a MySQL database.
+	(Trac #4281, git b8a306a27d1cae03f6bc5223c30806f5cd1b64f4)
 
 1119.	[func]		sar
 	Add debug logging to the classification tokens.  This uses

@@ -84,6 +84,7 @@ public:
     /// for a specified identifier. This method may return multiple hosts
     /// because a particular client may have reservations in multiple subnets.
     ///
+    /// @param identifier_type Identifier type.
     /// @param identifier_begin Pointer to a begining of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
@@ -250,22 +251,6 @@ public:
     ///
     /// Rolls back all pending database operations.
     virtual void rollback();
-
-    /// @brief Statement Tags
-    ///
-    /// The contents of the enum are indexes into the list of SQL statements
-    enum StatementIndex {
-        INSERT_HOST,            // Insert new host to collection
-        INSERT_V6_RESRV,        // Insert v6 reservation
-        GET_HOST_DHCPID,        // Gets hosts by host identifier
-        GET_HOST_ADDR,          // Gets hosts by IPv4 address
-        GET_HOST_SUBID4_DHCPID, // Gets host by IPv4 SubnetID, HW address/DUID
-        GET_HOST_SUBID6_DHCPID, // Gets host by IPv6 SubnetID, HW address/DUID
-        GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
-        GET_HOST_PREFIX,        // Gets host by IPv6 prefix
-        GET_VERSION,            // Obtain version number
-        NUM_STATEMENTS          // Number of statements
-    };
 
 private:
 
