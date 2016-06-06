@@ -24,6 +24,7 @@
 
 #include <list>
 #include <map>
+#include <set>
 #include <utility>
 
 namespace isc {
@@ -251,7 +252,7 @@ public:
     typedef std::pair<isc::asiolink::IOAddress, uint8_t> ResourceType;
 
     /// @brief Container for client's hints.
-    typedef std::vector<ResourceType> ResourceContainer;
+    typedef std::vector<ResourceType> HintContainer;
 
     /// @brief A tuple holding host identifier type and value.
     typedef std::pair<Host::IdentifierType, std::vector<uint8_t> > IdentifierPair;
@@ -351,10 +352,10 @@ public:
             ///
             /// There will typically be just one address, but the protocol
             /// allows more than one address or prefix for each IA container.
-            ResourceContainer hints_;
+            HintContainer hints_;
 
             /// @brief Holds addresses or prefixes allocated for this IA.
-            ResourceContainer allocated_resources_;
+            HintContainer allocated_resources_;
 
             /// @brief A pointer to any old leases that the client had before
             /// update but are no longer valid after the update/allocation.

@@ -690,7 +690,7 @@ TEST_F(AllocEngine6Test, renewExtendLeaseLifetime) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
 
     // This is what the client will send in his renew message.
-    AllocEngine::ResourceContainer hints;
+    AllocEngine::HintContainer hints;
     hints.push_back(make_pair(IOAddress("2001:db8:1::15"), 128));
 
     // Client should receive a lease.
@@ -723,7 +723,7 @@ TEST_F(AllocEngine6Test, renewExtendLeaseLifetimeForReservation) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
 
     // This is what the client will send in his renew message.
-    AllocEngine::ResourceContainer hints;
+    AllocEngine::HintContainer hints;
     hints.push_back(make_pair(IOAddress("2001:db8:1::15"), 128));
 
     // Client should receive a lease.
@@ -1273,7 +1273,7 @@ TEST_F(AllocEngine6Test, addressRenewal) {
     ASSERT_EQ(1, leases.size());
 
     // This is what the client will send in his renew message.
-    AllocEngine::ResourceContainer hints;
+    AllocEngine::HintContainer hints;
     hints.push_back(make_pair(leases[0]->addr_, 128));
 
     Lease6Collection renewed = renewTest(engine, pool_, hints, true);
@@ -1304,7 +1304,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
     ASSERT_EQ("2001:db8:1::1c", leases[0]->addr_.toText());
 
     // This is what the client will send in his renew message.
-    AllocEngine::ResourceContainer hints;
+    AllocEngine::HintContainer hints;
     hints.push_back(make_pair(leases[0]->addr_, 128));
 
     Lease6Collection renewed = renewTest(engine, pool_, hints, true);
@@ -1440,7 +1440,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewChange) {
     ASSERT_NE("2001:db8:1::1c", leases[0]->addr_.toText());
 
     // This is what the client will send in his renew message.
-    AllocEngine::ResourceContainer hints;
+    AllocEngine::HintContainer hints;
     hints.push_back(make_pair(leases[0]->addr_, 128));
 
     // Create reservation for the client. This is in-pool reservation,
@@ -1464,7 +1464,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewReserved) {
     ASSERT_EQ(1, leases.size());
 
     // This is what the client will send in his renew message.
-    AllocEngine::ResourceContainer hints;
+    AllocEngine::HintContainer hints;
     hints.push_back(make_pair(leases[0]->addr_, 128));
 
     // Create reservation for this address, but for another client.
