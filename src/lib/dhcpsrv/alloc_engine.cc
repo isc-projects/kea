@@ -434,11 +434,6 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             // someone else.
             allocateReservedLeases6(ctx, leases);
 
-            // If we got at least one lease, we're good to go.
-            if (!leases.empty()) {
-                return (leases);
-            }
-
             // If not, we'll need to continue and will eventually fall into case 4:
             // getting a regular lease. That could happen when we're processing
             // request from client X, there's a reserved address A for X, but
@@ -462,10 +457,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             // If they're not, we're ok to keep using them.
             removeNonmatchingReservedLeases6(ctx, leases);
 
-            if (!leases.empty()) {
-                // Return old leases so the server can see what has changed.
-                return (updateLeaseData(ctx, leases));
-            }
+            leases = updateLeaseData(ctx, leases);
 
             // If leases are empty at this stage, it means that we used to have
             // leases for this client, but we checked and those leases are reserved
@@ -507,11 +499,6 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
 
             // All checks are done. Let's hope we have some leases left.
 
-            // If we have any leases left, let's return them and we're done.
-            if (!leases.empty()) {
-                return (leases);
-            }
-
             // If we don't have any leases at this stage, it means that we hit
             // one of the following cases:
             // - we have a reservation, but it's not for this IAID/ia-type and
@@ -523,24 +510,33 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             //   someone else, so we released it.
         }
 
-        // Case 4/catch-all: One of the following is true:
-        // - we don't have leases and there are no reservations
-        // - we used to have leases, but we lost them, because they are now
-        //   reserved for someone else
-        // - we have a reservation, but it is not usable yet, because the address
-        //   is still used by someone else
-        //
-        // In any case, we need to go through normal lease assignment process
-        // for now. This is also a catch-all or last resort approach, when we
-        // couldn't find any reservations (or couldn't use them).
+        if (leases.empty()) {
+            // Case 4/catch-all: One of the following is true:
+            // - we don't have leases and there are no reservations
+            // - we used to have leases, but we lost them, because they are now
+            //   reserved for someone else
+            // - we have a reservation, but it is not usable yet, because the address
+            //   is still used by someone else
+            //
+            // In any case, we need to go through normal lease assignment process
+            // for now. This is also a catch-all or last resort approach, when we
+            // couldn't find any reservations (or couldn't use them).
 
-        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                  ALLOC_ENGINE_V6_ALLOC_UNRESERVED)
-            .arg(ctx.query_->getLabel());
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_ALLOC_UNRESERVED)
+                .arg(ctx.query_->getLabel());
 
-        leases = allocateUnreservedLeases6(ctx);
+            leases = allocateUnreservedLeases6(ctx);
+        }
 
         if (!leases.empty()) {
+            // If there are any leases allocated, let's store in them in the
+            // IA context so as they are available when we process subsequent
+            // IAs.
+            BOOST_FOREACH(Lease6Ptr lease, leases) {
+                ctx.currentIA().addAllocatedResource(lease->addr_,
+                                                     lease->prefixlen_);
+            }
             return (leases);
         }
 
@@ -1209,6 +1205,16 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
                 .arg((*l)->typeToText((*l)->type_))
                 .arg((*l)->addr_);
             extendLease6(ctx, *l);
+        }
+
+        if (!leases.empty()) {
+            // If there are any leases allocated, let's store in them in the
+            // IA context so as they are available when we process subsequent
+            // IAs.
+            BOOST_FOREACH(Lease6Ptr lease, leases) {
+                ctx.currentIA().addAllocatedResource(lease->addr_,
+                                                     lease->prefixlen_);
+            }
         }
 
         return (leases);
