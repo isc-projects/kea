@@ -203,17 +203,6 @@ pgsql_init() {
 cql_init() {
     printf "Checking if there is a database initialized already... Please ignore errors.\n"
 
-    result=`cql_execute "DESCRIBE KEYSPACES;"`
-    if [ "$result" != "" ]; then
-        result=`echo "$result" | sed -n "/$db_name/ p"`
-        if [ "$result" = "" ]; then
-            printf "Creating keyspace $db_name...\n"
-            cql_execute "CREATE KEYSPACE $db_name WITH replication = {'class' : 'SimpleStrategy','replication_factor' : 1};"
-        else
-            printf "Keyspace $db_name already exists.\n"
-        fi
-    fi
-
     result=`cql_execute "USE $db_name; DESCRIBE tables;"`
     if [ "$result"="<empty>" ]; then
         printf "Creating and initializing tables using script %s...\n" $scripts_dir/cql/dhcpdb_create.cql
@@ -225,7 +214,7 @@ cql_init() {
     version=`cql_version`
     printf "Lease DB version reported after initialization: $version\n"
 
-    return 0
+    exit 0
 }
 
 ### Functions that implement database version checking commands
@@ -340,7 +329,7 @@ cql_upgrade() {
 
     version=`cql_version`
     printf "Lease DB version reported after upgrade: $version\n"
-    return 0
+    exit 0
 }
 
 # Utility function which tests if the given file exists and
@@ -535,7 +524,7 @@ cql_dump() {
     # delete the tmp file on success
     rm $tmp_file
     echo lease$dump_type successfully dumped to $dump_file
-    return 0
+    exit 0
 }
 
 ### Script starts here ###
