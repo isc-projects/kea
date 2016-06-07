@@ -76,7 +76,7 @@ pgsql_execute_script() {
         retcode=$?
     else
         export PGPASSWORD=$db_password
-        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U $db_user -d $db_name -h localhost -f $file
+        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U $db_user -d $db_name -f $file
         retcode=$?
     fi
     return $retcode

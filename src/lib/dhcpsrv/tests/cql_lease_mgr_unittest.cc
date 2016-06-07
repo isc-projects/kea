@@ -94,7 +94,7 @@ public:
 /// CqlLeaseMgr test fixure set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 
-TEST(CQLOpenTest, OpenDatabase) {
+TEST(CqlOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
     destroyCqlSchema(false, true);

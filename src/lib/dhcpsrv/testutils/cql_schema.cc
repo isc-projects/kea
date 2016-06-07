@@ -38,15 +38,15 @@ bool softWipeEnabled() {
     return (false);
 }
 
-void destroyCqlSchema(bool , bool show_err) {
-//    if (force_wipe || !softWipeEnabled()) {
+void destroyCqlSchema(bool force_wipe, bool show_err) {
+    if (force_wipe || !softWipeEnabled()) {
         // Do full wipe
         runCqlScript(DATABASE_SCRIPTS_DIR, "cql/dhcpdb_drop.cql", show_err);
-//    } else {
+    } else {
 
         // do soft wipe (just remove the data, not the structures)
-//        runCqlScript(DATABASE_SCRIPTS_DIR, "cql/soft_wipe.cql", show_err);
-//    }
+        runCqlScript(DATABASE_SCRIPTS_DIR, "cql/soft_wipe.cql", show_err);
+    }
 }
 
 void createCqlSchema(bool force_wipe, bool show_err) {
