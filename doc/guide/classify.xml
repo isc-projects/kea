@@ -625,4 +625,96 @@
       </para>
   </section>
 
+  <section>
+   <title>Debugging Expressions</title>
+     <para>
+     While you are constructing your classification expressions you may
+     find it useful to enable logging see <xref linkend="logging"/> for
+     a more complete description of the logging facility.
+     </para>
+
+     <para>
+     To enable the debug statements in the classifciaton system you will
+     need to set the severity to "DEBUG" and the debug level to at least 55.
+     The specific loggers are "kea-dhcp4.eval" and "kea-dhcp6.eval".
+     </para>
+
+     <para>
+     In order to understand the logging statements one must understand a
+     bit about how expressions are evaluated, for a more complete description
+     refer to the design document at <ulink url="http://kea.isc.org/wiki/KeaDesigns"/>.
+     In brief there are two structures used during the evaluation of an expression:
+     a list of tokens which represent the expressions and a value stack which
+     represents the values being manipulated.
+     </para>
+
+     <para>
+     The list of tokens is created when the configuration file is processed with
+     most expressions and values being converted to a token.  The list is organized
+     in reverse Polish notation.  During execution the list will be traversed
+     in order.  As each token is executed it will be able to pop values
+     from the top of the stack and eventually push its result on the top of the
+     stack.  Imagine the following expression:
+       <screen>
+       "test": "substring(option[61].hex,0,3) == 'foo'",
+       </screen>
+     This will result in the following tokens:
+       <screen>
+       option, number (0), number (3), substring, text ('foo'), equals
+       </screen>
+     In this example the first three tokens will simply push values onto the
+     stack.  The substring token will then remove those three values and
+     compute a result that it places on the stack.  The text option also
+     places a value on the stack and finally the equals token removes the
+     two tokens on the stack and places its result on the stack.
+     </para>
+
+     <para>
+     When debug logging is enabled each time a token is evaluated it will
+     emit a log line indicating the values of any objects that were popped
+     off of the value stack and any objects that were pushed onto the value
+     stack.
+     </para>
+
+     <para>
+     The values will be displayed as either text if the command is known
+     to use text values or hex if the command either uses binary values or
+     can manipulate either text or binary values.  For expressions that
+     pop multiple values off the stack the values will be displayed in
+     the order they were popped.  For most expressions this won't matter
+     but for the concat expression the values are displayed in reverse
+     order from how they are written in the expression.
+     </para>
+
+     <para>
+     Let us assume that the following test has been entered into the configuration.
+     This example skips most of the configuration to concentrate on the test.
+       <screen>
+       "test": "substring(option[61].hex,0,3) == 'foo'",
+       </screen>
+     The logging might then resemble this:
+       <screen>
+       2016-05-19 13:35:04.163 DEBUG [kea.eval/44478] EVAL_DEBUG_OPTION Pushing option 61 with value 0x666F6F626172
+       2016-05-19 13:35:04.164 DEBUG [kea.eval/44478] EVAL_DEBUG_STRING Pushing text string '0'
+       2016-05-19 13:35:04.165 DEBUG [kea.eval/44478] EVAL_DEBUG_STRING Pushing text string '3'
+       2016-05-19 13:35:04.166 DEBUG [kea.eval/44478] EVAL_DEBUG_SUBSTRING Popping length 3, start 0,
+       string 0x666F6F626172 pushing result 0x666F6F
+       2016-05-19 13:35:04.167 DEBUG [kea.eval/44478] EVAL_DEBUG_STRING Pushing text string 'foo'
+       2016-05-19 13:35:04.168 DEBUG [kea.eval/44478] EVAL_DEBUG_EQUAL Popping 0x666F6F and 0x666F6F pushing result 'true'
+       </screen>
+     </para>
+
+     <note><para>
+     The debug logging may be quite verbose if you have a number of expressions
+     to evaluate.  It is intended as an aide in helping you create and debug
+     your expressions.  You should plan to disable debug logging when you have your
+     expressions working correctly.  You also may wish to include only one set of
+     expressions at a time in the configuration file while debugging them in order
+     to limit the log statements.  For example when adding a new set of expressions
+     you might find it more convenient to create a configuration file that only
+     includes the new expressions until you have them working correctly and then
+     add the new set to the main configuration file.
+     </para></note>
+  </section>
+
 </chapter>

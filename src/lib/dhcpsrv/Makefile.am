@@ -136,6 +136,8 @@ endif
 libkea_dhcpsrv_la_SOURCES += ncr_generator.cc ncr_generator.h
 
 if HAVE_PGSQL
+libkea_dhcpsrv_la_SOURCES += pgsql_connection.cc pgsql_connection.h
+libkea_dhcpsrv_la_SOURCES += pgsql_exchange.cc pgsql_exchange.h
 libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
 endif
 if HAVE_CQL

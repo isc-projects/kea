@@ -1,102 +1,123 @@
-1117.	[bug]		marcin
+1124.	[bug]		sar
+	Update the classification document to match the output from
+	the debug statements.
+	(Trac NA, git 8b3ea8e26c3e6cd3c46073b635212fd29f031774)
+
+1123.	[func]		marcin
+	Extended MySQL host data source to retrieve DHCPv4 and DHCPv6
+	options associated with hosts from a MySQL database.
+	(Trac #4281, git b8a306a27d1cae03f6bc5223c30806f5cd1b64f4)
+
+1122.	[func]		sar
+	Add debug logging to the classification tokens.  This uses
+	the loggers "kea-dhcp4.eval" and "kea-dhcp6.eval" to capture
+	details of the classification expression evaluations.
+	(Trac #4480, git cf14d0d21c69879f21733457a97a6ac0bdb1dae2)
+
+1121.	[func]		stephen
+	Make the database connection timeout a configurable parameter with
+	a default value of five seconds.
+	(Trac #3164, git 3332ad17523c6fcc1e735e4297169ebb2de95118)
+
+1120.	[bug]		marcin
 	Performance improvement in libdhcp++: improved efficiency of the
 	DHCPv4 Message Type option creation.
 	(Trac #4495, git 41c43a2a9e34931fc3ebf58c459f10ad08575d19)
 
-1116.	[bug]		marcin
+1119.	[bug]		marcin
 	Performance improvement in hosts reservation: removed
 	inefficient conversion of the host identifier to text
 	when logging.
 	(Trac #4499, git 48c20790480d5ed7bfde0ef7b052dd4a9745607d)
 
-1115.	[func]		tmark
+1118.	[func]		tmark
 	The "query4" argument, containing the client packet received, has been
 	added to the DHCPv4 hook points: lease4_select and lease4_renew.  The
 	"query6" argument, containing the client packet received, has been
 	added to the DHCPv6 hook points: lease6_select and pkt6_send.
 	(Trac #4481, git c0af94c47bda85eb1caa3a78a46280b63990672a)
 
-1114.	[bug]		stephen
+1117.	[bug]		stephen
 	Adjusted variable type in a MySQL-related file to overcome a
 	type mismatch problem reported by one particular compiler.
 	(Trac #4485, git 4c6fb189b5d12ffdf4ab171c9154366e70e6082c)
 
-1113.	[func]		tomek
+1116.	[func]		tomek
 	DHCPv4 subnet selection can now be selected based on IPv6
 	information. This is part of ongoing effort to support RFC7341:
 	DHCPv4-over-DHCPv6.
 	(Trac #4112, git 3352685981ec8ca9a90f7405ff56cd31af6fb0d9)
 
-1112.   [bug]		tmark
+1115.   [bug]		tmark
 	An explicit call to unload the hook libraries prior to server
 	exit was added to both kea-dhcp6 and kea-dhcp4.  This corrects
-	an issue where loggging components were being destroyed prior
-	to hook librarires being unloaded.
+	an issue where logging components were being destroyed prior
+	to hook libraries being unloaded.
 	(Trac #4492, git 2a4792b3551cce2fb9147f33f032ae7e71791d21)
 
-1111.	[bug]		marcin
+1114.	[bug]		marcin
 	perfdhcp: Improved algorithm for dropping timed out transactions.
 	This prevents growing memory consumption due to storing timed
 	out transactions when the DHCP server drops many messages.
 	(Trac #4493, git 9757a93110afb82c5379643f2f48e223d497efae)
 
-1110.	[func]		tomek
+1113.	[func]		tomek
 	It is now possible to specify parameters for hook libraries.
 	(Trac #4297, git f45d0b5d297f6ad522eb8b7e6f6a0de1064b8569)
 
-1109.	[func]		marcin
+1112.	[func]		marcin
 	"host-reservation-identifiers" configuration parameter has been
 	implemented. It allows for specifying an ordered list of
 	host identifiers that DHCPv4 and DHCPv6 servers use to
 	retrieve static host reservations for a client.
 	(Trac #4303, git 942808400e7116d95acfd53b0dc1ecad1c45c598)
 
-1108.	[func]		tmark
+1111.	[func]		tmark
 	Schema scripts have been relocated from src/bin/admin/scripts to
 	src/share/database/scripts and are now shared by both kea-admin
 	and unit testing.
 	(Trac #4239, git 131fcf52f2a65cedb53975f99114296366fb0199)
 
-1107.	[func]		fdupont
+1110.	[func]		fdupont
 	Added support for extracting constant length fields from a DHCPv4
 	packet.
 	(Trac #4268a, git 5d1397efc05802b72e86785528870b7154307ff0)
 
-1106.	[func]		sar
+1109.	[func]		sar
 	Added support for accessing DHCPv6 packet fields message type
 	and transaction id in a classification expression.
 	(Trac #4269, git 48be5f5ceaba6b0d0a2b31465e8a5904524e894c)
 
-1105.	[bug]		pallotron
+1108.	[bug]		pallotron
 	perfdhcp uses the same transaction id throughout the DORA
 	exchange to adhere with RFC 2131.
 	(github #19, git d260a70d6aa0baecd68131bc35f58f097aa77bcc)
 
-1104.	[func]		tmark
+1107.	[func]		tmark
 	The DDNS parameter, replace-client-name, has been changed from a boolean
 	to list of modes, which provides greater flexibility in when the Kea
 	servers replace or supply DNS names for clients.  This is supported both
 	kea-dhcp4 and kea-dhcp6.
 	(Trac #4529, git 45e56d7aa0d4a6224a1a28941f6cb11575391222)
 
-1103.	[func]		marcin
+1106.	[func]		marcin
 	"circuit-id" can be specified as host identifier in host
 	host reservations. However, the server ignores the reservations
 	by "circuit-id" at this point.
 	(Trac #4301, git cf56fc2a2e0e821a17dd95de49a43755745682fb)
 
-1102.	[func]		sar
+1105.	[func]		sar
 	Added access to the peer address, link address and option
 	information added by relays in a DHCPv6 message.
 	(Trac #4265, git bb00d9d205ee047961ba70417d7ce02c37d80ce7)
 
-1101.	[bug]		stephen
+1104.	[bug]		stephen
 	Made DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED a debug message as the
 	condition leading to it (trying to unregister a timer that is not
 	registered) does not have an adverse effect on the operation of Kea.
 	(Trac #4293, git 06204c5d347d0df359af69974c155d0fa9725b44)
 
-1100.	[bug]		tmark
+1103.	[bug]		tmark
 	Wrapped asio/asio.hpp with logic to suppress optimization when building
 	under GCC 5.2.0 through 5.3.1 and BOOST_ERROR_CODE_HEADER only is defined.
 	This avoids an issue in the asio socket layer that was incorrectly
@@ -104,94 +125,94 @@
 	to loop logger calls in the error handler (aka double errors).
 	(Trac #4243, git 082f846f37cb32964c876b2bff5fcac82d1eaaf0)
 
-1099.	[func]		marcin
+1102.	[func]		marcin
 	Updated Host Manager API to allow for retrieving host reservations
 	by any type of host identifier. Previously it was only possible
 	to retrieve host reservations by hardware address or DUID.
 	(Trac #4302, git 3979656c918164e3c39e0e8fb78b2862a2b5e95a)
 
-1098.	[func]		kalmus, marcin
+1101.	[func]		kalmus, marcin
 	Implemented IPv6 address/prefix reservations in MySQL.
 	(Trac #4212, git 79481043935789fc6898d4743bede1606f82eb75)
 
-1097.	[func]		fdupont
+1100.	[func]		fdupont
 	Reorganized the DHCPv4 and DHCPv6 services into run() (service
 	loop), run_one() (receive, call next routine and send) and
 	processPacket() (internal core processing of an incoming packet).
 	(Trac #4108,#4266,#4267, git ba24bd770d1a1791f8fdc3df7f2e41f9f0c851ec)
 
-1096.	[func]		tmark
+1099.	[func]		tmark
 	Both kea-dhcp4 and kea-dhcp6, now log the primary lease events (e.g.
 	grants, renewals, releases, declines) at the INFO log level to the
-	lease4_logger and lease6_logger repsectively.  Prior to this these
+	lease4_logger and lease6_logger respectively.  Prior to this these
 	events were logged at the DEBUG log level.
 	(Trac #4316, git 9beca27e3d76d0ccec925125f23074227db08869)
 
-1095.	[bug]		fdupont
+1098.	[bug]		fdupont
 	Fixed some minor Coverity-detected issues.
 	(Trac #4326, git ad1f442ee4382b354dc8be84ba77785e565aa86b)
 
-1094.	[bug]		marcin
+1097.	[bug]		marcin
 	libdhcpsrv: Fixed issues with lease indexing in Memfile
 	database backend.
 	(Trac #4339, git a065144663ac716b1fa1c8c224a88aa176da9630)
 
-1093.	[bug]		fdupont
+1096.	[bug]		fdupont
 	Fixed Coverity-detected overflows in pkt4::setFile() and setName().
 	(Trac #4306, git 0b7388891eaab39fe727b076468d672551126796)
 
-1092.	[func]		marcin
+1095.	[func]		marcin
 	DHCP option values can be specified within host reservations
 	in the configuration file.
 	(Trac #4319, git 069dd7c248afcfcb7e4d958f20faa32e946e74ce)
 
-1091.	[bug]		fdupont
+1094.	[bug]		fdupont
 	Fixed Coverity-detected exception-handling issues.
 	(Trac #4307, git 3e1050749d9684144e1bd17552af7e4abf3c0d17)
 
-1090.	[func]		fdupont
+1093.	[func]		fdupont
 	Added support for IP address (IPv4 and IPv6) literals in
 	classification expressions.
 	(Trac #4232, git b98cc019b172a4903a2121e910f3cee4eaca2d51)
 
-1089.	[func]		fdupont
+1092.	[func]		fdupont
 	Added relay4[X].exists method in classifications that checks
 	whether a sub-option is present in theDHCPv4 RAI (Relay Agent
 	Information, 82) option.
 	(Trac #4313, git 87397fd75215b69ad79708aaa1d7505aca299fb5)
 
-1088.	[bug]		fdupont
+1091.	[bug]		fdupont
 	Protected DHCP server main() routines against errors raised from
 	logger calls in the error handler (aka double errors).
 	(Trac #4310, git 6813e1a7520335f6920ff8de5e52ecdb24712910)
 
-1087.	[bug]		fdupont
+1090.	[bug]		fdupont
 	Empty option specifications no longer require setting the
 	csv-format parameter.
 	(Trac #4291, git 398458f3ad4680fd5f3c032eb6c99d50c2981368)
 
-1086.	[func]		marcin
+1089.	[func]		marcin
 	The Host class has been extended to store DHCP options to
 	be assigned to a client.
 	(Trac #3571, git 9d434f28cc4683eccbcca1ba0d1e45bceb5230d2)
 
-1085.	[bug]		sar
+1088.	[bug]		sar
 	Always copy the DHCPv4 flags field from a client's request to the
-	the server's resposne.
+	the server's response.
 	(Trac #4292, git 8b7182abdc7ff47eb9b68451e7507b7e4b9872e0)
 
-1084.	[bug]		fdupont
+1087.	[bug]		fdupont
 	Removed obsolete requirement of python3 by --enable-generate-docs
 	configuration option.
 	(Trac #4315, git 2c236316d5fbac9906cf48a6e4df1649e7545e67)
 
-1083.	[bug]		marcin
+1086.	[bug]		marcin
 	When lease-database configuration parameter is not
 	specified the default lease database backend (memfile)
 	is used.
 	(Trac #3696, git 0be5e6eb32680a742ddcf427b8181f55c0c98115)
 
-1082.	[func]		fdupont
+1085.	[func]		fdupont
 	The following DHCPv4 options are now supported:
 		nisplus-domain-name (64),
 		nisplus-servers (65),
@@ -206,43 +227,45 @@
 		streettalk-directory-assistance-server (76)
 	(Trac #4286, git 5ed03ed5ea48334bbd16a9a8e1676f3b4cc730a0)
 
-1081.	[bug]		jpopelka
+1084.	[bug]		jpopelka
 	Added missing slashed in path_replacer.sh.
 	(Github #10, git 8986813825623b19fb220534434d0c13785fc14c)
 
-1080.	[func]		fdupont
+1083.	[func]		fdupont
 	Added a concat function in classification which concatenates two
 	strings.
 	(Trac #4233, git eec10b436b928bd5eb3139c2f98ec9a6a818f30e)
 
-1079.	[func]		fdupont
+1082.	[func]		fdupont
 	Added Not, And and Or logical operators, parentheses around
 	logical expressions and option[code].exist logical predicate
 	(to check the presence of an empty option).
 	(Trac #4231, git 8e01dbe2fe2d8c97f89c20f5bb1d03748a2432e0)
 
-1078.	[func]		tomek
+1081.	[func]		tomek
 	Client classification in DHCPv4 has been enhanced. It is now
 	possible to access relay sub-options using the expression
 	relay[123].hex.
 	(Trac #4264, git c13791e916ceae9a73ca44005581e0e39385a572)
 
-1077.	[func]		marcin
+1080.	[func]		marcin
 	perfdhcp now accepts -f option for DHCPv4 server testing, which
 	enables lease renewals at the specified rate.
 	(Trac #4254, git 8c5630b9ce6d3fba224f0643a7c69e4f7aaefca7)
 
-1076.	[bug]		jpopelka
+Kea 1.0.0 released on December 29, 2015
+
+1079.	[bug]		jpopelka
 	Fixed compilation issue in MySQL host data source: the
 	dhcp_identifer_length is now unsigned long. This addresses
 	a compilation problem on Fedora.
 	(Github #17, git 8548d1b589df98cc956b4d80d2cb8819ef576717)
 
-1075.	[bug]		fdupont
+1078.	[bug]		fdupont
 	Removed warnings emitted during generation of Doxygen documentation.
 	(Trac #4234, git b67910a3893bc79eb77a48bae6c31214a317bd40)
 
-1074.	[bug]		marcin
+1077.	[bug]		marcin
 	Addressed regression in distcheck after merge of #4224.
 	Before the changes one of the lease files produced by
 	'kea-lfc' was not removed after tests running lease file
@@ -250,7 +273,7 @@
 	this file being left after distclean.
 	(Trac #4249, git 04aa9b95bf8c4dd8b555dd78cc8cd57126473800)
 
-1073.	[bug]		tmark
+1076.	[bug]		tmark
 	This change bumps the MySQL schema version from 4.0 to 4.1 and includes
 	the following changes: added explicit use of InnoDB engine to all MySQL
 	table create statements,  MySQL lease dump output is now sorted by lease
@@ -293,6 +316,8 @@
 	Correct v6 classification examples to use client-id (1) instead
 	of server-id (2).
 	(Trac #4222, git 69dd98d03861d9de72c2ef75c17c8154b0c5088b)
+
+Kea 1.0.0-beta2 released on December 22, 2015
 
 1069.	[bug]		tomek
 	Improved handling of incoming packets with invalid client-id

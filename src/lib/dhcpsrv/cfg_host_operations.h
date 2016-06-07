@@ -63,7 +63,7 @@ public:
     /// @brief Adds new identifier type to a collection of identifiers
     /// to be used by the server to search for host reservations.
     ///
-    /// @param identifier_type Name of the identifier to be added. It
+    /// @param identifier_name Name of the identifier to be added. It
     /// must be one of the names supported by the @ref Host::getIdentifierType
     /// function.
     void addIdentifierType(const std::string& identifier_name);

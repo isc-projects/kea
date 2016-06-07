@@ -49,6 +49,7 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     std::map<string, string> values_copy = values_;
 
     int64_t lfc_interval = 0;
+    int64_t timeout = 0;
     // 2. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, config_value->mapValue()) {
         try {
@@ -60,6 +61,11 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
                 lfc_interval = param.second->intValue();
                 values_copy[param.first] =
                     boost::lexical_cast<std::string>(lfc_interval);
+
+            } else if (param.first == "connect-timeout") {
+                timeout = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(timeout);
 
             } else {
                 values_copy[param.first] = param.second->stringValue();
@@ -92,6 +98,14 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     // range.
     if ((lfc_interval < 0) || (lfc_interval > std::numeric_limits<uint32_t>::max())) {
         isc_throw(BadValue, "lfc-interval value: " << lfc_interval
+                  << " is out of range, expected value: 0.."
+                  << std::numeric_limits<uint32_t>::max());
+    }
+
+    // d. Check that the timeout is a number and it is within a resonable
+    // range.
+    if ((timeout < 0) || (timeout > std::numeric_limits<uint32_t>::max())) {
+        isc_throw(BadValue, "timeout value: " << timeout
                   << " is out of range, expected value: 0.."
                   << std::numeric_limits<uint32_t>::max());
     }

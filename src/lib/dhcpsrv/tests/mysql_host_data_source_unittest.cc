@@ -109,6 +109,21 @@ TEST(MySqlHostDataSource, OpenDatabase) {
                << "*** before the MySQL tests will run correctly.\n";
     }
 
+    // Check that lease manager open the database opens correctly with a longer
+    // timeout.  If it fails, print the error message.
+    try {
+        string connection_string = validMySQLConnectionString() + string(" ") +
+                                   string(VALID_TIMEOUT);
+        HostDataSourceFactory::create(connection_string);
+        EXPECT_NO_THROW((void) HostDataSourceFactory::getHostDataSourcePtr());
+        HostDataSourceFactory::destroy();
+    } catch (const isc::Exception& ex) {
+        FAIL() << "*** ERROR: unable to open database, reason:\n"
+               << "    " << ex.what() << "\n"
+               << "*** The test environment is broken and must be fixed\n"
+               << "*** before the MySQL tests will run correctly.\n";
+    }
+
     // Check that attempting to get an instance of the lease manager when
     // none is set throws an exception.
     EXPECT_FALSE(HostDataSourceFactory::getHostDataSourcePtr());
@@ -136,6 +151,12 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
+    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
+        DbInvalidTimeout);
+    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
+        DbInvalidTimeout);
 
     // Check for missing parameters
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
@@ -404,6 +425,89 @@ TEST_F(MySqlHostDataSourceTest, addDuplicate6WithHWAddr) {
 // verify that the second and following attempts will throw exceptions.
 TEST_F(MySqlHostDataSourceTest, addDuplicate4) {
     testAddDuplicate4();
+}
+
+// This test verifies that DHCPv4 options can be inserted in a binary format
+/// and retrieved from the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, optionsReservations4) {
+    testOptionsReservations4(false);
+}
+
+// This test verifies that DHCPv6 options can be inserted in a binary format
+/// and retrieved from the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, optionsReservations6) {
+    testOptionsReservations6(false);
+}
+
+// This test verifies that DHCPv4 and DHCPv6 options can be inserted in a
+/// binary format and retrieved with a single query to the database.
+TEST_F(MySqlHostDataSourceTest, optionsReservations46) {
+    testOptionsReservations46(false);
+}
+
+// This test verifies that DHCPv4 options can be inserted in a textual format
+/// and retrieved from the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations4) {
+    testOptionsReservations4(true);
+}
+
+// This test verifies that DHCPv6 options can be inserted in a textual format
+/// and retrieved from the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations6) {
+    testOptionsReservations6(true);
+}
+
+// This test verifies that DHCPv4 and DHCPv6 options can be inserted in a
+// textual format and retrieved with a single query to the database.
+TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations46) {
+    testOptionsReservations46(true);
+}
+
+// This test checks transactional insertion of the host information
+// into the database. The failure to insert host information at
+// any stage should cause the whole transaction to be rolled back.
+TEST_F(MySqlHostDataSourceTest, testAddRollback) {
+    // Make sure we have the pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // To test the transaction rollback mechanism we need to cause the
+    // insertion of host information to fail at some stage. The 'hosts'
+    // table should be updated correctly but the failure should occur
+    // when inserting reservations or options. The simplest way to
+    // achieve that is to simply drop one of the tables. To do so, we
+    // connect to the database and issue a DROP query.
+    MySqlConnection::ParameterMap params;
+    params["name"] = "keatest";
+    params["user"] = "keatest";
+    params["password"] = "keatest";
+    MySqlConnection conn(params);
+    ASSERT_NO_THROW(conn.openDatabase());
+    int status = mysql_query(conn.mysql_,
+                             "DROP TABLE IF EXISTS ipv6_reservations");
+    ASSERT_EQ(0, status) << mysql_error(conn.mysql_);
+
+    // Create a host with a reservation.
+    HostPtr host = initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
+    // Let's assign some DHCPv4 subnet to the host, because we will use the
+    // DHCPv4 subnet to try to retrieve the host after failed insertion.
+    host->setIPv4SubnetID(SubnetID(4));
+
+    // There is no ipv6_reservations table, so the insertion should fail.
+    ASSERT_THROW(hdsptr_->add(host), DbOperationError);
+
+    // Even though we have created a DHCPv6 host, we can't use get6()
+    // method to retrieve the host from the database, because the
+    // query would expect that the ipv6_reservations table is present.
+    // Therefore, the query would fail. Instead, we use the get4 method
+    // which uses the same client identifier, but doesn't attempt to
+    // retrieve the data from ipv6_reservations table. The query should
+    // pass but return no host because the (insert) transaction is expected
+    // to be rolled back.
+    ConstHostPtr from_hds = hdsptr_->get4(host->getIPv4SubnetID(),
+                                          host->getIdentifierType(),
+                                          &host->getIdentifier()[0],
+                                          host->getIdentifier().size());
+    EXPECT_FALSE(from_hds);
 }
 
 }; // Of anonymous namespace
