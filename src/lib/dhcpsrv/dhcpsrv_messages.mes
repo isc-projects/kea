@@ -539,6 +539,15 @@ information from the MySQL hosts database.
 The code has issued a rollback call.  All outstanding transaction will
 be rolled back and not committed to the database.
 
+% DHCPSRV_MYSQL_START_TRANSACTION starting new MySQL transaction
+A debug message issued whena new MySQL transaction is being started.
+This message is typically not issued when inserting data into a
+single table because the server doesn't explicitly start
+transactions in this case. This message is issued when data is
+inserted into multiple tables with multiple INSERT statements
+and there may be a need to rollback the whole transaction if
+any of these INSERT statements fail.
+
 % DHCPSRV_MYSQL_UPDATE_ADDR4 updating IPv4 lease for address %1
 A debug message issued when the server is attempting to update IPv4
 lease from the MySQL database for the specified address.

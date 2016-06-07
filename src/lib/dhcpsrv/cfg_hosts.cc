@@ -98,6 +98,7 @@ CfgHosts::getAllInternal(const Host::IdentifierType& identifier_type,
                          const uint8_t* identifier,
                          const size_t identifier_len,
                          Storage& storage) const {
+
     // Convert host identifier into textual format for logging purposes.
     // This conversion is exception free.
     std::string identifier_text = Host::getIdentifierAsText(identifier_type,

@@ -175,7 +175,8 @@ private:
     ///
     /// @return true if the value of the parameter should be quoted.
      bool quoteValue(const std::string& parameter) const {
-         return ((parameter != "persist") && (parameter != "lfc-interval"));
+         return ((parameter != "persist") && (parameter != "lfc-interval") &&
+                 (parameter != "connect-timeout"));
     }
 
 };
@@ -333,6 +334,56 @@ TEST_F(DbAccessParserTest, largeLFCInterval) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/kea/var/kea-leases6.csv",
                             "lfc-interval", "4294967296",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB);
+    EXPECT_THROW(parser.build(json_elements), BadValue);
+}
+
+// This test checks that the parser accepts the valid value of the
+// timeout parameter.
+TEST_F(DbAccessParserTest, validTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "connect-timeout", "3600",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB);
+    EXPECT_NO_THROW(parser.build(json_elements));
+    checkAccessString("Valid timeout", parser.getDbAccessParameters(),
+                      config);
+}
+
+// This test checks that the parser rejects the negative value of the
+// timeout parameter.
+TEST_F(DbAccessParserTest, negativeTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "connect-timeout", "-1",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB);
+    EXPECT_THROW(parser.build(json_elements), BadValue);
+}
+
+// This test checks that the parser rejects a too large (greater than
+// the max uint32_t) value of the timeout parameter.
+TEST_F(DbAccessParserTest, largeTimeout) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "connect-timeout", "4294967296",
                             NULL};
 
     string json_config = toJson(config);
