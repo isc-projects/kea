@@ -45,8 +45,8 @@ public:
     CqlLeaseMgrTest() {
 
         // Ensure schema is the correct one.
-        destroyCqlSchema();
-        createCqlSchema();
+        destroyCqlSchema(false, true);
+        createCqlSchema(false, true);
 
         // Connect to the database
         try {
@@ -69,7 +69,7 @@ public:
     virtual ~CqlLeaseMgrTest() {
         lmptr_->rollback();
         LeaseMgrFactory::destroy();
-        destroyCqlSchema();
+        destroyCqlSchema(false, true);
     }
 
     /// @brief Reopen the database
@@ -97,8 +97,8 @@ public:
 TEST(CQLOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
-    destroyCqlSchema();
-    createCqlSchema();
+    destroyCqlSchema(false, true);
+    createCqlSchema(false, true);
 
     // Check that lease manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
@@ -147,15 +147,15 @@ TEST(CQLOpenTest, OpenDatabase) {
         NoDatabaseName);
 
     // Tidy up after the test
-    destroyCqlSchema();
+    destroyCqlSchema(false, true);
 }
 
 /// @brief Check the getType() method
 ///
 /// getType() returns a string giving the type of the backend, which should
-/// always be "cassandra".
+/// always be "cql".
 TEST_F(CqlLeaseMgrTest, getType) {
-    EXPECT_EQ(std::string("cassandra"), lmptr_->getType());
+    EXPECT_EQ(std::string("cql"), lmptr_->getType());
 }
 
 /// @brief Check conversion functions

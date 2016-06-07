@@ -48,11 +48,11 @@ pgsql_execute() {
     QUERY=$1
     shift
     if [ $# -gt 0 ]; then
-        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -q $*
+        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q $*
         retcode=$?
     else
         export PGPASSWORD=$db_password
-        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -q -U $db_user -d $db_name
+        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U $db_user -d $db_name
         retcode=$?
     fi
     return $retcode
@@ -72,11 +72,11 @@ pgsql_execute_script() {
     file=$1
     shift
     if [ $# -gt 0 ]; then
-        psql --set ON_ERROR_STOP=1 -A -t -q -f $file $*
+        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -f $file $*
         retcode=$?
     else
         export PGPASSWORD=$db_password
-        psql --set ON_ERROR_STOP=1 -A -t -q -U $db_user -d $db_name -f $file
+        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U $db_user -d $db_name -h localhost -f $file
         retcode=$?
     fi
     return $retcode
@@ -88,14 +88,19 @@ pgsql_version() {
 }
 
 cql_execute() {
-    QUERY=$1
+    query=$1
     shift
     if [ $# -gt 1 ]; then
-        cqlsh $* -e "${QUERY}"
+        cqlsh $* -e "$query"
         retcode=$?
     else
-        cqlsh -u $db_user -p $db_password -e "${QUERY}" -k $db_name
-        retcode="$?"
+        cqlsh -u $db_user -p $db_password -k $db_name -e "$query"
+        retcode=$?
+    fi
+
+    if [ $retcode -ne 0 ]; then
+        printf "cqlsh returned with exit status $retcode\n"
+        exit $retcode
     fi
 
     return $retcode

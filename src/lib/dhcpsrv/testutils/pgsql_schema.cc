@@ -49,7 +49,7 @@ void runPgSQLScript(const std::string& path, const std::string& script_name,
     }
 
     cmd << script_name
-        << " | psql --set ON_ERROR_STOP=1 -A -t -q -U keatest -d keatest";
+        << " | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U keatest -d keatest";
 
     if (!show_err) {
         cmd << " 2>/dev/null ";

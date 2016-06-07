@@ -98,32 +98,13 @@ CfgHosts::getAllInternal(const Host::IdentifierType& identifier_type,
                          const uint8_t* identifier,
                          const size_t identifier_len,
                          Storage& storage) const {
-    // We will need to transform the identifier into the textual format.
-    // Until we do it, we mark it as invalid.
-    std::string identifier_text = "(invalid)";
-    try {
-        // Use Host object to find the textual form of the identifier.
-        // This may throw exception if the identifier is invalid.
-        Host host(identifier, identifier_len, identifier_type,
-                  SubnetID(0), SubnetID(0), IOAddress::IPV4_ZERO_ADDRESS());
-        identifier_text = host.getIdentifierAsText();
-
-    } catch (...) {
-        // Suppress exception and keep using (invalid) as an
-        // identifier. We will log that the identifier is
-        // invalid and return.
-    }
-
-    // This will log that we're invoking this function with the specified
-    // identifier. The identifier may also be marked as (invalid) if it
-    // had 0 length or its type is unsupported.
+    // Convert host identifier into textual format for logging purposes.
+    // This conversion is exception free.
+    std::string identifier_text = Host::getIdentifierAsText(identifier_type,
+                                                            identifier,
+                                                            identifier_len);
     LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ALL_IDENTIFIER)
         .arg(identifier_text);
-
-    // Do nothing if the identifier specified is invalid.
-    if (identifier_text == "(invalid)") {
-        return;
-    }
 
     // Use the identifier and identifier type as a composite key.
     const HostContainerIndex0& idx = hosts_.get<0>();
