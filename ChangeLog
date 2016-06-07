@@ -1,3 +1,14 @@
+1117.	[bug]		marcin
+	Performance improvement in libdhcp++: improved efficiency of the
+	DHCPv4 Message Type option creation.
+	(Trac #4495, git 41c43a2a9e34931fc3ebf58c459f10ad08575d19)
+
+1116.	[bug]		marcin
+	Performance improvement in hosts reservation: removed
+	inefficient conversion of the host identifier to text
+	when logging.
+	(Trac #4499, git 48c20790480d5ed7bfde0ef7b052dd4a9745607d)
+
 1115.	[func]		tmark
 	The "query4" argument, containing the client packet received, has been
 	added to the DHCPv4 hook points: lease4_select and lease4_renew.  The

@@ -310,9 +310,9 @@ IPv4 leases from the memory file database for a client with the specified
 hardware address.
 
 % DHCPSRV_MEMFILE_GET_IAID_DUID obtaining IPv6 leases for IAID %1 and DUID %2 and lease type %3
-A debug message issued when the server is attempting to obtain a set of
-IPv6 lease from the memory file database for a client with the specified
-IAID (Identity Association ID) and DUID (DHCP Unique Identifier).
+A debug message issued when the server is attempting to obtain a set of IPv6
+leases from the memory file database for a client with the specified IAID
+(Identity Association ID) and DUID (DHCP Unique Identifier).
 
 % DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3 and lease type %4
 A debug message issued when the server is attempting to obtain an IPv6
@@ -502,9 +502,9 @@ of IPv4 leases from the MySQL database for a client with the specified
 hardware address.
 
 % DHCPSRV_MYSQL_GET_IAID_DUID obtaining IPv6 leases for IAID %1, DUID %2, lease type %3
-A debug message issued when the server is attempting to obtain a set of
-IPv6 lease from the MySQL database for a client with the specified IAID
-(Identity Association ID) and DUID (DHCP Unique Identifier).
+A debug message issued when the server is attempting to obtain a set of IPv6
+leases from the MySQL database for a client with the specified IAID (Identity
+Association ID) and DUID (DHCP Unique Identifier).
 
 % DHCPSRV_MYSQL_GET_IAID_SUBID_DUID obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3, lease type %4
 A debug message issued when the server is attempting to obtain an IPv6
@@ -638,8 +638,8 @@ of IPv4 leases from the PostgreSQL database for a client with the specified
 hardware address.
 
 % DHCPSRV_PGSQL_GET_IAID_DUID obtaining IPv4 leases for IAID %1 and DUID %2, lease type %3
-A debug message issued when the server is attempting to obtain a set of
-IPv6 lease from the PostgreSQL database for a client with the specified IAID
+A debug message issued when the server is attempting to obtain a set of IPv6
+leases from the PostgreSQL database for a client with the specified IAID
 (Identity Association ID) and DUID (DHCP Unique Identifier).
 
 % DHCPSRV_PGSQL_GET_IAID_SUBID_DUID obtaining IPv4 leases for IAID %1, Subnet ID %2, DUID %3, and lease type %4
@@ -793,7 +793,7 @@ A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the Cassandra backend database.
 
 % DHCPSRV_CQL_COMMIT committing to Cassandra database
-The code has issued a commit call.
+A commit call been issued on the server. For Cassandra, this is a no-op.
 
 % DHCPSRV_CQL_DB opening Cassandra lease database: %1
 This informational message is logged when a DHCP server (either V4 or
@@ -802,9 +802,8 @@ the connection including database name and username needed to access it
 (but not the password if any) are logged.
 
 % DHCPSRV_CQL_DELETE_ADDR deleting lease for address %1
-A debug message issued when the server is attempting to delete a lease
-for the specified address from the Cassandra database for the specified
-address.
+A debug message issued when the server is attempting to delete a lease from the
+Cassandra database for the specified address.
 
 % DHCPSRV_CQL_DELETE_EXPIRED_RECLAIMED4 deleting reclaimed IPv4 leases that expired more than %1 seconds ago
 A debug message issued when the server is removing reclaimed DHCPv4
@@ -852,9 +851,9 @@ IPv4 leases from the Cassandra database for a client with the specified
 hardware address.
 
 % DHCPSRV_CQL_GET_IAID_DUID obtaining IPv6 leases for IAID %1 and DUID %2 and lease type %3
-A debug message issued when the server is attempting to obtain a set of
-IPv6 lease from the Cassandra database for a client with the specified
-IAID (Identity Association ID) and DUID (DHCP Unique Identifier).
+A debug message issued when the server is attempting to obtain a set of IPv6
+leases from the Cassandra database for a client with the specified IAID
+(Identity Association ID) and DUID (DHCP Unique Identifier).
 
 % DHCPSRV_CQL_GET_IAID_SUBID_DUID obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3 and lease type %4
 A debug message issued when the server is attempting to obtain an IPv6
@@ -876,7 +875,8 @@ A debug message issued when the server is about to obtain schema version
 information from the Cassandra database.
 
 % DHCPSRV_CQL_ROLLBACK rolling back Cassandra database
-The code has issued a rollback call.
+The code has issued a rollback call. For Cassandra, this is
+a no-op.
 
 % DHCPSRV_CQL_UPDATE_ADDR4 updating IPv4 lease for address %1
 A debug message issued when the server is attempting to update IPv4
@@ -885,4 +885,3 @@ lease from the Cassandra database for the specified address.
 % DHCPSRV_CQL_UPDATE_ADDR6 updating IPv6 lease for address %1
 A debug message issued when the server is attempting to update IPv6
 lease from the Cassandra database for the specified address.
-

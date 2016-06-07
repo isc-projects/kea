@@ -9,26 +9,106 @@
 # Include common test library.
 . @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
 
+# Include admin utilities
+. @abs_top_srcdir@/src/bin/admin/admin-utils.sh
+
+# Set path to the production schema scripts
+db_scripts_dir=@abs_top_srcdir@/src/share/database/scripts
+
+db_user="keatest"
+db_password="keatest"
+db_name="keatest"
+
+# Set location of the kea-admin.
+keaadmin=@abs_top_builddir@/src/bin/admin/kea-admin
+
 cql_init_test() {
     test_start "cql.init"
-    
-    # @todo: Implement this
+
+    # Wipe the database.
+    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
+    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+
+    # Create the database
+    $keaadmin lease-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    assert_eq 0 $? "kea-admin lease-init cql failed, expected exit code: %d, actual: %d"
+
+    # Verify that all the expected tables exist
+
+    # Check schema_version table
+    cql_execute "SELECT version, minor FROM schema_version;"
+    assert_eq 0 $? "schema_version table check failed, expected exit code: %d, actual: %d"
+
+    # Check lease4 table
+    cql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, state FROM lease4;"
+    assert_eq 0 $? "lease4 table check failed, expected exit code: %d, actual: %d"
+
+    # Check lease6 table
+    cql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname,\
+     state FROM lease6;"
+    assert_eq 0 $? "lease6 table check failed, expected exit code: %d, actual: %d"
+
+    # Check lease6_types table
+    cql_execute "SELECT lease_type, name FROM lease6_types;"
+    assert_eq 0 $? "lease6_types table check failed, expected exit code: %d, actual: %d"
+
+    # Check lease_state table
+    cql_execute "SELECT state, name FROM lease_state;"
+    assert_eq 0 $? "lease_state table check failed, expected exit code: %d, actual: %d"
+
+    # Trying to create it again should fail.  This verifies the db present
+    # check
+    echo ""
+    echo "Making sure keyspace creation fails the second time..."
+    $keaadmin lease-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    assert_eq 2 $? "kea-admin failed to deny lease-init, expected exit code: %d, actual: %d"
+
+    # Wipe the database.
+    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
+    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
 
     test_finish 0
 }
 
 cql_version_test() {
     test_start "cql.version"
-    
-    # @todo: Implement this
+
+    # Wipe the database.
+    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
+    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+
+    # Create the database
+    $keaadmin lease-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    assert_eq 0 $? "kea-admin lease-init cql failed, expected exit code: %d, actual: %d"
+
+    # Verfiy that kea-admin lease-version returns the correct version
+    version=$($keaadmin lease-version cql -u $db_user -p $db_password -n $db_name)
+    assert_str_eq "1.0" $version "Expected kea-admin to return %s, returned value was %s"
+
+    # Wipe the database.
+    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
+    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
 
     test_finish 0
 }
 
 cql_upgrade_test() {
     test_start "cql.upgrade"
-    
-    # @todo: Implement this
+
+    # Wipe the database.
+    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
+    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+
+    # Initialize database to schema 1.0.
+    cql_execute_script @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.cql
+    assert_eq 0 $? "cannot initialize the database, expected exit code: %d, actual: %d"
+
+    $keaadmin lease-upgrade cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    assert_eq 0 $? "lease-upgrade failed, expected exit code: %d, actual: %d"
+
+    # Wipe the database.
+    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
+    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
 
     test_finish 0
 }

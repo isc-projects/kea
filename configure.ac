@@ -1012,11 +1012,9 @@ if test "$CQL_CONFIG" != "" ; then
         AC_MSG_ERROR([--with-cql should point to a cql_config program])
     fi
 
-    CQL_CPPFLAGS=`$CQL_CONFIG --cppflags`
     CQL_INCLUDEDIR=`$CQL_CONFIG --includedir`
-    CQL_CPPFLAGS="$CQL_CPPFLAGS -I$CQL_INCLUDEDIR"
-    CQL_LIBS=`$CQL_CONFIG --libdir`
-    CQL_LIBS="-L$CQL_LIBS -lcassandra_static -luv"
+    CQL_CPPFLAGS="`$CQL_CONFIG --cppflags` -I$CQL_INCLUDEDIR"
+    CQL_LIBS="-L`$CQL_CONFIG --libdir` -lcassandra_static -luv"
     CQL_VERSION=`$CQL_CONFIG --version`
 
     AC_SUBST(CQL_CPPFLAGS)

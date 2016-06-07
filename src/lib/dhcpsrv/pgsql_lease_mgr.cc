@@ -208,7 +208,7 @@ TaggedStatement tagged_statements[] = {
 
     // INSERT_LEASE4
     { 10, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
-            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_INT8 },
+            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8 },
       "insert_lease4",
       "INSERT INTO lease4(address, hwaddr, client_id, "
         "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, "

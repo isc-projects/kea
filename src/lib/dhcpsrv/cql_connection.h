@@ -79,7 +79,7 @@ public:
     ///
     /// @return Type of the backend.
     virtual std::string getType() const {
-        return (std::string("cassandra"));
+        return (std::string("cql"));
     }
 
     /// @brief Returns name of the database.
@@ -133,7 +133,7 @@ public:
     CassCluster* cluster_;
     CassSession* session_;
     std::vector<const CassPrepared*> statements_;       ///< Prepared statements
-    CqlTaggedStatement *tagged_statements_;
+    CqlTaggedStatement* tagged_statements_;
 };
 
 }; // end of isc::dhcp namespace
