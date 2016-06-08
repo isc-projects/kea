@@ -1,3 +1,7 @@
+1126.	[func]		marcin
+	Host reservations can be assigned using DHCPv4 client identifier.
+	(Trac #4317, git 5f14fca1e029b04ad21a417936c2b8889acef10d)
+
 1125.	[func]		fdupont
 	Inter-process communication for exchanging packets between
 	DHCPv4 and DHCPv6 components of DHCPv4-over-DHCPv6 has been
