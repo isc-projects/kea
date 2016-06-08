@@ -2,7 +2,7 @@
 	Inter-process communication for exchanging packets between
 	DHCPv4 and DHCPv6 components of DHCPv4-over-DHCPv6 has been
 	implemented.
-	(Trac #4106, git xxx)
+	(Trac #4106, git 3223bb8280bfd99c225e725de660ae764abe3c87)
 
 1124.	[bug]		sar
 	Update the classification document to match the output from
