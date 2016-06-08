@@ -3457,6 +3457,11 @@ TEST_F(Dhcp4ParserTest, reservations) {
         "        \"circuit-id\": \"060504030201\","
         "        \"ip-address\": \"192.0.4.102\","
         "        \"hostname\": \"\""
+        "      },"
+        "      {"
+        "        \"client-id\": \"05:01:02:03:04:05:06\","
+        "        \"ip-address\": \"192.0.4.103\","
+        "        \"hostname\": \"\""
         "      }"
         "    ]"
         " } ],"
@@ -3542,6 +3547,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
     EXPECT_FALSE(hosts_cfg->get4(234, Host::IDENT_CIRCUIT_ID,
                                  &circuit_id[0], circuit_id.size()));
 
+
     // Repeat the test for the DUID based reservation in this subnet.
     duid.reset(new DUID(std::vector<uint8_t>(duid_vec.rbegin(),
                                              duid_vec.rend())));
@@ -3559,6 +3565,18 @@ TEST_F(Dhcp4ParserTest, reservations) {
     opt_ttl = retrieveOption<OptionUint8Ptr>(*host, DHO_DEFAULT_IP_TTL);
     ASSERT_TRUE(opt_ttl);
     EXPECT_EQ(95, static_cast<int>(opt_ttl->getValue()));
+
+    // Check that we can find reservation using client identifier.
+    ClientIdPtr client_id = ClientId::fromText("05:01:02:03:04:05:06");
+    host = hosts_cfg->get4(542, Host::IDENT_CLIENT_ID, &client_id->getDuid()[0],
+                           client_id->getDuid().size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ("192.0.4.103", host->getIPv4Reservation().toText());
+
+    // But this reservation should not be returned for other subnet.
+    host = hosts_cfg->get4(234, Host::IDENT_CLIENT_ID, &client_id->getDuid()[0],
+                           client_id->getDuid().size());
+    EXPECT_FALSE(host);
 }
 
 // This test checks that it is possible to configure option data for a
