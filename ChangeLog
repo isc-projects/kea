@@ -1,3 +1,9 @@
+1125.	[func]		fdupont
+	Inter-process communication for exchanging packets between
+	DHCPv4 and DHCPv6 components of DHCPv4-over-DHCPv6 has been
+	implemented.
+	(Trac #4106, git xxx)
+
 1124.	[bug]		sar
 	Update the classification document to match the output from
 	the debug statements.
