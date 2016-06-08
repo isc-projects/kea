@@ -492,7 +492,7 @@ TEST_F(HostReservationParserTest, dhcp6CircuitId) {
 // This test verifies that host reservation parser for DHCPv6 rejects
 // "client-id" as a host identifier.
 TEST_F(HostReservationParserTest, dhcp6ClientId) {
-    // Use DHCPv4 specific identifier 'circuit-id' with DHCPv6 parser.
+    // Use DHCPv4 specific identifier 'client-id' with DHCPv6 parser.
     std::string config = "{ \"client-id\": \"01010203040506\","
         "\"ip-addresses\": [ \"2001:db8:1::100\", \"2001:db8:1::200\" ],"
         "\"prefixes\": [ ],"

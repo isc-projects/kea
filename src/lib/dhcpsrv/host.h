@@ -176,10 +176,10 @@ public:
     /// @brief Type of the host identifier.
     ///
     /// Currently supported identifiers are:
-    /// - hardware address (DHCPv4 and DHCPv6),
-    /// - DUID (DHCPv4 and DHCPv6),
-    /// - circuit identifier (DHCPv4),
-    /// - client identifier (DHCPv4).
+    /// - hardware address (DHCPv4 and DHCPv6) (identifier name: "hw-address"),
+    /// - DUID (DHCPv4 and DHCPv6) (identifier name: "duid"),
+    /// - circuit identifier (DHCPv4) (identifier name: "circuit-id"),
+    /// - client identifier (DHCPv4) (identifier name: "client-id")
     enum IdentifierType {
         IDENT_HWADDR,
         IDENT_DUID,
@@ -244,7 +244,8 @@ public:
     ///
     /// @param identifier Identifier in the textual format. The expected formats
     /// for the hardware address and other identifiers are provided above.
-    /// @param identifier_name One of "hw-address", "duid", "circuit-id", "client-id".
+    /// @param identifier_name One of the supported identifiers in the text form as
+    /// described for @ref IdentifierType.
     /// @param ipv4_subnet_id Identifier of the IPv4 subnet to which the host
     /// is connected.
     /// @param ipv6_subnet_id Identifier of the IPv6 subnet to which the host
@@ -286,7 +287,8 @@ public:
     /// This method is called by the @c Host constructor.
     ///
     /// @param identifier Reference to a new identifier in the textual format.
-    /// @param name One of "hw-address", "duid", "circuit-id", "client-id".
+    /// @param name One of the supported identifiers in the text form as
+    /// described for @ref IdentifierType.
     ///
     /// @throw BadValue if the identifier is invalid.
     void setIdentifier(const std::string& identifier, const std::string& name);
