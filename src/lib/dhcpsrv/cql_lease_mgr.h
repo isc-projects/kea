@@ -38,7 +38,7 @@ namespace dhcp {
 /// words populating them with pointers to values that go out of scope before
 /// statement is executed is a bad idea.
 
-struct CqlBindArray {
+struct CqlDataArray {
     /// @brief Vector of pointers to the data values.
     std::vector<void*> values_;
     void add(void* value) {
@@ -49,19 +49,10 @@ struct CqlBindArray {
     }
 };
 
+class CqlExchange;
 class CqlLeaseExchange;
 class CqlLease4Exchange;
 class CqlLease6Exchange;
-
-enum CqlDataType {
-    CQL_DATA_TYPE_NONE,
-    CQL_DATA_TYPE_BOOL,
-    CQL_DATA_TYPE_INT32,
-    CQL_DATA_TYPE_INT64,
-    CQL_DATA_TYPE_TIMESTAMP,
-    CQL_DATA_TYPE_STRING,
-    CQL_DATA_TYPE_BYTES
-};
 
 /// @brief Cassandra Lease Manager
 ///
@@ -421,6 +412,11 @@ public:
         UPDATE_LEASE6,              // Update a Lease6 entry
         NUM_STATEMENTS              // Number of statements
     };
+    static void bindData(CassStatement* statement, const StatementIndex stindex, CqlDataArray& data, const SqlExchange& exchange);
+
+    static void getDataType(const StatementIndex stindex, int param, const SqlExchange& exchange, ExchangeDataType& type);
+
+    static void getData(const CassRow* row, int pindex, CqlDataArray& data, CqlDataArray& size, const SqlExchange& exchange);
 
 private:
 
@@ -431,7 +427,7 @@ private:
     /// the prepared statement and adds it to the database.
     ///
     /// @param stindex Index of statement being executed
-    /// @param bind_array array that has been created for the type
+    /// @param data array that has been created for the type
     ///        of lease in question.
     ///
     /// @return true if the lease was added, false if it was not added because
@@ -439,7 +435,7 @@ private:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool addLeaseCommon(StatementIndex stindex, CqlBindArray& bind_array, CqlLeaseExchange& exchange);
+    bool addLeaseCommon(StatementIndex stindex, CqlDataArray& data, CqlLeaseExchange& exchange);
 
     /// @brief Get Lease Collection Common Code
     ///
@@ -447,7 +443,7 @@ private:
     /// from the database.
     ///
     /// @param stindex Index of statement being executed
-    /// @param bind_array array containing the where clause input parameters
+    /// @param data array containing the where clause input parameters
     /// @param exchange Exchange object to use
     /// @param result Returned collection of Leases Note that any leases in
     ///        the collection when this method is called are not erased: the
@@ -462,7 +458,7 @@ private:
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
-    void getLeaseCollection(StatementIndex stindex, CqlBindArray& bind_array,
+    void getLeaseCollection(StatementIndex stindex, CqlDataArray& data_array,
                             Exchange& exchange, LeaseCollection& result,
                             bool single = false) const;
 
@@ -472,7 +468,7 @@ private:
     /// the get lease collection common code.
     ///
     /// @param stindex Index of statement being executed
-    /// @param bind_array array containing the where clause input parameters
+    /// @param data array containing the where clause input parameters
     /// @param lease LeaseCollection object returned.  Note that any leases in
     ///        the collection when this method is called are not erased: the
     ///        new data is appended to the end.
@@ -482,9 +478,9 @@ private:
     ///        failed.
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, CqlBindArray& bind_array,
+    void getLeaseCollection(StatementIndex stindex, CqlDataArray& data,
                             Lease4Collection& result) const {
-        getLeaseCollection(stindex, bind_array, exchange4_, result);
+        getLeaseCollection(stindex, data, exchange4_, result);
     }
 
     /// @brief Get Lease6 Collection
@@ -493,7 +489,7 @@ private:
     /// the get lease collection common code.
     ///
     /// @param stindex Index of statement being executed
-    /// @param bind_array array containing input parameters for the query
+    /// @param data array containing input parameters for the query
     /// @param lease LeaseCollection object returned.  Note that any existing
     ///        data in the collection is erased first.
     ///
@@ -502,9 +498,9 @@ private:
     ///        failed.
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, CqlBindArray& bind_array,
+    void getLeaseCollection(StatementIndex stindex, CqlDataArray& data,
                             Lease6Collection& result) const {
-        getLeaseCollection(stindex, bind_array, exchange6_, result);
+        getLeaseCollection(stindex, data, exchange6_, result);
     }
 
     /// @brief Get Lease4 Common Code
@@ -514,9 +510,9 @@ private:
     /// but retrieveing only a single lease.
     ///
     /// @param stindex Index of statement being executed
-    /// @param bind_array array containing input parameters for the query
+    /// @param data array containing input parameters for the query
     /// @param lease Lease4 object returned
-    void getLease(StatementIndex stindex, CqlBindArray& bind_array,
+    void getLease(StatementIndex stindex, CqlDataArray& data,
                   Lease4Ptr& result) const;
 
     /// @brief Get Lease6 Common Code
@@ -526,9 +522,9 @@ private:
     /// but retrieveing only a single lease.
     ///
     /// @param stindex Index of statement being executed
-    /// @param bind_array array containing input parameters for the query
+    /// @param data array containing input parameters for the query
     /// @param lease Lease6 object returned
-    void getLease(StatementIndex stindex, CqlBindArray& bind_array,
+    void getLease(StatementIndex stindex, CqlDataArray& data,
                   Lease6Ptr& result) const;
 
     /// @brief Get expired leases common code.
@@ -557,7 +553,7 @@ private:
     /// were affected.
     ///
     /// @param stindex Index of prepared statement to be executed
-    /// @param bind_array array containing lease values and where clause
+    /// @param data array containing lease values and where clause
     /// parameters for the update.
     /// @param lease Pointer to the lease object whose record is being updated.
     ///
@@ -566,7 +562,7 @@ private:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     template <typename LeasePtr>
-    void updateLeaseCommon(StatementIndex stindex, CqlBindArray& bind_array,
+    void updateLeaseCommon(StatementIndex stindex, CqlDataArray& data,
                            const LeasePtr& lease, CqlLeaseExchange& exchange);
 
     /// @brief Delete lease common code
@@ -576,14 +572,14 @@ private:
     /// see how many rows were deleted.
     ///
     /// @param stindex Index of prepared statement to be executed
-    /// @param bind_array array containing lease values and where clause
+    /// @param data array containing lease values and where clause
     /// parameters for the delete
     ///
     /// @return Number of deleted leases.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool deleteLeaseCommon(StatementIndex stindex, CqlBindArray& bind_array, CqlLeaseExchange& exchange);
+    bool deleteLeaseCommon(StatementIndex stindex, CqlDataArray& data, CqlLeaseExchange& exchange);
 
     /// @brief Delete expired-reclaimed leases.
     ///
@@ -596,10 +592,6 @@ private:
     /// @return Number of leases deleted.
     uint64_t deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
                                                 StatementIndex statement_index);
-
-    static void bindData(CassStatement* statement, const StatementIndex stindex, CqlBindArray& bind_array, const CqlLeaseExchange& exchange);
-
-    static void getDataType(const StatementIndex stindex, int param, const CqlLeaseExchange& exchange, CqlDataType& type);
 
     static CqlTaggedStatement tagged_statements_[];
     /// Database connection object

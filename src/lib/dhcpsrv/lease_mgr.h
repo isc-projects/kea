@@ -60,6 +60,36 @@
 namespace isc {
 namespace dhcp {
 
+enum ExchangeDataType {
+    EXCHANGE_DATA_TYPE_NONE,
+    EXCHANGE_DATA_TYPE_BOOL,
+    EXCHANGE_DATA_TYPE_INT32,
+    EXCHANGE_DATA_TYPE_INT64,
+    EXCHANGE_DATA_TYPE_TIMESTAMP,
+    EXCHANGE_DATA_TYPE_STRING,
+    EXCHANGE_DATA_TYPE_BYTES
+};
+
+enum ExchangeDataTypeIO {
+    EXCHANGE_DATA_TYPE_IO_IN,
+    EXCHANGE_DATA_TYPE_IO_OUT,
+    EXCHANGE_DATA_TYPE_IO_IN_OUT
+};
+
+struct ExchangeColumnInfo {
+    ExchangeColumnInfo () : column_(NULL), type_io_(EXCHANGE_DATA_TYPE_IO_IN), type_(EXCHANGE_DATA_TYPE_NONE) {};
+    ExchangeColumnInfo (const char *column, ExchangeDataTypeIO type_io, ExchangeDataType type) : column_(column),  type_io_(type_io), type_(type) {};
+    const char* column_;
+    ExchangeDataTypeIO type_io_;
+    ExchangeDataType type_;
+};
+
+class SqlExchange {
+public:
+    SqlExchange () {};
+    virtual ~SqlExchange() {};
+    std::vector<ExchangeColumnInfo> parameters_;   ///< Column names and types
+};
 /// @brief Abstract Lease Manager
 ///
 /// This is an abstract API for lease database backends. It provides unified
