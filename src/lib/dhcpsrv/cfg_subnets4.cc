@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -210,7 +210,6 @@ CfgSubnets4::selectSubnet(const IOAddress& address,
         if ((*subnet)->clientSupported(client_classes)) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_SUBNET4_ADDR)
                 .arg((*subnet)->toText()).arg(address.toText());
-
             return (*subnet);
         }
     }
@@ -218,7 +217,6 @@ CfgSubnets4::selectSubnet(const IOAddress& address,
     // Failed to find a subnet.
     return (Subnet4Ptr());
 }
-
 
 bool
 CfgSubnets4::isDuplicate(const Subnet4& subnet) const {
