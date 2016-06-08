@@ -174,7 +174,7 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     if (!iface) {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
                   DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
-            .arg("can't get interface");
+            .arg("can't get interface " + ifname->getValue());
         return (Pkt6Ptr());
     }
     Option6AddrLstPtr srcs =
@@ -237,7 +237,9 @@ void Dhcp4o6IpcBase::send(Pkt6Ptr pkt) {
     pkt->pack();
 
     // Send
-    static_cast<void>(::send(socket_fd_, buf.getData(), buf.getLength(), 0));
+    if (::send(socket_fd_, buf.getData(), buf.getLength(), 0) < 0) {
+        isc_throw(Unexpected, "Failed to send over DHCP4o6 IPC socket");
+    }
     return;
 }
 
