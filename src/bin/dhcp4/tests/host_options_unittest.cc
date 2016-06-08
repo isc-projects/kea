@@ -107,11 +107,11 @@ const char* HOST_CONFIGS[] = {
         "    },"
         "    {"
         "        \"name\": \"log-servers\","
-        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "        \"data\": \"10.0.0.204,10.0.0.205\""
         "    },"
         "    {"
         "        \"name\": \"cookie-servers\","
-        "        \"data\": \"10.0.0.202,10.0.0.203\""
+        "        \"data\": \"10.0.0.206,10.0.0.207\""
         "    } ],"
         "    \"reservations\": [ "
         "    {"
@@ -149,11 +149,11 @@ const char* HOST_CONFIGS[] = {
         "    },"
         "    {"
         "        \"name\": \"log-servers\","
-        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "        \"data\": \"10.0.0.204,10.0.0.205\""
         "    },"
         "    {"
         "        \"name\": \"cookie-servers\","
-        "        \"data\": \"10.0.0.202,10.0.0.203\""
+        "        \"data\": \"10.0.0.206,10.0.0.207\""
         "    } ],"
         "    \"reservations\": [ "
         "    {"
@@ -190,7 +190,7 @@ const char* HOST_CONFIGS[] = {
         "        },"
         "        {"
         "            \"name\": \"cookie-servers\","
-        "            \"data\": \"10.1.1.202,10.1.1.203\""
+        "            \"data\": \"10.1.1.206,10.1.1.207\""
         "        } ]"
         "    } ]"
         " } ]"
@@ -244,17 +244,6 @@ public:
         : Dhcpv4SrvTest(),
           iface_mgr_test_config_(true) {
         IfaceMgr::instance().openSockets4();
-
-        // Let's wipe all existing statistics.
-        isc::stats::StatsMgr::instance().removeAll();
-    }
-
-    /// @brief Destructor.
-    ///
-    /// Cleans up statistics after the test.
-    virtual ~HostOptionsTest() {
-        // Let's wipe all existing statistics.
-        isc::stats::StatsMgr::instance().removeAll();
     }
 
     /// @brief Verifies that host specific options override subnet specific
@@ -394,12 +383,12 @@ HostOptionsTest::testOverrideDefaultOptions(const bool stateless) {
     EXPECT_EQ("10.1.1.203", client.config_.dns_servers_[1].toText());
     // Make sure that the Quotes Servers option has been received.
     ASSERT_EQ(2, client.config_.quotes_servers_.size());
-    EXPECT_EQ("10.0.0.202", client.config_.quotes_servers_[0].toText());
-    EXPECT_EQ("10.0.0.203", client.config_.quotes_servers_[1].toText());
+    EXPECT_EQ("10.0.0.206", client.config_.quotes_servers_[0].toText());
+    EXPECT_EQ("10.0.0.207", client.config_.quotes_servers_[1].toText());
     // Make sure that the Log Servers option has been received.
     ASSERT_EQ(2, client.config_.log_servers_.size());
-    EXPECT_EQ("10.0.0.200", client.config_.log_servers_[0].toText());
-    EXPECT_EQ("10.0.0.201", client.config_.log_servers_[1].toText());
+    EXPECT_EQ("10.0.0.204", client.config_.log_servers_[0].toText());
+    EXPECT_EQ("10.0.0.205", client.config_.log_servers_[1].toText());
 }
 
 void
@@ -441,8 +430,8 @@ HostOptionsTest::testHostOnlyOptions(const bool stateless) {
     EXPECT_EQ("10.1.1.201", client.config_.routers_[1].toText());
     // Make sure that the Quotes Servers option has been received.
     ASSERT_EQ(2, client.config_.quotes_servers_.size());
-    EXPECT_EQ("10.1.1.202", client.config_.quotes_servers_[0].toText());
-    EXPECT_EQ("10.1.1.203", client.config_.quotes_servers_[1].toText());
+    EXPECT_EQ("10.1.1.206", client.config_.quotes_servers_[0].toText());
+    EXPECT_EQ("10.1.1.207", client.config_.quotes_servers_[1].toText());
 
     // Other options are not configured and should not be delivered.
     EXPECT_EQ(0, client.config_.dns_servers_.size());
@@ -496,6 +485,7 @@ HostOptionsTest::testOverrideVendorOptions(const bool stateless) {
     // Assume this suboption is a TFTP servers suboption.
     std::multimap<unsigned int, OptionPtr>::const_iterator opt =
         client.config_.vendor_suboptions_.find(DOCSIS3_V4_TFTP_SERVERS);
+    ASSERT_TRUE(opt->second);
     Option4AddrLstPtr opt_tftp = boost::dynamic_pointer_cast<
         Option4AddrLst>(opt->second);
     ASSERT_TRUE(opt_tftp);
