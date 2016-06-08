@@ -23,7 +23,7 @@ namespace {
 /// @brief Holds a type of the last identifier in @c IdentifierType enum.
 ///
 /// This value must be updated when new identifiers are added to the enum.
-const Host::IdentifierType LAST_IDENTIFIER_TYPE = Host::IDENT_CIRCUIT_ID;
+const Host::IdentifierType LAST_IDENTIFIER_TYPE = Host::IDENT_CLIENT_ID;
 
 // This test verifies that it is possible to create IPv6 address
 // reservation.
@@ -180,6 +180,7 @@ TEST_F(HostTest, getIdentifier) {
     EXPECT_EQ(Host::IDENT_HWADDR, Host::getIdentifierType("hw-address"));
     EXPECT_EQ(Host::IDENT_DUID, Host::getIdentifierType("duid"));
     EXPECT_EQ(Host::IDENT_CIRCUIT_ID, Host::getIdentifierType("circuit-id"));
+    EXPECT_EQ(Host::IDENT_CLIENT_ID, Host::getIdentifierType("client-id"));
 
     EXPECT_THROW(Host::getIdentifierType("unuspported"), isc::BadValue);
 }
