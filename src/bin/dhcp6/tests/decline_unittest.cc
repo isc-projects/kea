@@ -133,7 +133,8 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
         break;
     case NO_IA:
         // Tell the client to not include IA_NA at all
-        client.useNA(false);
+        client.config_.clear();
+        client.clearRequestedIAs();
     }
 
     // Use the second duid

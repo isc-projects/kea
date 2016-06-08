@@ -332,8 +332,9 @@ TEST_F(RebindTest, directClientChangingIAID) {
     Lease6 lease_client = client.getLease(0);
     // Modify the IAID of the lease record that client stores. By adding
     // one to IAID we guarantee that the IAID will change.
+    client.clearRequestedIAs();
     client.config_.leases_[0].iaid_ = 1235;
-    client.useNA(true, 1235);
+    client.useNA(1235);
 
     // Try to Rebind. The server should allocate new lease for this IAID.
     ASSERT_NO_THROW(client.doRebind());
@@ -459,8 +460,9 @@ TEST_F(RebindTest, relayedClientChangingIAID) {
 
     // Modify the IAID of the lease record that client stores. By adding
     // one to IAID we guarantee that the IAID will change.
+    client.clearRequestedIAs();
     client.config_.leases_[0].iaid_ = 1235;
-    client.useNA(true, 1235);
+    client.useNA(1235);
 
     // Try to Rebind. The server should allocate new lease for this IAID.
     ASSERT_NO_THROW(client.doRebind());
@@ -642,8 +644,9 @@ TEST_F(RebindTest, directClientPDChangingIAID) {
 
     // Modify the IAID of the lease record that client stores. By adding
     // one to IAID we guarantee that the IAID will change.
+    client.clearRequestedIAs();
     client.config_.leases_[0].iaid_ = 5679;
-    client.usePD(true, 5679);
+    client.usePD(5679);
 
     // Try to Rebind. The server should allocate new lease for this IAID.
     ASSERT_NO_THROW(client.doRebind());

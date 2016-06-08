@@ -142,8 +142,7 @@ public:
 
         // Configure client to request IA_NA and append IA_NA option
         //  to the client's message.
-        client.useNA();
-        ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
+        client.useNA(1234, IOAddress("2001:db8:1:1::dead:beef"));
 
         // Perform 4-way exchange.
         ASSERT_NO_THROW(client.doSARR());
@@ -182,8 +181,7 @@ TEST_F(HostTest, basicSarrs) {
     // Configure client to request IA_NA and aAppend IA_NA option
     //  to the client's message.
     client.setDUID("01:02:03:04");
-    client.useNA();
-    ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
+    client.useNA(1234, IOAddress("2001:db8:1:1::dead:beef"));
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -202,8 +200,6 @@ TEST_F(HostTest, basicSarrs) {
     // Now redo the client, adding one to the DUID
     client.clearConfig();
     client.modifyDUID();
-    client.useNA();
-    ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -223,8 +219,8 @@ TEST_F(HostTest, basicSarrs) {
     // we get a dynamic address.
     client.clearConfig();
     client.modifyDUID();
-    client.useNA();
-    ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
+    client.clearRequestedIAs();
+    client.useNA(1234);
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -258,8 +254,7 @@ TEST_F(HostTest, sarrAndRenew) {
     // Configure client to request IA_NA and aAppend IA_NA option
     //  to the client's message.
     client.setDUID("01:02:03:04");
-    client.useNA();
-    ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
+    client.useNA(1234, IOAddress("2001:db8:1:1::dead:beef"));
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -271,6 +266,9 @@ TEST_F(HostTest, sarrAndRenew) {
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:1::babe", lease_client.addr_.toText());
+
+    // Do not send the hint while renewing.
+    client.clearRequestedIAs();
 
     // Send Renew message to the server.
     ASSERT_NO_THROW(client.doRenew());
@@ -308,8 +306,7 @@ TEST_F(HostTest, sarrAndRebind) {
     // Configure client to request IA_NA and aAppend IA_NA option
     //  to the client's message.
     client.setDUID("01:02:03:04");
-    client.useNA();
-    ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
+    client.useNA(1234, IOAddress("2001:db8:1:1::dead:beef"));
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -321,6 +318,9 @@ TEST_F(HostTest, sarrAndRebind) {
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:1::babe", lease_client.addr_.toText());
+
+    // Do not send the hint while renewing.
+    client.clearRequestedIAs();
 
     // Send Rebind message to the server.
     ASSERT_NO_THROW(client.doRebind());
