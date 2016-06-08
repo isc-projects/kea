@@ -66,8 +66,7 @@ TEST(CfgSubnets4Test, selectSubnetByCiaddr) {
 TEST(CfgSubnets4Test, selectSubnetByIface) {
     // The IfaceMgrTestConfig object initializes fake interfaces:
     // eth0, eth1 and lo on the configuration manager. The CfgSubnets4
-    // object uses addresses assigned to these fake interfaces to
-    // select the appropriate subnet.
+    // object uses interface names to select the appropriate subnet.
     IfaceMgrTestConfig config(true);
 
     CfgSubnets4 cfg;
