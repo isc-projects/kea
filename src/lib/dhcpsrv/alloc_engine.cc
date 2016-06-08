@@ -587,6 +587,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         Pool6>(ctx.subnet_->getPool(ctx.currentIA().type_, hint, false));
 
     if (pool) {
+
         /// @todo: We support only one hint for now
         Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,
                                                                 hint);

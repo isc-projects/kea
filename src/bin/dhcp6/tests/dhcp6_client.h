@@ -11,9 +11,11 @@
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/option6_client_fqdn.h>
+#include <dhcpsrv/lease.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+#include <list>
 #include <set>
 #include <vector>
 
@@ -140,6 +142,27 @@ public:
         Pkt6Ptr query_;
         /// @brief Holds the last sent message by the server to the client.
         Pkt6Ptr response_;
+    };
+
+    /// @brief Structure holding information to be placed in client's IA.
+    struct ClientIA {
+        Lease::Type type_;            ///< IA type
+        uint32_t iaid_;               ///< IAID
+        asiolink::IOAddress prefix_;  ///< prefix or address
+        uint8_t prefix_len_;          ///< prefix length
+
+        /// @brief Constructor.
+        ///
+        /// @param type IA type.
+        /// @param iaid IAID.
+        /// @param prefix Address or prefix.
+        /// @param prefix_len Prefix length.
+        ClientIA(const Lease::Type& type, const uint32_t iaid,
+                 const asiolink::IOAddress& prefix,
+                 const uint8_t prefix_len)
+            : type_(type), iaid_(iaid), prefix_(prefix),
+              prefix_len_(prefix_len) {
+        }
     };
 
     /// @brief Creates a new client.
@@ -419,34 +442,17 @@ public:
         link_local_ = link_local;
     }
 
-    /// @brief Set an address hint to be sent to a server.
-    ///
-    /// @param pref_lft Preferred lifetime.
-    /// @param valid_lft Valid lifetime.
-    /// @param address Address for which the client has a preference.
-    void useHint(const uint32_t pref_lft, const uint32_t valid_lft,
-                 const std::string& address);
-
-    /// @brief Sets a prefix hint to be sent to a server.
-    ///
-    /// @param pref_lft Preferred lifetime.
-    /// @param valid_lft Valid lifetime.
-    /// @param len Prefix length.
-    /// @param prefix Prefix for which the client has a preference.
-    void useHint(const uint32_t pref_lft, const uint32_t valid_lft,
-                 const uint8_t len, const std::string& prefix);
-
     /// @brief Place IA_NA options to request address assignment.
     ///
     /// This function configures the client to place IA_NA options in its
     /// Solicit messages to request the IPv6 address assignment.
     ///
     /// @param iaid IAID to be used in the IA_NA.
-    void useNA(const uint32_t iaid) {
+/*    void useNA(const uint32_t iaid) {
         useNA(true, iaid);
-    }
+    } */
 
-    /// @brief Place IA_NA options to request address assignment.
+/*    /// @brief Place IA_NA options to request address assignment.
     ///
     /// This function configures the client to place IA_NA options in its
     /// Solicit messages to request the IPv6 address assignment.
@@ -454,10 +460,7 @@ public:
     /// @param use Parameter which 'true' value indicates that client should
     /// request address assignment.
     /// @param iaid IAID to be used in the IA_NA.
-    void useNA(const bool use = true, const uint32_t iaid = 1234) {
-        use_na_ = use;
-        na_iaid_ = iaid;
-    }
+    void useNA(const bool use = true, const uint32_t iaid = 1234); */
 
     /// @brief Place IA_PD options to request address assignment.
     ///
@@ -465,9 +468,9 @@ public:
     /// Solicit messages to request the IPv6 address assignment.
     ///
     /// @param iaid IAID to be used in the IA_PD.
-    void usePD(const uint32_t iaid) {
+/*    void usePD(const uint32_t iaid) {
         usePD(true, iaid);
-    }
+    } */
 
     /// @brief Place IA_PD options to request prefix assignment.
     ///
@@ -477,9 +480,18 @@ public:
     /// @param use Parameter which 'true' value indicates that client should
     /// request prefix assignment.
     /// @param iaid IAID to be used in the IA_NA.
-    void usePD(const bool use = true, const uint32_t iaid = 5678) {
-        use_pd_ = use;
-        pd_iaid_ = iaid;
+//    void usePD(const bool use = true, const uint32_t iaid = 5678);
+
+    void useNA(const uint32_t iaid = 1234, const asiolink::IOAddress& address =
+               asiolink::IOAddress::IPV6_ZERO_ADDRESS());
+
+    void usePD(const uint32_t iaid = 5678, const asiolink::IOAddress& prefix =
+               asiolink::IOAddress::IPV6_ZERO_ADDRESS(),
+               const uint8_t prefix_len = 0);
+
+    /// @brief Removes requested IAs.
+    void clearRequestedIAs() {
+        client_ias_.clear();
     }
 
     /// @brief Simulate sending messages through a relay.
@@ -497,14 +509,6 @@ public:
     /// @param send should the client-id be sent?
     void useClientId(const bool send) {
         use_client_id_ = send;
-    }
-
-    /// @brief Controls whether the client should send an addres in IA_NA
-    ///
-    /// @todo: For now, this flag is only used in Decline
-    /// @param send should the address be included?
-    void includeAddress(const bool send) {
-        include_address_ = send;
     }
 
     /// @brief Specifies if the Rapid Commit option should be included in
@@ -535,6 +539,10 @@ public:
     /// @param fqdn_type Type of the name (fully qualified or partial).
     void useFQDN(const uint8_t flags, const std::string& fqdn_name,
                  Option6ClientFqdn::DomainNameType fqdn_type);
+
+    void includeAddress(const bool send) {
+        include_address_ = send;
+    }
 
     /// @brief Lease configuration obtained by the client.
     Configuration config_;
@@ -628,20 +636,6 @@ private:
     /// added.
     void appendRequestedIAs(const Pkt6Ptr& query) const;
 
-    /// @brief Include IA of the specified type if it doesn't exist yet.
-    ///
-    /// This methods includes an IA option of the specific type, and
-    /// having a given IAID to the query message, if this IA hasn't
-    /// been added yet.
-    ///
-    /// @param query Pointer to the client's message to which IA should be
-    /// added.
-    /// @param ia_type One of the D6O_IA_NA or D6O_IA_PD
-    /// @param iaid IAID of the IA.
-    void conditionallyAppendRequestedIA(const Pkt6Ptr& query,
-                                        const uint8_t ia_type,
-                                        const uint32_t iaid) const;
-
     /// @brief Copy IA options from one message to another.
     ///
     /// This method copies IA_NA and IA_PD options from one message to another.
@@ -733,19 +727,14 @@ private:
     /// @brief Pointer to the server that the client is communicating with.
     boost::shared_ptr<isc::dhcp::test::NakedDhcpv6Srv> srv_;
 
-    bool use_na_;    ///< Enable address assignment.
-    bool use_pd_;    ///< Enable prefix delegation.
     bool use_relay_; ///< Enable relaying messages to the server.
 
     bool use_oro_;  ///< Conth
     bool use_client_id_;
     bool use_rapid_commit_;
 
-    /// @brief Pointer to the option holding an address hint.
-    Option6IAAddrPtr address_hint_;
-
-    /// @brief Pointer to the option holding a prefix hint.
-    Option6IAPrefixPtr prefix_hint_;
+    /// @brief List holding information to be sent in client's IAs.
+    std::list<ClientIA> client_ias_;
 
     /// @brief List of options to be requested
     ///
@@ -762,15 +751,6 @@ private:
     /// @brief FQDN requested by the client.
     Option6ClientFqdnPtr fqdn_;
 
-    /// @bref IAID used by the client when requesting address assignment.
-    uint32_t na_iaid_;
-    /// @brief IAID used by the client when requesting prefix delegation.
-    uint32_t pd_iaid_;
-
-    /// @brief Determines if the client will include address in the messages
-    ///        it sends.
-    ///
-    /// @todo this flag is currently supported in Decline only.
     bool include_address_;
 };
 
