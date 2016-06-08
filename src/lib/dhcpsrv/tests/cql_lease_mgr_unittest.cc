@@ -101,9 +101,24 @@ TEST(CqlOpenTest, OpenDatabase) {
     createCqlSchema(false, true);
 
     // Check that lease manager open the database opens correctly and tidy up.
-    //  If it fails, print the error message.
+    // If it fails, print the error message.
     try {
         LeaseMgrFactory::create(validCqlConnectionString());
+        EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
+        LeaseMgrFactory::destroy();
+    } catch (const isc::Exception& ex) {
+        FAIL() << "*** ERROR: unable to open database, reason:\n"
+               << "    " << ex.what() << "\n"
+               << "*** The test environment is broken and must be fixed\n"
+               << "*** before the CQL tests will run correctly.\n";
+    }
+
+    // Check that lease manager open the database opens correctly with a longer
+    // timeout.  If it fails, print the error message.
+    try {
+        string connection_string = validCqlConnectionString() + string(" ") +
+                                   string(VALID_TIMEOUT);
+        LeaseMgrFactory::create(connection_string);
         EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
         LeaseMgrFactory::destroy();
     } catch (const isc::Exception& ex) {
@@ -123,6 +138,7 @@ TEST(CqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         InvalidParameter);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
@@ -131,15 +147,26 @@ TEST(CqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         CQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         CQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         CQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
+
+    // Check for invalid timeouts
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
+        DbInvalidTimeout);
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
+        DbInvalidTimeout);
 
     // Check for missing parameters
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
