@@ -100,7 +100,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
                 continue;
             }
 
-            // Eliminate those subnets that do not meet client class criteria.
+            // If a subnet meets the client class criteria return it.
             if ((*subnet)->clientSupported(selector.client_classes_)) {
                 return (*subnet);
             }
@@ -182,11 +182,12 @@ CfgSubnets4::selectSubnet(const std::string& iface,
             continue;
         }
 
-        // Eliminate those subnets that do not meet client class criteria.
+        // If a subnet meets the client class criteria return it.
         if ((*subnet)->clientSupported(client_classes)) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                       DHCPSRV_CFGMGR_SUBNET4_IFACE)
-                .arg((*subnet)->toText()).arg(iface);
+                .arg((*subnet)->toText())
+                .arg(iface);
             return (*subnet);
         }
     }
@@ -206,10 +207,11 @@ CfgSubnets4::selectSubnet(const IOAddress& address,
             continue;
         }
 
-        // Eliminate those subnets that do not meet client class criteria.
+        // If a subnet meets the client class criteria return it.
         if ((*subnet)->clientSupported(client_classes)) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_SUBNET4_ADDR)
-                .arg((*subnet)->toText()).arg(address.toText());
+                .arg((*subnet)->toText())
+                .arg(address.toText());
             return (*subnet);
         }
     }
