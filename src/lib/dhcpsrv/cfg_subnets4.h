@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,7 +47,7 @@ public:
         return (&subnets_);
     }
 
-    /// @brief Returns pointer to the selected subnet.
+    /// @brief Returns a pointer to the selected subnet.
     ///
     /// This method tries to retrieve the subnet for the client using various
     /// parameters extracted from the client's message using the following
@@ -96,7 +96,7 @@ public:
     /// or they are insufficient to select a subnet.
     Subnet4Ptr selectSubnet(const SubnetSelector& selector) const;
 
-    /// @brief Returns pointer to a subnet if provided address is in its range.
+    /// @brief Returns a pointer to a subnet if provided address is in its range.
     ///
     /// This method returns a pointer to the subnet if the address passed in
     /// parameter is in range with this subnet. This is mainly used for unit
@@ -120,12 +120,12 @@ public:
                             const ClientClasses& client_classes
                             = ClientClasses()) const;
 
-    /// @brief Returns pointer to a subnet if provided interface name matches.
+    /// @brief Returns a pointer to a subnet if provided interface name matches.
     ///
     /// This method returns a pointer to the subnet if the interface name passed
-    /// in parameter matches that of a subnet. This is mainly used for matching
+    /// in parameter iface matches that of a subnet. This is mainly used for matching
     /// local incoming traffic, even when the addresses on local interfaces do
-    /// not match subnet definition. This method is also called by the
+    /// not match a subnet definition. This method is also called by the
     /// @c selectSubnet(SubnetSelector).
     ///
     /// @todo This method requires performance improvement! It currently
