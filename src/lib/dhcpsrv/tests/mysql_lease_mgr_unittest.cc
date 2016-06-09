@@ -116,7 +116,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
     // Check that lease manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
-	string connection_string = validMySQLConnectionString() + string(" ") + 
+	string connection_string = validMySQLConnectionString() + string(" ") +
                                    string(VALID_TIMEOUT);
         LeaseMgrFactory::create(connection_string);
         EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
@@ -231,8 +231,8 @@ TEST_F(MySqlLeaseMgrTest, checkVersion) {
     // Check version
     pair<uint32_t, uint32_t> version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
-    EXPECT_EQ(CURRENT_VERSION_VERSION, version.first);
-    EXPECT_EQ(CURRENT_VERSION_MINOR, version.second);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
