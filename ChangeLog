@@ -1,3 +1,9 @@
+1128.	[func]		tomek
+	Subnet selection in DHCPv4 will now work, even if the addresses
+	configured on interface are not in range of the subnet definition
+	from the configuration file.
+	(Trac #4308, git 7c74ecdbb64c69d341d623422216b0a54e6ff519)
+
 1127.	[func]		marcin
 	DHCPv4 server assigns DHCP options specified for hosts. Host
 	specific options take precedence over class specific options,
