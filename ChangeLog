@@ -1,3 +1,9 @@
+1127.	[func]		marcin
+	DHCPv4 server assigns DHCP options specified for hosts. Host
+	specific options take precedence over class specific options,
+	subnet specific options and global options.
+	(Trac #3572, git 49f67aaf36dab38b4fcbf59dcad97e4309903b2f)
+
 1126.	[func]		marcin
 	Host reservations can be assigned using DHCPv4 client identifier.
 	(Trac #4317, git 5f14fca1e029b04ad21a417936c2b8889acef10d)
