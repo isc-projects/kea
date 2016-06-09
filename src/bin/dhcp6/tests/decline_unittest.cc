@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -78,7 +78,7 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
     StatsMgr::instance().setValue("declined-addresses", static_cast<int64_t>(0));
 
     client.setDUID(duid1);
-    client.useNA(iaid1);
+    client.requestAddress(iaid1);
 
     // Configure the server with a configuration.
     ASSERT_NO_THROW(configure(DECLINE_CONFIGS[0], *client.getServer()));

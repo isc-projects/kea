@@ -142,7 +142,7 @@ public:
 
         // Configure client to request IA_NA and append IA_NA option
         //  to the client's message.
-        client.useNA(1234, IOAddress("2001:db8:1:1::dead:beef"));
+        client.requestAddress(1234, IOAddress("2001:db8:1:1::dead:beef"));
 
         // Perform 4-way exchange.
         ASSERT_NO_THROW(client.doSARR());
@@ -181,7 +181,7 @@ TEST_F(HostTest, basicSarrs) {
     // Configure client to request IA_NA and aAppend IA_NA option
     //  to the client's message.
     client.setDUID("01:02:03:04");
-    client.useNA(1234, IOAddress("2001:db8:1:1::dead:beef"));
+    client.requestAddress(1234, IOAddress("2001:db8:1:1::dead:beef"));
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -220,7 +220,7 @@ TEST_F(HostTest, basicSarrs) {
     client.clearConfig();
     client.modifyDUID();
     client.clearRequestedIAs();
-    client.useNA(1234);
+    client.requestAddress(1234);
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -245,7 +245,7 @@ TEST_F(HostTest, sarrAndRenew) {
     configure(CONFIGS[0], *client.getServer());
 
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
 
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
@@ -254,7 +254,7 @@ TEST_F(HostTest, sarrAndRenew) {
     // Configure client to request IA_NA and aAppend IA_NA option
     //  to the client's message.
     client.setDUID("01:02:03:04");
-    client.useNA(1234, IOAddress("2001:db8:1:1::dead:beef"));
+    client.requestAddress(1234, IOAddress("2001:db8:1:1::dead:beef"));
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -297,7 +297,7 @@ TEST_F(HostTest, sarrAndRebind) {
     configure(CONFIGS[0], *client.getServer());
 
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
 
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
@@ -306,7 +306,7 @@ TEST_F(HostTest, sarrAndRebind) {
     // Configure client to request IA_NA and aAppend IA_NA option
     //  to the client's message.
     client.setDUID("01:02:03:04");
-    client.useNA(1234, IOAddress("2001:db8:1:1::dead:beef"));
+    client.requestAddress(1234, IOAddress("2001:db8:1:1::dead:beef"));
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
