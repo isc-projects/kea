@@ -27,20 +27,19 @@ namespace isc {
 namespace dhcp {
 
 /// @brief  Defines a single query
+///
+/// @param params_ Bind parameter names
+/// @param name_ Short name of the query.
+/// @param text_ Text representation of the actual query.
 struct CqlTaggedStatement {
-    /// Param name.
     const char** params_;
-
-    /// Short name of the query.
     const char* name_;
-
-    /// Text representation of the actual query.
     const char* text_;
 };
 
-/// Defines CQL backend version: 1.0
-const uint32_t CQL_CURRENT_VERSION = 1;
-const uint32_t CQL_CURRENT_MINOR = 0;
+// Defines CQL backend version: 2.3
+const uint32_t CQL_CURRENT_VERSION = CASS_VERSION_MAJOR;
+const uint32_t CQL_CURRENT_MINOR = CASS_VERSION_MINOR;
 
 class CqlConnection : public DatabaseConnection {
 public:
@@ -55,27 +54,25 @@ public:
 
     /// @brief Prepare statements
     ///
-    /// Creates the prepared statements for all of the SQL statements used
+    /// Creates the prepared statements for all of the CQL statements used
     /// by the CQL backend.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    /// @throw isc::InvalidParameter 'index' is not valid for the vector.  This
+    /// @throw isc::InvalidParameter 'index' is not valid for the vector. This
     ///        represents an internal error within the code.
     void prepareStatements(CqlTaggedStatement *statements);
 
     /// @brief Open Database
     ///
     /// Opens the database using the information supplied in the parameters
-    /// passed to the constructor.
+    /// passed to the constructor. If no parameters are supplied, the default
+    /// values will be used (keyspace keatest).
     ///
-    /// @throw NoDatabaseName Mandatory database name not given
     /// @throw DbOpenError Error opening the database
     void openDatabase();
 
     /// @brief Return backend type
-    ///
-    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
     ///
     /// @return Type of the backend.
     virtual std::string getType() const {
@@ -96,7 +93,7 @@ public:
 
     /// @brief Returns backend version.
     ///
-    /// @return Version number as a pair of unsigned integers.  "first" is the
+    /// @return Version number as a pair of unsigned integers. "first" is the
     ///         major version number, "second" the minor number.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
@@ -129,10 +126,18 @@ public:
     void checkStatementError(std::string& error, CassFuture* future,
         const char* what) const;
 
-    /// CQL connection handle
+    /// @brief CQL connection handle
     CassCluster* cluster_;
+
+    /// @brief CQL session handle
     CassSession* session_;
-    std::vector<const CassPrepared*> statements_;       ///< Prepared statements
+
+    /// @brief CQL prepared statements - used for faster statement execution using
+    /// bind functionality
+    std::vector<const CassPrepared*> statements_;
+
+    /// @brief Pointer to external array of tagged statements containing statement
+    /// name, array of names of bind parameters and text query
     CqlTaggedStatement* tagged_statements_;
 };
 

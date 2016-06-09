@@ -1,4 +1,4 @@
-address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source
-10,3230,30,2015-04-04 01:15:30,40,50,IA_TA,60,70,1,1,one.example.com,3830,90,100
-11,,30,2015-05-05 02:30:45,40,50,IA_TA,60,70,1,1,,3830,90,100
-12,3231,30,2015-06-06 11:01:07,40,50,IA_TA,60,70,1,1,three.example.com,3830,90,100
+address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state
+2001:db8::12,0x3231,30,1436173267,40,50,1,60,70,True,True,three.example.com,0x3830,90,4,2
+2001:db8::11,null,30,1433464245,40,50,1,60,70,True,True,,0x3830,90,1,1
+2001:db8::10,0x3230,30,1430694930,40,50,1,60,70,True,True,one.example.com,0x3830,90,16,0

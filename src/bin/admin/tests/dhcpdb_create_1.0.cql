@@ -197,7 +197,8 @@ INSERT INTO lease_state (state, name) VALUES (2, 'expired-reclaimed');
 -- This table is only modified during schema upgrades.  For historical reasons
 -- (related to the names of the columns in the BIND 10 DNS database file), the
 -- first column is called "version" and not "major".
-
+-- Note: This MUST be kept in step with src/share/database/scripts/cassandra/dhcpdb_create.cql,
+-- which defines the schema for the unit tests.
 CREATE TABLE schema_version (
     version int,
     minor int,

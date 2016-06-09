@@ -27,7 +27,7 @@ pgsql_wipe() {
     printf "Wiping whole database %s\n" $db_name
     export PGPASSWORD=$db_password
 
-    cat $db_scripts_dir/pgsql/dhcpdb_drop.pgsql | psql --set ON_ERROR_STOP=1 -A -t -q -U keatest -d keatest >/dev/null 2>&1
+    cat $db_scripts_dir/pgsql/dhcpdb_drop.pgsql | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U keatest -d keatest >/dev/null 2>&1
     assert_eq 0 $?  "pgsql_wipe drop failed, expected exit code: %d, actual: %d"
 }
 

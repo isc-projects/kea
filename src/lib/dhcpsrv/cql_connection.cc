@@ -22,14 +22,16 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-CqlConnection::CqlConnection(const ParameterMap& parameters) : DatabaseConnection(parameters),
-        cluster_(NULL), session_(NULL), tagged_statements_(NULL) {
+CqlConnection::CqlConnection(const ParameterMap& parameters) :
+        DatabaseConnection(parameters), cluster_(NULL), session_(NULL),
+        tagged_statements_(NULL) {
 }
 
 CqlConnection::~CqlConnection() {
+    // Free up the prepared statements, ignoring errors.
+    // Session and connection resources are deallocated.
     CassError rc;
-    for (int i = 0; i < statements_.size(); i++)
-    {
+    for (int i = 0; i < statements_.size(); i++) {
         if (statements_[i]) {
             cass_prepared_free(statements_[i]);
         }
@@ -60,7 +62,7 @@ CqlConnection::openDatabase() {
         scontact_points = getParameter("contact_points");
         contact_points = scontact_points.c_str();
     } catch (...) {
-        // No host.  Fine, we'll use "localhost"
+        // No host. Fine, we'll use "localhost".
     }
 
     const char* port = NULL;
@@ -69,7 +71,7 @@ CqlConnection::openDatabase() {
         sport = getParameter("port");
         port = sport.c_str();
     } catch (...) {
-        // No port.  Fine, we'll use "default"
+        // No port. Fine, we'll use "default".
     }
 
     const char* user = NULL;
@@ -78,7 +80,7 @@ CqlConnection::openDatabase() {
         suser = getParameter("user");
         user = suser.c_str();
     } catch (...) {
-        // No user.  Fine, we'll use NULL
+        // No user. Fine, we'll use NULL.
     }
 
     const char* password = NULL;
@@ -87,7 +89,7 @@ CqlConnection::openDatabase() {
         spassword = getParameter("password");
         password = spassword.c_str();
     } catch (...) {
-        // No password.  Fine, we'll use NULL
+        // No password. Fine, we'll use NULL.
     }
 
     const char* keyspace = "keatest";
@@ -96,7 +98,7 @@ CqlConnection::openDatabase() {
         skeyspace = getParameter("keyspace");
         keyspace = skeyspace.c_str();
     } catch (...) {
-        // No database name.  Fine, we'll use default 'keatest'
+        // No database name. Fine, we'll use default "keatest".
     }
 
     cluster_ = cass_cluster_new();
@@ -202,8 +204,7 @@ CqlConnection::rollback() {
 
 void
 CqlConnection::checkStatementError(std::string& error, CassFuture* future,
-    uint32_t stindex, const char* what) const
-{
+        uint32_t stindex, const char* what) const {
     CassError rc;
     const char* errorMessage;
     size_t errorMessageSize;
@@ -215,15 +216,15 @@ CqlConnection::checkStatementError(std::string& error, CassFuture* future,
 
     if (rc != CASS_OK) {
         stream.str(std::string());
-        stream << what << " for: " << tagged_statements_[stindex].name_ << " reason: " <<
-            errorMessage << " error code: " << rc;
+        stream << what << " for: " << tagged_statements_[stindex].name_ <<
+            " reason: " << errorMessage << " error code: " << rc;
     }
     error = stream.str();
 }
 
 void
-CqlConnection::checkStatementError(std::string& error, CassFuture* future, const char* what) const
-{
+CqlConnection::checkStatementError(std::string& error, CassFuture* future,
+        const char* what) const {
     CassError rc;
     const char* errorMessage;
     size_t errorMessageSize;

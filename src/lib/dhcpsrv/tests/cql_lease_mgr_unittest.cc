@@ -31,7 +31,6 @@ using namespace std;
 
 namespace {
 
-
 /// @brief Test fixture class for testing Cassandra Lease Manager
 ///
 /// Opens the database prior to each test and closes it afterwards.
@@ -64,8 +63,8 @@ public:
 
     /// @brief Destructor
     ///
-    /// Rolls back all pending transactions.  The deletion of lmptr_ will close
-    /// the database.  Then reopen it and delete everything created by the test.
+    /// Rolls back all pending transactions. The deletion of lmptr_ will close
+    /// the database. Then reopen it and delete everything created by the test.
     virtual ~CqlLeaseMgrTest() {
         lmptr_->rollback();
         LeaseMgrFactory::destroy();
@@ -74,7 +73,7 @@ public:
 
     /// @brief Reopen the database
     ///
-    /// Closes the database and re-open it.  Anything committed should be
+    /// Closes the database and re-open it. Anything committed should be
     /// visible.
     ///
     /// Parameter is ignored for CQL backend as the v4 and v6 leases share
@@ -89,9 +88,9 @@ public:
 
 /// @brief Check that database can be opened
 ///
-/// This test checks if the CqlLeaseMgr can be instantiated.  This happens
-/// only if the database can be opened.  Note that this is not part of the
-/// CqlLeaseMgr test fixure set.  This test checks that the database can be
+/// This test checks if the CqlLeaseMgr can be instantiated. This happens
+/// only if the database can be opened. Note that this is not part of the
+/// CqlLeaseMgr test fixure set. This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 
 TEST(CqlOpenTest, OpenDatabase) {
@@ -114,7 +113,7 @@ TEST(CqlOpenTest, OpenDatabase) {
     }
 
     // Check that lease manager open the database opens correctly with a longer
-    // timeout.  If it fails, print the error message.
+    // timeout. If it fails, print the error message.
     try {
         string connection_string = validCqlConnectionString() + string(" ") +
                                    string(VALID_TIMEOUT);
@@ -187,7 +186,7 @@ TEST_F(CqlLeaseMgrTest, getType) {
 
 /// @brief Check conversion functions
 ///
-/// The server works using cltt and valid_filetime.  In the database, the
+/// The server works using cltt and valid_filetime. In the database, the
 /// information is stored as expire_time and valid-lifetime, which are
 /// related by
 ///
@@ -196,11 +195,17 @@ TEST_F(CqlLeaseMgrTest, getType) {
 /// This test checks that the conversion is correct.
 TEST_F(CqlLeaseMgrTest, checkTimeConversion) {
     const time_t cltt = time(NULL);
+    const uint32_t valid_lft = 86400;       // 1 day
+    uint64_t cql_expire;
 
+    // Convert to the database time
+    CqlExchange::convertToDatabaseTime(cltt, valid_lft, cql_expire);
+
+    // Convert back
     time_t converted_cltt = 0;
+    CqlExchange::convertFromDatabaseTime(cql_expire, valid_lft, converted_cltt);
     EXPECT_EQ(cltt, converted_cltt);
 }
-
 
 /// @brief Check getName() returns correct database name
 TEST_F(CqlLeaseMgrTest, getName) {
