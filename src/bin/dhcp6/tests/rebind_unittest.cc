@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -259,7 +259,7 @@ TEST_F(RebindTest, sanityCheck) {
 TEST_F(RebindTest, directClient) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
@@ -288,7 +288,7 @@ TEST_F(RebindTest, directClient) {
 TEST_F(RebindTest, directClientChangingSubnet) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
@@ -325,7 +325,7 @@ TEST_F(RebindTest, directClientChangingSubnet) {
 TEST_F(RebindTest, directClientChangingIAID) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
@@ -334,7 +334,7 @@ TEST_F(RebindTest, directClientChangingIAID) {
     // one to IAID we guarantee that the IAID will change.
     client.clearRequestedIAs();
     client.config_.leases_[0].iaid_ = 1235;
-    client.useNA(1235);
+    client.requestAddress(1235);
 
     // Try to Rebind. The server should allocate new lease for this IAID.
     ASSERT_NO_THROW(client.doRebind());
@@ -359,7 +359,7 @@ TEST_F(RebindTest, directClientChangingIAID) {
 TEST_F(RebindTest, directClientLostLease) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
@@ -384,7 +384,7 @@ TEST_F(RebindTest, directClientLostLease) {
 TEST_F(RebindTest, relayedClient) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
     // agent. The default link-addr is 3001:1::1. This address should be used
     // by the server to pick the suitable subnet.
@@ -417,7 +417,7 @@ TEST_F(RebindTest, relayedClient) {
 TEST_F(RebindTest, relayedClientChangingSubnet) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
     // agent. The default link-addr is 3001:1::1. This address should be used
     // by the server to pick the suitable subnet.
@@ -448,7 +448,7 @@ TEST_F(RebindTest, relayedClientChangingSubnet) {
 TEST_F(RebindTest, relayedClientChangingIAID) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
     // agent. The default link-addr is 3001:1::1. This address should be used
     // by the server to pick the suitable subnet.
@@ -462,7 +462,7 @@ TEST_F(RebindTest, relayedClientChangingIAID) {
     // one to IAID we guarantee that the IAID will change.
     client.clearRequestedIAs();
     client.config_.leases_[0].iaid_ = 1235;
-    client.useNA(1235);
+    client.requestAddress(1235);
 
     // Try to Rebind. The server should allocate new lease for this IAID.
     ASSERT_NO_THROW(client.doRebind());
@@ -487,7 +487,7 @@ TEST_F(RebindTest, relayedClientChangingIAID) {
 TEST_F(RebindTest, relayedClientLostLease) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
     // agent. The default link-addr is 3001:1::1. This address should be used
     // by the server to pick the suitable subnet.
@@ -516,7 +516,7 @@ TEST_F(RebindTest, relayedClientLostLease) {
 TEST_F(RebindTest, relayedClientChangingAddress) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[2], 2, client));
     // Keep the client's lease for future reference.
@@ -572,7 +572,7 @@ TEST_F(RebindTest, relayedClientChangingAddress) {
 TEST_F(RebindTest, directClientPD) {
     Dhcp6Client client;
     // Configure client to request IA_PD.
-    client.usePD();
+    client.requestPrefix();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[4], 2, client));
     // Keep the client's lease for future reference.
@@ -599,7 +599,7 @@ TEST_F(RebindTest, directClientPD) {
 TEST_F(RebindTest, directClientPDChangingSubnet) {
     Dhcp6Client client;
     // Configure client to request IA_PD.
-    client.usePD();
+    client.requestPrefix();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[4], 2, client));
     // Keep the client's lease for future reference.
@@ -636,7 +636,7 @@ TEST_F(RebindTest, directClientPDChangingSubnet) {
 TEST_F(RebindTest, directClientPDChangingIAID) {
     Dhcp6Client client;
     // Configure client to request IA_PD.
-    client.usePD();
+    client.requestPrefix();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[4], 2, client));
     // Keep the client's lease for future reference.
@@ -646,7 +646,7 @@ TEST_F(RebindTest, directClientPDChangingIAID) {
     // one to IAID we guarantee that the IAID will change.
     client.clearRequestedIAs();
     client.config_.leases_[0].iaid_ = 5679;
-    client.usePD(5679);
+    client.requestPrefix(5679);
 
     // Try to Rebind. The server should allocate new lease for this IAID.
     ASSERT_NO_THROW(client.doRebind());
@@ -671,7 +671,7 @@ TEST_F(RebindTest, directClientPDChangingIAID) {
 TEST_F(RebindTest, directClientPDChangingPrefix) {
     Dhcp6Client client;
     // Configure client to request IA_PD.
-    client.usePD();
+    client.requestPrefix();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[4], 2, client));
     // Keep the client's lease for future reference.
@@ -727,7 +727,7 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
 TEST_F(RebindTest, unicast) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
@@ -756,7 +756,7 @@ TEST_F(RebindTest, unicast) {
 TEST_F(RebindTest, relayedUnicast) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
     // agent. The default link-addr is 3001:1::1. This address should be used
     // by the server to pick the suitable subnet.
@@ -791,8 +791,8 @@ TEST_F(RebindTest, requestPrefixInRebind) {
     Dhcp6Client client;
 
     // Configure client to request IA_NA and IA_PD.
-    client.useNA();
-    client.usePD();
+    client.requestAddress();
+    client.requestPrefix();
 
     // Configure the server with NA pools only.
     ASSERT_NO_THROW(configure(REBIND_CONFIGS[0], *client.getServer()));
@@ -846,8 +846,8 @@ TEST_F(RebindTest, requestAddressInRebind) {
     Dhcp6Client client;
 
     // Configure client to request IA_NA and IA_PD.
-    client.useNA();
-    client.usePD();
+    client.requestAddress();
+    client.requestPrefix();
 
     // Configure the server with PD pools only.
     ASSERT_NO_THROW(configure(REBIND_CONFIGS[4], *client.getServer()));

@@ -442,54 +442,59 @@ public:
         link_local_ = link_local;
     }
 
-    /// @brief Place IA_NA options to request address assignment.
+    /// @brief Specifies address to be included in client's message.
     ///
-    /// This function configures the client to place IA_NA options in its
-    /// Solicit messages to request the IPv6 address assignment.
+    /// This method specifies IPv6 address to be included within IA_NA
+    /// option sent by the client. In order to specify multiple addresses
+    /// to be included in a particular IA_NA, this method must be called
+    /// multiple times to specify each address separately. In such case,
+    /// the value of the IAID should remain the same across all calls to
+    /// this method.
     ///
-    /// @param iaid IAID to be used in the IA_NA.
-/*    void useNA(const uint32_t iaid) {
-        useNA(true, iaid);
-    } */
+    /// This method is typically called to specify IA_NA options to be
+    /// sent to the server during 4-way handshakes and during lease
+    /// renewal to request allocation of new leases (as per RFC7550).
+    ///
+    /// @param iaid IAID.
+    /// @param address IPv6 address to be included in the IA_NA. It defaults
+    /// to IPv6 zero address, which indicates that no address should be
+    /// included in the IA_NA (empty IA_NA will be sent).
+    void requestAddress(const uint32_t iaid = 1234,
+                        const asiolink::IOAddress& address =
+                        asiolink::IOAddress::IPV6_ZERO_ADDRESS());
 
-/*    /// @brief Place IA_NA options to request address assignment.
+    /// @brief Specifies IPv6 prefix to be included in client's message.
     ///
-    /// This function configures the client to place IA_NA options in its
-    /// Solicit messages to request the IPv6 address assignment.
+    /// This method specifies IPv6 prefix to be included within IA_PD
+    /// option sent by the client. In order to specify multiple prefixes
+    /// to be included in a particular IA_PD, this method must be called
+    /// multiple times to specify each prefix separately. In such case,
+    /// the value of the IAID should remain the same across all calls to
+    /// this method.
     ///
-    /// @param use Parameter which 'true' value indicates that client should
-    /// request address assignment.
-    /// @param iaid IAID to be used in the IA_NA.
-    void useNA(const bool use = true, const uint32_t iaid = 1234); */
+    /// This method is typically called to specify IA_PD options to be
+    /// sent to the server during 4-way handshakes and during lease
+    /// renewal to request allocation of new leases (as per RFC7550).
+    ///
+    /// @param iaid IAID.
+    /// @param prefix_len Prefix length.
+    /// @param prefix Prefix to be included. This value defaults to the
+    /// IPv6 zero address. If zero address is specified and prefix_len is
+    /// set to 0, the IA Prefix option will not be included in the IA_PD.
+    /// If the prefix_len is non-zero and the prefix is IPv6 zero address
+    /// the prefix length hint will be included in the IA Prefix option.
+    void requestPrefix(const uint32_t iaid = 5678,
+                       const uint8_t prefix_len = 0,
+                       const asiolink::IOAddress& prefix =
+                       asiolink::IOAddress::IPV6_ZERO_ADDRESS());
 
-    /// @brief Place IA_PD options to request address assignment.
+    /// @brief Removes IAs specified with @ref includeAddress and
+    /// @ref includePrefix methods.
     ///
-    /// This function configures the client to place IA_NA options in its
-    /// Solicit messages to request the IPv6 address assignment.
-    ///
-    /// @param iaid IAID to be used in the IA_PD.
-/*    void usePD(const uint32_t iaid) {
-        usePD(true, iaid);
-    } */
-
-    /// @brief Place IA_PD options to request prefix assignment.
-    ///
-    /// This function configures the client to place IA_PD options in its
-    /// Solicit messages to request the IPv6 address assignment.
-    ///
-    /// @param use Parameter which 'true' value indicates that client should
-    /// request prefix assignment.
-    /// @param iaid IAID to be used in the IA_NA.
-//    void usePD(const bool use = true, const uint32_t iaid = 5678);
-
-    void useNA(const uint32_t iaid = 1234, const asiolink::IOAddress& address =
-               asiolink::IOAddress::IPV6_ZERO_ADDRESS());
-
-    void usePD(const uint32_t iaid = 5678, const asiolink::IOAddress& prefix =
-               asiolink::IOAddress::IPV6_ZERO_ADDRESS(),
-               const uint8_t prefix_len = 0);
-
-    /// @brief Removes requested IAs.
+    /// If this method is called and the client initiates an exchange with
+    /// a server the client will only include IAs for which it has leases.
+    /// If the client has no leases (e.g. a Solicit case), no IAs will be
+    /// included in the client's message.
     void clearRequestedIAs() {
         client_ias_.clear();
     }
@@ -629,8 +634,7 @@ private:
 
     /// @brief Includes IAs to be requested.
     ///
-    /// This method checks if @c use_na_ and/or @c use_pd_ are specified and
-    /// includes appropriate IA types, if they are not already included.
+    /// This method includes IAs explicitly requested using 
     ///
     /// @param query Pointer to the client's message to which IAs should be
     /// added.

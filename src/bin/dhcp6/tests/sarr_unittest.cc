@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -123,15 +123,14 @@ public:
 TEST_F(SARRTest, directClientPrefixHint) {
     Dhcp6Client client;
     // Configure client to request IA_PD.
-    client.usePD();
+    client.requestPrefix();
     configure(CONFIGS[0], *client.getServer());
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
     ASSERT_EQ(1, subnets->size());
     // Append IAPREFIX option to the client's message.
-    ASSERT_NO_THROW(client.usePD(5678, asiolink::IOAddress("2001:db8:3:33::33"),
-                                 64));
+    ASSERT_NO_THROW(client.requestPrefix(5678, 64, asiolink::IOAddress("2001:db8:3:33::33")));
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
     // Server should have assigned a prefix.
@@ -156,7 +155,7 @@ TEST_F(SARRTest, directClientPrefixHint) {
 
     // Use the hint with some least significant bytes set.
     client.clearRequestedIAs();
-    ASSERT_NO_THROW(client.usePD(5678, IOAddress("2001:db8:3:33::34"), 64));
+    ASSERT_NO_THROW(client.requestPrefix(5678, 64, IOAddress("2001:db8:3:33::34")));
     ASSERT_NO_THROW(client.doSARR());
     // Server should assign a lease.
     ASSERT_EQ(1, client.getLeaseNum());
@@ -179,7 +178,7 @@ TEST_F(SARRTest, directClientPrefixHint) {
 TEST_F(SARRTest, rapidCommitEnable) {
     Dhcp6Client client;
     // Configure client to request IA_NA
-    client.useNA();
+    client.requestAddress();
     configure(CONFIGS[1], *client.getServer());
     ASSERT_NO_THROW(client.getServer()->startD2());
     // Make sure we ended-up having expected number of subnets configured.
@@ -217,7 +216,7 @@ TEST_F(SARRTest, rapidCommitEnable) {
 TEST_F(SARRTest, rapidCommitNoOption) {
     Dhcp6Client client;
     // Configure client to request IA_NA
-    client.useNA();
+    client.requestAddress();
     configure(CONFIGS[1], *client.getServer());
     ASSERT_NO_THROW(client.getServer()->startD2());
     // Make sure we ended-up having expected number of subnets configured.
@@ -250,7 +249,7 @@ TEST_F(SARRTest, rapidCommitDisable) {
     // The subnet assigned to eth1 has Rapid Commit disabled.
     client.setInterface("eth1");
     // Configure client to request IA_NA
-    client.useNA();
+    client.requestAddress();
     configure(CONFIGS[1], *client.getServer());
     ASSERT_NO_THROW(client.getServer()->startD2());
     // Make sure we ended-up having expected number of subnets configured.
@@ -286,7 +285,7 @@ TEST_F(SARRTest, sarrStats) {
     Dhcp6Client client;
     configure(CONFIGS[1], *client.getServer());
     client.setInterface("eth1");
-    client.useNA();
+    client.requestAddress();
 
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
@@ -350,7 +349,7 @@ TEST_F(SARRTest, pkt6ReceiveDropStat1) {
     Dhcp6Client client;
     configure(CONFIGS[1], *client.getServer());
     client.setInterface("eth1");
-    client.useNA();
+    client.requestAddress();
 
     client.doSolicit();
     client.useServerId(bogus_srv_id);
@@ -375,7 +374,7 @@ TEST_F(SARRTest, pkt6ReceiveDropStat2) {
     Dhcp6Client client;
     configure(CONFIGS[1], *client.getServer());
     client.setInterface("eth1");
-    client.useNA();
+    client.requestAddress();
 
     client.setDestAddress(asiolink::IOAddress("2001:db8::1")); // Pretend it's unicast
     client.doSolicit();
@@ -400,7 +399,7 @@ TEST_F(SARRTest, pkt6ReceiveDropStat3) {
     Dhcp6Client client;
     configure(CONFIGS[1], *client.getServer());
     client.setInterface("eth1");
-    client.useNA();
+    client.requestAddress();
 
     // Let's send our client-id as server-id. That will result in the
     // packet containing the client-id twice. That should cause RFCViolation

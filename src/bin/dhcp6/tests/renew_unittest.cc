@@ -116,8 +116,8 @@ TEST_F(RenewTest, requestPrefixInRenew) {
     Dhcp6Client client;
 
     // Configure client to request IA_NA and IA_PD.
-    client.useNA(na_iaid_);
-    client.usePD(pd_iaid_);
+    client.requestAddress(na_iaid_);
+    client.requestPrefix(pd_iaid_);
 
     // Configure the server with NA pools only.
     ASSERT_NO_THROW(configure(RENEW_CONFIGS[0], *client.getServer()));
@@ -175,8 +175,8 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
     Dhcp6Client client;
 
     // Configure client to request IA_NA and IA_PD.
-    client.useNA(na_iaid_);
-    client.usePD(pd_iaid_);
+    client.requestAddress(na_iaid_);
+    client.requestPrefix(pd_iaid_);
 
     // Configure the server with NA pools only.
     ASSERT_NO_THROW(configure(RENEW_CONFIGS[0], *client.getServer()));
@@ -208,7 +208,7 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // Specify the hint used for IA_PD.
-    client.usePD(pd_iaid_, IOAddress::IPV6_ZERO_ADDRESS(), 64);
+    client.requestPrefix(pd_iaid_, 64, IOAddress::IPV6_ZERO_ADDRESS());
 
     // Send Renew message to the server, including IA_NA and requesting IA_PD.
     ASSERT_NO_THROW(client.doRenew());
@@ -248,8 +248,8 @@ TEST_F(RenewTest, requestAddressInRenew) {
     Dhcp6Client client;
 
     // Configure client to request IA_NA and IA_PD.
-    client.useNA(na_iaid_);
-    client.usePD(pd_iaid_);
+    client.requestAddress(na_iaid_);
+    client.requestPrefix(pd_iaid_);
 
     // Configure the server with PD pools only.
     ASSERT_NO_THROW(configure(RENEW_CONFIGS[1], *client.getServer()));
@@ -308,8 +308,8 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
     Dhcp6Client client;
 
     // Configure client to request IA_NA and IA_PD.
-    client.useNA(na_iaid_);
-    client.usePD(pd_iaid_);
+    client.requestAddress(na_iaid_);
+    client.requestPrefix(pd_iaid_);
 
     // Configure the server with PD pools only.
     ASSERT_NO_THROW(configure(RENEW_CONFIGS[1], *client.getServer()));
@@ -331,7 +331,7 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
     ASSERT_EQ(0, leases_client_na.size());
     ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(na_iaid_));
 
-    client.useNA(na_iaid_, IOAddress("2001:db8:1::100"));
+    client.requestAddress(na_iaid_, IOAddress("2001:db8:1::100"));
 
     // Send Renew message to the server, including IA_PD and requesting IA_NA.
     // The server should return NoAddrsAvail status code in this case.

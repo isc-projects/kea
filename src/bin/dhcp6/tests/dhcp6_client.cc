@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -725,32 +725,16 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     srv_->run();
 }
 
-/*void
-Dhcp6Client::useNA(const bool use, const uint32_t iaid) {
-    use_na_ = use;
-    client_ias_.push_back(ClientIA(Lease::TYPE_NA, iaid,
-                                   asiolink::IOAddress::IPV6_ZERO_ADDRESS(),
-                                   0));
-    na_iaid_ = iaid;
-} */
-
 void
-Dhcp6Client::useNA(const uint32_t iaid, const asiolink::IOAddress& address) {
+Dhcp6Client::requestAddress(const uint32_t iaid,
+                            const asiolink::IOAddress& address) {
     client_ias_.push_back(ClientIA(Lease::TYPE_NA, iaid, address, 128));
 }
 
-/*void
-Dhcp6Client::usePD(const bool use, const uint32_t iaid) {
-    use_pd_ = use;
-    client_ias_.push_back(ClientIA(Lease::TYPE_PD, iaid,
-                                   asiolink::IOAddress::IPV6_ZERO_ADDRESS(),
-                                   0));
-    pd_iaid_ = iaid;
-}*/
-
 void
-Dhcp6Client::usePD(const uint32_t iaid,const asiolink::IOAddress& prefix,
-                   const uint8_t prefix_len) {
+Dhcp6Client::requestPrefix(const uint32_t iaid,
+                           const uint8_t prefix_len,
+                           const asiolink::IOAddress& prefix) {
     client_ias_.push_back(ClientIA(Lease::TYPE_PD, iaid, prefix, prefix_len));
 }
 
