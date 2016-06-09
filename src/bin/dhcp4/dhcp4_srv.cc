@@ -924,13 +924,21 @@ void
 Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
     CfgOptionList& co_list = ex.getCfgOptionList();
 
-    // First subnet configured options
+    // Retrieve subnet.
     Subnet4Ptr subnet = ex.getContext()->subnet_;
     if (!subnet) {
         // All methods using the CfgOptionList object return soon when
         // there is no subnet so do the same
         return;
     }
+
+    // Firstly, host specific options.
+    const ConstHostPtr& host = ex.getContext()->host_;
+    if (host && !host->getCfgOption4()->empty()) {
+        co_list.push_back(host->getCfgOption4());
+    }
+
+    // Secondly, subnet configured options.
     if (!subnet->getCfgOption()->empty()) {
         co_list.push_back(subnet->getCfgOption());
     }

@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/hwaddr.h>
+#include <dhcp/option.h>
 #include <dhcp/pkt4.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <util/optional_value.h>
@@ -73,6 +74,8 @@ public:
         Option4AddrLst::AddressContainer log_servers_;
         /// @brief Holds IP addresses received in the Quotes Servers option.
         Option4AddrLst::AddressContainer quotes_servers_;
+        /// @brief Vendor Specific options
+        OptionCollection vendor_suboptions_;
         /// @brief Holds a lease obtained by the client.
         Lease4 lease_;
         /// @brief Holds server id of the server which responded to the client's
