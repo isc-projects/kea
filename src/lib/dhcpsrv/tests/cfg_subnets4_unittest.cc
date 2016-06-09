@@ -61,6 +61,42 @@ TEST(CfgSubnets4Test, selectSubnetByCiaddr) {
     EXPECT_FALSE(cfg.selectSubnet(selector));
 }
 
+// This test verifies that it is possible to select a subnet by
+// matching an interface name.
+TEST(CfgSubnets4Test, selectSubnetByIface) {
+    // The IfaceMgrTestConfig object initializes fake interfaces:
+    // eth0, eth1 and lo on the configuration manager. The CfgSubnets4
+    // object uses interface names to select the appropriate subnet.
+    IfaceMgrTestConfig config(true);
+
+    CfgSubnets4 cfg;
+
+    // Create 3 subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+    // No interface defined for subnet1
+    subnet2->setIface("lo");
+    subnet3->setIface("eth1");
+
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    // Make sure that initially the subnets don't exist.
+    SubnetSelector selector;
+    // Set an interface to a name that is not defined in the config.
+    // Subnet selection should fail.
+    selector.iface_name_ = "eth0";
+    ASSERT_FALSE(cfg.selectSubnet(selector));
+
+    // Now select an interface name that matches. Selection should succeed
+    // and return subnet3.
+    selector.iface_name_ = "eth1";
+    Subnet4Ptr selected = cfg.selectSubnet(selector);
+    ASSERT_TRUE(selected);
+    EXPECT_EQ(subnet3, selected);
+}
 
 // This test verifies that when the classification information is specified for
 // subnets, the proper subnets are returned by the subnet configuration.
