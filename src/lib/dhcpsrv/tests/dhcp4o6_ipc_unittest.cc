@@ -42,7 +42,7 @@ const uint16_t TEST_PORT = 12345;
 const uint16_t TEST_ITERATIONS = 10;
 
 /// @brief Type definition for the function creating DHCP message.
-typedef boost::function<Pkt6Ptr(const uint16_t, const uint16_t)> CreateMsgFun;
+typedef boost::function<Pkt6Ptr(uint16_t, uint16_t)> CreateMsgFun;
 
 /// @brief Define short name for test IPC class.
 typedef Dhcp4o6TestIpc TestIpc;
@@ -65,7 +65,7 @@ protected:
     /// @param prefix Prefix.
     /// @param postfix Postfix.
     /// @return String representing concatenated prefix and postfix.
-    static std::string concatenate(const std::string& prefix, const uint16_t postfix);
+    static std::string concatenate(const std::string& prefix, uint16_t postfix);
 
     /// @brief Creates an instance of the DHCPv4o6 message.
     ////
@@ -77,19 +77,20 @@ protected:
     /// the "eth0" will be used, for odd postfix values "eth1" will be used.
     ///
     /// @return Pointer to the created message.
-    static Pkt6Ptr createDHCPv4o6Message(const uint16_t msg_type,
-                                         const uint16_t postfix = 0);
+    static Pkt6Ptr createDHCPv4o6Message(uint16_t msg_type,
+                                         uint16_t postfix = 0);
 
     /// @brief Creates an instance of the DHCPv4o6 message with vendor option.
     ///
     /// @param msg_type Message type.
     /// @param postfix Postfix to be appended to the remote address. See the
     /// documentation of @c createDHCPv4o6Message for details.
+    /// @param enterprise_id Enterprise ID for the vendor option.
     ///
     /// @return Pointer to the created message.
-    static Pkt6Ptr createDHCPv4o6MsgWithVendorOption(const uint16_t msg_type,
-                                                     const uint16_t postfix,
-                                                     const uint32_t enterprise_id);
+    static Pkt6Ptr createDHCPv4o6MsgWithVendorOption(uint16_t msg_type,
+                                                     uint16_t postfix,
+                                                     uint32_t enterprise_id);
 
     /// @brief Creates an instance of the DHCPv4o6 message with ISC
     /// vendor option.
@@ -102,8 +103,8 @@ protected:
     /// documentation of @c createDHCPv4o6Message for details.
     ///
     /// @return Pointer to the created message.
-    static Pkt6Ptr createDHCPv4o6MsgWithISCVendorOption(const uint16_t msg_type,
-                                                        const uint16_t postfix);
+    static Pkt6Ptr createDHCPv4o6MsgWithISCVendorOption(uint16_t msg_type,
+                                                        uint16_t postfix);
 
     /// @brief Creates an instance of the DHCPv4o6 message with vendor
     /// option holding enterprise id of 32000.
@@ -117,23 +118,24 @@ protected:
     /// documentation of @c createDHCPv4o6Message for details.
     ///
     /// @return Pointer to the created message.
-    static Pkt6Ptr createDHCPv4o6MsgWithAnyVendorOption(const uint16_t msg_type,
-                                                        const uint16_t postfix);
+    static Pkt6Ptr createDHCPv4o6MsgWithAnyVendorOption(uint16_t msg_type,
+                                                        uint16_t postfix);
 
     /// @brief Creates an instance of the DHCPv4o6 Message option.
     ///
     /// @param src Type of the source endpoint. It can be 4 or 6.
     /// @return Pointer to the instance of the option.
-    static OptionPtr createDHCPv4MsgOption(const TestIpc::EndpointType& src);
+    static OptionPtr createDHCPv4MsgOption(TestIpc::EndpointType src);
 
     /// @brief Tests sending and receiving packets over the IPC.
     ///
     /// @param iterations_num Number of packets to be sent over the IPC.
     /// @param src Type of the source IPC endpoint. It can be 4 or 6.
     /// @param dest Type of the destination IPC endpoint. It can be 4 or 6.
-    void testSendReceive(const uint16_t iterations_num,
-                         const TestIpc::EndpointType& src,
-                         const TestIpc::EndpointType& dest,
+    /// @param create_msg_fun Function called to create the packet.
+    void testSendReceive(uint16_t iterations_num,
+                         TestIpc::EndpointType src,
+                         TestIpc::EndpointType dest,
                          const CreateMsgFun& create_msg_fun);
 
     /// @brief Tests that error is reported when invalid message is received.
@@ -154,15 +156,15 @@ Dhcp4o6IpcBaseTest::Dhcp4o6IpcBaseTest()
 
 std::string
 Dhcp4o6IpcBaseTest::concatenate(const std::string& prefix,
-                                const uint16_t postfix) {
+                                uint16_t postfix) {
     std::ostringstream s;
     s << prefix << postfix;
     return (s.str());
 }
 
 Pkt6Ptr
-Dhcp4o6IpcBaseTest::createDHCPv4o6Message(const uint16_t msg_type,
-                                          const uint16_t postfix) {
+Dhcp4o6IpcBaseTest::createDHCPv4o6Message(uint16_t msg_type,
+                                          uint16_t postfix) {
     // Create the DHCPv4o6 message.
     Pkt6Ptr pkt(new Pkt6(msg_type, 0));
 
@@ -180,7 +182,7 @@ Dhcp4o6IpcBaseTest::createDHCPv4o6Message(const uint16_t msg_type,
     pkt->setRemoteAddr(IOAddress(concatenate("2001:db8:1::", postfix)));
 
     // Determine the endpoint type using the message type.
-    const TestIpc::EndpointType src = (msg_type ==  DHCPV6_DHCPV4_QUERY) ?
+    TestIpc::EndpointType src = (msg_type ==  DHCPV6_DHCPV4_QUERY) ?
         TestIpc::ENDPOINT_TYPE_V6 : TestIpc::ENDPOINT_TYPE_V4;
 
     // Add DHCPv4 Message option to make sure it is conveyed by the IPC.
@@ -190,9 +192,9 @@ Dhcp4o6IpcBaseTest::createDHCPv4o6Message(const uint16_t msg_type,
 }
 
 Pkt6Ptr
-Dhcp4o6IpcBaseTest::createDHCPv4o6MsgWithVendorOption(const uint16_t msg_type,
-                                                      const uint16_t postfix,
-                                                      const uint32_t enterprise_id) {
+Dhcp4o6IpcBaseTest::createDHCPv4o6MsgWithVendorOption(uint16_t msg_type,
+                                                      uint16_t postfix,
+                                                      uint32_t enterprise_id) {
     Pkt6Ptr pkt = createDHCPv4o6Message(msg_type, postfix);
 
     // Create vendor option with ISC enterprise id.
@@ -208,19 +210,19 @@ Dhcp4o6IpcBaseTest::createDHCPv4o6MsgWithVendorOption(const uint16_t msg_type,
 }
 
 Pkt6Ptr
-Dhcp4o6IpcBaseTest::createDHCPv4o6MsgWithISCVendorOption(const uint16_t msg_type,
-                                                         const uint16_t postfix) {
+Dhcp4o6IpcBaseTest::createDHCPv4o6MsgWithISCVendorOption(uint16_t msg_type,
+                                                         uint16_t postfix) {
     return (createDHCPv4o6MsgWithVendorOption(msg_type, postfix, ENTERPRISE_ID_ISC));
 }
 
 Pkt6Ptr
-Dhcp4o6IpcBaseTest::createDHCPv4o6MsgWithAnyVendorOption(const uint16_t msg_type,
-                                                         const uint16_t postfix) {
+Dhcp4o6IpcBaseTest::createDHCPv4o6MsgWithAnyVendorOption(uint16_t msg_type,
+                                                         uint16_t postfix) {
     return (createDHCPv4o6MsgWithVendorOption(msg_type, postfix, 32000));
 }
 
 OptionPtr
-Dhcp4o6IpcBaseTest::createDHCPv4MsgOption(const TestIpc::EndpointType& src) {
+Dhcp4o6IpcBaseTest::createDHCPv4MsgOption(TestIpc::EndpointType src) {
     // Create the DHCPv4 message.
     Pkt4Ptr pkt(new Pkt4(src == TestIpc::ENDPOINT_TYPE_V4 ? DHCPACK : DHCPREQUEST,
                          1234));
@@ -236,9 +238,9 @@ Dhcp4o6IpcBaseTest::createDHCPv4MsgOption(const TestIpc::EndpointType& src) {
 }
 
 void
-Dhcp4o6IpcBaseTest::testSendReceive(const uint16_t iterations_num,
-                                    const TestIpc::EndpointType& src,
-                                    const TestIpc::EndpointType& dest,
+Dhcp4o6IpcBaseTest::testSendReceive(uint16_t iterations_num,
+                                    TestIpc::EndpointType src,
+                                    TestIpc::EndpointType dest,
                                     const CreateMsgFun& create_msg_fun) {
     // Create IPC instances representing the source and destination endpoints.
     TestIpc ipc_src(TEST_PORT, src);
@@ -248,7 +250,7 @@ Dhcp4o6IpcBaseTest::testSendReceive(const uint16_t iterations_num,
     ASSERT_NO_THROW(ipc_src.open());
     ASSERT_NO_THROW(ipc_dest.open());
 
-    // Depnding if we're sending from DHCPv6 to DHCPv4 or the opposite
+    // Depending if we're sending from DHCPv6 to DHCPv4 or the opposite
     // direction we use different message type. This is not really required
     // for testing IPC, but it better simulates the real use case.
     uint16_t msg_type = (src == TestIpc::ENDPOINT_TYPE_V6 ? DHCPV6_DHCPV4_QUERY :
@@ -455,13 +457,6 @@ TEST_F(Dhcp4o6IpcBaseTest, openError) {
     ASSERT_NO_THROW(ipc.open());
     EXPECT_NE(-1, ipc.getSocketFd());
     EXPECT_EQ(TEST_PORT + 10, ipc.getPort());
-}
-
-// This test verifies that the IPC returns an error when trying to bind
-// to the out of range port.
-TEST_F(Dhcp4o6IpcBaseTest, invalidPortError4) {
-    TestIpc ipc(65535, TestIpc::ENDPOINT_TYPE_V4);
-    EXPECT_THROW(ipc.open(), Dhcp4o6IpcError);
 }
 
 // This test verifies that the IPC returns an error when trying to bind
