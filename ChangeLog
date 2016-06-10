@@ -1,3 +1,9 @@
+1129.	[bug]		marcin
+	libdhcp++: Removed unnecessary copies of the container holding
+	option definitions to improve performance of both DHCPv4 and
+	DHCPv6 server.
+	(Trac #4498, git 14716853a92e08c4cc5be75ae85c5e84d6356a1e)
+
 1128.	[func]		tomek
 	Subnet selection in DHCPv4 will now work, even if the addresses
 	configured on interface are not in range of the subnet definition
