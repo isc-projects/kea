@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -170,6 +170,7 @@ TEST_F(OptionCustomTest, emptyData) {
         option.reset(new OptionCustom(opt_def, Option::V4, buf.begin(),
                                       buf.end()));
     );
+
     ASSERT_TRUE(option);
 
     // Option is 'empty' so no data fields are expected.

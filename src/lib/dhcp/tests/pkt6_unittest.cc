@@ -41,55 +41,6 @@ using boost::scoped_ptr;
 
 namespace {
 
-/// @brief A class which contains a custom callback function to unpack options.
-///
-/// This is a class used by the tests which verify that the custom callback
-/// functions can be installed to unpack options from a message. When the
-/// callback function is called, the executed_ member is set to true to allow
-/// verification that the callback was really called. Internally, this class
-/// uses libdhcp++ to unpack options so the options parsing algorithm remains
-/// unchanged after installation of the callback.
-class CustomUnpackCallback {
-public:
-
-    /// @brief Constructor
-    ///
-    /// Marks that callback hasn't been called.
-    CustomUnpackCallback()
-        : executed_(false) {
-    }
-
-    /// @brief A callback
-    ///
-    /// Contains custom implementation of the callback.
-    ///
-    /// @param buf a A buffer holding options in on-wire format.
-    /// @param option_space A name of the option space encapsulated by the
-    /// option being parsed.
-    /// @param [out] options A reference to the collection where parsed options
-    /// will be stored.
-    /// @param relay_msg_offset Reference to a size_t structure. If specified,
-    /// offset to beginning of relay_msg option will be stored in it.
-    /// @param relay_msg_len reference to a size_t structure. If specified,
-    /// length of the relay_msg option will be stored in it.
-    /// @return An offset to the first byte after last parsed option.
-    size_t execute(const OptionBuffer& buf,
-                   const std::string& option_space,
-                   isc::dhcp::OptionCollection& options,
-                   size_t* relay_msg_offset,
-                   size_t* relay_msg_len) {
-        // Set the executed_ member to true to allow verification that the
-        // callback has been actually called.
-        executed_ = true;
-        // Use default implementation of the unpack algorithm to parse options.
-        return (LibDHCP::unpackOptions6(buf, option_space, options,
-                                        relay_msg_offset, relay_msg_len));
-    }
-
-    /// A flag which indicates if callback function has been called.
-    bool executed_;
-};
-
 class Pkt6Test : public ::testing::Test {
 public:
     Pkt6Test() {
@@ -434,49 +385,6 @@ TEST_F(Pkt6Test, unpackVendorMalformed) {
     shorto[len_index] = 16;
     Pkt6Ptr too_short_option_pkt(new Pkt6(&shorto[0], shorto.size()));
     EXPECT_THROW(too_short_option_pkt->unpack(), OutOfRange);
-}
-
-// This test verifies that it is possible to specify custom implementation of
-// the option parsing algorithm by installing a callback function.
-TEST_F(Pkt6Test, packUnpackWithCallback) {
-    // Create an on-wire representation of the test packet and clone it.
-    Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 0x020304));
-    Pkt6Ptr clone = packAndClone(pkt);
-
-    // Install the custom callback function. We expect that this function
-    // will be called to parse options in the packet instead of
-    // LibDHCP::unpackOptions6.
-    CustomUnpackCallback cb;
-    clone->setCallback(boost::bind(&CustomUnpackCallback::execute, &cb,
-                                   _1, _2, _3, _4, _5));
-    // Make sure that the flag which indicates if the callback function has
-    // been called is not set. Otherwise, our test doesn't make sense.
-    ASSERT_FALSE(cb.executed_);
-
-    // Now recreate options list
-    ASSERT_NO_THROW(clone->unpack());
-
-    // An object which holds a callback should now have a flag set which
-    // indicates that callback has been called.
-    EXPECT_TRUE(cb.executed_);
-
-    // transid, message-type should be the same as before
-    EXPECT_EQ(0x020304, clone->getTransid());
-    EXPECT_EQ(DHCPV6_SOLICIT, clone->getType());
-
-    EXPECT_TRUE(clone->getOption(1));
-    EXPECT_TRUE(clone->getOption(2));
-    EXPECT_TRUE(clone->getOption(100));
-    EXPECT_FALSE(clone->getOption(4));
-
-    // Reset the indicator to perform another check: uninstall the callback.
-    cb.executed_ = false;
-    // By setting the callback to NULL we effectively uninstall the callback.
-    clone->setCallback(NULL);
-    // Do another unpack.
-    ASSERT_NO_THROW(clone->unpack());
-    // Callback should not be executed.
-    EXPECT_FALSE(cb.executed_);
 }
 
 // This test verifies that options can be added (addOption()), retrieved

@@ -39,48 +39,6 @@ using boost::scoped_ptr;
 
 namespace {
 
-/// @brief A class which contains a custom callback function to unpack options.
-///
-/// This is a class used by the tests which verify that the custom callback
-/// functions can be installed to unpack options from a message. When the
-/// callback function is called, the executed_ member is set to true to allow
-/// verification that the callback was really called. Internally, this class
-/// uses libdhcp++ to unpack options so the options parsing algorithm remains
-/// unchanged after installation of the callback.
-class CustomUnpackCallback {
-public:
-
-    /// @brief Constructor
-    ///
-    /// Marks that callback hasn't been called.
-    CustomUnpackCallback()
-        : executed_(false) {
-    }
-
-    /// @brief A callback
-    ///
-    /// Contains custom implementation of the callback.
-    ///
-    /// @param buf a A buffer holding options in on-wire format.
-    /// @param option_space A name of the option space being encapsulated by
-    /// the option being parsed.
-    /// @param [out] options A reference to the collection where parsed options
-    /// will be stored.
-    /// @return An offset to the first byte after last parsed option.
-    size_t execute(const OptionBuffer& buf,
-                   const std::string& option_space,
-                   isc::dhcp::OptionCollection& options) {
-        // Set the executed_ member to true to allow verification that the
-        // callback has been actually called.
-        executed_ = true;
-        // Use default implementation of the unpack algorithm to parse options.
-        return (LibDHCP::unpackOptions4(buf, option_space, options));
-    }
-
-    /// A flag which indicates if callback function has been called.
-    bool executed_;
-};
-
 /// V4 Options being used for pack/unpack testing.
 /// For test simplicity, all selected options have
 /// variable length data so as there are no restrictions
@@ -764,47 +722,6 @@ TEST_F(Pkt4Test, unpackVendorMalformed) {
     shorty[data_len_index] = 9;
     Pkt4Ptr too_short_pkt(new Pkt4(&shorty[0], shorty.size()));
     EXPECT_THROW(too_short_pkt->unpack(), InvalidOptionValue);
-}
-
-// This test verifies that it is possible to specify custom implementation of
-// the option parsing algorithm by installing a callback function.
-TEST_F(Pkt4Test, unpackOptionsWithCallback) {
-    vector<uint8_t> expectedFormat = generateTestPacket2();
-
-    expectedFormat.push_back(0x63);
-    expectedFormat.push_back(0x82);
-    expectedFormat.push_back(0x53);
-    expectedFormat.push_back(0x63);
-
-    for (size_t i = 0; i < sizeof(v4_opts); i++) {
-        expectedFormat.push_back(v4_opts[i]);
-    }
-
-    // now expectedFormat contains fixed format and 5 options
-
-    boost::shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
-                                expectedFormat.size()));
-
-    CustomUnpackCallback cb;
-    pkt->setCallback(boost::bind(&CustomUnpackCallback::execute, &cb,
-                                 _1, _2, _3));
-
-    ASSERT_FALSE(cb.executed_);
-
-    EXPECT_NO_THROW(pkt->unpack());
-
-    EXPECT_TRUE(cb.executed_);
-    verifyParsedOptions(pkt);
-
-    // Reset the indicator to perform another check: uninstall the callback.
-    cb.executed_ = false;
-    // By setting the callback to NULL we effectively uninstall the callback.
-    pkt->setCallback(NULL);
-    // Do another unpack.
-    EXPECT_NO_THROW(pkt->unpack());
-    // Callback should not be executed.
-    EXPECT_FALSE(cb.executed_);
-
 }
 
 // This test verifies methods that are used for manipulating meta fields

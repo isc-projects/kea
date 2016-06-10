@@ -201,17 +201,9 @@ Pkt4::unpack() {
 
     // Use readVector because a function which parses option requires
     // a vector as an input.
-    size_t offset;
     buffer_in.readVector(opts_buffer, opts_len);
-    if (callback_.empty()) {
-        offset = LibDHCP::unpackOptions4(opts_buffer, "dhcp4", options_);
-    } else {
-        // The last two arguments are set to NULL because they are
-        // specific to DHCPv6 options parsing. They are unused for
-        // DHCPv4 case. In DHCPv6 case they hold are the relay message
-        // offset and length.
-        offset = callback_(opts_buffer, "dhcp4", options_, NULL, NULL);
-    }
+
+    size_t offset = LibDHCP::unpackOptions4(opts_buffer, "dhcp4", options_);
 
     // If offset is not equal to the size and there is no DHO_END,
     // then something is wrong here. We either parsed past input
