@@ -46,8 +46,6 @@ using namespace isc::eval;
   OPTION "option"
   RELAY4 "relay4"
   RELAY6 "relay6"
-  PEERADDR "peeraddr"
-  LINKADDR "linkaddr"
   LBRACKET "["
   RBRACKET "]"
   DOT "."
@@ -62,13 +60,15 @@ using namespace isc::eval;
   GIADDR "giaddr"
   YIADDR "yiaddr"
   SIADDR "siaddr"
+  PKT6 "pkt6"
+  MSGTYPE "msgtype"
+  TRANSID "transid"
+  PEERADDR "peeraddr"
+  LINKADDR "linkaddr"
   SUBSTRING "substring"
   ALL "all"
   COMA ","
   CONCAT "concat"
-  PKT6 "pkt6"
-  MSGTYPE "msgtype"
-  TRANSID "transid"
 ;
 
 %token <std::string> STRING "constant string"
@@ -218,6 +218,16 @@ string_expr : STRING
                      }
                   }
 
+            | PKT4 "." pkt4_field
+                  {
+                      TokenPtr pkt4_field(new TokenPkt4($3));
+                      ctx.expression.push_back(pkt4_field);
+                  }
+            | PKT6 "." pkt6_field
+                  {
+                      TokenPtr pkt6_field(new TokenPkt6($3));
+                      ctx.expression.push_back(pkt6_field);
+                  }
             | RELAY6 "[" nest_level "]" "." relay6_field
                   {
                      switch (ctx.getUniverse()) {
@@ -233,16 +243,6 @@ string_expr : STRING
                      }
                   }
 
-            | PKT4 "." pkt4_field
-                  {
-                      TokenPtr pkt4_field(new TokenPkt4($3));
-                      ctx.expression.push_back(pkt4_field);
-                  }
-            | PKT6 "." pkt6_field
-                  {
-                      TokenPtr pkt6_field(new TokenPkt6($3));
-                      ctx.expression.push_back(pkt6_field);
-                  }
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
                   {
                       TokenPtr sub(new TokenSubstring());
@@ -275,6 +275,15 @@ option_repr_type : TEXT
                       }
                  ;
 
+nest_level : INTEGER
+                 {
+                     $$ = ctx.convertNestLevelNumber($1, @1);
+                 }
+                 // Eventually we may add strings to handle different
+                 // ways of choosing from which relay we want to extract
+                 // an option or field.
+           ;
+
 pkt4_field : CHADDR
                 {
                     $$ = TokenPkt4::CHADDR;
@@ -305,6 +314,26 @@ pkt4_field : CHADDR
                 }
            ;
 
+pkt6_field : MSGTYPE
+                 {
+                     $$ = TokenPkt6::MSGTYPE;
+                 }
+           | TRANSID
+                 {
+                     $$ = TokenPkt6::TRANSID;
+                 }
+           ;
+
+relay6_field : PEERADDR
+                   {
+                       $$ = TokenRelay6Field::PEERADDR;
+                   }
+             | LINKADDR
+                   {
+                       $$ = TokenRelay6Field::LINKADDR;
+                   }
+             ;
+
 start_expr : INTEGER
                  {
                      TokenPtr str(new TokenString($1));
@@ -323,23 +352,6 @@ length_expr : INTEGER
                      ctx.expression.push_back(str);
                  }
             ;
-
-relay6_field : PEERADDR { $$ = TokenRelay6Field::PEERADDR; }
-             | LINKADDR { $$ = TokenRelay6Field::LINKADDR; }
-             ;
-
-nest_level : INTEGER
-                 {
-		 $$ = ctx.convertNestLevelNumber($1, @1);
-                 }
-                 // Eventually we may add strings to handle different
-                 // ways of choosing from which relay we want to extract
-                 // an option or field.
-           ;
-
-pkt6_field:MSGTYPE { $$ = TokenPkt6::MSGTYPE; }
-          | TRANSID { $$ = TokenPkt6::TRANSID; }
-          ;
 
 %%
 void

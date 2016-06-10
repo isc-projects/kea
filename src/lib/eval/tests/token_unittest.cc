@@ -835,6 +835,56 @@ TEST_F(TokenTest, relay4RAIOnly) {
     EXPECT_TRUE(checkFile());
 }
 
+// This test checks if we can properly extract an option
+// from relay encapsulations.  Our packet has two relay
+// encapsulations.  Both include a common option with the
+// original message (option 100) and both include their
+// own option (101 and 102).  We attempt to extract the
+// options and compare them to expected values.  We also
+// try to extract an option from an encapsulation
+// that doesn't exist (level 2), this should result in an empty
+// string.
+TEST_F(TokenTest, relay6Option) {
+    // We start by adding a set of relay encapsulations to the
+    // basic v6 packet.
+    addRelay6Encapsulations();
+
+    // Then we work our way through the set of choices
+    // Level 0 both options it has and the check that
+    // the checking for an option it doesn't have results
+    // in an empty string.
+    verifyRelay6Option(0, 100, TokenOption::TEXTUAL, "hundred.zero");
+    verifyRelay6Option(0, 100, TokenOption::EXISTS, "true");
+    verifyRelay6Option(0, 101, TokenOption::TEXTUAL, "hundredone.zero");
+    verifyRelay6Option(0, 102, TokenOption::TEXTUAL, "");
+    verifyRelay6Option(0, 102, TokenOption::EXISTS, "false");
+
+    // Level 1, again both options it has and the one for level 0
+    verifyRelay6Option(1, 100, TokenOption::TEXTUAL, "hundred.one");
+    verifyRelay6Option(1, 101, TokenOption::TEXTUAL, "");
+    verifyRelay6Option(1, 102, TokenOption::TEXTUAL, "hundredtwo.one");
+
+    // Level 2, no encapsulation so no options
+    verifyRelay6Option(2, 100, TokenOption::TEXTUAL, "");
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.zero'");
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'true'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value 'hundredone.zero'");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value ''");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'false'");
+
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.one'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value ''");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'hundredtwo.one'");
+
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value ''");
+
+    EXPECT_TRUE(checkFile());
+}
+
 // Verifies if the DHCPv4 packet fields can be extracted.
 TEST_F(TokenTest, pkt4Fields) {
     pkt4_->setGiaddr(IOAddress("192.0.2.1"));
@@ -927,6 +977,116 @@ TEST_F(TokenTest, pkt4Fields) {
     EXPECT_TRUE(checkFile());
 }
 
+// Verifies if the DHCPv6 packet fields can be extracted.
+TEST_F(TokenTest, pkt6Fields) {
+    // The default test creates a v6 DHCPV6_SOLICIT packet with a
+    // transaction id of 12345.
+
+    // Check the message type
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::MSGTYPE)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    uint32_t expected = htonl(1);
+    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
+
+    // Check the transaction id field
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    expected = htonl(12345);
+    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
+
+    // Check that working with a v4 packet generates an error
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_PKT6 Pushing PKT6 field msgtype with value 0x00000001");
+    addString("EVAL_DEBUG_PKT6 Pushing PKT6 field transid with value 0x00003039");
+
+    EXPECT_TRUE(checkFile());
+}
+
+// This test checks if we can properly extract the link and peer
+// address fields from relay encapsulations.  Our packet has
+// two relay encapsulations.  We attempt to extract the two
+// fields from both of the encapsulations and compare them.
+// We also try to extract one of the fields from an encapsulation
+// that doesn't exist (level 2), this should result in an empty
+// string.
+TEST_F(TokenTest, relay6Field) {
+    // Values for the address results
+    uint8_t zeroaddr[] = { 0, 0, 0, 0, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 0 };
+    uint8_t linkaddr[] = { 0, 1, 0, 0, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 1 };
+    uint8_t peeraddr[] = { 0, 1, 0, 0, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 2 };
+
+    // We start by adding a set of relay encapsulations to the
+    // basic v6 packet.
+    addRelay6Encapsulations();
+
+    // Then we work our way through the set of choices
+    // Level 0 both link and peer address should be 0::0
+    verifyRelay6Eval(0, TokenRelay6Field::LINKADDR, 16, zeroaddr);
+    verifyRelay6Eval(0, TokenRelay6Field::PEERADDR, 16, zeroaddr);
+
+    // Level 1 link and peer should have different non-zero addresses
+    verifyRelay6Eval(1, TokenRelay6Field::LINKADDR, 16, linkaddr);
+    verifyRelay6Eval(1, TokenRelay6Field::PEERADDR, 16, peeraddr);
+
+    // Level 2 has no encapsulation so the address should be zero length
+    verifyRelay6Eval(2, TokenRelay6Field::LINKADDR, 0, zeroaddr);
+
+    // Lets check that the layout of the address returned by the
+    // token matches that of the TokenIpAddress
+    TokenPtr trelay;
+    TokenPtr taddr;
+    TokenPtr tequal;
+    ASSERT_NO_THROW(trelay.reset(new TokenRelay6Field(1, TokenRelay6Field::LINKADDR)));
+    ASSERT_NO_THROW(taddr.reset(new TokenIpAddress("1::1")));
+    ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
+
+    EXPECT_NO_THROW(trelay->evaluate(*pkt6_, values_));
+    EXPECT_NO_THROW(taddr->evaluate(*pkt6_, values_));
+    EXPECT_NO_THROW(tequal->evaluate(*pkt6_, values_));
+
+    // We should have a single value on the stack and it should be "true"
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // be tidy
+    clearStack();
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 0 "
+              "with value 0x00000000000000000000000000000000");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 0 "
+              "with value 0x00000000000000000000000000000000");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
+              "with value 0x00010000000000000000000000000001");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 1 "
+              "with value 0x00010000000000000000000000000002");
+    addString("EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field linkaddr nest 2 "
+              "with value 0x");
+
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
+              "with value 0x00010000000000000000000000000001");
+    addString("EVAL_DEBUG_IPADDRESS Pushing IPAddress "
+              "0x00010000000000000000000000000001");
+    addString("EVAL_DEBUG_EQUAL Popping 0x00010000000000000000000000000001 "
+              "and 0x00010000000000000000000000000001 pushing result 'true'");
+
+    EXPECT_TRUE(checkFile());
+}
+
 // This test checks if a token representing an == operator is able to
 // compare two values (with incorrectly built stack).
 TEST_F(TokenTest, optionEqualInvalid) {
@@ -985,206 +1145,6 @@ TEST_F(TokenTest, optionEqualTrue) {
     // for comparison
     addString("EVAL_DEBUG_EQUAL Popping 0x666F6F and 0x666F6F "
               "pushing result 'true'");
-    EXPECT_TRUE(checkFile());
-}
-
-// This test checks if a token representing a not is able to
-// negate a boolean value (with incorrectly built stack).
-TEST_F(TokenTest, operatorNotInvalid) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenNot()));
-
-    // CASE 1: The stack is empty.
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
-
-    // CASE 2: The top value is not a boolean
-    values_.push("foo");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
-}
-
-// This test checks if a token representing a not operator is able to
-// negate a boolean value.
-TEST_F(TokenTest, operatorNot) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenNot()));
-
-    values_.push("true");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-
-    // After evaluation there should be the negation of the value.
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("false", values_.top());
-
-    // Double negation is identity.
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("true", values_.top());
-
-    // Check that the debug output was correct.  Add the strings
-    // to the test vector in the class and then call checkFile
-    // for comparison
-    addString("EVAL_DEBUG_NOT Popping 'true' pushing 'false'");
-    addString("EVAL_DEBUG_NOT Popping 'false' pushing 'true'");
-    EXPECT_TRUE(checkFile());
-}
-
-// This test checks if a token representing an and is able to
-// conjugate two values (with incorrectly built stack).
-TEST_F(TokenTest, operatorAndInvalid) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
-
-    // CASE 1: There's not enough values on the stack. and is an operator that
-    // takes two parameters. There are 0 on the stack.
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
-
-    // CASE 2: One value is still not enough.
-    values_.push("foo");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
-
-    // CASE 3: The two values must be logical
-    values_.push("true");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
-
-    // Swap the 2 values
-    values_.push("true");
-    values_.push("foo");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
-}
-
-// This test checks if a token representing an and operator is able to
-// conjugate false with another logical
-TEST_F(TokenTest, operatorAndFalse) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
-
-    values_.push("true");
-    values_.push("false");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-
-    // After evaluation there should be a single "false" value
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("false", values_.top());
-
-    // After true and false, check false and true
-    values_.push("true");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("false", values_.top());
-
-    // And false and false
-    values_.push("false");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("false", values_.top());
-
-    // Check that the debug output was correct.  Add the strings
-    // to the test vector in the class and then call checkFile
-    // for comparison
-    addString("EVAL_DEBUG_AND Popping 'false' and 'true' pushing 'false'");
-    addString("EVAL_DEBUG_AND Popping 'true' and 'false' pushing 'false'");
-    addString("EVAL_DEBUG_AND Popping 'false' and 'false' pushing 'false'");
-    EXPECT_TRUE(checkFile());
-}
-
-// This test checks if a token representing an and is able to
-// conjugate two true values.
-TEST_F(TokenTest, operatorAndTrue) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
-
-    values_.push("true");
-    values_.push("true");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-
-    // After evaluation there should be a single "true" value
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("true", values_.top());
-
-    // Check that the debug output was correct.  Add the strings
-    // to the test vector in the class and then call checkFile
-    // for comparison
-    addString("EVAL_DEBUG_AND Popping 'true' and 'true' pushing 'true'");
-    EXPECT_TRUE(checkFile());
-}
-
-// This test checks if a token representing an or is able to
-// combinate two values (with incorrectly built stack).
-TEST_F(TokenTest, operatorOrInvalid) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenOr()));
-
-    // CASE 1: There's not enough values on the stack. or is an operator that
-    // takes two parameters. There are 0 on the stack.
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
-
-    // CASE 2: One value is still not enough.
-    values_.push("foo");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
-
-    // CASE 3: The two values must be logical
-    values_.push("true");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
-
-    // Swap the 2 values
-    values_.push("true");
-    values_.push("foo");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
-}
-
-// This test checks if a token representing an or is able to
-// conjugate two false values.
-TEST_F(TokenTest, operatorOrFalse) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenOr()));
-
-    values_.push("false");
-    values_.push("false");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-
-    // After evaluation there should be a single "false" value
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("false", values_.top());
-
-    // Check that the debug output was correct.  Add the strings
-    // to the test vector in the class and then call checkFile
-    // for comparison
-    addString("EVAL_DEBUG_OR Popping 'false' and 'false' pushing 'false'");
-    EXPECT_TRUE(checkFile());
-}
-
-// This test checks if a token representing an == operator is able to
-// conjugate true with another logical
-TEST_F(TokenTest, operatorOrTrue) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenOr()));
-
-    values_.push("false");
-    values_.push("true");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-
-    // After evaluation there should be a single "true" value
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("true", values_.top());
-
-    // After false or true, checks true or false
-    values_.push("false");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("true", values_.top());
-
-    // And true or true
-    values_.push("true");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("true", values_.top());
-
-    // Check that the debug output was correct.  Add the strings
-    // to the test vector in the class and then call checkFile
-    // for comparison
-    addString("EVAL_DEBUG_OR Popping 'true' and 'false' pushing 'true'");
-    addString("EVAL_DEBUG_OR Popping 'false' and 'true' pushing 'true'");
-    addString("EVAL_DEBUG_OR Popping 'true' and 'true' pushing 'true'");
     EXPECT_TRUE(checkFile());
 }
 
@@ -1512,163 +1472,204 @@ TEST_F(TokenTest, concat) {
     EXPECT_TRUE(checkFile());
 }
 
-// This test checks if we can properly extract the link and peer
-// address fields from relay encapsulations.  Our packet has
-// two relay encapsulations.  We attempt to extract the two
-// fields from both of the encapsulations and compare them.
-// We also try to extract one of the fields from an encapsulation
-// that doesn't exist (level 2), this should result in an empty
-// string.
-TEST_F(TokenTest, relay6Field) {
-    // Values for the address results
-    uint8_t zeroaddr[] = { 0, 0, 0, 0, 0, 0, 0, 0,
-                           0, 0, 0, 0, 0, 0, 0, 0 };
-    uint8_t linkaddr[] = { 0, 1, 0, 0, 0, 0, 0, 0,
-                           0, 0, 0, 0, 0, 0, 0, 1 };
-    uint8_t peeraddr[] = { 0, 1, 0, 0, 0, 0, 0, 0,
-                           0, 0, 0, 0, 0, 0, 0, 2 };
+// This test checks if a token representing a not is able to
+// negate a boolean value (with incorrectly built stack).
+TEST_F(TokenTest, operatorNotInvalid) {
 
-    // We start by adding a set of relay encapsulations to the
-    // basic v6 packet.
-    addRelay6Encapsulations();
+    ASSERT_NO_THROW(t_.reset(new TokenNot()));
 
-    // Then we work our way through the set of choices
-    // Level 0 both link and peer address should be 0::0
-    verifyRelay6Eval(0, TokenRelay6Field::LINKADDR, 16, zeroaddr);
-    verifyRelay6Eval(0, TokenRelay6Field::PEERADDR, 16, zeroaddr);
+    // CASE 1: The stack is empty.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
 
-    // Level 1 link and peer should have different non-zero addresses
-    verifyRelay6Eval(1, TokenRelay6Field::LINKADDR, 16, linkaddr);
-    verifyRelay6Eval(1, TokenRelay6Field::PEERADDR, 16, peeraddr);
+    // CASE 2: The top value is not a boolean
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
 
-    // Level 2 has no encapsulation so the address should be zero length
-    verifyRelay6Eval(2, TokenRelay6Field::LINKADDR, 0, zeroaddr);
+// This test checks if a token representing a not operator is able to
+// negate a boolean value.
+TEST_F(TokenTest, operatorNot) {
 
-    // Lets check that the layout of the address returned by the
-    // token matches that of the TokenIpAddress
-    TokenPtr trelay;
-    TokenPtr taddr;
-    TokenPtr tequal;
-    ASSERT_NO_THROW(trelay.reset(new TokenRelay6Field(1, TokenRelay6Field::LINKADDR)));
-    ASSERT_NO_THROW(taddr.reset(new TokenIpAddress("1::1")));
-    ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
+    ASSERT_NO_THROW(t_.reset(new TokenNot()));
 
-    EXPECT_NO_THROW(trelay->evaluate(*pkt6_, values_));
-    EXPECT_NO_THROW(taddr->evaluate(*pkt6_, values_));
-    EXPECT_NO_THROW(tequal->evaluate(*pkt6_, values_));
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
 
-    // We should have a single value on the stack and it should be "true"
+    // After evaluation there should be the negation of the value.
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // Double negation is identity.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("true", values_.top());
 
-    // be tidy
-    clearStack();
-
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 0 "
-              "with value 0x00000000000000000000000000000000");
-    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 0 "
-              "with value 0x00000000000000000000000000000000");
-    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
-              "with value 0x00010000000000000000000000000001");
-    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 1 "
-              "with value 0x00010000000000000000000000000002");
-    addString("EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field linkaddr nest 2 "
-              "with value 0x");
-
-    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
-              "with value 0x00010000000000000000000000000001");
-    addString("EVAL_DEBUG_IPADDRESS Pushing IPAddress "
-              "0x00010000000000000000000000000001");
-    addString("EVAL_DEBUG_EQUAL Popping 0x00010000000000000000000000000001 "
-              "and 0x00010000000000000000000000000001 pushing result 'true'");
-
+    addString("EVAL_DEBUG_NOT Popping 'true' pushing 'false'");
+    addString("EVAL_DEBUG_NOT Popping 'false' pushing 'true'");
     EXPECT_TRUE(checkFile());
 }
 
-// This test checks if we can properly extract an option
-// from relay encapsulations.  Our packet has two relay
-// encapsulations.  Both include a common option with the
-// original message (option 100) and both include their
-// own option (101 and 102).  We attempt to extract the
-// options and compare them to expected values.  We also
-// try to extract an option from an encapsulation
-// that doesn't exist (level 2), this should result in an empty
-// string.
-TEST_F(TokenTest, relay6Option) {
-    // We start by adding a set of relay encapsulations to the
-    // basic v6 packet.
-    addRelay6Encapsulations();
+// This test checks if a token representing an and is able to
+// conjugate two values (with incorrectly built stack).
+TEST_F(TokenTest, operatorAndInvalid) {
 
-    // Then we work our way through the set of choices
-    // Level 0 both options it has and the check that
-    // the checking for an option it doesn't have results
-    // in an empty string.
-    verifyRelay6Option(0, 100, TokenOption::TEXTUAL, "hundred.zero");
-    verifyRelay6Option(0, 100, TokenOption::EXISTS, "true");
-    verifyRelay6Option(0, 101, TokenOption::TEXTUAL, "hundredone.zero");
-    verifyRelay6Option(0, 102, TokenOption::TEXTUAL, "");
-    verifyRelay6Option(0, 102, TokenOption::EXISTS, "false");
+    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
 
-    // Level 1, again both options it has and the one for level 0
-    verifyRelay6Option(1, 100, TokenOption::TEXTUAL, "hundred.one");
-    verifyRelay6Option(1, 101, TokenOption::TEXTUAL, "");
-    verifyRelay6Option(1, 102, TokenOption::TEXTUAL, "hundredtwo.one");
+    // CASE 1: There's not enough values on the stack. and is an operator that
+    // takes two parameters. There are 0 on the stack.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
 
-    // Level 2, no encapsulation so no options
-    verifyRelay6Option(2, 100, TokenOption::TEXTUAL, "");
+    // CASE 2: One value is still not enough.
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
 
-    // Check that the debug output was correct.  Add the strings
-    // to the test vector in the class and then call checkFile
-    // for comparison
-    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.zero'");
-    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'true'");
-    addString("EVAL_DEBUG_OPTION Pushing option 101 with value 'hundredone.zero'");
-    addString("EVAL_DEBUG_OPTION Pushing option 102 with value ''");
-    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'false'");
-
-    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.one'");
-    addString("EVAL_DEBUG_OPTION Pushing option 101 with value ''");
-    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'hundredtwo.one'");
-
-    addString("EVAL_DEBUG_OPTION Pushing option 100 with value ''");
-
-    EXPECT_TRUE(checkFile());
-}
-
-// Verifies if the DHCPv6 packet fields can be extracted.
-TEST_F(TokenTest, pkt6Fields) {
-    // The default test creates a v6 DHCPV6_SOLICIT packet with a
-    // transaction id of 12345.
-
-    // Check the message type
-    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::MSGTYPE)));
-    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
-    ASSERT_EQ(1, values_.size());
-    uint32_t expected = htonl(1);
-    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
-
-    // Check the transaction id field
-    clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
-    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
-    ASSERT_EQ(1, values_.size());
-    expected = htonl(12345);
-    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
-
-    // Check that working with a v4 packet generates an error
-    clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
+    // CASE 3: The two values must be logical
+    values_.push("true");
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
 
+    // Swap the 2 values
+    values_.push("true");
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
+
+// This test checks if a token representing an and operator is able to
+// conjugate false with another logical
+TEST_F(TokenTest, operatorAndFalse) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
+
+    values_.push("true");
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "false" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // After true and false, check false and true
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // And false and false
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_PKT6 Pushing PKT6 field msgtype with value 0x00000001");
-    addString("EVAL_DEBUG_PKT6 Pushing PKT6 field transid with value 0x00003039");
-
+    addString("EVAL_DEBUG_AND Popping 'false' and 'true' pushing 'false'");
+    addString("EVAL_DEBUG_AND Popping 'true' and 'false' pushing 'false'");
+    addString("EVAL_DEBUG_AND Popping 'false' and 'false' pushing 'false'");
     EXPECT_TRUE(checkFile());
 }
+
+// This test checks if a token representing an and is able to
+// conjugate two true values.
+TEST_F(TokenTest, operatorAndTrue) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
+
+    values_.push("true");
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "true" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_AND Popping 'true' and 'true' pushing 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test checks if a token representing an or is able to
+// combinate two values (with incorrectly built stack).
+TEST_F(TokenTest, operatorOrInvalid) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenOr()));
+
+    // CASE 1: There's not enough values on the stack. or is an operator that
+    // takes two parameters. There are 0 on the stack.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 2: One value is still not enough.
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 3: The two values must be logical
+    values_.push("true");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // Swap the 2 values
+    values_.push("true");
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
+
+// This test checks if a token representing an or is able to
+// conjugate two false values.
+TEST_F(TokenTest, operatorOrFalse) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenOr()));
+
+    values_.push("false");
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "false" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OR Popping 'false' and 'false' pushing 'false'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test checks if a token representing an == operator is able to
+// conjugate true with another logical
+TEST_F(TokenTest, operatorOrTrue) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenOr()));
+
+    values_.push("false");
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "true" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // After false or true, checks true or false
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // And true or true
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OR Popping 'true' and 'false' pushing 'true'");
+    addString("EVAL_DEBUG_OR Popping 'false' and 'true' pushing 'true'");
+    addString("EVAL_DEBUG_OR Popping 'true' and 'true' pushing 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
 };

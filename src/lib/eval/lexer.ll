@@ -144,8 +144,6 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "option"    return isc::eval::EvalParser::make_OPTION(loc);
 "relay4"    return isc::eval::EvalParser::make_RELAY4(loc);
 "relay6"    return isc::eval::EvalParser::make_RELAY6(loc);
-"peeraddr"  return isc::eval::EvalParser::make_PEERADDR(loc);
-"linkaddr"  return isc::eval::EvalParser::make_LINKADDR(loc);
 "text"      return isc::eval::EvalParser::make_TEXT(loc);
 "hex"       return isc::eval::EvalParser::make_HEX(loc);
 "exists"    return isc::eval::EvalParser::make_EXISTS(loc);
@@ -157,6 +155,11 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "giaddr"    return isc::eval::EvalParser::make_GIADDR(loc);
 "yiaddr"    return isc::eval::EvalParser::make_YIADDR(loc);
 "siaddr"    return isc::eval::EvalParser::make_SIADDR(loc);
+"pkt6"      return isc::eval::EvalParser::make_PKT6(loc);
+"msgtype"   return isc::eval::EvalParser::make_MSGTYPE(loc);
+"transid"   return isc::eval::EvalParser::make_TRANSID(loc);
+"peeraddr"  return isc::eval::EvalParser::make_PEERADDR(loc);
+"linkaddr"  return isc::eval::EvalParser::make_LINKADDR(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
 "all"       return isc::eval::EvalParser::make_ALL(loc);
 "concat"    return isc::eval::EvalParser::make_CONCAT(loc);
@@ -169,10 +172,6 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "["         return isc::eval::EvalParser::make_LBRACKET(loc);
 "]"         return isc::eval::EvalParser::make_RBRACKET(loc);
 ","         return isc::eval::EvalParser::make_COMA(loc);
-
-"pkt6"      return isc::eval::EvalParser::make_PKT6(loc);
-"msgtype"   return isc::eval::EvalParser::make_MSGTYPE(loc);
-"transid"   return isc::eval::EvalParser::make_TRANSID(loc);
 
 .          driver.error (loc, "Invalid character: " + std::string(yytext));
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);
