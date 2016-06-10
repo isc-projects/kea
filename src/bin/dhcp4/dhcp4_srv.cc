@@ -654,15 +654,6 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
     isc::stats::StatsMgr::instance().addValue("pkt4-received",
                                               static_cast<int64_t>(1));
 
-    // In order to parse the DHCP options, the server needs to use some
-    // configuration information such as: existing option spaces, option
-    // definitions etc. This is the kind of information which is not
-    // available in the libdhcp, so we need to supply our own implementation
-    // of the option parsing function here, which would rely on the
-    // configuration data.
-    query->setCallback(boost::bind(&Dhcpv4Srv::unpackOptions, this,
-                                   _1, _2, _3));
-
     bool skip_unpack = false;
 
     // The packet has just been received so contains the uninterpreted wire
@@ -2353,102 +2344,6 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
                   " provided in message "
                   << query->getName());
     }
-}
-
-size_t
-Dhcpv4Srv::unpackOptions(const OptionBuffer& buf,
-                         const std::string& option_space,
-                         isc::dhcp::OptionCollection& options) {
-    size_t offset = 0;
-
-    OptionDefContainer option_defs;
-    if (option_space == "dhcp4") {
-        // Get the list of standard option definitions.
-        option_defs = LibDHCP::getOptionDefs(Option::V4);
-    } else if (!option_space.empty()) {
-        OptionDefContainerPtr option_defs_ptr = CfgMgr::instance()
-            .getCurrentCfg()->getCfgOptionDef()->getAll(option_space);
-        if (option_defs_ptr != NULL) {
-            option_defs = *option_defs_ptr;
-        }
-    }
-    // Get the search index #1. It allows to search for option definitions
-    // using option code.
-    const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
-
-    // The buffer being read comprises a set of options, each starting with
-    // a one-byte type code and a one-byte length field.
-    while (offset + 1 <= buf.size()) {
-        uint8_t opt_type = buf[offset++];
-
-        // DHO_END is a special, one octet long option
-        if (opt_type == DHO_END)
-            return (offset); // just return. Don't need to add DHO_END option
-
-        // DHO_PAD is just a padding after DHO_END. Let's continue parsing
-        // in case we receive a message without DHO_END.
-        if (opt_type == DHO_PAD)
-            continue;
-
-        if (offset + 1 > buf.size()) {
-            // opt_type must be cast to integer so as it is not treated as
-            // unsigned char value (a number is presented in error message).
-            isc_throw(OutOfRange, "Attempt to parse truncated option "
-                      << static_cast<int>(opt_type));
-        }
-
-        uint8_t opt_len =  buf[offset++];
-        if (offset + opt_len > buf.size()) {
-
-            // We peeked at the option header of the next option, but discovered
-            // that it would end up beyond buffer end, so the option is
-            // truncated. Hence we can't parse it. Therefore we revert
-            // back by two bytes (as if we never parsed them).
-            return (offset - 2);
-
-            // isc_throw(OutOfRange, "Option parse failed. Tried to parse "
-            //          << offset + opt_len << " bytes from " << buf.size()
-            //          << "-byte long buffer.");
-        }
-
-        // Get all definitions with the particular option code. Note that option code
-        // is non-unique within this container however at this point we expect
-        // to get one option definition with the particular code. If more are
-        // returned we report an error.
-        const OptionDefContainerTypeRange& range = idx.equal_range(opt_type);
-        // Get the number of returned option definitions for the option code.
-        size_t num_defs = distance(range.first, range.second);
-
-        OptionPtr opt;
-        if (num_defs > 1) {
-            // Multiple options of the same code are not supported right now!
-            isc_throw(isc::Unexpected, "Internal error: multiple option definitions"
-                      " for option type " << static_cast<int>(opt_type)
-                      << " returned. Currently it is not supported to initialize"
-                      << " multiple option definitions for the same option code."
-                      << " This will be supported once support for option spaces"
-                      << " is implemented");
-        } else if (num_defs == 0) {
-            opt = OptionPtr(new Option(Option::V4, opt_type,
-                                       buf.begin() + offset,
-                                       buf.begin() + offset + opt_len));
-            opt->setEncapsulatedSpace("dhcp4");
-        } else {
-            // The option definition has been found. Use it to create
-            // the option instance from the provided buffer chunk.
-            const OptionDefinitionPtr& def = *(range.first);
-            assert(def);
-            opt = def->optionFactory(Option::V4, opt_type,
-                                     buf.begin() + offset,
-                                     buf.begin() + offset + opt_len,
-                                     boost::bind(&Dhcpv4Srv::unpackOptions,
-                                                 this, _1, _2, _3));
-        }
-
-        options.insert(std::make_pair(opt_type, opt));
-        offset += opt_len;
-    }
-    return (offset);
 }
 
 void Dhcpv4Srv::classifyByVendor(const Pkt4Ptr& pkt, std::string& classes) {

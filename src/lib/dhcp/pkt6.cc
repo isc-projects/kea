@@ -336,15 +336,7 @@ Pkt6::unpackMsg(OptionBuffer::const_iterator begin,
 
     // If custom option parsing function has been set, use this function
     // to parse options. Otherwise, use standard function from libdhcp.
-    size_t offset;
-    if (callback_.empty()) {
-        offset = LibDHCP::unpackOptions6(opt_buffer, "dhcp6", options_);
-    } else {
-        // The last two arguments hold the DHCPv6 Relay message offset and
-        // length. Setting them to NULL because we are dealing with the
-        // not-relayed message.
-        offset = callback_(opt_buffer, "dhcp6", options_, NULL, NULL);
-    }
+    size_t offset = LibDHCP::unpackOptions6(opt_buffer, "dhcp6", options_);
 
     // If offset is not equal to the size, then something is wrong here. We
     // either parsed past input buffer (bug in our code) or we haven't parsed
@@ -394,13 +386,8 @@ Pkt6::unpackRelayMsg() {
 
         // If custom option parsing function has been set, use this function
         // to parse options. Otherwise, use standard function from libdhcp.
-        if (callback_.empty()) {
-            LibDHCP::unpackOptions6(opt_buffer, "dhcp6", relay.options_,
-                                    &relay_msg_offset, &relay_msg_len);
-        } else {
-            callback_(opt_buffer, "dhcp6", relay.options_,
-                      &relay_msg_offset, &relay_msg_len);
-        }
+        LibDHCP::unpackOptions6(opt_buffer, "dhcp6", relay.options_,
+                                &relay_msg_offset, &relay_msg_len);
 
         /// @todo: check that each option appears at most once
         //relay.interface_id_ = options->getOption(D6O_INTERFACE_ID);

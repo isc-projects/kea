@@ -469,15 +469,6 @@ void Dhcpv6Srv::run_one() {
 
 void
 Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
-    // In order to parse the DHCP options, the server needs to use some
-    // configuration information such as: existing option spaces, option
-    // definitions etc. This is the kind of information which is not
-    // available in the libdhcp, so we need to supply our own implementation
-    // of the option parsing function here, which would rely on the
-    // configuration data.
-    query->setCallback(boost::bind(&Dhcpv6Srv::unpackOptions, this, _1, _2,
-                                   _3, _4, _5));
-
     bool skip_unpack = false;
 
     // The packet has just been received so contains the uninterpreted wire
@@ -1604,11 +1595,9 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(it->second);
         if (!iaaddr) {
             // That's weird. Option code was ok, but the object type was not.
-            // As we use Dhcpv6Srv::unpackOptions() that is guaranteed to use
-            // Option6IAAddr for D6O_IAADDR, this should never happen. The only
-            // case would be with badly mis-implemented hook libraries that
-            // insert invalid option objects. There's no way to protect against
-            // this.
+            // This should never happen. The only case would be with badly
+            // mis-implemented hook libraries that insert invalid option objects.
+            // There's no way to protect against this.
             continue;
         }
         ctx.hints_.push_back(make_pair(iaaddr->getAddress(), 128));
@@ -1758,11 +1747,9 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         Option6IAPrefixPtr prf = boost::dynamic_pointer_cast<Option6IAPrefix>(it->second);
         if (!prf) {
             // That's weird. Option code was ok, but the object type was not.
-            // As we use Dhcpv6Srv::unpackOptions() that is guaranteed to use
-            // Option6IAPrefix for D6O_IAPREFIX, this should never happen. The only
-            // case would be with badly mis-implemented hook libraries that
-            // insert invalid option objects. There's no way to protect against
-            // this.
+            // This should never happen. The only case would be with badly
+            // mis-implemented hook libraries that insert invalid option objects.
+            // There's no way to protect against this.
             continue;
         }
 
@@ -2777,108 +2764,6 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     appendRequestedOptions(inf_request, reply, co_list);
 
     return (reply);
-}
-
-size_t
-Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
-                         const std::string& option_space,
-                         isc::dhcp::OptionCollection& options,
-                         size_t* relay_msg_offset,
-                         size_t* relay_msg_len) {
-    size_t offset = 0;
-    size_t length = buf.size();
-
-    OptionDefContainer option_defs;
-    if (option_space == "dhcp6") {
-        // Get the list of standard option definitions.
-        option_defs = LibDHCP::getOptionDefs(Option::V6);
-    } else if (!option_space.empty()) {
-        OptionDefContainerPtr option_defs_ptr =
-            CfgMgr::instance().getCurrentCfg()->getCfgOptionDef()->
-            getAll(option_space);
-        if (option_defs_ptr != NULL) {
-            option_defs = *option_defs_ptr;
-        }
-    }
-
-    // Get the search index #1. It allows to search for option definitions
-    // using option code.
-    const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
-
-    // The buffer being read comprises a set of options, each starting with
-    // a two-byte type code and a two-byte length field.
-    while (offset + 4 <= length) {
-        // At this point, from the while condition, we know that there
-        // are at least 4 bytes available following offset in the
-        // buffer.
-        uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
-        offset += 2;
-
-        uint16_t opt_len = isc::util::readUint16(&buf[offset], 2);
-        offset += 2;
-
-        if (offset + opt_len > length) {
-            // @todo: consider throwing exception here.
-
-            // We peeked at the option header of the next option, but discovered
-            // that it would end up beyond buffer end, so the option is
-            // truncated. Hence we can't parse it. Therefore we revert
-            // by by those four bytes (as if we never parsed them).
-            return (offset - 4);
-        }
-
-        if (opt_type == D6O_RELAY_MSG && relay_msg_offset && relay_msg_len) {
-            // remember offset of the beginning of the relay-msg option
-            *relay_msg_offset = offset;
-            *relay_msg_len = opt_len;
-
-            // do not create that relay-msg option
-            offset += opt_len;
-            continue;
-        }
-
-        // Get all definitions with the particular option code. Note that option
-        // code is non-unique within this container however at this point we
-        // expect to get one option definition with the particular code. If more
-        // are returned we report an error.
-        const OptionDefContainerTypeRange& range = idx.equal_range(opt_type);
-        // Get the number of returned option definitions for the option code.
-        size_t num_defs = distance(range.first, range.second);
-
-        OptionPtr opt;
-        if (num_defs > 1) {
-            // Multiple options of the same code are not supported right now!
-            isc_throw(isc::Unexpected, "Internal error: multiple option definitions"
-                      " for option type " << opt_type << " returned. Currently it is not"
-                      " supported to initialize multiple option definitions"
-                      " for the same option code. This will be supported once"
-                      " support for option spaces is implemented");
-        } else if (num_defs == 0) {
-            // @todo Don't crash if definition does not exist because only a few
-            // option definitions are initialized right now. In the future
-            // we will initialize definitions for all options and we will
-            // remove this elseif. For now, return generic option.
-            opt = OptionPtr(new Option(Option::V6, opt_type,
-                                       buf.begin() + offset,
-                                       buf.begin() + offset + opt_len));
-            opt->setEncapsulatedSpace("dhcp6");
-        } else {
-            // The option definition has been found. Use it to create
-            // the option instance from the provided buffer chunk.
-            const OptionDefinitionPtr& def = *(range.first);
-            assert(def);
-            opt = def->optionFactory(Option::V6, opt_type,
-                                     buf.begin() + offset,
-                                     buf.begin() + offset + opt_len,
-                                     boost::bind(&Dhcpv6Srv::unpackOptions, this, _1, _2,
-                                                 _3, _4, _5));
-        }
-        // add option to options
-        options.insert(std::make_pair(opt_type, opt));
-        offset += opt_len;
-    }
-
-    return (offset);
 }
 
 void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt, std::string& classes) {

@@ -11,6 +11,7 @@
 #include <cc/command_interpreter.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
@@ -67,6 +68,8 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
     CfgMgr::instance().commit();
 
+    LibDHCP::clearRuntimeOptionDefs();
+
     // Let's wipe all existing statistics.
     isc::stats::StatsMgr::instance().removeAll();
 }
@@ -76,6 +79,8 @@ Dhcpv4SrvTest::~Dhcpv4SrvTest() {
     // Make sure that we revert to default value
     CfgMgr::instance().clear();
     CfgMgr::instance().echoClientId(true);
+
+    LibDHCP::clearRuntimeOptionDefs();
 
     // Let's wipe all existing statistics.
     isc::stats::StatsMgr::instance().removeAll();
