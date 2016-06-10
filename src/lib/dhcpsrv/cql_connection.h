@@ -78,16 +78,12 @@ public:
 
     /// @brief Commit Transactions
     ///
-    /// Commits all pending database operations.
-    ///
-    /// @throw DbOperationError If the commit failed.
+    /// This is a no-op for Cassandra.
     virtual void commit();
 
     /// @brief Rollback Transactions
     ///
-    /// Rolls back all pending database operations.
-    ///
-    /// @throw DbOperationError If the rollback failed.
+    /// This is a no-op for Cassandra.
     virtual void rollback();
 
     /// @brief Check Error
