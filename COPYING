@@ -9,3 +9,5 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 The ext/coroutine code is externally maintained and distributed under
 the Boost Software License, Version 1.0.  (See its accompanying file
 LICENSE_1_0.txt.)
+
+The Cassandra backend code is distributed under the Apache License, Version 2.0.
