@@ -33,17 +33,17 @@ namespace dhcp {
 /// This vector is passed directly into the
 /// CQL execute call.
 ///
-/// Note that the data values are stored as pointers. These pointers need to
-/// valid for the duration of the CQL statement execution. In other
-/// words populating them with pointers to values that go out of scope before
-/// statement is executed is a bad idea.
-
+/// Note that the data values are stored as pointers. These pointers need
+/// to be valid for the duration of the CQL statement execution. In other
+/// words populating them with pointers to values that go out of scope
+/// before statement is executed is a bad idea.
 struct CqlDataArray {
-    /// @brief Vector of pointers to the data values.
+    /// Add void pointer to a vector of pointers to the data values.
     std::vector<void*> values_;
     void add(void* value) {
         values_.push_back(value);
     }
+    /// Remove void pointer from a vector of pointers to the data values.
     void remove(int index) {
         if (values_.size() <= index) {
             isc_throw(BadValue, "Index " << index << " out of bounds: [0, " <<
@@ -307,7 +307,6 @@ public:
     virtual void getExpiredLeases6(Lease6Collection& ,
                                    const size_t ) const;
 
-
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
     /// This method returns at most @c max_leases expired leases. The leases
@@ -320,7 +319,6 @@ public:
     /// value is set to 0, all expired (but not reclaimed) leases are returned.
     virtual void getExpiredLeases4(Lease4Collection& ,
                                    const size_t ) const;
-
 
     /// @brief Updates IPv4 lease.
     ///
@@ -415,7 +413,6 @@ public:
     /// This is a no-op for Cassandra.
     virtual void rollback();
 
-
     /// @brief Statement Tags
     ///
     /// The contents of the enum are indexes into the list of compiled SQL
@@ -462,8 +459,8 @@ public:
     /// @param param TODO
     /// @param exchange Exchange object to use
     /// @param type TODO
-    static void getDataType(const StatementIndex stindex, int param,
-        const SqlExchange& exchange, ExchangeDataType& type);
+    static ExchangeDataType getDataType(const StatementIndex stindex, int param,
+        const SqlExchange& exchange);
 
     /// @brief TODO
     ///
