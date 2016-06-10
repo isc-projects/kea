@@ -280,14 +280,14 @@
             <row>
               <entry>Message Type in DHCPv6 packet</entry>
               <entry>pkt6.msgtype</entry>
-              <!--  <entry>1</entry> -->
+              <entry>1</entry>
               <entry>The value of the message type field in the DHCPv6
               packet.</entry>
             </row>
             <row>
               <entry>Transaction ID in DHCPv6 packet</entry>
               <entry>pkt6.transid</entry>
-              <!--  <entry>12345</entry> -->
+              <entry>12345</entry>
               <entry>The value of the transaction id in the DHCPv6
               packet.</entry>
             </row>
@@ -351,7 +351,8 @@
       </para>
 
       <para>
-        Expressions starting with pkt4 can be used only in DHCPv4.
+        Expressions starting with "pkt4" can be used only in DHCPv4.
+        They allows access to DHCPv4 message fields.
       </para>
 
       <para>
