@@ -13,6 +13,7 @@
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcpsrv/lease.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
+#include <util/staged_value.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <list>
@@ -226,12 +227,15 @@ public:
     /// i.e. sends a Solicit to the server and receives Advertise. It doesn't
     /// set the lease configuration in the @c config_.
     ///
+    /// @param always_apply_config Apply received configuration even if the
+    /// Advertise message is received. Default value is false.
+    ///
     /// @throw This function doesn't throw exceptions on its own, but it calls
     /// functions that are not exception safe, so it may throw exceptions if
     /// error occurs.
     ///
     /// @todo Perform sanity checks on returned messages.
-    void doSolicit();
+    void doSolicit(const bool always_apply_config = false);
 
     /// @brief Sends a Renew to the server and receives the Reply.
     ///
@@ -357,6 +361,72 @@ public:
 
     /// @brief Returns leases with zero lifetimes.
     std::vector<Lease6> getLeasesWithZeroLifetime() const;
+
+    /// @brief Returns leases by lease address/prefix.
+    ///
+    /// @param address Leased address.
+    ///
+    /// @return Vector containing leases for the specified address.
+    std::vector<Lease6> getLeasesByAddress(const asiolink::IOAddress& address) const;
+
+    /// @brief Returns leases belonging to specified address range.
+    ///
+    /// @param first Lower bound of the address range.
+    /// @param second Upper bound of the address range.
+    ///
+    /// @return Vector containing leases belonging to specified address range.
+    std::vector<Lease6> getLeasesByAddressRange(const asiolink::IOAddress& first,
+                                                const asiolink::IOAddress& second) const;
+
+    /// @brief Returns leases belonging to prefix pool.
+    ///
+    /// @param prefix Prefix of the pool.
+    /// @param prefix_len Prefix length.
+    /// @param delegated_len Delegated prefix length.
+    ///
+    /// @return Vector containing leases belonging to specified prefix pool.
+    std::vector<Lease6> getLeasesByPrefixPool(const asiolink::IOAddress& prefix,
+                                              const uint8_t prefix_len,
+                                              const uint8_t delegated_len) const;
+
+    /// @brief Checks if client has lease for the specified address.
+    ///
+    /// @param address Address for which lease should be found.
+    ///
+    /// @return true if client has lease for the address, false otherwise.
+    bool hasLeaseForAddress(const asiolink::IOAddress& address) const;
+
+    /// @brief Checks if client has a lease for an address within range.
+    ///
+    /// @param first Lower bound of the address range.
+    /// @param last Upper bound of the address range.
+    ///
+    /// @return true if client has lease for the address within the range,
+    /// false otherwise.
+    bool hasLeaseForAddressRange(const asiolink::IOAddress& first,
+                                 const asiolink::IOAddress& last) const;
+
+    /// @brief Checks if client has a lease for a prefix.
+    ///
+    /// @param prefix Prefix.
+    /// @param prefix_len Prefix length.
+    ///
+    /// @return true if client has a lease for the specified prefix, false
+    /// otherwise.
+    bool hasLeaseForPrefix(const asiolink::IOAddress& prefix,
+                           const uint8_t prefix_len) const;
+
+    /// @brief Checks if client has a lease belonging to a prefix pool.
+    ///
+    /// @param prefix Pool prefix.
+    /// @param prefix_len Prefix length.
+    /// @param delegated_len Delegated prefix length.
+    ///
+    /// @return true if client has a lease belonging to specified pool,
+    /// false otherwise.
+    bool hasLeaseForPrefixPool(const asiolink::IOAddress& prefix,
+                               const uint8_t prefix_len,
+                               const uint8_t delegated_len) const;
 
     /// @brief Returns the value of the global status code for the last
     /// transaction.

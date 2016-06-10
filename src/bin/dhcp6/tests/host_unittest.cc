@@ -9,6 +9,10 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/lexical_cast.hpp>
+#include <list>
+#include <sstream>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -107,12 +111,90 @@ const char* CONFIGS[] = {
         "        \"ip-addresses\": [ \"2001:db8:1::2\" ]"
         "    } ]"
         " } ]"
+    "}",
+
+    // Configuration 3:
+    "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 4000, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::10\" } ],"
+        "    \"interface\" : \"eth0\","
+        "    \"reservations\": ["
+        "    {"
+        "        \"duid\": \"01:02:03:04\","
+        "        \"ip-addresses\": [ \"2001:db8:1:1::1\", \"2001:db8:1:1::2\","
+                                    "\"2001:db8:1:1::3\" ],"
+        "        \"prefixes\": [  \"3000:1:1::/32\", \"3000:1:2::/32\","
+                                 "\"3000:1:3::/32\" ]"
+        "    } ]"
+        " } ]"
     "}"
 };
+
+class Reservation {
+public:
+    Reservation(const std::string& resource);
+
+    bool isEmpty() const;
+
+    bool isPrefix() const;
+
+    static const Reservation& UNSPEC();
+
+    operator std::string() const;
+
+private:
+    IOAddress prefix_;
+    uint8_t prefix_len_;
+};
+
+Reservation::Reservation(const std::string& resource)
+    : prefix_(IOAddress::IPV6_ZERO_ADDRESS()), prefix_len_(0) {
+    size_t slash_pos = resource.find("/");
+    if ((slash_pos != std::string::npos) && (slash_pos < resource.size() - 1)) {
+        prefix_len_ = boost::lexical_cast<unsigned int>(resource.substr(slash_pos + 1));
+    }
+    prefix_ = IOAddress(resource.substr(0, slash_pos));
+}
+
+bool
+Reservation::isEmpty() const {
+    return (prefix_.isV6Zero());
+}
+
+bool
+Reservation::isPrefix() const {
+    return (!isEmpty() && (prefix_len_ > 0));
+}
+
+const Reservation& Reservation::UNSPEC() {
+    static Reservation unspec("::/0");
+    return (unspec);
+}
+
+Reservation::operator std::string() const {
+    std::ostringstream s;
+    s << "\"" << prefix_;
+    if (prefix_len_ > 0) {
+        s << "/" << static_cast<int>(prefix_len_);
+    }
+    s << "\"";
+    return (s.str());
+}
 
 /// @brief Test fixture class for testing host reservations
 class HostTest : public Dhcpv6SrvTest {
 public:
+
+
     /// @brief Constructor.
     ///
     /// Sets up fake interfaces.
@@ -153,9 +235,97 @@ public:
         EXPECT_EQ(exp_ip_address, lease_client.addr_.toText());
     }
 
+    static void storeReservation(const Reservation& r,
+                                 std::list<std::string>& address_list,
+                                 std::list<std::string>& prefix_list);
+
+    std::string configString(const DUID& duid,
+                             const Reservation& r1 = Reservation::UNSPEC(),
+                             const Reservation& r2 = Reservation::UNSPEC(),
+                             const Reservation& r3 = Reservation::UNSPEC(),
+                             const Reservation& r4 = Reservation::UNSPEC(),
+                             const Reservation& r5 = Reservation::UNSPEC(),
+                             const Reservation& r6 = Reservation::UNSPEC()) const;
+
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
 };
+
+void
+HostTest::storeReservation(const Reservation& r,
+                           std::list<std::string>& address_list,
+                           std::list<std::string>& prefix_list) {
+    if (!r.isEmpty()) {
+        if (r.isPrefix()) {
+            prefix_list.push_back(r);
+        } else {
+            address_list.push_back(r);
+        }
+    }
+}
+
+std::string
+HostTest::configString(const DUID& duid,
+                       const Reservation& r1, const Reservation& r2,
+                       const Reservation& r3, const Reservation& r4,
+                       const Reservation& r5, const Reservation& r6) const {
+    std::list<std::string> address_list;
+    std::list<std::string> prefix_list;
+    storeReservation(r1, address_list, prefix_list);
+    storeReservation(r2, address_list, prefix_list);
+    storeReservation(r3, address_list, prefix_list);
+    storeReservation(r4, address_list, prefix_list);
+    storeReservation(r5, address_list, prefix_list);
+    storeReservation(r6, address_list, prefix_list);
+
+    std::ostringstream s;
+    s << "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 4000, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::10\" } ],"
+        "    \"pd-pools\": [ { \"prefix\": \"3001::\", \"prefix-len\": 32,"
+        "                      \"delegated-len\": 64 } ],"
+        "    \"interface\" : \"eth0\"";
+
+    if (!address_list.empty() || !prefix_list.empty()) {
+        s << ","
+            "    \"reservations\": ["
+            "    {"
+            "        \"duid\": ";
+        s << "\"" << duid.toText() << "\",";
+
+        if (!address_list.empty()) {
+            s << "        \"ip-addresses\": [ "
+              << boost::algorithm::join(address_list, ", ")
+              << "]";
+        }
+
+        if (!prefix_list.empty()) {
+            if (!address_list.empty()) {
+                s << ", ";
+            }
+            s << "        \"prefixes\": [ "
+              << boost::algorithm::join(prefix_list, ", ")
+              << "]";
+        }
+
+        s <<  "    } ]";
+    }
+
+    s << " } ]"
+         "}";
+
+    return (s.str());
+}
+
 
 // Test basic SARR scenarios against a server configured with one subnet
 // containing two reservations.  One reservation with a hostname, one
@@ -374,6 +544,109 @@ TEST_F(HostTest, hostIdentifiersOrder) {
     // decoded address will be used to search for host reservations.
     client.setLinkLocal(IOAddress("fe80::3a60:77ff:fed5:ffee"));
     testReservationByIdentifier(client, 2, "2001:db8:1::2");
+}
+
+TEST_F(HostTest, reservationMultipleIASolicit) {
+    Dhcp6Client client;
+    client.setDUID("01:02:03:04");
+
+    const std::string c = configString(*client.getDuid(),
+                                       Reservation("2001:db8:1:1::1"),
+                                       Reservation("2001:db8:1:1::2"),
+                                       Reservation("2001:db8:1:1::3"),
+                                       Reservation("3000:1:1::/32"),
+                                       Reservation("3000:1:2::/32"),
+                                       Reservation("3000:1:3::/32"));
+
+    ASSERT_NO_THROW(configure(c, *client.getServer()));
+
+    client.requestAddress(1234);
+    client.requestAddress(2345);
+    client.requestAddress(3456);
+    client.requestPrefix(5678);
+    client.requestPrefix(6789);
+    client.requestPrefix(7890);
+
+    // Send Solicit and require that the client saves received configuration
+    // so as we can test that advertised configuration is correct.
+    ASSERT_NO_THROW(client.doSolicit(true));
+
+    ASSERT_EQ(6, client.getLeaseNum());
+
+    EXPECT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1:1::1")));
+    EXPECT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1:1::2")));
+    EXPECT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1:1::3")));
+    EXPECT_TRUE(client.hasLeaseForPrefix(IOAddress("3000:1:1::"), 32));
+    EXPECT_TRUE(client.hasLeaseForPrefix(IOAddress("3000:1:2::"), 32));
+    EXPECT_TRUE(client.hasLeaseForPrefix(IOAddress("3000:1:3::"), 32));
+}
+
+TEST_F(HostTest, reservationMultipleIARequest) {
+    Dhcp6Client client;
+    client.setDUID("01:02:03:04");
+
+    const std::string c = configString(*client.getDuid(),
+                                       Reservation("2001:db8:1:1::1"),
+                                       Reservation("2001:db8:1:1::2"),
+                                       Reservation("2001:db8:1:1::3"),
+                                       Reservation("3000:1:1::/32"),
+                                       Reservation("3000:1:2::/32"),
+                                       Reservation("3000:1:3::/32"));
+
+    ASSERT_NO_THROW(configure(c, *client.getServer()));
+
+    client.requestAddress(1234);
+    client.requestAddress(2345);
+    client.requestAddress(3456);
+    client.requestPrefix(5678);
+    client.requestPrefix(6789);
+    client.requestPrefix(7890);
+
+    ASSERT_NO_THROW(client.doSARR());
+
+    ASSERT_EQ(6, client.getLeaseNum());
+
+    EXPECT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1:1::1")));
+    EXPECT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1:1::2")));
+    EXPECT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1:1::3")));
+    EXPECT_TRUE(client.hasLeaseForPrefix(IOAddress("3000:1:1::"), 32));
+    EXPECT_TRUE(client.hasLeaseForPrefix(IOAddress("3000:1:2::"), 32));
+    EXPECT_TRUE(client.hasLeaseForPrefix(IOAddress("3000:1:3::"), 32));
+}
+
+TEST_F(HostTest, reservationAndDynamicIAs) {
+    Dhcp6Client client;
+    client.setDUID("01:02:03:04");
+
+    const std::string c = configString(*client.getDuid(),
+                                       Reservation("2001:db8:1:1::2"),
+                                       Reservation("2001:db8:1:1::3"),
+                                       Reservation("3000:1:1::/32"),
+                                       Reservation("3000:1:3::/32"));
+
+    ASSERT_NO_THROW(configure(c, *client.getServer()));
+
+    client.requestAddress(1234);
+    client.requestAddress(2345);
+    client.requestAddress(3456);
+    client.requestPrefix(5678);
+    client.requestPrefix(6789);
+    client.requestPrefix(7890);
+
+    // Send Solicit and require that the client saves received configuration
+    // so as we can test that advertised configuration is correct.
+    ASSERT_NO_THROW(client.doSolicit(true));
+
+    ASSERT_EQ(6, client.getLeaseNum());
+
+    EXPECT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1:1::2")));
+    EXPECT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1:1::3")));
+    EXPECT_TRUE(client.hasLeaseForPrefix(IOAddress("3000:1:1::"), 32));
+    EXPECT_TRUE(client.hasLeaseForPrefix(IOAddress("3000:1:3::"), 32));
+
+    EXPECT_TRUE(client.hasLeaseForAddressRange(IOAddress("2001:db8:1::1"),
+                                               IOAddress("2001:db8:1::10")));
+    EXPECT_TRUE(client.hasLeaseForPrefixPool(IOAddress("3001::"), 32, 64));
 }
 
 } // end of anonymous namespace
