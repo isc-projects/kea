@@ -396,7 +396,7 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
         }
 
         // Standard option definitions do not include the definition for
-        // out option or we're searching for non-standard option. Try to
+        // our option or we're searching for non-standard option. Try to
         // find the definition among runtime option definitions.
         if (num_defs == 0) {
             range = runtime_idx.equal_range(opt_type);
@@ -512,7 +512,7 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
         }
 
         // Standard option definitions do not include the definition for
-        // out option or we're searching for non-standard option. Try to
+        // our option or we're searching for non-standard option. Try to
         // find the definition among runtime option definitions.
         if (num_defs == 0) {
             range = runtime_idx.equal_range(opt_type);
