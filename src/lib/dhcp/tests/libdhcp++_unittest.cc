@@ -902,7 +902,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
 }
 
 // Check parsing of an empty option.
-TEST_F(LibDhcpTest, unpackEmptyOption) {
+TEST_F(LibDhcpTest, unpackEmptyOption4) {
     // Create option definition for the option code 254 without fields.
     OptionDefinitionPtr opt_def(new OptionDefinition("option-empty", 254,
                                                      "empty", false));
@@ -942,7 +942,7 @@ TEST_F(LibDhcpTest, unpackEmptyOption) {
 //   - sub option (option space 'foo')
 //      - sub option (option space 'bar')
 // @todo Add more thorough unit tests for unpackOptions.
-TEST_F(LibDhcpTest, unpackSubOptions) {
+TEST_F(LibDhcpTest, unpackSubOptions4) {
     // Create option definition for each level of encapsulation. Each option
     // definition is for the option code 1. Options may have the same
     // option code because they belong to different option spaces.
