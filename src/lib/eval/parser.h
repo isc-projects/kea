@@ -351,29 +351,29 @@ namespace isc { namespace eval {
         TOKEN_OPTION = 264,
         TOKEN_RELAY4 = 265,
         TOKEN_RELAY6 = 266,
-        TOKEN_PEERADDR = 267,
-        TOKEN_LINKADDR = 268,
-        TOKEN_LBRACKET = 269,
-        TOKEN_RBRACKET = 270,
-        TOKEN_DOT = 271,
-        TOKEN_TEXT = 272,
-        TOKEN_HEX = 273,
-        TOKEN_EXISTS = 274,
-        TOKEN_PKT4 = 275,
-        TOKEN_CHADDR = 276,
-        TOKEN_HLEN = 277,
-        TOKEN_HTYPE = 278,
-        TOKEN_CIADDR = 279,
-        TOKEN_GIADDR = 280,
-        TOKEN_YIADDR = 281,
-        TOKEN_SIADDR = 282,
-        TOKEN_SUBSTRING = 283,
-        TOKEN_ALL = 284,
-        TOKEN_COMA = 285,
-        TOKEN_CONCAT = 286,
-        TOKEN_PKT6 = 287,
-        TOKEN_MSGTYPE = 288,
-        TOKEN_TRANSID = 289,
+        TOKEN_LBRACKET = 267,
+        TOKEN_RBRACKET = 268,
+        TOKEN_DOT = 269,
+        TOKEN_TEXT = 270,
+        TOKEN_HEX = 271,
+        TOKEN_EXISTS = 272,
+        TOKEN_PKT4 = 273,
+        TOKEN_CHADDR = 274,
+        TOKEN_HLEN = 275,
+        TOKEN_HTYPE = 276,
+        TOKEN_CIADDR = 277,
+        TOKEN_GIADDR = 278,
+        TOKEN_YIADDR = 279,
+        TOKEN_SIADDR = 280,
+        TOKEN_PKT6 = 281,
+        TOKEN_MSGTYPE = 282,
+        TOKEN_TRANSID = 283,
+        TOKEN_PEERADDR = 284,
+        TOKEN_LINKADDR = 285,
+        TOKEN_SUBSTRING = 286,
+        TOKEN_ALL = 287,
+        TOKEN_COMA = 288,
+        TOKEN_CONCAT = 289,
         TOKEN_STRING = 290,
         TOKEN_INTEGER = 291,
         TOKEN_HEXSTRING = 292,
@@ -539,14 +539,6 @@ namespace isc { namespace eval {
 
     static inline
     symbol_type
-    make_PEERADDR (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LINKADDR (const location_type& l);
-
-    static inline
-    symbol_type
     make_LBRACKET (const location_type& l);
 
     static inline
@@ -603,6 +595,26 @@ namespace isc { namespace eval {
 
     static inline
     symbol_type
+    make_PKT6 (const location_type& l);
+
+    static inline
+    symbol_type
+    make_MSGTYPE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_TRANSID (const location_type& l);
+
+    static inline
+    symbol_type
+    make_PEERADDR (const location_type& l);
+
+    static inline
+    symbol_type
+    make_LINKADDR (const location_type& l);
+
+    static inline
+    symbol_type
     make_SUBSTRING (const location_type& l);
 
     static inline
@@ -616,18 +628,6 @@ namespace isc { namespace eval {
     static inline
     symbol_type
     make_CONCAT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_PKT6 (const location_type& l);
-
-    static inline
-    symbol_type
-    make_MSGTYPE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_TRANSID (const location_type& l);
 
     static inline
     symbol_type
@@ -734,7 +734,7 @@ namespace isc { namespace eval {
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const signed char yycheck_[];
+  static const unsigned char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -854,7 +854,7 @@ namespace isc { namespace eval {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 113,     ///< Last index in yytable_.
+      yylast_ = 112,     ///< Last index in yytable_.
       yynnts_ = 12,  ///< Number of nonterminal symbols.
       yyfinal_ = 25, ///< Termination state number.
       yyterror_ = 1,
@@ -944,11 +944,11 @@ namespace isc { namespace eval {
         value.copy< TokenOption::RepresentationType > (other.value);
         break;
 
-      case 46: // pkt4_field
+      case 47: // pkt4_field
         value.copy< TokenPkt4::FieldType > (other.value);
         break;
 
-      case 51: // pkt6_field
+      case 48: // pkt6_field
         value.copy< TokenPkt6::FieldType > (other.value);
         break;
 
@@ -968,7 +968,7 @@ namespace isc { namespace eval {
         value.copy< uint16_t > (other.value);
         break;
 
-      case 50: // nest_level
+      case 46: // nest_level
         value.copy< uint8_t > (other.value);
         break;
 
@@ -993,11 +993,11 @@ namespace isc { namespace eval {
         value.copy< TokenOption::RepresentationType > (v);
         break;
 
-      case 46: // pkt4_field
+      case 47: // pkt4_field
         value.copy< TokenPkt4::FieldType > (v);
         break;
 
-      case 51: // pkt6_field
+      case 48: // pkt6_field
         value.copy< TokenPkt6::FieldType > (v);
         break;
 
@@ -1017,7 +1017,7 @@ namespace isc { namespace eval {
         value.copy< uint16_t > (v);
         break;
 
-      case 50: // nest_level
+      case 46: // nest_level
         value.copy< uint8_t > (v);
         break;
 
@@ -1115,11 +1115,11 @@ namespace isc { namespace eval {
         value.template destroy< TokenOption::RepresentationType > ();
         break;
 
-      case 46: // pkt4_field
+      case 47: // pkt4_field
         value.template destroy< TokenPkt4::FieldType > ();
         break;
 
-      case 51: // pkt6_field
+      case 48: // pkt6_field
         value.template destroy< TokenPkt6::FieldType > ();
         break;
 
@@ -1139,7 +1139,7 @@ namespace isc { namespace eval {
         value.template destroy< uint16_t > ();
         break;
 
-      case 50: // nest_level
+      case 46: // nest_level
         value.template destroy< uint8_t > ();
         break;
 
@@ -1170,11 +1170,11 @@ namespace isc { namespace eval {
         value.move< TokenOption::RepresentationType > (s.value);
         break;
 
-      case 46: // pkt4_field
+      case 47: // pkt4_field
         value.move< TokenPkt4::FieldType > (s.value);
         break;
 
-      case 51: // pkt6_field
+      case 48: // pkt6_field
         value.move< TokenPkt6::FieldType > (s.value);
         break;
 
@@ -1194,7 +1194,7 @@ namespace isc { namespace eval {
         value.move< uint16_t > (s.value);
         break;
 
-      case 50: // nest_level
+      case 46: // nest_level
         value.move< uint8_t > (s.value);
         break;
 
@@ -1322,18 +1322,6 @@ namespace isc { namespace eval {
   }
 
   EvalParser::symbol_type
-  EvalParser::make_PEERADDR (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_PEERADDR, l);
-  }
-
-  EvalParser::symbol_type
-  EvalParser::make_LINKADDR (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_LINKADDR, l);
-  }
-
-  EvalParser::symbol_type
   EvalParser::make_LBRACKET (const location_type& l)
   {
     return symbol_type (token::TOKEN_LBRACKET, l);
@@ -1418,6 +1406,36 @@ namespace isc { namespace eval {
   }
 
   EvalParser::symbol_type
+  EvalParser::make_PKT6 (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_PKT6, l);
+  }
+
+  EvalParser::symbol_type
+  EvalParser::make_MSGTYPE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MSGTYPE, l);
+  }
+
+  EvalParser::symbol_type
+  EvalParser::make_TRANSID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_TRANSID, l);
+  }
+
+  EvalParser::symbol_type
+  EvalParser::make_PEERADDR (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_PEERADDR, l);
+  }
+
+  EvalParser::symbol_type
+  EvalParser::make_LINKADDR (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_LINKADDR, l);
+  }
+
+  EvalParser::symbol_type
   EvalParser::make_SUBSTRING (const location_type& l)
   {
     return symbol_type (token::TOKEN_SUBSTRING, l);
@@ -1439,24 +1457,6 @@ namespace isc { namespace eval {
   EvalParser::make_CONCAT (const location_type& l)
   {
     return symbol_type (token::TOKEN_CONCAT, l);
-  }
-
-  EvalParser::symbol_type
-  EvalParser::make_PKT6 (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_PKT6, l);
-  }
-
-  EvalParser::symbol_type
-  EvalParser::make_MSGTYPE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_MSGTYPE, l);
-  }
-
-  EvalParser::symbol_type
-  EvalParser::make_TRANSID (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_TRANSID, l);
   }
 
   EvalParser::symbol_type
