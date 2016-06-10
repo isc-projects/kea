@@ -495,10 +495,10 @@ struct yy_trans_info
 static yyconst flex_int16_t yy_acclist[227] =
     {   0,
        42,   40,   41,    1,   40,   41,    2,   41,   40,   41,
-       32,   40,   41,   33,   40,   41,   36,   40,   41,   40,
-       41,   31,   40,   41,    5,   40,   41,    5,   40,   41,
+       35,   40,   41,   36,   40,   41,   39,   40,   41,   40,
+       41,   34,   40,   41,    5,   40,   41,    5,   40,   41,
        40,   41,   40,   41,   40,   41,16390,   40,   41,16390,
-       34,   40,   41,   35,   40,   41,   40,   41,16390,   40,
+       37,   40,   41,   38,   40,   41,   40,   41,16390,   40,
        41,16390,   40,   41,16390,   40,   41,16390,   40,   41,
     16390,   40,   41,16390,   40,   41,16390,   40,   41,16390,
        40,   41,16390,   40,   41,16390,   40,   41,16390,   40,
@@ -506,19 +506,19 @@ static yyconst flex_int16_t yy_acclist[227] =
         3,    5,    5,    7,    8,16390,16390, 8198,16390,16390,
 
     16390,16390,16390,16390,16390,16390,16390,16390,16390,16390,
-    16390,16390,   30,16390,16390,16390,16390,16390,16390,16390,
-    16390,16390,    4,    7,   26,16390,   29,16390,16390,16390,
-    16390,16390,   15,16390,16390,16390,16390,   18,16390,16390,
-       28,16390,16390,16390,16390,16390,16390,16390,16390,16390,
-    16390,16390,16390,16390,16390,   19,16390,16390,16390,16390,
-    16390,16390,   17,16390,   37,16390,16390,16390,16390,   14,
-    16390,16390,16390,16390,16390,16390,16390,   20,16390,16390,
-    16390,16390,16390,16390,16390,16390,16390,16390,   21,16390,
-       27,16390,   16,16390,   22,16390,16390,16390,    9,16390,
+    16390,16390,   33,16390,16390,16390,16390,16390,16390,16390,
+    16390,16390,    4,    7,   29,16390,   32,16390,16390,16390,
+    16390,16390,   13,16390,16390,16390,16390,   16,16390,16390,
+       31,16390,16390,16390,16390,16390,16390,16390,16390,16390,
+    16390,16390,16390,16390,16390,   17,16390,16390,16390,16390,
+    16390,16390,   15,16390,   23,16390,16390,16390,16390,   12,
+    16390,16390,16390,16390,16390,16390,16390,   18,16390,16390,
+    16390,16390,16390,16390,16390,16390,16390,16390,   19,16390,
+       30,16390,   14,16390,   20,16390,16390,16390,    9,16390,
 
-    16390,   10,16390,   11,16390,   24,16390,16390,16390,   23,
-    16390,    7,16390,   38,16390,16390,16390,   39,16390,   13,
-    16390,   12,16390,16390,   25,16390
+    16390,   10,16390,   11,16390,   22,16390,16390,16390,   21,
+    16390,    7,16390,   24,16390,16390,16390,   25,16390,   27,
+    16390,   26,16390,16390,   28,16390
     } ;
 
 static yyconst flex_int16_t yy_accept[162] =
@@ -719,7 +719,7 @@ static yyconst flex_int16_t yy_rule_linenum[41] =
        82,   86,   92,  102,  108,  122,  129,  143,  144,  145,
       146,  147,  148,  149,  150,  151,  152,  153,  154,  155,
       156,  157,  158,  159,  160,  161,  162,  163,  164,  165,
-      166,  167,  168,  169,  170,  171,  173,  174,  175,  177
+      166,  167,  168,  169,  170,  171,  172,  173,  174,  176
     } ;
 
 static yy_state_type *yy_state_buf=0, *yy_state_ptr=0;
@@ -1316,155 +1316,155 @@ return isc::eval::EvalParser::make_RELAY6(loc);
 case 12:
 YY_RULE_SETUP
 #line 147 "lexer.ll"
-return isc::eval::EvalParser::make_PEERADDR(loc);
+return isc::eval::EvalParser::make_TEXT(loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
 #line 148 "lexer.ll"
-return isc::eval::EvalParser::make_LINKADDR(loc);
+return isc::eval::EvalParser::make_HEX(loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
 #line 149 "lexer.ll"
-return isc::eval::EvalParser::make_TEXT(loc);
+return isc::eval::EvalParser::make_EXISTS(loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
 #line 150 "lexer.ll"
-return isc::eval::EvalParser::make_HEX(loc);
+return isc::eval::EvalParser::make_PKT4(loc);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
 #line 151 "lexer.ll"
-return isc::eval::EvalParser::make_EXISTS(loc);
+return isc::eval::EvalParser::make_CHADDR(loc);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
 #line 152 "lexer.ll"
-return isc::eval::EvalParser::make_PKT4(loc);
+return isc::eval::EvalParser::make_HLEN(loc);
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
 #line 153 "lexer.ll"
-return isc::eval::EvalParser::make_CHADDR(loc);
+return isc::eval::EvalParser::make_HTYPE(loc);
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
 #line 154 "lexer.ll"
-return isc::eval::EvalParser::make_HLEN(loc);
+return isc::eval::EvalParser::make_CIADDR(loc);
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
 #line 155 "lexer.ll"
-return isc::eval::EvalParser::make_HTYPE(loc);
+return isc::eval::EvalParser::make_GIADDR(loc);
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
 #line 156 "lexer.ll"
-return isc::eval::EvalParser::make_CIADDR(loc);
+return isc::eval::EvalParser::make_YIADDR(loc);
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
 #line 157 "lexer.ll"
-return isc::eval::EvalParser::make_GIADDR(loc);
+return isc::eval::EvalParser::make_SIADDR(loc);
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
 #line 158 "lexer.ll"
-return isc::eval::EvalParser::make_YIADDR(loc);
+return isc::eval::EvalParser::make_PKT6(loc);
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
 #line 159 "lexer.ll"
-return isc::eval::EvalParser::make_SIADDR(loc);
+return isc::eval::EvalParser::make_MSGTYPE(loc);
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
 #line 160 "lexer.ll"
-return isc::eval::EvalParser::make_SUBSTRING(loc);
+return isc::eval::EvalParser::make_TRANSID(loc);
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
 #line 161 "lexer.ll"
-return isc::eval::EvalParser::make_ALL(loc);
+return isc::eval::EvalParser::make_PEERADDR(loc);
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
 #line 162 "lexer.ll"
-return isc::eval::EvalParser::make_CONCAT(loc);
+return isc::eval::EvalParser::make_LINKADDR(loc);
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
 #line 163 "lexer.ll"
-return isc::eval::EvalParser::make_NOT(loc);
+return isc::eval::EvalParser::make_SUBSTRING(loc);
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
 #line 164 "lexer.ll"
-return isc::eval::EvalParser::make_AND(loc);
+return isc::eval::EvalParser::make_ALL(loc);
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
 #line 165 "lexer.ll"
-return isc::eval::EvalParser::make_OR(loc);
+return isc::eval::EvalParser::make_CONCAT(loc);
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
 #line 166 "lexer.ll"
-return isc::eval::EvalParser::make_DOT(loc);
+return isc::eval::EvalParser::make_NOT(loc);
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
 #line 167 "lexer.ll"
-return isc::eval::EvalParser::make_LPAREN(loc);
+return isc::eval::EvalParser::make_AND(loc);
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
 #line 168 "lexer.ll"
-return isc::eval::EvalParser::make_RPAREN(loc);
+return isc::eval::EvalParser::make_OR(loc);
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
 #line 169 "lexer.ll"
-return isc::eval::EvalParser::make_LBRACKET(loc);
+return isc::eval::EvalParser::make_DOT(loc);
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
 #line 170 "lexer.ll"
-return isc::eval::EvalParser::make_RBRACKET(loc);
+return isc::eval::EvalParser::make_LPAREN(loc);
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
 #line 171 "lexer.ll"
-return isc::eval::EvalParser::make_COMA(loc);
+return isc::eval::EvalParser::make_RPAREN(loc);
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 173 "lexer.ll"
-return isc::eval::EvalParser::make_PKT6(loc);
+#line 172 "lexer.ll"
+return isc::eval::EvalParser::make_LBRACKET(loc);
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 174 "lexer.ll"
-return isc::eval::EvalParser::make_MSGTYPE(loc);
+#line 173 "lexer.ll"
+return isc::eval::EvalParser::make_RBRACKET(loc);
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 175 "lexer.ll"
-return isc::eval::EvalParser::make_TRANSID(loc);
+#line 174 "lexer.ll"
+return isc::eval::EvalParser::make_COMA(loc);
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 177 "lexer.ll"
+#line 176 "lexer.ll"
 driver.error (loc, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 178 "lexer.ll"
+#line 177 "lexer.ll"
 return isc::eval::EvalParser::make_END(loc);
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 179 "lexer.ll"
+#line 178 "lexer.ll"
 ECHO;
 	YY_BREAK
 #line 1471 "lexer.cc"
@@ -2550,7 +2550,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 179 "lexer.ll"
+#line 178 "lexer.ll"
 
 
 
