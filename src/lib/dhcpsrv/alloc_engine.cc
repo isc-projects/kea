@@ -762,9 +762,15 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
     // Get the IPv6 reservations of specified type.
     const IPv6ResrvRange& reservs = ctx.host_->getIPv6Reservations(type);
     for (IPv6ResrvIterator resv = reservs.first; resv != reservs.second; ++resv) {
-        // We do have a reservation for addr.
+        // We do have a reservation for address or prefix.
         IOAddress addr = resv->second.getPrefix();
         uint8_t prefix_len = resv->second.getPrefixLen();
+
+        // We have allocated this address/prefix while processing one of the
+        // previous IAs, so let's try another reservation.
+        if (ctx.isAllocated(addr, prefix_len)) {
+            continue;
+        }
 
         // Check if already have this lease on the existing_leases list.
         for (Lease6Collection::iterator l = existing_leases.begin();

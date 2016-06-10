@@ -13,6 +13,7 @@
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/pool.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <util/buffer.h>
 #include <boost/foreach.hpp>
@@ -20,6 +21,7 @@
 #include <cstdlib>
 #include <time.h>
 
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
@@ -62,6 +64,25 @@ struct getLeasesByPropertyFun {
         }
     }
 };
+
+/// @brief Returns leases which belong to specified pool.
+///
+/// @param config DHCP client configuration structure holding leases.
+/// @param pool Pool to which returned leases belong.
+/// @param [out] leases A vector in which the function will store leases
+/// found.
+void getLeasesByPool(const Dhcp6Client::Configuration& config,
+                     const Pool6& pool, std::vector<Lease6>& leases) {
+    for (std::vector<Lease6>::const_iterator lease =
+             config.leases_.begin(); lease != config.leases_.end();
+         ++lease) {
+        // Check if prefix in range.
+        if (pool.inRange(lease->addr_)) {
+            // Found the matching lease.
+            leases.push_back(*lease);
+        }
+    }
+}
 
 }; // end of anonymous namespace
 
@@ -392,7 +413,7 @@ Dhcp6Client::doSARR() {
 }
 
 void
-Dhcp6Client::doSolicit() {
+Dhcp6Client::doSolicit(const bool always_apply_config) {
     context_.query_ = createMsg(DHCPV6_SOLICIT);
     if (forced_server_id_) {
         context_.query_->addOption(forced_server_id_);
@@ -412,9 +433,10 @@ Dhcp6Client::doSolicit() {
     context_.response_ = receiveOneMsg();
 
     // If using Rapid Commit and the server has responded with Reply,
-    // let's apply received configuration.
-    if (use_rapid_commit_ && context_.response_ &&
-        context_.response_->getType() == DHCPV6_REPLY) {
+    // let's apply received configuration. We also apply the configuration
+    // for the Advertise if instructed to do so.
+    if (context_.response_ && (always_apply_config || (use_rapid_commit_ &&
+        context_.response_->getType() == DHCPV6_REPLY))) {
         config_.clear();
         applyRcvdConfiguration(context_.response_);
     }
@@ -647,6 +669,66 @@ Dhcp6Client::getLeasesWithZeroLifetime() const {
     getLeasesByProperty<Lease, uint32_t, &Lease::valid_lft_>(0, true, leases);
     return (leases);
 }
+
+std::vector<Lease6>
+Dhcp6Client::getLeasesByAddress(const IOAddress& address) const {
+    std::vector<Lease6> leases;
+    getLeasesByProperty<Lease, IOAddress, &Lease::addr_>(address, true, leases);
+    return (leases);
+}
+
+std::vector<Lease6>
+Dhcp6Client::getLeasesByAddressRange(const IOAddress& first,
+                                     const IOAddress& second) const {
+    std::vector<Lease6> leases;
+    getLeasesByPool(config_, Pool6(Lease::TYPE_NA, first, second), leases);
+    return (leases);
+}
+
+std::vector<Lease6>
+Dhcp6Client::getLeasesByPrefixPool(const asiolink::IOAddress& prefix,
+                                   const uint8_t prefix_len,
+                                   const uint8_t delegated_len) const {
+    std::vector<Lease6> leases;
+    getLeasesByPool(config_, Pool6(Lease::TYPE_PD, prefix, prefix_len,
+                                   delegated_len), leases);
+    return (leases);
+}
+
+bool
+Dhcp6Client::hasLeaseForAddress(const asiolink::IOAddress& address) const {
+    std::vector<Lease6> leases = getLeasesByAddress(address);
+    return (!leases.empty());
+}
+
+bool
+Dhcp6Client::hasLeaseForAddressRange(const asiolink::IOAddress& first,
+                                     const asiolink::IOAddress& last) const {
+    std::vector<Lease6> leases = getLeasesByAddressRange(first, last);
+    return (!leases.empty());
+}
+
+bool
+Dhcp6Client::hasLeaseForPrefix(const asiolink::IOAddress& prefix,
+                               const uint8_t prefix_len) const {
+    std::vector<Lease6> leases = getLeasesByAddress(prefix);
+    BOOST_FOREACH(const Lease6& lease, leases) {
+        if (lease.prefixlen_ == prefix_len) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+bool
+Dhcp6Client::hasLeaseForPrefixPool(const asiolink::IOAddress& prefix,
+                                   const uint8_t prefix_len,
+                                   const uint8_t delegated_len) const {
+    std::vector<Lease6> leases = getLeasesByPrefixPool(prefix, prefix_len,
+                                                       delegated_len);
+    return (!leases.empty());
+}
+
 
 uint16_t
 Dhcp6Client::getStatusCode(const uint32_t iaid) const {
