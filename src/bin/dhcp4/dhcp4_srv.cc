@@ -1777,14 +1777,14 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     Pkt4Ptr response = ex.getResponse();
 
     // For the non-relayed message, the destination port is the client's port.
-    // For the relayed message, the server/relay port is a destination.
+    // For the relayed message, the server/relay port is a destination unless
+    // the message is DHCPINFORM.
     // Note that the call to this function may throw if invalid combination
     // of hops and giaddr is found (hops = 0 if giaddr = 0 and hops != 0 if
     // giaddr != 0). The exception will propagate down and eventually cause the
     // packet to be discarded.
-    response->setRemotePort(query->isRelayed() ? DHCP4_SERVER_PORT :
-                            DHCP4_CLIENT_PORT);
-
+    const bool server_port = query->isRelayed() && ((query->getType() == DHCPINFORM) ? query->getCiaddr().isV4Zero() : true);
+    response->setRemotePort(server_port ? DHCP4_SERVER_PORT : DHCP4_CLIENT_PORT);
 
     IOAddress local_addr = query->getLocalAddr();
 
