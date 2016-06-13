@@ -290,7 +290,7 @@ error information to the Kea logging system.
 
 The @c CalloutHandle object provides two methods to get and set the
 arguments passed to the callout.  These methods are called (naturally
-enough) getArgument and SetArgument.  Their usage is illustrated by the
+enough) getArgument and setArgument.  Their usage is illustrated by the
 following code snippets.
 
 @code
