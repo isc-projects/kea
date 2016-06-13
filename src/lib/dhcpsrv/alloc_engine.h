@@ -523,12 +523,13 @@ public:
     ///
     /// The following fields of ClientContext6 are used:
     ///
-    /// @ref ClientContext6::subnet_ subnet the allocation should come from<br/>
+    /// @ref ClientContext6::subnet_ subnet the allocation should
+    ///        come from<br/>
     /// @ref ClientContext6::duid_ Client's DUID<br/>
-    /// @ref ClientContext6::iaid_ iaid field from the IA_NA container
+    /// @ref ClientContext6::IAContext::iaid_ iaid field from the IA_NA container
     ///        that client sent<br/>
-    /// @ref ClientContext6::hints_ a hint that the client provided<br/>
-    /// @ref ClientContext6::type_ lease type (IA, TA or PD)<br/>
+    /// @ref ClientContext6::IAContext::hints_ a hint that the client provided<br/>
+    /// @ref ClientContext6::IAContext::type_ lease type (IA, TA or PD)<br/>
     /// @ref ClientContext6::fwd_dns_update_ A boolean value which indicates
     ///        that server takes responsibility for the forward DNS Update
     ///        for this lease (if true).<br/>
@@ -541,7 +542,8 @@ public:
     ///        allocated (true)<br/>
     /// @ref ClientContext6::callout_handle_ a callout handle (used in hooks). A
     ///        lease callouts will be executed if this parameter is passed.<br/>
-    /// @ref ClientContext6::old_leases_ [out] Collection to which this function
+    /// @ref ClientContext6::IAContext::old_leases_ [out] Collection to which this
+    ///        function
     ///        will append old leases. Leases are stored in the same order as in
     ///        the collection of new leases, being returned. For newly allocated
     ///        leases (not renewed) the NULL pointers are stored in this
@@ -569,9 +571,10 @@ public:
     ///
     /// @param ctx Message processing context. It holds various information
     /// extracted from the client's message and required to allocate a lease.
-    /// In particular, @ref ClientContext6::hints_ provides list of addresses or
-    /// prefixes the client had sent. @ref ClientContext6::old_leases_ will
-    /// contain removed leases in this case.
+    /// In particular, @ref ClientContext6::IAContext::hints_ provides list
+    /// of addresses or
+    /// prefixes the client had sent. @ref ClientContext6::IAContext::old_leases_
+    /// will contain removed leases in this case.
     ///
     /// @return Returns renewed lease.
     Lease6Collection renewLeases6(ClientContext6& ctx);
