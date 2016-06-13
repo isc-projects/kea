@@ -203,10 +203,7 @@ public:
     /// Creates a prepared statement from the text given and adds it to the
     /// statements_ vector at the given index.
     ///
-    /// @param index Index into the statements_ vector into which the text
-    ///        should be placed.  The vector must be big enough for the index
-    ///        to be valid, else an exception will be thrown.
-    /// @param text Text of the SQL statement to be prepared.
+    /// @param statement SQL statement to be prepared.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
