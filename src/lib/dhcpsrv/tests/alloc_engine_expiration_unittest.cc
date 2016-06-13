@@ -1415,14 +1415,13 @@ ExpirationAllocEngine6Test::testReclaimReusedLeases(const uint16_t msg_type,
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
         // Build the context.
-        AllocEngine::ClientContext6 ctx(subnet, leases_[i]->duid_, 1,
-                                        leases_[i]->addr_,
-                                        Lease::TYPE_NA,
+        AllocEngine::ClientContext6 ctx(subnet, leases_[i]->duid_,
                                         false, false,
                                         leases_[i]->hostname_,
-                                        msg_type == DHCPV6_SOLICIT);
-        // Query is needed for logging purposes.
-        ctx.query_.reset(new Pkt6(msg_type, 0x1234));
+                                        msg_type == DHCPV6_SOLICIT,
+                                        Pkt6Ptr(new Pkt6(msg_type, 0x1234)));
+        ctx.currentIA().iaid_ = 1;
+        ctx.currentIA().hints_.push_back(std::make_pair(leases_[i]->addr_, 128));
 
         // Depending on the message type, we will call a different function.
         if (msg_type == DHCPV6_RENEW) {
