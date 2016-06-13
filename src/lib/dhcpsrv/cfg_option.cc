@@ -98,6 +98,26 @@ CfgOption::encapsulate() {
 }
 
 void
+CfgOption::encapsulateOptions(OptionPtr option) {
+    // Get encapsulated option space for the option.
+    const std::string& encap_space = option->getEncapsulatedSpace();
+    // Empty value means that no option space is encapsulated.
+    if (!encap_space.empty()) {
+        // Retrieve all options from the encapsulated option space.
+        OptionContainerPtr encap_options = getAll(encap_space);
+        for (OptionContainer::const_iterator encap_opt =
+                 encap_options->begin(); encap_opt != encap_options->end();
+             ++encap_opt) {
+            // Add sub-option if there isn't one added already.
+            if (!option->getOption(encap_opt->option_->getType())) {
+                option->addOption(encap_opt->option_);
+            }
+            encapsulateOptions(encap_opt->option_);
+        }
+    }
+}
+
+void
 CfgOption::encapsulateInternal(const std::string& option_space) {
     // Get all options for the particular option space.
     OptionContainerPtr options = getAll(option_space);
@@ -105,21 +125,7 @@ CfgOption::encapsulateInternal(const std::string& option_space) {
     // from the option spaces they encapsulate.
     for (OptionContainer::const_iterator opt = options->begin();
          opt != options->end(); ++opt) {
-        // Get encapsulated option space for the option.
-        const std::string& encap_space = opt->option_->getEncapsulatedSpace();
-        // Empty value means that no option space is encapsulated.
-        if (!encap_space.empty()) {
-            // Retrieve all options from the encapsulated option space.
-            OptionContainerPtr encap_options = getAll(encap_space);
-            for (OptionContainer::const_iterator encap_opt =
-                     encap_options->begin(); encap_opt != encap_options->end();
-                 ++encap_opt) {
-                // Add sub-option if there isn't one added already.
-                if (!opt->option_->getOption(encap_opt->option_->getType())) {
-                    opt->option_->addOption(encap_opt->option_);
-                }
-            }
-        }
+        encapsulateOptions(opt->option_);
     }
 }
 

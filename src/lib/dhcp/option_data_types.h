@@ -53,10 +53,30 @@ enum OptionDataType {
     OPT_ANY_ADDRESS_TYPE,
     OPT_IPV4_ADDRESS_TYPE,
     OPT_IPV6_ADDRESS_TYPE,
+    OPT_IPV6_PREFIX_TYPE,
     OPT_STRING_TYPE,
     OPT_FQDN_TYPE,
     OPT_RECORD_TYPE,
     OPT_UNKNOWN_TYPE
+};
+
+/// @brief Parameters being used to make up an option definition.
+struct OptionDefParams {
+    const char*             name;           // option name
+    uint16_t                code;           // option code
+    OptionDataType          type;           // data type
+    bool                    array;          // is array
+    const OptionDataType*   records;        // record fields
+    size_t                  records_size;   // number of fields in a record
+    const char*             encapsulates;   // option space encapsulated by the
+                                            // particular option.
+};
+
+/// @brief Encapsulation of option definition parameters and the structure size.
+struct OptionDefParamsEncapsulation {
+    const struct OptionDefParams*   optionDefParams;    // parameters structure
+    const int                       size;               // structure size
+    const char*                     space;              // option space
 };
 
 /// @brief Trait class for data types supported in DHCP option definitions.
@@ -221,7 +241,7 @@ public:
     ///
     /// @param buf input buffer.
     /// @param family address family: AF_INET or AF_INET6.
-    /// 
+    ///
     /// @throw isc::dhcp::BadDataTypeCast when the data being read
     /// is truncated.
     /// @return address being read.

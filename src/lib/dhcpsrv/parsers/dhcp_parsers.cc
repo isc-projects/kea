@@ -569,11 +569,7 @@ OptionDataParser::findOptionDefinition(const std::string& option_space,
         Option::V4 : Option::V6;
     OptionDefinitionPtr def;
 
-    if ((option_space == DHCP4_OPTION_SPACE) ||
-        (option_space == DHCP6_OPTION_SPACE)) {
-        def = LibDHCP::getOptionDef(u, search_key);
-
-    }
+    def = LibDHCP::getOptionDef(u, search_key, option_space);
 
     if (!def) {
         // Check if this is a vendor-option. If it is, get vendor-specific

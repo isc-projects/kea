@@ -725,7 +725,7 @@ private:
             // definition created within libdhcp++.
             OptionDefinitionPtr def;
             if ((space == DHCP4_OPTION_SPACE) || (space == DHCP6_OPTION_SPACE)) {
-                def = LibDHCP::getOptionDef(universe_, code_);
+                def = LibDHCP::getOptionDef(universe_, code_, space);
             }
 
             // Otherwise, we may check if this an option encapsulated within the

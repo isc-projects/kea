@@ -7,6 +7,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
+#include <dhcp/option_space.h>
 #include <dhcp/libdhcp++.h>
 #include <eval/eval_context.h>
 #include <eval/parser.h>
@@ -78,19 +79,21 @@ uint16_t
 EvalContext::convertOptionName(const std::string& option_name,
                                const isc::eval::location& loc)
 {
-    OptionDefinitionPtr option_def = LibDHCP::getOptionDef(option_universe_,
-                                                           option_name);
-    if (!option_def) {
-        const std::string global_space =
-            (option_universe_ == Option::V4) ? "dhcp4" : "dhcp6";
-        option_def = LibDHCP::getRuntimeOptionDef(global_space, option_name);
+    const std::string global_space =
+        (Option::V4 == option_universe_) ? DHCP4_OPTION_SPACE : DHCP6_OPTION_SPACE;
+
+    OptionDefinitionPtr option_def_ptr =
+        LibDHCP::getOptionDef(option_universe_, option_name, global_space);
+
+    if (!option_def_ptr) {
+        option_def_ptr = LibDHCP::getRuntimeOptionDef(global_space, option_name);
     }
 
-    if (!option_def) {
+    if (!option_def_ptr) {
         error(loc, "option '" + option_name + "' is not defined");
     }
 
-    return (option_def->getCode());
+    return (option_def_ptr->getCode());
 }
 
 uint8_t

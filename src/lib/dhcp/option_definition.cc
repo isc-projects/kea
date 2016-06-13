@@ -20,7 +20,6 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_opaque_data_tuples.h>
-#include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
@@ -28,6 +27,7 @@
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 using namespace std;
 using namespace isc::util;
@@ -565,6 +565,66 @@ OptionDefinition::writeToBuffer(const std::string& value,
             OptionDataTypeUtil::writeAddress(address, buf);
             return;
         }
+    case OPT_IPV6_PREFIX_TYPE:
+        {
+            std::string txt = value;
+
+            // first let's remove any whitespaces
+            boost::erase_all(txt, " "); // space
+            boost::erase_all(txt, "\t"); // tabulation
+
+            // Is this prefix/len notation?
+            size_t pos = txt.find("/");
+
+            if (pos == string::npos) {
+                isc_throw(BadDataTypeCast, "provided address/prefix "
+                          << value
+                          << " is not valid.");
+            }
+
+            std::string txt_address = txt.substr(0, pos);
+            isc::asiolink::IOAddress address = isc::asiolink::IOAddress(txt_address);
+            if (!address.isV6()) {
+                isc_throw(BadDataTypeCast, "provided address "
+                          << txt_address
+                          << " is not a valid IPv4 or IPv6 address.");
+            }
+
+            std::string txt_prefix = txt.substr(pos + 1);
+            uint8_t len = 0;
+            try {
+                // start with the first character after /
+                len = lexicalCastWithRangeCheck<uint8_t>(txt_prefix);
+            } catch (...)  {
+                isc_throw(BadDataTypeCast, "provided prefix "
+                          << txt_prefix
+                          << " is not valid.");
+            }
+
+            // Write the prefix length
+            OptionDataTypeUtil::writeInt<uint8_t>(len, buf);
+
+            std::vector<uint8_t> addrV6 = address.toBytes();
+            boost::dynamic_bitset<uint8_t> bits(addrV6.rbegin(), addrV6.rend());
+
+            uint8_t lenBytes = (len + 7) / 8;
+            for (size_t idx = 0; idx < lenBytes; idx++) {
+                boost::dynamic_bitset<uint8_t> tmp = bits >> 120;
+                uint8_t val = static_cast<uint8_t>(tmp.to_ulong());
+
+                //Zero padded bits follow when the prefix len is not divided exactly by 8
+                if (idx == lenBytes - 1) {
+                    uint8_t unusedBits = 0xFF;
+                    unusedBits <<= (8 - (len % 8)) % 8;
+                    val = val & unusedBits;
+                }
+                bits = bits << 8;
+                // Write prefix data
+                OptionDataTypeUtil::writeInt<uint8_t>(val, buf);
+            }
+
+            return;
+    }
     case OPT_STRING_TYPE:
         OptionDataTypeUtil::writeString(value, buf);
         return;

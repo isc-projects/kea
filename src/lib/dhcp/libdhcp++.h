@@ -38,7 +38,8 @@ public:
     /// @param u universe of the options (V4 or V6).
     ///
     /// @return Pointer to a collection of option definitions.
-    static const OptionDefContainerPtr& getOptionDefs(const Option::Universe u);
+    static const OptionDefContainerPtr getOptionDefs(const Option::Universe u,
+                                                   const std::string& space);
 
     /// @brief Return the first option definition matching a
     /// particular option code.
@@ -49,7 +50,8 @@ public:
     /// @return reference to an option definition being requested
     /// or NULL pointer if option definition has not been found.
     static OptionDefinitionPtr getOptionDef(const Option::Universe u,
-                                            const uint16_t code);
+                                            const uint16_t code,
+                                            const std::string& space);
 
     /// @brief Return the definition of option having a specified name.
     ///
@@ -59,7 +61,8 @@ public:
     /// @return Pointer to the option definition or NULL pointer if option
     /// definition has not been found.
     static OptionDefinitionPtr getOptionDef(const Option::Universe u,
-                                            const std::string& name);
+                                            const std::string& name,
+                                            const std::string& space);
 
     /// @brief Returns vendor option definition for a given vendor-id and code
     ///
@@ -248,21 +251,13 @@ public:
                                       uint16_t type,
                                       Option::Factory * factory);
 
-    /// @brief Returns v4 option definitions for a given vendor
+    /// @brief Returns option definitions for given universe and vendor
     ///
     /// @param vendor_id enterprise-id of a given vendor
     /// @return a container for a given vendor (or NULL if no option
     ///         definitions are defined)
-    static const OptionDefContainerPtr&
-    getVendorOption4Defs(const uint32_t vendor_id);
-
-    /// @brief Returns v6 option definitions for a given vendor
-    ///
-    /// @param vendor_id enterprise-id of a given vendor
-    /// @return a container for a given vendor (or NULL if no option
-    ///         definitions are defined)
-    static const OptionDefContainerPtr&
-    getVendorOption6Defs(const uint32_t vendor_id);
+    static const OptionDefContainerPtr
+    getVendorOptionDefs(Option::Universe u, const uint32_t vendor_id);
 
     /// @brief Parses provided buffer as DHCPv6 vendor options and creates
     ///        Option objects.
@@ -338,32 +333,7 @@ public:
     static uint32_t optionSpaceToVendorId(const std::string& option_space);
 
 private:
-
-    /// Initialize standard DHCPv4 option definitions.
-    ///
-    /// The method creates option definitions for all DHCPv4 options.
-    /// Currently this function is not implemented.
-    ///
-    /// @throw std::bad alloc if system went out of memory.
-    /// @throw MalformedOptionDefinition if any of the definitions
-    /// are incorrect. This is programming error.
-    static void initStdOptionDefs4();
-
-    /// Initialize standard DHCPv6 option definitions.
-    ///
-    /// The method creates option definitions for all DHCPv6 options.
-    ///
-    /// @throw std::bad_alloc if system went out of memory.
-    /// @throw MalformedOptionDefinition if any of the definitions
-    /// is incorrect. This is a programming error.
-    static void initStdOptionDefs6();
-
-    static void initVendorOptsDocsis4();
-
-    static void initVendorOptsDocsis6();
-
-    /// Initialize private DHCPv6 option definitions.
-    static void initVendorOptsIsc6();
+    static void initStdOptionDefs(const std::string& space);
 
     /// pointers to factories that produce DHCPv6 options
     static FactoryMap v4factories_;
@@ -376,6 +346,9 @@ private:
 
     /// Container with DHCPv6 option definitions.
     static OptionDefContainerPtr v6option_defs_;
+
+    // Container that maps option spaces to option definitions.
+    static std::map<std::string, OptionDefContainerPtr> option_defs_;
 
     /// Container for v4 vendor option definitions
     static VendorOptionDefContainers vendor4_defs_;
