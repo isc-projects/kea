@@ -303,6 +303,8 @@ TEST_F(InformTest, relayedClient) {
     EXPECT_EQ(IOAddress("192.0.2.56"), resp->getLocalAddr());
     // Response is unicast to the client, so it must not be relayed.
     EXPECT_FALSE(resp->isRelayed());
+    EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getLocalPort());
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
     // Make sure that the server id is present.
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
     // Make sure that the Routers option has been received.
@@ -342,6 +344,8 @@ TEST_F(InformTest, relayedClientNoCiaddr) {
     EXPECT_EQ(IOAddress("192.0.2.2"), resp->getLocalAddr());
     EXPECT_EQ(IOAddress("192.0.2.2"), resp->getGiaddr());
     EXPECT_EQ(1, resp->getHops());
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
     // In the case when the client didn't set the ciaddr and the message
     // was received via relay the server sets the Broadcast flag to help
     // the relay forwarding the message (without yiaddr) to the client.
