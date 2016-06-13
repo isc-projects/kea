@@ -148,13 +148,12 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_select", lease6_select_callout));
 
-    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
-
     Lease6Ptr lease;
-    AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
-                                    Lease::TYPE_NA, false, false, "", false);
-    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
-    ctx.callout_handle_ = callout_handle;
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)),
+                                    HooksManager::createCalloutHandle());
+    ctx.currentIA().iaid_ = iaid_;
+
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -223,16 +222,12 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_select", lease6_select_different_callout));
 
-    // Normally, dhcpv6_srv would passed the handle when calling allocateLeases6,
-    // but in tests we need to create it on our own.
-    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
-
     // Call allocateLeases6. Callouts should be triggered here.
     Lease6Ptr lease;
-    AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
-                                    Lease::TYPE_NA, false, false, "", false);
-    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
-    ctx.callout_handle_ = callout_handle;
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)),
+                                    HooksManager::createCalloutHandle());
+    ctx.currentIA().iaid_ = iaid_;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     // Check that we got a lease
     ASSERT_TRUE(lease);
