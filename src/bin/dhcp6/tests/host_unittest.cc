@@ -273,7 +273,8 @@ public:
                              const Dhcp6Client::Configuration& config) const {
         Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
             Option6AddrLst>(config.findOption(option_type));
-        ASSERT_TRUE(opt) << "option " << option_type << " not found";
+        ASSERT_TRUE(opt) << "option " << option_type << " not found or it "
+            "is of incorrect type";
         Option6AddrLst::AddressContainer addrs = opt->getAddresses();
         ASSERT_GE(addrs.size(), 1) << "test failed for option type " << option_type;
         EXPECT_EQ(expected_addr, addrs[0].toText())
@@ -720,7 +721,7 @@ TEST_F(HostTest, overrideRequestedOptionsInformationRequest) {
 
 // This test checks that host specific options override subnet specific
 // options. Overridden options are requested with Option Request
-// option (Reuqest case).
+// option (Request case).
 TEST_F(HostTest, overrideRequestedOptionsRequest) {
     testOverrideRequestedOptions(DHCPV6_REQUEST);
 }
@@ -748,7 +749,7 @@ TEST_F(HostTest, testHostOnlyOptionsInformationRequest) {
 
 // This test checks that client receives options when they are
 // solely defined in the host scope and not in the global or subnet
-// scope (Reuqest case).
+// scope (Request case).
 TEST_F(HostTest, testHostOnlyOptionsRequest) {
     testHostOnlyOptions(DHCPV6_REQUEST);
 }
@@ -768,7 +769,7 @@ TEST_F(HostTest, testHostOnlyOptionsRebind) {
 }
 
 // This test checks that host specific vendor options override vendor
-// options defined in the global scope (Reuqest case).
+// options defined in the global scope (Request case).
 TEST_F(HostTest, overrideVendorOptionsRequest) {
     testOverrideVendorOptions(DHCPV6_REQUEST);
 }
