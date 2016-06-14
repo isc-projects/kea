@@ -88,7 +88,7 @@ pgsql_lease_version_test() {
 
     # Verfiy that kea-admin lease-version returns the correct version
     version=$(${keaadmin} lease-version pgsql -u $db_user -p $db_password -n $db_name)
-    assert_str_eq "2.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "3.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -297,9 +297,9 @@ pgsql_lease6_dump_test() {
 
     # Insert the reference records
     insert_sql="\
-insert into lease6 values(10,E'\\x20',30,'$timestamp1',40,50,1,60,70,'t','t','one.example.com', 0);\
-insert into lease6 values(11,'',30,'$timestamp2',40,50,1,60,70,'t','t','', 1);\
-insert into lease6 values(12,E'\\x21',30,'$timestamp3',40,50,1,60,70,'t','t','three.example.com', 2);"
+insert into lease6 values(10,E'\\x20',30,'$timestamp1',40,50,1,60,70,'t','t','one.example.com', 0,decode('80','hex'),90,16);\
+insert into lease6 values(11,'',30,'$timestamp2',40,50,1,60,70,'t','t','', 1,decode('80','hex'),90,1);\
+insert into lease6 values(12,E'\\x21',30,'$timestamp3',40,50,1,60,70,'t','t','three.example.com', 2,decode('80','hex'),90,4);"
 
     pgsql_execute "$insert_sql"
     ERRCODE=$?
