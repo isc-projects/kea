@@ -794,7 +794,12 @@ void
 Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
                               AllocEngine::ClientContext6& ctx,
                               CfgOptionList& co_list) {
-    // First subnet configured options
+    // Firstly, host specific options.
+    if (ctx.host_ && !ctx.host_->getCfgOption6()->empty()) {
+        co_list.push_back(ctx.host_->getCfgOption6());
+    }
+
+    // Next, subnet configured options.
     if (ctx.subnet_ && !ctx.subnet_->getCfgOption()->empty()) {
         co_list.push_back(ctx.subnet_->getCfgOption());
     }
