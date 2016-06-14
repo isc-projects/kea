@@ -26,7 +26,7 @@ class PgSqlLease4Exchange;
 class PgSqlLease6Exchange;
 
 /// Defines PostgreSQL backend version: 2.0
-const uint32_t PG_CURRENT_VERSION = 2;
+const uint32_t PG_CURRENT_VERSION = 3;
 const uint32_t PG_CURRENT_MINOR = 0;
 
 /// @brief PostgreSQL Lease Manager

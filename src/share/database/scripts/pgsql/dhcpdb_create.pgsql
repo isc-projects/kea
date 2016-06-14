@@ -237,6 +237,217 @@ COMMIT;
 
 -- Schema 2.0 specification ends here.
 
+-- Upgrade to schema 3.0 begins here:
+
+--
+-- Table structure for table hosts
+--
+
+DROP TABLE IF EXISTS hosts;
+CREATE TABLE hosts (
+  host_id SERIAL PRIMARY KEY NOT NULL,
+  dhcp_identifier BYTEA NOT NULL,
+  dhcp_identifier_type SMALLINT NOT NULL,
+  dhcp4_subnet_id INT DEFAULT NULL,
+  dhcp6_subnet_id INT DEFAULT NULL,
+  ipv4_address BIGINT DEFAULT NULL,
+  hostname VARCHAR(255) DEFAULT NULL,
+  dhcp4_client_classes VARCHAR(255) DEFAULT NULL,
+  dhcp6_client_classes VARCHAR(255) DEFAULT NULL
+);
+
+CREATE INDEX key_dhcp4_identifier_subnet_id ON hosts (dhcp_identifier, dhcp_identifier_type);
+
+CREATE INDEX key_dhcp6_identifier_subnet_id ON hosts (dhcp_identifier, dhcp_identifier_type, dhcp6_subnet_id);
+
+--
+-- Table structure for table dhcp4_options
+--
+
+DROP TABLE IF EXISTS dhcp4_options;
+CREATE TABLE dhcp4_options (
+  option_id SERIAL PRIMARY KEY NOT NULL,
+  code SMALLINT NOT NULL,
+  value BYTEA,
+  formatted_value TEXT,
+  space VARCHAR(128) DEFAULT NULL,
+  persistent BOOLEAN NOT NULL DEFAULT 'f',
+  dhcp_client_class VARCHAR(128) DEFAULT NULL,
+  dhcp4_subnet_id INT DEFAULT NULL,
+  host_id INT DEFAULT NULL,
+  CONSTRAINT fk_options_host1 FOREIGN KEY (host_id) REFERENCES hosts (host_id) ON DELETE CASCADE
+);
+
+CREATE INDEX fk_dhcp4_options_host1_idx ON dhcp4_options (host_id);
+
+--
+-- Table structure for table dhcp6_options
+--
+
+DROP TABLE IF EXISTS dhcp6_options;
+CREATE TABLE dhcp6_options (
+  option_id SERIAL PRIMARY KEY NOT NULL,
+  code INT NOT NULL,
+  value BYTEA,
+  formatted_value TEXT,
+  space VARCHAR(128) DEFAULT NULL,
+  persistent BOOLEAN NOT NULL DEFAULT 'f',
+  dhcp_client_class VARCHAR(128) DEFAULT NULL,
+  dhcp6_subnet_id INT DEFAULT NULL,
+  host_id INT DEFAULT NULL,
+  CONSTRAINT fk_options_host10 FOREIGN KEY (host_id) REFERENCES hosts (host_id) ON DELETE CASCADE
+);
+
+CREATE INDEX fk_dhcp6_options_host1_idx ON dhcp6_options (host_id);
+
+--
+-- Table structure for table ipv6_reservations
+--
+
+DROP TABLE IF EXISTS ipv6_reservations;
+CREATE TABLE ipv6_reservations (
+  reservation_id SERIAL PRIMARY KEY NOT NULL,
+  address VARCHAR(39) NOT NULL,
+  prefix_len SMALLINT NOT NULL DEFAULT '128',
+  type SMALLINT NOT NULL DEFAULT '0',
+  dhcp6_iaid INT DEFAULT NULL,
+  host_id INT NOT NULL,
+  CONSTRAINT fk_ipv6_reservations_host FOREIGN KEY (host_id) REFERENCES hosts (host_id) ON DELETE CASCADE
+);
+
+CREATE INDEX fk_ipv6_reservations_host_idx ON ipv6_reservations (host_id);
+
+--
+-- Table structure for table lease_hwaddr_source
+--
+
+DROP TABLE IF EXISTS lease_hwaddr_source;
+CREATE TABLE lease_hwaddr_source (
+  hwaddr_source INT PRIMARY KEY NOT NULL,
+  name VARCHAR(40) DEFAULT NULL
+);
+
+-- Hardware address obtained from raw sockets
+INSERT INTO lease_hwaddr_source VALUES (1, 'HWADDR_SOURCE_RAW');
+
+-- Hardware address converted from IPv6 link-local address with EUI-64
+INSERT INTO lease_hwaddr_source VALUES (2, 'HWADDR_SOURCE_IPV6_LINK_LOCAL');
+
+-- Hardware address extracted from client-id (duid)
+INSERT INTO lease_hwaddr_source VALUES (4, 'HWADDR_SOURCE_DUID');
+
+-- Hardware address extracted from client address relay option (RFC6939)
+INSERT INTO lease_hwaddr_source VALUES (8, 'HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION');
+
+-- Hardware address extracted from remote-id option (RFC4649)
+INSERT INTO lease_hwaddr_source VALUES (16, 'HWADDR_SOURCE_REMOTE_ID');
+
+-- Hardware address extracted from subscriber-id option (RFC4580)
+INSERT INTO lease_hwaddr_source VALUES (32, 'HWADDR_SOURCE_SUBSCRIBER_ID');
+
+-- Hardware address extracted from docsis options
+INSERT INTO lease_hwaddr_source VALUES (64, 'HWADDR_SOURCE_DOCSIS');
+
+
+-- Adding ORDER BY clause to sort by lease address
+--
+--  FUNCTION that returns a result set containing the data for lease4 dumps
+DROP FUNCTION IF EXISTS lease4DumpData();
+CREATE FUNCTION lease4DumpData() RETURNS
+    table (address inet,
+           hwaddr text,
+           client_id text,
+           valid_lifetime bigint,
+           expire timestamp with time zone,
+           subnet_id bigint,
+           fqdn_fwd int,
+           fqdn_rev int,
+           hostname text,
+           state text
+    ) as $$
+    SELECT ('0.0.0.0'::inet + l.address),
+            encode(l.hwaddr,'hex'),
+            encode(l.client_id,'hex'),
+            l.valid_lifetime,
+            l.expire,
+            l.subnet_id,
+            l.fqdn_fwd::int,
+            l.fqdn_rev::int,
+            l.hostname,
+            s.name
+    FROM lease4 l
+         left outer join lease_state s on (l.state = s.state)
+    ORDER BY l.address;
+$$ LANGUAGE SQL;
+--
+
+-- Add new columns to lease6
+ALTER TABLE lease6
+  ADD COLUMN hwaddr BYTEA DEFAULT NULL,
+  ADD COLUMN hwtype SMALLINT DEFAULT NULL,
+  ADD COLUMN hwaddr_source SMALLINT DEFAULT NULL;
+
+--
+--  FUNCTION that returns a result set containing the column names for lease6 dumps
+DROP FUNCTION IF EXISTS lease6DumpHeader();
+CREATE FUNCTION lease6DumpHeader() RETURNS text AS  $$
+    select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,state,hwaddr,hwtype,hwaddr_source' as text) as result;
+$$ LANGUAGE SQL;
+--
+
+--
+--  FUNCTION that returns a result set containing the data for lease6 dumps
+DROP FUNCTION IF EXISTS lease6DumpData();
+CREATE FUNCTION lease6DumpData() RETURNS
+    TABLE (
+           address text,
+           duid text,
+           valid_lifetime bigint,
+           expire timestamp with time zone,
+           subnet_id bigint,
+           pref_lifetime bigint,
+           name text,
+           iaid integer,
+           prefix_len smallint,
+           fqdn_fwd int,
+           fqdn_rev int,
+           hostname text,
+           state text,
+           hwaddr text,
+           hwtype smallint,
+           hwaddr_source text
+    ) AS $$
+    SELECT (l.address,
+            encode(l.duid,'hex'),
+            l.valid_lifetime,
+            l.expire,
+            l.subnet_id,
+            l.pref_lifetime,
+            t.name,
+            l.iaid,
+            l.prefix_len,
+            l.fqdn_fwd::int,
+            l.fqdn_rev::int,
+            l.hostname,
+            s.name,
+            encode(l.hwaddr,'hex'),
+            l.hwtype,
+            h.name
+     )
+     FROM lease6 l
+         left outer join lease6_types t on (l.lease_type = t.lease_type)
+         left outer join lease_state s on (l.state = s.state)
+         left outer join lease_hwaddr_source h on (l.hwaddr_source = h.hwaddr_source)
+     ORDER BY l.address;
+$$ LANGUAGE SQL;
+--
+
+-- Set 3.0 schema version.
+START TRANSACTION;
+UPDATE schema_version
+    SET version = '3', minor = '0';
+COMMIT;
+
 -- Notes:
 
 -- Indexes
