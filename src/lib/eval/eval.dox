@@ -143,6 +143,8 @@ instantiated with the appropriate value and put onto the expression vector.
                     DHCPv4 relay, e.g. relay[123].text or relay[123].hex
  - isc::dhcp::TokenRelay6Option -- represents a sub-option inserted by
    a DHCPv6 relay
+ - isc::dhcp::TokenPkt -- represents a DHCP packet meta data (incoming
+   interface name, source/remote or destination/local IP address, length).
  - isc::dhcp::TokenPkt4 -- represents a DHCPv4 packet field.
  - isc::dhcp::TokenPkt6 -- represents a DHCPv6 packet field (message type
    or transaction id).
