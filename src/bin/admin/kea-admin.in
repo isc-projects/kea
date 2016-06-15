@@ -489,10 +489,10 @@ cql_dump() {
 
     select_where_clause=""
     if [ $dump_type -eq 4 ]; then
-        dump_qry="SELECT address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state FROM keatest.lease4"
+        dump_qry="SELECT address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state FROM lease4"
         select_where_clause=" WHERE address = 0" # invalid address
     elif [ $dump_type -eq 6 ]; then
-        dump_qry="SELECT address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state FROM keatest.lease6"
+        dump_qry="SELECT address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state FROM lease6"
         select_where_clause=" WHERE address = '::'" # invalid address
     fi
 

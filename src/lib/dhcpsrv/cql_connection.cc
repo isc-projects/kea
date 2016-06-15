@@ -98,7 +98,7 @@ CqlConnection::openDatabase() {
         skeyspace = getParameter("keyspace");
         keyspace = skeyspace.c_str();
     } catch (...) {
-        // No database name. Fine, we'll use default "keatest".
+        // No keyspace name. Fine, we'll use default "keatest".
     }
 
     cluster_ = cass_cluster_new();

@@ -258,7 +258,8 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
     // DELETE_LEASE4
     { delete_lease4_params,
       "delete_lease4",
-      "DELETE FROM lease4 WHERE address = ?" },
+      "DELETE FROM lease4 WHERE address = ? "
+      "IF EXISTS" },
 
     // DELETE_LEASE4_STATE_EXPIRED
     { delete_expired_lease4_params,
@@ -267,12 +268,14 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "valid_lifetime, expire, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
-      "WHERE state = ? AND expire < ? ALLOW FILTERING" },
+      "WHERE state = ? AND expire < ? "
+      "ALLOW FILTERING" },
 
     // DELETE_LEASE6
     { delete_lease6_params,
       "delete_lease6",
-      "DELETE FROM lease6 WHERE address = ?" },
+      "DELETE FROM lease6 WHERE address = ? "
+      "IF EXISTS" },
 
     // DELETE_LEASE6_STATE_EXPIRED
     { delete_expired_lease6_params,
@@ -282,7 +285,8 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, state "
       "FROM lease6 "
-      "WHERE state = ? AND expire < ? ALLOW FILTERING" },
+      "WHERE state = ? AND expire < ? "
+      "ALLOW FILTERING" },
 
     // GET_LEASE4_ADDR
     { get_lease4_addr_params,
@@ -309,7 +313,8 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "valid_lifetime, expire, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
-      "WHERE client_id = ? AND subnet_id = ? ALLOW FILTERING" },
+      "WHERE client_id = ? AND subnet_id = ? "
+      "ALLOW FILTERING" },
 
     // GET_LEASE4_HWADDR
     { get_lease4_hwaddr_params,
@@ -327,7 +332,8 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "valid_lifetime, expire, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
-      "WHERE hwaddr = ? AND subnet_id = ? ALLOW FILTERING" },
+      "WHERE hwaddr = ? AND subnet_id = ? "
+      "ALLOW FILTERING" },
 
     // GET_LEASE4_EXPIRE
     { get_lease4_expired_params,
@@ -337,7 +343,8 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
       "WHERE state = ? AND expire < ? "
-      "LIMIT ? ALLOW FILTERING" },
+      "LIMIT ? "
+      "ALLOW FILTERING" },
 
     // GET_LEASE6_ADDR
     { get_lease6_addr_params,
@@ -347,7 +354,8 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, state "
       "FROM lease6 "
-      "WHERE address = ? AND lease_type = ? ALLOW FILTERING" },
+      "WHERE address = ? AND lease_type = ? "
+      "ALLOW FILTERING" },
 
     // GET_LEASE6_DUID_IAID
     { get_lease6_duid_iaid_params,
@@ -357,7 +365,8 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
          "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
          "hwaddr, hwtype, hwaddr_source, state "
        "FROM lease6 "
-       "WHERE duid = ? AND iaid = ? AND lease_type = ? ALLOW FILTERING" },
+       "WHERE duid = ? AND iaid = ? AND lease_type = ? "
+       "ALLOW FILTERING" },
 
     // GET_LEASE6_DUID_IAID_SUBID
     { get_lease6_duid_iaid_subid_params,
@@ -367,7 +376,8 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, state "
       "FROM lease6 "
-      "WHERE duid = ? AND iaid = ? AND subnet_id = ? AND lease_type = ? ALLOW FILTERING" },
+      "WHERE duid = ? AND iaid = ? AND subnet_id = ? AND lease_type = ? "
+      "ALLOW FILTERING" },
 
     // GET_LEASE6_EXPIRE
     { get_lease6_expired_params,
@@ -377,9 +387,9 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, state "
       "FROM lease6 "
-      //"WHERE state != ? AND expire < ? ORDER BY expire ASC "
       "WHERE state = ? AND expire < ? "
-      "LIMIT ? ALLOW FILTERING" },
+      "LIMIT ? "
+      "ALLOW FILTERING" },
 
     // GET_VERSION
     { get_version_params,
@@ -393,7 +403,7 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, "
         "state) "
       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
-    },
+      "IF NOT EXISTS" },
 
     // INSERT_LEASE6
     { insert_lease6_params,
@@ -403,7 +413,7 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, "
         "hwtype, hwaddr_source, state) "
       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
-    },
+      "IF NOT EXISTS" },
 
     // UPDATE_LEASE4
     { update_lease4_params,
@@ -412,7 +422,7 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "client_id = ?, valid_lifetime = ?, expire = ?, "
         "subnet_id = ?, fqdn_fwd = ?, fqdn_rev = ?, hostname = ?, state = ? "
       "WHERE address = ? "
-    },
+      "IF EXISTS" },
 
     // UPDATE_LEASE6
     { update_lease6_params,
@@ -423,7 +433,7 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "prefix_len = ?, fqdn_fwd = ?, fqdn_rev = ?, hostname = ?, "
         "hwaddr = ?, hwtype = ?, hwaddr_source = ?, state = ? "
       "WHERE address = ? "
-    },
+      "IF EXISTS" },
 
     // End of list sentinel
     { NULL, NULL, NULL }
@@ -501,12 +511,12 @@ public:
     /// all variables are initialized/set in the methods before they are used.
     CqlLease4Exchange() : addr4_(0), client_id_length_(0),
                             client_id_null_(false) {
-        const size_t MAX_COLUMNS = 11U;
+        const size_t MAX_COLUMNS = 12U;
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
 
         // Set the column names
         size_t offset = 0U;
-        BOOST_STATIC_ASSERT(11U == MAX_COLUMNS);
+        BOOST_STATIC_ASSERT(12U == MAX_COLUMNS);
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("address",
             offset++, EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32)));
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("hwaddr",
@@ -529,6 +539,8 @@ public:
             offset++, EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32)));
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("limit",
             offset++, EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32)));
+        parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("[applied]",
+            offset++, EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BOOL)));
         BOOST_ASSERT(parameters_.size() == MAX_COLUMNS);
     }
 
@@ -553,7 +565,18 @@ public:
             data.add(&addr4_);
 
             // hwaddr: blob
-            hwaddr_ = lease_->hwaddr_->hwaddr_;
+            HWAddrPtr hwaddr = lease_->hwaddr_;
+            if (hwaddr) {
+                if (hwaddr->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
+                    isc_throw(DbOperationError, "Hardware address length " <<
+                              lease_->hwaddr_->hwaddr_.size() <<
+                              " exceeds maximum allowed of " <<
+                              HWAddr::MAX_HWADDR_LEN);
+                }
+                hwaddr_ = hwaddr->hwaddr_;
+            } else {
+                hwaddr_.clear();
+            }
             hwaddr_length_ = hwaddr_.size();
             data.add(&hwaddr_);
 
@@ -622,7 +645,6 @@ public:
     /// Creates a CQL_BIND array to receive Lease4 data from the database.
     Lease4Ptr createBindForReceive(const CassRow* row) {
         try {
-
             unsigned char* hwaddr_buffer = NULL;
             const char* client_id_buffer = NULL;
             const char* hostname_buffer = NULL;
@@ -669,8 +691,8 @@ public:
             data.add(reinterpret_cast<void*>(&state_));
             size.add(NULL);
 
-            for (int i = 0; i < 10; i++) {
-                CqlLeaseMgr::getData(row, i, data, size, *this);
+            for (size_t i = 0; i < data.size(); i++) {
+                CqlLeaseMgr::getData(row, i, data, size, i, *this);
             }
 
             // hwaddr: blob
@@ -756,17 +778,17 @@ public:
     CqlLease6Exchange() : addr6_length_(0), duid_length_(0), iaid_(0),
                           lease_type_(0), prefixlen_(0), pref_lifetime_(0),
                           hwaddr_null_(false), hwtype_(0), hwaddr_source_(0) {
-        const size_t MAX_COLUMNS = 17U;
+        const size_t MAX_COLUMNS = 18U;
         memset(addr6_buffer_, 0, sizeof(addr6_buffer_));
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
 
         // Set the column names
         size_t offset = 0U;
-        BOOST_STATIC_ASSERT(17U == MAX_COLUMNS);
+        BOOST_STATIC_ASSERT(18U == MAX_COLUMNS);
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("address",
             offset++, EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_STRING)));
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("duid",
-            offset++, EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_STRING)));
+            offset++, EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BYTES)));
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("valid_lifetime",
             offset++, EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT64)));
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("expire",
@@ -797,6 +819,8 @@ public:
             offset++, EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32)));
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("limit",
             offset++, EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32)));
+        parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("[applied]",
+            offset++, EXCHANGE_DATA_TYPE_IO_OUT, EXCHANGE_DATA_TYPE_BOOL)));
         BOOST_ASSERT(parameters_.size() == MAX_COLUMNS);
     }
 
@@ -899,6 +923,12 @@ public:
             // hwaddr: blob
             HWAddrPtr hwaddr = lease_->hwaddr_;
             if (hwaddr) {
+                if (hwaddr->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
+                    isc_throw(DbOperationError, "Hardware address length : "
+                              << lease_->hwaddr_->hwaddr_.size()
+                              << " exceeds maximum allowed of: "
+                              << HWAddr::MAX_HWADDR_LEN);
+                }
                 hwaddr_ = hwaddr->hwaddr_;
             } else {
                 hwaddr_.clear();
@@ -1009,8 +1039,8 @@ public:
             data.add(reinterpret_cast<void*>(&state_));
             size.add(NULL);
 
-            for (int i = 0; i < 16; i++) {
-                CqlLeaseMgr::getData(row, i, data, size, *this);
+            for (size_t i = 0; i < data.size(); i++) {
+                CqlLeaseMgr::getData(row, i, data, size, i, *this);
             }
 
             // address: varchar
@@ -1151,8 +1181,8 @@ CqlLeaseMgr::bindData(CassStatement* statement, const StatementIndex stindex,
 }
 
 void
-CqlLeaseMgr::getData(const CassRow* row, int pindex, CqlDataArray& data,
-        CqlDataArray& size, const SqlExchange& exchange) {
+CqlLeaseMgr::getData(const CassRow* row, const int pindex, CqlDataArray& data,
+        CqlDataArray& size, const int dindex, const SqlExchange& exchange) {
     const CassValue* value;
     if (pindex >= exchange.parameters_.size()) {
         return;
@@ -1169,8 +1199,8 @@ CqlLeaseMgr::getData(const CassRow* row, int pindex, CqlDataArray& data,
         if (type >= sizeof(CqlFunctions) / sizeof(CqlFunctions[0])) {
             isc_throw(BadValue, "index " << type << " out of bounds");
         }
-        CqlFunctions[type].sqlGetFunction_(value, data.values_[pindex],
-            reinterpret_cast<size_t *>(size.values_[pindex]));
+        CqlFunctions[type].sqlGetFunction_(value, data.values_[dindex],
+            reinterpret_cast<size_t *>(size.values_[dindex]));
     }
 }
 
@@ -1200,14 +1230,31 @@ CqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
     if (rc != CASS_OK) {
         cass_future_free(future);
         cass_statement_free(statement);
-        isc_throw(DbOperationError, error);
+        return false;
     }
+
+    // Check if statement has been applied.
     const CassResult* resultCollection = cass_future_get_result(future);
+    CassIterator* rows = cass_iterator_from_result(resultCollection);
+    CqlDataArray appliedData;
+    CqlDataArray appliedSize;
+    bool applied = false;
+    while (cass_iterator_next(rows)) {
+        const CassRow* row = cass_iterator_get_row(rows);
+        // [applied]: bool
+        appliedData.add(reinterpret_cast<void*>(&applied));
+        appliedSize.add(NULL);
+        CqlLeaseMgr::getData(row, exchange.parameters_.size() - 1, appliedData,
+                             appliedSize, 0, exchange);
+    }
+
+    // Free resources.
+    cass_iterator_free(rows);
     cass_result_free(resultCollection);
     cass_future_free(future);
     cass_statement_free(statement);
 
-    return (true);
+    return applied;
 }
 
 bool
@@ -1268,7 +1315,6 @@ void CqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
 
     const CassResult* resultCollection = cass_future_get_result(future);
     CassIterator* rows = cass_iterator_from_result(resultCollection);
-
     int rowCount = 0;
     while (cass_iterator_next(rows)) {
         rowCount++;
@@ -1555,14 +1601,13 @@ CqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
                                        const size_t max_leases,
                                        StatementIndex statement_index) const {
     // Set up the WHERE clause value
-    //"WHERE state != ? AND expire < ? ORDER BY expire ASC "
     uint32_t keepState = Lease::STATE_EXPIRED_RECLAIMED;
     uint64_t timestamp = static_cast<int64_t>(time(NULL));
 
     // If the number of leases is 0, we will return all leases. This is
     // achieved by setting the limit to a very high value.
-    uint32_t limit = max_leases > 0 ? static_cast<uint32_t>(max_leases) :
-        std::numeric_limits<uint32_t>::max();
+    uint32_t limit = max_leases > 0 ? static_cast<int32_t>(max_leases) :
+        std::numeric_limits<int32_t>::max();
 
     for (uint32_t state = Lease::STATE_DEFAULT;
             state <= Lease::STATE_EXPIRED_RECLAIMED; state++) {
@@ -1622,10 +1667,30 @@ CqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
         isc_throw(DbOperationError, error);
     }
 
+    // Check if statement has been applied.
     const CassResult* resultCollection = cass_future_get_result(future);
+    CassIterator* rows = cass_iterator_from_result(resultCollection);
+    CqlDataArray appliedData;
+    CqlDataArray appliedSize;
+    bool applied = false;
+    while (cass_iterator_next(rows)) {
+        const CassRow* row = cass_iterator_get_row(rows);
+        // [applied]: bool
+        appliedData.add(reinterpret_cast<void*>(&applied));
+        appliedSize.add(NULL);
+        CqlLeaseMgr::getData(row, exchange.parameters_.size() - 1, appliedData,
+                             appliedSize, 0, exchange);
+    }
+
+    // Free resources.
+    cass_iterator_free(rows);
     cass_result_free(resultCollection);
     cass_future_free(future);
     cass_statement_free(statement);
+
+    if (!applied) {
+        isc_throw(NoSuchLease, "Statement has not been applied.");
+    }
 }
 
 void
@@ -1700,13 +1765,34 @@ CqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
     std::string error;
     dbconn_.checkStatementError(error, future, stindex, "unable to DELETE");
     rc = cass_future_error_code(future);
-    cass_future_free(future);
-    cass_statement_free(statement);
     if (rc != CASS_OK) {
-       isc_throw(DbOperationError, error);
+        cass_future_free(future);
+        cass_statement_free(statement);
+        isc_throw(DbOperationError, error);
     }
 
-    return (true);
+    // Check if statement has been applied.
+    const CassResult* resultCollection = cass_future_get_result(future);
+    CassIterator* rows = cass_iterator_from_result(resultCollection);
+    CqlDataArray appliedData;
+    CqlDataArray appliedSize;
+    bool applied = false;
+    while (cass_iterator_next(rows)) {
+        const CassRow* row = cass_iterator_get_row(rows);
+        // [applied]: bool
+        appliedData.add(reinterpret_cast<void*>(&applied));
+        appliedSize.add(NULL);
+        CqlLeaseMgr::getData(row, exchange.parameters_.size() - 1, appliedData,
+                             appliedSize, 0, exchange);
+    }
+
+    // Free resources.
+    cass_iterator_free(rows);
+    cass_result_free(resultCollection);
+    cass_future_free(future);
+    cass_statement_free(statement);
+
+    return applied;
 }
 
 bool
@@ -1757,7 +1843,6 @@ uint64_t
 CqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
         StatementIndex statement_index) {
     // Set up the WHERE clause value
-    //"WHERE state = ? AND expire < ? ALLOW FILTERING"
 
     CqlDataArray data;
     uint32_t result = 0;
@@ -1845,13 +1930,12 @@ CqlLeaseMgr::getVersion() const {
         isc_throw(DbOperationError, error);
     }
 
+    // Get major and minor versions.
     const CassResult* resultCollection = cass_future_get_result(future);
     CassIterator* rows = cass_iterator_from_result(resultCollection);
     CqlDataArray data;
     CqlDataArray size;
-    int rowCount = 0;
     while (cass_iterator_next(rows)) {
-        rowCount++;
         const CassRow* row = cass_iterator_get_row(rows);
         // version: uint32_t
         data.add(reinterpret_cast<void*>(&version));
@@ -1859,9 +1943,8 @@ CqlLeaseMgr::getVersion() const {
         // minor: uint32_t
         data.add(reinterpret_cast<void*>(&minor));
         size.add(NULL);
-
-        for (int i = 0; i < 2; i++) {
-            CqlLeaseMgr::getData(row, i, data, size, *versionExchange_);
+        for (size_t i = 0; i < data.size(); i++) {
+            CqlLeaseMgr::getData(row, i, data, size, i, *versionExchange_);
         }
     }
 
