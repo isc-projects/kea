@@ -396,6 +396,14 @@ public:
     /// @return true if client has lease for the address, false otherwise.
     bool hasLeaseForAddress(const asiolink::IOAddress& address) const;
 
+    /// @brief Checks if client has lease for the specified address in the
+    /// IA_NA identified by IAID.
+    ///
+    /// @param address Address for which lease should be found.
+    /// @param iaid IAID of the IA_NA in which the lease is expected.
+    bool hasLeaseForAddress(const asiolink::IOAddress& address,
+                            const uint32_t iaid) const;
+
     /// @brief Checks if client has a lease for an address within range.
     ///
     /// @param first Lower bound of the address range.
@@ -406,6 +414,14 @@ public:
     bool hasLeaseForAddressRange(const asiolink::IOAddress& first,
                                  const asiolink::IOAddress& last) const;
 
+    /// @brief Checks if client has a lease with zero lifetimes for the
+    /// specified address.
+    ///
+    /// @param address Address for which lease should be found.
+    ///
+    /// @return true if client has a lease, false otherwise.
+    bool hasLeaseWithZeroLifetimeForAddress(const asiolink::IOAddress& address) const;
+
     /// @brief Checks if client has a lease for a prefix.
     ///
     /// @param prefix Prefix.
@@ -415,6 +431,16 @@ public:
     /// otherwise.
     bool hasLeaseForPrefix(const asiolink::IOAddress& prefix,
                            const uint8_t prefix_len) const;
+
+    /// @brief Checks if client as a lease for prefix in the IA_PD identified
+    /// by specified IAID.
+    ///
+    /// @param prefix Prefix.
+    /// @param prefix_len Prefix length.
+    /// @param iaid IAID of the IA_PD in which the lease is expected.
+    bool hasLeaseForPrefix(const asiolink::IOAddress& prefix,
+                           const uint8_t prefix_len,
+                           const uint32_t iaid) const;
 
     /// @brief Checks if client has a lease belonging to a prefix pool.
     ///
@@ -427,6 +453,9 @@ public:
     bool hasLeaseForPrefixPool(const asiolink::IOAddress& prefix,
                                const uint8_t prefix_len,
                                const uint8_t delegated_len) const;
+
+    bool hasLeaseWithZeroLifetimeForPrefix(const asiolink::IOAddress& prefix,
+                                           const uint8_t prefix_len) const;
 
     /// @brief Returns the value of the global status code for the last
     /// transaction.

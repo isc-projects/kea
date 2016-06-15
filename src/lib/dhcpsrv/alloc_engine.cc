@@ -845,37 +845,60 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
     // so the operation shouldn't be that expensive.
     Lease6Collection copy = existing_leases;
 
-    for (Lease6Collection::const_iterator candidate = copy.begin();
-         candidate != copy.end(); ++candidate) {
+    BOOST_FOREACH(const Lease6Ptr& candidate, copy) {
+        // If we have reservation we should check if the reservation is for
+        // the candidate lease. If so, we simply accept the lease.
+        if (ctx.host_) {
+            if (candidate->type_ == Lease6::TYPE_NA) {
+                if (ctx.host_->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                                        candidate->addr_))) {
+                    continue;
+                }
+            } else {
+                if (ctx.host_->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                                        candidate->addr_,
+                                                        candidate->prefixlen_))) {
+                    continue;
+                }
+            }
+        }
 
+        // The candidate address doesn't appear to be reserved for us.
+        // We have to make a bit more expensive operation here to retrieve
+        // the reservation for the candidate lease and see if it is
+        // reserved for someone else.
         ConstHostPtr host = HostMgr::instance().get6(ctx.subnet_->getID(),
-                                                     (*candidate)->addr_);
-
-        if (!host || (host == ctx.host_)) {
-            // Not reserved or reserved for us. That's ok, let's check
-            // the next lease.
+                                                     candidate->addr_);
+        // If lease is not reserved to someone else, it means that it can
+        // be allocated to us from a dynamic pool, but we must check if
+        // this lease belongs to any pool. If it does, we can proceed to
+        // checking the next lease.
+        if (!host && ctx.subnet_->inPool(candidate->type_, candidate->addr_)) {
             continue;
         }
 
-        // Ok, we have a problem. This host has a lease that is reserved
-        // for someone else. We need to recover from this.
-        if (ctx.currentIA().type_ == Lease::TYPE_NA) {
-            LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE)
-                .arg((*candidate)->addr_.toText()).arg(ctx.duid_->toText())
-                .arg(host->getIdentifierAsText());
-        } else {
-            LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE)
-                .arg((*candidate)->addr_.toText())
-                .arg(static_cast<int>((*candidate)->prefixlen_))
-                .arg(ctx.duid_->toText())
-                .arg(host->getIdentifierAsText());
+        if (host) {
+            // Ok, we have a problem. This host has a lease that is reserved
+            // for someone else. We need to recover from this.
+            if (ctx.currentIA().type_ == Lease::TYPE_NA) {
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE)
+                    .arg(candidate->addr_.toText()).arg(ctx.duid_->toText())
+                    .arg(host->getIdentifierAsText());
+            } else {
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE)
+                    .arg(candidate->addr_.toText())
+                    .arg(static_cast<int>(candidate->prefixlen_))
+                    .arg(ctx.duid_->toText())
+                    .arg(host->getIdentifierAsText());
+            }
         }
 
-        // Remove this lease from LeaseMgr
-        LeaseMgrFactory::instance().deleteLease((*candidate)->addr_);
+        // Remove this lease from LeaseMgr as it is reserved to someone
+        // else or doesn't belong to a pool.
+        LeaseMgrFactory::instance().deleteLease(candidate->addr_);
 
         // Update DNS if needed.
-        queueNCR(CHG_REMOVE, *candidate);
+        queueNCR(CHG_REMOVE, candidate);
 
         // Need to decrease statistic for assigned addresses.
         StatsMgr::instance().addValue(
@@ -890,10 +913,10 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         // should not interfere with it.
 
         // Add this to the list of removed leases.
-        ctx.currentIA().old_leases_.push_back(*candidate);
+        ctx.currentIA().old_leases_.push_back(candidate);
 
         // Let's remove this candidate from existing leases
-        removeLeases(existing_leases, (*candidate)->addr_);
+        removeLeases(existing_leases, candidate->addr_);
     }
 }
 
