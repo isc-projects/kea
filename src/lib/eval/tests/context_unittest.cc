@@ -421,6 +421,42 @@ public:
     bool parsed_; ///< Parsing status
 };
 
+// Test the error method without location
+TEST_F(EvalContextTest, error) {
+
+    EvalContext eval(Option::V4);
+
+    EXPECT_THROW(eval.error("an error"), EvalParseError);
+}
+
+// Test the fatal method
+TEST_F(EvalContextTest, fatal) {
+
+    EvalContext eval(Option::V4);
+
+    EXPECT_THROW(eval.fatal("a fatal error"), isc::Unexpected);
+}
+
+// Test the convertOptionCode method with an illegal input
+TEST_F(EvalContextTest, badOptionCode) {
+
+    EvalContext eval(Option::V4);
+
+    // the option code must be a number
+    EXPECT_THROW(eval.convertOptionCode("bad", location(position())),
+                 EvalParseError);
+}
+
+// Test the convertNestLevelNumber method with an illegal input
+TEST_F(EvalContextTest, badNestLevelNumber) {
+
+    EvalContext eval(Option::V4);
+
+    // the nest level number must be a number
+    EXPECT_THROW(eval.convertNestLevelNumber("bad", location(position())),
+                 EvalParseError);
+}
+
 // Test the parsing of a basic expression
 TEST_F(EvalContextTest, basic) {
 
@@ -699,6 +735,37 @@ TEST_F(EvalContextTest, relay6OptionHex) {
                      2, 85, TokenOption::HEXADECIMAL, 3);
 }
 
+// Test the nest level of a relay6 option should be in [0..32[
+TEST_F(EvalContextTest, relay6OptionLimits) {
+    EvalContext eval(Option::V6);
+
+    // max nest level is hop count limit minus one so 31
+    testRelay6Option("relay6[31].option[123].text == 'foo'",
+                     31, 123, TokenOption::TEXTUAL, 3);
+
+    universe_ = Option::V6;
+
+    checkError("relay6[32].option[123].text == 'foo'",
+               "<string>:1.8-9: Nest level has invalid value in 32. "
+               "Allowed range: 0..31");
+                     
+    // next level must be a positive number
+    checkError("relay6[-1].option[123].text == 'foo'",
+               "<string>:1.8-9: Nest level has invalid value in -1. "
+               "Allowed range: 0..31");
+}
+
+// Verify that relay6[13].option is not usable in v4
+TEST_F(EvalContextTest, relay6OptionError) {
+    universe_ = Option::V4;
+
+    // nest_level is reduced first so raises the error
+    // (if we'd like to get a relay6 error we have to insert an
+    //  intermediate action to check the universe)
+    checkError("relay6[0].option[123].text == 'foo'",
+               "<string>:1.8: Nest level invalid for DHCPv4 packets");
+}
+
 // Tests whether iface metadata in DHCP can be accessed.
 TEST_F(EvalContextTest, pktMetadataIface) {
     testPktMetadata("pkt.iface == 'eth0'", TokenPkt::IFACE, 3);
@@ -774,6 +841,17 @@ TEST_F(EvalContextTest, relay6FieldLinkAddr) {
 TEST_F(EvalContextTest, relay6FieldPeerAddr) {
     testRelay6Field("relay6[1].peeraddr == ::",
                     1, TokenRelay6Field::PEERADDR, 3);
+}
+
+// Verify that relay6[13].<field> is not usable in v4
+TEST_F(EvalContextTest, relay6FieldError) {
+    universe_ = Option::V4;
+
+    // nest_level is reduced first so raises the error
+    // (if we'd like to get a relay6 error we have to insert an
+    //  intermediate action to check the universe)
+    checkError("relay6[0].linkaddr == ::",
+               "<string>:1.8: Nest level invalid for DHCPv4 packets");
 }
 
 // Test parsing of logical operators

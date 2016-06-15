@@ -885,6 +885,15 @@ TEST_F(TokenTest, relay6Option) {
     EXPECT_TRUE(checkFile());
 }
 
+// Verifies that relay6 option requires DHCPv6
+TEST_F(TokenTest, relay6OptionError) {
+    // Create a relay6 option token
+    ASSERT_NO_THROW(t_.reset(new TokenRelay6Option(0, 13, TokenOption::TEXTUAL)));
+
+    // A DHCPv6 packet is required
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
+
 // Verifies that DHCPv4 packet metadata can be extracted.
 TEST_F(TokenTest, pkt4MetaData) {
     pkt4_->setIface("eth0");
@@ -925,6 +934,20 @@ TEST_F(TokenTest, pkt4MetaData) {
     uint32_t length = htonl(static_cast<uint32_t>(pkt4_->len()));
     ASSERT_EQ(4, values_.top().size());
     EXPECT_EQ(0, memcmp(&length, &values_.top()[0], 4));
+
+    // Unknown metadata type fails
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::MetadataType(100))));
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data iface with value eth0");
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data src with value 0x0A000002");
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data dst with value 0x0A000001");
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data len with value 0x000000F9");
+    EXPECT_TRUE(checkFile());
 }
 
 // Verifies that DHCPv6 packet metadata can be extracted.
@@ -970,6 +993,22 @@ TEST_F(TokenTest, pkt6MetaData) {
     uint32_t length = htonl(static_cast<uint32_t>(pkt6_->len()));
     ASSERT_EQ(4, values_.top().size());
     EXPECT_EQ(0, memcmp(&length, &values_.top()[0], 4));
+
+    // Unknown meta data type fails
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::MetadataType(100))));
+    EXPECT_THROW(t_->evaluate(*pkt6_, values_), EvalTypeError);
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data iface with value eth0");
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data src with value "
+              "0xFE800000000000000000000000001234");
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data dst with value "
+              "0xFF020000000000000000000000010002");
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data len with value 0x00000010");
+    EXPECT_TRUE(checkFile());
 }
 
 // Verifies if the DHCPv4 packet fields can be extracted.
@@ -1051,6 +1090,11 @@ TEST_F(TokenTest, pkt4Fields) {
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::HLEN)));
     EXPECT_THROW(t_->evaluate(*pkt6_, values_), EvalTypeError);
 
+    // Unknown field fails
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::FieldType(100))));
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
@@ -1088,6 +1132,11 @@ TEST_F(TokenTest, pkt6Fields) {
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // Unknown field fails
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::FieldType(100))));
+    EXPECT_THROW(t_->evaluate(*pkt6_, values_), EvalTypeError);
 
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
@@ -1172,6 +1221,17 @@ TEST_F(TokenTest, relay6Field) {
               "and 0x00010000000000000000000000000001 pushing result 'true'");
 
     EXPECT_TRUE(checkFile());
+}
+
+// This test checks some error cases for a relay6 field token
+TEST_F(TokenTest, relay6FieldError) {
+    // Create a valid relay6 field token
+    ASSERT_NO_THROW(t_.reset(new TokenRelay6Field(0, TokenRelay6Field::LINKADDR)));
+
+    // a DHCPv6 packet is required
+    ASSERT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // No test for unknown field as it is not (yet) checked?!
 }
 
 // This test checks if a token representing an == operator is able to
