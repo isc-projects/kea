@@ -51,6 +51,10 @@ struct CqlDataArray {
         }
         values_.erase(values_.begin() + index);
     }
+    /// Get size.
+    size_t size() {
+        return values_.size();
+    }
 };
 
 class CqlVersionExchange;
@@ -471,8 +475,8 @@ public:
     /// @param data array that has been created for the type of lease in question.
     /// @param data size TODO
     /// @param exchange Exchange object to use
-    static void getData(const CassRow* row, int pindex, CqlDataArray& data,
-        CqlDataArray& size, const SqlExchange& exchange);
+    static void getData(const CassRow* row, const int pindex, CqlDataArray& data,
+        CqlDataArray& size, const int dindex, const SqlExchange& exchange);
 
 private:
 
