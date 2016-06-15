@@ -484,7 +484,7 @@ struct Lease6 : public Lease {
            uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
            uint32_t t2, SubnetID subnet_id, const bool fqdn_fwd,
            const bool fqdn_rev, const std::string& hostname,
-           const HWAddrPtr& hwaddr = HWAddrPtr(), uint8_t prefixlen = 0);
+           const HWAddrPtr& hwaddr = HWAddrPtr(), uint8_t prefixlen = 128);
 
     /// @brief Constructor
     ///

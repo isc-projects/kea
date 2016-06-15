@@ -495,8 +495,10 @@ Dhcp6Client::doRenew() {
     appendFQDN();
 
     context_.query_ = query;
+
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
+
     // Apply configuration only if the server has responded.
     if (context_.response_) {
         config_.clear();
@@ -565,11 +567,6 @@ Dhcp6Client::doDecline() {
 void
 Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query) {
     /// @todo: add support for IAPREFIX here.
-
-/*    if (!use_na_) {
-        // If we're told to not use IA_NA at all, there's nothing to be done here
-        return;
-    } */
 
     for (std::vector<Lease6>::const_iterator lease = config_.leases_.begin();
          lease != config_.leases_.end(); ++lease) {
@@ -702,11 +699,36 @@ Dhcp6Client::hasLeaseForAddress(const asiolink::IOAddress& address) const {
 }
 
 bool
+Dhcp6Client::hasLeaseForAddress(const asiolink::IOAddress& address,
+                                const uint32_t iaid) const {
+    std::vector<Lease6> leases = getLeasesByAddress(address);
+    BOOST_FOREACH(const Lease6& lease, leases) {
+        if (lease.iaid_ == iaid) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+bool
 Dhcp6Client::hasLeaseForAddressRange(const asiolink::IOAddress& first,
                                      const asiolink::IOAddress& last) const {
     std::vector<Lease6> leases = getLeasesByAddressRange(first, last);
     return (!leases.empty());
 }
+
+bool
+Dhcp6Client::
+hasLeaseWithZeroLifetimeForAddress(const asiolink::IOAddress& address) const {
+    std::vector<Lease6> leases = getLeasesByAddress(address);
+    BOOST_FOREACH(const Lease6& lease, leases) {
+        if ((lease.preferred_lft_ == 0) && (lease.valid_lft_ == 0)) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
 
 bool
 Dhcp6Client::hasLeaseForPrefix(const asiolink::IOAddress& prefix,
@@ -721,12 +743,39 @@ Dhcp6Client::hasLeaseForPrefix(const asiolink::IOAddress& prefix,
 }
 
 bool
+Dhcp6Client::hasLeaseForPrefix(const asiolink::IOAddress& prefix,
+                               const uint8_t prefix_len,
+                               const uint32_t iaid) const {
+    std::vector<Lease6> leases = getLeasesByAddress(prefix);
+    BOOST_FOREACH(const Lease6& lease, leases) {
+        if ((lease.prefixlen_ == prefix_len) &&
+            (lease.iaid_ == iaid)) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+bool
 Dhcp6Client::hasLeaseForPrefixPool(const asiolink::IOAddress& prefix,
                                    const uint8_t prefix_len,
                                    const uint8_t delegated_len) const {
     std::vector<Lease6> leases = getLeasesByPrefixPool(prefix, prefix_len,
                                                        delegated_len);
     return (!leases.empty());
+}
+
+bool
+Dhcp6Client::hasLeaseWithZeroLifetimeForPrefix(const asiolink::IOAddress& prefix,
+                                               const uint8_t prefix_len) const {
+    std::vector<Lease6> leases = getLeasesByAddress(prefix);
+    BOOST_FOREACH(const Lease6& lease, leases) {
+        if ((lease.prefixlen_ == prefix_len) && (lease.preferred_lft_ == 0) &&
+            (lease.valid_lft_ == 0)) {
+            return (true);
+        }
+    }
+    return (false);
 }
 
 
@@ -797,12 +846,14 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     }
     // Repack the message to simulate wire-data parsing.
     msg->pack();
+
     Pkt6Ptr msg_copy(new Pkt6(static_cast<const uint8_t*>
                               (msg->getBuffer().getData()),
                               msg->getBuffer().getLength()));
     msg_copy->setRemoteAddr(link_local_);
     msg_copy->setLocalAddr(dest_addr_);
     msg_copy->setIface(iface_name_);
+
     srv_->fakeReceive(msg_copy);
     srv_->run();
 }
