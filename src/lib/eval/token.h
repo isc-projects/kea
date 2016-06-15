@@ -334,6 +334,53 @@ protected:
     uint8_t nest_level_; ///< nesting level of the relay block to use
 };
 
+/// @brief Token that represents meta data of a DHCP packet.
+///
+/// For example in the expression pkt.iface == 'eth0'
+/// this token represents the pkt.iface expression.
+///
+/// Currently supported meta datas are:
+/// - iface (incoming/outgoinginterface name)
+/// - src   (source IP address, 4 or 16 octets)
+/// - dst   (destination IP address, 4 octets)
+/// - len   (length field in the UDP header, padded to 4 octets)
+class TokenPkt : public Token {
+public:
+
+    /// @brief enum value that determines the field.
+    enum MetadataType {
+        IFACE, ///< interface name (string)
+        SRC,   ///< source (IP address)
+        DST,   ///< destination (IP address)
+        LEN    ///< length (4 octets)
+    };
+
+    /// @brief Constructor (does nothing)
+    TokenPkt(const MetadataType type)
+        : type_(type) {}
+
+    /// @brief Gets a value from the specified packet.
+    ///
+    /// Evaluation uses metadatas available in the packet. It does not
+    /// require any values to be present on the stack.
+    ///
+    /// @param pkt - metadatas will be extracted from here
+    /// @param values - stack of values (1 result will be pushed)
+    void evaluate(const Pkt& pkt, ValueStack& values);
+
+    /// @brief Returns metadata type
+    ///
+    /// This method is used only in tests.
+    /// @return type of the metadata.
+    MetadataType getType() {
+        return (type_);
+    }
+
+private:
+    /// @brief Specifies metadata of the DHCP packet
+    MetadataType type_;
+};
+
 /// @brief Token that represents fields of a DHCPv4 packet.
 ///
 /// For example in the expression pkt4.chaddr == 0x0102030405

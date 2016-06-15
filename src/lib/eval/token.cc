@@ -17,6 +17,19 @@
 using namespace isc::dhcp;
 using namespace std;
 
+namespace {
+
+/// @brief encode in hexadecimal
+///
+/// @param value the value to encode
+/// @return 0x followed by the value encoded in hexa
+inline string toHex(string value) {
+    vector<uint8_t> bin(value.begin(), value.end());
+    return ("0x" + isc::util::encode::encodeHex(bin));
+}
+
+}; // end of anonymous namespace
+
 void
 TokenString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     // Literals only push, nothing to pop
@@ -62,8 +75,7 @@ TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_HEXSTRING)
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value_.begin(),
-								 value_.end())));
+        .arg(toHex(value_));
 }
 
 TokenIpAddress::TokenIpAddress(const string& addr) : value_("") {
@@ -88,8 +100,7 @@ TokenIpAddress::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_IPADDRESS)
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value_.begin(),
-								 value_.end())));
+        .arg(toHex(value_));
 }
 
 OptionPtr
@@ -127,8 +138,7 @@ TokenOption::evaluate(const Pkt& pkt, ValueStack& values) {
     if (representation_type_ == HEXADECIMAL) {
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OPTION)
             .arg(option_code_)
-            .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(opt_str.begin(),
-                                                                     opt_str.end())));
+            .arg(toHex(opt_str));
     } else {
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OPTION)
             .arg(option_code_)
@@ -177,6 +187,66 @@ OptionPtr TokenRelay6Option::getOption(const Pkt& pkt) {
         isc_throw(EvalTypeError, "Specified packet is not Pkt6");
     }
 
+}
+
+void
+TokenPkt::evaluate(const Pkt& pkt, ValueStack& values) {
+
+    string value;
+    vector<uint8_t> binary;
+    string type_str;
+    uint32_t len;
+    bool is_binary = true;
+    switch (type_) {
+    case IFACE:
+        is_binary = false;
+        value = pkt.getIface();
+        type_str = "iface";
+        break;
+    case SRC:
+        binary = pkt.getRemoteAddr().toBytes();
+        type_str = "src";
+        break;
+    case DST:
+        binary = pkt.getLocalAddr().toBytes();
+        type_str = "dst";
+        break;
+    case LEN:
+        // len() returns a size_t but in fact it can't be very large
+        // (with UDP transport it fits in 16 bits)
+        // the len() method is not const because of DHCPv6 relays.
+        // We assume here it has no bad side effects...
+        len = static_cast<uint32_t>(const_cast<Pkt&>(pkt).len());
+        binary.push_back(len >> 24);
+        binary.push_back((len >> 16) & 0xFF);
+        binary.push_back((len >> 8) & 0xFF);
+        binary.push_back(len & 0xFF);
+        type_str = "len";
+        break;
+
+    default:
+        isc_throw(EvalTypeError, "Bad meta data specified: "
+                  << static_cast<int>(type_) );
+    }
+
+    if (is_binary) {
+        value.resize(binary.size());
+        if (!binary.empty()) {
+            memmove(&value[0], &binary[0], binary.size());
+        }
+    }
+    values.push(value);
+
+    // Log what we pushed
+    if (is_binary) {
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT)
+            .arg(type_str)
+            .arg(toHex(value));
+    } else {
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT)
+            .arg(type_str)
+            .arg(value);
+    }
 }
 
 void
@@ -260,8 +330,7 @@ TokenPkt4::evaluate(const Pkt& pkt, ValueStack& values) {
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT4)
         .arg(type_str)
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value.begin(),
-                                                                 value.end())));
+        .arg(toHex(value));
 }
 
 void
@@ -312,8 +381,7 @@ TokenPkt6::evaluate(const Pkt& pkt, ValueStack& values) {
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT6)
         .arg(type_str)
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value.begin(),
-                                                                 value.end())));
+        .arg(toHex(value));
 }
 
 void
@@ -365,8 +433,7 @@ TokenRelay6Field::evaluate(const Pkt& pkt, ValueStack& values) {
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_RELAY6)
         .arg(type_str)
         .arg(unsigned(nest_level_))
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value.begin(),
-                                                                 value.end())));
+        .arg(toHex(value));
 }
 
 void
@@ -389,10 +456,8 @@ TokenEqual::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 
     // Log what we popped and pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_EQUAL)
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(op1.begin(),
-                                                                 op1.end())))
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(op2.begin(),
-                                                                 op2.end())))
+        .arg(toHex(op1))
+        .arg(toHex(op2))
         .arg('\'' + values.top() + '\'');
 }
 
@@ -459,8 +524,7 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUBSTRING_RANGE)
             .arg(len_str)
             .arg(start_str)
-            .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(string_str.begin(),
-                                                                     string_str.end())))
+            .arg(toHex(string_str))
             .arg("0x");
         return;
     }
@@ -489,10 +553,8 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUBSTRING)
         .arg(len_str)
         .arg(start_str)
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(string_str.begin(),
-                                                                 string_str.end())))
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(values.top().begin(),
-                                                                 values.top().end())));
+        .arg(toHex(string_str))
+        .arg(toHex(values.top()));
 }
 
 void
@@ -513,12 +575,9 @@ TokenConcat::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 
     // Log what we popped and pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_CONCAT)
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(op1.begin(),
-                                                                 op1.end())))
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(op2.begin(),
-                                                                 op2.end())))
-        .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(values.top().begin(),
-                                                                 values.top().end())));
+        .arg(toHex(op1))
+        .arg(toHex(op2))
+        .arg(toHex(values.top()));
 }
 
 void

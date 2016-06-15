@@ -39,7 +39,7 @@ namespace {
 class TokenTest : public LogContentTest {
 public:
 
-    /// @brief Initializes Pkt4,Pkt6 and options that can be useful for
+    /// @brief Initializes Pkt4, Pkt6 and options that can be useful for
     ///        evaluation tests.
     TokenTest() {
         pkt4_.reset(new Pkt4(DHCPDISCOVER, 12345));
@@ -883,6 +883,93 @@ TEST_F(TokenTest, relay6Option) {
     addString("EVAL_DEBUG_OPTION Pushing option 100 with value ''");
 
     EXPECT_TRUE(checkFile());
+}
+
+// Verifies that DHCPv4 packet metadata can be extracted.
+TEST_F(TokenTest, pkt4MetaData) {
+    pkt4_->setIface("eth0");
+    pkt4_->setLocalAddr(IOAddress("10.0.0.1"));
+    pkt4_->setRemoteAddr(IOAddress("10.0.0.2"));
+
+    // Check interface (expect eth0)
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::IFACE)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ("eth0", values_.top());
+
+    // Check source (expect 10.0.0.2)
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::SRC)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(4, values_.top().size());
+    EXPECT_EQ(10, values_.top()[0]);
+    EXPECT_EQ(0, values_.top()[1]);
+    EXPECT_EQ(0, values_.top()[2]);
+    EXPECT_EQ(2, values_.top()[3]);
+
+    // Check destination (expect 10.0.0.1)
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::DST)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    vector<uint8_t> a1 = IOAddress("10.0.0.1").toBytes();
+    ASSERT_EQ(a1.size(), values_.top().size());
+    EXPECT_EQ(0, memcmp(&a1[0], &values_.top()[0], a1.size()));
+
+    // Check length (expect 249)
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::LEN)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    uint32_t length = htonl(static_cast<uint32_t>(pkt4_->len()));
+    ASSERT_EQ(4, values_.top().size());
+    EXPECT_EQ(0, memcmp(&length, &values_.top()[0], 4));
+}
+
+// Verifies that DHCPv6 packet metadata can be extracted.
+TEST_F(TokenTest, pkt6MetaData) {
+    pkt6_->setIface("eth0");
+    pkt6_->setLocalAddr(IOAddress("ff02::1:2"));
+    pkt6_->setRemoteAddr(IOAddress("fe80::1234"));
+
+    // Check interface (expect eth0)
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::IFACE)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ("eth0", values_.top());
+
+    // Check source (expect fe80::1234)
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::SRC)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(16, values_.top().size());
+    EXPECT_EQ(0xfe, static_cast<uint8_t>(values_.top()[0]));
+    EXPECT_EQ(0x80, static_cast<uint8_t>(values_.top()[1]));
+    for (unsigned i = 2; i < 14; ++i) {
+        EXPECT_EQ(0, values_.top()[i]);
+    }
+    EXPECT_EQ(0x12, values_.top()[14]);
+    EXPECT_EQ(0x34, values_.top()[15]);
+
+    // Check destination (expect ff02::1:2)
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::DST)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    vector<uint8_t> ma = IOAddress("ff02::1:2").toBytes();
+    ASSERT_EQ(ma.size(), values_.top().size());
+    EXPECT_EQ(0, memcmp(&ma[0], &values_.top()[0], ma.size()));
+
+    // Check length (expect 16)
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::LEN)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    uint32_t length = htonl(static_cast<uint32_t>(pkt6_->len()));
+    ASSERT_EQ(4, values_.top().size());
+    EXPECT_EQ(0, memcmp(&length, &values_.top()[0], 4));
 }
 
 // Verifies if the DHCPv4 packet fields can be extracted.
