@@ -589,7 +589,10 @@ GenericLeaseMgrTest::testGetLease4ClientIdHWAddrSubnetId() {
 
 void
 GenericLeaseMgrTest::testAddGetDelete6(bool check_t1_t2) {
-    IOAddress addr("2001:db8:1::456");
+    const std::string addr234("2001:db8:1::234");
+    const std::string addr456("2001:db8:1::456");
+    const std::string addr789("2001:db8:1::789");
+    IOAddress addr(addr456);
 
     uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     DuidPtr duid(new DUID(llt, sizeof(llt)));
@@ -606,11 +609,10 @@ GenericLeaseMgrTest::testAddGetDelete6(bool check_t1_t2) {
     // should not be allowed to add a second lease with the same address
     EXPECT_FALSE(lmptr_->addLease(lease));
 
-    Lease6Ptr x = lmptr_->getLease6(Lease::TYPE_NA,
-                                    IOAddress("2001:db8:1::234"));
+    Lease6Ptr x = lmptr_->getLease6(Lease::TYPE_NA, IOAddress(addr234));
     EXPECT_EQ(Lease6Ptr(), x);
 
-    x = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::456"));
+    x = lmptr_->getLease6(Lease::TYPE_NA, IOAddress(addr456));
     ASSERT_TRUE(x);
 
     EXPECT_EQ(x->addr_, addr);
@@ -655,19 +657,19 @@ GenericLeaseMgrTest::testAddGetDelete6(bool check_t1_t2) {
     EXPECT_FALSE(y);
 
     // should return false - there's no such address
-    EXPECT_FALSE(lmptr_->deleteLease(IOAddress("2001:db8:1::789")));
+    EXPECT_FALSE(lmptr_->deleteLease(IOAddress(addr789)));
 
     // this one should succeed
-    EXPECT_TRUE(lmptr_->deleteLease(IOAddress("2001:db8:1::456")));
+    EXPECT_TRUE(lmptr_->deleteLease(IOAddress(addr456)));
 
     // after the lease is deleted, it should really be gone
-    x = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::456"));
+    x = lmptr_->getLease6(Lease::TYPE_NA, IOAddress(addr456));
     EXPECT_FALSE(x);
 
     // Reopen the lease storage to make sure that lease is gone from the
     // persistent storage.
     reopen(V6);
-    x = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::456"));
+    x = lmptr_->getLease6(Lease::TYPE_NA, IOAddress(addr456));
     EXPECT_FALSE(x);
 }
 
@@ -1699,7 +1701,6 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
         // Update the time of expired leases with even indexes.
         if (i % 2 == 0) {
             leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
-
         } else {
             // Make sure remaining leases remain unexpired.
             leases[i]->cltt_ = current_time + 100;

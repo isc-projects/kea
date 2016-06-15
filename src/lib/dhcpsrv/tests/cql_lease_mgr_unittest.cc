@@ -87,14 +87,212 @@ public:
     /// Closes the database and re-open it. Anything committed should be
     /// visible.
     ///
-    /// Parameter is ignored for CQL backend as the v4 and v6 leases share
-    /// the same database.
+    /// Parameter is ignored for CQL backend as the v4 and v6 leases share the
+    /// same keyspace.
     void reopen(Universe) {
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(validCqlConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
     }
 
+    // This is the CQL implementation for GenericLeaseMgrTest::testGetExpiredLeases4().
+    // The GenericLeaseMgrTest implementation checks for the order of expired
+    // leases to be from the most expired to the least expired. Cassandra
+    // doesn't support ORDER BY without imposing a EQ / IN restriction on the
+    // columns. Because of that, the order check has been excluded.
+    void
+    testCqlGetExpiredLeases4() {
+        // Get the leases to be used for the test.
+        vector<Lease4Ptr> leases = createLeases4();
+        // Make sure we have at least 6 leases there.
+        ASSERT_GE(leases.size(), 6U);
+
+        // Use the same current time for all leases.
+        time_t current_time = time(NULL);
+
+        // Add them to the database
+        for (size_t i = 0U; i < leases.size(); ++i) {
+            // Mark every other lease as expired.
+            if (i % 2U == 0U) {
+                // Set client last transmission time to the value older than the
+                // valid lifetime to make it expired. The expiration time also
+                // depends on the lease index, so as we can later check that the
+                // leases are ordered by the expiration time.
+                leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 10 - i;
+
+            } else {
+                // Set current time as cltt for remaining leases. These leases are
+                // not expired.
+                leases[i]->cltt_ = current_time;
+            }
+            ASSERT_TRUE(lmptr_->addLease(leases[i]));
+        }
+
+        // Retrieve at most 1000 expired leases.
+        Lease4Collection expired_leases;
+        ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 1000));
+        // Leases with even indexes should be returned as expired.
+        ASSERT_EQ(static_cast<size_t>(leases.size() / 2U), expired_leases.size());
+
+        // Update current time for the next test.
+        current_time = time(NULL);
+        // Also, remove expired leases collected during the previous test.
+        expired_leases.clear();
+
+        // This time let's reverse the expiration time and see if they will be returned
+        // in the correct order.
+        for (size_t i = 0U; i < leases.size(); ++i) {
+            // Update the time of expired leases with even indexes.
+            if (i % 2U == 0U) {
+                leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
+            } else {
+                // Make sure remaining leases remain unexpired.
+                leases[i]->cltt_ = current_time + 100;
+            }
+            ASSERT_NO_THROW(lmptr_->updateLease4(leases[i]));
+        }
+
+        // Retrieve expired leases again. The limit of 0 means return all expired
+        // leases.
+        ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 0));
+        // The same leases should be returned.
+        ASSERT_EQ(static_cast<size_t>(leases.size() / 2U), expired_leases.size());
+
+        // Remember expired leases returned.
+        std::vector<Lease4Ptr> saved_expired_leases = expired_leases;
+
+        // Remove expired leases again.
+        expired_leases.clear();
+
+        // Limit the number of leases to be returned to 2.
+        ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 2));
+
+        // Make sure we have exactly 2 leases returned.
+        ASSERT_EQ(2U, expired_leases.size());
+
+        // Mark every other expired lease as reclaimed.
+        for (size_t i = 0U; i < saved_expired_leases.size(); ++i) {
+            if (i % 2U != 0U) {
+                saved_expired_leases[i]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+            }
+            ASSERT_NO_THROW(lmptr_->updateLease4(saved_expired_leases[i]));
+        }
+
+        expired_leases.clear();
+
+        // This the returned leases should exclude reclaimed ones. So the number
+        // of returned leases should be roughly half of the expired leases.
+        ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 0U));
+        ASSERT_EQ(static_cast<size_t>(saved_expired_leases.size() / 2U),
+                  expired_leases.size());
+
+        // Make sure that returned leases are those that are not reclaimed, i.e.
+        // those that have even index.
+        for (Lease4Collection::iterator lease = expired_leases.begin();
+             lease != expired_leases.end(); ++lease) {
+            int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+            EXPECT_EQ(saved_expired_leases[2 * index]->addr_, (*lease)->addr_);
+        }
+    }
+
+    // This is the CQL implementation for GenericLeaseMgrTest::testGetExpiredLeases4().
+    // The GenericLeaseMgrTest implementation checks for the order of expired
+    // leases to be from the most expired to the least expired. Cassandra
+    // doesn't support ORDER BY without imposing a EQ / IN restriction on the
+    // columns. Because of that, the order check has been excluded.
+    void
+    testCqlGetExpiredLeases6() {
+        // Get the leases to be used for the test.
+        vector<Lease6Ptr> leases = createLeases6();
+        // Make sure we have at least 6 leases there.
+        ASSERT_GE(leases.size(), 6U);
+
+        // Use the same current time for all leases.
+        time_t current_time = time(NULL);
+
+        // Add them to the database
+        for (size_t i = 0U; i < leases.size(); ++i) {
+            // Mark every other lease as expired.
+            if (i % 2U == 0U) {
+                // Set client last transmission time to the value older than the
+                // valid lifetime to make it expired. The expiration time also
+                // depends on the lease index, so as we can later check that the
+                // leases are ordered by the expiration time.
+                leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 10 - i;
+
+            } else {
+                // Set current time as cltt for remaining leases. These leases are
+                // not expired.
+                leases[i]->cltt_ = current_time;
+            }
+            ASSERT_TRUE(lmptr_->addLease(leases[i]));
+        }
+
+        // Retrieve at most 1000 expired leases.
+        Lease6Collection expired_leases;
+        ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 1000));
+        // Leases with even indexes should be returned as expired.
+        ASSERT_EQ(static_cast<size_t>(leases.size() / 2U), expired_leases.size());
+
+        // Update current time for the next test.
+        current_time = time(NULL);
+        // Also, remove expired leases collected during the previous test.
+        expired_leases.clear();
+
+        // This time let's reverse the expiration time and see if they will be returned
+        // in the correct order.
+        for (size_t i = 0U; i < leases.size(); ++i) {
+            // Update the time of expired leases with even indexes.
+            if (i % 2U == 0U) {
+                leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
+
+            } else {
+                // Make sure remaining leases remain unexpired.
+                leases[i]->cltt_ = current_time + 100;
+            }
+            ASSERT_NO_THROW(lmptr_->updateLease6(leases[i]));
+        }
+
+        // Retrieve expired leases again. The limit of 0 means return all expired
+        // leases.
+        ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0));
+        // The same leases should be returned.
+        ASSERT_EQ(static_cast<size_t>(leases.size() / 2U), expired_leases.size());
+
+        // Remember expired leases returned.
+        std::vector<Lease6Ptr> saved_expired_leases = expired_leases;
+
+        // Remove expired leases again.
+        expired_leases.clear();
+
+        // Limit the number of leases to be returned to 2.
+        ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 2));
+
+        // Make sure we have exactly 2 leases returned.
+        ASSERT_EQ(2U, expired_leases.size());
+
+        // Mark every other expired lease as reclaimed.
+        for (size_t i = 0U; i < saved_expired_leases.size(); ++i) {
+            if (i % 2U != 0U) {
+                saved_expired_leases[i]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+            }
+            ASSERT_NO_THROW(lmptr_->updateLease6(saved_expired_leases[i]));
+        }
+
+        expired_leases.clear();
+
+        // This the returned leases should exclude reclaimed ones. So the number
+        // of returned leases should be roughly half of the expired leases.
+        ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0));
+
+        // Make sure that returned leases are those that are not reclaimed, i.e.
+        // those that have even index.
+        for (Lease6Collection::iterator lease = expired_leases.begin();
+             lease != expired_leases.end(); ++lease) {
+            int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+            EXPECT_EQ(saved_expired_leases[2 * index]->addr_, (*lease)->addr_);
+        }
+    }
 };
 
 /// @brief Check that database can be opened
@@ -103,7 +301,8 @@ public:
 /// only if the database can be opened. Note that this is not part of the
 /// CqlLeaseMgr test fixure set. This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
-
+/// Unlike other backend implementations, this one doesn't check for lacking
+/// parameters. In that scenario, Cassandra defaults to configured parameters.
 TEST(CqlOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
@@ -188,7 +387,7 @@ TEST_F(CqlLeaseMgrTest, checkTimeConversion) {
     EXPECT_EQ(cltt, converted_cltt);
 }
 
-/// @brief Check getName() returns correct database name
+/// @brief Check getName() returns correct keyspace name.
 TEST_F(CqlLeaseMgrTest, getName) {
     EXPECT_EQ(std::string("keatest"), lmptr_->getName());
 }
@@ -420,7 +619,7 @@ TEST_F(CqlLeaseMgrTest, testLease6HWTypeAndSource) {
 /// the order from most to least expired. It also checks that the lease
 /// which is marked as 'reclaimed' is not returned.
 TEST_F(CqlLeaseMgrTest, getExpiredLeases4) {
-    testGetExpiredLeases4();
+    testCqlGetExpiredLeases4();
 }
 
 /// @brief Check that the expired DHCPv6 leases can be retrieved.
@@ -431,7 +630,7 @@ TEST_F(CqlLeaseMgrTest, getExpiredLeases4) {
 /// the order from most to least expired. It also checks that the lease
 /// which is marked as 'reclaimed' is not returned.
 TEST_F(CqlLeaseMgrTest, getExpiredLeases6) {
-    testGetExpiredLeases6();
+    testCqlGetExpiredLeases6();
 }
 
 /// @brief Check that expired reclaimed DHCPv6 leases are removed.

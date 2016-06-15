@@ -306,8 +306,8 @@ be followed by a comma and another object definition.</para>
 <section>
   <title>Lease Storage</title>
   <para>All leases issued by the server are stored in the lease database.
-  Currently there are three database backends available:
-  memfile (which is the default backend), MySQL and PostgreSQL.</para>
+  Currently there are four database backends available:  memfile (which is the
+  default backend), MySQL, PostgreSQL and CQL.</para>
 <section>
   <title>Memfile, Basic Storage for Leases</title>
 
@@ -435,13 +435,15 @@ be followed by a comma and another object definition.</para>
 
   <para>Lease database configuration is controlled through the
   Dhcp6/lease-database parameters. The type of the database must be set to
-  "memfile", "mysql" or "postgresql", e.g.
+  "memfile", "mysql", "postgresql" or "cql", e.g.
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
   Next, the name of the database is to hold the leases must be set: this is the
-  name used when the lease database was created (see <xref linkend="mysql-database-create"/>
-  or <xref linkend="pgsql-database-create"/>).
+  name used when the lease database was created
+  (see <xref linkend="mysql-database-create"/>,
+  <xref linkend="pgsql-database-create"/>
+  or <xref linkend="cql-database-create"/>).
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
@@ -3568,8 +3570,8 @@ should include options from the isc option space:
               that are stored in the lease database. Removing non-last subnet will
               cause the configuration information to mismatch data in the lease
               database. It is possible to manually update subnet-id fields in
-              MySQL or PostgreSQL database, but it is awkward and error prone
-              process. A better reconfiguration support is planned.
+              MySQL, PostgreSQL or CQL database, but it is awkward and
+              error prone process. A better reconfiguration support is planned.
             </para>
           </listitem>
 
