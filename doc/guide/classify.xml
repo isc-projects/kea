@@ -217,23 +217,47 @@
             <row>
               <entry>DHCPv6 Relay Options</entry>
               <entry>relay6[nest].option[code].hex</entry>
-              <!--  <entry>Value of the option</entry> -->
+              <entry>(value of the option)</entry>
               <entry>The value of the option with code "code" from the
               relay encapsulation "nest"</entry>
             </row>
             <row>
               <entry>DHCPv6 Relay Peer Address</entry>
               <entry>relay6[nest].peeraddr</entry>
-              <!-- <entry>2001:DB8::1</entry> -->n
+              <entry>2001:DB8::1</entry>
               <entry>The value of the peer address field from the
               relay encapsulation "nest"</entry>
             </row>
             <row>
               <entry>DHCPv6 Relay Link Address</entry>
               <entry>relay6[nest].linkaddr</entry>
-              <!-- <entry>2001:DB8::1</entry> -->n
+              <entry>2001:DB8::1</entry>
               <entry>The value of the link address field from the
               relay encapsulation "nest"</entry>
+            </row>
+            <row>
+              <entry>Interface name of packet</entry>
+              <entry>pkt.iface</entry>
+              <entry>eth0</entry>
+              <entry>The name of the incoming interface of a DHCP packet.</entry>
+            </row>
+            <row>
+              <entry>Source address of packet</entry>
+              <entry>pkt.src</entry>
+              <entry>10.1.2.3</entry>
+              <entry>The IP source address of a DHCP packet.</entry>
+            </row>
+            <row>
+              <entry>Destination address of packet</entry>
+              <entry>pkt.dst</entry>
+              <entry>10.1.2.3</entry>
+              <entry>The IP destination address of a DHCP packet.</entry>
+            </row>
+            <row>
+              <entry>Length of packet</entry>
+              <entry>pkt.len</entry>
+              <entry>0x00000100</entry>
+              <entry>The length of a DHCP packet (UDP header field) padded to 4 bytes.</entry>
             </row>
             <row>
               <entry>Hardware address in DHCPv4 packet</entry>

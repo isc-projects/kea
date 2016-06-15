@@ -188,6 +188,51 @@ public:
         checkTokenRelay6Option(eval.expression.at(0), exp_level, exp_code, exp_repr);
     }
 
+    /// @brief check if the given token is a Pkt of specified type
+    /// @param token token to be checked
+    /// @param type expected type of the Pkt metadata
+    void checkTokenPkt(const TokenPtr& token, TokenPkt::MetadataType type) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenPkt> pkt =
+            boost::dynamic_pointer_cast<TokenPkt>(token);
+        ASSERT_TRUE(pkt);
+
+        EXPECT_EQ(type, pkt->getType());
+    }
+
+    /// @brief Test that verifies access to the DHCP packet metadatas.
+    ///
+    /// This test attempts to parse the expression, will check if the number
+    /// of tokens is exactly as expected and then will try to verify if the
+    /// first token represents the expected metadata in DHCP packet.
+    ///
+    /// @param expr expression to be parsed
+    /// @param exp_type expected metadata type to be parsed
+    /// @param exp_tokens expected number of tokens
+    void testPktMetadata(std::string expr,
+                         TokenPkt::MetadataType exp_type,
+                         int exp_tokens) {
+        EvalContext eval(Option::V6);
+
+        // Parse the expression.
+        try {
+            parsed_ = eval.parseString(expr);
+        }
+        catch (const EvalParseError& ex) {
+            FAIL() << "Exception thrown: " << ex.what();
+            return;
+        }
+
+        // Parsing should succeed and return a token.
+        EXPECT_TRUE(parsed_);
+
+        // There should be exactly the expected number of tokens.
+        ASSERT_EQ(exp_tokens, eval.expression.size());
+
+        // Check that the first token is TokenPkt instance and has correct type.
+        checkTokenPkt(eval.expression.at(0), exp_type);
+    }
+
     /// @brief checks if the given token is Pkt4 of specified type
     /// @param token token to be checked
     /// @param type expected type of the Pkt4 field
@@ -652,6 +697,26 @@ TEST_F(EvalContextTest, relay6OptionHex) {
 
     testRelay6Option("relay6[2].option[85].hex == 'foo'",
                      2, 85, TokenOption::HEXADECIMAL, 3);
+}
+
+// Tests whether iface metadata in DHCP can be accessed.
+TEST_F(EvalContextTest, pktMetadataIface) {
+    testPktMetadata("pkt.iface == 'eth0'", TokenPkt::IFACE, 3);
+}
+
+// Tests whether src metadata in DHCP can be accessed.
+TEST_F(EvalContextTest, pktMetadataSrc) {
+    testPktMetadata("pkt.src == fe80::1", TokenPkt::SRC, 3);
+}
+
+// Tests whether dst metadata in DHCP can be accessed.
+TEST_F(EvalContextTest, pktMetadataDst) {
+    testPktMetadata("pkt.dst == fe80::2", TokenPkt::DST, 3);
+}
+
+// Tests whether len metadata in DHCP can be accessed.
+TEST_F(EvalContextTest, pktMetadataLen) {
+    testPktMetadata("pkt.len == 0x00000100", TokenPkt::LEN, 3);
 }
 
 // Tests whether chaddr field in DHCPv4 can be accessed.

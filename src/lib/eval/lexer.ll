@@ -147,6 +147,11 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "text"      return isc::eval::EvalParser::make_TEXT(loc);
 "hex"       return isc::eval::EvalParser::make_HEX(loc);
 "exists"    return isc::eval::EvalParser::make_EXISTS(loc);
+"pkt"       return isc::eval::EvalParser::make_PKT(loc);
+"iface"     return isc::eval::EvalParser::make_IFACE(loc);
+"src"       return isc::eval::EvalParser::make_SRC(loc);
+"dst"       return isc::eval::EvalParser::make_DST(loc);
+"len"       return isc::eval::EvalParser::make_LEN(loc);
 "pkt4"      return isc::eval::EvalParser::make_PKT4(loc);
 "mac"       return isc::eval::EvalParser::make_CHADDR(loc);
 "hlen"      return isc::eval::EvalParser::make_HLEN(loc);
