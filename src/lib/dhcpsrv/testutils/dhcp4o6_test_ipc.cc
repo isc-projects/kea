@@ -1,16 +1,8 @@
 // Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
 #include <dhcp/iface_mgr.h>
@@ -30,6 +22,8 @@ Dhcp4o6TestIpc::open() {
     // Use the base IPC to open the socket.
     socket_fd_ = Dhcp4o6IpcBase::open(desired_port_, endpoint_type_);
     // If the socket has been opened correctly, register it in the @c IfaceMgr.
+    // BTW if it has not an exception has been thrown so it is only
+    // a sanity / recommended check.
     if (socket_fd_ != -1) {
         IfaceMgr& iface_mgr = IfaceMgr::instance();
         iface_mgr.addExternalSocket(socket_fd_,

@@ -1,16 +1,8 @@
 // Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef DHCP4O6_IPC_H
 #define DHCP4O6_IPC_H
@@ -35,8 +27,9 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief Base class implementing transmission of the DHCPv4 over
-/// DHCPv6 messages (RFC 7341) between the Kea servers.
+/// @brief This class implements the communication between the DHCPv4
+/// and DHCPv6 servers to allow for transmission of the DHCPv4 query
+/// and DHCPv4 response messages.
 ///
 /// When the DHCPv6 server receives the DHCPv4 query message it needs
 /// to forward it to the DHCPv4 server for processing. The DHCPv4
@@ -52,7 +45,7 @@ public:
 /// port value is used directly on the DHCPv6 server side. The DHCPv4
 /// server uses the port specified + 1.
 ///
-/// The DHCPv4 and DHCPv6 servers use distict instances of classes derived
+/// The DHCPv4 and DHCPv6 servers use distinct instances of classes derived
 /// from this base class. Each of these instances is used to send and
 /// receive messages sent by the other server.
 ///
