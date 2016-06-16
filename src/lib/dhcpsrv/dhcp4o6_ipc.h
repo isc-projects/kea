@@ -84,6 +84,7 @@ protected:
     /// @param endpoint_type Endpoint type (DHCPv4 or DHCPv6 server).
     ///
     /// @return New socket descriptor.
+    /// @throw isc::dhcp::Dhcp4o6IpcError on system call errors.
     int open(uint16_t port, EndpointType endpoint_type);
 
 public:
@@ -98,6 +99,8 @@ public:
     ///
     /// @return a pointer to a DHCPv6 message with interface and remote
     /// address set from the IPC message
+    /// @throw isc::dhcp::Dhcp4o6IpcError on system call error or
+    /// malformed packets.
     Pkt6Ptr receive();
 
     /// @brief Send message over IPC.
@@ -110,6 +113,7 @@ public:
     ///
     /// @param pkt Pointer to a DHCPv6 message with interface and remote
     /// address.
+    /// @throw isc::dhcp::Dhcp4o6IpcError.
     void send(const Pkt6Ptr& pkt);
 
 protected:

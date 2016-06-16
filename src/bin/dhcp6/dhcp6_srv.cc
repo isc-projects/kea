@@ -25,7 +25,7 @@
 #include <dhcp/option_vendor_class.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
-#include <dhcp6/dhcp6_dhcp4o6_ipc.h>
+#include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/callout_handle_store.h>

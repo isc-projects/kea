@@ -13,7 +13,10 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcpsrv/dhcp4o6_ipc.h>
+#include <dhcpsrv/dhcpsrv_log.h>
+
 #include <boost/pointer_cast.hpp>
+
 #include <errno.h>
 #include <netinet/in.h>
 #include <sys/fcntl.h>
@@ -151,6 +154,8 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
          
     // Vendor option must exist.
     if (!option_vendor) {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
+            .arg("no ISC vendor option");
         isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
                   << " with ISC enterprise id is not present in the DHCP4o6"
                   " message sent between the servers");
@@ -160,6 +165,8 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     OptionStringPtr ifname = boost::dynamic_pointer_cast<
         OptionString>(option_vendor->getOption(ISC_V6_4O6_INTERFACE));
     if (!ifname) {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
+            .arg("no interface suboption");
         isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
                   << " doesn't contain the " << ISC_V6_4O6_INTERFACE
                   << " option required in the DHCP4o6 message sent"
@@ -169,6 +176,8 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     // Check if this interface is present in the system.
     IfacePtr iface = IfaceMgr::instance().getIface(ifname->getValue());
     if (!iface) {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
+            .arg("can't get interface " + ifname->getValue());
         isc_throw(Dhcp4o6IpcError, "option " << ISC_V6_4O6_INTERFACE
                   << " sent in the DHCP4o6 message contains non-existing"
                   " interface name '" << ifname->getValue() << "'");
@@ -178,6 +187,8 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     OptionCustomPtr srcs = boost::dynamic_pointer_cast<
         OptionCustom>(option_vendor->getOption(ISC_V6_4O6_SRC_ADDRESS));
     if (!srcs) {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
+            .arg("no source address suboption");
         isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
                   << " doesn't contain the " << ISC_V6_4O6_SRC_ADDRESS
                   << " option required in the DHCP4o6 message sent"

@@ -10,7 +10,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_filter6_test_stub.h>
-#include <dhcp6/dhcp6_dhcp4o6_ipc.h>
+#include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/testutils/dhcp4o6_test_ipc.h>
 #include <gtest/gtest.h>
@@ -50,6 +50,9 @@ public:
     void configurePort(const uint16_t port);
 
     /// @brief Creates an instance of the DHCPv4o6 Message option.
+    ///
+    /// The option will contain an empty DHCPREQUEST message, with
+    /// just the Message Type option inside and nothing else.
     ///
     /// @return Pointer to the instance of the DHCPv4-query Message option.
     OptionPtr createDHCPv4MsgOption() const;

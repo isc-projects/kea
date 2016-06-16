@@ -4,10 +4,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef DHCP4_DHCP4O6_IPC_H
-#define DHCP4_DHCP4O6_IPC_H
+#ifndef DHCP4TO6_IPC_H
+#define DHCP4TO6_IPC_H
 
-/// @file dhcp4_dhcp4o6_ipc.h Defines the Dhcp4o6Ipc class.
+/// @file dhcp4to6_ipc.h Defines the Dhcp4o6Ipc class.
 /// This file defines the class Kea uses to act as the DHCPv4 server
 /// side of DHCPv4-over-DHCPv6 communication between servers.
 ///
