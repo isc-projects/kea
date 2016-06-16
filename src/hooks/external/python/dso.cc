@@ -138,6 +138,7 @@ int pkt4_receive(CalloutHandle& handle) {
     (static_cast<py_pkt4*>(query))->object = query4;
 
     PyObject* args = Py_BuildValue("(O)", query);
+    Py_DECREF(query);
     if (!args) {
         PyErr_Print();
         cerr << "Py_BuildValue failed\n";

@@ -9,6 +9,8 @@
 
 #include <hooks/external/python/poption.h>
 
+#include <iostream>
+
 using namespace std;
 using namespace isc::dhcp;
 using namespace isc::python;
@@ -62,6 +64,8 @@ option_init(PyObject* obj, PyObject* args, PyObject*) {
 // tp_dealloc
 void
 option_dealloc(PyObject* obj) {
+    // This is a critical code to avoid memory leaks
+    cout << "option_dealloc called\n";
     py_option* const self = static_cast<py_option*>(obj);
     self->object.reset();
     Py_TYPE(self)->tp_free(self);

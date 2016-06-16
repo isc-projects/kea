@@ -10,6 +10,8 @@
 #include <hooks/external/python/poption.h>
 #include <hooks/external/python/ppkt4.h>
 
+#include <iostream>
+
 using namespace std;
 using namespace isc::dhcp;
 using namespace isc::python;
@@ -30,6 +32,8 @@ pkt4_init(PyObject*, PyObject*, PyObject*) {
 // tp_dealloc
 void
 pkt4_dealloc(PyObject* obj) {
+    // This is a critical code to avoid memory leaks
+    cout << "pkt4_dealloc called\n";
     py_pkt4* const self = static_cast<py_pkt4*>(obj);
     self->object.reset();
     Py_TYPE(self)->tp_free(self);

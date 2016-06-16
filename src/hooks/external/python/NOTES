@@ -1,0 +1,50 @@
+Implementation notes fro python
+
+Manifest:
+ - poption.h poption.cc: the C++ OptionPtr encapsulated into a python
+  object with some methods ported.
+
+ - ppkt4.h ppkt4.cc: the C++ Pkt4Ptr encapsulated into a python object
+  with some methods ported. Note there is no constructor in python.
+
+  one can complete these python types or/and new python type.
+
+ - module.h module.cc: the python kea module. Initialization only (of
+  the module and option+pkt4 types), no module method (aka function)
+  nor object (constant).
+
+ - dso.cc: the kea framework and hook glue: on the kea / C side it is
+  a dynamic shared object providing the framework and hook entry points,
+  on the python side it embbeds an interpreter which imports the
+  python script hook.py.
+
+  poption.o, ppkt4.o, module.o and dso.o are compiled into kea.so.
+
+ - hook.py: the python script which implements the python part of
+  hook handlers using the python kea module.
+
+ - tests.cc: source of test program which loads the kea.so hook-library
+  and exercise the pkt4_receive hook. It gives an independent executable.
+
+ - cshenv: C-shell script setting environment variables for a kea
+  distrib in /tmp/kea on OS X.
+
+ - Makefile: make config file for OS X.
+
+ - NOTES: this file.
+
+Some hairy points (not particular to python but found with it):
+ - the hardest is to build a working Makefile in particular for this system
+
+ - hooks must be registered as soon as possible (kea-dhcp* do this
+  in the global initialization)
+
+ - initLogger() must be soon too (kea-dhcp* do it through
+  Daemon::loggerInit() just after command line argument parsing
+
+ - there is no easy way to know if hook libraries were successfully
+  loaded?
+
+ - be very careful with external language memory management
+  (they provide a garbage collector which is very fine inside the
+   language but can become hairy for the C++ interface)

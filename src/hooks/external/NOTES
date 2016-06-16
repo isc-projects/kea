@@ -1,0 +1,56 @@
+Kea hooks in external (i.e., not C++) languages.
+
+Asked for customers: hooks written in python (see below), lua,
+ocaml (see below?), ...
+
+Kea hook summary:
+ - dynamic shared objects loaded from the config on hooks-libraries
+
+ - version (against binary API mismatch), load and unload entry points
+
+ - callouts for Kea -call-> external code -return-> Kea interaction,
+  registered by load, using an API to access arguments, context and result
+
+ - standard hook points in packet processing (aka Kea service loop)
+
+Question: which entity is embedded?
+Answer: the external language (e.g. python, ocaml) is embedded
+ (cf https://docs.python.org/3/extending/embedding.html and
+  http://caml.inria.fr/pub/docs/manual-ocaml/intfc.html#sec432)
+
+Question: when initializes the external language?
+Answer: in the DSO load (cf Py_Initialize()) (and unload should
+finalize, cf Py_Finalize())
+
+Question: what to call from callouts in the external language?
+Answer: a routine getting one argument selecting the called hook
+
+Question: how to build?
+Answer: for python use python-config
+
+Question: what C++ object to translate?
+Answer: packet, option (in fact every thing from the management API) and
+element (for config), imported as external pointers and using set/get
+C++ methods, and of course callout tools (including exceptions)
+
+Question: and lua?
+Answer: C++ objects map to lua full userdata by default
+(cf http://www.troubleshooters.com/codecorn/lua/lua_c_calls_lua.htm ?)
+(doc at https://www.lua.org/docs.html but not very useful,
+ https://www.lua.org/pil/p1.html is obsolete but better)
+
+Question: C++ shared_ptr?
+Answer: must use explicit finalization to reset shared_ptr's
+
+Question: DHCPv4 packet example?
+Answer: Pkt4Ptr with addOption, getCiaddr, getHtype, getHWAddr,
+ getType, toText, (inherit) getIface, getOption, getTimestamp, ...
+
+Question: (generic) option example?
+Answer: OptionPtr with (class) factory, getData, getType, len, toText, ...
+
+Question: external language types?
+Answer:
+ python3: int, float, str, bytes
+ ocaml: int, float, string (include binary)
+ lua: (number) integer, (number) float, string (include binary)
