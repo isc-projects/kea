@@ -82,7 +82,7 @@
 #define D6O_AFTR_NAME                           64 /* RFC6334 */
 #define D6O_ERP_LOCAL_DOMAIN_NAME               65 /* RFC6440 */
 #define D6O_RSOO                                66 /* RFC6422 */
-//#define D6O_PD_EXCLUDE                          67 /* RFC6603 */
+#define D6O_PD_EXCLUDE                          67 /* RFC6603 */
 //#define D6O_VSS                                 68 /* RFC6607 */
 //#define D6O_MIP6_IDINF                          69 /* RFC6610 */
 //#define D6O_MIP6_UDINF                          70 /* RFC6610 */

@@ -625,6 +625,67 @@ OptionDefinition::writeToBuffer(const std::string& value,
 
             return;
     }
+    case OPT_PSID_TYPE:
+    {
+        std::string txt = value;
+
+        // first let's remove any whitespaces
+        boost::erase_all(txt, " "); // space
+        boost::erase_all(txt, "\t"); // tabulation
+
+        // Is this prefix/len notation?
+        size_t pos = txt.find("/");
+
+        if (pos == string::npos) {
+            isc_throw(BadDataTypeCast, "provided psid-len/psid "
+                      << value
+                      << " is not valid.");
+        }
+
+        std::string txt_psid = txt.substr(0, pos);
+        std::string txt_psid_len = txt.substr(pos + 1);
+
+        uint16_t psid = 0;
+        uint8_t psid_len = 0;
+
+        try {
+            psid = lexicalCastWithRangeCheck<uint16_t>(txt_psid);
+        } catch (...)  {
+            isc_throw(BadDataTypeCast, "provided psid "
+                      << txt_psid
+                      << " is not valid.");
+        }
+
+        try {
+            psid_len = lexicalCastWithRangeCheck<uint8_t>(txt_psid_len);
+        } catch (...)  {
+            isc_throw(BadDataTypeCast, "provided psid-len "
+                      << txt_psid_len
+                      << " is not valid.");
+        }
+
+        if (psid >= (1 << psid_len)) {
+            isc_throw(BadDataTypeCast, "provided psid "
+                      << txt_psid
+                      << " is not valid.");
+        }
+
+        if (psid_len > sizeof(uint16_t) * 8) {
+            isc_throw(BadDataTypeCast, "provided psid-len "
+                      << txt_psid_len
+                      << " is not valid.");
+        }
+
+        psid = psid << (sizeof(uint16_t) * 8 - psid_len);
+
+        // Write the psid length
+        OptionDataTypeUtil::writeInt<uint8_t>(psid_len, buf);
+
+        // Write the psid
+        OptionDataTypeUtil::writeInt<uint16_t>(psid, buf);
+
+        return;
+    }
     case OPT_STRING_TYPE:
         OptionDataTypeUtil::writeString(value, buf);
         return;

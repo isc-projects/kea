@@ -76,7 +76,9 @@ Pool4::Pool4( const isc::asiolink::IOAddress& prefix, uint8_t prefix_len)
 
 Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
-    :Pool(type, first, last), prefix_len_(128) {
+    :Pool(type, first, last), prefix_len_(128)
+    ,prefix_excluded_(isc::asiolink::IOAddress::IPV6_ZERO_ADDRESS())
+    ,prefix_excluded_len_(0) {
 
     // check if specified address boundaries are sane
     if (!first.isV6() || !last.isV6()) {
@@ -117,8 +119,11 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
 }
 
 Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
-             uint8_t prefix_len, uint8_t delegated_len /* = 128 */)
-    :Pool(type, prefix, IOAddress("::")), prefix_len_(delegated_len) {
+             uint8_t prefix_len, uint8_t delegated_len /* = 128 */,
+             const isc::asiolink::IOAddress& prefix_excluded /*= IOAddress::IPV6_ZERO_ADDRESS()*/,
+             uint8_t prefix_excluded_len /* = 0 */)
+    :Pool(type, prefix, IOAddress("::")), prefix_len_(delegated_len)
+    , prefix_excluded_(prefix_excluded), prefix_excluded_len_(prefix_excluded_len){
 
     // check if the prefix is sane
     if (!prefix.isV6()) {
