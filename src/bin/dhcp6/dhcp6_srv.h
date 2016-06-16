@@ -787,12 +787,18 @@ private:
     /// @param query packet received
     static void processStatsReceived(const Pkt6Ptr& query);
 
+    /// UDP port number on which server listens.
+    uint16_t port_;
+
+public:
+    /// @note used by DHCPv4-over-DHCPv6 so must be public
+
     /// @brief Updates statistics for transmitted packets
     /// @param query packet transmitted
     static void processStatsSent(const Pkt6Ptr& response);
 
-    /// UDP port number on which server listens.
-    uint16_t port_;
+    /// the index of the buffer6_send hook
+    static int hook_index_buffer6_send;
 
 protected:
 

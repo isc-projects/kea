@@ -165,6 +165,8 @@ createStatusCode(const Pkt6& pkt, const Option6IA& ia, const uint16_t status_cod
 namespace isc {
 namespace dhcp {
 
+int Dhcpv6Srv::hook_index_buffer6_send = Hooks.hook_index_buffer6_send_;
+
 const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
