@@ -9,7 +9,7 @@
 #include <dhcp/pkt4o6.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
-#include <dhcp4/dhcp4_dhcp4o6_ipc.h>
+#include <dhcp4/dhcp4to6_ipc.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/testutils/dhcp4o6_test_ipc.h>
 #include <gtest/gtest.h>

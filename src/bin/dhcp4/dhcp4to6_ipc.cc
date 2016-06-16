@@ -9,7 +9,7 @@
 #include <util/buffer.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcp4/dhcp4_dhcp4o6_ipc.h>
+#include <dhcp4/dhcp4to6_ipc.h>
 
 using namespace std;
 
