@@ -1,3 +1,7 @@
+1131.	[func]		fdupont
+	Update the DHCPv4-over-DHCPv6 inter-process communication code.
+	(Trac #4106, git xxx)
+
 1130.	[func]		marcin
 	DHCPv6 server assigns DHCP options specified for hosts. Host
 	specific options take precedence over class specific options,
