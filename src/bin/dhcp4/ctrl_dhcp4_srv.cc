@@ -8,7 +8,7 @@
 #include <cc/data.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
-#include <dhcp4/dhcp4_dhcp4o6_ipc.h>
+#include <dhcp4/dhcp4to6_ipc.h>
 #include <hooks/hooks_manager.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -192,7 +192,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Setup DHCPv4-over-DHCPv6 IPC
     try {
-        Dhcp4o6Ipc::instance().open();
+        Dhcp4to6Ipc::instance().open();
     } catch (const std::exception& ex) {
         std::ostringstream err;
         err << "error starting DHCPv4-over-DHCPv6 IPC "
