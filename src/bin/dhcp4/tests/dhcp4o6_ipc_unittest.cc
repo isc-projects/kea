@@ -49,6 +49,9 @@ public:
 
     /// @brief Creates an instance of the DHCPv4o6 Message option.
     ///
+    /// The option will contain an empty DHCPREQUEST message, with
+    /// just the Message Type option inside and nothing else.
+    ///
     /// @return Pointer to the instance of the DHCPv4-query Message option.
     OptionPtr createDHCPv4MsgOption() const;
 
