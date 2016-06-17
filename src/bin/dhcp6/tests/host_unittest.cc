@@ -58,7 +58,7 @@ const char* CONFIGS[] = {
         "        \"ip-addresses\": [ \"2001:db8:1:1::babf\" ]"
         "    } ]"
         " } ]"
-    "}",
+   "}",
 
     // Configuration 1:
     "{ "
@@ -1026,6 +1026,57 @@ TEST_F(HostTest, multipleIAsRenew) {
     EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:1::"), 64));
     EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:2::"), 64));
     EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:3::"), 64));
+}
+
+// In this test, the client performs 4-way exchange and includes 3 IA_NAs
+// and IA_PDs. The server has 3 address and 3 prefix reservations for the
+// client and allocates them all. Once the 4-way exchange is complete,
+// the client sends Solicit in which it specifies hints for all IAs. The
+// hints are for the reserved addresses but some of them are included in
+// different IAs than they are assigned to. The server should ignore hints
+// and respond with currently assigned leases.
+TEST_F(HostTest, multipleIAsSolicitAfterAcquisition) {
+    // 4-way exchange
+    testMultipleIAs(do_solicit_request_,
+                    Reservation("2001:db8:1:1::1"),
+                    Reservation("2001:db8:1:1::2"),
+                    Reservation("2001:db8:1:1::3"),
+                    Reservation("3000:1:1::/64"),
+                    Reservation("3000:1:2::/64"),
+                    Reservation("3000:1:3::/64"));
+
+    client_.clearRequestedIAs();
+
+    // Specify hints.
+
+    // "2001:db8:1:1::1" is allocated for IAID = 1 but we specify it as
+    // a hint for IAID = 3 and so on.
+    requestIA(client_, Hint(IAID(3), "2001:db8:1:1::1"));
+    requestIA(client_, Hint(IAID(2), "2001:db8:1:1::2"));
+    requestIA(client_, Hint(IAID(1), "2001:db8:1:1::3"));
+    requestIA(client_, Hint(IAID(6), "3000:1:1::/64"));
+    requestIA(client_, Hint(IAID(5), "3000:1:2::/64"));
+    requestIA(client_, Hint(IAID(4), "3000:1:3::/64"));
+
+    // Send Solicit with hints as specified above.
+    ASSERT_NO_THROW(do_solicit_());
+
+    // Make sure that the client still has the same leases and the leases
+    // should be assigned to the same IAs.
+    ASSERT_EQ(6, client_.getLeaseNum());
+
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::1"),
+                                           IAID(1)));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::2"),
+                                           IAID(2)));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::3"),
+                                           IAID(3)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:1::"), 64,
+                                          IAID(4)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:2::"), 64,
+                                          IAID(5)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:3::"), 64,
+                                          IAID(6)));
 }
 
 // In this test, the client performs 4-way exchange and includes 3 IA_NAs and
