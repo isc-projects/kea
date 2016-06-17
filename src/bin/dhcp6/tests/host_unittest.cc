@@ -1259,5 +1259,117 @@ TEST_F(HostTest, insertReservationDuringRenew) {
     EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForPrefix(dynamic_prefix_lease, 64));
 }
 
+// In this test there are two clients. One client obtains two leases: one
+// for a prefix, another one for an address. The server is reconfigured
+// to make 4 reservations to a different client. Two of those reservations
+// are for the prefix and the address assigned to the first client. The
+// second client performs 4-way exchange and the server detects that two
+// reserved leases are not available because they are in use by another
+// client. The server assigns available address and prefix and an address
+// and prefix from dynamic pool. The first client renews and the server
+// detects that the renewed leases are reserved for another client. As
+// a result, the client obtains an address and prefix from the dynamic
+// pools. The second client renews and it obtains all reserved
+// addresses and prefixes.
+TEST_F(HostTest, multipleIAsConflict) {
+    Dhcp6Client client;
+    client.setDUID("01:02:03:05");
+
+    // Create configuration without any reservations.
+    std::string c = configString(*client_.getDuid());
+
+    ASSERT_NO_THROW(configure(c, *client_.getServer()));
+
+    // First client performs 4-way exchange and obtains an address and
+    // prefix indicated in hints.
+    requestIA(client, Hint(IAID(1), "2001:db8:1::1"));
+    requestIA(client, Hint(IAID(2), "3001:0:0:10::/64"));
+
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Make sure the client has obtained requested leases.
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1::1"), IAID(1)));
+    ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("3001:0:0:10::"), 64,
+                                         IAID(2)));
+
+    // Reconfigure the server to make reservations for the second client.
+    // The reservations include a prefix and address acquired by the
+    // first client in the previous transaction.
+    c = configString(*client_.getDuid(),
+                     Reservation("2001:db8:1::1"),
+                     Reservation("2001:db8:1::2"),
+                     Reservation("3001:0:0:9::/64"),
+                     Reservation("3001:0:0:10::/64"));
+
+    ASSERT_NO_THROW(configure(c, *client_.getServer()));
+
+    // Configure the second client to send two IA_NAs and two IA_PDs with
+    // IAIDs from 1 to 4.
+    client_.requestAddress(1);
+    client_.requestAddress(2);
+    client_.requestPrefix(3);
+    client_.requestPrefix(4);
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(do_solicit_request_());
+
+    // The client should have obtained 4 leases: two prefixes and two addresses.
+    ASSERT_EQ(4, client_.getLeaseNum());
+
+    // The address "2001:db8:1::2" is reserved and available so the
+    // server should have assigned it.
+    ASSERT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1::2"),
+                                           IAID(1)));
+    // The address "2001:db8:1::1" was hijacked by another client so it
+    // must not be assigned to thsi client.
+    ASSERT_FALSE(client_.hasLeaseForAddress(IOAddress("2001:db8:1::1")));
+    // This client should have got an address from the dynamic pool excluding
+    // two addresses already assigned, i.e. excluding "2001:db8:1::1" and
+    // "2001:db8:1::2".
+    ASSERT_TRUE(client_.hasLeaseForAddressRange(IOAddress("2001:db8:1::3"),
+                                                IOAddress("2001:db8:1::10")));
+
+    // Same story with prefixes.
+    ASSERT_TRUE(client_.hasLeaseForPrefix(IOAddress("3001:0:0:9::"), 64,
+                                          IAID(3)));
+    ASSERT_FALSE(client_.hasLeaseForPrefix(IOAddress("3001:0:0:10::"), 64));
+
+
+    // Now that the reservations have been made, the first client should get
+    // non-reserved leases upon renewal. The server detects that the leases
+    // are reserved for someone else.
+    ASSERT_NO_THROW(client.doRenew());
+
+    // For those leases, the first client should get 0 lifetimes.
+    ASSERT_TRUE(client.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:1::1")));
+    ASSERT_TRUE(client.hasLeaseWithZeroLifetimeForPrefix(IOAddress("3001:0:0:10::"), 64));
+
+    // The total number of leases should be 4 - two leases with zero lifetimes
+    // and two leases with address and prefix from the dynamic pools, which
+    // replace previously assigned leases. We don't care too much what those
+    // leases are, though.
+    EXPECT_EQ(4, client.getLeaseNum());
+
+    // The second client renews and the server should be now able to assign
+    // all reserved leases to this client.
+    ASSERT_NO_THROW(client_.doRenew());
+
+    // Client requests 4 leases, but there are additional two with zero
+    // lifetimes to indicate that the client should not use the address
+    // and prefix from the dynamic pools anymore.
+    ASSERT_EQ(6, client_.getLeaseNum());
+
+    // Check that the client has all reserved leases.
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1::2"),
+                                           IAID(1)));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1::1"),
+                                           IAID(2)));
+
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3001:0:0:9::"), 64,
+                                          IAID(3)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3001:0:0:10::"), 64,
+                                          IAID(4)));
+}
+
 
 } // end of anonymous namespace
