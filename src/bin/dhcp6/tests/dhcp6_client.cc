@@ -700,7 +700,7 @@ Dhcp6Client::hasLeaseForAddress(const asiolink::IOAddress& address) const {
 
 bool
 Dhcp6Client::hasLeaseForAddress(const asiolink::IOAddress& address,
-                                const uint32_t iaid) const {
+                                const IAID& iaid) const {
     std::vector<Lease6> leases = getLeasesByAddress(address);
     BOOST_FOREACH(const Lease6& lease, leases) {
         if (lease.iaid_ == iaid) {
@@ -745,7 +745,7 @@ Dhcp6Client::hasLeaseForPrefix(const asiolink::IOAddress& prefix,
 bool
 Dhcp6Client::hasLeaseForPrefix(const asiolink::IOAddress& prefix,
                                const uint8_t prefix_len,
-                               const uint32_t iaid) const {
+                               const IAID& iaid) const {
     std::vector<Lease6> leases = getLeasesByAddress(prefix);
     BOOST_FOREACH(const Lease6& lease, leases) {
         if ((lease.prefixlen_ == prefix_len) &&

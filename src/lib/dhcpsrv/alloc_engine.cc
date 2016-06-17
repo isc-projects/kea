@@ -759,39 +759,45 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
     IPv6Resrv::Type type = ctx.currentIA().type_ == Lease::TYPE_NA ?
         IPv6Resrv::TYPE_NA : IPv6Resrv::TYPE_PD;
 
+    // We want to avoid allocating new lease for an IA if there is already
+    // a valid lease for which client has reservation. So, we first check if
+    // we already have a lease for a reserved address or prefix.
+    BOOST_FOREACH(const Lease6Ptr& lease, existing_leases) {
+        if ((lease->valid_lft_ != 0)) {
+            if (ctx.host_->hasReservation(IPv6Resrv(type, lease->addr_,
+                                                    lease->prefixlen_))) {
+                // We found existing lease for a reserved address or prefix.
+                // We'll simply extend the lifetime of the lease.
+                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                          ALLOC_ENGINE_V6_ALLOC_HR_LEASE_EXISTS)
+                    .arg(ctx.query_->getLabel())
+                    .arg(lease->typeToText(lease->type_))
+                    .arg(lease->addr_.toText());
+
+                // If this is a real allocation, we may need to extend the lease
+                // lifetime.
+                if (!ctx.fake_allocation_ && conditionalExtendLifetime(*lease)) {
+                    LeaseMgrFactory::instance().updateLease6(lease);
+                }
+                return;
+            }
+        }
+    }
+
+    // There is no lease for a reservation in this IA. So, let's now iterate
+    // over reservations specified and try to allocate one of them for the IA.
+
     // Get the IPv6 reservations of specified type.
     const IPv6ResrvRange& reservs = ctx.host_->getIPv6Reservations(type);
-    for (IPv6ResrvIterator resv = reservs.first; resv != reservs.second; ++resv) {
+    BOOST_FOREACH(IPv6ResrvTuple type_lease_tuple, reservs) {
         // We do have a reservation for address or prefix.
-        IOAddress addr = resv->second.getPrefix();
-        uint8_t prefix_len = resv->second.getPrefixLen();
+        const IOAddress& addr = type_lease_tuple.second.getPrefix();
+        uint8_t prefix_len = type_lease_tuple.second.getPrefixLen();
 
         // We have allocated this address/prefix while processing one of the
         // previous IAs, so let's try another reservation.
         if (ctx.isAllocated(addr, prefix_len)) {
             continue;
-        }
-
-        // Check if already have this lease on the existing_leases list.
-        for (Lease6Collection::iterator l = existing_leases.begin();
-             l != existing_leases.end(); ++l) {
-
-            // Ok, we already have a lease for this reservation and it's usable
-            if (((*l)->addr_ == addr) && (*l)->valid_lft_ != 0) {
-                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                          ALLOC_ENGINE_V6_ALLOC_HR_LEASE_EXISTS)
-                    .arg(ctx.query_->getLabel())
-                    .arg((*l)->typeToText((*l)->type_))
-                    .arg((*l)->addr_.toText());
-
-                // If this is a real allocation, we may need to extend the lease
-                // lifetime.
-                if (!ctx.fake_allocation_ && conditionalExtendLifetime(**l)) {
-                    LeaseMgrFactory::instance().updateLease6(*l);
-                }
-
-                return;
-            }
         }
 
         // If there's a lease for this address, let's not create it.

@@ -116,76 +116,6 @@ const char* CONFIGS[] = {
     "}"
 };
 
-/// @brief Generic wrapper to provide strongly typed values.
-///
-/// In many cases, the test fixture class methods require providing many
-/// paramaters, of which some ore optional. Some of the parameters may also
-/// be implicitly converted to other types. Non-careful test implementer
-/// may often "shift by one" or swap two values on the arguments list, which
-/// will be accepted by the compiler but will result in troubles running the
-/// function. Sometimes it takes non trivial amount of debugging to find out
-/// why the particular function fails until we find that the arguments were
-/// swapped or shifted. In addition, the use of classes wrapping simple types
-/// results in better readbility of the test code.
-///
-/// @tparam ValueType Type of the wrapped value.
-template<typename ValueType>
-struct SpecializedTypeWrapper {
-
-    /// @brief Constructor
-    ///
-    /// @param value Wrapped value
-    explicit SpecializedTypeWrapper(const ValueType& value)
-        : value_(value) { }
-
-    /// @brief Operator returning a wrapped value.
-    operator ValueType () const {
-        return (value_);
-    }
-
-    /// @brief Wrapped value.
-    ValueType value_;
-};
-
-
-/// @brief Class representing strongly typed IAID.
-struct IAID : public SpecializedTypeWrapper<uint32_t> {
-    /// @brief Constructor
-    ///
-    /// @param iaid IAID.
-    explicit IAID(const uint32_t iaid)
-        : SpecializedTypeWrapper(iaid) { }
-};
-
-/// @brief Class representing stronly typed value for strict IAID checks.
-///
-/// Strict IAID checks are used to verify that  the particular address has been
-/// assign to a specific IA. In many cases we don't check that because it may
-/// not be possible to predict to which IA the specific lease will be assigned.
-struct StrictIAIDChecking : public SpecializedTypeWrapper<bool> {
-    /// @brief Constructor.
-    ///
-    /// @param strict_check Boolean value indicating if strict checking should
-    /// be performed.
-    explicit StrictIAIDChecking(const bool strict_check)
-        : SpecializedTypeWrapper(strict_check) { }
-
-    /// @brief Convenience function returning an object indicating that strict
-    /// checks should be performed.
-    static const StrictIAIDChecking YES() {
-        static StrictIAIDChecking strict_check(true);
-        return (strict_check);
-    }
-
-    /// @brief Convenience function returning an object indicating that strict
-    /// checks should not be performed.
-    static StrictIAIDChecking NO() {
-        static StrictIAIDChecking strict_check(false);
-        return (strict_check);
-    }
-
-};
-
 /// @brief Base class representing leases and hints coveyed within IAs.
 ///
 /// This is a base class for @ref Reservation and @ref Hint classes.
@@ -310,11 +240,11 @@ public:
     /// @param iaid IAID of IA in which hint should be placed.
     /// @param resource Resource string as for @ref IAResource constructor.
     Hint(const IAID& iaid, const std::string& resource)
-        : IAResource(resource), iaid_(iaid.value_) {
+        : IAResource(resource), iaid_(iaid) {
     }
 
-    /// @brief Returns IAID as 32-bit unsigned value.
-    uint32_t getIAID() const;
+    /// @brief Returns IAID.
+    const IAID& getIAID() const;
 
     /// @brief Convenience function returning unspecified hint.
     static const Hint& UNSPEC();
@@ -322,10 +252,10 @@ public:
 private:
 
     /// @brief Holds IAID as 32-bit unsigned integer.
-    uint32_t iaid_;
+    IAID iaid_;
 };
 
-uint32_t
+const IAID&
 Hint::getIAID() const {
     return (iaid_);
 }
@@ -530,11 +460,14 @@ HostTest::testLeaseForIA(const Reservation& r, size_t& address_count,
                          size_t& prefix_count) {
     if (r.isPrefix()) {
         ++prefix_count;
-        EXPECT_TRUE(client_.hasLeaseForPrefix(r.getPrefix(), r.getPrefixLen()));
+        EXPECT_TRUE(client_.hasLeaseForPrefix(r.getPrefix(),
+                                              r.getPrefixLen(),
+                                              IAID(3 + prefix_count)));
 
     } else if (!r.isEmpty()) {
         ++address_count;
-        EXPECT_TRUE(client_.hasLeaseForAddress(r.getPrefix()));
+        EXPECT_TRUE(client_.hasLeaseForAddress(r.getPrefix(),
+                                               IAID(address_count)));
     }
 }
 
@@ -1104,7 +1037,7 @@ TEST_F(HostTest, multipleIAsRenew) {
 // allocate newly reserved address and prefix, replacing the previously
 // allocated dynamic leases. For both dynamically allocated leases, the
 // server should return IAs with zero lifetimes.
-TEST_F(HostTest, additionalReservationDuringRenew) {
+TEST_F(HostTest, appendReservationDuringRenew) {
     // 4-way exchange to acquire 4 reserved leases and 2 dynamic leases.
     testMultipleIAs(do_solicit_request_,
                     Reservation("2001:db8:1:1::1"),
@@ -1194,6 +1127,85 @@ TEST_F(HostTest, additionalReservationDuringRenew) {
     // Make sure that all prefix leases are also within the dynamic pool range.
     leases = client_.getLeasesByPrefixPool(IOAddress("3001::"), 32, 64);
     EXPECT_EQ(3, leases.size());
+}
+
+// In this test, the client performs 4-way exchange and includes 3 IA_NAs
+// and 3 IA_PDs. Initially, the server has 2 address reservations and
+// 2 prefix reservations for this client. The server allocates the 2
+// reserved addresses to the first 2 IA_NAs and 2 reserved prefixes to the
+// first two IA_PDs. The server is reconfigured and 2 new reservations are
+// inserted: new address reservation before existing address reservations
+// and prefix reservation before existing prefix reservations.
+// The server should detect that leases already exist for reserved addresses
+// and prefixes and it should not remove existing leases. Instead, it should
+// replace dynamically allocated leases with newly added reservations
+TEST_F(HostTest, insertReservationDuringRenew) {
+    // 4-way exchange to acquire 4 reserved leases and 2 dynamic leases.
+    testMultipleIAs(do_solicit_request_,
+                    Reservation("2001:db8:1:1::1"),
+                    Reservation("2001:db8:1:1::2"),
+                    Reservation("3000:1:1::/64"),
+                    Reservation("3000:1:2::/64"));
+
+    // The server must have not lease for the address and prefix for which
+    // we will later make reservations, because these are outside of the
+    // dynamic pool.
+    ASSERT_FALSE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::3")));
+    ASSERT_FALSE(client_.hasLeaseForPrefix(IOAddress("3000:1:3::"), 64));
+
+    // Retrieve leases from the dynamic pools and store them so as we can
+    // later check that they were returned with zero lifetimes when the
+    // reservations are added.
+    std::vector<Lease6> leases =
+        client_.getLeasesByAddressRange(IOAddress("2001:db8:1::1"),
+                                        IOAddress("2001:db8:1::10"));
+    ASSERT_EQ(1, leases.size());
+    IOAddress dynamic_address_lease = leases[0].addr_;
+
+    leases = client_.getLeasesByPrefixPool(IOAddress("3001::"), 32, 64);
+    ASSERT_EQ(1, leases.size());
+    IOAddress dynamic_prefix_lease = leases[0].addr_;
+
+    // Add two additional reservations.
+    std::string c = configString(*client_.getDuid(),
+                                 Reservation("2001:db8:1:1::3"),
+                                 Reservation("2001:db8:1:1::1"),
+                                 Reservation("2001:db8:1:1::2"),
+                                 Reservation("3000:1:3::/64"),
+                                 Reservation("3000:1:1::/64"),
+                                 Reservation("3000:1:2::/64"));
+
+    ASSERT_NO_THROW(configure(c, *client_.getServer()));
+
+    // Client renews and includes all leases it currently has in the IAs.
+    ASSERT_NO_THROW(client_.doRenew());
+
+    // The expectation is that the server allocated two new reserved leases to
+    // the client and removed leases allocated from the dynamic pools. The
+    // number if leases in the server configuration should include those that
+    // are returned with zero lifetimes. Hence, the total number of leases
+    // should be equal to 6 + 2 = 8.
+    ASSERT_EQ(8, client_.getLeaseNum());
+
+    // Even though the new reservations have been added before existing
+    // reservations, the server should assign them to the IAs with
+    // IAID = 3 (for address) and IAID = 6 (for prefix).
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::1"),
+                                           IAID(1)));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::2"),
+                                           IAID(2)));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::3"),
+                                           IAID(3)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:1::"), 64,
+                                          IAID(4)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:2::"), 64,
+                                          IAID(5)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:3::"), 64,
+                                          IAID(6)));
+
+    // Make sure that the replaced leases have been returned with zero liftimes.
+    EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForAddress(dynamic_address_lease));
+    EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForPrefix(dynamic_prefix_lease, 64));
 }
 
 

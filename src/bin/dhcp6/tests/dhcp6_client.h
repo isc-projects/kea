@@ -402,7 +402,7 @@ public:
     /// @param address Address for which lease should be found.
     /// @param iaid IAID of the IA_NA in which the lease is expected.
     bool hasLeaseForAddress(const asiolink::IOAddress& address,
-                            const uint32_t iaid) const;
+                            const IAID& iaid) const;
 
     /// @brief Checks if client has a lease for an address within range.
     ///
@@ -440,7 +440,7 @@ public:
     /// @param iaid IAID of the IA_PD in which the lease is expected.
     bool hasLeaseForPrefix(const asiolink::IOAddress& prefix,
                            const uint8_t prefix_len,
-                           const uint32_t iaid) const;
+                           const IAID& iaid) const;
 
     /// @brief Checks if client has a lease belonging to a prefix pool.
     ///
