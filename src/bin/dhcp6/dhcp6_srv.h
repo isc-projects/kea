@@ -794,7 +794,7 @@ public:
     /// @note used by DHCPv4-over-DHCPv6 so must be public
 
     /// @brief Updates statistics for transmitted packets
-    /// @param query packet transmitted
+    /// @param response packet transmitted
     static void processStatsSent(const Pkt6Ptr& response);
 
     /// the index of the buffer6_send hook
