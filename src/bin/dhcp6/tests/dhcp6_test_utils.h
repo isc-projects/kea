@@ -34,6 +34,76 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
+/// @brief Generic wrapper to provide strongly typed values.
+///
+/// In many cases, the test fixture class methods require providing many
+/// paramaters, of which some ore optional. Some of the parameters may also
+/// be implicitly converted to other types. Non-careful test implementer
+/// may often "shift by one" or swap two values on the arguments list, which
+/// will be accepted by the compiler but will result in troubles running the
+/// function. Sometimes it takes non trivial amount of debugging to find out
+/// why the particular function fails until we find that the arguments were
+/// swapped or shifted. In addition, the use of classes wrapping simple types
+/// results in better readbility of the test code.
+///
+/// @tparam ValueType Type of the wrapped value.
+template<typename ValueType>
+struct SpecializedTypeWrapper {
+
+    /// @brief Constructor
+    ///
+    /// @param value Wrapped value
+    explicit SpecializedTypeWrapper(const ValueType& value)
+        : value_(value) { }
+
+    /// @brief Operator returning a wrapped value.
+    operator ValueType () const {
+        return (value_);
+    }
+
+    /// @brief Wrapped value.
+    ValueType value_;
+};
+
+
+/// @brief Class representing strongly typed IAID.
+struct IAID : public SpecializedTypeWrapper<uint32_t> {
+    /// @brief Constructor
+    ///
+    /// @param iaid IAID.
+    explicit IAID(const uint32_t iaid)
+        : SpecializedTypeWrapper(iaid) { }
+};
+
+/// @brief Class representing strongly typed value for strict IAID checks.
+///
+/// Strict IAID checks are used to verify that  the particular address has been
+/// assign to a specific IA. In many cases we don't check that because it may
+/// not be possible to predict to which IA the specific lease will be assigned.
+struct StrictIAIDChecking : public SpecializedTypeWrapper<bool> {
+    /// @brief Constructor.
+    ///
+    /// @param strict_check Boolean value indicating if strict checking should
+    /// be performed.
+    explicit StrictIAIDChecking(const bool strict_check)
+        : SpecializedTypeWrapper(strict_check) { }
+
+    /// @brief Convenience function returning an object indicating that strict
+    /// checks should be performed.
+    static const StrictIAIDChecking YES() {
+        static StrictIAIDChecking strict_check(true);
+        return (strict_check);
+    }
+
+    /// @brief Convenience function returning an object indicating that strict
+    /// checks should not be performed.
+    static StrictIAIDChecking NO() {
+        static StrictIAIDChecking strict_check(false);
+        return (strict_check);
+    }
+};
+
+
 /// @brief Base class for DHCPv6 server testing.
 ///
 /// Currently it configures the test data path directory in
