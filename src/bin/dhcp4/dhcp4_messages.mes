@@ -198,6 +198,41 @@ detected as a duplicate (i.e. another device in the network is using this addres
 However, the server does not have a record for this address. This may indicate
 a client's error or a server's purged database.
 
+% DHCP4_DHCP4O6_BAD_PACKET received malformed DHCPv4o6 packet: %1
+A malformed DHCPv4o6 packet was received.
+
+% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 on interface %3
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv6 server over inter-process communication.
+
+% DHCP4_DHCP4O6_PACKET_SEND %1: trying to send packet %2 (type %3) to %4 on interface %5 encapsulating %6 %7 (type %8)
+The arguments specify the client identification information (HW address
+and client identifier), DHCP message name and type, source IPv4
+address and port, destination IPv4 address and port and the
+interface name.
+
+% DHCP4_DHCP4O6_PACKET_SEND_FAIL %1: failed to send DHCPv4o6 packet: %2
+This error is output if the IPv4 DHCP server fails to send an
+DHCPv4o6 message to the IPv6 DHCP server. The reason for the
+error is included in the message.
+
+% DHCP4_DHCP4O6_RECEIVE_FAIL failed to receive DHCPv4o6: %1
+This debug message indicates the inter-process communication with the
+DHCPv6 server failed. The reason for the error is included in
+the message.
+
+% DHCP4_DHCP4O6_RECEIVING receiving DHCPv4o6 packet from DHCPv6 server
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv6 server over inter-process communication socket.
+
+% DHCP4_DHCP4O6_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
+A debug message including the detailed data about the packet being
+sent to the DHCPv6 server to be forwarded to the client. The first
+argument contains the client and the transaction identification
+information. The second and third argument contains the packet name
+and type respectively. The fourth argument contains detailed packet
+information.
+
 % DHCP4_DISCOVER_CLASS_PROCESSING_FAILED %1: client class specific processing failed for DHCPDISCOVER
 This debug message means that the server processing that is unique for each
 client class has reported a failure. The response packet will not be sent.
