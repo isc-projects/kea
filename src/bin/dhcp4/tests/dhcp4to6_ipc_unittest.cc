@@ -330,6 +330,18 @@ TEST_F(Dhcp4to6IpcTest, process) {
     EXPECT_EQ(DHCPV6_DHCPV4_RESPONSE, pkt6_sent->getType());
     EXPECT_EQ("eth0", pkt6_sent->getIface());
     EXPECT_EQ("2001:db8:1::123", pkt6_sent->getRemoteAddr().toText());
+
+    // Check the 4o6 part
+    OptionCollection sent_msgs = pkt6_sent->getOptions(D6O_DHCPV4_MSG);
+    ASSERT_EQ(1, sent_msgs.size());
+    OptionPtr sent_msg = sent_msgs.begin()->second;
+    ASSERT_TRUE(sent_msg);
+    const OptionBuffer sent_buf = sent_msg->getData();
+    Pkt4Ptr pkt4_opt;
+    ASSERT_NO_THROW(pkt4_opt.reset(new Pkt4(&sent_buf[0], sent_buf.size())));
+    ASSERT_NO_THROW(pkt4_opt->unpack());
+    EXPECT_EQ(DHCPACK, pkt4_sent->getType());
+    EXPECT_EQ(pkt4_sent->len(), pkt4_opt->len());
 }
 
 } // end of anonymous namespace
