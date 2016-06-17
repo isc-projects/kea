@@ -45,13 +45,13 @@ public:
     /// Configures IPC to use a test port. It also provides a fake
     /// configuration of interfaces.
     Dhcp4to6IpcTest()
-	: Dhcpv4SrvTest(),
-	iface_mgr_test_config_(true) {
+        : Dhcpv4SrvTest(),
+        iface_mgr_test_config_(true) {
         configurePort(TEST_PORT);
-	// Install buffer4_receive_callout
-	EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().
-			registerCallout("buffer4_receive",
-					buffer4_receive_callout));
+        // Install buffer4_receive_callout
+        EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().
+                        registerCallout("buffer4_receive",
+                                        buffer4_receive_callout));
         // Install buffer4_send_callout
         EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().
                         registerCallout("buffer4_send", buffer4_send_callout));
