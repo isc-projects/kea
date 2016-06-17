@@ -790,6 +790,12 @@ private:
     /// @return Option that contains netmask information
     static OptionPtr getNetmaskOption(const Subnet4Ptr& subnet);
 
+    uint16_t port_;  ///< UDP port number on which server listens.
+    bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
+
+public:
+    /// Class methods and variables for DHCPv4-over-DHCPv6 handler
+
     /// @brief Updates statistics for received packets
     /// @param query packet received
     static void processStatsReceived(const Pkt4Ptr& query);
@@ -798,13 +804,28 @@ private:
     /// @param query packet transmitted
     static void processStatsSent(const Pkt4Ptr& response);
 
-    uint16_t port_;  ///< UDP port number on which server listens.
-    bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
-
     /// Indexes for registered hook points
-    int hook_index_pkt4_receive_;
-    int hook_index_subnet4_select_;
-    int hook_index_pkt4_send_;
+
+    /// @brief index for "buffer4_receive" hook point
+    static int hook_index_buffer4_receive_;
+
+    /// @brief index for "pkt4_receive" hook point
+    static int hook_index_pkt4_receive_;
+
+    /// @brief index for "subnet4_select" hook point
+    static int hook_index_subnet4_select_;
+
+    /// @brief index for "lease4_release" hook point
+    static int hook_index_lease4_release_;
+
+    /// @brief index for "pkt4_send" hook point
+    static int hook_index_pkt4_send_;
+
+    /// @brief index for "buffer4_send" hook point
+    static int hook_index_buffer4_send_;
+
+    /// @brief index for "lease4_decline" hook point
+    static int hook_index_lease4_decline_;
 };
 
 }; // namespace isc::dhcp
