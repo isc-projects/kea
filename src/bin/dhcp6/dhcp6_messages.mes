@@ -248,7 +248,7 @@ the message.
 
 % DHCP6_DHCP4O6_RECEIVING receiving DHCPv4o6 packet from DHCPv4 server
 This debug message is printed when the server is receiving a DHCPv4o6
-from the DHCPv4 server over inter-process communication
+from the DHCPv4 server over inter-process communication socket.
 
 % DHCP6_DHCP4O6_SEND_FAIL failed to send DHCPv4o6 packet: %1
 This error is output if the IPv6 DHCP server fails to send an assembled
