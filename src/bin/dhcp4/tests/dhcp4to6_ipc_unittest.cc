@@ -47,6 +47,7 @@ public:
     Dhcp4to6IpcTest()
         : Dhcpv4SrvTest(),
         iface_mgr_test_config_(true) {
+        IfaceMgr::instance().openSockets4();
         configurePort(TEST_PORT);
         // Install buffer4_receive_callout
         EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().
@@ -279,15 +280,25 @@ TEST_F(Dhcp4to6IpcTest, process) {
     ASSERT_NO_THROW(ipc.open());
     ASSERT_NO_THROW(src_ipc.open());
 
+    // Create an information request message
+    Pkt4Ptr infreq(new Pkt4(DHCPINFORM, 1234));
+    infreq->setHWAddr(generateHWAddr(6));
+    infreq->setCiaddr(IOAddress("192.0.1.2"));
+    // Make a wire representation of the DHCPv4 message.
+    infreq->pack();
+    OutputBuffer& output_buffer = infreq->getBuffer();
+    const uint8_t* data = static_cast<const uint8_t*>(output_buffer.getData());
+    OptionBuffer option_buffer(data, data + output_buffer.getLength());
+
+    // Create the DHCPv4 Message option holding the created message.
+    OptionPtr opt_msg(new Option(Option::V6, D6O_DHCPV4_MSG, option_buffer));
+
     // Create message to be sent over IPC.
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 1234));
-    pkt->addOption(createDHCPv4MsgOption());
+    pkt->addOption(opt_msg);
     pkt->setIface("eth0");
     pkt->setRemoteAddr(IOAddress("2001:db8:1::123"));
     ASSERT_NO_THROW(pkt->pack());
-
-    // TODO: put enough in the packet and server config to make it pass
-    // through processPacket, in particular provide a subnet to select
 
     // Reset the received packet
     Dhcp4to6IpcTest::callback_recv_pkt_.reset();
@@ -310,16 +321,15 @@ TEST_F(Dhcp4to6IpcTest, process) {
     // Make sure that the message has been processed.
     // Using the buffer4_send hook
     Pkt4Ptr pkt4_sent = Dhcp4to6IpcTest::callback_sent_pkt_;
-#if 0
     ASSERT_TRUE(pkt4_sent);
+    EXPECT_EQ(DHCPACK, pkt4_sent->getType());
     Pkt4o6Ptr pkt_sent = boost::dynamic_pointer_cast<Pkt4o6>(pkt4_sent);
     ASSERT_TRUE(pkt_sent);
     Pkt6Ptr pkt6_sent = pkt_sent->getPkt6();
     ASSERT_TRUE(pkt6_sent);
+    EXPECT_EQ(DHCPV6_DHCPV4_RESPONSE, pkt6_sent->getType());
     EXPECT_EQ("eth0", pkt6_sent->getIface());
     EXPECT_EQ("2001:db8:1::123", pkt6_sent->getRemoteAddr().toText());
-    // more tests
-#endif
 }
 
 } // end of anonymous namespace
