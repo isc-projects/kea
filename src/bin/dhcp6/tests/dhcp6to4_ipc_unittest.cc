@@ -50,7 +50,7 @@ public:
         configurePort(TEST_PORT);
         // Install buffer6_send_callout
         EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().
-                    registerCallout("buffer6_send", buffer6_send_callout));
+                        registerCallout("buffer6_send", buffer6_send_callout));
     }
 
     /// @brief Configure DHCP4o6 port.
