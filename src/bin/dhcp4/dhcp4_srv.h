@@ -801,7 +801,7 @@ public:
     static void processStatsReceived(const Pkt4Ptr& query);
 
     /// @brief Updates statistics for transmitted packets
-    /// @param query packet transmitted
+    /// @param response packet transmitted
     static void processStatsSent(const Pkt4Ptr& response);
 
     /// Indexes for registered hook points
