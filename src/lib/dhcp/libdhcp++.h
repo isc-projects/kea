@@ -9,6 +9,7 @@
 
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space_container.h>
+#include <dhcp/option_space.h>
 #include <dhcp/pkt6.h>
 #include <util/buffer.h>
 #include <util/staged_value.h>
@@ -38,8 +39,22 @@ public:
     /// @param u universe of the options (V4 or V6).
     ///
     /// @return Pointer to a collection of option definitions.
+    static const OptionDefContainerPtr getOptionDefs(const Option::Universe u);
+
+    /// @brief Return collection of option definitions.
+    ///
+    /// Method returns the collection of DHCP standard DHCP
+    /// option definitions.
+    /// @todo DHCPv4 option definitions are not implemented. For now
+    /// this function will throw isc::NotImplemented in case of attempt
+    /// to get option definitions for V4 universe.
+    ///
+    /// @param u universe of the options (V4 or V6).
+    /// @param space space of the options.
+    ///
+    /// @return Pointer to a collection of option definitions.
     static const OptionDefContainerPtr getOptionDefs(const Option::Universe u,
-                                                   const std::string& space);
+                                                     const std::string& space);
 
     /// @brief Return the first option definition matching a
     /// particular option code.

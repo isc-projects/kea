@@ -571,7 +571,7 @@ TEST_F(ParseConfigTest, defaultSpaceOptionDefTest) {
 
     // Verify that the option definition can be retrieved.
     OptionDefinitionPtr def =
-        CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get("dhcp6", 10000);
+        CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->get(DHCP6_OPTION_SPACE, 10000);
     ASSERT_TRUE(def);
 
     // Verify that the option definition is correct.
@@ -683,7 +683,7 @@ TEST_F(ParseConfigTest, escapedOptionDataTest) {
     ASSERT_EQ(0, rcode);
 
     // Verify that the option can be retrieved.
-    OptionPtr opt = getOptionPtr("dhcp4", DHO_BOOT_FILE_NAME);
+    OptionPtr opt = getOptionPtr(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(opt);
 
     util::OutputBuffer buf(100);
@@ -721,7 +721,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
 
     // Verify that the option data is correct.
     OptionCustomPtr addr_opt = boost::dynamic_pointer_cast<
-        OptionCustom>(getOptionPtr("dhcp4", 16));
+        OptionCustom>(getOptionPtr(DHCP4_OPTION_SPACE, 16));
     ASSERT_TRUE(addr_opt);
     EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
 
@@ -741,7 +741,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
 
     // Verify that the option data is correct.
     addr_opt = boost::dynamic_pointer_cast<
-        OptionCustom>(getOptionPtr("dhcp4", 16));
+        OptionCustom>(getOptionPtr(DHCP4_OPTION_SPACE, 16));
     ASSERT_TRUE(addr_opt);
     EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
 
@@ -761,7 +761,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
 
     // Verify that the option data is correct.
     addr_opt = boost::dynamic_pointer_cast<
-        OptionCustom>(getOptionPtr("dhcp4", 16));
+        OptionCustom>(getOptionPtr(DHCP4_OPTION_SPACE, 16));
     ASSERT_TRUE(addr_opt);
     EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
 }
@@ -816,7 +816,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
         "}";
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     ASSERT_EQ(0, rcode);
-    OptionPtr opt = getOptionPtr("dhcp6", 25000);
+    OptionPtr opt = getOptionPtr(DHCP6_OPTION_SPACE, 25000);
     ASSERT_TRUE(opt);
     ASSERT_EQ(1, opt->getData().size());
     EXPECT_EQ(0, opt->getData()[0]);
@@ -835,7 +835,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
         "}";
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     EXPECT_EQ(0, rcode);
-    opt = getOptionPtr("dhcp6", 25000);
+    opt = getOptionPtr(DHCP6_OPTION_SPACE, 25000);
     ASSERT_TRUE(opt);
     ASSERT_EQ(3, opt->getData().size());
     EXPECT_EQ(0x12, opt->getData()[0]);
@@ -857,7 +857,7 @@ TEST_F(ParseConfigTest, optionDataNoName) {
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
-        Option6AddrLst>(getOptionPtr("dhcp6", 23));
+        Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 23));
     ASSERT_TRUE(opt);
     ASSERT_EQ(1, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::1", opt->getAddresses()[0].toText());
@@ -877,7 +877,7 @@ TEST_F(ParseConfigTest, optionDataNoCode) {
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
-        Option6AddrLst>(getOptionPtr("dhcp6", 23));
+        Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 23));
     ASSERT_TRUE(opt);
     ASSERT_EQ(1, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::1", opt->getAddresses()[0].toText());
@@ -896,7 +896,7 @@ TEST_F(ParseConfigTest, optionDataMinimal) {
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
-        Option6AddrLst>(getOptionPtr("dhcp6", 23));
+        Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 23));
     ASSERT_TRUE(opt);
     ASSERT_EQ(1, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::10", opt->getAddresses()[0].toText());
@@ -912,7 +912,7 @@ TEST_F(ParseConfigTest, optionDataMinimal) {
     rcode = 0;
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     EXPECT_EQ(0, rcode);
-    opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr("dhcp6",
+    opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE,
                                                                    23));
     ASSERT_TRUE(opt);
     ASSERT_EQ(1, opt->getAddresses().size());
@@ -942,7 +942,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
-        Option6AddrLst>(getOptionPtr("dhcp6", 2345));
+        Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 2345));
     ASSERT_TRUE(opt);
     ASSERT_EQ(2, opt->getAddresses().size());
     EXPECT_EQ("2001:db8:1::10", opt->getAddresses()[0].toText());
@@ -967,7 +967,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
     rcode = 0;
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     EXPECT_EQ(0, rcode);
-    opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr("dhcp6",
+    opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE,
                                                                    2345));
     ASSERT_TRUE(opt);
     ASSERT_EQ(2, opt->getAddresses().size());
@@ -989,7 +989,7 @@ TEST_F(ParseConfigTest, emptyOptionData) {
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     EXPECT_EQ(0, rcode);
     const Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
-        Option6AddrLst>(getOptionPtr("dhcp6", D6O_DHCPV4_O_DHCPV6_SERVER));
+        Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, D6O_DHCPV4_O_DHCPV6_SERVER));
     ASSERT_TRUE(opt);
     ASSERT_EQ(0, opt->getAddresses().size());
 }
@@ -1009,7 +1009,7 @@ TEST_F(ParseConfigTest, optionDataNoSubOpion) {
     int rcode = 0;
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     EXPECT_EQ(0, rcode);
-    const OptionPtr opt = getOptionPtr("dhcp4", DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    const OptionPtr opt = getOptionPtr(DHCP4_OPTION_SPACE, DHO_VENDOR_ENCAPSULATED_OPTIONS);
     ASSERT_TRUE(opt);
     ASSERT_EQ(0, opt->getOptions().size());
 }

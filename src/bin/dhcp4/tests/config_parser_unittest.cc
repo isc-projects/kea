@@ -146,7 +146,7 @@ public:
         std::map<std::string, std::string> params;
         if (parameter == "name") {
             params["name"] = param_value;
-            params["space"] = "dhcp4";
+            params["space"] = DHCP4_OPTION_SPACE;
             params["code"] = "56";
             params["data"] = "ABCDEF0105";
             params["csv-format"] = "False";
@@ -158,19 +158,19 @@ public:
             params["csv-format"] = "False";
         } else if (parameter == "code") {
             params["name"] = "dhcp-message";
-            params["space"] = "dhcp4";
+            params["space"] = DHCP4_OPTION_SPACE;
             params["code"] = param_value;
             params["data"] = "ABCDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "data") {
             params["name"] = "dhcp-message";
-            params["space"] = "dhcp4";
+            params["space"] = DHCP4_OPTION_SPACE;
             params["code"] = "56";
             params["data"] = param_value;
             params["csv-format"] = "False";
         } else if (parameter == "csv-format") {
             params["name"] = "dhcp-message";
-            params["space"] = "dhcp4";
+            params["space"] = DHCP4_OPTION_SPACE;
             params["code"] = "56";
             params["data"] = "ABCDEF0105";
             params["csv-format"] = param_value;
@@ -251,7 +251,7 @@ public:
                           << "does not exist in Config Manager";
         }
         OptionContainerPtr options =
-            subnet->getCfgOption()->getAll("dhcp4");
+            subnet->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
         if (expected_options_count != options->size()) {
             ADD_FAILURE() << "The number of options in the subnet '"
                           << subnet_address.toText() << "' is different "
@@ -475,7 +475,7 @@ public:
     template<typename ReturnType>
     ReturnType
     retrieveOption(const Host& host, const uint16_t option_code) const {
-        return (retrieveOption<ReturnType>(host, "dhcp4", option_code));
+        return (retrieveOption<ReturnType>(host, DHCP4_OPTION_SPACE, option_code));
     }
 
     /// @brief Retrieve an option associated with a host.
@@ -1823,7 +1823,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     ElementPtr json = Element::fromJSON(config);
 
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
-        getCfgOptionDef()->get("dhcp4", 109);
+        getCfgOptionDef()->get(DHCP4_OPTION_SPACE, 109);
     ASSERT_FALSE(def);
 
     // Use the configuration string to create new option definition.
@@ -1834,7 +1834,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->
-        getCfgOptionDef()->get("dhcp4", 109);
+        getCfgOptionDef()->get(DHCP4_OPTION_SPACE, 109);
     ASSERT_TRUE(def);
 
     // Check the option data.
@@ -1885,7 +1885,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     checkResult(status, 0);
 
     def = CfgMgr::instance().getStagingCfg()->
-        getCfgOptionDef()->get("dhcp4", 213);
+        getCfgOptionDef()->get(DHCP4_OPTION_SPACE, 213);
     ASSERT_TRUE(def);
 
     // Check the option data.
@@ -1927,10 +1927,10 @@ TEST_F(Dhcp4ParserTest, optionDataDefaultsGlobal) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_EQ(0, options->size());
 
-    options = CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp4");
+    options = CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_EQ(2, options->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -1994,13 +1994,13 @@ TEST_F(Dhcp4ParserTest, optionDataDefaultsSubnet) {
 
     // These options are subnet options
     OptionContainerPtr options =
-        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp4");
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_EQ(0, options->size());
 
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    options = subnet->getCfgOption()->getAll("dhcp4");
+    options = subnet->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_EQ(2, options->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -2078,7 +2078,7 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     // Options should be now available
     // Try to get the option from the space dhcp4.
     OptionDescriptor desc1 =
-        CfgMgr::instance().getStagingCfg()->getCfgOption()->get("dhcp4", 56);
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(DHCP4_OPTION_SPACE, 56);
     ASSERT_TRUE(desc1.option_);
     EXPECT_EQ(56, desc1.option_->getType());
     // Try to get the option from the space isc.
@@ -2207,13 +2207,13 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
 
     // We should have one option available.
     OptionContainerPtr options =
-        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp4");
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_TRUE(options);
     ASSERT_EQ(1, options->size());
 
     // Get the option.
     OptionDescriptor desc =
-        CfgMgr::instance().getStagingCfg()->getCfgOption()->get("dhcp4", 222);
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(DHCP4_OPTION_SPACE, 222);
     EXPECT_TRUE(desc.option_);
     EXPECT_EQ(222, desc.option_->getType());
 
@@ -2267,7 +2267,7 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.24"));
     ASSERT_TRUE(subnet);
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_EQ(2, options->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -2303,7 +2303,7 @@ TEST_F(Dhcp4ParserTest, optionDataBoolean) {
     // Create configuration. Use standard option 19 (ip-forwarding).
     std::map<std::string, std::string> params;
     params["name"] = "ip-forwarding";
-    params["space"] = "dhcp4";
+    params["space"] = DHCP4_OPTION_SPACE;
     params["code"] = "19";
     params["data"] = "true";
     params["csv-format"] = "true";
@@ -2414,7 +2414,7 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     Subnet4Ptr subnet1 = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.100"));
     ASSERT_TRUE(subnet1);
-    OptionContainerPtr options1 = subnet1->getCfgOption()->getAll("dhcp4");
+    OptionContainerPtr options1 = subnet1->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_EQ(1, options1->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -2439,7 +2439,7 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     Subnet4Ptr subnet2 = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.3.102"));
     ASSERT_TRUE(subnet2);
-    OptionContainerPtr options2 = subnet2->getCfgOption()->getAll("dhcp4");
+    OptionContainerPtr options2 = subnet2->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_EQ(1, options2->size());
 
     const OptionContainerTypeIndex& idx2 = options2->get<1>();
@@ -2517,7 +2517,7 @@ TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
     ASSERT_TRUE(subnet);
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp4");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_EQ(1, options->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -2544,7 +2544,7 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
     ConstElementPtr x;
     std::map<std::string, std::string> params;
     params["name"] = "nis-servers";
-    params["space"] = "dhcp4";
+    params["space"] = DHCP4_OPTION_SPACE;
     // Option code 41 means nis-servers.
     params["code"] = "41";
     // Specify option values in a CSV (user friendly) format.
@@ -2561,7 +2561,7 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
     ASSERT_TRUE(subnet);
     OptionContainerPtr options =
-        subnet->getCfgOption()->getAll("dhcp4");
+        subnet->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_TRUE(options);
     ASSERT_EQ(1, options->size());
 
@@ -2746,13 +2746,13 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
 
     // We should have one option available.
     OptionContainerPtr options =
-        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp4");
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_TRUE(options);
     ASSERT_EQ(1, options->size());
 
     // Get the option.
     OptionDescriptor desc = CfgMgr::instance().getStagingCfg()->
-        getCfgOption()->get("dhcp4", DHO_VENDOR_ENCAPSULATED_OPTIONS);
+        getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_VENDOR_ENCAPSULATED_OPTIONS);
     EXPECT_TRUE(desc.option_);
     EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, desc.option_->getType());
 

@@ -23,7 +23,6 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_opaque_data_tuples.h>
-#include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
@@ -421,7 +420,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
 
     EXPECT_NO_THROW ({
             LibDHCP::unpackOptions6(OptionBuffer(buf.begin(), buf.begin() + sizeof(v6packed)),
-                                    "dhcp6", options);
+                                    DHCP6_OPTION_SPACE, options);
     });
 
     EXPECT_EQ(options.size(), 6); // there should be 5 options
@@ -680,7 +679,8 @@ TEST_F(LibDhcpTest, packOptions4) {
     // by OptionCustom which requires a definition to be passed to
     // the constructor.
     OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(Option::V4,
-                                                        DHO_DHCP_AGENT_OPTIONS);
+                                                        DHO_DHCP_AGENT_OPTIONS,
+                                                        DHCP4_OPTION_SPACE);
     ASSERT_TRUE(rai_def);
     // Create RAI option.
     OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
@@ -766,7 +766,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     isc::dhcp::OptionCollection options; // list of options
 
     ASSERT_NO_THROW(
-        LibDHCP::unpackOptions4(v4packed, "dhcp4", options);
+        LibDHCP::unpackOptions4(v4packed, DHCP4_OPTION_SPACE, options);
     );
 
     isc::dhcp::OptionCollection::const_iterator x = options.find(12);
@@ -1629,7 +1629,7 @@ TEST_F(LibDhcpTest, getOptionDefByName6) {
     for (OptionDefContainer::const_iterator def = defs->begin();
          def != defs->end(); ++def) {
         OptionDefinitionPtr def_by_name =
-            LibDHCP::getOptionDef(Option::V6, (*def)->getName());
+            LibDHCP::getOptionDef(Option::V6, (*def)->getName(), DHCP6_OPTION_SPACE);
         ASSERT_TRUE(def_by_name);
         ASSERT_TRUE(**def == *def_by_name);
     }
@@ -1645,7 +1645,7 @@ TEST_F(LibDhcpTest, getOptionDefByName4) {
     for (OptionDefContainer::const_iterator def = defs->begin();
          def != defs->end(); ++def) {
         OptionDefinitionPtr def_by_name =
-            LibDHCP::getOptionDef(Option::V4, (*def)->getName());
+            LibDHCP::getOptionDef(Option::V4, (*def)->getName(), DHCP4_OPTION_SPACE);
         ASSERT_TRUE(def_by_name);
         ASSERT_TRUE(**def == *def_by_name);
     }
@@ -1698,7 +1698,7 @@ TEST_F(LibDhcpTest, vendorClass6) {
     isc::util::encode::decodeHex(vendor_class_hex, bin);
 
     ASSERT_NO_THROW ({
-            LibDHCP::unpackOptions6(bin, "dhcp6", options);
+            LibDHCP::unpackOptions6(bin, DHCP6_OPTION_SPACE, options);
         });
 
     EXPECT_EQ(options.size(), 1); // There should be 1 option.

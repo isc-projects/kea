@@ -403,7 +403,8 @@ TEST_F(Dhcpv4SrvTest, initResponse) {
     // rai echo is done in relayAgentInfoEcho
     // Do subnet selection option
     OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(Option::V4,
-                                                           DHO_SUBNET_SELECTION);
+                                                           DHO_SUBNET_SELECTION,
+                                                           DHCP4_OPTION_SPACE);
     ASSERT_TRUE(sbnsel_def);
     OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
     ASSERT_TRUE(sbnsel);
@@ -2166,7 +2167,8 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
 
     // Let's create a Relay Agent Information option
     OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(Option::V4,
-                                                        DHO_DHCP_AGENT_OPTIONS);
+                                                        DHO_DHCP_AGENT_OPTIONS,
+                                                        DHCP4_OPTION_SPACE);
     ASSERT_TRUE(rai_def);
     OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
     ASSERT_TRUE(rai);
@@ -2193,7 +2195,8 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
 
     // Subnet select option has a lower precedence
     OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(Option::V4,
-                                                           DHO_SUBNET_SELECTION);
+                                                           DHO_SUBNET_SELECTION,
+                                                           DHCP4_OPTION_SPACE);
     ASSERT_TRUE(sbnsel_def);
     OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
     ASSERT_TRUE(sbnsel);
@@ -2276,7 +2279,8 @@ TEST_F(Dhcpv4SrvTest, subnetSelect) {
 
     // Let's create a Subnet Selection option
     OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(Option::V4,
-                                                           DHO_SUBNET_SELECTION);
+                                                           DHO_SUBNET_SELECTION,
+                                                           DHCP4_OPTION_SPACE);
     ASSERT_TRUE(sbnsel_def);
     OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
     ASSERT_TRUE(sbnsel);

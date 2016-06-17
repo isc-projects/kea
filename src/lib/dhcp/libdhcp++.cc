@@ -15,7 +15,6 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int_array.h>
-#include <dhcp/option_space.h>
 #include <dhcp/std_option_defs.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <exceptions/exceptions.h>
@@ -95,6 +94,22 @@ const char* isc::dhcp::DOCSIS3_CLASS_EROUTER = "eRouter1.0";
 void initOptionSpace(OptionDefContainerPtr& defs,
                      const OptionDefParams* params,
                      size_t params_size);
+
+const OptionDefContainerPtr
+LibDHCP::getOptionDefs(const Option::Universe u) {
+    std::string space = "";
+    if (Option::V4 == u) {
+        space = DHCP4_OPTION_SPACE;
+    } else if (Option::V6 == u) {
+        space = DHCP6_OPTION_SPACE;
+    } else {
+        return OptionDefContainerPtr();
+    }
+    if (option_defs_.end() == option_defs_.find(space)) {
+        initStdOptionDefs(space);
+    }
+    return option_defs_[space];
+}
 
 const OptionDefContainerPtr
 LibDHCP::getOptionDefs(const Option::Universe, const std::string& space) {

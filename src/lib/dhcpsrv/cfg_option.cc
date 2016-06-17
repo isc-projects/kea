@@ -5,7 +5,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <dhcp/libdhcp++.h>
-#include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcp/dhcp6.h>
 #include <string>
@@ -112,7 +111,13 @@ CfgOption::encapsulateOptions(OptionPtr option) {
             if (!option->getOption(encap_opt->option_->getType())) {
                 option->addOption(encap_opt->option_);
             }
-            encapsulateOptions(encap_opt->option_);
+            // This is a workaround for preventing infinite recursion when
+            // trying to encapsulate options created with default global option
+            // spaces.
+            if (encap_space != DHCP4_OPTION_SPACE &&
+                encap_space != DHCP6_OPTION_SPACE) {
+                encapsulateOptions(encap_opt->option_);
+            }
         }
     }
 }

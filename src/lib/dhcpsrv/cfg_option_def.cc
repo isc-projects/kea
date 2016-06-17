@@ -7,7 +7,6 @@
 #include <config.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
-#include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option_def.h>
 
 namespace isc {

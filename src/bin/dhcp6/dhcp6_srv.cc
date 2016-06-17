@@ -1527,7 +1527,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                 }
 
                 Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>
-                        (ctx.subnet_->getPool(ctx.type_, (*l)->addr_, false));
+                        (ctx.subnet_->getPool(ctx.currentIA().type_, (*l)->addr_, false));
 
                 if (pdExcludeFound && pool && pool->getPrefixExcludedLength() > 0) {
                     OptionPtr opt(new Option6PDExclude((*l)->addr_, (*l)->prefixlen_,
@@ -1831,7 +1831,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
             }
 
             Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>
-                    (ctx.subnet_->getPool(ctx.type_, (*l)->addr_, false));
+                    (ctx.subnet_->getPool(ctx.currentIA().type_, (*l)->addr_, false));
 
             if (pdExcludeFound && pool && pool->getPrefixExcludedLength() > 0) {
                 OptionPtr opt(new Option6PDExclude((*l)->addr_, (*l)->prefixlen_,

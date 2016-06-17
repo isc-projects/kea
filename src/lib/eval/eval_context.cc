@@ -7,7 +7,6 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
-#include <dhcp/option_space.h>
 #include <dhcp/libdhcp++.h>
 #include <eval/eval_context.h>
 #include <eval/parser.h>

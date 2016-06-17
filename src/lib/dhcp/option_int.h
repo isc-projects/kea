@@ -10,7 +10,6 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
-#include <dhcp/option_space.h>
 #include <util/io_utilities.h>
 
 #include <stdint.h>
