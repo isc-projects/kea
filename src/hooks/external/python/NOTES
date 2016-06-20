@@ -1,4 +1,4 @@
-Implementation notes fro python
+Implementation notes for python
 
 Manifest:
  - poption.h poption.cc: the C++ OptionPtr encapsulated into a python
@@ -15,7 +15,7 @@ Manifest:
 
  - dso.cc: the kea framework and hook glue: on the kea / C side it is
   a dynamic shared object providing the framework and hook entry points,
-  on the python side it embbeds an interpreter which imports the
+  on the python side it embeds an interpreter which imports the
   python script hook.py.
 
   poption.o, ppkt4.o, module.o and dso.o are compiled into kea.so.

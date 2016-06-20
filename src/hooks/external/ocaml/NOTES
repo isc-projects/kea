@@ -1,0 +1,40 @@
+Implementation notes for ocaml
+
+Manifest:
+ - opt.h opt.c: the C++ OptionPtr encapsulated into a ocaml custom block
+  with some method ported.
+
+ - pkt4.h pkt4.c: the C++ Pkt4Ptr encapsulated into a ocaml custom block
+  with some method ported.
+
+  one can complete these python types or/and new python type.
+
+ - dso.c: the kea framework and hook glue with initialization: on the
+  ocaml / C side it is a dynamic shared object providing the framework
+  and hook entry points, on the ocaml side it embeds a bytecode
+  intepreter or a native code runtime with the hook.ml compiled code.
+
+ - hook.mli and hook.ml: interface and implementation ocaml files
+  which defines the Option and Packet4 modules, and the hook handlers
+  written in ocaml.
+
+ - opt.o, pkt4.o, hook.cmo or hook.cmx, and dso.o are compiled into
+  [bn]hook.so the dynamic shared objects in bytecode and native modes.
+
+ - tests.c: source of test program which loads the [bn]hook.so
+  hook-libraries and exercise the pkt4_receive hook. It gives
+  independent executable [bn]tests.
+
+ - cshenv: C-shell script setting environment variables for a kea
+  distrib in /tmp/kea on OS X.
+
+ - Makefile: make config file for OS X.
+
+ - NOTES: the file.
+
+ocamlc doesn't know C++ and works only on .c files (and of course all
+the caml extensions). An option forces ocamlc to use a C++ compiler
+despite of the .c extension, and another silents clang warning...
+
+There is no entry point in the ocaml runtime to unload it. Not a big
+problem but it means memory leaks can become hard to track.
