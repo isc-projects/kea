@@ -38,3 +38,7 @@ despite of the .c extension, and another silents clang warning...
 
 There is no entry point in the ocaml runtime to unload it. Not a big
 problem but it means memory leaks can become hard to track.
+
+ocaml is statically typed so there is no type check in the runtime
+even in the C++ code. So if you bug an external declaration you
+likely bug the whole thing!

@@ -1,7 +1,6 @@
 Kea hooks in external (i.e., not C++) languages.
 
-Asked for customers: hooks written in python (see below), lua,
-ocaml (see below?), ...
+Asked for customers: hooks written in python (done), lua, ocaml (done), ...
 
 Kea hook summary:
  - dynamic shared objects loaded from the config on hooks-libraries
@@ -40,7 +39,13 @@ Answer: C++ objects map to lua full userdata by default
  https://www.lua.org/pil/p1.html is obsolete but better)
 
 Question: C++ shared_ptr?
-Answer: must use explicit finalization to reset shared_ptr's
+Answer: must use explicit finalization to reset shared_ptr's,
+should be encapsulated into a structure. Note the example codes make
+the strong assumption shared pointers are built by the default
+constructor as a memory block of zero (the documentation says
+only the use count and the managed pointer are initialized to 0).
+The test tool inspect.cc can be used to verify boost shared pointers
+are implemented as expected.
 
 Question: DHCPv4 packet example?
 Answer: Pkt4Ptr with addOption, getCiaddr, getHtype, getHWAddr,
@@ -52,5 +57,6 @@ Answer: OptionPtr with (class) factory, getData, getType, len, toText, ...
 Question: external language types?
 Answer:
  python3: int, float, str, bytes
- ocaml: int, float, string (include binary)
+ ocaml: int, float, string, bytes (same representation than string)
  lua: (number) integer, (number) float, string (include binary)
+
