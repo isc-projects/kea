@@ -42,3 +42,6 @@ problem but it means memory leaks can become hard to track.
 ocaml is statically typed so there is no type check in the runtime
 even in the C++ code. So if you bug an external declaration you
 likely bug the whole thing!
+
+To finish ocaml has a standard type named option (None | Some of)
+so I used the name opt (vs option) for the kea option type.

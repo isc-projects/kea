@@ -1,0 +1,39 @@
+Implementation notes for lua
+
+Manifest:
+ - loption.h loption.cc: the C++ OptionPtr encapsulated into a lua full
+  userdata with a few methods ported.
+
+ - ppkt4.h ppkt4.cc: the C++ Pkt4Ptr encapsulated into a lua full userdata
+  with a few methods ported.
+
+  one can complete these lua types or/and new lua type.
+
+ - dso.cc: the kea framework and hook glue: on the kea / C side it is
+  a dynamic shared object providing the framework and hook entry points,
+  on the lua side it embeds an interpreter which imports the lua script
+  hook.lua.
+
+  loption.o, lpkt4.o and dso.o are compiled into kea.so.
+
+ - hook.lua: the lua script which implements the lua part of hook
+  hook handlers using lua option and pkt4 modules.
+
+ - tests.cc: source of test program which loads the kea.so hook-library
+  and exercise the pkt4_receive hook. It gives an independent executable.
+
+ - cshenv: C-shell script setting environment variables for a kea
+  distrib in /tmp/kea on OS X. Note I brewed a recent (vs standard)
+  version of lua (last one is 5.3.3).
+
+ - Makefile: make config file for OS X.
+
+ - NOTES: this file.
+
+I was afraid to have to recompile lua for C++ but it was not (yet?)
+necessary.
+
+The preload stuff from linit.c doesn't work.
+
+A possible bug issue: the allocator (lua_newuserdata) does NOT
+clear the memory?!
