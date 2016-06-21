@@ -38,8 +38,36 @@ void PsqlBindArray::add(const std::vector<uint8_t>& data) {
     formats_.push_back(BINARY_FMT);
 }
 
+void PsqlBindArray::add(const uint8_t* data, const size_t len) {
+    values_.push_back(reinterpret_cast<const char*>(&(data[0])));
+    lengths_.push_back(len);
+    formats_.push_back(BINARY_FMT);
+}
+
 void PsqlBindArray::add(const bool& value)  {
     add(value ? TRUE_STR : FALSE_STR);
+}
+
+void PsqlBindArray::add(const uint8_t& byte) {
+    // We static_cast to an unsigned int, otherwise lexcial_cast may to
+    // treat byte as a character, which yields "" for unprintable values 
+    bindString(boost::lexical_cast<std::string>
+                              (static_cast<unsigned int>(byte)));
+}
+
+void PsqlBindArray::add(const isc::asiolink::IOAddress& addr) {
+    if (addr.isV4()) {
+        bindString(boost::lexical_cast<std::string>
+                   (static_cast<uint32_t>(addr)));
+    } else {
+        bindString(addr.toText());
+    }
+}
+
+// eventually this should replace add(std::string)
+void PsqlBindArray::bindString(const std::string& str) {
+    bound_strs_.push_back(StringPtr(new std::string(str)));
+    PsqlBindArray::add((bound_strs_.back())->c_str());
 }
 
 std::string PsqlBindArray::toText() const {
@@ -132,32 +160,6 @@ PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
         isc_throw(DbOperationError, "Invalid boolean data: " << data
                   << " for: " << getColumnLabel(col) << " row:" << row
                   << " : must be 't' or 'f'");
-    }
-}
-
-void
-PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
-                              const size_t col, uint32_t &value) const {
-    const char* data = getRawColumnValue(r, row, col);
-    try {
-        value = boost::lexical_cast<uint32_t>(data);
-    } catch (const std::exception& ex) {
-        isc_throw(DbOperationError, "Invalid uint32_t data: " << data
-                  << " for: " << getColumnLabel(col) << " row:" << row
-                  << " : " << ex.what());
-    }
-}
-
-void
-PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
-                              const size_t col, int32_t &value) const {
-    const char* data = getRawColumnValue(r, row, col);
-    try {
-        value = boost::lexical_cast<int32_t>(data);
-    } catch (const std::exception& ex) {
-        isc_throw(DbOperationError, "Invalid int32_t data: " << data
-                  << " for: " << getColumnLabel(col) << " row:" << row
-                  << " : " << ex.what());
     }
 }
 

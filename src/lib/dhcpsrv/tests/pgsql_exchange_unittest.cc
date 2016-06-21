@@ -69,5 +69,48 @@ TEST(PgSqlExchangeTest, convertTimeTest) {
     EXPECT_EQ(ref_time, from_time);
 }
 
+TEST(PsqlBindArray, basicOperation) {
+    
+    PsqlBindArray b;
+
+    uint8_t small_int = 25;
+    b.add(small_int);
+
+    int reg_int = 376;
+    b.add(reg_int);
+
+    uint64_t big_int = 86749032;
+    b.add(big_int);
+
+    b.add((bool)(1));
+    b.add((bool)(0));
+
+    b.add(isc::asiolink::IOAddress("192.2.15.34"));
+    b.add(isc::asiolink::IOAddress("3001::1"));
+
+    std::string str("just a string");
+    b.add(str);
+
+    std::vector<uint8_t> bytes;
+    for (int i = 0; i < 10; i++) {
+        bytes.push_back(i+1);
+    }
+
+    b.add(bytes);
+
+    std::string expected = 
+        "0 : \"25\"\n"
+        "1 : \"376\"\n"
+        "2 : \"86749032\"\n"
+        "3 : \"TRUE\"\n"
+        "4 : \"FALSE\"\n"
+        "5 : \"3221360418\"\n"
+        "6 : \"3001::1\"\n"
+        "7 : \"just a string\"\n"
+        "8 : 0x010203040506070809\n";
+
+    EXPECT_EQ(expected, b.toText());
+}
+
 }; // namespace
 

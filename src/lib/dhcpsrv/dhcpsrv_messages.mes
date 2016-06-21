@@ -634,6 +634,10 @@ An error message indicating that communication with the MySQL database server
 has been lost.  When this occurs the server exits immediately with a non-zero
 exit code.  This is most likely due to a network issue.
 
+% DHCPSRV_PGSQL_HOST_DB_GET_VERSION obtaining schema version information for the PostgreSQL hosts database
+A debug message issued when the server is about to obtain schema version
+information from the PostgreSQL hosts database.
+
 % DHCPSRV_PGSQL_GET_ADDR4 obtaining IPv4 lease for address %1
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the PostgreSQL database for the specified address.
@@ -695,6 +699,15 @@ connection including database name and username needed to access it
 % DHCPSRV_PGSQL_ROLLBACK rolling back PostgreSQL database
 The code has issued a rollback call.  All outstanding transaction will
 be rolled back and not committed to the database.
+
+% DHCPSRV_PGSQL_START_TRANSACTION starting a new PostgreSQL transaction
+A debug message issued when a new PostgreSQL transaction is being started.
+This message is typically not issued when inserting data into a
+single table because the server doesn't explicitly start
+transactions in this case. This message is issued when data is
+inserted into multiple tables with multiple INSERT statements
+and there may be a need to rollback the whole transaction if
+any of these INSERT statements fail.
 
 % DHCPSRV_PGSQL_UPDATE_ADDR4 updating IPv4 lease for address %1
 A debug message issued when the server is attempting to update IPv4
