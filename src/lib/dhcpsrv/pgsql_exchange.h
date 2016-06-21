@@ -7,10 +7,16 @@
 #ifndef PGSQL_EXCHANGE_H
 #define PGSQL_EXCHANGE_H
 
+#include <asiolink/io_address.h>
 #include <dhcpsrv/pgsql_connection.h>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <stdint.h>
 #include <vector>
+#include <iostream>
 
 namespace isc {
 namespace dhcp {
@@ -24,6 +30,11 @@ namespace dhcp {
 /// be valid for the duration of the PostgreSQL statement execution.  In other
 /// words populating them with pointers to values that go out of scope before
 /// statement is executed is a bad idea.
+
+/// @brief smart pointer to strings used by PsqlBindArray to ensure scope
+/// of strings supplying exchange values 
+typedef boost::shared_ptr<std::string> StringPtr;
+
 struct PsqlBindArray {
     /// @brief Vector of pointers to the data values.
     std::vector<const char *> values_;
@@ -74,13 +85,26 @@ struct PsqlBindArray {
     /// @param value std::string containing the value to add.
     void add(const std::string& value);
 
-    /// @brief Adds a binary value to the bind array.
+    /// @brief Adds a vector of binary data to the bind array.
     ///
     /// Adds a BINARY_FMT value to the end of the bind array using the
-    /// given vector as the data source.
+    /// given vector as the data source.  NOTE this does not replicate
+    /// the vector, so it must remain in scope until the bind array
+    /// is destroyed.
     ///
     /// @param data vector of binary bytes.
     void add(const std::vector<uint8_t>& data);
+
+    /// @brief Adds a buffer of binary data to the bind array.
+    ///
+    /// Adds a BINARY_FMT value to the end of the bind array using the
+    /// given vector as the data source. NOTE this does not replicate
+    /// the buffer, so it must remain in scope until the bind array
+    /// is destroyed.
+    ///
+    /// @param data buffer of binary data.
+    /// @param len  number of bytes of data in buffer 
+    void add(const uint8_t* data, const size_t len);
 
     /// @brief Adds a boolean value to the bind array.
     ///
@@ -90,10 +114,61 @@ struct PsqlBindArray {
     /// @param value bool value to add.
     void add(const bool& value);
 
+    /// @brief Adds a uint8_t value to the bind array.
+    ///
+    /// Converts the given uint8_t value to its corresponding numeric string
+    /// literal and adds it as a TEXT_FMT value to the bind array.
+    ///
+    /// @param value bool value to add.
+    void add(const uint8_t& byte);
+
+    /// @brief Adds a the given IOAddress value to the bind array.
+    ///
+    /// Converts the IOAddress, based on its protocol family, to the 
+    /// corresponding string literal and adds it as a TEXT_FMT value to 
+    /// the bind array.
+    ///
+    /// @param value bool value to add.
+    void add(const isc::asiolink::IOAddress& addr);
+
+    /// @brief Adds a the given value to the bind array.
+    ///
+    /// Converts the given value its corresponding string literal
+    /// boost::lexical_cast and adds it as a TEXT_FMT value to the bind array.
+    ///
+    /// @param value bool value to add.
+    template<typename T>
+    void add(const T& numeric) {
+        bindString(boost::lexical_cast<std::string>(numeric));
+    }
+
+    /// @brief Binds a the given string to the bind array.
+    ///
+    /// Prior to added the The given string the vector of exchange values,
+    /// it duplicated as a StringPtr and saved internally.  This garauntees
+    /// the string remains in scope until the PsqlBindArray is destroyed,
+    /// without the caller maintaining the string values. 
+    ///
+    /// @param value bool value to add.
+    void bindString(const std::string& str);
+
+    //std::vector<const std::string> getBoundStrs() {
+    std::vector<StringPtr> getBoundStrs() {
+        return (bound_strs_);
+    }
+
     /// @brief Dumps the contents of the array to a string.
     /// @return std::string containing the dump
     std::string toText() const;
+
+private:
+    /// @brief vector of strings which supplied the values
+    std::vector<StringPtr> bound_strs_;
+
 };
+
+/// @brief Defines a smart pointer to PsqlBindArray
+typedef boost::shared_ptr<PsqlBindArray> PsqlBindArrayPtr;
 
 /// @brief Base class for marshalling data to and from PostgreSQL.
 ///
@@ -179,30 +254,6 @@ public:
     void getColumnValue(const PgSqlResult& r, const int row, const size_t col,
                         bool &value) const;
 
-    /// @brief Fetches an integer text column as a uint32_t.
-    ///
-    /// @param r the result set containing the query results
-    /// @param row the row number within the result set
-    /// @param col the column number within the row
-    /// @param[out] value parameter to receive the converted value
-    ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
-    /// invalid.
-    void getColumnValue(const PgSqlResult& r, const int row, const size_t col,
-                        uint32_t &value) const;
-
-    /// @brief Fetches an integer text column as a int32_t.
-    ///
-    /// @param r the result set containing the query results
-    /// @param row the row number within the result set
-    /// @param col the column number within the row
-    /// @param[out] value parameter to receive the converted value
-    ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
-    /// invalid.
-    void getColumnValue(const PgSqlResult& r, const int row, const size_t col,
-                        int32_t &value) const;
-
     /// @brief Fetches an integer text column as a uint8_t.
     ///
     /// @param r the result set containing the query results
@@ -214,6 +265,31 @@ public:
     /// invalid.
     void getColumnValue(const PgSqlResult& r, const int row, const size_t col,
                         uint8_t &value) const;
+
+    /// @brief Fetches a text column as the given value type
+    ///
+    /// Uses boost::lexicalcast to convert the text column value into
+    /// a value of type T. 
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    /// @param[out] value parameter to receive the converted value
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
+    template<typename T>
+    void getColumnValue(const PgSqlResult& r, const int row, const size_t col,
+                        T& value) const {
+        const char* data = getRawColumnValue(r, row, col);
+        try {
+            value = boost::lexical_cast<T>(data);
+        } catch (const std::exception& ex) {
+            isc_throw(DbOperationError, "Invalid data: " << data
+                      << " for: " << getColumnLabel(col) << " row:" << row
+                      << " : " << ex.what());
+        }
+    }
 
     /// @brief Converts a column in a row in a result set to a binary bytes
     ///

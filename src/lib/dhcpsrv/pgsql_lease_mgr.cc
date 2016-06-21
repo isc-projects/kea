@@ -26,6 +26,8 @@ using namespace std;
 
 namespace {
 
+/// @todo TKM lease6 needs to accomodate hwaddr,hwtype, and hwaddr source columns
+
 /// @brief Catalog of all the SQL statements currently supported.  Note
 /// that the order columns appear in statement body must match the order they
 /// that the occur in the table.  This does not apply to the where clause.

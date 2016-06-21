@@ -53,6 +53,7 @@ const size_t OID_NONE = 0;   // PostgreSQL infers proper type
 const size_t OID_BOOL = 16;
 const size_t OID_BYTEA = 17;
 const size_t OID_INT8 = 20;  // 8 byte int
+const size_t OID_INT4 = 23;  // 4 byte int
 const size_t OID_INT2 = 21;  // 2 byte int
 const size_t OID_TIMESTAMP = 1114;
 const size_t OID_VARCHAR = 1043;
@@ -176,6 +177,62 @@ private:
     PGconn* pgconn_;      ///< Postgresql connection
 };
 
+/// @brief Forward declaration to @ref PgSqlConnection.
+class PgSqlConnection;
+
+/// @brief RAII object representing PostgreSQL transaction.
+///
+/// An instance of this class should be created in a scope where multiple
+/// INSERT statements should be executed within a single transaction. The
+/// transaction is started when the constructor of this class is invoked.
+/// The transaction is ended when the @ref PgSqlTransaction::commit is
+/// explicitly called or when the instance of this class is destroyed.
+/// The @ref PgSqlTransaction::commit commits changes to the database
+/// and the changes remain in the database when the instance of the
+/// class is destroyed. If the class instance is destroyed before the
+/// @ref PgSqlTransaction::commit is called, the transaction is rolled
+/// back. The rollback on destruction guarantees that partial data is
+/// not stored in the database when there is an error during any
+/// of the operations belonging to a transaction.
+///
+/// The default PostgreSQL backend configuration enables 'autocommit'.
+/// Starting a transaction overrides 'autocommit' setting for this
+/// particular transaction only. It does not affect the global 'autocommit'
+/// setting for the database connection, i.e. all modifications to the
+/// database which don't use transactions will still be auto committed.
+class PgSqlTransaction : public boost::noncopyable {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Starts transaction by making a "START TRANSACTION" query.
+    ///
+    /// @param conn PostgreSQL connection to use for the transaction. This
+    /// connection will be later used to commit or rollback changes.
+    ///
+    /// @throw DbOperationError if "START TRANSACTION" query fails.
+    PgSqlTransaction(PgSqlConnection& conn);
+
+    /// @brief Destructor.
+    ///
+    /// Rolls back the transaction if changes haven't been committed.
+    ~PgSqlTransaction();
+
+    /// @brief Commits transaction.
+    void commit();
+
+private:
+
+    /// @brief Holds reference to the PostgreSQL database connection.
+    PgSqlConnection& conn_;
+
+    /// @brief Boolean flag indicating if the transaction has been committed.
+    ///
+    /// This flag is used in the class destructor to assess if the
+    /// transaction should be rolled back.
+    bool committed_;
+};
+
 /// @brief Common PgSql Connector Pool
 ///
 /// This class provides common operations for PgSql database connection
@@ -218,18 +275,23 @@ public:
     /// @throw DbOpenError Error opening the database
     void openDatabase();
 
+    /// @brief Start a transaction
+    ///
+    /// Starts a transaction.
+    ///
+    /// @throw DbOperationError If the transaction start failed.
+    void startTransaction();
+
     /// @brief Commit Transactions
     ///
-    /// Commits all pending database operations. On databases that don't
-    /// support transactions, this is a no-op.
+    /// Commits all pending database operations.
     ///
     /// @throw DbOperationError If the commit failed.
     void commit();
 
     /// @brief Rollback Transactions
     ///
-    /// Rolls back all pending database operations. On databases that don't
-    /// support transactions, this is a no-op.
+    /// Rolls back all pending database operations.
     ///
     /// @throw DbOperationError If the rollback failed.
     void rollback();

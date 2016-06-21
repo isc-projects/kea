@@ -35,6 +35,25 @@ const int PGSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
 
 const char PgSqlConnection::DUPLICATE_KEY[] = ERRCODE_UNIQUE_VIOLATION;
 
+PgSqlTransaction::PgSqlTransaction(PgSqlConnection& conn)
+    : conn_(conn), committed_(false) {
+    conn_.startTransaction();
+}
+
+PgSqlTransaction::~PgSqlTransaction() {
+    // Rollback if the PgSqlTransaction::commit wasn't explicitly
+    // called.
+    if (!committed_) {
+        conn_.rollback();
+    }
+}
+
+void
+PgSqlTransaction::commit() {
+    conn_.commit();
+    committed_ = true;
+}
+
 PgSqlConnection::~PgSqlConnection() {
     if (conn_) {
         // Deallocate the prepared queries.
@@ -188,6 +207,18 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
         const char* error_message = PQerrorMessage(conn_);
         isc_throw(DbOperationError, "Statement exec failed:" << " for: "
                   << statement.name << ", reason: "
+                  << error_message);
+    }
+}
+
+void
+PgSqlConnection::startTransaction() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_START_TRANSACTION);
+    PgSqlResult r(PQexec(conn_, "START TRANSACTION"));
+    if (PQresultStatus(r) != PGRES_COMMAND_OK) {
+        const char* error_message = PQerrorMessage(conn_);
+        isc_throw(DbOperationError, "unable to start transaction" 
                   << error_message);
     }
 }
