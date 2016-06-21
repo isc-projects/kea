@@ -144,7 +144,7 @@ ALTER TABLE lease6
     REFERENCES lease6_types (lease_type);
 
 --
---  FUNCTION that returns a result set containing the column names for lease4 dumps
+--  FUNCTION that returns a result set containing the column names for lease4 dumps.
 DROP FUNCTION IF EXISTS lease4DumpHeader();
 CREATE FUNCTION lease4DumpHeader() RETURNS text AS  $$
     select cast('address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state' as text) as result;
@@ -152,7 +152,7 @@ $$ LANGUAGE SQL;
 --
 
 --
---  FUNCTION that returns a result set containing the data for lease4 dumps
+--  FUNCTION that returns a result set containing the data for lease4 dumps.
 DROP FUNCTION IF EXISTS lease4DumpData();
 CREATE FUNCTION lease4DumpData() RETURNS
     table (address inet,
@@ -182,7 +182,7 @@ $$ LANGUAGE SQL;
 --
 
 --
---  FUNCTION that returns a result set containing the column names for lease6 dumps
+--  FUNCTION that returns a result set containing the column names for lease6 dumps.
 DROP FUNCTION IF EXISTS lease6DumpHeader();
 CREATE FUNCTION lease6DumpHeader() RETURNS text AS  $$
     select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,state' as text) as result;
@@ -190,7 +190,7 @@ $$ LANGUAGE SQL;
 --
 
 --
---  FUNCTION that returns a result set containing the data for lease6 dumps
+--  FUNCTION that returns a result set containing the data for lease6 dumps.
 DROP FUNCTION IF EXISTS lease6DumpData();
 CREATE FUNCTION lease6DumpData() RETURNS
     TABLE (
@@ -236,7 +236,7 @@ UPDATE schema_version
 -- Upgrade to schema 3.0 begins here:
 
 --
--- Table structure for table host_identifier_type
+-- Table structure for table host_identifier_type.
 --
 
 CREATE TABLE host_identifier_type (
@@ -247,6 +247,11 @@ CREATE TABLE host_identifier_type (
 INSERT INTO host_identifier_type VALUES (0, 'hw-address');
 INSERT INTO host_identifier_type VALUES (1, 'duid');
 INSERT INTO host_identifier_type VALUES (2, 'circuit-id');
+INSERT INTO host_identifier_type VALUES (3, 'client-id');
+
+--
+-- Table structure for table dhcp_option_scope.
+--
 
 CREATE TABLE dhcp_option_scope (
   scope_id SMALLINT PRIMARY KEY NOT NULL,
@@ -259,10 +264,10 @@ INSERT INTO dhcp_option_scope VALUES (2, 'client-class');
 INSERT INTO dhcp_option_scope VALUES (3, 'host');
 
 --
--- Table structure for table hosts
+-- Table structure for table hosts.
 --
--- Primary key and unique contraints automatically create indexes
--- foreign key constraints do not
+-- Primary key and unique contraints automatically create indexes,
+-- foreign key constraints do not.
 CREATE TABLE hosts (
   host_id SERIAL PRIMARY KEY NOT NULL,
   dhcp_identifier BYTEA NOT NULL,
@@ -283,7 +288,7 @@ CREATE TABLE hosts (
 CREATE INDEX fk_host_identifier_type ON hosts (dhcp_identifier_type);
 
 --
--- Table structure for table dhcp4_options
+-- Table structure for table dhcp4_options.
 --
 
 CREATE TABLE dhcp4_options (
@@ -305,7 +310,7 @@ CREATE INDEX fk_dhcp4_options_host1_idx ON dhcp4_options (host_id);
 CREATE INDEX fk_dhcp4_options_scope_idx ON dhcp4_options (scope_id);
 
 --
--- Table structure for table dhcp6_options
+-- Table structure for table dhcp6_options.
 --
 
 CREATE TABLE dhcp6_options (
@@ -327,7 +332,7 @@ CREATE INDEX fk_dhcp6_options_host1_idx ON dhcp6_options (host_id);
 CREATE INDEX fk_dhcp6_options_scope_idx ON dhcp6_options (scope_id);
 
 --
--- Table structure for table ipv6_reservations
+-- Table structure for table ipv6_reservations.
 --
 
 CREATE TABLE ipv6_reservations (
@@ -344,7 +349,7 @@ CREATE TABLE ipv6_reservations (
 CREATE INDEX fk_ipv6_reservations_host_idx ON ipv6_reservations (host_id);
 
 --
--- Table structure for table lease_hwaddr_source
+-- Table structure for table lease_hwaddr_source.
 --
 
 CREATE TABLE lease_hwaddr_source (
@@ -352,36 +357,36 @@ CREATE TABLE lease_hwaddr_source (
   name VARCHAR(40) DEFAULT NULL
 );
 
--- Hardware address obtained from raw sockets
+-- Hardware address obtained from raw sockets.
 INSERT INTO lease_hwaddr_source VALUES (1, 'HWADDR_SOURCE_RAW');
 
--- Hardware address converted from IPv6 link-local address with EUI-64
+-- Hardware address converted from IPv6 link-local address with EUI-64.
 INSERT INTO lease_hwaddr_source VALUES (2, 'HWADDR_SOURCE_IPV6_LINK_LOCAL');
 
--- Hardware address extracted from client-id (duid)
+-- Hardware address extracted from client-id (duid).
 INSERT INTO lease_hwaddr_source VALUES (4, 'HWADDR_SOURCE_DUID');
 
--- Hardware address extracted from client address relay option (RFC6939)
+-- Hardware address extracted from client address relay option (RFC6939).
 INSERT INTO lease_hwaddr_source VALUES (8, 'HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION');
 
--- Hardware address extracted from remote-id option (RFC4649)
+-- Hardware address extracted from remote-id option (RFC4649).
 INSERT INTO lease_hwaddr_source VALUES (16, 'HWADDR_SOURCE_REMOTE_ID');
 
--- Hardware address extracted from subscriber-id option (RFC4580)
+-- Hardware address extracted from subscriber-id option (RFC4580).
 INSERT INTO lease_hwaddr_source VALUES (32, 'HWADDR_SOURCE_SUBSCRIBER_ID');
 
--- Hardware address extracted from docsis options
+-- Hardware address extracted from docsis options.
 INSERT INTO lease_hwaddr_source VALUES (64, 'HWADDR_SOURCE_DOCSIS_CMTS');
 
 INSERT INTO lease_hwaddr_source VALUES (128, 'HWADDR_SOURCE_DOCSIS_MODEM');
 
 -- In the event hardware address cannot be determined, we need to satisfy
--- foreign key constraint between lease6 and lease_hardware_source
+-- foreign key constraint between lease6 and lease_hardware_source.
 INSERT INTO lease_hwaddr_source VALUES (0, 'HWADDR_SOURCE_UNKNOWN');
 
--- Adding ORDER BY clause to sort by lease address
+-- Adding ORDER BY clause to sort by lease address.
 --
---  FUNCTION that returns a result set containing the data for lease4 dumps
+--  FUNCTION that returns a result set containing the data for lease4 dumps.
 DROP FUNCTION IF EXISTS lease4DumpData();
 CREATE FUNCTION lease4DumpData() RETURNS
     table (address inet,
@@ -411,14 +416,14 @@ CREATE FUNCTION lease4DumpData() RETURNS
 $$ LANGUAGE SQL;
 --
 
--- Add new columns to lease6
+-- Add new columns to lease6.
 ALTER TABLE lease6
   ADD COLUMN hwaddr BYTEA DEFAULT NULL,
   ADD COLUMN hwtype SMALLINT DEFAULT NULL,
   ADD COLUMN hwaddr_source SMALLINT DEFAULT NULL;
 
 --
---  FUNCTION that returns a result set containing the column names for lease6 dumps
+--  FUNCTION that returns a result set containing the column names for lease6 dumps.
 DROP FUNCTION IF EXISTS lease6DumpHeader();
 CREATE FUNCTION lease6DumpHeader() RETURNS text AS  $$
     select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,state,hwaddr,hwtype,hwaddr_source' as text) as result;
@@ -426,7 +431,7 @@ $$ LANGUAGE SQL;
 --
 
 --
---  FUNCTION that returns a result set containing the data for lease6 dumps
+--  FUNCTION that returns a result set containing the data for lease6 dumps.
 DROP FUNCTION IF EXISTS lease6DumpData();
 CREATE FUNCTION lease6DumpData() RETURNS
     TABLE (
@@ -477,7 +482,7 @@ UPDATE schema_version
 
 -- Schema 3.0 specification ends here.
 
--- Commit the script transaction
+-- Commit the script transaction.
 COMMIT;
 
 -- Notes:
