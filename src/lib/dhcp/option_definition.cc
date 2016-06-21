@@ -121,8 +121,7 @@ OptionDefinition::addRecordField(const OptionDataType data_type) {
 OptionPtr
 OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                                 OptionBufferConstIter begin,
-                                OptionBufferConstIter end,
-                                UnpackOptionsCallback callback) const {
+                                OptionBufferConstIter end) const {
 
     try {
         // Some of the options are represented by the specialized classes derived
@@ -131,7 +130,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
         // type to be returned. Therefore, we first check that if we are dealing
         // with such an option. If the instance is returned we just exit at this
         // point. If not, we will search for a generic option type to return.
-        OptionPtr option = factorySpecialFormatOption(u, begin, end, callback);
+        OptionPtr option = factorySpecialFormatOption(u, begin, end);
         if (option) {
             return (option);
         }
@@ -151,37 +150,37 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             return (array_type_ ?
                     factoryIntegerArray<uint8_t>(u, type, begin, end) :
                     factoryInteger<uint8_t>(u, type, getEncapsulatedSpace(),
-                                            begin, end, callback));
+                                            begin, end));
 
         case OPT_INT8_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<int8_t>(u, type, begin, end) :
                     factoryInteger<int8_t>(u, type, getEncapsulatedSpace(),
-                                           begin, end, callback));
+                                           begin, end));
 
         case OPT_UINT16_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint16_t>(u, type, begin, end) :
                     factoryInteger<uint16_t>(u, type, getEncapsulatedSpace(),
-                                             begin, end, callback));
+                                             begin, end));
 
         case OPT_INT16_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint16_t>(u, type, begin, end) :
                     factoryInteger<int16_t>(u, type, getEncapsulatedSpace(),
-                                            begin, end, callback));
+                                            begin, end));
 
         case OPT_UINT32_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint32_t>(u, type, begin, end) :
                     factoryInteger<uint32_t>(u, type, getEncapsulatedSpace(),
-                                             begin, end, callback));
+                                             begin, end));
 
         case OPT_INT32_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint32_t>(u, type, begin, end) :
                     factoryInteger<int32_t>(u, type, getEncapsulatedSpace(),
-                                            begin, end, callback));
+                                            begin, end));
 
         case OPT_IPV4_ADDRESS_TYPE:
             // If definition specifies that an option is an array
@@ -217,9 +216,8 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
 
 OptionPtr
 OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
-                                const OptionBuffer& buf,
-                                UnpackOptionsCallback callback) const {
-    return (optionFactory(u, type, buf.begin(), buf.end(), callback));
+                                const OptionBuffer& buf) const {
+    return (optionFactory(u, type, buf.begin(), buf.end()));
 }
 
 OptionPtr
@@ -662,8 +660,7 @@ OptionDefinition::factoryIAPrefix6(uint16_t type,
 OptionPtr
 OptionDefinition::factorySpecialFormatOption(Option::Universe u,
                                              OptionBufferConstIter begin,
-                                             OptionBufferConstIter end,
-                                             UnpackOptionsCallback) const {
+                                             OptionBufferConstIter end) const {
     if (u == Option::V6) {
         if ((getCode() == D6O_IA_NA || getCode() == D6O_IA_PD) &&
             haveIA6Format()) {

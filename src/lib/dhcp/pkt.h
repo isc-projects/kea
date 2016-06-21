@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -283,14 +283,6 @@ public:
     /// transmitted data is stored in buffer_out_. If we want to send packet
     /// that we just received, a copy between those two buffers is necessary.
     void repack();
-
-    /// @brief Set callback function to be used to parse options.
-    ///
-    /// @param callback An instance of the callback function or NULL to
-    /// uninstall callback.
-    void setCallback(UnpackOptionsCallback callback) {
-        callback_ = callback;
-    }
 
     /// @brief Sets remote IP address.
     ///
@@ -628,9 +620,6 @@ protected:
 
     // remote HW address (src if receiving packet, dst if sending packet)
     HWAddrPtr remote_hwaddr_;
-
-    /// A callback to be called to unpack options from the packet.
-    UnpackOptionsCallback callback_;
 
 private:
 

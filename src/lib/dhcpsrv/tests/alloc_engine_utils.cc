@@ -208,9 +208,13 @@ AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
     Lease::Type type = pool->getType();
     uint8_t expected_len = pool->getLength();
 
-    AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, hint, type,
-                                    false, false, "", fake);
-    ctx.query_.reset(new Pkt6(fake ? DHCPV6_SOLICIT : DHCPV6_REQUEST, 1234));
+    Pkt6Ptr query(new Pkt6(fake ? DHCPV6_SOLICIT : DHCPV6_REQUEST, 1234));
+
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "",
+                                    fake, query);
+    ctx.currentIA().iaid_ = iaid_;
+    ctx.currentIA().type_ = type;
+    ctx.currentIA().addHint(hint);
 
     Lease6Collection leases;
 
@@ -221,6 +225,10 @@ AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
 
         // Do all checks on the lease
         checkLease6(*it, type, expected_len, in_pool, in_pool);
+
+        // Check that context has been updated with allocated addresses or
+        // prefixes.
+        checkAllocatedResources(*it, ctx);
 
         // Check that the lease is indeed in LeaseMgr
         Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(type,
@@ -266,14 +274,17 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
         return (Lease6Ptr());
     }
 
-    Lease6Ptr lease;
-    AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, hint, type,
-                                    false, false, "", fake);
+    Pkt6Ptr query(new Pkt6(fake ? DHCPV6_SOLICIT : DHCPV6_REQUEST, 1234));
+
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", fake, query);
     ctx.hwaddr_ = hwaddr_;
     ctx.addHostIdentifier(Host::IDENT_HWADDR, hwaddr_->hwaddr_);
-    ctx.query_.reset(new Pkt6(fake ? DHCPV6_SOLICIT : DHCPV6_REQUEST, 1234));
+    ctx.currentIA().iaid_ = iaid_;
+    ctx.currentIA().type_ = type;
+    ctx.currentIA().addHint(hint);
 
     findReservation(*engine, ctx);
+    Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
     // Check that we got a lease
@@ -315,11 +326,12 @@ AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
     Lease::Type type = pool->getType();
     uint8_t expected_len = pool->getLength();
 
-    AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
-                                    type, false, false, "", false);
-    ctx.hints_ = hints;
-    ctx.query_.reset(new Pkt6(DHCPV6_RENEW, 123));
-    ctx.query_.reset(new Pkt6(DHCPV6_RENEW, 1234));
+    Pkt6Ptr query(new Pkt6(DHCPV6_RENEW, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "",
+                                    false, query);
+    ctx.currentIA().hints_ = hints;
+    ctx.currentIA().iaid_ = iaid_;
+    ctx.currentIA().type_ = type;
 
     findReservation(engine, ctx);
     Lease6Collection leases = engine.renewLeases6(ctx);
@@ -328,6 +340,10 @@ AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
 
         // Do all checks on the lease
         checkLease6(*it, type, expected_len, in_pool, in_pool);
+
+        // Check that context has been updated with allocated addresses or
+        // prefixes.
+        checkAllocatedResources(*it, ctx);
 
         // Check that the lease is indeed in LeaseMgr
         Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(type,
@@ -366,10 +382,15 @@ AllocEngine6Test::allocWithUsedHintTest(Lease::Type type, IOAddress used_addr,
     // Another client comes in and request an address that is in pool, but
     // unfortunately it is used already. The same address must not be allocated
     // twice.
+
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    query);
+    ctx.currentIA().iaid_ = iaid_;
+    ctx.currentIA().type_ = type;
+    ctx.currentIA().addHint(requested);
+
     Lease6Ptr lease;
-    AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, requested, type,
-                                    false, false, "", false);
-    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
     // Check that we got a lease
@@ -403,11 +424,15 @@ AllocEngine6Test::allocBogusHint6(Lease::Type type, asiolink::IOAddress hint,
     // Client would like to get a 3000::abc lease, which does not belong to any
     // supported lease. Allocation engine should ignore it and carry on
     // with the normal allocation
-    Lease6Ptr lease;
-    AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, hint, type, false,
-                                    false, "", false);
-    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
 
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    query);
+    ctx.currentIA().iaid_ = iaid_;
+    ctx.currentIA().type_ = type;
+    ctx.currentIA().addHint(hint);
+
+    Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
     // Check that we got a lease
@@ -448,9 +473,12 @@ AllocEngine6Test::testReuseLease6(const AllocEnginePtr& engine,
     }
 
     // A client comes along, asking specifically for a given address
-    AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress(addr),
-                                    Lease::TYPE_NA, false, false, "", fake_allocation);
-    ctx.query_.reset(new Pkt6(fake_allocation ? DHCPV6_SOLICIT : DHCPV6_REQUEST, 1234));
+
+    Pkt6Ptr query(new Pkt6(fake_allocation ? DHCPV6_SOLICIT : DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "",
+                                    fake_allocation, query);
+    ctx.currentIA().iaid_ = iaid_;
+    ctx.currentIA().addHint(IOAddress(addr));
 
     Lease6Collection leases;
 

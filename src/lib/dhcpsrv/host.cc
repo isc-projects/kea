@@ -136,6 +136,9 @@ Host::getIdentifierType(const std::string& identifier_name) {
     } else if (identifier_name == "circuit-id") {
         return (IDENT_CIRCUIT_ID);
 
+    } else if (identifier_name == "client-id") {
+        return (IDENT_CLIENT_ID);
+
     } else {
         isc_throw(isc::BadValue, "invalid client identifier type '"
                   << identifier_name << "'");
@@ -176,6 +179,9 @@ Host::getIdentifierAsText(const IdentifierType& type, const uint8_t* value,
     case IDENT_CIRCUIT_ID:
         s << "circuit-id";
         break;
+    case IDENT_CLIENT_ID:
+        s << "client-id";
+        break;
     default:
         // This should never happen actually, unless we add new identifier
         // and forget to add a case for it above.
@@ -197,6 +203,9 @@ Host::getIdentifierName(const IdentifierType& type) {
 
     case Host::IDENT_CIRCUIT_ID:
         return ("circuit-id");
+
+    case Host::IDENT_CLIENT_ID:
+        return ("client-id");
 
     default:
         ;

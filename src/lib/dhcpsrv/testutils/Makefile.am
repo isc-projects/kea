@@ -12,7 +12,8 @@ if HAVE_GTEST
 
 noinst_LTLIBRARIES = libdhcpsrvtest.la
 
-libdhcpsrvtest_la_SOURCES = config_result_check.cc config_result_check.h
+libdhcpsrvtest_la_SOURCES  = config_result_check.cc config_result_check.h
+libdhcpsrvtest_la_SOURCES += dhcp4o6_test_ipc.cc dhcp4o6_test_ipc.h
 
 if HAVE_MYSQL
 libdhcpsrvtest_la_SOURCES += schema.cc schema.h
