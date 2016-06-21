@@ -191,7 +191,7 @@ pgsql_upgrade_2_0_to_3_0() {
     count=`echo $output | grep -ic "order by l\.address"`
     assert_eq 1 $count "lease4DumpData is missing order by clause"
 
-    #lease_hardware_source should have row for source = 0
+    # lease_hardware_source should have row for source = 0
     output=`pgsql_execute "select count(hwaddr_source) from lease_hwaddr_source where hwaddr_source = 0 and name='HWADDR_SOURCE_UNKNOWN';"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select from lease_hwaddr_source failed. (returned status code %d, expected %d)"
