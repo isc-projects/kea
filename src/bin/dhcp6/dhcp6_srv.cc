@@ -26,7 +26,7 @@
 #include <dhcp/option_vendor_class.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
-#include <dhcp6/dhcp6_dhcp4o6_ipc.h>
+#include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/callout_handle_store.h>
@@ -214,7 +214,7 @@ Dhcpv6Srv::~Dhcpv6Srv() {
     }
 
     try {
-        Dhcp4o6Ipc::instance().close();
+        Dhcp6to4Ipc::instance().close();
     } catch(const std::exception& ex) {
         // Highly unlikely, but lets Report it but go on
         // LOG_ERROR(dhcp6_logger, DHCP6_SRV_DHCP4O6_ERROR).arg(ex.what());
@@ -795,7 +795,12 @@ void
 Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
                               AllocEngine::ClientContext6& ctx,
                               CfgOptionList& co_list) {
-    // First subnet configured options
+    // Firstly, host specific options.
+    if (ctx.host_ && !ctx.host_->getCfgOption6()->empty()) {
+        co_list.push_back(ctx.host_->getCfgOption6());
+    }
+
+    // Next, subnet configured options.
     if (ctx.subnet_ && !ctx.subnet_->getCfgOption()->empty()) {
         co_list.push_back(ctx.subnet_->getCfgOption());
     }

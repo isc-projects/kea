@@ -11,7 +11,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
-#include <dhcp6/dhcp6_dhcp4o6_ipc.h>
+#include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/json_config_parser.h>
 #include <hooks/hooks_manager.h>
@@ -216,7 +216,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Setup DHCPv4-over-DHCPv6 IPC
     try {
-        Dhcp4o6Ipc::instance().open();
+        Dhcp6to4Ipc::instance().open();
     } catch (const std::exception& ex) {
         std::ostringstream err;
         err << "error starting DHCPv4-over-DHCPv6 IPC "
