@@ -1,3 +1,9 @@
+1132.	[func]		tmark
+	The Postgresql schema has been updated to support host reservations and its 
+	version number has been bumped to 3.0.  This schema is content equivlent to
+	the MySQL schema version 4.2.
+	(Trac #4275, git 6f8e646bee9de22c921ed26409f3d1856ebce9e6)
+
 1131.	[func]		fdupont
 	Update the DHCPv4-over-DHCPv6 inter-process communication code.
 	(Trac #4106, git 1ce1cba00af5d81822d5bbe26ddd28b718f51d54)
