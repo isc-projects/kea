@@ -1,0 +1,52 @@
+The 3 (python, ocaml and lua) examples are organized the same way:
+
+ - a dynamic shared object (hook library in Kea terms) with:
+  * C++ -> embedded language initialization using parameters
+   for the program name (python and ocaml) and the script
+   (python and lua)
+
+  * glue for the pkt4_receive hook
+
+  * method/functions to deal with a DHCP option
+
+  * method/functions to deal with a DHCPv4 packet with toText
+   (tp_str in python and __tostring in lua)
+
+ - a script written in the external language with a pkt4 -> int
+  pkt4_receive function which prints its argument using toText.
+  Note in ocaml the sompiled script (in bytecode or native code)
+  is embedded into the dynamic shared object.
+
+ - a tests tool which loads a config with a hook-libraires entry,
+  build a DHCPv4 packet and call the pkt4_receive callout.
+
+So in running order you have:
+
+kea server (simulated by tests)
+|
+V
+the DSO is loaded and dynamically linked
+|
+V
+the DSO "load" entry point is called
+|
+V
+embedded language interpreter is initialized
+(option and pkt4 modules are loaded)
+|
+V
+the script is loaded (pkt4_receive function is defined)
+|
+V
+control comes back to the kea server
+|
+V
+C++ pkt4_receive callout is called
+|
+V
+embedded language pkt4_receive function is called
+(query4 argument is printed)
+|
+V
+0 (next step continue) is returned
+(here the tests tool exits)

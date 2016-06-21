@@ -1,5 +1,7 @@
 Kea hooks in external (i.e., not C++) languages.
 
+(written before the implementation work so at the beginning of the design)
+
 Asked for customers: hooks written in python (done), lua, ocaml (done), ...
 
 Kea hook summary:
