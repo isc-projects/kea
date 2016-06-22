@@ -30,23 +30,33 @@ CqlConnection::CqlConnection(const ParameterMap& parameters) :
 CqlConnection::~CqlConnection() {
     // Free up the prepared statements, ignoring errors.
     // Session and connection resources are deallocated.
-    CassError rc;
+    CassError rc = CASS_OK;
+    std::string error;
+
     for (int i = 0; i < statements_.size(); i++) {
         if (statements_[i]) {
             cass_prepared_free(statements_[i]);
         }
         statements_[i] = NULL;
     }
-    CassFuture* close_future = cass_session_close(session_);
-    cass_future_wait(close_future);
-    std::string error;
-    checkStatementError(error, close_future, "could not close connection to DB");
-    rc = cass_future_error_code(close_future);
-    cass_future_free(close_future);
-    cass_session_free(session_);
-    session_ = NULL;
-    cass_cluster_free(cluster_);
-    cluster_ = NULL;
+
+    if (session_) {
+        CassFuture* close_future = cass_session_close(session_);
+        cass_future_wait(close_future);
+        checkStatementError(error, close_future, "could not close connection to DB");
+        rc = cass_future_error_code(close_future);
+        cass_future_free(close_future);
+        cass_session_free(session_);
+        session_ = NULL;
+    }
+
+    if (cluster_) {
+        cass_cluster_free(cluster_);
+        cluster_ = NULL;
+    }
+
+    // We're closing the connection anyway. Let's not throw at this
+    // stage
     if (rc != CASS_OK) {
         isc_throw(DbOpenError, error);
     }
