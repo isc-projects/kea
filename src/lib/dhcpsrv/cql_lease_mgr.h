@@ -444,36 +444,39 @@ public:
         NUM_STATEMENTS              // Number of statements
     };
 
-    /// @brief TODO
+    /// @brief Binds data specified in data
     ///
-    /// TODO
+    /// This method calls one of cass_value_bind_{none,bool,int32,int64,string,bytes}.
+    /// It is used to bind C++ data types used by Kea into formats used by Cassandra.
     ///
-    /// @param statement TODO
+    /// @param statement Statement object representing the query
     /// @param stindex Index of statement being executed
     /// @param data array that has been created for the type of lease in question.
     /// @param exchange Exchange object to use
     static void bindData(CassStatement* statement, const StatementIndex stindex,
         CqlDataArray& data, const SqlExchange& exchange);
 
-    /// @brief TODO
+    /// @brief Returns type of data for specific parameter.
     ///
-    /// TODO
+    /// Returns type of a given parameter of a given statement.
     ///
-    /// @param stindex Index of statement being executed
-    /// @param param TODO
+    /// @param stindex Index of statement being executed.
+    /// @param pindex Index of the parameter for a given statement.
     /// @param exchange Exchange object to use
-    /// @param type TODO
-    static ExchangeDataType getDataType(const StatementIndex stindex, int param,
+    static ExchangeDataType getDataType(const StatementIndex stindex, int pindex,
         const SqlExchange& exchange);
 
-    /// @brief TODO
+    /// @brief Retrieves data returned by Cassandra.
     ///
-    /// TODO
+    /// This method calls one of cass_value_get_{none,bool,int32,int64,string,bytes}.
+    /// It is used to retrieve data returned by Cassandra into standard C++ types
+    /// used by Kea.
     ///
-    /// @param row TODO
+    /// @param row row of data returned by CQL library
     /// @param pindex Index of statement being executed
     /// @param data array that has been created for the type of lease in question.
-    /// @param data size TODO
+    /// @param size a structure that holds information about size
+    /// @param dindex data index (specifies which entry in size array is used)
     /// @param exchange Exchange object to use
     static void getData(const CassRow* row, const int pindex, CqlDataArray& data,
         CqlDataArray& size, const int dindex, const SqlExchange& exchange);
@@ -656,7 +659,7 @@ private:
     uint64_t deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
                                                 StatementIndex statement_index);
 
-    /// TODO
+    /// CQL queries used by CQL backend
     static CqlTaggedStatement tagged_statements_[];
     /// Database connection object
     CqlConnection dbconn_;
