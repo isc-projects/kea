@@ -165,11 +165,11 @@ public:
     ///        None of the fields in the host reservation are modified -
     ///        the host data is only read.
     ///
-    /// @return pointer to newly constructed bind_array containing the 
+    /// @return pointer to newly constructed bind_array containing the
     /// bound values extracted from host
     ///
     /// @throw DbOperationError if bind_array cannot be populated.
-    PsqlBindArrayPtr 
+    PsqlBindArrayPtr
     createBindForSend(const HostPtr& host) {
         if (!host) {
             isc_throw(BadValue, "createBindForSend:: host object is NULL");
@@ -178,7 +178,7 @@ public:
         // Store the host to ensure bound values remain in scope
         host_ = host;
 
-        // Bind the host data to the array 
+        // Bind the host data to the array
         PsqlBindArrayPtr bind_array(new PsqlBindArray());
         try {
             // host_id : is auto_incremented skip it
@@ -195,9 +195,9 @@ public:
             // dhcp6_subnet_id : INT NULL
             bind_array->add(host->getIPv6SubnetID());
 
-            // ipv4_address : BIGINT NULL 
+            // ipv4_address : BIGINT NULL
             bind_array->add(host->getIPv4Reservation());
- 
+
             // hostname : VARCHAR(255) NULL
             bind_array->bindString(host->getHostname());
 
@@ -230,7 +230,7 @@ public:
         // host_id INT NOT NULL
         // @todo going to have to deal with uint64_t versus INT etc...
         HostID host_id;
-        getColumnValue(r, row, HOST_ID_COL, host_id); 
+        getColumnValue(r, row, HOST_ID_COL, host_id);
 
         // dhcp_identifier : BYTEA NOT NULL
         uint8_t identifier_value[DHCP_IDENTIFIER_MAX_LEN];
@@ -250,17 +250,17 @@ public:
             static_cast<Host::IdentifierType>(type);
 
         // dhcp4_subnet_id : INT NULL
-        uint32_t subnet_id; 
-        getColumnValue(r, row, DHCP4_SUBNET_ID_COL, subnet_id); 
+        uint32_t subnet_id;
+        getColumnValue(r, row, DHCP4_SUBNET_ID_COL, subnet_id);
         SubnetID dhcp4_subnet_id = static_cast<SubnetID>(subnet_id);
 
         // dhcp6_subnet_id : INT NULL
-        getColumnValue(r, row, DHCP6_SUBNET_ID_COL, subnet_id); 
+        getColumnValue(r, row, DHCP6_SUBNET_ID_COL, subnet_id);
         SubnetID dhcp6_subnet_id = static_cast<SubnetID>(subnet_id);
 
         // ipv4_address : BIGINT NULL
-        uint32_t addr4; 
-        getColumnValue(r, row, IPV4_ADDRESS_COL, addr4); 
+        uint32_t addr4;
+        getColumnValue(r, row, IPV4_ADDRESS_COL, addr4);
         isc::asiolink::IOAddress ipv4_reservation(addr4);
 
         // hostname : VARCHAR(255) NULL
@@ -280,13 +280,13 @@ public:
             host.reset(new Host(identifier_value, identifier_len,
                                 identifier_type, dhcp4_subnet_id,
                                 dhcp6_subnet_id, ipv4_reservation, hostname,
-                                dhcp4_client_classes, dhcp6_client_classes)); 
+                                dhcp4_client_classes, dhcp6_client_classes));
 
             host->setHostId(host_id);
         } catch (const isc::Exception& ex) {
             isc_throw(DbOperationError, "Could not create host: " << ex.what());
         }
-        
+
         return(host);
     };
 
@@ -1348,10 +1348,12 @@ public:
         GET_HOST_DHCPID,        // Gets hosts by host identifier
 #endif
         GET_HOST_ADDR,          // Gets hosts by IPv4 address
-#if 0
         GET_HOST_SUBID4_DHCPID, // Gets host by IPv4 SubnetID, HW address/DUID
+#if 0
         GET_HOST_SUBID6_DHCPID, // Gets host by IPv6 SubnetID, HW address/DUID
+#endif
         GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
+#if 0
         GET_HOST_PREFIX,        // Gets host by IPv6 prefix
 #endif
         GET_VERSION,            // Obtain version number
@@ -1373,18 +1375,18 @@ public:
     /// @param bind Vector of MYSQL_BIND objects to be used when making the
     /// query.
     /// @param return_last_id flag indicating whether or not the insert
-    /// returns the primary key of from the row inserted via " RETURNING 
+    /// returns the primary key of from the row inserted via " RETURNING
     /// <primary key> as pid" clause on the INSERT statement.  The RETURNING
     /// clause causes the INSERT to return a result set that should consist
     /// of a single row with one column, the value of the primary key.
     /// Defaults to false.
     ///
     /// @returns 0 if return_last_id is false, otherwise it returns the
-    /// the value in the result set in the first col of the first row. 
+    /// the value in the result set in the first col of the first row.
     ///
     /// @throw isc::dhcp::DuplicateEntry Database throws duplicate entry error
     uint64_t addStatement(PgSqlHostDataSourceImpl::StatementIndex stindex,
-                          PsqlBindArrayPtr& bind, 
+                          PsqlBindArrayPtr& bind,
                           const bool return_last_id = false);
 
 #if 0
@@ -1509,14 +1511,14 @@ public:
 /// retrieve hosts from the database.
 PgSqlTaggedStatement tagged_statements[] = {
     // Inserts a host into the 'hosts' table. Returns the inserted host id.
-    {PgSqlHostDataSourceImpl::INSERT_HOST, 
-     { OID_INT8, OID_BYTEA, OID_INT2, 
+    { 8, // PgSqlHostDataSourceImpl::INSERT_HOST,
+     { OID_BYTEA, OID_INT2,
        OID_INT4, OID_INT4, OID_INT8, OID_VARCHAR,
-       OID_VARCHAR, OID_VARCHAR },
-     "INSERT INTO hosts(host_id, dhcp_identifier, dhcp_identifier_type, "
+       OID_VARCHAR, OID_VARCHAR }, "insert_host",
+     "INSERT INTO hosts(dhcp_identifier, dhcp_identifier_type, "
         "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
         "dhcp4_client_classes, dhcp6_client_classes) "
-     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING host_id"},
+     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING host_id"},
 
 #if 0
     // Inserts a single IPv6 reservation into 'reservations' table.
@@ -1567,8 +1569,8 @@ PgSqlTaggedStatement tagged_statements[] = {
     // Retrieves host information along with the DHCPv4 options associated with
     // it. Left joining the dhcp4_options table results in multiple rows being
     // returned for the same host. The host is retrieved by IPv4 address.
-    {PgSqlHostDataSourceImpl::GET_HOST_ADDR,
-     { OID_INT8 },
+    { 1, // PgSqlHostDataSourceImpl::GET_HOST_ADDR,
+     { OID_INT8 }, "get_host_addr",
      "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
             "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
             "h.dhcp4_client_classes, h.dhcp6_client_classes, "
@@ -1576,26 +1578,26 @@ PgSqlTaggedStatement tagged_statements[] = {
             "o.persistent "
       "FROM hosts AS h "
       "LEFT JOIN dhcp4_options AS o ON h.host_id = o.host_id "
-      "WHERE ipv4_address = ? "
+      "WHERE ipv4_address = $1 "
       "ORDER BY h.host_id, o.option_id"},
-#if 0
 
     // Retrieves host information and DHCPv4 options using subnet identifier
     // and client's identifier. Left joining the dhcp4_options table results in
     // multiple rows being returned for the same host.
-    {PgSqlHostDataSourceImpl::GET_HOST_SUBID4_DHCPID,
-            "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
-                "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
-                "h.dhcp4_client_classes, h.dhcp6_client_classes, "
-                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
-                "o.persistent "
-            "FROM hosts AS h "
-            "LEFT JOIN dhcp4_options AS o "
-                "ON h.host_id = o.host_id "
-            "WHERE h.dhcp4_subnet_id = ? AND h.dhcp_identifier_type = ? "
-            "   AND h.dhcp_identifier = ? "
-            "ORDER BY h.host_id, o.option_id"},
+    { 3, //PgSqlHostDataSourceImpl::GET_HOST_SUBID4_DHCPID,
+     { OID_INT4, OID_INT2, OID_BYTEA }, "get_host_subid4_dhcpid",
+     "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
+        "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+        "h.dhcp4_client_classes, h.dhcp6_client_classes, "
+        "o.option_id, o.code, o.value, o.formatted_value, o.space, "
+        "o.persistent "
+     "FROM hosts AS h "
+     "LEFT JOIN dhcp4_options AS o ON h.host_id = o.host_id "
+     "WHERE h.dhcp4_subnet_id = $1 AND h.dhcp_identifier_type = $2 "
+     "   AND h.dhcp_identifier = $3 "
+     "ORDER BY h.host_id, o.option_id"},
 
+#if 0
     // Retrieves host information, IPv6 reservations and DHCPv6 options
     // associated with a host. The number of rows returned is a multiplication
     // of number of IPv6 reservations and DHCPv6 options.
@@ -1616,22 +1618,24 @@ PgSqlTaggedStatement tagged_statements[] = {
             "WHERE h.dhcp6_subnet_id = ? AND h.dhcp_identifier_type = ? "
                 "AND h.dhcp_identifier = ? "
             "ORDER BY h.host_id, o.option_id, r.reservation_id"},
+#endif
 
     // Retrieves host information and DHCPv4 options for the host using subnet
     // identifier and IPv4 reservation. Left joining the dhcp4_options table
     // results in multiple rows being returned for the host. The number of
     // rows depends on the number of options defined for the host.
-    {PgSqlHostDataSourceImpl::GET_HOST_SUBID_ADDR,
-            "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
-                "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
-                "h.dhcp4_client_classes, h.dhcp6_client_classes, "
-                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
-                "o.persistent "
-            "FROM hosts AS h "
-            "LEFT JOIN dhcp4_options AS o "
-                "ON h.host_id = o.host_id "
-            "WHERE h.dhcp4_subnet_id = ? AND h.ipv4_address = ? "
-            "ORDER BY h.host_id, o.option_id"},
+    { 2,  //PgSqlHostDataSourceImpl::GET_HOST_SUBID_ADDR,
+      { OID_INT4, OID_INT8 }, "get_host_subid_addr",
+       "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
+            "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+            "h.dhcp4_client_classes, h.dhcp6_client_classes, "
+            "o.option_id, o.code, o.value, o.formatted_value, o.space, "
+            "o.persistent "
+        "FROM hosts AS h "
+        "LEFT JOIN dhcp4_options AS o ON h.host_id = o.host_id "
+        "WHERE h.dhcp4_subnet_id = $1 AND h.ipv4_address = $2 "
+        "ORDER BY h.host_id, o.option_id"},
+#if 0
 
     // Retrieves host information, IPv6 reservations and DHCPv6 options
     // associated with a host using prefix and prefix length. This query
@@ -1660,11 +1664,12 @@ PgSqlTaggedStatement tagged_statements[] = {
 #endif
 
     // Retrieves MySQL schema version.
-    {PgSqlHostDataSourceImpl::GET_VERSION, { OID_NONE },
-            "SELECT version, minor FROM schema_version"},
+    { 0, //PgSqlHostDataSourceImpl::GET_VERSION,
+     { OID_NONE }, "get_version",
+     "SELECT version, minor FROM schema_version"},
 
     // Marks the end of the statements table.
-    {PgSqlHostDataSourceImpl::NUM_STATEMENTS, { 0 }, NULL, NULL}
+    {0, { 0 }, NULL, NULL}
 };
 
 PgSqlHostDataSourceImpl::
@@ -1836,11 +1841,11 @@ getHost(const SubnetID& subnet_id,
     // Add the subnet id.
     bind_array->add(subnet_id);
 
-    // Add the identifier value.
-    bind_array->add(identifier_begin, identifier_len);
-
     // Add the Identifier type.
     bind_array->add(static_cast<uint8_t>(identifier_type));
+
+    // Add the identifier value.
+    bind_array->add(identifier_begin, identifier_len);
 
     ConstHostCollection collection;
     getHostCollection(stindex, bind_array, exchange, collection, true);
@@ -1858,7 +1863,7 @@ std::pair<uint32_t, uint32_t> PgSqlHostDataSourceImpl::getVersion() const {
               DHCPSRV_PGSQL_HOST_DB_GET_VERSION);
 
     PgSqlResult r(PQexecPrepared(conn_, "get_version", 0, NULL, NULL, NULL, 0));
-    conn_.checkStatementError(r, tagged_statements[GET_VERSION]); 
+    conn_.checkStatementError(r, tagged_statements[GET_VERSION]);
 
     istringstream tmp;
     uint32_t version;
@@ -2023,16 +2028,6 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
     return (ConstHostPtr());
 }
 
-#if 1
-ConstHostPtr
-PgSqlHostDataSource::get4(const SubnetID&,
-                          const Host::IdentifierType&,
-                          const uint8_t*,
-                          const size_t) const {
-
-    return (HostPtr());
-}
-#else
 ConstHostPtr
 PgSqlHostDataSource::get4(const SubnetID& subnet_id,
                           const Host::IdentifierType& identifier_type,
@@ -2040,18 +2035,11 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id,
                           const size_t identifier_len) const {
 
     return (impl_->getHost(subnet_id, identifier_type, identifier_begin,
-                   identifier_len, PgSqlHostDataSourceImpl::GET_HOST_SUBID4_DHCPID,
-                   impl_->host_exchange_));
+                           identifier_len,
+                           PgSqlHostDataSourceImpl::GET_HOST_SUBID4_DHCPID,
+                           impl_->host_exchange_));
 }
-#endif
 
-#if 1
-ConstHostPtr
-PgSqlHostDataSource::get4(const SubnetID&,
-                          const asiolink::IOAddress&) const {
-    return(HostPtr());
-}
-#else
 ConstHostPtr
 PgSqlHostDataSource::get4(const SubnetID& subnet_id,
                           const asiolink::IOAddress& address) const {
@@ -2066,7 +2054,8 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id,
 
     ConstHostCollection collection;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_SUBID_ADDR,
-                             inbind, impl_->host_exchange_, collection, true);
+                             bind_array, impl_->host_exchange_, collection,
+                             true);
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
@@ -2075,7 +2064,6 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id,
 
     return (result);
 }
-#endif
 
 #if 1
 ConstHostPtr
