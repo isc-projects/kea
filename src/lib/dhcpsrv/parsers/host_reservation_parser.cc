@@ -41,6 +41,7 @@ getSupportedParams4(const bool identifiers_only = false) {
         identifiers_set.insert("hw-address");
         identifiers_set.insert("duid");
         identifiers_set.insert("circuit-id");
+        identifiers_set.insert("client-id");
     }
     // Copy identifiers and add all other parameters.
     if (params_set.empty()) {

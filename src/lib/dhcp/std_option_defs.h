@@ -211,7 +211,19 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "domain-search", DHO_DOMAIN_SEARCH, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "vivco-suboptions", DHO_VIVCO_SUBOPTIONS, OPT_RECORD_TYPE,
       false, RECORD_DEF(VIVCO_RECORDS), "" },
-    { "vivso-suboptions", DHO_VIVSO_SUBOPTIONS, OPT_BINARY_TYPE,
+    // Vendor-Identifying Vendor Specific Information option payload begins with a
+    // 32-bit log enterprise number, followed by a tuple of data-len/option-data.
+    // The format defined here includes 32-bit field holding enterprise number.
+    // This allows for specifying option-data information where the enterprise-id
+    // is represented by a uint32_t value. Previously we represented this option
+    // as a binary, but that would imply that enterprise number would have to be
+    // represented in binary format in the server configuration. That would be
+    // inconvenient and non-intuitive.
+    /// @todo We need to extend support for vendor options with ability to specify
+    /// multiple enterprise numbers for a single option. Perhaps it would be
+    /// ok to specify multiple instances of the "vivso-suboptions" which will be
+    /// combined in a single option by the server before responding to a client.
+    { "vivso-suboptions", DHO_VIVSO_SUBOPTIONS, OPT_UINT32_TYPE,
       false, NO_RECORD_DEF, "" }
 
         // @todo add definitions for all remaning options.

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,7 +47,7 @@ public:
         return (&subnets_);
     }
 
-    /// @brief Returns pointer to the selected subnet.
+    /// @brief Returns a pointer to the selected subnet.
     ///
     /// This method tries to retrieve the subnet for the client using various
     /// parameters extracted from the client's message using the following
@@ -96,7 +96,7 @@ public:
     /// or they are insufficient to select a subnet.
     Subnet4Ptr selectSubnet(const SubnetSelector& selector) const;
 
-    /// @brief Returns pointer to a subnet if provided address is in its range.
+    /// @brief Returns a pointer to a subnet if provided address is in its range.
     ///
     /// This method returns a pointer to the subnet if the address passed in
     /// parameter is in range with this subnet. This is mainly used for unit
@@ -119,6 +119,30 @@ public:
     Subnet4Ptr selectSubnet(const asiolink::IOAddress& address,
                             const ClientClasses& client_classes
                             = ClientClasses()) const;
+
+    /// @brief Returns a pointer to a subnet if provided interface name matches.
+    ///
+    /// This method returns a pointer to the subnet if the interface name passed
+    /// in parameter iface matches that of a subnet. This is mainly used for matching
+    /// local incoming traffic, even when the addresses on local interfaces do
+    /// not match a subnet definition. This method is also called by the
+    /// @c selectSubnet(SubnetSelector).
+    ///
+    /// @todo This method requires performance improvement! It currently
+    /// iterates over all existing subnets to find the one which fulfils
+    /// the search criteria. The subnet storage is implemented as a simple
+    /// STL vector which precludes fast searches using specific keys.
+    /// Hence, full scan is required. To improve the search performance a
+    /// different container type is required, e.g. multi-index container,
+    /// or something of a similar functionality.
+    ///
+    /// @param iface name of the interface to be matched.
+    /// @param client_classes Optional parameter specifying the classes that
+    /// the client belongs to.
+    ///
+    /// @return Pointer to the selected subnet or NULL if no subnet found.
+    Subnet4Ptr selectSubnet(const std::string& iface,
+                            const ClientClasses& client_classes) const;
 
     /// @brief Attempts to do subnet selection based on DHCP4o6 information
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,11 +58,11 @@ const char* INFORM_CONFIGS[] = {
         "    },"
         "    {"
         "        \"name\": \"log-servers\","
-        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "        \"data\": \"10.0.0.202,10.0.0.203\""
         "    },"
         "    {"
         "        \"name\": \"cookie-servers\","
-        "        \"data\": \"10.0.0.202,10.0.0.203\""
+        "        \"data\": \"10.0.0.200,10.0.0.201\""
         "    } ]"
         " } ]"
     "}",
@@ -159,12 +159,12 @@ TEST_F(InformTest, directClientBroadcast) {
     EXPECT_EQ("10.0.0.203", client.config_.dns_servers_[1].toText());
     // Make sure that the Log Servers option has been received.
     ASSERT_EQ(2, client.config_.quotes_servers_.size());
-    EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
-    EXPECT_EQ("10.0.0.201", client.config_.routers_[1].toText());
+    EXPECT_EQ("10.0.0.200", client.config_.quotes_servers_[0].toText());
+    EXPECT_EQ("10.0.0.201", client.config_.quotes_servers_[1].toText());
     // Make sure that the Quotes Servers option has been received.
     ASSERT_EQ(2, client.config_.log_servers_.size());
-    EXPECT_EQ("10.0.0.202", client.config_.dns_servers_[0].toText());
-    EXPECT_EQ("10.0.0.203", client.config_.dns_servers_[1].toText());
+    EXPECT_EQ("10.0.0.202", client.config_.log_servers_[0].toText());
+    EXPECT_EQ("10.0.0.203", client.config_.log_servers_[1].toText());
 
     // Check that we can send another DHCPINFORM message using
     // different ciaddr and we will get the configuration.
@@ -313,14 +313,14 @@ TEST_F(InformTest, relayedClient) {
     ASSERT_EQ(2, client.config_.dns_servers_.size());
     EXPECT_EQ("192.0.2.202", client.config_.dns_servers_[0].toText());
     EXPECT_EQ("192.0.2.203", client.config_.dns_servers_[1].toText());
-    // Make sure that the Log Servers option has been received.
-    ASSERT_EQ(2, client.config_.quotes_servers_.size());
-    EXPECT_EQ("192.0.2.200", client.config_.routers_[0].toText());
-    EXPECT_EQ("192.0.2.201", client.config_.routers_[1].toText());
     // Make sure that the Quotes Servers option has been received.
+    ASSERT_EQ(2, client.config_.quotes_servers_.size());
+    EXPECT_EQ("10.0.0.202", client.config_.quotes_servers_[0].toText());
+    EXPECT_EQ("10.0.0.203", client.config_.quotes_servers_[1].toText());
+    // Make sure that the Log Servers option has been received.
     ASSERT_EQ(2, client.config_.log_servers_.size());
-    EXPECT_EQ("192.0.2.202", client.config_.dns_servers_[0].toText());
-    EXPECT_EQ("192.0.2.203", client.config_.dns_servers_[1].toText());
+    EXPECT_EQ("10.0.0.200", client.config_.log_servers_[0].toText());
+    EXPECT_EQ("10.0.0.201", client.config_.log_servers_[1].toText());
 }
 
 // This test checks that the server can respond to the DHCPINFORM message

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -129,13 +129,6 @@ void Option::unpack(OptionBufferConstIter begin,
 
 void
 Option::unpackOptions(const OptionBuffer& buf) {
-    // If custom option parsing function has been set, use this function
-    // to parse options. Otherwise, use standard function from libdhcp++.
-    if (!callback_.empty()) {
-        callback_(buf, getEncapsulatedSpace(), options_, 0, 0);
-        return;
-    }
-
     switch (universe_) {
     case V4:
         LibDHCP::unpackOptions4(buf, getEncapsulatedSpace(), options_);

@@ -25,6 +25,7 @@
 #include <dhcp/option_vendor_class.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
+#include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/callout_handle_store.h>
@@ -214,6 +215,13 @@ Dhcpv6Srv::~Dhcpv6Srv() {
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_D2STOP_ERROR).arg(ex.what());
     }
 
+    try {
+        Dhcp6to4Ipc::instance().close();
+    } catch(const std::exception& ex) {
+        // Highly unlikely, but lets Report it but go on
+        // LOG_ERROR(dhcp6_logger, DHCP6_SRV_DHCP4O6_ERROR).arg(ex.what());
+    }
+
     IfaceMgr::instance().closeSockets();
 
     LeaseMgrFactory::destroy();
@@ -279,12 +287,15 @@ Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
     return (true);
 }
 
-AllocEngine::ClientContext6
-Dhcpv6Srv::createContext(const Pkt6Ptr& pkt) {
-    AllocEngine::ClientContext6 ctx;
+void
+Dhcpv6Srv::initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
     ctx.subnet_ = selectSubnet(pkt);
+    ctx.duid_ = pkt->getClientId(),
+    ctx.fwd_dns_update_ = false;
+    ctx.rev_dns_update_ = false;
+    ctx.hostname_ = "";
     ctx.query_ = pkt;
-    ctx.duid_ = pkt->getClientId();
+    ctx.callout_handle_ = getCalloutHandle(pkt);
     ctx.hwaddr_ = getMAC(pkt);
 
     // Collect host identifiers if host reservations enabled. The identifiers
@@ -317,8 +328,6 @@ Dhcpv6Srv::createContext(const Pkt6Ptr& pkt) {
         // Find host reservations using specified identifiers.
         alloc_engine_->findReservation(ctx);
     }
-
-    return (ctx);
 }
 
 bool Dhcpv6Srv::run() {
@@ -464,15 +473,6 @@ void Dhcpv6Srv::run_one() {
 
 void
 Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
-    // In order to parse the DHCP options, the server needs to use some
-    // configuration information such as: existing option spaces, option
-    // definitions etc. This is the kind of information which is not
-    // available in the libdhcp, so we need to supply our own implementation
-    // of the option parsing function here, which would rely on the
-    // configuration data.
-    query->setCallback(boost::bind(&Dhcpv6Srv::unpackOptions, this, _1, _2,
-                                   _3, _4, _5));
-
     bool skip_unpack = false;
 
     // The packet has just been received so contains the uninterpreted wire
@@ -797,7 +797,12 @@ void
 Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
                               AllocEngine::ClientContext6& ctx,
                               CfgOptionList& co_list) {
-    // First subnet configured options
+    // Firstly, host specific options.
+    if (ctx.host_ && !ctx.host_->getCfgOption6()->empty()) {
+        co_list.push_back(ctx.host_->getCfgOption6());
+    }
+
+    // Next, subnet configured options.
     if (ctx.subnet_ && !ctx.subnet_->getCfgOption()->empty()) {
         co_list.push_back(ctx.subnet_->getCfgOption());
     }
@@ -1286,7 +1291,7 @@ Dhcpv6Srv::getMAC(const Pkt6Ptr& pkt) {
 
 OptionPtr
 Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
-                       AllocEngine::ClientContext6& orig_ctx,
+                       AllocEngine::ClientContext6& ctx,
                        boost::shared_ptr<Option6IA> ia) {
 
     // Check if the client sent us a hint in his IA_NA. Clients may send an
@@ -1305,8 +1310,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         .arg(hint_opt ? hint.toText() : "(no hint)");
 
     // convenience values
-    const Subnet6Ptr& subnet = orig_ctx.subnet_;
-    const DuidPtr& duid = orig_ctx.duid_;
+    const Subnet6Ptr& subnet = ctx.subnet_;
 
     // If there is no subnet selected for handling this IA_NA, the only thing left to do is
     // to say that we are sorry, but the user won't get an address. As a convenience, we
@@ -1350,19 +1354,21 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                                                                 do_rev);
     }
 
+    // Update per-packet context values.
+    ctx.fwd_dns_update_ = do_fwd;
+    ctx.rev_dns_update_ = do_rev;
+    ctx.fake_allocation_ = fake_allocation;
+
+    // Set per-IA context values.
+    ctx.createIAContext();
+    ctx.currentIA().iaid_ = ia->getIAID();
+    ctx.currentIA().addHint(hint);
+    ctx.currentIA().type_ = Lease::TYPE_NA;
+
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honor the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
     // be inserted into the LeaseMgr as well.
-    AllocEngine::ClientContext6 ctx(subnet, duid, ia->getIAID(),
-                                    hint, Lease::TYPE_NA, do_fwd, do_rev,
-                                    orig_ctx.hostname_, fake_allocation);
-    ctx.callout_handle_ = getCalloutHandle(query);
-    ctx.hwaddr_ = orig_ctx.hwaddr_;
-    ctx.host_ = orig_ctx.host_;
-    ctx.query_ = orig_ctx.query_;
-    ctx.host_identifiers_ = orig_ctx.host_identifiers_;
-
     Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 
     /// @todo: Handle more than one lease
@@ -1420,7 +1426,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
 OptionPtr
 Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
-                       AllocEngine::ClientContext6& orig_ctx,
+                       AllocEngine::ClientContext6& ctx,
                        boost::shared_ptr<Option6IA> ia) {
 
     // Check if the client sent us a hint in his IA_PD. Clients may send an
@@ -1440,8 +1446,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         .arg(hint_opt ? hint.toText() : "(no hint)");
 
 
-    const Subnet6Ptr& subnet = orig_ctx.subnet_;
-    const DuidPtr& duid = orig_ctx.duid_;
+    const Subnet6Ptr& subnet = ctx.subnet_;
 
     // Create IA_PD that we will put in the response.
     // Do not use OptionDefinition to create option's instance so
@@ -1471,20 +1476,18 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // Reply message it means that it is committing leases. Other message
     // type (Advertise) means that server is not committing leases (fake
     // allocation).
-    bool fake_allocation = (answer->getType() != DHCPV6_REPLY);
+    ctx.fake_allocation_ = (answer->getType() != DHCPV6_REPLY);
+
+    // Set per-IA context values.
+    ctx.createIAContext();
+    ctx.currentIA().iaid_ = ia->getIAID();
+    ctx.currentIA().addHint(hint);
+    ctx.currentIA().type_ = Lease::TYPE_PD;
 
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honor the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
     // be inserted into the LeaseMgr as well.
-    AllocEngine::ClientContext6 ctx(subnet, duid, ia->getIAID(), hint, Lease::TYPE_PD,
-                                    false, false, string(), fake_allocation);
-    ctx.callout_handle_ = getCalloutHandle(query);
-    ctx.hwaddr_ = orig_ctx.hwaddr_;
-    ctx.host_ = orig_ctx.host_;
-    ctx.query_ = orig_ctx.query_;
-    ctx.host_identifiers_ = orig_ctx.host_identifiers_;
-
     Lease6Collection leases = alloc_engine_->allocateLeases6(ctx);
 
     if (!leases.empty()) {
@@ -1497,7 +1500,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
             // We have a lease! Let's wrap its content into IA_PD option
             // with IAADDR suboption.
-            LOG_INFO(lease6_logger, fake_allocation ?
+            LOG_INFO(lease6_logger, ctx.fake_allocation_ ?
                       DHCP6_PD_LEASE_ADVERT : DHCP6_PD_LEASE_ALLOC)
                 .arg(query->getLabel())
                 .arg((*l)->addr_.toText())
@@ -1520,7 +1523,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         // cause of that failure. The only thing left is to insert
         // status code to pass the sad news to the client.
 
-        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, ctx.fake_allocation_ ?
                   DHCP6_PD_LEASE_ADVERT_FAIL : DHCP6_PD_LEASE_ALLOC_FAIL)
             .arg(query->getLabel())
             .arg(ia->getIAID());
@@ -1535,7 +1538,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
 OptionPtr
 Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
-                       AllocEngine::ClientContext6& orig_ctx,
+                       AllocEngine::ClientContext6& ctx,
                        boost::shared_ptr<Option6IA> ia) {
 
     LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_NA_EXTEND)
@@ -1543,8 +1546,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         .arg(ia->getIAID());
 
     // convenience values
-    const Subnet6Ptr& subnet = orig_ctx.subnet_;
-    const DuidPtr& duid = orig_ctx.duid_;
+    const Subnet6Ptr& subnet = ctx.subnet_;
 
     // Create empty IA_NA option with IAID matching the request.
     Option6IAPtr ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
@@ -1578,16 +1580,15 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                                                                 do_fwd, do_rev);
     }
 
-    // Create client context for this renewal
-    AllocEngine::ClientContext6 ctx(subnet, duid, ia->getIAID(),
-                                    IOAddress::IPV6_ZERO_ADDRESS(), Lease::TYPE_NA,
-                                    do_fwd, do_rev, orig_ctx.hostname_, false);
+    // Set per-packet context values.
+    ctx.fwd_dns_update_ = do_fwd;
+    ctx.rev_dns_update_ = do_rev;
 
-    ctx.callout_handle_ = getCalloutHandle(query);
-    ctx.query_ = query;
-    ctx.ia_rsp_ = ia_rsp;
-    ctx.hwaddr_ = orig_ctx.hwaddr_;
-    ctx.host_ = orig_ctx.host_;
+    // Set per-IA context values.
+    ctx.createIAContext();
+    ctx.currentIA().iaid_ = ia->getIAID();
+    ctx.currentIA().type_ = Lease::TYPE_NA;
+    ctx.currentIA().ia_rsp_ = ia_rsp;
 
     // Extract the addresses that the client is trying to obtain.
     OptionCollection addrs = ia->getOptions();
@@ -1599,14 +1600,12 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(it->second);
         if (!iaaddr) {
             // That's weird. Option code was ok, but the object type was not.
-            // As we use Dhcpv6Srv::unpackOptions() that is guaranteed to use
-            // Option6IAAddr for D6O_IAADDR, this should never happen. The only
-            // case would be with badly mis-implemented hook libraries that
-            // insert invalid option objects. There's no way to protect against
-            // this.
+            // This should never happen. The only case would be with badly
+            // mis-implemented hook libraries that insert invalid option objects.
+            // There's no way to protect against this.
             continue;
         }
-        ctx.hints_.push_back(make_pair(iaaddr->getAddress(), 128));
+        ctx.currentIA().addHint(iaaddr->getAddress());
     }
 
     Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
@@ -1615,6 +1614,13 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // - what the client tried to renew in ctx.hints_
     // - what we actually assigned in leases
     // - old leases that are no longer valid in ctx.old_leases_
+
+    // For each IA inserted by the client we have to determine what to do
+    // about included addresses and notify the client. We will iterate over
+    // those prefixes and remove those that we have already processed. We
+    // don't want to remove them from the context, so we need to copy them
+    // into temporary container.
+    AllocEngine::HintContainer hints = ctx.currentIA().hints_;
 
     // For all leases we have now, add the IAADDR with non-zero lifetimes.
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
@@ -1627,22 +1633,21 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
             .arg(ia_rsp->getIAID());
 
         // Now remove this address from the hints list.
-        AllocEngine::HintType tmp((*l)->addr_, 128);
-        ctx.hints_.erase(std::remove(ctx.hints_.begin(), ctx.hints_.end(), tmp),
-                         ctx.hints_.end());
+        AllocEngine::ResourceType hint_type((*l)->addr_, 128);
+        hints.erase(std::remove(hints.begin(), hints.end(), hint_type),
+                    hints.end());
     }
 
     // For the leases that we just retired, send the addresses with 0 lifetimes.
-    for (Lease6Collection::const_iterator l = ctx.old_leases_.begin();
-                                          l != ctx.old_leases_.end(); ++l) {
+    for (Lease6Collection::const_iterator l = ctx.currentIA().old_leases_.begin();
+                                          l != ctx.currentIA().old_leases_.end(); ++l) {
         Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
                                                   (*l)->addr_, 0, 0));
         ia_rsp->addOption(iaaddr);
 
         // Now remove this address from the hints list.
-        AllocEngine::HintType tmp((*l)->addr_, 128);
-        ctx.hints_.erase(std::remove(ctx.hints_.begin(), ctx.hints_.end(), tmp),
-                         ctx.hints_.end());
+        AllocEngine::ResourceType hint_type((*l)->addr_, 128);
+        hints.erase(std::remove(hints.begin(), hints.end(), hint_type), hints.end());
 
         // If the new FQDN settings have changed for the lease, we need to
         // delete any existing FQDN records for this lease.
@@ -1662,8 +1667,8 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
     // Finally, if there are any addresses requested that we haven't dealt with
     // already, inform the client that he can't have them.
-    for (AllocEngine::HintContainer::const_iterator hint = ctx.hints_.begin();
-         hint != ctx.hints_.end(); ++hint) {
+    for (AllocEngine::HintContainer::const_iterator hint = hints.begin();
+         hint != hints.end(); ++hint) {
         Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
                                                   hint->first, 0, 0));
         ia_rsp->addOption(iaaddr);
@@ -1685,15 +1690,15 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
 OptionPtr
 Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
-                       AllocEngine::ClientContext6& orig_ctx,
+                       AllocEngine::ClientContext6& ctx,
                        boost::shared_ptr<Option6IA> ia) {
 
     LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_EXTEND)
         .arg(query->getLabel())
         .arg(ia->getIAID());
 
-    const Subnet6Ptr& subnet = orig_ctx.subnet_;
-    const DuidPtr& duid = orig_ctx.duid_;
+    const Subnet6Ptr& subnet = ctx.subnet_;
+    const DuidPtr& duid = ctx.duid_;
 
     // Let's create a IA_PD response and fill it in later
     Option6IAPtr ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
@@ -1732,16 +1737,11 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     ia_rsp->setT1(subnet->getT1());
     ia_rsp->setT2(subnet->getT2());
 
-    // Create client context for this renewal
-    static const IOAddress none("::");
-    AllocEngine::ClientContext6 ctx(subnet, duid, ia->getIAID(), none,
-                                    Lease::TYPE_PD, false, false, string(""),
-                                    false);
-    ctx.callout_handle_ = getCalloutHandle(query);
-    ctx.query_ = query;
-    ctx.ia_rsp_ = ia_rsp;
-    ctx.hwaddr_ = orig_ctx.hwaddr_;
-    ctx.host_ = orig_ctx.host_;
+    // Set per-IA context values.
+    ctx.createIAContext();
+    ctx.currentIA().iaid_ = ia->getIAID();
+    ctx.currentIA().type_ = Lease::TYPE_PD;
+    ctx.currentIA().ia_rsp_ = ia_rsp;
 
     // Extract prefixes that the client is trying to renew.
     OptionCollection addrs = ia->getOptions();
@@ -1753,16 +1753,14 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         Option6IAPrefixPtr prf = boost::dynamic_pointer_cast<Option6IAPrefix>(it->second);
         if (!prf) {
             // That's weird. Option code was ok, but the object type was not.
-            // As we use Dhcpv6Srv::unpackOptions() that is guaranteed to use
-            // Option6IAPrefix for D6O_IAPREFIX, this should never happen. The only
-            // case would be with badly mis-implemented hook libraries that
-            // insert invalid option objects. There's no way to protect against
-            // this.
+            // This should never happen. The only case would be with badly
+            // mis-implemented hook libraries that insert invalid option objects.
+            // There's no way to protect against this.
             continue;
         }
 
         // Put the client's prefix into the hints list.
-        ctx.hints_.push_back(make_pair(prf->getAddress(), prf->getLength()));
+        ctx.currentIA().addHint(prf->getAddress(), prf->getLength());
     }
 
     // Call Allocation Engine and attempt to renew leases. Number of things
@@ -1774,6 +1772,13 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // - changed_leases - leases that have FQDN changed (not really important
     //                    in PD context)
     Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
+
+    // For each IA inserted by the client we have to determine what to do
+    // about included prefixes and notify the client. We will iterate over
+    // those prefixes and remove those that we have already processed. We
+    // don't want to remove them from the context, so we need to copy them
+    // into temporary container.
+    AllocEngine::HintContainer hints = ctx.currentIA().hints_;
 
     // For all the leases we have now, add the IAPPREFIX with non-zero lifetimes
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
@@ -1788,9 +1793,9 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
             .arg(ia->getIAID());
 
         // Now remove this address from the hints list.
-        AllocEngine::HintType tmp((*l)->addr_, (*l)->prefixlen_);
-        ctx.hints_.erase(std::remove(ctx.hints_.begin(), ctx.hints_.end(), tmp),
-                                     ctx.hints_.end());
+        AllocEngine::ResourceType hint_type((*l)->addr_, (*l)->prefixlen_);
+        hints.erase(std::remove(hints.begin(), hints.end(), hint_type),
+                    hints.end());
     }
 
     /// @todo: Maybe we should iterate over ctx.old_leases_, i.e. the leases
@@ -1800,8 +1805,8 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // zero lifetimes
     // Finally, if there are any addresses requested that we haven't dealt with
     // already, inform the client that he can't have them.
-    for (AllocEngine::HintContainer::const_iterator prefix = ctx.hints_.begin();
-         prefix != ctx.hints_.end(); ++prefix) {
+    for (AllocEngine::HintContainer::const_iterator prefix = hints.begin();
+         prefix != hints.end(); ++prefix) {
         // Send the prefix with the zero lifetimes only if the prefix
         // contains non-zero value. A zero value indicates that the hint was
         // for the prefix length.
@@ -2241,7 +2246,8 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     sanityCheck(solicit, MANDATORY, FORBIDDEN);
 
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx = createContext(solicit);
+    AllocEngine::ClientContext6 ctx;
+    initContext(solicit, ctx);
 
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
@@ -2285,7 +2291,8 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     sanityCheck(request, MANDATORY, MANDATORY);
 
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx = createContext(request);
+    AllocEngine::ClientContext6 ctx;
+    initContext(request, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
@@ -2310,7 +2317,8 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     sanityCheck(renew, MANDATORY, MANDATORY);
 
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx = createContext(renew);
+    AllocEngine::ClientContext6 ctx;
+    initContext(renew, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
 
@@ -2334,7 +2342,8 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     sanityCheck(rebind, MANDATORY, FORBIDDEN);
 
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx = createContext(rebind);
+    AllocEngine::ClientContext6 ctx;
+    initContext(rebind, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
 
@@ -2358,7 +2367,8 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     sanityCheck(confirm, MANDATORY, FORBIDDEN);
 
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx = createContext(confirm);
+    AllocEngine::ClientContext6 ctx;
+    initContext(confirm, ctx);
 
     // Get IA_NAs from the Confirm. If there are none, the message is
     // invalid and must be discarded. There is nothing more to do.
@@ -2448,7 +2458,8 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
     sanityCheck(release, MANDATORY, MANDATORY);
 
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx = createContext(release);
+    AllocEngine::ClientContext6 ctx;
+    initContext(release, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, release->getTransid()));
 
@@ -2475,7 +2486,8 @@ Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, decline->getTransid()));
 
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx = createContext(decline);
+    AllocEngine::ClientContext6 ctx;
+    initContext(decline, ctx);
 
     // Copy client options (client-id, also relay information if present)
     copyClientOptions(decline, reply);
@@ -2751,7 +2763,8 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     sanityCheck(inf_request, OPTIONAL, OPTIONAL);
 
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx = createContext(inf_request);
+    AllocEngine::ClientContext6 ctx;
+    initContext(inf_request, ctx);
 
     // Create a Reply packet, with the same trans-id as the client's.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, inf_request->getTransid()));
@@ -2772,108 +2785,6 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     appendRequestedOptions(inf_request, reply, co_list);
 
     return (reply);
-}
-
-size_t
-Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
-                         const std::string& option_space,
-                         isc::dhcp::OptionCollection& options,
-                         size_t* relay_msg_offset,
-                         size_t* relay_msg_len) {
-    size_t offset = 0;
-    size_t length = buf.size();
-
-    OptionDefContainer option_defs;
-    if (option_space == "dhcp6") {
-        // Get the list of standard option definitions.
-        option_defs = LibDHCP::getOptionDefs(Option::V6);
-    } else if (!option_space.empty()) {
-        OptionDefContainerPtr option_defs_ptr =
-            CfgMgr::instance().getCurrentCfg()->getCfgOptionDef()->
-            getAll(option_space);
-        if (option_defs_ptr != NULL) {
-            option_defs = *option_defs_ptr;
-        }
-    }
-
-    // Get the search index #1. It allows to search for option definitions
-    // using option code.
-    const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
-
-    // The buffer being read comprises a set of options, each starting with
-    // a two-byte type code and a two-byte length field.
-    while (offset + 4 <= length) {
-        // At this point, from the while condition, we know that there
-        // are at least 4 bytes available following offset in the
-        // buffer.
-        uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
-        offset += 2;
-
-        uint16_t opt_len = isc::util::readUint16(&buf[offset], 2);
-        offset += 2;
-
-        if (offset + opt_len > length) {
-            // @todo: consider throwing exception here.
-
-            // We peeked at the option header of the next option, but discovered
-            // that it would end up beyond buffer end, so the option is
-            // truncated. Hence we can't parse it. Therefore we revert
-            // by by those four bytes (as if we never parsed them).
-            return (offset - 4);
-        }
-
-        if (opt_type == D6O_RELAY_MSG && relay_msg_offset && relay_msg_len) {
-            // remember offset of the beginning of the relay-msg option
-            *relay_msg_offset = offset;
-            *relay_msg_len = opt_len;
-
-            // do not create that relay-msg option
-            offset += opt_len;
-            continue;
-        }
-
-        // Get all definitions with the particular option code. Note that option
-        // code is non-unique within this container however at this point we
-        // expect to get one option definition with the particular code. If more
-        // are returned we report an error.
-        const OptionDefContainerTypeRange& range = idx.equal_range(opt_type);
-        // Get the number of returned option definitions for the option code.
-        size_t num_defs = distance(range.first, range.second);
-
-        OptionPtr opt;
-        if (num_defs > 1) {
-            // Multiple options of the same code are not supported right now!
-            isc_throw(isc::Unexpected, "Internal error: multiple option definitions"
-                      " for option type " << opt_type << " returned. Currently it is not"
-                      " supported to initialize multiple option definitions"
-                      " for the same option code. This will be supported once"
-                      " support for option spaces is implemented");
-        } else if (num_defs == 0) {
-            // @todo Don't crash if definition does not exist because only a few
-            // option definitions are initialized right now. In the future
-            // we will initialize definitions for all options and we will
-            // remove this elseif. For now, return generic option.
-            opt = OptionPtr(new Option(Option::V6, opt_type,
-                                       buf.begin() + offset,
-                                       buf.begin() + offset + opt_len));
-            opt->setEncapsulatedSpace("dhcp6");
-        } else {
-            // The option definition has been found. Use it to create
-            // the option instance from the provided buffer chunk.
-            const OptionDefinitionPtr& def = *(range.first);
-            assert(def);
-            opt = def->optionFactory(Option::V6, opt_type,
-                                     buf.begin() + offset,
-                                     buf.begin() + offset + opt_len,
-                                     boost::bind(&Dhcpv6Srv::unpackOptions, this, _1, _2,
-                                                 _3, _4, _5));
-        }
-        // add option to options
-        options.insert(std::make_pair(opt_type, opt));
-        offset += opt_len;
-    }
-
-    return (offset);
 }
 
 void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt, std::string& classes) {

@@ -28,7 +28,7 @@ SrvConfig::SrvConfig()
       cfg_host_operations4_(CfgHostOperations::createConfig4()),
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
-      decline_timer_(0) {
+      decline_timer_(0), dhcp4o6_port_(0) {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
@@ -41,7 +41,7 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       cfg_host_operations4_(CfgHostOperations::createConfig4()),
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
-      decline_timer_(0) {
+      decline_timer_(0), dhcp4o6_port_(0) {
 }
 
 std::string

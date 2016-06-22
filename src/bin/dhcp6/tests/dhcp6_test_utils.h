@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -127,11 +127,10 @@ public:
     using Dhcpv6Srv::testUnicast;
     using Dhcpv6Srv::sanityCheck;
     using Dhcpv6Srv::classifyPacket;
-    using Dhcpv6Srv::unpackOptions;
     using Dhcpv6Srv::shutdown_;
     using Dhcpv6Srv::name_change_reqs_;
     using Dhcpv6Srv::VENDOR_CLASS_PREFIX;
-    using Dhcpv6Srv::createContext;
+    using Dhcpv6Srv::initContext;
 
     /// @brief packets we pretend to receive
     ///

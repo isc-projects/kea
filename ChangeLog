@@ -1,3 +1,47 @@
+1132.	[func]		tmark
+	The Postgresql schema has been updated to support host reservations and its 
+	version number has been bumped to 3.0.  This schema is content equivlent to
+	the MySQL schema version 4.2.
+	(Trac #4275, git 6f8e646bee9de22c921ed26409f3d1856ebce9e6)
+
+1131.	[func]		fdupont
+	Update the DHCPv4-over-DHCPv6 inter-process communication code.
+	(Trac #4106, git 1ce1cba00af5d81822d5bbe26ddd28b718f51d54)
+
+1130.	[func]		marcin
+	DHCPv6 server assigns DHCP options specified for hosts. Host
+	specific options take precedence over class specific options,
+	subnet specific options and global options.
+	(Trac #3573, git c29551e43010a345cfa2efda46389f4433d84650)
+
+1129.	[bug]		marcin
+	libdhcp++: Removed unnecessary copies of the container holding
+	option definitions to improve performance of both DHCPv4 and
+	DHCPv6 server.
+	(Trac #4498, git 14716853a92e08c4cc5be75ae85c5e84d6356a1e)
+
+1128.	[func]		tomek
+	Subnet selection in DHCPv4 will now work, even if the addresses
+	configured on interface are not in range of the subnet definition
+	from the configuration file.
+	(Trac #4308, git 7c74ecdbb64c69d341d623422216b0a54e6ff519)
+
+1127.	[func]		marcin
+	DHCPv4 server assigns DHCP options specified for hosts. Host
+	specific options take precedence over class specific options,
+	subnet specific options and global options.
+	(Trac #3572, git 49f67aaf36dab38b4fcbf59dcad97e4309903b2f)
+
+1126.	[func]		marcin
+	Host reservations can be assigned using DHCPv4 client identifier.
+	(Trac #4317, git 5f14fca1e029b04ad21a417936c2b8889acef10d)
+
+1125.	[func]		fdupont
+	Inter-process communication for exchanging packets between
+	DHCPv4 and DHCPv6 components of DHCPv4-over-DHCPv6 has been
+	implemented.
+	(Trac #4106, git 3223bb8280bfd99c225e725de660ae764abe3c87)
+
 1124.	[bug]		sar
 	Update the classification document to match the output from
 	the debug statements.
