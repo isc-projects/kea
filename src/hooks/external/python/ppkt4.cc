@@ -220,6 +220,21 @@ setIface(PyObject* obj, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+// TODO many methods
+
+// getHWAddr() method
+PyObject*
+getHWAddr(PyObject* obj) {
+    py_pkt4* const self = static_cast<py_pkt4*>(obj);
+    HWAddrPtr hwaddr = self->object->getHWAddr();
+    vector<uint8_t> bin;
+    if (hwaddr) {
+        bin = hwaddr->hwaddr_;
+    }
+    return (PyBytes_FromStringAndSize(reinterpret_cast<char*>(&bin[0]),
+                                      static_cast<Py_ssize_t>(bin.size())));
+}
+
 // Method table
 PyMethodDef pkt4_method[] = {
     { "addOption", addOption, METH_VARARGS,
@@ -250,6 +265,8 @@ PyMethodDef pkt4_method[] = {
       "return interface name" },
     { "setIface", setIface, METH_VARARGS,
       "sets interface name" },
+    { "getHWAddr", (PyCFunction)getHWAddr, METH_NOARGS,
+      "returns hardware address information" },
     { NULL, NULL, 0, NULL }
 };
 

@@ -182,5 +182,23 @@ extern "C" CAMLprim value pkt4_setIface(value pkt, value ifn) {
     CAMLreturn (Val_unit);
 }
 
+// TODO many
+
+extern "C" CAMLprim value pkt4_getHWAddr(value pkt) {
+    CAMLparam1(pkt);
+    CAMLlocal1(result);
+    oc_pkt4* const self = static_cast<oc_pkt4*>(Data_custom_val(pkt));
+    HWAddrPtr hwaddr = self->object->getHWAddr();
+    vector<uint8_t> bin;
+    if (hwaddr) {
+        bin = hwaddr->hwaddr_;
+    }
+    result = caml_alloc_string(static_cast<mlsize_t>(bin.size()));
+    if (!bin.empty()) {
+        memmove(String_val(result), &bin[0], bin.size());
+    }
+    CAMLreturn (result);
+}
+
 } // end of namespace ocaml
 } // end of namespace isc

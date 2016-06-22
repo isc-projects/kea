@@ -121,7 +121,7 @@ extern "C" CAMLprim value opt_toBinary(value opt) {
     CAMLparam1(opt);
     CAMLlocal1(result);
     oc_opt* const self = static_cast<oc_opt*>(Data_custom_val(opt));
-    vector<uint8_t> bin = self->object->toBinary(0);
+    vector<uint8_t> bin = self->object->toBinary(true);
     result = caml_alloc_string(static_cast<mlsize_t>(bin.size()));
     memmove(String_val(result), &bin[0], bin.size());
     CAMLreturn (result);

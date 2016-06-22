@@ -86,6 +86,8 @@ module Packet4 = struct
     external getIface : pkt4 -> string = "pkt4_getIface"
 
     external setIface : pkt4 -> string -> unit = "pkt4_setIface"
+
+    external getHWAddr : pkt4 -> bytes = "pkt4_getHWAddr"
 end
 
 let _ = print_leave "pkt4"

@@ -80,6 +80,10 @@ module Packet4 : sig
     external getIface : pkt4 -> string = "pkt4_getIface"
 
     external setIface : pkt4 -> string -> unit = "pkt4_setIface"
+
+    (* TODO many *)
+
+    external getHWAddr : pkt4 -> bytes = "pkt4_getHWAddr"
 end
 
 val next_step_continue : int

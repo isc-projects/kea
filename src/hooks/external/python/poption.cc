@@ -53,7 +53,9 @@ option_init(PyObject* obj, PyObject* args, PyObject*) {
 
     OptionBuffer data;
     data.resize(PyBytes_GET_SIZE(d));
-    memmove(&data[0], PyBytes_AS_STRING(d), data.size());
+    if (!data.empty()) {
+        memmove(&data[0], PyBytes_AS_STRING(d), data.size());
+    }
 
     py_option* const self = static_cast<py_option*>(obj);
     self->object.reset(new Option(universe, t, data));
@@ -197,7 +199,9 @@ setData(PyObject* obj, PyObject* args) {
     }
     vector<uint8_t> data;
     data.resize(PyBytes_GET_SIZE(d));
-    memmove(&data[0], PyBytes_AS_STRING(d), data.size());
+    if (!data.empty()) {
+        memmove(&data[0], PyBytes_AS_STRING(d), data.size());
+    }
 
     py_option* const self = static_cast<py_option*>(obj);
     self->object->setData(data.begin(), data.end());

@@ -2,10 +2,10 @@ Implementation notes for lua
 
 Manifest:
  - loption.h loption.cc: the C++ OptionPtr encapsulated into a lua full
-  userdata with a few methods ported.
+  userdata with some methods ported.
 
  - ppkt4.h ppkt4.cc: the C++ Pkt4Ptr encapsulated into a lua full userdata
-  with a few methods ported.
+  with some methods ported.
 
   one can complete these lua types or/and new lua type.
 

@@ -35,6 +35,7 @@ extern "C" CAMLprim value pkt4_setIndex(value pkt, value idx);
 extern "C" CAMLprim value pkt4_getIndex(value pkt);
 extern "C" CAMLprim value pkt4_getIface(value pkt);
 extern "C" CAMLprim value pkt4_setIface(value pkt, value ifn);
+extern "C" CAMLprim value pkt4_getHWAddr(value pkt);
 
 CAMLextern struct custom_operations* pkt4_ops;
 
