@@ -39,6 +39,8 @@ static const size_t ADDRESS6_TEXT_MAX_LEN = 39U;
 
 /// @name CqlBind auxiliary methods for binding data into Cassandra format:
 /// @{
+
+/// @todo These void* cast are unsafe. See ticket #4525.
 static CassError CqlBindNone(CassStatement* statement, size_t index, void*) {
     return cass_statement_bind_null(statement, index);
 }

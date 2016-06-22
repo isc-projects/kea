@@ -119,14 +119,14 @@ CqlConnection::openDatabase() {
     }
 
     if (port != NULL) {
-        int port_nr;
+        int port_number;
         try {
-            port_nr = boost::lexical_cast<int>(port);
+            port_number = boost::lexical_cast<int>(port);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError, "Invalid int data: " << port
                       << " : " << ex.what());
         }
-        cass_cluster_set_port(cluster_, port_nr);
+        cass_cluster_set_port(cluster_, port_number);
     }
 
     session_ = cass_session_new();
@@ -187,7 +187,7 @@ CqlConnection::rollback() {
 
 void
 CqlConnection::checkStatementError(std::string& error, CassFuture* future,
-        uint32_t stindex, const char* what) const {
+                                   uint32_t stindex, const char* what) const {
     CassError rc;
     const char* errorMessage;
     size_t errorMessageSize;
@@ -199,15 +199,15 @@ CqlConnection::checkStatementError(std::string& error, CassFuture* future,
 
     if (rc != CASS_OK) {
         stream.str(std::string());
-        stream << what << " for: " << tagged_statements_[stindex].name_ <<
-            " reason: " << errorMessage << " error code: " << rc;
+        stream << what << " for: " << tagged_statements_[stindex].name_
+               << " reason: " << errorMessage << " error code: " << rc;
     }
     error = stream.str();
 }
 
 void
 CqlConnection::checkStatementError(std::string& error, CassFuture* future,
-        const char* what) const {
+                                   const char* what) const {
     CassError rc;
     const char* errorMessage;
     size_t errorMessageSize;
