@@ -494,7 +494,7 @@ $ <userinput>kea-admin lease-init pgsql -u <replaceable>database-user</replaceab
     </section> <!-- end of PostgreSQL sections -->
 
     <section>
-      <title>CQL</title>
+      <title>CQL (Cassandra)</title>
 
       <para>
         The CQL database must be properly set up if you want Kea to store
