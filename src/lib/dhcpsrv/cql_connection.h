@@ -38,8 +38,12 @@ struct CqlTaggedStatement {
 };
 
 // Defines CQL backend version: 2.3
-const uint32_t CQL_CURRENT_VERSION = CASS_VERSION_MAJOR;
-const uint32_t CQL_CURRENT_MINOR = CASS_VERSION_MINOR;
+const uint32_t CQL_DRIVER_VERSION_MAJOR = CASS_VERSION_MAJOR;
+const uint32_t CQL_DRIVER_VERSION_MINOR = CASS_VERSION_MINOR;
+
+/// Defines CQL schema version: 1.0
+const uint32_t CQL_SCHEMA_VERSION_MAJOR = 1;
+const uint32_t CQL_SCHEMA_VERSION_MINOR = 0;
 
 class CqlConnection : public DatabaseConnection {
 public:
@@ -71,34 +75,6 @@ public:
     ///
     /// @throw DbOpenError Error opening the database
     void openDatabase();
-
-    /// @brief Return backend type
-    ///
-    /// @return Type of the backend.
-    virtual std::string getType() const {
-        return (std::string("cql"));
-    }
-
-    /// @brief Returns name of the database.
-    ///
-    /// @return database name
-    virtual std::string getName() const;
-
-    /// @brief Returns description of the backend.
-    ///
-    /// This description may be multiline text that describes the backend.
-    ///
-    /// @return Description of the backend.
-    virtual std::string getDescription() const;
-
-    /// @brief Returns backend version.
-    ///
-    /// @return Version number as a pair of unsigned integers. "first" is the
-    ///         major version number, "second" the minor number.
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const;
 
     /// @brief Commit Transactions
     ///

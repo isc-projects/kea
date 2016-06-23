@@ -165,33 +165,6 @@ CqlConnection::prepareStatements(CqlTaggedStatement *statements) {
     }
 }
 
-string
-CqlConnection::getName() const {
-    string name = "";
-    try {
-        name = getParameter("name");
-    } catch (...) {
-        // Return an empty name
-    }
-    return (name);
-}
-
-string
-CqlConnection::getDescription() const {
-    return (string("Cassandra Database"));
-}
-
-pair<uint32_t, uint32_t>
-CqlConnection::getVersion() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_GET_VERSION);
-
-    uint32_t version = CASS_VERSION_MAJOR;
-    uint32_t minor = CASS_VERSION_MINOR;
-
-    return make_pair<uint32_t, uint32_t>(version, minor);
-}
-
 void
 CqlConnection::commit() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_COMMIT);
