@@ -8,6 +8,7 @@ EXTRA_DIST += devel/qa.dox
 
 nobase_dist_doc_DATA  = examples/ddns/sample1.json
 nobase_dist_doc_DATA += examples/ddns/template.json
+nobase_dist_doc_DATA += examples/kea4/backends.json
 nobase_dist_doc_DATA += examples/kea4/hooks.json
 nobase_dist_doc_DATA += examples/kea4/leases-expiration.json
 nobase_dist_doc_DATA += examples/kea4/multiple-options.json
@@ -15,6 +16,7 @@ nobase_dist_doc_DATA += examples/kea4/reservations.json
 nobase_dist_doc_DATA += examples/kea4/several-subnets.json
 nobase_dist_doc_DATA += examples/kea4/single-subnet.json
 nobase_dist_doc_DATA += examples/kea6/advanced.json
+nobase_dist_doc_DATA += examples/kea6/backends.json
 nobase_dist_doc_DATA += examples/kea6/hooks.json
 nobase_dist_doc_DATA += examples/kea6/leases-expiration.json
 nobase_dist_doc_DATA += examples/kea6/multiple-options.json
