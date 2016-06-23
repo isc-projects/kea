@@ -12,13 +12,13 @@ Welcome to Kea Legal Log Hooks Library. This documentation is
 addressed at Kea developers, and provides information needed to write,
 extend and maintain Kea hooks.
 
-This documentation is standalone: you are supposes to have read and
+This documentation is stand-alone: you are supposes to have read and
 understood <a href="http://git.kea.isc.org/~tester/kea/doxygen/">Kea
 Developer's Guide</a> and in particular its section about hooks: <a
 href="http://git.kea.isc.org/~tester/kea/doxygen/df/d46/hooksdgDevelopersGuide.html">
 Hooks Developer's Guide</a>.
 
-@section libdhcp_legal_logIntro Libdhcp_legal_log: An Example Hooks Library
+@section libdhcp_legal_logUser Libdhcp_legal_log: An Example Hooks Library, How To Use It
 ## Introduction
 libdhcp_legal_log is an example hooks library which customizes the
 DHCP lease management provided by Kea DHCP server modules (kea-dhcp4
@@ -27,7 +27,7 @@ assignments and renewals as it could be required for legal purpose.
 
 ## Log Files
 Legal logs are appended into a text file implemented by the class
-@c legal_log::RotatingFile. On a daily basis it is rotated to a new file.
+@c isc::legal_log::RotatingFile. On a daily basis it is rotated to a new file.
 
 Legal file names have the form:
 @verbatim
@@ -129,5 +129,63 @@ Two string Hook Library Parameters are supported:
  - @b base-name - An arbitrary value which is used in conjunction with
  current system date to form the current legal file name.  It defaults
  to "kea-legal".
+
+
+@section libdhcp_legal_logDesign Libdhcp_legal_log: An Example Hooks Library, Commented Design
+## Introduction
+Some countries requires ISP to log the connection meta-data for legal purpose,
+so the idea of a legal log hook library as an example explaining how
+to program such a thing.
+
+As explained in the tutorial of the Hook Developer's Guide <a
+href="http://git.kea.isc.org/~tester/kea/doxygen/df/d46/hooksdgDevelopersGuide.html#hooksdgTutorial">
+Tutorial</a> a hook library is a Dynamic Shared Object with known
+entry points for the framework functions and hooks. The DSO is (when
+not static linked) dynamically loaded by a Kea server module, some
+parameters can be passed to configure it and DSO entry points with
+a well known hook names are auto-magically registered.
+
+The Kea server module invokes the registered callouts during processing,
+passes some context arguments and uses the returned status to eventually
+cancel the current action, e.g., by dropping a message.
+
+## Framework
+The file version.cc defines the required framework version() function
+which protects against Hooks API changes. The file load_unload.cc
+defines a load() function which decodes the configuration parameters,
+creates and opens the legal log file (implemented by class @c
+isc::legal_log::RotatingFile in rotating_file.h and
+rotating_file.cc). The unload() function destroys the object which by
+side effect closes the legal log file. Note the load() function does
+not register callouts nor a logger: the Hooks Library Manager takes
+care of this (triggered for the logger by legal_log_log.h,
+legal_log_log.cc and legal_log_messages.h files).
+
+## Callouts
+For DHCPv4 lease4_select() and lease4_renew() hook callouts are defined,
+for DHCPv6 lease6_select(), lease6_renew() and lease6_rebind() are defined
+in lease4_callouts.cc and lease6_callouts.cc files.
+
+Lease select callouts return on fake_allocation, i.e., on the reception
+of DHCPDISCOVER or DHCPV6_SOLICIT messages. legalLog4Handler() or
+legalLog6Handler() is called with the callout handle (to get the
+parsed query message and the lease) and a boolean renewal flag.
+
+When something goes wrong callouts returns 1 (next step skip)
+which tells the server to skip the processing. So any legal log
+error is converted in the server as an internal error and denial
+of service for the client (the choice comes from the meaning of
+the "legal" word).
+
+## Log Generation
+For DHCPv4 the only not trivial point is to get for relayed queries
+the relay agent information option ans its two interesting (i.e., to log)
+circuit ID and remote ID sub-options.
+
+For DHCPv6 the hardware address is not built-in but can be recovered and
+recorded by kea-dhcp6 in many cases. A DHCPv6 query can be relayed
+more than once but the current code logs only the first (closest
+to the client) relay information with first found remote ID and
+subscriber ID relay options.
 
 */
