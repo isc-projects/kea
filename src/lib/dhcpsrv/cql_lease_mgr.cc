@@ -187,9 +187,6 @@ static const char* update_lease4_params[] = {
         static_cast<const char*>("hostname"),
         static_cast<const char*>("state"),
         static_cast<const char*>("address"),
-#ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
-        static_cast<const char*>("expire"),
-#endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
         NULL };
 static const char* update_lease6_params[] = {
         static_cast<const char*>("duid"),
@@ -208,9 +205,6 @@ static const char* update_lease6_params[] = {
         static_cast<const char*>("hwaddr_source"),
         static_cast<const char*>("state"),
         static_cast<const char*>("address"),
-#ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
-        static_cast<const char*>("expire"),
-#endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
         NULL };
 
 CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
@@ -352,9 +346,6 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
       "INSERT INTO lease4(address, hwaddr, client_id, "
         "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, state) "
       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
-#ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
-      "IF NOT EXISTS"
-#endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
     },
 
     // INSERT_LEASE6
@@ -364,9 +355,6 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "expire, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, hwaddr_source, state) "
       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
-#ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
-      "IF NOT EXISTS"
-#endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
     },
 
     // UPDATE_LEASE4
@@ -376,9 +364,6 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "client_id = ?, valid_lifetime = ?, expire = ?, "
         "subnet_id = ?, fqdn_fwd = ?, fqdn_rev = ?, hostname = ?, state = ? "
       "WHERE address = ? "
-#ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
-      "IF expire = ?"
-#endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
     },
 
     // UPDATE_LEASE6
@@ -390,9 +375,6 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "prefix_len = ?, fqdn_fwd = ?, fqdn_rev = ?, hostname = ?, "
         "hwaddr = ?, hwtype = ?, hwaddr_source = ?, state = ? "
       "WHERE address = ? "
-#ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
-      "IF expire = ?"
-#endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
     },
 
     // End of list sentinel
@@ -908,7 +890,7 @@ public:
 
             // pref_lifetime: unsigned int
             value = cass_row_get_column_by_name(row, columns_[5].column_);
-            cass_value_get_int32(value, reinterpret_cast<cass_int32_t*>(&pref_lifetime_));
+            cass_value_get_int64(value, reinterpret_cast<cass_int64_t*>(&pref_lifetime_));
 
             // lease_type: tinyint
             value = cass_row_get_column_by_name(row, columns_[6].column_);
@@ -988,9 +970,6 @@ public:
             time_t cltt = 0;
             CqlLeaseExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
             result->cltt_ = cltt;
-#ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
-            result->old_cltt_ = cltt;
-#endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
 
             result->state_ = state_;
 
@@ -1022,111 +1001,6 @@ private:
     uint32_t        hwtype_;            ///< Hardware type
     uint32_t        hwaddr_source_;     ///< Source of the hardware address
 };
-
-#ifdef TERASTREAM_DB_LOGIC
-class CqlCustomLeaseExchange : public virtual SqlLeaseExchange {
-public:
-    CqlCustomLeaseExchange() {}
-    virtual ~CqlCustomLeaseExchange() {}
-    virtual void executeInternal(LeaseExchangeData& exchange, bool has_allocated_ip, bool has_requested_ip, bool has_reserved_ip) {
-        if (has_allocated_ip) {
-        }
-        if (has_requested_ip) {
-        }
-        if (has_reserved_ip) {
-        }
-        if (exchange.in_fake_) {
-        }
-    }
-};
-
-class CqlLease4DiscoverNoReqNoResExchange : public SqlLease4DiscoverNoReqNoResExchange, public CqlCustomLeaseExchange {
-public:
-    CqlLease4DiscoverNoReqNoResExchange() : CqlCustomLeaseExchange() {}
-    virtual ~CqlLease4DiscoverNoReqNoResExchange() {}
-    virtual void execute(LeaseExchangeData& exchange) {
-        executeInternal(exchange, true, false, false);
-    }
-private:
-};
-
-/// @brief Supports exchanging IPv4 leases with SQL for discover.
-class CqlLease4DiscoverNoReqResExchange : public SqlLease4DiscoverNoReqResExchange, public CqlCustomLeaseExchange {
-public:
-    CqlLease4DiscoverNoReqResExchange() : CqlCustomLeaseExchange() {}
-    virtual ~CqlLease4DiscoverNoReqResExchange() {}
-    virtual void execute(LeaseExchangeData& exchange) {
-        executeInternal(exchange, true, false, true);
-    }
-private:
-};
-
-/// @brief Supports exchanging IPv4 leases with SQL for discover.
-class CqlLease4DiscoverReqNoResExchange : public SqlLease4DiscoverReqNoResExchange, public CqlCustomLeaseExchange {
-public:
-    CqlLease4DiscoverReqNoResExchange() : CqlCustomLeaseExchange() {}
-    virtual ~CqlLease4DiscoverReqNoResExchange() {}
-    virtual void execute(LeaseExchangeData& exchange) {
-        executeInternal(exchange, true, true, false);
-    }
-private:
-};
-
-/// @brief Supports exchanging IPv4 leases with SQL for discover.
-class CqlLease4DiscoverReqResExchange : public SqlLease4DiscoverReqResExchange, public CqlCustomLeaseExchange {
-public:
-    CqlLease4DiscoverReqResExchange() : CqlCustomLeaseExchange() {}
-    virtual ~CqlLease4DiscoverReqResExchange() {}
-    virtual void execute(LeaseExchangeData& exchange) {
-        executeInternal(exchange, true, true, true);
-    }
-private:
-};
-
-/// @brief Supports exchanging IPv4 leases with SQL for request.
-class CqlLease4RequestNoReqNoResExchange : public SqlLease4RequestNoReqNoResExchange, public CqlCustomLeaseExchange {
-public:
-    CqlLease4RequestNoReqNoResExchange() : CqlCustomLeaseExchange() {}
-    virtual ~CqlLease4RequestNoReqNoResExchange() {}
-    virtual void execute(LeaseExchangeData& exchange) {
-        executeInternal(exchange, true, false, false);
-    }
-private:
-};
-
-/// @brief Supports exchanging IPv4 leases with SQL for request.
-class CqlLease4RequestNoReqResExchange : public SqlLease4RequestNoReqResExchange, public CqlCustomLeaseExchange {
-public:
-    CqlLease4RequestNoReqResExchange() : CqlCustomLeaseExchange() {}
-    virtual ~CqlLease4RequestNoReqResExchange() {}
-    virtual void execute(LeaseExchangeData& exchange) {
-        executeInternal(exchange, false, false, true);
-    }
-private:
-};
-
-/// @brief Supports exchanging IPv4 leases with SQL for request.
-class CqlLease4RequestReqNoResExchange : public SqlLease4RequestReqNoResExchange, public CqlCustomLeaseExchange {
-public:
-    CqlLease4RequestReqNoResExchange() : CqlCustomLeaseExchange() {}
-    virtual ~CqlLease4RequestReqNoResExchange() {}
-    virtual void execute(LeaseExchangeData& exchange) {
-        executeInternal(exchange, false, true, false);
-    }
-private:
-};
-
-/// @brief Supports exchanging IPv4 leases with SQL for request.
-class CqlLease4RequestReqResExchange : public SqlLease4RequestReqResExchange, public CqlCustomLeaseExchange {
-public:
-    CqlLease4RequestReqResExchange() : CqlCustomLeaseExchange() {}
-    virtual ~CqlLease4RequestReqResExchange() {}
-    virtual void execute(LeaseExchangeData& exchange) {
-        executeInternal(exchange, false, true, true);
-    }
-private:
-};
-#endif // TERASTREAM_DB_LOGIC
 
 CqlLeaseMgr::CqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : LeaseMgr(), dbconn_(parameters), exchange4_(new CqlLease4Exchange()),
@@ -1196,21 +1070,9 @@ CqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
         isc_throw(DbOperationError, error);
     }
     const CassResult* resultCollection = cass_future_get_result(future);
-    int row_count = cass_result_row_count(resultCollection);
-    int column_count = cass_result_column_count(resultCollection);
     cass_result_free(resultCollection);
     cass_future_free(future);
     cass_statement_free(statement);
-#ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
-    if (row_count != 1) {
-        return (false);
-    } else if (column_count != 1) {
-        isc_throw(TransactionException, "add transaction failed");
-    }
-#else
-    if (row_count && column_count) {
-    }
-#endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
 
     return (true);
 }
@@ -1594,7 +1456,7 @@ template <typename LeasePtr>
 void
 CqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
                                  CqlBindArray& bind_array,
-                                 const LeasePtr& lease, CqlLeaseExchange& exchange) {
+                                 const LeasePtr&, CqlLeaseExchange& exchange) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_CQL_ADD_ADDR4).arg(dbconn_.tagged_statements_[stindex].name_);
 
@@ -1618,37 +1480,9 @@ CqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
     }
 
     const CassResult* resultCollection = cass_future_get_result(future);
-    int row_count = cass_result_row_count(resultCollection);
-    int column_count = cass_result_column_count(resultCollection);
     cass_result_free(resultCollection);
     cass_future_free(future);
     cass_statement_free(statement);
-
-#ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
-    // Check success case first as it is the most likely outcome.
-    if (row_count > 1) {
-        // Should not happen - primary key constraint should only have selected
-        // one row.
-        isc_throw(DbOperationError, "apparently updated more than one lease "
-                      "that had the address " << lease->addr_.toText());
-    }
-
-    // If no rows affected, lease doesn't exist.
-    if (row_count == 0) {
-        isc_throw(NoSuchLease, "unable to update lease for address " <<
-                  lease->addr_.toText() << " as it does not exist");
-    }
-
-    if (row_count != 1) {
-        isc_throw(DbOperationError, "apparently updated transaction failed for the lease "
-                              "that had the address " << lease->addr_.toText());
-    } else if (column_count != 1) {
-        isc_throw(TransactionException, "update transaction failed");
-    }
-#else
-        if (row_count && column_count && lease) {
-        }
-#endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
 }
 
 
@@ -1667,12 +1501,6 @@ CqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     // Set up the WHERE clause and append it to the SQL_BIND array
     uint32_t addr4_data = static_cast<uint32_t>(lease->addr_);
     bind_array.add(&addr4_data);
-
-#ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
-    uint64_t old_expire;
-    CqlLeaseExchange::convertToDatabaseTime(lease->old_cltt_, lease->old_valid_lft_, old_expire);
-    bind_array.add(&old_expire);
-#endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
 
     // Drop to common update code
     updateLeaseCommon(stindex, bind_array, lease, *exchange4_);
@@ -1702,12 +1530,6 @@ CqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     }
     addr6_buffer[addr6_length] = '\0';
     bind_array.add(addr6_buffer);
-
-#ifdef TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
-    uint64_t old_expire;
-    CqlLeaseExchange::convertToDatabaseTime(lease->old_cltt_, lease->old_valid_lft_, old_expire);
-    bind_array.add(&old_expire);
-#endif // TERASTREAM_LIGHTWEIGHT_TRANSACTIONS
 
     // Drop to common update code
     updateLeaseCommon(stindex, bind_array, lease, *exchange6_);
@@ -1860,56 +1682,6 @@ void
 CqlLeaseMgr::rollback() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_ROLLBACK);
 }
-
-#ifdef TERASTREAM_DB_LOGIC
-void
-CqlLeaseMgr::discoverLease4NoReqNoRes(LeaseExchangeData &data) {
-    CqlLease4DiscoverNoReqNoResExchange exchange;
-    exchange.execute(data);
-}
-
-void
-CqlLeaseMgr::discoverLease4NoReqRes(LeaseExchangeData &data) {
-    CqlLease4DiscoverNoReqResExchange exchange;
-    exchange.execute(data);
-}
-
-void
-CqlLeaseMgr::discoverLease4ReqNoRes(LeaseExchangeData &data) {
-    CqlLease4DiscoverReqNoResExchange exchange;
-    exchange.execute(data);
-}
-
-void
-CqlLeaseMgr::discoverLease4ReqRes(LeaseExchangeData &data) {
-    CqlLease4DiscoverReqResExchange exchange;
-    exchange.execute(data);
-}
-
-void
-CqlLeaseMgr::requestLease4NoReqNoRes(LeaseExchangeData &data) {
-    CqlLease4RequestNoReqNoResExchange exchange;
-    exchange.execute(data);
-}
-
-void
-CqlLeaseMgr::requestLease4NoReqRes(LeaseExchangeData &data) {
-    CqlLease4RequestNoReqResExchange exchange;
-    exchange.execute(data);
-}
-
-void
-CqlLeaseMgr::requestLease4ReqNoRes(LeaseExchangeData &data) {
-    CqlLease4RequestReqNoResExchange exchange;
-    exchange.execute(data);
-}
-
-void
-CqlLeaseMgr::requestLease4ReqRes(LeaseExchangeData &data) {
-    CqlLease4RequestReqResExchange exchange;
-    exchange.execute(data);
-}
-#endif // TERASTREAM_DB_LOGIC
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
