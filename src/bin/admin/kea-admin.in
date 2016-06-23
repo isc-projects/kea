@@ -292,7 +292,7 @@ pgsql_upgrade() {
     for script in ${scripts_dir}/pgsql/upgrade*.sh
     do
         echo "Processing $script file..."
-        sh ${script} -U ${db_user} -d ${db_name}
+        sh ${script} -U ${db_user} -h localhost -d ${db_name}
     done
 
     version=`pgsql_version`
@@ -460,7 +460,7 @@ pgsql_dump() {
 
     # Call psql and redirect output to the dump file. We don't use psql "to csv"
     # as it can only be run as db superuser.
-    echo "$dump_qry" | psql --set ON_ERROR_STOP=1 -t -q --user=$db_user --dbname=$db_name -w --no-align --field-separator=',' >$dump_file
+    echo "$dump_qry" | psql --set ON_ERROR_STOP=1 -t -h localhost -q --user=$db_user --dbname=$db_name -w --no-align --field-separator=',' >$dump_file
     retcode=$?
 
     # Check for errors.
@@ -493,7 +493,7 @@ cql_dump() {
         select_where_clause=" WHERE address = 0" # invalid address
     elif [ $dump_type -eq 6 ]; then
         dump_qry="SELECT address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state FROM keatest.lease6"
-        select_where_clause=" WHERE address = ::" # invalid address
+        select_where_clause=" WHERE address = '::'" # invalid address
     fi
 
     # Make sure they specified a file
