@@ -366,9 +366,6 @@ get_dump_query() {
     pgsql)
         invoke="select * from"
         ;;
-    cql)
-        invoke="select * from"
-        ;;
     *)
         log_error "unsupported backend ${backend}"
         usage
@@ -474,49 +471,42 @@ pgsql_dump() {
 }
 
 cql_dump() {
-
-    # get the correct dump query
-    version=`cql_version`
-    retcode=$?
-    if [ $retcode -ne 0 ]
-    then
-        log_error "lease-dump: cql_version failed, exit code $retcode"
-        exit 1;
-    fi
-
-    # Fetch the correct SQL text. Note this function will exit
-    # if it fails.
-
-    select_where_clause=""
+    # Get the query appropriate to lease version. Explicitly specify all columns
+    # so that they are returned in expected order.
     if [ $dump_type -eq 4 ]; then
-        dump_qry="SELECT address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state FROM lease4"
-        select_where_clause=" WHERE address = 0" # invalid address
+        dump_query="SELECT address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state FROM lease4"
     elif [ $dump_type -eq 6 ]; then
-        dump_qry="SELECT address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state FROM lease6"
-        select_where_clause=" WHERE address = '::'" # invalid address
-    fi
-
-    # Make sure they specified a file
-    if [ "$dump_file" = "" ]; then
-        log_error "you must specify an output file for lease-dump"
+        dump_query="SELECT address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state FROM lease6"
+    else
+        log_error "lease-dump: lease type ( -4 or -6 ) needs to be specified"
         usage
         exit 1
     fi
 
-    # If output file exists, notify user, allow them a chance to bail
+    # Check if file was specified.
+    if [ "$dump_file" = "" ]; then
+        log_error "lease-dump: output file needs to be specified with -o"
+        usage
+        exit 1
+    fi
+
+    # If output file exists, notify user, allow them a chance to bail.
     check_file_overwrite $dump_file
 
-    cql_execute "${dump_qry}${select_where_clause}" | head -n 2 | tail -n 1 | sed -e 's/\s*//g' | sed -e 's/|/,/g' > $dump_file
-    if [ $? -ne 0 ]; then
-        log_error "lease-dump: cql_execute failed, exit code $retcode";
+    # Run query, check for failure.
+    result=`cql_execute "$dump_query"`
+    return_code=$?
+    if [ $return_code -ne 0 ]; then
+        log_error "lease-dump: cql_execute failed, exit code $return_code";
         exit 1
     fi
 
-    cql_execute "${dump_qry}" | tail -n +4 | head -n -2 | sed -e 's/\s*//g' | sed -e 's/|/,/g' | sort -r >> $dump_file
-    if [ $? -ne 0 ]; then
-        log_error "lease-dump: cql_execute failed, exit code $retcode";
-        exit 1
-    fi
+    # Parse and display header.
+    echo "$result" | head -n 2 | tail -n 1 | sed -e 's/\s*//g' | sed -e 's/|/,/g' > $dump_file
+
+    # Parse and display contents - done separately from header to allow sorting
+    # by address.
+    echo "$result" | tail -n +4 | head -n -2 | sed -e 's/\s*//g' | sed -e 's/|/,/g' | sort -r >> $dump_file
 
     echo lease$dump_type successfully dumped to $dump_file
     exit 0
