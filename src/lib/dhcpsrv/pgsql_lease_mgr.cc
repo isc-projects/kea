@@ -729,8 +729,8 @@ PgSqlLeaseMgr::~PgSqlLeaseMgr() {
 std::string
 PgSqlLeaseMgr::getDBVersion() {
     std::stringstream tmp;
-    tmp << "PostgreSQL backend " << PG_SCHEMA_VERSION_MAJOR;
-    tmp << "." << PG_SCHEMA_VERSION_MINOR;
+    tmp << "PostgreSQL backend " << PG_CURRENT_VERSION;
+    tmp << "." << PG_CURRENT_MINOR;
     tmp << ", library " << PQlibVersion();
     return (tmp.str());
 }
