@@ -34,15 +34,15 @@ public:
 ///
 /// Forms the current file name from:
 ///
-///    <path>/<base_name>.<date>.txt
+///    "<path>/<base_name>.<date>.txt"
 ///
 /// where:
-/// - <b>path</b> - is the pathname supplied via the constructor. The path
+/// - @b path - is the pathname supplied via the constructor. The path
 /// must exist and be writable by the process
 ///
-/// - <b>base_name</b> - an arbitrary text label supplied via the constructor
+/// - @b base_name - an arbitrary text label supplied via the constructor
 ///
-/// - <b>date</b> - is the system date, at the time the file is opened, in local
+/// - @b date - is the system date, at the time the file is opened, in local
 /// time.  The format of the value is CCYYMMDD (century,year,month,day)
 ///
 /// Prior to each write, the system date is compared to the current file date
@@ -75,7 +75,7 @@ public:
     ///
     /// Forms the current file name from:
     ///
-    ///    <path_>/<base_name_>.<CCYYMMDD>.txt
+    ///    "<path_>/<base_name_>.<CCYYMMDD>.txt"
     ///
     /// where CCYYMMDD is the current date in local time,
     ///
@@ -109,15 +109,15 @@ public:
     /// followed by EOL to the end of the file. The content of
     /// new line will be:
     ///
-    ///     <timestamp>\b<text><EOL>
+    ///     "<timestamp>SP<text><EOL>"
     ///
     /// where:
-    /// -<b>timestamp<\b> - current local date and time as given by the
+    /// - @b timestamp> - current local date and time as given by the
     /// strftime format "%Y-%m-%d %H:%M:%S %Z"
     ///
-    /// -<b>text<\b> - text supplied by the parameter
+    /// - @b text - text supplied by the parameter
     ///
-    /// -<b>EOL<\b> - the character(s) generated std::endl
+    /// - @b EOL - the character(s) generated std::endl
     ///
     /// @param text String to append
     ///
@@ -162,7 +162,7 @@ public:
     ///
     /// The output string will have the following format:
     ///
-    ///    {<d> day(s) }<h> hrs <m> min <s> secs
+    ///    "{<d> day(s) }<h> hrs <m> min <s> secs"
     /// Examples:
     ///
     ///     0 hrs 0 min 30 secs

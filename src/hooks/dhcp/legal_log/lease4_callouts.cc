@@ -30,25 +30,29 @@ extern RotatingFilePtr legal_file;
 /// DHCPv4 lease.  The entry is returned as a single string with no embedded
 /// EOL markers and has the following sections:
 ///
-///  <address><duration><device-id>{client-info}{relay-info}
+///  "<address><duration><device-id>{client-info}{relay-info}"
 ///
 /// Where:
-///     # address - the leased IPv4 address given out and whether it was
+///     - address - the leased IPv4 address given out and whether it was
 ///     assigned or renewed.
-///     # duration - the lease lifetime expressed as in days (if present),
+///     - duration - the lease lifetime expressed as in days (if present),
 ///     hours, minutes and seconds.  A lease lifetime of 0xFFFFFFFF will be
 ///     denoted with the text "infinite duration".
-///     # device-id - the client's hardware address shown as numerical type
+///     - device-id - the client's hardware address shown as numerical type
 ///     and hex digit string
-///     # client-info - the DHCP client id option (61) if present, shown as
+///     - client-info - the DHCP client id option (61) if present, shown as
 ///     hex digit string
-///     # relay-inf - for relayed packets the giaddr and the RAI circuit id
+///     - relay-info - for relayed packets the giaddr and the RAI circuit id
 ///     and remote id options (x and xx) if present
 ///
-///     For example:
-/// {{{
-///  "Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs to a device with hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33, identified by circuit-id: 68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
-/// }}}
+///     For example (on multiple lines for readibility):
+/// @code
+///  "Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs
+///  to a device with hardware address: hwtype=1 08:00:2b:02:3f:4e,
+///  client-id: 17:34:e2:ff:09:92:54 connected via relay at address:
+///  192.2.16.33, identified by circuit-id: 68:6f:77:64:79 and
+///  remote-id: 87:f6:79:77:ef"
+/// @endcode
 ///
 /// @param query - DHCPREQUEST packet for which the lease was generated
 /// @param lease - DHCPv4 lease for which the entry should be created

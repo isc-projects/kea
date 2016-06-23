@@ -23,9 +23,7 @@ s-messages: legal_log_messages.mes
 # (so that they are built before the main library is built).
 BUILT_SOURCES = legal_log_messages.h legal_log_messages.cc
 
-# @todo #4511 calls for the creation of user documentation
-# EXTRA_DIST = libdhcp_legal_log.dox
-EXTRA_DIST =
+EXTRA_DIST = 
 
 # Ensure that the message file is included in the distribution
 EXTRA_DIST += legal_log_messages.mes
@@ -70,3 +68,15 @@ libdhcp_legal_log_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-thre
 libdhcp_legal_log_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_legal_log_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcp_legal_log_la_LIBADD  += $(LOG4CPLUS_LIBS)
+
+# Doxygen documentation
+
+EXTRA_DIST += libdhcp_legal_log.dox Doxyfile Doxyfile-xml
+
+devel:
+	mkdir -p html
+	(cat Doxyfile; echo PROJECT_NUMBER=$(PACKAGE_VERSION)) | doxygen - > html/doxygen.log 2> html/doxygen-error.log
+	echo `grep -i ": warning:" html/doxygen-error.log | wc -l` warnings/errors detected.
+
+clean-local:
+	rm -rf html

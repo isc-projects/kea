@@ -1,0 +1,60 @@
+// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@mainpage Kea Legal Log Hooks Library
+
+Welcome to Kea Legal Log Hooks Library. This documentation is
+addressed at Kea developers, and provides information needed to
+write, extend and maintain Kea hooks.
+
+You suppose to have read and understood
+<a href="http://git.kea.isc.org/~tester/kea/doxygen/">Kea
+Developer's Guide</a> and in particular its section about hooks:
+<a href="http://git.kea.isc.org/~tester/kea/doxygen/df/d46/hooksdgDevelopersGuide.html">
+Hooks Developer's Guide</a>.
+
+@section libdhcp_legal_logIntro Libdhcp_legal_log: An Example Hooks Library
+## Introduction
+libdhcp_legal_log is an example hooks library which customizes the
+DHCP lease management provided by Kea DHCP server modules (kea-dhcp4
+and kea-dhcp6).  Specifically it implements a legal log of lease
+assignements and renewals as it could be required for legal purpose.
+
+## Log Detailed Structure
+
+## Callout Processing
+
+## Configuring the DHCP Modules
+
+It must be configured as a hook library for the desired DHCP server
+modules.  Note that the legal_log library is installed alongside the
+Kea libraries in "<install-dir>/lib" where <install-dir> is determined
+by the --prefix option of the configure script.  It defaults to
+"/usr/local". Assuming the default value then, configuring kea-dhcp4
+to load the legal_log library could be done with the following Kea4
+configuration:
+
+@code
+"Dhcp4": {
+    "hook_libraries": [ "/usr/local/lib/libdhcp_legal_log.so" ],
+    ...
+}
+@endcode
+
+To configure it for kea-dhcp6, the commands are simply as shown below:
+
+@code
+"Dhcp6": {
+    "hook_libraries": [ "/usr/local/lib/libdhcp_legal_log.so" ],
+    ...
+}
+@endcode
+
+TODO add parameters
+
+*/

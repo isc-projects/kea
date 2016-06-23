@@ -37,7 +37,7 @@ extern "C" {
 /// parameters via the Hook Library Parameter mechanism::
 ///
 /// "path" - Directory in which the legal file(s) will be written.  The default
-/// value is <prefix>/kea/var.  The directory must exist.
+/// value is "<prefix>/kea/var".  The directory must exist.
 ///
 /// "base-name" - An arbitrary value which is used in conjunction with current
 /// system date to form the current legal file name.  It defaults to "kea-legal".
