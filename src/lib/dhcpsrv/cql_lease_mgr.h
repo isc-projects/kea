@@ -356,7 +356,7 @@ public:
     ///
     /// @return Type of the backend.
     virtual std::string getType() const {
-        return (std::string("cassandra"));
+        return (std::string("cql"));
     }
 
     /// @brief Returns name of the database.
@@ -419,29 +419,8 @@ public:
         INSERT_LEASE6,              // Add entry to lease6 table
         UPDATE_LEASE4,              // Update a Lease4 entry
         UPDATE_LEASE6,              // Update a Lease6 entry
-#ifdef TERASTREAM_DB_LOGIC
-        DISCOVER_LEASE4_NOREQNORES,
-        DISCOVER_LEASE4_NOREQRES,
-        DISCOVER_LEASE4_REQNORES,
-        DISCOVER_LEASE4_REQRES,
-        REQUEST_LEASE4_NOREQNORES,
-        REQUEST_LEASE4_NOREQRES,
-        REQUEST_LEASE4_REQNORES,
-        REQUEST_LEASE4_REQRES,
-#endif // TERASTREAM_DB_LOGIC
         NUM_STATEMENTS              // Number of statements
     };
-
-#ifdef TERASTREAM_DB_LOGIC
-    virtual void discoverLease4NoReqNoRes(LeaseExchangeData &data);
-    virtual void discoverLease4NoReqRes(LeaseExchangeData &data);
-    virtual void discoverLease4ReqNoRes(LeaseExchangeData &data);
-    virtual void discoverLease4ReqRes(LeaseExchangeData &data);
-    virtual void requestLease4NoReqNoRes(LeaseExchangeData &data);
-    virtual void requestLease4NoReqRes(LeaseExchangeData &data);
-    virtual void requestLease4ReqNoRes(LeaseExchangeData &data);
-    virtual void requestLease4ReqRes(LeaseExchangeData &data);
-#endif // TERASTREAM_DB_LOGIC
 
 private:
 
