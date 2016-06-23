@@ -106,6 +106,25 @@ cql_execute() {
     return $retcode
 }
 
+cql_execute_script() {
+    file=$1
+    shift
+    if [ $# -gt 1 ]; then
+        cqlsh $* -e "$file"
+        retcode=$?
+    else
+        cqlsh -u $db_user -p $db_password -k $db_name -f "$file"
+        retcode=$?
+    fi
+
+    if [ $retcode -ne 0 ]; then
+        printf "cqlsh returned with exit status $retcode\n"
+        exit $retcode
+    fi
+
+    return $retcode
+}
+
 cql_version() {
     version=`cql_execute "SELECT version, minor FROM schema_version" "$@"`
     version=`echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 --output-delimiter="."`

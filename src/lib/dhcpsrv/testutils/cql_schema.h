@@ -32,8 +32,8 @@ std::string validCqlConnectionString();
 /// will fail. The output of stderr is suppressed unless the parameter,
 /// show_err is true.
 ///
-/// @param force_wipe forces wipe of the database, even if KEA_TEST_CASSANDRA_WIPE
-///                   is set.
+/// @param force_wipe forces wipe of the database, even if
+/// KEA_TEST_CASSANDRA_WIPE is set.
 /// @param show_err flag which governs whether or not stderr is suppressed.
 void destroyCqlSchema(bool force_wipe, bool show_err = false);
 
@@ -47,17 +47,17 @@ void destroyCqlSchema(bool force_wipe, bool show_err = false);
 /// will fail. The output of stderr is suppressed unless the parameter,
 /// show_err is true.
 ///
-/// @param force_wipe forces wipe of the database, even if KEA_TEST_CASSANDRA_WIPE
-///                   is set.
+/// @param force_wipe forces wipe of the database, even if
+/// KEA_TEST_CASSANDRA_WIPE is set.
 /// @param show_err flag which governs whether or not stderr is suppressed.
 void createCqlSchema(bool force_wipe, bool show_err = false);
 
 /// @brief Run a CQL script against the CQL unit test database
 ///
 /// Submits the given SQL script to CQL via cqlsh CLI. The output of
-/// stderr is suppressed unless the parameter, show_err is true.  The is done
+/// stderr is suppressed unless the parameter, show_err is true. The is done
 /// to suppress warnings that might otherwise make test output needlessly
-/// noisy.  A gtest assertion occurs if the script fails to execute.
+/// noisy. A gtest assertion occurs if the script fails to execute.
 ///
 /// @param path - path (if not blank) of the script to execute
 /// @param script_name - file name of the path to execute

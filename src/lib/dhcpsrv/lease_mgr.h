@@ -60,6 +60,8 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Used to map server data types with internal backend storage data
+/// types.
 enum ExchangeDataType {
     EXCHANGE_DATA_TYPE_NONE,
     EXCHANGE_DATA_TYPE_BOOL,
@@ -70,12 +72,15 @@ enum ExchangeDataType {
     EXCHANGE_DATA_TYPE_BYTES
 };
 
+/// @brief Used to specify the direction of the data exchange between the
+/// database and the server.
 enum ExchangeDataTypeIO {
     EXCHANGE_DATA_TYPE_IO_IN,
     EXCHANGE_DATA_TYPE_IO_OUT,
     EXCHANGE_DATA_TYPE_IO_IN_OUT
 };
 
+/// @brief Used to map the column name with internal backend storage data types.
 struct ExchangeColumnInfo {
     ExchangeColumnInfo () : column_(NULL), type_io_(EXCHANGE_DATA_TYPE_IO_IN), type_(EXCHANGE_DATA_TYPE_NONE) {};
     ExchangeColumnInfo (const char *column, ExchangeDataTypeIO type_io, ExchangeDataType type) : column_(column),  type_io_(type_io), type_(type) {};

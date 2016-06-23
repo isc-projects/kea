@@ -37,34 +37,49 @@ namespace dhcp {
 static const size_t HOSTNAME_MAX_LEN = 255;
 static const size_t ADDRESS6_TEXT_MAX_LEN = 39;
 
+/// @name CqlBind auxiliary methods for binding data into Cassandra format:
+/// @{
 static CassError CqlBindNone(CassStatement* statement, size_t index, void*) {
     return cass_statement_bind_null(statement, index);
 }
 
-static CassError CqlBindBool(CassStatement* statement, size_t index, void* value) {
-    return cass_statement_bind_bool(statement, index, *(static_cast<cass_bool_t*>(value)));
+static CassError CqlBindBool(CassStatement* statement, size_t index,
+        void* value) {
+    return cass_statement_bind_bool(statement, index,
+        *(static_cast<cass_bool_t*>(value)));
 }
 
-static CassError CqlBindInt32(CassStatement* statement, size_t index, void* value) {
-    return cass_statement_bind_int32(statement, index, *(static_cast<cass_int32_t*>(value)));
+static CassError CqlBindInt32(CassStatement* statement, size_t index,
+        void* value) {
+    return cass_statement_bind_int32(statement, index,
+        *(static_cast<cass_int32_t*>(value)));
 }
 
-static CassError CqlBindInt64(CassStatement* statement, size_t index, void* value) {
-    return cass_statement_bind_int64(statement, index, *(static_cast<cass_int64_t*>(value)));
+static CassError CqlBindInt64(CassStatement* statement, size_t index,
+        void* value) {
+    return cass_statement_bind_int64(statement, index,
+        *(static_cast<cass_int64_t*>(value)));
 }
 
-static CassError CqlBindTimestamp(CassStatement* statement, size_t index, void* value) {
-    return cass_statement_bind_int64(statement, index, *(static_cast<cass_int64_t*>(value)));
+static CassError CqlBindTimestamp(CassStatement* statement, size_t index,
+        void* value) {
+    return cass_statement_bind_int64(statement, index,
+        *(static_cast<cass_int64_t*>(value)));
 }
 
-static CassError CqlBindString(CassStatement* statement, size_t index, void* value) {
-    return cass_statement_bind_string(statement, index, (static_cast<const char*>(value)));
+static CassError CqlBindString(CassStatement* statement, size_t index,
+        void* value) {
+    return cass_statement_bind_string(statement, index,
+        (static_cast<const char*>(value)));
 }
 
-static CassError CqlBindBytes(CassStatement* statement, size_t index, void* value) {
-    return cass_statement_bind_bytes(statement, index, &(*(static_cast<std::vector<cass_byte_t>*>(value)))[0],
-            static_cast<std::vector<cass_byte_t>*>(value)->size());
+static CassError CqlBindBytes(CassStatement* statement, size_t index,
+        void* value) {
+    return cass_statement_bind_bytes(statement, index,
+        static_cast<std::vector<cass_byte_t>*>(value)->data(),
+        static_cast<std::vector<cass_byte_t>*>(value)->size());
 }
+/// @}
 
 static CassError CqlGetNone(const CassValue*, void*, size_t*) {
     return CASS_OK;
@@ -86,16 +101,20 @@ static CassError CqlGetTimestamp(const CassValue* value, void* data, size_t*) {
     return cass_value_get_int64(value, static_cast<cass_int64_t*>(data));
 }
 
-static CassError CqlGetString(const CassValue* value, void* data, size_t* size) {
+static CassError CqlGetString(const CassValue* value, void* data,
+        size_t* size) {
     return cass_value_get_string(value, static_cast<const char**>(data), size);
 }
 
 static CassError CqlGetBytes(const CassValue* value, void* data, size_t* size) {
-    return cass_value_get_bytes(value, static_cast<const cass_byte_t**>(data), size);
+    return cass_value_get_bytes(value, static_cast<const cass_byte_t**>(data),
+        size);
 }
 
-typedef CassError (*CqlBindFunction)(CassStatement* statement, size_t index, void* value);
-typedef CassError (*CqlGetFunction)(const CassValue* value, void* data, size_t* size);
+typedef CassError (*CqlBindFunction)(CassStatement* statement, size_t index,
+        void* value);
+typedef CassError (*CqlGetFunction)(const CassValue* value, void* data,
+        size_t* size);
 
 struct CqlFunctionData {
     CqlBindFunction sqlBindFunction_;
@@ -112,9 +131,9 @@ static struct CqlFunctionData CqlFunctions[] = {
     {CqlBindBytes, CqlGetBytes}
 };
 
-/// @brief Catalog of all the SQL statements currently supported.  Note
+/// @brief Catalog of all the SQL statements currently supported. Note
 /// that the order columns appear in statement body must match the order they
-/// that the occur in the table.  This does not apply to the where clause.
+/// that the occur in the table. This does not apply to the where clause.
 
 static const char* delete_lease4_params[] = {
         static_cast<const char*>("address"),
@@ -173,7 +192,6 @@ static const char* get_lease6_expired_params[] = {
         static_cast<const char*>("limit"),
         NULL };
 static const char* get_version_params[] = {
-        static_cast<const char*>("version"),
         NULL };
 static const char* insert_lease4_params[] = {
         static_cast<const char*>("address"),
@@ -318,7 +336,6 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
         "valid_lifetime, expire, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
-      //"WHERE state != ? AND expire < ? ORDER BY expire ASC "
       "WHERE state = ? AND expire < ? "
       "LIMIT ? ALLOW FILTERING" },
 
@@ -373,7 +390,8 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
     { insert_lease4_params,
       "insert_lease4",
       "INSERT INTO lease4(address, hwaddr, client_id, "
-        "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, state) "
+        "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, "
+        "state) "
       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
     },
 
@@ -382,7 +400,8 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
       "insert_lease6",
       "INSERT INTO lease6(address, duid, valid_lifetime, "
         "expire, subnet_id, pref_lifetime, "
-        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, hwaddr_source, state) "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, "
+        "hwtype, hwaddr_source, state) "
       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
     },
 
@@ -410,23 +429,15 @@ CqlTaggedStatement CqlLeaseMgr::tagged_statements_[] = {
     { NULL, NULL, NULL }
 };
 
-
-/// @brief Common CQL and Lease Data Methods
-///
-/// The CqlLease4Exchange and CqlLease6Exchange classes provide the
-/// functionality to set up binding information between variables in the
-/// program and data extracted from the database.  This class is the common
-/// base to both of them, containing some common methods.
-
 class CqlExchange : public virtual SqlExchange {
 public:
     // Time conversion methods.
     static void
     convertToDatabaseTime(const time_t& cltt,
-                                             const uint32_t& valid_lifetime,
-                                             uint64_t& expire) {
-        // Calculate expiry time. Store it in the 64-bit value so as we can detect
-        // overflows.
+                          const uint32_t& valid_lifetime,
+                          uint64_t& expire) {
+        // Calculate expiry time. Store it in the 64-bit value so as we can
+        // detect overflows.
         int64_t expire_time = static_cast<int64_t>(cltt) +
             static_cast<int64_t>(valid_lifetime);
 
@@ -439,18 +450,24 @@ public:
 
     static void
     convertFromDatabaseTime(const uint64_t& expire,
-                                           const uint32_t& valid_lifetime,
-                                           time_t& cltt) {
+                            const uint32_t& valid_lifetime,
+                            time_t& cltt) {
         // Convert to local time
         cltt = expire - static_cast<int64_t>(valid_lifetime);
     }
 };
 
+/// @brief Common CQL and Lease Data Methods
+///
+/// The CqlLease4Exchange and CqlLease6Exchange classes provide the
+/// functionality to set up binding information between variables in the
+/// program and data extracted from the database. This class is the common
+/// base to both of them, containing some common methods.
 class CqlLeaseExchange : public CqlExchange {
 public:
-    CqlLeaseExchange() : hwaddr_length_(0), expire_(0),
-                            subnet_id_(0), valid_lifetime_(0),
-                            fqdn_fwd_(false), fqdn_rev_(false), hostname_length_(0), state_(0) {
+    CqlLeaseExchange() : hwaddr_length_(0), expire_(0), subnet_id_(0),
+                         valid_lifetime_(0), fqdn_fwd_(false), fqdn_rev_(false),
+                         hostname_length_(0), state_(0) {
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(hostname_buffer_, 0, sizeof(hostname_buffer_));
     }
@@ -473,17 +490,38 @@ protected:
 };
 
 
+class CqlVersionExchange : public virtual CqlExchange {
+public:
+    /// @brief Constructor
+    ///
+    /// The initialization of the variables here is only to satisfy cppcheck -
+    /// all variables are initialized/set in the methods before they are used.
+    CqlVersionExchange() {
+        const size_t MAX_COLUMNS = 2;
+        // Set the column names (for error messages)
+        size_t offset = 0;
+        BOOST_ASSERT(2 == MAX_COLUMNS);
+        parameters_.resize(MAX_COLUMNS);
+        parameters_[offset++] = ExchangeColumnInfo("version",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        parameters_[offset++] = ExchangeColumnInfo("minor",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        BOOST_ASSERT(offset == MAX_COLUMNS);
+    }
+};
+
+
 /// @brief Exchange CQL and Lease4 Data
 ///
 /// On any CQL operation, arrays of CQL BIND structures must be built to
-/// describe the parameters in the prepared statements.  Where information is
+/// describe the parameters in the prepared statements. Where information is
 /// inserted or retrieved - INSERT, UPDATE, SELECT - a large amount of that
-/// structure is identical.  This class handles the creation of that array.
+/// structure is identical. This class handles the creation of that array.
 ///
 /// Owing to the CQL API, the process requires some intermediate variables
-/// to hold things like data length etc.  This object holds those variables.
+/// to hold things like data length etc. This object holds those variables.
 ///
-/// @note There are no unit tests for this class.  It is tested indirectly
+/// @note There are no unit tests for this class. It is tested indirectly
 /// in all CqlLeaseMgr::xxx4() calls where it is used.
 
 class CqlLease4Exchange : public CqlLeaseExchange {
@@ -494,25 +532,36 @@ public:
     /// all variables are initialized/set in the methods before they are used.
     CqlLease4Exchange() : addr4_(0), client_id_length_(0),
                             client_id_null_(false) {
+        const size_t MAX_COLUMNS = 11;
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
 
         // Set the column names (for error messages)
-        uint32_t size;
-        uint32_t offset = 0;
-        size = 12;
-        parameters_.resize(size);
-        parameters_[offset++] = ExchangeColumnInfo("address", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
-        parameters_[offset++] = ExchangeColumnInfo("hwaddr", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BYTES);
-        parameters_[offset++] = ExchangeColumnInfo("client_id", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BYTES);
-        parameters_[offset++] = ExchangeColumnInfo("valid_lifetime", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT64);
-        parameters_[offset++] = ExchangeColumnInfo("expire", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_TIMESTAMP);
-        parameters_[offset++] = ExchangeColumnInfo("subnet_id", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
-        parameters_[offset++] = ExchangeColumnInfo("fqdn_fwd", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BOOL);
-        parameters_[offset++] = ExchangeColumnInfo("fqdn_rev", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BOOL);
-        parameters_[offset++] = ExchangeColumnInfo("hostname", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_STRING);
-        parameters_[offset++] = ExchangeColumnInfo("state", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
-        parameters_[offset++] = ExchangeColumnInfo("limit", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
-        parameters_[offset++] = ExchangeColumnInfo("version", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_NONE);
+        size_t offset = 0;
+        BOOST_STATIC_ASSERT(11 == MAX_COLUMNS);
+        parameters_.resize(MAX_COLUMNS);
+        parameters_[offset++] = ExchangeColumnInfo("address",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        parameters_[offset++] = ExchangeColumnInfo("hwaddr",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BYTES);
+        parameters_[offset++] = ExchangeColumnInfo("client_id",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BYTES);
+        parameters_[offset++] = ExchangeColumnInfo("valid_lifetime",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT64);
+        parameters_[offset++] = ExchangeColumnInfo("expire",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_TIMESTAMP);
+        parameters_[offset++] = ExchangeColumnInfo("subnet_id",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        parameters_[offset++] = ExchangeColumnInfo("fqdn_fwd",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BOOL);
+        parameters_[offset++] = ExchangeColumnInfo("fqdn_rev",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BOOL);
+        parameters_[offset++] = ExchangeColumnInfo("hostname",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_STRING);
+        parameters_[offset++] = ExchangeColumnInfo("state",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        parameters_[offset++] = ExchangeColumnInfo("limit",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        BOOST_ASSERT(offset == MAX_COLUMNS);
     }
 
     /// @brief Create CQL_BIND objects for Lease4 Pointer
@@ -530,8 +579,8 @@ public:
 
         try {
             // address: uint32_t
-            // The address in the Lease structure is an IOAddress object.  Convert
-            // this to an integer for storage.
+            // The address in the Lease structure is an IOAddress object.
+            // Convert this to an integer for storage.
             addr4_ = static_cast<uint32_t>(lease_->addr_);
             data.add(&addr4_);
 
@@ -554,10 +603,11 @@ public:
             // expire: timestamp
             // The lease structure holds the client last transmission time (cltt_)
             // For convenience for external tools, this is converted to lease
-            // expiry time (expire).  The relationship is given by:
+            // expiry time (expire). The relationship is given by:
             //
             // expire = cltt_ + valid_lft_
-            CqlLeaseExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
+            CqlLeaseExchange::convertToDatabaseTime(lease_->cltt_,
+                lease_->valid_lft_, expire_);
             data.add(&expire_);
 
             // subnet_id: unsigned int
@@ -576,10 +626,12 @@ public:
             // hostname: varchar(255)
             hostname_length_  = lease_->hostname_.length();
             if (hostname_length_ >= sizeof(hostname_buffer_)) {
-                isc_throw(BadValue, "hostname value is too large: " << lease_->hostname_.c_str());
+                isc_throw(BadValue, "hostname value is too large: " <<
+                    lease_->hostname_.c_str());
             }
             if (hostname_length_) {
-                memcpy(hostname_buffer_, lease_->hostname_.c_str(), hostname_length_);
+                memcpy(hostname_buffer_, lease_->hostname_.c_str(),
+                    hostname_length_);
             }
             hostname_buffer_[hostname_length_] = '\0';
             data.add(hostname_buffer_);
@@ -655,9 +707,11 @@ public:
             hwaddr_.assign(hwaddr_buffer, hwaddr_buffer + hwaddr_length_);
 
             // client_id: varbinary(128)
-            client_id_.assign(client_id_buffer, client_id_buffer + client_id_length_);
+            client_id_.assign(client_id_buffer, client_id_buffer +
+                client_id_length_);
             if (client_id_length_ >= sizeof(client_id_buffer_)) {
-                isc_throw(BadValue, "client id value is too large: " << client_id_buffer);
+                isc_throw(BadValue, "client id value is too large: " <<
+                    client_id_buffer);
             }
             if (client_id_length_) {
                 memcpy(client_id_buffer_, client_id_buffer, client_id_length_);
@@ -666,7 +720,8 @@ public:
 
             // hostname: varchar(255)
             if (hostname_length_ >= sizeof(hostname_buffer_)) {
-                isc_throw(BadValue, "hostname value is too large: " << hostname_buffer);
+                isc_throw(BadValue, "hostname value is too large: " <<
+                    hostname_buffer);
             }
             if (hostname_length_) {
                 memcpy(hostname_buffer_, hostname_buffer, hostname_length_);
@@ -674,7 +729,8 @@ public:
             hostname_buffer_[hostname_length_] = '\0';
 
             time_t cltt = 0;
-            CqlLeaseExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+            CqlLeaseExchange::convertFromDatabaseTime(expire_, valid_lifetime_,
+                cltt);
 
             // Recreate the hardware address.
             HWAddrPtr hwaddr(new HWAddr(hwaddr_, HTYPE_ETHER));
@@ -682,11 +738,10 @@ public:
             std::string hostname(hostname_buffer_,
                                  hostname_buffer_ + hostname_length_);
 
-            Lease4Ptr result(new Lease4(addr4_, hwaddr,
-                                                     client_id_buffer_, client_id_length_,
-                                                     valid_lifetime_, 0, 0, cltt,
-                                                     subnet_id_, fqdn_fwd_, fqdn_rev_,
-                                                     hostname));
+            Lease4Ptr result(new Lease4(addr4_, hwaddr, client_id_buffer_,
+                                        client_id_length_, valid_lifetime_, 0,
+                                        0, cltt, subnet_id_, fqdn_fwd_,
+                                        fqdn_rev_, hostname));
 
             result->state_ = state_;
 
@@ -713,19 +768,17 @@ private:
     bool            client_id_null_;    ///< Is Client ID null?
 };
 
-
-
 /// @brief Exchange CQL and Lease6 Data
 ///
 /// On any CQL operation, arrays of CQL BIND structures must be built to
-/// describe the parameters in the prepared statements.  Where information is
+/// describe the parameters in the prepared statements. Where information is
 /// inserted or retrieved - INSERT, UPDATE, SELECT - a large amount of that
-/// structure is identical.  This class handles the creation of that array.
+/// structure is identical. This class handles the creation of that array.
 ///
 /// Owing to the CQL API, the process requires some intermediate variables
-/// to hold things like data length etc.  This object holds those variables.
+/// to hold things like data length etc. This object holds those variables.
 ///
-/// @note There are no unit tests for this class.  It is tested indirectly
+/// @note There are no unit tests for this class. It is tested indirectly
 /// in all CqlLeaseMgr::xxx6() calls where it is used.
 
 class CqlLease6Exchange : public CqlLeaseExchange {
@@ -738,32 +791,49 @@ public:
                             iaid_(0), lease_type_(0), prefixlen_(0),
                             pref_lifetime_(0), hwaddr_null_(false), hwtype_(0),
                             hwaddr_source_(0) {
+        const size_t MAX_COLUMNS = 17;
         memset(addr6_buffer_, 0, sizeof(addr6_buffer_));
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
 
         // Set the column names (for error messages)
-        uint32_t size;
-        uint32_t offset = 0;
-        size = 18;
-        parameters_.resize(size);
-        parameters_[offset++] = ExchangeColumnInfo("address", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_STRING);
-        parameters_[offset++] = ExchangeColumnInfo("duid", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BYTES);
-        parameters_[offset++] = ExchangeColumnInfo("valid_lifetime", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT64);
-        parameters_[offset++] = ExchangeColumnInfo("expire", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_TIMESTAMP);
-        parameters_[offset++] = ExchangeColumnInfo("subnet_id", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
-        parameters_[offset++] = ExchangeColumnInfo("pref_lifetime", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT64);
-        parameters_[offset++] = ExchangeColumnInfo("lease_type", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
-        parameters_[offset++] = ExchangeColumnInfo("iaid", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
-        parameters_[offset++] = ExchangeColumnInfo("prefix_len", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
-        parameters_[offset++] = ExchangeColumnInfo("fqdn_fwd", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BOOL);
-        parameters_[offset++] = ExchangeColumnInfo("fqdn_rev", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BOOL);
-        parameters_[offset++] = ExchangeColumnInfo("hostname", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_STRING);
-        parameters_[offset++] = ExchangeColumnInfo("hwaddr", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BYTES);
-        parameters_[offset++] = ExchangeColumnInfo("hwtype", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
-        parameters_[offset++] = ExchangeColumnInfo("hwaddr_source", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
-        parameters_[offset++] = ExchangeColumnInfo("state", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
-        parameters_[offset++] = ExchangeColumnInfo("limit", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
-        parameters_[offset++] = ExchangeColumnInfo("version", EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_NONE);
+        size_t offset = 0;
+        BOOST_STATIC_ASSERT(17 == MAX_COLUMNS);
+        parameters_.resize(MAX_COLUMNS);
+        parameters_[offset++] = ExchangeColumnInfo("address",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_STRING);
+        parameters_[offset++] = ExchangeColumnInfo("duid",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BYTES);
+        parameters_[offset++] = ExchangeColumnInfo("valid_lifetime",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT64);
+        parameters_[offset++] = ExchangeColumnInfo("expire",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_TIMESTAMP);
+        parameters_[offset++] = ExchangeColumnInfo("subnet_id",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        parameters_[offset++] = ExchangeColumnInfo("pref_lifetime",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT64);
+        parameters_[offset++] = ExchangeColumnInfo("lease_type",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        parameters_[offset++] = ExchangeColumnInfo("iaid",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        parameters_[offset++] = ExchangeColumnInfo("prefix_len",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        parameters_[offset++] = ExchangeColumnInfo("fqdn_fwd",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BOOL);
+        parameters_[offset++] = ExchangeColumnInfo("fqdn_rev",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BOOL);
+        parameters_[offset++] = ExchangeColumnInfo("hostname",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_STRING);
+        parameters_[offset++] = ExchangeColumnInfo("hwaddr",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BYTES);
+        parameters_[offset++] = ExchangeColumnInfo("hwtype",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        parameters_[offset++] = ExchangeColumnInfo("hwaddr_source",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        parameters_[offset++] = ExchangeColumnInfo("state",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        parameters_[offset++] = ExchangeColumnInfo("limit",
+            EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32);
+        BOOST_ASSERT(offset == MAX_COLUMNS);
     }
 
     /// @brief Create CQL_BIND objects for Lease6 Pointer
@@ -776,15 +846,16 @@ public:
         }
         // Store lease object to ensure it remains valid.
         lease_ = lease;
+
         // Set up the structures for the various components of the lease4
         // structure.
-
         try {
             // address: varchar(39)
             std::string text_buffer = lease_->addr_.toText();
             addr6_length_ = text_buffer.size();
             if (addr6_length_ >= sizeof(addr6_buffer_)) {
-                isc_throw(BadValue, "address value is too large: " << text_buffer);
+                isc_throw(BadValue, "address value is too large: " <<
+                    text_buffer);
             }
             if (addr6_length_) {
                 memcpy(addr6_buffer_, text_buffer.c_str(), addr6_length_);
@@ -794,8 +865,8 @@ public:
 
             // duid: varchar(128)
             if (!lease_->duid_) {
-                isc_throw(DbOperationError, "lease6 for address " << addr6_buffer_
-                          << " is missing mandatory client-id.");
+                isc_throw(DbOperationError, "lease6 for address " <<
+                    addr6_buffer_ << " is missing mandatory client-id.");
             }
             duid_ = lease_->duid_->getDuid();
             duid_length_ = duid_.size();
@@ -808,10 +879,11 @@ public:
             // expire: timestamp
             // The lease structure holds the client last transmission time (cltt_)
             // For convenience for external tools, this is converted to lease
-            // expiry time (expire).  The relationship is given by:
+            // expiry time (expire). The relationship is given by:
             //
             // expire = cltt_ + valid_lft_
-            CqlLeaseExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
+            CqlLeaseExchange::convertToDatabaseTime(lease_->cltt_,
+                lease_->valid_lft_, expire_);
             data.add(&expire_);
 
             // subnet_id: unsigned int
@@ -850,10 +922,12 @@ public:
             // hostname: varchar(255)
             hostname_length_  = lease_->hostname_.length();
             if (hostname_length_ >= sizeof(hostname_buffer_)) {
-                isc_throw(BadValue, "hostname value is too large: " << lease_->hostname_.c_str());
+                isc_throw(BadValue, "hostname value is too large: " <<
+                    lease_->hostname_.c_str());
             }
             if (hostname_length_) {
-                memcpy(hostname_buffer_, lease_->hostname_.c_str(), hostname_length_);
+                memcpy(hostname_buffer_, lease_->hostname_.c_str(),
+                    hostname_length_);
             }
             hostname_buffer_[hostname_length_] = '\0';
             data.add(hostname_buffer_);
@@ -977,7 +1051,8 @@ public:
 
             // address: varchar(39)
             if (addr6_length_ >= sizeof(addr6_buffer_)) {
-                isc_throw(BadValue, "address value is too large: " << address_buffer);
+                isc_throw(BadValue, "address value is too large: " <<
+                    address_buffer);
             }
             if (addr6_length_) {
                 memcpy(addr6_buffer_, address_buffer, addr6_length_);
@@ -989,7 +1064,8 @@ public:
 
             // hostname: varchar(255)
             if (hostname_length_ >= sizeof(hostname_buffer_)) {
-                isc_throw(BadValue, "hostname value is too large: " << hostname_buffer);
+                isc_throw(BadValue, "hostname value is too large: " <<
+                    hostname_buffer);
             }
             if (hostname_length_) {
                 memcpy(hostname_buffer_, hostname_buffer, hostname_length_);
@@ -1021,13 +1097,15 @@ public:
 
             // Create the lease and set the cltt (after converting from the
             // expire time retrieved from the database).
-            Lease6Ptr result(new Lease6(static_cast<Lease::Type>(lease_type_), addr, duid, iaid_,
-                                        pref_lifetime_, valid_lifetime_, 0, 0,
-                                        subnet_id_, fqdn_fwd_, fqdn_rev_,
-                                        hostname, hwaddr, prefixlen_));
+            Lease6Ptr result(new Lease6(static_cast<Lease::Type>(lease_type_),
+                                        addr, duid, iaid_, pref_lifetime_,
+                                        valid_lifetime_, 0, 0, subnet_id_,
+                                        fqdn_fwd_, fqdn_rev_, hostname, hwaddr,
+                                        prefixlen_));
 
             time_t cltt = 0;
-            CqlLeaseExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+            CqlLeaseExchange::convertFromDatabaseTime(expire_, valid_lifetime_,
+                cltt);
             result->cltt_ = cltt;
 
             result->state_ = state_;
@@ -1063,12 +1141,14 @@ private:
 
 CqlLeaseMgr::CqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : LeaseMgr(), dbconn_(parameters), exchange4_(new CqlLease4Exchange()),
-    exchange6_(new CqlLease6Exchange()) {
+    exchange6_(new CqlLease6Exchange()), versionExchange_(new CqlVersionExchange()) {
     dbconn_.openDatabase();
     dbconn_.prepareStatements(CqlLeaseMgr::tagged_statements_);
 }
 
 CqlLeaseMgr::~CqlLeaseMgr() {
+    // There is no need to close the database in this destructor: it is
+    // closed in the destructor of the dbconn_ member variable.
 }
 
 std::string
@@ -1081,11 +1161,13 @@ CqlLeaseMgr::getDBVersion() {
 }
 
 void
-CqlLeaseMgr::getDataType(const StatementIndex stindex, int pindex, const SqlExchange& exchange, ExchangeDataType& type) {
+CqlLeaseMgr::getDataType(const StatementIndex stindex, int pindex,
+        const SqlExchange& exchange, ExchangeDataType& type) {
     if (CqlLeaseMgr::tagged_statements_[stindex].params_ &&
             CqlLeaseMgr::tagged_statements_[stindex].params_[pindex]) {
         for (int i = 0; exchange.parameters_.size(); i++) {
-            if (!strcmp(CqlLeaseMgr::tagged_statements_[stindex].params_[pindex], exchange.parameters_[i].column_)) {
+            if (!strcmp(CqlLeaseMgr::tagged_statements_[stindex].params_[pindex],
+                    exchange.parameters_[i].column_)) {
                 type = exchange.parameters_[i].type_;
                 return;
             }
@@ -1095,7 +1177,8 @@ CqlLeaseMgr::getDataType(const StatementIndex stindex, int pindex, const SqlExch
 }
 
 void
-CqlLeaseMgr::bindData(CassStatement* statement, const StatementIndex stindex, CqlDataArray& data, const SqlExchange& exchange) {
+CqlLeaseMgr::bindData(CassStatement* statement, const StatementIndex stindex,
+        CqlDataArray& data, const SqlExchange& exchange) {
     if (CqlLeaseMgr::tagged_statements_[stindex].params_ == NULL) {
         return;
     }
@@ -1107,13 +1190,19 @@ CqlLeaseMgr::bindData(CassStatement* statement, const StatementIndex stindex, Cq
 }
 
 void
-CqlLeaseMgr::getData(const CassRow* row, int pindex, CqlDataArray& data, CqlDataArray& size, const SqlExchange& exchange) {
+CqlLeaseMgr::getData(const CassRow* row, int pindex, CqlDataArray& data,
+        CqlDataArray& size, const SqlExchange& exchange) {
     const CassValue* value;
     if (pindex >= exchange.parameters_.size()) {
         return;
     }
     value = cass_row_get_column_by_name(row, exchange.parameters_[pindex].column_);
-    CqlFunctions[exchange.parameters_[pindex].type_].sqlGetFunction_(value, data.values_[pindex], reinterpret_cast<size_t *>(size.values_[pindex]));
+    if (NULL == value) {
+        isc_throw(BadValue, "Column name "
+            << exchange.parameters_[pindex].column_ << "doesn't exist");
+    }
+    CqlFunctions[exchange.parameters_[pindex].type_].sqlGetFunction_(value,
+        data.values_[pindex], reinterpret_cast<size_t *>(size.values_[pindex]));
 }
 
 bool
@@ -1200,8 +1289,7 @@ void CqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     int rowCount = 0;
     while (cass_iterator_next(rows)) {
         rowCount++;
-        if (single && rowCount > 1)
-        {
+        if (single && rowCount > 1) {
             result.clear();
             break;
         }
@@ -1224,7 +1312,7 @@ void
 CqlLeaseMgr::getLease(StatementIndex stindex, CqlDataArray& data,
                              Lease4Ptr& result) const {
     // Create appropriate collection object and get all leases matching
-    // the selection criteria.  The "single" parameter is true to indicate
+    // the selection criteria. The "single" parameter is true to indicate
     // that the called method should throw an exception if multiple
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
@@ -1244,7 +1332,7 @@ void
 CqlLeaseMgr::getLease(StatementIndex stindex, CqlDataArray& data,
                              Lease6Ptr& result) const {
     // Create appropriate collection object and get all leases matching
-    // the selection criteria.  The "single" parameter is true to indicate
+    // the selection criteria. The "single" parameter is true to indicate
     // that the called method should throw an exception if multiple
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
@@ -1259,7 +1347,7 @@ CqlLeaseMgr::getLease(StatementIndex stindex, CqlDataArray& data,
     }
 }
 
-// Basic lease access methods.  Obtain leases from the database using various
+// Basic lease access methods. Obtain leases from the database using various
 // criteria.
 
 Lease4Ptr
@@ -1342,7 +1430,8 @@ CqlLeaseMgr::getLease4(const ClientId& clientid) const {
 }
 
 Lease4Ptr
-CqlLeaseMgr::getLease4(const ClientId& clientid, const HWAddr& hwaddr, SubnetID subnet_id) const {
+CqlLeaseMgr::getLease4(const ClientId& clientid, const HWAddr& hwaddr,
+        SubnetID subnet_id) const {
     /// This function is currently not implemented because allocation engine
     /// searches for the lease using HW address or client identifier.
     /// It never uses both parameters in the same time. We need to
@@ -1498,7 +1587,8 @@ CqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
     uint32_t limit = max_leases > 0 ? static_cast<uint32_t>(max_leases) :
         std::numeric_limits<uint32_t>::max();
 
-    for (uint32_t state = Lease::STATE_DEFAULT; state <= Lease::STATE_EXPIRED_RECLAIMED; state++) {
+    for (uint32_t state = Lease::STATE_DEFAULT;
+            state <= Lease::STATE_EXPIRED_RECLAIMED; state++) {
         if (state == keepState) {
             continue;
         }
@@ -1514,7 +1604,8 @@ CqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
 
         typedef typename LeaseCollection::iterator LeaseCollectionIt;
 
-        for (LeaseCollectionIt it = tempCollection.begin(); it != tempCollection.end(); ++it) {
+        for (LeaseCollectionIt it = tempCollection.begin();
+                it != tempCollection.end(); ++it) {
             expired_leases.push_back((*it));
         }
     }
@@ -1673,7 +1764,8 @@ CqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
 }
 
 uint64_t
-CqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs, StatementIndex statement_index) {
+CqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
+        StatementIndex statement_index) {
     // Set up the WHERE clause value
     //"WHERE state = ? AND expire < ? ALLOW FILTERING"
 
@@ -1685,7 +1777,8 @@ CqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs, StatementIn
     data.add(&state);
 
     // Expiration timestamp.
-    uint64_t expiration = static_cast<int64_t>(time(NULL) - static_cast<time_t>(secs));
+    uint64_t expiration = static_cast<int64_t>(time(NULL) -
+        static_cast<time_t>(secs));
     data.add(&expiration);
 
     // Get the data
@@ -1701,12 +1794,14 @@ CqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs, StatementIn
     default:
         break;
     }
-    for (Lease4Collection::iterator it = result4Leases.begin(); it != result4Leases.end(); ++it) {
+    for (Lease4Collection::iterator it = result4Leases.begin();
+            it != result4Leases.end(); ++it) {
         if (deleteLease((*it)->addr_)) {
             result++;
         }
     }
-    for (Lease6Collection::iterator it = result6Leases.begin(); it != result6Leases.end(); ++it) {
+    for (Lease6Collection::iterator it = result6Leases.begin();
+            it != result6Leases.end(); ++it) {
         if (deleteLease((*it)->addr_)) {
             result++;
         }
@@ -1734,9 +1829,49 @@ pair<uint32_t, uint32_t>
 CqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_CQL_GET_VERSION);
+    uint32_t version;
+    uint32_t minor;
+    CassError rc;
+    CassStatement* statement = NULL;
+    CassFuture* future = NULL;
 
-    uint32_t version = CASS_VERSION_MAJOR;
-    uint32_t minor = CASS_VERSION_MINOR;
+    statement = cass_prepared_bind(dbconn_.statements_[GET_VERSION]);
+
+    future = cass_session_execute(dbconn_.session_, statement);
+    cass_future_wait(future);
+    std::string error;
+    dbconn_.checkStatementError(error, future, "unable to GET");
+    rc = cass_future_error_code(future);
+    if (rc != CASS_OK) {
+        cass_future_free(future);
+        cass_statement_free(statement);
+        isc_throw(DbOperationError, error);
+    }
+
+    const CassResult* resultCollection = cass_future_get_result(future);
+    CassIterator* rows = cass_iterator_from_result(resultCollection);
+    CqlDataArray data;
+    CqlDataArray size;
+    int rowCount = 0;
+    while (cass_iterator_next(rows)) {
+        rowCount++;
+        const CassRow* row = cass_iterator_get_row(rows);
+        // version: uint32_t
+        data.add(reinterpret_cast<void*>(&version));
+        size.add(NULL);
+        // minor: uint32_t
+        data.add(reinterpret_cast<void*>(&minor));
+        size.add(NULL);
+
+        for (int i = 0; i < 2; i++) {
+            CqlLeaseMgr::getData(row, i, data, size, *versionExchange_);
+        }
+    }
+
+    cass_iterator_free(rows);
+    cass_result_free(resultCollection);
+    cass_future_free(future);
+    cass_statement_free(statement);
 
     return make_pair<uint32_t, uint32_t>(version, minor);
 }

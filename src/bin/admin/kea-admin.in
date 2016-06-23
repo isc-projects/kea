@@ -208,7 +208,8 @@ cql_init() {
         printf "Creating and initializing tables using script %s...\n" $scripts_dir/cql/dhcpdb_create.cql
         cql_execute_script $scripts_dir/cql/dhcpdb_create.cql
     else
-        printf "Tables are already created.\n"
+        log_error "Expected empty database $db_name, but the following tables are present \n$result. Aborting."
+        exit 2
     fi
 
     version=`cql_version`
@@ -485,44 +486,38 @@ cql_dump() {
 
     # Fetch the correct SQL text. Note this function will exit
     # if it fails.
-    get_dump_query $version
+
+    select_where_clause=""
+    if [ $dump_type -eq 4 ]; then
+        dump_qry="SELECT address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state FROM keatest.lease4"
+        select_where_clause=" WHERE address = 0" # invalid address
+    elif [ $dump_type -eq 6 ]; then
+        dump_qry="SELECT address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state FROM keatest.lease6"
+        select_where_clause=" WHERE address = ::" # invalid address
+    fi
 
     # Make sure they specified a file
     if [ "$dump_file" = "" ]; then
         log_error "you must specify an output file for lease-dump"
         usage
         exit 1
-
     fi
 
     # If output file exists, notify user, allow them a chance to bail
     check_file_overwrite $dump_file
 
-    # Check the temp file too
-    tmp_file="$dump_file.tmp"
-    check_file_overwrite $tmp_file
-
-    # Run the sql to output tab-delimited lease data to a temp file.
-    # By using a temp file we can check for MySQL errors before using
-    # 'tr' to translate tabs to commas.  We do not use MySQL's output
-    # to file as that requires linux superuser privileges to execute
-    # the select.
-    cql_execute "${dump_qry}" > $tmp_file
-    retcode=$?
-    if [ $retcode -ne 0 ]; then
+    cql_execute "${dump_qry}${select_where_clause}" | head -n 2 | tail -n 1 | sed -e 's/\s*//g' | sed -e 's/|/,/g' > $dump_file
+    if [ $? -ne 0 ]; then
         log_error "lease-dump: cql_execute failed, exit code $retcode";
         exit 1
     fi
 
-    # Now translate tabs to commas.
-    cat $tmp_file | tr '\t' ',' >$dump_file
+    cql_execute "${dump_qry}" | tail -n +4 | head -n -2 | sed -e 's/\s*//g' | sed -e 's/|/,/g' | sort -r >> $dump_file
     if [ $? -ne 0 ]; then
-        log_error "lease-dump: reformatting failed";
+        log_error "lease-dump: cql_execute failed, exit code $retcode";
         exit 1
     fi
 
-    # delete the tmp file on success
-    rm $tmp_file
     echo lease$dump_type successfully dumped to $dump_file
     exit 0
 }

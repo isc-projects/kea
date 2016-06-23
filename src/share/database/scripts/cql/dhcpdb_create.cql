@@ -103,11 +103,9 @@ CREATE TABLE lease6_types (
     name varchar,                               -- Name of the lease type
     PRIMARY KEY (lease_type)
 );
---START TRANSACTION;
 INSERT INTO lease6_types (lease_type, name) VALUES (0, 'IA_NA');   -- Non-temporary v6 addresses
 INSERT INTO lease6_types (lease_type, name) VALUES (1, 'IA_TA');   -- Temporary v6 addresses
 INSERT INTO lease6_types (lease_type, name) VALUES (2, 'IA_PD');   -- Prefix delegations
---COMMIT;
 
 -- Kea keeps track of the hardware/MAC address source, i.e. how the address
 -- was obtained. Depending on the technique and your network topology, it may
@@ -198,16 +196,9 @@ INSERT INTO lease_state (state, name) VALUES (2, 'expired-reclaimed');
 -- This table is only modified during schema upgrades.  For historical reasons
 -- (related to the names of the columns in the BIND 10 DNS database file), the
 -- first column is called "version" and not "major".
-
--- NOTE: this MUST be kept in step with src/lib/dhcpsrv/tests/schema_copy.h,
---       which defines the schema for the unit tests.  If you are updating
---       the version number, the schema has changed: please ensure that
---       schema_copy.h has been updated as well.
 CREATE TABLE schema_version (
     version int,
     minor int,
     PRIMARY KEY (version)
 );
---START TRANSACTION;
 INSERT INTO schema_version (version, minor) VALUES (1, 0);
---COMMIT;
