@@ -52,8 +52,8 @@ endif
 if HAVE_PGSQL
 lfc_unittests_LDFLAGS += $(PGSQL_LIBS)
 endif
-if HAVE_DSCSQL
-lfc_unittests_LDFLAGS += $(DSCSQL_LIBS)
+if HAVE_CQL
+lfc_unittests_LDFLAGS += $(CQL_LIBS)
 endif
 lfc_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 

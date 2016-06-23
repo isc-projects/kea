@@ -83,8 +83,8 @@ endif
 if HAVE_PGSQL
 kea_lfc_LDFLAGS += $(PGSQL_LIBS)
 endif
-if HAVE_DSCSQL
-kea_lfc_LDFLAGS += $(DSCSQL_LIBS)
+if HAVE_CQL
+kea_lfc_LDFLAGS += $(CQL_LIBS)
 endif
 
 kea_lfcdir = $(pkgdatadir)

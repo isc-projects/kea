@@ -16,8 +16,8 @@ endif
 if HAVE_PGSQL
 AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
-if HAVE_DSCSQL
-AM_CPPFLAGS += $(DSCSQL_CPPFLAGS)
+if HAVE_CQL
+AM_CPPFLAGS += $(CQL_CPPFLAGS)
 endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -141,9 +141,9 @@ libkea_dhcpsrv_la_SOURCES += pgsql_connection.cc pgsql_connection.h
 libkea_dhcpsrv_la_SOURCES += pgsql_exchange.cc pgsql_exchange.h
 libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
 endif
-if HAVE_DSCSQL
-libkea_dhcpsrv_la_SOURCES += dscsql_lease_mgr.cc dscsql_lease_mgr.h
-libkea_dhcpsrv_la_SOURCES += dscsql_connection.cc dscsql_connection.h
+if HAVE_CQL
+libkea_dhcpsrv_la_SOURCES += cql_lease_mgr.cc cql_lease_mgr.h
+libkea_dhcpsrv_la_SOURCES += cql_connection.cc cql_connection.h
 endif
 libkea_dhcpsrv_la_SOURCES += pool.cc pool.h
 libkea_dhcpsrv_la_SOURCES += srv_config.cc srv_config.h
@@ -204,8 +204,8 @@ endif
 if HAVE_PGSQL
 libkea_dhcpsrv_la_LDFLAGS += $(PGSQL_LIBS)
 endif
-if HAVE_DSCSQL
-libkea_dhcpsrv_la_LDFLAGS += $(DSCSQL_LIBS)
+if HAVE_CQL
+libkea_dhcpsrv_la_LDFLAGS += $(CQL_LIBS)
 endif
 
 if USE_CLANGPP

@@ -1,6 +1,6 @@
 SUBDIRS = .
 
-sqlscriptsdir = ${datarootdir}/${PACKAGE_NAME}/scripts/dscsql
+sqlscriptsdir = ${datarootdir}/${PACKAGE_NAME}/scripts/cql
 sqlscripts_DATA = dhcpdb_create.cql
 sqlscripts_DATA += dhcpdb_drop.cql
 

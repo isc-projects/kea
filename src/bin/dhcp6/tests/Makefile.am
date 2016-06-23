@@ -107,8 +107,8 @@ endif
 if HAVE_PGSQL
 dhcp6_unittests_LDFLAGS += $(PGSQL_LIBS)
 endif
-if HAVE_DSCSQL
-dhcp6_unittests_LDFLAGS += $(DSCSQL_LIBS)
+if HAVE_CQL
+dhcp6_unittests_LDFLAGS += $(CQL_LIBS)
 endif
 dhcp6_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 

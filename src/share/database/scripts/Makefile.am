@@ -1,1 +1,1 @@
-SUBDIRS = mysql pgsql dscsql
+SUBDIRS = mysql pgsql cql
