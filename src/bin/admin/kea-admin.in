@@ -201,44 +201,31 @@ pgsql_init() {
 }
 
 cql_init() {
-    printf "Checking if there is a database initialized already. Please ignore errors.\n"
+    printf "Checking if there is a database initialized already... Please ignore errors.\n"
 
-    # Let's try to count the number of tables. Anything above 0 means that there
-    # is some database in place. If there is anything, we abort. Note that
-    # cql may spit out connection or access errors to stderr, we ignore those.
-    # We should not hide them as they may give hints to user what is wrong with
-    # his setup.
-    #
-    RESULT=`echo "DESCRIBE keyspaces;" | cqlsh`
-    ERRCODE=$?
-    if [ $ERRCODE -ne  0 ]
-    then
-        log_error "cql_init table query failed, cqlsh status = $ERRCODE"
-        exit 1
+    result=`cql_execute "DESCRIBE KEYSPACES;"`
+    if [ "$result" != "" ]; then
+        result=`echo "$result" | sed -n "/$db_name/ p"`
+        if [ "$result" = "" ]; then
+            printf "Creating keyspace $db_name...\n"
+            cql_execute "CREATE KEYSPACE $db_name WITH replication = {'class' : 'SimpleStrategy','replication_factor' : 1};"
+        else
+            printf "Keyspace $db_name already exists.\n"
+        fi
     fi
 
-    COUNT=`echo $RESULT | tr " " "\n" | grep $db_name | wc -w`
-    if [ $COUNT -gt 0 ]; then
-        # Let't start with a new line. cqlsh could have printed something out.
-        printf "\n"
-        log_error "Expected no database $db_name, but there are $COUNT databases: \n$RESULT. Aborting."
-        exit 1
+    result=`cql_execute "USE $db_name; DESCRIBE tables;"`
+    if [ "$result"="<empty>" ]; then
+        printf "Creating and initializing tables using script %s...\n" $scripts_dir/cql/dhcpdb_create.cql
+        cql_execute_script $scripts_dir/cql/dhcpdb_create.cql
+    else
+        printf "Tables are already created.\n"
     fi
 
-    printf "Initializing database using script %s\n" $scripts_dir/cql/dhcpdb_create.cql
-    cqlsh -u $db_user -p $db_password -e "CREATE KEYSPACE $db_name WITH replication = {'class' : 'SimpleStrategy','replication_factor' : 1};"
-    cqlsh -u $db_user -p $db_password -k $db_name -f $scripts_dir/cql/dhcpdb_create.cql
-    ERRCODE=$?
+    version=`cql_version`
+    printf "Lease DB version reported after initialization: $version\n"
 
-    printf "cqlsh returned status code $ERRCODE\n"
-
-    if [ "$ERRCODE" -eq 0 ]; then
-        printf "Lease DB version reported after initialization: "
-        cql_version
-        printf "\n"
-    fi
-
-    exit $ERRCODE
+    return 0
 }
 
 ### Functions that implement database version checking commands
@@ -333,22 +320,27 @@ cql_upgrade() {
         exit 1
     fi
 
-    # Check if there are any files in it
-    num_files=$(find ${scripts_dir}/cql/upgrade*.sh -type f | wc -l)
-    if [ $num_files -eq 0 ]; then
-        log_error "No scripts in ${scripts_dir}/cql or the directory is not readable or does not have any upgrade* scripts."
+    # Check if directory is readable.
+    if [ ! -r ${scripts_dir}/cql ]; then
+        log_error "Directory is not readable: ${scripts_dir}/cql"
         exit 1
     fi
 
-    for script in ${scripts_dir}/cql/upgrade*.sh
-    do
-        echo "Processing $script file..."
-        sh ${script} -u ${db_user} -p ${db_password} -k ${db_name}
-    done
+    # Check if there are upgrade scripts.
+    files=$(find ${scripts_dir}/cql/upgrade*.sh -type f)
+    if [ $? -eq 0 ]; then # Upgrade scripts are present.
+        for script in ${scripts_dir}/cql/upgrade*.sh
+        do
+            echo "Processing $script file..."
+            sh ${script} -u ${db_user} -p ${db_password} -k ${db_name}
+        done
+    else
+        echo "No upgrade script available."
+    fi
 
     version=`cql_version`
     printf "Lease DB version reported after upgrade: $version\n"
-    exit 0
+    return 0
 }
 
 # Utility function which tests if the given file exists and
@@ -543,7 +535,7 @@ cql_dump() {
     # delete the tmp file on success
     rm $tmp_file
     echo lease$dump_type successfully dumped to $dump_file
-    exit 0
+    return 0
 }
 
 ### Script starts here ###

@@ -21,7 +21,7 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-const char* CQL_VALID_TYPE = "type=cassandra";
+const char* CQL_VALID_TYPE = "type=cql";
 
 string
 validCqlConnectionString() {
@@ -29,25 +29,45 @@ validCqlConnectionString() {
                              VALID_USER, VALID_PASSWORD));
 }
 
-void destroyCqlSchema(bool show_err) {
-    runCqlScript(DATABASE_SCRIPTS_DIR, "cql/dhcpdb_drop.cql", show_err);
+bool softWipeEnabled() {
+    const char* const env = getenv("KEA_TEST_CASSANDRA_WIPE");
+    if (env && (string(env) == string("soft"))) {
+        return (true);
+    }
+
+    return (false);
 }
 
-void createCqlSchema(bool show_err) {
-    runCqlScript(DATABASE_SCRIPTS_DIR, "cql/dhcpdb_create.cql",
-                   show_err);
+void destroyCqlSchema(bool , bool show_err) {
+//    if (force_wipe || !softWipeEnabled()) {
+        // Do full wipe
+        runCqlScript(DATABASE_SCRIPTS_DIR, "cql/dhcpdb_drop.cql", show_err);
+//    } else {
+
+        // do soft wipe (just remove the data, not the structures)
+//        runCqlScript(DATABASE_SCRIPTS_DIR, "cql/soft_wipe.cql", show_err);
+//    }
+}
+
+void createCqlSchema(bool force_wipe, bool show_err) {
+    if (force_wipe || !softWipeEnabled()) {
+        runCqlScript(DATABASE_SCRIPTS_DIR, "cql/dhcpdb_create.cql",
+                        show_err);
+    }
 }
 
 void runCqlScript(const std::string& path, const std::string& script_name,
                     bool show_err) {
     std::ostringstream cmd;
-    cmd << "cqlsh -u keatest -p keatest -k keatest -f";
+    cmd << "cqlsh -u keatest -p keatest -k keatest";
     if (!show_err) {
         cmd << " 2>/dev/null ";
     }
 
+    cmd << " -f";
+
     if (!path.empty()) {
-        cmd << " < " << path << "/";
+        cmd << path << "/";
     }
 
     cmd << script_name;

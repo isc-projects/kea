@@ -376,7 +376,7 @@ public:
     /// Commits all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
     ///
-    /// @throw DbOperationError Iif the commit failed.
+    /// @throw DbOperationError If the commit failed.
     virtual void commit();
 
     /// @brief Rollback Transactions

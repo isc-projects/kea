@@ -351,7 +351,7 @@ public:
     ///
     /// Commits all pending database operations.
     ///
-    /// @throw DbOperationError Iif the commit failed.
+    /// @throw DbOperationError If the commit failed.
     virtual void commit();
 
     /// @brief Rollback Transactions
