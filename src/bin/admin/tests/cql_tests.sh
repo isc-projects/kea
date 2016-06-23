@@ -7,32 +7,32 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # Include common test library.
-. @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+. /home/andrei/work/git/isc-kea-integration/kea/src/lib/testutils/dhcp_test_lib.sh
 
-dscsql_init_test() {
-    test_start "dscsql.init"
+cql_init_test() {
+    test_start "cql.init"
     
     # @todo: Implement this
 
     test_finish 0
 }
 
-dscsql_version_test() {
-    test_start "dscsql.version"
+cql_version_test() {
+    test_start "cql.version"
     
     # @todo: Implement this
 
     test_finish 0
 }
 
-dscsql_upgrade_test() {
-    test_start "dscsql.upgrade"
+cql_upgrade_test() {
+    test_start "cql.upgrade"
     
     # @todo: Implement this
 
     test_finish 0
 }
 
-dscsql_init_test
-dscsql_version_test
-dscsql_upgrade_test
+cql_init_test
+cql_version_test
+cql_upgrade_test

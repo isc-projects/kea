@@ -87,7 +87,7 @@ pgsql_version() {
     return $?
 }
 
-dscsql_execute() {
+cql_execute() {
     QUERY=$1
     shift
     if [ $# -gt 1 ]; then
@@ -101,8 +101,8 @@ dscsql_execute() {
     return $retcode
 }
 
-dscsql_version() {
-    version=`dscsql_execute "SELECT version, minor FROM schema_version" "$@"`
+cql_version() {
+    version=`cql_execute "SELECT version, minor FROM schema_version" "$@"`
     version=`echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 --output-delimiter="."`
     echo $version
     return $?

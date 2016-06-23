@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <dhcpsrv/dscsql_connection.h>
+#include <dhcpsrv/cql_connection.h>
 #include <string>
 
 using namespace std;
@@ -22,11 +22,11 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-DSCSqlConnection::DSCSqlConnection(const ParameterMap& parameters) : DatabaseConnection(parameters),
+CqlConnection::CqlConnection(const ParameterMap& parameters) : DatabaseConnection(parameters),
         cluster_(NULL), session_(NULL), tagged_statements_(NULL) {
 }
 
-DSCSqlConnection::~DSCSqlConnection() {
+CqlConnection::~CqlConnection() {
     CassError rc;
     for (int i = 0; i < statements_.size(); i++)
     {
@@ -51,7 +51,7 @@ DSCSqlConnection::~DSCSqlConnection() {
 }
 
 void
-DSCSqlConnection::openDatabase() {
+CqlConnection::openDatabase() {
     CassError rc;
     // Set up the values of the parameters
     const char* contact_points = "127.0.0.1";
@@ -135,7 +135,7 @@ DSCSqlConnection::openDatabase() {
 }
 
 void
-DSCSqlConnection::prepareStatements(DSCSqlTaggedStatement *statements) {
+CqlConnection::prepareStatements(CqlTaggedStatement *statements) {
     CassError rc = CASS_OK;
     CassFuture* future = NULL;
     uint32_t size = 0;
@@ -163,7 +163,7 @@ DSCSqlConnection::prepareStatements(DSCSqlTaggedStatement *statements) {
 }
 
 string
-DSCSqlConnection::getName() const {
+CqlConnection::getName() const {
     string name = "";
     try {
         name = getParameter("name");
@@ -174,14 +174,14 @@ DSCSqlConnection::getName() const {
 }
 
 string
-DSCSqlConnection::getDescription() const {
-    return (string("DataStax Cassandra Database"));
+CqlConnection::getDescription() const {
+    return (string("Cassandra Database"));
 }
 
 pair<uint32_t, uint32_t>
-DSCSqlConnection::getVersion() const {
+CqlConnection::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_DSCSQL_GET_VERSION);
+              DHCPSRV_CQL_GET_VERSION);
 
     uint32_t version = CASS_VERSION_MAJOR;
     uint32_t minor = CASS_VERSION_MINOR;
@@ -190,18 +190,18 @@ DSCSqlConnection::getVersion() const {
 }
 
 void
-DSCSqlConnection::commit() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_DSCSQL_COMMIT);
+CqlConnection::commit() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_COMMIT);
 }
 
 void
-DSCSqlConnection::rollback() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_DSCSQL_ROLLBACK);
+CqlConnection::rollback() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_ROLLBACK);
 }
 
 
 void
-DSCSqlConnection::checkStatementError(std::string& error, CassFuture* future, uint32_t stindex, const char* what) const
+CqlConnection::checkStatementError(std::string& error, CassFuture* future, uint32_t stindex, const char* what) const
 {
     CassError rc;
     const char* errorMessage;
@@ -221,7 +221,7 @@ DSCSqlConnection::checkStatementError(std::string& error, CassFuture* future, ui
 }
 
 void
-DSCSqlConnection::checkStatementError(std::string& error, CassFuture* future, const char* what) const
+CqlConnection::checkStatementError(std::string& error, CassFuture* future, const char* what) const
 {
     CassError rc;
     const char* errorMessage;

@@ -10,8 +10,8 @@ endif
 if HAVE_PGSQL
 AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
-if HAVE_DSCSQL
-AM_CPPFLAGS += $(DSCSQL_CPPFLAGS)
+if HAVE_CQL
+AM_CPPFLAGS += $(CQL_CPPFLAGS)
 endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -102,8 +102,8 @@ endif
 if HAVE_PGSQL
 kea_dhcp4_LDFLAGS += $(PGSQL_LIBS)
 endif
-if HAVE_DSCSQL
-kea_dhcp4_LDFLAGS += $(DSCSQL_LIBS)
+if HAVE_CQL
+kea_dhcp4_LDFLAGS += $(CQL_LIBS)
 endif
 
 kea_dhcp4dir = $(pkgdatadir)
