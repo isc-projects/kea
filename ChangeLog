@@ -1,7 +1,7 @@
 1133.	[func]		razvan
 	The initial support for CQL (Cassandra) backend added. It is able
 	to store leases information.
-	(Github #21, git tbd)
+	(Github #21, git d3a412d4b090bfd84ec5bc5d7817b1dfcc92602e)
 
 1132.	[func]		tmark
 	The Postgresql schema has been updated to support host reservations and its
