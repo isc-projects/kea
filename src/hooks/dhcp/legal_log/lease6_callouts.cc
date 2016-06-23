@@ -62,36 +62,34 @@ std::string hwaddrSourceToString(uint32_t source) {
 
 /// @brief Creates legal file entry for a DHCPv6 Lease
 ///
-/// Creates an entry based on the given DHCPv4 DHCPREQUEST and corresponding
-/// DHCPv4 lease.  The entry is returned as a single string with no embedded
+/// Creates an entry based on the given DHCPv6 queries and corresponding
+/// DHCPv6 lease.  The entry is returned as a single string with no embedded
 /// EOL markers and has the following sections:
 ///
-///  "<address><duration><device-id>{client-info}{relay-info}"
+///  "<address><duration><device-id>{relay-info}*"
 ///
 /// Where:
-///     - address - the leased IPv6 address given out and whether it was
-///     assigned or renewed.
+///     - address - the leased IPv6 address or prefix given out and
+///     whether it was assigned or renewed.
 ///     - duration - the lease lifetime expressed as in days (if present),
 ///     hours, minutes and seconds.  A lease lifetime of 0xFFFFFFFF will be
 ///     denoted with the text "infinite duration".
 ///     - device-id - the client's DUID and hardware address (if present)
-///     - client-info - the DHCP client id option (61) if present, shown as
-///     hex digit string
-///     - relay-inf - for relayed packets the giaddr and the RAI circuit id
-///     and remote id options (x and xx) if present
+///     - relay-info - for relayed packets the content of relay agent messages,
+///     remote id and subscriber id options (x and xx) if present.
 ///
-///     For example:
 ///     For example (on multiple lines for readibility):
 /// @code
-///  "Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs
-///  to a device with hardware address: hwtype=1 08:00:2b:02:3f:4e,
-///  client-id: 17:34:e2:ff:09:92:54 connected via relay at address:
-///  192.2.16.33, identified by circuit-id: 68:6f:77:64:79 and
-///  remote-id: 87:f6:79:77:ef
+///  "Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs
+///  to a device with DUID: 17:34:e2:ff:09:92:54 and hardware address:
+///  hwtype=1 08:00:2b:02:3f:4e (from Raw Socket) connected via relay
+///  at address: fe80::abcd for client on link address: 3001::1, hop
+///  count: 1, identified by remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f
+///  and subscriber-id: 1a:2b:3c:4d:5e:6f"
 /// @endcode
 ///
-/// @param query DHCPREQUEST packet for which the lease was generated
-/// @param lease DHCPv4 lease for which the entry should be created
+/// @param query DHCPv6 query packet for which the lease was generated
+/// @param lease DHCPv6 lease for which the entry should be created
 /// @param renewal indicates whether or not the lease is a renewal.
 std::string genLease6Entry(const Pkt6Ptr& query, const Lease6Ptr& lease, const bool renewal) {
     std::stringstream stream;

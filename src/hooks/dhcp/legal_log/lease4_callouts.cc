@@ -39,11 +39,11 @@ extern RotatingFilePtr legal_file;
 ///     hours, minutes and seconds.  A lease lifetime of 0xFFFFFFFF will be
 ///     denoted with the text "infinite duration".
 ///     - device-id - the client's hardware address shown as numerical type
-///     and hex digit string
+///     and hex digit string.
 ///     - client-info - the DHCP client id option (61) if present, shown as
-///     hex digit string
+///     hex digit string.
 ///     - relay-info - for relayed packets the giaddr and the RAI circuit id
-///     and remote id options (x and xx) if present
+///     and remote id options (x and xx) if present.
 ///
 ///     For example (on multiple lines for readibility):
 /// @code

@@ -9,13 +9,13 @@
 @mainpage Kea Legal Log Hooks Library
 
 Welcome to Kea Legal Log Hooks Library. This documentation is
-addressed at Kea developers, and provides information needed to
-write, extend and maintain Kea hooks.
+addressed at Kea developers, and provides information needed to write,
+extend and maintain Kea hooks.
 
-You suppose to have read and understood
-<a href="http://git.kea.isc.org/~tester/kea/doxygen/">Kea
-Developer's Guide</a> and in particular its section about hooks:
-<a href="http://git.kea.isc.org/~tester/kea/doxygen/df/d46/hooksdgDevelopersGuide.html">
+This documentation is standalone: you are supposes to have read and
+understood <a href="http://git.kea.isc.org/~tester/kea/doxygen/">Kea
+Developer's Guide</a> and in particular its section about hooks: <a
+href="http://git.kea.isc.org/~tester/kea/doxygen/df/d46/hooksdgDevelopersGuide.html">
 Hooks Developer's Guide</a>.
 
 @section libdhcp_legal_logIntro Libdhcp_legal_log: An Example Hooks Library
@@ -25,9 +25,67 @@ DHCP lease management provided by Kea DHCP server modules (kea-dhcp4
 and kea-dhcp6).  Specifically it implements a legal log of lease
 assignements and renewals as it could be required for legal purpose.
 
-## Log Detailed Structure
+## Log Files
+Legal logs are appended into a text file implemented by the class
+@c legal_log::RotatingFile. On a daily basis it is rotated to a new file.
 
-## Callout Processing
+Legal file names have the form:
+@verbatim
+<path>/<base-name>.<CCYYMMDD>.txt
+@endverbatim
+
+## DHCPv4 Log Detailed Structure
+For DHCPv4 the library creates entries based on DHCPREQUEST messages
+and corresponding DHCPv4 leases intercepted by the lease4_select
+(for new leases) and lease4_renew (for renewed leases) hooks.
+
+An entry is a single string with no embedded end-of-line markers
+has the following sections:
+@code
+<address><duration><device-id>{client-info}{relay-info}
+@endcode
+Where:
+ - @b address - the leased IPv4 address given out and whether it was
+   assigned or renewed.
+ - @b duration - the lease lifetime expressed as in days (if present),
+   hours, minutes and seconds.  A lease lifetime of 0xFFFFFFFF will be
+   denoted with the text "infinite duration".
+ - @b device-id - the client's hardware address shown as numerical type
+   and hex digit string.
+ - @b client-info - the DHCP client id option (61) if present, shown as
+   hex digit string.
+ - @b relay-info - for relayed packets the giaddr and the RAI circuit id
+   and remote id options (x and xx) if present.
+
+For instance:
+@verbatim
+Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs to a device with hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33, identified by circuit-id: 68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
+@endverbatim
+
+## DHCPv6 Log Detailed Structure
+For DHCPv6 the library creates entries based on lease management interesting
+actions intercepted by the lease6_select (for new leases), lease6_renew
+(for renewed leases) and lease6_rebind (for rebound leases).
+
+An entry is a single string with no embedded end-of-line markers
+has the following sections:
+@code
+<address><duration><device-id>{relay-info}*
+@endcode
+Where:
+ - @b address - the leased IPv6 address or prefix given out and whether
+   it was assigned or renewed.
+ - @b duration - the lease lifetime expressed as in days (if present),
+   hours, minutes and seconds.  A lease lifetime of 0xFFFFFFFF will be
+   denoted with the text "infinite duration".
+ - @b device-id - the client's DUID and hardware address (if present).
+ - @b relay-info - for relayed packets the content of relay agent
+   messages, remote id and subscriber id options (x and xx) if present.
+
+For instance:
+@verbatim
+Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs to a device with DUID: 17:34:e2:ff:09:92:54 and hardware address: hwtype=1 08:00:2b:02:3f:4e (from Raw Socket) connected via relay at address: fe80::abcd for client on link address: 3001::1, hop count: 1, identified by remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f and subscriber-id: 1a:2b:3c:4d:5e:6f
+@endverbatim
 
 ## Configuring the DHCP Modules
 
@@ -41,8 +99,13 @@ configuration:
 
 @code
 "Dhcp4": {
-    "hook_libraries": [ "/usr/local/lib/libdhcp_legal_log.so" ],
-    ...
+    "hook_libraries": [
+        { "library": "/usr/local/lib/libdhcp_legal_log.so",
+          "parameters": {
+            "path": "/var/kea/var",
+            "base-name": "kea-legal" } },
+        ...
+    ]
 }
 @endcode
 
@@ -50,11 +113,21 @@ To configure it for kea-dhcp6, the commands are simply as shown below:
 
 @code
 "Dhcp6": {
-    "hook_libraries": [ "/usr/local/lib/libdhcp_legal_log.so" ],
-    ...
+    "hook_libraries": [
+        { "library": "/usr/local/lib/libdhcp_legal_log.so",
+          "parameters": {
+            "path": "/var/kea/var",
+            "base-name": "kea-legal" } },
+        ...
+    ]
 }
 @endcode
 
-TODO add parameters
+Two string Hook Library Parameters are supported:
+ - @b path - Directory in which the legal file(s) will be written.  The
+ default value is "<prefix>/kea/var".  The directory must exist.
+ - @b base-name - An arbitrary value which is used in conjunction with
+ current system date to form the current legal file name.  It defaults
+ to "kea-legal".
 
 */
