@@ -1,5 +1,10 @@
+1133.	[func]		razvan
+	The initial support for CQL (Cassandra) backend added. It is able
+	to store leases information.
+	(Github #21, git tbd)
+
 1132.	[func]		tmark
-	The Postgresql schema has been updated to support host reservations and its 
+	The Postgresql schema has been updated to support host reservations and its
 	version number has been bumped to 3.0.  This schema is content equivlent to
 	the MySQL schema version 4.2.
 	(Trac #4275, git 6f8e646bee9de22c921ed26409f3d1856ebce9e6)
