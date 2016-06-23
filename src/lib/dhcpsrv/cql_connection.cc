@@ -119,7 +119,8 @@ CqlConnection::openDatabase() {
 
     session_ = cass_session_new();
 
-    CassFuture* connect_future = cass_session_connect_keyspace(session_, cluster_, keyspace);
+    CassFuture* connect_future = cass_session_connect_keyspace(session_,
+        cluster_, keyspace);
     cass_future_wait(connect_future);
     std::string error;
     checkStatementError(error, connect_future, "could not connect to DB");
@@ -199,9 +200,9 @@ CqlConnection::rollback() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_ROLLBACK);
 }
 
-
 void
-CqlConnection::checkStatementError(std::string& error, CassFuture* future, uint32_t stindex, const char* what) const
+CqlConnection::checkStatementError(std::string& error, CassFuture* future,
+    uint32_t stindex, const char* what) const
 {
     CassError rc;
     const char* errorMessage;

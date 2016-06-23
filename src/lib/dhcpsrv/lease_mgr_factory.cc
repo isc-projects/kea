@@ -74,7 +74,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
 #ifdef HAVE_CQL
     if (parameters[type] == string("cql")) {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_CQL_DB).arg(redacted);
-        getLeaseMgrPtr().reset(new CQLLeaseMgr(parameters));
+        getLeaseMgrPtr().reset(new CqlLeaseMgr(parameters));
         return;
     }
 #endif
@@ -87,7 +87,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     // Get here on no match
     LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(parameters[type]);
     isc_throw(InvalidType, "Database access parameter 'type' does "
-              "not specify a supported database backend");
+              "not specify a supported database backend:" << parameters[type]);
 }
 
 void
