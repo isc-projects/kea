@@ -713,6 +713,14 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
         isc_throw(DbOpenError, "Number of statements prepared: " << i
                   << " does not match expected count:" << NUM_STATEMENTS);
     }
+
+    pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR, PG_SCHEMA_VERSION_MINOR);
+    pair<uint32_t, uint32_t> db_version = getVersion();
+    if (code_version != db_version) {
+        isc_throw(DbOpenError, "Posgresql schema version mismatch: need version: "
+                  << code_version.first << "." << code_version.second
+                  << " found version:  " << db_version.first << "." << db_version.second);
+    }
 }
 
 PgSqlLeaseMgr::~PgSqlLeaseMgr() {

@@ -1536,6 +1536,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
+                 src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
                  src/share/database/scripts/cql/Makefile
                  tools/Makefile
                  tools/path_replacer.sh
