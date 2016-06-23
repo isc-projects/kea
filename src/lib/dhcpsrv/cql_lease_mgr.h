@@ -58,6 +58,38 @@ class CqlLeaseExchange;
 class CqlLease4Exchange;
 class CqlLease6Exchange;
 
+/// @brief Cassandra Exchange
+///
+/// This class provides the basic conversion functions between Cassandra CQL and
+/// base types.
+class CqlExchange : public virtual SqlExchange {
+public:
+    // Time conversion methods.
+    static void
+    convertToDatabaseTime(const time_t& cltt,
+                          const uint32_t& valid_lifetime,
+                          uint64_t& expire) {
+        // Calculate expiry time. Store it in the 64-bit value so as we can
+        // detect overflows.
+        int64_t expire_time = static_cast<int64_t>(cltt) +
+            static_cast<int64_t>(valid_lifetime);
+
+        if (expire_time > DatabaseConnection::MAX_DB_TIME) {
+            isc_throw(BadValue, "Time value is too large: " << expire_time);
+        }
+
+        expire = expire_time;
+    }
+
+    static void
+    convertFromDatabaseTime(const uint64_t& expire,
+                            const uint32_t& valid_lifetime,
+                            time_t& cltt) {
+        // Convert to local time
+        cltt = expire - static_cast<int64_t>(valid_lifetime);
+    }
+};
+
 /// @brief Cassandra Lease Manager
 ///
 /// This class provides the \ref isc::dhcp::LeaseMgr interface to the Cassandra

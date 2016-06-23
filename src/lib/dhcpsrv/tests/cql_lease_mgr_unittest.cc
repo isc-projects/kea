@@ -142,36 +142,6 @@ TEST(CqlOpenTest, OpenDatabase) {
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
 
-    // Check that invalid login data causes an exception.
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        CQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
-        DbOpenError);
-
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        CQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
-        DbOpenError);
-
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
-        DbOpenError);
-
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
-        DbOpenError);
-
-    // Check for invalid timeouts
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
-        DbInvalidTimeout);
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
-        DbInvalidTimeout);
-
-    // Check for missing parameters
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        CQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
-        NoDatabaseName);
-
     // Tidy up after the test
     destroyCqlSchema(false, true);
 }
@@ -217,8 +187,8 @@ TEST_F(CqlLeaseMgrTest, checkVersion) {
     // Check version
     pair<uint32_t, uint32_t> version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
-    EXPECT_EQ(CQL_CURRENT_VERSION, version.first);
-    EXPECT_EQ(CQL_CURRENT_MINOR, version.second);
+    EXPECT_EQ(CQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(CQL_SCHEMA_VERSION_MINOR, version.second);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
