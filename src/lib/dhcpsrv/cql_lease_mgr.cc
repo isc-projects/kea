@@ -1185,7 +1185,6 @@ CqlLeaseMgr::bindData(CassStatement* statement, const StatementIndex stindex,
 void
 CqlLeaseMgr::getData(const CassRow* row, const int pindex, CqlDataArray& data,
         CqlDataArray& size, const int dindex, const SqlExchange& exchange) {
-    const CassValue* value;
     if (pindex >= exchange.parameters_.size()) {
         return;
     }
@@ -1194,7 +1193,7 @@ CqlLeaseMgr::getData(const CassRow* row, const int pindex, CqlDataArray& data,
     if (std::distance(range.first, range.second) > 0) {
         std::string name = (*range.first)->name_;
         ExchangeDataType type = (*range.first)->type_;
-        value = cass_row_get_column_by_name(row, name.c_str());
+        const CassValue* value = cass_row_get_column_by_name(row, name.c_str());
         if (NULL == value) {
             isc_throw(BadValue, "column name " << name << " doesn't exist");
         }

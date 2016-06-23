@@ -150,7 +150,6 @@ CqlConnection::openDatabase() {
 void
 CqlConnection::prepareStatements(CqlTaggedStatement *statements) {
     CassError rc = CASS_OK;
-    CassFuture* future = NULL;
     uint32_t size = 0;
     tagged_statements_ = statements;
     for (; tagged_statements_[size].params_; size++);
@@ -158,7 +157,7 @@ CqlConnection::prepareStatements(CqlTaggedStatement *statements) {
     for (uint32_t i = 0; i < size; i++) {
         const char* query = tagged_statements_[i].text_;
 
-        future = cass_session_prepare(session_, query);
+        CassFuture* future = cass_session_prepare(session_, query);
         cass_future_wait(future);
         std::string error;
         checkStatementError(error, future, i, "could not prepare statement");
