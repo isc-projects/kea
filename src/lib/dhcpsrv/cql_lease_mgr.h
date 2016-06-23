@@ -34,7 +34,7 @@ namespace dhcp {
 /// CQL execute call.
 ///
 /// Note that the data values are stored as pointers. These pointers need to
-/// valid for the duration of the CQL statement execution.  In other
+/// valid for the duration of the CQL statement execution. In other
 /// words populating them with pointers to values that go out of scope before
 /// statement is executed is a bad idea.
 
@@ -45,20 +45,24 @@ struct CqlDataArray {
         values_.push_back(value);
     }
     void remove(int index) {
+        if (values_.size() <= index) {
+            isc_throw(BadValue, "Index " << index << " out of bounds: [0, " <<
+                (values_.size() - 1)  << "]");
+        }
         values_.erase(values_.begin() + index);
     }
 };
 
-class CqlExchange;
+class CqlVersionExchange;
 class CqlLeaseExchange;
 class CqlLease4Exchange;
 class CqlLease6Exchange;
 
 /// @brief Cassandra Lease Manager
 ///
-/// This class provides the \ref isc::dhcp::LeaseMgr interface to the CQL - Cassandra
-/// database.  Use of this backend presupposes that a CQL database is
-/// available and that the Kea schema has been created within it.
+/// This class provides the \ref isc::dhcp::LeaseMgr interface to the Cassandra
+/// database. Use of this backend presupposes that a CQL database is available
+/// and that the Kea schema has been created within it.
 class CqlLeaseMgr : public LeaseMgr {
 public:
 
@@ -314,7 +318,7 @@ public:
 
     /// @brief Deletes a lease.
     ///
-    /// @param addr Address of the lease to be deleted.  This can be an IPv4
+    /// @param addr Address of the lease to be deleted. This can be an IPv4
     ///             address or an IPv6 address.
     ///
     /// @return true if deletion was successful, false if no such lease exists
@@ -343,8 +347,6 @@ public:
 
     /// @brief Return backend type
     ///
-    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
-    ///
     /// @return Type of the backend.
     virtual std::string getType() const {
         return (std::string("cql"));
@@ -364,7 +366,7 @@ public:
 
     /// @brief Returns backend version.
     ///
-    /// @return Version number as a pair of unsigned integers.  "first" is the
+    /// @return Version number as a pair of unsigned integers. "first" is the
     ///         major version number, "second" the minor number.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
@@ -373,16 +375,12 @@ public:
 
     /// @brief Commit Transactions
     ///
-    /// Commits all pending database operations.
-    ///
-    /// @throw DbOperationError If the commit failed.
+    /// This is a no-op for Cassandra.
     virtual void commit();
 
     /// @brief Rollback Transactions
     ///
-    /// Rolls back all pending database operations.
-    ///
-    /// @throw DbOperationError If the rollback failed.
+    /// This is a no-op for Cassandra.
     virtual void rollback();
 
 
@@ -412,30 +410,61 @@ public:
         UPDATE_LEASE6,              // Update a Lease6 entry
         NUM_STATEMENTS              // Number of statements
     };
-    static void bindData(CassStatement* statement, const StatementIndex stindex, CqlDataArray& data, const SqlExchange& exchange);
 
-    static void getDataType(const StatementIndex stindex, int param, const SqlExchange& exchange, ExchangeDataType& type);
+    /// @brief TODO
+    ///
+    /// TODO
+    ///
+    /// @param statement TODO
+    /// @param stindex Index of statement being executed
+    /// @param data array that has been created for the type of lease in question.
+    /// @param exchange Exchange object to use
+    static void bindData(CassStatement* statement, const StatementIndex stindex,
+        CqlDataArray& data, const SqlExchange& exchange);
 
-    static void getData(const CassRow* row, int pindex, CqlDataArray& data, CqlDataArray& size, const SqlExchange& exchange);
+    /// @brief TODO
+    ///
+    /// TODO
+    ///
+    /// @param stindex Index of statement being executed
+    /// @param param TODO
+    /// @param exchange Exchange object to use
+    /// @param type TODO
+    static void getDataType(const StatementIndex stindex, int param,
+        const SqlExchange& exchange, ExchangeDataType& type);
+
+    /// @brief TODO
+    ///
+    /// TODO
+    ///
+    /// @param row TODO
+    /// @param pindex Index of statement being executed
+    /// @param data array that has been created for the type of lease in question.
+    /// @param data size TODO
+    /// @param exchange Exchange object to use
+    static void getData(const CassRow* row, int pindex, CqlDataArray& data,
+        CqlDataArray& size, const SqlExchange& exchange);
 
 private:
 
     /// @brief Add Lease Common Code
     ///
     /// This method performs the common actions for both flavours (V4 and V6)
-    /// of the addLease method.  It binds the contents of the lease object to
+    /// of the addLease method. It binds the contents of the lease object to
     /// the prepared statement and adds it to the database.
     ///
     /// @param stindex Index of statement being executed
     /// @param data array that has been created for the type
     ///        of lease in question.
+    /// @param exchange Exchange object to use
     ///
     /// @return true if the lease was added, false if it was not added because
     ///         a lease with that address already exists in the database.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool addLeaseCommon(StatementIndex stindex, CqlDataArray& data, CqlLeaseExchange& exchange);
+    bool addLeaseCommon(StatementIndex stindex, CqlDataArray& data,
+        CqlLeaseExchange& exchange);
 
     /// @brief Get Lease Collection Common Code
     ///
@@ -464,12 +493,12 @@ private:
 
     /// @brief Gets Lease4 Collection
     ///
-    /// Gets a collection of Lease4 objects.  This is just an interface to
+    /// Gets a collection of Lease4 objects. This is just an interface to
     /// the get lease collection common code.
     ///
     /// @param stindex Index of statement being executed
     /// @param data array containing the where clause input parameters
-    /// @param lease LeaseCollection object returned.  Note that any leases in
+    /// @param result LeaseCollection object returned. Note that any leases in
     ///        the collection when this method is called are not erased: the
     ///        new data is appended to the end.
     ///
@@ -485,12 +514,12 @@ private:
 
     /// @brief Get Lease6 Collection
     ///
-    /// Gets a collection of Lease6 objects.  This is just an interface to
+    /// Gets a collection of Lease6 objects. This is just an interface to
     /// the get lease collection common code.
     ///
     /// @param stindex Index of statement being executed
     /// @param data array containing input parameters for the query
-    /// @param lease LeaseCollection object returned.  Note that any existing
+    /// @param result LeaseCollection object returned. Note that any existing
     ///        data in the collection is erased first.
     ///
     /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
@@ -506,7 +535,7 @@ private:
     /// @brief Get Lease4 Common Code
     ///
     /// This method performs the common actions for the various getLease4()
-    /// methods.  It acts as an interface to the getLeaseCollection() method,
+    /// methods. It acts as an interface to the getLeaseCollection() method,
     /// but retrieveing only a single lease.
     ///
     /// @param stindex Index of statement being executed
@@ -518,7 +547,7 @@ private:
     /// @brief Get Lease6 Common Code
     ///
     /// This method performs the common actions for the various getLease4()
-    /// methods.  It acts as an interface to the getLeaseCollection() method,
+    /// methods. It acts as an interface to the getLeaseCollection() method,
     /// but retrieveing only a single lease.
     ///
     /// @param stindex Index of statement being executed
@@ -548,7 +577,7 @@ private:
 
     /// @brief Update lease common code
     ///
-    /// Holds the common code for updating a lease.  It binds the parameters
+    /// Holds the common code for updating a lease. It binds the parameters
     /// to the prepared statement, executes it, then checks how many rows
     /// were affected.
     ///
@@ -567,7 +596,7 @@ private:
 
     /// @brief Delete lease common code
     ///
-    /// Holds the common code for deleting a lease.  It binds the parameters
+    /// Holds the common code for deleting a lease. It binds the parameters
     /// to the prepared statement, executes the statement and checks to
     /// see how many rows were deleted.
     ///
@@ -579,7 +608,8 @@ private:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool deleteLeaseCommon(StatementIndex stindex, CqlDataArray& data, CqlLeaseExchange& exchange);
+    bool deleteLeaseCommon(StatementIndex stindex, CqlDataArray& data,
+        CqlLeaseExchange& exchange);
 
     /// @brief Delete expired-reclaimed leases.
     ///
@@ -593,16 +623,18 @@ private:
     uint64_t deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
                                                 StatementIndex statement_index);
 
+    /// TODO
     static CqlTaggedStatement tagged_statements_[];
     /// Database connection object
     CqlConnection dbconn_;
 
     /// The exchange objects are used for transfer of data to/from the database.
     /// They are pointed-to objects as the contents may change in "const" calls,
-    /// while the rest of this object does not.  (At alternative would be to
+    /// while the rest of this object does not. (At alternative would be to
     /// declare them as "mutable".)
     boost::scoped_ptr<CqlLease4Exchange> exchange4_; ///< Exchange object
     boost::scoped_ptr<CqlLease6Exchange> exchange6_; ///< Exchange object
+    boost::scoped_ptr<CqlVersionExchange> versionExchange_; ///< Exchange object
 };
 
 }; // end of isc::dhcp namespace
