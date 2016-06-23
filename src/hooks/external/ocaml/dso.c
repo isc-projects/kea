@@ -51,7 +51,11 @@ int load(LibraryHandle& handle) {
     }
     // Start ocaml
     char* argv[2];
-    argv[0] = &progname[0];
+    if (!progname.empty()) {
+        argv[0] = &progname[0];
+    } else {
+        argv[0] = NULL;
+    }
     argv[1] = NULL;
     caml_startup(argv);
     

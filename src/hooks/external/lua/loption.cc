@@ -115,7 +115,11 @@ int toBinary(lua_State* L) {
     l_option* const self =
         static_cast<l_option*>(luaL_checkudata(L, 1, LUA_KEAOPTION));
     vector<uint8_t> bin = self->object->toBinary(true);
-    lua_pushlstring(L, reinterpret_cast<char*>(&bin[0]), bin.size());
+    char* ptr = NULL;
+    if (!bin.empty()) {
+        ptr = reinterpret_cast<char*>(&bin[0]);
+    }
+    lua_pushlstring(L, ptr, bin.size());
     return (1);
 }
 
@@ -148,7 +152,11 @@ int getData(lua_State* L) {
     l_option* const self =
         static_cast<l_option*>(luaL_checkudata(L, 1, LUA_KEAOPTION));
     const OptionBuffer& data = self->object->getData();
-    lua_pushlstring(L, reinterpret_cast<const char*>(&data[0]), data.size());
+    const char* ptr = NULL;
+    if (!data.empty()) {
+        ptr = reinterpret_cast<const char*>(&data[0]);
+    }
+    lua_pushlstring(L, ptr, data.size());
     return (1);
 }
 

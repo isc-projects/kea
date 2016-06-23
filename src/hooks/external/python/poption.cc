@@ -106,8 +106,12 @@ toBinary(PyObject* obj, PyObject* args) {
 
     py_option* const self = static_cast<py_option*>(obj);
     vector<uint8_t> bin = self->object->toBinary(ih != 0);
-    return (PyBytes_FromStringAndSize(reinterpret_cast<char*>(&bin[0]),
-                                      static_cast<Py_ssize_t>(bin.size())));
+    char* ptr = NULL;
+    if (!bin.empty()) {
+        ptr = reinterpret_cast<char*>(&bin[0]);
+    }
+    Py_ssize_t sz = static_cast<Py_ssize_t>(bin.size());
+    return (PyBytes_FromStringAndSize(ptr, sz));
 }
 
 // getType() method
@@ -136,8 +140,12 @@ PyObject*
 getData(PyObject* obj) {
     py_option* const self = static_cast<py_option*>(obj);
     const OptionBuffer& data = self->object->getData();
-    return (PyBytes_FromStringAndSize(reinterpret_cast<const char*>(&data[0]),
-                                      static_cast<Py_ssize_t>(data.size())));
+    const char* ptr = NULL;
+    if (!data.empty()) {
+        ptr = reinterpret_cast<const char*>(&data[0]);
+    }
+    Py_ssize_t sz = static_cast<Py_ssize_t>(data.size());
+    return (PyBytes_FromStringAndSize(ptr, sz));
 }
 
 // addOption(OptionPtr opt) method

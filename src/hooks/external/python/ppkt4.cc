@@ -231,8 +231,12 @@ getHWAddr(PyObject* obj) {
     if (hwaddr) {
         bin = hwaddr->hwaddr_;
     }
-    return (PyBytes_FromStringAndSize(reinterpret_cast<char*>(&bin[0]),
-                                      static_cast<Py_ssize_t>(bin.size())));
+    char* ptr = NULL;
+    if (!bin.empty()) {
+        ptr = reinterpret_cast<char*>(&bin[0]);
+    }
+    Py_ssize_t sz = static_cast<Py_ssize_t>(bin.size());
+    return (PyBytes_FromStringAndSize(ptr, sz));
 }
 
 // Method table

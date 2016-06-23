@@ -250,7 +250,11 @@ int getHWAddr(lua_State* L) {
     if (hwaddr) {
         bin = hwaddr->hwaddr_;
     }
-    lua_pushlstring(L, reinterpret_cast<char*>(&bin[0]), bin.size());
+    char* ptr = NULL;
+    if (!bin.empty()) {
+        ptr = reinterpret_cast<char*>(&bin[0]);
+    }
+    lua_pushlstring(L, ptr, bin.size());
     return (1);
 }
 

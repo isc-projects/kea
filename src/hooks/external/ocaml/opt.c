@@ -83,7 +83,9 @@ extern "C" CAMLprim value opt_factory(value u, value typ, value bytes) {
     uint16_t type = static_cast<uint16_t>(Int_val(typ));
     OptionBuffer data;
     data.resize(static_cast<size_t>(caml_string_length(bytes)));
-    memmove(&data[0], String_val(bytes), data.size());
+    if (!data.empty()) {
+        memmove(&data[0], String_val(bytes), data.size());
+    }
     result = caml_alloc_custom(opt_ops, sizeof(oc_opt), 0, 1);
     oc_opt* const self = static_cast<oc_opt*>(Data_custom_val(result));
     self->object.reset(new Option(universe, type, data));
@@ -123,7 +125,9 @@ extern "C" CAMLprim value opt_toBinary(value opt) {
     oc_opt* const self = static_cast<oc_opt*>(Data_custom_val(opt));
     vector<uint8_t> bin = self->object->toBinary(true);
     result = caml_alloc_string(static_cast<mlsize_t>(bin.size()));
-    memmove(String_val(result), &bin[0], bin.size());
+    if (!bin.empty()) {
+        memmove(String_val(result), &bin[0], bin.size());
+    }
     CAMLreturn (result);
 }
 
@@ -151,7 +155,9 @@ extern "C" CAMLprim value opt_getData(value opt) {
     oc_opt* const self = static_cast<oc_opt*>(Data_custom_val(opt));
     vector<uint8_t> data = self->object->getData();
     result = caml_alloc_string(static_cast<mlsize_t>(data.size()));
-    memmove(String_val(result), &data[0], data.size());
+    if (!data.empty()) {
+        memmove(String_val(result), &data[0], data.size());
+    }
     CAMLreturn (result);
 }
 
@@ -195,7 +201,9 @@ extern "C" CAMLprim value opt_setData(value opt, value bytes) {
     oc_opt* const self = static_cast<oc_opt*>(Data_custom_val(opt));
     vector<uint8_t> data;
     data.resize(static_cast<size_t>(caml_string_length(bytes)));
-    memmove(&data[0], String_val(bytes), data.size());
+    if (!data.empty()) {
+        memmove(&data[0], String_val(bytes), data.size());
+    }
     self->object->setData(data.begin(), data.end());
     CAMLreturn (Val_unit);
 }
