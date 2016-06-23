@@ -22,8 +22,8 @@ Hooks Developer's Guide</a>.
 ## Introduction
 libdhcp_legal_log is an example hooks library which customizes the
 DHCP lease management provided by Kea DHCP server modules (kea-dhcp4
-and kea-dhcp6).  Specifically it implements a legal log of lease
-assignements and renewals as it could be required for legal purpose.
+and kea-dhcp6).  Specifically it implements a detailed log of lease
+assignments and renewals as it could be required for legal purpose.
 
 ## Log Files
 Legal logs are appended into a text file implemented by the class
