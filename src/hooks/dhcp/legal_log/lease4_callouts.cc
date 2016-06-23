@@ -137,7 +137,7 @@ int legalLog4Handler(CalloutHandle& handle, bool renewal) {
     Lease4Ptr lease;
     handle.getArgument("lease4", lease);
     try {
-        legal_file->writeln(genLease4Entry(query,lease, renewal));
+        legal_file->writeln(genLease4Entry(query, lease, renewal));
     } catch (const std::exception& ex) {
         LOG_ERROR(legal_log_logger, LEGAL_LOG_LEASE4_WRITE_ERROR)
                   .arg(ex.what());
