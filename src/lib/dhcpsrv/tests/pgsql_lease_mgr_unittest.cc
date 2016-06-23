@@ -69,7 +69,7 @@ public:
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
     ///
-    /// Parameter is ignored for Postgres abckend as the v4 and v6 leases share
+    /// Parameter is ignored for Postgres backend as the v4 and v6 leases share
     /// the same database.
     void reopen(Universe) {
         LeaseMgrFactory::destroy();
@@ -93,7 +93,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     createPgSQLSchema(true);
 
     // Check that lease manager open the database opens correctly and tidy up.
-    //  If it fails, print the error message.
+    // If it fails, print the error message.
     try {
         LeaseMgrFactory::create(validPgSQLConnectionString());
         EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
@@ -117,7 +117,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
                << "*** The test environment is broken and must be fixed\n"
-               << "*** before the MySQL tests will run correctly.\n";
+               << "*** before the PostgreSQL tests will run correctly.\n";
     }
 
     // Check that attempting to get an instance of the lease manager when
@@ -190,8 +190,8 @@ TEST_F(PgSqlLeaseMgrTest, checkVersion) {
     // Check version
     pair<uint32_t, uint32_t> version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
-    EXPECT_EQ(PG_CURRENT_VERSION, version.first);
-    EXPECT_EQ(PG_CURRENT_MINOR, version.second);
+    EXPECT_EQ(PG_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PG_SCHEMA_VERSION_MINOR, version.second);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -403,4 +403,3 @@ TEST_F(PgSqlLeaseMgrTest, getExpiredLeases6) {
 }
 
 }; // namespace
-

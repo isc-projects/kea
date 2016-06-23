@@ -82,11 +82,6 @@ INSERT INTO lease6_types VALUES (2, 'IA_PD');   -- Prefix delegations
 -- This table is only modified during schema upgrades.  For historical reasons
 -- (related to the names of the columns in the BIND 10 DNS database file), the
 -- first column is called "version" and not "major".
-
--- NOTE: this MUST be kept in step with src/lib/dhcpsrv/tests/schema_copy.h,
---       which defines the schema for the unit tests.  If you are updating
---       the version number, the schema has changed: please ensure that
---       schema_copy.h has been updated as well.
 CREATE TABLE schema_version (
     version INT PRIMARY KEY NOT NULL,       -- Major version number
     minor INT                               -- Minor version number

@@ -68,6 +68,13 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
     }
 #endif
 
+#ifdef HAVE_CQL
+    if (db_type == "cql") {
+        isc_throw(NotImplemented, "Sorry, CQL backend for host reservations "
+                  "is not implemented yet.");
+    }
+#endif
+
     // Get here on no match.
     isc_throw(InvalidType, "Hosts database access parameter 'type': " <<
                            db_type << " is invalid");

@@ -1,38 +1,105 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015 - 2016 Deutsche Telekom AG.
 //
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//           http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-#ifndef MYSQL_LEASE_MGR_H
-#define MYSQL_LEASE_MGR_H
+#ifndef CQL_LEASE_MGR_H
+#define CQL_LEASE_MGR_H
 
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/mysql_connection.h>
-
+#include <dhcpsrv/cql_connection.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
-#include <mysql.h>
-
-#include <time.h>
+#include <cassandra.h>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
 
-// Forward declaration of the Lease exchange objects.  These classes are defined
-// in the .cc file.
-class MySqlLease4Exchange;
-class MySqlLease6Exchange;
-
-
-/// @brief MySQL Lease Manager
+/// @brief Structure used to bind C++ input values to dynamic SQL parameters
+/// The structure contains a vector which store the input values,
+/// This vector is passed directly into the
+/// CQL execute call.
 ///
-/// This class provides the \ref isc::dhcp::LeaseMgr interface to the MySQL
-/// database.  Use of this backend presupposes that a MySQL database is
-/// available and that the Kea schema has been created within it.
+/// Note that the data values are stored as pointers. These pointers need
+/// to be valid for the duration of the CQL statement execution. In other
+/// words populating them with pointers to values that go out of scope
+/// before statement is executed is a bad idea.
+struct CqlDataArray {
+    /// Add void pointer to a vector of pointers to the data values.
+    std::vector<void*> values_;
+    void add(void* value) {
+        values_.push_back(value);
+    }
+    /// Remove void pointer from a vector of pointers to the data values.
+    void remove(int index) {
+        if (values_.size() <= index) {
+            isc_throw(BadValue, "Index " << index << " out of bounds: [0, " <<
+                (values_.size() - 1)  << "]");
+        }
+        values_.erase(values_.begin() + index);
+    }
+    /// Get size.
+    size_t size() {
+        return values_.size();
+    }
+};
 
-class MySqlLeaseMgr : public LeaseMgr {
+class CqlVersionExchange;
+class CqlLeaseExchange;
+class CqlLease4Exchange;
+class CqlLease6Exchange;
+
+/// @brief Cassandra Exchange
+///
+/// This class provides the basic conversion functions between Cassandra CQL and
+/// base types.
+class CqlExchange : public virtual SqlExchange {
+public:
+    // Time conversion methods.
+    static void
+    convertToDatabaseTime(const time_t& cltt,
+                          const uint32_t& valid_lifetime,
+                          uint64_t& expire) {
+        // Calculate expiry time. Store it in the 64-bit value so as we can
+        // detect overflows.
+        int64_t expire_time = static_cast<int64_t>(cltt) +
+            static_cast<int64_t>(valid_lifetime);
+
+        if (expire_time > DatabaseConnection::MAX_DB_TIME) {
+            isc_throw(BadValue, "Time value is too large: " << expire_time);
+        }
+
+        expire = expire_time;
+    }
+
+    static void
+    convertFromDatabaseTime(const uint64_t& expire,
+                            const uint32_t& valid_lifetime,
+                            time_t& cltt) {
+        // Convert to local time
+        cltt = expire - static_cast<int64_t>(valid_lifetime);
+    }
+};
+
+/// @brief Cassandra Lease Manager
+///
+/// This class provides the \ref isc::dhcp::LeaseMgr interface to the Cassandra
+/// database. Use of this backend presupposes that a CQL database is available
+/// and that the Kea schema has been created within it.
+class CqlLeaseMgr : public LeaseMgr {
 public:
 
     /// @brief Constructor
@@ -57,10 +124,10 @@ public:
     /// @throw isc::dhcp::DbOpenError Error opening the database
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
+    CqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
-    virtual ~MySqlLeaseMgr();
+    virtual ~CqlLeaseMgr();
 
     /// @brief Local version of getDBVersion() class method
     static std::string getDBVersion();
@@ -100,13 +167,9 @@ public:
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
-    ///        fit into the space allocated for the result.  This indicates a
-    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
-
 
     /// @brief Returns existing IPv4 leases for specified hardware address.
     ///
@@ -119,9 +182,6 @@ public:
     ///
     /// @return lease collection
     ///
-    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
-    ///        fit into the space allocated for the result.  This indicates a
-    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Collection getLease4(const isc::dhcp::HWAddr& hwaddr) const;
@@ -137,15 +197,12 @@ public:
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
-    ///        fit into the space allocated for the result.  This indicates a
-    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const isc::dhcp::HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
 
-    /// @brief Returns existing IPv4 lease for specified client-id
+    /// @brief Returns existing IPv4 leases for specified client-id
     ///
     /// Although in the usual case there will be only one lease, for mobile
     /// clients or clients with multiple static/fixed/reserved leases there
@@ -156,9 +213,6 @@ public:
     ///
     /// @return lease collection
     ///
-    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
-    ///        fit into the space allocated for the result.  This indicates a
-    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Collection getLease4(const ClientId& clientid) const;
@@ -172,7 +226,7 @@ public:
     ///
     /// @return A pointer to the lease or NULL if the lease is not found.
     /// @throw isc::NotImplemented On every call as this function is currently
-    /// not implemented for the MySQL backend.
+    /// not implemented for the PostgreSQL backend.
     virtual Lease4Ptr getLease4(const ClientId& client_id, const HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
 
@@ -186,9 +240,6 @@ public:
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
-    ///        fit into the space allocated for the result.  This indicates a
-    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const ClientId& clientid,
@@ -207,9 +258,6 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
-    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
-    ///        fit into the space allocated for the result.  This indicates a
-    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Ptr getLease6(Lease::Type type,
@@ -230,13 +278,10 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
-    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
-    ///        fit into the space allocated for the result.  This indicates a
-    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
-                                        uint32_t iaid) const;
+                                       uint32_t iaid) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
@@ -249,14 +294,10 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
-    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
-    ///        fit into the space allocated for the result.  This indicates a
-    ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
                                         uint32_t iaid, SubnetID subnet_id) const;
-
     /// @brief Returns a collection of expired DHCPv6 leases.
     ///
     /// This method returns at most @c max_leases expired leases. The leases
@@ -267,9 +308,8 @@ public:
     /// by the database backend are added.
     /// @param max_leases A maximum number of leases to be returned. If this
     /// value is set to 0, all expired (but not reclaimed) leases are returned.
-    virtual void getExpiredLeases6(Lease6Collection& expired_leases,
-                                   const size_t max_leases) const;
-
+    virtual void getExpiredLeases6(Lease6Collection& ,
+                                   const size_t ) const;
 
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
@@ -281,8 +321,8 @@ public:
     /// by the database backend are added.
     /// @param max_leases A maximum number of leases to be returned. If this
     /// value is set to 0, all expired (but not reclaimed) leases are returned.
-    virtual void getExpiredLeases4(Lease4Collection& expired_leases,
-                                   const size_t max_leases) const;
+    virtual void getExpiredLeases4(Lease4Collection& ,
+                                   const size_t ) const;
 
     /// @brief Updates IPv4 lease.
     ///
@@ -312,7 +352,7 @@ public:
 
     /// @brief Deletes a lease.
     ///
-    /// @param addr Address of the lease to be deleted.  This can be an IPv4
+    /// @param addr Address of the lease to be deleted. This can be an IPv4
     ///             address or an IPv6 address.
     ///
     /// @return true if deletion was successful, false if no such lease exists
@@ -321,38 +361,34 @@ public:
     ///        failed.
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
 
-    /// @brief Deletes all expired-reclaimed DHCPv4 leases.
+    /// @brief Deletes all expired and reclaimed DHCPv4 leases.
     ///
     /// @param secs Number of seconds since expiration of leases before
     /// they can be removed. Leases which have expired later than this
     /// time will not be deleted.
     ///
     /// @return Number of leases deleted.
-    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t secs);
+    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t );
 
-    /// @brief Deletes all expired-reclaimed DHCPv6 leases.
+    /// @brief Deletes all expired and reclaimed DHCPv6 leases.
     ///
     /// @param secs Number of seconds since expiration of leases before
     /// they can be removed. Leases which have expired later than this
     /// time will not be deleted.
     ///
     /// @return Number of leases deleted.
-    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs);
+    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t );
 
     /// @brief Return backend type
     ///
-    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
-    ///
     /// @return Type of the backend.
     virtual std::string getType() const {
-        return (std::string("mysql"));
+        return (std::string("cql"));
     }
 
-    /// @brief Returns backend name.
+    /// @brief Returns name of the database.
     ///
-    /// Each backend have specific name, e.g. "mysql" or "sqlite".
-    ///
-    /// @return Name of the backend.
+    /// @return database name
     virtual std::string getName() const;
 
     /// @brief Returns description of the backend.
@@ -364,7 +400,7 @@ public:
 
     /// @brief Returns backend version.
     ///
-    /// @return Version number as a pair of unsigned integers.  "first" is the
+    /// @return Version number as a pair of unsigned integers. "first" is the
     ///         major version number, "second" the minor number.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
@@ -373,63 +409,95 @@ public:
 
     /// @brief Commit Transactions
     ///
-    /// Commits all pending database operations.  On databases that don't
-    /// support transactions, this is a no-op.
-    ///
-    /// @throw DbOperationError If the commit failed.
+    /// This is a no-op for Cassandra.
     virtual void commit();
 
     /// @brief Rollback Transactions
     ///
-    /// Rolls back all pending database operations.  On databases that don't
-    /// support transactions, this is a no-op.
-    ///
-    /// @throw DbOperationError If the rollback failed.
+    /// This is a no-op for Cassandra.
     virtual void rollback();
 
     /// @brief Statement Tags
     ///
-    /// The contents of the enum are indexes into the list of SQL statements
+    /// The contents of the enum are indexes into the list of compiled SQL
+    /// statements
     enum StatementIndex {
-        DELETE_LEASE4,               // Delete from lease4 by address
-        DELETE_LEASE4_STATE_EXPIRED, // Delete expired lease4 in a given state
-        DELETE_LEASE6,               // Delete from lease6 by address
-        DELETE_LEASE6_STATE_EXPIRED, // Delete expired lease6 in a given state
-        GET_LEASE4_ADDR,             // Get lease4 by address
-        GET_LEASE4_CLIENTID,         // Get lease4 by client ID
-        GET_LEASE4_CLIENTID_SUBID,   // Get lease4 by client ID & subnet ID
-        GET_LEASE4_HWADDR,           // Get lease4 by HW address
-        GET_LEASE4_HWADDR_SUBID,     // Get lease4 by HW address & subnet ID
-        GET_LEASE4_EXPIRE,           // Get lease4 by expiration.
-        GET_LEASE6_ADDR,             // Get lease6 by address
-        GET_LEASE6_DUID_IAID,        // Get lease6 by DUID and IAID
-        GET_LEASE6_DUID_IAID_SUBID,  // Get lease6 by DUID, IAID and subnet ID
-        GET_LEASE6_EXPIRE,           // Get lease6 by expiration.
-        GET_VERSION,                 // Obtain version number
-        INSERT_LEASE4,               // Add entry to lease4 table
-        INSERT_LEASE6,               // Add entry to lease6 table
-        UPDATE_LEASE4,               // Update a Lease4 entry
-        UPDATE_LEASE6,               // Update a Lease6 entry
-        NUM_STATEMENTS               // Number of statements
+        DELETE_LEASE4,              // Delete from lease4 by address
+        DELETE_LEASE4_STATE_EXPIRED,// Delete expired lease4s in certain state
+        DELETE_LEASE6,              // Delete from lease6 by address
+        DELETE_LEASE6_STATE_EXPIRED,// Delete expired lease6s in certain state
+        GET_LEASE4_ADDR,            // Get lease4 by address
+        GET_LEASE4_CLIENTID,        // Get lease4 by client ID
+        GET_LEASE4_CLIENTID_SUBID,  // Get lease4 by client ID & subnet ID
+        GET_LEASE4_HWADDR,          // Get lease4 by HW address
+        GET_LEASE4_HWADDR_SUBID,    // Get lease4 by HW address & subnet ID
+        GET_LEASE4_EXPIRE,          // Get expired lease4
+        GET_LEASE6_ADDR,            // Get lease6 by address
+        GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID
+        GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and subnet ID
+        GET_LEASE6_EXPIRE,          // Get expired lease6
+        GET_VERSION,                // Obtain version number
+        INSERT_LEASE4,              // Add entry to lease4 table
+        INSERT_LEASE6,              // Add entry to lease6 table
+        UPDATE_LEASE4,              // Update a Lease4 entry
+        UPDATE_LEASE6,              // Update a Lease6 entry
+        NUM_STATEMENTS              // Number of statements
     };
 
+    /// @brief TODO
+    ///
+    /// TODO
+    ///
+    /// @param statement TODO
+    /// @param stindex Index of statement being executed
+    /// @param data array that has been created for the type of lease in question.
+    /// @param exchange Exchange object to use
+    static void bindData(CassStatement* statement, const StatementIndex stindex,
+        CqlDataArray& data, const SqlExchange& exchange);
+
+    /// @brief TODO
+    ///
+    /// TODO
+    ///
+    /// @param stindex Index of statement being executed
+    /// @param param TODO
+    /// @param exchange Exchange object to use
+    /// @param type TODO
+    static ExchangeDataType getDataType(const StatementIndex stindex, int param,
+        const SqlExchange& exchange);
+
+    /// @brief TODO
+    ///
+    /// TODO
+    ///
+    /// @param row TODO
+    /// @param pindex Index of statement being executed
+    /// @param data array that has been created for the type of lease in question.
+    /// @param data size TODO
+    /// @param exchange Exchange object to use
+    static void getData(const CassRow* row, const int pindex, CqlDataArray& data,
+        CqlDataArray& size, const int dindex, const SqlExchange& exchange);
+
 private:
+
     /// @brief Add Lease Common Code
     ///
     /// This method performs the common actions for both flavours (V4 and V6)
-    /// of the addLease method.  It binds the contents of the lease object to
+    /// of the addLease method. It binds the contents of the lease object to
     /// the prepared statement and adds it to the database.
     ///
-    /// @param stindex Index of statemnent being executed
-    /// @param bind MYSQL_BIND array that has been created for the type
+    /// @param stindex Index of statement being executed
+    /// @param data array that has been created for the type
     ///        of lease in question.
+    /// @param exchange Exchange object to use
     ///
     /// @return true if the lease was added, false if it was not added because
     ///         a lease with that address already exists in the database.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool addLeaseCommon(StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
+    bool addLeaseCommon(StatementIndex stindex, CqlDataArray& data,
+        CqlLeaseExchange& exchange);
 
     /// @brief Get Lease Collection Common Code
     ///
@@ -437,9 +505,9 @@ private:
     /// from the database.
     ///
     /// @param stindex Index of statement being executed
-    /// @param bind MYSQL_BIND array for input parameters
+    /// @param data array containing the where clause input parameters
     /// @param exchange Exchange object to use
-    /// @param lease LeaseCollection object returned.  Note that any leases in
+    /// @param result Returned collection of Leases Note that any leases in
     ///        the collection when this method is called are not erased: the
     ///        new data is appended to the end.
     /// @param single If true, only a single data item is to be retrieved.
@@ -452,18 +520,18 @@ private:
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
-    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
+    void getLeaseCollection(StatementIndex stindex, CqlDataArray& data_array,
                             Exchange& exchange, LeaseCollection& result,
                             bool single = false) const;
 
-    /// @brief Get Lease Collection
+    /// @brief Gets Lease4 Collection
     ///
-    /// Gets a collection of Lease4 objects.  This is just an interface to
+    /// Gets a collection of Lease4 objects. This is just an interface to
     /// the get lease collection common code.
     ///
     /// @param stindex Index of statement being executed
-    /// @param bind MYSQL_BIND array for input parameters
-    /// @param lease LeaseCollection object returned.  Note that any leases in
+    /// @param data array containing the where clause input parameters
+    /// @param result LeaseCollection object returned. Note that any leases in
     ///        the collection when this method is called are not erased: the
     ///        new data is appended to the end.
     ///
@@ -472,19 +540,19 @@ private:
     ///        failed.
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
+    void getLeaseCollection(StatementIndex stindex, CqlDataArray& data,
                             Lease4Collection& result) const {
-        getLeaseCollection(stindex, bind, exchange4_, result);
+        getLeaseCollection(stindex, data, exchange4_, result);
     }
 
-    /// @brief Get Lease Collection
+    /// @brief Get Lease6 Collection
     ///
-    /// Gets a collection of Lease6 objects.  This is just an interface to
+    /// Gets a collection of Lease6 objects. This is just an interface to
     /// the get lease collection common code.
     ///
     /// @param stindex Index of statement being executed
-    /// @param bind MYSQL_BIND array for input parameters
-    /// @param lease LeaseCollection object returned.  Note that any existing
+    /// @param data array containing input parameters for the query
+    /// @param result LeaseCollection object returned. Note that any existing
     ///        data in the collection is erased first.
     ///
     /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
@@ -492,35 +560,34 @@ private:
     ///        failed.
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
+    void getLeaseCollection(StatementIndex stindex, CqlDataArray& data,
                             Lease6Collection& result) const {
-        getLeaseCollection(stindex, bind, exchange6_, result);
+        getLeaseCollection(stindex, data, exchange6_, result);
     }
 
     /// @brief Get Lease4 Common Code
     ///
     /// This method performs the common actions for the various getLease4()
-    /// methods.  It acts as an interface to the getLeaseCollection() method,
+    /// methods. It acts as an interface to the getLeaseCollection() method,
     /// but retrieveing only a single lease.
     ///
     /// @param stindex Index of statement being executed
-    /// @param bind MYSQL_BIND array for input parameters
+    /// @param data array containing input parameters for the query
     /// @param lease Lease4 object returned
-    void getLease(StatementIndex stindex, MYSQL_BIND* bind,
+    void getLease(StatementIndex stindex, CqlDataArray& data,
                   Lease4Ptr& result) const;
 
     /// @brief Get Lease6 Common Code
     ///
-    /// This method performs the common actions for the various getLease46)
-    /// methods.  It acts as an interface to the getLeaseCollection() method,
+    /// This method performs the common actions for the various getLease4()
+    /// methods. It acts as an interface to the getLeaseCollection() method,
     /// but retrieveing only a single lease.
     ///
     /// @param stindex Index of statement being executed
-    /// @param bind MYSQL_BIND array for input parameters
+    /// @param data array containing input parameters for the query
     /// @param lease Lease6 object returned
-    void getLease(StatementIndex stindex, MYSQL_BIND* bind,
-                   Lease6Ptr& result) const;
-
+    void getLease(StatementIndex stindex, CqlDataArray& data,
+                  Lease6Ptr& result) const;
 
     /// @brief Get expired leases common code.
     ///
@@ -543,14 +610,13 @@ private:
 
     /// @brief Update lease common code
     ///
-    /// Holds the common code for updating a lease.  It binds the parameters
+    /// Holds the common code for updating a lease. It binds the parameters
     /// to the prepared statement, executes it, then checks how many rows
     /// were affected.
     ///
     /// @param stindex Index of prepared statement to be executed
-    /// @param bind Array of MYSQL_BIND objects representing the parameters.
-    ///        (Note that the number is determined by the number of parameters
-    ///        in the statement.)
+    /// @param data array containing lease values and where clause
+    /// parameters for the update.
     /// @param lease Pointer to the lease object whose record is being updated.
     ///
     /// @throw NoSuchLease Could not update a lease because no lease matches
@@ -558,25 +624,25 @@ private:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     template <typename LeasePtr>
-    void updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
-                           const LeasePtr& lease);
+    void updateLeaseCommon(StatementIndex stindex, CqlDataArray& data,
+                           const LeasePtr& lease, CqlLeaseExchange& exchange);
 
     /// @brief Delete lease common code
     ///
-    /// Holds the common code for deleting a lease.  It binds the parameters
+    /// Holds the common code for deleting a lease. It binds the parameters
     /// to the prepared statement, executes the statement and checks to
     /// see how many rows were deleted.
     ///
     /// @param stindex Index of prepared statement to be executed
-    /// @param bind Array of MYSQL_BIND objects representing the parameters.
-    ///        (Note that the number is determined by the number of parameters
-    ///        in the statement.)
+    /// @param data array containing lease values and where clause
+    /// parameters for the delete
     ///
     /// @return Number of deleted leases.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    uint64_t deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind);
+    bool deleteLeaseCommon(StatementIndex stindex, CqlDataArray& data,
+        CqlLeaseExchange& exchange);
 
     /// @brief Delete expired-reclaimed leases.
     ///
@@ -590,34 +656,21 @@ private:
     uint64_t deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
                                                 StatementIndex statement_index);
 
-
-    /// @brief Check Error and Throw Exception
-    ///
-    /// This method invokes @ref MySqlConnection::checkError.
-    ///
-    /// @param status Status code: non-zero implies an error
-    /// @param index Index of statement that caused the error
-    /// @param what High-level description of the error
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    void checkError(int status, StatementIndex index,
-                    const char* what) const;
-
-    // Members
+    /// TODO
+    static CqlTaggedStatement tagged_statements_[];
+    /// Database connection object
+    CqlConnection dbconn_;
 
     /// The exchange objects are used for transfer of data to/from the database.
     /// They are pointed-to objects as the contents may change in "const" calls,
-    /// while the rest of this object does not.  (At alternative would be to
+    /// while the rest of this object does not. (At alternative would be to
     /// declare them as "mutable".)
-    boost::scoped_ptr<MySqlLease4Exchange> exchange4_; ///< Exchange object
-    boost::scoped_ptr<MySqlLease6Exchange> exchange6_; ///< Exchange object
-
-    /// @brief MySQL connection
-    MySqlConnection conn_;
+    boost::scoped_ptr<CqlLease4Exchange> exchange4_; ///< Exchange object
+    boost::scoped_ptr<CqlLease6Exchange> exchange6_; ///< Exchange object
+    boost::scoped_ptr<CqlVersionExchange> versionExchange_; ///< Exchange object
 };
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 
-#endif // MYSQL_LEASE_MGR_H
+#endif // CQL_LEASE_MGR_H

@@ -301,8 +301,8 @@ be followed by a comma and another object definition.</para>
 <section>
   <title>Lease Storage</title>
   <para>All leases issued by the server are stored in the lease database.
-  Currently there are three database backends available:
-  memfile (which is the default backend), MySQL and PostgreSQL.</para>
+  Currently there are four database backends available:  memfile (which is the
+  default backend), MySQL, PostgreSQL and CQL.</para>
 <section>
   <title>Memfile, Basic Storage for Leases</title>
 
@@ -441,8 +441,10 @@ be followed by a comma and another object definition.</para>
 "Dhcp4": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
   Next, the name of the database to hold the leases must be set: this is the
-  name used when the lease database was created (see <xref linkend="mysql-database-create"/>
-  or <xref linkend="pgsql-database-create"/>).
+  name used when the lease database was created
+  (see <xref linkend="mysql-database-create"/>,
+  <xref linkend="pgsql-database-create"/> or
+  <xref linkend="cql-database-create"/>).
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
