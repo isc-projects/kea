@@ -88,10 +88,10 @@ std::string PsqlBindArray::toText() const {
                 stream << "empty" << std::endl;
             } else {
                 stream << "0x";
-                for (int i = 0; i < lengths_[i]; ++i) {
+                for (int x = 0; x < lengths_[i]; ++x) {
                     stream << std::setfill('0') << std::setw(2)
                            << std::setbase(16)
-                           << static_cast<unsigned int>(data[i]);
+                           << static_cast<unsigned int>(data[x]);
                 }
                 stream << std::endl;
             }
