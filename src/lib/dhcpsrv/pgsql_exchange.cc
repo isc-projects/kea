@@ -64,6 +64,12 @@ void PsqlBindArray::add(const isc::asiolink::IOAddress& addr) {
     }
 }
 
+void PsqlBindArray::addNull(const int format) {
+    values_.push_back(NULL);
+    lengths_.push_back(0);
+    formats_.push_back(format);
+}
+
 // eventually this should replace add(std::string)
 void PsqlBindArray::bindString(const std::string& str) {
     bound_strs_.push_back(StringPtr(new std::string(str)));
@@ -139,18 +145,30 @@ PgSqlExchange::convertFromDatabaseTime(const std::string& db_time_val) {
 
 const char*
 PgSqlExchange::getRawColumnValue(const PgSqlResult& r, const int row,
-                                 const size_t col) const {
+                                 const size_t col) {
     const char* value = PQgetvalue(r, row, col);
     if (!value) {
         isc_throw(DbOperationError, "getRawColumnValue no data for :"
-                    << getColumnLabel(col) << " row:" << row);
+                    << getColumnLabel(r, col) << " row:" << row);
     }
     return (value);
 }
 
+bool 
+PgSqlExchange::isColumnNull(const PgSqlResult& r, const int row, 
+                            const size_t col) {
+    return (PQgetisnull(r, row, col));
+}
+
 void
 PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
-                              const size_t col, bool &value) const {
+                              const size_t col, std::string& value) {
+    value = getRawColumnValue(r, row, col);
+}
+
+void
+PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
+                              const size_t col, bool &value) {
     const char* data = getRawColumnValue(r, row, col);
     if (!strlen(data) || *data == 'f') {
         value = false;
@@ -158,14 +176,14 @@ PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
         value = true;
     } else {
         isc_throw(DbOperationError, "Invalid boolean data: " << data
-                  << " for: " << getColumnLabel(col) << " row:" << row
+                  << " for: " << getColumnLabel(r, col) << " row:" << row
                   << " : must be 't' or 'f'");
     }
 }
 
 void
 PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
-                              const size_t col, uint8_t &value) const {
+                              const size_t col, uint8_t &value) {
     const char* data = getRawColumnValue(r, row, col);
     try {
         // lexically casting as uint8_t doesn't convert from char
@@ -173,7 +191,7 @@ PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
         value = boost::lexical_cast<uint16_t>(data);
     } catch (const std::exception& ex) {
         isc_throw(DbOperationError, "Invalid uint8_t data: " << data
-                  << " for: " << getColumnLabel(col) << " row:" << row
+                  << " for: " << getColumnLabel(r, col) << " row:" << row
                   << " : " << ex.what());
     }
 }
@@ -182,7 +200,7 @@ void
 PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
                                 const size_t col, uint8_t* buffer,
                                 const size_t buffer_size,
-                                size_t &bytes_converted) const {
+                                size_t &bytes_converted) {
     // Returns converted bytes in a dynamically allocated buffer, and
     // sets bytes_converted.
     unsigned char* bytes = PQunescapeBytea((const unsigned char*)
@@ -192,7 +210,7 @@ PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
     // Unlikely it couldn't allocate it but you never know.
     if (!bytes) {
         isc_throw (DbOperationError, "PQunescapeBytea failed for:"
-                   << getColumnLabel(col) << " row:" << row);
+                   << getColumnLabel(r, col) << " row:" << row);
     }
 
     // Make sure it's not larger than expected.
@@ -201,7 +219,7 @@ PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
         PQfreemem(bytes);
         isc_throw (DbOperationError, "Converted data size: "
                    << bytes_converted << " is too large for: "
-                   << getColumnLabel(col) << " row:" << row);
+                   << getColumnLabel(r, col) << " row:" << row);
     }
 
     // Copy from the allocated buffer to caller's buffer the free up
@@ -210,15 +228,60 @@ PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
     PQfreemem(bytes);
 }
 
+#if 0
 std::string
 PgSqlExchange::getColumnLabel(const size_t column) const {
-    if (column > column_labels_.size()) {
+    if (column > columns_.size()) {
         std::ostringstream os;
         os << "Unknown column:" << column;
         return (os.str());
     }
 
-    return (column_labels_[column]);
+    return (columns_[column]);
+}
+#endif
+
+std::string
+PgSqlExchange::getColumnLabel(const PgSqlResult& r, const size_t column) {
+    const char* label = PQfname(r, column);
+    if (!label) {
+        std::ostringstream os;
+        os << "Unknown column:" << column;
+        return (os.str());
+    }
+
+    return (label);
+}
+
+std::string 
+PgSqlExchange::dumpRow(const PgSqlResult& r, int row, size_t columns) {
+    std::ostringstream stream;
+    for (int col = 0; col < columns; ++col) {
+        const char* val = getRawColumnValue(r, row, col);
+        std::string name = getColumnLabel(r, col);
+        int format = PQfformat(r, col); 
+
+        stream << col << "   " << name << " : " ;
+        if (format == PsqlBindArray::TEXT_FMT) {
+            stream << "\"" << val << "\"" << std::endl;
+        } else {
+            const char *data = val;
+            int length = PQfsize(r, col);
+            if (length == 0) {
+                stream << "empty" << std::endl;
+            } else {
+                stream << "0x";
+                for (int i = 0; i < length; ++i) {
+                    stream << std::setfill('0') << std::setw(2)
+                           << std::setbase(16)
+                           << static_cast<unsigned int>(data[i]);
+                }
+                stream << std::endl;
+            }
+        }
+    }
+
+    return (stream.str());
 }
 
 }; // end of isc::dhcp namespace

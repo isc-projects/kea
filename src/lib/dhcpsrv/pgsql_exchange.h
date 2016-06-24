@@ -152,6 +152,12 @@ struct PsqlBindArray {
     /// @param value bool value to add.
     void bindString(const std::string& str);
 
+    /// @brief Adds a NULL value to the bind array
+    ///
+    /// This should be used whenever a the value for a parameter specified
+    /// in the SQL statement should be NULL.
+    void addNull(const int format = PsqlBindArray::TEXT_FMT);
+
     //std::vector<const std::string> getBoundStrs() {
     std::vector<StringPtr> getBoundStrs() {
         return (bound_strs_);
@@ -178,7 +184,7 @@ typedef boost::shared_ptr<PsqlBindArray> PsqlBindArrayPtr;
 class PgSqlExchange {
 public:
     /// @brief Constructor
-    PgSqlExchange(){}
+    PgSqlExchange(const size_t num_columns = 0) : columns_(num_columns) {}
 
     /// @brief Destructor
     virtual ~PgSqlExchange(){}
@@ -239,8 +245,23 @@ public:
     ///
     /// @return a const char* pointer to the column's raw data
     /// @throw  DbOperationError if the value cannot be fetched.
-    const char* getRawColumnValue(const PgSqlResult& r, const int row,
-                                  const size_t col) const;
+    static const char* getRawColumnValue(const PgSqlResult& r, const int row,
+                                         const size_t col);
+
+    /// @todo
+    static std::string getColumnLabel(const PgSqlResult& r, const size_t col);
+
+    /// @brief Fetches text column value as a string
+    ///
+    /// @param r the result set containing the query results
+    /// @param row the row number within the result set
+    /// @param col the column number within the row
+    /// @param[out] value parameter to receive the string value
+    ///
+    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// invalid.
+    static void getColumnValue(const PgSqlResult& r, const int row, 
+                               const size_t col, std::string& value);
 
     /// @brief Fetches boolean text ('t' or 'f') as a bool.
     ///
@@ -251,8 +272,8 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void getColumnValue(const PgSqlResult& r, const int row, const size_t col,
-                        bool &value) const;
+    static void getColumnValue(const PgSqlResult& r, const int row, 
+                               const size_t col, bool &value);
 
     /// @brief Fetches an integer text column as a uint8_t.
     ///
@@ -263,8 +284,11 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void getColumnValue(const PgSqlResult& r, const int row, const size_t col,
-                        uint8_t &value) const;
+    static void getColumnValue(const PgSqlResult& r, const int row, 
+                               const size_t col, uint8_t &value);
+
+    static bool isColumnNull(const PgSqlResult& r, const int row, 
+                             const size_t col);
 
     /// @brief Fetches a text column as the given value type
     ///
@@ -279,15 +303,15 @@ public:
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
     template<typename T>
-    void getColumnValue(const PgSqlResult& r, const int row, const size_t col,
-                        T& value) const {
+    static void getColumnValue(const PgSqlResult& r, const int row, 
+                               const size_t col, T& value) {
         const char* data = getRawColumnValue(r, row, col);
         try {
             value = boost::lexical_cast<T>(data);
         } catch (const std::exception& ex) {
-            isc_throw(DbOperationError, "Invalid data: " << data
-                      << " for: " << getColumnLabel(col) << " row:" << row
-                      << " : " << ex.what());
+            isc_throw(DbOperationError, "Invalid data:[" << data
+                      << "] for row: " << row << " col: " << col << "," 
+                      << getColumnLabel(r, col) << " : " << ex.what());
         }
     }
 
@@ -307,17 +331,18 @@ public:
     ///
     /// @throw  DbOperationError if the value cannot be fetched or is
     /// invalid.
-    void convertFromBytea(const PgSqlResult& r, const int row, const size_t col,
-                          uint8_t* buffer, const size_t buffer_size,
-                          size_t &bytes_converted) const;
+    static void convertFromBytea(const PgSqlResult& r, const int row, 
+                                 const size_t col, uint8_t* buffer, 
+                                 const size_t buffer_size, 
+                                 size_t &bytes_converted);
 
-    /// @brief Returns column label given a column number
-    std::string getColumnLabel(const size_t column) const;
+
+    static std::string dumpRow(const PgSqlResult& r, int row, size_t columns);
 
 protected:
     /// @brief Stores text labels for columns, currently only used for
     /// logging and errors.
-    std::vector<std::string>column_labels_;
+    std::vector<std::string>columns_;
 };
 
 }; // end of isc::dhcp namespace
