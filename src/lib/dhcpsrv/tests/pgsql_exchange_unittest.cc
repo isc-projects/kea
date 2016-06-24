@@ -107,7 +107,7 @@ TEST(PsqlBindArray, basicOperation) {
         "5 : \"3221360418\"\n"
         "6 : \"3001::1\"\n"
         "7 : \"just a string\"\n"
-        "8 : 0x010203040506070809\n";
+        "8 : 0x0102030405060708090a\n";
 
     EXPECT_EQ(expected, b.toText());
 }
