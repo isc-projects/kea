@@ -42,6 +42,11 @@ Option6IAAddr::Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
     unpack(begin, end);
 }
 
+OptionPtr
+Option6IAAddr::clone() const {
+    return (cloneInternal<Option6IAAddr>());
+}
+
 void Option6IAAddr::pack(isc::util::OutputBuffer& buf) const {
 
     buf.writeUint16(type_);

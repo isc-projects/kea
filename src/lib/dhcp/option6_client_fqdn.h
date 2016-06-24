@@ -137,8 +137,10 @@ public:
     explicit Option6ClientFqdn(OptionBufferConstIter first,
                                OptionBufferConstIter last);
 
-   /// @brief Copy constructor
+    /// @brief Copy constructor
     Option6ClientFqdn(const Option6ClientFqdn& source);
+
+    virtual OptionPtr clone() const;
 
     /// @brief Destructor
     virtual ~Option6ClientFqdn();

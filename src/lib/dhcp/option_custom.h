@@ -79,6 +79,8 @@ public:
     OptionCustom(const OptionDefinition& def, Universe u,
                  OptionBufferConstIter first, OptionBufferConstIter last);
 
+    virtual OptionPtr clone() const;
+
     /// @brief Create new buffer and set its value as an IP address.
     ///
     /// @param address IPv4 or IPv6 address to be written to

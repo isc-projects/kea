@@ -11,6 +11,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
 #include <util/io_utilities.h>
+#include <boost/shared_ptr.hpp>
 #include <sstream>
 #include <stdint.h>
 
@@ -53,6 +54,9 @@ typedef boost::shared_ptr<OptionUint32Array> OptionUint32ArrayPtr;
 /// @param T data field type (see above).
 template<typename T>
 class OptionIntArray: public Option {
+private:
+
+    typedef boost::shared_ptr<OptionIntArray<T> > OptionIntArrayTypePtr;
 
 public:
 
@@ -114,6 +118,10 @@ public:
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
         unpack(begin, end);
+    }
+
+    virtual OptionPtr clone() const {
+        return (cloneInternal<OptionIntArray<T> >());
     }
 
     /// @brief Adds a new value to the array.

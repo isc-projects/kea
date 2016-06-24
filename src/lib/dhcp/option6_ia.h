@@ -39,6 +39,8 @@ public:
     Option6IA(uint16_t type, OptionBuffer::const_iterator begin,
               OptionBuffer::const_iterator end);
 
+    virtual OptionPtr clone() const;
+
     /// Writes option in wire-format to buf, returns pointer to first unused
     /// byte after stored option.
     ///

@@ -46,6 +46,8 @@ public:
     Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
                   OptionBuffer::const_iterator end);
 
+    virtual OptionPtr clone() const;
+
     /// @brief Writes option in wire-format.
     ///
     /// Writes option in wire-format to buf, returns pointer to first unused

@@ -80,6 +80,8 @@ public:
     Option4AddrLst(uint8_t type, OptionBufferConstIter first,
                    OptionBufferConstIter last);
 
+    virtual OptionPtr clone() const;
+
     /// @brief Writes option in a wire-format to a buffer.
     ///
     /// Method will throw if option storing fails for some reason.

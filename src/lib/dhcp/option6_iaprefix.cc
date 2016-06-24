@@ -44,6 +44,11 @@ Option6IAPrefix::Option6IAPrefix(uint32_t type, OptionBuffer::const_iterator beg
     unpack(begin, end);
 }
 
+OptionPtr
+Option6IAPrefix::clone() const {
+    return (cloneInternal<Option6IAPrefix>());
+}
+
 void Option6IAPrefix::pack(isc::util::OutputBuffer& buf) const {
     if (!addr_.isV6()) {
         isc_throw(isc::BadValue, addr_ << " is not an IPv6 address");

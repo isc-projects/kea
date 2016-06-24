@@ -50,6 +50,8 @@ public:
     OptionVendor(Option::Universe u, OptionBufferConstIter begin,
                  OptionBufferConstIter end);
 
+    OptionPtr clone() const;
+
     /// @brief Writes option in wire-format to buf, returns pointer to first
     /// unused byte after stored option.
     ///

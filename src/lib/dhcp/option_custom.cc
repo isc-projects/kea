@@ -40,6 +40,11 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
     createBuffers(getData());
 }
 
+OptionPtr
+OptionCustom::clone() const {
+    return (cloneInternal<OptionCustom>());
+}
+
 void
 OptionCustom::addArrayDataField(const asiolink::IOAddress& address) {
     checkArrayType();

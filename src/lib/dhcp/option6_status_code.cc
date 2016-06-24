@@ -40,6 +40,11 @@ Option6StatusCode::Option6StatusCode(OptionBufferConstIter begin,
     unpack(begin, end);
 }
 
+OptionPtr
+Option6StatusCode::clone() const {
+    return (cloneInternal<Option6StatusCode>());
+}
+
 void
 Option6StatusCode::pack(isc::util::OutputBuffer& buf) const {
     // Pack option header.

@@ -69,6 +69,8 @@ public:
     OptionVendorClass(Option::Universe u, OptionBufferConstIter begin,
                       OptionBufferConstIter end);
 
+    OptionPtr clone() const;
+
     /// @brief Renders option into the buffer in the wire format.
     ///
     /// @param [out] buf Buffer to which the option is rendered.

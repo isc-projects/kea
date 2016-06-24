@@ -144,6 +144,12 @@ public:
     Option(Universe u, uint16_t type, OptionBufferConstIter first,
            OptionBufferConstIter last);
 
+    Option(const Option& option);
+
+    Option& operator=(const Option& rhs);
+
+    virtual OptionPtr clone() const;
+
     /// @brief returns option universe (V4 or V6)
     ///
     /// @return universe type
@@ -257,6 +263,8 @@ public:
         return (options_);
     }
 
+    void getOptionsCopy(OptionCollection& options_copy) const;
+
     /// Attempts to delete first suboption of requested type
     ///
     /// @param type Type of option to be deleted.
@@ -363,6 +371,13 @@ public:
     virtual bool equals(const Option& other) const;
 
 protected:
+
+    template<typename OptionType>
+    OptionPtr cloneInternal() const {
+        boost::shared_ptr<OptionType>
+            option(new OptionType(*dynamic_cast<const OptionType*>(this)));
+        return (option);
+    }
 
     /// @brief Store option's header in a buffer.
     ///

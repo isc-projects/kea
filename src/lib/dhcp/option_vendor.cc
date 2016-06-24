@@ -23,6 +23,10 @@ OptionVendor::OptionVendor(Option::Universe u, OptionBufferConstIter begin,
     unpack(begin, end);
 }
 
+OptionPtr
+OptionVendor::clone() const {
+    return (cloneInternal<OptionVendor>());
+}
 
 void OptionVendor::pack(isc::util::OutputBuffer& buf) const {
     packHeader(buf);
