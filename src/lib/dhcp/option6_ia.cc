@@ -48,6 +48,11 @@ Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin,
     unpack(begin, end);
 }
 
+OptionPtr
+Option6IA::clone() const {
+    return (cloneInternal<Option6IA>());
+}
+
 void Option6IA::pack(isc::util::OutputBuffer& buf) const {
     buf.writeUint16(type_);
     buf.writeUint16(len() - OPTION6_HDR_LEN);

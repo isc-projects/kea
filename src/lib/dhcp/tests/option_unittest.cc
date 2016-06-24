@@ -6,9 +6,12 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option4_addrlst.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 
@@ -24,6 +27,7 @@
 
 using namespace std;
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
 using boost::scoped_ptr;

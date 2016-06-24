@@ -20,11 +20,16 @@ OptionVendorClass::OptionVendorClass(Option::Universe u,
     }
 }
 
-    OptionVendorClass::OptionVendorClass(Option::Universe u,
-                                         OptionBufferConstIter begin,
-                                         OptionBufferConstIter end)
+OptionVendorClass::OptionVendorClass(Option::Universe u,
+                                     OptionBufferConstIter begin,
+                                     OptionBufferConstIter end)
     : Option(u, getOptionCode(u)) {
     unpack(begin, end);
+}
+
+OptionPtr
+OptionVendorClass::clone() const {
+    return (cloneInternal<OptionVendorClass>());
 }
 
 void

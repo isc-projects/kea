@@ -37,6 +37,8 @@ public:
     /// @param end Iterator to end of option data (first byte after option end).
     Option6StatusCode(OptionBufferConstIter begin, OptionBufferConstIter end);
 
+    virtual OptionPtr clone() const;
+
     /// @brief Writes option in wire-format.
     ///
     /// Writes option in wire-format to buf, returns pointer to first unused

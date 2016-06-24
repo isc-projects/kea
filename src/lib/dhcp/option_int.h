@@ -46,6 +46,9 @@ typedef boost::shared_ptr<OptionUint32> OptionUint32Ptr;
 /// @param T data field type (see above).
 template<typename T>
 class OptionInt: public Option {
+private:
+
+    typedef boost::shared_ptr<OptionInt<T> > OptionIntTypePtr;
 
 public:
     /// @brief Constructor.
@@ -88,6 +91,10 @@ public:
         }
         setEncapsulatedSpace(u == Option::V4 ? "dhcp4" : "dhcp6");
         unpack(begin, end);
+    }
+
+    virtual OptionPtr clone() const {
+        return (cloneInternal<OptionInt<T> >());
     }
 
     /// Writes option in wire-format to buf, returns pointer to first unused

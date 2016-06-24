@@ -56,6 +56,8 @@ public:
     OptionString(const Option::Universe u, const uint16_t type,
                  OptionBufferConstIter begin, OptionBufferConstIter end);
 
+    OptionPtr clone() const;
+
     /// @brief Returns length of the whole option, including header.
     ///
     /// @return length of the whole option.

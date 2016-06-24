@@ -45,6 +45,8 @@ public:
     Option6AddrLst(uint16_t type, OptionBufferConstIter begin,
                    OptionBufferConstIter end);
 
+    virtual OptionPtr clone() const;
+
     /// @brief Assembles on-wire form of this option
     ///
     /// @param buf pointer to packet buffer

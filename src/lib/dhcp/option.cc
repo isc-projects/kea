@@ -53,6 +53,31 @@ Option::Option(Universe u, uint16_t type, OptionBufferConstIter first,
     check();
 }
 
+Option::Option(const Option& option)
+    : universe_(option.universe_), type_(option.type_),
+      data_(option.data_), options_(),
+      encapsulated_space_(option.encapsulated_space_) {
+    option.getOptionsCopy(options_);
+}
+
+Option&
+Option::operator=(const Option& rhs) {
+    if (&rhs != this) {
+        universe_ = rhs.universe_;
+        type_ = rhs.type_;
+        data_ = rhs.data_;
+        rhs.getOptionsCopy(options_);
+        encapsulated_space_ = rhs.encapsulated_space_;
+    }
+    return (*this);
+}
+
+OptionPtr
+Option::clone() const {
+    OptionPtr option(new Option(*this));
+    return (option);
+}
+
 void
 Option::check() const {
     if ( (universe_ != V4) && (universe_ != V6) ) {
@@ -178,6 +203,18 @@ OptionPtr Option::getOption(uint16_t opt_type) const {
         return (*x).second;
     }
     return OptionPtr(); // NULL
+}
+
+void
+Option::getOptionsCopy(OptionCollection& options_copy) const {
+    OptionCollection local_options;
+    for (OptionCollection::const_iterator it = options_.begin();
+         it != options_.end(); ++it) {
+        OptionPtr copy = it->second->clone();
+        local_options.insert(std::make_pair(it->second->getType(),
+                                            copy));
+    }
+    options_copy.swap(local_options);
 }
 
 bool Option::delOption(uint16_t opt_type) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dns/name.h>
 
 #include <string>
+#include <utility>
 
 namespace isc {
 namespace dhcp {
@@ -215,8 +216,10 @@ public:
     explicit Option4ClientFqdn(OptionBufferConstIter first,
                                OptionBufferConstIter last);
 
-   /// @brief Copy constructor
+    /// @brief Copy constructor
     Option4ClientFqdn(const Option4ClientFqdn& source);
+
+    virtual OptionPtr clone() const;
 
     /// @brief Destructor
     virtual ~Option4ClientFqdn();
@@ -250,6 +253,12 @@ public:
 
     /// @brief Sets the flag field value to 0.
     void resetFlags();
+
+    /// @brief Returns @c Rcode objects representing value of RCODE1 and RCODE2.
+    ///
+    /// @return Pair of Rcode objects of which first is the RCODE1 and the
+    /// second is RCODE2.
+    std::pair<Rcode, Rcode> getRcode() const;
 
     /// @brief Set Rcode value.
     ///

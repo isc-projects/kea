@@ -41,6 +41,11 @@ Option6AddrLst::Option6AddrLst(uint16_t type, OptionBufferConstIter begin,
     unpack(begin, end);
 }
 
+OptionPtr
+Option6AddrLst::clone() const {
+    return (cloneInternal<Option6AddrLst>());
+}
+
 void
 Option6AddrLst::setAddress(const isc::asiolink::IOAddress& addr) {
     if (!addr.isV6()) {

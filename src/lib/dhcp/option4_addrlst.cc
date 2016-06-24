@@ -55,6 +55,11 @@ Option4AddrLst::Option4AddrLst(uint8_t type, const IOAddress& addr)
     setAddress(addr);
 }
 
+OptionPtr
+Option4AddrLst::clone() const {
+    return (cloneInternal<Option4AddrLst>());
+}
+
 void
 Option4AddrLst::pack(isc::util::OutputBuffer& buf) const {
 

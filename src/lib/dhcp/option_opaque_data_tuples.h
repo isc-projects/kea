@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,6 +61,8 @@ public:
     OptionOpaqueDataTuples(Option::Universe u, const uint16_t type,
                            OptionBufferConstIter begin,
                            OptionBufferConstIter end);
+
+    OptionPtr clone() const;
 
     /// @brief Renders option into the buffer in the wire format.
     ///
@@ -137,12 +139,11 @@ private:
     ///
     /// This function returns the length field type which should be used
     /// for the opaque data tuples being added to this option.
-    /// Currently this class is only used for a DHCPv6 option it may be expanded
-    /// for DHCPv4 in the future.
     ///
     /// @return Tuple length field type for the universe this option belongs to.
     OpaqueDataTuple::LengthFieldType getLengthFieldType() const {
-        return (OpaqueDataTuple::LENGTH_2_BYTES);
+        return (universe_ == Option::V6 ? OpaqueDataTuple::LENGTH_2_BYTES :
+                OpaqueDataTuple::LENGTH_1_BYTE);
     }
 
     /// @brief Returns minimal length of the option for the given universe.

@@ -27,6 +27,11 @@ OptionString::OptionString(const Option::Universe u, const uint16_t type,
     unpack(begin, end);
 }
 
+OptionPtr
+OptionString::clone() const {
+    return (cloneInternal<OptionString>());
+}
+
 std::string
 OptionString::getValue() const {
     const OptionBuffer& data = getData();

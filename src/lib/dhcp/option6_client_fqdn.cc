@@ -293,11 +293,17 @@ Option6ClientFqdn::Option6ClientFqdn(const Option6ClientFqdn& source)
       impl_(new Option6ClientFqdnImpl(*source.impl_)) {
 }
 
+OptionPtr
+Option6ClientFqdn::clone() const {
+    return (cloneInternal<Option6ClientFqdn>());
+}
+
 Option6ClientFqdn&
 // This assignment operator handles assignment to self, it uses copy
 // constructor of Option6ClientFqdnImpl to copy all required values.
 // cppcheck-suppress operatorEqToSelf
 Option6ClientFqdn::operator=(const Option6ClientFqdn& source) {
+    Option::operator=(source);
     Option6ClientFqdnImpl* old_impl = impl_;
     impl_ = new Option6ClientFqdnImpl(*source.impl_);
     delete(old_impl);
