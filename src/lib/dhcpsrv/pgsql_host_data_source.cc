@@ -363,17 +363,6 @@ private:
     /// @brief Number of columns holding DHCPv4  or DHCPv6 option information.
     static const size_t OPTION_COLUMNS = 6;
 
-    virtual void clear() {
-        PgSqlHostExchange::clear();
-        if (opt_proc4_) {
-            opt_proc4_->clear();
-        }
-
-        if (opt_proc6_) {
-            opt_proc6_->clear();
-        }
-    }
-
     /// @brief Receives DHCPv4 or DHCPv6 options information from the
     /// dhcp4_options or dhcp6_options tables respectively.
     ///
@@ -634,6 +623,22 @@ public:
         }
     }
 
+    /// @brief Reinitializes state information
+    /// 
+    /// This function should be called in between statement executions.
+    /// Deriving classes should be to sure to reinitialize any stateful
+    /// values that control statement result processing.
+    virtual void clear() {
+        PgSqlHostExchange::clear();
+        if (opt_proc4_) {
+            opt_proc4_->clear();
+        }
+
+        if (opt_proc6_) {
+            opt_proc6_->clear();
+        }
+    }
+
     /// @brief Processes the current row.
     ///
     /// The processed row includes both host information and DHCP option
@@ -644,12 +649,6 @@ public:
     /// @param [out] hosts Container holding parsed hosts and options.
     virtual void processRowData(ConstHostCollection& hosts, 
                                 const PgSqlResult& r, int row) {
-
-#if 0
-        std::cout << "row :" << row << std::endl 
-                <<  dumpRow(r, row, columns_.size()) << std::endl;;
-#endif
-        
         HostPtr current_host;
         if (hosts.empty()) {
             current_host = retrieveHost(r, row);
@@ -709,7 +708,6 @@ private:
     OptionProcessorPtr opt_proc6_;
 };
 
-#if 0
 /// @brief This class provides mechanisms for sending and retrieving
 /// host information, DHCPv4 options, DHCPv6 options and IPv6 reservations.
 ///
@@ -736,9 +734,6 @@ public:
     /// initializes values representing IPv6 reservation information.
     PgSqlHostIPv6Exchange(const FetchedOptions& fetched_options)
         : PgSqlHostWithOptionsExchange(fetched_options, RESERVATION_COLUMNS),
-          reservation_id_(0),
-          reserv_type_(0), reserv_type_null_(MLM_FALSE),
-          ipv6_address_buffer_len_(0), prefix_len_(0), iaid_(0),
           reservation_id_index_(findAvailColumn()),
           address_index_(reservation_id_index_ + 1),
           prefix_len_index_(reservation_id_index_ + 2),
@@ -746,24 +741,36 @@ public:
           iaid_index_(reservation_id_index_ + 4),
           most_recent_reservation_id_(0) {
 
-        memset(ipv6_address_buffer_, 0, sizeof(ipv6_address_buffer_));
-
         // Provide names of additional columns returned by the queries.
         columns_[reservation_id_index_] = "reservation_id";
         columns_[address_index_] = "address";
         columns_[prefix_len_index_] = "prefix_len";
         columns_[type_index_] = "type";
         columns_[iaid_index_] = "dhcp6_iaid";
+
+    //    BOOST_STATIC_ASSERT(5 < RESERVATION_COLUMNS);
     }
 
-    /// @brief Returns last fetched reservation id.
+    /// @brief Reinitializes state information
+    /// 
+    /// This function should be called in between statement executions.
+    /// Deriving classes should be to sure to reinitialize any stateful
+    /// values that control statement result processing.
+    void clear() {
+        PgSqlHostWithOptionsExchange::clear();
+        most_recent_reservation_id_ = 0;
+    }
+
+    /// @brief Returns reservation id from the row.
     ///
     /// @return Reservation id or 0 if no reservation data is fetched.
-    uint64_t getReservationId() const {
-        if (reserv_type_null_ == MLM_FALSE) {
-            return (reservation_id_);
+    uint64_t getReservationId(const PgSqlResult& r, int row) const {
+        uint64_t resv_id = 0;
+        if (!isColumnNull(r, row, reservation_id_index_)) {
+            getColumnValue(r, row, reservation_id_index_, resv_id);
         }
-        return (0);
+        
+        return (resv_id);
     };
 
     /// @brief Creates IPv6 reservation from the data contained in the
@@ -772,30 +779,34 @@ public:
     /// Called after the MYSQL_BIND array created by createBindForReceive().
     ///
     /// @return IPv6Resrv object (containing IPv6 address or prefix reservation)
-    IPv6Resrv retrieveReservation() {
+    IPv6Resrv retrieveReservation(const PgSqlResult& r, int row) {
         // Set the IPv6 Reservation type (0 = IA_NA, 2 = IA_PD)
-        IPv6Resrv::Type type = IPv6Resrv::TYPE_NA;
+        IPv6Resrv::Type resv_type;
+        uint16_t tmp;
+        getColumnValue(r, row, type_index_, tmp);
 
-        switch (reserv_type_) {
+        switch (tmp) {
         case 0:
-            type = IPv6Resrv::TYPE_NA;
+            resv_type = IPv6Resrv::TYPE_NA;
             break;
 
         case 2:
-            type = IPv6Resrv::TYPE_PD;
+            resv_type = IPv6Resrv::TYPE_PD;
             break;
 
         default:
             isc_throw(BadValue,
                       "invalid IPv6 reservation type returned: "
-                      << static_cast<int>(reserv_type_)
-                      << ". Only 0 or 2 are allowed.");
+                      << tmp << ". Only 0 or 2 are allowed.");
         }
 
-        ipv6_address_buffer_[ipv6_address_buffer_len_] = '\0';
-        std::string address = ipv6_address_buffer_;
-        IPv6Resrv r(type, IOAddress(address), prefix_len_);
-        return (r);
+        isc::asiolink::IOAddress address(getIPv6Value(r, row, address_index_));
+
+        uint16_t prefix_len;        
+        getColumnValue(r, row, prefix_len_index_, prefix_len);
+
+        IPv6Resrv reservation(resv_type, IOAddress(address), prefix_len);
+        return (reservation);
     };
 
     /// @brief Processes one row of data fetched from a database.
@@ -817,12 +828,13 @@ public:
     ///
     /// @param [out] hosts Collection of hosts to which a new host created
     ///        from the processed data should be inserted.
-    virtual void processRowData(ConstHostCollection& hosts) {
-
+    virtual void processRowData(ConstHostCollection& hosts,
+                                const PgSqlResult& r, int row) {
         // Call parent class to fetch host information and options.
-        PgSqlHostWithOptionsExchange::processRowData(hosts);
+        PgSqlHostWithOptionsExchange::processRowData(hosts, r, row);
 
-        if (getReservationId() == 0) {
+        uint64_t reservation_id = getReservationId(r, row);
+        if (!reservation_id) {
             return;
         }
 
@@ -834,92 +846,16 @@ public:
 
         // If we're dealing with a new reservation, let's add it to the
         // host.
-        if (getReservationId() > most_recent_reservation_id_) {
-            most_recent_reservation_id_ = getReservationId();
+        if (reservation_id > most_recent_reservation_id_) {
+            most_recent_reservation_id_ = reservation_id;
 
             if (most_recent_reservation_id_ > 0) {
-                host->addReservation(retrieveReservation());
+                host->addReservation(retrieveReservation(r, row));
             }
         }
     }
 
-    /// @brief Create BIND array to receive Host data with IPv6 reservations.
-    ///
-    /// Creates a MYSQL_BIND array to receive Host data from the database.
-    /// After data is successfully received, @ref processedFetchedData is
-    /// called for each returned row to build collection of @ref Host
-    /// objects with associated IPv6 reservations.
-    ///
-    /// @return Vector of MYSQL_BIND objects representing data to be retrieved.
-    virtual std::vector<MYSQL_BIND> createBindForReceive() {
-        // Reset most recent reservation id value because we're now making
-        // a new SELECT query.
-        most_recent_reservation_id_ = 0;
-
-        // Bind values supported by parent classes.
-        static_cast<void>(PgSqlHostWithOptionsExchange::createBindForReceive());
-
-        // reservation_id : INT UNSIGNED NOT NULL AUTO_INCREMENT
-        bind_[reservation_id_index_].buffer_type = MYSQL_TYPE_LONG;
-        bind_[reservation_id_index_].buffer = reinterpret_cast<char*>(&reservation_id_);
-        bind_[reservation_id_index_].is_unsigned = MLM_TRUE;
-
-        // IPv6 address/prefix VARCHAR(39)
-        ipv6_address_buffer_len_ = sizeof(ipv6_address_buffer_) - 1;
-        bind_[address_index_].buffer_type = MYSQL_TYPE_STRING;
-        bind_[address_index_].buffer = ipv6_address_buffer_;
-        bind_[address_index_].buffer_length = ipv6_address_buffer_len_;
-        bind_[address_index_].length = &ipv6_address_buffer_len_;
-
-        // prefix_len : TINYINT
-        bind_[prefix_len_index_].buffer_type = MYSQL_TYPE_TINY;
-        bind_[prefix_len_index_].buffer = reinterpret_cast<char*>(&prefix_len_);
-        bind_[prefix_len_index_].is_unsigned = MLM_TRUE;
-
-        // (reservation) type : TINYINT
-        reserv_type_null_ = MLM_FALSE;
-        bind_[type_index_].buffer_type = MYSQL_TYPE_TINY;
-        bind_[type_index_].buffer = reinterpret_cast<char*>(&reserv_type_);
-        bind_[type_index_].is_unsigned = MLM_TRUE;
-        bind_[type_index_].is_null = &reserv_type_null_;
-
-        // dhcp6_iaid INT UNSIGNED
-        bind_[iaid_index_].buffer_type = MYSQL_TYPE_LONG;
-        bind_[iaid_index_].buffer = reinterpret_cast<char*>(&iaid_);
-        bind_[iaid_index_].is_unsigned = MLM_TRUE;
-
-        // Add the error flags
-        setErrorIndicators(bind_, error_);
-
-        return (bind_);
-    };
-
 private:
-
-    /// @brief IPv6 reservation id.
-    uint64_t reservation_id_;
-
-    /// @brief IPv6 reservation type.
-    uint8_t reserv_type_;
-
-    /// @brief Boolean flag indicating if reservation type field is null.
-    ///
-    /// This flag is used by the class to determine if the returned row
-    /// contains IPv6 reservation information.
-    my_bool reserv_type_null_;
-
-    /// @brief Buffer holding IPv6 address/prefix in textual format.
-    char ipv6_address_buffer_[ADDRESS6_TEXT_MAX_LEN + 1];
-
-    /// @brief Length of the textual address representation.
-    unsigned long ipv6_address_buffer_len_;
-
-    /// @brief Length of the prefix (128 for addresses)
-    uint8_t prefix_len_;
-
-    /// @brief IAID.
-    uint8_t iaid_;
-
     /// @name Indexes of columns holding information about IPv6 reservations.
     //@{
     /// @brief Index of reservation_id column.
@@ -943,9 +879,7 @@ private:
     uint64_t most_recent_reservation_id_;
 
 };
-#endif
 
-#if 0
 /// @brief This class is used for storing IPv6 reservations in a MySQL database.
 ///
 /// This class is only used to insert IPv6 reservations into the
@@ -956,7 +890,7 @@ private:
 /// When a new IPv6 reservation is inserted into the database, an appropriate
 /// host must be defined in the hosts table. An attempt to insert IPv6
 /// reservation for non-existing host will result in failure.
-class PgSqlIPv6ReservationExchange {
+class PgSqlIPv6ReservationExchange : public PgSqlExchange {
 private:
 
     /// @brief Set number of columns for ipv6_reservation table.
@@ -968,12 +902,8 @@ public:
     ///
     /// Initialize class members representing a single IPv6 reservation.
     PgSqlIPv6ReservationExchange()
-        : host_id_(0), address_("::"), address_len_(0), prefix_len_(0), type_(0),
-          iaid_(0), resv_(IPv6Resrv::TYPE_NA, asiolink::IOAddress("::"), 128) {
-
-        // Reset error table.
-        std::fill(&error_[0], &error_[RESRV_COLUMNS], MLM_FALSE);
-
+        : PgSqlExchange(RESRV_COLUMNS), 
+          resv_(IPv6Resrv::TYPE_NA, asiolink::IOAddress("::"), 128) {
         // Set the column names (for error messages)
         columns_[0] = "host_id";
         columns_[1] = "address";
@@ -983,115 +913,58 @@ public:
         BOOST_STATIC_ASSERT(4 < RESRV_COLUMNS);
     }
 
-    /// @brief Create MYSQL_BIND objects for IPv6 Reservation.
+    /// @brief Populate a bind array representing an IPv6 reservation
     ///
-    /// Fills in the MYSQL_BIND array for sending data in the IPv6 Reservation
-    /// object to the database.
+    /// Constructs a PsqlBindArray for an IPv6 reservation to the database.
     ///
-    /// @param resv An object representing IPv6 reservation which will be
-    ///        sent to the database.
+    /// @param resv The IPv6 reservation to be added to the database.
     ///        None of the fields in the reservation are modified -
-    ///        the reservation data is only read.
-    /// @param id ID of a host owning this reservation
+    /// @param host_id ID of the host to which this reservation belongs.
     ///
-    /// @return Vector of MySQL BIND objects representing the data to be added.
-    std::vector<MYSQL_BIND> createBindForSend(const IPv6Resrv& resv,
-                                              const HostID& id) {
-
+    /// @return pointer to newly constructed bind_array containing the
+    /// bound values extracted the IPv6 reservation
+    ///
+    /// @throw DbOperationError if bind_array cannot be populated.
+    PsqlBindArrayPtr createBindForSend(const IPv6Resrv& resv, 
+                                       const HostID& host_id) {
         // Store the values to ensure they remain valid.
+        // Technically we don't need this, as currently all the values
+        // are converted to strings and stored by the bind array.
         resv_ = resv;
-        host_id_ = id;
 
-        // Initialize prior to constructing the array of MYSQL_BIND structures.
-        // It sets all fields, including is_null, to zero, so we need to set
-        // is_null only if it should be true. This gives up minor performance
-        // benefit while being safe approach. For improved readability, the
-        // code that explicitly sets is_null is there, but is commented out.
-        memset(bind_, 0, sizeof(bind_));
-
-        // Set up the structures for the various components of the host structure.
+        PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
         try {
-            // address VARCHAR(39)
-            address_ = resv.getPrefix().toText();
-            address_len_ = address_.length();
-            bind_[0].buffer_type = MYSQL_TYPE_BLOB;
-            bind_[0].buffer = reinterpret_cast<char*>
-                (const_cast<char*>(address_.c_str()));
-            bind_[0].buffer_length = address_len_;
-            bind_[0].length = &address_len_;
+            // address VARCHAR(39) NOT NULL
+            bind_array->add(resv.getPrefix());
 
-            // prefix_len tinyint
-            prefix_len_ = resv.getPrefixLen();
-            bind_[1].buffer_type = MYSQL_TYPE_TINY;
-            bind_[1].buffer = reinterpret_cast<char*>(&prefix_len_);
-            bind_[1].is_unsigned = MLM_TRUE;
+            // prefix_len: SMALLINT NOT NULL
+            bind_array->add(resv.getPrefixLen());
 
-            // type tinyint
+            // type: SMALLINT NOT NULL
             // See lease6_types for values (0 = IA_NA, 1 = IA_TA, 2 = IA_PD)
-            type_ = resv.getType() == IPv6Resrv::TYPE_NA ? 0 : 2;
-            bind_[2].buffer_type = MYSQL_TYPE_TINY;
-            bind_[2].buffer = reinterpret_cast<char*>(&type_);
-            bind_[2].is_unsigned = MLM_TRUE;
+            uint16_t type = resv.getType() == IPv6Resrv::TYPE_NA ? 0 : 2;
+            bind_array->add(type);
 
-            // dhcp6_iaid INT UNSIGNED
+            // dhcp6_iaid: INT UNSIGNED
             /// @todo: We don't support iaid in the IPv6Resrv yet.
-            iaid_ = 0;
-            bind_[3].buffer_type = MYSQL_TYPE_LONG;
-            bind_[3].buffer = reinterpret_cast<char*>(&iaid_);
-            bind_[3].is_unsigned = MLM_TRUE;
+            bind_array->addNull();
 
-            // host_id INT UNSIGNED NOT NULL
-            bind_[4].buffer_type = MYSQL_TYPE_LONG;
-            bind_[4].buffer = reinterpret_cast<char*>(&host_id_);
-            bind_[4].is_unsigned = MLM_TRUE;
-
+            // host_id: BIGINT NOT NULL
+            bind_array->add(host_id);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from IPv6 Reservation: "
                       << resv_.toText() << ", reason: " << ex.what());
         }
 
-        // Add the data to the vector.  Note the end element is one after the
-        // end of the array.
-        // RESRV_COLUMNS -1 as we do not set reservation_id.
-        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[RESRV_COLUMNS-1]));
+        return (bind_array);
     }
 
 private:
-
-    /// @brief Host unique identifier.
-    uint64_t host_id_;
-
-    /// @brief Address (or prefix).
-    std::string address_;
-
-    /// @brief Length of the textual address representation.
-    unsigned long address_len_;
-
-     /// @brief Length of the prefix (128 for addresses).
-    uint8_t prefix_len_;
-
-    /// @brief Reservation type.
-    uint8_t type_;
-
-    /// @brief IAID.
-    uint8_t iaid_;
-
     /// @brief Object holding reservation being sent to the database.
     IPv6Resrv resv_;
-
-    /// @brief Array of MySQL bindings.
-    MYSQL_BIND bind_[RESRV_COLUMNS];
-
-    /// @brief Array of strings holding columns names.
-    std::string columns_[RESRV_COLUMNS];
-
-    /// @brief Array of boolean values indicating if error occurred
-    /// for respective columns.
-    my_bool error_[RESRV_COLUMNS];
 };
-#endif
 
 /// @brief This class is used for inserting options into a database.
 ///
@@ -1242,23 +1115,15 @@ public:
     /// The contents of the enum are indexes into the list of SQL statements
     enum StatementIndex {
         INSERT_HOST,            // Insert new host to collection
-#if 0
         INSERT_V6_RESRV,        // Insert v6 reservation
-#endif
         INSERT_V4_OPTION,       // Insert DHCPv4 option
         INSERT_V6_OPTION,       // Insert DHCPv6 option
-#if 0
         GET_HOST_DHCPID,        // Gets hosts by host identifier
-#endif
         GET_HOST_ADDR,          // Gets hosts by IPv4 address
         GET_HOST_SUBID4_DHCPID, // Gets host by IPv4 SubnetID, HW address/DUID
-#if 0
         GET_HOST_SUBID6_DHCPID, // Gets host by IPv6 SubnetID, HW address/DUID
-#endif
         GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
-#if 0
         GET_HOST_PREFIX,        // Gets host by IPv6 prefix
-#endif
         GET_VERSION,            // Obtain version number
         NUM_STATEMENTS          // Number of statements
     };
@@ -1292,13 +1157,11 @@ public:
                           PsqlBindArrayPtr& bind,
                           const bool return_last_id = false);
 
-#if 0
     /// @brief Inserts IPv6 Reservation into ipv6_reservation table.
     ///
     /// @param resv IPv6 Reservation to be added
     /// @param id ID of a host owning this reservation
     void addResv(const IPv6Resrv& resv, const HostID& id);
-#endif
 
     /// @brief Inserts a single DHCP option into the database.
     ///
@@ -1379,17 +1242,10 @@ public:
     ///        has failed.
     std::pair<uint32_t, uint32_t> getVersion() const;
 
-#if 0
-    // @todo TKM using plain host exchange for now
-    boost::shared_ptr<PgSqlHostExchange> host_exchange_;
-#else
     /// @brief Pointer to the object representing an exchange which
     /// can be used to retrieve hosts and DHCPv4 options.
     boost::shared_ptr<PgSqlHostWithOptionsExchange> host_exchange_;
-#endif
 
-
-#if 0
     /// @brief Pointer to an object representing an exchange which can
     /// be used to retrieve hosts, DHCPv6 options and IPv6 reservations.
     boost::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange_;
@@ -1402,7 +1258,6 @@ public:
     /// @brief Pointer to an object representing an exchange which can
     /// be used to insert new IPv6 reservation.
     boost::shared_ptr<PgSqlIPv6ReservationExchange> host_ipv6_reservation_exchange_;
-#endif
 
     /// @brief Pointer to an object representing an exchange which can
     /// be used to insert DHCPv4 or DHCPv6 option into dhcp4_options
@@ -1418,7 +1273,7 @@ public:
 /// retrieve hosts from the database.
 PgSqlTaggedStatement tagged_statements[] = {
     // Inserts a host into the 'hosts' table. Returns the inserted host id.
-    { 8, // PgSqlHostDataSourceImpl::INSERT_HOST,
+    {8, // PgSqlHostDataSourceImpl::INSERT_HOST,
      { OID_BYTEA, OID_INT2,
        OID_INT4, OID_INT4, OID_INT8, OID_VARCHAR,
        OID_VARCHAR, OID_VARCHAR }, 
@@ -1429,13 +1284,14 @@ PgSqlTaggedStatement tagged_statements[] = {
      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING host_id"
     },
 
-#if 0
     // Inserts a single IPv6 reservation into 'reservations' table.
-    {PgSqlHostDataSourceImpl::INSERT_V6_RESRV,
-         "INSERT INTO ipv6_reservations(address, prefix_len, type, "
-            "dhcp6_iaid, host_id) "
-         "VALUES (?,?,?,?,?)"},
-#endif
+    {5, //PgSqlHostDataSourceImpl::INSERT_V6_RESRV,
+     { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_INT4 },
+     "insert_v6_resrv",
+     "INSERT INTO ipv6_reservations(address, prefix_len, type, "
+     "  dhcp6_iaid, host_id) "
+     "VALUES ($1, $2, $3, $4, $5)"
+    },
 
     // Inserts a single DHCPv4 option into 'dhcp4_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
@@ -1459,32 +1315,28 @@ PgSqlTaggedStatement tagged_statements[] = {
      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 3)"
     },
 
-#if 0
-
     // Retrieves host information, IPv6 reservations and both DHCPv4 and
     // DHCPv6 options associated with the host. The LEFT JOIN clause is used
     // to retrieve information from 4 different tables using a single query.
     // Hence, this query returns multiple rows for a single host.
-    {PgSqlHostDataSourceImpl::GET_HOST_DHCPID,
-            "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
-                "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, "
-                "h.hostname, h.dhcp4_client_classes, h.dhcp6_client_classes, "
-                "o4.option_id, o4.code, o4.value, o4.formatted_value, o4.space, "
-                "o4.persistent, "
-                "o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
-                "o6.persistent, "
-                "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
-            "FROM hosts AS h "
-            "LEFT JOIN dhcp4_options AS o4 "
-                "ON h.host_id = o4.host_id "
-            "LEFT JOIN dhcp6_options AS o6 "
-                "ON h.host_id = o6.host_id "
-            "LEFT JOIN ipv6_reservations AS r "
-                "ON h.host_id = r.host_id "
-            "WHERE dhcp_identifier = ? AND dhcp_identifier_type = ? "
-            "ORDER BY h.host_id, o4.option_id, o6.option_id, r.reservation_id"},
-#endif
+    {2, // PgSqlHostDataSourceImpl::GET_HOST_DHCPID,
+     { OID_BYTEA, OID_INT2 },
+     "get_host_dhcpid",
+     "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
+     "  h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, "
+     "  h.hostname, h.dhcp4_client_classes, h.dhcp6_client_classes, "
+     "  o4.option_id, o4.code, o4.value, o4.formatted_value, o4.space, "
+     "  o4.persistent, "
+     "  o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
+     "  o6.persistent, "
+     "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+     "FROM hosts AS h "
+     "LEFT JOIN dhcp4_options AS o4 ON h.host_id = o4.host_id "
+     "LEFT JOIN dhcp6_options AS o6 ON h.host_id = o6.host_id "
+     "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
+     "WHERE dhcp_identifier = $1 AND dhcp_identifier_type = $2 "
+     "ORDER BY h.host_id, o4.option_id, o6.option_id, r.reservation_id"
+    },
 
     // Retrieves host information along with the DHCPv4 options associated with
     // it. Left joining the dhcp4_options table results in multiple rows being
@@ -1518,28 +1370,26 @@ PgSqlTaggedStatement tagged_statements[] = {
      "ORDER BY h.host_id, o.option_id"
     },
 
-#if 0
     // Retrieves host information, IPv6 reservations and DHCPv6 options
     // associated with a host. The number of rows returned is a multiplication
     // of number of IPv6 reservations and DHCPv6 options.
-    {PgSqlHostDataSourceImpl::GET_HOST_SUBID6_DHCPID,
-            "SELECT h.host_id, h.dhcp_identifier, "
-                "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
-                "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
-                "h.dhcp4_client_classes, h.dhcp6_client_classes, "
-                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
-                "o.persistent, "
-                "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
-            "FROM hosts AS h "
-            "LEFT JOIN dhcp6_options AS o "
-                "ON h.host_id = o.host_id "
-            "LEFT JOIN ipv6_reservations AS r "
-                "ON h.host_id = r.host_id "
-            "WHERE h.dhcp6_subnet_id = ? AND h.dhcp_identifier_type = ? "
-                "AND h.dhcp_identifier = ? "
-            "ORDER BY h.host_id, o.option_id, r.reservation_id"},
-#endif
+    {3, //PgSqlHostDataSourceImpl::GET_HOST_SUBID6_DHCPID,
+     { OID_INT4, OID_INT2, OID_BYTEA },
+     "get_host_subid6_dhcpid",
+     "SELECT h.host_id, h.dhcp_identifier, "
+     "  h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+     "  h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+     "  h.dhcp4_client_classes, h.dhcp6_client_classes, "
+     "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
+     "  o.persistent, "
+     "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+     "FROM hosts AS h "
+     "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
+     "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
+     "WHERE h.dhcp6_subnet_id = $1 AND h.dhcp_identifier_type = $2 "
+     " AND h.dhcp_identifier = $3 "
+     "ORDER BY h.host_id, o.option_id, r.reservation_id"
+    },
 
     // Retrieves host information and DHCPv4 options for the host using subnet
     // identifier and IPv4 reservation. Left joining the dhcp4_options table
@@ -1557,7 +1407,6 @@ PgSqlTaggedStatement tagged_statements[] = {
      "WHERE h.dhcp4_subnet_id = $1 AND h.ipv4_address = $2 "
      "ORDER BY h.host_id, o.option_id"
     },
-#if 0
 
     // Retrieves host information, IPv6 reservations and DHCPv6 options
     // associated with a host using prefix and prefix length. This query
@@ -1565,25 +1414,25 @@ PgSqlTaggedStatement tagged_statements[] = {
     // are returned due to left joining IPv6 reservations and DHCPv6 options.
     // The number of rows returned is multiplication of number of existing
     // IPv6 reservations and DHCPv6 options.
-    {PgSqlHostDataSourceImpl::GET_HOST_PREFIX,
-            "SELECT h.host_id, h.dhcp_identifier, "
-                "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
-                "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
-                "h.dhcp4_client_classes, h.dhcp6_client_classes, "
-                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
-                "o.persistent, "
-                "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
-            "FROM hosts AS h "
-            "LEFT JOIN dhcp6_options AS o "
-                "ON h.host_id = o.host_id "
-            "LEFT JOIN ipv6_reservations AS r "
-                "ON h.host_id = r.host_id "
-            "WHERE h.host_id = "
-                "(SELECT host_id FROM ipv6_reservations "
-                 "WHERE address = ? AND prefix_len = ?) "
-            "ORDER BY h.host_id, o.option_id, r.reservation_id"},
-#endif
+    {2, // PgSqlHostDataSourceImpl::GET_HOST_PREFIX,
+     { OID_VARCHAR, OID_INT2 },
+     "get_host_prefix",
+     "SELECT h.host_id, h.dhcp_identifier, "
+     "  h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+     "  h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+     "  h.dhcp4_client_classes, h.dhcp6_client_classes, "
+     "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
+     "  o.persistent, "
+     "  r.reservation_id, r.address, r.prefix_len, r.type, "
+     "  r.dhcp6_iaid "
+     "FROM hosts AS h "
+     "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
+     "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
+     "WHERE h.host_id = "
+     "  (SELECT host_id FROM ipv6_reservations "
+     "   WHERE address = $1 AND prefix_len = $2) "
+     "ORDER BY h.host_id, o.option_id, r.reservation_id"
+    },
 
     // Retrieves MySQL schema version.
     { 0, //PgSqlHostDataSourceImpl::GET_VERSION,
@@ -1598,17 +1447,11 @@ PgSqlTaggedStatement tagged_statements[] = {
 
 PgSqlHostDataSourceImpl::
 PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
-#if 0
-    : host_exchange_(new PgSqlHostExchange()),
-#else
     : host_exchange_(new PgSqlHostWithOptionsExchange(PgSqlHostWithOptionsExchange::DHCP4_ONLY)),
-#endif
-#if 0
       host_ipv6_exchange_(new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::DHCP6_ONLY)),
       host_ipv46_exchange_(new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::
                                                      DHCP4_AND_DHCP6)),
       host_ipv6_reservation_exchange_(new PgSqlIPv6ReservationExchange()),
-#endif
       host_option_exchange_(new PgSqlOptionExchange()),
       conn_(parameters) {
 
@@ -1662,16 +1505,13 @@ PgSqlHostDataSourceImpl::addStatement(StatementIndex stindex,
 
 }
 
-#if 0
 void
 PgSqlHostDataSourceImpl::addResv(const IPv6Resrv& resv,
                                  const HostID& id) {
-    std::vector<MYSQL_BIND> bind =
-        host_ipv6_reservation_exchange_->createBindForSend(resv, id);
-
-    addStatement(INSERT_V6_RESRV, bind);
+    PsqlBindArrayPtr bind_array;
+    bind_array = host_ipv6_reservation_exchange_->createBindForSend(resv, id);
+    addStatement(INSERT_V6_RESRV, bind_array);
 }
-#endif
 
 void
 PgSqlHostDataSourceImpl::addOption(const StatementIndex& stindex,
@@ -1835,7 +1675,6 @@ PgSqlHostDataSource::add(const HostPtr& host) {
                           cfg_option6, host_id);
     }
 
-#if 0
     // Insert IPv6 reservations.
     IPv6ResrvRange v6resv = host->getIPv6Reservations();
     if (std::distance(v6resv.first, v6resv.second) > 0) {
@@ -1844,8 +1683,6 @@ PgSqlHostDataSource::add(const HostPtr& host) {
             impl_->addResv(resv->second, host_id);
         }
     }
-
-#endif
 
     // Everything went fine, so explicitly commit the transaction.
     transaction.commit();
@@ -1868,15 +1705,6 @@ PgSqlHostDataSource::getAll(const HWAddrPtr& hwaddr,
     return (ConstHostCollection());
 }
 
-#if 1
-ConstHostCollection
-PgSqlHostDataSource::getAll(const Host::IdentifierType&,
-                            const uint8_t*,
-                            const size_t) const {
-    ConstHostCollection result;
-    return (result);
-}
-#else
 ConstHostCollection
 PgSqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
                             const uint8_t* identifier_begin,
@@ -1884,11 +1712,11 @@ PgSqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
-    // Identifier type.
-    bind_array->add(static_cast<uint8_t>(identifier_type));
-
     // Identifier value.
     bind_array->add(identifier_begin, identifier_len);
+
+    // Identifier type.
+    bind_array->add(static_cast<uint8_t>(identifier_type));
 
     ConstHostCollection result;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_DHCPID,
@@ -1896,7 +1724,6 @@ PgSqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
                              result, false);
     return (result);
 }
-#endif
 
 ConstHostCollection
 PgSqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
@@ -1904,6 +1731,7 @@ PgSqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
+    // v4 Reservation address 
     bind_array->add(address);
 
     ConstHostCollection result;
@@ -1977,13 +1805,6 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id,
     return (result);
 }
 
-#if 1
-ConstHostPtr
-PgSqlHostDataSource::get6(const SubnetID&, const DuidPtr&,
-                          const HWAddrPtr&) const {
-    return (HostPtr());
-}
-#else
 ConstHostPtr
 PgSqlHostDataSource::get6(const SubnetID& subnet_id, const DuidPtr& duid,
                           const HWAddrPtr& hwaddr) const {
@@ -2009,17 +1830,7 @@ PgSqlHostDataSource::get6(const SubnetID& subnet_id, const DuidPtr& duid,
 
     return (ConstHostPtr());
 }
-#endif
 
-#if 1
-ConstHostPtr
-PgSqlHostDataSource::get6(const SubnetID&,
-                          const Host::IdentifierType&,
-                          const uint8_t*,
-                          const size_t) const {
-    return (ConstHostPtr());
-}
-#else
 ConstHostPtr
 PgSqlHostDataSource::get6(const SubnetID& subnet_id,
                           const Host::IdentifierType& identifier_type,
@@ -2030,44 +1841,22 @@ PgSqlHostDataSource::get6(const SubnetID& subnet_id,
                    identifier_len, PgSqlHostDataSourceImpl::GET_HOST_SUBID6_DHCPID,
                    impl_->host_ipv6_exchange_));
 }
-#endif
 
-#if 1
-ConstHostPtr
-PgSqlHostDataSource::get6(const asiolink::IOAddress&,
-                          const uint8_t) const {
-
-    ConstHostPtr result;
-    return(result);
-}
-#else
 ConstHostPtr
 PgSqlHostDataSource::get6(const asiolink::IOAddress& prefix,
                           const uint8_t prefix_len) const {
-
     // Set up the WHERE clause value
-    MYSQL_BIND inbind[2];
-    memset(inbind, 0, sizeof(inbind));
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
-    std::string addr6 = prefix.toText();
-    unsigned long addr6_length = addr6.size();
+    // Add the prefix 
+    bind_array->add(prefix);
 
-    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[0].buffer = reinterpret_cast<char*>
-                        (const_cast<char*>(addr6.c_str()));
-    inbind[0].length = &addr6_length;
-    inbind[0].buffer_length = addr6_length;
-
-
-    uint8_t tmp = prefix_len;
-    inbind[1].buffer_type = MYSQL_TYPE_TINY;
-    inbind[1].buffer = reinterpret_cast<char*>(&tmp);
-    inbind[1].is_unsigned = MLM_TRUE;
-
+    // Add the prefix length
+    bind_array->add(prefix_len);
 
     ConstHostCollection collection;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_PREFIX,
-                             inbind, impl_->host_ipv6_exchange_,
+                             bind_array, impl_->host_ipv6_exchange_,
                              collection, true);
 
     // Return single record if present, else clear the host.
@@ -2078,7 +1867,6 @@ PgSqlHostDataSource::get6(const asiolink::IOAddress& prefix,
 
     return (result);
 }
-#endif
 
 // Miscellaneous database methods.
 

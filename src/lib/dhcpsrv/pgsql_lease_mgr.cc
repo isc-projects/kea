@@ -636,27 +636,6 @@ public:
         }
     }
 
-    /// @brief Converts a column in a row in a result set into IPv6 address.
-    ///
-    /// @param r the result set containing the query results
-    /// @param row the row number within the result set
-    /// @param col the column number within the row
-    ///
-    /// @return isc::asiolink::IOAddress containing the IPv6 address.
-    /// @throw  DbOperationError if the value cannot be fetched or is
-    /// invalid.
-    isc::asiolink::IOAddress getIPv6Value(const PgSqlResult& r, const int row,
-                                          const size_t col) const {
-        const char* data = getRawColumnValue(r, row, col);
-        try {
-            return (isc::asiolink::IOAddress(data));
-        } catch (const std::exception& ex) {
-            isc_throw(DbOperationError, "Cannot convert data: " << data
-                      << " for: " << getColumnLabel(r, col) << " row:" << row
-                      << " : " << ex.what());
-        }
-    }
-
 private:
     /// @brief Lease6 object currently being sent to the database.
     /// Storing this value ensures that it remains in scope while any bindings
