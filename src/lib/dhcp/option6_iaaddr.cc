@@ -42,7 +42,7 @@ Option6IAAddr::Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
     unpack(begin, end);
 }
 
-void Option6IAAddr::pack(isc::util::OutputBuffer& buf) {
+void Option6IAAddr::pack(isc::util::OutputBuffer& buf) const {
 
     buf.writeUint16(type_);
 
@@ -81,7 +81,7 @@ void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
     unpackOptions(OptionBuffer(begin, end));
 }
 
-std::string Option6IAAddr::toText(int indent) {
+std::string Option6IAAddr::toText(int indent) const {
     std::stringstream output;
     output << headerToText(indent, "IAADDR") << ": "
            << "address=" << addr_
@@ -92,14 +92,14 @@ std::string Option6IAAddr::toText(int indent) {
     return (output.str());
 }
 
-uint16_t Option6IAAddr::len() {
+uint16_t Option6IAAddr::len() const {
 
     uint16_t length = OPTION6_HDR_LEN + OPTION6_IAADDR_LEN;
 
     // length of all suboptions
     // TODO implement:
     // protected: unsigned short Option::lenHelper(int header_size);
-    for (OptionCollection::iterator it = options_.begin();
+    for (OptionCollection::const_iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();

@@ -56,7 +56,7 @@ Option6AddrLst::setAddresses(const AddressContainer& addrs) {
     addrs_ = addrs;
 }
 
-void Option6AddrLst::pack(isc::util::OutputBuffer& buf) {
+void Option6AddrLst::pack(isc::util::OutputBuffer& buf) const {
 
     buf.writeUint16(type_);
 
@@ -89,7 +89,7 @@ void Option6AddrLst::unpack(OptionBufferConstIter begin,
     }
 }
 
-std::string Option6AddrLst::toText(int indent) {
+std::string Option6AddrLst::toText(int indent) const {
     stringstream output;
     output << headerToText(indent) << ":";
 
@@ -100,7 +100,7 @@ std::string Option6AddrLst::toText(int indent) {
     return (output.str());
 }
 
-uint16_t Option6AddrLst::len() {
+uint16_t Option6AddrLst::len() const {
     return (OPTION6_HDR_LEN + addrs_.size() * V6ADDRESS_LEN);
 }
 

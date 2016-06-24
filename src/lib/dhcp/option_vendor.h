@@ -54,7 +54,7 @@ public:
     /// unused byte after stored option.
     ///
     /// @param [out] buf buffer (option will be stored here)
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer
     ///
@@ -82,14 +82,14 @@ public:
     /// Returns length of this option, including option header and suboptions
     ///
     /// @return length of this option
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     /// @brief Returns the option in the textual format.
     ///
     /// @param indent Number of spaces to be inserted before the text.
     ///
     /// @return Vendor option in the textual format.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
 private:
 
@@ -101,7 +101,7 @@ private:
     /// this value.
     ///
     /// @return Returns calculated data-len value.
-    uint8_t dataLen();
+    uint8_t dataLen() const;
 
     uint32_t vendor_id_;  ///< Enterprise-id
 };

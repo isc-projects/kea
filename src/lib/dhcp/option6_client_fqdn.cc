@@ -395,7 +395,7 @@ Option6ClientFqdn::getDomainNameType() const {
 }
 
 void
-Option6ClientFqdn::pack(isc::util::OutputBuffer& buf) {
+Option6ClientFqdn::pack(isc::util::OutputBuffer& buf) const {
     // Header = option code and length.
     packHeader(buf);
     // Flags field.
@@ -416,7 +416,7 @@ Option6ClientFqdn::unpack(OptionBufferConstIter first,
 }
 
 std::string
-Option6ClientFqdn::toText(int indent) {
+Option6ClientFqdn::toText(int indent) const {
     std::ostringstream stream;
     std::string in(indent, ' '); // base indentation
     stream << in  << "type=" << type_ << "(CLIENT_FQDN)" << ", "
@@ -432,7 +432,7 @@ Option6ClientFqdn::toText(int indent) {
 }
 
 uint16_t
-Option6ClientFqdn::len() {
+Option6ClientFqdn::len() const {
     uint16_t domain_name_length = 0;
     if (impl_->domain_name_) {
         // If domain name is partial, the NULL terminating character

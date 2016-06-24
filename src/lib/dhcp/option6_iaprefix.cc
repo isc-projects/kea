@@ -44,7 +44,7 @@ Option6IAPrefix::Option6IAPrefix(uint32_t type, OptionBuffer::const_iterator beg
     unpack(begin, end);
 }
 
-void Option6IAPrefix::pack(isc::util::OutputBuffer& buf) {
+void Option6IAPrefix::pack(isc::util::OutputBuffer& buf) const {
     if (!addr_.isV6()) {
         isc_throw(isc::BadValue, addr_ << " is not an IPv6 address");
     }
@@ -90,7 +90,7 @@ void Option6IAPrefix::unpack(OptionBuffer::const_iterator begin,
     unpackOptions(OptionBuffer(begin, end));
 }
 
-std::string Option6IAPrefix::toText(int indent) {
+std::string Option6IAPrefix::toText(int indent) const {
     std::stringstream output;
     output << headerToText(indent, "IAPREFIX") << ": "
            << "prefix=" << addr_ << "/" << static_cast<int>(prefix_len_)
@@ -101,7 +101,7 @@ std::string Option6IAPrefix::toText(int indent) {
     return (output.str());
 }
 
-uint16_t Option6IAPrefix::len() {
+uint16_t Option6IAPrefix::len() const {
 
     uint16_t length = OPTION6_HDR_LEN + OPTION6_IAPREFIX_LEN;
 
@@ -117,7 +117,7 @@ void
 Option6IAPrefix::mask(OptionBuffer::const_iterator begin,
                       OptionBuffer::const_iterator end,
                       const uint8_t len,
-                      OptionBuffer& output_address) {
+                      OptionBuffer& output_address) const {
     output_address.resize(16, 0);
     if (len >= 128) {
         std::copy(begin, end, output_address.begin());
