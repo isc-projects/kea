@@ -26,7 +26,7 @@ OptionOpaqueDataTuples::OptionOpaqueDataTuples(Option::Universe u,
 }
 
 void
-OptionOpaqueDataTuples::pack(isc::util::OutputBuffer& buf) {
+OptionOpaqueDataTuples::pack(isc::util::OutputBuffer& buf) const {
     packHeader(buf);
 
     for (TuplesCollection::const_iterator it = tuples_.begin();
@@ -107,7 +107,7 @@ OptionOpaqueDataTuples::hasTuple(const std::string& tuple_str) const {
 }
 
 uint16_t
-OptionOpaqueDataTuples::len() {
+OptionOpaqueDataTuples::len() const {
     // The option starts with the header.
     uint16_t length = getHeaderLen();
     // Now iterate over existing tuples and add their size.
@@ -120,7 +120,7 @@ OptionOpaqueDataTuples::len() {
 }
 
 std::string
-OptionOpaqueDataTuples::toText(int indent) {
+OptionOpaqueDataTuples::toText(int indent) const {
     std::ostringstream s;
 
     // Apply indentation

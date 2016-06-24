@@ -98,7 +98,7 @@ public:
     /// @throw isc::dhcp::InvalidDataType if size of a data field type is not
     /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
     /// because it is checked in a constructor.
-    void pack(isc::util::OutputBuffer& buf) {
+    void pack(isc::util::OutputBuffer& buf) const {
         // Pack option header.
         packHeader(buf);
         // Depending on the data type length we use different utility functions
@@ -184,13 +184,13 @@ public:
     /// Returns length of this option, including option header and suboptions
     ///
     /// @return length of this option
-    virtual uint16_t len() {
+    virtual uint16_t len() const {
         // Calculate the length of the header.
         uint16_t length = (getUniverse() == Option::V4) ? OPTION4_HDR_LEN : OPTION6_HDR_LEN;
         // The data length is equal to size of T.
         length += sizeof(T);;
         // length of all suboptions
-        for (OptionCollection::iterator it = options_.begin();
+        for (OptionCollection::const_iterator it = options_.begin();
              it != options_.end();
              ++it) {
             length += (*it).second->len();
@@ -204,7 +204,7 @@ public:
     /// The returned value also includes the suboptions if present.
     ///
     /// @param indent Number of spaces to be inserted before the text.
-    virtual std::string toText(int indent = 0) {
+    virtual std::string toText(int indent = 0) const {
         std::stringstream output;
         output << headerToText(indent) << ": ";
 

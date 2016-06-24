@@ -43,7 +43,7 @@ public:
     /// byte after stored option.
     ///
     /// @param [out] buf Pointer to the output buffer.
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer.
     ///
@@ -54,12 +54,12 @@ public:
     /// @brief Returns total length of the option.
     ///
     /// The returned length is a sum of the option header and data fields.
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     /// @brief Returns textual representation of the option.
     ///
     /// @param indent Number of spaces before printing text.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
     /// @brief Returns textual representation of the option data.
     ///

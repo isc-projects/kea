@@ -85,20 +85,20 @@ public:
     /// Method will throw if option storing fails for some reason.
     ///
     /// @param buf output buffer (option will be stored there)
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// Returns string representation of the option.
     ///
     /// @param indent number of spaces before printing text
     ///
     /// @return string with text representation.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
     /// Returns length of the complete option (data length + DHCPv4/DHCPv6
     /// option header)
     ///
     /// @return length of the option
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     /// @brief Returns vector with addresses.
     ///

@@ -28,7 +28,7 @@ OptionVendorClass::OptionVendorClass(Option::Universe u,
 }
 
 void
-OptionVendorClass::pack(isc::util::OutputBuffer& buf) {
+OptionVendorClass::pack(isc::util::OutputBuffer& buf) const {
     packHeader(buf);
 
     buf.writeUint32(getVendorId());
@@ -138,7 +138,7 @@ OptionVendorClass::hasTuple(const std::string& tuple_str) const {
 
 
 uint16_t
-OptionVendorClass::len() {
+OptionVendorClass::len() const {
     // The option starts with the header and enterprise id.
     uint16_t length = getHeaderLen() + sizeof(uint32_t);
     // Now iterate over existing tuples and add their size.
@@ -157,7 +157,7 @@ OptionVendorClass::len() {
 }
 
 std::string
-OptionVendorClass::toText(int indent) {
+OptionVendorClass::toText(int indent) const {
     std::ostringstream s;
 
     // Apply indentation

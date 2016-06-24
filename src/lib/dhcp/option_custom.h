@@ -243,7 +243,7 @@ public:
     /// @brief Writes DHCP option in a wire format to a buffer.
     ///
     /// @param buf output buffer (option will be stored there).
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer.
     ///
@@ -257,13 +257,13 @@ public:
     /// @param indent number of spaces before printed text.
     ///
     /// @return string with text representation.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
     /// @brief Returns length of the complete option (data length +
     ///        DHCPv4/DHCPv6 option header)
     ///
     /// @return length of the option
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     /// @brief Sets content of this option from buffer.
     ///

@@ -126,7 +126,7 @@ public:
     /// \brief Checks if option is valid.
     ///
     /// \return true, if option is valid.
-    virtual bool valid() {
+    virtual bool valid() const {
         return (Option::valid() && option_valid_);
     }
 

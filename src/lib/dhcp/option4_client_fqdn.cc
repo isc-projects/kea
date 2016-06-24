@@ -463,7 +463,7 @@ Option4ClientFqdn::getDomainNameType() const {
 }
 
 void
-Option4ClientFqdn::pack(isc::util::OutputBuffer& buf) {
+Option4ClientFqdn::pack(isc::util::OutputBuffer& buf) const {
     // Header = option code and length.
     packHeader(buf);
     // Flags field.
@@ -487,7 +487,7 @@ Option4ClientFqdn::unpack(OptionBufferConstIter first,
 }
 
 std::string
-Option4ClientFqdn::toText(int indent) {
+Option4ClientFqdn::toText(int indent) const {
     std::ostringstream stream;
     std::string in(indent, ' '); // base indentation
     stream << in  << "type=" << type_ << " (CLIENT_FQDN), "
@@ -504,7 +504,7 @@ Option4ClientFqdn::toText(int indent) {
 }
 
 uint16_t
-Option4ClientFqdn::len() {
+Option4ClientFqdn::len() const {
     uint16_t domain_name_length = 0;
     // Try to calculate the length of the domain name only if there is
     // any domain name specified.

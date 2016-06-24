@@ -82,7 +82,7 @@ public:
     /// @throw BadValue if the address is not IPv6
     ///
     /// @param buf pointer to a buffer
-    void pack(isc::util::OutputBuffer& buf);
+    void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer.
     ///
@@ -103,7 +103,7 @@ public:
     /// @param indent number of spaces before printing text
     ///
     /// @return string with text representation.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
     /// sets address in this option.
     ///
@@ -115,7 +115,7 @@ public:
     uint8_t getLength() const { return prefix_len_; }
 
     /// returns data length (data length + DHCPv4/DHCPv6 option header)
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
 private:
 
@@ -130,7 +130,7 @@ private:
     void mask(OptionBuffer::const_iterator begin,
               OptionBuffer::const_iterator end,
               const uint8_t len,
-              OptionBuffer& output_address);
+              OptionBuffer& output_address) const;
 
     uint8_t prefix_len_;
 };

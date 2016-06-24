@@ -59,7 +59,7 @@ public:
     /// @brief Returns length of the whole option, including header.
     ///
     /// @return length of the whole option.
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     /// @brief Returns the string value held by the option.
     ///
@@ -80,7 +80,7 @@ public:
     /// is moved to the end of stored data.
     ///
     /// @param [out] buf output buffer where the option will be stored.
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Decodes option data from the provided buffer.
     ///
@@ -101,13 +101,13 @@ public:
     /// the text.
     ///
     /// @return Option information in the textual format.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
     /// @brief Returns actual value of the option in string format.
     ///
     /// This method is used in client classification.
     /// @return Content of the option.
-    virtual std::string toString();
+    virtual std::string toString() const;
 };
 
 /// Pointer to the OptionString object.

@@ -158,7 +158,7 @@ public:
     /// @param buf pointer to a buffer
     ///
     /// @throw BadValue Universe of the option is neither V4 nor V6.
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer.
     ///
@@ -172,7 +172,7 @@ public:
     /// @param indent number of spaces before printing text
     ///
     /// @return string with text representation.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
     /// @brief Returns string representation of the value
     ///
@@ -180,7 +180,7 @@ public:
     /// refers to a specific option.
     ///
     /// @return string that represents the value of the option.
-    virtual std::string toString();
+    virtual std::string toString() const;
 
     /// @brief Returns binary representation of the option.
     ///
@@ -189,7 +189,7 @@ public:
     /// header fields.
     ///
     /// @return Vector holding binary representation of the option.
-    virtual std::vector<uint8_t> toBinary(const bool include_header = false);
+    virtual std::vector<uint8_t> toBinary(const bool include_header = false) const;
 
     /// @brief Returns string containing hexadecimal representation of option.
     ///
@@ -198,7 +198,7 @@ public:
     /// header fields.
     ///
     /// @return String containing hexadecimal representation of the option.
-    virtual std::string toHexString(const bool include_header = false);
+    virtual std::string toHexString(const bool include_header = false) const;
 
     /// Returns option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
     ///
@@ -209,17 +209,17 @@ public:
     /// option header)
     ///
     /// @return length of the option
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     /// @brief Returns length of header (2 for v4, 4 for v6)
     ///
     /// @return length of option header
-    virtual uint16_t getHeaderLen();
+    virtual uint16_t getHeaderLen() const;
 
     /// returns if option is valid (e.g. option may be truncated)
     ///
     /// @return true, if option is valid
-    virtual bool valid();
+    virtual bool valid() const;
 
     /// Returns pointer to actual data.
     ///
@@ -246,7 +246,7 @@ public:
     /// @param type type of requested suboption
     ///
     /// @return shared_ptr to requested suoption
-    OptionPtr getOption(uint16_t type);
+    OptionPtr getOption(uint16_t type) const;
 
     /// @brief Returns all encapsulated options.
     ///
@@ -269,21 +269,21 @@ public:
     /// @throw isc::OutOfRange Thrown if the option has a length of 0.
     ///
     /// @return value of the first byte
-    uint8_t getUint8();
+    uint8_t getUint8() const;
 
     /// @brief Returns content of first word.
     ///
     /// @throw isc::OutOfRange Thrown if the option has a length less than 2.
     ///
     /// @return uint16_t value stored on first two bytes
-    uint16_t getUint16();
+    uint16_t getUint16() const;
 
     /// @brief Returns content of first double word.
     ///
     /// @throw isc::OutOfRange Thrown if the option has a length less than 4.
     ///
     /// @return uint32_t value stored on first four bytes
-    uint32_t getUint32();
+    uint32_t getUint32() const;
 
     /// @brief Sets content of this option to singe uint8 value.
     ///
@@ -378,7 +378,7 @@ protected:
     /// directly by other classes.
     ///
     /// @param [out] buf output buffer.
-    void packHeader(isc::util::OutputBuffer& buf);
+    void packHeader(isc::util::OutputBuffer& buf) const;
 
     /// @brief Store sub options in a buffer.
     ///
@@ -393,7 +393,7 @@ protected:
     /// exceptions thrown by pack methods invoked on objects
     /// representing sub options. We should consider whether to aggregate
     /// those into one exception which can be documented here.
-    void packOptions(isc::util::OutputBuffer& buf);
+    void packOptions(isc::util::OutputBuffer& buf) const;
 
     /// @brief Builds a collection of sub options from the buffer.
     ///
@@ -420,7 +420,7 @@ protected:
     ///
     /// @return Option header in the textual format.
     std::string headerToText(const int indent = 0,
-                             const std::string& type_name = "");
+                             const std::string& type_name = "") const;
 
     /// @brief Returns collection of suboptions in the textual format.
     ///
@@ -441,7 +441,7 @@ protected:
     /// It is used in constructors. In there are any problems detected
     /// (like specifying type > 255 for DHCPv4 option), it will throw
     /// BadValue or OutOfRange exceptions.
-    void check();
+    void check() const;
 
     /// option universe (V4 or V6)
     Universe universe_;

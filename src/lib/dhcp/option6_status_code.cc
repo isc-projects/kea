@@ -41,7 +41,7 @@ Option6StatusCode::Option6StatusCode(OptionBufferConstIter begin,
 }
 
 void
-Option6StatusCode::pack(isc::util::OutputBuffer& buf) {
+Option6StatusCode::pack(isc::util::OutputBuffer& buf) const {
     // Pack option header.
     packHeader(buf);
     // Write numeric status code.
@@ -69,12 +69,12 @@ Option6StatusCode::unpack(OptionBufferConstIter begin, OptionBufferConstIter end
 }
 
 uint16_t
-Option6StatusCode::len() {
+Option6StatusCode::len() const {
     return (getHeaderLen() + sizeof(uint16_t) + status_message_.size());
 }
 
 std::string
-Option6StatusCode::toText(int indent) {
+Option6StatusCode::toText(int indent) const {
     std::ostringstream output;
     output << headerToText(indent) << ": " << dataToText();
 

@@ -357,7 +357,7 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
 }
 
 void
-OptionCustom::pack(isc::util::OutputBuffer& buf) {
+OptionCustom::pack(isc::util::OutputBuffer& buf) const {
 
     // Pack DHCP header (V4 or V6).
     packHeader(buf);
@@ -494,7 +494,7 @@ OptionCustom::unpack(OptionBufferConstIter begin,
 }
 
 uint16_t
-OptionCustom::len() {
+OptionCustom::len() const {
     // The length of the option is a sum of option header ...
     size_t length = getHeaderLen();
 
@@ -505,7 +505,7 @@ OptionCustom::len() {
     }
 
     // ... and lengths of all suboptions
-    for (OptionCollection::iterator it = options_.begin();
+    for (OptionCollection::const_iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
@@ -523,7 +523,7 @@ void OptionCustom::initialize(const OptionBufferConstIter first,
     createBuffers(getData());
 }
 
-std::string OptionCustom::toText(int indent) {
+std::string OptionCustom::toText(int indent) const {
     std::stringstream output;
 
     output << headerToText(indent) << ":";

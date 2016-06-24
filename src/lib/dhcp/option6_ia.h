@@ -43,7 +43,7 @@ public:
     /// byte after stored option.
     ///
     /// @param buf buffer (option will be stored here)
-    void pack(isc::util::OutputBuffer& buf);
+    void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer
     ///
@@ -59,8 +59,7 @@ public:
     /// @param indent number of leading space characters
     ///
     /// @return string with text represenation
-    virtual std::string
-    toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
     /// Sets T1 timer.
     ///
@@ -98,7 +97,7 @@ public:
     /// Returns length of this option, including option header and suboptions
     ///
     /// @return length of this option
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
 protected:
 

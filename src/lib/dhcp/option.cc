@@ -54,7 +54,7 @@ Option::Option(Universe u, uint16_t type, OptionBufferConstIter first,
 }
 
 void
-Option::check() {
+Option::check() const {
     if ( (universe_ != V4) && (universe_ != V6) ) {
         isc_throw(BadValue, "Invalid universe type specified. "
                   << "Only V4 and V6 are allowed.");
@@ -77,7 +77,7 @@ Option::check() {
     // both types and data size.
 }
 
-void Option::pack(isc::util::OutputBuffer& buf) {
+void Option::pack(isc::util::OutputBuffer& buf) const {
     // Write a header.
     packHeader(buf);
     // Write data.
@@ -89,7 +89,7 @@ void Option::pack(isc::util::OutputBuffer& buf) {
 }
 
 void
-Option::packHeader(isc::util::OutputBuffer& buf) {
+Option::packHeader(isc::util::OutputBuffer& buf) const {
     if (universe_ == V4) {
         if (len() > 255) {
             isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big. "
@@ -109,7 +109,7 @@ Option::packHeader(isc::util::OutputBuffer& buf) {
 }
 
 void
-Option::packOptions(isc::util::OutputBuffer& buf) {
+Option::packOptions(isc::util::OutputBuffer& buf) const {
     switch (universe_) {
     case V4:
         LibDHCP::packOptions4(buf, options_);
@@ -141,7 +141,7 @@ Option::unpackOptions(const OptionBuffer& buf) {
     }
 }
 
-uint16_t Option::len() {
+uint16_t Option::len() const {
     // Returns length of the complete option (data length + DHCPv4/DHCPv6
     // option header)
 
@@ -149,7 +149,7 @@ uint16_t Option::len() {
     size_t length = getHeaderLen() + data_.size();
 
     // ... and sum of lengths of all suboptions
-    for (OptionCollection::iterator it = options_.begin();
+    for (OptionCollection::const_iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
@@ -162,7 +162,7 @@ uint16_t Option::len() {
 }
 
 bool
-Option::valid() {
+Option::valid() const {
     if (universe_ != V4 &&
         universe_ != V6) {
         return (false);
@@ -171,7 +171,7 @@ Option::valid() {
     return (true);
 }
 
-OptionPtr Option::getOption(uint16_t opt_type) {
+OptionPtr Option::getOption(uint16_t opt_type) const {
     isc::dhcp::OptionCollection::const_iterator x =
         options_.find(opt_type);
     if ( x != options_.end() ) {
@@ -190,7 +190,7 @@ bool Option::delOption(uint16_t opt_type) {
 }
 
 
-std::string Option::toText(int indent) {
+std::string Option::toText(int indent) const {
     std::stringstream output;
     output << headerToText(indent) << ": ";
 
@@ -209,13 +209,13 @@ std::string Option::toText(int indent) {
 }
 
 std::string
-Option::toString() {
+Option::toString() const {
     /// @todo: Implement actual conversion in derived classes.
     return (toText(0));
 }
 
 std::vector<uint8_t>
-Option::toBinary(const bool include_header) {
+Option::toBinary(const bool include_header) const {
     OutputBuffer buf(len());
     try {
         // If the option is too long, exception will be thrown. We allow
@@ -236,7 +236,7 @@ Option::toBinary(const bool include_header) {
 }
 
 std::string
-Option::toHexString(const bool include_header) {
+Option::toHexString(const bool include_header) const {
     // Prepare binary version of the option.
     std::vector<uint8_t> option_vec = toBinary(include_header);
 
@@ -250,7 +250,7 @@ Option::toHexString(const bool include_header) {
 }
 
 std::string
-Option::headerToText(const int indent, const std::string& type_name) {
+Option::headerToText(const int indent, const std::string& type_name) const {
     std::stringstream output;
     for (int i = 0; i < indent; i++)
         output << " ";
@@ -284,7 +284,7 @@ Option::suboptionsToText(const int indent) const {
 }
 
 uint16_t
-Option::getHeaderLen() {
+Option::getHeaderLen() const {
     switch (universe_) {
     case V4:
         return OPTION4_HDR_LEN; // header length for v4
@@ -305,7 +305,7 @@ void Option::addOption(OptionPtr opt) {
     options_.insert(make_pair(opt->getType(), opt));
 }
 
-uint8_t Option::getUint8() {
+uint8_t Option::getUint8() const {
     if (data_.size() < sizeof(uint8_t) ) {
         isc_throw(OutOfRange, "Attempt to read uint8 from option " << type_
                   << " that has size " << data_.size());
@@ -313,12 +313,12 @@ uint8_t Option::getUint8() {
     return (data_[0]);
 }
 
-uint16_t Option::getUint16() {
+uint16_t Option::getUint16() const {
     // readUint16() checks and throws OutOfRange if data_ is too small.
     return (readUint16(&data_[0], data_.size()));
 }
 
-uint32_t Option::getUint32() {
+uint32_t Option::getUint32() const {
     // readUint32() checks and throws OutOfRange if data_ is too small.
     return (readUint32(&data_[0], data_.size()));
 }
