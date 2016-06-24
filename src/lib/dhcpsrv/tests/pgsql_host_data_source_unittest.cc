@@ -60,8 +60,9 @@ public:
 
     /// @brief Destructor
     ///
-    /// Rolls back all pending transactions.  The deletion of myhdsptr_ will close
-    /// the database.  Then reopen it and delete everything created by the test.
+    /// Rolls back all pending transactions.  The deletion of myhdsptr_ will
+    /// close the database.  Then reopen it and delete everything created by
+    /// the test.
     virtual ~PgSqlHostDataSourceTest() {
         hdsptr_->rollback();
         HostDataSourceFactory::destroy();
@@ -73,8 +74,8 @@ public:
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
     ///
-    /// Parameter is ignored for PostgreSQL backend as the v4 and v6 leases share
-    /// the same database.
+    /// Parameter is ignored for PostgreSQL backend as the v4 and v6 leases
+    /// share the same database.
     void reopen(Universe) {
         HostDataSourceFactory::destroy();
         HostDataSourceFactory::create(validPgSQLConnectionString());
@@ -379,6 +380,7 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicate6WithDUID) {
 TEST_F(PgSqlHostDataSourceTest, addDuplicate6WithHWAddr) {
     testAddDuplicate6WithSameHWAddr();
 }
+#endif
 
 // Test if the duplicate IPv4 host instances can't be inserted. The test logic is as
 // follows: try to add multiple instances of the same host reservation and
@@ -392,6 +394,7 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicate4) {
 TEST_F(PgSqlHostDataSourceTest, optionsReservations4) {
     testOptionsReservations4(false);
 }
+#if 0
 
 // This test verifies that DHCPv6 options can be inserted in a binary format
 /// and retrieved from the PostgreSQL host database.
@@ -404,6 +407,7 @@ TEST_F(PgSqlHostDataSourceTest, optionsReservations6) {
 TEST_F(PgSqlHostDataSourceTest, optionsReservations46) {
     testOptionsReservations46(false);
 }
+#endif
 
 // This test verifies that DHCPv4 options can be inserted in a textual format
 /// and retrieved from the PostgreSQL host database.
@@ -411,6 +415,7 @@ TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations4) {
     testOptionsReservations4(true);
 }
 
+#if 0
 // This test verifies that DHCPv6 options can be inserted in a textual format
 /// and retrieved from the PostgreSQL host database.
 TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations6) {

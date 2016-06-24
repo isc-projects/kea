@@ -280,16 +280,16 @@ public:
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
 
         // Set the column names (for error messages)
-        column_labels_.push_back("address");
-        column_labels_.push_back("hwaddr");
-        column_labels_.push_back("client_id");
-        column_labels_.push_back("valid_lifetime");
-        column_labels_.push_back("expire");
-        column_labels_.push_back("subnet_id");
-        column_labels_.push_back("fqdn_fwd");
-        column_labels_.push_back("fqdn_rev");
-        column_labels_.push_back("hostname");
-        column_labels_.push_back("state");
+        columns_.push_back("address");
+        columns_.push_back("hwaddr");
+        columns_.push_back("client_id");
+        columns_.push_back("valid_lifetime");
+        columns_.push_back("expire");
+        columns_.push_back("subnet_id");
+        columns_.push_back("fqdn_fwd");
+        columns_.push_back("fqdn_rev");
+        columns_.push_back("hostname");
+        columns_.push_back("state");
     }
 
     /// @brief Creates the bind array for sending Lease4 data to the database.
@@ -463,19 +463,19 @@ public:
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
 
         // Set the column names (for error messages)
-        column_labels_.push_back("address");
-        column_labels_.push_back("duid");
-        column_labels_.push_back("valid_lifetime");
-        column_labels_.push_back("expire");
-        column_labels_.push_back("subnet_id");
-        column_labels_.push_back("pref_lifetime");
-        column_labels_.push_back("lease_type");
-        column_labels_.push_back("iaid");
-        column_labels_.push_back("prefix_len");
-        column_labels_.push_back("fqdn_fwd");
-        column_labels_.push_back("fqdn_rev");
-        column_labels_.push_back("hostname");
-        column_labels_.push_back("state");
+        columns_.push_back("address");
+        columns_.push_back("duid");
+        columns_.push_back("valid_lifetime");
+        columns_.push_back("expire");
+        columns_.push_back("subnet_id");
+        columns_.push_back("pref_lifetime");
+        columns_.push_back("lease_type");
+        columns_.push_back("iaid");
+        columns_.push_back("prefix_len");
+        columns_.push_back("fqdn_fwd");
+        columns_.push_back("fqdn_rev");
+        columns_.push_back("hostname");
+        columns_.push_back("state");
     }
 
     /// @brief Creates the bind array for sending Lease6 data to the database.
@@ -632,7 +632,7 @@ public:
 
             default:
                 isc_throw(DbOperationError, "Invalid lease type: " << raw_value
-                      << " for: " << getColumnLabel(col) << " row:" << row);
+                      << " for: " << getColumnLabel(r, col) << " row:" << row);
         }
     }
 
@@ -652,7 +652,7 @@ public:
             return (isc::asiolink::IOAddress(data));
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError, "Cannot convert data: " << data
-                      << " for: " << getColumnLabel(col) << " row:" << row
+                      << " for: " << getColumnLabel(r, col) << " row:" << row
                       << " : " << ex.what());
         }
     }
