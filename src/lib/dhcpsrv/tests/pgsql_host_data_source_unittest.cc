@@ -231,7 +231,7 @@ TEST_F(PgSqlHostDataSourceTest, hostnameFQDN100) {
     testHostname("foo.example.org", 100);
 }
 
-// Test verifies if a host without any hostname specified can be stored and 
+// Test verifies if a host without any hostname specified can be stored and
 // later retrieved.
 TEST_F(PgSqlHostDataSourceTest, noHostname) {
     testHostname("", 1);
@@ -423,7 +423,6 @@ TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations46) {
     testOptionsReservations46(true);
 }
 
-#if 0
 // This test checks transactional insertion of the host information
 // into the database. The failure to insert host information at
 // any stage should cause the whole transaction to be rolled back.
@@ -443,9 +442,10 @@ TEST_F(PgSqlHostDataSourceTest, testAddRollback) {
     params["password"] = "keatest";
     PgSqlConnection conn(params);
     ASSERT_NO_THROW(conn.openDatabase());
-    int status = mysql_query(conn.mysql_,
-                             "DROP TABLE IF EXISTS ipv6_reservations");
-    ASSERT_EQ(0, status) << mysql_error(conn.mysql_);
+
+    PgSqlResult r(PQexec(conn, "DROP TABLE IF EXISTS ipv6_reservations"));
+    ASSERT_TRUE (PQresultStatus(r) == PGRES_COMMAND_OK)
+                 << " drop command failed :" << PQerrorMessage(conn);
 
     // Create a host with a reservation.
     HostPtr host = initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
@@ -470,6 +470,5 @@ TEST_F(PgSqlHostDataSourceTest, testAddRollback) {
                                           host->getIdentifier().size());
     EXPECT_FALSE(from_hds);
 }
-#endif
 
 }; // Of anonymous namespace

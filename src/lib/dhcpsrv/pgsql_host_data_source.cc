@@ -33,34 +33,8 @@ using namespace std;
 
 namespace {
 
-#if 0 // TKM
-/// @brief Maximum size of an IPv6 address represented as a text string.
-///
-/// This is 32 hexadecimal characters written in 8 groups of four, plus seven
-/// colon separators.
-const size_t ADDRESS6_TEXT_MAX_LEN = 39;
-
-/// @brief Maximum length of classes stored in a dhcp4/6_client_classes
-/// columns.
-const size_t CLIENT_CLASSES_MAX_LEN = 255;
-
-/// @brief Maximum length of the hostname stored in DNS.
-///
-/// This length is restricted by the length of the domain-name carried
-/// in the Client FQDN %Option (see RFC4702 and RFC4704).
-const size_t HOSTNAME_MAX_LEN = 255;
-#endif
-
 /// @brief Maximum length of option value.
 const size_t OPTION_VALUE_MAX_LEN = 4096;
-
-#if 0
-/// @brief Maximum length of option value specified in textual format.
-const size_t OPTION_FORMATTED_VALUE_MAX_LEN = 8192;
-
-/// @brief Maximum length of option space name.
-const size_t OPTION_SPACE_MAX_LEN = 128;
-#endif
 
 /// @brief Numeric value representing last supported identifier.
 ///
@@ -1658,9 +1632,6 @@ PgSqlHostDataSource::add(const HostPtr& host) {
     uint32_t host_id = impl_->addStatement(PgSqlHostDataSourceImpl::INSERT_HOST,
                                            bind_array, true);
 
-    // @todo TKM take this out
-    std::cout << "id of new host: " << host_id << std::endl;
-
     // Insert DHCPv4 options.
     ConstCfgOptionPtr cfg_option4 = host->getCfgOption4();
     if (cfg_option4) {
@@ -1888,21 +1859,6 @@ std::string PgSqlHostDataSource::getDescription() const {
 std::pair<uint32_t, uint32_t> PgSqlHostDataSource::getVersion() const {
     return(impl_->getVersion());
 }
-
-#if 0
-// Do we really need these ?
-void
-PgSqlHostDataSource::commit() {
-    impl_->conn_.commit();
-}
-
-
-void
-PgSqlHostDataSource::rollback() {
-    impl_->conn_.rollback();
-}
-#endif
-
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
