@@ -257,7 +257,6 @@ TEST_F(PgSqlHostDataSourceTest, DISABLED_hwaddrOrClientId2) {
     /// reservation is returned.
 }
 
-#if 0
 // Test verifies that host with IPv6 address and DUID can be added and
 // later retrieved by IPv6 address.
 TEST_F(PgSqlHostDataSourceTest, get6AddrWithDuid) {
@@ -380,7 +379,6 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicate6WithDUID) {
 TEST_F(PgSqlHostDataSourceTest, addDuplicate6WithHWAddr) {
     testAddDuplicate6WithSameHWAddr();
 }
-#endif
 
 // Test if the duplicate IPv4 host instances can't be inserted. The test logic is as
 // follows: try to add multiple instances of the same host reservation and
@@ -394,7 +392,6 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicate4) {
 TEST_F(PgSqlHostDataSourceTest, optionsReservations4) {
     testOptionsReservations4(false);
 }
-#if 0
 
 // This test verifies that DHCPv6 options can be inserted in a binary format
 /// and retrieved from the PostgreSQL host database.
@@ -407,7 +404,6 @@ TEST_F(PgSqlHostDataSourceTest, optionsReservations6) {
 TEST_F(PgSqlHostDataSourceTest, optionsReservations46) {
     testOptionsReservations46(false);
 }
-#endif
 
 // This test verifies that DHCPv4 options can be inserted in a textual format
 /// and retrieved from the PostgreSQL host database.
@@ -415,7 +411,6 @@ TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations4) {
     testOptionsReservations4(true);
 }
 
-#if 0
 // This test verifies that DHCPv6 options can be inserted in a textual format
 /// and retrieved from the PostgreSQL host database.
 TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations6) {
@@ -428,6 +423,7 @@ TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations46) {
     testOptionsReservations46(true);
 }
 
+#if 0
 // This test checks transactional insertion of the host information
 // into the database. The failure to insert host information at
 // any stage should cause the whole transaction to be rolled back.

@@ -196,6 +196,19 @@ PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
     }
 }
 
+isc::asiolink::IOAddress
+PgSqlExchange::getIPv6Value(const PgSqlResult& r, const int row,
+                            const size_t col) {
+    const char* data = getRawColumnValue(r, row, col);
+    try {
+        return (isc::asiolink::IOAddress(data));
+    } catch (const std::exception& ex) {
+        isc_throw(DbOperationError, "Cannot convert data: " << data
+                  << " for: " << getColumnLabel(r, col) << " row:" << row
+                  << " : " << ex.what());
+    }
+}
+
 void
 PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
                                 const size_t col, uint8_t* buffer,
@@ -254,8 +267,9 @@ PgSqlExchange::getColumnLabel(const PgSqlResult& r, const size_t column) {
 }
 
 std::string 
-PgSqlExchange::dumpRow(const PgSqlResult& r, int row, size_t columns) {
+PgSqlExchange::dumpRow(const PgSqlResult& r, int row) {
     std::ostringstream stream;
+    int columns = PQnfields(r);
     for (int col = 0; col < columns; ++col) {
         const char* val = getRawColumnValue(r, row, col);
         std::string name = getColumnLabel(r, col);

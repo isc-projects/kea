@@ -287,6 +287,10 @@ public:
     static void getColumnValue(const PgSqlResult& r, const int row, 
                                const size_t col, uint8_t &value);
 
+    static isc::asiolink::IOAddress getIPv6Value(const PgSqlResult& r,
+                                                 const int row,
+                                                 const size_t col);
+
     static bool isColumnNull(const PgSqlResult& r, const int row, 
                              const size_t col);
 
@@ -337,7 +341,7 @@ public:
                                  size_t &bytes_converted);
 
 
-    static std::string dumpRow(const PgSqlResult& r, int row, size_t columns);
+    static std::string dumpRow(const PgSqlResult& r, int row);
 
 protected:
     /// @brief Stores text labels for columns, currently only used for
