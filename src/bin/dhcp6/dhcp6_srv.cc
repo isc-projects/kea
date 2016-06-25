@@ -165,8 +165,6 @@ createStatusCode(const Pkt6& pkt, const Option6IA& ia, const uint16_t status_cod
 namespace isc {
 namespace dhcp {
 
-int Dhcpv6Srv::hook_index_buffer6_send = Hooks.hook_index_buffer6_send_;
-
 const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
@@ -3092,6 +3090,13 @@ void Dhcpv6Srv::processStatsReceived(const Pkt6Ptr& query) {
     case DHCPV6_INFORMATION_REQUEST:
         stat_name = "pkt6-infrequest-received";
         break;
+    case DHCPV6_DHCPV4_QUERY:
+        stat_name = "pkt6-dhcpv4-query-received";
+        break;
+    case DHCPV6_DHCPV4_RESPONSE:
+        // Should not happen, but let's keep a counter for it
+        stat_name = "pkt6-dhcpv4-response-received";
+        break;
     default:
             ; // do nothing
     }
@@ -3112,12 +3117,19 @@ void Dhcpv6Srv::processStatsSent(const Pkt6Ptr& response) {
     case DHCPV6_REPLY:
         stat_name = "pkt6-reply-sent";
         break;
+    case DHCPV6_DHCPV4_RESPONSE:
+        stat_name = "pkt6-dhcpv4-response-sent";
+        break;
     default:
         // That should never happen
         return;
     }
 
     StatsMgr::instance().addValue(stat_name, static_cast<int64_t>(1));
+}
+
+int Dhcpv6Srv::getHookIndexBuffer6Send() {
+    return (Hooks.hook_index_buffer6_send_);
 }
 
 };

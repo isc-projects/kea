@@ -2585,6 +2585,13 @@ TEST_F(Dhcpv6SrvTest, receiveReplyStat) {
     testReceiveStats(DHCPV6_REPLY, "pkt6-reply-received");
 }
 
+// Test checks if pkt6-dhcpv4-response-received is bumped up correctly.
+// Note that in properly configured network the server never receives
+// Dhcpv4-Response messages.
+TEST_F(Dhcpv6SrvTest, receiveDhcpv4ResponseStat) {
+    testReceiveStats(DHCPV6_DHCPV4_RESPONSE, "pkt6-dhcpv4-response-received");
+}
+
 // Test checks if pkt6-unknown-received is bumped up correctly.
 TEST_F(Dhcpv6SrvTest, receiveUnknownStat) {
     testReceiveStats(123, "pkt6-unknown-received");
@@ -2608,6 +2615,11 @@ TEST_F(Dhcpv6SrvTest, receiveReleaseStat) {
 // Test checks if pkt6-decline-received is bumped up correctly.
 TEST_F(Dhcpv6SrvTest, receiveDeclineStat) {
     testReceiveStats(DHCPV6_DECLINE, "pkt6-decline-received");
+}
+
+// Test checks if pkt6-dhcpv4-query-received is bumped up correctly.
+TEST_F(Dhcpv6SrvTest, receiveDhcpv4QueryStat) {
+    testReceiveStats(DHCPV6_DHCPV4_QUERY, "pkt6-dhcpv4-query-received");
 }
 
 // Test checks if reception of a malformed packet increases pkt-parse-failed
