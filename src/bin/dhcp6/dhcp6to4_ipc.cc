@@ -100,7 +100,7 @@ void Dhcp6to4Ipc::handler() {
 
     try {
         // Let's execute all callouts registered for buffer6_send
-      if (HooksManager::calloutsPresent(Dhcpv6Srv::getHookIndexBuffer6Send())) {
+        if (HooksManager::calloutsPresent(Dhcpv6Srv::getHookIndexBuffer6Send())) {
             CalloutHandlePtr callout_handle = getCalloutHandle(pkt);
 
             // Delete previously set arguments
