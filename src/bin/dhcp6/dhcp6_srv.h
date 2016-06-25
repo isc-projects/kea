@@ -292,7 +292,9 @@ protected:
     /// @brief Processes incoming DHCPv4-query message.
     ///
     /// @param dhcp4_query message received from client
-    /// @return Reply (empty) message to (not) be sent to the client.
+    /// @return Reply message to be sent to the client (always NULL
+    /// as the response will be returned after by
+    /// @ref isc::dhcp::Dhcp6to4Ipc::handler()).
     Pkt6Ptr processDhcp4Query(const Pkt6Ptr& dhcp4_query);
 
     /// @brief Selects a subnet for a given client's packet.
@@ -791,14 +793,15 @@ private:
     uint16_t port_;
 
 public:
-    /// @note used by DHCPv4-over-DHCPv6 so must be public
+    /// @note used by DHCPv4-over-DHCPv6 so must be public and static
 
     /// @brief Updates statistics for transmitted packets
     /// @param response packet transmitted
     static void processStatsSent(const Pkt6Ptr& response);
 
-    /// the index of the buffer6_send hook
-    static int hook_index_buffer6_send;
+    /// @brief Returns the index of the buffer6_send hook
+    /// @return the index of the buffer6_send hook
+    static int getHookIndexBuffer6Send();
 
 protected:
 

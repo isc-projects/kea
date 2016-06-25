@@ -85,7 +85,8 @@ void Dhcp6to4Ipc::handler() {
     buf.clear();
     pkt->pack();
 
-    // Don't use getType(): get the message type from the buffer
+    // Don't use getType(): get the message type from the buffer as we
+    // want to know if it is a relayed message (vs. internal message type).
     uint8_t msg_type = buf[0];
     if ((msg_type == DHCPV6_RELAY_FORW) || (msg_type == DHCPV6_RELAY_REPL)) {
         pkt->setRemotePort(DHCP6_SERVER_PORT);
@@ -99,7 +100,7 @@ void Dhcp6to4Ipc::handler() {
 
     try {
         // Let's execute all callouts registered for buffer6_send
-        if (HooksManager::calloutsPresent(Dhcpv6Srv::hook_index_buffer6_send)) {
+      if (HooksManager::calloutsPresent(Dhcpv6Srv::getHookIndexBuffer6Send())) {
             CalloutHandlePtr callout_handle = getCalloutHandle(pkt);
 
             // Delete previously set arguments
@@ -109,7 +110,7 @@ void Dhcp6to4Ipc::handler() {
             callout_handle->setArgument("response6", pkt);
 
             // Call callouts
-            HooksManager::callCallouts(Dhcpv6Srv::hook_index_buffer6_send,
+            HooksManager::callCallouts(Dhcpv6Srv::getHookIndexBuffer6Send(),
                                        *callout_handle);
 
             // Callouts decided to skip the next processing step. The next

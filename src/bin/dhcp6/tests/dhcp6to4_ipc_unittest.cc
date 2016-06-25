@@ -14,6 +14,7 @@
 #include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/testutils/dhcp4o6_test_ipc.h>
+#include <stats/stats_mgr.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/library_handle.h>
@@ -25,6 +26,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::stats;
 using namespace isc::hooks;
 using namespace isc::util;
 
@@ -51,6 +53,8 @@ public:
         // Install buffer6_send_callout
         EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().
                         registerCallout("buffer6_send", buffer6_send_callout));
+        // Let's wipe all existing statistics.
+        StatsMgr::instance().removeAll();
     }
 
     /// @brief Configure DHCP4o6 port.
@@ -128,8 +132,15 @@ TEST_F(Dhcp6to4IpcTest, receive) {
     ASSERT_NO_THROW(ipc.open());
     ASSERT_NO_THROW(src_ipc.open());
 
+    // Get statistics
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt6_snd = mgr.getObservation("pkt6-sent");
+    ObservationPtr d4_resp = mgr.getObservation("pkt6-dhcpv4-response-sent");
+    EXPECT_FALSE(pkt6_snd);
+    EXPECT_FALSE(d4_resp);
+
     // Create message to be sent over IPC.
-    Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 1234));
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_RESPONSE, 1234));
     pkt->addOption(createDHCPv4MsgOption());
     pkt->setIface("eth0");
     pkt->setRemoteAddr(IOAddress("2001:db8:1::123"));
@@ -152,13 +163,20 @@ TEST_F(Dhcp6to4IpcTest, receive) {
     EXPECT_TRUE(forwarded->getOption(D6O_DHCPV4_MSG));
     EXPECT_EQ("eth0", forwarded->getIface());
     EXPECT_EQ("2001:db8:1::123", forwarded->getRemoteAddr().toText());
+
+    // Verify statistics
+    pkt6_snd = mgr.getObservation("pkt6-sent");
+    d4_resp = mgr.getObservation("pkt6-dhcpv4-response-sent");
+    ASSERT_TRUE(pkt6_snd);
+    ASSERT_TRUE(d4_resp);
+    EXPECT_EQ(1, pkt6_snd->getInteger().first);
+    EXPECT_EQ(1, d4_resp->getInteger().first);
 }
 
-// #4296 addresses this
-#if 0
 // This test verifies that the DHCPv4 endpoint of the DHCPv4o6 IPC can
 // receive relayed messages.
-TEST_F(Dhcp6to4IpcTest, receiveRelayed) {
+// This is currently not supported: it is a known defect addressed by #4296.
+TEST_F(Dhcp6to4IpcTest, DISABLED_receiveRelayed) {
     // Create instance of the IPC endpoint under test.
     Dhcp6to4Ipc& ipc = Dhcp6to4Ipc::instance();
     // Create instance of the IPC endpoint being used as a source of messages.
@@ -168,8 +186,15 @@ TEST_F(Dhcp6to4IpcTest, receiveRelayed) {
     ASSERT_NO_THROW(ipc.open());
     ASSERT_NO_THROW(src_ipc.open());
 
+    // Get statistics
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt6_snd = mgr.getObservation("pkt6-sent");
+    ObservationPtr d4_resp = mgr.getObservation("pkt6-dhcpv4-response-sent");
+    EXPECT_FALSE(pkt6_snd);
+    EXPECT_FALSE(d4_resp);
+
     // Create relayed message to be sent over IPC.
-    Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 1234));
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_RESPONSE, 1234));
     pkt->addOption(createDHCPv4MsgOption());
     Pkt6::RelayInfo relay;
     relay.linkaddr_ = IOAddress("3000:1::1");
@@ -199,7 +224,14 @@ TEST_F(Dhcp6to4IpcTest, receiveRelayed) {
     EXPECT_EQ("eth0", forwarded->getIface());
     EXPECT_EQ("2001:db8:1::123", forwarded->getRemoteAddr().toText());
     EXPECT_EQ(DHCP6_CLIENT_PORT, forwarded->getRemotePort());
+
+    // Verify statistics
+    pkt6_snd = mgr.getObservation("pkt6-sent");
+    d4_resp = mgr.getObservation("pkt6-dhcpv4-response-sent");
+    ASSERT_TRUE(pkt6_snd);
+    ASSERT_TRUE(d4_resp);
+    EXPECT_EQ(1, pkt6_snd->getInteger().first);
+    EXPECT_EQ(1, d4_resp->getInteger().first);
 }
-#endif
 
 } // end of anonymous namespace
