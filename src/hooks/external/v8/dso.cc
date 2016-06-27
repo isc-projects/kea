@@ -131,6 +131,13 @@ int load(LibraryHandle& handle) {
     isolate_ = Isolate::New(create_params);
     isolate_->SetFatalErrorHandler(&fatal_error_handler);
 
+    // Get flags
+    ConstElementPtr flags = handle.getParameter("flags");
+    if (flags && flags->getType() == Element::string) {
+        string flgs = flags->stringValue();
+        V8::SetFlagsFromString(flgs.c_str(), static_cast<int>(flgs.size()));
+    }
+
     // Open a scope for the script
     Isolate::Scope isolate_scope(isolate_);
 

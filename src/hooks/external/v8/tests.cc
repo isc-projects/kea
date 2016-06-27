@@ -29,7 +29,8 @@ const string config =
     " { \"library\": \"kea.so\", "
     "   \"parameters\": "
     "   { \"program\": \"kea\", "
-    "     \"script\": \"hook.js\" }"
+    "     \"script\": \"hook.js\","
+    "     \"flags\": \"--use_strict\" }"
     " }] }";
 
 // main routine
