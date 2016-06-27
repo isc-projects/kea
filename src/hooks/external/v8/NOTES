@@ -1,0 +1,40 @@
+Implementation notes for v8
+
+Manifest:
+ - voption.h voption.cc: the C++ OptionPtr encapsulated into a v8 indirect
+  External with no methods ported.
+
+ - vpkt4.h vpkt4.cc: the C++ Pkt4Ptr encapsulated into a v8 indirect
+  External with one method ported.
+
+  one can complete these v8 types or/and new v8 type.
+
+ - globals.h globals.cc: global values and functions, currently
+  only the print() function.
+
+ - dso.cc: the kea framework and hook glue: on the kea / C side it is
+  a dynamic shared object providing the framework and hook entry points,
+  on the v8 side it embeds an interpreter which imports the v8 script
+  hook.js.
+
+  voption.o, vpkt4.o, globals.o and dso.o are compiled into kea.so.
+
+ - hook.js: the v8 / ECMAscript script which implements the v8 part of
+  hook handlers using v8 option and pkt4 implementations.
+
+ - tests.cc: source of test program which loads the kea.so hook-library
+  and exercise the pkt4_receive hook. It gives an independent executable.
+
+ - cshenv: C-shell script setting environment variables for a kea
+  distrib in /tmp/kea on OS X.
+
+ - Makefile: make config file for OS X.
+
+ - NOTES: this file.
+
+v8 external API supports only raw pointers.
+
+There is no proof the garbage collecting part is correct. BTW v8 is known
+to not cleanup things (performance issue for Chrome).
+
+The documentation is nearly useless and the API unstable...

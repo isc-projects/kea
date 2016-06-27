@@ -2,7 +2,8 @@ Kea hooks in external (i.e., not C++) languages.
 
 (written before the implementation work so at the beginning of the design)
 
-Asked for customers: hooks written in python (done), lua, ocaml (done), ...
+Asked for customers: hooks written in python (done), lua, ocaml (done),
+v8 (partial), ...
 
 Kea hook summary:
  - dynamic shared objects loaded from the config on hooks-libraries
