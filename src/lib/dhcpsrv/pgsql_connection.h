@@ -82,10 +82,17 @@ class PgSqlResult : public boost::noncopyable {
 public:
     /// @brief Constructor
     ///
-    /// Store the pointer to the result set to being fetched.
+    /// Store the pointer to the result set to being fetched.  Set row
+    /// and column counts for convenience.
     ///
-    PgSqlResult(PGresult *result) : result_(result)
-    {}
+    PgSqlResult(PGresult *result) : result_(result), rows_(0), cols_(0) {
+        if (!result) {
+            isc_throw (BadValue, "PgSqlResult result pointer cannot be null");
+        }
+
+        rows_ = PQntuples(result);
+        cols_ = PQnfields(result);
+    }
 
     /// @brief Destructor
     ///
@@ -94,6 +101,50 @@ public:
         if (result_)  {
             PQclear(result_);
         }
+    }
+
+    /// @brief Returns the number of rows in the result set.
+    int getRows() const {
+        return (rows_);
+    }
+
+    /// @brief Returns the number of columns in the result set.
+    int getCols() const {
+        return (cols_);
+    }
+
+    /// @brief Determines if a row index is valid
+    ///
+    /// @param row index to range check
+    ///
+    /// @throw throws DbOperationError if the row index is out of range
+    void rowCheck(int row) const {
+        if (row >= rows_) {
+            isc_throw (DbOperationError, "row: " << row << ", out of range: 0.." << rows_);
+        }
+    }
+
+    /// @brief Determines if a column index is valid
+    ///
+    /// @param col index to range check
+    ///
+    /// @throw throws DbOperationError if the column index is out of range
+    void colCheck(int col) const {
+        if (col >= cols_) {
+            isc_throw (DbOperationError, "col: " << col << ", out of range: 0.." << cols_);
+        }
+    }
+
+    /// @brief Determines if both a row and column index are valid
+    ///
+    /// @param row index to range check
+    /// @param col index to range check
+    ///
+    /// @throw throws DbOperationError if either the row or column index
+    /// is out of range
+    void rowColCheck(int row, int col) const {
+        rowCheck(row);
+        colCheck(col);
     }
 
     /// @brief Conversion Operator
@@ -113,6 +164,8 @@ public:
 
 private:
     PGresult*     result_;     ///< Result set to be freed
+    int rows_;   ///< Number of rows in the result set
+    int cols_;   ///< Number of columns in the result set
 };
 
 
@@ -181,45 +234,50 @@ private:
 /// @brief Forward declaration to @ref PgSqlConnection.
 class PgSqlConnection;
 
-/// @brief RAII object representing PostgreSQL transaction.
+/// @brief RAII object representing a PostgreSQL transaction.
 ///
 /// An instance of this class should be created in a scope where multiple
 /// INSERT statements should be executed within a single transaction. The
 /// transaction is started when the constructor of this class is invoked.
 /// The transaction is ended when the @ref PgSqlTransaction::commit is
 /// explicitly called or when the instance of this class is destroyed.
-/// The @ref PgSqlTransaction::commit commits changes to the database
-/// and the changes remain in the database when the instance of the
-/// class is destroyed. If the class instance is destroyed before the
-/// @ref PgSqlTransaction::commit is called, the transaction is rolled
-/// back. The rollback on destruction guarantees that partial data is
-/// not stored in the database when there is an error during any
-/// of the operations belonging to a transaction.
+/// The @ref PgSqlTransaction::commit commits changes to the database.
+/// If the class instance is destroyed before @ref PgSqlTransaction::commit
+/// has been called, the transaction is rolled back. The rollback on
+/// destruction guarantees that partial data is not stored in the database
+/// when an error occurs during any of the operations within a transaction.
 ///
-/// The default PostgreSQL backend configuration enables 'autocommit'.
-/// Starting a transaction overrides 'autocommit' setting for this
-/// particular transaction only. It does not affect the global 'autocommit'
-/// setting for the database connection, i.e. all modifications to the
-/// database which don't use transactions will still be auto committed.
+/// By default PostgreSQL performs a commit following each statement which
+/// alters the database (i.e. "autocommit"). Starting a transaction
+/// stops autocommit for the connection until the transaction is ended by
+/// either commit or rollback. Other connections are unaffected.
 class PgSqlTransaction : public boost::noncopyable {
 public:
 
     /// @brief Constructor.
     ///
-    /// Starts transaction by making a "START TRANSACTION" query.
+    /// Starts transaction by executing the SQL statement: "START TRANSACTION"
     ///
     /// @param conn PostgreSQL connection to use for the transaction. This
     /// connection will be later used to commit or rollback changes.
     ///
-    /// @throw DbOperationError if "START TRANSACTION" query fails.
+    /// @throw DbOperationError if statement execution fails
     PgSqlTransaction(PgSqlConnection& conn);
 
     /// @brief Destructor.
     ///
-    /// Rolls back the transaction if changes haven't been committed.
+    /// If the transaction has not been committed, it is rolled back
+    /// by executing the SQL statement: "ROLLBACK"
+    ///
+    /// @throw DbOperationError if statement execution fails
     ~PgSqlTransaction();
 
     /// @brief Commits transaction.
+    ///
+    /// Commits all changes made during the transaction by executing the
+    /// SQL statement: "COMMIT">
+    ///
+    /// @throw DbOperationError if statement execution fails
     void commit();
 
 private:

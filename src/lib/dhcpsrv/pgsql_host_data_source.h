@@ -50,8 +50,6 @@ public:
     PgSqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Virtual destructor.
-    ///
-    /// Releases prepared MySQL statements used by the backend.
     virtual ~PgSqlHostDataSource();
 
     /// @brief Return all hosts for the specified HW address or DUID.
@@ -216,7 +214,7 @@ public:
     ///
     /// @return Type of the backend.
     virtual std::string getType() const {
-        return (std::string("mysql"));
+        return (std::string("postgresql"));
     }
 
     /// @brief Returns backend name.

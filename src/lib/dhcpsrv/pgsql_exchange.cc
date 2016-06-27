@@ -51,16 +51,16 @@ void PsqlBindArray::add(const bool& value)  {
 void PsqlBindArray::add(const uint8_t& byte) {
     // We static_cast to an unsigned int, otherwise lexcial_cast may to
     // treat byte as a character, which yields "" for unprintable values 
-    bindString(boost::lexical_cast<std::string>
+    addTempString(boost::lexical_cast<std::string>
                               (static_cast<unsigned int>(byte)));
 }
 
 void PsqlBindArray::add(const isc::asiolink::IOAddress& addr) {
     if (addr.isV4()) {
-        bindString(boost::lexical_cast<std::string>
+        addTempString(boost::lexical_cast<std::string>
                    (static_cast<uint32_t>(addr)));
     } else {
-        bindString(addr.toText());
+        addTempString(addr.toText());
     }
 }
 
@@ -70,9 +70,9 @@ void PsqlBindArray::addNull(const int format) {
     formats_.push_back(format);
 }
 
-// eventually this should replace add(std::string)
-void PsqlBindArray::bindString(const std::string& str) {
-    bound_strs_.push_back(StringPtr(new std::string(str)));
+// Eventually this could replace add(std::string&) ?
+void PsqlBindArray::addTempString(const std::string& str) {
+    bound_strs_.push_back(ConstStringPtr(new std::string(str)));
     PsqlBindArray::add((bound_strs_.back())->c_str());
 }
 
@@ -94,6 +94,7 @@ std::string PsqlBindArray::toText() const {
                            << static_cast<unsigned int>(data[x]);
                 }
                 stream << std::endl;
+                stream << std::setbase(10);
             }
         }
     }
@@ -146,6 +147,7 @@ PgSqlExchange::convertFromDatabaseTime(const std::string& db_time_val) {
 const char*
 PgSqlExchange::getRawColumnValue(const PgSqlResult& r, const int row,
                                  const size_t col) {
+    r.rowColCheck(row,col);
     const char* value = PQgetvalue(r, row, col);
     if (!value) {
         isc_throw(DbOperationError, "getRawColumnValue no data for :"
@@ -157,6 +159,7 @@ PgSqlExchange::getRawColumnValue(const PgSqlResult& r, const int row,
 bool 
 PgSqlExchange::isColumnNull(const PgSqlResult& r, const int row, 
                             const size_t col) {
+    r.rowColCheck(row,col);
     return (PQgetisnull(r, row, col));
 }
 
@@ -241,21 +244,9 @@ PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
     PQfreemem(bytes);
 }
 
-#if 0
-std::string
-PgSqlExchange::getColumnLabel(const size_t column) const {
-    if (column > columns_.size()) {
-        std::ostringstream os;
-        os << "Unknown column:" << column;
-        return (os.str());
-    }
-
-    return (columns_[column]);
-}
-#endif
-
 std::string
 PgSqlExchange::getColumnLabel(const PgSqlResult& r, const size_t column) {
+    r.colCheck(column);
     const char* label = PQfname(r, column);
     if (!label) {
         std::ostringstream os;
@@ -268,8 +259,9 @@ PgSqlExchange::getColumnLabel(const PgSqlResult& r, const size_t column) {
 
 std::string 
 PgSqlExchange::dumpRow(const PgSqlResult& r, int row) {
+    r.rowCheck(row);
     std::ostringstream stream;
-    int columns = PQnfields(r);
+    int columns = r.getCols();
     for (int col = 0; col < columns; ++col) {
         const char* val = getRawColumnValue(r, row, col);
         std::string name = getColumnLabel(r, col);

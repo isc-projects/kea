@@ -41,8 +41,7 @@ PgSqlTransaction::PgSqlTransaction(PgSqlConnection& conn)
 }
 
 PgSqlTransaction::~PgSqlTransaction() {
-    // Rollback if the PgSqlTransaction::commit wasn't explicitly
-    // called.
+    // If commit() wasn't explicitly called, rollback.
     if (!committed_) {
         conn_.rollback();
     }
@@ -218,7 +217,7 @@ PgSqlConnection::startTransaction() {
     PgSqlResult r(PQexec(conn_, "START TRANSACTION"));
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
         const char* error_message = PQerrorMessage(conn_);
-        isc_throw(DbOperationError, "unable to start transaction" 
+        isc_throw(DbOperationError, "unable to start transaction"
                   << error_message);
     }
 }

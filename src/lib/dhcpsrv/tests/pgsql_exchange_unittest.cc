@@ -69,45 +69,71 @@ TEST(PgSqlExchangeTest, convertTimeTest) {
     EXPECT_EQ(ref_time, from_time);
 }
 
-TEST(PsqlBindArray, basicOperation) {
-    
+/// @brief Verifies the ability to add various data types to
+/// the bind array.
+TEST(PsqlBindArray, addDataTest) {
+
     PsqlBindArray b;
 
-    uint8_t small_int = 25;
-    b.add(small_int);
-
-    int reg_int = 376;
-    b.add(reg_int);
-
-    uint64_t big_int = 86749032;
-    b.add(big_int);
-
-    b.add((bool)(1));
-    b.add((bool)(0));
-
-    b.add(isc::asiolink::IOAddress("192.2.15.34"));
-    b.add(isc::asiolink::IOAddress("3001::1"));
-
-    std::string str("just a string");
-    b.add(str);
-
+    // Declare a vector to add. Vectors are not currently duplicated
+    // So they will go out of scope, unless caller ensures it.
     std::vector<uint8_t> bytes;
     for (int i = 0; i < 10; i++) {
         bytes.push_back(i+1);
     }
 
-    b.add(bytes);
+    // Declare a string
+    std::string not_temp_str("just a string");
 
-    std::string expected = 
-        "0 : \"25\"\n"
-        "1 : \"376\"\n"
-        "2 : \"86749032\"\n"
-        "3 : \"TRUE\"\n"
-        "4 : \"FALSE\"\n"
-        "5 : \"3221360418\"\n"
-        "6 : \"3001::1\"\n"
-        "7 : \"just a string\"\n"
-        "8 : 0x0102030405060708090a\n";
+    // Now add all the items within a different scope. Everything should
+    // still be valid once we exit this scope.
+    {
+        // Add a const char*
+        b.add("booya!");
+
+        // Add the non temporary string
+        b.add(not_temp_str);
+
+        // Add a temporary string
+        b.addTempString("walah walah washington");
+
+        // Add a one byte int
+        uint8_t small_int = 25;
+        b.add(small_int);
+
+        // Add a four byte int
+        int reg_int = 376;
+        b.add(reg_int);
+
+        // Add a eight byte unsigned int
+        uint64_t big_int = 48786749032;
+        b.add(big_int);
+
+        // Add boolean true and false
+        b.add((bool)(1));
+        b.add((bool)(0));
+
+        // Add IP addresses
+        b.add(isc::asiolink::IOAddress("192.2.15.34"));
+        b.add(isc::asiolink::IOAddress("3001::1"));
+
+        // Add the vector
+        b.add(bytes);
+    }
+
+    // We've left bind scope, everything should be intact.
+    std::string expected =
+        "0 : \"booya!\"\n"
+        "1 : \"just a string\"\n"
+        "2 : \"walah walah washington\"\n"
+        "3 : \"25\"\n"
+        "4 : \"376\"\n"
+        "5 : \"48786749032\"\n"
+        "6 : \"TRUE\"\n"
+        "7 : \"FALSE\"\n"
+        "8 : \"3221360418\"\n"
+        "9 : \"3001::1\"\n"
+        "10 : 0x0102030405060708090a\n";
 
     EXPECT_EQ(expected, b.toText());
 }
