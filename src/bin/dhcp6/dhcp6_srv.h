@@ -291,11 +291,13 @@ protected:
 
     /// @brief Processes incoming DHCPv4-query message.
     ///
+    /// It always returns NULL, as there is nothing to be sent back to the
+    /// client at this time. The message was sent to DHCPv4 server using
+    /// @ref isc::dhcp::Dhcp6to4Ipc::handler()). We will send back a response
+    /// to the client once we get back DHCP4-REPLY from the DHCPv4 server.
+    ///
     /// @param dhcp4_query message received from client
-    /// @return Reply message to be sent to the client (always NULL
-    /// as the response will be returned after by
-    /// @ref isc::dhcp::Dhcp6to4Ipc::handler()).
-    Pkt6Ptr processDhcp4Query(const Pkt6Ptr& dhcp4_query);
+    void processDhcp4Query(const Pkt6Ptr& dhcp4_query);
 
     /// @brief Selects a subnet for a given client's packet.
     ///
