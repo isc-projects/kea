@@ -4,7 +4,7 @@
 CCOPT = -ccopt -I../../.. -ccopt -I$(KEASRC) -ccopt -I/usr/local/include
 CCOPT += -ccopt -DBOOST_ERROR_CODE_HEADER_ONLY
 CCOPT += -ccopt -DBOOST_SYSTEM_NO_DEPRECATED
-CCOPT += -ccopt -g -ccopt -fPIC -ccopt -dynamic
+CCOPT += -ccopt -g -ccopt -fPIC -ccopt -dynamic -ccopt -Wall -ccopt -Wextra
 
 OCAMLCC = ocamlc -cc g++ -ccopt -x -ccopt c++
 BOCAMLCC = ocamlc -cc g++ -ccopt -x -ccopt c++ -ccopt -DOCAML_CODE_BYTECODE

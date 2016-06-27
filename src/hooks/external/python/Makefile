@@ -6,7 +6,7 @@ CPPFLAGS = -I../../.. -I$(KEASRC) -I/usr/local/include
 CPPFLAGS += -I/usr/local/Cellar/python3/3.5.1/Frameworks/Python.framework/Versions/3.5/include/python3.5m
 
 CXXFLAGS = -DBOOST_ERROR_CODE_HEADER_ONLY -DBOOST_SYSTEM_NO_DEPRECATED
-CXXFLAGS += -g -fPIC -dynamic -DNDEBUG -fwrapv
+CXXFLAGS += -g -fPIC -dynamic -DNDEBUG -fwrapv -Wall -Wextra
 
 # Kea dhcp library
 LIBS = -lkea-dhcp++ -lkea-hooks -lkea-exceptions

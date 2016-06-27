@@ -6,7 +6,7 @@ CPPFLAGS = -I../../.. -I$(KEASRC) -I/usr/local/include
 CPPFLAGS += -I/usr/local/include/lua-5.3
 
 CXXFLAGS = -DBOOST_ERROR_CODE_HEADER_ONLY -DBOOST_SYSTEM_NO_DEPRECATED
-CXXFLAGS += -g -fPIC -dynamic
+CXXFLAGS += -g -fPIC -dynamic -Wall -Wextra
 
 # Kea dhcp library
 LIBS = -lkea-dhcp++ -lkea-hooks -lkea-exceptions

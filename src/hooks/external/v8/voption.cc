@@ -1,0 +1,59 @@
+// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <libplatform/libplatform.h>
+#include <v8.h>
+
+#include <hooks/external/v8/voption.h>
+
+#include <iostream>
+
+using namespace std;
+using namespace v8;
+using namespace isc::dhcp;
+using namespace isc::v8;
+
+// Contructor
+v8_option::v8_option() {}
+
+namespace { // anonymous namespace
+
+// finalize (how to call it?)
+void
+option_finalize(Local<Object> obj) {
+    // This is a critical code to avoid memory leaks
+    cout << "option_finalize called\n";
+    Local<External> field = Local<External>::Cast(obj->GetInternalField(0));
+    v8_option* const self = static_cast<v8_option*>(field->Value());
+    self->object.reset();
+    delete self;
+}
+
+} // end of anonymous namespace
+
+namespace isc {
+namespace v8 {
+
+Global<ObjectTemplate> option_template;
+
+void init_option_template(Isolate* isolate) {
+    // Create a stack-allocated handle scope.
+    HandleScope handle_scope(isolate);
+
+    // Get an object template
+    Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+
+    // Get one field
+    templ->SetInternalFieldCount(1);
+
+    ///// TODO set methods
+
+    // Store it
+    option_template.Reset(isolate, templ);
+}
+
+} // end of namespace v8
+} // end of namespace isc

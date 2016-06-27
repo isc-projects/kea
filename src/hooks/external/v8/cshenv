@@ -1,0 +1,5 @@
+setenv KEATOP /tmp/kea
+
+setenv KEASRC $KEATOP/src/lib
+
+setenv DYLD_LIBRARY_PATH $KEASRC/dhcpsrv/.libs:$KEASRC/eval/.libs:$KEASRC/dhcp_ddns/.libs:$KEASRC/stats/.libs:$KEASRC/hooks/.libs:$KEASRC/config/.libs:$KEASRC/dhcp/.libs:$KEASRC/asiolink/.libs:$KEASRC/dns/.libs:$KEASRC/cc/.libs:$KEASRC/cryptolink/.libs:$KEASRC/log/.libs:$KEASRC/util/threads/.libs:$KEASRC/util/.libs:$KEASRC/exceptions/.libs
