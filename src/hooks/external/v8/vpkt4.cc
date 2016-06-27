@@ -24,13 +24,12 @@ namespace { // anonymous namespace
 
 // finalize (how to call it?)
 void
-pkt4_finalize(Local<Object> obj) {
+pkt4_finalize(const WeakCallbackData<Object, v8_pkt4>& data) {
     // This is a critical code to avoid memory leaks
     cout << "pkt4_finalize called\n";
-    Local<External> field = Local<External>::Cast(obj->GetInternalField(0));
-    v8_pkt4* const self = static_cast<v8_pkt4*>(field->Value());
-    self->object.reset();
-    delete self;
+    Local<External> field =
+        Local<External>::Cast(data.GetValue()->GetInternalField(0));
+    delete static_cast<v8_pkt4*>(field->Value());
 }
 
 // toString
@@ -54,7 +53,37 @@ namespace v8 {
 
 Global<ObjectTemplate> pkt4_template;
 
-void init_pkt4_template(Isolate* isolate) {
+Local<Object> make_pkt4(Isolate* isolate, Pkt4Ptr pkt) {
+    // Create a stack-allocated handle scope.
+    EscapableHandleScope handle_scope(isolate);
+
+    // Catch errors
+    TryCatch try_catch(isolate);
+
+    // Generate a new instance from the template
+    Local<ObjectTemplate> templ =
+        Local<ObjectTemplate>::New(isolate, pkt4_template);
+    Local<Object> result;
+    if (!templ->NewInstance(isolate->GetCurrentContext()).ToLocal(&result)) {
+        String::Utf8Value error(try_catch.Exception());
+        cerr << "NewInstance failed: " << *error << "\n";
+        return (handle_scope.Escape(result));
+    }
+
+    // Set the C++ part
+    v8_pkt4* ccpobj(new v8_pkt4());
+    ccpobj->object = pkt;
+    Local<External> ptr = External::New(isolate, ccpobj);
+    result->SetInternalField(0, ptr);
+
+    // Show the new value to the garbage collector
+    Persistent<Object> gcref(isolate, result);
+    gcref.SetWeak<v8_pkt4>(ccpobj, pkt4_finalize);
+
+    return (handle_scope.Escape(result));
+}
+
+void init_pkt4(Isolate* isolate) {
     // Create a stack-allocated handle scope.
     HandleScope handle_scope(isolate);
 

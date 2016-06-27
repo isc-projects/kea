@@ -23,13 +23,26 @@ namespace { // anonymous namespace
 
 // finalize (how to call it?)
 void
-option_finalize(Local<Object> obj) {
+option_finalize(const WeakCallbackData<Object, v8_option>& data) {
     // This is a critical code to avoid memory leaks
     cout << "option_finalize called\n";
-    Local<External> field = Local<External>::Cast(obj->GetInternalField(0));
+    Local<External> field =
+        Local<External>::Cast(data.GetValue()->GetInternalField(0));
+    delete static_cast<v8_option*>(field->Value());
+}
+
+// toString
+void
+option_tostring(const FunctionCallbackInfo<Value>& info) {
+    HandleScope handle_scope(info.GetIsolate());
+
+    Local<External> field =
+        Local<External>::Cast(info.Holder()->GetInternalField(0));
     v8_option* const self = static_cast<v8_option*>(field->Value());
-    self->object.reset();
-    delete self;
+    info.GetReturnValue().Set(
+        String::NewFromUtf8(info.GetIsolate(),
+                            self->object->toText().c_str(),
+                            NewStringType::kNormal).ToLocalChecked());
 }
 
 } // end of anonymous namespace
@@ -39,7 +52,37 @@ namespace v8 {
 
 Global<ObjectTemplate> option_template;
 
-void init_option_template(Isolate* isolate) {
+Local<Object> make_option(Isolate* isolate, OptionPtr opt) {
+    // Create a stack-allocated handle scope.
+    EscapableHandleScope handle_scope(isolate);
+
+    // Catch errors
+    TryCatch try_catch(isolate);
+
+    // Generate a new instance from the template
+    Local<ObjectTemplate> templ =
+        Local<ObjectTemplate>::New(isolate, option_template);
+    Local<Object> result;
+    if (!templ->NewInstance(isolate->GetCurrentContext()).ToLocal(&result)) {
+        String::Utf8Value error(try_catch.Exception());
+        cerr << "NewInstance failed: " << *error << "\n";
+        return (handle_scope.Escape(result));
+    }
+
+    // Set the C++ part
+    v8_option* ccpobj(new v8_option());
+    ccpobj->object = opt;
+    Local<External> ptr = External::New(isolate, ccpobj);
+    result->SetInternalField(0, ptr);
+
+    // Show the new value to the garbage collector
+    Persistent<Object> gcref(isolate, result);
+    gcref.SetWeak<v8_option>(ccpobj, option_finalize);
+
+    return (handle_scope.Escape(result));
+}
+
+void init_option(Isolate* isolate) {
     // Create a stack-allocated handle scope.
     HandleScope handle_scope(isolate);
 
@@ -49,7 +92,13 @@ void init_option_template(Isolate* isolate) {
     // Get one field
     templ->SetInternalFieldCount(1);
 
-    ///// TODO set methods
+    // Set Methods
+    Local<Function> tostring;
+    if (!Function::New(isolate->GetCurrentContext(),
+                       option_tostring).ToLocal(&tostring)) {
+        cerr << "can't create pkt4_tostring\n";
+    }
+    templ->Set(isolate, "toString", tostring);
 
     // Store it
     option_template.Reset(isolate, templ);

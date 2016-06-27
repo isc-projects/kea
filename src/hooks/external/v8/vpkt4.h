@@ -20,9 +20,10 @@ public:
     isc::dhcp::Pkt4Ptr object;
 };
 
-extern ::v8::Global< ::v8::ObjectTemplate> pkt4_template;
+::v8::Local< ::v8::Object> make_pkt4(::v8::Isolate* isolate,
+                                     isc::dhcp::Pkt4Ptr pkt);
 
-void init_pkt4_template(::v8::Isolate* isolate);
+void init_pkt4(::v8::Isolate* isolate);
 
 } // end of namespace v8
 } // end of namespace isc

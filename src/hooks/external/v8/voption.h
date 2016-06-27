@@ -14,15 +14,16 @@ namespace v8 {
 
 // Ocaml option class
 class v8_option {
+public:
     v8_option();
 
-public:
     isc::dhcp::OptionPtr object;
 };
 
-extern ::v8::Global< ::v8::ObjectTemplate> option_template;
+::v8::Local< ::v8::Object> make_option(::v8::Isolate* isolate,
+                                       isc::dhcp::OptionPtr opt);
 
-void init_option_template(::v8::Isolate* isolate);
+void init_option(::v8::Isolate* isolate);
 
 } // end of namespace v8
 } // end of namespace isc

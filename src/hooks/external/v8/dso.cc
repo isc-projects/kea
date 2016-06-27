@@ -151,8 +151,8 @@ int load(LibraryHandle& handle) {
     Context::Scope context_scope(context);
 
     // Initialize option and pkt4
-    init_option_template(isolate_);
-    init_pkt4_template(isolate_);
+    init_option(isolate_);
+    init_pkt4(isolate_);
 
     // Import script file content
     Local<String> source =
@@ -244,18 +244,11 @@ int pkt4_receive(CalloutHandle& handle) {
     Context::Scope context_scope(context);
 
     // Create pkt4 object
-    Local<ObjectTemplate> templ =
-        Local<ObjectTemplate>::New(isolate_, pkt4_template);
-    Local<Object> query;
-    if (!templ->NewInstance(context).ToLocal(&query)) {
-        String::Utf8Value error(try_catch.Exception());
-        cerr << "NewInstance failed: " << *error << "\n";
+    Local<Object> query = make_pkt4(isolate_, query4);
+    if (query.IsEmpty()) {
+        cerr << "empty v8 query\n";
         return (0);
     }
-    v8_pkt4* ccpobj(new v8_pkt4());
-    ccpobj->object = query4;
-    Local<External> ptr = External::New(isolate_, ccpobj);
-    query->SetInternalField(0, ptr);
 
     // Call the handler
     const int argc = 1;
@@ -264,7 +257,6 @@ int pkt4_receive(CalloutHandle& handle) {
     Local<Value> result;
     if (!handler->Call(context, context->Global(),
                        argc, argv).ToLocal(&result)) {
-      cerr << "call failed\n";
         String::Utf8Value error(try_catch.Exception());
         cerr << "pkt4_receive handler failed: " << *error << "\n";
         return (0);
