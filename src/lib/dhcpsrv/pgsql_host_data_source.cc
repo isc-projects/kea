@@ -104,10 +104,10 @@ public:
     }
 
     /// @brief Reinitializes state information
-    /// 
+    ///
     /// This function should be called in between statement executions.
-    /// Deriving classes should be to sure to reinitialize any stateful
-    /// values that control statement result processing.
+    /// Deriving classes should inovke this method as well as be reset
+    /// all of their own stateful values.
     virtual void clear() {
         host_.reset();
     };
@@ -135,8 +135,8 @@ public:
     /// @brief Returns value of host id in the given row.
     ///
     /// This method is used to "look ahead" at the host_id in a row
-    /// without having to call retrieveHost() 
-    HostID getHostId(const PgSqlResult& r, int row) { 
+    /// without having to call retrieveHost()
+    HostID getHostId(const PgSqlResult& r, int row) {
         HostID host_id;
         getColumnValue(r, row, HOST_ID_COL, host_id);
         return (host_id);
@@ -185,14 +185,14 @@ public:
             bind_array->add(host->getIPv4Reservation());
 
             // hostname : VARCHAR(255) NULL
-            bind_array->bindString(host->getHostname());
+            bind_array->add(host->getHostname());
 
             // dhcp4_client_classes : VARCHAR(255) NULL
             // Override default separator to not include space after comma.
-            bind_array->bindString(host->getClientClasses4().toText(","));
+            bind_array->addTempString(host->getClientClasses4().toText(","));
 
             // dhcp6_client_classes : VARCHAR(255) NULL
-            bind_array->bindString(host->getClientClasses6().toText(","));
+            bind_array->addTempString(host->getClientClasses6().toText(","));
         } catch (const std::exception& ex) {
             host_.reset();
             isc_throw(DbOperationError,
@@ -216,46 +216,38 @@ public:
     ///
     /// @param [out] hosts Collection of hosts to which a new host created
     ///        from the processed data should be inserted.
-    virtual void processRowData(ConstHostCollection& hosts, 
+    virtual void processRowData(ConstHostCollection& hosts,
                                     const PgSqlResult& r, int row) {
         // Peek at the host id , so we can skip it if we already have it
         // This lets us avoid constructing a copy of host for each
         // of its sub-rows (options, etc...)
-        HostID host_id;
-        getColumnValue(r, row, HOST_ID_COL, host_id);
+        HostID row_host_id = getHostId(r, row);
 
         // Add new host only if there are no hosts or the host id of the
         // most recently added host is different than the host id of the
         // currently processed host.
-        if (hosts.empty() || host_id != hosts.back()->getHostId()) {
-            HostPtr host = retrieveHost(r, row);
+        if (hosts.empty() || row_host_id != hosts.back()->getHostId()) {
+            HostPtr host = retrieveHost(r, row, row_host_id);
             hosts.push_back(host);
         }
     }
 
     /// @brief Creates a Host object from a given row in a result set.
     ///
-    /// @param r result set containing one or rows from the hosts table
-    /// @param row row number within the result set from to create the Lease4
-    /// object.
+    /// @param r result set containing one or more rows from the hosts table
+    /// @param row index within the result set of the row to process
     /// @param peeked_host_id if the caller has peeked ahead at the row's
-    /// host_id, it can be passed in here to avoid fetching from the row
+    /// host_id, it can be passed in here to avoid fetching it from the row
     /// a second time.
     ///
     /// @return HostPtr to the newly created Host object
     /// @throw DbOperationError if the host cannot be created.
-    HostPtr retrieveHost(const PgSqlResult& r, int row, 
+    HostPtr retrieveHost(const PgSqlResult& r, int row,
         const HostID& peeked_host_id = 0) {
-       
+
         // If the caller peeked ahead at the host_id use that, otherwise
-        // read it from the row. 
-        HostID host_id = peeked_host_id;
-        if (peeked_host_id) {
-            host_id = peeked_host_id;
-        }
-        else {
-            getColumnValue(r, row, HOST_ID_COL, host_id);
-        }
+        // read it from the row.
+        HostID host_id = (peeked_host_id ? peeked_host_id : getHostId(r,row));
 
         // dhcp_identifier : BYTEA NOT NULL
         uint8_t identifier_value[DHCP_IDENTIFIER_MAX_LEN];
@@ -300,6 +292,7 @@ public:
         std::string dhcp6_client_classes;
         getColumnValue(r, row, DHCP6_CLIENT_CLASSES_COL, dhcp6_client_classes);
 
+        // Finally, attempt to create the new host.
         HostPtr host;
         try {
             host.reset(new Host(identifier_value, identifier_len,
@@ -362,7 +355,7 @@ private:
         /// class.
         OptionProcessor(const Option::Universe& universe,
                         const size_t start_column)
-        : universe_(universe), start_column_(start_column), 
+        : universe_(universe), start_column_(start_column),
           option_id_index_(start_column), code_index_(start_column_ + 1),
           value_index_(start_column_ + 2),
           formatted_value_index_(start_column_ + 3),
@@ -391,22 +384,25 @@ private:
         ///
         /// @param cfg Pointer to the configuration object into which new
         /// option instances should be inserted.
-        void retrieveOption(const CfgOptionPtr& cfg, const PgSqlResult& r, 
+        /// @param r result set containing one or more rows from a dhcp
+        /// options table.
+        /// @param row index within the result set of the row to process
+        void retrieveOption(const CfgOptionPtr& cfg, const PgSqlResult& r,
                             int row) {
+            // If the option id on this row is NULL, then there's no
+            // option of this type (4/6) on this row to fetch, so bail.
             if (PgSqlExchange::isColumnNull(r, row, option_id_index_)) {
                 return;
             }
 
-            // option_id: INT NOT NULL
+            // option_id: INT
             uint64_t option_id;
             PgSqlExchange::getColumnValue(r, row, option_id_index_, option_id);
 
-            // option_id may be zero if dhcp4_options or dhcp6_options table
-            // doesn't contain any options for the particular host. Also, the
-            // current option id must be greater than id if the most recent
-            // option because options are ordered by option id. Otherwise
-            // we assume that this is already processed option.
-            if (!option_id || (most_recent_option_id_ >= option_id)) {
+            // The row option id must be greater than id if the most recent
+            // option because they are ordered by option id. Otherwise
+            // we assume that we have already processed this option.
+            if (most_recent_option_id_ >= option_id) {
                 return;
             }
 
@@ -418,15 +414,15 @@ private:
             uint16_t code;
             PgSqlExchange::getColumnValue(r, row, code_index_, code);
 
-            // value: BYTEA NOT NULL
+            // value: BYTEA
             uint8_t value[OPTION_VALUE_MAX_LEN];
             size_t value_len;
-            PgSqlExchange::convertFromBytea(r, row, value_index_, value, 
+            PgSqlExchange::convertFromBytea(r, row, value_index_, value,
                                             sizeof(value), value_len);
 
             // formatted_value: TEXT
             // @todo Should we attempt to enforce max value of 8K?
-            // If so, we should declare this VARCHAR[8K] in the table 
+            // If so, we should declare this VARCHAR[8K] in the table
             std::string formatted_value;
             PgSqlExchange::getColumnValue(r, row, formatted_value_index_,
                                           formatted_value);
@@ -492,7 +488,7 @@ private:
                     // Spit the value specified in comma separated values
                     // format.
                     std::vector<std::string> split_vec;
-                    boost::split(split_vec, formatted_value, 
+                    boost::split(split_vec, formatted_value,
                                  boost::is_any_of(","));
                     option = def->optionFactory(universe_, code, split_vec);
                 }
@@ -597,11 +593,11 @@ public:
         }
     }
 
-    /// @brief Reinitializes state information
-    /// 
+    /// @brief Clears state information
+    ///
     /// This function should be called in between statement executions.
-    /// Deriving classes should be to sure to reinitialize any stateful
-    /// values that control statement result processing.
+    /// Deriving classes should inovke this method as well as be reset
+    /// all of their own stateful values.
     virtual void clear() {
         PgSqlHostExchange::clear();
         if (opt_proc4_) {
@@ -621,24 +617,27 @@ public:
     /// detects duplicated information and discards such entries.
     ///
     /// @param [out] hosts Container holding parsed hosts and options.
-    virtual void processRowData(ConstHostCollection& hosts, 
+    virtual void processRowData(ConstHostCollection& hosts,
                                 const PgSqlResult& r, int row) {
         HostPtr current_host;
         if (hosts.empty()) {
+            // Must be the first one, fetch it.
             current_host = retrieveHost(r, row);
             hosts.push_back(current_host);
         } else {
             // Peek at the host id so we can skip it if we already have
             // this host.  This lets us avoid retrieving the host needlessly
-            // for each of its sub-rows (options, etc...)
+            // for each of its sub-rows (options, etc...).
             HostID row_host_id = getHostId(r, row);
             current_host = boost::const_pointer_cast<Host>(hosts.back());
+
+            // if the row's host id is greater than the one we've been
+            // working on we're starting a new host, so fetch it.
             if (row_host_id > current_host->getHostId()) {
                 current_host = retrieveHost(r, row, row_host_id);
                 hosts.push_back(current_host);
             }
         }
-
 
         // Parse DHCPv4 options if required to do so.
         if (opt_proc4_) {
@@ -722,14 +721,14 @@ public:
         columns_[type_index_] = "type";
         columns_[iaid_index_] = "dhcp6_iaid";
 
-    //    BOOST_STATIC_ASSERT(5 < RESERVATION_COLUMNS);
+        BOOST_STATIC_ASSERT(4 < RESERVATION_COLUMNS);
     }
 
     /// @brief Reinitializes state information
-    /// 
+    ///
     /// This function should be called in between statement executions.
-    /// Deriving classes should be to sure to reinitialize any stateful
-    /// values that control statement result processing.
+    /// Deriving classes should inovke this method as well as be reset
+    /// all of their own stateful values.
     void clear() {
         PgSqlHostWithOptionsExchange::clear();
         most_recent_reservation_id_ = 0;
@@ -743,7 +742,7 @@ public:
         if (!isColumnNull(r, row, reservation_id_index_)) {
             getColumnValue(r, row, reservation_id_index_, resv_id);
         }
-        
+
         return (resv_id);
     };
 
@@ -754,11 +753,13 @@ public:
     ///
     /// @return IPv6Resrv object (containing IPv6 address or prefix reservation)
     IPv6Resrv retrieveReservation(const PgSqlResult& r, int row) {
-        // Set the IPv6 Reservation type (0 = IA_NA, 2 = IA_PD)
-        IPv6Resrv::Type resv_type;
+
+        // type: SMALLINT NOT NULL
         uint16_t tmp;
         getColumnValue(r, row, type_index_, tmp);
 
+        // Convert it to IPv6 Reservation type (0 = IA_NA, 2 = IA_PD)
+        IPv6Resrv::Type resv_type;
         switch (tmp) {
         case 0:
             resv_type = IPv6Resrv::TYPE_NA;
@@ -774,11 +775,19 @@ public:
                       << tmp << ". Only 0 or 2 are allowed.");
         }
 
+        // address VARCHAR(39) NOT NULL
         isc::asiolink::IOAddress address(getIPv6Value(r, row, address_index_));
 
-        uint16_t prefix_len;        
+        // prefix_len: SMALLINT NOT NULL
+        uint16_t prefix_len;
         getColumnValue(r, row, prefix_len_index_, prefix_len);
 
+        // @todo once we support populating iaid
+        // iaid: INT
+        // int iaid;
+        // getColumnValue(r, row, iaid_index_, iaid);
+
+        // Create the reservation.
         IPv6Resrv reservation(resv_type, IOAddress(address), prefix_len);
         return (reservation);
     };
@@ -802,30 +811,26 @@ public:
     ///
     /// @param [out] hosts Collection of hosts to which a new host created
     ///        from the processed data should be inserted.
+    /// @param r result set containing one or more rows of fetched data
+    /// @param row index within the result set of the row to process
     virtual void processRowData(ConstHostCollection& hosts,
                                 const PgSqlResult& r, int row) {
         // Call parent class to fetch host information and options.
         PgSqlHostWithOptionsExchange::processRowData(hosts, r, row);
 
-        uint64_t reservation_id = getReservationId(r, row);
-        if (!reservation_id) {
-            return;
-        }
-
+        // Shouldn't happen but just in case
         if (hosts.empty()) {
             isc_throw(Unexpected, "no host information while retrieving"
                       " IPv6 reservation");
         }
-        HostPtr host = boost::const_pointer_cast<Host>(hosts.back());
 
-        // If we're dealing with a new reservation, let's add it to the
-        // host.
-        if (reservation_id > most_recent_reservation_id_) {
+        // If we have reservation id we havent' seen yet, retrive the
+        // the reservation, adding it to the current host
+        uint64_t reservation_id = getReservationId(r, row);
+        if (reservation_id && (reservation_id > most_recent_reservation_id_)) {
+            HostPtr host = boost::const_pointer_cast<Host>(hosts.back());
+            host->addReservation(retrieveReservation(r, row));
             most_recent_reservation_id_ = reservation_id;
-
-            if (most_recent_reservation_id_ > 0) {
-                host->addReservation(retrieveReservation(r, row));
-            }
         }
     }
 
@@ -876,7 +881,7 @@ public:
     ///
     /// Initialize class members representing a single IPv6 reservation.
     PgSqlIPv6ReservationExchange()
-        : PgSqlExchange(RESRV_COLUMNS), 
+        : PgSqlExchange(RESRV_COLUMNS),
           resv_(IPv6Resrv::TYPE_NA, asiolink::IOAddress("::"), 128) {
         // Set the column names (for error messages)
         columns_[0] = "host_id";
@@ -884,7 +889,7 @@ public:
         columns_[2] = "prefix_len";
         columns_[3] = "type";
         columns_[4] = "dhcp6_iaid";
-        BOOST_STATIC_ASSERT(4 < RESRV_COLUMNS);
+        BOOST_STATIC_ASSERT(5 < RESRV_COLUMNS);
     }
 
     /// @brief Populate a bind array representing an IPv6 reservation
@@ -899,7 +904,7 @@ public:
     /// bound values extracted the IPv6 reservation
     ///
     /// @throw DbOperationError if bind_array cannot be populated.
-    PsqlBindArrayPtr createBindForSend(const IPv6Resrv& resv, 
+    PsqlBindArrayPtr createBindForSend(const IPv6Resrv& resv,
                                        const HostID& host_id) {
         // Store the values to ensure they remain valid.
         // Technically we don't need this, as currently all the values
@@ -943,7 +948,6 @@ private:
 /// @brief This class is used for inserting options into a database.
 ///
 /// This class supports inserting both DHCPv4 and DHCPv6 options.
-
 class PgSqlOptionExchange : public PgSqlExchange {
 private:
 
@@ -977,22 +981,26 @@ public:
         columns_[HOST_ID_COL] = "host_id";
         columns_[SCOPE_ID_COL] = "scope_id";
 
-        BOOST_STATIC_ASSERT(8 < OPTION_COLUMNS);
+        BOOST_STATIC_ASSERT(9 < OPTION_COLUMNS);
     }
 
     /// @brief Creates binding array to insert option data into database.
     ///
-    /// @return Vector of MYSQL_BIND object representing an option.
+    /// @param opt_desc option descriptor of the option to write
+    /// @param opt_space name of the option space to which the option belongs
+    /// @param host_id host id of the host to which the option belongs
+    ///
+    /// @return pointer to newly constructed bind_array containing the
+    /// bound values extracted from host
     PsqlBindArrayPtr
     createBindForSend(const OptionDescriptor& opt_desc,
                       const std::string& opt_space,
-                      const OptionalValue<SubnetID>& subnet_id,
                       const HostID& host_id) {
-
         // Hold pointer to the option to make sure it remains valid until
         // we complete a query.
         option_ = opt_desc.option_;
 
+        // Create the bind-array
         PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
         try {
@@ -1021,41 +1029,32 @@ public:
             }
 
             // formatted_value: TEXT NULL,
-            if (opt_desc.formatted_value_.empty()) {
+            if (!opt_desc.formatted_value_.empty()) {
+                bind_array->addTempString(opt_desc.formatted_value_);
+            } else {
                 bind_array->addNull();
-            } else { 
-                bind_array->bindString(opt_desc.formatted_value_);
             }
 
             // space: VARCHAR(128) NULL
-            if (opt_space.empty()) {
-                bind_array->addNull();
+            if (!opt_space.empty()) {
+                bind_array->addTempString(opt_space);
             } else {
-                bind_array->bindString(opt_space);
+                bind_array->addNull();
             }
 
             // persistent: BOOLEAN DEFAULT false
             bind_array->add(opt_desc.persistent_);
 
-            // dhcp_client_class: VARCHAR(128) NULL
-            /// @todo Assign actual value to client class string.
-            /// once option level client class is supported
-            bind_array->addNull();
-
-            // dhcp_subnet_id: INT NULL
-            if (subnet_id.isSpecified()) {
-                uint32_t subnet_id = subnet_id;
-                bind_array->add(subnet_id);
-            } else {
-                bind_array->addNull();
+            // host_id: INT NULL
+            if (!host_id) {
+                isc_throw(BadValue, "host_id cannot be null");
             }
-
-            // host_id: INT  - in this case it should never be 0
             bind_array->add(host_id);
+
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array for inserting DHCP "
-                      "option: " << option_->toText() << ", reason: "
+                      "host option: " << option_->toText() << ", reason: "
                       << ex.what());
         }
 
@@ -1090,8 +1089,8 @@ public:
     enum StatementIndex {
         INSERT_HOST,            // Insert new host to collection
         INSERT_V6_RESRV,        // Insert v6 reservation
-        INSERT_V4_OPTION,       // Insert DHCPv4 option
-        INSERT_V6_OPTION,       // Insert DHCPv6 option
+        INSERT_V4_HOST_OPTION,       // Insert DHCPv4 option
+        INSERT_V6_HOST_OPTION,       // Insert DHCPv6 option
         GET_HOST_DHCPID,        // Gets hosts by host identifier
         GET_HOST_ADDR,          // Gets hosts by IPv4 address
         GET_HOST_SUBID4_DHCPID, // Gets host by IPv4 SubnetID, HW address/DUID
@@ -1157,7 +1156,7 @@ public:
     /// @param options_cfg An object holding a collection of options to be
     /// inserted into the database.
     /// @param host_id Host identifier retrieved using @c mysql_insert_id.
-    void addOptions(const StatementIndex& stindex, 
+    void addOptions(const StatementIndex& stindex,
                     const ConstCfgOptionPtr& options_cfg,
                     const uint64_t host_id);
 
@@ -1250,7 +1249,7 @@ PgSqlTaggedStatement tagged_statements[] = {
     {8, // PgSqlHostDataSourceImpl::INSERT_HOST,
      { OID_BYTEA, OID_INT2,
        OID_INT4, OID_INT4, OID_INT8, OID_VARCHAR,
-       OID_VARCHAR, OID_VARCHAR }, 
+       OID_VARCHAR, OID_VARCHAR },
      "insert_host",
      "INSERT INTO hosts(dhcp_identifier, dhcp_identifier_type, "
      "  dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
@@ -1269,24 +1268,24 @@ PgSqlTaggedStatement tagged_statements[] = {
 
     // Inserts a single DHCPv4 option into 'dhcp4_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
-    {8, // PgSqlHostDataSourceImpl::INSERT_V4_OPTION,
-     { OID_INT2, OID_BYTEA, OID_TEXT, OID_VARCHAR, 
-       OID_BOOL, OID_VARCHAR, OID_INT4, OID_INT8, OID_INT2}, 
-     "insert_v4_option",
+    {6, // PgSqlHostDataSourceImpl::INSERT_V4_HOST_OPTION,
+     { OID_INT2, OID_BYTEA, OID_TEXT,
+       OID_VARCHAR, OID_BOOL, OID_INT8},
+     "insert_v4_host_option",
      "INSERT INTO dhcp4_options(code, value, formatted_value, space, "
-     "  persistent, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id) "
-     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 3)"
+     "  persistent, host_id, scope_id) "
+     "VALUES ($1, $2, $3, $4, $5, $6, 3)"
     },
 
     // Inserts a single DHCPv6 option into 'dhcp6_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
-    {8, // PgSqlHostDataSourceImpl::INSERT_V6_OPTION,
-     { OID_INT2, OID_BYTEA, OID_TEXT, OID_VARCHAR, 
-       OID_BOOL, OID_VARCHAR, OID_INT4, OID_INT8, OID_INT2}, 
-     "insert_v6_option",
+    {6, // PgSqlHostDataSourceImpl::INSERT_V6_HOST_OPTION,
+     { OID_INT2, OID_BYTEA, OID_TEXT,
+       OID_VARCHAR, OID_BOOL, OID_INT8},
+     "insert_v6_host_option",
      "INSERT INTO dhcp6_options(code, value, formatted_value, space, "
-     "  persistent, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
-     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 3)"
+     "  persistent, host_id, scope_id) "
+     "VALUES ($1, $2, $3, $4, $5, $6, 3)"
     },
 
     // Retrieves host information, IPv6 reservations and both DHCPv4 and
@@ -1331,11 +1330,11 @@ PgSqlTaggedStatement tagged_statements[] = {
     // and client's identifier. Left joining the dhcp4_options table results in
     // multiple rows being returned for the same host.
     { 3, //PgSqlHostDataSourceImpl::GET_HOST_SUBID4_DHCPID,
-     { OID_INT4, OID_INT2, OID_BYTEA }, 
+     { OID_INT4, OID_INT2, OID_BYTEA },
      "get_host_subid4_dhcpid",
      "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
      "  h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
-     "  h.dhcp4_client_classes, h.dhcp6_client_classes, o.option_id, o.code, " 
+     "  h.dhcp4_client_classes, h.dhcp6_client_classes, o.option_id, o.code, "
      "  o.value, o.formatted_value, o.space, o.persistent "
      "FROM hosts AS h "
      "LEFT JOIN dhcp4_options AS o ON h.host_id = o.host_id "
@@ -1491,11 +1490,11 @@ void
 PgSqlHostDataSourceImpl::addOption(const StatementIndex& stindex,
                                    const OptionDescriptor& opt_desc,
                                    const std::string& opt_space,
-                                   const OptionalValue<SubnetID>& subnet_id,
+                                   const OptionalValue<SubnetID>&,
                                    const HostID& id) {
     PsqlBindArrayPtr bind_array;
     bind_array = host_option_exchange_->createBindForSend(opt_desc, opt_space,
-                                                          subnet_id, id);
+                                                          id);
     addStatement(stindex, bind_array);
 }
 
@@ -1540,7 +1539,7 @@ getHostCollection(StatementIndex stindex, PsqlBindArrayPtr bind_array,
 
     conn_.checkStatementError(r, tagged_statements[stindex]);
 
-    int rows = PQntuples(r);
+    int rows = r.getRows();
     for(int row = 0; row < rows; ++row) {
         exchange->processRowData(result, r, row);
 
@@ -1591,16 +1590,11 @@ std::pair<uint32_t, uint32_t> PgSqlHostDataSourceImpl::getVersion() const {
     PgSqlResult r(PQexecPrepared(conn_, "get_version", 0, NULL, NULL, NULL, 0));
     conn_.checkStatementError(r, tagged_statements[GET_VERSION]);
 
-    istringstream tmp;
     uint32_t version;
-    tmp.str(PQgetvalue(r, 0, 0));
-    tmp >> version;
-    tmp.str("");
-    tmp.clear();
+    PgSqlExchange::getColumnValue(r, 0, 0, version);
 
     uint32_t minor;
-    tmp.str(PQgetvalue(r, 0, 1));
-    tmp >> minor;
+    PgSqlExchange::getColumnValue(r, 0, 0, minor);
 
     return (std::make_pair<uint32_t, uint32_t>(version, minor));
 }
@@ -1635,14 +1629,14 @@ PgSqlHostDataSource::add(const HostPtr& host) {
     // Insert DHCPv4 options.
     ConstCfgOptionPtr cfg_option4 = host->getCfgOption4();
     if (cfg_option4) {
-        impl_->addOptions(PgSqlHostDataSourceImpl::INSERT_V4_OPTION,
+        impl_->addOptions(PgSqlHostDataSourceImpl::INSERT_V4_HOST_OPTION,
                           cfg_option4, host_id);
     }
 
     // Insert DHCPv6 options.
     ConstCfgOptionPtr cfg_option6 = host->getCfgOption6();
     if (cfg_option6) {
-        impl_->addOptions(PgSqlHostDataSourceImpl::INSERT_V6_OPTION,
+        impl_->addOptions(PgSqlHostDataSourceImpl::INSERT_V6_HOST_OPTION,
                           cfg_option6, host_id);
     }
 
@@ -1702,7 +1696,7 @@ PgSqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
-    // v4 Reservation address 
+    // v4 Reservation address
     bind_array->add(address);
 
     ConstHostCollection result;
@@ -1819,7 +1813,7 @@ PgSqlHostDataSource::get6(const asiolink::IOAddress& prefix,
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
-    // Add the prefix 
+    // Add the prefix
     bind_array->add(prefix);
 
     // Add the prefix length
