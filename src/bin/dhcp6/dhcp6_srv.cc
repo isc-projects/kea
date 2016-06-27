@@ -632,7 +632,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
             break;
 
         case DHCPV6_DHCPV4_QUERY:
-            rsp = processDhcp4Query(query);
+            processDhcp4Query(query);
             break;
 
         default:
@@ -2788,7 +2788,7 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     return (reply);
 }
 
-Pkt6Ptr
+void
 Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
 
     sanityCheck(dhcp4_query, OPTIONAL, OPTIONAL);
@@ -2804,8 +2804,8 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
         Dhcp6to4Ipc::instance().send(dhcp4_query);
     }
 
-    // Our job is finished
-    return (Pkt6Ptr());
+    // This method does not return anything as we already sent back
+    // the response via Dhcp6To4Ipc.
 }
 
 void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt, std::string& classes) {

@@ -87,6 +87,7 @@ void Dhcp6to4Ipc::handler() {
 
     // Don't use getType(): get the message type from the buffer as we
     // want to know if it is a relayed message (vs. internal message type).
+    // getType() always returns the type of internal message.
     uint8_t msg_type = buf[0];
     if ((msg_type == DHCPV6_RELAY_FORW) || (msg_type == DHCPV6_RELAY_REPL)) {
         pkt->setRemotePort(DHCP6_SERVER_PORT);
