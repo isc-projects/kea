@@ -2804,7 +2804,7 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
         Dhcp6to4Ipc::instance().send(dhcp4_query);
     }
 
-    // This method does not return anything as we already sent back
+    // This method does not return anything as we always sent back
     // the response via Dhcp6To4Ipc.
 }
 
