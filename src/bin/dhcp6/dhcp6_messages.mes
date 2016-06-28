@@ -237,6 +237,24 @@ received in Decline message. It's expected that the option will contain an
 address that is being declined. Specific information will be printed in a
 separate message.
 
+% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 on interface %3
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv4 server over inter-process communication.
+
+% DHCP6_DHCP4O6_RECEIVE_FAIL failed to receive DHCPv4o6: %1
+This debug message indicates the inter-process communication with the
+DHCPv4 server failed. The reason for the error is included in
+the message.
+
+% DHCP6_DHCP4O6_RECEIVING receiving DHCPv4o6 packet from DHCPv4 server
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv4 server over inter-process communication socket.
+
+% DHCP6_DHCP4O6_SEND_FAIL failed to send DHCPv4o6 packet: %1
+This error is output if the IPv6 DHCP server fails to send an assembled
+DHCPv4o6 message to a client. The reason for the error is included in the
+message.
+
 % DHCP6_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal
 This is the info message logged when the DHCPv6 server starts reconfiguration
 as a result of receiving SIGHUP signal.

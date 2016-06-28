@@ -8,10 +8,20 @@
 
 #include <util/buffer.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/pkt6.h>
+#include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/dhcp6to4_ipc.h>
+#include <dhcp6/dhcp6_log.h>
+#include <dhcp6/dhcp6_srv.h>
+#include <exceptions/exceptions.h>
+#include <hooks/callout_handle.h>
+#include <hooks/hooks_log.h>
+#include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 
 using namespace std;
+using namespace isc::hooks;
 
 namespace isc {
 namespace dhcp {
@@ -44,12 +54,29 @@ void Dhcp6to4Ipc::open() {
 
 void Dhcp6to4Ipc::handler() {
     Dhcp6to4Ipc& ipc = Dhcp6to4Ipc::instance();
+    Pkt6Ptr pkt;
 
-    // Receive message from IPC.
-    Pkt6Ptr pkt = ipc.receive();
+    try {
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_DHCP4O6_RECEIVING);
+        // Receive message from IPC.
+        pkt = ipc.receive();
+
+        if (pkt) {
+            LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_DHCP4O6_PACKET_RECEIVED)
+                .arg(static_cast<int>(pkt->getType()))
+                .arg(pkt->getRemoteAddr().toText())
+                .arg(pkt->getIface());
+        }
+    } catch (const std::exception& e) {
+        LOG_DEBUG(packet6_logger,DBG_DHCP6_DETAIL, DHCP6_DHCP4O6_RECEIVE_FAIL)
+            .arg(e.what());
+    }
+
     if (!pkt) {
         return;
     }
+
+    // Should we check it is a DHCPV6_DHCPV4_RESPONSE?
 
     // The received message has been unpacked by the receive() function. This
     // method could have modified the message so it's better to pack() it
@@ -58,16 +85,62 @@ void Dhcp6to4Ipc::handler() {
     buf.clear();
     pkt->pack();
 
-    uint8_t msg_type = pkt->getType();
+    // Don't use getType(): get the message type from the buffer as we
+    // want to know if it is a relayed message (vs. internal message type).
+    // getType() always returns the type of internal message.
+    uint8_t msg_type = buf[0];
     if ((msg_type == DHCPV6_RELAY_FORW) || (msg_type == DHCPV6_RELAY_REPL)) {
         pkt->setRemotePort(DHCP6_SERVER_PORT);
     } else {
         pkt->setRemotePort(DHCP6_CLIENT_PORT);
     }
 
-    // Forward packet to the client.
-    IfaceMgr::instance().send(pkt);
-    // processStatsSent(pkt);
+    // Can't call the pkt6_send callout because we don't have the query
+
+    // Copied from Dhcpv6Srv::run_one() sending part
+
+    try {
+        // Let's execute all callouts registered for buffer6_send
+        if (HooksManager::calloutsPresent(Dhcpv6Srv::getHookIndexBuffer6Send())) {
+            CalloutHandlePtr callout_handle = getCalloutHandle(pkt);
+
+            // Delete previously set arguments
+            callout_handle->deleteAllArguments();
+
+            // Pass incoming packet as argument
+            callout_handle->setArgument("response6", pkt);
+
+            // Call callouts
+            HooksManager::callCallouts(Dhcpv6Srv::getHookIndexBuffer6Send(),
+                                       *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to parse the packet, so skip at this
+            // stage means drop.
+            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+                LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP)
+                    .arg(pkt->getLabel());
+                return;
+            }
+
+            /// @todo: Add support for DROP status
+
+            callout_handle->getArgument("response6", pkt);
+        }
+
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_RESPONSE_DATA)
+            .arg(static_cast<int>(pkt->getType())).arg(pkt->toText());
+
+
+        // Forward packet to the client.
+        IfaceMgr::instance().send(pkt);
+
+        // Update statistics accordingly for sent packet.
+        Dhcpv6Srv::processStatsSent(pkt);
+
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet6_logger, DHCP6_DHCP4O6_SEND_FAIL).arg(e.what());
+    }
 }
 
 };  // namespace dhcp

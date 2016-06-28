@@ -3282,6 +3282,33 @@ should include options from the isc option space:
             </row>
 
             <row>
+              <entry>pkt6-dhcpv4-query-received</entry>
+              <entry>integer</entry>
+              <entry>
+                Number of DHCPv4-QUERY packets received. This
+                statistic is expected to grow if there are devices
+                that are using DHCPv4-over-DHCPv6. DHCPv4-QUERY
+                messages are used by DHCPv4 clients on an IPv6 only
+                line so that encapsulate requests over DHCPv6.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-dhcpv4-response-received</entry>
+              <entry>integer</entry>
+              <entry>
+                Number of DHCPv4-RESPONSE packets received. This
+                statistic is expected to remain zero at all times, as
+                DHCPv4-RESPONSE packets are sent by the server and the
+                server is never expected to receive them. A non-zero
+                value indicates an error.  One likely cause would be a
+                misbehaving relay agent that incorrectly forwards
+                DHCPv4-RESPONSE message towards the server, rather
+                back to the clients.
+              </entry>
+            </row>
+
+            <row>
               <entry>pkt6-unknown-received</entry>
               <entry>integer</entry>
               <entry>Number of packets received of an unknown type. Non-zero
@@ -3318,6 +3345,16 @@ should include options from the isc option space:
               grow in most cases after a SOLICIT (with rapid-commit), REQUEST,
               RENEW, REBIND, RELEASE, DECLINE or INFORMATION-REQUEST is
               processed. There are certain cases where there is no response.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-dhcpv4-response-sent</entry>
+              <entry>integer</entry>
+              <entry>Number of DHCPv4-RESPONSE packets sent. This
+              statistic is expected to grow in most cases after a
+              DHCPv4-QUERY is processed. There are certain cases where
+              there is no response.
               </entry>
             </row>
 
