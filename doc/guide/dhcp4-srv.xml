@@ -90,9 +90,9 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
       </para>
 
       <para>
-	    When running in a console, the server can be shut down by
-	    pressing ctrl-c. It detects the key combination and shuts
-	    down gracefully.
+            When running in a console, the server can be shut down by
+            pressing ctrl-c. It detects the key combination and shuts
+            down gracefully.
       </para>
 
       <para>
@@ -750,8 +750,8 @@ temporarily override a list of interface names and listen on all interfaces.
     manually specify a unique identifier for each subnet.
   </para>
       <para>
-	The following configuration will assign the specified subnet
-	identifier to the newly configured subnet:
+        The following configuration will assign the specified subnet
+        identifier to the newly configured subnet:
 
         <screen>
 "Dhcp4": {
@@ -2444,7 +2444,7 @@ It is merely echoed by the server
     near future.</para>
 
     <para>Hosts reservations are defined as parameters for each subnet. Each host
-    has to be identified by its hardware/MAC address. There is an optional
+    has to be identified by an identifier, for example hardware/MAC address. There is an optional
     <command>reservations</command> array in the <command>Subnet4</command>
     element. Each element in that array is a structure, that holds information
     about reservations for a single host. In particular, such a structure has
@@ -2453,14 +2453,9 @@ It is merely echoed by the server
     will be specified. It is possible to specify a hostname. Additional
     capabilities are planned.</para>
 
-    <note><para>In Kea 1.0.0 it is only possible to create host reservations
-    using client's hardware address. Host reservations by client identifier
-    (or DUID) are not supported in this version of Kea. This capability will
-    be implemented in Kea 1.1.0. Currently, the configuration parsing code
-    will accept the "duid" parameter in the reservation configuration, but
-    the server will misinterpret its value. Therefore, this parameter MUST
-    NOT be used until the client identifier based host reservations are
-    properly implemented and documented.</para></note>
+    <para>In Kea 1.1.0 it was only possible to create host reservations
+    using client's hardware address. Host reservations by client
+    identifier, DUID and circuit-id have been added in Kea 1.1.0.</para>
 
     <para>The following example shows how to reserve addresses for specific
     hosts:
@@ -2477,9 +2472,17 @@ It is merely echoed by the server
                 "ip-address": "192.0.2.202"
             },
             {
-                "hw-address": "0a:0b:0c:0d:0e:0f",
+                "duid": "0a:0b:0c:0d:0e:0f",
                 "ip-address": "192.0.2.100",
                 "hostname": "alice-laptop"
+            },
+            {
+                "circuit-id": "'charter950'",
+                "ip-address": "192.0.2.203"
+            },
+            {
+                "client-id": "01:11:22:33:44:55:66\","
+                "ip-address": "192.0.2.204"
             }
         ]</userinput>
     }
@@ -2487,10 +2490,19 @@ It is merely echoed by the server
 </screen>
     The first entry reserves the 192.0.2.202 address for the client that uses
     MAC address of 1a:1b:1c:1d:1e:1f. The second entry reserves the address
-    192.0.2.100 and the hostname of alice-laptop for client using MAC
-    address 0a:0b:0c:0d:0e:0f. Note that if you plan to do DNS updates, it
-    is strongly recommended for the hostnames to be unique.
-    </para>
+    192.0.2.100 and the hostname of alice-laptop for client using DUID
+    0a:0b:0c:0d:0e:0f. Note that if you plan to do DNS updates, it
+    is strongly recommended for the hostnames to be unique. The third
+    example reserves address 192.0.3.203 to a client whose request
+    would be relayed by a relay agent that inserts circuid-it option
+    with value 'charter950'. The fourth entry reserves address
+    192.0.2.204 for a client that uses client identifier with value
+    01:11:22:33:44:55:66.</para>
+
+    <para>Note that the above example is used for ilustrational purposes only
+    and in actual deployments it is recommended to use as few types as possible
+    (preferably just one). See <xref linkend="reservation-tuning4"/> for detailed
+    discussion.</para>
 
     <para>Making a reservation for a mobile host that may visit multiple subnets
     requires a separate host definition in each subnet it is expected to visit.
@@ -2670,20 +2682,60 @@ It is merely echoed by the server
 
     <section id="reservation4-options">
       <title>Reserving specific options</title>
-      <!-- @todo: replace this with the actual text once #3572 is implemented -->
-      <para>Currently it is not possible to specify options in host
-      reservation. Such a feature will be added in the upcoming Kea
-      releases.</para>
+      <para>Kea 1.1.0 introduced the ability to specify options on a
+      per host basis. The options follow the same rules as any other
+      options. These can be standard options (see <xref
+      linkend="dhcp4-std-options" />), custom options (see <xref
+      linkend="dhcp4-custom-options"/>) or vendor specific options
+      (see <xref linkend="dhcp4-vendor-opts" />). The following
+      example showcases how standard options can be defined.</para>
+
+      <screen>
+"reservations": [
+{
+    "hw-address": "aa:bb:cc:dd:ee:ff",
+    "ip-address": "192.0.2.1",
+    <userinput>"option-data": [
+    {
+        "name": "cookie-servers",
+        "data": "10.1.1.202,10.1.1.203"
+    },
+    {
+        "name": "log-servers",
+        "data": "10.1.1.200,10.1.1.201"
+    } ]</userinput>
+} ]</screen>
+
+    <para>Vendor specific options can be reserved in similar manner:</para>
+
+    <screen>
+"reservations": [
+{
+    "hw-address": "aa:bb:cc:dd:ee:ff",
+    "ip-address": "10.0.0.7",
+    <userinput>"option-data": [
+        {
+            "name": "vivso-suboptions","
+            "data": "4491"
+        },
+        {
+            "name": "tftp-servers",
+                "space": "vendor-4491",
+                "data": "10.1.1.202,10.1.1.203"
+        }
+    ]</userinput>
+} ]</screen>
+
+<para>
+  Options defined on host level have the highest priority. In other words,
+ if there are option defined with the same type on global, subnet, class and
+ host level, the host specific values will be used.
+</para>
+
     </section>
 
-    <section id="reservation4-mode">
+    <section id="reservation-tuning4">
       <title>Fine Tuning IPv4 Host Reservation</title>
-
-      <note>
-        <para><command>reservation-mode</command> configuration parameter in DHCPv4
-        server is accepted, but not used in the Kea 0.9.1 beta. Full implementation
-        will be available in the upcoming releases.</para>
-      </note>
 
       <para>Host reservation capability introduces additional restrictions for the
       allocation engine during lease selection and renewal. In particular, three
@@ -2745,6 +2797,46 @@ It is merely echoed by the server
 }
 </screen>
       </para>
+
+      <para>Another aspect of the host reservations are different types of
+      identifiers. Currently (June 2016) Kea supports four types of identifiers
+      (hw-address, duid, client-id and circuit-id), but more identifier types
+      are likely to be added in the future. This is beneficial from the
+      usability perspective. However, there is a drawback. For each incoming
+      packet Kea has to to extract each identifier type and then query the
+      database to see if there's a reservation done by this particular
+      identifier. If there is not, the next identifier is extracted and next
+      query is issued. This process continues until either a reservation is
+      found or all identifier types were checked. Over time with increasing
+      number of supported identifier types, Kea would become slower and
+      slower.</para>
+
+      <para>To address this problem, a parameter called
+      <command>host-reservation-identifiers</command> has been introduced. It
+      takes a list of identifier types as a parameter. Kea will check only those
+      identifier types enumerated in host-reservation-identifiers. From the
+      performance perspective the number of identifier types should be kept to
+      minimum, ideally limited to one. If your deployment uses several
+      reservation types, please enumerate them from most to least frequently
+      used as this increases the chances of Kea finding the reservation using
+      fewer number of queries. An example of host reservation identifiers looks
+      as follows:
+
+<screen>
+<userinput>"host-reservation-identifiers": [ "circuit-id", "hw-address", "duid", "client-id" ],</userinput>
+"subnet4": [
+    {
+        "subnet": "192.0.2.0/24",
+        ...
+    }
+]</screen>
+</para>
+
+<para>If not specified, the default value is <command>hw-address, duid,
+circuit-id</command>.</para> <!-- see CfgHostOperations::createConfig4() in
+src/lib/dhcpsrv/cfg_host_operations.cc -->
+
+
    </section>
 
   </section>
@@ -3283,12 +3375,12 @@ It is merely echoed by the server
       </para>
 
       <para>
-	The length of the path specified by the <command>socket-name</command>
-	parameter is restricted by the maximum length for the unix socket name
-	on your operating system, i.e. the size of the <command>sun_path</command>
-	field in the <command>sockaddr_un</command> structure, decreased by 1.
-	This value varies on different operating systems between 91 and 107
-	characters. The typical values are 107 on Linux and 103 on FreeBSD.
+        The length of the path specified by the <command>socket-name</command>
+        parameter is restricted by the maximum length for the unix socket name
+        on your operating system, i.e. the size of the <command>sun_path</command>
+        field in the <command>sockaddr_un</command> structure, decreased by 1.
+        This value varies on different operating systems between 91 and 107
+        characters. The typical values are 107 on Linux and 103 on FreeBSD.
       </para>
 
       <para>

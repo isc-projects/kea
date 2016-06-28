@@ -148,8 +148,84 @@
   <section>
     <title>Supported Databases</title>
 
+    <para>The following table presents capabilities of available
+    backends. Please refer to specific sections dedicated to each backend to
+    better understand the capabilities and limitations. Choosing the right
+    backend may be essential for success or failure of your deployment.</para>
+
+    <para>
+      <table frame="all" id="backends">
+        <title>List of available backends</title>
+        <tgroup cols='2'>
+          <colspec colname='feature'/>
+          <colspec colname='memfile'/>
+          <colspec colname='mysql'/>
+          <colspec colname='pgsql'/>
+          <colspec colname='cql'/>
+          <thead>
+            <row>
+              <entry>Feature</entry>
+              <entry>Memfile</entry>
+              <entry>MySQL</entry>
+              <entry>PostgreSQL</entry>
+              <entry>CQL(Cassandra)</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>Status</entry>
+              <entry>Stable</entry>
+              <entry>Stable</entry>
+              <entry>Stable</entry>
+              <entry>Experimental</entry>
+            </row>
+
+            <row>
+              <entry>Data format</entry>
+              <entry>coma separated file</entry>
+              <entry>SQL RMDB</entry>
+              <entry>SQL RMDB</entry>
+              <entry>NoSQL database (CQL)</entry>
+            </row>
+
+            <row>
+              <entry>Leases</entry>
+              <entry>yes</entry>
+              <entry>yes</entry>
+              <entry>yes</entry>
+              <entry>yes</entry>
+            </row>
+
+            <row>
+              <entry>Host Reservations</entry>
+              <entry>no</entry>
+              <entry>yes</entry>
+              <entry>no</entry>
+              <entry>no</entry>
+            </row>
+
+            <row>
+              <entry>Options defined on per host basis</entry>
+              <entry>no</entry>
+              <entry>yes</entry>
+              <entry>no</entry>
+              <entry>no</entry>
+            </row>
+
+          </tbody>
+          </tgroup>
+       </table>
+    </para>
+
     <section>
       <title>memfile</title>
+
+      <para>
+        Memfile backend is able to store leases information, but is not able to
+        store host reservation details. There are no plans to add the
+        reservations storage capability to memfile. Host reservations can be
+        defined in the configuration file.
+      </para>
 
       <para>
         There are no special initialization steps necessary
@@ -158,6 +234,7 @@
         will create an empty lease file if one is not
         present. Necessary disk write permission is required.
       </para>
+
       <section id="memfile-upgrade">
         <title>Upgrading Memfile Lease Files from an Earlier Version of Kea</title>
         <para>
@@ -186,11 +263,15 @@
       <title>MySQL</title>
 
       <para>
+        MySQL is able to store leases, host reservations and options defined on
+        a per host basis.
+      </para>
+
+      <para>
         The MySQL database must be properly set up if you want Kea to
         store information in MySQL. This section can be safely ignored
         if you chose to store the data in other backends.
       </para>
-
 
       <section id="mysql-database-create">
         <title>First Time Creation of Kea Database</title>
@@ -326,6 +407,12 @@ $ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replac
 
     <section>
       <title>PostgreSQL</title>
+
+      <para>
+        PostgreSQL is able to store leases. The capability to store host
+        reservations (that include addresses, prefixes and options) is planned
+        for upcoming Kea 1.1.0.
+      </para>
 
       <para>
         A PostgreSQL database must be set up if you want Kea to store
@@ -495,6 +582,15 @@ $ <userinput>kea-admin lease-init pgsql -u <replaceable>database-user</replaceab
 
     <section>
       <title>CQL (Cassandra)</title>
+
+      <para>
+        Cassandra, or Cassandra Query Language (CQL), is the newest backend
+        added to Kea. Since it was added recently and have not undergone as much
+        testing as other backends, it is considered experimental. Please use
+        with caution. CQL backend is currently able to store leases only. The
+        ability to store host reservations will likely be added some time in the
+        future.
+      </para>
 
       <para>
         The CQL database must be properly set up if you want Kea to store
