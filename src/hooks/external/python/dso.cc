@@ -169,4 +169,10 @@ int pkt4_receive(CalloutHandle& handle) {
     return (result);
 }
 
+// force_gc
+int force_gc(CalloutHandle&) {
+    cout << "cpython uses reference counts\n";
+    return (0);
+}
+
 }

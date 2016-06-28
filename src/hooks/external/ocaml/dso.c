@@ -120,4 +120,11 @@ int pkt4_receive(CalloutHandle& handle) {
     return (Int_val(result));
 }
 
+// force_gc
+extern void caml_minor_collection();
+int force_gc(CalloutHandle&) {
+    caml_minor_collection();
+    return (0);
+}
+
 }

@@ -27,9 +27,9 @@ void
 pkt4_finalize(const WeakCallbackData<Object, v8_pkt4>& data) {
     // This is a critical code to avoid memory leaks
     cout << "pkt4_finalize called\n";
-    Local<External> field =
-        Local<External>::Cast(data.GetValue()->GetInternalField(0));
-    delete static_cast<v8_pkt4*>(field->Value());
+    v8_pkt4* cppobj = static_cast<v8_pkt4*>(data.GetParameter());
+    cppobj->handle.Reset();
+    delete cppobj;
 }
 
 // toString
@@ -71,14 +71,14 @@ Local<Object> make_pkt4(Isolate* isolate, Pkt4Ptr pkt) {
     }
 
     // Set the C++ part
-    v8_pkt4* ccpobj(new v8_pkt4());
-    ccpobj->object = pkt;
-    Local<External> ptr = External::New(isolate, ccpobj);
+    v8_pkt4* cppobj(new v8_pkt4());
+    cppobj->object = pkt;
+    Local<External> ptr = External::New(isolate, cppobj);
     result->SetInternalField(0, ptr);
 
-    // Show the new value to the garbage collector
-    Persistent<Object> gcref(isolate, result);
-    gcref.SetWeak<v8_pkt4>(ccpobj, pkt4_finalize);
+    // Set the V8 part
+    cppobj->handle.Reset(isolate, result);
+    cppobj->handle.SetWeak<v8_pkt4>(cppobj, pkt4_finalize);
 
     return (handle_scope.Escape(result));
 }

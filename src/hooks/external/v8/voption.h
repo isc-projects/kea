@@ -18,6 +18,7 @@ public:
     v8_option();
 
     isc::dhcp::OptionPtr object;
+    ::v8::Persistent< ::v8::Object> handle;
 };
 
 ::v8::Local< ::v8::Object> make_option(::v8::Isolate* isolate,

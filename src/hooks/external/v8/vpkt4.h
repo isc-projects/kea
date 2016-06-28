@@ -18,6 +18,7 @@ public:
     v8_pkt4();
 
     isc::dhcp::Pkt4Ptr object;
+    ::v8::Persistent< ::v8::Object> handle;
 };
 
 ::v8::Local< ::v8::Object> make_pkt4(::v8::Isolate* isolate,

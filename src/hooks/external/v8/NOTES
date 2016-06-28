@@ -34,7 +34,8 @@ Manifest:
 
 v8 external API supports only raw pointers.
 
-There is no proof the garbage collecting part is correct. BTW v8 is known
-to not cleanup things (performance issue for Chrome).
+v8 is known to not cleanup things (performance issue for Chrome).
 
 The documentation is nearly useless and the API unstable...
+
+Weak persistent external values are very hairy to manage.

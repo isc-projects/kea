@@ -14,10 +14,10 @@ The 3 (python, ocaml and lua) examples are organized the same way:
 
  - a script written in the external language with a pkt4 -> int
   pkt4_receive function which prints its argument using toText.
-  Note in ocaml the sompiled script (in bytecode or native code)
+  Note in ocaml the compiled script (in bytecode or native code)
   is embedded into the dynamic shared object.
 
- - a tests tool which loads a config with a hook-libraires entry,
+ - a tests tool which loads a config with a hook-libraries entry,
   build a DHCPv4 packet and call the pkt4_receive callout.
 
 So in running order you have:
@@ -50,3 +50,10 @@ embedded language pkt4_receive function is called
 V
 0 (next step continue) is returned
 (here the tests tool exits)
+
+I added a hook forcing a garbage collection both to check whether
+shared pointers are correctly managed and because it can be useful
+in production (look at NOTES for a discussion about two languages'
+garbage collection (non)cooperation). BTW ocaml provides a way to
+take into account dependent memory: caml_{alloc,free}_dependent_memory.
+(ocaml is clearly superior but I have also clearly a bias in favor of it).

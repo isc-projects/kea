@@ -37,6 +37,8 @@ int main() {
     // must be first
     int hi_pkt4_receive = HooksManager::registerHook("pkt4_receive");
     cout << "pkt4_receive is hook#" << hi_pkt4_receive << "\n";
+    int hi_force_gc = HooksManager::registerHook("force_gc");
+    cout << "force_gc is hook#" << hi_force_gc << "\n";
 
     initLogger();
 
@@ -141,7 +143,17 @@ int main() {
     cout << "pkt4_receive callout status " << co_handle->getStatus() << "\n";
     co_handle->getArgument("query4", pkt);
 
+    // call the garbage collector
+    if (!HooksManager::calloutsPresent(hi_force_gc)) {
+        cout << "no callout present for force_gc\n";
+        exit(0);
+    }
+    co_handle->deleteAllArguments();
+    cout << "calling force_gc callout\n";
+    HooksManager::callCallouts(hi_force_gc, *co_handle);
+
     // TODO...
+    cout << "done...\n";
 
     exit(0);
 }

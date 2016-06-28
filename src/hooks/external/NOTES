@@ -63,3 +63,10 @@ Answer:
  ocaml: int, float, string, bytes (same representation than string)
  lua: (number) integer, (number) float, string (include binary)
 
+Question: garbage collection?
+Answer:
+ boost shared pointers and python3 use reference counters. ocaml, lua
+ and v8 use modern tracing systems which are far better but do not
+interact very well with boost shared pointers: objects referenced
+from an external language by an unused value can be freed only when
+the value is collected.

@@ -26,9 +26,9 @@ void
 option_finalize(const WeakCallbackData<Object, v8_option>& data) {
     // This is a critical code to avoid memory leaks
     cout << "option_finalize called\n";
-    Local<External> field =
-        Local<External>::Cast(data.GetValue()->GetInternalField(0));
-    delete static_cast<v8_option*>(field->Value());
+    v8_option* cppobj = static_cast<v8_option*>(data.GetParameter());
+    cppobj->handle.Reset();
+    delete cppobj;
 }
 
 // toString
@@ -70,14 +70,14 @@ Local<Object> make_option(Isolate* isolate, OptionPtr opt) {
     }
 
     // Set the C++ part
-    v8_option* ccpobj(new v8_option());
-    ccpobj->object = opt;
-    Local<External> ptr = External::New(isolate, ccpobj);
+    v8_option* cppobj(new v8_option());
+    cppobj->object = opt;
+    Local<External> ptr = External::New(isolate, cppobj);
     result->SetInternalField(0, ptr);
 
-    // Show the new value to the garbage collector
-    Persistent<Object> gcref(isolate, result);
-    gcref.SetWeak<v8_option>(ccpobj, option_finalize);
+    // Set the V8 part
+    cppobj->handle.Reset(isolate, result);
+    cppobj->handle.SetWeak<v8_option>(cppobj, option_finalize);
 
     return (handle_scope.Escape(result));
 }
@@ -96,7 +96,7 @@ void init_option(Isolate* isolate) {
     Local<Function> tostring;
     if (!Function::New(isolate->GetCurrentContext(),
                        option_tostring).ToLocal(&tostring)) {
-        cerr << "can't create pkt4_tostring\n";
+        cerr << "can't create option_tostring\n";
     }
     templ->Set(isolate, "toString", tostring);
 

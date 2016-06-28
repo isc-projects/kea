@@ -285,4 +285,11 @@ int pkt4_receive(CalloutHandle& handle) {
     return (static_cast<int>(ret));
 }
 
+// force_gc
+int force_gc(CalloutHandle&) {
+    isolate_->RequestGarbageCollectionForTesting(
+        Isolate::GarbageCollectionType::kFullGarbageCollection);
+    return (0);
+}
+
 }

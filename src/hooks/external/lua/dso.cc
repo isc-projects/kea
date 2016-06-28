@@ -205,4 +205,9 @@ int pkt4_receive(CalloutHandle& handle) {
     return (ret);
 }
 
+// force_gc
+int force_gc(CalloutHandle&) {
+    return (lua_gc(L, LUA_GCCOLLECT, 0));
+}
+
 }
