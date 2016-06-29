@@ -479,22 +479,8 @@ If a timeout is given though, it should be an integer greater than zero.
 </section>
 </section>
 
-<!-- Uncomment this once 4212 is merged. While the host storage for
-     MySQL is there, it is able to store hosts, but not IPv6
-     reservations. So technically we have host reservations for v6 in
-     MySQL, but in practice it's kinda useless right now as it can't
-     store addresses or prefixes. Let's keep it commented out until
-     we implement that functionality
-
-<section>
+<section id="hosts6-storage">
   <title>Hosts Storage</title>
-
-    <note>
-      <para>This feature did not undergo the regular system level
-      testing conducted by ISC. As such, please treat it as
-      experimental.</para>
-    </note>
-
     <para>Kea is also able to store information about host reservations in the
     database. Hosts database configuration uses the same syntax as lease
     database. In fact, Kea server opens independent connections for each
@@ -2473,6 +2459,32 @@ should include options from the isc option space:
  host level, the host specific values will be used.
 </para>
 
+    </section>
+
+    <section id="reservations6-mysql">
+      <title>Storing host reservations in MySQL</title>
+
+      <para>
+        It is possible to store host reservations in MySQL. See <xref
+        linkend="hosts6-storage" /> for information how to configure Kea to use
+        reservations stored in MySQL. Kea does not provide any dedicated tools
+        for managing MySQL reservations. See Kea wiki <ulink
+        url="http://kea.isc.org/wiki/HostReservationsHowTo" /> for detailed
+        information and examples of how reservations can be inserted into the
+        database.
+      </para>
+    </section>
+
+    <section id="reservations6-pgsql">
+      <title>Storing host reservations in PostgreSQL</title>
+      <para>Kea currently does not support storing reservations in
+      PostgreSQL, but this feature is planned for Kea 1.1.0.</para>
+    </section>
+
+    <section id="reservations6-cql">
+      <title>Storing host reservations in CQL (Cassandra)</title>
+      <para>Kea currently does not support storing reservations in
+      Cassandra (CQL).</para>
     </section>
 
     <section id="reservations6-tuning">
