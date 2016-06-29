@@ -15,6 +15,7 @@
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/testutils/dhcp4o6_test_ipc.h>
+#include <stats/stats_mgr.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
 
@@ -25,6 +26,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::stats;
 using namespace isc::hooks;
 using namespace isc::util;
 
@@ -56,6 +58,12 @@ public:
         // Install buffer4_send_callout
         EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().
                         registerCallout("buffer4_send", buffer4_send_callout));
+        // Verify we have a controlled server
+        ControlledDhcpv4Srv* srv = NULL;
+        EXPECT_NO_THROW(srv = ControlledDhcpv4Srv::getInstance());
+        EXPECT_TRUE(srv);
+        // Let's wipe all existing statistics.
+        StatsMgr::instance().removeAll();
     }
 
     /// @brief Configure DHCP4o6 port.
@@ -105,7 +113,7 @@ public:
     ///
     /// Dhcp4to6Ipc::handler() uses the instance of the controlled server
     /// so it has to be build. This reference does this.
-    ControlledDhcpv4Srv srv;
+    ControlledDhcpv4Srv srv_;
 
 private:
 
@@ -149,11 +157,6 @@ TEST_F(Dhcp4to6IpcTest, invalidPortError) {
 // This test verifies that the DHCPv4 endpoint of the DHCPv4o6 IPC can
 // receive messages.
 TEST_F(Dhcp4to6IpcTest, receive) {
-    // Verify we have a controlled server
-    ControlledDhcpv4Srv* srv = NULL;
-    ASSERT_NO_THROW(srv = ControlledDhcpv4Srv::getInstance());
-    ASSERT_TRUE(srv);
-
     // Create instance of the IPC endpoint under test.
     Dhcp4to6Ipc& ipc = Dhcp4to6Ipc::instance();
     // Create instance of the IPC endpoint being used as a source of messages.
@@ -194,11 +197,6 @@ TEST_F(Dhcp4to6IpcTest, receive) {
 // This test verifies that message with multiple DHCPv4 query options
 // is rejected.
 TEST_F(Dhcp4to6IpcTest, receiveMultipleQueries) {
-    // Verify we have a controlled server
-    ControlledDhcpv4Srv* srv = NULL;
-    ASSERT_NO_THROW(srv = ControlledDhcpv4Srv::getInstance());
-    ASSERT_TRUE(srv);
-
     // Create instance of the IPC endpoint under test.
     Dhcp4to6Ipc& ipc = Dhcp4to6Ipc::instance();
     // Create instance of the IPC endpoint being used as a source of messages.
@@ -231,11 +229,6 @@ TEST_F(Dhcp4to6IpcTest, receiveMultipleQueries) {
 
 // This test verifies that message with no DHCPv4 query options is rejected.
 TEST_F(Dhcp4to6IpcTest, receiveNoQueries) {
-    // Verify we have a controlled server
-    ControlledDhcpv4Srv* srv = NULL;
-    ASSERT_NO_THROW(srv = ControlledDhcpv4Srv::getInstance());
-    ASSERT_TRUE(srv);
-
     // Create instance of the IPC endpoint under test.
     Dhcp4to6Ipc& ipc = Dhcp4to6Ipc::instance();
     // Create instance of the IPC endpoint being used as a source of messages.
@@ -266,11 +259,6 @@ TEST_F(Dhcp4to6IpcTest, receiveNoQueries) {
 // This test verifies that the DHCPv4 endpoint of the DHCPv4o6 IPC can
 // process messages.
 TEST_F(Dhcp4to6IpcTest, process) {
-    // Verify we have a controlled server
-    ControlledDhcpv4Srv* srv = NULL;
-    ASSERT_NO_THROW(srv = ControlledDhcpv4Srv::getInstance());
-    ASSERT_TRUE(srv);
-
     // Create instance of the IPC endpoint under test.
     Dhcp4to6Ipc& ipc = Dhcp4to6Ipc::instance();
     // Create instance of the IPC endpoint being used as a source of messages.
@@ -279,6 +267,13 @@ TEST_F(Dhcp4to6IpcTest, process) {
     // Open both endpoints.
     ASSERT_NO_THROW(ipc.open());
     ASSERT_NO_THROW(src_ipc.open());
+
+    // Get statistics
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt4_snd = mgr.getObservation("pkt4-sent");
+    ObservationPtr pkt4_ack = mgr.getObservation("pkt4-ack-sent");
+    EXPECT_FALSE(pkt4_snd);
+    EXPECT_FALSE(pkt4_ack);
 
     // Create an information request message
     Pkt4Ptr infreq(new Pkt4(DHCPINFORM, 1234));
@@ -331,7 +326,7 @@ TEST_F(Dhcp4to6IpcTest, process) {
     EXPECT_EQ("eth0", pkt6_sent->getIface());
     EXPECT_EQ("2001:db8:1::123", pkt6_sent->getRemoteAddr().toText());
 
-    // Check the 4o6 part
+    // Verify the 4o6 part
     OptionCollection sent_msgs = pkt6_sent->getOptions(D6O_DHCPV4_MSG);
     ASSERT_EQ(1, sent_msgs.size());
     OptionPtr sent_msg = sent_msgs.begin()->second;
@@ -342,6 +337,14 @@ TEST_F(Dhcp4to6IpcTest, process) {
     ASSERT_NO_THROW(pkt4_opt->unpack());
     EXPECT_EQ(DHCPACK, pkt4_sent->getType());
     EXPECT_EQ(pkt4_sent->len(), pkt4_opt->len());
+
+    // Verify statistics
+    pkt4_snd = mgr.getObservation("pkt4-sent");
+    pkt4_ack = mgr.getObservation("pkt4-ack-sent");
+    ASSERT_TRUE(pkt4_snd);
+    ASSERT_TRUE(pkt4_ack);
+    EXPECT_EQ(1, pkt4_snd->getInteger().first);
+    EXPECT_EQ(1, pkt4_ack->getInteger().first);
 }
 
 } // end of anonymous namespace

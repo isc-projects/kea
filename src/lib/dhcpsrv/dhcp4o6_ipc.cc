@@ -166,7 +166,8 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
             .arg("no interface suboption");
         isc_throw(Dhcp4o6IpcError,
-                  "malformed packet (no interface suboption)");
+                  "malformed packet (interface suboption missing "
+                  "or has incorrect type)");
     }
 
     // Check if this interface is present in the system.
@@ -186,7 +187,8 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
             .arg("no source address suboption");
         isc_throw(Dhcp4o6IpcError,
-                  "malformed packet (o source address suboption)");
+                  "malformed packet (source address suboption missing "
+                  "or has incorrect type)");
     }
 
     // Update the packet.

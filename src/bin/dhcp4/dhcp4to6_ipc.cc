@@ -115,7 +115,7 @@ void Dhcp4to6Ipc::handler() {
         // Option objects modification does not make sense anymore. Hooks
         // can only manipulate wire buffer at this stage.
         // Let's execute all callouts registered for buffer4_send
-        if (HooksManager::calloutsPresent(Dhcpv4Srv::hook_index_buffer4_send_)) {
+      if (HooksManager::calloutsPresent(Dhcpv4Srv::getHookIndexBuffer4Send())) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
             // Delete previously set arguments
@@ -125,7 +125,7 @@ void Dhcp4to6Ipc::handler() {
             callout_handle->setArgument("response4", rsp);
 
             // Call callouts
-            HooksManager::callCallouts(Dhcpv4Srv::hook_index_buffer4_send_,
+            HooksManager::callCallouts(Dhcpv4Srv::getHookIndexBuffer4Send(),
                                        *callout_handle);
 
             // Callouts decided to skip the next processing step. The next
