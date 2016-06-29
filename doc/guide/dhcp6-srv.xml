@@ -2419,20 +2419,64 @@ should include options from the isc option space:
 
     <section id="reservation6-options">
       <title>Reserving specific options</title>
-      <!-- @todo: replace this with the actual text once #3573 is implemented -->
-      <para>Currently it is not possible to specify options in host
-      reservation. Such a feature will be added in the upcoming Kea
-      releases.</para>
+
+      <para>Kea 1.1.0 introduced the ability to specify options on a
+      per host basis. The options follow the same rules as any other
+      options. These can be standard options (see <xref
+      linkend="dhcp6-std-options" />), custom options (see <xref
+      linkend="dhcp6-custom-options"/>) or vendor specific options
+      (see <xref linkend="dhcp6-vendor-opts" />). The following
+      example showcases how standard options can be defined.</para>
+
+      <screen>
+"reservations": [
+{
+    "hw-address": "aa:bb:cc:dd:ee:ff",
+    "ip-address": "192.0.2.1",
+    <userinput>"option-data": [
+    {
+        "duid": "01:02:03:05:06:07:08",
+        "ip-addresses": [ "2001:db8:1::2" ],
+        "option-data": [ {
+            "name": "dns-servers",
+            "data": "3000:1::234"
+        },
+        {
+            "name": "nis-servers",
+            "data": "3000:1::234"
+        }
+    } ]</userinput>
+} ]</screen>
+
+    <para>Vendor specific options can be reserved in similar manner:</para>
+
+    <screen>
+"reservations": [
+{
+    "duid": "aa:bb:cc:dd:ee:ff",
+    "ip-addresses": [ "2001:db8::1" ],
+    <userinput>"option-data": [
+    {
+        "name": "vendor-opts",
+        "data": 4491"
+    },
+    {
+        "name": "tftp-servers",
+        "space": "vendor-4491",
+        "data": "3000:1::234"
+    } ]</userinput>
+} ]</screen>
+
+<para>
+  Options defined on host level have the highest priority. In other words,
+ if there are option defined with the same type on global, subnet, class and
+ host level, the host specific values will be used.
+</para>
+
     </section>
 
-    <section id="reservation6-mode">
+    <section id="reservations6-tuning">
       <title>Fine Tuning IPv6 Host Reservation</title>
-
-      <note>
-        <para><command>reservation-mode</command> in the DHCPv6 server is
-        implemented in Kea 0.9.1 beta, but has not been tested and is
-        considered experimental.</para>
-      </note>
 
       <para>Host reservation capability introduces additional restrictions for the
       allocation engine during lease selection and renewal. In particular, three
@@ -2493,6 +2537,47 @@ should include options from the isc option space:
 }
 </screen>
       </para>
+
+      <para>Another aspect of the host reservations are different types of
+      identifiers. Currently (June 2016) Kea supports two types of identifiers
+      in DHCPv6: hw-address and duid, but more identifier types
+      are likely to be added in the future. This is beneficial from the
+      usability perspective. However, there is a drawback. For each incoming
+      packet Kea has to to extract each identifier type and then query the
+      database to see if there's a reservation done by this particular
+      identifier. If there is not, the next identifier is extracted and next
+      query is issued. This process continues until either a reservation is
+      found or all identifier types were checked. Over time with increasing
+      number of supported identifier types, Kea would become slower and
+      slower.</para>
+
+      <para>To address this problem, a parameter called
+      <command>host-reservation-identifiers</command> has been introduced. It
+      takes a list of identifier types as a parameter. Kea will check only those
+      identifier types enumerated in host-reservation-identifiers. From the
+      performance perspective the number of identifier types should be kept to
+      minimum, ideally limited to one. If your deployment uses several
+      reservation types, please enumerate them from most to least frequently
+      used as this increases the chances of Kea finding the reservation using
+      fewer number of queries. An example of host reservation identifiers looks
+      as follows:
+
+<screen>
+<userinput>"host-reservation-identifiers": [ "duid", "hw-address" ],</userinput>
+"subnet4": [
+    {
+        "subnet": "192.0.2.0/24",
+        ...
+    }
+]</screen>
+</para>
+
+<para>
+  If not specified, the default value is <command>hw-address,duid</command>.
+</para>
+<!-- see CfgHostOperations::createConfig6() in
+     src/lib/dhcpsrv/cfg_host_operations.cc -->
+
    </section>
 
     <!-- @todo: add support for per IA reservation (that specifies IAID in
