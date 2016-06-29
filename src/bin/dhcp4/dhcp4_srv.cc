@@ -70,6 +70,34 @@ using namespace isc::log;
 using namespace isc::stats;
 using namespace std;
 
+/// Structure that holds registered hook indexes
+struct Dhcp4Hooks {
+    int hook_index_buffer4_receive_;///< index for "buffer4_receive" hook point
+    int hook_index_pkt4_receive_;   ///< index for "pkt4_receive" hook point
+    int hook_index_subnet4_select_; ///< index for "subnet4_select" hook point
+    int hook_index_lease4_release_; ///< index for "lease4_release" hook point
+    int hook_index_pkt4_send_;      ///< index for "pkt4_send" hook point
+    int hook_index_buffer4_send_;   ///< index for "buffer4_send" hook point
+    int hook_index_lease4_decline_; ///< index for "lease4_decline" hook point
+
+    /// Constructor that registers hook points for DHCPv4 engine
+    Dhcp4Hooks() {
+        hook_index_buffer4_receive_= HooksManager::registerHook("buffer4_receive");
+        hook_index_pkt4_receive_   = HooksManager::registerHook("pkt4_receive");
+        hook_index_subnet4_select_ = HooksManager::registerHook("subnet4_select");
+        hook_index_pkt4_send_      = HooksManager::registerHook("pkt4_send");
+        hook_index_lease4_release_ = HooksManager::registerHook("lease4_release");
+        hook_index_buffer4_send_   = HooksManager::registerHook("buffer4_send");
+        hook_index_lease4_decline_ = HooksManager::registerHook("lease4_decline");
+    }
+};
+
+// Declare a Hooks object. As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+Dhcp4Hooks Hooks;
+
 namespace isc {
 namespace dhcp {
 
@@ -302,30 +330,13 @@ Dhcpv4Exchange::setHostIdentifiers() {
     }
 }
 
-// Static values so instantiated when the module is loaded.
-// As a result, the hook indexes will be defined before any method in this
-// module is called.
-
-int Dhcpv4Srv::hook_index_buffer4_receive_=
-    HooksManager::registerHook("buffer4_receive");
-int Dhcpv4Srv::hook_index_pkt4_receive_ =
-    HooksManager::registerHook("pkt4_receive");
-int Dhcpv4Srv::hook_index_subnet4_select_ =
-    HooksManager::registerHook("subnet4_select");
-int Dhcpv4Srv::hook_index_pkt4_send_ =
-    HooksManager::registerHook("pkt4_send");
-int Dhcpv4Srv::hook_index_lease4_release_ =
-    HooksManager::registerHook("lease4_release");
-int Dhcpv4Srv::hook_index_buffer4_send_ =
-    HooksManager::registerHook("buffer4_send");
-int Dhcpv4Srv::hook_index_lease4_decline_ =
-    HooksManager::registerHook("lease4_decline");
-
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
                      const bool direct_response_desired)
-    : shutdown_(true), alloc_engine_(), port_(port), use_bcast_(use_bcast) {
+    : shutdown_(true), alloc_engine_(), port_(port),
+      use_bcast_(use_bcast), hook_index_pkt4_receive_(-1),
+      hook_index_subnet4_select_(-1), hook_index_pkt4_send_(-1) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
@@ -348,6 +359,11 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
         // attempts depending on the pool size.
         alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 0,
                                             false /* false = IPv4 */));
+
+        // Register hook points
+        hook_index_pkt4_receive_   = Hooks.hook_index_pkt4_receive_;
+        hook_index_subnet4_select_ = Hooks.hook_index_subnet4_select_;
+        hook_index_pkt4_send_      = Hooks.hook_index_pkt4_send_;
 
         /// @todo call loadLibraries() when handling configuration changes
 
@@ -503,7 +519,6 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
 
 isc::dhcp::Subnet4Ptr
 Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query) const {
-    // Here begin by the same thing than selectSubnet, i.e., the DHCPv4 part
 
     Subnet4Ptr subnet;
 
@@ -512,47 +527,9 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query) const {
     selector.giaddr_ = query->getGiaddr();
     selector.local_address_ = query->getLocalAddr();
     selector.client_classes_ = query->classes_;
-    // moved selector.remote_address_ as it is IPv6
     selector.iface_name_ = query->getIface();
-
-    // If the link-selection sub-option is present, extract its value.
-    // "The link-selection sub-option is used by any DHCP relay agent
-    // that desires to specify a subnet/link for a DHCP client request
-    // that it is relaying but needs the subnet/link specification to
-    // be different from the IP address the DHCP server should use
-    // when communicating with the relay agent." (RFC 3257)
-    //
-    // Try first Relay Agent Link Selection sub-option
-    OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
-    if (rai) {
-        OptionCustomPtr rai_custom =
-            boost::dynamic_pointer_cast<OptionCustom>(rai);
-        if (rai_custom) {
-            OptionPtr link_select =
-                rai_custom->getOption(RAI_OPTION_LINK_SELECTION);
-            if (link_select) {
-                OptionBuffer link_select_buf = link_select->getData();
-                if (link_select_buf.size() == sizeof(uint32_t)) {
-                    selector.option_select_ =
-                        IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
-                }
-            }
-        }
-    } else {
-        // Or Subnet Selection option
-        OptionPtr sbnsel = query->getOption(DHO_SUBNET_SELECTION);
-        if (sbnsel) {
-            OptionCustomPtr oc =
-                boost::dynamic_pointer_cast<OptionCustom>(sbnsel);
-            if (oc) {
-                selector.option_select_ = oc->readAddress();
-            }
-        }
-    }
-
     // Mark it as DHCPv4-over-DHCPv6
     selector.dhcp4o6_ = true;
-
     // Now the DHCPv6 part
     selector.remote_address_ = query->getRemoteAddr();
     selector.first_relay_linkaddr_ = IOAddress("::");
@@ -578,8 +555,17 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query) const {
                                       Pkt6::RELAY_GET_FIRST);
     }
 
+    // If the Subnet Selection option is present, extract its value.
+    OptionPtr sbnsel = query->getOption(DHO_SUBNET_SELECTION);
+    if (sbnsel) {
+        OptionCustomPtr oc = boost::dynamic_pointer_cast<OptionCustom>(sbnsel);
+        if (oc) {
+            selector.option_select_ = oc->readAddress();
+        }
+    }
+
     CfgMgr& cfgmgr = CfgMgr::instance();
-    subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
+    subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet4o6(selector);
 
     // Let's execute all callouts registered for subnet4_select
     if (HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
@@ -746,7 +732,7 @@ Dhcpv4Srv::run_one() {
         // Option objects modification does not make sense anymore. Hooks
         // can only manipulate wire buffer at this stage.
         // Let's execute all callouts registered for buffer4_send
-        if (HooksManager::calloutsPresent(hook_index_buffer4_send_)) {
+        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_send_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
             // Delete previously set arguments
@@ -756,7 +742,7 @@ Dhcpv4Srv::run_one() {
             callout_handle->setArgument("response4", rsp);
 
             // Call callouts
-            HooksManager::callCallouts(hook_index_buffer4_send_,
+            HooksManager::callCallouts(Hooks.hook_index_buffer4_send_,
                                        *callout_handle);
 
             // Callouts decided to skip the next processing step. The next
@@ -815,7 +801,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
 
     // The packet has just been received so contains the uninterpreted wire
     // data; execute callouts registered for buffer4_receive.
-    if (HooksManager::calloutsPresent(hook_index_buffer4_receive_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_receive_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Delete previously set arguments
@@ -825,7 +811,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         callout_handle->setArgument("query4", query);
 
         // Call callouts
-        HooksManager::callCallouts(hook_index_buffer4_receive_,
+        HooksManager::callCallouts(Hooks.hook_index_buffer4_receive_,
                                    *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
@@ -905,7 +891,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         .arg(query->toText());
 
     // Let's execute all callouts registered for pkt4_receive
-    if (HooksManager::calloutsPresent(hook_index_pkt4_receive_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_pkt4_receive_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Delete previously set arguments
@@ -915,7 +901,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         callout_handle->setArgument("query4", query);
 
         // Call callouts
-        HooksManager::callCallouts(hook_index_pkt4_receive_,
+        HooksManager::callCallouts(Hooks.hook_index_pkt4_receive_,
                                    *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
@@ -2075,7 +2061,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
         bool skip = false;
 
         // Execute all callouts registered for lease4_release
-        if (HooksManager::calloutsPresent(hook_index_lease4_release_)) {
+        if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_release_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(release);
 
             // Delete all previous arguments
@@ -2088,7 +2074,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             callout_handle->setArgument("lease4", lease);
 
             // Call all installed callouts
-            HooksManager::callCallouts(hook_index_lease4_release_,
+            HooksManager::callCallouts(Hooks.hook_index_lease4_release_,
                                        *callout_handle);
 
             // Callouts decided to skip the next processing step. The next
@@ -2218,7 +2204,7 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline) {
     // Let's check if there are hooks installed for decline4 hook point.
     // If they are, let's pass the lease and client's packet. If the hook
     // sets status to drop, we reject this Decline.
-    if (HooksManager::calloutsPresent(hook_index_lease4_decline_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_decline_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(decline);
 
         // Delete previously set arguments
@@ -2229,7 +2215,7 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline) {
         callout_handle->setArgument("query4", decline);
 
         // Call callouts
-        HooksManager::callCallouts(hook_index_lease4_decline_,
+        HooksManager::callCallouts(Hooks.hook_index_lease4_decline_,
                                    *callout_handle);
 
         // Check if callouts decided to drop the packet. If any of them did,
@@ -2786,6 +2772,34 @@ void Dhcpv4Srv::processStatsSent(const Pkt4Ptr& response) {
 
     isc::stats::StatsMgr::instance().addValue(stat_name,
                                               static_cast<int64_t>(1));
+}
+
+int Dhcpv4Srv::getHookIndexBuffer4Receive() {
+    return (Hooks.hook_index_buffer4_receive_);
+}
+
+int Dhcpv4Srv::getHookIndexPkt4Receive() {
+    return (Hooks.hook_index_pkt4_receive_);
+}
+
+int Dhcpv4Srv::getHookIndexSubnet4Select() {
+    return (Hooks.hook_index_subnet4_select_);
+}
+
+int Dhcpv4Srv::getHookIndexLease4Release() {
+    return (Hooks.hook_index_lease4_release_);
+}
+
+int Dhcpv4Srv::getHookIndexPkt4Send() {
+    return (Hooks.hook_index_pkt4_send_);
+}
+
+int Dhcpv4Srv::getHookIndexBuffer4Send() {
+    return (Hooks.hook_index_buffer4_send_);
+}
+
+int Dhcpv4Srv::getHookIndexLease4Decline() {
+    return (Hooks.hook_index_lease4_decline_);
 }
 
 }   // namespace dhcp
