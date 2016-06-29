@@ -2501,7 +2501,7 @@ It is merely echoed by the server
 
     <para>Note that the above example is used for ilustrational purposes only
     and in actual deployments it is recommended to use as few types as possible
-    (preferably just one). See <xref linkend="reservation-tuning4"/> for detailed
+    (preferably just one). See <xref linkend="reservations4-tuning"/> for detailed
     discussion.</para>
 
     <para>Making a reservation for a mobile host that may visit multiple subnets
@@ -2734,7 +2734,7 @@ It is merely echoed by the server
 
     </section>
 
-    <section id="reservation-tuning4">
+    <section id="reservations4-tuning">
       <title>Fine Tuning IPv4 Host Reservation</title>
 
       <para>Host reservation capability introduces additional restrictions for the

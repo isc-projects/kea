@@ -25,6 +25,13 @@
   "renew-timer": 1000,
   "rebind-timer": 2000,
 
+# Kea supports two types of identifiers in DHCPv6: hw-address (hardware/MAC address
+# of the client) and duid (DUID inserted by the client). When told to do so, Kea can
+# check for each of those identifier types, but it takes a costly database lookup
+# to do so. It is therefore useful from performance perspective to use only
+# that reservation types that are actually used in a given network.
+    "host-reservation-identifiers": [ "duid", "hw-address" ],
+
 # The following list defines subnets. Subnet, pools and interface definitions
 # are the same as in the regular scenario, without host reservations.
 # least subnet and pool entries.
@@ -58,13 +65,26 @@
           },
 # This is similar to the previous one, but this time the reservation is done
 # based on hardware/MAC address. The server will do its best to extract
-# the hardware/MAC address from received packets.
+# the hardware/MAC address from received packets (see 'mac-sources' directive
+# for details). This particular reservation also specifies two extra options
+# to be available for this client. If there are options with the same code
+# specified in global, subnet or class scope, the values defined at host level
+# takes precedence.
           {
               "hw-address": "00:01:02:03:04:05",
-              "ip-addresses": [ "2001:db8:1::101" ]
+              "ip-addresses": [ "2001:db8:1::101" ],
+              "option-data": [
+              {
+                  "name": "dns-servers",
+                  "data": "3000:1::234"
+              },
+              {
+                  "name": "nis-servers",
+                  "data": "3000:1::234"
+              }]
           },
-# This is a bit more advanced configuration. The client with specified
-# DUID will get a reserved address, prefix and a hostname.
+# This is a bit more advanced reservation. The client with specified
+# DUID will get a reserved address, a reserved prefix and a hostname.
           {
               "duid": "01:02:03:04:05:06:07:08:09:0A",
               "ip-addresses": [ "2001:db8:1::102" ],

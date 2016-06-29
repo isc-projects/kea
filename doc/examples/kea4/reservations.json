@@ -31,7 +31,7 @@
 #  "rebind-timer": 2000,
 
 
-# Kea supports several reservations by several different types of identifiers:
+# Kea supports reservations by several different types of identifiers:
 # hw-address (hardware/MAC address of the client), duid (DUID inserted by the
 # client), client-id (client identifier inserted by the client) and circuit-id
 # (circuit identifier inserted by the relay agent). When told to do so, Kea can
