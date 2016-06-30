@@ -15,6 +15,9 @@
 #ifdef HAVE_PGSQL
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #endif
+#ifdef HAVE_CQL
+#include <dhcpsrv/cql_lease_mgr.h>
+#endif
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
@@ -68,6 +71,13 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
         return;
     }
 #endif
+#ifdef HAVE_CQL
+    if (parameters[type] == string("cql")) {
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_CQL_DB).arg(redacted);
+        getLeaseMgrPtr().reset(new CqlLeaseMgr(parameters));
+        return;
+    }
+#endif
     if (parameters[type] == string("memfile")) {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_DB).arg(redacted);
         getLeaseMgrPtr().reset(new Memfile_LeaseMgr(parameters));
@@ -77,7 +87,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     // Get here on no match
     LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(parameters[type]);
     isc_throw(InvalidType, "Database access parameter 'type' does "
-              "not specify a supported database backend");
+              "not specify a supported database backend:" << parameters[type]);
 }
 
 void

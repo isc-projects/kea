@@ -25,7 +25,7 @@ namespace dhcp {
 class PgSqlLease4Exchange;
 class PgSqlLease6Exchange;
 
-/// Defines PostgreSQL backend version: 2.0
+/// Defines PostgreSQL backend version: 3.0
 const uint32_t PG_CURRENT_VERSION = 3;
 const uint32_t PG_CURRENT_MINOR = 0;
 
@@ -351,7 +351,7 @@ public:
     ///
     /// Commits all pending database operations.
     ///
-    /// @throw DbOperationError Iif the commit failed.
+    /// @throw DbOperationError If the commit failed.
     virtual void commit();
 
     /// @brief Rollback Transactions

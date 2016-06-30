@@ -1,0 +1,52 @@
+#!/bin/bash
+DIR=$(readlink -f $0 | xargs dirname)
+if ! [ -f ${DIR}/cql_config_defines.sh ] || ! [ -x ${DIR}/cql_config_defines.sh ]
+then
+	echo "missing path configuration file for DataStax Cassandra (cql_config_defines.h)"
+	exit 0
+fi
+source ${DIR}/cql_config_defines.sh
+
+if [ $# -ne 1 ]
+then
+	echo "run: \`$0 --help\` for more help"
+	exit 0
+fi
+if [ $1 == "--help" ]
+then
+	echo "--help"
+	echo "    print this help message"
+	echo "--cppflags"
+	echo "    get cpp compilation flags"
+	echo "--includedir"
+	echo "    get include path"
+	echo "--libdir"
+	echo "    get lib path"
+	echo "--version"
+	echo "    get version"
+	exit 0
+fi
+if [ $1 == "--cppflags" ]
+then
+	exit 0
+fi
+if [ $1 == "--includedir" ]
+then
+	echo "${CPP_DRIVER_PATH}/include/"
+	exit 0
+fi
+if [ $1 == "--libdir" ]
+then
+	echo "${CPP_DRIVER_PATH}/build/"
+	exit 0
+fi
+if [ $1 == "--version" ]
+then
+	MAJOR=`grep VERSION_MAJOR ${CPP_DRIVER_PATH}/include/cassandra.h | cut -d " " -f 3`
+	MINOR=`grep VERSION_MINOR ${CPP_DRIVER_PATH}/include/cassandra.h | cut -d " " -f 3`
+	PATCH=`grep VERSION_PATCH ${CPP_DRIVER_PATH}/include/cassandra.h | cut -d " " -f 3`
+	echo "${MAJOR}.${MINOR}.${PATCH}"
+	exit 0
+fi
+echo "wrong parameter"
+echo "run: \`$0 --help\` for more help"

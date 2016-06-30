@@ -59,6 +59,9 @@
 #ifdef HAVE_PGSQL
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #endif
+#ifdef HAVE_CQL
+#include <dhcpsrv/cql_lease_mgr.h>
+#endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
 #include <boost/bind.hpp>
@@ -630,6 +633,10 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
         case DHCPV6_INFORMATION_REQUEST:
             rsp = processInfRequest(query);
+            break;
+
+        case DHCPV6_DHCPV4_QUERY:
+            processDhcp4Query(query);
             break;
 
         default:
@@ -2846,6 +2853,26 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     return (reply);
 }
 
+void
+Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
+
+    sanityCheck(dhcp4_query, OPTIONAL, OPTIONAL);
+
+    // flags are in transid
+    // uint32_t flags = dhcp4_query->getTransid();
+    // do nothing with DHCPV4_QUERY_FLAGS_UNICAST
+
+    // Get the DHCPv4 message option
+    OptionPtr dhcp4_msg = dhcp4_query->getOption(D6O_DHCPV4_MSG);
+    if (dhcp4_msg) {
+        // Forward the whole message to the DHCPv4 server via IPC
+        Dhcp6to4Ipc::instance().send(dhcp4_query);
+    }
+
+    // This method does not return anything as we always sent back
+    // the response via Dhcp6To4Ipc.
+}
+
 void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt, std::string& classes) {
     OptionVendorClassPtr vclass = boost::dynamic_pointer_cast<
         OptionVendorClass>(pkt->getOption(D6O_VENDOR_CLASS));
@@ -3045,6 +3072,9 @@ Dhcpv6Srv::getVersion(bool extended) {
 #ifdef HAVE_PGSQL
         tmp << PgSqlLeaseMgr::getDBVersion() << endl;
 #endif
+#ifdef HAVE_CQL
+        tmp << CqlLeaseMgr::getDBVersion() << endl;
+#endif
         tmp << Memfile_LeaseMgr::getDBVersion();
 
         // @todo: more details about database runtime
@@ -3128,6 +3158,13 @@ void Dhcpv6Srv::processStatsReceived(const Pkt6Ptr& query) {
     case DHCPV6_INFORMATION_REQUEST:
         stat_name = "pkt6-infrequest-received";
         break;
+    case DHCPV6_DHCPV4_QUERY:
+        stat_name = "pkt6-dhcpv4-query-received";
+        break;
+    case DHCPV6_DHCPV4_RESPONSE:
+        // Should not happen, but let's keep a counter for it
+        stat_name = "pkt6-dhcpv4-response-received";
+        break;
     default:
             ; // do nothing
     }
@@ -3148,12 +3185,19 @@ void Dhcpv6Srv::processStatsSent(const Pkt6Ptr& response) {
     case DHCPV6_REPLY:
         stat_name = "pkt6-reply-sent";
         break;
+    case DHCPV6_DHCPV4_RESPONSE:
+        stat_name = "pkt6-dhcpv4-response-sent";
+        break;
     default:
         // That should never happen
         return;
     }
 
     StatsMgr::instance().addValue(stat_name, static_cast<int64_t>(1));
+}
+
+int Dhcpv6Srv::getHookIndexBuffer6Send() {
+    return (Hooks.hook_index_buffer6_send_);
 }
 
 };

@@ -97,6 +97,9 @@ We have received the following contributions:
  - Angelo Failla, Facebook
    2016-04: Fixes for transaction id generation in perfdhcp
 
+ - Razvan Becheriu, Qualitance
+   2016-05: Added support for Cassandra
+
  - Cristian Secareanu, Qualitance
    2016-06: Added support for IPv6 prefix and PDEXCLUDE option
 

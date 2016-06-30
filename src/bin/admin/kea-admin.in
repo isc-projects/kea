@@ -55,7 +55,7 @@ usage() {
     printf " - lease-upgrade: Upgrades your lease database scheme\n"
     printf " - lease-dump: Dump current leases to a CSV file\n"
     printf "\n"
-    printf "BACKEND - one of the supported backends: memfile|mysql|pgsql\n"
+    printf "BACKEND - one of the supported backends: memfile|mysql|pgsql|cql\n"
     printf "\n"
     printf "PARAMETERS: Parameters are optional in general, but may be required\n"
     printf "            for specific operation.\n"
@@ -148,7 +148,7 @@ mysql_init() {
     if [ $COUNT -gt 0 ]; then
         # Let't start with a new line. mysql could have printed something out.
         printf "\n"
-        log_error "Expected empty database $db_name, but there are $COUNT tables: \n$_RESULT. Aborting."
+        log_error "Expected empty database $db_name, but there are $COUNT tables: \n$RESULT. Aborting."
         exit 1
     fi
 
@@ -197,6 +197,24 @@ pgsql_init() {
 
     version=`pgsql_version`
     printf "Lease DB version reported after initialization: $version\n"
+    exit 0
+}
+
+cql_init() {
+    printf "Checking if there is a database initialized already... Please ignore errors.\n"
+
+    result=`cql_execute "USE $db_name; DESCRIBE tables;"`
+    if [ "$result"="<empty>" ]; then
+        printf "Creating and initializing tables using script %s...\n" $scripts_dir/cql/dhcpdb_create.cql
+        cql_execute_script $scripts_dir/cql/dhcpdb_create.cql
+    else
+        log_error "Expected empty database $db_name, but the following tables are present \n$result. Aborting."
+        exit 2
+    fi
+
+    version=`cql_version`
+    printf "Lease DB version reported after initialization: $version\n"
+
     exit 0
 }
 
@@ -274,10 +292,43 @@ pgsql_upgrade() {
     for script in ${scripts_dir}/pgsql/upgrade*.sh
     do
         echo "Processing $script file..."
-        sh ${script} -U ${db_user} -d ${db_name}
+        sh ${script} -U ${db_user} -h localhost -d ${db_name}
     done
 
     version=`pgsql_version`
+    printf "Lease DB version reported after upgrade: $version\n"
+    exit 0
+}
+
+cql_upgrade() {
+    version=`cql_version`
+    printf "Lease DB version reported before upgrade: $version\n"
+
+    # Check if the scripts directory exists at all.
+    if [ ! -d ${scripts_dir}/cql ]; then
+        log_error "Invalid scripts directory: ${scripts_dir}/cql"
+        exit 1
+    fi
+
+    # Check if directory is readable.
+    if [ ! -r ${scripts_dir}/cql ]; then
+        log_error "Directory is not readable: ${scripts_dir}/cql"
+        exit 1
+    fi
+
+    # Check if there are upgrade scripts.
+    files=$(find ${scripts_dir}/cql/upgrade*.sh -type f)
+    if [ $? -eq 0 ]; then # Upgrade scripts are present.
+        for script in ${scripts_dir}/cql/upgrade*.sh
+        do
+            echo "Processing $script file..."
+            sh ${script} -u ${db_user} -p ${db_password} -k ${db_name}
+        done
+    else
+        echo "No upgrade script available."
+    fi
+
+    version=`cql_version`
     printf "Lease DB version reported after upgrade: $version\n"
     exit 0
 }
@@ -406,7 +457,7 @@ pgsql_dump() {
 
     # Call psql and redirect output to the dump file. We don't use psql "to csv"
     # as it can only be run as db superuser.
-    echo "$dump_qry" | psql --set ON_ERROR_STOP=1 -t -q --user=$db_user --dbname=$db_name -w --no-align --field-separator=',' >$dump_file
+    echo "$dump_qry" | psql --set ON_ERROR_STOP=1 -t -h localhost -q --user=$db_user --dbname=$db_name -w --no-align --field-separator=',' >$dump_file
     retcode=$?
 
     # Check for errors.
@@ -414,6 +465,48 @@ pgsql_dump() {
         log_error "lease-dump: psql call failed, exit code: $retcode";
         exit 1
     fi
+
+    echo lease$dump_type successfully dumped to $dump_file
+    exit 0
+}
+
+cql_dump() {
+    # Get the query appropriate to lease version. Explicitly specify all columns
+    # so that they are returned in expected order.
+    if [ $dump_type -eq 4 ]; then
+        dump_query="SELECT address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state FROM lease4"
+    elif [ $dump_type -eq 6 ]; then
+        dump_query="SELECT address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state FROM lease6"
+    else
+        log_error "lease-dump: lease type ( -4 or -6 ) needs to be specified"
+        usage
+        exit 1
+    fi
+
+    # Check if file was specified.
+    if [ "$dump_file" = "" ]; then
+        log_error "lease-dump: output file needs to be specified with -o"
+        usage
+        exit 1
+    fi
+
+    # If output file exists, notify user, allow them a chance to bail.
+    check_file_overwrite $dump_file
+
+    # Run query, check for failure.
+    result=`cql_execute "$dump_query"`
+    return_code=$?
+    if [ $return_code -ne 0 ]; then
+        log_error "lease-dump: cql_execute failed, exit code $return_code";
+        exit 1
+    fi
+
+    # Parse and display header.
+    echo "$result" | head -n 2 | tail -n 1 | sed -e 's/\s*//g' | sed -e 's/|/,/g' > $dump_file
+
+    # Parse and display contents - done separately from header to allow sorting
+    # by address.
+    echo "$result" | tail -n +4 | head -n -2 | sed -e 's/\s*//g' | sed -e 's/|/,/g' | sort -r >> $dump_file
 
     echo lease$dump_type successfully dumped to $dump_file
     exit 0
@@ -442,7 +535,7 @@ if [ -z ${backend} ]; then
     usage
     exit 1
 fi
-is_in_list "${backend}" "memfile mysql pgsql"
+is_in_list "${backend}" "memfile mysql pgsql cql"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid backend: ${backend}"
     exit 1
@@ -542,6 +635,9 @@ case ${command} in
             pgsql)
                 pgsql_init
                 ;;
+            cql)
+                cql_init
+                ;;
             esac
         ;;
     lease-version)
@@ -556,6 +652,9 @@ case ${command} in
             pgsql)
                 pgsql_version
                 ;;
+            cql)
+                cql_version
+                ;;
             esac
         ;;
     lease-upgrade)
@@ -569,6 +668,9 @@ case ${command} in
             pgsql)
                 pgsql_upgrade
                 ;;
+            cql)
+                cql_upgrade
+                ;;
             esac
         ;;
     lease-dump)
@@ -581,6 +683,9 @@ case ${command} in
                 ;;
             pgsql)
                 pgsql_dump
+                ;;
+            cql)
+                cql_dump
                 ;;
             esac
         ;;

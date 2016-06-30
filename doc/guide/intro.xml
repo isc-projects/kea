@@ -88,6 +88,14 @@
     built without PostgreSQL support.
             </simpara>
         </listitem>
+
+        <listitem>
+            <simpara>
+	In order to store lease information in a CQL database, Kea requires CQL
+    headers and libraries. This is an optional dependency in that Kea can be
+    built without CQL support.
+            </simpara>
+        </listitem>
       </itemizedlist>
     </section>
 

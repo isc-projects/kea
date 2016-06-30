@@ -159,7 +159,7 @@ PgSqlTaggedStatement tagged_statements[] = {
 
     // INSERT_LEASE4
     { 10, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
-            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_INT8 },
+            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8 },
       "insert_lease4",
       "INSERT INTO lease4(address, hwaddr, client_id, "
         "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, "
@@ -394,14 +394,19 @@ public:
 
             hostname_ = getRawColumnValue(r, row, HOSTNAME_COL);
 
+            uint32_t state;
+            getColumnValue(r, row , STATE_COL, state);
+
             HWAddrPtr hwaddr(new HWAddr(hwaddr_buffer_, hwaddr_length_,
                                         HTYPE_ETHER));
 
-            return (Lease4Ptr(new Lease4(addr4_, hwaddr,
+            Lease4Ptr result(new Lease4(addr4_, hwaddr,
                                          client_id_buffer_, client_id_length_,
                                          valid_lifetime_, 0, 0, cltt_,
                                          subnet_id_, fqdn_fwd_, fqdn_rev_,
-                                         hostname_)));
+                                         hostname_));
+            result->state_ = state;
+            return (result);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not convert data to Lease4, reason: "
@@ -588,6 +593,9 @@ public:
 
             hostname_ = getRawColumnValue(r, row, HOSTNAME_COL);
 
+            uint32_t state;
+            getColumnValue(r, row , STATE_COL, state);
+
             /// @todo: implement this in #3557.
             HWAddrPtr hwaddr;
 
@@ -597,6 +605,7 @@ public:
                                         subnet_id_, fqdn_fwd_, fqdn_rev_,
                                         hostname_, hwaddr, prefix_len_));
             result->cltt_ = cltt_;
+            result->state_ = state;
             return (result);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,

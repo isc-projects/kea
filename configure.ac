@@ -995,6 +995,56 @@ fi
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_PGSQL, test "$PG_CONFIG" != "")
 
+cql_config="no"
+AC_ARG_WITH([cql],
+  AC_HELP_STRING([--with-cql=PATH],
+    [path to the Cassandra CQL 'cql_config' script]),
+    [cql_config="$withval"])
+
+if test "${cql_config}" = "yes" ; then
+    cql_config="/usr/bin/cql_config"
+elif test "${cql_config}" != "no" ; then
+    CQL_CONFIG="${withval}"
+fi
+
+if test "$CQL_CONFIG" != "" ; then
+    if test -d "$CQL_CONFIG" -o ! -x "$CQL_CONFIG" ; then
+        AC_MSG_ERROR([--with-cql should point to a cql_config program])
+    fi
+
+    CQL_INCLUDEDIR=`$CQL_CONFIG --includedir`
+    CQL_CPPFLAGS="`$CQL_CONFIG --cppflags` -I$CQL_INCLUDEDIR"
+    CQL_LIBS="-L`$CQL_CONFIG --libdir` -lcassandra_static -luv"
+    CQL_VERSION=`$CQL_CONFIG --version`
+
+    AC_SUBST(CQL_CPPFLAGS)
+    AC_SUBST(CQL_LIBS)
+
+    # Check that a simple program using CQL functions can compile and link.
+    CPPFLAGS_SAVED="$CPPFLAGS"
+    LIBS_SAVED="$LIBS"
+
+    CPPFLAGS="$CQL_CPPFLAGS $CPPFLAGS"
+    LIBS="$CQL_LIBS $LIBS"
+
+    AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([#include <cassandra.h>],
+                             [CassCluster* cluster = cass_cluster_new();
+                              cass_cluster_free(cluster);])],
+            [AC_MSG_RESULT([checking for Cassandra CQL headers and library... yes])],
+            [AC_MSG_RESULT([checking for Cassandra CQL headers and library... no])
+             AC_MSG_ERROR([Needs Cassandra CQL library])]
+    )
+    CPPFLAGS=$CPPFLAGS_SAVED
+    LIBS=$LIBS_SAVED
+
+    # Note that CQL is present in the config.h file
+    AC_DEFINE([HAVE_CQL], [1], [CQL is present])
+fi
+
+# ... and at the shell level, so Makefile.am can take action depending on this.
+AM_CONDITIONAL(HAVE_CQL, test "$CQL_CONFIG" != "")
+
 # Check for log4cplus
 log4cplus_path="yes"
 AC_ARG_WITH([log4cplus],
@@ -1279,11 +1329,11 @@ if test "x$enable_generate_docs" != xno ; then
   else
     AC_MSG_CHECKING([if $XSLTPROC works])
     # run xsltproc to see if works
-    $XSLTPROC --novalid --xinclude --nonet http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl
+    $XSLTPROC --novalid --xinclude http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl
     if test $? -ne 0 ; then
       AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/manpages/docbook.xsl")
     fi
-    $XSLTPROC --novalid --xinclude --nonet http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
+    $XSLTPROC --novalid --xinclude http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
     if test $? -ne 0 ; then
       AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/html/docbook.xsl")
     fi
@@ -1409,6 +1459,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/admin/tests/memfile_tests.sh
                  src/bin/admin/tests/mysql_tests.sh
                  src/bin/admin/tests/pgsql_tests.sh
+                 src/bin/admin/tests/cql_tests.sh
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile
@@ -1486,6 +1537,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
+                 src/share/database/scripts/cql/Makefile
                  tools/Makefile
                  tools/path_replacer.sh
 ])
@@ -1615,6 +1667,22 @@ else
 cat >> config.report << END
 
 PostgreSQL:
+  no
+END
+fi
+
+if test "$CQL_CPPFLAGS" != "" ; then
+cat >> config.report << END
+
+Cassandra CQL:
+  CQL_VERSION:   ${CQL_VERSION}
+  CQL_CPPFLAGS:  ${CQL_CPPFLAGS}
+  CQL_LIBS:      ${CQL_LIBS}
+END
+else
+cat >> config.report << END
+
+Cassandra CQL:
   no
 END
 fi
