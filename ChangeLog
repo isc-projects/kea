@@ -1,3 +1,7 @@
+1135.	[func]		fdupont
+	Integrated the DHCPv4 service part of DHCPv4-ouver-DHCPv6 support.
+	(Trac #4110, git 7d36aebe14db10b0cbac8e6c0e82160b9d5d7ecd)
+
 1134.	[func]		fdupont
 	Integrated the DHCPv6 service part of DHCPv4-ouver-DHCPv6 support.
 	(Trac #4109, git 8d1f330d9b0a44039a8b9e0b479f8da1743b9504)
