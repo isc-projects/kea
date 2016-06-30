@@ -224,7 +224,28 @@ public:
     /// @return Pointer to the DUID or NULL if the option doesn't exist.
     DuidPtr getClientId() const;
 
-    /// @brief returns option inserted by relay
+
+protected:
+
+    /// @brief Returns pointer to an option inserted by relay agent.
+    ///
+    /// This is a variant of the @ref Pk6::getRelayOption function which
+    /// never copies an option returned. This method should be only used by
+    /// the @ref Pkt6 class and derived classes. Any external callers should
+    /// use @ref getRelayOption which copies the option before returning it
+    /// when the @ref Pkt::copy_retrieved_option_ flag is set to true.
+    ///
+    /// @param opt_type Code of the requested option.
+    /// @param relay_level Nesting level as described for
+    /// @ref Pkt6::getRelayOption.
+    ///
+    /// @return Pointer to the option or NULL if such option doesn't exist.
+    OptionPtr getNonCopiedRelayOption(const uint16_t opt_type,
+                                      const uint8_t relay_level) const;
+
+public:
+
+    /// @brief Returns option inserted by relay
     ///
     /// Returns an option from specified relay scope (inserted by a given relay
     /// if this is received packet or to be decapsulated by a given relay if
@@ -239,7 +260,47 @@ public:
     /// @param nesting_level see description above
     ///
     /// @return pointer to the option (or NULL if there is no such option)
-    OptionPtr getRelayOption(uint16_t option_code, uint8_t nesting_level) const;
+    OptionPtr getRelayOption(uint16_t option_code, uint8_t nesting_level);
+
+private:
+
+    /// @brief Prepares parameters for loop used in @ref getAnyRelayOption
+    /// and @ref getNonCopiedAnyRelayOption.
+    ///
+    /// The methods retrieving "any" relay option iterate over the relay
+    /// info structures to find the matching option. This method returns
+    /// the index of the first and last relay info structure to be used
+    /// for this iteration. It also returns the direction in which the
+    /// iteration should be performed.
+    ///
+    /// @param order Option search order (see @ref RelaySearchOrder).
+    /// @param [out] start Index of the relay information structure from
+    /// which the serch should be started.
+    /// @param [out] end Index of the relay information structure on which
+    /// the option searches should stop.
+    /// @param [out] direction Equals to -1 for backwards searches, and
+    /// equals to 1 for forward searches.
+    void prepareGetAnyRelayOption(const RelaySearchOrder& order,
+                                  int& start, int& end, int& direction) const;
+
+protected:
+
+    /// @brief Returns pointer to an instance of specified option.
+    ///
+    /// This is a variant of @ref getAnyRelayOption but it never copies
+    /// an option returned. This method should be only used by
+    /// the @ref Pkt6 class and derived classes. Any external callers should
+    /// use @ref getAnyRelayOption which copies the option before returning it
+    /// when the @ref Pkt::copy_retrieved_option_ flag is set to true.
+    ///
+    /// @param option_code Searched option.
+    /// @param order Option search order (see @ref RelaySearchOrder).
+    ///
+    /// @return Option pointer or NULL, if no option matches specified criteria.
+    OptionPtr getNonCopiedAnyRelayOption(const uint16_t option_code,
+                                         const RelaySearchOrder& order) const;
+
+public:
 
     /// @brief Return first instance of a specified option
     ///
@@ -251,7 +312,8 @@ public:
     /// @param option_code searched option
     /// @param order option search order (see @ref RelaySearchOrder)
     /// @return option pointer (or NULL if no option matches specified criteria)
-    OptionPtr getAnyRelayOption(uint16_t option_code, RelaySearchOrder order);
+    OptionPtr getAnyRelayOption(const uint16_t option_code,
+                                const RelaySearchOrder& order);
 
     /// @brief return the link address field from a relay option
     ///
@@ -285,7 +347,24 @@ public:
     const isc::asiolink::IOAddress&
     getRelay6PeerAddress(uint8_t relay_level) const;
 
+protected:
+
+    /// @brief Returns all option instances of specified type without
+    /// copying.
     ///
+    /// This is a variant of @ref getOptions method, which returns a collection
+    /// of options without copying them. This method should be only used by
+    /// the @ref Pkt6 class and derived classes. Any external callers should
+    /// use @ref getOptions which copies option instances before returning them
+    /// when the @ref Pkt::copy_retrieved_option_ flag is set to true.
+    ///
+    /// @param option_code Option code.
+    ///
+    /// @return Collection of options found.
+    OptionCollection getNonCopiedOptions(const uint16_t opt_type) const;
+
+public:
+
     /// @brief Returns all instances of specified type.
     ///
     /// Returns all instances of options of the specified type. DHCPv6 protocol
@@ -293,7 +372,7 @@ public:
     ///
     /// @param type option type we are looking for
     /// @return instance of option collection with requested options
-    isc::dhcp::OptionCollection getOptions(uint16_t type);
+    isc::dhcp::OptionCollection getOptions(const uint16_t type);
 
     /// @brief add information about one traversed relay
     ///
