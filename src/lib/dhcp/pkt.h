@@ -245,18 +245,67 @@ public:
     /// data format change etc.
     OptionBuffer data_;
 
+protected:
+
+    /// @brief Returns the first option of specified type without copying.
+    ///
+    /// This method is internally used by the @ref Pkt class and derived
+    /// classes to retrieve a pointer to the specified option. This
+    /// method doesn't copy the option before returning it to the
+    /// caller.
+    ///
+    /// @param type Option type.
+    ///
+    /// @return Pointer to the option of specified type or NULL pointer
+    /// if such option is not present.
+    OptionPtr getNonCopiedOption(const uint16_t type) const;
+
+public:
+
     /// @brief Returns the first option of specified type.
     ///
     /// Returns the first option of specified type. Note that in DHCPv6 several
     /// instances of the same option are allowed (and frequently used).
-    /// Also see \ref Pkt6::getOptions().
+    /// Also see @ref Pkt6::getOptions().
     ///
     /// The options will be only returned after unpack() is called.
     ///
     /// @param type option type we are looking for
     ///
     /// @return pointer to found option (or NULL)
-    OptionPtr getOption(uint16_t type) const;
+    OptionPtr getOption(const uint16_t type);
+
+    OptionPtr getOption(const uint16_t type) const {
+        return (getNonCopiedOption(type));
+    }
+
+    /// @brief Controls whether the option retrieved by the @ref Pkt::getOption
+    /// should be copied before being returned.
+    ///
+    /// Setting this value to true enables the mechanism of copying options
+    /// retrieved from the packet to prevent accidental modifications of
+    /// options that shouldn't be modified. The typical use case for this
+    /// mechanism is to prevent hook library from modifying instance of
+    /// an option within the packet that would also affect the value for
+    /// this option within the Kea configuration structures.
+    ///
+    /// Kea doesn't copy option instances which it stores in the packet.
+    /// It merely copy pointers into the packets. Thus, any modification
+    /// to an option would change the value of this option in the
+    /// Kea configuration. To prevent this, option copying should be
+    /// enabled prior to passing the pointer to a packet to a hook library.
+    ///
+    /// Note that only only does this method causes the server to copy
+    /// an option, but the copied option also replaces the original
+    /// option within the packet. The option can be then freely modified
+    /// and the modifications will only affect the instance of this
+    /// option within the packet but not within the server configuration.
+    ///
+    /// @param copy Indicates if the options should be copied when
+    /// retrieved (if true), or not copied (if false).
+    void setCopyRetrievedOptions(const bool copy) {
+        copy_retrieved_options_ = copy;
+    }
 
     /// @brief Update packet timestamp.
     ///
@@ -614,6 +663,12 @@ protected:
     /// changes to this member such as access scope restriction or
     /// data format change etc.
     isc::util::OutputBuffer buffer_out_;
+
+    /// @brief Indicates if a copy of the retrieved option should be
+    /// returned when @ref Pkt::getOption is called.
+    ///
+    /// @see the documentation for @ref Pkt::setCopyRetrievedOptions.
+    bool copy_retrieved_options_;
 
     /// packet timestamp
     boost::posix_time::ptime timestamp_;

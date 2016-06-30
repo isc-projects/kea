@@ -75,7 +75,7 @@ public:
     ///
     /// @param pkt - packet being classified
     /// @param values - stack of values with previously evaluated tokens
-    virtual void evaluate(const Pkt& pkt, ValueStack& values) = 0;
+    virtual void evaluate(Pkt& pkt, ValueStack& values) = 0;
 
     /// @brief Virtual destructor
     virtual ~Token() {}
@@ -124,7 +124,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented string will be pushed here)
-    void evaluate(const Pkt& pkt, ValueStack& values);
+    void evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
     std::string value_; ///< Constant value
@@ -149,7 +149,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented string will be pushed here)
-    void evaluate(const Pkt& pkt, ValueStack& values);
+    void evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
     std::string value_; ///< Constant value
@@ -171,7 +171,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented IP address will be pushed here)
-    void evaluate(const Pkt& pkt, ValueStack& values);
+    void evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
     ///< Constant value (empty string if the IP address cannot be converted)
@@ -222,7 +222,7 @@ public:
     ///
     /// @param pkt specified option will be extracted from this packet (if present)
     /// @param values value of the option will be pushed here (or "")
-    void evaluate(const Pkt& pkt, ValueStack& values);
+    void evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns option-code
     ///
@@ -254,7 +254,7 @@ protected:
     ///
     /// @param pkt the option will be retrieved from here
     /// @return option instance (or NULL if not found)
-    virtual OptionPtr getOption(const Pkt& pkt);
+    virtual OptionPtr getOption(Pkt& pkt);
 
     uint16_t option_code_; ///< Code of the option to be extracted
     RepresentationType representation_type_; ///< Representation type.
@@ -285,7 +285,7 @@ protected:
     /// @brief Attempts to obtain specified sub-option of option 82 from the packet
     /// @param pkt DHCPv4 packet (that hopefully contains option 82)
     /// @return found sub-option from option 82
-    virtual OptionPtr getOption(const Pkt& pkt);
+    virtual OptionPtr getOption(Pkt& pkt);
 };
 
 /// @brief Token that represents fields of a DHCPv4 packet.
@@ -328,7 +328,7 @@ public:
     ///
     /// @param pkt - fields will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
-    void evaluate(const Pkt& pkt, ValueStack& values);
+    void evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns field type
     ///
@@ -364,7 +364,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(const Pkt& pkt, ValueStack& values);
+    void evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents the substring operator (returns a portion
@@ -421,7 +421,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (3 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(const Pkt& pkt, ValueStack& values);
+    void evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents concat operator (concatenates two other tokens)
@@ -444,7 +444,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(const Pkt& pkt, ValueStack& values);
+    void evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents logical negation operator
@@ -469,7 +469,7 @@ public:
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (logical top value negated)
-    void evaluate(const Pkt& pkt, ValueStack& values);
+    void evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents logical and operator
@@ -494,7 +494,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(const Pkt& pkt, ValueStack& values);
+    void evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents logical or operator
@@ -519,7 +519,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(const Pkt& pkt, ValueStack& values);
+    void evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents a value of an option within a DHCPv6 relay
@@ -563,7 +563,7 @@ protected:
     /// @brief Attempts to obtain specified option from the specified relay block
     /// @param pkt DHCPv6 packet that hopefully contains the proper relay block
     /// @return option instance if available
-    virtual OptionPtr getOption(const Pkt& pkt);
+    virtual OptionPtr getOption(Pkt& pkt);
 
     uint8_t nest_level_; ///< nesting level of the relay block to use
 };
@@ -606,7 +606,7 @@ public:
     ///
     /// @param pkt fields will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
-    void evaluate(const Pkt& pkt, ValueStack& values);
+    void evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns nest-level
     ///
@@ -666,7 +666,7 @@ public:
     ///
     /// @param pkt - packet from which to extract the fields
     /// @param values - stack of values, 1 result will be pushed
-    void evaluate(const Pkt& pkt, ValueStack& values);
+    void evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns field type
     ///
