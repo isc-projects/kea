@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,6 +69,7 @@ public:
     OptionVendorClass(Option::Universe u, OptionBufferConstIter begin,
                       OptionBufferConstIter end);
 
+    /// @brief Copies this option and returns a pointer to the copy.
     OptionPtr clone() const;
 
     /// @brief Renders option into the buffer in the wire format.

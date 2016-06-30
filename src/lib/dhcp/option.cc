@@ -74,8 +74,7 @@ Option::operator=(const Option& rhs) {
 
 OptionPtr
 Option::clone() const {
-    OptionPtr option(new Option(*this));
-    return (option);
+    return (cloneInternal<Option>());
 }
 
 void
@@ -214,6 +213,8 @@ Option::getOptionsCopy(OptionCollection& options_copy) const {
         local_options.insert(std::make_pair(it->second->getType(),
                                             copy));
     }
+    // All options copied successfully, so assign them to the output
+    // parameter.
     options_copy.swap(local_options);
 }
 

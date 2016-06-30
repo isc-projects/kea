@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -140,6 +140,7 @@ public:
     /// @brief Copy constructor
     Option6ClientFqdn(const Option6ClientFqdn& source);
 
+    /// @brief Copies this option and returns a pointer to the copy.
     virtual OptionPtr clone() const;
 
     /// @brief Destructor
