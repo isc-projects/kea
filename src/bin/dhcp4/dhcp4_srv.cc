@@ -458,7 +458,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
 
     // Let's execute all callouts registered for subnet4_select
-    if (HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // We're reusing callout_handle from previous calls
@@ -472,7 +472,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
                                     getCfgSubnets4()->getAll());
 
         // Call user (and server-side) callouts
-        HooksManager::callCallouts(hook_index_subnet4_select_,
+        HooksManager::callCallouts(Hooks.hook_index_subnet4_select_,
                                    *callout_handle);
 
         // Callouts decided to skip this step. This means that no subnet
@@ -562,7 +562,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query) const {
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet4o6(selector);
 
     // Let's execute all callouts registered for subnet4_select
-    if (HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // We're reusing callout_handle from previous calls
@@ -576,7 +576,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query) const {
                                     getCfgSubnets4()->getAll());
 
         // Call user (and server-side) callouts
-        HooksManager::callCallouts(hook_index_subnet4_select_,
+        HooksManager::callCallouts(Hooks.hook_index_subnet4_select_,
                                    *callout_handle);
 
         // Callouts decided to skip this step. This means that no subnet
@@ -971,7 +971,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
     bool skip_pack = false;
 
     // Execute all callouts registered for pkt4_send
-    if (HooksManager::calloutsPresent(hook_index_pkt4_send_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_pkt4_send_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Delete all previous arguments
@@ -987,7 +987,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         callout_handle->setArgument("query4", query);
 
         // Call all installed callouts
-        HooksManager::callCallouts(hook_index_pkt4_send_,
+        HooksManager::callCallouts(Hooks.hook_index_pkt4_send_,
                                    *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
