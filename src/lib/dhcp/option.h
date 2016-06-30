@@ -144,10 +144,31 @@ public:
     Option(Universe u, uint16_t type, OptionBufferConstIter first,
            OptionBufferConstIter last);
 
-    Option(const Option& option);
+    /// @brief Copy constructor.
+    ///
+    /// This constructor makes a deep copy of the option and all of the
+    /// suboptions. It calls @ref getOptionsCopy to deep copy suboptions.
+    ///
+    /// @param source Option to be copied.
+    Option(const Option& source);
 
+    /// @brief Assignment operator.
+    ///
+    /// The assignment operator performs a deep copy of the option and
+    /// its suboptions. It calls @ref getOptionsCopy to deep copy
+    /// suboptions.
+    ///
+    /// @param rhs Option to be assigned.
     Option& operator=(const Option& rhs);
 
+    /// @brief Copies this option and returns a pointer to the copy.
+    ///
+    /// This function must be overriden in the derived classes to make
+    /// a copy of the derived type. The simplest way to do it is by
+    /// calling @ref copyInternal function with an appropriate template
+    /// parmater.
+    ///
+    /// @return Pointer to the copy of the option.
     virtual OptionPtr clone() const;
 
     /// @brief returns option universe (V4 or V6)
@@ -263,6 +284,11 @@ public:
         return (options_);
     }
 
+    /// @brief Performs deep copy of suboptions.
+    ///
+    /// This method calls @ref clone method to deep copy each option.
+    ///
+    /// @param [out] options_copy Container where copied options are stored.
     void getOptionsCopy(OptionCollection& options_copy) const;
 
     /// Attempts to delete first suboption of requested type
@@ -372,6 +398,15 @@ public:
 
 protected:
 
+    /// @brief Copies this option and returns a pointer to the copy.
+    ///
+    /// The deep copy of the option is performed by calling copy
+    /// constructor of the option of a given type. Derived classes call
+    /// this method in the implementations of @ref clone methods to
+    /// create a copy of the option of their type.
+    ///
+    /// @tparam OptionType Type of the option of which a clone should
+    /// be created.
     template<typename OptionType>
     OptionPtr cloneInternal() const {
         boost::shared_ptr<OptionType>

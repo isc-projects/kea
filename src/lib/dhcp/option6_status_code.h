@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,6 +37,7 @@ public:
     /// @param end Iterator to end of option data (first byte after option end).
     Option6StatusCode(OptionBufferConstIter begin, OptionBufferConstIter end);
 
+    /// @brief Copies this option and returns a pointer to the copy.
     virtual OptionPtr clone() const;
 
     /// @brief Writes option in wire-format.

@@ -62,6 +62,7 @@ public:
                            OptionBufferConstIter begin,
                            OptionBufferConstIter end);
 
+    /// @brief Copies this option and returns a pointer to the copy.
     OptionPtr clone() const;
 
     /// @brief Renders option into the buffer in the wire format.

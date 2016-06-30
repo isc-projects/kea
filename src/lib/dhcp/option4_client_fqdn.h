@@ -219,6 +219,7 @@ public:
     /// @brief Copy constructor
     Option4ClientFqdn(const Option4ClientFqdn& source);
 
+    /// @brief Copies this option and returns a pointer to the copy.
     virtual OptionPtr clone() const;
 
     /// @brief Destructor
