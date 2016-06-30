@@ -48,16 +48,6 @@ public:
     /// The handler processes the DHCPv4-query DHCPv6 packet and
     /// sends the DHCPv4-response DHCPv6 packet back to the DHCPv6 server
     static void handler();
-
-    /// @brief Returns last received packet
-    ///
-    /// @return a reference to a shared pointer to the last received packet
-    /// @note This reference should be cleared after use
-    Pkt4o6Ptr& getReceived();
-
-private:
-    /// @brief last received packet
-    Pkt4o6Ptr received_;
 };
 
 } // namespace isc
