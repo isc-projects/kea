@@ -335,8 +335,7 @@ const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
                      const bool direct_response_desired)
     : shutdown_(true), alloc_engine_(), port_(port),
-      use_bcast_(use_bcast), hook_index_pkt4_receive_(-1),
-      hook_index_subnet4_select_(-1), hook_index_pkt4_send_(-1) {
+      use_bcast_(use_bcast) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
@@ -359,11 +358,6 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
         // attempts depending on the pool size.
         alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 0,
                                             false /* false = IPv4 */));
-
-        // Register hook points
-        hook_index_pkt4_receive_   = Hooks.hook_index_pkt4_receive_;
-        hook_index_subnet4_select_ = Hooks.hook_index_subnet4_select_;
-        hook_index_pkt4_send_      = Hooks.hook_index_pkt4_send_;
 
         /// @todo call loadLibraries() when handling configuration changes
 
