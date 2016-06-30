@@ -410,16 +410,18 @@ public:
         callout_handle.getArgument("lease6", callback_lease6_);
         callout_handle.getArgument("ia_na", callback_ia_na_);
 
+        // Should be an ASSERT but it is not allowed here
+        EXPECT_TRUE(callback_lease6_);
         // Let's override some values in the lease
-        ASSERT_TRUE(callback_lease6_);
         callback_lease6_->iaid_          = override_iaid_;
         callback_lease6_->t1_            = override_t1_;
         callback_lease6_->t2_            = override_t2_;
         callback_lease6_->preferred_lft_ = override_preferred_;
         callback_lease6_->valid_lft_     = override_valid_;
 
+        // Should be an ASSERT but it is not allowed here
+        EXPECT_TRUE(callback_ia_na_);
         // Override the values to be sent to the client as well
-        ASSERT_TRUE(callback_ia_na_);
         callback_ia_na_->setIAID(override_iaid_);
         callback_ia_na_->setT1(override_t1_);
         callback_ia_na_->setT2(override_t2_);
@@ -467,16 +469,18 @@ public:
         callout_handle.getArgument("lease6", callback_lease6_);
         callout_handle.getArgument("ia_na", callback_ia_na_);
 
+        // Should be an ASSERT but it is not allowed here
+        EXPECT_TRUE(callback_lease6_);
         // Let's override some values in the lease
-        ASSERT_TRUE(callback_lease6_);
         callback_lease6_->iaid_          = override_iaid_;
         callback_lease6_->t1_            = override_t1_;
         callback_lease6_->t2_            = override_t2_;
         callback_lease6_->preferred_lft_ = override_preferred_;
         callback_lease6_->valid_lft_     = override_valid_;
 
+        // Should be an ASSERT but it is not allowed here
+        EXPECT_TRUE(callback_ia_na_);
         // Override the values to be sent to the client as well
-        ASSERT_TRUE(callback_ia_na_);
         callback_ia_na_->setIAID(override_iaid_);
         callback_ia_na_->setT1(override_t1_);
         callback_ia_na_->setT2(override_t2_);
