@@ -191,7 +191,7 @@ packet processing. Hook points that are not specific to packet processing
    If a client sends more than one IA_NA option, callouts will be called
    separately for each IA_NA instance. The callout will be called only
    when the update is valid, i.e. conditions such as an invalid addresses
-   or invalid iaid rebindal attempts will not trigger this hook point.
+   or invalid iaid rebinding attempts will not trigger this hook point.
 
  - <b>Next step status</b>: If any callout installed on "lease6_rebind"
    sets the status to SKIP, the server will not rebind the lease. Under these
