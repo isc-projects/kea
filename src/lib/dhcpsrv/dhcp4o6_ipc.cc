@@ -156,9 +156,7 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     if (!option_vendor) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
             .arg("no ISC vendor option");
-        isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
-                  << " with ISC enterprise id is not present in the DHCP4o6"
-                  " message sent between the servers");
+        isc_throw(Dhcp4o6IpcError, "malformed packet (no ISC vendor option)");
     }
 
     // The option carrying interface name is required.
@@ -167,10 +165,9 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     if (!ifname) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
             .arg("no interface suboption");
-        isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
-                  << " doesn't contain the " << ISC_V6_4O6_INTERFACE
-                  << " option required in the DHCP4o6 message sent"
-                  " between Kea servers");
+        isc_throw(Dhcp4o6IpcError,
+                  "malformed packet (interface suboption missing "
+                  "or has incorrect type)");
     }
 
     // Check if this interface is present in the system.
@@ -178,9 +175,9 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     if (!iface) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
             .arg("can't get interface " + ifname->getValue());
-        isc_throw(Dhcp4o6IpcError, "option " << ISC_V6_4O6_INTERFACE
-                  << " sent in the DHCP4o6 message contains non-existing"
-                  " interface name '" << ifname->getValue() << "'");
+        isc_throw(Dhcp4o6IpcError,
+                  "malformed packet (unknown interface "
+                  + ifname->getValue() + ")");
     }
 
     // Get the option holding source IPv6 address.
@@ -189,10 +186,9 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     if (!srcs) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
             .arg("no source address suboption");
-        isc_throw(Dhcp4o6IpcError, "option " << D6O_VENDOR_OPTS
-                  << " doesn't contain the " << ISC_V6_4O6_SRC_ADDRESS
-                  << " option required in the DHCP4o6 message sent"
-                  " between Kea servers");
+        isc_throw(Dhcp4o6IpcError,
+                  "malformed packet (source address suboption missing "
+                  "or has incorrect type)");
     }
 
     // Update the packet.
