@@ -16,7 +16,7 @@ DHCPv6 counter-part, see @ref dhcpv4o6Dhcp6.
 The @c Dhcp4to6Ipc class is derived from the base @c Dhcp4o6IpcBase as
 a singleton class (by the static @ref isc::dhcp::Dhcp4to6Ipc::instance
 function).  @ref isc::dhcp::Dhcp4to6Ipc::open is called to open IPC
-sockets and to register @ref isc::dhcp::Dhcp4to6Ipc::handler on
+UDP sockets and to register @ref isc::dhcp::Dhcp4to6Ipc::handler on
 external sockets on the @c IfaceMgr.
 
 @section dhcp4to6Receive DHCPv4-over-DHCPv6 Packet Processing
@@ -97,7 +97,7 @@ Selectors (i.e., members of @c SubnetSelector class) are:
 - incoming interface name
 - gateway address - giaddr field (should be always undefined)
 - client address - ciaddr field
-- local address - set to the interface address
+- local address - set to the interface IPv4 address
 - remote address - IPv6 address
 - option select - from a Subnet Selection option
 - first relay link address - (IPv6) undefined or the first relay link
@@ -106,8 +106,8 @@ Selectors (i.e., members of @c SubnetSelector class) are:
   relay option
 - client classes - used to reject a matching rule and try next rules
 
-Check if DHCPv4-over-DHCPv6 is enabled for the subnet and continue
-with the next one is when it is not.
+Check if DHCPv4-over-DHCPv6 is enabled for this particulat subnet and
+continue with the next subnet is if it is not.
 
 First the remote address is matched in a subnet IPv6 range, second
 the interface ID if it is set is matched, third the interface name.
