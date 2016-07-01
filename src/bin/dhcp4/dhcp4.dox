@@ -193,7 +193,7 @@ flags set.
 
 @todo Note: the current implementation doesn't allow configuration of the
 server's behavior with respect to DNS Updates. This is planned for the future.
-The default behavioris constituted by the set of constants defined in the
+The default behavior is constituted by the set of constants defined in the
 (upper part of) dhcp4_srv.cc file. Once the configuration is implemented,
 these constants will be removed.
 

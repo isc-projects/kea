@@ -382,6 +382,9 @@ enterprise ID carrying interface and remote address suboptions.
 \ref isc::dhcp::Dhcp4o6IpcBase::send adds them,
 \ref isc::dhcp::Dhcp4o6IpcBase::receive decodes and removes them.
 
+Also see \ref dhcpv4o6Dhcp4 and \ref dhcpv4o6Dhcp6 for details on how IPC
+is used by DHCPv4 and DHCPv6 components.
+
 @todo
 
 DHCPv4-over-DHCPv6 which are relayed by a DHCPv6 relay are not yet supported.

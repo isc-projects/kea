@@ -8,7 +8,8 @@
  @page dhcpv4o6Dhcp4 DHCPv4-over-DHCPv6 DHCPv4 Server Side
 
 Kea supports DHCPv4-over-DHCPv6 using cooperating DHCPv6 and DHCPv4
-servers. This section describes the DHCPv4 server side.
+servers. This section describes the DHCPv4 server side. For its
+DHCPv6 counter-part, see @ref dhcpv4o6Dhcp6.
 
 @section Dhcp4to6Ipc DHCPv6-to-DHCPv4 Inter Process Communication
 
