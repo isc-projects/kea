@@ -240,7 +240,7 @@ TEST_F(Dhcpv6SrvTest, basic) {
     });
     srv.reset();
     ASSERT_NO_THROW({
-        // open an unpriviledged port
+        // open an unprivileged port
         srv.reset(new NakedDhcpv6Srv(DHCP6_SERVER_PORT + 10000));
     });
 }
@@ -1631,7 +1631,7 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
     // check if we get response at all
     ASSERT_TRUE(adv);
 
-    // We did not include any vendor opts in SOLCIT, so there should be none
+    // We did not include any vendor opts in SOLICIT, so there should be none
     // in ADVERTISE.
     ASSERT_FALSE(adv->getOption(D6O_VENDOR_OPTS));
 
@@ -2449,8 +2449,8 @@ TEST_F(Dhcpv6SrvTest, rsoo2relays) {
     opt = createRSOO(rsoo2, 2); // use 0x2 as payload
     relay2.options_.insert(make_pair(opt->getType(), opt));
 
-    // The relays ecapsulate packet in this order: relay1, relay2, but the server
-    // decapsulates the packet in reverse order.
+    // The relays encapsulate packet in this order: relay1, relay2,
+    // but the server decapsulates the packet in reverse order.
     client.relay_info_.push_back(relay2);
     client.relay_info_.push_back(relay1);
 
@@ -2639,7 +2639,7 @@ TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {
     // fakeReceive()
     srv.run();
 
-    // All expected statstics must be present.
+    // All expected statistics must be present.
     pkt6_rcvd = mgr.getObservation("pkt6-received");
     parse_fail = mgr.getObservation("pkt6-parse-failed");
     recv_drop = mgr.getObservation("pkt6-receive-drop");

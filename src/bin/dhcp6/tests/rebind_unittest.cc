@@ -7,6 +7,9 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <dhcp/docsis3_option_defs.h>
+#include <dhcp/option_string.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
@@ -59,6 +62,12 @@ namespace {
 ///   - addresses and prefixes
 ///   - address pool: 2001:db8:1::/64
 ///   - prefix pool: 3000::/72
+///
+/// - Configuration 7:
+///   - only addresses (no prefixes)
+///   - 2 subnets with 2001:db8:1::/64 and 2001:db8:2::/64
+///   - 1 subnet for eth0 and 1 subnet for eth1
+///   - DOCSIS vendor config file sub-option
 ///
 const char* REBIND_CONFIGS[] = {
 // Configuration 0
@@ -220,6 +229,38 @@ const char* REBIND_CONFIGS[] = {
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }",
+
+// Configuration 0
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-def\": [ {"
+        "        \"name\": \"config-file\","
+        "        \"code\": 33,"
+        "        \"type\": \"string\","
+        "        \"space\": \"vendor-4491\""
+        "     } ],"
+        "    \"option-data\": [ {"
+        "          \"name\": \"config-file\","
+        "          \"space\": \"vendor-4491\","
+        "          \"data\": \"normal_erouter_v6.cm\""
+        "        }],"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ],"
+        "    \"subnet\": \"2001:db8:2::/48\", "
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth1\""
         " } ],"
         "\"valid-lifetime\": 4000 }"
 };
@@ -892,5 +933,78 @@ TEST_F(RebindTest, requestAddressInRebind) {
     EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
 }
 
+// This test verifies that the client can request the DOCSIS sub-options.
+TEST_F(RebindTest, docsisORO) {
+    Dhcp6Client client;
+    // Configure client to request IA_NA.
+    client.useNA();
+    // Configure the DOCSIS vendor ORO for 32, 33, 34, 37 and 38.
+    client.requestDocsisOption(DOCSIS3_V6_TFTP_SERVERS);
+    client.requestDocsisOption(DOCSIS3_V6_CONFIG_FILE);
+    client.requestDocsisOption(DOCSIS3_V6_SYSLOG_SERVERS);
+    client.requestDocsisOption(DOCSIS3_V6_TIME_SERVERS);
+    client.requestDocsisOption(DOCSIS3_V6_TIME_OFFSET);
+    // Don't add it for now.
+    client.useDocsisORO(false);
+    // Make 4-way exchange to get the lease.
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[7], 2, client));
+    // Keep the client's lease for future reference.
+    Lease6 lease_client = client.getLease(0);
+
+    // Send Rebind message to the server.
+    ASSERT_NO_THROW(client.doRebind());
+    // The client should still have one lease which belong to one of the
+    // subnets.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client2 = client.getLease(0);
+    ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
+                selectSubnet(lease_client2.addr_, ClientClasses()));
+    // The client's lease should have been extended. The client will
+    // update the cltt to current time when the lease gets extended.
+    ASSERT_GE(lease_client2.cltt_ - lease_client.cltt_, 1000);
+    // Make sure, that the client's lease matches the lease held by the
+    // server.
+    Lease6Ptr lease_server2 = checkLease(lease_client2);
+    EXPECT_TRUE(lease_server2);
+    // No vendor option was included in the renew so there should be none
+    // in the received configuration.
+    OptionPtr opt = client.config_.findOption(D6O_VENDOR_OPTS);
+    ASSERT_FALSE(opt);
+
+    // Add a DOCSIS ORO.
+    client.useDocsisORO(true);
+    // Send Rebind message to the server.
+    ASSERT_NO_THROW(client.doRebind());
+    // The client should still have one lease which belong to one of the
+    // subnets.
+    ASSERT_EQ(1, client.getLeaseNum());
+    lease_client2 = client.getLease(0);
+    ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
+                selectSubnet(lease_client2.addr_, ClientClasses()));
+    // The client's lease should have been extended. The client will
+    // update the cltt to current time when the lease gets extended.
+    ASSERT_GE(lease_client2.cltt_ - lease_client.cltt_, 1000);
+    // Make sure, that the client's lease matches the lease held by the
+    // server.
+    lease_server2 = checkLease(lease_client2);
+    EXPECT_TRUE(lease_server2);
+
+    // Verify whether there is a vendor option.
+    opt = client.config_.findOption(D6O_VENDOR_OPTS);
+    ASSERT_TRUE(opt);
+    // The vendor option must be a OptionVentor object.
+    boost::shared_ptr<OptionVendor> vendor =
+        boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor);
+    // The vendor-id should be DOCSIS.
+    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorId());
+    // There must be a config file sub-option.
+    opt = vendor->getOption(DOCSIS3_V6_CONFIG_FILE);
+    // With the expected content.
+    OptionStringPtr config_file =
+        boost::dynamic_pointer_cast<OptionString>(opt);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ("normal_erouter_v6.cm", config_file->getValue());
+}
 
 } // end of anonymous namespace
