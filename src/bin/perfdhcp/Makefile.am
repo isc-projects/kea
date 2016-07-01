@@ -12,10 +12,16 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 # But older GCC compilers don't have the flag.
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
+if USE_CLANGPP
+# Workaround unused parameters in boost version included in FreeBSD 10
+AM_CXXFLAGS += -Wno-unused-parameter
+endif
+
 AM_LDFLAGS = -lm
 if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
+
 
 # convenience archive
 

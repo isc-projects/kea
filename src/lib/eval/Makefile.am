@@ -17,6 +17,11 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 # Disabling the strict aliasing rule suppresses this warning.
 AM_CXXFLAGS += $(WARNING_GCC_44_STRICT_ALIASING_CFLAG)
 
+if USE_CLANGPP
+# Workaround unused parameters in boost version included in FreeBSD 10
+AM_CXXFLAGS += -Wno-unused-parameter
+endif
+
 lib_LTLIBRARIES = libkea-eval.la
 libkea_eval_la_SOURCES  =
 libkea_eval_la_SOURCES += eval_log.cc eval_log.h
