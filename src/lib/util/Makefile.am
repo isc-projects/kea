@@ -4,7 +4,12 @@ SUBDIRS = . io unittests tests python threads
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
+
+if USE_CLANGPP
+AM_CXXFLAGS += -Wno-unused-parameter
+endif
 
 lib_LTLIBRARIES = libkea-util.la
 libkea_util_la_SOURCES  = boost_time_utils.h boost_time_utils.cc

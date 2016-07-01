@@ -6,6 +6,11 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
+if USE_CLANGPP
+# Workaround unused parameters in boost version included in FreeBSD 10
+AM_CXXFLAGS += -Wno-unused-parameter
+endif
+
 CLEANFILES = *.gcno *.gcda
 CLEANFILES += s-rdatacode
 # These two are created with rrtype/class.h, so not explicitly listed in

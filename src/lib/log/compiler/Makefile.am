@@ -5,6 +5,12 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
+# This check is for clang complaining about unused parameter
+# in boost version included in FreeBSD 10.
+if USE_CLANGPP
+AM_CXXFLAGS +=-Wno-unused-parameter
+endif
+
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
