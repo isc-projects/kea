@@ -96,6 +96,8 @@
  *   - @subpage allocengine
  *   - @subpage timerManager
  *   - @subpage leaseReclamationRoutine
+ *   - @subpage subnetSelect
+ *   - @subpage dhcp4o6Ipc
  * - @subpage libdhcp_ddns
  * - @subpage dhcpDatabaseBackends
  * - @subpage dhcpEval
