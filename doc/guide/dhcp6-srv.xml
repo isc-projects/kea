@@ -154,6 +154,7 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
     "rebind-timer": 2000,
     "preferred-lifetime": 3000,
     "valid-lifetime": 4000,
+    "dhcp4o6-port": 6767,
 
 # Next we setup the interfaces to be used by the server.
     "interfaces-config": {
@@ -227,7 +228,10 @@ around them.) The address will become deprecated in 3000 seconds (clients are
 allowed to keep old connections, but can't use this address for creating new
 connections). <command>renew-timer</command> and <command>
 rebind-timer</command> are values that define T1 and T2 timers that govern when
-the client will begin the renewal and rebind procedures.</para>
+the client will begin the renewal and rebind procedures.
+<command>dhcp4o6-port</command> is used by the DHCPv4-over-DHCPv6 support
+(more in <xref linkend="dhcp6-dhcp4o6-config"/>).
+</para>
 
 <para>The <command>interfaces-config</command> map specifies the server
 configuration concerning the network interfaces, on which the server should
@@ -290,7 +294,7 @@ syntax would be used:
     }
 ]
 </screen>
-Note that indentation is optional and is used for aesthetic purposes only.
+Note that indentation is optional and is used for esthetic purposes only.
 In some cases in may be preferable to use more compact notation.
 </para>
 
@@ -2179,6 +2183,96 @@ should include options from the isc option space:
       <para>
         myhost-3001-1--70E.example.com.
       </para>
+    </section>
+
+    <section id="dhcp6-dhcp4o6-config">
+      <title>DHCPv4-over-DHCPv6 DHCPv6 side</title>
+      <para>
+      The support of DHCPv4-over-DHCPv6 transport
+      <ulink url="http://tools.ietf.org/html/rfc7341">RFC 7341</ulink>
+      is implemented using cooperating DHCPv4 and DHCPv6 servers.
+      This section is about the configuration of the DHCPv6 side
+      (the DHCPv4 side is described in <xref linkend="dhcp4-dhcp4o6-config"/>).
+      </para>
+      <note>
+      DHCPv4-over-DHCPv6 support is experimental and the details of
+      the inter-process communication can change: DHCPv4 and DHCPv6
+      should run the same version of Kea.
+      </note>
+      <para>
+      There is only one specific parameter for the DHCPv6 side:
+      <command>dhcp4o6-port</command> which specifies the first of the
+      two consecutive ports of the UDP sockets used for the communication
+      between the DHCPv6 and DHCPv4 servers (received DHCPv4-QUERY requests
+      are forwarded to the DHCPv4 side on the first socket, DHCPv4-RESPONSE
+      replies on the second socket are forwarded to clients).
+      </para>
+      <para>
+      Two other configuration entries are in general required: unicast traffic
+      support (see <xref linkend="dhcp6-unicast"/>) and DHCP 4o6 server
+      address option (name "dhcp4o6-server-addr", code  88).
+      </para>
+      <para>
+      The following configuration was used during some tests:
+<screen>
+{
+
+# DHCPv6 conf
+"Dhcp6":
+{
+  "interfaces-config": {
+    "interfaces": [ "eno33554984/2001:db8:1:1::1" ]
+  },
+
+  "lease-database": {
+    "type": "memfile",
+    "name": "leases6"
+  },
+
+  "preferred-lifetime": 3000,
+  "valid-lifetime": 4000,
+  "renew-timer": 1000,
+  "rebind-timer": 2000,
+
+  "subnet6": [
+   {   "subnet": "2001:db8:1:1::/64",
+       "interface": "eno33554984",
+       "pools": [ { "pool": "2001:db8:1:1::1:0/112" } ] }
+   ],
+
+  "dhcp4o6-port": 6767,
+
+  "option-data": [
+   {  "name": "dhcp4o6-server-addr",
+      "code": 88,
+      "space": "dhcp6",
+      "csv-format": true,
+      "data": "2001:db8:1:1::1" }
+   ]
+},
+
+"Logging":
+{
+  "loggers": [
+    {
+      "name": "kea-dhcp6",
+      "output_options": [
+          {
+            "output": "/tmp/kea-dhcp6.log"
+          }
+      ],
+      "severity": "DEBUG",
+      "debuglevel": 0
+    }
+  ]
+}
+
+}
+</screen>
+      </para>
+      <note>
+      Relayed DHCPv4-QUERY DHCPv6 messages are not yet supported.
+      </note>
     </section>
 
    </section>
