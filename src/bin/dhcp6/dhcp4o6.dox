@@ -16,7 +16,7 @@ DHCPv6 counter-part, see @ref dhcpv4o6Dhcp4.
 The @c Dhcp6to4Ipc class is derived from the base @c Dhcp4o6IpcBase as
 a singleton class (by the static @ref isc::dhcp::Dhcp6to4Ipc::instance
 function).  @ref isc::dhcp::Dhcp6to4Ipc::open is called to open IPC
-sockets and to register @ref isc::dhcp::Dhcp6to4Ipc::handler on
+UDP sockets and to register @ref isc::dhcp::Dhcp6to4Ipc::handler on
 external sockets on the @c IfaceMgr.
 
 @section dhcp6to4Process DHCPv6-to-DHCPv4 Packet Processing
