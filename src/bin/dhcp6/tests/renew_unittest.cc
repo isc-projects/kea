@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,9 +7,13 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <dhcp/docsis3_option_defs.h>
+#include <dhcp/option_string.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
+#include <boost/pointer_cast.hpp>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -34,6 +38,11 @@ namespace {
 ///   - 1 subnet with one address pool and one prefix pool
 ///   - address pool: 2001:db8:1::/64
 ///   - prefix pool: 3000::/72
+///
+/// - Configuration 3:
+///   - only addresses (no prefixes)
+///   - 1 subnet with 2001:db8:1::/64 pool
+///   - DOCSIS vendor config file sub-option
 ///
 const char* RENEW_CONFIGS[] = {
 // Configuration 0
@@ -88,7 +97,34 @@ const char* RENEW_CONFIGS[] = {
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " } ],"
+        "\"valid-lifetime\": 4000 }",
+
+// Configuration 3
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-def\": [ {"
+        "        \"name\": \"config-file\","
+        "        \"code\": 33,"
+        "        \"type\": \"string\","
+        "        \"space\": \"vendor-4491\""
+        "     } ],"
+        "    \"option-data\": [ {"
+        "          \"name\": \"config-file\","
+        "          \"space\": \"vendor-4491\","
+        "          \"data\": \"normal_erouter_v6.cm\""
+        "        }],"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
         "\"valid-lifetime\": 4000 }"
+
 };
 
 /// @brief Test fixture class for testing Renew.
@@ -370,5 +406,79 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 }
 
+// This test verifies that the client can request the DOCSIS sub-options.
+TEST_F(RenewTest, requestDocsisORORenew) {
+    Dhcp6Client client;
+
+    // Configure client to request IA_NA.
+    client.useNA(na_iaid_);
+
+    // Configure the DOCSIS vendor ORO for 32, 33, 34, 37 and 38.
+    client.requestDocsisOption(DOCSIS3_V6_TFTP_SERVERS);
+    client.requestDocsisOption(DOCSIS3_V6_CONFIG_FILE);
+    client.requestDocsisOption(DOCSIS3_V6_SYSLOG_SERVERS);
+    client.requestDocsisOption(DOCSIS3_V6_TIME_SERVERS);
+    client.requestDocsisOption(DOCSIS3_V6_TIME_OFFSET);
+    // Don't add it for now.
+    client.useDocsisORO(false);
+
+    // Configure the server with NA pools and DOCSIS config file.
+    ASSERT_NO_THROW(configure(RENEW_CONFIGS[3], *client.getServer()));
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Simulate aging of leases.
+    client.fastFwdTime(1000);
+
+    // Make sure that the client has acquired NA lease.
+    std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases_client_na.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
+
+    // Send Renew message to the server.
+    ASSERT_NO_THROW(client.doRenew());
+
+    std::vector<Lease6> leases_client_na_renewed =
+        client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases_client_na_renewed.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
+
+    // No vendor option was included in the renew so there should be none
+    // in the received configuration.
+    OptionPtr opt = client.config_.findOption(D6O_VENDOR_OPTS);
+    ASSERT_FALSE(opt);
+
+    // Add a DOCSIS ORO.
+    client.useDocsisORO(true);
+
+    // Send Renew message to the server.
+    ASSERT_NO_THROW(client.doRenew());
+
+    leases_client_na_renewed = client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases_client_na_renewed.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
+
+    // Verify whether there is a vendor option.
+    opt = client.config_.findOption(D6O_VENDOR_OPTS);
+    ASSERT_TRUE(opt);
+
+    // The vendor option must be a OptionVentor object.
+    boost::shared_ptr<OptionVendor> vendor =
+        boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor);
+
+    // The vendor-id should be DOCSIS.
+    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorId());
+
+    // There must be a config file sub-option.
+    opt = vendor->getOption(DOCSIS3_V6_CONFIG_FILE);
+
+    // With the expected content.
+    OptionStringPtr config_file =
+        boost::dynamic_pointer_cast<OptionString>(opt);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ("normal_erouter_v6.cm", config_file->getValue());
+}
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,11 +6,13 @@
 
 #include <config.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
 #include <dhcp6/tests/dhcp6_client.h>
@@ -53,7 +55,7 @@ struct getLeasesByPropertyFun {
         for (typename std::vector<Lease6>::const_iterator lease =
                  config.leases_.begin(); lease != config.leases_.end();
              ++lease) {
-            // Check if fulfils the condition.
+            // Check if fulfills the condition.
             if ((equals && ((*lease).*MemberPointer) == property) ||
                 (!equals && ((*lease).*MemberPointer) != property)) {
                 // Found the matching lease.
@@ -81,6 +83,7 @@ Dhcp6Client::Dhcp6Client() :
     use_pd_(false),
     use_relay_(false),
     use_oro_(false),
+    use_docsis_oro_(false),
     use_client_id_(true),
     use_rapid_commit_(false),
     address_hint_(),
@@ -103,6 +106,7 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     use_pd_(false),
     use_relay_(false),
     use_oro_(false),
+    use_docsis_oro_(false),
     use_client_id_(true),
     use_rapid_commit_(false),
     address_hint_(),
@@ -368,6 +372,15 @@ Dhcp6Client::createMsg(const uint8_t msg_type) {
 
         msg->addOption(oro);
     };
+
+    if (use_docsis_oro_) {
+        OptionUint16ArrayPtr vendor_oro(new OptionUint16Array(Option::V6,
+                                                              DOCSIS3_V6_ORO));
+        vendor_oro->setValues(docsis_oro_);
+        OptionPtr vendor(new OptionVendor(Option::V6, 4491));
+        vendor->addOption(vendor_oro);
+        msg->addOption(vendor);
+    }
 
     // If there are any custom options specified, add them all to the message.
     if (!extra_options_.empty()) {
