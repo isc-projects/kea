@@ -90,6 +90,8 @@ public:
     void setRelativeDueTimes(const int send_secs, const int renew_secs = 0,
                              const int release_secs = 0) {
         ptime now = microsec_clock::universal_time();
+	// Use now to avoid unused but set warning
+	ASSERT_FALSE(now.is_special());
         basic_rate_control_.setRelativeDue(send_secs);
         renew_rate_control_.setRelativeDue(renew_secs);
         release_rate_control_.setRelativeDue(release_secs);
