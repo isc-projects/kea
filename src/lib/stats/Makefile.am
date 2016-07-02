@@ -4,12 +4,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
-if USE_CLANGPP
-# Workaround unused parameters in boost version included in FreeBSD 10
-AM_CXXFLAGS += -Wno-unused-parameter
-endif
-
-
 lib_LTLIBRARIES = libkea-stats.la
 libkea_stats_la_SOURCES = observation.h observation.cc
 libkea_stats_la_SOURCES += context.h context.cc

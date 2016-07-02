@@ -6,12 +6,6 @@ AM_CPPFLAGS += -DLOGGING_SPEC_FILE=\"$(abs_top_srcdir)/src/lib/dhcpsrv/logging.s
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
-# Some versions of GCC warn about some versions of Boost regarding
-# missing initializer for members in its posix_time.
-# https://svn.boost.org/trac/boost/ticket/3477
-# But older GCC compilers don't have the flag.
-AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
-
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
@@ -46,14 +40,6 @@ libeval_unittests_LDADD   += $(top_builddir)/src/lib/exceptions/libkea-exception
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 libeval_unittests_LDADD   += $(CRYPTO_LIBS) $(LOG4CPLUS_LIBS)
 libeval_unittests_LDADD   += $(BOOST_LIBS) $(GTEST_LDADD)
-
-if USE_CLANGPP
-# This is to workaround unused variables tcout and tcerr in
-# log4cplus's streams.h and unused parameters from some of the
-# Boost headers.
-libeval_unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
-endif
-
 endif
 
 noinst_PROGRAMS = $(TESTS)

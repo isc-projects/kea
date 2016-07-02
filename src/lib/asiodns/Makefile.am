@@ -26,12 +26,8 @@ EXTRA_DIST = asiodns_messages.mes
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # KEA_CXXFLAGS)
-libkea_asiodns_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_asiodns_la_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# Avoid ASIO header unused-paramet problem with clang
-libkea_asiodns_la_CXXFLAGS += -Wno-unused-parameter
-endif
+libkea_asiodns_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_asiodns_la_LIBADD  = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_asiodns_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_asiodns_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
