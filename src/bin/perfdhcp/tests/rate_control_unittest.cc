@@ -138,7 +138,7 @@ TEST(RateControl, getOutboundMessageCount) {
     // when the calcuation is made may be different from the interval set.)  The
     // margin in this test is reasonably generous, allowing for a timing error
     // of around 10ms.
-    uint64_t count;
+    uint64_t count = 0;
     ASSERT_NO_THROW(count = rc1.getOutboundMessageCount());
     EXPECT_TRUE((count >= 5240) && (count <= 5260)) <<
         "count is " << count << ", expected range 5240-5260";
