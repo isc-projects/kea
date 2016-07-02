@@ -70,10 +70,6 @@ TEST_F(Lease4Test, constructor) {
      // Get current time for the use in Lease.
     const time_t current_time = time(NULL);
 
-    // Other random constants.
-    const uint32_t SUBNET_ID = 42;
-    const uint32_t VALID_LIFETIME = 500;
-
     // We want to check that various addresses work, so let's iterate over
     // these.
     const uint32_t ADDRESS[] = {
@@ -107,10 +103,6 @@ TEST_F(Lease4Test, copyConstructor) {
 
     // Get current time for the use in Lease4.
     const time_t current_time = time(NULL);
-
-    // Other random constants.
-    const uint32_t SUBNET_ID = 42;
-    const uint32_t VALID_LIFETIME = 500;
 
     // Create the lease
     Lease4 lease(0xffffffff, hwaddr_, clientid_, VALID_LIFETIME, 0, 0, current_time,
@@ -148,10 +140,6 @@ TEST_F(Lease4Test, operatorAssign) {
 
     // Get the current time for the use in Lease4.
     const time_t current_time = time(NULL);
-
-    // Other random constants.
-    const uint32_t SUBNET_ID = 42;
-    const uint32_t VALID_LIFETIME = 500;
 
     // Create the lease
     Lease4 lease(0xffffffff, hwaddr_, clientid_, VALID_LIFETIME, 0, 0, current_time,
@@ -257,8 +245,6 @@ TEST_F(Lease4Test, operatorEquals) {
     // Random values for the tests
     const uint32_t ADDRESS = 0x01020304;
     const time_t current_time = time(NULL);
-    const uint32_t SUBNET_ID = 42;
-    const uint32_t VALID_LIFETIME = 500;
 
     // Check when the leases are equal.
     Lease4 lease1(ADDRESS, hwaddr_, clientid_, VALID_LIFETIME, current_time, 0,
@@ -504,7 +490,7 @@ TEST(Lease6Test, Lease6ConstructorDefault) {
     // Other values
     uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     DuidPtr duid(new DUID(llt, sizeof(llt)));
-    uint32_t iaid = 7;      // Just a number
+    uint32_t iaid = IAID;   // Just a number
     SubnetID subnet_id = 8; // Just another number
 
     for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
@@ -551,7 +537,7 @@ TEST(Lease6Test, Lease6ConstructorWithFQDN) {
     // Other values
     uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     DuidPtr duid(new DUID(llt, sizeof(llt)));
-    uint32_t iaid = 7;      // Just a number
+    uint32_t iaid = IAID;   // Just a number
     SubnetID subnet_id = 8; // Just another number
 
     for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
@@ -593,7 +579,7 @@ TEST(Lease6Test, operatorEquals) {
     const IOAddress addr("2001:db8:1::456");
     uint8_t duid_array[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     DuidPtr duid(new DUID(duid_array, sizeof(duid_array)));
-    uint32_t iaid = 7; // just a number
+    uint32_t iaid = IAID;   // just a number
     SubnetID subnet_id = 8; // just another number
 
     // Check for equality.
@@ -723,7 +709,7 @@ TEST(Lease6Test, Lease6Expired) {
     const IOAddress addr("2001:db8:1::456");
     const uint8_t duid_array[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     const DuidPtr duid(new DUID(duid_array, sizeof(duid_array)));
-    const uint32_t iaid = 7;        // Just a number
+    const uint32_t iaid = IAID;     // Just a number
     const SubnetID subnet_id = 8;   // Just another number
     Lease6 lease(Lease::TYPE_NA, addr, duid, iaid, 100, 200, 50, 80,
                                subnet_id);
