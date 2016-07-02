@@ -67,12 +67,6 @@ BUILT_SOURCES = alloc_engine_messages.h alloc_engine_messages.cc
 BUILT_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
 BUILT_SOURCES += hosts_messages.h hosts_messages.cc
 
-# Some versions of GCC warn about some versions of Boost regarding
-# missing initializer for members in its posix_time.
-# https://svn.boost.org/trac/boost/ticket/3477
-# But older GCC compilers don't have the flag.
-AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
-
 # Make sure the generated files are deleted in a "clean" operation
 CLEANFILES = *.gcno *.gcda
 CLEANFILES += alloc_engine_messages.h alloc_engine_messages.cc
@@ -206,12 +200,6 @@ libkea_dhcpsrv_la_LDFLAGS += $(PGSQL_LIBS)
 endif
 if HAVE_CQL
 libkea_dhcpsrv_la_LDFLAGS += $(CQL_LIBS)
-endif
-
-if USE_CLANGPP
-# Disable unused parameter warning caused by some of the
-# Boost headers when compiling with clang.
-libkea_dhcpsrv_la_CXXFLAGS += -Wno-unused-parameter
 endif
 
 # The message file should be in the distribution

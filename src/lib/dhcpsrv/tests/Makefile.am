@@ -14,12 +14,6 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-# Some versions of GCC warn about some versions of Boost regarding
-# missing initializer for members in its posix_time.
-# https://svn.boost.org/trac/boost/ticket/3477
-# But older GCC compilers don't have the flag.
-AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
-
 CLEANFILES = *.gcno *.gcda
 
 TESTS_ENVIRONMENT = \
@@ -144,6 +138,8 @@ if HAVE_CQL
 libdhcpsrv_unittests_CPPFLAGS += $(CQL_CPPFLAGS)
 endif
 
+libdhcpsrv_unittests_CXXFLAGS = $(AM_CXXFLAGS)
+
 libdhcpsrv_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 if HAVE_MYSQL
 libdhcpsrv_unittests_LDFLAGS  += $(MYSQL_LIBS)
@@ -153,14 +149,6 @@ libdhcpsrv_unittests_LDFLAGS  += $(PGSQL_LIBS)
 endif
 if HAVE_CQL
 libdhcpsrv_unittests_LDFLAGS  += $(CQL_LIBS)
-endif
-
-libdhcpsrv_unittests_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# This is to workaround unused variables tcout and tcerr in
-# log4cplus's streams.h and unused parameters from some of the
-# Boost headers.
-libdhcpsrv_unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 endif
 
 libdhcpsrv_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la

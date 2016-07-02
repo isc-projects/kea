@@ -10,11 +10,6 @@ if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
 
-if USE_CLANGPP
-# Workaround unused parameters in boost version included in FreeBSD 10
-AM_CXXFLAGS += -Wno-unused-parameter
-endif
-
 CLEANFILES = *.gcno *.gcda *.lock
 
 EXTRA_DIST = log_test_messages.mes
@@ -76,10 +71,6 @@ TESTS =
 
 # Define the flags used in each set of tests
 TESTSCXXFLAGS  = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# Workaround unused variables tcout and tcerr in log4cplus's streams.h.
-TESTSCXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
-endif
 TESTSCPPFLAGS  = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 TESTSLDFLAGS  = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 

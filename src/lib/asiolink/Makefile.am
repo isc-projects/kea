@@ -9,18 +9,9 @@ CLEANFILES = *.gcno *.gcda
 
 # This is a wrapper library.
 
-libkea_asiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
-# Note: the ordering matters: -Wno-... must follow -Wextra (defined in
-# KEA_CXXFLAGS)
-libkea_asiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
-
 # The ASIO header files have some code fragments that would hit
 # gcc's unused-parameter warning, which would make the build fail
 # with -Werror (our default setting).
-if USE_CLANGPP
-# Avoid this problem with clang
-libkea_asiolink_la_CXXFLAGS += -Wno-unused-parameter
-endif
 
 lib_LTLIBRARIES = libkea-asiolink.la
 
@@ -41,6 +32,10 @@ libkea_asiolink_la_SOURCES += tcp_socket.h
 libkea_asiolink_la_SOURCES += udp_endpoint.h
 libkea_asiolink_la_SOURCES += udp_socket.h
 
+# Note: the ordering matters: -Wno-... must follow -Wextra (defined in
+# KEA_CXXFLAGS)
+libkea_asiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
+libkea_asiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_asiolink_la_LIBADD  = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_asiolink_la_LIBADD += $(BOOST_LIBS)
 
