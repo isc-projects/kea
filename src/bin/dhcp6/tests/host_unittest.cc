@@ -116,7 +116,7 @@ const char* CONFIGS[] = {
     "}"
 };
 
-/// @brief Base class representing leases and hints coveyed within IAs.
+/// @brief Base class representing leases and hints conveyed within IAs.
 ///
 /// This is a base class for @ref Reservation and @ref Hint classes.
 class IAResource {
@@ -353,7 +353,7 @@ public:
     /// number of reservations it checks that for the remaining IAs the
     /// leases from dynamic pools are assigned.
     ///
-    /// The strict_iaid_check flag controlls whether the test should verify
+    /// The strict_iaid_check flag controls whether the test should verify
     /// that the address or prefix specified as a hint is assigned by the
     /// server to the IA in which the hint was placed by the client.
     ///
@@ -412,7 +412,7 @@ public:
     /// "01:02:03:04".
     ///
     /// @param r1 Reservation 1. Default value is "unspecified" in which case
-    /// the reservation will not be included in the configruation.
+    /// the reservation will not be included in the configuration.
     /// @param r2 Reservation 2.
     /// @param r3 Reservation 3.
     /// @param r4 Reservation 4.
@@ -841,7 +841,7 @@ TEST_F(HostTest, sarrAndRebind) {
     EXPECT_EQ("alice", lease_server2->hostname_);
 }
 
-// This test verfies that the host reservation by DUID is found by the
+// This test verifies that the host reservation by DUID is found by the
 // server.
 TEST_F(HostTest, reservationByDUID) {
     Dhcp6Client client;
@@ -851,7 +851,7 @@ TEST_F(HostTest, reservationByDUID) {
     testReservationByIdentifier(client, 1, "2001:db8:1::2");
 }
 
-// This test verfies that the host reservation by HW address is found
+// This test verifies that the host reservation by HW address is found
 // by the server.
 TEST_F(HostTest, reservationByHWAddress) {
     Dhcp6Client client;

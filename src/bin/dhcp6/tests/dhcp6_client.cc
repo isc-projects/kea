@@ -55,7 +55,7 @@ struct getLeasesByPropertyFun {
         for (typename std::vector<Lease6>::const_iterator lease =
                  config.leases_.begin(); lease != config.leases_.end();
              ++lease) {
-            // Check if fulfils the condition.
+            // Check if fulfills the condition.
             if ((equals && ((*lease).*MemberPointer) == property) ||
                 (!equals && ((*lease).*MemberPointer) != property)) {
                 // Found the matching lease.
@@ -252,15 +252,18 @@ Dhcp6Client::appendFQDN() {
 void
 Dhcp6Client::appendRequestedIAs(const Pkt6Ptr& query) const {
     BOOST_FOREACH(const ClientIA& ia, client_ias_) {
-        OptionCollection options = query->getOptions(ia.type_ == Lease::TYPE_NA ?
-                                                     D6O_IA_NA : D6O_IA_PD);
+        OptionCollection options =
+            query->getOptions(ia.type_ == Lease::TYPE_NA ?
+                              D6O_IA_NA : D6O_IA_PD);
         std::pair<unsigned int, OptionPtr> option_pair;
         Option6IAPtr existing_ia;
         BOOST_FOREACH(option_pair, options) {
-            Option6IAPtr ia_opt = boost::dynamic_pointer_cast<Option6IA>(option_pair.second);
+            Option6IAPtr ia_opt =
+                boost::dynamic_pointer_cast<Option6IA>(option_pair.second);
             // This shouldn't happen.
             if (!ia_opt) {
-                isc_throw(Unexpected, "Dhcp6Client: IA option has an invalid C++ type;"
+                isc_throw(Unexpected,
+                          "Dhcp6Client: IA option has an invalid C++ type;"
                           " this is a programming issue");
             }
             if (ia_opt->getIAID() == ia.iaid_) {
@@ -280,7 +283,8 @@ Dhcp6Client::appendRequestedIAs(const Pkt6Ptr& query) const {
             BOOST_FOREACH(option_pair, existing_ia->getOptions()) {
                 Option6IAAddrPtr existing_addr = boost::dynamic_pointer_cast<
                     Option6IAAddr>(option_pair.second);
-                if (existing_addr && (existing_addr->getAddress() == ia.prefix_)) {
+                if (existing_addr &&
+                    (existing_addr->getAddress() == ia.prefix_)) {
                     option_exists = true;
                 }
             }
@@ -289,15 +293,17 @@ Dhcp6Client::appendRequestedIAs(const Pkt6Ptr& query) const {
                 existing_ia->addOption(ia_addr);
             }
 
-        } else if ((ia.type_ == Lease::TYPE_PD) && (!ia.prefix_.isV6Zero() ||
-            (ia.prefix_len_ > 0))) {
-            Option6IAPrefixPtr ia_prefix(new Option6IAPrefix(D6O_IAPREFIX, ia.prefix_,
+        } else if ((ia.type_ == Lease::TYPE_PD) &&
+                   (!ia.prefix_.isV6Zero() || (ia.prefix_len_ > 0))) {
+            Option6IAPrefixPtr ia_prefix(new Option6IAPrefix(D6O_IAPREFIX,
+                                                             ia.prefix_,
                                                              ia.prefix_len_,
                                                              0, 0));
             BOOST_FOREACH(option_pair, existing_ia->getOptions()) {
-                Option6IAPrefixPtr existing_prefix = boost::dynamic_pointer_cast<
-                    Option6IAPrefix>(option_pair.second);
-                if (existing_prefix && (existing_prefix->getAddress() == ia.prefix_) &&
+                Option6IAPrefixPtr existing_prefix =
+                    boost::dynamic_pointer_cast<Option6IAPrefix>(option_pair.second);
+                if (existing_prefix &&
+                    (existing_prefix->getAddress() == ia.prefix_) &&
                     existing_prefix->getLength()) {
                     option_exists = true;
                 }
@@ -435,8 +441,10 @@ Dhcp6Client::doSolicit(const bool always_apply_config) {
     // If using Rapid Commit and the server has responded with Reply,
     // let's apply received configuration. We also apply the configuration
     // for the Advertise if instructed to do so.
-    if (context_.response_ && (always_apply_config || (use_rapid_commit_ &&
-        context_.response_->getType() == DHCPV6_REPLY))) {
+    if (context_.response_ &&
+        (always_apply_config ||
+         (use_rapid_commit_ &&
+          context_.response_->getType() == DHCPV6_REPLY))) {
         config_.clear();
         applyRcvdConfiguration(context_.response_);
     }

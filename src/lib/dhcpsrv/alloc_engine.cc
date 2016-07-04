@@ -589,8 +589,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     if (pool) {
 
         /// @todo: We support only one hint for now
-        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,
-                                                                hint);
+        Lease6Ptr lease =
+            LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_, hint);
         if (!lease) {
 
             // In-pool reservations: Check if this address is reserved for someone

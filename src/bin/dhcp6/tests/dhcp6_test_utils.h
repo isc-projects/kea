@@ -37,14 +37,14 @@ namespace test {
 /// @brief Generic wrapper to provide strongly typed values.
 ///
 /// In many cases, the test fixture class methods require providing many
-/// paramaters, of which some ore optional. Some of the parameters may also
+/// parameters, of which some are optional. Some of the parameters may also
 /// be implicitly converted to other types. Non-careful test implementer
 /// may often "shift by one" or swap two values on the arguments list, which
 /// will be accepted by the compiler but will result in troubles running the
 /// function. Sometimes it takes non trivial amount of debugging to find out
 /// why the particular function fails until we find that the arguments were
 /// swapped or shifted. In addition, the use of classes wrapping simple types
-/// results in better readbility of the test code.
+/// results in better readability of the test code.
 ///
 /// @tparam ValueType Type of the wrapped value.
 template<typename ValueType>
