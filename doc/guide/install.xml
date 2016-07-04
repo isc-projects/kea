@@ -346,7 +346,7 @@ Debian and Ubuntu:
 
           <screen>$ <userinput>./configure \
       --with-boost-include=/usr/pkg/include \
-      --with-dhcp-pgsql=/usr/local/bin/pg_config \
+      --with-pgsql=/usr/local/bin/pg_config \
       --prefix=/opt/kea</userinput></screen>
         </para>
 
@@ -469,10 +469,10 @@ Debian and Ubuntu:
           Build and install Kea as described in <xref linkend="installation"/>, with
           the following modification. To enable the MySQL database code, at the
           "configure" step (see <xref linkend="configure"/>), do:
-          <screen><userinput>./configure [other-options] --with-dhcp-mysql</userinput></screen>
+          <screen><userinput>./configure [other-options] --with-mysql</userinput></screen>
 	  Or specify the location of the MySQL configuration program
 	  "mysql_config" if MySQL was not installed in the default location:
-          <screen><userinput>./configure [other-options] --with-dhcp-mysql=<replaceable>path-to-mysql_config</replaceable></userinput></screen>
+          <screen><userinput>./configure [other-options] --with-mysql=<replaceable>path-to-mysql_config</replaceable></userinput></screen>
         </para>
         <para>
           See <xref linkend="mysql-database-create"/> for details regarding
@@ -490,11 +490,11 @@ Debian and Ubuntu:
           Build and install Kea as described in <xref linkend="installation"/>, with
           the following modification. To enable the PostgreSQL database code, at the
           "configure" step (see <xref linkend="configure"/>), do:
-          <screen><userinput>./configure [other-options] --with-dhcp-pgsql</userinput></screen>
+          <screen><userinput>./configure [other-options] --with-pgsql</userinput></screen>
 	  Or specify the location of the PostgreSQL configuration
 	  program "pg_config" if PostgreSQL was not installed in
 	  the default location:
-          <screen><userinput>./configure [other-options] --with-dhcp-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
+          <screen><userinput>./configure [other-options] --with-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
         </para>
         <para>
           See <xref linkend="pgsql-database-create"/> for details regarding
