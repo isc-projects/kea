@@ -167,6 +167,38 @@ packet processing. Hook points that are not specific to packet processing
    this fact; otherwise the client will think the lease was renewed and continue
    to operate under this assumption.
 
+@subsection dhcpv6HooksLease6Rebind lease6_rebind
+
+ - @b Arguments:
+   - name: @b query6, type: isc::dhcp::PktPtr, direction: <b>in</b>
+   - name: @b lease6, type: isc::dhcp::Lease6Ptr, direction: <b>in/out</b>
+   - name: @b ia_na, type: boost::shared_ptr<Option6IA>, direction: <b>in/out</b>
+
+ - @b Description: This callout is executed when the server engine is
+   about to rebind an existing lease. The client's request is provided as
+   the "query6" argument and the existing lease with the appropriate fields
+   already modified is given in the "lease6" argument. The final argument,
+   ia_na, is the IA_NA option that will be sent back to the client.
+   Callouts installed on the "lease6_rebind" may modify the content of
+   the "lease6" object. Care should be taken however, as that modified
+   information will be written to the database without any further
+   checking. \n\n Although the envisaged usage assumes modification of T1,
+   T2, preferred and valid lifetimes only, other parameters associated
+   with the lease may be modified as well. The only exception is the @c addr_
+   field, which must not be modified as it is used by the database to
+   select the existing lease to be updated. Care should also be taken to
+   modify the "ia_na" argument to match any changes in the "lease6" argument.
+   If a client sends more than one IA_NA option, callouts will be called
+   separately for each IA_NA instance. The callout will be called only
+   when the update is valid, i.e. conditions such as an invalid addresses
+   or invalid iaid rebinding attempts will not trigger this hook point.
+
+ - <b>Next step status</b>: If any callout installed on "lease6_rebind"
+   sets the status to SKIP, the server will not rebind the lease. Under these
+   circumstances, the callout should modify the "ia_na" argument to reflect
+   this fact; otherwise the client will think the lease was rebound and continue
+   to operate under this assumption.
+
 @subsection dhcpv6HooksLease6Decline lease6_decline
 
  - @b Arguments:

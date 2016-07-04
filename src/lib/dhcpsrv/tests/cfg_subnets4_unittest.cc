@@ -375,7 +375,7 @@ TEST(CfgSubnets4Test, 4o6subnetMatchByAddress) {
     selector.dhcp4o6_ = true;
     selector.remote_address_ = IOAddress("2001:db8:1::dead:beef");
 
-    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+    EXPECT_EQ(subnet2, cfg.selectSubnet4o6(selector));
 }
 
 // This test checks if the IPv4 subnet can be selected based on the value of
@@ -405,11 +405,11 @@ TEST(CfgSubnets4Test, 4o6subnetMatchByInterfaceId) {
     selector.dhcp4o6_ = true;
     selector.interface_id_ = interfaceId2;
     // We have mismatched interface-id options (data1 vs data2). Should not match.
-    EXPECT_FALSE(cfg.selectSubnet(selector));
+    EXPECT_FALSE(cfg.selectSubnet4o6(selector));
 
     // This time we have correct interface-id. Should match.
     selector.interface_id_ = interfaceId1;
-    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+    EXPECT_EQ(subnet2, cfg.selectSubnet4o6(selector));
 }
 
 // This test checks if the IPv4 subnet can be selected based on the value of
@@ -431,11 +431,11 @@ TEST(CfgSubnets4Test, 4o6subnetMatchByInterfaceName) {
     selector.dhcp4o6_ = true;
     selector.iface_name_ = "eth5";
     // We have mismatched interface names. Should not match.
-    EXPECT_FALSE(cfg.selectSubnet(selector));
+    EXPECT_FALSE(cfg.selectSubnet4o6(selector));
 
     // This time we have correct names. Should match.
     selector.iface_name_ = "eth7";
-    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+    EXPECT_EQ(subnet2, cfg.selectSubnet4o6(selector));
 }
 
 

@@ -76,10 +76,6 @@ CfgSubnets4::selectSubnet4o6(const SubnetSelector& selector) const {
 Subnet4Ptr
 CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
 
-    if (selector.dhcp4o6_) {
-        return selectSubnet4o6(selector);
-    }
-
     // First use RAI link select sub-option or subnet select option
     if (!selector.option_select_.isV4Zero()) {
         return (selectSubnet(selector.option_select_,
