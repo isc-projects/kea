@@ -307,6 +307,15 @@ public:
         copy_retrieved_options_ = copy;
     }
 
+    /// @brief Returns whether the copying of retrieved options is enabled.
+    ///
+    /// Also see @ref setCopyRetrievedOptions.
+    ///
+    /// @return true if retrieved options are copied.
+    bool isCopyRetrievedOptions() const {
+        return (copy_retrieved_options_);
+    }
+
     /// @brief Update packet timestamp.
     ///
     /// Updates packet timestamp. This method is invoked

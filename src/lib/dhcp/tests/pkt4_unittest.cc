@@ -625,6 +625,7 @@ TEST_F(Pkt4Test, setCopyRetrievedOptions) {
 
     // Now force copying the options when they are retrieved.
     pkt->setCopyRetrievedOptions(true);
+    EXPECT_TRUE(pkt->isCopyRetrievedOptions());
 
     // Option pointer returned must point to a new instance of option 2.
     OptionPtr option2_copy = pkt->getOption(2);
@@ -632,6 +633,7 @@ TEST_F(Pkt4Test, setCopyRetrievedOptions) {
 
     // Disable copying.
     pkt->setCopyRetrievedOptions(false);
+    EXPECT_FALSE(pkt->isCopyRetrievedOptions());
 
     // Expect that the original pointer is returned. This guarantees that
     // option1 wasn't affected by copying option 2.
