@@ -57,7 +57,6 @@ public:
 
     /// @brief IAID used for IA_NA.
     uint32_t na_iaid_;
-
 };
 
 };
@@ -117,6 +116,9 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
     ASSERT_TRUE(declined_global);
     uint64_t before_global = declined_cnt->getInteger().first;
 
+    /// Determines if the client will include address in the messages it sends.
+    bool include_address_ = true;
+
     // Let's tamper with the address if necessary.
     switch (addr_type) {
     case VALID_ADDR:
@@ -129,7 +131,7 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
         break;
     case NO_ADDR:
         // Tell the client to not include an address in its IA_NA
-        client.includeAddress(false);
+        include_address_ = false;
         break;
     case NO_IA:
         // Tell the client to not include IA_NA at all
@@ -144,7 +146,7 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
     client.config_.leases_[0].iaid_ = iaid2;
 
     // Ok, let's decline the lease.
-    ASSERT_NO_THROW(client.doDecline());
+    ASSERT_NO_THROW(client.doDecline(include_address_));
 
     // Let's check if there's a lease
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,

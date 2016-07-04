@@ -103,8 +103,7 @@ Dhcp6Client::Dhcp6Client() :
     use_client_id_(true),
     use_rapid_commit_(false),
     client_ias_(),
-    fqdn_(),
-    include_address_(true) {
+    fqdn_() {
 }
 
 Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
@@ -120,8 +119,7 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     use_client_id_(true),
     use_rapid_commit_(false),
     client_ias_(),
-    fqdn_(),
-    include_address_(true) {
+    fqdn_() {
 }
 
 void
@@ -551,7 +549,7 @@ Dhcp6Client::doConfirm() {
 }
 
 void
-Dhcp6Client::doDecline() {
+Dhcp6Client::doDecline(const bool include_address) {
     Pkt6Ptr query = createMsg(DHCPV6_DECLINE);
     if (!forced_server_id_) {
         query->addOption(context_.response_->getOption(D6O_SERVERID));
@@ -559,7 +557,7 @@ Dhcp6Client::doDecline() {
         query->addOption(forced_server_id_);
     }
 
-    generateIAFromLeases(query);
+    generateIAFromLeases(query, include_address);
 
     context_.query_ = query;
     sendMsg(context_.query_);
@@ -573,7 +571,8 @@ Dhcp6Client::doDecline() {
 }
 
 void
-Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query) {
+Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query,
+                                  const bool include_address) {
     /// @todo: add support for IAPREFIX here.
 
     for (std::vector<Lease6>::const_iterator lease = config_.leases_.begin();
@@ -584,7 +583,7 @@ Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query) {
 
         Option6IAPtr ia(new Option6IA(D6O_IA_NA, lease->iaid_));
 
-        if (include_address_) {
+        if (include_address) {
             ia->addOption(OptionPtr(new Option6IAAddr(D6O_IAADDR,
                   lease->addr_, lease->preferred_lft_, lease->valid_lft_)));
         }
