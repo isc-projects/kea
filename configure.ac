@@ -885,7 +885,7 @@ AC_SUBST(DISTCHECK_CRYPTO_CONFIGURE_FLAG)
 # the --with-mysql-config (default to /usr/bin/mysql-config).  By default,
 # the software is not built with MySQL support enabled.
 mysql_config="no"
-AC_ARG_WITH([dhcp-mysql],
+AC_ARG_WITH([mysql],
   AC_HELP_STRING([--with-mysql=PATH],
     [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
     [mysql_config="$withval"])
@@ -939,7 +939,7 @@ AC_CHECK_HEADERS(sys/filio.h,,,)
 AM_CONDITIONAL(HAVE_MYSQL, test "$MYSQL_CONFIG" != "")
 
 pg_config="no"
-AC_ARG_WITH([dhcp-pgsql],
+AC_ARG_WITH([pgsql],
   AC_HELP_STRING([--with-pgsql=PATH],
     [path to the PostgreSQL 'pg_config' script]),
     [pg_config="$withval"])
