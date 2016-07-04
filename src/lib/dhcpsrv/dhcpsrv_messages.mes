@@ -595,7 +595,7 @@ with the specified address to the PostgreSQL backend database.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the PostgreSQL backend database.
 
-% DHCPSRV_PGSQL_COMMIT committing to MySQL database
+% DHCPSRV_PGSQL_COMMIT committing to PostgreSQL database
 The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the PostgreSQL settings,
 the committal may not include a write to disk.

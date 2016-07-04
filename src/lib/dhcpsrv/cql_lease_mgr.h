@@ -20,6 +20,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/cql_connection.h>
+#include <dhcpsrv/cql_exchange.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
 #include <cassandra.h>
@@ -27,35 +28,6 @@
 
 namespace isc {
 namespace dhcp {
-
-/// @brief Structure used to bind C++ input values to dynamic SQL parameters
-/// The structure contains a vector which store the input values,
-/// This vector is passed directly into the
-/// CQL execute call.
-///
-/// Note that the data values are stored as pointers. These pointers need
-/// to be valid for the duration of the CQL statement execution. In other
-/// words populating them with pointers to values that go out of scope
-/// before statement is executed is a bad idea.
-struct CqlDataArray {
-    /// Add void pointer to a vector of pointers to the data values.
-    std::vector<void*> values_;
-    void add(void* value) {
-        values_.push_back(value);
-    }
-    /// Remove void pointer from a vector of pointers to the data values.
-    void remove(int index) {
-        if (values_.size() <= index) {
-            isc_throw(BadValue, "Index " << index << " out of bounds: [0, " <<
-                (values_.size() - 1)  << "]");
-        }
-        values_.erase(values_.begin() + index);
-    }
-    /// Get size.
-    size_t size() {
-        return values_.size();
-    }
-};
 
 class CqlVersionExchange;
 class CqlLeaseExchange;
@@ -71,12 +43,11 @@ public:
     // Time conversion methods.
     static void
     convertToDatabaseTime(const time_t& cltt,
-                          const uint32_t& valid_lifetime,
-                          uint64_t& expire) {
+                          const cass_int64_t& valid_lifetime,
+                          cass_int64_t& expire) {
         // Calculate expiry time. Store it in the 64-bit value so as we can
         // detect overflows.
-        int64_t expire_time = static_cast<int64_t>(cltt) +
-            static_cast<int64_t>(valid_lifetime);
+        cass_int64_t expire_time = static_cast<cass_int64_t>(cltt) + valid_lifetime;
 
         if (expire_time > DatabaseConnection::MAX_DB_TIME) {
             isc_throw(BadValue, "Time value is too large: " << expire_time);
@@ -86,11 +57,11 @@ public:
     }
 
     static void
-    convertFromDatabaseTime(const uint64_t& expire,
-                            const uint32_t& valid_lifetime,
+    convertFromDatabaseTime(const cass_int64_t& expire,
+                            const cass_int64_t& valid_lifetime,
                             time_t& cltt) {
         // Convert to local time
-        cltt = expire - static_cast<int64_t>(valid_lifetime);
+        cltt = static_cast<time_t>(expire - valid_lifetime);
     }
 };
 
@@ -281,7 +252,7 @@ public:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
-                                       uint32_t iaid) const;
+                                        uint32_t iaid) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
@@ -308,8 +279,8 @@ public:
     /// by the database backend are added.
     /// @param max_leases A maximum number of leases to be returned. If this
     /// value is set to 0, all expired (but not reclaimed) leases are returned.
-    virtual void getExpiredLeases6(Lease6Collection& ,
-                                   const size_t ) const;
+    virtual void getExpiredLeases6(Lease6Collection& expired_leases,
+                                   const size_t max_leases) const;
 
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
@@ -321,8 +292,8 @@ public:
     /// by the database backend are added.
     /// @param max_leases A maximum number of leases to be returned. If this
     /// value is set to 0, all expired (but not reclaimed) leases are returned.
-    virtual void getExpiredLeases4(Lease4Collection& ,
-                                   const size_t ) const;
+    virtual void getExpiredLeases4(Lease4Collection& expired_leases,
+                                   const size_t max_leases) const;
 
     /// @brief Updates IPv4 lease.
     ///
@@ -368,7 +339,7 @@ public:
     /// time will not be deleted.
     ///
     /// @return Number of leases deleted.
-    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t );
+    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t secs);
 
     /// @brief Deletes all expired and reclaimed DHCPv6 leases.
     ///
@@ -377,7 +348,7 @@ public:
     /// time will not be deleted.
     ///
     /// @return Number of leases deleted.
-    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t );
+    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs);
 
     /// @brief Return backend type
     ///
@@ -405,7 +376,7 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const;
+    virtual std::pair<unsigned int, unsigned int> getVersion() const;
 
     /// @brief Commit Transactions
     ///
@@ -444,43 +415,6 @@ public:
         NUM_STATEMENTS              // Number of statements
     };
 
-    /// @brief Binds data specified in data
-    ///
-    /// This method calls one of cass_value_bind_{none,bool,int32,int64,string,bytes}.
-    /// It is used to bind C++ data types used by Kea into formats used by Cassandra.
-    ///
-    /// @param statement Statement object representing the query
-    /// @param stindex Index of statement being executed
-    /// @param data array that has been created for the type of lease in question.
-    /// @param exchange Exchange object to use
-    static void bindData(CassStatement* statement, const StatementIndex stindex,
-        CqlDataArray& data, const SqlExchange& exchange);
-
-    /// @brief Returns type of data for specific parameter.
-    ///
-    /// Returns type of a given parameter of a given statement.
-    ///
-    /// @param stindex Index of statement being executed.
-    /// @param pindex Index of the parameter for a given statement.
-    /// @param exchange Exchange object to use
-    static ExchangeDataType getDataType(const StatementIndex stindex, int pindex,
-        const SqlExchange& exchange);
-
-    /// @brief Retrieves data returned by Cassandra.
-    ///
-    /// This method calls one of cass_value_get_{none,bool,int32,int64,string,bytes}.
-    /// It is used to retrieve data returned by Cassandra into standard C++ types
-    /// used by Kea.
-    ///
-    /// @param row row of data returned by CQL library
-    /// @param pindex Index of statement being executed
-    /// @param data array that has been created for the type of lease in question.
-    /// @param size a structure that holds information about size
-    /// @param dindex data index (specifies which entry in size array is used)
-    /// @param exchange Exchange object to use
-    static void getData(const CassRow* row, const int pindex, CqlDataArray& data,
-        CqlDataArray& size, const int dindex, const SqlExchange& exchange);
-
 private:
 
     /// @brief Add Lease Common Code
@@ -500,7 +434,7 @@ private:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     bool addLeaseCommon(StatementIndex stindex, CqlDataArray& data,
-        CqlLeaseExchange& exchange);
+                        CqlLeaseExchange& exchange);
 
     /// @brief Get Lease Collection Common Code
     ///
@@ -645,7 +579,7 @@ private:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     bool deleteLeaseCommon(StatementIndex stindex, CqlDataArray& data,
-        CqlLeaseExchange& exchange);
+                           CqlLeaseExchange& exchange);
 
     /// @brief Delete expired-reclaimed leases.
     ///
@@ -658,6 +592,20 @@ private:
     /// @return Number of leases deleted.
     uint64_t deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
                                                 StatementIndex statement_index);
+
+    /// @brief Check if CQL statement has been applied.
+    ///
+    /// @param future
+    /// @param exchange
+    /// @param row_count
+    /// @param column_count
+    ///
+    /// @return true if statement has been succesfully applied,
+    ///         false otherwise
+    static bool hasStatementBeenApplied(CassFuture* future,
+                                        CqlLeaseExchange& exchange,
+                                        size_t* row_count = NULL,
+                                        size_t* column_count = NULL);
 
     /// CQL queries used by CQL backend
     static CqlTaggedStatement tagged_statements_[];

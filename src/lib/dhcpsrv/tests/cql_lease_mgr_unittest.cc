@@ -376,7 +376,7 @@ TEST_F(CqlLeaseMgrTest, getType) {
 TEST_F(CqlLeaseMgrTest, checkTimeConversion) {
     const time_t cltt = time(NULL);
     const uint32_t valid_lft = 86400;       // 1 day
-    uint64_t cql_expire;
+    cass_int64_t cql_expire;
 
     // Convert to the database time
     CqlExchange::convertToDatabaseTime(cltt, valid_lft, cql_expire);
