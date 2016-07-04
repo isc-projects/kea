@@ -292,7 +292,8 @@ public:
     ///
     /// This function simulates sending the Decline message to the server and
     /// receiving the server's response.
-    void doDecline();
+    /// @param include_address should the address be included?
+    void doDecline(const bool include_address = true);
 
     /// @brief Performs stateless (inf-request / reply) exchange.
     ///
@@ -590,8 +591,8 @@ public:
                        const asiolink::IOAddress& prefix =
                        asiolink::IOAddress::IPV6_ZERO_ADDRESS());
 
-    /// @brief Removes IAs specified with @ref includeAddress and
-    /// @ref includePrefix methods.
+    /// @brief Removes IAs specified by @ref requestAddress and
+    /// @ref requestPrefix methods.
     ///
     /// If this method is called and the client initiates an exchange with
     /// a server the client will only include IAs for which it has leases.
@@ -647,13 +648,6 @@ public:
     void useFQDN(const uint8_t flags, const std::string& fqdn_name,
                  Option6ClientFqdn::DomainNameType fqdn_type);
 
-    /// @brief Controls whether the client should send an addres in IA_NA
-    ///
-    /// @param send should the address be included?
-    void includeAddress(const bool send) {
-        include_address_ = send;
-    }
-
     /// @brief Lease configuration obtained by the client.
     Configuration config_;
 
@@ -693,8 +687,9 @@ public:
     /// @brief Generates IA_NA based on lease information
     ///
     /// @param query generated IA_NA options will be added here
-    void
-    generateIAFromLeases(const Pkt6Ptr& query);
+    /// @param include_address should the address be included?
+    void generateIAFromLeases(const Pkt6Ptr& query,
+                              const bool include_address = true);
 
     /// @brief Adds extra option (an option the client will always send)
     ///
@@ -859,12 +854,6 @@ private:
 
     /// @brief FQDN requested by the client.
     Option6ClientFqdnPtr fqdn_;
-
-    /// @brief Determines if the client will include address in the messages
-    ///        it sends.
-    ///
-    /// @todo this flag is currently supported in Decline only.
-    bool include_address_;
 };
 
 } // end of namespace isc::dhcp::test
