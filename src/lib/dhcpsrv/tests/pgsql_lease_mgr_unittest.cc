@@ -190,8 +190,8 @@ TEST_F(PgSqlLeaseMgrTest, checkVersion) {
     // Check version
     pair<uint32_t, uint32_t> version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
-    EXPECT_EQ(PG_CURRENT_VERSION, version.first);
-    EXPECT_EQ(PG_CURRENT_MINOR, version.second);
+    EXPECT_EQ(PG_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PG_SCHEMA_VERSION_MINOR, version.second);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
