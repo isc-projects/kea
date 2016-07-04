@@ -298,7 +298,7 @@ public:
     ///
     /// This function generates Information-request message, sends it
     /// to the server and then receives the reply. Contents of the Inf-Request
-    /// are controlled by use_na_, use_pd_, use_client_id_ and use_oro_
+    /// are controlled by client_ias_, use_client_id_ and use_oro_
     /// fields. This method does not process the response in any specific
     /// way, just stores it.
     void doInfRequest();
@@ -367,7 +367,8 @@ public:
     /// @param address Leased address.
     ///
     /// @return Vector containing leases for the specified address.
-    std::vector<Lease6> getLeasesByAddress(const asiolink::IOAddress& address) const;
+    std::vector<Lease6>
+        getLeasesByAddress(const asiolink::IOAddress& address) const;
 
     /// @brief Returns leases belonging to specified address range.
     ///
@@ -375,8 +376,9 @@ public:
     /// @param second Upper bound of the address range.
     ///
     /// @return Vector containing leases belonging to specified address range.
-    std::vector<Lease6> getLeasesByAddressRange(const asiolink::IOAddress& first,
-                                                const asiolink::IOAddress& second) const;
+    std::vector<Lease6>
+        getLeasesByAddressRange(const asiolink::IOAddress& first,
+                                const asiolink::IOAddress& second) const;
 
     /// @brief Returns leases belonging to prefix pool.
     ///
@@ -385,9 +387,10 @@ public:
     /// @param delegated_len Delegated prefix length.
     ///
     /// @return Vector containing leases belonging to specified prefix pool.
-    std::vector<Lease6> getLeasesByPrefixPool(const asiolink::IOAddress& prefix,
-                                              const uint8_t prefix_len,
-                                              const uint8_t delegated_len) const;
+    std::vector<Lease6>
+        getLeasesByPrefixPool(const asiolink::IOAddress& prefix,
+                              const uint8_t prefix_len,
+                              const uint8_t delegated_len) const;
 
     /// @brief Checks if client has lease for the specified address.
     ///
@@ -644,6 +647,9 @@ public:
     void useFQDN(const uint8_t flags, const std::string& fqdn_name,
                  Option6ClientFqdn::DomainNameType fqdn_type);
 
+    /// @brief Controls whether the client should send an addres in IA_NA
+    ///
+    /// @param send should the address be included?
     void includeAddress(const bool send) {
         include_address_ = send;
     }
@@ -733,7 +739,7 @@ private:
 
     /// @brief Includes IAs to be requested.
     ///
-    /// This method includes IAs explicitly requested using 
+    /// This method includes IAs explicitly requested using client_ias_
     ///
     /// @param query Pointer to the client's message to which IAs should be
     /// added.
@@ -854,6 +860,10 @@ private:
     /// @brief FQDN requested by the client.
     Option6ClientFqdnPtr fqdn_;
 
+    /// @brief Determines if the client will include address in the messages
+    ///        it sends.
+    ///
+    /// @todo this flag is currently supported in Decline only.
     bool include_address_;
 };
 
