@@ -1,3 +1,8 @@
+1137.	[doc]		fdupont
+	Developer's Guide has been updated with DHCPv4-over-DHCPv6 support
+	details.
+	(Trac #4274, git b3eda594e055f03a9a601bacf0c72c3db0ef8e3c)
+
 1136.	[doc]		tomek
 	Included full text of MPL 2.0 and Apache licenses.
 	(Trac #4529, git baefb4b3e2078a0a0f794b42ef52d6b7d53c9dab)
