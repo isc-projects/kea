@@ -1,0 +1,62 @@
+// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page dhcpv4o6Dhcp4 DHCPv4-over-DHCPv6 DHCPv4 Server Side
+
+Kea supports DHCPv4-over-DHCPv6 using cooperating DHCPv6 and DHCPv4
+servers. This section describes the DHCPv4 server side. For its
+DHCPv6 counter-part, see @ref dhcpv4o6Dhcp6.
+
+@section Dhcp4to6Ipc DHCPv6-to-DHCPv4 Inter Process Communication
+
+The @c Dhcp4to6Ipc class is derived from the base @c Dhcp4o6IpcBase as
+a singleton class (by the static @ref isc::dhcp::Dhcp4to6Ipc::instance
+function).  @ref isc::dhcp::Dhcp4to6Ipc::open is called to open IPC
+UDP sockets and to register @ref isc::dhcp::Dhcp4to6Ipc::handler on
+external sockets on the @c IfaceMgr.
+
+@section dhcp4to6Receive DHCPv4-over-DHCPv6 Packet Processing
+
+DHCPv6 DHCPv4-QUERY messages are forwarded by the DHCPv6 server on the IPC.
+The interface manager (@c IfaceMgr) using the external socket mechanism
+invokes @ref isc::dhcp::Dhcp4to6Ipc::handler, the packet is received using
+(inherited) @ref isc::dhcp::Dhcp4o6IpcBase::receive which decodes and strips
+the ISC Vendor option.
+
+The handler verifies there is one and only one DHCPv4-Message option
+and extracts it. @ref isc::dhcp::Dhcpv4Srv::processPacket processes
+the DHCPv4 query as a @c Pkt4o6 instance and builds the
+DHCPv4-over-DHCPv6 response.
+Registered callouts for "buffer4_send" are called (@ref
+dhcpv4HooksBuffer4Send, note all the other DHCPv4 hook points are
+served during the standard processing). The response is sent back
+to the DHCPv6 server on the IPC.
+
+@section dhcp4to6Specific Modified DHCPv4 Routines
+
+For a @c Pkt4o6 query the @ref isc::dhcp::Dhcpv4Exchange::initResponse
+performs some extra steps (@ref isc::dhcp::Dhcpv4Exchange::initResponse4o6):
+the DHCPv6 response is built and the response member is reset to
+a @c Pkt4o6 instance with DHCPv4 and DHCPv6 parts.
+
+The subnet selection (@ref isc::dhcp::Dhcpv4Srv::selectSubnet) is specialized
+for @c Pkt4o6 queries (@ref isc::dhcp::Dhcpv4Srv::selectSubnet4o6):
+the subnet selector class (@c SubnetSelector) is filled using DHCPv4 and
+DHCPv6 information and the @ref isc::dhcp::CfgSubnets4::selectSubnet4o6
+function is called (instead of @ref isc::dhcp::CfgSubnets4::selectSubnet).
+
+In @ref isc::dhcp::Dhcpv4Srv::adjustIfaceData for @c Pkt4o6 queries
+the local address is set to the incoming interface assigned address
+(same case than for a broadcast local address).
+
+In @ref isc::dhcp::Dhcpv4Srv::adjustRemoteAddr for @c Pkt4o6 queries the
+remote address is set to the query one (which is in fact an IPv6 address).
+
+In @ref isc::dhcp::Dhcpv4Srv::acceptDirectRequest @c Pkt4o6 queries are
+accepted (they are considered as being relayed).
+
+*/

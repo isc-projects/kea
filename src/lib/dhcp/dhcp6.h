@@ -188,7 +188,7 @@
 /* RFC 7341 */
 #define DHCPV6_DHCPV4_QUERY        20
 #define DHCPV6_DHCPV4_RESPONSE     21
-/* draft-ietf-dhc-dhcpv6-active-leasequery-04 */
+/* RFC 7653 */
 //#define DHCPV6_ACTIVELEASEQUERY    22
 //#define DHCPV6_STARTTLS            23
 

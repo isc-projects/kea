@@ -29,7 +29,7 @@ CLEANFILES  = *.gcno *.gcda spec_config.h dhcp4_messages.h dhcp4_messages.cc s-m
 man_MANS = kea-dhcp4.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-dhcp4.xml dhcp4.spec
-EXTRA_DIST += dhcp4.dox dhcp4_hooks.dox
+EXTRA_DIST += dhcp4.dox dhcp4_hooks.dox dhcp4o6.dox
 
 if GENERATE_DOCS
 kea-dhcp4.8: kea-dhcp4.xml
