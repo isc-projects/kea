@@ -6,12 +6,6 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
-# Some versions of GCC warn about some versions of Boost regarding
-# missing initializer for members in its posix_time.
-# https://svn.boost.org/trac/boost/ticket/3477
-# But older GCC compilers don't have the flag.
-AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
-
 AM_LDFLAGS = -lm
 if USE_STATIC_LINK
 AM_LDFLAGS += -static
@@ -32,16 +26,8 @@ libperfdhcp_la_SOURCES += rate_control.cc rate_control.h
 libperfdhcp_la_SOURCES += stats_mgr.h
 libperfdhcp_la_SOURCES += test_control.cc test_control.h
 
-libperfdhcp_la_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# Disable unused parameter warning caused by some of the
-# Boost headers when compiling with clang.
-libperfdhcp_la_CXXFLAGS += -Wno-unused-parameter
-endif
-
 sbin_PROGRAMS = perfdhcp
 perfdhcp_SOURCES = main.cc
-libkea_perfdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
 
 perfdhcp_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 

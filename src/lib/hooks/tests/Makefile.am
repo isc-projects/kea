@@ -4,11 +4,6 @@ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
-# Some versions of GCC warn about some versions of Boost regarding
-# missing initializer for members in its posix_time.
-# https://svn.boost.org/trac/boost/ticket/3477
-# But older GCC compilers don't have the flag.     
-AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # Kea libraries against which the test user libraries are linked.
 HOOKS_LIB      = $(top_builddir)/src/lib/hooks/libkea-hooks.la
@@ -18,11 +13,6 @@ UTIL_LIB       = $(top_builddir)/src/lib/util/libkea-util.la
 EXCEPTIONS_LIB = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
 ALL_LIBS       = $(HOOKS_LIB) $(LOG_LIB) $(THREADS_LIB) $(UTIL_LIB) $(EXCEPTIONS_LIB) $(LOG4CPLUS_LIBS)
-
-if USE_CLANGPP
-# see ../Makefile.am
-AM_CXXFLAGS += -Wno-unused-parameter
-endif
 
 # Files to clean include the file created by testing.
 CLEANFILES = *.gcno *.gcda $(builddir)/marker_file.dat

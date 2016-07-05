@@ -25,8 +25,7 @@ namespace {
 const uint8_t HWADDR0[] = { 0, 1, 2, 3, 4, 5 };
 const uint8_t HWADDR1[] = { 0xd, 0xe, 0xa, 0xd, 0xb, 0xe, 0xe, 0xf };
 
-const uint8_t CLIENTID0[] = { 1, 2, 3, 4 };
-const uint8_t CLIENTID1[] = { 0xa, 0xb, 0xc, 0xd };
+const uint8_t CLIENTID[] = { 1, 2, 3, 4 };
 
 /// @brief Test fixture class for @c CSVLeaseFile4 validation.
 class CSVLeaseFile4Test : public ::testing::Test {
@@ -219,7 +218,7 @@ TEST_F(CSVLeaseFile4Test, recreate) {
     // Create second lease, with non-NULL client id.
     lease.reset(new Lease4(IOAddress("192.0.3.10"),
                            hwaddr1_,
-                           CLIENTID0, sizeof(CLIENTID0),
+                           CLIENTID, sizeof(CLIENTID),
                            100, 60, 90, 0, 7));
     {
     SCOPED_TRACE("Second write");

@@ -32,7 +32,7 @@ namespace {
 /// @brief Holds a type of the last identifier in @c IdentifierType enum.
 ///
 /// This value must be updated when new identifiers are added to the enum.
-const Host::IdentifierType LAST_IDENTIFIER_TYPE = Host::IDENT_CIRCUIT_ID;
+// const Host::IdentifierType LAST_IDENTIFIER_TYPE = Host::IDENT_CIRCUIT_ID;
 
 /// @brief Test fixture class for @c HostReservationParser.
 class HostReservationParserTest : public ::testing::Test {

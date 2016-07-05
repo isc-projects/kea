@@ -4,13 +4,6 @@ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
-# Some versions of GCC warn about some versions of Boost regarding
-# missing initializer for members in its posix_time.
-# https://svn.boost.org/trac/boost/ticket/3477
-# But older GCC compilers don't have the flag.
-AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
-
-
 # Define rule to build logging source files from message file
 hooks_messages.h hooks_messages.cc: s-messages
 
@@ -74,9 +67,3 @@ libkea_hooks_include_HEADERS = \
     library_handle.h \
     hooks.h \
     server_hooks.h
-
-if USE_CLANGPP
-# Disable unused parameter warning caused by some of the
-# Boost headers when compiling with clang.
-libkea_hooks_la_CXXFLAGS += -Wno-unused-parameter
-endif
