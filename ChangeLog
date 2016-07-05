@@ -1,7 +1,7 @@
 1137.	[doc]		fdupont
 	Developer's Guide has been updated with DHCPv4-over-DHCPv6 support
 	details.
-	(Trac #4274, git xxx)
+	(Trac #4274, git b3eda594e055f03a9a601bacf0c72c3db0ef8e3c)
 
 1136.	[doc]		tomek
 	Included full text of MPL 2.0 and Apache licenses.
